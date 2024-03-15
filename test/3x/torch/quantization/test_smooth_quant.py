@@ -96,7 +96,7 @@ class TestSmoothQuant:
             model(example_inputs)
 
         run_fn(user_model)
-        user_model.save_qconf_summary(qconf_summary="saved_results/ipex.json")
+        user_model.save_qconf_summary(qconf_summary="ipex.json")
         with torch.no_grad():
             user_model = convert(user_model.eval(), inplace=True).eval()
             user_model(example_inputs)
@@ -125,7 +125,7 @@ class TestSmoothQuant:
         assert torch.allclose(inc_out, loaded_out, atol=2e-02), "Unexpected result. Please double check."
 
         fp32_model = copy.deepcopy(model)
-        ipex_model = recover_model_from_json(fp32_model, "saved_results/ipex.json", example_inputs=example_inputs)
+        ipex_model = recover_model_from_json(fp32_model, "ipex.json", example_inputs=example_inputs)
         inc_out = q_model(example_inputs)
         ipex_out = ipex_model(example_inputs)
         assert torch.allclose(inc_out, ipex_out, atol=1e-05), "Unexpected result. Please double check."
