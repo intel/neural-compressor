@@ -23,7 +23,7 @@ except:
 from neural_compressor.torch.algorithms.static_quant import load, save
 
 
-def recover_model_from_json(model, json_file_path, example_inputs):
+def recover_model_from_json(model, json_file_path, example_inputs):  # pragma: no cover
     """Recover ipex model from JSON file.
 
     Args:
