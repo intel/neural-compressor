@@ -113,7 +113,7 @@ class TestSmoothQuant:
         # set a big atol to avoid random issue
         assert torch.allclose(inc_out, ipex_out, atol=2e-02), "Unexpected result. Please double check."
 
-        from neural_compressor.torch.algorithms.static_quant import load, save
+        from neural_compressor.torch.algorithms.smooth_quant import load, recover_model_from_json, save
 
         save(q_model, "saved_results")
 
@@ -121,3 +121,9 @@ class TestSmoothQuant:
         loaded_model = load("saved_results")
         loaded_out = loaded_model(example_inputs)
         assert torch.allclose(inc_out, loaded_out, atol=1e-05), "Unexpected result. Please double check."
+
+        fp32_model = copy.deepcopy(model)
+        ipex_model = recover_model_from_json(fp32_model, "saved_results/q_config.json", example_inputs=example_inputs)
+        inc_out = q_model(example_inputs)
+        ipex_out = ipex_model(example_inputs)
+        assert torch.allclose(inc_out, ipex_out, atol=1e-05), "Unexpected result. Please double check."

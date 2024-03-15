@@ -92,3 +92,49 @@ class TestStaticQuant:
         output2 = q_model(example_inputs)
         # set a big atol to avoid random issue
         assert torch.allclose(output1, output2, atol=2e-2), "Accuracy gap atol > 0.02 is unexpected. Please check."
+
+    @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
+    def test_static_quant_save_load(self):
+        from intel_extension_for_pytorch.quantization import convert, prepare
+
+        example_inputs = torch.zeros(1, 30)
+        try:
+            qconfig = ipex.quantization.default_static_qconfig_mapping
+        except:
+            from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
+
+            qconfig = QConfig(
+                activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_channel_symmetric),
+            )
+        user_model = copy.deepcopy(self.fp32_model)
+        user_model = prepare(user_model.eval(), qconfig, example_inputs=example_inputs, inplace=True)
+
+        def run_fn(model):
+            model(example_inputs)
+
+        run_fn(user_model)
+        with torch.no_grad():
+            user_model = convert(user_model.eval(), inplace=True).eval()
+            user_model(example_inputs)
+            user_model = torch.jit.trace(user_model.eval(), example_inputs, strict=False)
+            user_model = torch.jit.freeze(user_model.eval())
+            user_model(example_inputs)
+            user_model(example_inputs)
+        ipex_out = user_model(example_inputs)
+
+        fp32_model = copy.deepcopy(self.fp32_model)
+        quant_config = get_default_static_config()
+        q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
+        assert q_model is not None, "Quantization failed!"
+        inc_out = q_model(example_inputs)
+        # set a big atol to avoid random issue
+        assert torch.allclose(inc_out, ipex_out, atol=2e-02), "Unexpected result. Please double check."
+
+        from neural_compressor.torch.algorithms.static_quant import load, save
+
+        save(q_model, "saved_results")
+
+        # load
+        loaded_model = load("saved_results")
+        assert isinstance(loaded_model, torch.jit.ScriptModule)
