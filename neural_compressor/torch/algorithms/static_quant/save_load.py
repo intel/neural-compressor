@@ -26,35 +26,15 @@ except:
 from neural_compressor.torch.utils import QCONFIG_NAME, WEIGHT_NAME, logger
 
 
-def save_config_mapping(config_mapping, qconfig_file_path):
-    """Save config mapping to json file.
-
-    Args:
-        config_mapping (dict): config mapping.
-        qconfig_file_path (str): path to saved json file.
-    """
-    per_op_qconfig = {}
-    for op_name, q_op_infos in config_mapping.items():
-        value = {}
-        for k, v in q_op_infos.items():
-            if k == "op_type":
-                op = f"('{op_name}', '{v}')"
-            else:
-                value[k] = v
-        per_op_qconfig[op] = value
-
-    with open(qconfig_file_path, "w") as f:
-        json.dump(per_op_qconfig, f, indent=4)
-
-
 def save(model, output_dir="./saved_results"):
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
 
     qmodel_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), WEIGHT_NAME)
     qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), QCONFIG_NAME)
-    save_config_mapping(model.tune_cfg[" "]["q_op_infos"], qconfig_file_path)
     model.save(qmodel_file_path)
+    with open(qconfig_file_path, "w") as f:
+        json.dump(model.tune_cfg, f, indent=4)
 
     logger.info("Save quantized model to {}.".format(qmodel_file_path))
     logger.info("Save configuration of quantized model to {}.".format(qconfig_file_path))
@@ -63,5 +43,6 @@ def save(model, output_dir="./saved_results"):
 def load(output_dir="./saved_results"):
     qmodel_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), WEIGHT_NAME)
     model = torch.jit.load(qmodel_file_path)
+    model = torch.jit.freeze(model.eval())
     logger.info("Quantized model loading successful.")
     return model
