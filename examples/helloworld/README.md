@@ -1,6 +1,12 @@
 # Hello World Examples
 
-## Prerequisite
+## PyTorch Examples
+### Examples List
+* [torch_llm](/examples/helloworld/torch_llm): apply the weight-only quantization to LLMs.
+* [torch_non_llm](/examples/helloworld/torch_non_llm): apply the static quantization to non-LLMs.
+
+## Tensorflow Examples
+### Prerequisite
 Enter the following commands to prepare a dataset and pretrained models for the included Hello World examples:
 
 ```shell
@@ -10,9 +16,7 @@ python train.py
 The `train.py` script generates a saved model and a frozen pb at ./models for your use.
 > Note: Validated TensorFlow [Version](/docs/source/installation_guide.md#validated-software-environment).
 
-## Examples
-The following Hello World examples are available:
-
+### Examples List
 * [tf_example1](/examples/helloworld/tf_example1): quantize with built-in dataloader and metric.
 * [tf_example2](/examples/helloworld/tf_example2): quantize keras model with customized metric and dataloader.
 * [tf_example3](/examples/helloworld/tf_example3): convert model with mix precision.
