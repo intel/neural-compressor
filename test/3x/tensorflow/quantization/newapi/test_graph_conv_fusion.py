@@ -11,11 +11,11 @@ from pkg_resources import parse_version
 from tensorflow.compat.v1 import graph_util
 from tensorflow.python.framework import function
 
+from neural_compressor.tensorflow.utils import disable_random
 from neural_compressor.tensorflow.algorithms.static_quant.tensorflow import TensorflowQuery
 from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
 from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
 from neural_compressor.tensorflow.quantization.utils.quantize_graph.qdq.optimize_qdq import OptimizeQDQGraph
-from neural_compressor.tensorflow.quantization.utils.utility import disable_random
 
 
 class TestConvBiasAddAddReluFusion(unittest.TestCase):

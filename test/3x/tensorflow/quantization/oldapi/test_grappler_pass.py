@@ -3,8 +3,8 @@ import unittest
 import numpy as np
 import tensorflow.compat.v1 as tf
 
+from neural_compressor.tensorflow.utils import disable_random
 from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.grappler_pass import GrapplerOptimizer
-from neural_compressor.tensorflow.quantization.utils.utility import disable_random
 
 
 class TestGrapplerPass(unittest.TestCase):

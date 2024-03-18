@@ -11,10 +11,8 @@ import torch
 import torchvision
 from pkg_resources import parse_version
 
-from neural_compressor.model import MODELS, Model
-from neural_compressor.model.model import get_model_fwk_name
-from neural_compressor.model.mxnet_model import MXNetModel
-from neural_compressor.model.onnx_model import ONNXModel
+from neural_compressor.tensorflow.utils.model import Model
+from neural_compressor.tensorflow.utils.model_wrappers import MODELS, get_tf_model_type
 
 
 def build_graph():
@@ -107,7 +105,7 @@ def build_keras():
     return model
 
 
-class TestTensorflowModel(unittest.TestCase):
+class TestModelWrappers(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         os.remove("model_test.pb")
@@ -141,7 +139,7 @@ class TestTensorflowModel(unittest.TestCase):
         self.assertEqual(True, isinstance(model.graph_def, tf.compat.v1.GraphDef))
 
     def test_validate_graph_node(self):
-        from neural_compressor.model.tensorflow_model import validate_graph_node
+        from neural_compressor.tensorflow.utils.model_wrappers import validate_graph_node
 
         graph = build_graph()
         self.assertEqual(False, validate_graph_node(graph.as_graph_def(), []))
@@ -149,7 +147,7 @@ class TestTensorflowModel(unittest.TestCase):
         self.assertEqual(True, validate_graph_node(graph.as_graph_def(), ["x"]))
 
     def test_estimator(self):
-        from neural_compressor.adaptor.tf_utils.util import get_estimator_graph
+        from neural_compressor.tensorflow.quantization.utils.utility import get_estimator_graph
 
         model_fn = build_estimator()
         input_fn = build_input_fn()
@@ -157,6 +155,7 @@ class TestTensorflowModel(unittest.TestCase):
         with self.assertRaises(AssertionError):
             graph_def = Model(estimator).graph_def
         model = Model(estimator, input_fn=input_fn)
+
         self.assertEqual(model.output_tensor_names[0], "dense_2/BiasAdd:0")
 
     def test_ckpt(self):
@@ -206,7 +205,7 @@ class TestTensorflowModel(unittest.TestCase):
         self.assertGreaterEqual(len(model.input_node_names), 1)
         self.assertEqual(model.model_path, "./slim_ckpt/inception_v1.ckpt")
         # test net factory
-        from neural_compressor.model.nets_factory import TFSlimNetsFactory
+        from neural_compressor.tensorflow.utils.nets_factory import TFSlimNetsFactory
 
         factory = TFSlimNetsFactory()
         from tf_slim.nets import inception
@@ -263,7 +262,7 @@ class TestTensorflowModel(unittest.TestCase):
         keras_model = build_keras()
         self.assertEqual("tensorflow", get_model_fwk_name(keras_model))
 
-        from neural_compressor.model.tensorflow_model import TensorflowQATModel
+        from neural_compressor.tensorflow.utils.model_wrappers import TensorflowQATModel
 
         model = TensorflowQATModel(keras_model)
         assert isinstance(model.model, tf.keras.Model)
@@ -363,14 +362,14 @@ class TestTensorflowModel(unittest.TestCase):
         self.assertTrue(isinstance(center_model.graph_def, tf.compat.v1.GraphDef))
         self.assertTrue(isinstance(center_model.graph, tf.compat.v1.Graph))
 
-        from neural_compressor.model.tensorflow_model import _get_graph_from_saved_model_v1
+        from neural_compressor.tensorflow.utils.model_wrappers import _get_graph_from_saved_model_v1
 
         graph_def, input_names, output_names = _get_graph_from_saved_model_v1(unzip_center_model)
         assert graph_def is not None, "Can not parse the saved model..."
 
         from tensorflow.python.saved_model.loader_impl import parse_saved_model_with_debug_info
 
-        from neural_compressor.model.tensorflow_model import _contains_function_with_implements_attr
+        from neural_compressor.tensorflow.utils.model_wrappers import _contains_function_with_implements_attr
 
         saved_model_proto, _ = parse_saved_model_with_debug_info(unzip_center_model)
         self.assertEqual(False, _contains_function_with_implements_attr(saved_model_proto))
@@ -378,7 +377,7 @@ class TestTensorflowModel(unittest.TestCase):
         os.system("rm -rf unzip_center_model")
 
     def test_tensorflow(self):
-        from neural_compressor.model.tensorflow_model import TensorflowBaseModel
+        from neural_compressor.tensorflow.utils.model_wrappers import TensorflowBaseModel
 
         ori_model = build_graph()
         self.assertEqual("tensorflow", get_model_fwk_name(ori_model))
@@ -391,133 +390,6 @@ class TestTensorflowModel(unittest.TestCase):
             get_model_fwk_name("./model.pb")
         except AssertionError:
             pass
-
-
-def export_onnx_model(model, path):
-    x = torch.randn(100, 3, 224, 224, requires_grad=True)
-    torch_out = model(x)
-    torch.onnx.export(
-        model,
-        x,
-        path,
-        export_params=True,
-        opset_version=11,
-        do_constant_folding=True,
-        input_names=["input"],
-        output_names=["output"],
-        dynamic_axes={"input": {0: "batch_size"}, "output": {0: "batch_size"}},
-    )
-
-
-class TestONNXModel(unittest.TestCase):
-    cnn_export_path = "cnn.onnx"
-    cnn_model = torchvision.models.quantization.resnet18()
-
-    @classmethod
-    def setUpClass(self):
-        cnn_model = torchvision.models.quantization.resnet18()
-        export_onnx_model(self.cnn_model, self.cnn_export_path)
-        self.cnn_model = onnx.load(self.cnn_export_path)
-
-    @classmethod
-    def tearDownClass(self):
-        os.remove(self.cnn_export_path)
-
-    def test_model(self):
-        self.assertEqual("onnxruntime", get_model_fwk_name(self.cnn_export_path))
-        model = MODELS["onnxruntime"](self.cnn_model)
-        self.assertEqual(True, isinstance(model, ONNXModel))
-        self.assertEqual(True, isinstance(model.model, onnx.ModelProto))
-
-        model.save("test.onnx")
-        self.assertEqual(True, os.path.exists("test.onnx"))
-        os.remove("test.onnx")
-
-
-class TestPyTorchModel(unittest.TestCase):
-    def testPyTorch(self):
-        import torchvision
-
-        from neural_compressor.model.torch_model import IPEXModel, PyTorchFXModel, PyTorchModel
-
-        ori_model = torchvision.models.mobilenet_v2()
-        self.assertEqual("pytorch", get_model_fwk_name(ori_model))
-        pt_model = PyTorchModel(ori_model)
-        pt_model.model = ori_model
-        pt_model = PyTorchModel(torchvision.models.mobilenet_v2())
-        with self.assertRaises(AssertionError):
-            pt_model.workspace_path = "./pytorch"
-
-        ipex_model = IPEXModel(ori_model)
-        self.assertTrue(ipex_model.model)
-        ipex_model.model = ori_model
-        ipex_model = PyTorchModel(torchvision.models.mobilenet_v2())
-        with self.assertRaises(AssertionError):
-            ipex_model.workspace_path = "./pytorch"
-        ipex_model.save("./")
-
-        self.assertEqual("pytorch", get_model_fwk_name(PyTorchModel(ori_model)))
-        self.assertEqual("pytorch", get_model_fwk_name(IPEXModel(ori_model)))
-        self.assertEqual("pytorch", get_model_fwk_name(PyTorchFXModel(ori_model)))
-
-
-def load_mxnet_model(symbol_file, param_file):
-    import mxnet as mx
-
-    symbol = mx.sym.load(symbol_file)
-    save_dict = mx.nd.load(param_file)
-    arg_params = {}
-    aux_params = {}
-    for k, v in save_dict.items():
-        tp, name = k.split(":", 1)
-        if tp == "arg":
-            arg_params[name] = v
-    return symbol, arg_params, aux_params
-
-
-class TestMXNetModel(unittest.TestCase):
-    @classmethod
-    def setUpClass(self):
-        if platform.system().lower() == "windows":
-            self.skipTest(self, "not support mxnet on windows yet")
-        import mxnet as mx
-        import mxnet.gluon.nn as nn
-
-        net = nn.HybridSequential()
-        net.add(nn.Dense(128, activation="relu"))
-        net.add(nn.Dense(64, activation="relu"))
-        net.add(nn.Dense(10))
-        net.initialize()
-        net.hybridize()
-        fake_data = mx.random.uniform(shape=(1, 128, 128))
-        net(fake_data)
-        self.net = net
-
-    @classmethod
-    def tearDownClass(self):
-        os.remove("test-symbol.json")
-        os.remove("test-0000.params")
-        os.remove("test2-symbol.json")
-        os.remove("test2-0000.params")
-
-    def test_model(self):
-        import mxnet as mx
-
-        self.assertEqual("mxnet", get_model_fwk_name(self.net))
-        model = MODELS["mxnet"](self.net)
-        self.assertEqual(True, isinstance(model, MXNetModel))
-        self.assertEqual(True, isinstance(model.model, mx.gluon.HybridBlock))
-
-        model.save("./test")
-        self.assertEqual(True, os.path.exists("test-symbol.json"))
-        self.assertEqual(True, os.path.exists("test-0000.params"))
-
-        net = load_mxnet_model("test-symbol.json", "test-0000.params")
-        model.model = net
-        self.assertEqual(True, isinstance(model.model[0], mx.symbol.Symbol))
-        model.save("./test2")
-        self.assertEqual(True, os.path.exists("test2-symbol.json"))
-        self.assertEqual(True, os.path.exists("test2-0000.params"))
 
 
 if __name__ == "__main__":

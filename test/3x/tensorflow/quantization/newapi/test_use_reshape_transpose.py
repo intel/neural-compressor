@@ -8,7 +8,7 @@ import yaml
 from numpy.core.fromnumeric import squeeze
 from tensorflow.compat.v1 import graph_util
 
-from neural_compressor.tensorflow.quantization.utils.utility import disable_random
+from neural_compressor.tensorflow.utils import disable_random
 
 
 class TestFuseReshapeTransposeOptimizer(unittest.TestCase):

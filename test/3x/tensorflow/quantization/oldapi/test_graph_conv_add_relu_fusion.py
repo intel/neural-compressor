@@ -5,10 +5,10 @@ import tensorflow as tf
 from tensorflow.compat.v1 import graph_util
 
 import neural_compressor
+from neural_compressor.tensorflow.utils import disable_random
 from neural_compressor.tensorflow.algorithms.static_quant.tensorflow import TensorflowQuery
 from neural_compressor.tensorflow.quantization.utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
 from neural_compressor.tensorflow.quantization.utils.quantize_graph_common import QuantizeGraphHelper
-from neural_compressor.tensorflow.quantization.utils.utility import disable_random
 
 
 class TestConvAddRelu(unittest.TestCase):

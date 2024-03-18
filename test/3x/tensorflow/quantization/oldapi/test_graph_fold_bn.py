@@ -7,9 +7,9 @@ import tensorflow as tf
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.framework import dtypes
 
+from neural_compressor.tensorflow.utils import disable_random
 from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
 from neural_compressor.tensorflow.quantization.utils.quantize_graph_common import QuantizeGraphHelper
-from neural_compressor.tensorflow.quantization.utils.utility import disable_random
 
 
 class TestGraphFoldBNWithInvalidParameter(unittest.TestCase):

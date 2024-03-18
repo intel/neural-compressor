@@ -9,8 +9,8 @@ import tensorflow.compat.v1 as tf
 import yaml
 from tensorflow.python.framework import dtypes
 
+from neural_compressor.tensorflow.utils import disable_random
 from neural_compressor.tensorflow.algorithms.static_quant.tensorflow import TensorflowQuery
-from neural_compressor.tensorflow.quantization.utils.utility import disable_random
 
 
 class TestGraphMatMulFusion(unittest.TestCase):

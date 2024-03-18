@@ -10,8 +10,8 @@ import yaml
 from tensorflow.compat.v1 import graph_util
 from tensorflow.python.framework import dtypes
 
+from neural_compressor.tensorflow.utils import disable_random
 from neural_compressor.tensorflow.algorithms.static_quant.tensorflow import TensorflowQuery
-from neural_compressor.tensorflow.quantization.utils.utility import disable_random
 
 
 class TestGraphQDQPoolingFusion(unittest.TestCase):

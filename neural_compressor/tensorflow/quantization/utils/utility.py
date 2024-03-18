@@ -37,21 +37,6 @@ from neural_compressor.common import logger
 from neural_compressor.tensorflow.quantization.utils.graph_util import GraphAnalyzer, GraphRewriterHelper
 
 
-def disable_random(seed=1):
-    """A Decorator to disable tf random seed."""
-
-    def decorator(func):
-        def wrapper(*args, **kw):
-            tf.compat.v1.disable_eager_execution()
-            tf.compat.v1.reset_default_graph()
-            tf.compat.v1.set_random_seed(seed)
-            return func(*args, **kw)
-
-        return wrapper
-
-    return decorator
-
-
 def read_graph(in_graph, in_graph_is_binary=True):
     """Reads input graph file as GraphDef.
 

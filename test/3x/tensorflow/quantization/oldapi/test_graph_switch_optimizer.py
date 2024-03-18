@@ -7,7 +7,7 @@ import tensorflow as tf
 from tensorflow.compat.v1 import graph_util
 from tensorflow.python.ops import control_flow_ops
 
-from neural_compressor.tensorflow.quantization.utils.utility import disable_random
+from neural_compressor.tensorflow.utils import disable_random
 
 
 class TestSwitchOptimizer(unittest.TestCase):

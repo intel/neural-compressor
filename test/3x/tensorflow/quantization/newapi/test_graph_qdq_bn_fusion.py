@@ -12,9 +12,8 @@ from tensorflow.compat.v1 import graph_util
 from tensorflow.core.framework import attr_value_pb2
 from tensorflow.python.framework import dtypes
 
-from neural_compressor.tensorflow.quantization.utils.utility import disable_random
 from neural_compressor.common import logger
-from neural_compressor.tensorflow.utils import CpuInfo
+from neural_compressor.tensorflow.utils import CpuInfo, disable_random
 
 
 class TestTensorflowQdqConvFusion(unittest.TestCase):

@@ -8,8 +8,8 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.compat.v1 import graph_util
 
+from neural_compressor.tensorflow.utils import disable_random
 from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fuse_conv_with_math import FuseConvWithMathOptimizer
-from neural_compressor.tensorflow.quantization.utils.utility import disable_random
 
 
 class TestConvWithMath(unittest.TestCase):

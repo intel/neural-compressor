@@ -7,9 +7,9 @@ import tensorflow as tf
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.framework import dtypes
 
+from neural_compressor.tensorflow.utils import disable_random
 from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.graph_cse_optimizer import GraphCseOptimizer
 from neural_compressor.tensorflow.quantization.utils.quantize_graph_common import QuantizeGraphHelper
-from neural_compressor.tensorflow.quantization.utils.utility import disable_random
 
 
 class TestGraphCommonSequenceElimated(unittest.TestCase):

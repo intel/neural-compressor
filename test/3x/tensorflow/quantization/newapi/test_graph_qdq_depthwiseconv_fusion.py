@@ -11,7 +11,7 @@ from tensorflow.compat.v1 import graph_util
 from tensorflow.core.framework import attr_value_pb2, graph_pb2, node_def_pb2
 from tensorflow.python.framework import dtypes, tensor_util
 
-from neural_compressor.tensorflow.quantization.utils.utility import disable_random
+from neural_compressor.tensorflow.utils import disable_random
 
 
 def build_conv2d_biasadd_add_relu6_mul_mul():

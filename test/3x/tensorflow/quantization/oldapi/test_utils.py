@@ -6,10 +6,11 @@ import tensorflow as tf
 from tensorflow.core.framework import graph_pb2
 from tensorflow.python.framework import dtypes
 
+from neural_compressor.tensorflow import Model
+from neural_compressor.tensorflow.utils import disable_random
 from neural_compressor.tensorflow.quantization.utils.graph_util import GraphRewriterHelper as Helper
 from neural_compressor.tensorflow.quantization.utils.utility import (
     collate_tf_preds,
-    disable_random,
     fix_ref_type_of_graph_def,
     generate_feed_dict,
     get_graph_def,
@@ -17,7 +18,6 @@ from neural_compressor.tensorflow.quantization.utils.utility import (
     get_tensor_by_name,
     is_ckpt_format,
 )
-from neural_compressor.tensorflow import Model
 
 
 def build_fake_graphdef():

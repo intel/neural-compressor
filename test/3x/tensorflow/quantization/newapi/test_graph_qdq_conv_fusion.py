@@ -11,7 +11,7 @@ import yaml
 from tensorflow.compat.v1 import graph_util
 from tensorflow.python.framework import function
 
-from neural_compressor.tensorflow.quantization.utils.utility import disable_random
+from neural_compressor.tensorflow.utils import disable_random
 
 
 class TestTensorflowQdqConvFusion(unittest.TestCase):

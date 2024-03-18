@@ -6,8 +6,8 @@ import tensorflow as tf
 import yaml
 from tensorflow.compat.v1 import graph_util
 
+from neural_compressor.tensorflow.utils import disable_random
 from neural_compressor.tensorflow.quantization.utils.graph_util import GraphRewriterHelper as Helper
-from neural_compressor.tensorflow.quantization.utils.utility import disable_random
 
 
 def quantize(model, q_data, e_data):

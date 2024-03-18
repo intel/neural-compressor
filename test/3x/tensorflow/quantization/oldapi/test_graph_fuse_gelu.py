@@ -6,9 +6,9 @@ import unittest
 import tensorflow as tf
 from tensorflow.compat.v1 import graph_util
 
+from neural_compressor.tensorflow.utils import disable_random
 from neural_compressor.tensorflow.utils import version1_lt_version2
 from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fuse_gelu import FuseGeluOptimizer
-from neural_compressor.tensorflow.quantization.utils.utility import disable_random
 
 
 @unittest.skipIf(tf.version.VERSION.find("up") == -1, "Only supports tf 1.15.up2 and 1.15.up3 and SprBase")
