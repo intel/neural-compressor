@@ -49,7 +49,12 @@ done
 
 SCRIPTS_PATH="/neural-compressor/.azure-pipelines/scripts/models"
 log_dir="/neural-compressor/.azure-pipelines/scripts/models"
-WORK_SOURCE_DIR="/neural-compressor/examples/${framework}"
+if [[ "${inc_new_api}" == "3x"* ]]; then
+    WORK_SOURCE_DIR="/neural-compressor/examples/3.x_api/${framework}"
+else
+    WORK_SOURCE_DIR="/neural-compressor/examples/${framework}"
+fi
+
 $BOLD_YELLOW && echo "processing ${framework}-${fwk_ver}-${model}" && $RESET
 
 $BOLD_YELLOW && echo "======= creat log_dir =========" && $RESET
@@ -62,7 +67,7 @@ else
 fi
 
 $BOLD_YELLOW && echo "====== install requirements ======" && $RESET
-/bin/bash /neural-compressor/.azure-pipelines/scripts/install_nc.sh
+/bin/bash /neural-compressor/.azure-pipelines/scripts/install_nc.sh ${inc_new_api}
 
 mkdir -p ${WORK_SOURCE_DIR}
 cd ${WORK_SOURCE_DIR}
@@ -91,7 +96,7 @@ elif [[ "${framework}" == "pytorch" ]]; then
     pip install torch==${fwk_ver} -f https://download.pytorch.org/whl/torch_stable.html
     pip install torchvision==${torch_vision_ver} -f https://download.pytorch.org/whl/torch_stable.html
 elif [[ "${framework}" == "onnxrt" ]]; then
-    pip install onnx==1.14.1
+    pip install onnx==1.15.0
     pip install onnxruntime==${fwk_ver}
 elif [[ "${framework}" == "mxnet" ]]; then
     pip install numpy==1.23.5

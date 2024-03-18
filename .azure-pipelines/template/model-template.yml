@@ -5,6 +5,9 @@ parameters:
   - name: framework
     type: string
     default: "tensorflow"
+  - name: APIVersion
+    type: string
+    default: ""
 
   - name: modelContainerName
     type: string
@@ -41,17 +44,18 @@ steps:
   - script: |
       docker exec ${{ parameters.modelContainerName }} bash -c "cd /neural-compressor/.azure-pipelines/scripts/models \
       && bash run_${{ parameters.framework }}_models_trigger.sh --model=${{ parameters.modelName }} --mode='tuning'"
-    displayName: Tuning
+    displayName: Quantization
 
-  - script: |
-      docker exec ${{ parameters.modelContainerName }} bash -c "cd /neural-compressor/.azure-pipelines/scripts/models \
-      && bash run_${{ parameters.framework }}_models_trigger.sh --model=${{ parameters.modelName }} --mode='int8_benchmark' --USE_TUNE_ACC=$(USE_TUNE_ACC) --PERF_STABLE_CHECK=$(PERF_STABLE_CHECK)"
-    displayName: INT8 Benchmark
+  - ${{ if ne(parameters.APIVersion, '3x') }}:
+    - script: |
+        docker exec ${{ parameters.modelContainerName }} bash -c "cd /neural-compressor/.azure-pipelines/scripts/models \
+        && bash run_${{ parameters.framework }}_models_trigger.sh --model=${{ parameters.modelName }} --mode='int8_benchmark' --USE_TUNE_ACC=$(USE_TUNE_ACC) --PERF_STABLE_CHECK=$(PERF_STABLE_CHECK)"
+      displayName: INT8 Benchmark
 
-  - script: |
-      docker exec ${{ parameters.modelContainerName }} bash -c "cd /neural-compressor/.azure-pipelines/scripts/models \
-      && bash run_${{ parameters.framework }}_models_trigger.sh --model=${{ parameters.modelName }} --mode='fp32_benchmark' --USE_TUNE_ACC=$(USE_TUNE_ACC) --PERF_STABLE_CHECK=$(PERF_STABLE_CHECK)"
-    displayName: FP32 Benchmark
+    - script: |
+        docker exec ${{ parameters.modelContainerName }} bash -c "cd /neural-compressor/.azure-pipelines/scripts/models \
+        && bash run_${{ parameters.framework }}_models_trigger.sh --model=${{ parameters.modelName }} --mode='fp32_benchmark' --USE_TUNE_ACC=$(USE_TUNE_ACC) --PERF_STABLE_CHECK=$(PERF_STABLE_CHECK)"
+      displayName: FP32 Benchmark
 
   - task: Bash@3
     inputs:
