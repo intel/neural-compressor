@@ -62,13 +62,11 @@ subprojects:
 
   - id: "Model Tests 3x workflow"
     paths:
-      - "neural_compressor/common"
-      - "neural_compressor/torch"
-      - "test/3x/torch"
-      - "test/3x/common"
+      - "neural_compressor/common/**"
+      - "neural_compressor/torch/**"
       - "setup.py"
       - "requirements_pt.txt"
-      - ".azure-pipelines/scripts/models"
+      - ".azure-pipelines/scripts/models/**"
     checks:
       - "Model-Test-3x"
       - "Model-Test-3x (Generate Report GenerateReport)"

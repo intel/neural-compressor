@@ -10,8 +10,6 @@ pr:
     include:
       - neural_compressor/common
       - neural_compressor/torch
-      - test/3x/torch
-      - test/3x/common
       - setup.py
       - requirements_pt.txt
       - .azure-pipelines/scripts/models
@@ -54,7 +52,7 @@ stages:
     displayName: Generate Report
     pool:
       vmImage: "ubuntu-latest"
-    dependsOn: [ PyTorchModels]
+    dependsOn: [PyTorchModels]
     jobs:
       - job: GenerateReport
         steps:
