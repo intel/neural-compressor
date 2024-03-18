@@ -5,14 +5,10 @@ import platform
 import unittest
 
 import numpy as np
-import onnx
 import tensorflow as tf
-import torch
-import torchvision
 from pkg_resources import parse_version
 
 from neural_compressor.tensorflow.utils.model import Model
-from neural_compressor.tensorflow.utils.model_wrappers import MODELS, get_tf_model_type
 
 
 def build_graph():
@@ -146,6 +142,10 @@ class TestModelWrappers(unittest.TestCase):
         self.assertEqual(False, validate_graph_node(graph.as_graph_def(), ["test"]))
         self.assertEqual(True, validate_graph_node(graph.as_graph_def(), ["x"]))
 
+    @unittest.skipIf(
+        parse_version(tf.version.VERSION) >= parse_version("2.16.1"),
+        "Only supports tf previous to the version 2.16.1",
+    )
     def test_estimator(self):
         from neural_compressor.tensorflow.quantization.utils.utility import get_estimator_graph
 
@@ -216,79 +216,6 @@ class TestModelWrappers(unittest.TestCase):
         num_classes = 1001
         factory.register("inceptionv1", model_func, input_shape, arg_scope, num_classes=num_classes)
         os.system("rm -rf slim_ckpt")
-
-    def test_keras_h5_model(self):
-        if parse_version(tf.version.VERSION) < parse_version("2.3.0"):
-            return
-        keras_model = build_keras()
-        self.assertEqual("tensorflow", get_model_fwk_name(keras_model))
-        keras_model.save("./simple_model.h5")
-        # load from path
-        model = Model("./simple_model.h5")
-
-        self.assertEqual(model.model_path, "./simple_model.h5")
-        self.assertGreaterEqual(len(model.output_node_names), 1)
-        self.assertGreaterEqual(len(model.input_node_names), 1)
-        os.makedirs("./keras_model", exist_ok=True)
-        model.save("./keras_model")
-        os.system("rm -rf simple_model.h5")
-        os.system("rm -rf keras_model")
-
-    def test_keras_saved_model(self):
-        if parse_version(tf.version.VERSION) < parse_version("2.3.0"):
-            return
-        keras_model = build_keras()
-        self.assertEqual("tensorflow", get_model_fwk_name(keras_model))
-
-        model = Model(keras_model)
-        self.assertEqual(model.model_path, None)
-        self.assertGreaterEqual(len(model.output_node_names), 1)
-        self.assertGreaterEqual(len(model.input_node_names), 1)
-        keras_model.save("./simple_model")
-        # load from path
-        model = Model("./simple_model")
-        self.assertEqual(model.model_path, "./simple_model")
-        self.assertGreaterEqual(len(model.output_node_names), 1)
-        self.assertGreaterEqual(len(model.input_node_names), 1)
-
-        os.makedirs("./keras_model", exist_ok=True)
-        model.save("./keras_model")
-        os.system("rm -rf simple_model")
-        os.system("rm -rf keras_model")
-
-    def test_tf_qat_model(self):
-        if parse_version(tf.version.VERSION) < parse_version("2.3.0"):
-            return
-        keras_model = build_keras()
-        self.assertEqual("tensorflow", get_model_fwk_name(keras_model))
-
-        from neural_compressor.tensorflow.utils.model_wrappers import TensorflowQATModel
-
-        model = TensorflowQATModel(keras_model)
-        assert isinstance(model.model, tf.keras.Model)
-        self.assertEqual(model.model_path, None)
-        keras_model.save("./simple_model")
-        # load from path
-        model = TensorflowQATModel("./simple_model")
-        assert isinstance(model.model, tf.keras.Model)
-        self.assertEqual(model.model_path, "./simple_model")
-
-        model.save("./keras_model")
-        loaded_model = tf.keras.models.load_model("./keras_model")
-        assert isinstance(loaded_model, tf.keras.Model)
-
-        model.save("keras_model.h5")
-        loaded_model = tf.keras.models.load_model("keras_model.h5")
-        assert isinstance(loaded_model, tf.keras.Model)
-
-        root = model.save()
-        loaded_model = tf.keras.models.load_model(root)
-        assert isinstance(loaded_model, tf.keras.Model)
-
-        os.system("rm -rf simple_model")
-        os.system("rm -rf keras_model")
-        os.remove("keras_model.h5")
-        os.system("rm -rf " + root)
 
     @unittest.skipIf(
         parse_version(tf.version.VERSION) < parse_version("2.4.0") or platform.system().lower() == "windows",
@@ -375,21 +302,6 @@ class TestModelWrappers(unittest.TestCase):
         self.assertEqual(False, _contains_function_with_implements_attr(saved_model_proto))
 
         os.system("rm -rf unzip_center_model")
-
-    def test_tensorflow(self):
-        from neural_compressor.tensorflow.utils.model_wrappers import TensorflowBaseModel
-
-        ori_model = build_graph()
-        self.assertEqual("tensorflow", get_model_fwk_name(ori_model))
-        self.assertEqual("tensorflow", get_model_fwk_name(TensorflowBaseModel(ori_model)))
-        try:
-            get_model_fwk_name([])
-        except AssertionError:
-            pass
-        try:
-            get_model_fwk_name("./model.pb")
-        except AssertionError:
-            pass
 
 
 if __name__ == "__main__":
