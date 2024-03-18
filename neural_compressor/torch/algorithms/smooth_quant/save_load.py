@@ -18,7 +18,7 @@ import torch
 try:
     import intel_extension_for_pytorch as ipex
 except:
-    assert False, "Please install IPEX for static quantization."
+    assert False, "Please install IPEX for smooth quantization."
 
 from neural_compressor.torch.algorithms.static_quant import load, save
 
@@ -46,12 +46,6 @@ def recover_model_from_json(model, json_file_path, example_inputs):  # pragma: n
         model = ipex.quantization.prepare(model, qconfig, example_inputs=example_inputs, inplace=True)
 
     model.load_qconf_summary(qconf_summary=json_file_path)
-    if isinstance(example_inputs, dict):
-        model(**example_inputs)
-    elif isinstance(example_inputs, tuple) or isinstance(example_inputs, list):
-        model(*example_inputs)
-    else:
-        model(example_inputs)
     model = ipex.quantization.convert(model, inplace=True)
     with torch.no_grad():
         try:
