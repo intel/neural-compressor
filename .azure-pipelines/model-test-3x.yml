@@ -8,86 +8,35 @@ pr:
       - master
   paths:
     include:
-      - neural_compressor
-      - setup.py
-      - requirements.txt
-      - .azure-pipelines/scripts/models
-      - examples/tensorflow/oob_models/quantization/ptq
-    exclude:
-      - test
       - neural_compressor/common
       - neural_compressor/torch
-      - neural_compressor/tensorflow
-      - neural_compressor/onnxrt
-
-pool: MODEL_PERF_TEST_TF
+      - setup.py
+      - requirements_pt.txt
+      - .azure-pipelines/scripts/models
 
 variables:
   OUT_SCRIPT_PATH: $(Build.SourcesDirectory)/.azure-pipelines/scripts/models
   SCRIPT_PATH: /neural-compressor/.azure-pipelines/scripts
 
 parameters:
-  - name: TensorFlow_Model
-    displayName: Run TensorFlow models?
-    type: boolean
-    default: true
-  - name: PyTorch_Model
+  - name: PyTorch_Model_3X
     displayName: Run PyTorch models?
     type: boolean
     default: true
-  - name: ONNX_Model
-    displayName: Run ONNX models?
-    type: boolean
-    default: true
-  - name: MXNet_Model
-    displayName: Run MXNet models?
-    type: boolean
-    default: false
 
-  - name: TensorFlowModelList
-    type: object
-    default:
-      - resnet50v1.5
-      - ssd_resnet50_v1
-      - ssd_mobilenet_v1_ckpt
-      - inception_v1
-      - darknet19
-      - resnet-101
   - name: PyTorchModelList
     type: object
     default:
-      - resnet18
-      - resnet18_fx
-  - name: ONNXModelList
-    type: object
-    default:
-      - resnet50-v1-12
-  - name: MXNetModelList
-    type: object
-    default:
-      - resnet50v1
+      - opt_125m_woq_gptq_int4
+      - opt_125m_woq_gptq_int4_dq_bnb
+      - opt_125m_woq_gptq_int4_dq_ggml
 
 stages:
-  - stage: TensorFlowModels
-    displayName: Run TensorFlow Model
-    pool: MODEL_PERF_TEST_TF
-    dependsOn: []
-    condition: and(succeeded(), eq('${{ parameters.TensorFlow_Model }}', 'true'))
-    jobs:
-      - ${{ each model in parameters.TensorFlowModelList }}:
-          - job:
-            displayName: ${{ model }}
-            steps:
-              - template: template/model-template.yml
-                parameters:
-                  modelName: ${{ model }}
-                  framework: "tensorflow"
-
   - stage: PyTorchModels
     displayName: Run PyTorch Model
     pool: MODEL_PERF_TEST
     dependsOn: []
-    condition: and(succeeded(), eq('${{ parameters.PyTorch_Model }}', 'true'))
+    condition: and(succeeded(), eq('${{ parameters.PyTorch_Model_3X }}', 'true'))
     jobs:
       - ${{ each model in parameters.PyTorchModelList }}:
           - job:
@@ -97,42 +46,13 @@ stages:
                 parameters:
                   modelName: ${{ model }}
                   framework: "pytorch"
-
-  - stage: ONNXModels
-    displayName: Run ONNX Model
-    pool: MODEL_PERF_TEST
-    dependsOn: []
-    condition: and(succeeded(), eq('${{ parameters.ONNX_Model }}', 'true'))
-    jobs:
-      - ${{ each model in parameters.ONNXModelList }}:
-          - job:
-            displayName: ${{ model }}
-            steps:
-              - template: template/model-template.yml
-                parameters:
-                  modelName: ${{ model }}
-                  framework: "onnxrt"
-
-  - stage: MXNetModels
-    displayName: Run MXNet Model
-    pool: MODEL_PERF_TEST
-    dependsOn: []
-    condition: and(succeeded(), eq('${{ parameters.MXNet_Model }}', 'true'))
-    jobs:
-      - ${{ each model in parameters.MXNetModelList }}:
-          - job:
-            displayName: ${{ model }}
-            steps:
-              - template: template/model-template.yml
-                parameters:
-                  modelName: ${{ model }}
-                  framework: "mxnet"
+                  APIVersion: "3x"
 
   - stage: GenerateLogs
     displayName: Generate Report
     pool:
       vmImage: "ubuntu-latest"
-    dependsOn: [TensorFlowModels, PyTorchModels, ONNXModels]
+    dependsOn: [PyTorchModels]
     jobs:
       - job: GenerateReport
         steps:
