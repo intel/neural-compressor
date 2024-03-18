@@ -687,7 +687,10 @@ def main():
         example_inputs = get_example_inputs(model, eval_dataloader)
         model = ipex.optimize(model)
         with torch.no_grad():
-            model = torch.jit.trace(model, example_kwarg_inputs=example_inputs, strict=False)
+            if isinstance(example_inputs, dict):
+                model = torch.jit.trace(model, example_kwarg_inputs=example_inputs, strict=False)
+            else:
+                model = torch.jit.trace(model, example_inputs, strict=False)
             model = torch.jit.freeze(model)
 
     if model_args.benchmark or model_args.accuracy_only:

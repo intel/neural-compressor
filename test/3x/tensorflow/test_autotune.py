@@ -59,7 +59,7 @@ def build_model():
     _, baseline_model_accuracy = model.evaluate(test_images, test_labels, verbose=0)
 
     print("Baseline test accuracy:", baseline_model_accuracy)
-    model.save("baseline_model")
+    tf.saved_model.save(model, "baseline_model")
 
 
 class Dataset(object):

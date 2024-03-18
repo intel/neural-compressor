@@ -34,6 +34,7 @@ GPTQ = "gptq"
 AWQ = "awq"  # pragma: no cover
 HQQ = "hqq"  # pragma: no cover
 TEQ = "teq"  # pragma: no cover
+AUTOROUND = "autoround"
 FP8_QUANT = "fp8_quant"
 
 # options

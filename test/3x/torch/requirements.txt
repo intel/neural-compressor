@@ -1,7 +1,5 @@
-intel-extension-for-pytorch
 numpy
 prettytable
 psutil
 pytest
-torch
 transformers
