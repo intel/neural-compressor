@@ -323,6 +323,45 @@ def strip_unused_nodes(graph_def, input_node_names, output_node_names):
     return tf.compat.v1.graph_util.extract_sub_graph(cur_graph.dump_graph(), output_node_names)
 
 
+def get_estimator_graph(estimator, input_fn):
+    """Get the graph of the estimator.
+
+    Args:
+        estimator: tf estimator model
+        input_fn: input function
+
+    Returns:
+        graph
+    """
+    with tf.Graph().as_default() as g:
+        features, input_hooks = estimator._get_features_from_input_fn(input_fn, tf.estimator.ModeKeys.PREDICT)
+        estimator_spec = estimator._call_model_fn(features, None, tf.estimator.ModeKeys.PREDICT, estimator.config)
+
+        outputs = (
+            [tensor.name for tensor in estimator_spec.predictions.values()]
+            if isinstance(estimator_spec.predictions, dict)
+            else [estimator_spec.predictions.name]
+        )
+        logger.info("Estimator output tensor names is {}.".format(outputs))
+        with tf.compat.v1.Session(graph=g) as sess:
+            sess.run(tf.compat.v1.global_variables_initializer())
+            # Freezing a graph requires output_node_names, which can be found in
+            # estimator_spec.predictions that contains prediction tensors as a
+            # dictionary
+            # When a model uses Iterator, we need to have 'MakeIterator' (default
+            # name used by TF) in the output_node_names as well.
+            output_nodes = list(set([output.split(":")[0] for output in outputs]))
+            if "MakeIterator" in [node.op for node in g.as_graph_def().node]:
+                output_nodes.append("MakeIterator")
+
+            graph_def = tf.compat.v1.graph_util.convert_variables_to_constants(sess, g.as_graph_def(), output_nodes)
+
+        graph = tf.Graph()
+        with graph.as_default():
+            tf.import_graph_def(graph_def, name="")
+        return graph
+
+
 def strip_equivalent_nodes(graph_def, output_node_names):
     """Strip nodes with the same input and attr."""
     stripped_graph = GraphAnalyzer()
@@ -446,40 +485,6 @@ def int8_node_name_reverse(node):
         if index_postfix != -1:
             node_name = node_name[:index_postfix]
     return node_name
-
-
-def tf_diagnosis_helper(fp32_model, quan_model, tune_cfg, save_path):
-    """Tensorflow diagnosis helper function."""
-    from ...utils.utility import dump_data_to_local
-
-    fp32_node_mapping = {}
-    qnode_mapping = {}
-    for node in fp32_model.graph_def.node:
-        fp32_node_mapping[node.name] = node
-    for node in quan_model.graph_def.node:
-        qnode_mapping[node.name] = node
-    supported_op_lst = set(["Conv2D", "MatMul", "ConcatV2", "MaxPool", "AvgPool", "DepthwiseConv2dNative"])
-    fp32_node_lst = set()
-    for node in fp32_model.graph_def.node:
-        if node.op in supported_op_lst:
-            fp32_node_lst.add(node.name)
-    int8_node_lst = set()
-    bf16_node_lst = set()
-    for node in quan_model.graph_def.node:
-        node_name = node.name
-        node_name = int8_node_name_reverse(node)
-        if "Quantized" in node.op:
-            int8_node_lst.add(node_name)
-        elif node.attr["value"].tensor.dtype == tf.dtypes.bfloat16.as_datatype_enum:  # pragma: no cover
-            bf16_node_lst.add(node.name)
-        else:
-            continue
-    inspect_node_lst = fp32_node_lst.intersection(bf16_node_lst.union(int8_node_lst))
-    activation_min_max, updated_cfg = _parse_config(quan_model.q_config, tune_cfg, inspect_node_lst)
-    dump_data_to_local(activation_min_max, save_path, "activation_min_max.pkl")
-    dump_data_to_local(updated_cfg, save_path, "cfg.pkl")
-
-    return inspect_node_lst, updated_cfg
 
 
 def _parse_config(q_config, cfg, op_list):
