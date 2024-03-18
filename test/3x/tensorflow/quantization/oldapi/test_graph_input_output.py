@@ -169,7 +169,7 @@ class TestGraphInputOutputDetection(unittest.TestCase):
         self.assertGreater(len(qmodel.graph_def.node), 0)
 
     def test_invalid_input_output_config(self):
-        from neural_compressor.tensorflow import quantize_model, StaticQuantConfig
+        from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
         from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
         g = GraphAnalyzer()
@@ -181,7 +181,7 @@ class TestGraphInputOutputDetection(unittest.TestCase):
         calib_dataloader = BaseDataLoader(dataset)
         quant_config = StaticQuantConfig()
         qmodel = quantize_model(float_graph_def, quant_config, calib_dataloader)
-        
+
         # will detect the right inputs/outputs
         self.assertNotEqual(qmodel.input_node_names, ["x"])
         self.assertNotEqual(qmodel.output_node_names, ["op_to_store"])

@@ -7,7 +7,9 @@ import platform
 import tarfile
 import unittest
 
-from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.split_shared_input import SplitSharedInputOptimizer
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.split_shared_input import (
+    SplitSharedInputOptimizer,
+)
 from neural_compressor.tensorflow.quantization.utils.quantize_graph_common import QuantizeGraphHelper
 from neural_compressor.tensorflow.quantization.utils.utility import read_graph
 

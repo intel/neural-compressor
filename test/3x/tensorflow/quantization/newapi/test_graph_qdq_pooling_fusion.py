@@ -10,16 +10,18 @@ import yaml
 from tensorflow.compat.v1 import graph_util
 from tensorflow.python.framework import dtypes
 
-from neural_compressor.tensorflow.utils import disable_random
 from neural_compressor.tensorflow.algorithms.static_quant.tensorflow import TensorflowQuery
+from neural_compressor.tensorflow.utils import disable_random
 
 
 class TestGraphQDQPoolingFusion(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         self.op_wise_sequences = TensorflowQuery(
-            local_config_file=os.path.join(os.path.dirname(__file__), \
-                "../../neural_compressor/algorithms/static_quant/tensorflow.yaml")).get_eightbit_patterns(True)
+            local_config_file=os.path.join(
+                os.path.dirname(__file__), "../../neural_compressor/algorithms/static_quant/tensorflow.yaml"
+            )
+        ).get_eightbit_patterns(True)
 
     @disable_random()
     def test_qdq_maxpool_fusion(self):
@@ -47,7 +49,7 @@ class TestGraphQDQPoolingFusion(unittest.TestCase):
                 sess=sess, input_graph_def=sess.graph_def, output_node_names=[out_name]
             )
 
-            from neural_compressor.tensorflow import quantize_model, StaticQuantConfig
+            from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
             from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
             dataset = DummyDataset(shape=(100, 30, 30, 1), label=True)
@@ -89,7 +91,7 @@ class TestGraphQDQPoolingFusion(unittest.TestCase):
                 sess=sess, input_graph_def=sess.graph_def, output_node_names=[out_name]
             )
 
-            from neural_compressor.tensorflow import quantize_model, StaticQuantConfig
+            from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
             from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
             dataset = DummyDataset(shape=(100, 30, 30, 1), label=True)
@@ -102,7 +104,7 @@ class TestGraphQDQPoolingFusion(unittest.TestCase):
                 if i.op == "QuantizedAvgPool":
                     found_quantized_avgpool = True
                     break
-                
+
             self.assertEqual(found_quantized_avgpool, True)
 
 

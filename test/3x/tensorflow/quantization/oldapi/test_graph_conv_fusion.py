@@ -11,11 +11,17 @@ from tensorflow.compat.v1 import graph_util
 
 import neural_compressor
 from neural_compressor.tensorflow import quantize_model
-from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset, disable_random
 from neural_compressor.tensorflow.algorithms.static_quant.tensorflow import TensorflowQuery
-from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
-from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
-from neural_compressor.tensorflow.quantization.utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fold_batch_norm import (
+    FoldBatchNormNodesOptimizer,
+)
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.strip_unused_nodes import (
+    StripUnusedNodesOptimizer,
+)
+from neural_compressor.tensorflow.quantization.utils.quantize_graph.quantize_graph_for_intel_cpu import (
+    QuantizeGraphForIntel,
+)
+from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset, disable_random
 
 
 class TestConvBiasAddAddReluFusion(unittest.TestCase):
@@ -138,7 +144,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
                 }
             }
             qmodel = quantize_model(fp32_graph_def, quant_config, calib_dataloader)
-            
+
             found_conv_fusion = False
             for i in qmodel.graph_def.node:
                 if i.op == "QuantizedDepthwiseConv2DWithBias":
@@ -184,7 +190,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
                 }
             }
             qmodel = quantize_model(fp32_graph_def, quant_config, calib_dataloader)
-            
+
             found_conv_fusion = True
             for i in qmodel.graph_def.node:
                 if i.op == "Relu6":
@@ -524,7 +530,6 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             }
             qmodel = quantize_model(fp32_graph_def, quant_config, calib_dataloader)
 
-
             quantized_pool_data_type = None
             quantized_conv_data_type = None
             for i in qmodel.graph_def.node:
@@ -581,8 +586,10 @@ class TestGraphConvFusion(unittest.TestCase):
 
         self._tmp_graph_def = FoldBatchNormNodesOptimizer(self._tmp_graph_def).do_transformation()
         op_wise_sequences = TensorflowQuery(
-            local_config_file=os.path.join(os.path.dirname(neural_compressor.__file__), \
-                "tensorflow/algorithms/static_quant/tensorflow.yaml")).get_eightbit_patterns()
+            local_config_file=os.path.join(
+                os.path.dirname(neural_compressor.__file__), "tensorflow/algorithms/static_quant/tensorflow.yaml"
+            )
+        ).get_eightbit_patterns()
 
         output_graph, _, _ = QuantizeGraphForIntel(
             self._tmp_graph_def, self.inputs, self.outputs, self.op_wise_config, op_wise_sequences, "cpu"

@@ -5,9 +5,11 @@ import tensorflow as tf
 from tensorflow.compat.v1 import graph_util
 
 import neural_compressor
-from neural_compressor.tensorflow.utils import disable_random
 from neural_compressor.tensorflow.algorithms.static_quant.tensorflow import TensorflowQuery
-from neural_compressor.tensorflow.quantization.utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
+from neural_compressor.tensorflow.quantization.utils.quantize_graph.quantize_graph_for_intel_cpu import (
+    QuantizeGraphForIntel,
+)
+from neural_compressor.tensorflow.utils import disable_random
 
 
 class TestTensorflowGraphInsertLogging(unittest.TestCase):
@@ -37,9 +39,11 @@ class TestTensorflowGraphInsertLogging(unittest.TestCase):
                 "Conv2D": (False, "minmax", False, 7.0),
             }
             op_wise_sequences = TensorflowQuery(
-                local_config_file=os.path.join(os.path.dirname(neural_compressor.__file__), \
-                    "tensorflow/algorithms/static_quant/tensorflow.yaml")).get_eightbit_patterns()
-                    
+                local_config_file=os.path.join(
+                    os.path.dirname(neural_compressor.__file__), "tensorflow/algorithms/static_quant/tensorflow.yaml"
+                )
+            ).get_eightbit_patterns()
+
             output_graph, _, _ = QuantizeGraphForIntel(
                 output_graph_def, inputs, outputs, op_wise_config, op_wise_sequences, "cpu"
             ).do_transform()

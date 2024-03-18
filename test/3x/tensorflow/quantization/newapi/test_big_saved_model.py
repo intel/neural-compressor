@@ -111,7 +111,7 @@ class TestBigSavedModel(unittest.TestCase):
         model = Model("baseline_model", modelType="llm_saved_model")
         model.weight_name_mapping = weight_name_mapping
         output_node_names = model.output_node_names
-        
+
         self.assertEqual(output_node_names, ["Identity"])
 
         sq_config = SmoothQuantConfig(alpha=0.6)

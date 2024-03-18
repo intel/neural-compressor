@@ -30,7 +30,9 @@ class TestSwitchOptimizer(unittest.TestCase):
                 sess=sess, input_graph_def=sess.graph_def, output_node_names=[out_name]
             )
 
-        from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.switch_optimizer import SwitchOptimizer
+        from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.switch_optimizer import (
+            SwitchOptimizer,
+        )
 
         convert_graph = SwitchOptimizer(output_graph_def).do_transformation()
         found_switch = False
@@ -61,7 +63,9 @@ class TestSwitchOptimizer(unittest.TestCase):
         from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.convert_placeholder_to_const import (
             ConvertPlaceholderToConst,
         )
-        from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.switch_optimizer import SwitchOptimizer
+        from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.switch_optimizer import (
+            SwitchOptimizer,
+        )
 
         convert_graph = ConvertPlaceholderToConst(output_graph_def).do_transformation()
         convert_graph = SwitchOptimizer(convert_graph).do_transformation()
@@ -92,7 +96,10 @@ class TestSwitchOptimizer(unittest.TestCase):
                 sess=sess, input_graph_def=sess.graph_def, output_node_names=[out_name]
             )
 
-        from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.switch_optimizer import SwitchOptimizer
+        from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.switch_optimizer import (
+            SwitchOptimizer,
+        )
+
         convert_graph = SwitchOptimizer(output_graph_def).do_transformation()
 
         found_switch = False

@@ -26,7 +26,9 @@ class TestSwitchOptimizer(unittest.TestCase):
                 sess=sess, input_graph_def=sess.graph_def, output_node_names=[out_name]
             )
 
-        from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.expanddims_optimizer import ExpandDimsOptimizer
+        from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.expanddims_optimizer import (
+            ExpandDimsOptimizer,
+        )
 
         convert_graph = ExpandDimsOptimizer(output_graph_def).do_transformation()
         handle_expanddims = True

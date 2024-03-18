@@ -8,7 +8,9 @@ from tensorflow.python.ops import array_ops, gen_math_ops, nn_ops
 from tensorflow.python.platform import test
 from tensorflow.python.tools import optimize_for_inference_lib
 
-from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fuse_decomposed_bn import FuseDecomposedBNOptimizer
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fuse_decomposed_bn import (
+    FuseDecomposedBNOptimizer,
+)
 
 
 class OptimizeForInferenceTest(unittest.TestCase):

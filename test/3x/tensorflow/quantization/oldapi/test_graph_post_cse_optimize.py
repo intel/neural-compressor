@@ -47,7 +47,7 @@ class TestPostCSEOptimizer(unittest.TestCase):
             )
             from neural_compressor.tensorflow import quantize_model
             from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
-            
+
             dataset = DummyDataset(shape=(100, 56, 56, 16), label=True)
             calib_dataloader = BaseDataLoader(dataset)
             quant_config = {
@@ -111,7 +111,7 @@ class TestPostCSEOptimizer(unittest.TestCase):
 
             from neural_compressor.tensorflow import quantize_model
             from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
-            
+
             dataset = DummyDataset(shape=(100, 56, 56, 16), label=True)
             calib_dataloader = BaseDataLoader(dataset)
             quant_config = {

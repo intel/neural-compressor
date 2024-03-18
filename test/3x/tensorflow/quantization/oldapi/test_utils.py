@@ -7,7 +7,6 @@ from tensorflow.core.framework import graph_pb2
 from tensorflow.python.framework import dtypes
 
 from neural_compressor.tensorflow import Model
-from neural_compressor.tensorflow.utils import disable_random
 from neural_compressor.tensorflow.quantization.utils.graph_util import GraphRewriterHelper as Helper
 from neural_compressor.tensorflow.quantization.utils.utility import (
     collate_tf_preds,
@@ -18,6 +17,7 @@ from neural_compressor.tensorflow.quantization.utils.utility import (
     get_tensor_by_name,
     is_ckpt_format,
 )
+from neural_compressor.tensorflow.utils import disable_random
 
 
 def build_fake_graphdef():
@@ -156,7 +156,7 @@ class TestTFutil(unittest.TestCase):
             print("This code is for UT coverage of the exception handling")
         model = Model(graph_def)
         input_shape = get_model_input_shape(model)
-        
+
         self.assertEqual(input_shape, 32)
 
     @disable_random()

@@ -6,12 +6,7 @@ import tensorflow as tf
 from tensorflow.compat.v1 import graph_util
 
 from neural_compressor.common import set_random_seed
-from neural_compressor.tensorflow import (
-    SmoothQuantConfig, 
-    StaticQuantConfig, 
-    get_default_sq_config, 
-    quantize_model,
-)
+from neural_compressor.tensorflow import SmoothQuantConfig, StaticQuantConfig, get_default_sq_config, quantize_model
 from neural_compressor.tensorflow.utils import DummyDataset, disable_random
 
 
@@ -232,4 +227,3 @@ class TestSmoothQuantTF3xNewApi(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

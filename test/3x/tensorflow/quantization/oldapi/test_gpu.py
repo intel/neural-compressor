@@ -62,8 +62,10 @@ class TestTensorflowGpu(unittest.TestCase):
         from neural_compressor.tensorflow.algorithms.static_quant.tensorflow import TensorflowQuery
 
         cls.op_wise_sequences = TensorflowQuery(
-            local_config_file=os.path.join(os.path.dirname(neural_compressor.__file__), \
-                "tensorflow/algorithms/static_quant/tensorflow.yaml")).get_eightbit_patterns()
+            local_config_file=os.path.join(
+                os.path.dirname(neural_compressor.__file__), "tensorflow/algorithms/static_quant/tensorflow.yaml"
+            )
+        ).get_eightbit_patterns()
         cls.logger_nc.warning(
             f"After importing neural_compressor: {sys.modules[__name__].__file__}-{cls.__name__}, "
             f"Root_Logger_Level = {cls.logger_root.level}"
@@ -77,7 +79,9 @@ class TestTensorflowGpu(unittest.TestCase):
         from neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.post_hostconst_converter import (
             PostHostConstConverter,
         )
-        from neural_compressor.tensorflow.quantization.utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
+        from neural_compressor.tensorflow.quantization.utils.quantize_graph.quantize_graph_for_intel_cpu import (
+            QuantizeGraphForIntel,
+        )
         from neural_compressor.tensorflow.quantization.utils.utility import read_graph
 
         input_graph_def = read_graph(self.pb_path)

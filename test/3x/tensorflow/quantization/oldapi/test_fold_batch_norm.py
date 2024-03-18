@@ -5,7 +5,9 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.compat.v1 import graph_util
 
-from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fold_batch_norm import (
+    FoldBatchNormNodesOptimizer,
+)
 from neural_compressor.tensorflow.quantization.utils.quantize_graph_common import QuantizeGraphHelper
 
 
@@ -52,7 +54,7 @@ class TestFoldBatchnorm(unittest.TestCase):
             x = fold_graph.get_tensor_by_name("input:0")
             normed = fold_graph.get_tensor_by_name("batch_normalization/FusedBatchNormV3:0")
             y_fold = sess.run(normed, feed_dict={x: input_data})
-            
+
         assert np.allclose(y, y_fold, rtol=1e-05, atol=1e-05)
 
     def test_do_transform(self):

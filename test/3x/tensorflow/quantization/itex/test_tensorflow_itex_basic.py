@@ -140,7 +140,6 @@ class TestItexEnabling(unittest.TestCase):
             self.assertEqual(dequant_count, 5)
             self.assertEqual(quantize_count, 4)
 
-
     @disable_random()
     @unittest.skipIf(version1_lt_version2(tf.version.VERSION, "2.8.0"), "Only supports tf greater 2.7.0")
     def test_depthwiseconv2d_case(self):
@@ -173,14 +172,13 @@ class TestItexEnabling(unittest.TestCase):
                 }
             }
             qmodel = quantize_model(fp32_graph_def, quant_config, calib_dataloader)
-            
+
             reshape_counter = 0
             for i in qmodel.graph_def.node:
                 if i.op == "Reshape":
                     reshape_counter += 1
 
             self.assertEqual(reshape_counter, 2)
-
 
     @disable_random()
     @unittest.skipIf(version1_lt_version2(tf.version.VERSION, "2.8.0"), "Only supports tf greater 2.7.0")

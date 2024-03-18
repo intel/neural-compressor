@@ -37,7 +37,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
 
             from neural_compressor.tensorflow import quantize_model
             from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
-            
+
             dataset = DummyDataset(shape=(100, 56, 56, 16), label=True)
             calib_dataloader = BaseDataLoader(dataset)
             quant_config = {
@@ -56,7 +56,7 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             for i in qmodel.graph_def.node:
                 if "QuantizedConv2D" in i.op:
                     found_conv_num += 1
-                    
+
             self.assertEqual(found_conv_num, 1)
 
 

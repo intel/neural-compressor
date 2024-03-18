@@ -6,8 +6,8 @@ import tensorflow as tf
 import yaml
 from tensorflow.compat.v1 import graph_util
 
-from neural_compressor.tensorflow.utils import disable_random
 from neural_compressor.tensorflow.algorithms.static_quant.tensorflow import TensorFlowAdaptor
+from neural_compressor.tensorflow.utils import disable_random
 
 
 class TestQuantizeInput(unittest.TestCase):
@@ -45,9 +45,9 @@ class TestQuantizeInput(unittest.TestCase):
                 if i.op.find("Add") != -1:
                     i.op = "Add"
 
-            from neural_compressor.tensorflow import quantize_model, StaticQuantConfig
+            from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
             from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
-            
+
             dataset = DummyDataset(shape=(100, 56, 56, 16), label=True)
             calib_dataloader = BaseDataLoader(dataset)
             quant_config = StaticQuantConfig()

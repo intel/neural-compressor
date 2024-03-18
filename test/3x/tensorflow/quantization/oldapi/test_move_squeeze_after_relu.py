@@ -32,8 +32,9 @@ class TestSwitchOptimizer(unittest.TestCase):
         from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.move_squeeze_after_relu import (
             MoveSqueezeAfterReluOptimizer,
         )
+
         convert_graph = MoveSqueezeAfterReluOptimizer(output_graph_def).do_transformation()
-        
+
         move_relu = False
         for node in convert_graph.node:
             if node.op == "Squeeze" and node.input[0] == "op_to_store":
@@ -63,8 +64,9 @@ class TestSwitchOptimizer(unittest.TestCase):
         from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.move_squeeze_after_relu import (
             MoveSqueezeAfterReluOptimizer,
         )
+
         convert_graph = MoveSqueezeAfterReluOptimizer(output_graph_def).do_transformation()
-        
+
         move_relu = False
         for node in convert_graph.node:
             if node.op == "Squeeze" and node.input[0] == "op_to_store":
@@ -93,8 +95,9 @@ class TestSwitchOptimizer(unittest.TestCase):
         from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.move_squeeze_after_relu import (
             MoveSqueezeAfterReluOptimizer,
         )
+
         convert_graph = MoveSqueezeAfterReluOptimizer(output_graph_def).do_transformation()
-        
+
         move_sigmoid = False
         for node in convert_graph.node:
             if node.op == "Squeeze" and node.input[0] == "op_to_store":
@@ -123,8 +126,9 @@ class TestSwitchOptimizer(unittest.TestCase):
         from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.move_squeeze_after_relu import (
             MoveSqueezeAfterReluOptimizer,
         )
+
         convert_graph = MoveSqueezeAfterReluOptimizer(output_graph_def).do_transformation()
-        
+
         move_relu = False
         for node in convert_graph.node:
             if node.op == "Reshape" and node.input[0] == "op_to_store":

@@ -6,9 +6,11 @@ import tensorflow as tf
 import yaml
 from tensorflow.python.framework import dtypes
 
-from neural_compressor.tensorflow.utils import disable_random
-from neural_compressor.tensorflow.quantization.utils.graph_rewriter.bf16.dequantize_cast_optimizer import DequantizeCastOptimizer
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.bf16.dequantize_cast_optimizer import (
+    DequantizeCastOptimizer,
+)
 from neural_compressor.tensorflow.quantization.utils.graph_util import GraphRewriterHelper as Helper
+from neural_compressor.tensorflow.utils import disable_random
 
 
 def build_fake_graphdef(set_min_first=False, dq_multi_outputs=False):
@@ -74,7 +76,7 @@ class TestDequantizeCastOptimizer(unittest.TestCase):
             if i.op == "Cast":
                 hasCast = True
                 break
-            
+
         self.assertEqual(hasCast, False)
 
     @disable_random()

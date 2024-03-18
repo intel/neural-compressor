@@ -9,8 +9,10 @@ import tensorflow as tf
 from tensorflow.compat.v1 import graph_util
 from tensorflow.python.framework import tensor_util
 
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.convert_nan_to_random import (
+    ConvertNanToRandom,
+)
 from neural_compressor.tensorflow.utils import disable_random
-from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.convert_nan_to_random import ConvertNanToRandom
 
 
 class TestNanConvert(unittest.TestCase):

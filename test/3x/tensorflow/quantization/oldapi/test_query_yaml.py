@@ -8,8 +8,8 @@ import tensorflow as tf
 import yaml
 from tensorflow.compat.v1 import graph_util
 
-from neural_compressor.tensorflow.utils import disable_random
 from neural_compressor.tensorflow.algorithms.static_quant.tensorflow import TensorFlowAdaptor
+from neural_compressor.tensorflow.utils import disable_random
 
 
 def build_fake_framework_yaml():
@@ -120,8 +120,9 @@ def build_fake_framework_yaml():
 class TestTFQueryYaml(unittest.TestCase):
     @classmethod
     def setUpClass(self):
-        self.tf_yaml_path = os.path.join(os.getcwd() + \
-          "/../neural_compressor/tensorflow/algorithms/static_quant/tensorflow.yaml")
+        self.tf_yaml_path = os.path.join(
+            os.getcwd() + "/../neural_compressor/tensorflow/algorithms/static_quant/tensorflow.yaml"
+        )
 
         with open(self.tf_yaml_path) as f:
             self.content = yaml.safe_load(f)
@@ -192,7 +193,7 @@ class TestTFQueryYaml(unittest.TestCase):
 
             from neural_compressor.tensorflow import quantize_model
             from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
-            
+
             dataset = DummyDataset(shape=(100, 30, 30, 1), label=True)
             calib_dataloader = BaseDataLoader(dataset)
             quant_config = {

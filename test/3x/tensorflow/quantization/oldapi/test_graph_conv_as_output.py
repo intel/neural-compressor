@@ -179,7 +179,7 @@ class TestConvAsOutput(unittest.TestCase):
         self.test_graph = create_test_graph()
 
     def test_do_transform(self):
-        from neural_compressor.tensorflow import quantize_model, StaticQuantConfig
+        from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
         from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
         fp32_graph_def = create_test_graph()

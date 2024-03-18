@@ -46,8 +46,9 @@ class TestDataPipelineConvert(unittest.TestCase):
         output_tensor = get_tensor_by_name(graph, output_names[0])
         sess = tf.compat.v1.Session(graph=graph)
         preds = iterator_sess_run(sess, iter_op, feed_dict={}, output_tensor=output_tensor)
-        
+
         self.assertNotEqual(preds, None)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -5,7 +5,9 @@ import tensorflow as tf
 from tensorflow.core.framework import attr_value_pb2, graph_pb2, node_def_pb2
 from tensorflow.python.framework import tensor_util
 
-from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fold_constant import GraphFoldConstantOptimizer
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fold_constant import (
+    GraphFoldConstantOptimizer,
+)
 
 
 class TestFoldConstant(unittest.TestCase):

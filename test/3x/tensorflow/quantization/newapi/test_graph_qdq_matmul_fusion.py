@@ -9,16 +9,18 @@ import tensorflow.compat.v1 as tf
 import yaml
 from tensorflow.python.framework import dtypes
 
-from neural_compressor.tensorflow.utils import disable_random
 from neural_compressor.tensorflow.algorithms.static_quant.tensorflow import TensorflowQuery
+from neural_compressor.tensorflow.utils import disable_random
 
 
 class TestGraphMatMulFusion(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         self.op_wise_sequences = TensorflowQuery(
-            local_config_file=os.path.join(os.path.dirname(__file__), \
-                "../../neural_compressor/algorithms/static_quant/tensorflow.yaml")).get_eightbit_patterns(True)
+            local_config_file=os.path.join(
+                os.path.dirname(__file__), "../../neural_compressor/algorithms/static_quant/tensorflow.yaml"
+            )
+        ).get_eightbit_patterns(True)
 
     @disable_random()
     def test_matmul_biasadd_relu_requantize_fusion(self):
@@ -1431,7 +1433,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
             with tf.Session() as sess:
                 sess.run(z, feed_dict={x: x_data, y: y_data})
                 fp32_graph_def = sess.graph.as_graph_def()
-                
+
                 from neural_compressor.tensorflow import quantize_model
                 from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
@@ -1494,7 +1496,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                     if i.op == "_QuantizedMatMul" and i.attr["fused_ops"].list.s == [b"BiasAdd", b"Dequantize"]:
                         found_quantized_matmul = True
                         break
-                    
+
                 self.assertEqual(found_quantized_matmul, True)
 
 

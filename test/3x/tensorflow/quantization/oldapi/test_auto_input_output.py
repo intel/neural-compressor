@@ -5,8 +5,8 @@ import os
 import platform
 import unittest
 
-from neural_compressor.tensorflow.algorithms.static_quant.tensorflow import TensorFlowAdaptor
 from neural_compressor.tensorflow import Model as TensorflowModel
+from neural_compressor.tensorflow.algorithms.static_quant.tensorflow import TensorFlowAdaptor
 from neural_compressor.tensorflow.utils.model_wrappers import validate_graph_node
 
 

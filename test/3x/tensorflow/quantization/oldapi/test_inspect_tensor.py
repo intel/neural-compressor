@@ -20,6 +20,7 @@ import numpy as np
 
 np.random.seed(0)
 
+
 def build_fake_model():
     import tensorflow as tf
 
@@ -84,12 +85,13 @@ class TestTensorflowInspectTensortinMSETuning(unittest.TestCase):
 
     def test_tensorflow_inspect_tensor(self):
         import tensorflow.compat.v1 as tf
+
         tf.disable_v2_behavior()
         model = build_fake_model()
 
         from neural_compressor.tensorflow import quantize_model
         from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
-        
+
         dataset = DummyDataset(shape=(128, 28, 28, 1), label=True)
         calib_dataloader = BaseDataLoader(dataset)
         quant_config = {

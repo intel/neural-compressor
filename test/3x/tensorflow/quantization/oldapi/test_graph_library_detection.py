@@ -8,10 +8,10 @@ import unittest
 import tensorflow as tf
 
 import neural_compressor
+from neural_compressor.tensorflow import Model
 from neural_compressor.tensorflow.algorithms.static_quant.tensorflow import TensorflowQuery
 from neural_compressor.tensorflow.quantization.utils.graph_converter import GraphConverter
 from neural_compressor.tensorflow.quantization.utils.utility import read_graph
-from neural_compressor.tensorflow import Model
 
 
 class TestGraphLibraryDetection(unittest.TestCase):
@@ -33,8 +33,10 @@ class TestGraphLibraryDetection(unittest.TestCase):
         tf.compat.v1.disable_eager_execution()
 
         op_wise_sequences = TensorflowQuery(
-            local_config_file=os.path.join(os.path.dirname(neural_compressor.__file__), \
-                "tensorflow/algorithms/static_quant/tensorflow.yaml")).get_eightbit_patterns()
+            local_config_file=os.path.join(
+                os.path.dirname(neural_compressor.__file__), "tensorflow/algorithms/static_quant/tensorflow.yaml"
+            )
+        ).get_eightbit_patterns()
 
         qt_config = {"calib_iteration": 1, "op_wise_config": {}}
         original_graphdef = read_graph(self.pb_path)

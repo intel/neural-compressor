@@ -6,23 +6,23 @@ import tensorflow as tf
 import yaml
 from tensorflow.compat.v1 import graph_util
 
-from neural_compressor.tensorflow.utils import disable_random
 from neural_compressor.tensorflow.quantization.utils.graph_util import GraphRewriterHelper as Helper
+from neural_compressor.tensorflow.utils import disable_random
 
 
 def quantize(model, q_data, e_data):
     from neural_compressor.tensorflow import quantize_model
     from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
-    
+
     calib_dataloader = BaseDataLoader(dataset=list(zip(q_data[0], q_data[1])))
     quant_config = {
-            "static_quant": {
-                "global": {
-                    "weight_granularity": "per_tensor",
-                    "act_algorithm": "minmax",
-                },
-            }
+        "static_quant": {
+            "global": {
+                "weight_granularity": "per_tensor",
+                "act_algorithm": "minmax",
+            },
         }
+    }
     q_model = quantize_model(model, quant_config, calib_dataloader)
 
     return q_model

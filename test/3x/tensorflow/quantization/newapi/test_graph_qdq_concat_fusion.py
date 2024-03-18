@@ -8,10 +8,12 @@ import tensorflow as tf
 import yaml
 from tensorflow.compat.v1 import graph_util
 
-from neural_compressor.tensorflow.utils import disable_random
 from neural_compressor.tensorflow.algorithms.static_quant.tensorflow import TensorflowQuery
-from neural_compressor.tensorflow.quantization.utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
+from neural_compressor.tensorflow.quantization.utils.quantize_graph.quantize_graph_for_intel_cpu import (
+    QuantizeGraphForIntel,
+)
 from neural_compressor.tensorflow.quantization.utils.utility import read_graph
+from neural_compressor.tensorflow.utils import disable_random
 
 
 class TestTensorflowQdqConcatFusion(unittest.TestCase):
@@ -25,8 +27,10 @@ class TestTensorflowQdqConcatFusion(unittest.TestCase):
         if not os.path.exists(self.pb_path):
             os.system("mkdir -p /tmp/.neural_compressor && wget {} -O {} ".format(self.mb_model_url, self.pb_path))
         self.op_wise_sequences = TensorflowQuery(
-            local_config_file=os.path.join(os.path.dirname(__file__), \
-                "../../neural_compressor/tensorflow/algorithms/static_quant/tensorflow.yaml")).get_eightbit_patterns()
+            local_config_file=os.path.join(
+                os.path.dirname(__file__), "../../neural_compressor/tensorflow/algorithms/static_quant/tensorflow.yaml"
+            )
+        ).get_eightbit_patterns()
 
     def test_tensorflow_concat_quantization(self):
         fp32_graph_def = read_graph(self.pb_path)
@@ -213,7 +217,7 @@ class TestTensorflowQdqConcatFusion(unittest.TestCase):
                 if i.op == "QuantizedConcatV2":
                     dtype = dtypes.DType(i.attr["T"].type)
                     quantized_concat = True
-                    
+
             self.assertEqual(quantized_concat, True)
             self.assertEqual(dtype, dtypes.qint8)
 

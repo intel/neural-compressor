@@ -8,8 +8,10 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.compat.v1 import graph_util
 
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.convert_leakyrelu import (
+    ConvertLeakyReluOptimizer,
+)
 from neural_compressor.tensorflow.utils import disable_random
-from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.convert_leakyrelu import ConvertLeakyReluOptimizer
 
 
 class TestConvertLeaklyRelu(unittest.TestCase):

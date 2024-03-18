@@ -50,7 +50,7 @@ class TestFuseReshapeTransposeOptimizer(unittest.TestCase):
                 }
             }
             qmodel = quantize_model(float_graph_def, quant_config, calib_dataloader)
-            
+
             for i in qmodel.graph_def.node:
                 if i.op == "MatMul":
                     found_quantized_matmul = False
@@ -97,7 +97,7 @@ class TestFuseReshapeTransposeOptimizer(unittest.TestCase):
                 }
             }
             qmodel = quantize_model(float_graph_def, quant_config, calib_dataloader)
-            
+
             for i in qmodel.graph_def.node:
                 if i.op == "MatMul":
                     found_quantized_matmul = False
@@ -105,7 +105,7 @@ class TestFuseReshapeTransposeOptimizer(unittest.TestCase):
                     found_transpose = True
                 if i.op == "Reshape":
                     found_reshape = True
-                    
+
             self.assertEqual(found_quantized_matmul, True)
             self.assertEqual(found_transpose, False)
             self.assertEqual(found_reshape, False)

@@ -7,8 +7,8 @@ import unittest
 import tensorflow as tf
 from tensorflow.compat.v1 import graph_util
 
-from neural_compressor.tensorflow.utils import version1_lt_version2
 from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.convert_layout import ConvertLayoutOptimizer
+from neural_compressor.tensorflow.utils import version1_lt_version2
 
 
 class TestConvertLayout(unittest.TestCase):

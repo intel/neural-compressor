@@ -327,6 +327,7 @@ def load_saved_model(model, saved_model_tags, input_tensor_names, output_tensor_
 
 def _get_graph_from_saved_model_v3(model, input_tensor_names, output_tensor_names):
     """The version 3 function that get graph from saved_model.
+
     Args:
         model (string or tf.keras.Model): model path or tf.keras.Model object.
         input_tensor_names (list of string): input tensor names of the model.
@@ -372,6 +373,7 @@ def _get_graph_from_saved_model_v2(saved_model_dir, input_tensor_names, output_t
 
 def _get_graph_from_original_keras_v2(model):
     """The version 2 function that get graph from the original keras model.
+
     Args:
         model (string or tf.keras.Model): model path or tf.keras.Model object.
     Returns:
@@ -424,6 +426,7 @@ def _get_graph_from_original_keras_v2(model):
 
 def _check_keras_format(model, saved_model_dir):
     """Decide which method will be used to get graph from the saved_model .
+
     Args:
         model (string or tf.keras.Model): model path or tf.keras.Model object.
         saved_model_dir (string): the path to save a temporary saved_model.
@@ -453,6 +456,7 @@ def _check_keras_format(model, saved_model_dir):
 
 def _get_graph_from_saved_model_v1(model):
     """The version 1 function that get graph from saved_model.
+
     Args:
         model (string or tf.keras.Model): model path or tf.keras.Model object.
     Returns:
@@ -502,6 +506,7 @@ def _get_graph_from_saved_model_v1(model):
 
 def try_loading_keras(model, input_tensor_names, output_tensor_names):
     """Try different ways of loading keras models.
+
     Args:
         model (string or tf.keras.Model): model path or tf.keras.Model object.
         input_tensor_names (list of string): input tensor names of the model.

@@ -9,8 +9,8 @@ import tensorflow as tf
 from tensorflow.core.framework import attr_value_pb2, graph_pb2, node_def_pb2
 from tensorflow.python.framework import dtypes, tensor_util
 
-from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 from neural_compressor.tensorflow.quantization.utils.graph_rewriter.bf16.bf16_convert import BF16Convert
+from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
 
 def create_test_graph(bf16_graph=True):
@@ -261,6 +261,7 @@ class TestBF16Convert(unittest.TestCase):
 
     def test_bf16_transpose_b_matmul(self):
         from tensorflow.core.framework import attr_value_pb2
+
         from neural_compressor.tensorflow import quantize_model
 
         os.environ["FORCE_BF16"] = "1"
@@ -289,7 +290,7 @@ class TestBF16Convert(unittest.TestCase):
                     }
                 }
                 qmodel = quantize_model(float_graph_def, quant_config, calib_dataloader)
-                
+
                 for i in qmodel.graph_def.node:
                     if i.op == "MatMul" and i.attr["T"] == DT_BFLOAT16:
                         is_bf16 = True
@@ -334,7 +335,7 @@ class TestBF16Convert(unittest.TestCase):
             }
         }
         qmodel = quantize_model(self.test_fp32_graph, quant_config, calib_dataloader)
-                
+
         cast_op_count = 0
         for node in qmodel.graph_def.node:
             if node.op == "Cast":

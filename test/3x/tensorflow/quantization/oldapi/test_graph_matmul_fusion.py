@@ -10,16 +10,18 @@ import yaml
 from tensorflow.python.framework import dtypes
 
 import neural_compressor
-from neural_compressor.tensorflow.utils import disable_random
 from neural_compressor.tensorflow.algorithms.static_quant.tensorflow import TensorflowQuery
+from neural_compressor.tensorflow.utils import disable_random
 
 
 class TestGraphMatMulFusion(unittest.TestCase):
     @classmethod
     def setUpClass(self):
-        self.op_wise_sequences = TensorflowQuery(\
-            local_config_file=os.path.join(os.path.dirname(neural_compressor.__file__), \
-            "tensorflow/algorithms/static_quant/tensorflow.yaml")).get_eightbit_patterns()
+        self.op_wise_sequences = TensorflowQuery(
+            local_config_file=os.path.join(
+                os.path.dirname(neural_compressor.__file__), "tensorflow/algorithms/static_quant/tensorflow.yaml"
+            )
+        ).get_eightbit_patterns()
 
     @disable_random()
     def test_matmul_biasadd_relu_requantize_fusion(self):
@@ -37,7 +39,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 sess.run(z, feed_dict={x: x_data, y: y_data})
                 float_graph_def = sess.graph.as_graph_def()
 
-                from neural_compressor.tensorflow import quantize_model, StaticQuantConfig
+                from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
                 from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
                 dataset = DummyDataset(shape=(2, 2), label=True)
@@ -65,7 +67,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
             sess.run(z, feed_dict={x: x_data, y: y_data})
             float_graph_def = sess.graph.as_graph_def()
 
-            from neural_compressor.tensorflow import quantize_model, StaticQuantConfig
+            from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
             from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
             dataset = DummyDataset(shape=(2, 2), label=True)
@@ -104,7 +106,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                     sess.run(z, feed_dict={x: x_data, y: y_data})
                     float_graph_def = sess.graph.as_graph_def()
 
-                    from neural_compressor.tensorflow import quantize_model, StaticQuantConfig
+                    from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
                     from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
                     dataset = DummyDataset(shape=(2, 2), label=True)
@@ -136,7 +138,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                     sess.run(z, feed_dict={x: x_data, y: y_data})
                     float_graph_def = sess.graph.as_graph_def()
 
-                    from neural_compressor.tensorflow import quantize_model, StaticQuantConfig
+                    from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
                     from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
                     dataset = DummyDataset(shape=(2, 2), label=True)
@@ -167,7 +169,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 sess.run(z, feed_dict={x: x_data, y: y_data})
                 float_graph_def = sess.graph.as_graph_def()
 
-                from neural_compressor.tensorflow import quantize_model, StaticQuantConfig
+                from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
                 from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
                 dataset = DummyDataset(shape=(2, 2), label=True)
@@ -198,7 +200,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 sess.run(z, feed_dict={x: x_data, y: y_data})
                 float_graph_def = sess.graph.as_graph_def()
 
-                from neural_compressor.tensorflow import quantize_model, StaticQuantConfig
+                from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
                 from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
                 dataset = DummyDataset(shape=(2, 2), label=True)
@@ -229,7 +231,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 sess.run(z, feed_dict={x: x_data, y: y_data})
                 float_graph_def = sess.graph.as_graph_def()
 
-                from neural_compressor.tensorflow import quantize_model, StaticQuantConfig
+                from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
                 from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
                 dataset = DummyDataset(shape=(2, 2), label=True)
@@ -261,7 +263,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 sess.run(z, feed_dict={x: x_data})
                 float_graph_def = sess.graph.as_graph_def()
 
-                from neural_compressor.tensorflow import quantize_model, StaticQuantConfig
+                from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
                 from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
                 dataset = DummyDataset(shape=(2, 2), label=True)
@@ -294,7 +296,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 sess.run(z, feed_dict={x: x_data, y: y_data})
                 float_graph_def = sess.graph.as_graph_def()
 
-                from neural_compressor.tensorflow import quantize_model, StaticQuantConfig
+                from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
                 from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
                 dataset = DummyDataset(shape=(2, 2), label=True)
@@ -327,7 +329,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 sess.run(z, feed_dict={x: x_data, y: y_data})
                 float_graph_def = sess.graph.as_graph_def()
 
-                from neural_compressor.tensorflow import quantize_model, StaticQuantConfig
+                from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
                 from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
                 dataset = DummyDataset(shape=(2, 2), label=True)
@@ -368,20 +370,20 @@ class TestGraphMatMulFusion(unittest.TestCase):
                     sess.run(z, feed_dict={x: x_data, y: y_data})
                     float_graph_def = sess.graph.as_graph_def()
 
-                    from neural_compressor.tensorflow import quantize_model, StaticQuantConfig
+                    from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
                     from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
                     dataset = DummyDataset(shape=(2, 2), label=True)
                     calib_dataloader = BaseDataLoader(dataset, batch_size=2)
                     quant_config = StaticQuantConfig()
                     qmodel = quantize_model(float_graph_def, quant_config, calib_dataloader)
-                    
+
                     count = 0
                     for i in qmodel.model.as_graph_def().node:
                         if i.op == "QuantizedMatMulWithBiasAndDequantize":
                             count += 1
                     found_quantized_matmul = bool(count > 1)
-                    
+
             # TF2.6 has enabled matmul_biasadd_requantize_dequantize_fusion_with_softmax
             if tf.__version__ < "2.6.0":
                 self.assertEqual(found_quantized_matmul, False)
@@ -402,7 +404,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 sess.run(z, feed_dict={x: x_data})
                 float_graph_def = sess.graph.as_graph_def()
 
-                from neural_compressor.tensorflow import quantize_model, StaticQuantConfig
+                from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
                 from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
                 dataset = DummyDataset(shape=(2, 2), label=True)
@@ -430,7 +432,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                 sess.run(z, feed_dict={x: x_data})
                 float_graph_def = sess.graph.as_graph_def()
 
-                from neural_compressor.tensorflow import quantize_model, StaticQuantConfig
+                from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
                 from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
                 dataset = DummyDataset(shape=(2, 2), label=True)
@@ -442,7 +444,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
                     if i.op == "MatMul":
                         found_quantized_matmul = False
                         break
-                    
+
             self.assertEqual(found_quantized_matmul, False)
 
 

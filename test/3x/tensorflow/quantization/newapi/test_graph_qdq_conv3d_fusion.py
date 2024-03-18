@@ -12,11 +12,17 @@ from pkg_resources import parse_version
 from tensorflow.compat.v1 import graph_util
 from tensorflow.python.framework import function
 
-from neural_compressor.tensorflow.utils import disable_random
 from neural_compressor.tensorflow.algorithms.static_quant.tensorflow import TensorflowQuery
-from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fold_batch_norm import FoldBatchNormNodesOptimizer
-from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.strip_unused_nodes import StripUnusedNodesOptimizer
-from neural_compressor.tensorflow.quantization.utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fold_batch_norm import (
+    FoldBatchNormNodesOptimizer,
+)
+from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.strip_unused_nodes import (
+    StripUnusedNodesOptimizer,
+)
+from neural_compressor.tensorflow.quantization.utils.quantize_graph.quantize_graph_for_intel_cpu import (
+    QuantizeGraphForIntel,
+)
+from neural_compressor.tensorflow.utils import disable_random
 
 
 class TestTensorflowQdqConvFusion(unittest.TestCase):
@@ -982,7 +988,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
                     [b"BiasAdd", b"Sum", b"Requantize"]
                 ):
                     found_conv_fusion = True
-                    
+
             self.assertEqual(found_conv_fusion, True)
 
 

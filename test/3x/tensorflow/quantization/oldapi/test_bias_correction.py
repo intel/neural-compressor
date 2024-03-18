@@ -6,7 +6,9 @@ from tensorflow.compat.v1 import graph_util
 
 import neural_compressor
 from neural_compressor.tensorflow.algorithms.static_quant.tensorflow import TensorflowQuery
-from neural_compressor.tensorflow.quantization.utils.quantize_graph.quantize_graph_for_intel_cpu import QuantizeGraphForIntel
+from neural_compressor.tensorflow.quantization.utils.quantize_graph.quantize_graph_for_intel_cpu import (
+    QuantizeGraphForIntel,
+)
 from neural_compressor.tensorflow.quantization.utils.quantize_graph_common import QuantizeGraphHelper
 from neural_compressor.tensorflow.quantization.utils.transform_graph.bias_correction import BiasCorrection
 
@@ -26,8 +28,10 @@ class TestBiasCorrection(unittest.TestCase):
         conv_bias = tf.nn.bias_add(conv1, conv_bias)
         relu = tf.nn.relu(conv_bias, name="Relu_1")
         op_wise_sequences = TensorflowQuery(
-            local_config_file=os.path.join(os.path.dirname(neural_compressor.__file__), \
-                "tensorflow/algorithms/static_quant/tensorflow.yaml")).get_eightbit_patterns()
+            local_config_file=os.path.join(
+                os.path.dirname(neural_compressor.__file__), "tensorflow/algorithms/static_quant/tensorflow.yaml"
+            )
+        ).get_eightbit_patterns()
         with tf.compat.v1.Session() as sess:
             sess.run(tf.compat.v1.global_variables_initializer())
             output_graph_def = graph_util.convert_variables_to_constants(

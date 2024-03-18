@@ -381,7 +381,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             }
         }
         qmodel = quantize_model(fp32_graph_def, quant_config, calib_dataloader)
-        
+
         found_fusion = True
         qconv_num = 0
         qbn_num = 0
