@@ -1,0 +1,8 @@
+:orphan:
+
+:py:mod:`neural_compressor.torch.algorithms.static_quant.save_load`
+===================================================================
+
+.. py:module:: neural_compressor.torch.algorithms.static_quant.save_load
+
+
