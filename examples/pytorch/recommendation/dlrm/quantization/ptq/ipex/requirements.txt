@@ -1,8 +1,0 @@
-future
-numpy
-pydot
-neural-compressor
-scikit-learn
-tqdm
-torch>=1.11.0
-intel_extension_for_pytorch>=1.11.0

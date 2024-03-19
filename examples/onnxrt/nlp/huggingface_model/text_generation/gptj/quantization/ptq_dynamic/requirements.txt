@@ -1,7 +1,0 @@
-torch
-transformers
-accelerate
-onnx
-onnxruntime
-onnxruntime-extensions; python_version < '3.11'
-datasets

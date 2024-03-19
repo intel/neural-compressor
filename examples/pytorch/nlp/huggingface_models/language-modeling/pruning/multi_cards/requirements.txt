@@ -1,8 +1,0 @@
-accelerate
-datasets
-sentencepiece
-transformers
-torch
-tqdm
-optimum
-einops

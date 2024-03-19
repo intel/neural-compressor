@@ -1,8 +1,0 @@
-sentencepiece!=0.1.92
-protobuf
-evaluate
-datasets
-transformers>=4.22.0
-accelerate
-torch>=1.9.0
-pytest # adapt transformers 4.30.x

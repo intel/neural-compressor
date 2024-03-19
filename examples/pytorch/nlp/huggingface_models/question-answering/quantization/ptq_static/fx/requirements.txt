@@ -1,6 +1,0 @@
-accelerate
-datasets<=2.6.0
-transformers>=4.16.0 
-torch>=1.9.0
-tqdm
-fsspec==2023.9.2 # https://github.com/huggingface/datasets/issues/6330
