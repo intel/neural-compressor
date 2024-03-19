@@ -12,4 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from neural_compressor.torch.quantization import FP8QuantConfig, prepare, convert, save_calib
+from neural_compressor.torch.quantization import FP8QuantConfig, prepare, convert, save_calibration_result

@@ -1,20 +1,30 @@
-from typing import Callable, List, NamedTuple, Optional, Tuple, Union
-from neural_compressor.common.base_config import (
-    BaseConfig,
-    register_config,
-)
-from neural_compressor.common.utils import (
-    FP8_QUANT,
-    DEFAULT_WHITE_LIST,
-    OP_NAME_OR_MODULE_TYPE,
-)
+# Copyright (c) 2024 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from typing import Callable, List, NamedTuple, Optional, Union
+
+from neural_compressor.common.base_config import BaseConfig, register_config
+from neural_compressor.common.utils import DEFAULT_WHITE_LIST, FP8_QUANT, OP_NAME_OR_MODULE_TYPE
 
 FRAMEWORK_NAME = "torch"
+
 
 class OperatorConfig(NamedTuple):
     config: BaseConfig
     operators: List[Union[str, Callable]]
     valid_func_list: List[Callable] = []
+
 
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=FP8_QUANT)
 class FP8QuantConfig(BaseConfig):
@@ -72,8 +82,9 @@ class FP8QuantConfig(BaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "FP8QuantConfig", List["FP8QuantConfig"]]:
-        # TODO fwk owner needs to update it.
+        # TODO: for auto-tune
         return FP8QuantConfig(act_observer=["minmax", "kl"])
+
 
 def get_default_fp8_config() -> FP8QuantConfig:
     """Generate the default fp8 config.

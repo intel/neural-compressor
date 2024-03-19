@@ -25,7 +25,7 @@ usage demo:
 
 ```diff
 import torch
-+ from neural_compressor.torch import FP8QuantConfig, prepare, convert, save_calib
++ from neural_compressor.torch import FP8QuantConfig, prepare, convert, save_calibration_result
 
 class M(torch.nn.Module):
     def __init__(self) -> None:
@@ -46,6 +46,6 @@ model = M().to("hpu")
 # reuse user's eval func to do calibration
 eval_func(model)
 
-+ save_calib(model, quant_config) # save calibration results to local file if needed
++ save_calibration_result(model, quant_config) # save calibration results to local file if needed
 + model = convert(model, quant_config) # convert the model to a quantized model
 ```
