@@ -1,8 +1,8 @@
 """Tests for model."""
 
 import os
-import shutil
 import platform
+import shutil
 import unittest
 
 import numpy as np
