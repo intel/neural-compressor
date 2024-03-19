@@ -1,5 +1,0 @@
-numpy
-onnx
-onnxruntime
-onnxruntime-extensions
-pydantic
