@@ -71,7 +71,6 @@ class TestModelWrappers(unittest.TestCase):
 
         self.assertEqual(os.path.isfile("./keras_model.h5"), True)
 
-
     def test_keras_model(self):
         if parse_version(tf.version.VERSION) < parse_version("2.3.0"):
             return
@@ -94,7 +93,6 @@ class TestModelWrappers(unittest.TestCase):
         model.save("./keras_model.keras")
 
         self.assertEqual(os.path.isfile("./keras_model.keras"), True)
-
 
     def test_tf_qat_model(self):
         if parse_version(tf.version.VERSION) < parse_version("2.3.0"):

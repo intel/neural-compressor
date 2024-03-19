@@ -1638,16 +1638,22 @@ class KerasModel(BaseModel):
     @property
     def input_node_names(self):
         """Return input node names."""
-        names = self.model.input_names if version1_lt_version2(tf.version.VERSION, "2.16.1") \
-                                        else [tensor.name for tensor in self.model.inputs]
+        names = (
+            self.model.input_names
+            if version1_lt_version2(tf.version.VERSION, "2.16.1")
+            else [tensor.name for tensor in self.model.inputs]
+        )
 
         return names
 
     @property
     def output_node_names(self):
         """Return output node names."""
-        names = self.model.output_names if version1_lt_version2(tf.version.VERSION, "2.16.1") \
-                                else [tensor.name for tensor in self.model.outputs]
+        names = (
+            self.model.output_names
+            if version1_lt_version2(tf.version.VERSION, "2.16.1")
+            else [tensor.name for tensor in self.model.outputs]
+        )
 
         return names
 
