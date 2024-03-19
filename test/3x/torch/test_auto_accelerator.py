@@ -3,6 +3,7 @@ import os
 import pytest
 import torch
 
+from neural_compressor.torch.utils import get_device
 from neural_compressor.torch.utils.auto_accelerator import accelerator_registry, auto_detect_accelerator
 
 
@@ -51,6 +52,16 @@ class Test_CUDA_Accelerator:
         assert accelerator.current_device_name() == "cuda:1"
         assert accelerator.synchronize() is None
         assert accelerator.empty_cache() is None
+
+    @pytest.mark.skipif(torch.cuda.device_count() < 2, reason="Only one GPU is available")
+    def test_get_device(self):
+        accelerator = auto_detect_accelerator()
+        assert accelerator.set_device(1) is None
+        assert accelerator.current_device_name() == "cuda:1"
+        cur_device = get_device()
+        assert cur_device == "cuda:1"
+        tmp_tensor = torch.tensor([1, 2], device=cur_device)
+        assert "cuda:1" == str(tmp_tensor.device)
 
 
 class TestAutoAccelerator:
