@@ -126,7 +126,7 @@ class TestBigSavedModel(unittest.TestCase):
             name = name.replace("kernel:0", "ReadVariableOp")
             return name
 
-        from neural_compressor.tensorflow import Model, quantize_model, SmoothQuantConfig
+        from neural_compressor.tensorflow import Model, SmoothQuantConfig, quantize_model
 
         model = Model("baseline_model", modelType="llm_saved_model")
         model.weight_name_mapping = weight_name_mapping
