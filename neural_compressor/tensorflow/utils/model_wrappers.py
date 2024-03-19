@@ -67,7 +67,7 @@ def get_model_type(model):
     if isinstance(model, str):
         model = os.path.abspath(os.path.expanduser(model))
         if (
-            (model.endswith(".h5") and os.path.isfile(model))
+            ((model.endswith(".h5") or model.endswith(".keras")) and os.path.isfile(model))
             or is_saved_model_format(os.path.dirname(model))
             or (os.path.isdir(model) and is_saved_model_format(model))
         ):
@@ -1638,12 +1638,18 @@ class KerasModel(BaseModel):
     @property
     def input_node_names(self):
         """Return input node names."""
-        return self.model.input_names
+        names = self.model.input_names if version1_lt_version2(tf.version.VERSION, "2.16.1") \
+                                        else [tensor.name for tensor in self.model.inputs]
+
+        return names
 
     @property
     def output_node_names(self):
         """Return output node names."""
-        return self.model.output_names
+        names = self.model.output_names if version1_lt_version2(tf.version.VERSION, "2.16.1") \
+                                else [tensor.name for tensor in self.model.outputs]
+
+        return names
 
 
 TENSORFLOW_MODELS = {
