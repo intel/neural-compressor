@@ -11,8 +11,7 @@ class M(torch.nn.Module):
         x2 = self.fc2(x1)
         return x2
 
-# model = M().to("hpu")
-model = M()
+model = M().to("hpu")
 
 from neural_compressor.torch import FP8QuantConfig, prepare, convert, save_calib
 quant_config = FP8QuantConfig()
