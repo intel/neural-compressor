@@ -85,6 +85,12 @@ class FP8QuantConfig(BaseConfig):
         # TODO: for auto-tune
         return FP8QuantConfig(act_observer=["minmax", "kl"])
 
+    @classmethod
+    def register_supported_configs(cls):
+        """Add all supported configs."""
+        # TODO: add supported configs
+        pass
+
 
 def get_default_fp8_config() -> FP8QuantConfig:
     """Generate the default fp8 config.
