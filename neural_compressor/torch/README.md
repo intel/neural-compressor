@@ -1,17 +1,31 @@
+file tree:
 ```bash
-neural_compressor
-    common
-    torch
-        quantization
-            quantizer
-        utils
-setup.py
-README.md
+├── neural_compressor
+│   ├── common
+│   ├── torch
+│   │   ├── algorithms
+│   │   ├── quantization
+│   │   │   ├── __init__.py
+│   │   │   ├── config.py
+│   │   │   ├── quantize.py
+│   │   │   └── quantizer
+│   │   │       ├── base_quantizer.py
+│   │   │       ├── guadi_quantizer.py
+│   │   │       └── __init__.py
+│   │   ├── __init__.py
+│   │   └── README.md
+│   ├── __init__.py
+│   └── version.py
+├── test
+│   └── sample.py
+
 ```
 
+usage demo:
 
 ```diff
 import torch
++ from neural_compressor.torch import FP8QuantConfig, prepare, convert, save_calib
 
 class M(torch.nn.Module):
     def __init__(self) -> None:
@@ -26,8 +40,6 @@ class M(torch.nn.Module):
 
 model = M().to("hpu")
 
-+ from neural_compressor.torch import FP8QuantConfig, prepare, convert, save_calib
-
 + quant_config = FP8QuantConfig()
 + model = prepare(model, quant_config) # prepare the model for quantization if needed
 
@@ -35,5 +47,5 @@ model = M().to("hpu")
 eval_func(model)
 
 + save_calib(model, quant_config) # save calibration results to local file if needed
-+ model = convert(model, quant_config) # convert the origin model to a quantized model
++ model = convert(model, quant_config) # convert the model to a quantized model
 ```

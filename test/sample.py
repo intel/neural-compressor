@@ -20,7 +20,7 @@ quant_config = FP8QuantConfig()
 # prepare the model for quantization if needed
 model = prepare(model, quant_config)
 
-# use user's eval func to do calibration
+# reuse user's eval func to do calibration
 # eval_func(model)
 input = torch.randn(1, 10)
 model(input)
