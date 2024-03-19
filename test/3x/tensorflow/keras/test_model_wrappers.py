@@ -1,6 +1,7 @@
 """Tests for model."""
 
 import os
+import shutil
 import platform
 import unittest
 
@@ -112,11 +113,11 @@ class TestModelWrappers(unittest.TestCase):
 
         model.save("./keras_model.keras")
         loaded_model = tf.keras.models.load_model("./keras_model.keras")
-        self.assertEqual(isinstance(loaded_model.model, tf.keras.Model), True)
+        self.assertEqual(isinstance(loaded_model, tf.keras.Model), True)
 
         model.save("keras_model.h5")
         loaded_model = tf.keras.models.load_model("keras_model.h5")
-        self.assertEqual(isinstance(loaded_model.model, tf.keras.Model), True)
+        self.assertEqual(isinstance(loaded_model, tf.keras.Model), True)
 
 
 if __name__ == "__main__":
