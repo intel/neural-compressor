@@ -1,18 +1,13 @@
-import torch
-from collections import OrderedDict
-from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import Callable, List, NamedTuple, Optional, Tuple, Union
 from neural_compressor.common.base_config import (
     BaseConfig,
-    config_registry,
     register_config,
-    register_supported_configs_for_fwk,
 )
 from neural_compressor.common.utils import (
     FP8_QUANT,
     DEFAULT_WHITE_LIST,
     OP_NAME_OR_MODULE_TYPE,
 )
-from neural_compressor.torch.utils import is_hpex_available, logger
 
 FRAMEWORK_NAME = "torch"
 
@@ -79,8 +74,6 @@ class FP8QuantConfig(BaseConfig):
     def get_config_set_for_tuning(cls) -> Union[None, "FP8QuantConfig", List["FP8QuantConfig"]]:
         # TODO fwk owner needs to update it.
         return FP8QuantConfig(act_observer=["minmax", "kl"])
-
-fp8_quant_config = FP8QuantConfig()
 
 def get_default_fp8_config() -> FP8QuantConfig:
     """Generate the default fp8 config.

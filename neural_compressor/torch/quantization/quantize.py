@@ -1,6 +1,5 @@
-from neural_compressor.torch.utils import is_hpex_available
 from neural_compressor.common.base_config import BaseConfig
-from .quantizer.quantizer import init_quantizer
+from neural_compressor.torch.quantization import init_quantizer
 import torch
 
 # another proposal:
@@ -18,7 +17,7 @@ def prepare(model: torch.nn.Module, quant_cfg: BaseConfig):
     Returns:
         model with observers
     """
-    if need_calibration():
+    if _need_calibration():
         quantizer = init_quantizer(model, quant_cfg)
         prepared_model = quantizer.prepare(model)
         return prepared_model
@@ -45,8 +44,13 @@ def save_calib(model: torch.nn.Module, quant_cfg: BaseConfig):
         model (torch.nn.Module): model with observers (output model of prepare() func)
         quant_cfg (BaseConfig): including save path of calibration results
     """
-    if need_calibration():
-        # refer to habana_quantization_toolkit.finish_measurements(model)
+    if _need_calibration():
         _save_calibration_results(model, quant_cfg)
     else:
         return
+
+def _need_calibration():
+    return True
+
+def _save_calibration_results(model, quant_cfg):
+    return

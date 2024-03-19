@@ -13,8 +13,6 @@ README.md
 ```diff
 import torch
 
-from quantization.quantize import prepare, convert, save_calib
-
 class M(torch.nn.Module):
     def __init__(self) -> None:
         super().__init__()
@@ -33,8 +31,8 @@ model = M().to("hpu")
 + quant_config = FP8QuantConfig()
 + model = prepare(model, quant_config) # prepare the model for quantization if needed
 
-# use user's eval func to do calibration
-user_func(model)
+# reuse user's eval func to do calibration
+eval_func(model)
 
 + save_calib(model, quant_config) # save calibration results to local file if needed
 + model = convert(model, quant_config) # convert the origin model to a quantized model
