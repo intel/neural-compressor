@@ -24,7 +24,7 @@ from neural_compressor.torch.quantization import init_quantizer
 def prepare(model: torch.nn.Module, quant_config: BaseConfig):
     """Prepare the model for calibration.
 
-    Insert observers to the model that will observe input(output, weight?) tensors during calibration.
+    Insert observers into the model so that it can monitor the input and output tensors during calibration.
 
     Args:
         model (torch.nn.Module): origin model
