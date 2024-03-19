@@ -75,7 +75,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
         out_name = conv.name.split(":")[0]
         with tf.compat.v1.Session() as sess:
             sess.run(tf.compat.v1.global_variables_initializer())
-            output_graph_def = graph_util.convert_variables_to_constants(
+            fp32_graph_def = graph_util.convert_variables_to_constants(
                 sess=sess, input_graph_def=sess.graph_def, output_node_names=[out_name]
             )
 
@@ -230,7 +230,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
             self.assertNotEqual(qmodel, None)
 
             elu_fused = False
-            for node in output_graph.graph_def.node:
+            for node in qmodel.graph_def.node:
                 if node.name == "conv_eightbit_requantize_dequantize":
                     if b"Elu" in node.attr["fused_ops"].list.s:
                         elu_fused = True
@@ -711,7 +711,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
         out_name = add.name.split(":")[0]
         with tf.compat.v1.Session() as sess:
             sess.run(tf.compat.v1.global_variables_initializer())
-            fp322_graph_def = graph_util.convert_variables_to_constants(
+            fp32_graph_def = graph_util.convert_variables_to_constants(
                 sess=sess, input_graph_def=sess.graph_def, output_node_names=[out_name]
             )
 
@@ -837,7 +837,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
             qmodel = quantize_model(fp32_graph_def, quant_config, calib_dataloader)
 
             found_conv_fusion = False
-            for i in output_graph.graph_def.node:
+            for i in qmodel.graph_def.node:
                 if i.op == "_FusedQuantizedConv3D":
                     found_conv_fusion = True
 
@@ -955,7 +955,7 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
         out_name = add_2.name.split(":")[0]
         with tf.compat.v1.Session() as sess:
             sess.run(tf.compat.v1.global_variables_initializer())
-            fp322_graph_def = graph_util.convert_variables_to_constants(
+            fp32_graph_def = graph_util.convert_variables_to_constants(
                 sess=sess, input_graph_def=sess.graph_def, output_node_names=[out_name]
             )
 

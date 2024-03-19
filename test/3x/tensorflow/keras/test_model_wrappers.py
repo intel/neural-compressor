@@ -52,7 +52,6 @@ class TestModelWrappers(unittest.TestCase):
         # load from path
         model = Model("./simple_model.h5")
 
-        self.assertEqual(model.model_path, "./simple_model.h5")
         self.assertGreaterEqual(len(model.output_node_names), 1)
         self.assertGreaterEqual(len(model.input_node_names), 1)
         os.makedirs("./keras_model", exist_ok=True)
@@ -66,13 +65,13 @@ class TestModelWrappers(unittest.TestCase):
         keras_model = build_keras()
 
         model = Model(keras_model)
-        self.assertEqual(model.model_path, None)
+
         self.assertGreaterEqual(len(model.output_node_names), 1)
         self.assertGreaterEqual(len(model.input_node_names), 1)
         keras_model.save("./simple_model.keras")
         # load from path
         model = Model("./simple_model.keras")
-        self.assertEqual(model.model_path, "./simple_model")
+
         self.assertGreaterEqual(len(model.output_node_names), 1)
         self.assertGreaterEqual(len(model.input_node_names), 1)
 

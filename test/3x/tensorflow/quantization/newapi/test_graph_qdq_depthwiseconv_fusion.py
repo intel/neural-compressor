@@ -264,7 +264,7 @@ class TestConv2DBiasAddAddReluFusion(unittest.TestCase):
 
         with tf.compat.v1.Session() as sess:
             sess.run(tf.compat.v1.global_variables_initializer())
-            fp3_graph_def = graph_util.convert_variables_to_constants(
+            fp32_graph_def = graph_util.convert_variables_to_constants(
                 sess=sess, input_graph_def=sess.graph_def, output_node_names=[out_name]
             )
 

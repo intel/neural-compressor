@@ -24,8 +24,6 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 
-from neural_compressor.tensorflow.utils import BaseDataLoader
-
 
 def build_model():
     # Load MNIST dataset
@@ -87,6 +85,29 @@ class Dataset(object):
         return self.test_images[idx].astype(np.float32), self.test_labels[idx]
 
 
+class MyDataLoader:
+    def __init__(self, dataset, batch_size=1):
+        self.dataset = dataset
+        self.batch_size = batch_size
+        self.length = math.ceil(len(dataset) / self.batch_size)
+
+    def __iter__(self):
+        images_list = []
+        labels_list = []
+        for _, (images, labels) in enumerate(self.dataset):
+            images = np.expand_dims(images, axis=0)
+            labels = np.expand_dims(labels, axis=0)
+            images_list.append(images[0])
+            labels_list.append(labels[0])
+            if self.batch_size == len(images_list):
+                yield (images_list, labels_list)
+                images_list = []
+                labels_list = []
+
+    def __len__(self):
+        return self.length
+
+
 class TestBigSavedModel(unittest.TestCase):
     @classmethod
     def setUpClass(self):
@@ -105,8 +126,7 @@ class TestBigSavedModel(unittest.TestCase):
             name = name.replace("kernel:0", "ReadVariableOp")
             return name
 
-        from neural_compressor import Model, quantization
-        from neural_compressor.config import PostTrainingQuantConfig
+        from neural_compressor.tensorflow import Model, quantize_model, SmoothQuantConfig
 
         model = Model("baseline_model", modelType="llm_saved_model")
         model.weight_name_mapping = weight_name_mapping

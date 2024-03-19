@@ -76,7 +76,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
             qmodel = quantize_model(float_graph_def, quant_config, calib_dataloader)
 
             found_quantized_matmul = False
-            for i in output_graph.graph_def.node:
+            for i in qmodel.graph_def.node:
                 if (
                     i.op == "QuantizeV2"
                     and i.name == "MatMul_eightbit_quantize_x"

@@ -6,10 +6,9 @@ import platform
 import unittest
 
 import tensorflow as tf
-import yaml
 
 from neural_compressor.tensorflow.quantization.utils.graph_util import GraphAnalyzer
-from neural_compressor.tensorflow.quantization.utils.utility import get_input_output_node_names
+from neural_compressor.tensorflow.quantization.utils.utility import get_input_output_node_names, read_graph
 
 
 def build_fake_model_1():

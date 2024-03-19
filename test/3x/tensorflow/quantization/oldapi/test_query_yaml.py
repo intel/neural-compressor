@@ -8,7 +8,7 @@ import tensorflow as tf
 import yaml
 from tensorflow.compat.v1 import graph_util
 
-from neural_compressor.tensorflow.algorithms.static_quant.tensorflow import TensorFlowAdaptor
+from neural_compressor.tensorflow.algorithms.static_quant.tensorflow import TensorflowQuery
 from neural_compressor.tensorflow.utils import disable_random
 
 
@@ -127,7 +127,6 @@ class TestTFQueryYaml(unittest.TestCase):
         with open(self.tf_yaml_path) as f:
             self.content = yaml.safe_load(f)
         self.query_handler = TensorflowQuery(local_config_file=self.tf_yaml_path)
-        build_fake_yaml_on_grappler()
 
     @classmethod
     def tearDownClass(self):
