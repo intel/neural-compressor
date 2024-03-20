@@ -1,20 +1,19 @@
 from abc import ABC, abstractmethod
 
-QUANTIZER_REGISTRY = {}
+BACKEND_REGISTRY = {}
 
-def quantizer_register(name):
-    def decorator(quantizer):
-        QUANTIZER_REGISTRY[name] = quantizer
-        return quantizer
-
+def backend_register(name):
+    def decorator(backend):
+        BACKEND_REGISTRY[name] = backend
+        return backend
     return decorator
 
-def init_quantizer(model, quant_config):
+def init_backend(model):
     # according to model device and environment
     if model.device == "hpu":
-        return QUANTIZER_REGISTRY["guadi"](quant_config)
+        return BACKEND_REGISTRY["hqt"](model.qconfig)
 
-class BaseQuantizer(ABC):
+class BaseBackend(ABC):
     def __init__(self, quant_config):
         self.quant_config = quant_config
 

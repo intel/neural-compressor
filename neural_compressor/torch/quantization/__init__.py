@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from neural_compressor.torch.quantization.quantizer import (
-    BaseQuantizer,
-    GuadiQuantizer,
-    quantizer_register,
-    init_quantizer,
+from neural_compressor.torch.quantization.backend import (
+    BaseBackend,
+    HQTBackend,
+    backend_register,
+    init_backend,
 )
 from neural_compressor.torch.quantization.config import FP8QuantConfig
 from neural_compressor.torch.quantization.quantize import prepare, convert, save_calibration_result

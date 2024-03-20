@@ -12,5 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from neural_compressor.torch.quantization.quantizer.base_quantizer import BaseQuantizer, quantizer_register, init_quantizer
-from neural_compressor.torch.quantization.quantizer.guadi_quantizer import GuadiQuantizer
+from neural_compressor.torch.quantization.backend.base_backend import BaseBackend, backend_register, init_backend
+from neural_compressor.torch.quantization.backend.hqt_backend import HQTBackend

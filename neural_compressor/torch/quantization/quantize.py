@@ -13,57 +13,59 @@
 # limitations under the License.
 
 import torch
-
 from neural_compressor.common.base_config import BaseConfig
-from neural_compressor.torch.quantization import init_quantizer
-
-# another proposal to not pass `quant_config` as a parameter
-# global quant_config
+from neural_compressor.torch.quantization import init_backend
+from typing import Union
 
 
-def prepare(model: torch.nn.Module, quant_config: BaseConfig):
+def prepare(model: torch.nn.Module, quant_config: Union[BaseConfig, str, dict]):
     """Prepare the model for calibration.
 
     Insert observers into the model so that it can monitor the input and output tensors during calibration.
 
     Args:
         model (torch.nn.Module): origin model
-        quant_config (BaseConfig): quantization config, including observer method
+        quant_config (Union[BaseConfig, str, dict]): quantization config
 
     Returns:
         model with observers
     """
+    # TODO: process quant_config according to its type
+
     if _need_calibration():
-        quantizer = init_quantizer(model, quant_config)
-        prepared_model = quantizer.prepare(model)
-        return prepared_model
+        backend = init_backend(model, quant_config)
+        model = backend.prepare(model)
+
+    # TODO: quant config should be assigned to model in `.qconfig` attribute.
+    model.qconfig = quant_config
+    return model
+
+
+def convert(model: torch.nn.Module):
+    """Convert the prepared model to a quantized model.
+
+    Load the calibration results and apply post-processing to generate the quantized module.
+    Then, swap out the original module with the newly created quantized module.
+
+    Args:
+        model (torch.nn.Module): the prepared model
+    """
+    if _need_convert():
+        backend = init_backend(model)
+        q_model = backend.convert(model)
+        return q_model
     else:
         return model
 
 
-def convert(model: torch.nn.Module, quant_config: BaseConfig):
-    """Convert the origin model to a quantized model.
-
-    Load the calibration results and apply post-processing to generate the quantized module. Then, swap out the original module with the newly created quantized module.
-
-    Args:
-        model (torch.nn.Module): the origin model
-        quant_config (BaseConfig): quantization config, including scale method
-    """
-    quantizer = init_quantizer(model, quant_config)
-    q_model = quantizer.convert(model, quant_config)
-    return q_model
-
-
-def save_calibration_result(model: torch.nn.Module, quant_config: BaseConfig):
+def save_calibration_result(model: torch.nn.Module):
     """Save calibration result to local file.
 
     Args:
         model (torch.nn.Module): model with observers (output model of prepare() func)
-        quant_config (BaseConfig): including save path of calibration results
     """
     if _need_calibration():
-        _save_calibration_results(model, quant_config)
+        _save_calibration_results(model)
     else:
         return
 
@@ -71,6 +73,9 @@ def save_calibration_result(model: torch.nn.Module, quant_config: BaseConfig):
 def _need_calibration():
     return True
 
+def _need_convert():
 
-def _save_calibration_results(model, quant_config):
+    return True
+
+def _save_calibration_results(model):
     return

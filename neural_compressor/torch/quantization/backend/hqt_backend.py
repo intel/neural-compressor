@@ -1,7 +1,7 @@
-from neural_compressor.torch.quantization.quantizer import BaseQuantizer, quantizer_register
+from neural_compressor.torch.quantization.backend import BaseBackend, backend_register
 
-@quantizer_register(name="guadi")
-class GuadiQuantizer(BaseQuantizer):
+@backend_register(name="hqt")
+class HQTBackend(BaseBackend):
     def __init__(self, quant_config):
         super().__init__(quant_config)
 
