@@ -47,8 +47,8 @@ model = M().to("hpu")
 # reuse user's eval func to do calibration
 eval_func(model)
 
-+ save_calibration_result(model, quant_config) # save calibration results to local file
-+ model = convert(model, quant_config) # convert the model to a quantized model
++ save_calibration_result(model) # save calibration results to local file
++ model = convert(model) # convert the model to a quantized model
 
 # reuse user's eval func to do evaluation
 eval_func(model)
@@ -76,11 +76,11 @@ class M(torch.nn.Module):
 model = M().to("hpu")
 
 + model = prepare(model, quant_config="quant_config.json") # prepare the model for quantization if needed
-+ model = convert(model, quant_config) # convert the model to a quantized model if needed
++ model = convert(model) # convert the model to a quantized model if needed
 
 # reuse user's eval func to do calibration/evaluation
 eval_func(model)
 
-+ save_calibration_result(model, quant_config) # save calibration results to local file if needed
++ save_calibration_result(model) # save calibration results to local file if needed
 
 ```
