@@ -29,6 +29,86 @@ else:
     from keras.layers.convolutional.base_conv import Conv  # pylint: disable=E0401
 
 
+# class QConv2D(Conv):
+#     def __init__(
+#         self,
+#         filters,
+#         kernel_size,
+#         strides=(1, 1),
+#         padding="valid",
+#         data_format=None,
+#         dilation_rate=(1, 1),
+#         groups=1,
+#         activation=None,
+#         use_bias=True,
+#         kernel_initializer="glorot_uniform",
+#         bias_initializer="zeros",
+#         kernel_regularizer=None,
+#         bias_regularizer=None,
+#         activity_regularizer=None,
+#         kernel_constraint=None,
+#         bias_constraint=None,
+#         min_value=-10000,
+#         max_value=10000,
+#         **kwargs
+#     ):
+#         super(QConv2D, self).__init__(
+#             rank=2,
+#             filters=filters,
+#             kernel_size=kernel_size,
+#             strides=strides,
+#             padding=padding,
+#             data_format=data_format,
+#             dilation_rate=dilation_rate,
+#             groups=groups,
+#             activation=activations.get(activation),
+#             use_bias=use_bias,
+#             kernel_initializer=initializers.get(kernel_initializer),
+#             bias_initializer=initializers.get(bias_initializer),
+#             kernel_regularizer=regularizers.get(kernel_regularizer),
+#             bias_regularizer=regularizers.get(bias_regularizer),
+#             activity_regularizer=regularizers.get(activity_regularizer),
+#             kernel_constraint=constraints.get(kernel_constraint),
+#             bias_constraint=constraints.get(bias_constraint),
+#             **kwargs
+#         )
+#         self.min_value = json.loads(min_value)
+#         self.max_value = json.loads(max_value)
+
+#     def call(self, inputs):
+#         # add the Q/DQ here
+#         kernel, _, _ = quantization.quantize(
+#             self.kernel, self.min_value, self.max_value, tf.qint8, axis=3, mode="SCALED"
+#         )
+#         kernel = quantization.dequantize(
+#             kernel,
+#             self.min_value,
+#             self.max_value,
+#             axis=3,
+#             mode="SCALED",
+#         )
+#         outputs = tf.keras.backend.conv2d(
+#             inputs,
+#             kernel,
+#             strides=self.strides,
+#             padding=self.padding,
+#             data_format=self.data_format,
+#             dilation_rate=self.dilation_rate,
+#         )
+
+#         if self.use_bias:
+#             outputs = tf.keras.backend.bias_add(outputs, self.bias, data_format=self.data_format)
+
+#         if self.activation is not None:
+#             return self.activation(outputs)
+
+#         return outputs
+
+#     @classmethod
+#     def from_config(cls, config):
+#         return cls(**config)
+
+
 class QConv2D(Conv):
     def __init__(
         self,
@@ -48,8 +128,8 @@ class QConv2D(Conv):
         activity_regularizer=None,
         kernel_constraint=None,
         bias_constraint=None,
-        min_value=-10000,
-        max_value=10000,
+        scales=78.7,
+        zero_points=0,
         **kwargs
     ):
         super(QConv2D, self).__init__(
@@ -72,21 +152,29 @@ class QConv2D(Conv):
             bias_constraint=constraints.get(bias_constraint),
             **kwargs
         )
-        self.min_value = json.loads(min_value)
-        self.max_value = json.loads(max_value)
+        self.scales = json.loads(scales)
+        self.zero_points = json.loads(zero_points)
 
     def call(self, inputs):
         # add the Q/DQ here
-        kernel, _, _ = quantization.quantize(
-            self.kernel, self.min_value, self.max_value, tf.qint8, axis=3, mode="SCALED"
-        )
-        kernel = quantization.dequantize(
-            kernel,
-            self.min_value,
-            self.max_value,
-            axis=3,
-            mode="SCALED",
-        )
+        kernel = tf.raw_ops.UniformQuantize(
+            input=self.kernel,
+            scales=self.scales,
+            zero_points=self.zero_points,
+            Tout=tf.qint8,
+            quantization_min_val=-127,
+            quantization_max_val=128,
+            quantization_axis=3,)
+
+        kernel = tf.raw_ops.UniformDequantize(
+            input=kernel,
+            scales=self.scales,
+            zero_points=self.zero_points,
+            Tout=tf.float32,
+            quantization_min_val=-127,
+            quantization_max_val=128,
+            quantization_axis=3,)
+
         outputs = tf.keras.backend.conv2d(
             inputs,
             kernel,

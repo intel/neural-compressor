@@ -51,11 +51,13 @@ def _add_supported_quantized_objects(custom_objects):
     from neural_compressor.adaptor.keras_utils.dense import QDense
     from neural_compressor.adaptor.keras_utils.depthwise_conv2d import QDepthwiseConv2D
     from neural_compressor.adaptor.keras_utils.pool2d import QAvgPool2D, QMaxPool2D
-    from neural_compressor.adaptor.keras_utils.quantizer import DeQuantize, FakeQuant, Quantize
+    from neural_compressor.adaptor.keras_utils.quantizer import DeQuantize, FakeQuant, Quantize, UniformQuantize, UniformDeQuantize
     from neural_compressor.adaptor.keras_utils.separable_conv2d import QSeparableConv2D
 
     custom_objects["Quantize"] = Quantize
     custom_objects["DeQuantize"] = DeQuantize
+    custom_objects["UniformQuantize"] = UniformQuantize
+    custom_objects["UniformDeQuantize"] = UniformDeQuantize
     custom_objects["FakeQuant"] = FakeQuant
     custom_objects["QConv2D"] = QConv2D
     custom_objects["QDepthwiseConv2D"] = QDepthwiseConv2D
@@ -479,6 +481,114 @@ class KerasAdaptor(Adaptor):
                     # cause no kernel weights for this layer
                     layer_config["min_value"] = json.dumps([-10000])
                     layer_config["max_value"] = json.dumps([10000])
+                layer_config["name"] = q_name
+                q_layer = {"class_name": q_layer_name, "name": q_name, "config": layer_config}
+                if "inbound_nodes" in layer:
+                    q_layer["inbound_nodes"] = inbound_reverse_map[layer["name"]]
+                q_layers.append(q_layer)
+            else:
+                q_layers.append(layer)
+
+        json_model["config"]["layers"] = q_layers
+        quantized_model = self._restore_model_from_json(json_model)
+        return quantized_model
+
+    def _calibrate_with_uniform_qdq(self, model, dataloader, calib_interation):
+        # run eagerly to fetch the numpy min/max
+        model.compile(run_eagerly=True)
+        results = {}
+        for idx, (inputs, labels) in enumerate(dataloader):
+            outputs = model.predict_on_batch(inputs)
+            json_model = copy.deepcopy(json.loads(model.to_json()))
+            config = json_model["config"]
+            layers = config["layers"]
+            for layer in layers:
+                if layer["class_name"] == "FakeQuant":
+                    min_value = layer["config"]["min_value"]
+                    max_value = layer["config"]["max_value"]
+                    if layer["config"]["name"] not in results:
+                        results[layer["config"]["name"]] = {"min": [min_value], "max": [max_value]}
+                    else:
+                        results[layer["config"]["name"]]["min"].append(min_value)
+                        results[layer["config"]["name"]]["max"].append(max_value)
+            if idx + 1 == calib_interation:
+                break
+
+        # insert the calibrated min/max to Q/DQ
+        json_model = copy.deepcopy(json.loads(model.to_json()))
+        config = json_model["config"]
+        layers = config["layers"]
+        q_layers = []
+        # quantize_mode = self._check_quantize_mode(json_model)
+        inbound_reverse_map = {}
+        for idx, layer in enumerate(layers):
+            layer_config = copy.deepcopy(layer["config"])
+            if layer["class_name"] == "FakeQuant":
+                min_value = min(results[layer["config"]["name"]]["min"])
+                max_value = max(results[layer["config"]["name"]]["max"])
+                T = layer_config["T"]
+                zero_points = 0 if T == "s8" else 128
+                ranges = 127 if T == "s8" else 255
+                scales = max(abs(max_value), abs(min_value))/ranges
+
+                quantize_layer = {
+                    "class_name": "UniformQuantize",
+                    "name": "uniform_quantize_" + str(idx),
+                    "config": {
+                        "scales": scales,
+                        "zero_points": zero_points,
+                        "T": T,
+                        "quantization_axis": -1,
+                        "name": "uniform_quantize_" + str(idx),
+                    },
+                }
+                dequantize_layer = {
+                    "class_name": "UniformDeQuantize",
+                    "name": "uniform_dequantize_" + str(idx),
+                    "config": {
+                        "scales": scales,
+                        "zero_points": zero_points,
+                        "T": T,
+                        "quantization_axis": -1,
+                        "name": "uniform_dequantize_" + str(idx),
+                    },
+                }
+                if "inbound_nodes" in layer:
+                    quantize_layer["inbound_nodes"] = layer["inbound_nodes"]
+                    dequantize_layer["inbound_nodes"] = [[["quantize_" + str(idx), 0, 0, {}]]]
+                    # find the conv/dense layer from fake quant map and
+                    # change the conv/dense node inbound to dequantize
+                    layer_name = self.inbound_nodes_map[layer["name"]]["name"]
+                    inbound_reverse_map[layer_name] = [[["dequantize_" + str(idx), 0, 0, {}]]]
+
+                q_layers.append(quantize_layer)
+                q_layers.append(dequantize_layer)
+            elif (
+                layer["class_name"] in self.supported_op
+                and layer["config"]["name"] in self.quantize_config["op_wise_config"]
+            ):
+                # index 0 is weight, index 1 is bias
+                q_layer_name = "Q" + layer["class_name"]
+                # this is for inbounds search
+                q_name = layer["config"]["name"]
+                # for layers that have weights
+                if layer["config"]["name"] in self.layer_weights:
+                    kernel = self.layer_weights[layer["config"]["name"]][0]
+                    dim = list(range(0, kernel.ndim))
+                    t_dim = [dim.pop(-1)]
+                    t_dim.extend(dim)
+                    channel_size = kernel.shape[-1]
+                    kernel_channel = kernel.transpose(t_dim).reshape(channel_size, -1)
+                    min_value = json.dumps(np.min(kernel_channel, axis=1).tolist())
+                    max_value = json.dumps(np.max(kernel_channel, axis=1).tolist())
+                    layer_config["scales"] = max(abs(max_value), abs(min_value))/127
+                    layer_config["zero_points"] = 0
+                else:
+                    # default value, but never expected to be used
+                    # cause no kernel weights for this layer
+                    layer_config["scales"] = json.dumps([78.7])
+                    layer_config["zero_points"] = json.dumps([0])
+
                 layer_config["name"] = q_name
                 q_layer = {"class_name": q_layer_name, "name": q_name, "config": layer_config}
                 if "inbound_nodes" in layer:

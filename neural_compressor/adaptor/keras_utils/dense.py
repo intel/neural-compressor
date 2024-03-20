@@ -36,8 +36,8 @@ class QDense(Dense):
         activity_regularizer=None,
         kernel_constraint=None,
         bias_constraint=None,
-        min_value=-10000,
-        max_value=10000,
+        scales=78.7,
+        zero_points=0,
         **kwargs
     ):
         super(QDense, self).__init__(
@@ -53,30 +53,34 @@ class QDense(Dense):
             bias_constraint=bias_constraint,
             **kwargs
         )
-        self.min_value = json.loads(min_value)
-        self.max_value = json.loads(max_value)
+        self.scales = json.loads(scales)
+        self.zero_points = json.loads(zero_points)
 
     def call(self, inputs):
         # add the Q/DQ here
-        kernel, _, _ = quantization.quantize(
-            self.kernel,
-            self.min_value,
-            self.max_value,
-            tf.qint8,
-            axis=1,
-            mode="SCALED",
-        )
-        kernel = quantization.dequantize(
-            kernel,
-            self.min_value,
-            self.max_value,
-            axis=1,
-            mode="SCALED",
-        )
+        kernel = tf.raw_ops.UniformQuantize(
+            input=self.kernel,
+            scales=self.scales,
+            zero_points=self.zero_points,
+            Tout=tf.qint8,
+            quantization_min_val=-127,
+            quantization_max_val=128,
+            quantization_axis=1,)
+
+        kernel = tf.raw_ops.UniformDequantize(
+            input=kernel,
+            scales=self.scales,
+            zero_points=self.zero_points,
+            Tout=tf.float32,
+            quantization_min_val=-127,
+            quantization_max_val=128,
+            quantization_axis=1,)
+
         outputs = tf.keras.backend.dot(inputs, kernel)
 
         if self.use_bias:
             outputs = tf.keras.backend.bias_add(outputs, self.bias)
         if self.activation is not None:
             outputs = self.activation(outputs)
+
         return outputs

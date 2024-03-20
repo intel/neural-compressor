@@ -30,15 +30,15 @@ class QAvgPool2D(AveragePooling2D):
         strides=None,
         padding="valid",
         data_format=None,
-        min_value=-10000,
-        max_value=10000,
+        scales=78.7,
+        zero_points=0,
         **kwargs
     ):
         super(QAvgPool2D, self).__init__(
             pool_size=pool_size, strides=strides, padding=padding, data_format=data_format, **kwargs
         )
-        self.min_value = json.loads(min_value)
-        self.max_value = json.loads(max_value)
+        self.scales = json.loads(scales)
+        self.zero_points = json.loads(zero_points)
 
 
 class QMaxPool2D(MaxPooling2D):
@@ -48,12 +48,12 @@ class QMaxPool2D(MaxPooling2D):
         strides=None,
         padding="valid",
         data_format=None,
-        min_value=-10000,
-        max_value=10000,
+        scales=78.7,
+        zero_points=0,
         **kwargs
     ):
         super(QMaxPool2D, self).__init__(
             pool_size=pool_size, strides=strides, padding=padding, data_format=data_format, **kwargs
         )
-        self.min_value = json.loads(min_value)
-        self.max_value = json.loads(max_value)
+        self.scales = json.loads(scales)
+        self.zero_points = json.loads(zero_points)
