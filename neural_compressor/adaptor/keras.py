@@ -325,8 +325,6 @@ class KerasAdaptor(Adaptor):
             converted_model = self.convert_bf16()
             return converted_model
 
-        if self.backend == "itex":
-            self._check_itex()
         logger.debug("Dump quantization configurations:")
         logger.debug(self.quantize_config)
         calib_sampling_size = tune_cfg.get("calib_sampling_size", 1)
@@ -388,7 +386,7 @@ class KerasAdaptor(Adaptor):
         json_model["config"]["layers"] = q_layers
         quantized_model = self._restore_model_from_json(json_model)
 
-        converted_model = self._calibrate(quantized_model, dataloader, self.quantize_config["calib_iteration"])
+        converted_model = self._calibrate_with_uniform_qdq(quantized_model, dataloader, self.quantize_config["calib_iteration"])
 
         from neural_compressor.model.keras_model import KerasModel
 
@@ -533,24 +531,24 @@ class KerasAdaptor(Adaptor):
 
                 quantize_layer = {
                     "class_name": "UniformQuantize",
-                    "name": "uniform_quantize_" + str(idx),
+                    "name": "quantize_" + str(idx),
                     "config": {
                         "scales": scales,
                         "zero_points": zero_points,
                         "T": T,
                         "quantization_axis": -1,
-                        "name": "uniform_quantize_" + str(idx),
+                        "name": "quantize_" + str(idx),
                     },
                 }
                 dequantize_layer = {
                     "class_name": "UniformDeQuantize",
-                    "name": "uniform_dequantize_" + str(idx),
+                    "name": "dequantize_" + str(idx),
                     "config": {
                         "scales": scales,
                         "zero_points": zero_points,
                         "T": T,
                         "quantization_axis": -1,
-                        "name": "uniform_dequantize_" + str(idx),
+                        "name": "dequantize_" + str(idx),
                     },
                 }
                 if "inbound_nodes" in layer:
@@ -579,10 +577,15 @@ class KerasAdaptor(Adaptor):
                     t_dim.extend(dim)
                     channel_size = kernel.shape[-1]
                     kernel_channel = kernel.transpose(t_dim).reshape(channel_size, -1)
-                    min_value = json.dumps(np.min(kernel_channel, axis=1).tolist())
-                    max_value = json.dumps(np.max(kernel_channel, axis=1).tolist())
-                    layer_config["scales"] = max(abs(max_value), abs(min_value))/127
-                    layer_config["zero_points"] = 0
+                    min_value = np.min(kernel_channel, axis=1).tolist()
+                    max_value = np.max(kernel_channel, axis=1).tolist()
+                    scales = []
+                    zero_points = []
+                    for i in range(len(max_value)):
+                        scales.append(max(abs(max_value[i]), abs(min_value[i]))/127)
+                        zero_points.append(0)
+                    layer_config["scales"] = json.dumps(scales)
+                    layer_config["zero_points"] = json.dumps(zero_points)
                 else:
                     # default value, but never expected to be used
                     # cause no kernel weights for this layer

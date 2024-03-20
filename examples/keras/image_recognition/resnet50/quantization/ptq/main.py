@@ -116,7 +116,8 @@ def main(_):
         from neural_compressor import quantization
         from neural_compressor.config import PostTrainingQuantConfig
         conf = PostTrainingQuantConfig(backend='itex',
-                calibration_sampling_size=[50, 100])
+                calibration_sampling_size=[50, 100],
+                accuracy_criterion = AccuracyCriterion(tolerable_loss=0.1))
         q_model = quantization.fit(FLAGS.input_model, conf=conf, calib_dataloader=calib_dataloader,
                     eval_func=evaluate)
         q_model.save(FLAGS.output_model)
