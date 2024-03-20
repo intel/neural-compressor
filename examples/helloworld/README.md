@@ -2,8 +2,8 @@
 
 ## PyTorch Examples
 ### Examples List
-* [torch_llm](/examples/helloworld/torch_llm): apply the weight-only quantization to LLMs.
-* [torch_non_llm](/examples/helloworld/torch_non_llm): apply the static quantization to non-LLMs.
+* [torch_woq](/examples/helloworld/torch_woq): apply the weight-only quantization to LLMs.
+* [torch_static_quant](/examples/helloworld/torch_static_quant): apply the static quantization to non-LLMs.
 
 ## Tensorflow Examples
 ### Prerequisite
