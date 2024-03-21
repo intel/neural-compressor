@@ -128,7 +128,7 @@ def qdq_weight_asym(weight, num_bits=4, quantile=1.0, return_int=False):
     weight.add_(zp)
     weight.clamp_(0, maxq)
     if return_int:
-        return weight.type(torch.uint8), scale.type(torch.float), zp.type(torch.uint8)
+        return weight, scale.type(torch.float), zp.type(torch.uint8)
     weight.sub_(zp)
     return weight.mul_(scale)
 
@@ -176,7 +176,7 @@ def qdq_weight_sym(weight, num_bits=4, quantile=1.0, return_int=False, full_rang
     weight.round_()
     weight.clamp_(minq, maxq)
     if return_int:
-        return weight.type(torch.int8), scale.type(torch.float), None
+        return weight, scale.type(torch.float), None
     return weight.mul_(scale)
 
 
