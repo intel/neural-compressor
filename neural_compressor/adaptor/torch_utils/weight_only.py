@@ -93,7 +93,7 @@ def quantize_4bit(tensor, quantile=1.0, data_type="nf4", return_int=False):
             q_tensor += torch.where((mid_data[i - 1] < tensor) & (tensor <= mid_data[i]), data, 0)
     tensor.copy_(q_tensor)
     if return_int:
-        return tensor.type(torch.int8), scale.type(torch.float), None
+        return tensor, scale.type(torch.float), None
     return tensor.mul_(scale)
 
 
