@@ -93,7 +93,7 @@ def quantize_4bit(tensor, quantile=1.0, data_type="nf4", return_int=False):
             q_tensor += torch.where((mid_data[i - 1] < tensor) & (tensor <= mid_data[i]), data, 0)
     tensor.copy_(q_tensor)
     if return_int:
-        return tensor, scale.type(torch.float), None
+        return tensor, scale, None
     return tensor.mul_(scale)
 
 
@@ -128,7 +128,7 @@ def qdq_weight_asym(weight, num_bits=4, quantile=1.0, return_int=False):
     weight.add_(zp)
     weight.clamp_(0, maxq)
     if return_int:
-        return weight, scale.type(torch.float), zp.type(torch.uint8)
+        return weight, scale, zp
     weight.sub_(zp)
     return weight.mul_(scale)
 
