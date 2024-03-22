@@ -780,7 +780,6 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                     "n_samples": 20,
                     "seq_len": 10,
                     "iters": 10,
-                    "scale_dtype": "fp32",
                 },
             },
         )
@@ -797,7 +796,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-01))
         self.assertTrue("transformer.h.0.attn.k_proj" in q_model.autoround_config.keys())
         self.assertTrue("scale" in q_model.autoround_config["transformer.h.0.attn.k_proj"].keys())
-        self.assertTrue(torch.float32 == q_model.autoround_config["transformer.h.0.attn.k_proj"]["scale_dtype"])
+        self.assertTrue(torch.float16 == q_model.autoround_config["transformer.h.0.attn.k_proj"]["scale_dtype"])
 
         export_model = q_model.export_compressed_model()
         export_out = export_model(input)
