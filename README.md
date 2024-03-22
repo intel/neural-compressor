@@ -39,22 +39,57 @@ pip install neural-compressor
 
 ## Getting Started
 
-Setting up the environment:
+Setting up the environment:  
 ```bash
 pip install "neural-compressor>=2.3" "transformers>=4.34.0" torch torchvision
 ```
 After successfully installing these packages, try your first quantization program.
 
-### Weight-Only Quantization (LLMs) 
+### Weight-Only Quantization (LLMs)
+Following example code demostrates Weight-Only Quantization on LLMs, it supports Intel CPU, Intel Gauid2 AI Accelerator, Nvidia GPU, best device will be selected automatically. 
+
+To try on Intel Gaudi2, docker image with Gaudi Software Stack is recommended, please refer to following script for environment setup. More details can be found in [Gaudi Guide](https://docs.habana.ai/en/latest/Installation_Guide/Bare_Metal_Fresh_OS.html#launch-docker-image-that-was-built). 
+```bash
+docker run -it --runtime=habana -e HABANA_VISIBLE_DEVICES=all -e OMPI_MCA_btl_vader_single_copy_mechanism=none --cap-add=sys_nice --net=host --ipc=host vault.habana.ai/gaudi-docker/1.14.0/ubuntu22.04//habanalabs/pytorch-installer-2.1.1:latest
+
+# Check the container ID
+docker ps
+
+# Login into container
+docker exec -it <container_id> bash
+
+# Install the optimum-habana
+pip install --upgrade-strategy eager optimum[habana]
+
+# Install INC/auto_round
+pip install neural-compressor auto_round
+```
+Run the example:
 ```python
-from transformers import AutoModel
+from transformers import AutoModel, AutoTokenizer
 
 from neural_compressor.config import PostTrainingQuantConfig
 from neural_compressor.quantization import fit
+from neural_compressor.adaptor.torch_utils.auto_round import get_dataloader
 
-float_model = AutoModel.from_pretrained("mistralai/Mistral-7B-v0.1")
-woq_conf = PostTrainingQuantConfig(approach="weight_only")
-quantized_model = fit(model=float_model, conf=woq_conf)
+model_name = "EleutherAI/gpt-neo-125m"
+float_model = AutoModel.from_pretrained(model_name)
+tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+dataloader = get_dataloader(tokenizer, seqlen=2048)
+
+woq_conf = PostTrainingQuantConfig(
+    approach="weight_only",
+    op_type_dict={
+        ".*": {  # match all ops
+            "weight": {
+                "dtype": "int",
+                "bits": 4,
+                "algorithm": "AUTOROUND",
+            },
+        }
+    },
+)
+quantized_model = fit(model=float_model, conf=woq_conf, calib_dataloader=dataloader)
 ```
 
 ### Static Quantization (Non-LLMs)
