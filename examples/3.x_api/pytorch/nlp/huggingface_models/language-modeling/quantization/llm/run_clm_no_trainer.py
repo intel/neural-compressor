@@ -221,6 +221,24 @@ def get_user_model():
     return user_model, tokenizer
 
 
+def run_fn(model, dataloader, *args):
+    from neural_compressor.torch.algorithms.weight_only.gptq import move_input_to_device
+    from tqdm import tqdm
+
+    for batch in tqdm(dataloader):
+        batch = move_input_to_device(batch, device=None)
+        try:
+            if isinstance(batch, tuple) or isinstance(batch, list):
+                model(batch[0])
+            elif isinstance(batch, dict):
+                model(**batch)
+            else:
+                model(batch)
+        except ValueError:
+            pass
+    return
+
+
 if args.quantize:
     # dataset
     user_model, tokenizer = get_user_model()
@@ -281,21 +299,7 @@ if args.quantize:
                 max_seq_length=args.gptq_max_seq_length,
             )
             dataloader_for_calibration = dataloaderPreprocessor.get_prepared_dataloader()
-            from neural_compressor.torch.algorithms.weight_only.gptq import move_input_to_device
-            from tqdm import tqdm
-            def run_fn_for_gptq(model, dataloader_for_calibration, *args):
-                for batch in tqdm(dataloader_for_calibration):
-                    batch = move_input_to_device(batch, device=None)
-                    try:
-                        if isinstance(batch, tuple) or isinstance(batch, list):
-                            model(batch[0])
-                        elif isinstance(batch, dict):
-                            model(**batch)
-                        else:
-                            model(batch)
-                    except ValueError:
-                        pass
-                return
+
             if args.double_quant_type is not None:
                 double_quant_config_dict.update(
                     {
@@ -328,12 +332,40 @@ if args.quantize:
                 )
             quant_config.set_local("lm_head", GPTQConfig(dtype="fp32"))
             user_model = quantize(
-                model=user_model, quant_config=quant_config, run_fn=run_fn_for_gptq, run_args=(dataloader_for_calibration, )
+                model=user_model,
+                quant_config=quant_config,
+                run_fn=run_fn(user_model, dataloader_for_calibration),
+                run_args=(dataloader_for_calibration, )
             )
-    else:
-        # TODO: smooth quant
-        print("Only support WeightOnlyQuant now")
-        pass
+    else: # smooth quant
+        from neural_compressor.torch.quantization import SmoothQuantConfig, quantize
+
+        # alpha can be a float number of a list of float number.
+        args.alpha = args.alpha if args.alpha == "auto" else eval(args.alpha)
+        if re.search("falcon", user_model.config.model_type):
+            quant_config = SmoothQuantConfig(alpha=args.alpha, folding=False)
+        else:
+            quant_config = SmoothQuantConfig(alpha=args.alpha, folding=True)
+        
+        if re.search("gpt", user_model.config.model_type):
+            quant_config.set_local("add", SmoothQuantConfig(w_dtype="fp32", act_dtype="fp32"))
+        
+        from utils import get_example_inputs
+        example_inputs = get_example_inputs(user_model, calib_dataloader)
+        
+        user_model = quantize(
+            model=user_model, quant_config=quant_config, example_inputs=example_inputs, run_fn=run_fn(user_model, calib_dataloader)
+        )
+
+        # eval_func should be set when tuning alpha.
+        if isinstance(args.alpha, list):
+            eval_dataset = load_dataset('lambada', split='validation')
+            evaluator = Evaluator(eval_dataset, tokenizer)
+
+            def eval_func(model):
+                acc = evaluator.evaluate(model)
+                return acc
+
 
 if args.accuracy:
     user_model.eval()
