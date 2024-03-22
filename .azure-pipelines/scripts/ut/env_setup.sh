@@ -92,7 +92,7 @@ elif [[ $(echo "${test_case}" | grep -c "tf pruning") != 0 ]]; then
 fi
 
 if [[ $(echo "${test_case}" | grep -c "api") != 0 ]] || [[ $(echo "${test_case}" | grep -c "adaptor") != 0 ]]; then
-    pip install git+https://github.com/intel/auto-round.git@d02f94d4b085523df3b313863fb07f83b2989cce
+    pip install git+https://github.com/intel/auto-round.git@eaf3710ca1df0a645acbe97e965f8672ff8ba341
 fi
 
 # test deps

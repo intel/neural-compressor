@@ -1,4 +1,4 @@
-auto-round
+auto-round @ git+https://github.com/intel/auto-round.git@eaf3710ca1df0a645acbe97e965f8672ff8ba341
 intel_extension_for_pytorch
 peft
 py-cpuinfo
