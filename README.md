@@ -46,7 +46,7 @@ pip install "neural-compressor>=2.3" "transformers>=4.34.0" torch torchvision
 After successfully installing these packages, try your first quantization program.
 
 ### Weight-Only Quantization (LLMs)
-Following example code demostrates Weight-Only Quantization on LLMs, it supports Intel CPU, Intel Gauid2 AI Accelerator, Nvidia GPU, best device will be selected automatically. 
+Following example code demonstrates Weight-Only Quantization on LLMs, it supports Intel CPU, Intel Gauid2 AI Accelerator, Nvidia GPU, best device will be selected automatically. 
 
 To try on Intel Gaudi2, docker image with Gaudi Software Stack is recommended, please refer to following script for environment setup. More details can be found in [Gaudi Guide](https://docs.habana.ai/en/latest/Installation_Guide/Bare_Metal_Fresh_OS.html#launch-docker-image-that-was-built). 
 ```bash
