@@ -106,6 +106,12 @@ In particular, the tool provides the key features, typical examples, and open co
 <li><p>Validate popular LLMs such as <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm">LLama2</a>, <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm">Falcon</a>, <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm">GPT-J</a>, <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm">Bloom</a>, <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm">OPT</a>, and more than 10,000 broad models such as <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/text-to-image/quantization">Stable Diffusion</a>, <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">BERT-Large</a>, and <a class="reference external" href="/examples/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx">ResNet50</a> from popular model hubs such as <a class="reference external" href="https://huggingface.co/">Hugging Face</a>, <a class="reference external" href="https://pytorch.org/vision/stable/index.html">Torch Vision</a>, and <a class="reference external" href="https://github.com/onnx/models#models">ONNX Model Zoo</a>, by leveraging zero-code optimization solution <a class="reference external" href="/neural_coder#what-do-we-offer">Neural Coder</a> and automatic [accuracy-driven]./design.html#workflow) quantization strategies</p></li>
 <li><p>Collaborate with cloud marketplaces such as <a class="reference external" href="https://console.cloud.google.com/marketplace/product/bitnami-launchpad/inc-tensorflow-intel?project=verdant-sensor-286207">Google Cloud Platform</a>, <a class="reference external" href="https://aws.amazon.com/marketplace/pp/prodview-yjyh2xmggbmga#pdp-support">Amazon Web Services</a>, and <a class="reference external" href="https://azuremarketplace.microsoft.com/en-us/marketplace/apps/bitnami.inc-tensorflow-intel">Azure</a>, software platforms such as <a class="reference external" href="https://www.intel.com/content/www/us/en/developer/articles/technical/quantize-ai-by-oneapi-analytics-on-alibaba-cloud.html">Alibaba Cloud</a>, <a class="reference external" href="https://new.qq.com/rain/a/20221202A00B9S00">Tencent TACO</a> and <a class="reference external" href="https://github.com/microsoft/Olive">Microsoft Olive</a>, and open AI ecosystem such as <a class="reference external" href="https://huggingface.co/blog/intel">Hugging Face</a>, <a class="reference external" href="https://pytorch.org/tutorials/recipes/intel_neural_compressor_for_pytorch.html">PyTorch</a>, <a class="reference external" href="https://github.com/onnx/models#models">ONNX</a>, <a class="reference external" href="https://github.com/microsoft/onnxruntime">ONNX Runtime</a>, and <a class="reference external" href="https://github.com/Lightning-AI/lightning/blob/master/docs/source-pytorch/advanced/post_training_quantization.rst">Lightning AI</a></p></li>
 </ul>
+<section id="what-s-new">
+<h2>What’s New<a class="headerlink" href="#what-s-new" title="Permalink to this heading"></a></h2>
+<ul class="simple">
+<li><p>[2024/03] A new SOTA approach <a class="reference external" href="https://github.com/intel/auto-round">AutoRound</a> Weight-Only Quantization on <a class="reference external" href="https://habana.ai/products/gaudi2/">Intel Gaudi2 AI accelerator</a> is available for LLMs.</p></li>
+</ul>
+</section>
 <section id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h2>
 <section id="install-from-pypi">
@@ -128,16 +134,52 @@ More installation methods can be found at <a class="reference external" href="ht
 <p>After successfully installing these packages, try your first quantization program.</p>
 <section id="weight-only-quantization-llms">
 <h3>Weight-Only Quantization (LLMs)<a class="headerlink" href="#weight-only-quantization-llms" title="Permalink to this heading"></a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">transformers</span> <span class="kn">import</span> <span class="n">AutoModel</span>
+<p>Following example code demonstrates Weight-Only Quantization on LLMs, it supports Intel CPU, Intel Gauid2 AI Accelerator, Nvidia GPU, best device will be selected automatically.</p>
+<p>To try on Intel Gaudi2, docker image with Gaudi Software Stack is recommended, please refer to following script for environment setup. More details can be found in <a class="reference external" href="https://docs.habana.ai/en/latest/Installation_Guide/Bare_Metal_Fresh_OS.html#launch-docker-image-that-was-built">Gaudi Guide</a>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>run<span class="w"> </span>-it<span class="w"> </span>--runtime<span class="o">=</span>habana<span class="w"> </span>-e<span class="w"> </span><span class="nv">HABANA_VISIBLE_DEVICES</span><span class="o">=</span>all<span class="w"> </span>-e<span class="w"> </span><span class="nv">OMPI_MCA_btl_vader_single_copy_mechanism</span><span class="o">=</span>none<span class="w"> </span>--cap-add<span class="o">=</span>sys_nice<span class="w"> </span>--net<span class="o">=</span>host<span class="w"> </span>--ipc<span class="o">=</span>host<span class="w"> </span>vault.habana.ai/gaudi-docker/1.14.0/ubuntu22.04//habanalabs/pytorch-installer-2.1.1:latest
+
+<span class="c1"># Check the container ID</span>
+docker<span class="w"> </span>ps
+
+<span class="c1"># Login into container</span>
+docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>&lt;container_id&gt;<span class="w"> </span>bash
+
+<span class="c1"># Install the optimum-habana</span>
+pip<span class="w"> </span>install<span class="w"> </span>--upgrade-strategy<span class="w"> </span>eager<span class="w"> </span>optimum<span class="o">[</span>habana<span class="o">]</span>
+
+<span class="c1"># Install INC/auto_round</span>
+pip<span class="w"> </span>install<span class="w"> </span>neural-compressor<span class="w"> </span>auto_round
+</pre></div>
+</div>
+<p>Run the example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">transformers</span> <span class="kn">import</span> <span class="n">AutoModel</span><span class="p">,</span> <span class="n">AutoTokenizer</span>
 
 <span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span>
 <span class="kn">from</span> <span class="nn">neural_compressor.quantization</span> <span class="kn">import</span> <span class="n">fit</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.adaptor.torch_utils.auto_round</span> <span class="kn">import</span> <span class="n">get_dataloader</span>
 
-<span class="n">float_model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s2">&quot;mistralai/Mistral-7B-v0.1&quot;</span><span class="p">)</span>
-<span class="n">woq_conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">approach</span><span class="o">=</span><span class="s2">&quot;weight_only&quot;</span><span class="p">)</span>
-<span class="n">quantized_model</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">float_model</span><span class="p">,</span> <span class="n">conf</span><span class="o">=</span><span class="n">woq_conf</span><span class="p">)</span>
+<span class="n">model_name</span> <span class="o">=</span> <span class="s2">&quot;EleutherAI/gpt-neo-125m&quot;</span>
+<span class="n">float_model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">trust_remote_code</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">dataloader</span> <span class="o">=</span> <span class="n">get_dataloader</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">,</span> <span class="n">seqlen</span><span class="o">=</span><span class="mi">2048</span><span class="p">)</span>
+
+<span class="n">woq_conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
+    <span class="n">approach</span><span class="o">=</span><span class="s2">&quot;weight_only&quot;</span><span class="p">,</span>
+    <span class="n">op_type_dict</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;.*&quot;</span><span class="p">:</span> <span class="p">{</span>  <span class="c1"># match all ops</span>
+            <span class="s2">&quot;weight&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;bits&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+                <span class="s2">&quot;algorithm&quot;</span><span class="p">:</span> <span class="s2">&quot;AUTOROUND&quot;</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">}</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+<span class="n">quantized_model</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">float_model</span><span class="p">,</span> <span class="n">conf</span><span class="o">=</span><span class="n">woq_conf</span><span class="p">,</span> <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">)</span>
 </pre></div>
 </div>
+<p><strong>Note:</strong></p>
+<p>To try INT4 model inference, please directly use <a class="reference external" href="https://github.com/intel/intel-extension-for-transformers">Intel Extension for Transformers</a>, which leverages Intel Neural Compressor for model quantization.</p>
 </section>
 <section id="static-quantization-non-llms">
 <h3>Static Quantization (Non-LLMs)<a class="headerlink" href="#static-quantization-non-llms" title="Permalink to this heading"></a></h3>
@@ -288,7 +330,7 @@ View <a class="reference external" href="https://github.com/intel/neural-compres
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f291fd64940> 
+   <jinja2.runtime.BlockReference object at 0x7f439ae07040> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
