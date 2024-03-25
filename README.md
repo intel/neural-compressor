@@ -91,6 +91,9 @@ woq_conf = PostTrainingQuantConfig(
 )
 quantized_model = fit(model=float_model, conf=woq_conf, calib_dataloader=dataloader)
 ```
+**Note:** 
+
+To try INT4 model inference, please directly use [Intel Extension for Transformers](https://github.com/intel/intel-extension-for-transformers), which leverages Intel Neural Compressor for model quantization.        
 
 ### Static Quantization (Non-LLMs)
 
