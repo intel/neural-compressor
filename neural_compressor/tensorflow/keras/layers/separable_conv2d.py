@@ -34,6 +34,7 @@ else:
     from keras.utils import conv_utils  # pylint: disable=E0401
 
 if version1_gte_version2(tf.__version__, "2.16.1"):
+
     class QSeparableConv2D(BaseSeparableConv):
         def __init__(
             self,
@@ -58,7 +59,8 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
             depthwise_constraint=None,
             pointwise_constraint=None,
             bias_constraint=None,
-            **kwargs        ):
+            **kwargs
+        ):
             super().__init__(
                 name=name,
                 rank=2,
@@ -93,9 +95,9 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
             depthwise_kernel_size = self.depthwise_kernel.shape[-1]
 
             if not self.min_value:
-                self.min_value = [-10000]*depthwise_kernel_size
+                self.min_value = [-10000] * depthwise_kernel_size
             if not self.max_value:
-                self.max_value = [10000]*depthwise_kernel_size
+                self.max_value = [10000] * depthwise_kernel_size
 
             # TODO it's ugly that we can't get the point_wise min/max here
             depthwise_kernel, _, _ = quantization.quantize(
@@ -130,7 +132,9 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
             if self.activation is not None:
                 return self.activation(outputs)
             return outputs
+
 else:
+
     class QSeparableConv2D(SeparableConv):
         def __init__(
             self,
@@ -190,9 +194,9 @@ else:
             depthwise_kernel_size = self.depthwise_kernel.shape[-1]
 
             if not self.min_value:
-                self.min_value = [-10000]*depthwise_kernel_size
+                self.min_value = [-10000] * depthwise_kernel_size
             if not self.max_value:
-                self.max_value = [10000]*depthwise_kernel_size
+                self.max_value = [10000] * depthwise_kernel_size
 
             # TODO it's ugly that we can't get the point_wise min/max here
             depthwise_kernel, _, _ = quantization.quantize(

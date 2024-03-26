@@ -128,7 +128,7 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
 
             if self.activation is not None:
                 return self.activation(outputs)
-            return 
+            return
 else:
     class QDepthwiseConv2D(DepthwiseConv):
         def __init__(
