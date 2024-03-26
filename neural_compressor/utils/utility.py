@@ -290,7 +290,8 @@ class CpuInfo(object):
             if proc.stdout:
                 for line in proc.stdout:
                     return int(line.decode("utf-8", errors="ignore").strip())
-        return 0
+        logger.warning("Failed to get number of sockets, return 1 as default.")
+        return 1
 
 
 def dump_elapsed_time(customized_msg=""):
