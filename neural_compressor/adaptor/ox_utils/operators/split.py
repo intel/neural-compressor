@@ -43,7 +43,10 @@ class SplitOperator(Operator):
         node = self.node
         assert convert_format in ["static"], "convert format for {} should be in ['static']".format(node.op_type)
 
-        parent = self.quantizer.model.get_parents(node)[0]
+        parents = self.quantizer.model.get_parents(node)
+        if len(parents) == 0:
+            return False
+        parent = parents[0]
         children = self.quantizer.model.get_children(node)
         if (
             parent.op_type != "DequantizeLinear" or len(children) == 0 or not node.name.endswith("_quant")

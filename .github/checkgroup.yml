@@ -1,0 +1,205 @@
+custom_service_name: "CI checker"
+subprojects:
+  - id: "Code Scan Tests workflow"
+    paths:
+      - "neural_compressor/**"
+      - "setup.py"
+      - "requirements.txt"
+      - ".azure-pipelines/code-scan.yml"
+      - ".azure-pipelines/scripts/codeScan/**"
+    checks:
+      - "Code-Scan"
+      - "Code-Scan (Bandit Code Scan Bandit)"
+      - "Code-Scan (DocStyle Code Scan DocStyle)"
+      - "Code-Scan (Pylint Code Scan Pylint)"
+
+  - id: "Code Scan Neural-Insights Tests workflow"
+    paths:
+      - "neural_insights/**"
+      - "setup.py"
+      - ".azure-pipelines/code-scan-neural-insights.yml"
+    checks:
+      - "Code-Scan-Neural-Insights"
+      - "Code-Scan-Neural-Insights (Bandit Code Scan Bandit)"
+      - "Code-Scan-Neural-Insights (DocStyle Code Scan DocStyle)"
+      - "Code-Scan-Neural-Insights (Pylint Code Scan Pylint)"
+
+  - id: "Code Scan Neural-Solution Tests workflow"
+    paths:
+      - "neural_solution/**"
+      - "setup.py"
+      - ".azure-pipelines/code-scan-neural-solution.yml"
+    checks:
+      - "Code-Scan-Neural-Solution"
+      - "Code-Scan-Neural-Solution (Bandit Code Scan Bandit)"
+      - "Code-Scan-Neural-Solution (DocStyle Code Scan DocStyle)"
+      - "Code-Scan-Neural-Solution (Pylint Code Scan Pylint)"
+
+  - id: "Model Tests workflow"
+    paths:
+      - "neural_compressor/**"
+      - "setup.py"
+      - "requirements.txt"
+      - ".azure-pipelines/scripts/models/**"
+      - "examples/tensorflow/oob_models/quantization/ptq/**"
+      - "!test"
+      - "!neural_compressor/common/**"
+      - "!neural_compressor/torch/**"
+      - "!neural_compressor/tensorflow/**"
+      - "!neural_compressor/onnxrt/**"
+    checks:
+      - "Model-Test"
+      - "Model-Test (Generate Report GenerateReport)"
+      - "Model-Test (Run ONNX Model resnet50-v1-12)"
+      - "Model-Test (Run PyTorch Model resnet18)"
+      - "Model-Test (Run PyTorch Model resnet18_fx)"
+      - "Model-Test (Run TensorFlow Model darknet19)"
+      - "Model-Test (Run TensorFlow Model inception_v1)"
+      - "Model-Test (Run TensorFlow Model resnet-101)"
+      - "Model-Test (Run TensorFlow Model resnet50v1.5)"
+      - "Model-Test (Run TensorFlow Model ssd_mobilenet_v1_ckpt)"
+      - "Model-Test (Run TensorFlow Model ssd_resnet50_v1)"
+
+  - id: "Model Tests 3x workflow"
+    paths:
+      - "neural_compressor/common/**"
+      - "neural_compressor/torch/**"
+      - "setup.py"
+      - "requirements_pt.txt"
+      - ".azure-pipelines/scripts/models/**"
+    checks:
+      - "Model-Test-3x"
+      - "Model-Test-3x (Generate Report GenerateReport)"
+      - "Model-Test-3x (Run PyTorch Model opt_125m_woq_gptq_int4)"
+      - "Model-Test-3x (Run PyTorch Model opt_125m_woq_gptq_int4_dq_bnb)"
+      - "Model-Test-3x (Run PyTorch Model opt_125m_woq_gptq_int4_dq_ggml)"
+
+  - id: "Unit Tests basic workflow"
+    paths:
+      - "neural_compressor/**"
+      - "test/**"
+      - "setup.py"
+      - "requirements.txt"
+      - ".azure-pipelines/scripts/ut/**"
+      - "!test/neural_coder/**"
+      - "!test/3x/**"
+      - "!neural_compressor/common/**"
+      - "!neural_compressor/torch/**"
+      - "!neural_compressor/tensorflow/**"
+      - "!neural_compressor/onnxrt/**"
+      - "!.azure-pipelines/scripts/ut/3x/**"
+    checks:
+      - "UT-Basic"
+      - "UT-Basic (Coverage Compare CollectDatafiles)"
+      - "UT-Basic (Unit Test FWKs adaptor Test FWKs adaptor)"
+      - "UT-Basic (Unit Test FWKs adaptor baseline Test FWKs adaptor baseline)"
+      - "UT-Basic (Unit Test ITEX Test ITEX)"
+      - "UT-Basic (Unit Test ITEX baseline Test ITEX baseline)"
+      - "UT-Basic (Unit Test Pruning Test PyTorch Pruning)"
+      - "UT-Basic (Unit Test Pruning Test TensorFlow Pruning)"
+      - "UT-Basic (Unit Test Pruning baseline Test PyTorch Pruning baseline)"
+      - "UT-Basic (Unit Test Pruning baseline Test TensorFlow Pruning baseline)"
+      - "UT-Basic (Unit Test TF newAPI Test TF newAPI)"
+      - "UT-Basic (Unit Test TF newAPI baseline Test TF newAPI baseline)"
+      - "UT-Basic (Unit Test User facing API Test User facing API)"
+      - "UT-Basic (Unit Test User facing API baseline Test User facing API baseline)"
+      - "UT-Basic (Unit Test other basic case Test other basic case)"
+      - "UT-Basic (Unit Test other cases baseline Test other cases baseline)"
+
+  - id: "Unit Tests basic no coverage workflow"
+    paths:
+      - "neural_compressor/**"
+      - "test/**"
+      - "setup.py"
+      - "requirements.txt"
+      - ".azure-pipelines/scripts/ut/**"
+      - "!test/neural_coder/**"
+      - "!test/3x/**"
+      - "!neural_compressor/common/**"
+      - "!neural_compressor/torch/**"
+      - "!neural_compressor/tensorflow/**"
+      - "!neural_compressor/onnxrt/**"
+      - "!.azure-pipelines/scripts/ut/3x/**"
+    checks:
+      - "UT-Basic-No-Coverage"
+      - "UT-Basic-No-Coverage (Unit Test FWKs adaptor Test FWKs adaptor)"
+      - "UT-Basic-No-Coverage (Unit Test Pruning Test PyTorch Pruning)"
+      - "UT-Basic-No-Coverage (Unit Test Pruning Test TensorFlow Pruning)"
+      - "UT-Basic-No-Coverage (Unit Test User facing API Test User facing API)"
+      - "UT-Basic-No-Coverage (Unit Test other basic case Test other basic case)"
+
+  - id: "Unit Tests ITREX workflow"
+    paths:
+      - "neural_compressor/**"
+      - "setup.py"
+      - "requirements.txt"
+      - ".azure-pipelines/scripts/ut/run_itrex.sh"
+      - ".azure-pipelines/ut-itrex.yml"
+      - "!neural_compressor/common/**"
+      - "!neural_compressor/torch/**"
+      - "!neural_compressor/tensorflow/**"
+    checks:
+      - "UT-ITREX"
+
+  - id: "Unit Tests Neural-Insights workflow"
+    paths:
+      - "neural_insights/**"
+      - "setup.py"
+    checks:
+      - "UT-Neural-Insights"
+
+  - id: "Unit Tests Neural-Solution workflow"
+    paths:
+      - "neural_solution/**"
+      - "setup.py"
+    checks:
+      - "UT-Neural-Solution"
+
+  - id: "Unit Tests Neural-Coder workflow"
+    paths:
+      - "neural_coder/**"
+      - "test/neural_coder/**"
+      - "setup.py"
+    checks:
+      - "UT-Coder"
+
+  - id: "Unit Tests 3x-TensorFlow workflow"
+    paths:
+      - "neural_compressor/common/**"
+      - "neural_compressor/tensorflow/**"
+      - "test/3x/tensorflow/**"
+      - "setup.py"
+      - "requirements_tf.txt"
+    checks:
+      - "UT-3x-TensorFlow"
+      - "UT-3x-TensorFlow (Coverage Compare CollectDatafiles)"
+      - "UT-3x-TensorFlow (Unit Test 3x TensorFlow Unit Test 3x TensorFlow)"
+      - "UT-3x-TensorFlow (Unit Test 3x TensorFlow baseline Unit Test 3x TensorFlow baseline)"
+
+  - id: "Unit Tests 3x-PyTorch workflow"
+    paths:
+      - "neural_compressor/common/**"
+      - "neural_compressor/torch/**"
+      - "test/3x/torch/**"
+      - "test/3x/common/**"
+      - "setup.py"
+      - "requirements_pt.txt"
+      - ".azure-pipelines/scripts/ut/3x/collect_log_3x.sh"
+    checks:
+      - "UT-3x-Torch"
+      - "UT-3x-Torch (Coverage Compare CollectDatafiles)"
+      - "UT-3x-Torch (Unit Test 3x Torch Unit Test 3x Torch)"
+      - "UT-3x-Torch (Unit Test 3x Torch baseline Unit Test 3x Torch baseline)"
+
+  - id: "Unit Tests 3x-ONNXRT workflow"
+    paths:
+      - "neural_compressor/common/**"
+      - "neural_compressor/onnxrt/**"
+      - "test/3x/onnxrt/**"
+      - "setup.py"
+      - "requirements_ort.txt"
+    checks:
+      - "UT-3x-ONNXRT"
+      - "UT-3x-ONNXRT (Coverage Compare CollectDatafiles)"
+      - "UT-3x-ONNXRT (Unit Test 3x ONNXRT Unit Test 3x ONNXRT)"
+      - "UT-3x-ONNXRT (Unit Test 3x ONNXRT baseline Unit Test 3x ONNXRT baseline)"

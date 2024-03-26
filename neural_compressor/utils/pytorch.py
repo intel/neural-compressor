@@ -210,7 +210,6 @@ def load_weight_only(checkpoint_dir, model, layer_wise=False):
     Returns:
         (object): quantized model
     """
-    import neural_compressor  # for eval(config['module_type'])
     from neural_compressor.adaptor.torch_utils.model_wrapper import MulLinear
 
     weights_file = os.path.join(os.path.abspath(os.path.expanduser(checkpoint_dir)), "best_model.pt")
@@ -221,7 +220,7 @@ def load_weight_only(checkpoint_dir, model, layer_wise=False):
     for op_name, config in weight_only_config.items():
         if config["dtype"] == "fp32":
             continue
-        if eval(config["module_type"]) == MulLinear:
+        if config["module_type"] == MulLinear.__module__ + "." + MulLinear.__name__:
             # op should be repleced by MulLinear
             module = util.fetch_module(model, op_name)
             new_module = MulLinear(module)
@@ -498,6 +497,7 @@ def recover_model_from_json(model, json_file_path, example_inputs):
         model = ipex.quantization.prepare(model, qconfig, example_inputs=example_inputs, inplace=True)
     model.load_qconf_summary(qconf_summary=json_file_path)
     model = ipex.quantization.convert(model, inplace=True)
+    model.eval()
     with torch.no_grad():
         try:
             if isinstance(example_inputs, dict):

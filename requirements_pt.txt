@@ -1,2 +1,6 @@
+auto-round
+intel_extension_for_pytorch
+peft
+py-cpuinfo
 pydantic
 torch

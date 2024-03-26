@@ -756,7 +756,6 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
             tokenizer, seqlen=10, seed=42, train_bs=8, dataset_split="train", dataset_name="NeelNanda/pile-10k"
         )
         fp32_model = copy.deepcopy(self.gptj)
-
         conf = PostTrainingQuantConfig(
             approach="weight_only",
             op_type_dict={
@@ -778,11 +777,10 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
             recipes={
                 "autoround_args": {
                     "n_samples": 20,
-                    "amp": False,
                     "seq_len": 10,
                     "iters": 10,
                     "scale_dtype": "fp32",
-                    "device": "cpu",
+                    "amp": False,
                 },
             },
         )
@@ -800,6 +798,14 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         self.assertTrue("transformer.h.0.attn.k_proj" in q_model.autoround_config.keys())
         self.assertTrue("scale" in q_model.autoround_config["transformer.h.0.attn.k_proj"].keys())
         self.assertTrue(torch.float32 == q_model.autoround_config["transformer.h.0.attn.k_proj"]["scale_dtype"])
+
+        export_model = q_model.export_compressed_model()
+        export_out = export_model(input)
+        self.assertTrue(torch.allclose(out2[0], export_out[0]))
+        from auto_round.export.export_to_itrex.model_wrapper import WeightOnlyLinear
+
+        self.assertTrue(isinstance(q_model.model.transformer.h[0].attn.k_proj, WeightOnlyLinear))
+        self.assertTrue(isinstance(export_model.transformer.h[0].attn.k_proj, WeightOnlyLinear))
 
 
 if __name__ == "__main__":

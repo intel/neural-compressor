@@ -37,10 +37,9 @@ repos:
           )$
       - id: debug-statements
       - id: file-contents-sorter
-        files: |
+        exclude: |
           (?x)^(
-              .azure-pipelines/scripts/codeScan/pyspelling/inc_dict.txt|
-              .azure-pipelines/scripts/codeScan/pydocstyle/scan_path*.txt
+              examples/.+
           )$
         args: [--unique]
       - id: requirements-txt-fixer
@@ -143,7 +142,8 @@ repos:
           (?x)^(
               examples/.*(txt|patch)|
               examples/onnxrt/nlp/huggingface_model/text_generation/llama/quantization/ptq_static/prompt.json|
-              examples/notebook/dynas/ResNet50_Quantiation_Search_Supernet_NAS.ipynb
+              examples/notebook/dynas/ResNet50_Quantiation_Search_Supernet_NAS.ipynb|
+              examples/notebook/dynas/Transformer_LT_Supernet_NAS.ipynb
           )$
 
   - repo: https://github.com/astral-sh/ruff-pre-commit

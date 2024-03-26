@@ -29,7 +29,7 @@ steps:
     condition: succeededOrFailed()
     inputs:
       targetPath: .azure-pipelines/scripts/codeScan/scanLog/${{ parameters.uploadPath }}
-      artifact: ${{ parameters.codeScanFileName }}
+      artifact: $(System.JobAttempt)_${{ parameters.codeScanFileName }}
       publishLocation: "pipeline"
     displayName: "PublishPipelineArtifact"
 

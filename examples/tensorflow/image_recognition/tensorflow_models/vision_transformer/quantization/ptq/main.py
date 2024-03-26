@@ -52,7 +52,7 @@ arg_parser.add_argument('--iters', type=int, default=100, dest='iters', help='in
 arg_parser.add_argument('--int8', dest='int8', action='store_true', help='whether to use int8 model for benchmark')
 args = arg_parser.parse_args()
 
-def evaluate(model, eval_dataloader, metric, postprocess=None):
+def evaluate(model, eval_dataloader, postprocess=None):
     """Custom evaluate function to estimate the accuracy of the model.
 
     Args:
@@ -61,12 +61,14 @@ def evaluate(model, eval_dataloader, metric, postprocess=None):
     Returns:
         accuracy (float): evaluation result, the larger is better.
     """
+    from neural_compressor import METRICS
     from neural_compressor.model import Model
     model = Model(model)
     input_tensor = model.input_tensor
     output_tensor = model.output_tensor if len(model.output_tensor)>1 else \
                         model.output_tensor[0]
     iteration = -1
+    metric = METRICS('tensorflow')['topk']()
     if args.benchmark and args.mode == 'performance':
         iteration = args.iters
 
@@ -131,15 +133,33 @@ class eval_classifier_optimized_graph:
                 'filter': None
             }
             eval_dataloader = create_dataloader('tensorflow', eval_dataloader_args)
+            
+            excluded_op_type = {
+                                    'conv2d': {
+                                        'weight':{
+                                            'dtype':['fp32']
+                                        }, 
+                                        'activation':{
+                                            'dtype':['fp32']
+                                        } 
+                                    }
+                                }
+            excluded_op_name = {
+                        'StatefulPartitionedCall/vit/encoder/layer_._9/output/dense/Tensordot/MatMul': {
+                            'weight':{
+                                'dtype':['fp32']
+                            }, 
+                            'activation':{
+                                'dtype':['fp32']
+                            } 
+                        }
+                    }
 
-            conf = PostTrainingQuantConfig(calibration_sampling_size=[50, 100],
-                                           accuracy_criterion = AccuracyCriterion(tolerable_loss=0.01),
-                                           op_type_dict={'conv2d':{ 'weight':{'dtype':['fp32']}, 'activation':{'dtype':['fp32']} }}
-                                           )
-            from neural_compressor import METRICS
-            metrics = METRICS('tensorflow')
-            top1 = metrics['topk']()
-            from tensorflow.core.protobuf import saved_model_pb2
+            conf = PostTrainingQuantConfig(op_type_dict=excluded_op_type,
+                                           op_name_dict=excluded_op_name,
+                                           calibration_sampling_size=[50, 100],
+                                           accuracy_criterion = AccuracyCriterion(tolerable_loss=0.01))
+
             sm = saved_model_pb2.SavedModel()
             with tf.io.gfile.GFile(args.input_graph, "rb") as f:
                 sm.ParseFromString(f.read())
@@ -147,10 +167,9 @@ class eval_classifier_optimized_graph:
             from neural_compressor.data import TensorflowShiftRescale
             postprocess = TensorflowShiftRescale()
             def eval(model):
-                return evaluate(model, eval_dataloader, top1, postprocess)
-            q_model = quantization.fit(graph_def, conf=conf, calib_dataloader=calib_dataloader,
-                        # eval_dataloader=eval_dataloader, eval_metric=top1)
-                        eval_func=eval)
+                return evaluate(model, eval_dataloader, postprocess)
+            q_model = quantization.fit(graph_def, conf=conf, eval_func=eval,
+                                            calib_dataloader=calib_dataloader)
             q_model.save(args.output_graph)
 
         if args.benchmark:
@@ -163,14 +182,10 @@ class eval_classifier_optimized_graph:
                 'filter': None
             }
             dataloader = create_dataloader('tensorflow', dataloader_args)
-            from neural_compressor import METRICS
-            metrics = METRICS('tensorflow')
-            top1 = metrics['topk']()
 
             if args.int8 or args.input_graph.endswith("-tune.pb"):
                 input_graph = args.input_graph
             else:
-                from tensorflow.core.protobuf import saved_model_pb2
                 sm = saved_model_pb2.SavedModel()
                 with tf.io.gfile.GFile(args.input_graph, "rb") as f:
                     sm.ParseFromString(f.read())
@@ -180,7 +195,7 @@ class eval_classifier_optimized_graph:
             from neural_compressor.data import TensorflowShiftRescale
             postprocess = TensorflowShiftRescale()
             def eval(model):
-                return evaluate(model, dataloader, top1, postprocess)
+                return evaluate(model, dataloader, postprocess)
 
             if args.mode == 'performance':
                 from neural_compressor.benchmark import fit
