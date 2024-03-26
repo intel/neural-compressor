@@ -18,13 +18,14 @@ import os
 import re
 from typing import Dict, List, Union
 
+import torch
+from packaging.version import Version
+
 try:
     import intel_extension_for_pytorch as ipex
     import prettytable as pt
 except:
     pass
-import torch
-from packaging.version import Version
 
 from neural_compressor.common.utils import DEFAULT_WORKSPACE
 from neural_compressor.torch.utils import get_ipex_version, get_torch_version, logger
@@ -50,7 +51,6 @@ unify_op_type_mapping_ipex = {
     "re": {"<built-in method matmul of type object at": "matmul"},
 }
 
-
 BLOCK_PATTERNS = [
     # [['OP_TYPE1', NUM_OPS], ['OP_TYPE2', NUM_OPS], ...]
     [["Linear", 4], ["Linear", 4]],  # TODO add model name
@@ -61,6 +61,288 @@ BLOCK_PATTERNS = [
     [["Linear", 4], ["Linear", 1], ["Linear", 1]],  # Bert
     [["Linear", 4], ["Linear", 4], ["Linear", 2]],  # T5-Decoder
 ]
+
+
+def cfg_to_qconfig(tune_cfg, cfgs, default_cfgs, fuse_ops):  # pragma: no cover
+    assert cfgs is not None, "No configure for IPEX int8 model..."
+    for key in tune_cfg["op"]:
+        try:
+            scheme = tune_cfg["op"][key]["activation"]["scheme"]
+        except:
+            scheme = "asym"
+        if scheme not in ["asym", "sym"]:
+            scheme = "asym"
+        break
+    for key in tune_cfg["op"]:
+        value = tune_cfg["op"][key]
+        pattern = get_pattern(key, fuse_ops)
+        assert isinstance(value, dict)
+        assert "activation" in value
+        if value["activation"]["dtype"] == "fp32":
+            if "weight" in value:
+                assert value["weight"]["dtype"] == "fp32"
+            for op_cfg in cfgs:
+                if op_cfg["id"] == key[0]:
+                    if key[1] in ["relu_", "add_"]:
+                        continue
+                    num_inputs = len(op_cfg["inputs_quantized"])
+                    num_outputs = len(op_cfg["outputs_quantized"])
+                    for i_num in range(num_inputs):
+                        op_cfg["inputs_quantized"][i_num] = False
+                    for o_num in range(num_outputs):
+                        op_cfg["outputs_quantized"][o_num] = False
+                    if pattern:
+                        if pattern[1] in ["relu_", "add_"]:
+                            continue
+                        tune_cfg["op"][pattern]["activation"]["dtype"] = "fp32"
+                        if "weight" in tune_cfg["op"][pattern]:
+                            tune_cfg["op"][pattern]["weight"]["dtype"] = "fp32"
+        else:
+            for op_cfg in cfgs:
+                if op_cfg["id"] == key[0]:
+                    if key[1] in ["relu_", "add_"]:
+                        continue
+                    num_inputs = len(op_cfg["inputs_quantized"])
+                    num_outputs = len(op_cfg["outputs_quantized"])
+                    for i_num in range(num_inputs):
+                        op_cfg["inputs_quantized"][i_num] = default_cfgs[key[0]]["inputs_quantized"][i_num]
+                    for o_num in range(num_outputs):
+                        op_cfg["outputs_quantized"][o_num] = default_cfgs[key[0]]["outputs_quantized"][o_num]
+    with open(ipex_config_path, "w") as write_f:
+        json.dump(cfgs, write_f)
+    if scheme == "asym":
+        return torch.per_tensor_affine
+    else:
+        return torch.per_tensor_symmetric
+
+
+def get_quantizable_ops_recursively(model, example_inputs):  # pragma: no cover
+    """Get all quantizable ops from model.
+
+    Args:
+        model (object): input model
+        example_inputs (dict|list|tuple|torch.Tensor): used to trace torch model.
+    Returns:
+        quantizable_ops (list): list of tuples of op_name and op_type.
+        cfgs (dict): dict of configuration
+    """
+    quantizable_ops = []
+    # group ops by position for transform-based model
+    detector = TransformerBasedModelBlockPatternDetector(model)
+    detect_result = detector.detect_block()
+    attention_block = detect_result.get("attention_blocks", None)
+    ffn_blocks = detect_result.get("ffn_blocks", None)
+    logger.info(f"Attention Blocks: {len(attention_block)}")
+    logger.info(f"FFN Blocks: {len(ffn_blocks)}")
+    if not os.path.exists(ipex_config_path):
+        assert isinstance(model, torch.nn.Module), "The model passed in is not the instance of torch.nn.Module"
+
+    if hasattr(model, "save_qconf_summary"):  # pragma: no cover
+        os.makedirs(os.path.dirname(ipex_config_path), exist_ok=True)
+        model.save_qconf_summary(qconf_summary=ipex_config_path)
+    else:
+        model.eval()
+
+        # create a quantization config file for intel pytorch extension model
+        os.makedirs(os.path.dirname(ipex_config_path), exist_ok=True)
+        assert example_inputs is not None, "IPEX need q_dataloader or example_inputs to prepare the model"
+        from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
+
+        if ipex_ver.release >= Version("2.1").release:
+            # HistogramObserver will cause a performance issue.
+            # static_qconfig = ipex.quantization.default_static_qconfig_mapping
+            qconfig = QConfig(
+                activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_channel_symmetric),
+            )
+            from torch.ao.quantization import QConfigMapping
+
+            static_qconfig = QConfigMapping().set_global(qconfig)
+        else:
+            static_qconfig = QConfig(
+                activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_channel_symmetric),
+            )
+
+        if isinstance(example_inputs, dict):
+            model = ipex.quantization.prepare(model, static_qconfig, example_kwarg_inputs=example_inputs, inplace=True)
+        else:
+            model = ipex.quantization.prepare(model, static_qconfig, example_inputs=example_inputs, inplace=True)
+        simple_inference(model, example_inputs, iterations=1)
+        model.save_qconf_summary(qconf_summary=ipex_config_path)
+
+    map_op_name_to_fqn = {}
+    with open(ipex_config_path, "r") as f:
+        cfgs = json.load(f)
+        default_cfgs = {}
+        fuse_ops = []
+        if ipex_ver.release < Version("1.12.0").release:  # pragma: no cover
+            default_cfgs = copy.deepcopy(cfgs)
+            fuse_ops = get_fuse_ops(cfgs)
+            for op_cfg in cfgs:
+                if op_cfg["name"] in unify_op_type_mapping_ipex:
+                    quantizable_ops.append((op_cfg["id"], unify_op_type_mapping_ipex[op_cfg["name"]]))
+                else:
+                    re_flag = False
+                    for pattern, unify_op_type in unify_op_type_mapping_ipex["re"].items():
+                        if re.match(pattern, op_cfg["name"]):
+                            re_flag = True
+                            quantizable_ops.append((op_cfg["id"], unify_op_type))
+                            break
+                    if not re_flag:
+                        quantizable_ops.append((op_cfg["id"], op_cfg["name"]))
+        else:
+            (
+                ops_name,
+                op_infos_from_cfgs,
+                input_tensor_id_op_name,
+                output_tensor_id_op_name,
+            ) = paser_cfgs(cfgs)
+            quantizable_op_names = get_quantizable_ops_from_cfgs(ops_name, op_infos_from_cfgs, input_tensor_id_op_name)
+            for name in quantizable_op_names:
+                # name : list
+                if len(name) == 1:
+                    module_key = name[0][0]
+                    op_cfg_id = name[0][2]
+                    ipex_op_type = cfgs[module_key]["q_op_infos"][op_cfg_id]["op_type"]
+                    module_fqn = cfgs[module_key]["q_op_infos"][op_cfg_id].get("fqn", None)
+
+                    if ipex_op_type in unify_op_type_mapping_ipex:
+                        quantizable_ops.append((tuple(name), unify_op_type_mapping_ipex[ipex_op_type]))
+                        map_op_name_to_fqn[(tuple(name), ipex_op_type)] = module_fqn
+                    else:
+                        re_flag = False
+                        for pattern, unify_op_type in unify_op_type_mapping_ipex["re"].items():
+                            if re.match(pattern, ipex_op_type):
+                                re_flag = True
+                                quantizable_ops.append((tuple(name), unify_op_type))
+                                map_op_name_to_fqn[(tuple(name), unify_op_type)] = module_fqn
+                                break
+                        if not re_flag:
+                            quantizable_ops.append((tuple(name), ipex_op_type))
+                            map_op_name_to_fqn[(tuple(name), ipex_op_type)] = module_fqn
+                else:
+                    op_type = ""
+                    for op_name in name:
+                        module_key = op_name[0]
+                        op_cfg_id = op_name[2]
+                        single_op_type = cfgs[module_key]["q_op_infos"][op_cfg_id]["op_type"]
+                        if single_op_type in unify_op_type_mapping_ipex:
+                            single_op_type = unify_op_type_mapping_ipex[single_op_type]
+                        op_type += "&" + single_op_type if op_type else single_op_type
+                    quantizable_ops.append((tuple(name), op_type))
+                    _module_key = name[0][0]
+                    _op_cfg_id = name[0][2]
+                    module_fqn = cfgs[_module_key]["q_op_infos"][_op_cfg_id]["fqn"]
+                    map_op_name_to_fqn[(tuple(name), op_type)] = module_fqn
+
+    logger.debug("Map op name to fqn: ")
+    logger.debug(map_op_name_to_fqn)
+    logger.info("Attention Blocks : ")
+    logger.info(attention_block)
+    logger.info("FFN Blocks : ")
+    logger.info(ffn_blocks)
+    return quantizable_ops, cfgs, default_cfgs, fuse_ops
+
+
+def simple_inference(q_model, example_inputs, iterations=1):
+    """The function is used for ipex warm-up inference."""
+    for _ in range(iterations):
+        if isinstance(example_inputs, tuple) or isinstance(example_inputs, list):
+            q_model(*example_inputs)
+        elif isinstance(example_inputs, dict):
+            q_model(**example_inputs)
+        else:
+            q_model(example_inputs)
+
+
+def dump_model_op_stats(tune_cfg):
+    """This is a function to dump quantizable ops of model to user.
+
+    Args:
+        tune_cfg (dict): quantization config
+    Returns:
+        None
+    """
+    res = dict()
+    for k, v in tune_cfg["op"].items():
+        op_type_list = k[-1].split("><")
+        op_type = ""
+        for op in op_type_list:
+            if "class" in op:
+                op_type = (
+                    op[op.rfind(".") + 1 : op.rfind("'")]
+                    if op_type == ""
+                    else op_type + "&" + op[op.rfind(".") + 1 : op.rfind("'")]
+                )
+            elif "method" in op:
+                start = op.find("'") + 1
+                if start > 1:
+                    op_type = (
+                        op[start : op.find("'", start)]
+                        if op_type == ""
+                        else op_type + "&" + op[start : op.find("'", start)]
+                    )
+                else:
+                    start = op.find("method") + 7
+                    op_type = (
+                        op[start : op.find(" ", start)]
+                        if op_type == ""
+                        else op_type + "&" + op[start : op.find(" ", start)]
+                    )
+            else:
+                op_type = op if op_type == "" else op_type + "&" + op
+        if op_type not in res.keys():
+            res[op_type] = {"INT8": 0, "BF16": 0, "FP32": 0}
+        if v["weight"]["dtype"] == "int8":
+            res[op_type]["INT8"] += 1
+        elif v["weight"]["dtype"] == "fp32":
+            res[op_type]["FP32"] += 1
+
+    output_data = [
+        [op_type, sum(res[op_type].values()), res[op_type]["INT8"], res[op_type]["BF16"], res[op_type]["FP32"]]
+        for op_type in res.keys()
+    ]
+
+    Statistics(
+        output_data, header="Mixed Precision Statistics", field_names=["Op Type", "Total", "INT8", "BF16", "FP32"]
+    ).print_stat()
+
+
+def get_fuse_ops(default_cfgs):  # pragma: no cover
+    elt_wise = ["relu", "sigmoid", "gelu"]
+    inplace_ops = ["relu_", "add_"]
+    op_patterns = []
+    num_ops = len(default_cfgs)
+    for cur_id in range(num_ops):
+        cur_op = default_cfgs[cur_id]["name"]
+        if cur_op == "dropout":
+            continue
+        inputs = default_cfgs[cur_id]["inputs_flow"]
+        num_input = len(inputs)
+        pre_ops = {}
+        for i_num in range(num_input):
+            inp = inputs[i_num]
+            for pre_id in range(cur_id):
+                pre_op = default_cfgs[pre_id]["name"]
+                pre_out = default_cfgs[pre_id]["outputs_flow"]
+                num_out = len(pre_out)
+                for o_num in range(num_out):
+                    if pre_out[o_num] == inp:
+                        if cur_op in inplace_ops and (pre_op in ["conv2d", "conv3d", "linear"]):
+                            op_patterns.append([(pre_id, pre_op), (cur_id, cur_op)])
+                        if cur_op in elt_wise and (pre_op in ["conv2d", "conv3d", "linear", "add"]):
+                            op_patterns.append([(pre_id, pre_op), (cur_id, cur_op)])
+                        if cur_op == "add":
+                            pre_ops[i_num] = [pre_id, pre_op]
+        if len(pre_ops) > 0:
+            for key, value in pre_ops.items():
+                if (
+                    value[1] in ["conv2d", "conv3d", "linear"]
+                    and default_cfgs[cur_id]["inputs_quantized"][key] is False
+                ):
+                    op_patterns.append([(value[0], value[1]), (cur_id, cur_op)])
+    return op_patterns
 
 
 def get_depth(d) -> int:
@@ -219,294 +501,49 @@ def get_pattern(fallback_op, fuse_ops):  # pragma: no cover
     return None
 
 
-def simple_inference(q_model, example_inputs, iterations=1):
-    """The function is used for ipex warm-up inference."""
-    for _ in range(iterations):
-        if isinstance(example_inputs, tuple) or isinstance(example_inputs, list):
-            q_model(*example_inputs)
-        elif isinstance(example_inputs, dict):
-            q_model(**example_inputs)
-        else:
-            q_model(example_inputs)
+class Statistics:  # pragma: no cover
+    """The statistics printer."""
+
+    def __init__(self, data, header, field_names, output_handle=logger.info):
+        """Init a Statistics object.
+
+        Args:
+            data: The statistics data
+            header: The table header
+            field_names: The field names
+            output_handle: The output logging method
+        """
+        self.field_names = field_names
+        self.header = header
+        self.data = data
+        self.output_handle = output_handle
+        self.tb = pt.PrettyTable(min_table_width=40)
+
+    def print_stat(self):
+        """Print the statistics."""
+        valid_field_names = []
+        for index, value in enumerate(self.field_names):
+            if index < 2:
+                valid_field_names.append(value)
+                continue
+
+            if any(i[index] for i in self.data):
+                valid_field_names.append(value)
+        self.tb.field_names = valid_field_names
+        for i in self.data:
+            tmp_data = []
+            for index, value in enumerate(i):
+                if self.field_names[index] in valid_field_names:
+                    tmp_data.append(value)
+            if any(tmp_data[1:]):
+                self.tb.add_row(tmp_data)
+        lines = self.tb.get_string().split("\n")
+        self.output_handle("|" + self.header.center(len(lines[0]) - 2, "*") + "|")
+        for i in lines:
+            self.output_handle(i)
 
 
-def cfg_to_qconfig(tune_cfg, cfgs, default_cfgs, fuse_ops):  # pragma: no cover
-    assert cfgs is not None, "No configure for IPEX int8 model..."
-    for key in tune_cfg["op"]:
-        try:
-            scheme = tune_cfg["op"][key]["activation"]["scheme"]
-        except:
-            scheme = "asym"
-        if scheme not in ["asym", "sym"]:
-            scheme = "asym"
-        break
-    for key in tune_cfg["op"]:
-        value = tune_cfg["op"][key]
-        pattern = get_pattern(key, fuse_ops)
-        assert isinstance(value, dict)
-        assert "activation" in value
-        if value["activation"]["dtype"] == "fp32":
-            if "weight" in value:
-                assert value["weight"]["dtype"] == "fp32"
-            for op_cfg in cfgs:
-                if op_cfg["id"] == key[0]:
-                    if key[1] in ["relu_", "add_"]:
-                        continue
-                    num_inputs = len(op_cfg["inputs_quantized"])
-                    num_outputs = len(op_cfg["outputs_quantized"])
-                    for i_num in range(num_inputs):
-                        op_cfg["inputs_quantized"][i_num] = False
-                    for o_num in range(num_outputs):
-                        op_cfg["outputs_quantized"][o_num] = False
-                    if pattern:
-                        if pattern[1] in ["relu_", "add_"]:
-                            continue
-                        tune_cfg["op"][pattern]["activation"]["dtype"] = "fp32"
-                        if "weight" in tune_cfg["op"][pattern]:
-                            tune_cfg["op"][pattern]["weight"]["dtype"] = "fp32"
-        else:
-            for op_cfg in cfgs:
-                if op_cfg["id"] == key[0]:
-                    if key[1] in ["relu_", "add_"]:
-                        continue
-                    num_inputs = len(op_cfg["inputs_quantized"])
-                    num_outputs = len(op_cfg["outputs_quantized"])
-                    for i_num in range(num_inputs):
-                        op_cfg["inputs_quantized"][i_num] = default_cfgs[key[0]]["inputs_quantized"][i_num]
-                    for o_num in range(num_outputs):
-                        op_cfg["outputs_quantized"][o_num] = default_cfgs[key[0]]["outputs_quantized"][o_num]
-    with open(ipex_config_path, "w") as write_f:
-        json.dump(cfgs, write_f)
-    if scheme == "asym":
-        return torch.per_tensor_affine
-    else:
-        return torch.per_tensor_symmetric
-
-
-def get_fuse_ops(default_cfgs):  # pragma: no cover
-    elt_wise = ["relu", "sigmoid", "gelu"]
-    inplace_ops = ["relu_", "add_"]
-    op_patterns = []
-    num_ops = len(default_cfgs)
-    for cur_id in range(num_ops):
-        cur_op = default_cfgs[cur_id]["name"]
-        if cur_op == "dropout":
-            continue
-        inputs = default_cfgs[cur_id]["inputs_flow"]
-        num_input = len(inputs)
-        pre_ops = {}
-        for i_num in range(num_input):
-            inp = inputs[i_num]
-            for pre_id in range(cur_id):
-                pre_op = default_cfgs[pre_id]["name"]
-                pre_out = default_cfgs[pre_id]["outputs_flow"]
-                num_out = len(pre_out)
-                for o_num in range(num_out):
-                    if pre_out[o_num] == inp:
-                        if cur_op in inplace_ops and (pre_op in ["conv2d", "conv3d", "linear"]):
-                            op_patterns.append([(pre_id, pre_op), (cur_id, cur_op)])
-                        if cur_op in elt_wise and (pre_op in ["conv2d", "conv3d", "linear", "add"]):
-                            op_patterns.append([(pre_id, pre_op), (cur_id, cur_op)])
-                        if cur_op == "add":
-                            pre_ops[i_num] = [pre_id, pre_op]
-        if len(pre_ops) > 0:
-            for key, value in pre_ops.items():
-                if (
-                    value[1] in ["conv2d", "conv3d", "linear"]
-                    and default_cfgs[cur_id]["inputs_quantized"][key] is False
-                ):
-                    op_patterns.append([(value[0], value[1]), (cur_id, cur_op)])
-    return op_patterns
-
-
-def dump_model_op_stats(tune_cfg):
-    """This is a function to dump quantizable ops of model to user.
-
-    Args:
-        tune_cfg (dict): quantization config
-    Returns:
-        None
-    """
-    res = dict()
-    for k, v in tune_cfg["op"].items():
-        op_type_list = k[-1].split("><")
-        op_type = ""
-        for op in op_type_list:
-            if "class" in op:
-                op_type = (
-                    op[op.rfind(".") + 1 : op.rfind("'")]
-                    if op_type == ""
-                    else op_type + "&" + op[op.rfind(".") + 1 : op.rfind("'")]
-                )
-            elif "method" in op:
-                start = op.find("'") + 1
-                if start > 1:
-                    op_type = (
-                        op[start : op.find("'", start)]
-                        if op_type == ""
-                        else op_type + "&" + op[start : op.find("'", start)]
-                    )
-                else:
-                    start = op.find("method") + 7
-                    op_type = (
-                        op[start : op.find(" ", start)]
-                        if op_type == ""
-                        else op_type + "&" + op[start : op.find(" ", start)]
-                    )
-            else:
-                op_type = op if op_type == "" else op_type + "&" + op
-        if op_type not in res.keys():
-            res[op_type] = {"INT8": 0, "BF16": 0, "FP32": 0}
-        if v["weight"]["dtype"] == "int8":
-            res[op_type]["INT8"] += 1
-        elif v["weight"]["dtype"] == "fp32":
-            res[op_type]["FP32"] += 1
-
-    output_data = [
-        [op_type, sum(res[op_type].values()), res[op_type]["INT8"], res[op_type]["BF16"], res[op_type]["FP32"]]
-        for op_type in res.keys()
-    ]
-
-    Statistics(
-        output_data, header="Mixed Precision Statistics", field_names=["Op Type", "Total", "INT8", "BF16", "FP32"]
-    ).print_stat()
-
-
-def get_quantizable_ops_recursively(model, example_inputs):
-    """Get all quantizable ops from model.
-
-    Args:
-        model (object): input model
-        example_inputs (dict|list|tuple|torch.Tensor): used to trace torch model.
-    Returns:
-        quantizable_ops (list): list of tuples of op_name and op_type.
-        cfgs (dict): dict of configuration
-    """
-    quantizable_ops = []
-    # group ops by position for transform-based model
-    from .utility import TransformerBasedModelBlockPatternDetector
-
-    detector = TransformerBasedModelBlockPatternDetector(model)
-    detect_result = detector.detect_block()
-    attention_block = detect_result.get("attention_blocks", None)
-    ffn_blocks = detect_result.get("ffn_blocks", None)
-    logger.info(f"Attention Blocks: {len(attention_block)}")
-    logger.info(f"FFN Blocks: {len(ffn_blocks)}")
-    if not os.path.exists(ipex_config_path):
-        assert isinstance(model, torch.nn.Module), "The model passed in is not the instance of torch.nn.Module"
-
-    if hasattr(model, "save_qconf_summary"):  # pragma: no cover
-        os.makedirs(os.path.dirname(ipex_config_path), exist_ok=True)
-        model.save_qconf_summary(qconf_summary=ipex_config_path)
-    else:
-        model.eval()
-
-        # create a quantization config file for intel pytorch extension model
-        os.makedirs(os.path.dirname(ipex_config_path), exist_ok=True)
-        assert example_inputs is not None, "IPEX need q_dataloader or example_inputs to prepare the model"
-        from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
-
-        if ipex_ver.release >= Version("2.1").release:
-            # HistogramObserver will cause a performance issue.
-            # static_qconfig = ipex.quantization.default_static_qconfig_mapping
-            qconfig = QConfig(
-                activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_affine, dtype=torch.quint8),
-                weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_channel_symmetric),
-            )
-            from torch.ao.quantization import QConfigMapping
-
-            static_qconfig = QConfigMapping().set_global(qconfig)
-        else:
-            static_qconfig = QConfig(
-                activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_affine, dtype=torch.quint8),
-                weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_channel_symmetric),
-            )
-
-        if isinstance(example_inputs, dict):
-            model = ipex.quantization.prepare(model, static_qconfig, example_kwarg_inputs=example_inputs, inplace=True)
-        else:
-            model = ipex.quantization.prepare(model, static_qconfig, example_inputs=example_inputs, inplace=True)
-        simple_inference(model, example_inputs, iterations=1)
-        model.save_qconf_summary(qconf_summary=ipex_config_path)
-
-    map_op_name_to_fqn = {}
-    with open(ipex_config_path, "r") as f:
-        cfgs = json.load(f)
-
-        from .utility import unify_op_type_mapping_ipex
-
-        default_cfgs = {}
-        fuse_ops = []
-        if ipex_ver.release < Version("1.12.0").release:  # pragma: no cover
-            default_cfgs = copy.deepcopy(cfgs)
-            fuse_ops = get_fuse_ops(cfgs)
-            for op_cfg in cfgs:
-                if op_cfg["name"] in unify_op_type_mapping_ipex:
-                    quantizable_ops.append((op_cfg["id"], unify_op_type_mapping_ipex[op_cfg["name"]]))
-                else:
-                    re_flag = False
-                    for pattern, unify_op_type in unify_op_type_mapping_ipex["re"].items():
-                        if re.match(pattern, op_cfg["name"]):
-                            re_flag = True
-                            quantizable_ops.append((op_cfg["id"], unify_op_type))
-                            break
-                    if not re_flag:
-                        quantizable_ops.append((op_cfg["id"], op_cfg["name"]))
-        else:
-            (
-                ops_name,
-                op_infos_from_cfgs,
-                input_tensor_id_op_name,
-                output_tensor_id_op_name,
-            ) = paser_cfgs(cfgs)
-            quantizable_op_names = get_quantizable_ops_from_cfgs(ops_name, op_infos_from_cfgs, input_tensor_id_op_name)
-            for name in quantizable_op_names:
-                # name : list
-                if len(name) == 1:
-                    module_key = name[0][0]
-                    op_cfg_id = name[0][2]
-                    ipex_op_type = cfgs[module_key]["q_op_infos"][op_cfg_id]["op_type"]
-                    module_fqn = cfgs[module_key]["q_op_infos"][op_cfg_id].get("fqn", None)
-
-                    if ipex_op_type in unify_op_type_mapping_ipex:
-                        quantizable_ops.append((tuple(name), unify_op_type_mapping_ipex[ipex_op_type]))
-                        map_op_name_to_fqn[(tuple(name), ipex_op_type)] = module_fqn
-                    else:
-                        re_flag = False
-                        for pattern, unify_op_type in unify_op_type_mapping_ipex["re"].items():
-                            if re.match(pattern, ipex_op_type):
-                                re_flag = True
-                                quantizable_ops.append((tuple(name), unify_op_type))
-                                map_op_name_to_fqn[(tuple(name), unify_op_type)] = module_fqn
-                                break
-                        if not re_flag:
-                            quantizable_ops.append((tuple(name), ipex_op_type))
-                            map_op_name_to_fqn[(tuple(name), ipex_op_type)] = module_fqn
-                else:
-                    op_type = ""
-                    for op_name in name:
-                        module_key = op_name[0]
-                        op_cfg_id = op_name[2]
-                        single_op_type = cfgs[module_key]["q_op_infos"][op_cfg_id]["op_type"]
-                        if single_op_type in unify_op_type_mapping_ipex:
-                            single_op_type = unify_op_type_mapping_ipex[single_op_type]
-                        op_type += "&" + single_op_type if op_type else single_op_type
-                    quantizable_ops.append((tuple(name), op_type))
-                    _module_key = name[0][0]
-                    _op_cfg_id = name[0][2]
-                    module_fqn = cfgs[_module_key]["q_op_infos"][_op_cfg_id]["fqn"]
-                    map_op_name_to_fqn[(tuple(name), op_type)] = module_fqn
-
-    logger.debug("Map op name to fqn: ")
-    logger.debug(map_op_name_to_fqn)
-    logger.info("Attention Blocks : ")
-    logger.info(attention_block)
-    logger.info("FFN Blocks : ")
-    logger.info(ffn_blocks)
-    return quantizable_ops, cfgs, default_cfgs, fuse_ops
-
-
-class TransformerBasedModelBlockPatternDetector:
+class TransformerBasedModelBlockPatternDetector:  # pragma: no cover
     """Detect the attention block and FFN block in transformer-based model."""
 
     def __init__(self, model: torch.nn.Module, pattern_lst: List[List[Union[str, int]]] = BLOCK_PATTERNS) -> None:
@@ -634,45 +671,3 @@ class TransformerBasedModelBlockPatternDetector:
                     if ffn_block:
                         ffn_block_lst.append(ffn_block)
         return attention_block_lst, ffn_block_lst
-
-
-class Statistics:
-    """The statistics printer."""
-
-    def __init__(self, data, header, field_names, output_handle=logger.info):
-        """Init a Statistics object.
-
-        Args:
-            data: The statistics data
-            header: The table header
-            field_names: The field names
-            output_handle: The output logging method
-        """
-        self.field_names = field_names
-        self.header = header
-        self.data = data
-        self.output_handle = output_handle
-        self.tb = pt.PrettyTable(min_table_width=40)
-
-    def print_stat(self):
-        """Print the statistics."""
-        valid_field_names = []
-        for index, value in enumerate(self.field_names):
-            if index < 2:
-                valid_field_names.append(value)
-                continue
-
-            if any(i[index] for i in self.data):
-                valid_field_names.append(value)
-        self.tb.field_names = valid_field_names
-        for i in self.data:
-            tmp_data = []
-            for index, value in enumerate(i):
-                if self.field_names[index] in valid_field_names:
-                    tmp_data.append(value)
-            if any(tmp_data[1:]):
-                self.tb.add_row(tmp_data)
-        lines = self.tb.get_string().split("\n")
-        self.output_handle("|" + self.header.center(len(lines[0]) - 2, "*") + "|")
-        for i in lines:
-            self.output_handle(i)

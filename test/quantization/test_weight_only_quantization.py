@@ -278,8 +278,6 @@ class TestAutoRoundWeightOnlyQuant(unittest.TestCase):
             model=model,
             tokenizer=self.tokenizer,
             n_samples=20,
-            device=device,
-            amp=False,
             seqlen=10,
             iters=10,
             scale_dtype="fp32",

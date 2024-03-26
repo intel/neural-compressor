@@ -45,7 +45,7 @@ stages:
               dockerConfigName: "commonDockerConfig"
               utScriptFileName: "run_basic_adaptor"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut-adaptor"
+              utArtifact: "ut_adaptor"
               utTestMode: "no-coverage"
               utContainerName: "utTest-no-coverage"
 
@@ -61,7 +61,7 @@ stages:
               dockerConfigName: "commonDockerConfig"
               utScriptFileName: "run_basic_api"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut-coverage-api"
+              utArtifact: "ut_api"
               utTestMode: "no-coverage"
               utContainerName: "utTest-no-coverage"
 
@@ -77,7 +77,7 @@ stages:
               dockerConfigName: "commonDockerConfig"
               utScriptFileName: "run_basic_pt_pruning"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut-coverage-pt-pruning"
+              utArtifact: "ut_pt-pruning"
               utTestMode: "no-coverage"
               utContainerName: "utTest-no-coverage"
       - job:
@@ -88,7 +88,7 @@ stages:
               dockerConfigName: "commonDockerConfig"
               utScriptFileName: "run_basic_tf_pruning"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut-coverage-tf-pruning"
+              utArtifact: "ut_tf-pruning"
               utTestMode: "no-coverage"
               utContainerName: "utTest-no-coverage"
 
@@ -104,6 +104,6 @@ stages:
               dockerConfigName: "commonDockerConfig"
               utScriptFileName: "run_basic_others"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut-others"
+              utArtifact: "ut_others"
               utTestMode: "no-coverage"
               utContainerName: "utTest-no-coverage"

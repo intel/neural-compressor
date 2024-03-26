@@ -33,12 +33,10 @@ else:
     from keras.layers.convolutional.base_separable_conv import SeparableConv  # pylint: disable=E0401
     from keras.utils import conv_utils  # pylint: disable=E0401
 
-
 if version1_gte_version2(tf.__version__, "2.16.1"):
     class QSeparableConv2D(BaseSeparableConv):
         def __init__(
             self,
-            name,
             filters,
             kernel_size,
             min_value,

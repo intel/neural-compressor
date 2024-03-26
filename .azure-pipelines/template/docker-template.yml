@@ -28,7 +28,7 @@ steps:
             echo "remove left files through container ..."
             docker exec ${{ parameters.containerName }} bash -c "ls -a /neural-compressor && rm -fr /neural-compressor/* && rm -fr /neural-compressor/.* && ls -a /neural-compressor  || true"
         fi
-    displayName: "Docker clean up"
+    displayName: "Docker workspace clean up"
 
   - ${{ if eq(parameters.dockerConfigName, 'commonDockerConfig') }}:
       - script: |

@@ -33,12 +33,21 @@ else:
     from keras.layers.convolutional.base_depthwise_conv import DepthwiseConv  # pylint: disable=E0401
     from keras.utils import conv_utils, tf_utils  # pylint: disable=E0401
 
-
 if version1_gte_version2(tf.__version__, "2.16.1"):
+
+<<<<<<< HEAD
+if version1_gte_version2(tf.__version__, "2.16.1"):
+=======
+>>>>>>> master
     class QDepthwiseConv2D(BaseDepthwiseConv):
         def __init__(
             self,
             kernel_size,
+<<<<<<< HEAD
+=======
+            min_value,
+            max_value,
+>>>>>>> master
             strides=(1, 1),
             padding="valid",
             depth_multiplier=1,
@@ -53,6 +62,7 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
             activity_regularizer=None,
             depthwise_constraint=None,
             bias_constraint=None,
+<<<<<<< HEAD
             min_value=None,
             max_value=None,
             **kwargs ):
@@ -140,6 +150,8 @@ else:
             bias_constraint=None,
             min_value=None,
             max_value=None,
+=======
+>>>>>>> master
             **kwargs
         ):
             super().__init__(
@@ -161,6 +173,7 @@ else:
                 bias_constraint=bias_constraint,
                 **kwargs
             )
+<<<<<<< HEAD
             self.min_value = min_value
             self.max_value = max_value
 
@@ -200,6 +213,121 @@ else:
 
             return outputs
 
+=======
+            self.min_value = json.loads(min_value)
+            self.max_value = json.loads(max_value)
+
+        def call(self, inputs):
+            # add the Q/DQ here
+            kernel, _, _ = quantization.quantize(
+                self.depthwise_kernel, self.min_value, self.max_value, tf.qint8, axis=3, mode="SCALED"
+            )
+            kernel = quantization.dequantize(
+                kernel,
+                self.min_value,
+                self.max_value,
+                axis=3,
+                mode="SCALED",
+            )
+
+            input_channel = self._get_input_channel(inputs.shape)
+            outputs = ops.depthwise_conv(
+                inputs,
+                self.kernel,
+                strides=self.strides,
+                padding=self.padding,
+                dilation_rate=self.dilation_rate,
+                data_format=self.data_format,
+            )
+
+            if self.use_bias:
+                if self.data_format == "channels_last":
+                    bias_shape = (1,) * (self.rank + 1) + (self.depth_multiplier * input_channel,)
+                else:
+                    bias_shape = (1, self.depth_multiplier * input_channel) + (1,) * self.rank
+                bias = ops.reshape(self.bias, bias_shape)
+                outputs += bias
+
+            if self.activation is not None:
+                return self.activation(outputs)
+            return outputs
+
+else:
+
+    class QDepthwiseConv2D(DepthwiseConv):
+        def __init__(
+            self,
+            kernel_size,
+            min_value,
+            max_value,
+            strides=(1, 1),
+            padding="valid",
+            depth_multiplier=1,
+            data_format=None,
+            dilation_rate=(1, 1),
+            activation=None,
+            use_bias=True,
+            depthwise_initializer="glorot_uniform",
+            bias_initializer="zeros",
+            depthwise_regularizer=None,
+            bias_regularizer=None,
+            activity_regularizer=None,
+            depthwise_constraint=None,
+            bias_constraint=None,
+            **kwargs
+        ):
+            super().__init__(
+                2,
+                kernel_size=kernel_size,
+                strides=strides,
+                padding=padding,
+                depth_multiplier=depth_multiplier,
+                data_format=data_format,
+                dilation_rate=dilation_rate,
+                activation=activation,
+                use_bias=use_bias,
+                depthwise_initializer=depthwise_initializer,
+                bias_initializer=bias_initializer,
+                depthwise_regularizer=depthwise_regularizer,
+                bias_regularizer=bias_regularizer,
+                activity_regularizer=activity_regularizer,
+                depthwise_constraint=depthwise_constraint,
+                bias_constraint=bias_constraint,
+                **kwargs
+            )
+            self.min_value = json.loads(min_value)
+            self.max_value = json.loads(max_value)
+
+        def call(self, inputs):
+            # add the Q/DQ here
+            kernel, _, _ = quantization.quantize(
+                self.depthwise_kernel, self.min_value, self.max_value, tf.qint8, axis=3, mode="SCALED"
+            )
+            kernel = quantization.dequantize(
+                kernel,
+                self.min_value,
+                self.max_value,
+                axis=3,
+                mode="SCALED",
+            )
+            outputs = tf.keras.backend.depthwise_conv2d(
+                inputs,
+                kernel,
+                strides=self.strides,
+                padding=self.padding,
+                data_format=self.data_format,
+                dilation_rate=self.dilation_rate,
+            )
+
+            if self.use_bias:
+                outputs = tf.keras.backend.bias_add(outputs, self.bias, data_format=self.data_format)
+
+            if self.activation is not None:
+                return self.activation(outputs)
+
+            return outputs
+
+>>>>>>> master
         @classmethod
         def from_config(cls, config):
             return cls(**config)
@@ -233,6 +361,7 @@ else:
                 return (input_shape[0], out_filters, rows, cols)
             elif self.data_format == "channels_last":
                 return (input_shape[0], rows, cols, out_filters)
+<<<<<<< HEAD
 
 
 def initialize_int8_depthwise_conv2d(fp32_layer):
@@ -297,3 +426,5 @@ def initialize_int8_depthwise_conv2d(fp32_layer):
         max_value=fp32_layer.max_value,
         **kwargs
     )
+=======
+>>>>>>> master

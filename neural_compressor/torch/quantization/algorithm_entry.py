@@ -18,13 +18,15 @@ from typing import Any, Callable, Dict, Tuple
 
 import torch
 
-from neural_compressor.common.utils import AWQ, FP8_QUANT, GPTQ, HQQ, RTN, STATIC_QUANT, TEQ
+from neural_compressor.common.utils import AUTOROUND, AWQ, FP8_QUANT, GPTQ, HQQ, RTN, SMOOTH_QUANT, STATIC_QUANT, TEQ
 from neural_compressor.torch.quantization import (
+    AutoRoundConfig,
     AWQConfig,
     FP8Config,
     GPTQConfig,
     HQQConfig,
     RTNConfig,
+    SmoothQuantConfig,
     StaticQuantConfig,
     TEQConfig,
 )
@@ -119,9 +121,9 @@ def static_quant_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], StaticQuantConfig], *args, **kwargs
 ) -> torch.nn.Module:
     logger.info("Quantize model with the static quant algorithm.")
-    from neural_compressor.torch.algorithms.static_quant import static_quantize
+    from neural_compressor.torch.algorithms.static_quant import save, static_quantize
 
-    # rebuild tune_cfg for static_quantize function
+    # convert the user config into internal format
     quant_config_mapping = {}
     cfgs = deepcopy(configs_mapping)
     quant_config_mapping["op"] = cfgs
@@ -155,6 +157,67 @@ def static_quant_entry(
         inplace=inplace,
     )
     logger.info("Static quantization done.")
+    q_model.ori_save = q_model.save
+    q_model.save = MethodType(save, q_model)
+    return q_model
+
+
+###################### Smooth Quant Algo Entry ##################################
+@register_algo(name=SMOOTH_QUANT)
+@torch.no_grad()
+def smooth_quant_entry(
+    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], SmoothQuantConfig], *args, **kwargs
+) -> torch.nn.Module:
+    logger.info("Quantize model with the smooth quant algorithm.")
+    from neural_compressor.torch.algorithms.smooth_quant import save, smooth_quantize
+
+    # convert the user config into internal format
+    quant_config_mapping = {}
+    cfgs = deepcopy(configs_mapping)
+    quant_config_mapping["op"] = cfgs
+    for (op_name, op_type), cfg in cfgs.items():
+        quant_config_mapping["op"][(op_name, op_type)] = {
+            "weight": {
+                "dtype": cfg.w_dtype,
+                "scheme": "sym",
+                "granularity": cfg.w_granularity,
+                "algorithm": cfg.w_algo,
+            },
+            "activation": {
+                "dtype": cfg.act_dtype,
+                "scheme": "sym" if cfg.act_sym else "asym",
+                "granularity": cfg.act_granularity,
+                "algorithm": cfg.act_algo,
+            },
+        }
+        quant_config_mapping["recipe_cfgs"] = {
+            "smooth_quant": True,
+            "smooth_quant_args": {
+                "alpha": cfg.alpha,
+                "folding": cfg.folding,
+                "scale_sharing": cfg.scale_sharing,
+                "auto_alpha_args": cfg.auto_alpha_args if cfg.auto_alpha_args is not None else {},
+            },
+            "layer_wise_quant_args": {},
+            "first_conv_or_matmul_quantization": True,
+            "last_conv_or_matmul_quantization": True,
+            "pre_post_process_quantization": True,
+        }
+
+    run_fn = kwargs.get("run_fn", None)
+    example_inputs = kwargs.get("example_inputs", None)
+    inplace = kwargs.get("inplace", True)
+    assert example_inputs is not None, "Please provide example_inputs for smooth quantization."
+    q_model = smooth_quantize(
+        model=model,
+        tune_cfg=quant_config_mapping,
+        run_fn=run_fn,
+        example_inputs=example_inputs,
+        inplace=inplace,
+    )
+    logger.info("Smooth quantization done.")
+    q_model.ori_save = q_model.save
+    q_model.save = MethodType(save, q_model)
     return q_model
 
 
@@ -267,6 +330,74 @@ def teq_quantize_entry(
         weight_config=weight_config,
     )
     logger.info("TEQ quantization done.")
+    return model
+
+
+###################### AUTOROUND Algo Entry ##################################
+@register_algo(name=AUTOROUND)
+def autoround_quantize_entry(
+    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], AutoRoundConfig], *args, **kwargs
+) -> torch.nn.Module:
+    from neural_compressor.torch.algorithms.weight_only import autoround_quantize
+
+    logger.info("Quantize model with the AutoRound algorithm.")
+    calib_func = kwargs.get("run_fn", None)
+    weight_config = {}
+    for (op_name, op_type), quant_config in configs_mapping.items():
+        if quant_config.name != AUTOROUND or quant_config.dtype == "fp32":
+            continue
+        else:
+            weight_config[op_name] = {
+                "data_type": quant_config.dtype,
+                "bits": quant_config.bits,
+                "sym": quant_config.use_sym,
+                "group_size": quant_config.group_size,
+            }
+            enable_full_range = quant_config.enable_full_range
+            batch_size = quant_config.batch_size
+            lr_scheduler = quant_config.lr_scheduler
+            use_quant_input = quant_config.use_quant_input
+            enable_minmax_tuning = quant_config.enable_minmax_tuning
+            lr = quant_config.lr
+            minmax_lr = quant_config.minmax_lr
+            low_gpu_mem_usage = quant_config.low_gpu_mem_usage
+            iters = quant_config.iters
+            seqlen = quant_config.seqlen
+            n_samples = quant_config.n_samples
+            sampler = quant_config.sampler
+            seed = quant_config.seed
+            n_blocks = quant_config.n_blocks
+            gradient_accumulate_steps = quant_config.gradient_accumulate_steps
+            not_use_best_mse = quant_config.not_use_best_mse
+            dynamic_max_gap = quant_config.dynamic_max_gap
+            scale_dtype = quant_config.scale_dtype
+
+    kwargs.pop("example_inputs")
+    model, autoround_config = autoround_quantize(
+        model=model,
+        weight_config=weight_config,
+        enable_full_range=enable_full_range,
+        batch_size=batch_size,
+        lr_scheduler=lr_scheduler,
+        use_quant_input=use_quant_input,
+        enable_minmax_tuning=enable_minmax_tuning,
+        lr=lr,
+        minmax_lr=minmax_lr,
+        low_gpu_mem_usage=low_gpu_mem_usage,
+        iters=iters,
+        seqlen=seqlen,
+        n_samples=n_samples,
+        sampler=sampler,
+        seed=seed,
+        n_blocks=n_blocks,
+        gradient_accumulate_steps=gradient_accumulate_steps,
+        not_use_best_mse=not_use_best_mse,
+        dynamic_max_gap=dynamic_max_gap,
+        scale_dtype=scale_dtype,
+        **kwargs
+    )
+    model.autoround_config = autoround_config
+    logger.info("AutoRound quantization done.")
     return model
 
 

@@ -66,5 +66,5 @@ def get_device(device_name="auto"):
     from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
     runtime_accelerator = auto_detect_accelerator(device_name)
-    device = runtime_accelerator.name()
+    device = runtime_accelerator.current_device_name()
     return device

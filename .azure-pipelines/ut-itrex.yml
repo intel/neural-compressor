@@ -12,6 +12,7 @@ pr:
       - setup.py
       - requirements.txt
       - .azure-pipelines/scripts/ut/run_itrex.sh
+      - .azure-pipelines/ut-itrex.yml
     exclude:
       - neural_compressor/common
       - neural_compressor/torch
@@ -33,5 +34,6 @@ stages:
               dockerConfigName: 'commonDockerConfig'
               utScriptFileName: 'run_itrex'
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: 'ut-itrex'
+              utArtifact: 'ut_itrex'
+              utTestMode: "no-coverage"
               utContainerName: "utTest-itrex"

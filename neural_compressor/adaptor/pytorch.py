@@ -1813,7 +1813,8 @@ class TemplateAdaptor(Adaptor):
             kwargs["percentile"] = percentile
         if scales_per_op is not None:
             kwargs["scales_per_op"] = scales_per_op
-        auto_alpha_args["init_alpha"] = default_alpha
+        if alpha == "auto":
+            auto_alpha_args["init_alpha"] = default_alpha
         model._model = self.sq.transform(
             alpha=alpha,
             folding=folding,
@@ -4912,13 +4913,11 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             weight_config[op_name]["data_type"] = config["weight"]["dtype"]
             weight_config[op_name]["bits"] = config["weight"]["bits"]
             weight_config[op_name]["group_size"] = config["weight"]["group_size"]
-            weight_config[op_name]["scheme"] = config["weight"]["scheme"]
+            weight_config[op_name]["sym"] = config["weight"]["scheme"] == "sym"
 
         # auto round recipes
         enable_full_range = self.recipes["autoround_args"].get("enable_full_range", False)
-        bs = self.recipes["autoround_args"].get("bs", 8)
-        amp = self.recipes["autoround_args"].get("amp", True)
-        device = self.recipes["autoround_args"].get("device", "cpu")
+        batch_size = self.recipes["autoround_args"].get("batch_size", 8)
         lr_scheduler = self.recipes["autoround_args"].get("lr_scheduler", None)
         dataset_name = self.recipes["autoround_args"].get("dataset_name", "NeelNanda/pile-10k")
         dataset_split = self.recipes["autoround_args"].get("dataset_split", "train")
@@ -4938,18 +4937,18 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         dynamic_max_gap = self.recipes["autoround_args"].get("dynamic_max_gap", -1)
         data_type = self.recipes["autoround_args"].get("data_type", "int")  ##only support data_type
         scale_dtype = self.recipes["autoround_args"].get("scale_dtype", "fp16")
+        amp = self.recipes["autoround_args"].get("amp", True)
 
         model, autoround_config = autoround_quantize(
             model=model,
             tokenizer=None,
             bits=4,
             group_size=128,
-            scheme="asym",
+            sym=False,
             weight_config=weight_config,
             enable_full_range=enable_full_range,
-            bs=bs,
+            batch_size=batch_size,
             amp=amp,
-            device=device,
             lr_scheduler=lr_scheduler,
             dataloader=dataloader,
             dataset_name=dataset_name,

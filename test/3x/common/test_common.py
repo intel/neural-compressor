@@ -49,7 +49,7 @@ from neural_compressor.common.base_config import (
     register_config,
     register_supported_configs_for_fwk,
 )
-from neural_compressor.common.base_tuning import ConfigLoader, ConfigSet, SequentialSampler
+from neural_compressor.common.base_tuning import ConfigLoader, ConfigSet, Evaluator, SequentialSampler
 from neural_compressor.common.tuning_param import TuningParam
 from neural_compressor.common.utils import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE
 
@@ -191,6 +191,30 @@ def get_all_config_set() -> Union[BaseConfig, List[BaseConfig]]:
 
 
 register_supported_configs_for_fwk(fwk_name=FAKE_FRAMEWORK_NAME)
+
+
+class TestEvaluator(unittest.TestCase):
+    def test_single_eval_fn(self):
+        def fake_eval_fn(model):
+            return 1.0
+
+        evaluator = Evaluator()
+        evaluator.set_eval_fn_registry(fake_eval_fn)
+        evaluator.self_check()
+        self.assertEqual(evaluator.get_number_of_eval_functions(), 1)
+
+    def test_single_eval_fn_dict(self):
+        acc_data = iter([1.0, 0.8, 0.99, 1.0, 0.99, 0.99])
+
+        def eval_acc_fn(model) -> float:
+            return next(acc_data)
+
+        eval_fns = {"eval_fn": eval_acc_fn, "weight": 0.5, "name": "accuracy"}
+
+        evaluator = Evaluator()
+        evaluator.set_eval_fn_registry(eval_fns)
+        evaluator.self_check()
+        self.assertEqual(evaluator.get_number_of_eval_functions(), 1)
 
 
 class TestBaseConfig(unittest.TestCase):

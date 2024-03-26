@@ -23,11 +23,11 @@ sort run.sh -o run.sh
 cat run.sh | tee ${ut_log_name}
 echo "------UT start-------"
 bash -x run.sh 2>&1 | tee -a ${ut_log_name}
-cp .coverage ${LOG_DIR}/.coverage.tf_pruning
 echo "------UT end -------"
 
 if [ $(grep -c "FAILED" ${ut_log_name}) != 0 ] || [ $(grep -c "core dumped" ${ut_log_name}) != 0 ] || [ $(grep -c "ModuleNotFoundError:" ${ut_log_name}) != 0 ] || [ $(grep -c "OK" ${ut_log_name}) == 0 ];then
     echo "Find errors in UT test, please check the output..."
     exit 1
 fi
+cp .coverage ${LOG_DIR}/.coverage.tf_pruning
 echo "UT finished successfully! "
