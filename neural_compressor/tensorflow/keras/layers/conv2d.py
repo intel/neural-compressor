@@ -83,9 +83,9 @@ class QConv2D(Conv):
         kernel_size = self.kernel.shape[-1]
 
         if not self.min_value:
-            self.min_value = [-10000]*kernel_size
+            self.min_value = [-10000] * kernel_size
         if not self.max_value:
-            self.max_value = [10000]*kernel_size
+            self.max_value = [10000] * kernel_size
 
         # add the Q/DQ here
         kernel, _, _ = quantization.quantize(

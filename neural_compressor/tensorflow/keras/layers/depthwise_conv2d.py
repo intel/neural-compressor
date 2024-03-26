@@ -34,6 +34,7 @@ else:
     from keras.utils import conv_utils, tf_utils  # pylint: disable=E0401
 
 if version1_gte_version2(tf.__version__, "2.16.1"):
+
     class QDepthwiseConv2D(BaseDepthwiseConv):
         def __init__(
             self,
@@ -54,7 +55,8 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
             bias_constraint=None,
             min_value=None,
             max_value=None,
-            **kwargs ):
+            **kwargs
+        ):
             super().__init__(
                 2,
                 kernel_size=kernel_size,
@@ -81,9 +83,9 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
             kernel_size = self.kernel.shape[-1]
 
             if not self.min_value:
-                self.min_value = [-10000]*kernel_size
+                self.min_value = [-10000] * kernel_size
             if not self.max_value:
-                self.max_value = [10000]*kernel_size
+                self.max_value = [10000] * kernel_size
 
             # add the Q/DQ here
             kernel, _, _ = quantization.quantize(
@@ -117,8 +119,10 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
 
             if self.activation is not None:
                 return self.activation(outputs)
-            return 
+            return
+
 else:
+
     class QDepthwiseConv2D(DepthwiseConv):
         def __init__(
             self,
@@ -167,9 +171,9 @@ else:
             depthwise_kernel_size = self.depthwise_kernel.shape[-1]
 
             if not self.min_value:
-                self.min_value = [-10000]*depthwise_kernel_size
+                self.min_value = [-10000] * depthwise_kernel_size
             if not self.max_value:
-                self.max_value = [10000]*depthwise_kernel_size
+                self.max_value = [10000] * depthwise_kernel_size
 
             # add the Q/DQ here
             kernel, _, _ = quantization.quantize(
