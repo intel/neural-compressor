@@ -57,7 +57,7 @@ eval_func(model)
 + save(model, args.calib_result)
 ```
 
-Whole scrip refer to [sample.py](../test/sample.py).
+Whole scrip refer to [sample.py](../../test/sample.py).
 
 First, measure the tensor quantization statistic:
 ```shell
