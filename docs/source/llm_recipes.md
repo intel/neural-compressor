@@ -37,4 +37,4 @@ This document aims to publish the specific recipes we achieved for the popular L
 > Notes:
 >
 > - This model list comes from [IPEX](https://intel.github.io/intel-extension-for-pytorch/cpu/latest/tutorials/llm.html).
-> - WOQ INT4 recipes will be published soon.
+> - The WIP recipes will be published soon.
