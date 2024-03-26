@@ -1,0 +1,9 @@
+accelerate>=0.16.0
+transformers>=4.25.1
+ftfy
+tensorboard
+Jinja2
+http://mlpc.intel.com/downloads/cpu/2023/2023_ww44_Internal/torch-2.2.0a0+git9955283-cp38-cp38-linux_x86_64.whl
+http://mlpc.intel.com/downloads/cpu/2023/2023_ww44_Internal/intel_extension_for_pytorch-2.2.0+gite027110-cp38-cp38-linux_x86_64.whl
+http://mlpc.intel.com/downloads/cpu/2023/2023_ww44/torchvision-0.17.0.dev20231102+cpu-cp38-cp38-linux_x86_64.whl 
+http://mlpc.intel.com/downloads/cpu/2023/2023_ww44_Internal/oneccl_bind_pt-2.2.0+cpu-cp38-cp38-linux_x86_64.whl
