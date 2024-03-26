@@ -21,8 +21,7 @@
 │   └── version.py
 ├── test
 │   └── sample.py
-│   ├── calib.json
-│   └── quantize.py
+│   └── quant_config.py
 
 
 ```
