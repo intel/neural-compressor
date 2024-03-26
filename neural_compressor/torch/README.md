@@ -103,6 +103,7 @@ class M(torch.nn.Module):
 model = M().to("hpu")
 
 + model = prepare(model, args.quant_config)
+eval_func(model)
 + save(model, args.calib_result)
 + model = convert(model, args.quant_config, args.calib_result)
 ```

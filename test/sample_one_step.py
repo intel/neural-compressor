@@ -56,6 +56,7 @@ if __name__ == "__main__":
     model = M().eval().to("hpu")
 
     model = prepare(model, args.quant_config)
+    eval_func(model)
     save(model, args.calib_result)
     model = convert(model, args.quant_config, args.calib_result)
     print(model)
