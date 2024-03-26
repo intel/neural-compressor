@@ -28,7 +28,7 @@
 
 ### Usage demo:
 
-#### python code:
+#### two steps to get quantized model
 
 ```diff
 import torch
@@ -81,4 +81,34 @@ python sample.py --calib --calib_result ./hqt_output/measure --quant_config=quan
 Then quantize the model based on previous measurements:
 ```shell
 python sample.py --quantize --calib_result ./hqt_output/measure --quant_config=quant_config.json
+```
+
+#### one step to get quantized model
+
+```diff
+import torch
++ from neural_compressor.torch import prepare, convert, save
+
+class M(torch.nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.fc1 = torch.nn.Linear(10, 5)
+        self.fc2 = torch.nn.Linear(5, 10)
+
+    def forward(self, inp):
+        x1 = self.fc1(inp)
+        x2 = self.fc2(x1)
+        return x2
+
+model = M().to("hpu")
+
++ model = prepare(model, args.quant_config)
++ save(model, args.calib_result)
++ model = convert(model, args.quant_config, args.calib_result)
+```
+
+Whole scrip and config refer to [sample_one_step.py](../../test/sample_one_step.py).
+
+```shell
+python sample_one_step.py --calib --quantize --calib_result ./hqt_output/measure --quant_config=quant_config.json
 ```
