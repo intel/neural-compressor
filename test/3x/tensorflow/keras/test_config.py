@@ -48,10 +48,10 @@ def build_model():
         [
             keras.layers.InputLayer(input_shape=(28, 28)),
             keras.layers.Reshape(target_shape=(28, 28, 1)),
-            keras.layers.Conv2D(filters=12, kernel_size=(3, 3), activation="relu"),
+            keras.layers.Conv2D(filters=12, kernel_size=(3, 3), activation="relu", name="conv2d"),
             keras.layers.MaxPooling2D(pool_size=(2, 2)),
             keras.layers.Flatten(),
-            keras.layers.Dense(10),
+            keras.layers.Dense(10, name="dense"),
         ]
     )
     # Train the digit classification model
@@ -128,9 +128,18 @@ class TestTF3xNewApi(unittest.TestCase):
         qmodel = quantize_model(fp32_model, get_default_static_quant_config(), calib_dataloader)
         self.assertIsNotNone(qmodel)
 
+        dense_checked = False
+        conv_checked = False
         for layer in qmodel.layers:
             if layer.name == "dense":
+                dense_checked = True
                 self.assertEqual(layer.__class__.__name__, "QDense")
+            if layer.name == "conv2d":
+                conv_checked = True
+                self.assertEqual(layer.__class__.__name__, "QConv2D")
+
+        self.assertEqual(dense_checked, True)
+        self.assertEqual(conv_checked, True)
 
     def test_static_quant_from_dict_beginner(self):
         logger.info("test_static_quant_from_dict_beginner")
@@ -153,9 +162,18 @@ class TestTF3xNewApi(unittest.TestCase):
         qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
         self.assertIsNotNone(qmodel)
 
+        dense_checked = False
+        conv_checked = False
         for layer in qmodel.layers:
             if layer.name == "dense":
+                dense_checked = True
                 self.assertEqual(layer.__class__.__name__, "QDense")
+            if layer.name == "conv2d":
+                conv_checked = True
+                self.assertEqual(layer.__class__.__name__, "QConv2D")
+
+        self.assertEqual(dense_checked, True)
+        self.assertEqual(conv_checked, True)
 
     def test_static_quant_from_class_default(self):
         logger.info("test_static_quant_from_class_default")
@@ -168,9 +186,18 @@ class TestTF3xNewApi(unittest.TestCase):
         qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
         self.assertIsNotNone(qmodel)
 
+        dense_checked = False
+        conv_checked = False
         for layer in qmodel.layers:
             if layer.name == "dense":
+                dense_checked = True
                 self.assertEqual(layer.__class__.__name__, "QDense")
+            if layer.name == "conv2d":
+                conv_checked = True
+                self.assertEqual(layer.__class__.__name__, "QConv2D")
+
+        self.assertEqual(dense_checked, True)
+        self.assertEqual(conv_checked, True)
 
     def test_static_quant_from_class_beginner(self):
         logger.info("test_static_quant_from_class_beginner")
@@ -190,9 +217,18 @@ class TestTF3xNewApi(unittest.TestCase):
         qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
         self.assertIsNotNone(qmodel)
 
+        dense_checked = False
+        conv_checked = False
         for layer in qmodel.layers:
             if layer.name == "dense":
+                dense_checked = True
                 self.assertEqual(layer.__class__.__name__, "QDense")
+            if layer.name == "conv2d":
+                conv_checked = True
+                self.assertEqual(layer.__class__.__name__, "QConv2D")
+
+        self.assertEqual(dense_checked, True)
+        self.assertEqual(conv_checked, True)
 
     def test_static_quant_from_dict_advance(self):
         logger.info("test_static_quant_from_dict_advance")
@@ -221,9 +257,18 @@ class TestTF3xNewApi(unittest.TestCase):
         qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
         self.assertIsNotNone(qmodel)
 
+        dense_checked = False
+        conv_checked = False
         for layer in qmodel.layers:
             if layer.name == "dense":
-                self.assertNotEqual(layer.__class__.__name__, "QDense")
+                dense_checked = True
+                self.assertEqual(layer.__class__.__name__, "QDense")
+            if layer.name == "conv2d":
+                conv_checked = True
+                self.assertEqual(layer.__class__.__name__, "QConv2D")
+
+        self.assertEqual(dense_checked, True)
+        self.assertEqual(conv_checked, True)
 
     def test_static_quant_from_class_advance(self):
         logger.info("test_static_quant_from_class_advance")
@@ -249,9 +294,18 @@ class TestTF3xNewApi(unittest.TestCase):
         qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
         self.assertIsNotNone(qmodel)
 
+        dense_checked = False
+        conv_checked = False
         for layer in qmodel.layers:
             if layer.name == "dense":
-                self.assertNotEqual(layer.__class__.__name__, "QDense")
+                dense_checked = True
+                self.assertEqual(layer.__class__.__name__, "QDense")
+            if layer.name == "conv2d":
+                conv_checked = True
+                self.assertEqual(layer.__class__.__name__, "QConv2D")
+
+        self.assertEqual(dense_checked, True)
+        self.assertEqual(conv_checked, True)
 
     def test_config_from_dict(self):
         logger.info("test_config_from_dict")
