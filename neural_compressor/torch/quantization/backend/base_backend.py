@@ -8,10 +8,9 @@ def backend_register(name):
         return backend
     return decorator
 
-def init_backend(model):
+def init_backend(quant_config):
     # according to model device and environment
-    if model.device == "hpu":
-        return BACKEND_REGISTRY["hqt"](model.qconfig)
+    return BACKEND_REGISTRY["hqt"](quant_config)
 
 class BaseBackend(ABC):
     def __init__(self, quant_config):

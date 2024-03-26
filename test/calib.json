@@ -1,0 +1,7 @@
+{
+    "method": "HOOKS",
+    "observer": "maxabs",
+    "whitelist": {"types": [], "names":  []},
+    "blacklist": {"types": [], "names":  []},
+    "dump_stats_path": "./hqt_output_in_config/measure"
+}

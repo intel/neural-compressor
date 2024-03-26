@@ -13,35 +13,31 @@
 # limitations under the License.
 
 import torch
+from pathlib import Path
 from neural_compressor.common.base_config import BaseConfig
 from neural_compressor.torch.quantization import init_backend
 from typing import Union
 
 
-def prepare(model: torch.nn.Module, quant_config: Union[BaseConfig, str, dict]):
+def prepare(model: torch.nn.Module, quant_config: Union[str, Path]):
     """Prepare the model for calibration.
 
     Insert observers into the model so that it can monitor the input and output tensors during calibration.
 
     Args:
         model (torch.nn.Module): origin model
-        quant_config (Union[BaseConfig, str, dict]): quantization config
+        quant_config (Union[str, Path]): path to quantization config
 
     Returns:
         model with observers
     """
-    # TODO: process quant_config according to its type
-
-    if _need_calibration():
-        backend = init_backend(model, quant_config)
-        model = backend.prepare(model)
-
-    # TODO: quant config should be assigned to model in `.qconfig` attribute.
-    model.qconfig = quant_config
+    backend = init_backend(quant_config)
+    model = backend.prepare(model)
+    setattr(model, "calib", True)
     return model
 
 
-def convert(model: torch.nn.Module):
+def convert(model: torch.nn.Module, quant_config, calib_result):
     """Convert the prepared model to a quantized model.
 
     Load the calibration results and apply post-processing to generate the quantized module.
@@ -50,32 +46,19 @@ def convert(model: torch.nn.Module):
     Args:
         model (torch.nn.Module): the prepared model
     """
-    if _need_convert():
-        backend = init_backend(model)
-        q_model = backend.convert(model)
-        return q_model
-    else:
-        return model
+    backend = init_backend(quant_config)
+    q_model = backend.convert(model, calib_result)
+    setattr(model, "quant", True)
+    return q_model
 
 
-def save_calibration_result(model: torch.nn.Module):
-    """Save calibration result to local file.
+def save(model, fname="./saved_results"):
+    if getattr(model, "calib", False):
+        from neural_compressor.torch.algorithms.habana_fp8 import save_calib_result
+        save_calib_result(model, fname)
+    if getattr(model, "quant", False):
+        from neural_compressor.torch.algorithms.habana_fp8 import save_fp8_model
+        save_fp8_model(model, fname)
 
-    Args:
-        model (torch.nn.Module): model with observers (output model of prepare() func)
-    """
-    if _need_calibration():
-        _save_calibration_results(model)
-    else:
-        return
-
-
-def _need_calibration():
-    return True
-
-def _need_convert():
-
-    return True
-
-def _save_calibration_results(model):
-    return
+def load(model, fname="./saved_results"):
+    pass

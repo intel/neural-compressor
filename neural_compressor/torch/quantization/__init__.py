@@ -19,4 +19,4 @@ from neural_compressor.torch.quantization.backend import (
     init_backend,
 )
 from neural_compressor.torch.quantization.config import FP8QuantConfig
-from neural_compressor.torch.quantization.quantize import prepare, convert, save_calibration_result
+from neural_compressor.torch.quantization.quantize import prepare, convert, save

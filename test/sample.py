@@ -1,5 +1,10 @@
 import torch
+import argparse
+import habana_frameworks.torch.core as htcore
 
+
+# 1. python sample.py --calib --calib_result ./hqt_output_2/measure --quant_config=calib.json
+# 2. python sample.py --quantize --calib_result ./hqt_output_2/measure --quant_config=quantize.json
 
 class M(torch.nn.Module):
     def __init__(self) -> None:
@@ -12,29 +17,53 @@ class M(torch.nn.Module):
         x2 = self.fc2(x1)
         return x2
 
-
-model = M().to("hpu")
-
-
 def eval_func(model):
     # user's eval func
-    pass
+    input = torch.randn(1, 10)
+    model(input.to("hpu"))
 
 
-from neural_compressor.torch import FP8QuantConfig, convert, prepare, save_calibration_result
+from neural_compressor.torch import convert, prepare, save
 
-quant_config = FP8QuantConfig()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Habana FP8 sample code.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument(
+        '--quantize',
+        action='store_true',
+        default=False,
+        help="whether to do quantization"
+    )
+    parser.add_argument(
+        '--calib',
+        action='store_true',
+        default=False,
+        help="whether to do calibration"
+    )
+    parser.add_argument(
+        '--quant_config',
+        type=str,
+        help="json file of quantization config"
+    )
+    parser.add_argument(
+        '--calib_result',
+        type=str,
+        help="where to dump calibration statistics"
+    )
+    args = parser.parse_args()
 
-# prepare the model for quantization if needed
-model = prepare(model, quant_config)
+    model = M().eval().to("hpu")
 
-# reuse user's eval func to do calibration
-eval_func(model)
+    if args.calib:
+        model = prepare(model, args.quant_config)
 
-# save calibration results to local file if needed
-save_calibration_result(model, quant_config)
+    if args.quantize:
+        model = convert(model, args.quant_config, args.calib_result)
+        print(model)
 
-# convert the origin model to a quantized model
-model = convert(model, quant_config)
+    eval_func(model)
 
-# ? have to call user's eval func again to evaluate quantized model
+    if args.calib_result:
+        save(model, args.calib_result)

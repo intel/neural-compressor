@@ -1,0 +1,8 @@
+{
+    "method": "HOOKS",
+    "observer": "maxabs",
+    "scale_method": "maxabs_hw",
+    "whitelist": {"types": [], "names":  []},
+    "blacklist": {"types": [], "names":  []},
+    "dump_stats_path": "./hqt_output/measure"
+}
