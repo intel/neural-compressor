@@ -32,7 +32,8 @@ def update_stats_path_in_config(old_stats_path, new_stats_path):
         config.cfg[key] = config.cfg[key].replace(old_stats_path, new_stats_path)
 
     # remove old dump_stats_path folder
-    os.removedirs(old_dump_stats_base_path)
+    if old_dump_stats_base_path != new_folder_name:
+        os.removedirs(old_dump_stats_base_path)
 
 def update_mode(calib_step=False, quant_step=False):
     from habana_quantization_toolkit._hook_method import config

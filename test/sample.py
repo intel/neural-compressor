@@ -3,8 +3,8 @@ import argparse
 import habana_frameworks.torch.core as htcore
 
 
-# 1. python sample.py --calib --calib_result ./hqt_output_2/measure --quant_config=calib.json
-# 2. python sample.py --quantize --calib_result ./hqt_output_2/measure --quant_config=quantize.json
+# 1. python sample.py --calib --calib_result ./hqt_output/measure --quant_config=quant_config.json
+# 2. python sample.py --quantize --calib_result ./hqt_output/measure --quant_config=quant_config.json
 
 class M(torch.nn.Module):
     def __init__(self) -> None:

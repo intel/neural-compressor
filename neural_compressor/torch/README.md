@@ -1,4 +1,4 @@
-file tree:
+### File tree:
 ```bash
 ├── neural_compressor
 │   ├── common
@@ -27,7 +27,9 @@ file tree:
 
 ```
 
-usage demo:
+### Usage demo:
+
+#### python code:
 
 ```diff
 import torch
@@ -57,14 +59,27 @@ eval_func(model)
 + save(model, args.calib_result)
 ```
 
-Whole scrip refer to [sample.py](../../test/sample.py).
+#### config json:
+```json
+{
+    "method": "HOOKS",
+    "observer": "maxabs",
+    "scale_method": "maxabs_hw",
+    "whitelist": {"types": [], "names":  []},
+    "blacklist": {"types": [], "names":  []},
+    "dump_stats_path": "./hqt_output/measure"
+}
+```
+> Note: `dump_stats_path` set in the json file will not work.
+
+Whole scrip and config refer to [sample.py](../../test/sample.py) and [quant_config.json](../../test/quant_config.json).
 
 First, measure the tensor quantization statistic:
 ```shell
-python sample.py --calib --calib_result ./hqt_output/measure --quant_config=calib.json
+python sample.py --calib --calib_result ./hqt_output/measure --quant_config=quant_config.json
 ```
 
 Then quantize the model based on previous measurements:
 ```shell
-python sample.py --quantize --calib_result ./hqt_output/measure --quant_config=quantize.json
+python sample.py --quantize --calib_result ./hqt_output/measure --quant_config=quant_config.json
 ```
