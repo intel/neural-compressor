@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2023 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,13 +16,11 @@
 # limitations under the License.
 
 import copy
-import math
-import re
+import json
 import os
 from collections import OrderedDict, UserDict
 from typing import Callable, Dict
 
-import keras
 import numpy as np
 import tensorflow as tf
 import yaml
@@ -42,36 +40,13 @@ from neural_compressor.tensorflow.keras.layers import (
     Quantize,
 )
 from neural_compressor.tensorflow.quantization.config import StaticQuantConfig
-from neural_compressor.tensorflow.utils import deep_get, dump_elapsed_time
-
-
-def _add_supported_quantized_objects(custom_objects):
-    """Map all the quantized objects."""
-    custom_objects["Quantize"] = Quantize
-    custom_objects["DeQuantize"] = DeQuantize
-    custom_objects["FakeQuant"] = FakeQuant
-    custom_objects["QConv2D"] = QConv2D
-    custom_objects["QDepthwiseConv2D"] = QDepthwiseConv2D
-    custom_objects["QSeparableConv2D"] = QSeparableConv2D
-    custom_objects["QDense"] = QDense
-    custom_objects["QMaxPool2D"] = QMaxPool2D
-    custom_objects["QAvgPool2D"] = QAvgPool2D
-    custom_objects["QMaxPooling2D"] = QMaxPool2D
-    custom_objects["QAveragePooling2D"] = QAvgPool2D
-    return custom_objects
+from neural_compressor.tensorflow.utils import deep_get, dump_elapsed_time, version1_gte_version2
 
 
 class KerasAdaptor:
     """The keras class of framework adaptor layer."""
 
-    def __init__(self, framework_specific_info):
-        self.framework_specific_info = framework_specific_info
-        self.approach = deep_get(self.framework_specific_info, "approach", False)
-        self.quantize_config = {"op_wise_config": {}}
-        self.device = self.framework_specific_info["device"]
-        self.backend = self.framework_specific_info["backend"]
-        self.recipes = deep_get(self.framework_specific_info, "recipes", {})
-        self.supported_op = [
+    supported_op = [
             "Conv2D",
             "Dense",
             "SeparableConv2D",
@@ -81,8 +56,31 @@ class KerasAdaptor:
             "AvgPool2D",
             "MaxPool2D",
         ]
+        
+    custom_layers = {
+        "Quantize": Quantize,
+        "DeQuantize": DeQuantize,
+        "FakeQuant": FakeQuant,
+        "QConv2D": QConv2D,
+        "QDepthwiseConv2D": QDepthwiseConv2D,
+        "QSeparableConv2D": QSeparableConv2D,
+        "QDense": QDense,
+        "QMaxPool2D": QMaxPool2D,
+        "QAvgPool2D": QAvgPool2D,
+        "QMaxPooling2D": QMaxPool2D,
+        "QAveragePooling2D": QAvgPool2D,
+    }
 
-        self.pre_optimized_object = None
+    def __init__(self, framework_specific_info):
+        """Initialize the KerasAdaptor class with framework specific information."""
+        self.framework_specific_info = framework_specific_info
+        self.approach = deep_get(self.framework_specific_info, "approach", False)
+        self.quantize_config = {"op_wise_config": {}}
+        self.device = self.framework_specific_info["device"]
+        self.backend = self.framework_specific_info["backend"]
+        self.recipes = deep_get(self.framework_specific_info, "recipes", {})
+
+        self.pre_optimized_model = None
         self.pre_optimizer_handle = None
         self.bf16_ops = []
         self.fp32_ops = []
@@ -93,10 +91,9 @@ class KerasAdaptor:
         self.callbacks = []
 
         self.conv_format = {}
-        self.layer_name_mapping = {}
-        self.input_layer_dict = {}
-        self.custom_layers = _add_supported_quantized_objects({})
-        self.tmp_dir = DEFAULT_WORKSPACE + "/tmp_saved_model_dir"
+        self.fold_conv = []
+        self.tmp_dir = (DEFAULT_WORKSPACE + "/tmp_model.keras") if version1_gte_version2(tf.__version__, "2.16.1") \
+                                                                else (DEFAULT_WORKSPACE + "/tmp_model")
 
     def _check_itex(self):
         """Check if the Intel® Extension for TensorFlow has been installed."""
@@ -108,74 +105,74 @@ class KerasAdaptor:
                 "Please install it to run models on ITEX backend"
             )
 
-    def tuning_cfg_to_fw(self, tuning_cfg):
-        """Parse tune_config and set framework variables."""
-        self.quantize_config["calib_iteration"] = tuning_cfg["calib_iteration"]
-        self.quantize_config["device"] = self.device
-        self.quantize_config["advance"] = deep_get(tuning_cfg, "advance")
-        fp32_ops = []
-        bf16_ops = []
-        bf16_type = set(self.query_handler.get_op_types_by_precision(precision="bf16"))
-        dispatched_op_names = [j[0] for j in tuning_cfg["op"]]
-        invalid_op_names = [i for i in self.quantize_config["op_wise_config"] if i not in dispatched_op_names]
+    def convert_bf16(self):
+        """Execute the BF16 conversion."""
+        tf.keras.mixed_precision.set_global_policy("mixed_bfloat16")
+        model = self.pre_optimized_model
 
-        for op_name in invalid_op_names:
-            self.quantize_config["op_wise_config"].pop(op_name)
+        for layer in model.layers:
+            if layer.name in self.bf16_ops:
+                layer.dtype = "mixed_bfloat16"
 
-        for each_op_info in tuning_cfg["op"]:
-            op_name = each_op_info[0]
+        model.save(self.tmp_dir)
+        converted_model = tf.keras.models.load_model(self.tmp_dir)
+        tf.keras.mixed_precision.set_global_policy("float32")
 
-            if tuning_cfg["op"][each_op_info]["activation"]["dtype"] == "bf16":
-                if each_op_info[1] in bf16_type:
-                    bf16_ops.append(op_name)
-                continue
+        return converted_model
 
-            if tuning_cfg["op"][each_op_info]["activation"]["dtype"] == "fp32":
-                if op_name in self.quantize_config["op_wise_config"]:
-                    self.quantize_config["op_wise_config"].pop(op_name)
-                    fp32_ops.append(op_name)
-                continue
+    # (TODO) choose the properly quantize mode
+    def _check_quantize_mode(self, model):
+        """Check what quantize mode to use."""
+        for layer in model.layers:
+            if "ReLU" in layer.__class__.__name__:
+                return "MIN_FIRST"
+        return "SCALED"
 
-            is_perchannel = False
-            bit = None
-            if "weight" in tuning_cfg["op"][each_op_info]:
-                is_perchannel = tuning_cfg["op"][each_op_info]["weight"]["granularity"] == "per_channel"
-                # bit = tuning_cfg['op'][each_op_info]['weight']['bit']
-            weight_bit = bit if bit else 7.0
-            algorithm = tuning_cfg["op"][each_op_info]["activation"]["algorithm"]
-            is_asymmetric = False
-            if "activation" in tuning_cfg["op"][each_op_info]:
-                is_asymmetric = tuning_cfg["op"][each_op_info]["activation"]["scheme"] == "asym"
-            self.quantize_config["op_wise_config"][op_name] = (is_perchannel, algorithm, is_asymmetric, weight_bit)
-        self.bf16_ops = bf16_ops
-        if self.bf16_ops:
-            self.bf16_ops.pop(-1)
-        self.fp32_ops = fp32_ops
-
-    def _pre_optimize(self, model):
-        """Apply pre-optimization."""
-        model = self._check_quantize_format(model)
-        model = self._fuse_bn(model)
-        return model
+    def _set_weights(self, qmodel, layer_weights):
+        """Set fp32 weights to qmodel"""
+        for qlayer in qmodel.layers:
+            if qlayer.get_weights():
+                if qlayer.name in layer_weights:
+                    qlayer.set_weights(layer_weights[qlayer.name])
+                else:
+                    hit_layer = False
+                    for sub_layer in qlayer.submodules:
+                        if sub_layer.name in layer_weights:
+                            qlayer.set_weights(layer_weights[sub_layer.name])
+                            hit_layer = True
+                            break
+                    if not hit_layer:
+                        raise ValueError("Can not match the module weights....")
+        return qmodel
 
     def _check_quantize_format(self, model):
         """The function that checks format for conv ops."""
+        input_layer_dict = {}
+        layer_name_mapping = {}
+        for layer in model.layers:
+            layer_name_mapping[layer.name] = layer
+            for node in layer._outbound_nodes:
+                layer_name = node.outbound_layer.name
+                if layer_name not in input_layer_dict:
+                    input_layer_dict[layer_name] = [layer.name]
+                else:
+                    input_layer_dict[layer_name].append(layer.name)
+
         for layer in model.layers:
             if layer.__class__.__name__ in self.supported_op:
                 self.conv_format[layer.name] = "s8"
-                input_layer_names = self.input_layer_dict[layer.name]
+                input_layer_names = input_layer_dict[layer.name]
                 for input_layer_name in input_layer_names:
-                    check_layer = self.layer_name_mapping[input_layer_name]
+                    check_layer = layer_name_mapping[input_layer_name]
                     if check_layer.__class__.__name__  == "Activation" \
                             and check_layer.activation.__name__ in ["relu"]:
                         self.conv_format[layer.name] = "u8"
                         break
 
-        return model
-
     def _fuse_bn(self, model):
         """Fusing Batch Normalization."""
-        fp32_layers = model.layers
+        fuse_bn_model = copy.deepcopy(model)
+        fp32_layers = fuse_bn_model.layers
 
         def fuse_conv_bn(conv_weight, bn_weight, conv_type="Conv2D", eps=1.0e-5):
             assert conv_type in [
@@ -222,7 +219,6 @@ class KerasAdaptor:
             return [depth_weight, weight, bias] if conv_type == "SeparableConv2D" else [weight, bias]
 
         fuse_layers = []
-        fold_conv = []
         for idx, layer in enumerate(fp32_layers):
             if hasattr(layer, "inbound_nodes"):
                 if layer.__class__.__name__ in ("BatchNormalization"):
@@ -232,10 +228,11 @@ class KerasAdaptor:
                         conv_layer = inbound_layer
                         conv_weight = self.conv_weights[conv_layer.name]
                         bn_weight = self.bn_weights[layer.name]
+
                         self.layer_weights[conv_layer.name] = fuse_conv_bn(
                             conv_weight, bn_weight, conv_layer.__class__.__name__, layer.epsilon
                         )
-                        fold_conv.append(conv_layer.name)
+                        self.fold_conv.append(conv_layer.name)
                     else:
                         fuse_layers.append(layer)
                 elif len(layer.inbound_nodes):
@@ -244,9 +241,10 @@ class KerasAdaptor:
                     if layer.__class__.__name__ in ("TFOpLambda", "SlicingOpLambda"):
                         fuse_layers.append(layer)
                     else:
-                        for bound_node in layer.inbound_nodes[0]:
+                        for bound_node in layer.inbound_nodes:
                             inbound_layer = bound_node.inbound_layers
-                            if inbound_layer in self.bn_weights.keys():
+
+                            if not isinstance(inbound_layer, list) and inbound_layer in self.bn_weights.keys():
                                 bn_inbound_node = inbound_layer.inbound_nodes[0]
                                 bn_inbound_layer = bn_inbound_node.inbound_layers
                                 if bn_inbound_layer.name in self.conv_weights.keys():
@@ -255,7 +253,10 @@ class KerasAdaptor:
                                     new_bound_nodes.append(bound_node)
                             else:
                                 new_bound_nodes.append(bound_node)
-                        layer.inbound_nodes = new_bound_nodes
+
+                        for idx, bound_node in enumerate(new_bound_nodes):
+                            layer.inbound_nodes[idx] = new_bound_nodes[idx]
+
                         fuse_layers.append(layer)
                 else:
                     fuse_layers.append(layer)
@@ -269,23 +270,31 @@ class KerasAdaptor:
                     conv_weight = self.conv_weights[conv_name]
                     bn_weight = self.bn_weights[layer.name]
                     conv_type = fp32_layers[idx - 1].__class__.__name__
+
                     self.layer_weights[conv_name] = fuse_conv_bn(
                         conv_weight, bn_weight, conv_type, layer.epsilon
                     )
-                    fold_conv.append(conv_name)
+                    self.fold_conv.append(conv_name)
                 else:
                     fuse_layers.append(layer)
 
-        # bn folding will have a shift bias
         for idx, layer in enumerate(fuse_layers):
             if (
                 layer.__class__.__name__ in ("Conv2D", "DepthwiseConv2D", "SeparableConv2D")
-                and layer.name in fold_conv
+                and layer.name in self.fold_conv
             ):
-                layer.use_bias = True
+                conv_config = layer.get_config()
+                conv_config["use_bias"] = True
+                conv_layer = type(layer).from_config(conv_config)
+                conv_layer._outbound_nodes.append(layer._outbound_nodes[0])
+                fuse_layers[idx] = conv_layer
 
-        fused_model = self._rebuild_model_from_layers(model, fuse_layers)
-        return fused_model
+        bn_surgery = KerasSurgery(model)
+        fused_model = bn_surgery.fuse_bn_layers(fuse_layers, self.conv_weights.keys())
+        fused_model = self._set_weights(fused_model, self.layer_weights)
+        fused_model.save(self.tmp_dir)
+
+        return tf.keras.models.load_model(self.tmp_dir)
 
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, quant_config, model, dataloader, iteration, q_func=None):
@@ -310,6 +319,7 @@ class KerasAdaptor:
 
         if self.backend == "itex":
             self._check_itex()
+
         logger.debug("Dump quantization configurations:")
         logger.debug(self.quantize_config)
         calib_sampling_size = tune_cfg.get("calib_sampling_size", 1)
@@ -324,9 +334,9 @@ class KerasAdaptor:
                 )
             )
 
-        q_layers = []
-        self.inbound_nodes_map = {}
-        for idx, layer in enumerate(copy.deepcopy(self.fp32_layers)):
+        fq_layers_dict = {}
+        fq_output_layers = {}
+        for idx, layer in enumerate(self.pre_optimized_model.layers):
             if (
                 layer.__class__.__name__ in self.supported_op
                 and layer.name in self.quantize_config["op_wise_config"]
@@ -338,76 +348,87 @@ class KerasAdaptor:
                                          T=self.conv_format[layer.name],
                                          mode="per_tensor"
                                          )
-                if hasattr(layer, "inbound_nodes"):
-                    fake_q_layer.inbound_nodes[0].inbound_layers = layer.inbound_nodes[0].inbound_layers
-                    layer.inbound_nodes[0].inbound_layers = fake_q_layer
-                    self.inbound_nodes_map[fake_q_name] = layer
+                fq_layers_dict[layer.name] = [fake_q_layer]
+                fq_output_layers[fake_q_layer.name] = layer.name
+        self.pre_optimized_model.save(self.tmp_dir)
 
-                q_layers.append(fake_q_layer)
-                q_layers.append(layer)
-            else:
-                q_layers.append(layer)
+        fq_surgery = KerasSurgery(self.pre_optimized_model)
+        calibration_model = fq_surgery.insert_quant_layers(fq_layers_dict)
+        calibration_model = self._set_weights(calibration_model, self.layer_weights)
 
-        quantized_model = self._rebuild_model_from_layers(self.pre_optimized_object, q_layers)
-        converted_model = self._calibrate(quantized_model, dataloader, self.quantize_config["calib_iteration"])
+        quantized_model = self._calibrate(calibration_model, 
+                                          dataloader, 
+                                          self.quantize_config["calib_iteration"],
+                                          fq_output_layers,
+                                          )
+        
+        return quantized_model
 
-        return converted_model
-
-    def _calibrate(self, model, dataloader, calib_interation):
-        """Apply calibration."""
+    def _calibrate(self, 
+                   model, 
+                   dataloader, 
+                   calib_interation, 
+                   fq_output_layers):
+        """Apply calibration.        
+        
+        Args:
+            model (tf.keras.Model): The model inserted with FakeQuant layers for calibration.
+            dataloader(object): The calibration dataloader used to load quantization dataset.
+            iteration(int): The iteration of calibration.
+            fq_output_layers (dict): A dict mapping from names of FakeQuant layers to 
+                names of their output layers.
+        """
         # run eagerly to fetch the numpy min/max
-        model.compile(run_eagerly=True)
         results = {}
+        model.compile(run_eagerly=True)
         for idx, (inputs, labels) in enumerate(dataloader):
-            outputs = model.predict_on_batch(inputs)
-            for layer in model.layers:
-                if layer.__class__.__name__ == "FakeQuant":
-                    min_value = layer.min_value
-                    max_value = layer.max_value
-                    if layer.name not in results:
-                        results[layer.name] = {"min": [min_value], "max": [max_value]}
+            _ = model.predict_on_batch(inputs)
+            json_model = copy.deepcopy(json.loads(model.to_json()))
+            config = json_model["config"]
+            layers = config["layers"]
+            for layer in layers:
+                if layer["class_name"] == "FakeQuant":
+                    min_value = layer["config"]["min_value"]
+                    max_value = layer["config"]["max_value"]
+                    assert min_value < max_value, "The min value must be lower than the max value in quantization."
+ 
+                    if layer["config"]["name"] not in results:
+                        results[layer["config"]["name"]] = {"min": [min_value], "max": [max_value]}
                     else:
-                        results[layer.name]["min"].append(min_value)
-                        results[layer.name]["max"].append(max_value)
+                        results[layer["config"]["name"]]["min"].append(min_value)
+                        results[layer["config"]["name"]]["max"].append(max_value)
             if idx + 1 == calib_interation:
                 break
 
-        q_layers = []
-        inbound_reverse_map = {}
+        qdq_layer_nums = 0
+        qdq_layers_dict = {}
+        quantized_layers_dict = {}
         for idx, layer in enumerate(model.layers):
             if layer.__class__.__name__ == "FakeQuant":
                 min_value = min(results[layer.name]["min"])
                 max_value = max(results[layer.name]["max"])
+
                 quantize_layer = Quantize(
-                    name = "quantize_" + str(idx),
+                    name = "quantize_" + str(qdq_layer_nums),
                     min_range = min_value,
                     max_range = max_value,
                     T = layer.T,
                 )
                 dequantize_layer = DeQuantize(
-                    name = "dequantize_" + str(idx),
+                    name = "dequantize_" + str(qdq_layer_nums),
                     min_range = min_value,
                     max_range = max_value,
                 )
 
-                if hasattr(layer, "inbound_nodes"):
-                    quantize_layer.inbound_nodes = layer.inbound_nodes
-                    dequantize_layer.inbound_nodes[0].inbound_layers = quantize_layer
-                    # find the conv/dense layer from fake quant map and
-                    # change the conv/dense node inbound to dequantize
-                    layer_name = self.inbound_nodes_map[layer.name].name
-                    inbound_reverse_map[layer_name] = dequantize_layer
-
-                q_layers.append(quantize_layer)
-                q_layers.append(dequantize_layer)
+                qdq_layer_nums += 1
+                output_layer_name = fq_output_layers[layer.name]
+                qdq_layers_dict[output_layer_name] = [quantize_layer, dequantize_layer]
             elif (
                 layer.__class__.__name__ in self.supported_op
                 and layer.name in self.quantize_config["op_wise_config"]
             ):
                 # index 0 is weight, index 1 is bias
                 q_layer_class = "Q" + layer.__class__.__name__
-                # this is for inbounds search
-                q_name = layer.name
                 # for layers that have weights
                 if layer.name in self.layer_weights:
                     kernel = self.layer_weights[layer.name][0]
@@ -416,6 +437,7 @@ class KerasAdaptor:
                     t_dim.extend(dim)
                     channel_size = kernel.shape[-1]
                     kernel_channel = kernel.transpose(t_dim).reshape(channel_size, -1)
+
                     layer.min_value = np.min(kernel_channel, axis=1).tolist()
                     layer.max_value = np.max(kernel_channel, axis=1).tolist()
                 else:
@@ -423,87 +445,20 @@ class KerasAdaptor:
                     # cause no kernel weights for this layer
                     layer.min_value = [-10000]
                     layer.max_value = [10000]
-                layer.name = q_name
-                layer_config = layer.get_config()
-                layer_config["name"] = q_name
-                q_layer = self.custom_layers[q_layer_class].from_config(layer_config)
-                if hasattr(layer, "inbound_nodes"):
-                    q_layer.inbound_nodes = inbound_reverse_map[layer.name]
-                q_layers.append(q_layer)
-            else:
-                q_layers.append(layer)
 
-        quantized_model = self._rebuild_model_from_layers(model ,q_layers)
-        return quantized_model
+                from neural_compressor.tensorflow.keras.layers import layer_initializer_dict
+            
+                q_layer = layer_initializer_dict[q_layer_class](layer)
+                quantized_layers_dict[layer.name] = q_layer
 
-    def convert_bf16(self):
-        """Execute the BF16 conversion."""
-        tf.keras.mixed_precision.set_global_policy("mixed_bfloat16")
-        model = self.pre_optimized_object
-
-        for layer in model.layers:
-            if layer.name in self.bf16_ops:
-                layer.dtype = "mixed_bfloat16"
-
-        model.save(self.tmp_dir)
-        converted_model = tf.keras.saved_model.load(self.tmp_dir)
-        tf.keras.mixed_precision.set_global_policy("float32")
-
-        return converted_model
-
-    # (TODO) choose the properly quantize mode
-    def _check_quantize_mode(self, model):
-        """Check what quantize mode to use."""
-        for idx, layer in enumerate(model.layers):
-            if "ReLU" in layer.__class__.__name__:
-                return "MIN_FIRST"
-        return "SCALED"
-
-    def _rebuild_model_from_layers(self, model, layers):
-        """Insert a layer before the target layer."""
-        model_outputs = []
-        input_layer_dict = {}
-        output_tensor_dict = {layers[0].name: model.input}
-
-        for layer in layers:
-            for node in layer._outbound_nodes:
-                layer_name = node.outbound_layer.name
-                if layer_name not in input_layer_dict:
-                    input_layer_dict[layer_name] = [layer.name]
-                else:
-                    input_layer_dict[layer_name].append(layer.name)
-
-        for layer in layers[1:]:
-            input_tensors = [output_tensor_dict[input_layer] 
-                    for input_layer in input_layer_dict[layer.name]]
-            if len(input_tensors) == 1:
-                input_tensors = input_tensors[0]
-            x = layer(input_tensors)
-            output_tensor_dict[layer.name] = x
-            if layer_name in model.output_names:
-                model_outputs.append(x)
+        qdq_surgery = KerasSurgery(self.pre_optimized_model)
+        quantized_model = qdq_surgery.insert_quant_layers(qdq_layers_dict, quantized_layers_dict)
+        quantized_model = self._set_weights(quantized_model, self.layer_weights)
         
-        new_model = tf.keras.models.Model(inputs=model.inputs, outputs=model_outputs)
-        new_model = self._set_weights(new_model, self.layer_weights)
-        new_model.save(self.tmp_dir)
-        return tf.keras.saved_model.load(self.tmp_dir)
-
-    # set fp32 weights to qmodel
-    def _set_weights(self, qmodel, layer_weights):
-        for qlayer in qmodel.layers:
-            if qlayer.get_weights():
-                if qlayer.name in layer_weights:
-                    qlayer.set_weights(layer_weights[qlayer.name])
-                else:
-                    hit_layer = False
-                    for sub_layer in qlayer.submodules:
-                        if sub_layer.name in layer_weights:
-                            qlayer.set_weights(layer_weights[sub_layer.name])
-                            hit_layer = True
-                            break
-                    if not hit_layer:
-                        raise ValueError("Can not match the module weights....")
-        return qmodel
+        quantized_model.save(self.tmp_dir)
+        quantized_model = tf.keras.models.load_model(self.tmp_dir)
+    
+        return quantized_model
 
     @dump_elapsed_time(customized_msg="Model inference")
     def evaluate(
@@ -581,11 +536,11 @@ class KerasAdaptor:
         other_config = copy.deepcopy(op_capability["int8"]["default"])
 
         # # get fp32 layer weights
-        keras_object = model
+        self.fp32_model = model
         self.conv_weights = {}
         self.bn_weights = {}
         self.layer_weights = {}
-        for layer in keras_object.layers:
+        for layer in self.fp32_model.layers:
             if layer.get_weights():
                 if (
                     isinstance(layer, tf.keras.layers.Conv2D)
@@ -596,13 +551,12 @@ class KerasAdaptor:
                 elif isinstance(layer, tf.keras.layers.BatchNormalization):
                     self.bn_weights[layer.name] = copy.deepcopy(layer.get_weights())
                 self.layer_weights[layer.name] = copy.deepcopy(layer.get_weights())
-        self.pre_optimized_object = self._pre_optimize(keras_object)
 
-
-        self.fp32_layers = keras_object.layers
+        self._check_quantize_format(self.fp32_model)
+        self.pre_optimized_model = self._fuse_bn(self.fp32_model)
 
         quantizable_layer_details = OrderedDict()
-        for layer in self.fp32_layers:
+        for layer in self.fp32_model.layers:
             layer_class = layer.__class__.__name__
             if layer_class == "Conv2D":
                 quantizable_layer_details[(layer.name, layer_class)] = [conv_config, bf16_config, fp32_config]
@@ -638,6 +592,54 @@ class KerasAdaptor:
                 if "weight" in quantizable_op_details[op][0]:
                     res[op[1]]["weight"] = quantizable_op_details[op][0]["weight"]
         return res
+
+    def tuning_cfg_to_fw(self, tuning_cfg):
+        """Parse tune_config and set framework variables.     
+
+        Args:
+            tuning_cfg (dict): The dict of tunning config.
+        """
+        self.quantize_config["calib_iteration"] = tuning_cfg["calib_iteration"]
+        self.quantize_config["device"] = self.device
+        self.quantize_config["advance"] = deep_get(tuning_cfg, "advance")
+        fp32_ops = []
+        bf16_ops = []
+        bf16_type = set(self.query_handler.get_op_types_by_precision(precision="bf16"))
+        dispatched_op_names = [j[0] for j in tuning_cfg["op"]]
+        invalid_op_names = [i for i in self.quantize_config["op_wise_config"] if i not in dispatched_op_names]
+
+        for op_name in invalid_op_names:
+            self.quantize_config["op_wise_config"].pop(op_name)
+
+        for each_op_info in tuning_cfg["op"]:
+            op_name = each_op_info[0]
+
+            if tuning_cfg["op"][each_op_info]["activation"]["dtype"] == "bf16":
+                if each_op_info[1] in bf16_type:
+                    bf16_ops.append(op_name)
+                continue
+
+            if tuning_cfg["op"][each_op_info]["activation"]["dtype"] == "fp32":
+                if op_name in self.quantize_config["op_wise_config"]:
+                    self.quantize_config["op_wise_config"].pop(op_name)
+                    fp32_ops.append(op_name)
+                continue
+
+            is_perchannel = False
+            bit = None
+            if "weight" in tuning_cfg["op"][each_op_info]:
+                is_perchannel = tuning_cfg["op"][each_op_info]["weight"]["granularity"] == "per_channel"
+                # bit = tuning_cfg['op'][each_op_info]['weight']['bit']
+            weight_bit = bit if bit else 7.0
+            algorithm = tuning_cfg["op"][each_op_info]["activation"]["algorithm"]
+            is_asymmetric = False
+            if "activation" in tuning_cfg["op"][each_op_info]:
+                is_asymmetric = tuning_cfg["op"][each_op_info]["activation"]["scheme"] == "asym"
+            self.quantize_config["op_wise_config"][op_name] = (is_perchannel, algorithm, is_asymmetric, weight_bit)
+        self.bf16_ops = bf16_ops
+        if self.bf16_ops:
+            self.bf16_ops.pop(-1)
+        self.fp32_ops = fp32_ops
 
 
 class KerasQuery:
@@ -734,7 +736,7 @@ class KerasQuery:
 class KerasConfigConverter:
     """Convert `StaticQuantConfig` to the format used by static quant algo."""
 
-    support_int8_weight = {"Dense", "Conv2d", "DepthwiseConv2D", "SeparableConv2D"}
+    support_int8_weight = {"Dense", "Conv2D", "DepthwiseConv2D", "SeparableConv2D"}
 
     def __init__(self, quant_config: StaticQuantConfig, calib_iteration: int):
         """Init parser for keras static quant config.
@@ -783,3 +785,110 @@ class KerasConfigConverter:
             tune_cfg["calib_iteration"] = self.calib_iteration
 
         return tune_cfg
+
+
+class KerasSurgery:
+    """The class that inserts FakeQuant or QDQ layers before the target layers."""
+
+    def __init__(self, model):
+        """Init the KerasSurgery class.
+
+        Args:
+            model: the model to be modified.
+        """
+        self.model_outputs = []
+        self.model = copy.deepcopy(model)
+
+    def _create_input_dict(self, fuse_layers=None, conv_weights_keys=None):
+        """Create a input_layer_dict from model.
+
+        Args:
+            fuse_layers: The layers in which fused BNs have been excluded, defualt to be None.
+            conv_weights_keys: The names of conv layers where BNs are going to be fused, defualt to be None.
+
+        Returns:
+            input_layer_dict: The dict that mapping for layer names to their input layer names.
+        """
+        input_layer_dict = {}
+        layers = fuse_layers if fuse_layers else self.model.layers
+        for layer in layers:
+            for node in layer._outbound_nodes:
+                out_layer = node.outbound_layer
+                layer_name = out_layer.name
+                if conv_weights_keys and out_layer.__class__.__name__ in ("BatchNormalization") and \
+                    out_layer.inbound_nodes[0].inbound_layers.name in conv_weights_keys:
+                    layer_name =  out_layer._outbound_nodes[0].outbound_layer.name
+                if layer_name not in input_layer_dict:
+                    input_layer_dict[layer_name] = [layer.name]
+                else:
+                    input_layer_dict[layer_name].append(layer.name)
+
+        return input_layer_dict
+
+    def fuse_bn_layers(self, fuse_layers, conv_weights_keys):
+        """Fuse BN layers and rebuild the model.
+
+        Args:
+            fuse_layers: The layers in which fused BNs have been excluded.
+            conv_weights_keys: The names of conv layers where BNs are going to be fused.
+        """
+        self.input_layer_dict = self._create_input_dict(fuse_layers, conv_weights_keys)
+        has_input_layer = fuse_layers[0].__class__.__name__ == "InputLayer" 
+        output_tensor_dict = {fuse_layers[0].name: self.model.input} if has_input_layer \
+                                else {"keras.Input": self.model.input}
+
+        for idx, layer in enumerate(fuse_layers):
+            if idx == 0 and has_input_layer:
+                continue
+
+            input_tensors = output_tensor_dict["keras.Input"] if idx == 0 \
+                    else [output_tensor_dict[input_layer] for input_layer in self.input_layer_dict[layer.name]]
+            if len(input_tensors) == 1:
+                input_tensors = input_tensors[0]
+
+            x = layer(input_tensors)
+
+            output_tensor_dict[layer.name] = x
+            if layer.name in self.model.output_names:
+                self.model_outputs.append(x)
+
+        return tf.keras.models.Model(inputs=self.model.inputs, outputs=self.model_outputs)
+
+    def insert_quant_layers(self, qdq_layer_dict, q_layer_dict=None):
+        """Insert FakeQuant or QDQ layers before the target layers and replace 
+           Keras layers to Quantized layers.
+
+        Args:
+            qdq_layer_dict: The dict mapping from layers to be quantized to the FakeQuant layer or QDQ layers
+            that are going to be inserted before them.
+            q_layer_dict: The dict mapping from layers to be replacement to the quantized layers.
+        """
+        self.input_layer_dict = self._create_input_dict()
+        layers = self.model.layers
+        has_input_layer = layers[0].__class__.__name__ == "InputLayer" 
+        output_tensor_dict = {layers[0].name: layers[0](self.model.input)} if has_input_layer \
+                                else {"keras.Input": self.model.input}
+
+        for idx, layer in enumerate(layers):
+            if idx == 0 and has_input_layer:
+                continue
+
+            input_tensors = output_tensor_dict["keras.Input"] if idx == 0 \
+                    else [output_tensor_dict[input_layer] for input_layer in self.input_layer_dict[layer.name]]
+            if len(input_tensors) == 1:
+                input_tensors = input_tensors[0]
+
+            if layer.name in qdq_layer_dict:
+                x = input_tensors
+                for inserted_layer in qdq_layer_dict[layer.name]:
+                    x = inserted_layer(x)
+                cur_layer = layer if not q_layer_dict else q_layer_dict[layer.name]
+                x = cur_layer(x)
+            else:
+                x = layer(input_tensors)
+
+            output_tensor_dict[layer.name] = x
+            if layer.name in self.model.output_names:
+                self.model_outputs.append(x)
+
+        return tf.keras.models.Model(inputs=self.model.inputs, outputs=self.model_outputs)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2022 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,9 @@ from tensorflow.keras import activations, constraints, initializers, regularizer
 
 from neural_compressor.tensorflow.utils import version1_gte_version2
 
-if version1_gte_version2(tf.__version__, "2.13.0"):
+if version1_gte_version2(tf.__version__, "2.16.1"):
+    from keras.src.layers.convolutional.base_conv import BaseConv as Conv  # pylint: disable=E0401
+elif version1_gte_version2(tf.__version__, "2.13.0"):
     from keras.src.layers.convolutional.base_conv import Conv  # pylint: disable=E0401
 else:
     from keras.layers.convolutional.base_conv import Conv  # pylint: disable=E0401
@@ -32,6 +34,7 @@ else:
 class QConv2D(Conv):
     def __init__(
         self,
+        name,
         filters,
         kernel_size,
         strides=(1, 1),
@@ -48,11 +51,12 @@ class QConv2D(Conv):
         activity_regularizer=None,
         kernel_constraint=None,
         bias_constraint=None,
-        min_value=-10000,
-        max_value=10000,
+        min_value=None,
+        max_value=None,
         **kwargs
     ):
         super(QConv2D, self).__init__(
+            name=name,
             rank=2,
             filters=filters,
             kernel_size=kernel_size,
@@ -72,10 +76,17 @@ class QConv2D(Conv):
             bias_constraint=constraints.get(bias_constraint),
             **kwargs
         )
-        self.min_value = json.loads(min_value)
-        self.max_value = json.loads(max_value)
+        self.min_value = min_value
+        self.max_value = max_value
 
     def call(self, inputs):
+        kernel_size = self.kernel.shape[-1]
+
+        if not self.min_value:
+            self.min_value = [-10000]*kernel_size
+        if not self.max_value:
+            self.max_value = [10000]*kernel_size
+
         # add the Q/DQ here
         kernel, _, _ = quantization.quantize(
             self.kernel, self.min_value, self.max_value, tf.qint8, axis=3, mode="SCALED"
@@ -107,3 +118,69 @@ class QConv2D(Conv):
     @classmethod
     def from_config(cls, config):
         return cls(**config)
+
+
+def initialize_int8_conv2d(fp32_layer):
+    kwargs = fp32_layer.get_config()
+
+    if "name" in kwargs:
+        del kwargs["name"]
+    if "filters" in kwargs:
+        del kwargs["filters"]
+    if "kernel_size" in kwargs:
+        del kwargs["kernel_size"]
+    if "strides" in kwargs:
+        del kwargs["strides"]
+    if "padding" in kwargs:
+        del kwargs["padding"]
+    if "data_format" in kwargs:
+        del kwargs["data_format"]
+    if "dilation_rate" in kwargs:
+        del kwargs["dilation_rate"]
+    if "groups" in kwargs:
+        del kwargs["groups"]
+    if "activation" in kwargs:
+        del kwargs["activation"]
+    if "use_bias" in kwargs:
+        del kwargs["use_bias"]
+    if "kernel_initializer" in kwargs:
+        del kwargs["kernel_initializer"]
+    if "bias_initializer" in kwargs:
+        del kwargs["bias_initializer"]
+    if "kernel_regularizer" in kwargs:
+        del kwargs["kernel_regularizer"]
+    if "activity_regularizer" in kwargs:
+        del kwargs["activity_regularizer"]
+    if "bias_regularizer" in kwargs:
+        del kwargs["bias_regularizer"]
+    if "kernel_constraint" in kwargs:
+        del kwargs["kernel_constraint"]
+    if "bias_constraint" in kwargs:
+        del kwargs["bias_constraint"]
+    if "min_value" in kwargs:
+        del kwargs["min_value"]
+    if "max_value" in kwargs:
+        del kwargs["max_value"]
+
+    return QConv2D(
+        name=fp32_layer.name,
+        filters=fp32_layer.filters,
+        kernel_size=fp32_layer.kernel_size,
+        strides=fp32_layer.strides,
+        padding=fp32_layer.padding,
+        data_format=fp32_layer.data_format,
+        dilation_rate=fp32_layer.dilation_rate,
+        groups=fp32_layer.groups,
+        activation=fp32_layer.activation,
+        use_bias=fp32_layer.use_bias,
+        kernel_initializer=fp32_layer.kernel_initializer,
+        bias_initializer=fp32_layer.bias_initializer,
+        kernel_regularizer=fp32_layer.kernel_regularizer,
+        bias_regularizer=fp32_layer.bias_regularizer,
+        activity_regularizer=fp32_layer.activity_regularizer,
+        kernel_constraint=fp32_layer.kernel_constraint,
+        bias_constraint=fp32_layer.bias_constraint,
+        min_value=fp32_layer.min_value,
+        max_value=fp32_layer.max_value,
+        **kwargs
+    )
