@@ -103,21 +103,125 @@ and verified a list of LLMs on 4th Gen Intel® Xeon® Scalable Processor (codena
 </section>
 <section id="ipex-key-models">
 <h1>IPEX key models<a class="headerlink" href="#ipex-key-models" title="Permalink to this heading"></a></h1>
-<p>|          Models           | SQ INT8 | WOQ INT8 | WOQ INT4 |
-|:————————-:|:——-:|:——–:|:——–:|
-|    EleutherAI/gpt-j-6b    |    ✔    |    ✔     |    ✔    |
-|   facebook/opt-1.3b       |    ✔    |    ✔     |    ✔    |
-|     facebook/opt-30b      |    ✔    |    ✔     |    ✔    |
-| meta-llama/Llama-2-7b-hf  |    ✔    |    ✔     |    ✔    |
-| meta-llama/Llama-2-13b-hf |    ✔    |    ✔     |    ✔    |
-| meta-llama/Llama-2-70b-hf |    ✔    |    ✔     |    ✔    |
-|     tiiuae/falcon-40b     |    ✔    |    ✔     |    ✔    |</p>
-<p><strong>Detail recipes can be found <a class="reference external" href="https://github.com/intel/intel-extension-for-transformers/blob/main/examples/huggingface/pytorch/text-generation/quantization/llm_quantization_recipes.html">HERE</a>.</strong></p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: center;">Models</th>
+<th style="text-align: center;">SQ INT8</th>
+<th style="text-align: center;">WOQ INT8</th>
+<th style="text-align: center;">WOQ INT4</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">EleutherAI/gpt-j-6b</td>
+<td style="text-align: center;">✔</td>
+<td style="text-align: center;">✔</td>
+<td style="text-align: center;">✔</td>
+</tr>
+<tr>
+<td style="text-align: center;">facebook/opt-1.3b</td>
+<td style="text-align: center;">✔</td>
+<td style="text-align: center;">✔</td>
+<td style="text-align: center;">✔</td>
+</tr>
+<tr>
+<td style="text-align: center;">facebook/opt-30b</td>
+<td style="text-align: center;">✔</td>
+<td style="text-align: center;">✔</td>
+<td style="text-align: center;">✔</td>
+</tr>
+<tr>
+<td style="text-align: center;">meta-llama/Llama-2-7b-hf</td>
+<td style="text-align: center;">WIP</td>
+<td style="text-align: center;">✔</td>
+<td style="text-align: center;">✔</td>
+</tr>
+<tr>
+<td style="text-align: center;">meta-llama/Llama-2-13b-hf</td>
+<td style="text-align: center;">✔</td>
+<td style="text-align: center;">✔</td>
+<td style="text-align: center;">✔</td>
+</tr>
+<tr>
+<td style="text-align: center;">meta-llama/Llama-2-70b-hf</td>
+<td style="text-align: center;">✔</td>
+<td style="text-align: center;">✔</td>
+<td style="text-align: center;">✔</td>
+</tr>
+<tr>
+<td style="text-align: center;">tiiuae/falcon-7b</td>
+<td style="text-align: center;">✔</td>
+<td style="text-align: center;">✔</td>
+<td style="text-align: center;">✔</td>
+</tr>
+<tr>
+<td style="text-align: center;">tiiuae/falcon-40b</td>
+<td style="text-align: center;">✔</td>
+<td style="text-align: center;">✔</td>
+<td style="text-align: center;">✔</td>
+</tr>
+<tr>
+<td style="text-align: center;">baichuan-inc/Baichuan-13B-Chat</td>
+<td style="text-align: center;">✔</td>
+<td style="text-align: center;">✔</td>
+<td style="text-align: center;">✔</td>
+</tr>
+<tr>
+<td style="text-align: center;">baichuan-inc/Baichuan2-13B-Chat</td>
+<td style="text-align: center;">✔</td>
+<td style="text-align: center;">✔</td>
+<td style="text-align: center;">✔</td>
+</tr>
+<tr>
+<td style="text-align: center;">baichuan-inc/Baichuan2-7B-Chat</td>
+<td style="text-align: center;">✔</td>
+<td style="text-align: center;">✔</td>
+<td style="text-align: center;">✔</td>
+</tr>
+<tr>
+<td style="text-align: center;">bigscience/bloom-1b7</td>
+<td style="text-align: center;">✔</td>
+<td style="text-align: center;">✔</td>
+<td style="text-align: center;">✔</td>
+</tr>
+<tr>
+<td style="text-align: center;">databricks/dolly-v2-12b</td>
+<td style="text-align: center;">✖</td>
+<td style="text-align: center;">✔</td>
+<td style="text-align: center;">✖</td>
+</tr>
+<tr>
+<td style="text-align: center;">EleutherAI/gpt-neox-20b</td>
+<td style="text-align: center;">✖</td>
+<td style="text-align: center;">✔</td>
+<td style="text-align: center;">✖</td>
+</tr>
+<tr>
+<td style="text-align: center;">mistralai/Mistral-7B-v0.1</td>
+<td style="text-align: center;">✖</td>
+<td style="text-align: center;">✔</td>
+<td style="text-align: center;">✔</td>
+</tr>
+<tr>
+<td style="text-align: center;">THUDM/chatglm2-6b</td>
+<td style="text-align: center;">WIP</td>
+<td style="text-align: center;">✔</td>
+<td style="text-align: center;">WIP</td>
+</tr>
+<tr>
+<td style="text-align: center;">THUDM/chatglm3-6b</td>
+<td style="text-align: center;">WIP</td>
+<td style="text-align: center;">✔</td>
+<td style="text-align: center;">WIP</td>
+</tr>
+</tbody>
+</table><p><strong>Detail recipes can be found <a class="reference external" href="https://github.com/intel/intel-extension-for-transformers/blob/main/examples/huggingface/pytorch/text-generation/quantization/llm_quantization_recipes.html">HERE</a>.</strong></p>
 <blockquote>
 <div><p>Notes:</p>
 <ul class="simple">
 <li><p>This model list comes from <a class="reference external" href="https://intel.github.io/intel-extension-for-pytorch/cpu/latest/tutorials/llm.html">IPEX</a>.</p></li>
-<li><p>WOQ INT4 recipes will be published soon.</p></li>
+<li><p>The WIP recipes will be published soon.</p></li>
 </ul>
 </div></blockquote>
 </section>
@@ -136,7 +240,7 @@ and verified a list of LLMs on 4th Gen Intel® Xeon® Scalable Processor (codena
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7eff48826260> 
+   <jinja2.runtime.BlockReference object at 0x7f1bb246d8a0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
