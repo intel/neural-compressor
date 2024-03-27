@@ -359,7 +359,6 @@ if args.quantize:
                         model(batch)
                 except ValueError:
                     pass
-                break
             return
             
         if re.search("gpt", user_model.config.model_type):
