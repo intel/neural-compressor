@@ -16,7 +16,7 @@ requirements:
   run:
     - python
     - pip
-    - numpy<=1.22.3
+    - numpy<=1.26.4
     - pyyaml
     - scikit-learn
     - schema
