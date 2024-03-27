@@ -53,7 +53,9 @@ model = M().to("hpu")
 + if args.quantize:
 +    model = convert(model, args.quant_config, args.calib_result)
 
-eval_func(model)
+# user's eval func
+input = torch.randn(1, 10)
+model(input.to("hpu"))
 
 + save(model, args.calib_result)
 ```
@@ -103,7 +105,11 @@ class M(torch.nn.Module):
 model = M().to("hpu")
 
 + model = prepare(model, args.quant_config)
-eval_func(model)
+
+# use user's eval func to do calibration
+input = torch.randn(1, 10)
+model(input.to("hpu"))
+
 + save(model, args.calib_result)
 + model = convert(model, args.quant_config, args.calib_result)
 ```
