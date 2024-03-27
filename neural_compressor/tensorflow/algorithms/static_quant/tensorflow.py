@@ -1520,12 +1520,6 @@ class TensorFlowAdaptor:
 
         return converter.convert_without_calib()
 
-    def diagnosis_helper(self, fp32_model, quan_model, tune_cfg, save_path):
-        """Tensorflow diagnosis helper function."""
-        from neural_compressor.tensorflow.quantization.utils.utility import tf_diagnosis_helper
-
-        return tf_diagnosis_helper(fp32_model, quan_model, tune_cfg, save_path)
-
     def get_output_op_names(self, qmodel):
         """Get the oupur OPs's names."""
         from neural_compressor.tensorflow.quantization.utils.graph_util import GraphAnalyzer
