@@ -117,6 +117,7 @@ args = parser.parse_args()
 
 # load model
 tokenizer = LlamaTokenizer.from_pretrained(args.tokenizer)
+config = LlamaConfig.from_pretrained(args.model_path)
 
 def tokenize_function(examples):
     example = tokenizer(examples["text"])
@@ -176,11 +177,10 @@ class KVDataloader:
             shuffle=False,
             collate_fn=self.collate_batch,
         )
-        session = ort.InferenceSession(model_path)
-        inputs_names = [input.name for input in session.get_inputs()]
+        model = onnx.load(model_path, load_external_data=False)
+        inputs_names = [input.name for input in model.graph.input]
         self.key_value_input_names = [key for key in inputs_names if (".key" in key) or (".value" in key)]
         self.use_cache = len(self.key_value_input_names) > 0
-        self.session = session if self.use_cache else None
 
     def collate_batch(self, batch):
 
@@ -217,6 +217,8 @@ class KVDataloader:
                     for key_value_input_name in self.key_value_input_names:
                         ort_input[key_value_input_name] = key_or_value
 
+                yield ort_input, last_ind.detach().cpu().numpy()
+
         except StopIteration:
             return
 
@@ -229,7 +231,7 @@ class GPTQDataloader:
 
         self.batch_size=batch_size
         traindata = load_dataset(args.dataset, split=sub_folder)
-        traindata = traindata.map(tokenize_function, batched=True)
+        self.traindata = traindata.map(tokenize_function, batched=True)
         self.traindata.set_format(type="torch", columns=["input_ids", "attention_mask"])
 
         session = ort.InferenceSession(model_path)
@@ -267,15 +269,6 @@ class GPTQDataloader:
                     for key_value_input_name in self.key_value_input_names:
                         ort_input[key_value_input_name] = key_or_value
 
-                    outputs = self.session.run(None, ort_input)
-
-                    # regenerate input
-                    ort_input['input_ids'] = inp[:, -1].unsqueeze(0).detach().cpu().numpy().astype('int64')
-                    for i in range(int((len(outputs) - 1) / 2)):
-                        ort_input['past_key_values.{}.key'.format(i)] = outputs[i*2+1]
-                        ort_input['past_key_values.{}.value'.format(i)] = outputs[i*2+2]
-                    ort_input['attention_mask'] =  np.zeros([self.batch_size, ort_input['past_key_values.0.key'].shape[2]+1], dtype='int64')
-
                 yield ort_input, 0
 
         except StopIteration:
@@ -310,7 +303,7 @@ if __name__ == "__main__":
         model_path = os.path.join(args.model_path, model_name)
         if args.algorithm.upper() == "RTN":
             dataloader = KVDataloader(model_path, pad_max=args.pad_max, batch_size=1)
-            config = PostTrainingQuantConfig(
+            ptq_config = PostTrainingQuantConfig(
                 approach="weight_only",
                 calibration_sampling_size=[8],
                 op_type_dict={".*": {"weight": {"algorithm": ["RTN"]}}},
@@ -318,12 +311,12 @@ if __name__ == "__main__":
                 )
             q_model = quantization.fit(
                 model_path,
-                config,
+                ptq_config,
                 calib_dataloader=dataloader)
 
         elif args.algorithm.upper() == "AWQ":
             dataloader = KVDataloader(model_path, pad_max=args.pad_max, batch_size=1)
-            config = PostTrainingQuantConfig(
+            ptq_config = PostTrainingQuantConfig(
                 approach="weight_only",
                 calibration_sampling_size=[8],
                 recipes={"awq_args": {"enable_mse_search": False},
@@ -332,12 +325,12 @@ if __name__ == "__main__":
                 )
             q_model = quantization.fit(
                 model_path,
-                config,
+                ptq_config,
                 calib_dataloader=dataloader)
 
         elif args.algorithm.upper() == "GPTQ":
             dataloader = GPTQDataloader(model_path, seqlen=args.seqlen, batch_size=1)
-            config = PostTrainingQuantConfig(
+            ptq_config = PostTrainingQuantConfig(
                 approach="weight_only",
                 calibration_sampling_size=[8],
                 op_type_dict={".*": {"weight": {"algorithm": ["GPTQ"], "scheme": ["asym"]}}},
@@ -345,7 +338,7 @@ if __name__ == "__main__":
                 )
             q_model = quantization.fit(
                 model_path,
-                config,
+                ptq_config,
                 calib_dataloader=dataloader)
 
         elif args.algorithm.upper() == "WOQ_TUNE":
@@ -353,14 +346,14 @@ if __name__ == "__main__":
             dataloader = GPTQDataloader(model_path, seqlen=args.seqlen, batch_size=1)
             # set tolerable_loss to 0.5% for test, default is 1%
             accuracy_criterion = AccuracyCriterion(tolerable_loss=0.005)
-            config = PostTrainingQuantConfig(
+            ptq_config = PostTrainingQuantConfig(
                 approach="weight_only",
                 calibration_sampling_size=[8],
                 accuracy_criterion=accuracy_criterion,
                 recipes={'graph_optimization_level': 'ENABLE_EXTENDED'},)
             q_model = quantization.fit(
                 model_path,
-                config,
+                ptq_config,
                 calib_dataloader=dataloader,
                 eval_func=eval_func)
 

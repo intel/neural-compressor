@@ -50,17 +50,29 @@ subprojects:
     checks:
       - "Model-Test"
       - "Model-Test (Generate Report GenerateReport)"
-      - "Model-Test (Run MXNet Model resnet50v1)"
       - "Model-Test (Run ONNX Model resnet50-v1-12)"
       - "Model-Test (Run PyTorch Model resnet18)"
       - "Model-Test (Run PyTorch Model resnet18_fx)"
       - "Model-Test (Run TensorFlow Model darknet19)"
-      - "Model-Test (Run TensorFlow Model densenet-121)"
       - "Model-Test (Run TensorFlow Model inception_v1)"
       - "Model-Test (Run TensorFlow Model resnet-101)"
       - "Model-Test (Run TensorFlow Model resnet50v1.5)"
       - "Model-Test (Run TensorFlow Model ssd_mobilenet_v1_ckpt)"
       - "Model-Test (Run TensorFlow Model ssd_resnet50_v1)"
+
+  - id: "Model Tests 3x workflow"
+    paths:
+      - "neural_compressor/common/**"
+      - "neural_compressor/torch/**"
+      - "setup.py"
+      - "requirements_pt.txt"
+      - ".azure-pipelines/scripts/models/**"
+    checks:
+      - "Model-Test-3x"
+      - "Model-Test-3x (Generate Report GenerateReport)"
+      - "Model-Test-3x (Run PyTorch Model opt_125m_woq_gptq_int4)"
+      - "Model-Test-3x (Run PyTorch Model opt_125m_woq_gptq_int4_dq_bnb)"
+      - "Model-Test-3x (Run PyTorch Model opt_125m_woq_gptq_int4_dq_ggml)"
 
   - id: "Unit Tests basic workflow"
     paths:

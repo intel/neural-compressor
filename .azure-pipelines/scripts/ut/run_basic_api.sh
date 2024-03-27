@@ -21,7 +21,7 @@ find ./nas -name "test*.py" | sed 's,\.\/,coverage run --source='"${lpot_path}"'
 
 LOG_DIR=/neural-compressor/log_dir
 mkdir -p ${LOG_DIR}
-ut_log_name=${LOG_DIR}/ut_tf_${tensorflow_version}_pt_${pytorch_version}.log
+ut_log_name=${LOG_DIR}/ut_api.log
 
 echo "cat run.sh..."
 sort run.sh -o run.sh

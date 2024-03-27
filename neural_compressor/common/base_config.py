@@ -25,7 +25,8 @@ from collections import OrderedDict
 from itertools import product
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
-from neural_compressor.common import Logger
+from typing_extensions import Self
+
 from neural_compressor.common.tuning_param import TuningParam
 from neural_compressor.common.utils import (
     BASE_CONFIG,
@@ -36,9 +37,8 @@ from neural_compressor.common.utils import (
     GLOBAL,
     LOCAL,
     OP_NAME_OR_MODULE_TYPE,
+    logger,
 )
-
-logger = Logger().get_logger()
 
 __all__ = [
     "options",
@@ -52,11 +52,18 @@ __all__ = [
 
 
 # Config registry to store all registered configs.
-class ConfigRegistry:
+class ConfigRegistry(object):
     registered_configs = {}
+    _config_registry = None
+
+    def __new__(cls) -> Self:
+        if cls._config_registry is None:
+            cls._config_registry = super(ConfigRegistry, cls).__new__(cls)
+
+        return cls._config_registry
 
     @classmethod
-    def register_config_impl(cls, framework_name="None", algo_name=None, priority=0):
+    def register_config_impl(cls, framework_name: str, algo_name: str, priority: Union[float, int] = 0):
         """Register config decorator.
 
         The register the configuration classes for different algorithms within specific frameworks.
@@ -67,8 +74,8 @@ class ConfigRegistry:
                 # Configuration details for the ExampleAlgorithm
 
         Args:
-            framework_name: the framework name. Defaults to "None".
-            algo_name: the algorithm name. Defaults to None.
+            framework_name: the framework name.
+            algo_name: the algorithm name.
             priority: priority: the priority of the configuration. A larger number indicates a higher priority,
                 which will be tried first at the auto-tune stage. Defaults to 0.
         """
@@ -116,7 +123,7 @@ class ConfigRegistry:
 config_registry = ConfigRegistry()
 
 
-def register_config(framework_name="None", algo_name=None, priority=0):
+def register_config(framework_name: str, algo_name: str, priority: Union[float, int] = 0):
     """Register config decorator.
 
     The register the configuration classes for different algorithms within specific frameworks.
@@ -127,8 +134,8 @@ def register_config(framework_name="None", algo_name=None, priority=0):
             # Configuration details for the ExampleAlgorithm
 
     Args:
-        framework_name: the framework name. Defaults to "None".
-        algo_name: the algorithm name. Defaults to None.
+        framework_name: the framework name.
+        algo_name: the algorithm name.
         priority: the priority of the configuration. A larger number indicates a higher priority,
             which will be tried first at the auto-tune stage. Defaults to 0.
     """
@@ -411,7 +418,7 @@ class BaseConfig(ABC):
 
     @staticmethod
     def _is_op_type(name: str) -> bool:
-        # TODO (Yi), ort and tf need override it
+        # * Ort and TF may override this method.
         return not isinstance(name, str)
 
     @classmethod
@@ -461,7 +468,6 @@ class ComposableConfig(BaseConfig):
     ) -> OrderedDict[str, BaseConfig]:
         config_mapping = OrderedDict()
         for config in self.config_list:
-            global_config = config.global_config
             op_type_config_dict, op_name_config_dict = config._get_op_name_op_type_config()
             single_config_model_info = model_info.get(config.name, None)
             for op_name, op_type in single_config_model_info:

@@ -5,7 +5,7 @@ import torch
 import transformers
 from tqdm import tqdm
 
-from neural_compressor.common.utils import logger
+from neural_compressor.common import logger
 from neural_compressor.torch.algorithms.weight_only.gptq import move_input_to_device
 from neural_compressor.torch.quantization import (
     AWQConfig,
