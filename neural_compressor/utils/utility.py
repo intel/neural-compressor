@@ -249,12 +249,26 @@ class CpuInfo(object):
                     b"\xB8\x07\x00\x00\x00" b"\x0f\xa2" b"\xC3",  # mov eax, 7  # cpuid  # ret
                 )
                 self._bf16 = bool(eax & (1 << 5))
-        if "arch" in info and "ARM" in info["arch"]:  # pragma: no cover
-            self._sockets = 1
-        else:
-            self._sockets = self.get_number_of_sockets()
-        self._cores = psutil.cpu_count(logical=False)
-        self._cores_per_socket = int(self._cores / self._sockets)
+        self._info = info
+        # detect the below info when needed
+        self._cores = None
+        self._sockets = None
+        self._cores_per_socket = None
+
+    @staticmethod
+    def _detect_cores():
+        physical_cores = psutil.cpu_count(logical=False)
+        return physical_cores
+
+    @property
+    def cores(self):
+        if self._cores is None:
+            self._cores = self._detect_cores()
+        return self._cores
+
+    @cores.setter
+    def cores(self, num_of_cores):
+        self._cores = num_of_cores
 
     @property
     def bf16(self):
@@ -267,12 +281,29 @@ class CpuInfo(object):
         return self._vnni
 
     @property
-    def cores_per_socket(self):
+    def cores_per_socket(self) -> int:
         """Get the cores per socket."""
+        if self._cores_per_socket is None:
+            self._cores_per_socket = self.cores // self.sockets
         return self._cores_per_socket
 
-    def get_number_of_sockets(self) -> int:
+    @property
+    def sockets(self):
+        if self._sockets is None:
+            self._sockets = self._get_number_of_sockets()
+        return self._sockets
+
+    @sockets.setter
+    def sockets(self, num_of_sockets):
+        self._sockets = num_of_sockets
+
+    def _get_number_of_sockets(self) -> int:
         """Get number of sockets in platform."""
+
+        if "arch" in self._info and "ARM" in self._info["arch"]:  # pragma: no cover
+            return 1
+
+        num_sockets = None
         cmd = "cat /proc/cpuinfo | grep 'physical id' | sort -u | wc -l"
         if psutil.WINDOWS:
             cmd = r'wmic cpu get DeviceID | C:\Windows\System32\find.exe /C "CPU"'
@@ -289,9 +320,12 @@ class CpuInfo(object):
             proc.wait()
             if proc.stdout:
                 for line in proc.stdout:
-                    return int(line.decode("utf-8", errors="ignore").strip())
-        logger.warning("Failed to get number of sockets, return 1 as default.")
-        return 1
+                    num_sockets = int(line.decode("utf-8", errors="ignore").strip())
+        if isinstance(num_sockets, int) and num_sockets >= 1:
+            return num_sockets
+        else:
+            logger.warning("Failed to get number of sockets, return 1 as default.")
+            return 1
 
 
 def dump_elapsed_time(customized_msg=""):
