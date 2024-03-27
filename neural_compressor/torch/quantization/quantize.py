@@ -60,5 +60,6 @@ def save(model, fname="./saved_results"):
         from neural_compressor.torch.algorithms.habana_fp8 import save_fp8_model
         save_fp8_model(model, fname)
 
+
 def load(model, fname="./saved_results"):
     pass

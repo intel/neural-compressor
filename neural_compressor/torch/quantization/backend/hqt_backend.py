@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from typing import Union
 from neural_compressor.torch.quantization.backend import BaseBackend, backend_register
+from neural_compressor.torch.algorithms.habana_fp8 import get_mod_list, update_stats_path_in_config, update_mode
 
 @backend_register(name="hqt")
 class HQTBackend(BaseBackend):
@@ -23,8 +24,7 @@ class HQTBackend(BaseBackend):
         return model
 
 def _convert(model, calib_result):
-    from habana_quantization_toolkit._hook_method import config
-    from neural_compressor.torch.algorithms.habana_fp8 import get_mod_list, update_stats_path_in_config, update_mode
+    from habana_quantization_toolkit._hook_method import config, quantize_hooks, scale_method_mapping, scaling_params
 
     # update mode to QUANTIZE
     update_mode(quant_step=True)
@@ -33,9 +33,6 @@ def _convert(model, calib_result):
     update_stats_path_in_config(old_stats_path=config.cfg["dump_stats_path"], new_stats_path=calib_result)
 
     mod_list = get_mod_list(model)
-
-    from habana_quantization_toolkit._hook_method import quantize_hooks, scale_method_mapping, scaling_params
-
     scaling_method_name = scale_method_mapping[(config.cfg['scale_method'], config.cfg['observer'])]
     scaling_params[scaling_method_name].update(config.cfg['scale_params'])
     config.cfg['scale_params'] = scaling_params[scaling_method_name]
@@ -44,10 +41,10 @@ def _convert(model, calib_result):
 
 def _prepare(model):
     from habana_quantization_toolkit._hook_method import prepare_model_for_measure
-    from neural_compressor.torch.algorithms.habana_fp8 import get_mod_list, update_mode
 
     # update mode to MEASURE
     update_mode(calib_step=True)
 
     mod_list = get_mod_list(model)
+
     return prepare_model_for_measure(model, mod_list)

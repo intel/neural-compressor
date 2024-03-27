@@ -3,7 +3,7 @@ import argparse
 import habana_frameworks.torch.core as htcore
 
 
-# 1. python sample_one_step.py --calib --quantize --calib_result ./hqt_output/measure --quant_config=quant_config.json
+# 1. python sample_one_step.py --calib_result ./hqt_output/measure --quant_config=quant_config.json
 
 class M(torch.nn.Module):
     def __init__(self) -> None:
@@ -28,18 +28,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Habana FP8 sample code.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
-    )
-    parser.add_argument(
-        '--quantize',
-        action='store_true',
-        default=False,
-        help="whether to do quantization"
-    )
-    parser.add_argument(
-        '--calib',
-        action='store_true',
-        default=False,
-        help="whether to do calibration"
     )
     parser.add_argument(
         '--quant_config',

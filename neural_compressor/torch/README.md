@@ -61,9 +61,10 @@ model(input.to("hpu"))
 ```
 
 #### config json:
-```json
+```diff
 {
     "method": "HOOKS",
+-   "mode": "MEASURE",
     "observer": "maxabs",
     "scale_method": "maxabs_hw",
     "whitelist": {"types": [], "names":  []},
@@ -71,7 +72,9 @@ model(input.to("hpu"))
     "dump_stats_path": "./hqt_output/measure"
 }
 ```
-> Note: `dump_stats_path` set in the json file will not work.
+> Note: </br>
+`dump_stats_path` set in the json file will not work, just to prevent bug caused by its default value. </br>
+`mode` doesn't need to be set in the json file. It will be automatically set in prepare() or convert() phase.
 
 Whole scrip and config refer to [sample.py](../../test/sample.py) and [quant_config.json](../../test/quant_config.json).
 
@@ -117,5 +120,5 @@ model(input.to("hpu"))
 Whole scrip and config refer to [sample_one_step.py](../../test/sample_one_step.py).
 
 ```shell
-python sample_one_step.py --calib --quantize --calib_result ./hqt_output/measure --quant_config=quant_config.json
+python sample_one_step.py --calib_result ./hqt_output/measure --quant_config=quant_config.json
 ```

@@ -71,7 +71,8 @@ def get_mod_list(model):
 def _get_mod_default_dict():
     from collections import namedtuple
     from habana_quantization_toolkit._quant_common.helper_modules import (
-        PatchedMatmul, PatchedLinear, PatchedKVCache, PatchedConv2d, PatchedLoRACompatibleLinear, PatchedLoRACompatibleConv, PatchedSoftmax
+        PatchedMatmul, PatchedLinear, PatchedKVCache, PatchedConv2d,
+        PatchedLoRACompatibleLinear, PatchedLoRACompatibleConv, PatchedSoftmax
     )
     module_info = namedtuple('ModuleInfo', ['type', 'patched_module'])
     mod_default_dict= {
