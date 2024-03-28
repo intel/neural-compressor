@@ -20,13 +20,15 @@ def build_conv_graph():
         "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
     )
     conv = tf.nn.conv2d(x_pad, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-
+    normed = tf.compat.v1.layers.batch_normalization(conv)
+    
     conv_weights2 = tf.compat.v1.get_variable(
         "weight2", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
     )
     conv2 = tf.nn.conv2d(top_relu, conv_weights2, strides=[1, 2, 2, 1], padding="SAME")
+    normed2 = tf.compat.v1.layers.batch_normalization(conv2)
+    add = tf.raw_ops.Add(x=normed, y=normed2, name="addv2")
 
-    add = tf.raw_ops.Add(x=conv, y=conv2, name="addv2")
     relu = tf.nn.relu(add)
     relu6 = tf.nn.relu6(relu, name="op_to_store")
 

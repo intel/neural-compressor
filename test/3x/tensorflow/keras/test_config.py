@@ -69,7 +69,7 @@ def build_model():
     _, baseline_model_accuracy = model.evaluate(test_images, test_labels, verbose=0)
 
     print("Baseline test accuracy:", baseline_model_accuracy)
-    model.save("baseline_model.keras")
+    model.save("baseline_model")
 
 
 class Dataset(object):
@@ -124,7 +124,7 @@ class TestTF3xNewApi(unittest.TestCase):
         from neural_compressor.tensorflow.keras import get_default_static_quant_config
 
         calib_dataloader = MyDataloader(dataset=Dataset())
-        fp32_model = keras.models.load_model("baseline_model.keras")
+        fp32_model = keras.models.load_model("baseline_model")
         qmodel = quantize_model(fp32_model, get_default_static_quant_config(), calib_dataloader)
         self.assertIsNotNone(qmodel)
 
@@ -158,7 +158,7 @@ class TestTF3xNewApi(unittest.TestCase):
             }
         }
         calib_dataloader = MyDataloader(dataset=Dataset())
-        fp32_model = keras.models.load_model("baseline_model.keras")
+        fp32_model = keras.models.load_model("baseline_model")
         qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
         self.assertIsNotNone(qmodel)
 
@@ -181,7 +181,7 @@ class TestTF3xNewApi(unittest.TestCase):
         from neural_compressor.tensorflow.keras import StaticQuantConfig
 
         calib_dataloader = MyDataloader(dataset=Dataset())
-        fp32_model = keras.models.load_model("baseline_model.keras")
+        fp32_model = keras.models.load_model("baseline_model")
         quant_config = StaticQuantConfig()
         qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
         self.assertIsNotNone(qmodel)
@@ -205,7 +205,7 @@ class TestTF3xNewApi(unittest.TestCase):
         from neural_compressor.tensorflow.keras import StaticQuantConfig
 
         calib_dataloader = MyDataloader(dataset=Dataset())
-        fp32_model = keras.models.load_model("baseline_model.keras")
+        fp32_model = keras.models.load_model("baseline_model")
         quant_config = StaticQuantConfig(
             weight_dtype="int8",
             weight_sym=True,
@@ -235,7 +235,7 @@ class TestTF3xNewApi(unittest.TestCase):
         from neural_compressor.tensorflow import quantize_model
 
         calib_dataloader = MyDataloader(dataset=Dataset())
-        fp32_model = keras.models.load_model("baseline_model.keras")
+        fp32_model = keras.models.load_model("baseline_model")
         quant_config = {
             "static_quant": {
                 "global": {
@@ -290,7 +290,7 @@ class TestTF3xNewApi(unittest.TestCase):
         )
         quant_config.set_local("dense", dense_config)
         # get model and quantize
-        fp32_model = keras.models.load_model("baseline_model.keras")
+        fp32_model = keras.models.load_model("baseline_model")
         qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
         self.assertIsNotNone(qmodel)
 
