@@ -605,7 +605,9 @@ class GPTQuantizer(object):
                     full_layer_name = self.get_full_layer_name(layer_name, block_idx)
                     # if self.weight_config.get(full_layer_name, None) == None:
                     if self.get_layer_config(full_layer_name) is None:
-                        logger.warning(f"{full_layer_name} can be quantized " + "but excluded from quantization configs.")
+                        logger.warning(
+                            f"{full_layer_name} can be quantized " + "but excluded from quantization configs."
+                        )
                     else:
                         sub_layers_to_quant[layer_name] = layer_obj
                 del sequential_layers
@@ -639,6 +641,7 @@ class GPTQuantizer(object):
                 def add_batch(_name):
                     def tmp(_, inp, out):
                         gptq_for_this_block[_name].add_batch(inp[0].data, out.data)  # noqa: F821
+
                     return tmp
 
                 handles = []  # register handles which add inputs and outputs to gptq object
