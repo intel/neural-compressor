@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2022 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ class FakeQuant(Layer):
         self.mode = mode
         self.T = T
         self.axis = 1 if mode == "per_channel" else 0
-        self.min_value = tf.constant(np.finfo(np.float32).max, dtype=tf.float32)
-        self.max_value = tf.constant(np.finfo(np.float32).min, dtype=tf.float32)
+        self.min_value = tf.constant(np.finfo(np.float32).min, dtype=tf.float32)
+        self.max_value = tf.constant(np.finfo(np.float32).max, dtype=tf.float32)
 
     def call(self, inputs):
         if self.mode == "per_tensor":
@@ -36,6 +36,7 @@ class FakeQuant(Layer):
         else:
             self.min_value = tf.math.reduce_min(inputs, axis=self.axis)
             self.max_value = tf.math.reduce_max(inputs, axis=self.axis)
+
         return inputs
 
     def compute_output_shape(self, input_shape):
