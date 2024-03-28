@@ -584,7 +584,7 @@ class KerasAdaptor:
         """Parse tune_config and set framework variables.
 
         Args:
-            tuning_cfg (dict): The dict of tunning config.
+            tuning_cfg (dict): The dict of tuning config.
         """
         self.quantize_config["calib_iteration"] = tuning_cfg["calib_iteration"]
         self.quantize_config["device"] = self.device
@@ -790,8 +790,8 @@ class KerasSurgery:
         """Create a input_layer_dict from model.
 
         Args:
-            fuse_layers: The layers in which fused BNs have been excluded, defualt to be None.
-            conv_weights_keys: The names of conv layers where BNs are going to be fused, defualt to be None.
+            fuse_layers: The layers in which fused BNs have been excluded, default to be None.
+            conv_weights_keys: The names of conv layers where BNs are going to be fused, default to be None.
 
         Returns:
             input_layer_dict: The dict that mapping for layer names to their input layer names.

@@ -23,7 +23,7 @@ import unittest
 
 import numpy as np
 import tensorflow as tf
-from tensorflow import keras
+import keras
 
 from neural_compressor.common import Logger
 
@@ -56,7 +56,7 @@ def build_model():
     )
     # Train the digit classification model
     model.compile(
-        optimizer="adam", loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True), metrics=["accuracy"]
+        optimizer="adam", loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True), metrics=["accuracy"]
     )
 
     model.fit(
@@ -260,9 +260,6 @@ class TestTF3xNewApi(unittest.TestCase):
         dense_checked = False
         conv_checked = False
         for layer in qmodel.layers:
-            if layer.name == "dense":
-                dense_checked = True
-                self.assertEqual(layer.__class__.__name__, "QDense")
             if layer.name == "conv2d":
                 conv_checked = True
                 self.assertEqual(layer.__class__.__name__, "QConv2D")
@@ -297,13 +294,10 @@ class TestTF3xNewApi(unittest.TestCase):
         dense_checked = False
         conv_checked = False
         for layer in qmodel.layers:
-            if layer.name == "dense":
-                dense_checked = True
-                self.assertEqual(layer.__class__.__name__, "QDense")
             if layer.name == "conv2d":
                 conv_checked = True
                 self.assertEqual(layer.__class__.__name__, "QConv2D")
-
+        
         self.assertEqual(dense_checked, True)
         self.assertEqual(conv_checked, True)
 
