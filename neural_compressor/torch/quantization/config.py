@@ -16,6 +16,7 @@
 # limitations under the License.
 # pylint:disable=import-error
 
+import copy
 from collections import OrderedDict
 from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
 
@@ -818,7 +819,8 @@ class StaticQuantConfig(BaseConfig):
     def get_model_info(model: torch.nn.Module, example_inputs) -> List[Tuple[str, Callable]]:
         from neural_compressor.torch.algorithms.static_quant import get_quantizable_ops_recursively
 
-        model_info, _, _, _ = get_quantizable_ops_recursively(model, example_inputs=example_inputs)
+        ori_model = copy.deepcopy(model)
+        model_info, _, _, _ = get_quantizable_ops_recursively(ori_model, example_inputs=example_inputs)
         return model_info
 
     @classmethod
@@ -923,7 +925,8 @@ class SmoothQuantConfig(BaseConfig):
     def get_model_info(model: torch.nn.Module, example_inputs) -> List[Tuple[str, Callable]]:
         from neural_compressor.torch.algorithms.smooth_quant import get_quantizable_ops_recursively
 
-        model_info, _, _, _ = get_quantizable_ops_recursively(model, example_inputs=example_inputs)
+        ori_model = copy.deepcopy(model)
+        model_info, _, _, _ = get_quantizable_ops_recursively(ori_model, example_inputs=example_inputs)
         return model_info
 
     @classmethod
