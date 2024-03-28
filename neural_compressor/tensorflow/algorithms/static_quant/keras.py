@@ -159,7 +159,6 @@ class KerasAdaptor:
                 else:
                     input_layer_dict[layer_name].append(layer.name)
 
-
         for layer in model.layers:
             if layer.__class__.__name__ in self.supported_op:
                 self.conv_format[layer.name] = "s8"
@@ -244,9 +243,12 @@ class KerasAdaptor:
                     else:
                         for bound_node in layer._inbound_nodes:
                             inbound_layer = bound_node.inbound_layers
-                            if not isinstance(inbound_layer, list) and inbound_layer.name in self.bn_weights.keys() \
-                                and inbound_layer._inbound_nodes[0].inbound_layers.name in self.conv_weights.keys():
-                                    new_bound_nodes.append(bn_inbound_node)
+                            if (
+                                not isinstance(inbound_layer, list)
+                                and inbound_layer.name in self.bn_weights.keys()
+                                and inbound_layer._inbound_nodes[0].inbound_layers.name in self.conv_weights.keys()
+                            ):
+                                new_bound_nodes.append(bn_inbound_node)
                             else:
                                 new_bound_nodes.append(bound_node)
 
@@ -290,7 +292,7 @@ class KerasAdaptor:
 
         bn_fused_model.save(self.tmp_dir)
         bn_fused_model = tf.keras.models.load_model(self.tmp_dir)
-        
+
         return bn_fused_model
 
     @dump_elapsed_time("Pass quantize model")
@@ -844,7 +846,7 @@ class KerasSurgery:
             output_tensor_dict[layer.name] = x
             if layer.name in self.model.output_names:
                 self.model_outputs.append(x)
-        
+
         return tf.keras.models.Model(inputs=self.model.inputs, outputs=self.model_outputs)
 
     def insert_quant_layers(self, qdq_layer_dict, q_layer_dict=None):

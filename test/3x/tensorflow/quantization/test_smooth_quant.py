@@ -21,7 +21,7 @@ def build_conv_graph():
     )
     conv = tf.nn.conv2d(x_pad, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
     normed = tf.compat.v1.layers.batch_normalization(conv)
-    
+
     conv_weights2 = tf.compat.v1.get_variable(
         "weight2", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
     )
