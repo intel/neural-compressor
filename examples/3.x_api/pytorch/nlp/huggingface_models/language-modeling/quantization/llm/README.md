@@ -22,6 +22,18 @@ Here is how to run the scripts:
 
 #### Quantization
 ```bash
+# "--sq" is used to enable smooth quant
+python run_clm_no_trainer.py \
+    --model EleutherAI/gpt-j-6B \
+    --quantize \
+    --sq \
+    --alpha 1.0 \
+    --output_dir "saved_results" \
+    --ipex 
+```
+**Notes**: Smooth quantization here is based on torch.jit. Without past key value in example_inputs, the quantized model cannot be used for text-generation.
+
+```bash
 # "--approach weight_only" is used to enable weight only quantization.
 # "--woq_algo GPTQ" is used to enable GPTQ algorithms
 # "--double_quant_type BNB_NF4" is used to enable double quant algorithms
@@ -62,6 +74,15 @@ python run_clm_no_trainer.py \
 #### Quantization
 
 ```bash
+# "--sq" is used to enable smooth quant
+python run_clm_no_trainer.py \
+    --model facebook/opt-125m \
+    --quantize \
+    --sq \
+    --alpha 0.5 \
+    --ipex \
+    --output_dir "saved_results"
+
 # "--approach weight_only" is used to enable weight only quantization.
 # "--woq_algo GPTQ" is used to enable GPTQ algorithms
 # "--double_quant_type BNB_NF4" is used to enable double quant algorithms
@@ -96,9 +117,19 @@ python run_clm_no_trainer.py \
 ```
 
 ### LLAMA2-7b/13b/30b
+>Note: LLAMA requires IPEX requirements >= 2.1 to get better accuracy.
 #### Quantization
 
 ```bash
+# "--sq" is used to enable smooth quant
+python run_clm_no_trainer.py \
+    --model meta-llama/Llama-2-7b-hf \
+    --quantize \
+    --sq \
+    --alpha 0.8 \
+    --ipex \
+    --output_dir "saved_results"
+
 # "--approach weight_only" is used to enable weight only quantization.
 # "--double_quant_type BNB_NF4" is used to enable double quant algorithms
 # "--woq_algo GPTQ" is used to enable GPTQ algorithms

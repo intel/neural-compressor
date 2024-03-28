@@ -56,6 +56,12 @@ function run_tuning {
         approach="weight_only"
         extra_cmd=$extra_cmd" --woq_algo GPTQ --woq_bits 4 --woq_group_size 128 --woq_scheme asym --woq_use_mse_search --gptq_use_max_length --gptq_percdamp 0.1 --gptq_actorder"
         extra_cmd=$extra_cmd" --double_quant_type GGML_TYPE_Q4_K"
+    elif [ "${topology}" = "opt_125m_ipex" ]; then
+        model_name_or_path="facebook/opt-125m"
+        extra_cmd=$extra_cmd" --ipex"
+    elif [ "${topology}" = "opt_125m_sq" ]; then
+        model_name_or_path="facebook/opt-125m"
+        extra_cmd=$extra_cmd" --ipex --sq --alpha 0.5"
     elif [ "${topology}" = "llama2_7b_gptq_int4" ]; then
         model_name_or_path="meta-llama/Llama-2-7b-hf"
         approach="weight_only"
@@ -70,6 +76,12 @@ function run_tuning {
         approach="weight_only"
         extra_cmd=$extra_cmd" --woq_algo GPTQ --woq_bits 4 --woq_group_size 128 --woq_scheme asym --woq_use_mse_search --gptq_use_max_length"
         extra_cmd=$extra_cmd" --double_quant_type GGML_TYPE_Q4_K"
+    elif [ "${topology}" = "llama2_7b_ipex" ]; then
+        model_name_or_path="meta-llama/Llama-2-7b-hf"
+        extra_cmd=$extra_cmd" --ipex"
+    elif [ "${topology}" = "llama2_7b_sq" ]; then
+        model_name_or_path="meta-llama/Llama-2-7b-hf"
+        extra_cmd=$extra_cmd" --ipex --sq --alpha 0.8"
     elif [ "${topology}" = "gpt_j_woq_rtn_int4" ]; then
         model_name_or_path="EleutherAI/gpt-j-6b"
         approach="weight_only"
@@ -98,6 +110,12 @@ function run_tuning {
         approach="weight_only"
         extra_cmd=$extra_cmd" --woq_algo GPTQ --woq_bits 4 --woq_group_size 128 --woq_scheme asym --woq_use_mse_search --gptq_use_max_length"
         extra_cmd=$extra_cmd" --double_quant_type GGML_TYPE_Q4_K"
+    elif [ "${topology}" = "gpt_j_ipex" ]; then
+        model_name_or_path="EleutherAI/gpt-j-6b"
+        extra_cmd=$extra_cmd" --ipex"
+    elif [ "${topology}" = "gpt_j_sq" ]; then
+        model_name_or_path="EleutherAI/gpt-j-6b"
+        extra_cmd=$extra_cmd" --ipex --sq --alpha 1.0"
     fi
 
     python -u run_clm_no_trainer.py \
