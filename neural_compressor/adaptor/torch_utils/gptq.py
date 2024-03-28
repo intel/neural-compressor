@@ -429,7 +429,7 @@ class GPTQuantizer(object):
                 self.weight_config[layer_name]["static_groups"] = config.get(
                     "static_groups", self.static_groups_default
                 )
-                self.weight_config[layer_name]["true_sequential"] = self.weight_config.get(
+                self.weight_config[layer_name]["true_sequential"] = config.get(
                     "true_sequential", self.true_sequential_default
                 )
                 self.weight_config[layer_name]["perchannel"] = config.get("perchannel", self.perchannel_default)
@@ -551,14 +551,11 @@ class GPTQuantizer(object):
         else:
             self.cache_positional_arguments[0] = outs[:]
 
-    def rearrange_sequential(self, sub_layers, true_sequential):
-        rearranged_sub_layers = []
-        for level_layer in true_sequential:
-            level = {}
-            for layer in level_layer:
-                level[layer] = sub_layers[layer]
-            rearranged_sub_layers.append(level)
-        return rearranged_sub_layers
+    def find_true_sequential(self):
+        for layer_name in self.weight_config:
+            if self.weight_config[layer_name]["true_sequential"] is not None:
+                return self.weight_config[layer_name]["true_sequential"]
+        return None
 
     @torch.no_grad()
     def execute_quantization(self, means=None, stds=None, model_path=None):
@@ -571,13 +568,14 @@ class GPTQuantizer(object):
         # Step2: run gptq quantization in a transformer block-wise manner.
         gptq_config = {}
 
+        # an example of llama-2's true_sequential process.
         # self.true_sequential =  [
         #     ['self_attn.k_proj', 'self_attn.v_proj', 'self_attn.q_proj'],
         #     ['self_attn.o_proj'],
         #     ['mlp.up_proj', 'mlp.gate_proj'],
         #     ['mlp.down_proj']
         # ]
-        self.true_sequential = None
+        self.true_sequential = self.find_true_sequential()
         tblock_length = len(self.gptq_related_blocks["transformers"])
         for block_idx in range(tblock_length):
             logger.info(f"Quantizing layer {block_idx + 1} / {tblock_length}..")
@@ -595,7 +593,6 @@ class GPTQuantizer(object):
             else:
                 sequentials = [list(sub_layers.keys())]
             # start to process every layers in a sequential
-            # import pdb;pdb.set_trace()
             for sequential in sequentials:
                 logger.info(f"Current quantization sequential: {sequential}")
                 sub_layers_to_quant = {}

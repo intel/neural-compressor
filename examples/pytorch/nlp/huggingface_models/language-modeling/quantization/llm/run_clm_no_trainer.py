@@ -272,6 +272,12 @@ if args.quantize:
             "enable_mse_search": args.woq_enable_mse_search,
             "enable_full_range": args.woq_enable_full_range,
         }
+        # gptq_true_sequential_test = [
+        #     ['self_attn.k_proj', 'self_attn.v_proj', 'self_attn.q_proj'],
+        #     ['self_attn.o_proj'],
+        #     ['mlp.up_proj', 'mlp.gate_proj'],
+        #     ['mlp.down_proj']
+        # ]
         recipes['gptq_args'] = {
             'percdamp': args.gptq_percdamp,
             'act_order': args.gptq_actorder,

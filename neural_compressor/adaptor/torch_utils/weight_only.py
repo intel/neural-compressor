@@ -506,7 +506,6 @@ def gptq_quantize(
     if layer_wise:
         assert model_path is not None, "model_path should not be None when use layer_wise mode"
     from .gptq import GPTQuantizer
-
     gptq_quantizer = GPTQuantizer(
         model, weight_config, dataloader, nsamples, use_max_length, pad_max_length, device, layer_wise=layer_wise
     )
