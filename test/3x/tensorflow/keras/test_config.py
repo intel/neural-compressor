@@ -21,9 +21,9 @@ import shutil
 import time
 import unittest
 
+import keras
 import numpy as np
 import tensorflow as tf
-import keras
 
 from neural_compressor.common import Logger
 
@@ -297,7 +297,7 @@ class TestTF3xNewApi(unittest.TestCase):
             if layer.name == "conv2d":
                 conv_checked = True
                 self.assertEqual(layer.__class__.__name__, "QConv2D")
-        
+
         self.assertEqual(dense_checked, True)
         self.assertEqual(conv_checked, True)
 
