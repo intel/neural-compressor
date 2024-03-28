@@ -78,6 +78,7 @@ parser.add_argument('--gptq_pad_max_length', type=int, default=2048, help='Calib
                                                                            this should align with your model config, \
                                                                            and your dataset builder args: args.pad_max_length')
 parser.add_argument('--gptq_static_groups', action='store_true', help='Use determined group to do quantization')
+parser.add_argument('--gptq_true_sequential', nargs='+', default=None, type=str, help="Whether to run in true_sequential model.")
 # ==============code generation args===========
 parser.add_argument("--code_generation", action="store_true")
 parser.add_argument("--n_samples", default=200, type=int)
@@ -271,6 +272,12 @@ if args.quantize:
             "enable_mse_search": args.woq_enable_mse_search,
             "enable_full_range": args.woq_enable_full_range,
         }
+        # gptq_true_sequential_test = [
+        #     ['self_attn.k_proj', 'self_attn.v_proj', 'self_attn.q_proj'],
+        #     ['self_attn.o_proj'],
+        #     ['mlp.up_proj', 'mlp.gate_proj'],
+        #     ['mlp.down_proj']
+        # ]
         recipes['gptq_args'] = {
             'percdamp': args.gptq_percdamp,
             'act_order': args.gptq_actorder,
@@ -279,7 +286,7 @@ if args.quantize:
             'use_max_length': args.gptq_use_max_length,
             'pad_max_length': args.gptq_pad_max_length,
             'static_groups': args.gptq_static_groups,
-            "enable_mse_search": args.woq_enable_mse_search,
+            "true_sequential": args.gptq_true_sequential,
         }
         # GPTQ: use assistive functions to modify calib_dataloader and calib_func
         # TEQ: set calib_func=None, use default training func as calib_func
@@ -333,7 +340,7 @@ if args.quantize:
         eval_func=eval_func,
     )
 
-    q_model.save(args.output_dir)
+    # q_model.save(args.output_dir)
 
 if args.int8 or args.int8_bf16_mixed:
     print("load int8 model")
@@ -350,6 +357,11 @@ else:
 
 if args.accuracy:
     user_model.eval()
+    if torch.cuda.is_available():
+        DEV = torch.device("cuda:0")
+    else:
+        DEV = torch.device("cpu")
+    q_model.model.to(DEV)
     if args.code_generation:
         from intel_extension_for_transformers.llm.evaluation.lm_code_eval import evaluate
         from transformers import AutoTokenizer
@@ -359,16 +371,17 @@ if args.accuracy:
             tokenizer=tokenizer,
             tasks=",".join(args.tasks),
             batch_size=args.batch_size,
-            args=args,
+            device=DEV.type
         )
     else:
         from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate
         results = evaluate(
             model="hf-causal",
-            model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
-            user_model=user_model,
+            model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32' + ",trust_remote_code=" + str(args.trust_remote_code),
+            user_model=q_model.model,
             batch_size=args.batch_size,
             tasks=args.tasks,
+            device=DEV.type
         )
 
     dumped = json.dumps(results, indent=2)
