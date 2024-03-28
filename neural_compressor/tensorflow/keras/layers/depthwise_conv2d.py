@@ -79,9 +79,9 @@ class QDepthwiseConv2D(DepthwiseConv):
         depthwise_kernel_size = self.depthwise_kernel.shape[-1]
 
         if not self.min_value:
-            self.min_value = [-10000]*depthwise_kernel_size
+            self.min_value = [-10000] * depthwise_kernel_size
         if not self.max_value:
-            self.max_value = [10000]*depthwise_kernel_size
+            self.max_value = [10000] * depthwise_kernel_size
 
         # add the Q/DQ here
         kernel, _, _ = quantization.quantize(
