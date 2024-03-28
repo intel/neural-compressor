@@ -21,9 +21,9 @@ import shutil
 import time
 import unittest
 
+import keras
 import numpy as np
 import tensorflow as tf
-import keras
 
 from neural_compressor.common import Logger
 
