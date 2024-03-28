@@ -50,7 +50,7 @@ parser.add_argument("--pad_max_length", default=512, type=int,
                     help="Pad input ids to max length.")
 parser.add_argument("--calib_iters", default=512, type=int,
                     help="calibration iters.")
-parser.add_argument("--tasks", nargs='+', default=["lambada_openai"
+parser.add_argument("--tasks", nargs='+', default=["lambada_openai",
                                                    "hellaswag", "winogrande", "piqa", "wikitext"],
                     type=str, help="tasks list for accuracy validation, text-generation and code-generation tasks are different.")
 parser.add_argument("--peft_model_id", type=str, default=None, help="model_name_or_path of peft model")
