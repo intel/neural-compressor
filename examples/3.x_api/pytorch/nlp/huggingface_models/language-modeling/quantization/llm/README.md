@@ -28,8 +28,8 @@ python run_clm_no_trainer.py \
     --quantize \
     --sq \
     --alpha 1.0 \
-    --output_dir "saved_results" \
-    --ipex 
+    --ipex \
+    --output_dir "saved_results"
 ```
 **Notes**: Smooth quantization here is based on torch.jit. Without past key value in example_inputs, the quantized model cannot be used for text-generation.
 
