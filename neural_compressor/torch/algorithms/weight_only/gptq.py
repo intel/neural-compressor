@@ -30,10 +30,10 @@ from tqdm import tqdm
 
 from neural_compressor.torch.utils import fetch_module, get_device, logger, set_module
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
+from neural_compressor.utils.utility import LazyImport
 
 from .modules import WeightOnlyLinear
 
-from neural_compressor.utils.utility import LazyImport
 htcore = LazyImport("habana_frameworks.torch.core")
 
 DEBUG = False
@@ -545,11 +545,11 @@ class GPTQuantizer(object):
         if self.run_fn:
             if self.run_args:
                 self.run_fn(self.model, *self.run_args)
-                if 'hpu' in self.device:
+                if "hpu" in self.device:
                     htcore.mark_step()
             else:
                 self.run_fn(self.model)
-                if 'hpu' in self.device:
+                if "hpu" in self.device:
                     htcore.mark_step()
         else:
             for batch in tqdm(self.dataloader):
@@ -670,7 +670,7 @@ class GPTQuantizer(object):
             for j in range(batch_num):
                 cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                 cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
-                if 'hpu' in self.device:
+                if "hpu" in self.device:
                     htcore.mark_step()
                 out = transformer_block(*cache_positional_batch, **cache_keyword_batch)
                 out = self.track_hidden_states(out)
@@ -691,7 +691,7 @@ class GPTQuantizer(object):
                     W = load_value(self.model, full_layer_name + ".weight", model_path)
                 else:
                     W = sub_layers[layer_name].weight.data.clone()
-                if 'hpu' in self.device:
+                if "hpu" in self.device:
                     htcore.mark_step()
                     # using hpu to do fasterquant decrease the runing time, the possible reason may be need to compile model
                     W = W.to("cpu")
