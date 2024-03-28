@@ -429,7 +429,7 @@ class GPTQuantizer(object):
                 self.weight_config[layer_name]["static_groups"] = config.get(
                     "static_groups", self.static_groups_default
                 )
-                self.weight_config[name]["true_sequential"] = self.weight_config.get(
+                self.weight_config[layer_name]["true_sequential"] = self.weight_config.get(
                     "true_sequential", self.true_sequential_default
                 )
                 self.weight_config[layer_name]["perchannel"] = config.get("perchannel", self.perchannel_default)
@@ -570,6 +570,14 @@ class GPTQuantizer(object):
 
         # Step2: run gptq quantization in a transformer block-wise manner.
         gptq_config = {}
+
+        # self.true_sequential =  [
+        #     ['self_attn.k_proj', 'self_attn.v_proj', 'self_attn.q_proj'],
+        #     ['self_attn.o_proj'],
+        #     ['mlp.up_proj', 'mlp.gate_proj'],
+        #     ['mlp.down_proj']
+        # ]
+        self.true_sequential = None
         tblock_length = len(self.gptq_related_blocks["transformers"])
         for block_idx in range(tblock_length):
             logger.info(f"Quantizing layer {block_idx + 1} / {tblock_length}..")
@@ -580,118 +588,126 @@ class GPTQuantizer(object):
                 transformer_block = self.gptq_related_blocks["transformers"][block_idx]  # .to(self.device)
             # Step2.1: obtain all layers (Linear, Conv2d, etc) in the block which can be quantized.
             sub_layers = find_layers(transformer_block)
-            if true_sequential[block_id] is not None:
-                sub_layers = self.rearrange_sequential(sub_layer, true_sequential[block_id])
             sub_layers_to_quant = {}
-            for layer_name, layer_obj in sub_layers.items():
-                # filter sub_layers with included layer_names in self.weight_config
-                full_layer_name = self.get_full_layer_name(layer_name, block_idx)
-                # if self.weight_config.get(full_layer_name, None) == None:
-                if self.get_layer_config(full_layer_name) is None:
-                    logger.warning(f"{full_layer_name} can be quantized " + "but excluded from quantization configs.")
-                else:
-                    sub_layers_to_quant[layer_name] = layer_obj
-            del sub_layers
-            sub_layers = sub_layers_to_quant
-            # Step 2.2: Initialize GPTQ quantizers for collected layers.
-            gptq_for_this_block = {}
-            # initialize gptq quantizer for every layer in a transformer block
-            for layer_name in sub_layers:
-                # weight_config_this_layer = self.weight_config.get(
-                #     self.get_full_layer_name(layer_name, block_idx), None
-                # )
-                full_layer_name = self.get_full_layer_name(layer_name, block_idx)
-                weight_config_this_layer = self.get_layer_config(full_layer_name)
-                if self.layer_wise:
-                    from ..torch_utils.layer_wise_quant.utils import load_value
-
-                    W = load_value(self.model, full_layer_name + ".weight", model_path)
-                else:
-                    W = sub_layers[layer_name].weight.data.clone()
-
-                gptq_for_this_block[layer_name] = GPTQ(sub_layers[layer_name], W, self.device)
-                # gptq_for_this_block[layer_name].quantizer = Quantizer()
-                gptq_for_this_block[layer_name].quantizer.configure(
-                    weight_config_this_layer["wbits"],
-                    weight_config_this_layer["perchannel"],
-                    weight_config_this_layer["sym"],
-                    weight_config_this_layer["mse"],
-                )
-
-            # Step 2.3: modify forward functions to hook inputs data (used in gptq execution)
-            def add_batch(_name):
-                def tmp(_, inp, out):
-                    gptq_for_this_block[_name].add_batch(inp[0].data, out.data)  # noqa: F821
-
-                return tmp
-
-            handles = []  # register handles which add inputs and outputs to gptq object
-            for layer_name in sub_layers:
-                handles.append(sub_layers[layer_name].register_forward_hook(add_batch(layer_name)))
-            idx = self.cache_key_arguments.pop("i")
-            for j in range(len(self.dataloader)):
-                cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
-                cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
-                out = transformer_block(*cache_positional_batch, **cache_keyword_batch)
-                out = self.track_hidden_states(out)
-            self.cache_key_arguments["i"] = idx
-            for h in handles:
-                h.remove()
-            # Step 2.4: everything is prepared, so start quantization!
-            for layer_name in sub_layers:
-                # weight_config_this_layer = self.weight_config.get(
-                #     self.get_full_layer_name(layer_name, block_idx), None
-                # )
-                weight_config_this_layer = self.get_layer_config(self.get_full_layer_name(layer_name, block_idx))
-                logger.info(f"Quantizing layer {layer_name}")
-                if self.layer_wise:
-                    from ..torch_utils.layer_wise_quant.utils import load_value
-
+            # add true sequential options
+            if self.true_sequential is not None:
+                sequentials = self.true_sequential
+            else:
+                sequentials = [list(sub_layers.keys())]
+            # start to process every layers in a sequential
+            # import pdb;pdb.set_trace()
+            for sequential in sequentials:
+                logger.info(f"Current quantization sequential: {sequential}")
+                sub_layers_to_quant = {}
+                sequential_layers = {n: sub_layers[n] for n in sequential}
+                for layer_name, layer_obj in sequential_layers.items():
+                    # filter sub_layers with included layer_names in self.weight_config
                     full_layer_name = self.get_full_layer_name(layer_name, block_idx)
-                    W = load_value(self.model, full_layer_name + ".weight", model_path)
-                else:
-                    W = sub_layers[layer_name].weight.data.clone()
-                scale, zp, Q = gptq_for_this_block[layer_name].fasterquant(
-                    W,
-                    blocksize=weight_config_this_layer["block_size"],
-                    percdamp=weight_config_this_layer["percdamp"],
-                    groupsize=weight_config_this_layer["group_size"],
-                    act_order=weight_config_this_layer["act_order"],
-                    static_groups=weight_config_this_layer["static_groups"],
-                )
-                if self.layer_wise:
-                    from ..torch_utils.layer_wise_quant.utils import (
-                        LWQ_WORKSPACE,
-                        clean_module_weight,
-                        load_value,
-                        set_module_tensor_to_device,
+                    # if self.weight_config.get(full_layer_name, None) == None:
+                    if self.get_layer_config(full_layer_name) is None:
+                        logger.warning(f"{full_layer_name} can be quantized " + "but excluded from quantization configs.")
+                    else:
+                        sub_layers_to_quant[layer_name] = layer_obj
+                del sequential_layers
+                sequential_layers = sub_layers_to_quant
+                # Step 2.2: Initialize GPTQ quantizers for collected layers.
+                gptq_for_this_block = {}
+                # initialize gptq quantizer for every layer in a transformer block
+                for layer_name in sequential_layers:
+                    # weight_config_this_layer = self.weight_config.get(
+                    #     self.get_full_layer_name(layer_name, block_idx), None
+                    # )
+                    full_layer_name = self.get_full_layer_name(layer_name, block_idx)
+                    weight_config_this_layer = self.get_layer_config(full_layer_name)
+                    if self.layer_wise:
+                        from ..torch_utils.layer_wise_quant.utils import load_value
+
+                        W = load_value(self.model, full_layer_name + ".weight", model_path)
+                    else:
+                        W = sequential_layers[layer_name].weight.data.clone()
+
+                    gptq_for_this_block[layer_name] = GPTQ(sequential_layers[layer_name], W, self.device)
+                    # gptq_for_this_block[layer_name].quantizer = Quantizer()
+                    gptq_for_this_block[layer_name].quantizer.configure(
+                        weight_config_this_layer["wbits"],
+                        weight_config_this_layer["perchannel"],
+                        weight_config_this_layer["sym"],
+                        weight_config_this_layer["mse"],
                     )
 
-                    sub_layer = sub_layers[layer_name]
-                    full_layer_name = self.get_full_layer_name(layer_name, block_idx)
-                    for n, p in sub_layer.named_parameters():
-                        param_name = full_layer_name + "." + n
-                        if n == "weight":
-                            set_module_tensor_to_device(self.model, param_name, self.device, Q)
-                        else:
-                            value = load_value(self.model, param_name, model_path)
-                            set_module_tensor_to_device(self.model, param_name, self.device, value)
-                    # sub_layer.weight.data = Q
-                    torch.save(sub_layer.state_dict(), LWQ_WORKSPACE + f"/{full_layer_name}.pt")
-                    clean_module_weight(sub_layer)
-                    del Q
-                    gc.collect()
-                else:
-                    sub_layers[layer_name].weight.data = Q
-                gptq_config[self.get_full_layer_name(layer_name, block_idx)] = {"scale": scale}
-                if not weight_config_this_layer["sym"]:
-                    gptq_config[self.get_full_layer_name(layer_name, block_idx)]["zero"] = zp
-                if weight_config_this_layer["act_order"] and not weight_config_this_layer["static_groups"]:
-                    # save perm for restoring the weights, but only when static_groups is not enabled.
-                    gptq_config[self.get_full_layer_name(layer_name, block_idx)]["perm"] = gptq_for_this_block[
-                        layer_name
-                    ].perm
-                gptq_for_this_block[layer_name].free()
+                # Step 2.3: modify forward functions to hook inputs data (used in gptq execution)
+                def add_batch(_name):
+                    def tmp(_, inp, out):
+                        gptq_for_this_block[_name].add_batch(inp[0].data, out.data)  # noqa: F821
+                    return tmp
+
+                handles = []  # register handles which add inputs and outputs to gptq object
+                for layer_name in sequential_layers:
+                    handles.append(sequential_layers[layer_name].register_forward_hook(add_batch(layer_name)))
+                idx = self.cache_key_arguments.pop("i")
+                for j in range(len(self.dataloader)):
+                    cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
+                    cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
+                    out = transformer_block(*cache_positional_batch, **cache_keyword_batch)
+                    out = self.track_hidden_states(out)
+                self.cache_key_arguments["i"] = idx
+                for h in handles:
+                    h.remove()
+                # Step 2.4: everything is prepared, so start quantization!
+                for layer_name in sequential_layers:
+                    # weight_config_this_layer = self.weight_config.get(
+                    #     self.get_full_layer_name(layer_name, block_idx), None
+                    # )
+                    weight_config_this_layer = self.get_layer_config(self.get_full_layer_name(layer_name, block_idx))
+                    logger.info(f"Quantizing layer {layer_name}")
+                    if self.layer_wise:
+                        from ..torch_utils.layer_wise_quant.utils import load_value
+
+                        full_layer_name = self.get_full_layer_name(layer_name, block_idx)
+                        W = load_value(self.model, full_layer_name + ".weight", model_path)
+                    else:
+                        W = sequential_layers[layer_name].weight.data.clone()
+                    scale, zp, Q = gptq_for_this_block[layer_name].fasterquant(
+                        W,
+                        blocksize=weight_config_this_layer["block_size"],
+                        percdamp=weight_config_this_layer["percdamp"],
+                        groupsize=weight_config_this_layer["group_size"],
+                        act_order=weight_config_this_layer["act_order"],
+                        static_groups=weight_config_this_layer["static_groups"],
+                    )
+                    if self.layer_wise:
+                        from ..torch_utils.layer_wise_quant.utils import (
+                            LWQ_WORKSPACE,
+                            clean_module_weight,
+                            load_value,
+                            set_module_tensor_to_device,
+                        )
+
+                        sub_layer = sequential_layers[layer_name]
+                        full_layer_name = self.get_full_layer_name(layer_name, block_idx)
+                        for n, p in sub_layer.named_parameters():
+                            param_name = full_layer_name + "." + n
+                            if n == "weight":
+                                set_module_tensor_to_device(self.model, param_name, self.device, Q)
+                            else:
+                                value = load_value(self.model, param_name, model_path)
+                                set_module_tensor_to_device(self.model, param_name, self.device, value)
+                        # sub_layer.weight.data = Q
+                        torch.save(sub_layer.state_dict(), LWQ_WORKSPACE + f"/{full_layer_name}.pt")
+                        clean_module_weight(sub_layer)
+                        del Q
+                        gc.collect()
+                    else:
+                        sequential_layers[layer_name].weight.data = Q
+                    gptq_config[self.get_full_layer_name(layer_name, block_idx)] = {"scale": scale}
+                    if not weight_config_this_layer["sym"]:
+                        gptq_config[self.get_full_layer_name(layer_name, block_idx)]["zero"] = zp
+                    if weight_config_this_layer["act_order"] and not weight_config_this_layer["static_groups"]:
+                        # save perm for restoring the weights, but only when static_groups is not enabled.
+                        gptq_config[self.get_full_layer_name(layer_name, block_idx)]["perm"] = gptq_for_this_block[
+                            layer_name
+                        ].perm
+                    gptq_for_this_block[layer_name].free()
 
             # Step 2.5: replace output data with quantized weights
             outs = []

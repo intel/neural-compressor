@@ -50,7 +50,8 @@ parser.add_argument("--pad_max_length", default=512, type=int,
                     help="Pad input ids to max length.")
 parser.add_argument("--calib_iters", default=512, type=int,
                     help="calibration iters.")
-parser.add_argument("--tasks", nargs='+', default=["lambada_openai"],
+parser.add_argument("--tasks", nargs='+', default=["lambada_openai"
+                                                   "hellaswag", "winogrande", "piqa", "wikitext"],
                     type=str, help="tasks list for accuracy validation, text-generation and code-generation tasks are different.")
 parser.add_argument("--peft_model_id", type=str, default=None, help="model_name_or_path of peft model")
 # ============SmoothQuant configs==============
@@ -324,15 +325,6 @@ if args.quantize:
             def eval_func(model):
                 acc = evaluator.evaluate(model)
                 return acc
-
-    # import pdb;pdb.set_trace()
-    if torch.cuda.is_available():
-        DEV = torch.device("cuda:0")
-    else:
-        DEV = torch.device("cpu")
-    user_model.to(DEV)
-
-    import pdb;pdb.set_trace()
 
     q_model = quantization.fit(
         user_model,
