@@ -134,7 +134,6 @@ class TestTF3xNewApi(unittest.TestCase):
             if layer.name == "conv2d":
                 self.assertEqual(layer.__class__.__name__, "QConv2D")
 
-
     def test_static_quant_from_dict_beginner(self):
         logger.info("test_static_quant_from_dict_beginner")
         from neural_compressor.tensorflow import quantize_model
@@ -161,7 +160,6 @@ class TestTF3xNewApi(unittest.TestCase):
                 self.assertEqual(layer.__class__.__name__, "QDense")
             if layer.name == "conv2d":
                 self.assertEqual(layer.__class__.__name__, "QConv2D")
-
 
     def test_static_quant_from_class_default(self):
         logger.info("test_static_quant_from_class_default")
@@ -203,7 +201,6 @@ class TestTF3xNewApi(unittest.TestCase):
                 self.assertEqual(layer.__class__.__name__, "QDense")
             if layer.name == "conv2d":
                 self.assertEqual(layer.__class__.__name__, "QConv2D")
-
 
     def test_static_quant_from_dict_advance(self):
         logger.info("test_static_quant_from_dict_advance")
