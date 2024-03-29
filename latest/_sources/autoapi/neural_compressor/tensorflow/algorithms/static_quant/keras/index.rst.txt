@@ -17,6 +17,7 @@ Classes
    neural_compressor.tensorflow.algorithms.static_quant.keras.KerasAdaptor
    neural_compressor.tensorflow.algorithms.static_quant.keras.KerasQuery
    neural_compressor.tensorflow.algorithms.static_quant.keras.KerasConfigConverter
+   neural_compressor.tensorflow.algorithms.static_quant.keras.KerasSurgery
 
 
 
@@ -37,5 +38,11 @@ Classes
 
 
    Convert `StaticQuantConfig` to the format used by static quant algo.
+
+
+.. py:class:: KerasSurgery(model)
+
+
+   The class that inserts FakeQuant or QDQ layers before the target layers.
 
 
