@@ -116,7 +116,7 @@ python run_clm_no_trainer.py \
     --double_quant_type "BNB_NF4"
 ```
 
-### LLAMA2-7b/13b/30b
+### LLAMA2-7b/13b/70b
 >Note: LLAMA requires IPEX requirements >= 2.1 to get better accuracy.
 #### Quantization
 
