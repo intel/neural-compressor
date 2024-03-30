@@ -55,7 +55,7 @@ class TestTensorflowGraphInsertLogging(unittest.TestCase):
             }
             target_conv_op = []
             _print_node_mapping = {}
-            from neural_compressor.adaptor.tf_utils.quantize_graph_common import QuantizeGraphHelper
+            from neural_compressor.tensorflow.quantization.utils.quantize_graph_common import QuantizeGraphHelper
 
             sorted_graph = QuantizeGraphHelper().get_sorted_graph(output_graph, inputs, outputs)
 
@@ -70,7 +70,7 @@ class TestTensorflowGraphInsertLogging(unittest.TestCase):
                 if node_name_mapping[i + "_eightbit_quantized_conv"].op == "QuantizedConv2DWithBias":
                     output_node_names.append(node_name_mapping[i + "_eightbit_quantized_conv"].name)
 
-            from neural_compressor.adaptor.tf_utils.transform_graph.insert_logging import InsertLogging
+            from neural_compressor.tensorflow.quantization.utils.transform_graph.insert_logging import InsertLogging
 
             graph_def = InsertLogging(
                 output_graph, node_name_list=output_node_names, message="__KL:", summarize=-1, dump_fp32=False

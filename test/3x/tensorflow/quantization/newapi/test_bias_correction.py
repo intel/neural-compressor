@@ -5,6 +5,7 @@ import tensorflow as tf
 import yaml
 from tensorflow.compat.v1 import graph_util
 
+import neural_compressor
 from neural_compressor.tensorflow.algorithms.static_quant.tensorflow import TensorflowQuery
 from neural_compressor.tensorflow.quantization.utils.quantize_graph.quantize_graph_for_intel_cpu import (
     QuantizeGraphForIntel,
@@ -66,9 +67,6 @@ class TestBiasCorrectionNewApi(unittest.TestCase):
             ),
         )
         relu1 = tf.nn.relu(normed, name="Relu_1")
-        op_wise_sequences = TensorflowQuery(
-            local_config_file=os.path.join(os.path.dirname(__file__), "../../neural_compressor/adaptor/tensorflow.yaml")
-        ).get_eightbit_patterns()
         with tf.compat.v1.Session() as sess:
             sess.run(tf.compat.v1.global_variables_initializer())
             output_graph_def = graph_util.convert_variables_to_constants(
@@ -77,7 +75,7 @@ class TestBiasCorrectionNewApi(unittest.TestCase):
             fp32_graph_def = QuantizeGraphHelper.remove_training_nodes(
                 output_graph_def, protected_nodes=[relu1.name.split(":")[0]]
             )
-
+            from neural_compressor.tensorflow.algorithms.static_quant
             from neural_compressor.tensorflow import quantize_model
             from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
@@ -155,8 +153,10 @@ class TestBiasCorrectionOldApi(unittest.TestCase):
         )
         relu = tf.nn.relu(normed, name="Relu_0")
         op_wise_sequences = TensorflowQuery(
-            local_config_file=os.path.join(os.path.dirname(__file__), "../../neural_compressor/adaptor/tensorflow.yaml")
-        ).get_eightbit_patterns()
+            local_config_file=os.path.join(
+                os.path.dirname(neural_compressor.__file__), "tensorflow/algorithms/static_quant/tensorflow.yaml"
+                )
+            ).get_eightbit_patterns()
         with tf.compat.v1.Session() as sess:
             sess.run(tf.compat.v1.global_variables_initializer())
             output_graph_def = graph_util.convert_variables_to_constants(

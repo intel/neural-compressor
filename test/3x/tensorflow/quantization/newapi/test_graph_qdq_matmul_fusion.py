@@ -9,19 +9,10 @@ import tensorflow.compat.v1 as tf
 import yaml
 from tensorflow.python.framework import dtypes
 
-from neural_compressor.tensorflow.algorithms.static_quant.tensorflow import TensorflowQuery
 from neural_compressor.tensorflow.utils import disable_random
 
 
 class TestGraphMatMulFusion(unittest.TestCase):
-    @classmethod
-    def setUpClass(self):
-        self.op_wise_sequences = TensorflowQuery(
-            local_config_file=os.path.join(
-                os.path.dirname(__file__), "../../neural_compressor/algorithms/static_quant/tensorflow.yaml"
-            )
-        ).get_eightbit_patterns(True)
-
     @disable_random()
     def test_matmul_biasadd_relu_requantize_fusion(self):
         g = tf.Graph()

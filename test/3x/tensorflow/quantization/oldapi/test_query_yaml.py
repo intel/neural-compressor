@@ -8,6 +8,7 @@ import tensorflow as tf
 import yaml
 from tensorflow.compat.v1 import graph_util
 
+import neural_compressor
 from neural_compressor.tensorflow.algorithms.static_quant.tensorflow import TensorflowQuery
 from neural_compressor.tensorflow.utils import disable_random
 
@@ -121,8 +122,8 @@ class TestTFQueryYaml(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         self.tf_yaml_path = os.path.join(
-            os.getcwd() + "/../neural_compressor/tensorflow/algorithms/static_quant/tensorflow.yaml"
-        )
+                os.path.dirname(neural_compressor.__file__), "tensorflow/algorithms/static_quant/tensorflow.yaml"
+            )
 
         with open(self.tf_yaml_path) as f:
             self.content = yaml.safe_load(f)

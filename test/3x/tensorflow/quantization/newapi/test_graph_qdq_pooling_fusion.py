@@ -10,19 +10,10 @@ import yaml
 from tensorflow.compat.v1 import graph_util
 from tensorflow.python.framework import dtypes
 
-from neural_compressor.tensorflow.algorithms.static_quant.tensorflow import TensorflowQuery
 from neural_compressor.tensorflow.utils import disable_random
 
 
 class TestGraphQDQPoolingFusion(unittest.TestCase):
-    @classmethod
-    def setUpClass(self):
-        self.op_wise_sequences = TensorflowQuery(
-            local_config_file=os.path.join(
-                os.path.dirname(__file__), "../../neural_compressor/algorithms/static_quant/tensorflow.yaml"
-            )
-        ).get_eightbit_patterns(True)
-
     @disable_random()
     def test_qdq_maxpool_fusion(self):
         x = tf.compat.v1.placeholder(tf.float32, [1, 30, 30, 1], name="input")

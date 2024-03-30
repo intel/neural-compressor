@@ -760,7 +760,7 @@ class KerasQuery:
 class KerasConfigConverter:
     """Convert `StaticQuantConfig` to the format used by static quant algo."""
 
-    support_int8_weight = {"Dense", "Conv2d", "DepthwiseConv2D", "SeparableConv2D"}
+    support_int8_weight = {"Dense", "Conv2D", "DepthwiseConv2D", "SeparableConv2D"}
 
     def __init__(self, quant_config: StaticQuantConfig, calib_iteration: int):
         """Init parser for keras static quant config.
