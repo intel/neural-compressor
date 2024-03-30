@@ -255,7 +255,7 @@ def quant_weight(
                 zp = zp.reshape(orig_shape[0], -1)
             return weight, scale, zp
         else:
-            qdq_weight_actor(
+            weight = qdq_weight_actor(
                 weight, num_bits, scheme=scheme, data_type=data_type, quantile=quantile, full_range=full_range
             )
             return weight.reshape(orig_shape)
@@ -330,7 +330,7 @@ def search_clip(m, num_bits=4, group_size=32, scheme="asym", data_type="int", en
     history = []
     for i_s in range(int(max_shrink * n_grid)):
         ratio = 1 - i_s / n_grid  # 1, 0.805-1.0
-        quant_weight(
+        m.weight.data = quant_weight(
             m.weight.data,  # in-place mode
             num_bits=num_bits,
             group_size=group_size,
@@ -438,8 +438,7 @@ def rtn_quantize(
                 quantile = search_clip(m, num_bits, group_size, scheme, data_type, enable_full_range)
             if return_int:
                 from .model_wrapper import WeightOnlyLinear
-
-                _, scale, zp = quant_weight(
+                m.weight.data, scale, zp = quant_weight(
                     m.weight.data,
                     num_bits,
                     group_size,
@@ -473,7 +472,7 @@ def rtn_quantize(
                 else:
                     set_module(model, name, new_module)
             else:
-                quant_weight(
+                m.weight.data = quant_weight(
                     m.weight.data,
                     num_bits,
                     group_size,
