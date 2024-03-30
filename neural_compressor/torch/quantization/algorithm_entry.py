@@ -121,7 +121,7 @@ def static_quant_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], StaticQuantConfig], *args, **kwargs
 ) -> torch.nn.Module:
     logger.info("Quantize model with the static quant algorithm.")
-    from neural_compressor.torch.algorithms.static_quant import static_quantize
+    from neural_compressor.torch.algorithms.static_quant import save, static_quantize
 
     # convert the user config into internal format
     quant_config_mapping = {}
@@ -157,6 +157,8 @@ def static_quant_entry(
         inplace=inplace,
     )
     logger.info("Static quantization done.")
+    q_model.ori_save = q_model.save
+    q_model.save = MethodType(save, q_model)
     return q_model
 
 
@@ -167,7 +169,7 @@ def smooth_quant_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], SmoothQuantConfig], *args, **kwargs
 ) -> torch.nn.Module:
     logger.info("Quantize model with the smooth quant algorithm.")
-    from neural_compressor.torch.algorithms.smooth_quant import smooth_quantize
+    from neural_compressor.torch.algorithms.smooth_quant import save, smooth_quantize
 
     # convert the user config into internal format
     quant_config_mapping = {}
@@ -214,6 +216,8 @@ def smooth_quant_entry(
         inplace=inplace,
     )
     logger.info("Smooth quantization done.")
+    q_model.ori_save = q_model.save
+    q_model.save = MethodType(save, q_model)
     return q_model
 
 
