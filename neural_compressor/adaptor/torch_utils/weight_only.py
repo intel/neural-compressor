@@ -438,6 +438,7 @@ def rtn_quantize(
                 quantile = search_clip(m, num_bits, group_size, scheme, data_type, enable_full_range)
             if return_int:
                 from .model_wrapper import WeightOnlyLinear
+
                 m.weight.data, scale, zp = quant_weight(
                     m.weight.data,
                     num_bits,
