@@ -176,7 +176,7 @@ def qdq_weight_sym(weight, num_bits=4, quantile=1.0, return_int=False, full_rang
     weight.round_()
     weight.clamp_(minq, maxq)
     if return_int:
-        return weight, scale.type(torch.float), None
+        return weight, scale, None
     return weight.mul_(scale)
 
 
@@ -238,6 +238,7 @@ def quant_weight(
 
     orig_shape = weight.shape
     if weight.shape[1] % group_size == 0:
+        orig_weight = weight
         weight = weight.reshape(-1, group_size)
         if return_int:
             weight, scale, zp = qdq_weight_actor(
@@ -250,17 +251,21 @@ def quant_weight(
                 data_type=data_type,
             )
             weight = weight.reshape(orig_shape)
+            orig_weight.copy_(weight)
             scale = scale.reshape(orig_shape[0], -1)
             if zp is not None:
                 zp = zp.reshape(orig_shape[0], -1)
-            return weight, scale, zp
+            return orig_weight, scale, zp
         else:
             qdq_weight_actor(
                 weight, num_bits, scheme=scheme, data_type=data_type, quantile=quantile, full_range=full_range
             )
-            return weight.reshape(orig_shape)
+            weight.reshape(orig_shape)
+            orig_weight.copy_(weight)
+            return orig_weight
     else:
         split_index = weight.shape[1] // group_size * group_size
+        orig_weight = weight
         weight1 = weight[:, :split_index]
         weight1 = weight1.reshape(-1, group_size)
         if return_int:
@@ -277,7 +282,7 @@ def quant_weight(
             if zp1 is not None:
                 zp1 = zp1.reshape(orig_shape[0], -1)
         else:
-            weight1 = qdq_weight_actor(
+            qdq_weight_actor(
                 weight1, num_bits, scheme=scheme, quantile=quantile, data_type=data_type, full_range=full_range
             )
         weight1 = weight1.reshape(orig_shape[0], split_index)
@@ -292,7 +297,7 @@ def quant_weight(
                 return_int=True,
                 full_range=full_range,
             )
-            weight.copy_(torch.cat([weight1, weight2], dim=1))
+            orig_weight.copy_(torch.cat([weight1, weight2], dim=1))
             scale = torch.cat([scale1, scale2], dim=1)
             if zp2 is not None:
                 zp = torch.cat([zp1, zp2], dim=1)
@@ -303,8 +308,8 @@ def quant_weight(
             weight2 = qdq_weight_actor(
                 weight2, num_bits, scheme=scheme, data_type=data_type, quantile=quantile, full_range=full_range
             )
-            weight.copy_(torch.cat([weight1, weight2], dim=1))
-            return weight
+            orig_weight.copy_(torch.cat([weight1, weight2], dim=1))
+            return orig_weight
 
 
 def search_clip(m, num_bits=4, group_size=32, scheme="asym", data_type="int", enable_full_range=False):
