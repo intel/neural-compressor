@@ -303,7 +303,7 @@ def quant_weight(
                 zp = torch.cat([zp1, zp2], dim=1)
             else:
                 zp = None
-            return weight, scale, zp
+            return orig_weight, scale, zp
         else:
             weight2 = qdq_weight_actor(
                 weight2, num_bits, scheme=scheme, data_type=data_type, quantile=quantile, full_range=full_range
