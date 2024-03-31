@@ -266,9 +266,10 @@ def quant_tensor(
         group_size = weight.shape[1]
     # case 2, reshape based on group size
     orig_shape = weight.shape
+    orig_weight = weight
     if weight.shape[1] % group_size == 0:
         weight = weight.reshape(-1, group_size)
-        weight = qdq_weight_actor(
+        qdq_weight_actor(
             weight,
             bits,
             scheme=scheme,
@@ -281,18 +282,21 @@ def quant_tensor(
         if return_int or quant_scale:
             weight, scale, zp = weight
             weight = weight.reshape(orig_shape)
+            orig_weight.copy_(weight)
             scale = scale.reshape(orig_shape[0], -1)
             if zp is not None:
                 zp = zp.reshape(orig_shape[0], -1)
-            q_state = weight, scale, zp
+            q_state = orig_weight, scale, zp
         else:
-            return weight.reshape(orig_shape)
+            weight = weight.reshape(orig_shape)
+            orig_weight.copy_(weight)
+            return orig_weight
     else:
         # case 3, process left part split by group size
         split_index = weight.shape[1] // group_size * group_size
         weight1 = weight[:, :split_index]
         weight1 = weight1.reshape(-1, group_size)
-        weight1 = qdq_weight_actor(
+        qdq_weight_actor(
             weight1,
             bits,
             scheme=scheme,
@@ -309,7 +313,7 @@ def quant_tensor(
                 zp1 = zp1.reshape(orig_shape[0], -1)
         weight1 = weight1.reshape(orig_shape[0], split_index)
         weight2 = weight[:, split_index:]
-        weight2 = qdq_weight_actor(
+        qdq_weight_actor(
             weight2,
             bits,
             scheme=scheme,
@@ -321,13 +325,13 @@ def quant_tensor(
         )
         if return_int or quant_scale:
             weight2, scale2, zp2 = weight2
-            weight.copy_(torch.cat([weight1, weight2], dim=1))
+            orig_weight.copy_(torch.cat([weight1, weight2], dim=1))
             scale = torch.cat([scale1, scale2], dim=1)
             zp = None if zp2 is None else torch.cat([zp1, zp2], dim=1)
             q_state = (weight, scale, zp)
         else:
-            weight.copy_(torch.cat([weight1, weight2], dim=1))
-            return weight
+            orig_weight.copy_(torch.cat([weight1, weight2], dim=1))
+            return orig_weight
     if quant_scale:
         weight, scale, zp = q_state
         scale_dtype = kwargs.get("double_quant_dtype", "int")
@@ -343,7 +347,7 @@ def quant_tensor(
             scale.sub_(scale_mean)
             scale_scheme = "sym"
         # process: scale
-        scale = quant_tensor(
+        quant_tensor(
             scale,
             dtype=scale_dtype,
             bits=scale_bits,
@@ -375,7 +379,7 @@ def quant_tensor(
                 weight1 = weight1.mul_(scale[:, :-1].reshape(-1, 1))
                 weight1 = weight1.reshape(orig_shape[0], -1)
                 weight2 = weight2.mul_(scale[:, -1].reshape(-1, 1))
-                weight.copy_(torch.cat([weight1, weight2], dim=1))
+                orig_weight.copy_(torch.cat([weight1, weight2], dim=1))
             else:
                 if zp is not None:
                     weight = weight.reshape(-1, group_size) - zp.reshape(-1, 1)
@@ -383,7 +387,8 @@ def quant_tensor(
                     weight = weight.reshape(-1, group_size)
                 weight = weight.mul_(scale.reshape(-1, 1))
                 weight = weight.reshape(orig_shape[0], -1)
-            return weight
+                orig_weight.copy_(weight)
+            return orig_weight
     else:
         return q_state
 
