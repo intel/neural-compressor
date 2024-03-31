@@ -260,7 +260,7 @@ def quant_weight(
             qdq_weight_actor(
                 weight, num_bits, scheme=scheme, data_type=data_type, quantile=quantile, full_range=full_range
             )
-            weight.reshape(orig_shape)
+            weight = weight.reshape(orig_shape)
             orig_weight.copy_(weight)
             return orig_weight
     else:
