@@ -179,7 +179,7 @@ if args.quantize:
     from neural_compressor.torch import MXQuantConfig, quantize
     quant_config = MXQuantConfig(weight_dtype=args.weight_dtype, act_dtype=args.act_dtype, weight_only=args.woq)
     user_model = quantize(model=user_model, quant_config=quant_config)
-    eval_func(user_model)
+    # eval_func(user_model)
 
 
 if args.accuracy:
