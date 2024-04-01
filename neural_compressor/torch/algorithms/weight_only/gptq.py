@@ -542,10 +542,10 @@ class GPTQuantizer(object):
         if self.run_fn:
             if self.run_args:
                 self.run_fn(self.model, *self.run_args)
-                auto_detect_accelerator.mark_step()
+                auto_detect_accelerator().mark_step()
             else:
                 self.run_fn(self.model)
-                auto_detect_accelerator.mark_step()
+                auto_detect_accelerator().mark_step()
         else:
             for batch in tqdm(self.dataloader):
                 if not self.use_layer_wise:
@@ -665,7 +665,7 @@ class GPTQuantizer(object):
             for j in range(batch_num):
                 cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                 cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
-                auto_detect_accelerator.mark_step()
+                auto_detect_accelerator().mark_step()
                 out = transformer_block(*cache_positional_batch, **cache_keyword_batch)
                 out = self.track_hidden_states(out)
             self.cache_key_arguments["batch_num"] = batch_num
@@ -685,7 +685,7 @@ class GPTQuantizer(object):
                     W = load_value(self.model, full_layer_name + ".weight", model_path)
                 else:
                     W = sub_layers[layer_name].weight.data.clone()
-                auto_detect_accelerator.mark_step()
+                auto_detect_accelerator().mark_step()
                 if "hpu" in self.device:
                     W = W.to("cpu")
                 scale, zp, Q = gptq_for_this_block[layer_name].fasterquant(
