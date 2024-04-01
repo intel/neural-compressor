@@ -154,8 +154,8 @@ class TestBiasCorrectionOldApi(unittest.TestCase):
         op_wise_sequences = TensorflowQuery(
             local_config_file=os.path.join(
                 os.path.dirname(neural_compressor.__file__), "tensorflow/algorithms/static_quant/tensorflow.yaml"
-                )
-            ).get_eightbit_patterns()
+            )
+        ).get_eightbit_patterns()
         with tf.compat.v1.Session() as sess:
             sess.run(tf.compat.v1.global_variables_initializer())
             output_graph_def = graph_util.convert_variables_to_constants(
