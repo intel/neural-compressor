@@ -398,7 +398,7 @@ def rtn_quantize(
         model: fake quantized torch module
     """
     assert isinstance(model, torch.nn.Module), "only support torch module"
-    supported_layers = [torch.nn.Linear]
+    supported_layers = (torch.nn.Linear, )
     if return_int:
         compression_dtype = kwargs.get("compression_dtype", torch.int32)
         compression_dim = kwargs.get("compression_dim", 1)
@@ -407,7 +407,7 @@ def rtn_quantize(
         use_optimum_format = kwargs.get("use_optimum_format", True)
     with torch.no_grad():
         for name, m in model.named_modules():
-            if not any(isinstance(m, layer) for layer in supported_layers):
+            if not isinstance(m, supported_layers):
                 continue
             orig_dtype = next(m.parameters()).dtype
             if orig_dtype != torch.float:
