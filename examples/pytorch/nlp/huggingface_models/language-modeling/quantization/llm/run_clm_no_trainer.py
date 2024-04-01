@@ -41,6 +41,7 @@ parser.add_argument("--act_dtype", type=str, default="int8",
                                                 "fp6_e2m3", "fp4", "float16", "bfloat12"],
                     help="input activation data type")
 parser.add_argument("--int8", action="store_true")
+parser.add_argument("--woq", action="store_true")
 parser.add_argument("--accuracy", action="store_true")
 parser.add_argument("--performance", action="store_true")
 parser.add_argument("--iters", default=100, type=int,
@@ -176,7 +177,7 @@ if args.quantize:
         return acc
 
     from neural_compressor.torch import MXQuantConfig, quantize
-    quant_config = MXQuantConfig(weight_dtype=args.weight_dtype, act_dtype=args.act_dtype)
+    quant_config = MXQuantConfig(weight_dtype=args.weight_dtype, act_dtype=args.act_dtype, weight_only=args.woq)
     user_model = quantize(model=user_model, quant_config=quant_config)
     eval_func(user_model)
 
