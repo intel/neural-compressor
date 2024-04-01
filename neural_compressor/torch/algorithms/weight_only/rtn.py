@@ -81,7 +81,7 @@ def rtn_quantize(
     model.to(device)
 
     assert isinstance(model, torch.nn.Module), "only support torch module"
-    supported_layers = (torch.nn.Linear, )
+    supported_layers = (torch.nn.Linear,)
     # initialize global configuration
     double_quant_config = {
         "double_quant": kwargs.get("use_double_quant", False),
