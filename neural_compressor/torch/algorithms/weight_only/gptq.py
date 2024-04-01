@@ -30,11 +30,8 @@ from tqdm import tqdm
 
 from neural_compressor.torch.utils import fetch_module, get_device, logger, set_module
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
-from neural_compressor.utils.utility import LazyImport
 
 from .modules import WeightOnlyLinear
-
-htcore = LazyImport("habana_frameworks.torch.core")
 
 DEBUG = False
 
@@ -545,12 +542,10 @@ class GPTQuantizer(object):
         if self.run_fn:
             if self.run_args:
                 self.run_fn(self.model, *self.run_args)
-                if "hpu" in self.device:
-                    htcore.mark_step()
+                auto_detect_accelerator.mark_step()
             else:
                 self.run_fn(self.model)
-                if "hpu" in self.device:
-                    htcore.mark_step()
+                auto_detect_accelerator.mark_step()
         else:
             for batch in tqdm(self.dataloader):
                 if not self.use_layer_wise:
@@ -670,8 +665,7 @@ class GPTQuantizer(object):
             for j in range(batch_num):
                 cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                 cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
-                if "hpu" in self.device:
-                    htcore.mark_step()
+                auto_detect_accelerator.mark_step()
                 out = transformer_block(*cache_positional_batch, **cache_keyword_batch)
                 out = self.track_hidden_states(out)
             self.cache_key_arguments["batch_num"] = batch_num
@@ -691,9 +685,8 @@ class GPTQuantizer(object):
                     W = load_value(self.model, full_layer_name + ".weight", model_path)
                 else:
                     W = sub_layers[layer_name].weight.data.clone()
+                auto_detect_accelerator.mark_step()
                 if "hpu" in self.device:
-                    htcore.mark_step()
-                    # using hpu to do fasterquant decrease the runing time, the possible reason may be need to compile model
                     W = W.to("cpu")
                 scale, zp, Q = gptq_for_this_block[layer_name].fasterquant(
                     W,
@@ -945,9 +938,6 @@ class GPTQ:
             Losses[:, i1:i2] = Losses1 / 2
 
             W[:, i2:] -= Err1.matmul(Hinv[i1:i2, i2:])
-            # if using hpu during fasterquant, the need add mark_step here
-            # if "hpu" in self.device:
-            #     htcore.mark_step()
 
             # if DEBUG:
             #     self.layer.weight.data[:, :i2] = Q[:, :i2]
@@ -976,6 +966,10 @@ class GPTQ:
             zero.append(self.quantizer.zero)
         scale = torch.cat(scale, dim=1)
         zero = torch.cat(zero, dim=1)
+        if "hpu" in self.device:
+            scale = scale.to(self.device)
+            zero = zero.to(self.device)
+            Q = Q.to(self.device)
         return scale, zero, Q
 
     def free(self):
@@ -1006,12 +1000,10 @@ class Quantizer(nn.Module):
         self.grid = grid
         self.maxshrink = maxshrink
         if trits:
-            # self.maxq = torch.tensor(-1)
             self.maxq = -1
 
     def find_params(self, x, weight=False):
         dev = x.device
-        # self.maxq = self.maxq.to(dev)
         # NF4 FP4
         if self.dtype != "int":
             from .utility import quant_tensor
