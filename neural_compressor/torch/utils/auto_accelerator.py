@@ -29,8 +29,9 @@ from typing import Any, Callable, List
 
 import torch
 
-from neural_compressor.torch.utils import logger
 from neural_compressor.common.utils import LazyImport
+from neural_compressor.torch.utils import logger
+
 htcore = LazyImport("habana_frameworks.torch.core")
 
 PRIORITY_HPU = 100
@@ -211,7 +212,7 @@ class CUDA_Accelerator(Auto_Accelerator):
 
     def empty_cache(self):
         return torch.cuda.empty_cache()
-    
+
     def mark_step(self):
         pass
 
@@ -255,7 +256,7 @@ class HPU_Accelerator(Auto_Accelerator):
 
     def empty_cache(self):
         return torch.hpu.empty_cache()
-    
+
     def mark_step(self):
         return htcore.mark_step()
 
