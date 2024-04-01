@@ -81,7 +81,7 @@ def rtn_quantize(
     model.to(device)
 
     assert isinstance(model, torch.nn.Module), "only support torch module"
-    supported_layers = ["Linear"]
+    supported_layers = [torch.nn.Linear]
     # initialize global configuration
     double_quant_config = {
         "double_quant": kwargs.get("use_double_quant", False),
@@ -93,7 +93,7 @@ def rtn_quantize(
     if export_compressed_model:
         use_optimum_format = kwargs.get("use_optimum_format", True)
     for name, m in model.named_modules():
-        if m.__class__.__name__ not in supported_layers:
+        if not any(isinstance(m, layer) for layer in supported_layers):
             continue
         if name in weight_config:  # pragma: no cover
             # initialize op configuration
