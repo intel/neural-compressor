@@ -398,7 +398,7 @@ def rtn_quantize(
         model: fake quantized torch module
     """
     assert isinstance(model, torch.nn.Module), "only support torch module"
-    supported_layers = (torch.nn.Linear, )
+    supported_layers = (torch.nn.Linear,)
     if return_int:
         compression_dtype = kwargs.get("compression_dtype", torch.int32)
         compression_dim = kwargs.get("compression_dim", 1)
