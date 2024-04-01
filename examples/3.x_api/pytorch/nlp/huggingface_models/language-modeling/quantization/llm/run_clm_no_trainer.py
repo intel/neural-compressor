@@ -337,7 +337,7 @@ if args.quantize:
 
 if args.accuracy:
     user_model.eval()
-    from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate
+    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate
 
     results = evaluate(
         model="hf-causal",
@@ -360,7 +360,7 @@ if args.accuracy:
 
 if args.performance:
     user_model.eval()
-    from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate
+    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate
     import time
 
     samples = args.iters * args.batch_size
