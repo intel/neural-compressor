@@ -75,7 +75,6 @@ class TestBiasCorrectionNewApi(unittest.TestCase):
             fp32_graph_def = QuantizeGraphHelper.remove_training_nodes(
                 output_graph_def, protected_nodes=[relu1.name.split(":")[0]]
             )
-            from neural_compressor.tensorflow.algorithms.static_quant
             from neural_compressor.tensorflow import quantize_model
             from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
