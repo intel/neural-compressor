@@ -269,7 +269,8 @@ def quant_tensor(
     orig_weight = weight
     if weight.shape[1] % group_size == 0:
         weight = weight.reshape(-1, group_size)
-        qdq_weight_actor(
+        # return weight for unpacking scale and zp
+        weight = qdq_weight_actor(
             weight,
             bits,
             scheme=scheme,
@@ -296,7 +297,7 @@ def quant_tensor(
         split_index = weight.shape[1] // group_size * group_size
         weight1 = weight[:, :split_index]
         weight1 = weight1.reshape(-1, group_size)
-        qdq_weight_actor(
+        weight1 = qdq_weight_actor(
             weight1,
             bits,
             scheme=scheme,
@@ -313,7 +314,7 @@ def quant_tensor(
                 zp1 = zp1.reshape(orig_shape[0], -1)
         weight1 = weight1.reshape(orig_shape[0], split_index)
         weight2 = weight[:, split_index:]
-        qdq_weight_actor(
+        weight2 = qdq_weight_actor(
             weight2,
             bits,
             scheme=scheme,
