@@ -9,12 +9,22 @@
 Module Contents
 ---------------
 
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.common.utils.utility.LazyImport
+   neural_compressor.common.utils.utility.CpuInfo
+
+
 
 Functions
 ~~~~~~~~~
 
 .. autoapisummary::
 
+   neural_compressor.common.utils.utility.singleton
    neural_compressor.common.utils.utility.dump_elapsed_time
    neural_compressor.common.utils.utility.set_random_seed
    neural_compressor.common.utils.utility.set_workspace
@@ -22,6 +32,27 @@ Functions
    neural_compressor.common.utils.utility.set_tensorboard
    neural_compressor.common.utils.utility.log_quant_execution
 
+
+
+.. py:function:: singleton(cls)
+
+   Singleton decorator.
+
+
+.. py:class:: LazyImport(module_name)
+
+
+
+
+   Lazy import python module till use.
+
+
+.. py:class:: CpuInfo
+
+
+
+
+   CPU info collection.
 
 
 .. py:function:: dump_elapsed_time(customized_msg='')
