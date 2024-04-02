@@ -125,7 +125,7 @@ repos:
       - id: blacken-docs
         args: [--line-length=120, --skip-errors]
         additional_dependencies:
-          - black==24.1.1
+          - black==24.3.0
         exclude: |
           (?x)^(
               examples/.+|
