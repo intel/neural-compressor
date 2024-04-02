@@ -31,7 +31,7 @@ from neural_compressor.common.base_config import (
     register_config,
     register_supported_configs_for_fwk,
 )
-from neural_compressor.common.utils import SMOOTH_QUANT, STATIC_QUANT
+from neural_compressor.common.utils import SMOOTH_QUANT, STATIC_QUANT, SPR_BASE_VERSIONS
 from neural_compressor.tensorflow.utils import DEFAULT_SQ_ALPHA_ARGS
 
 FRAMEWORK_NAME = "tensorflow"
@@ -107,11 +107,11 @@ class StaticQuantConfig(BaseConfig):
     def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
         static_quant_config = StaticQuantConfig(
-            weight_dtype=["int8", "fp32"],
+            weight_dtype=["int8", "bf16", "fp32"],
             weight_sym=[True, False],
             weight_granularity=["per_tensor", "per_channel"],
             weight_algorithm=["minmax", "kl"],
-            act_dtype=["int8", "fp32"],
+            act_dtype=["int8", "bf16", "fp32"],
             act_sym=[True, False],
             act_granularity=["per_tensor", "per_channel"],
             act_algorithm=["minmax", "kl"],

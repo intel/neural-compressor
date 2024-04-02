@@ -35,6 +35,7 @@ UNIFY_OP_TYPE_MAPPING = {
     "Conv3D": "conv3d",
     "DepthwiseConv2dNative": "conv2d",
     "FusedBatchNormV3": "batchnorm",
+    "FusedBatchNorm": "batchnorm",
     "_MklFusedInstanceNorm": "instancenorm",
     "MaxPool": "pooling",
     "MaxPool3D": "pooling",

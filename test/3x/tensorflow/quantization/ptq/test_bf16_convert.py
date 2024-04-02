@@ -262,7 +262,7 @@ class TestBF16Convert(unittest.TestCase):
     def test_bf16_transpose_b_matmul(self):
         from tensorflow.core.framework import attr_value_pb2
 
-        from neural_compressor.tensorflow import quantize_model
+        from neural_compressor.tensorflow import quantize_model, StaticQuantConfig
 
         os.environ["FORCE_BF16"] = "1"
         DT_BFLOAT16 = attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum)
@@ -281,14 +281,7 @@ class TestBF16Convert(unittest.TestCase):
 
                 dataset = DummyDataset(shape=(2, 2), label=True)
                 calib_dataloader = BaseDataLoader(dataset, batch_size=2)
-                quant_config = {
-                    "static_quant": {
-                        "global": {
-                            "weight_dtype": "bf16",
-                            "act_dtype": "bf16",
-                        },
-                    }
-                }
+                quant_config = StaticQuantConfig()
                 qmodel = quantize_model(float_graph_def, quant_config, calib_dataloader)
 
                 for i in qmodel.graph_def.node:
@@ -322,18 +315,11 @@ class TestBF16Convert(unittest.TestCase):
 
     def test_bf16_fallback(self):
         os.environ["FORCE_BF16"] = "1"
-        from neural_compressor.tensorflow import quantize_model
+        from neural_compressor.tensorflow import quantize_model, StaticQuantConfig
 
         dataset = DummyDataset(shape=(1, 224, 224, 3), label=True)
         calib_dataloader = BaseDataLoader(dataset)
-        quant_config = {
-            "static_quant": {
-                "global": {
-                    "weight_dtype": "bf16",
-                    "act_dtype": "bf16",
-                },
-            }
-        }
+        quant_config = StaticQuantConfig()
         qmodel = quantize_model(self.test_fp32_graph, quant_config, calib_dataloader)
 
         cast_op_count = 0

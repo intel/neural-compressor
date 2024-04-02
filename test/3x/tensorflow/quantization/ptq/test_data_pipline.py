@@ -47,7 +47,7 @@ class TestDataPipelineConvert(unittest.TestCase):
         sess = tf.compat.v1.Session(graph=graph)
         preds = iterator_sess_run(sess, iter_op, feed_dict={}, output_tensor=output_tensor)
 
-        self.assertNotEqual(preds, None)
+        assert preds is not None
 
 
 if __name__ == "__main__":

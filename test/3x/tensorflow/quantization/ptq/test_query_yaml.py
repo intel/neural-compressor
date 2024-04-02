@@ -129,10 +129,6 @@ class TestTFQueryYaml(unittest.TestCase):
             self.content = yaml.safe_load(f)
         self.query_handler = TensorflowQuery(local_config_file=self.tf_yaml_path)
 
-    @classmethod
-    def tearDownClass(self):
-        os.remove("fake_yaml_grappler.yaml")
-
     def test_unique_version(self):
         versions = [i["version"]["name"] for i in self.content]
         registered_version_name = []

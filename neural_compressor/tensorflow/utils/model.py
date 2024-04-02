@@ -25,6 +25,7 @@ framework_specific_info = {
     "random_seed": 1978,
     "workspace_path": DEFAULT_WORKSPACE,
     "format": "default",
+    "use_bf16": True,
 }
 
 
@@ -93,8 +94,6 @@ class Model(object):
             framework_specific_info["workspace_path"] = conf.workspace_path
         if conf.recipes:
             framework_specific_info["recipes"] = conf.recipes
-
-        framework_specific_info["use_bf16"] = conf.use_bf16 if conf.use_bf16 else False
 
         for item in ["scale_propagation_max_pooling", "scale_propagation_concat"]:
             if framework_specific_info["recipes"] and item not in framework_specific_info["recipes"]:

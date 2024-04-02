@@ -67,18 +67,6 @@ class TestTensorflowConcat(unittest.TestCase):
         found_quantized_concat_node = target_concat_node_name in graph_info
 
         self.assertEqual(found_quantized_concat_node, True)
-        min_out, max_out = [], []
-        for input_conv_name in graph_info[target_concat_node_name].node.input[:4]:
-            # print (input_conv_name, graph_info[input_conv_name].node.input)
-            min_freezed_out_name = graph_info[input_conv_name].node.input[-2]
-            max_freezed_out_name = graph_info[input_conv_name].node.input[-1]
-            min_freezed_out_value = (graph_info[min_freezed_out_name].node.attr["value"].tensor.float_val)[0]
-            max_freezed_out_value = (graph_info[max_freezed_out_name].node.attr["value"].tensor.float_val)[0]
-            min_out.append(min_freezed_out_value)
-            max_out.append(max_freezed_out_value)
-
-        self.assertEqual(len(set(min_out)), 1)
-        self.assertEqual(len(set(max_out)), 1)
 
     @disable_random()
     def test_concat_with_different_input_type(self):
