@@ -499,7 +499,7 @@ class PyTorchModel(PyTorchBaseModel):
 
         autoround_config = self.autoround_config if hasattr(self, "autoround_config") else {}
 
-        if gptq_config or (autoround_config and device=="xpu"):
+        if gptq_config or (autoround_config and device == "xpu"):
             for k, v in weight_config.items():
                 logger.debug(f"Compressing {k} on device {device}")
                 if v["dtype"] == "fp32":
@@ -558,8 +558,9 @@ class PyTorchModel(PyTorchBaseModel):
                 )
                 new_module.pack(int_weight, gptq_scale, gptq_zp, m.bias, gptq_perm)
                 set_module(self.model, k, new_module)
-        elif autoround_config and (device=="cpu" or device=="auto"):
+        elif autoround_config and (device == "cpu" or device == "auto"):
             from auto_round.export.export_to_itrex.export import pack_model  # pylint: disable=E0401
+
             self.model = pack_model(
                 self.model,
                 weight_config=autoround_config,
