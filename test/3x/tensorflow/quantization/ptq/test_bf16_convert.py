@@ -262,7 +262,7 @@ class TestBF16Convert(unittest.TestCase):
     def test_bf16_transpose_b_matmul(self):
         from tensorflow.core.framework import attr_value_pb2
 
-        from neural_compressor.tensorflow import quantize_model, StaticQuantConfig
+        from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
 
         os.environ["FORCE_BF16"] = "1"
         DT_BFLOAT16 = attr_value_pb2.AttrValue(type=dtypes.bfloat16.as_datatype_enum)
@@ -315,7 +315,7 @@ class TestBF16Convert(unittest.TestCase):
 
     def test_bf16_fallback(self):
         os.environ["FORCE_BF16"] = "1"
-        from neural_compressor.tensorflow import quantize_model, StaticQuantConfig
+        from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
 
         dataset = DummyDataset(shape=(1, 224, 224, 3), label=True)
         calib_dataloader = BaseDataLoader(dataset)

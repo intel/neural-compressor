@@ -17,9 +17,9 @@
 # ==============================================================================
 """BaseDataloder of all dataloaders."""
 
-import sys
-import math
 import collections
+import math
+import sys
 from abc import abstractmethod
 
 import numpy as np
@@ -45,7 +45,7 @@ def default_collate(batch):  # pragma: no cover
         return batch
 
 
-class IterableFetcher():
+class IterableFetcher:
     """Iterate to get next batch-size samples as a batch."""
 
     def __init__(self, dataset, collate_fn, drop_last, distributed):
@@ -102,7 +102,7 @@ class IterableFetcher():
         return self.collate_fn(batch_data)
 
 
-class IndexFetcher():
+class IndexFetcher:
     """Take single index or a batch of indices to fetch samples as a batch."""
 
     def __init__(self, dataset, collate_fn, drop_last, distributed):
@@ -128,7 +128,7 @@ class IndexFetcher():
         return self.collate_fn(data)
 
 
-class IterableSampler():
+class IterableSampler:
     """Internally samples elements.
 
     Used for datasets retrieved element by iterator. Yield None to act as a placeholder for each iteration.
@@ -152,7 +152,7 @@ class IterableSampler():
         return len(self.whole_dataset)
 
 
-class SequentialSampler():
+class SequentialSampler:
     """Sequentially samples elements, used for datasets retrieved element by index."""
 
     def __init__(self, dataset, distributed):
@@ -190,7 +190,7 @@ class SequentialSampler():
         return len(self.whole_dataset)
 
 
-class BatchSampler():
+class BatchSampler:
     """Yield a batch of indices and number of batches."""
 
     def __init__(self, sampler, batch_size, drop_last=True):
@@ -227,6 +227,7 @@ class BatchSampler():
             return len(self.sampler) // self.batch_size
         else:
             return (len(self.sampler) + self.batch_size - 1) // self.batch_size
+
 
 class BaseDataLoader:  # pragma: no cover
     """Base class for TF DataLoaders.
@@ -360,7 +361,6 @@ class BaseDataLoader:  # pragma: no cover
             return IterableSampler(dataset)
         else:
             raise ValueError("dataset type only support (index, iter)")
-
 
 
 class DummyDataset:  # pragma: no cover
