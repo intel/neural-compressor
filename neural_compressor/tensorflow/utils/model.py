@@ -58,26 +58,24 @@ class Model(object):
             model_type = "saved_model"
 
         model = TensorflowModel(model_type, root, **kwargs)
-        conf = kwargs.pop("conf", "NA")
+        conf = kwargs.pop("conf", None)
         cls.set_framework_info(conf, model)
 
         return model
 
     @staticmethod
     def set_framework_info(conf, model):
-        if conf == "NA":
-            return
         framework = "keras" if isinstance(model, KerasModel) else "tensorflow"
 
-        if conf.device:
+        if conf and conf.device:
             framework_specific_info["device"] = conf.device
-        if conf.approach:
+        if conf and conf.approach:
             framework_specific_info["approach"] = conf.approach
-        if conf.random_seed:
+        if conf and conf.random_seed:
             framework_specific_info["random_seed"] = conf.random_seed
-        if conf.inputs:
+        if conf and conf.inputs:
             framework_specific_info["inputs"] = conf.inputs
-        if conf.outputs:
+        if conf and conf.outputs:
             framework_specific_info["outputs"] = conf.outputs
 
         if framework == "keras":
@@ -86,15 +84,15 @@ class Model(object):
 
         from neural_compressor.tensorflow.utils import itex_installed
 
-        if conf.performance_only:
+        if conf and conf.performance_only:
             framework_specific_info["performance_only"] = conf.performance_only
         if itex_installed():
             framework_specific_info["backend"] = "itex"
-        if conf.workspace_path:
+        if conf and conf.workspace_path:
             framework_specific_info["workspace_path"] = conf.workspace_path
-        if conf.recipes:
+        if conf and conf.recipes:
             framework_specific_info["recipes"] = conf.recipes
 
         for item in ["scale_propagation_max_pooling", "scale_propagation_concat"]:
-            if framework_specific_info["recipes"] and item not in framework_specific_info["recipes"]:
+            if "recipes" in framework_specific_info and item not in framework_specific_info["recipes"]:
                 framework_specific_info["recipes"].update({item: True})

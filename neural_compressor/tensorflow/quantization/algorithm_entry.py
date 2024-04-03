@@ -1,4 +1,4 @@
-# Copyright (c) 2023 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ from typing import Callable, Dict
 
 from neural_compressor.common.base_config import BaseConfig
 from neural_compressor.common.utils import SMOOTH_QUANT, STATIC_QUANT
-from neural_compressor.tensorflow.algorithms import KerasAdaptor, TensorFlowAdaptor
+from neural_compressor.tensorflow.algorithms import KerasAdaptor, TensorFlowAdaptor, Tensorflow_ITEXAdaptor
 from neural_compressor.tensorflow.quantization.config import SmoothQuantConfig
 from neural_compressor.tensorflow.utils import BaseModel, KerasModel, framework_specific_info, register_algo
 
@@ -40,7 +40,13 @@ def static_quant_entry(
     Returns:
         q_model: the quantized model.
     """
-    framework = KerasAdaptor if isinstance(model, KerasModel) else TensorFlowAdaptor
+    if isinstance(model, KerasModel):
+        framework = KerasAdaptor
+    elif framework_specific_info["backend"] == "itex":
+        framework = Tensorflow_ITEXAdaptor
+    else:
+        framework = TensorFlowAdaptor
+
     quantizer = framework(framework_specific_info)
     q_model = quantizer.quantize(quant_config, model, calib_dataloader, calib_iteration)
     return q_model
