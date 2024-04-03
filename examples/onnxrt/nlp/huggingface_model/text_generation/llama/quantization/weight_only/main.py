@@ -304,6 +304,7 @@ if __name__ == "__main__":
         if args.algorithm.upper() == "RTN":
             dataloader = KVDataloader(model_path, pad_max=args.pad_max, batch_size=1)
             ptq_config = PostTrainingQuantConfig(
+                backend='onnxrt_dnnl_ep',
                 approach="weight_only",
                 calibration_sampling_size=[8],
                 op_type_dict={".*": {"weight": {"algorithm": ["RTN"]}}},
