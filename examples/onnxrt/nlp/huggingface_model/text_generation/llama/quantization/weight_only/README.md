@@ -8,7 +8,7 @@ This example confirms llama's weight only accuracy on [lambada](https://huggingf
 ## 1. Environment
 ```shell
 pip install neural-compressor
-SKIP_RUNTIME=True pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 > Note: Validated ONNX Runtime [Version](/docs/source/installation_guide.md#validated-software-environment).
 
@@ -32,6 +32,7 @@ Export to ONNX model:
 python prepare_model.py  --input_model="meta-llama/Llama-2-7b-hf" \
                          --output_model="./llama-2-7b-hf" \
                          --task=text-generation-with-past \ # or text-generation
+                         --backend=onednn \ # or mlas
 ```
 
 # Run
@@ -46,6 +47,7 @@ bash run_quant.sh --input_model=/path/to/model \ # folder path of onnx model
                   --batch_size=batch_size # optional \
                   --dataset=NeelNanda/pile-10k \
                   --tokenizer=meta-llama/Llama-2-7b-hf \ # model name or folder path containing all relevant files for model's tokenizer
+                  --backend=onednn \ # or mlas
                   --algorithm=WOQ_TUNE # support WOQ_TUNE, RTN, AWQ, GPTQ
 ```
 
@@ -58,6 +60,7 @@ bash run_benchmark.sh --input_model=path/to/model \ # folder path of onnx model
                       --batch_size=batch_size \ # optional 
                       --mode=accuracy \
                       --tokenizer=meta-llama/Llama-2-7b-hf \ # model name or folder path containing all relevant files for model's tokenizer
+                      --backend=onednn \ # or mlas
                       --tasks=lambada_openai
 ```
 
@@ -66,5 +69,6 @@ Performance:
 bash run_benchmark.sh --input_model=path/to/model \ # folder path of onnx model
                       --mode=performance \
                       --batch_size=batch_size # optional \
+                      --backend=onednn \ # or mlas
                       --tokenizer=meta-llama/Llama-2-7b-hf \ # model name or folder path containing all relevant files for model's tokenizer
 ```

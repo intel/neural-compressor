@@ -27,9 +27,9 @@ from datasets import load_dataset
 import onnxruntime as ort
 from torch.nn.functional import pad
 from torch.utils.data import DataLoader
-from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate
+from evaluation import evaluate
 from optimum.onnxruntime import ORTModelForCausalLM
-from transformers import LlamaConfig, LlamaTokenizer
+from transformers import AutoConfig, AutoTokenizer
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format = "%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
@@ -42,6 +42,11 @@ parser.add_argument(
     "--model_path",
     type=str,
     help="Folder path of pre-trained onnx model"
+)
+parser.add_argument(
+    "--backend",
+    type=str,
+    help="Support mlas and onednn"
 )
 parser.add_argument(
     "--benchmark",
@@ -116,30 +121,18 @@ parser.add_argument(
 args = parser.parse_args()
 
 # load model
-tokenizer = LlamaTokenizer.from_pretrained(args.tokenizer)
-config = LlamaConfig.from_pretrained(args.model_path)
+tokenizer = AutoTokenizer.from_pretrained(args.tokenizer)
+config = AutoConfig.from_pretrained(args.model_path)
+
 
 def tokenize_function(examples):
     example = tokenizer(examples["text"])
     return example
 
-def replace_architectures(json_path):
-    # replace 'LLaMATokenizer' to lowercase 'LlamaTokenizer'
-    # to avoid bug 'Tokenizer class LLaMATokenizer does not exist or is not currently imported.'
-    # refer to https://github.com/huggingface/transformers/issues/22222#issuecomment-1477171703
-    with open(json_path, "r") as file:
-        data = json.load(file)
-        data["architectures"] = ["LlamaForCausalLM"]
-
-    with open(json_path, 'w') as file:
-        json.dump(data, file, indent=4)
-
 def eval_func(model):
     model_dir = model
     if isinstance(model, str) and model.endswith(".onnx"):
         model_dir = os.path.dirname(model)
-
-    replace_architectures(os.path.join(model_dir, "config.json"))
 
     results = evaluate(
         model="hf-causal",
@@ -147,6 +140,7 @@ def eval_func(model):
         batch_size=args.batch_size,
         tasks=args.tasks,
         model_format="onnx",
+        backend="CPUExecutionProvider" if args.backend.lower() == "mlas" else "DnnlExecutionProvider"
     )
 
     eval_acc = 0
@@ -277,7 +271,7 @@ class GPTQDataloader:
 if __name__ == "__main__":
     from neural_compressor import set_workspace
     set_workspace(args.workspace)
-
+    backend = 'default' if args.backend.lower() == 'mlas' else 'onnxrt_dnnl_ep'
     if args.benchmark:
         if args.mode == 'performance':
             from neural_compressor.benchmark import fit
@@ -288,7 +282,7 @@ if __name__ == "__main__":
             conf = BenchmarkConfig(iteration=20,
                                    cores_per_instance=24,
                                    num_of_instance=1,
-                                   backend='onnxrt_dnnl_ep',
+                                   backend=backend,
                                    )
             fit(model_path, conf, b_dataloader=dataloader)
         elif args.mode == 'accuracy':
@@ -306,20 +300,18 @@ if __name__ == "__main__":
         if args.algorithm.upper() == "RTN":
             dataloader = KVDataloader(model_path, pad_max=args.pad_max, batch_size=1)
             ptq_config = PostTrainingQuantConfig(
-                backend='onnxrt_dnnl_ep',
+                backend=backend,
                 approach="weight_only",
                 calibration_sampling_size=[8],
                 op_type_dict={".*": {"weight": {"algorithm": ["RTN"]}}},
                 recipes={'graph_optimization_level': 'ENABLE_EXTENDED'},
                 )
-            q_model = quantization.fit(
-                model_path,
-                ptq_config,
-                calib_dataloader=dataloader)
+            q_model = quantization.fit(model_path, ptq_config)
 
         elif args.algorithm.upper() == "AWQ":
             dataloader = KVDataloader(model_path, pad_max=args.pad_max, batch_size=1)
             ptq_config = PostTrainingQuantConfig(
+                backend=backend,
                 approach="weight_only",
                 calibration_sampling_size=[8],
                 recipes={"awq_args": {"enable_mse_search": False},
@@ -334,6 +326,7 @@ if __name__ == "__main__":
         elif args.algorithm.upper() == "GPTQ":
             dataloader = GPTQDataloader(model_path, seqlen=args.seqlen, batch_size=1)
             ptq_config = PostTrainingQuantConfig(
+                backend=backend,
                 approach="weight_only",
                 calibration_sampling_size=[8],
                 op_type_dict={".*": {"weight": {"algorithm": ["GPTQ"], "scheme": ["asym"]}}},
@@ -350,6 +343,7 @@ if __name__ == "__main__":
             # set tolerable_loss to 0.5% for test, default is 1%
             accuracy_criterion = AccuracyCriterion(tolerable_loss=0.005)
             ptq_config = PostTrainingQuantConfig(
+                backend=backend,
                 approach="weight_only",
                 calibration_sampling_size=[8],
                 accuracy_criterion=accuracy_criterion,

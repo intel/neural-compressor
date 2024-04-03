@@ -25,6 +25,9 @@ function init_params {
       --mode=*)
           mode=$(echo $var |cut -f2 -d=)
       ;;
+      --backend=*)
+          backend=$(echo $var |cut -f2 -d=)
+      ;;
     esac
   done
 
@@ -45,6 +48,7 @@ function run_benchmark {
             --tokenizer=${tokenizer-meta-llama/Llama-2-7b-hf} \
             --tasks=${tasks-lambada_openai} \
             --mode=${mode} \
+            --backend=${backend} \
             --benchmark
             
 }
