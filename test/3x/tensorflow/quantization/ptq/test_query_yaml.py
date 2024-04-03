@@ -122,7 +122,7 @@ class TestTFQueryYaml(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         self.tf_yaml_path = os.path.join(
-            os.path.dirname(neural_compressor.__file__), "tensorflow/algorithms/static_quant/tensorflow.yaml"
+            os.path.dirname(neural_compressor.__path__[0]), "/tensorflow/algorithms/static_quant/tensorflow.yaml"
         )
 
         with open(self.tf_yaml_path) as f:

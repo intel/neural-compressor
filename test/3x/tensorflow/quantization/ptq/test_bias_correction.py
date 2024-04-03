@@ -27,9 +27,10 @@ class TestBiasCorrection(unittest.TestCase):
         conv1 = tf.nn.conv2d(x, conv_weights, strides=[1, 1, 1, 1], padding="SAME")
         conv_bias = tf.nn.bias_add(conv1, conv_bias)
         relu = tf.nn.relu(conv_bias, name="Relu_1")
+        inc_path= $(python-c'import neural_compressor; print(neural_compressor.__path__[0])')
         op_wise_sequences = TensorflowQuery(
             local_config_file=os.path.join(
-                os.path.dirname(neural_compressor.__file__), "tensorflow/algorithms/static_quant/tensorflow.yaml"
+                os.path.dirname(neural_compressor.__path__[0]), "/tensorflow/algorithms/static_quant/tensorflow.yaml"
             )
         ).get_eightbit_patterns()
         with tf.compat.v1.Session() as sess:

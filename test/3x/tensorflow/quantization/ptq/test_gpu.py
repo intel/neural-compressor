@@ -63,7 +63,7 @@ class TestTensorflowGpu(unittest.TestCase):
 
         cls.op_wise_sequences = TensorflowQuery(
             local_config_file=os.path.join(
-                os.path.dirname(neural_compressor.__file__), "tensorflow/algorithms/static_quant/tensorflow.yaml"
+                os.path.dirname(neural_compressor.__path__[0]), "/tensorflow/algorithms/static_quant/tensorflow.yaml"
             )
         ).get_eightbit_patterns()
         cls.logger_nc.warning(
