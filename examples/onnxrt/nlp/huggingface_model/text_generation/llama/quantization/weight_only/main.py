@@ -285,9 +285,11 @@ if __name__ == "__main__":
             model_name = "model.onnx" # require optimum >= 1.14.0
             model_path = os.path.join(args.model_path, model_name)
             dataloader = KVDataloader(model_path, pad_max=args.pad_max, batch_size=1)
-            conf = BenchmarkConfig(iteration=100,
-                                   cores_per_instance=28,
-                                   num_of_instance=1)
+            conf = BenchmarkConfig(iteration=20,
+                                   cores_per_instance=24,
+                                   num_of_instance=1,
+                                   backend='onnxrt_dnnl_ep',
+                                   )
             fit(model_path, conf, b_dataloader=dataloader)
         elif args.mode == 'accuracy':
             acc_result = eval_func(args.model_path)
