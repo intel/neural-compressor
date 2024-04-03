@@ -16,13 +16,6 @@ from neural_compressor.tensorflow.utils import disable_random, version1_gte_vers
 
 @unittest.skipIf(version1_lt_version2(tf.version.VERSION, "2.8.0"), "Only supports tf greater 2.7.0")
 class TestItexEnabling(unittest.TestCase):
-    @classmethod
-    def tearDownClass(self):
-        if version1_gte_version2(tf.version.VERSION, "2.8.0"):
-            shutil.rmtree("workspace_1")
-            shutil.rmtree("workspace_2")
-            shutil.rmtree("workspace_3")
-
     @disable_random()
     def test_itex_convert_basic_default_device(self):
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")

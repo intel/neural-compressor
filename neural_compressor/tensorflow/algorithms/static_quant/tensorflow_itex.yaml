@@ -140,7 +140,6 @@
         'MaxPool': *ref_default_static,
         'MaxPool3D': *ref_default_static,
         'AvgPool': *ref_default_static,
-        '_MklFusedInstanceNorm': *ref_default_static,
         'Conv2DBackpropInput': *ref_default_static,
         'Conv3DBackpropInputV2': *ref_default_static,
         'default': *ref_default_static
