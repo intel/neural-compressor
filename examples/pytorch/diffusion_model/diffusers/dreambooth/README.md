@@ -19,7 +19,7 @@ Before running the scripts, make sure to install the library's training dependen
 
 ```bash
 pip install git+https://github.com/huggingface/diffusers
-pip install -U -r dreambooth/requirements.txt --no-deps
+pip install -U -r requirements.txt --no-deps
 
 ```
 
