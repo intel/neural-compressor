@@ -1,4 +1,4 @@
-{% set version = "2.5" %}
+{% set version = "2.5.1" %}
 {% set buildnumber = 0 %}
 package:
   name: neural-compressor
