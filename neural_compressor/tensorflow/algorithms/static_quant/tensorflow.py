@@ -1706,12 +1706,14 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
         super().__init__(framework_specific_info)
 
     @dump_elapsed_time("Pass quantize model")
-    def quantize(self,
-                 quant_config: StaticQuantConfig,
-                 model: BaseModel,
-                 calib_dataloader: Callable = None,
-                 calib_iteration: int = 100,
-                 q_func=None,):
+    def quantize(
+        self,
+        quant_config: StaticQuantConfig,
+        model: BaseModel,
+        calib_dataloader: Callable = None,
+        calib_iteration: int = 100,
+        q_func=None,
+    ):
         """Execute the quantize process on the specified model.
 
         Args:
