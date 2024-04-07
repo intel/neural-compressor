@@ -532,15 +532,13 @@ def _quantize_mx(
 
 def quantize_mx_op(
     A,
-    mx_specs: dict,
+    elem_format: str,
+    round: str,
+    block_size: int,
     scale_bits=8,
     axes=None,
     expand_and_reshape=False,
 ):
-    elem_format = mx_specs["act_dtype"]
-    round = mx_specs["round_method"]
-    block_size = mx_specs["blocksize"]
-
     if elem_format == None:
         return A
     elif type(elem_format) is str:
@@ -557,22 +555,27 @@ class MXLinearFunction(Function):
     @staticmethod
     def forward(ctx, input, weight, bias=None, mx_specs=None):
         # element-wise quantize for input
-        input = quantize_elemwise_op(input, mx_specs=mx_specs)
+        if mx_specs.get("out_dtype", "float32") != "float32":
+            input = quantize_elemwise_op(input, mx_specs=mx_specs)
 
         if not mx_specs.get("weight_only", False):
             # MX quantize everything along input size
             input = quantize_mx_op(
                 input,
-                mx_specs,
+                mx_specs.get("act_dtype", "bfloat16"),
+                self.mx_specs["round_method"],
+                self.mx_specs["blocksize"],
                 axes=[-1],
             )
         # compute output
         output = F.linear(input, weight)
-        output = quantize_elemwise_op(output, mx_specs=mx_specs)
+        if mx_specs.get("out_dtype", "float32") != "float32":
+            output = quantize_elemwise_op(output, mx_specs=mx_specs)
 
         if bias is not None:
             output = output + bias
-            output = quantize_elemwise_op(output, mx_specs=mx_specs)
+            if mx_specs.get("out_dtype", "float32") != "float32":
+                output = quantize_elemwise_op(output, mx_specs=mx_specs)
 
         return output
 
@@ -604,19 +607,22 @@ class MXLinear(torch.nn.Linear):
 
     def apply_mx_specs(self):
         if self.mx_specs is not None:
-            self.weight.data = quantize_elemwise_op(
-                self.weight.data, mx_specs=self.mx_specs
-            )
-
-            if self.bias is not None:
-                self.bias.data = quantize_elemwise_op(
-                    self.bias.data, mx_specs=self.mx_specs
+            if self.mx_specs.get("out_dtype", "float32") != "float32":
+                self.weight.data = quantize_elemwise_op(
+                    self.weight.data, mx_specs=self.mx_specs
                 )
+
+                if self.bias is not None:
+                    self.bias.data = quantize_elemwise_op(
+                        self.bias.data, mx_specs=self.mx_specs
+                    )
 
             # MX quantize everything along input size
             self.weight.data = quantize_mx_op(
                 self.weight.data,
-                self.mx_specs,
+                self.mx_specs.get("weight_dtype", "bfloat16"),
+                self.mx_specs["round_method"],
+                self.mx_specs["blocksize"],
                 axes=[-1],
             )
 

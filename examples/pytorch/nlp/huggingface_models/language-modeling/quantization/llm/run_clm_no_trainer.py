@@ -150,9 +150,9 @@ def get_user_model():
     user_model.eval()
     return user_model, tokenizer
 
+user_model, tokenizer = get_user_model()
 if args.quantize:
     # dataset
-    user_model, tokenizer = get_user_model()
     calib_dataset = load_dataset(args.dataset, split="train")
     # calib_dataset = datasets.load_from_disk('/your/local/dataset/pile-10k/') # use this if trouble with connecting to HF
     calib_dataset = calib_dataset.shuffle(seed=42)

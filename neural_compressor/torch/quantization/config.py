@@ -102,9 +102,9 @@ class MXQuantConfig(BaseConfig):
     def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
         linear_mx_config = MXQuantConfig(
-            weight_dtype=["int8", "int4", "int2", "fp8_e5m2", "fp8_e4m3", "fp6_e3m2", "fp6_e2m3", "fp4", "float16", "bfloat16"],
-            act_dtype=["int8", "int4", "int2", "fp8_e5m2", "fp8_e4m3", "fp6_e3m2", "fp6_e2m3", "fp4", "float16", "bfloat16"],
-            out_dtype=["bfloat16", "float16"],
+            weight_dtype=["int8", "int4", "int2", "fp8_e5m2", "fp8_e4m3", "fp6_e3m2", "fp6_e2m3", "fp4", "float16", "bfloat16", "float32"],
+            act_dtype=["int8", "int4", "int2", "fp8_e5m2", "fp8_e4m3", "fp6_e3m2", "fp6_e2m3", "fp4", "float16", "bfloat16", "float32"],
+            out_dtype=["bfloat16", "float16", "float32"],
             blocksize=[2, 4, 8, 16, 32, 64, 128, 256, 512],
             round_method=["nearest", "dither", "floor", "even"],
             weight_only=[True, False],
