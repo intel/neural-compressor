@@ -114,7 +114,7 @@ class StaticQuantConfig(BaseConfig):
     def get_model_info(model) -> List[Tuple[str, Callable]]:
         white_list = [
             "Dense",
-            "Conv2d",
+            "Conv2D",
             "DepthwiseConv2D",
             "SeparableConv2D",
             "AvgPool2D",
