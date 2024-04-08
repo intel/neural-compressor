@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2022 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,3 +21,4 @@ from neural_compressor.tensorflow.keras.layers.depthwise_conv2d import QDepthwis
 from neural_compressor.tensorflow.keras.layers.pool2d import QAvgPool2D, QMaxPool2D
 from neural_compressor.tensorflow.keras.layers.quantizer import DeQuantize, FakeQuant, Quantize
 from neural_compressor.tensorflow.keras.layers.separable_conv2d import QSeparableConv2D
+from neural_compressor.tensorflow.keras.layers.layer_initializer import layer_initializer_dict

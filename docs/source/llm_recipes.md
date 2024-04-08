@@ -17,7 +17,7 @@ This document aims to publish the specific recipes we achieved for the popular L
 |       EleutherAI/gpt-j-6b       |    ✔    |    ✔     |    ✔     |
 |        facebook/opt-1.3b        |    ✔    |    ✔     |    ✔     |
 |        facebook/opt-30b         |    ✔    |    ✔     |    ✔     |
-|    meta-llama/Llama-2-7b-hf     |   WIP   |    ✔     |    ✔     |
+|    meta-llama/Llama-2-7b-hf     |    ✔    |    ✔     |    ✔     |
 |    meta-llama/Llama-2-13b-hf    |    ✔    |    ✔     |    ✔     |
 |    meta-llama/Llama-2-70b-hf    |    ✔    |    ✔     |    ✔     |
 |        tiiuae/falcon-7b         |    ✔    |    ✔     |    ✔     |
@@ -27,10 +27,10 @@ This document aims to publish the specific recipes we achieved for the popular L
 | baichuan-inc/Baichuan2-7B-Chat  |    ✔    |    ✔     |    ✔     |
 |      bigscience/bloom-1b7       |    ✔    |    ✔     |    ✔     |
 |     databricks/dolly-v2-12b     |    ✖    |    ✔     |    ✖     |
-|     EleutherAI/gpt-neox-20b     |    ✖    |    ✔     |    ✖     |
+|     EleutherAI/gpt-neox-20b     |    ✖    |    ✔     |    ✔     |
 |    mistralai/Mistral-7B-v0.1    |    ✖    |    ✔     |    ✔     |
-|        THUDM/chatglm2-6b        |   WIP   |    ✔     |   WIP    |
-|        THUDM/chatglm3-6b        |   WIP   |    ✔     |   WIP    |
+|        THUDM/chatglm2-6b        |   WIP   |    ✔     |    ✔     |
+|        THUDM/chatglm3-6b        |   WIP   |    ✔     |    ✔     |
 
 **Detail recipes can be found [HERE](https://github.com/intel/intel-extension-for-transformers/blob/main/examples/huggingface/pytorch/text-generation/quantization/llm_quantization_recipes.md).**
 
