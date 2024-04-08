@@ -76,3 +76,16 @@ converted_model = convert_pt2e(prepared_model)
 
 # 6. Lowering
 optimized_model = torch.compile(converted_model)
+
+
+################### Quantization Code (INC) ###################
+def prepare(model):
+    exported_model = capture_pre_autograd_graph(model)
+    prepared_model = prepare_pt2e(
+        model,
+    )
+
+
+def convert(model):
+    converted_model = convert_pt2e(model)
+    optimized_model = torch.compile(converted_model)
