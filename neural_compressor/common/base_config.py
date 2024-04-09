@@ -412,7 +412,9 @@ class BaseConfig(ABC):
                 if op_type in op_type_config_dict:
                     config_mapping[(op_name, op_type)] = op_name_config_dict[op_type]
                 for op_name_pattern in op_name_config_dict:
-                    if re.match(op_name_pattern, op_name):
+                    if isinstance(op_name, str) and re.match(op_name_pattern, op_name):
+                        config_mapping[(op_name, op_type)] = op_name_config_dict[op_name_pattern]
+                    elif op_name_pattern == op_name:
                         config_mapping[(op_name, op_type)] = op_name_config_dict[op_name_pattern]
         return config_mapping
 
