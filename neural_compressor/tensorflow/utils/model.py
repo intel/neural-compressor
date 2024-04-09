@@ -18,13 +18,13 @@
 import copy
 
 from neural_compressor.common.utils import DEFAULT_WORKSPACE
-from neural_compressor.tensorflow.utils.utility import singleton
 from neural_compressor.tensorflow.utils.constants import TENSORFLOW_DEFAULT_CONFIG
 from neural_compressor.tensorflow.utils.model_wrappers import BaseModel, KerasModel, TensorflowModel, get_tf_model_type
+from neural_compressor.tensorflow.utils.utility import singleton
 
 
 @singleton
-class TensorflowGlobalConfig():
+class TensorflowGlobalConfig:
     global_config = {
         "device": "cpu",
         "backend": "default",

@@ -14,7 +14,7 @@
 
 from neural_compressor.tensorflow.utils.data import BaseDataLoader, DummyDataset, DummyDatasetV2
 from neural_compressor.tensorflow.utils.model import (
-    Model, 
+    Model,
     TFConfig,
 )
 from neural_compressor.tensorflow.utils.constants import (

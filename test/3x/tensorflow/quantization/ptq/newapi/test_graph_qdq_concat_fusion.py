@@ -29,7 +29,7 @@ class TestTensorflowQdqConcatFusion(unittest.TestCase):
     def test_tensorflow_concat_quantization(self):
         fp32_graph_def = read_graph(self.pb_path)
 
-        from neural_compressor.tensorflow import quantize_model, Model
+        from neural_compressor.tensorflow import Model, quantize_model
         from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
         dataset = DummyDataset(shape=(100, 299, 299, 3), label=True)
@@ -44,7 +44,7 @@ class TestTensorflowQdqConcatFusion(unittest.TestCase):
                 },
             }
         }
-        fp32_model = Model(fp32_graph_def, conf={"performance_only":True})
+        fp32_model = Model(fp32_graph_def, conf={"performance_only": True})
         qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
 
         found_quantized_concat_node = False
@@ -187,7 +187,7 @@ class TestTensorflowQdqConcatFusion(unittest.TestCase):
                 sess=sess, input_graph_def=sess.graph_def, output_node_names=[out_name]
             )
 
-            from neural_compressor.tensorflow import quantize_model, Model
+            from neural_compressor.tensorflow import Model, quantize_model
             from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
             dataset = DummyDataset(shape=(100, 128, 128, 16), label=True)
@@ -202,7 +202,7 @@ class TestTensorflowQdqConcatFusion(unittest.TestCase):
                     },
                 }
             }
-            fp32_model = Model(fp32_graph_def, conf={"performance_only":True})
+            fp32_model = Model(fp32_graph_def, conf={"performance_only": True})
             qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
 
             dtype = None
