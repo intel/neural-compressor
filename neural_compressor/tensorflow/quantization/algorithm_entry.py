@@ -19,7 +19,12 @@ from neural_compressor.common.base_config import BaseConfig
 from neural_compressor.common.utils import SMOOTH_QUANT, STATIC_QUANT
 from neural_compressor.tensorflow.algorithms import KerasAdaptor, Tensorflow_ITEXAdaptor, TensorFlowAdaptor
 from neural_compressor.tensorflow.quantization.config import SmoothQuantConfig
-from neural_compressor.tensorflow.utils import BaseModel, KerasModel, framework_specific_info, register_algo
+from neural_compressor.tensorflow.utils import (
+    BaseModel, 
+    KerasModel, 
+    TFConfig,
+    register_algo,
+)
 
 
 @register_algo(name=STATIC_QUANT)
@@ -42,13 +47,15 @@ def static_quant_entry(
     """
     if isinstance(model, KerasModel):
         framework = KerasAdaptor
-    elif framework_specific_info["backend"] == "itex":
+    elif TFConfig.global_config == "itex":
         framework = Tensorflow_ITEXAdaptor
     else:
         framework = TensorFlowAdaptor
 
-    quantizer = framework(framework_specific_info)
+    quantizer = framework(TFConfig.global_config)
     q_model = quantizer.quantize(quant_config, model, calib_dataloader, calib_iteration)
+    TFConfig.reset_global_config()
+
     return q_model
 
 

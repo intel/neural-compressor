@@ -96,7 +96,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
                 sess=sess, input_graph_def=sess.graph_def, output_node_names=[out_name]
             )
 
-            from neural_compressor.tensorflow import quantize_model
+            from neural_compressor.tensorflow import quantize_model, Model
             from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
             dataset = DummyDataset(shape=(100, 64, 64, 64, 1), label=True)
@@ -111,7 +111,8 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
                     },
                 }
             }
-            qmodel = quantize_model(fp32_graph_def, quant_config, calib_dataloader)
+            fp32_model = Model(fp32_graph_def, conf={"performance_only":True})
+            qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
 
             found_conv_fusion = False
             found_dequantize_fusion = False
@@ -143,7 +144,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
                 sess=sess, input_graph_def=sess.graph_def, output_node_names=[out_name]
             )
 
-            from neural_compressor.tensorflow import quantize_model
+            from neural_compressor.tensorflow import quantize_model, Model
             from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
             dataset = DummyDataset(shape=(100, 64, 64, 64, 1), label=True)
@@ -158,7 +159,8 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
                     },
                 }
             }
-            qmodel = quantize_model(fp32_graph_def, quant_config, calib_dataloader)
+            fp32_model = Model(fp32_graph_def, conf={"performance_only":True})
+            qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
 
             found_conv_fusion = False
             found_dequantize_fusion = False
@@ -188,7 +190,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
                 sess=sess, input_graph_def=sess.graph_def, output_node_names=[out_name]
             )
 
-            from neural_compressor.tensorflow import quantize_model
+            from neural_compressor.tensorflow import quantize_model, Model
             from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
             dataset = DummyDataset(shape=(100, 64, 64, 64, 1), label=True)
@@ -203,7 +205,8 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
                     },
                 }
             }
-            qmodel = quantize_model(fp32_graph_def, quant_config, calib_dataloader)
+            fp32_model = Model(fp32_graph_def, conf={"performance_only":True})
+            qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
 
             found_conv_fusion = False
             found_requantize_fusion = False
@@ -613,7 +616,7 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
                 sess=sess, input_graph_def=sess.graph_def, output_node_names=[out_name]
             )
 
-            from neural_compressor.tensorflow import quantize_model
+            from neural_compressor.tensorflow import quantize_model, Model
             from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
             dataset = DummyDataset(shape=(100, 64, 64, 64, 1), label=True)
@@ -628,7 +631,8 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
                     },
                 }
             }
-            qmodel = quantize_model(fp32_graph_def, quant_config, calib_dataloader)
+            fp32_model = Model(fp32_graph_def, conf={"performance_only":True})
+            qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
 
             found_conv_fusion = False
             for i in qmodel.graph_def.node:

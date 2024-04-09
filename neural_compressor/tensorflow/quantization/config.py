@@ -137,10 +137,11 @@ class StaticQuantConfig(BaseConfig):
     @staticmethod
     def get_model_info(model) -> List[Tuple[str, Callable]]:
         white_list = [
-            "MatMul",
             "Conv2D",
+            "FusedBatchNormV3",
             "Conv3D",
             "_MklFusedInstanceNorm",
+            "MatMul",
             "BatchMatMul",
             "BatchMatMulV2",
             "DepthwiseConv2dNative",
@@ -150,9 +151,8 @@ class StaticQuantConfig(BaseConfig):
             "MaxPool",
             "MaxPool3D",
             "AvgPool",
-            "_MklFusedInstanceNorm",
             "Conv2DBackpropInput",
-            "Conv2DBackpropInputV2",
+            "Conv3DBackpropInputV2",
         ]
         filter_result = []
         for node in model.graph_def.node:
