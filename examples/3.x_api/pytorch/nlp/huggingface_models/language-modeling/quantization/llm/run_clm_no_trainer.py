@@ -340,10 +340,15 @@ if args.quantize:
                 quant_config = SmoothQuantConfig(alpha=args.alpha, folding=False)
             else:
                 quant_config = SmoothQuantConfig(alpha=args.alpha, folding=True)
+            
+            if re.search("gpt", user_model.config.model_type):
+                quant_config.set_local("add", SmoothQuantConfig(w_dtype="fp32", act_dtype="fp32"))
         else:
-            from neural_compressor.torch.quantization import quantize, get_default_static_config
+            from neural_compressor.torch.quantization import quantize, get_default_static_config, StaticQuantConfig
 
             quant_config =  get_default_static_config()
+            if re.search("gpt", user_model.config.model_type):
+                quant_config.set_local("add", StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
 
         from neural_compressor.torch.algorithms.smooth_quant import move_input_to_device
         from tqdm import tqdm
@@ -361,14 +366,11 @@ if args.quantize:
                     pass
             return
             
-        if re.search("gpt", user_model.config.model_type):
-            quant_config.set_local("add", SmoothQuantConfig(w_dtype="fp32", act_dtype="fp32"))
         from utils import get_example_inputs
         example_inputs = get_example_inputs(user_model, calib_dataloader)
         user_model = quantize(
             model=user_model, quant_config=quant_config, example_inputs=example_inputs, run_fn=run_fn
         )
-
         user_model.save(args.output_dir)
 
 if args.int8 or args.int8_bf16_mixed:
@@ -388,7 +390,7 @@ else:
 
 if args.accuracy:
     user_model.eval()
-    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate
+    from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate
 
     results = evaluate(
         model="hf-causal",
@@ -411,7 +413,7 @@ if args.accuracy:
 
 if args.performance:
     user_model.eval()
-    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate
+    from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate
     import time
 
     samples = args.iters * args.batch_size
