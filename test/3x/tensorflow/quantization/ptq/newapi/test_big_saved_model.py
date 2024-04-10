@@ -86,29 +86,6 @@ class Dataset(object):
         return self.test_images[idx].astype(np.float32), self.test_labels[idx]
 
 
-class MyDataLoader:
-    def __init__(self, dataset, batch_size=1):
-        self.dataset = dataset
-        self.batch_size = batch_size
-        self.length = math.ceil(len(dataset) / self.batch_size)
-
-    def __iter__(self):
-        images_list = []
-        labels_list = []
-        for _, (images, labels) in enumerate(self.dataset):
-            images = np.expand_dims(images, axis=0)
-            labels = np.expand_dims(labels, axis=0)
-            images_list.append(images[0])
-            labels_list.append(labels[0])
-            if self.batch_size == len(images_list):
-                yield (images_list, labels_list)
-                images_list = []
-                labels_list = []
-
-    def __len__(self):
-        return self.length
-
-
 class TestBigSavedModel(unittest.TestCase):
     @classmethod
     def setUpClass(self):
@@ -124,10 +101,13 @@ class TestBigSavedModel(unittest.TestCase):
             """The function that maps name from AutoTrackable variables to graph nodes."""
             name = name.replace("dense", "StatefulPartitionedCall/sequential/dense/MatMul")
             name = name.replace("conv2d", "StatefulPartitionedCall/sequential/conv2d/Conv2D")
-            name = name.replace("kernel:0", "ReadVariableOp")
+            index = name.find('kernel')
+            if index != -1:
+                name = name.replace(name[index:], "ReadVariableOp")
             return name
 
         from neural_compressor.tensorflow import Model, SmoothQuantConfig, quantize_model
+        from neural_compressor.tensorflow.utils import BaseDataLoader
 
         model = Model("baseline_model", modelType="llm_saved_model")
         model.weight_name_mapping = weight_name_mapping
@@ -135,17 +115,19 @@ class TestBigSavedModel(unittest.TestCase):
 
         self.assertEqual(output_node_names, ["Identity"])
 
-        sq_config = SmoothQuantConfig(alpha=0.6)
+        sq_config = SmoothQuantConfig(alpha=0.6, op_types=["MatMul"])
         static_config = {
             "static_quant": {
-                "StatefulPartitionedCall/sequential/conv2d/Conv2D": {
-                    "weight_dtype": "fp32",
-                    "act_dtype": "fp32",
+                "local":{
+                    "StatefulPartitionedCall/sequential/conv2d/Conv2D": {
+                        "weight_dtype": "fp32",
+                        "act_dtype": "fp32",
+                    },
                 },
-            }
+            },
         }
 
-        calib_dataloader = MyDataLoader(dataset=Dataset())
+        calib_dataloader = BaseDataLoader(dataset=Dataset())
         q_model = quantize_model(model, [sq_config, static_config], calib_dataloader)
         q_model.save("int8_model")
 

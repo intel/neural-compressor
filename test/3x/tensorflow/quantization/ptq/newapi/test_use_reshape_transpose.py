@@ -32,9 +32,9 @@ class TestFuseReshapeTransposeOptimizer(unittest.TestCase):
 
         with tf.Session() as sess:
             sess.run(z, feed_dict={x: x_data, y: y_data})
-            float_graph_def = sess.graph.as_graph_def()
+            fp32_graph_def = sess.graph.as_graph_def()
 
-            from neural_compressor.tensorflow import quantize_model
+            from neural_compressor.tensorflow import quantize_model, Model
             from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
             dataset = DummyDataset(shape=(2, 2), label=True)
@@ -49,7 +49,9 @@ class TestFuseReshapeTransposeOptimizer(unittest.TestCase):
                     },
                 }
             }
-            qmodel = quantize_model(float_graph_def, quant_config, calib_dataloader)
+            fp32_model = Model(fp32_graph_def, conf={"performance_only": True})
+            qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
+
 
             for i in qmodel.graph_def.node:
                 if i.op == "MatMul":
@@ -79,9 +81,9 @@ class TestFuseReshapeTransposeOptimizer(unittest.TestCase):
 
         with tf.Session() as sess:
             sess.run(z, feed_dict={x: x_data, y: y_data})
-            float_graph_def = sess.graph.as_graph_def()
+            fp32_graph_def = sess.graph.as_graph_def()
 
-            from neural_compressor.tensorflow import quantize_model
+            from neural_compressor.tensorflow import quantize_model, Model
             from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
             dataset = DummyDataset(shape=(2, 2), label=True)
@@ -96,7 +98,9 @@ class TestFuseReshapeTransposeOptimizer(unittest.TestCase):
                     },
                 }
             }
-            qmodel = quantize_model(float_graph_def, quant_config, calib_dataloader)
+            
+            fp32_model = Model(fp32_graph_def, conf={"performance_only": True})
+            qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
 
             for i in qmodel.graph_def.node:
                 if i.op == "MatMul":
