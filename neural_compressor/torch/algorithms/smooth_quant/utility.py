@@ -16,13 +16,10 @@ import copy
 import json
 import os
 import re
-import subprocess
 from collections import UserDict
 
-import cpuinfo
 import intel_extension_for_pytorch as ipex
 import numpy
-import psutil
 import torch
 import tqdm
 from packaging.version import Version
@@ -30,6 +27,7 @@ from packaging.version import Version
 from neural_compressor.torch.algorithms.static_quant import (
     TransformerBasedModelBlockPatternDetector,
     dump_model_op_stats,
+    generate_activation_observer,
     get_quantizable_ops_from_cfgs,
     ipex_config_path,
     paser_cfgs,
@@ -40,99 +38,6 @@ from neural_compressor.torch.utils import get_ipex_version, get_torch_version, l
 
 version = get_torch_version()
 ipex_ver = get_ipex_version()
-
-
-def generate_activation_observer(scheme, algorithm, smooth_quant=False, smooth_quant_enable=False):  # pragma: no cover
-    """This is a helper method to generate an activation observer.
-
-    Args:
-        scheme (str): Quantization scheme to be used.
-        algorithm (str): What algorithm for computing the quantization parameters based on.
-
-    Returns:
-        An observer.
-    """
-    kl_activation_observer = {
-        "name": "HistogramObserver",
-        "bins": 2048,
-        "upsample_rate": 128,
-        "dtype": "torch.quint8",
-        "qscheme": "torch.per_tensor_affine",
-        "reduce_range": False,
-        "quant_min": 0,
-        "quant_max": 255,
-    }
-    minmax_activation_observer = {
-        "name": "MinMaxObserver",
-        "dtype": "torch.quint8",
-        "qscheme": "torch.per_tensor_affine",
-        "reduce_range": False,
-        "quant_min": 0,
-        "quant_max": 255,
-    }
-    smoothquant_kl_activation_observer = {
-        "name": "SmoothQuantActivationObserver",
-        "smooth_quant_enabled": smooth_quant_enable,
-        "dtype": "torch.quint8",
-        "qscheme": "torch.per_tensor_affine",
-        "reduce_range": False,
-        "quant_min": 0,
-        "quant_max": 255,
-        "alpha": 0.5,
-        "act_observer": kl_activation_observer,
-        "act_ic_observer": {
-            "name": "PerChannelMinMaxObserver",
-            "ch_axis": -1,
-            "dtype": "torch.quint8",
-            "qscheme": "torch.per_channel_affine",
-            "reduce_range": False,
-            "quant_min": 0,
-            "quant_max": 255,
-        },
-    }
-    smoothquant_minmax_activation_observer = {
-        "name": "SmoothQuantActivationObserver",
-        "smooth_quant_enabled": smooth_quant_enable,
-        "dtype": "torch.quint8",
-        "qscheme": "torch.per_tensor_affine",
-        "reduce_range": False,
-        "quant_min": 0,
-        "quant_max": 255,
-        "alpha": 0.5,
-        "act_observer": minmax_activation_observer,
-        "act_ic_observer": {
-            "name": "PerChannelMinMaxObserver",
-            "ch_axis": -1,
-            "dtype": "torch.quint8",
-            "qscheme": "torch.per_channel_affine",
-            "reduce_range": False,
-            "quant_min": 0,
-            "quant_max": 255,
-        },
-    }
-    REDUCE_RANGE = False if CpuInfo().vnni else True
-    if REDUCE_RANGE:
-        minmax_activation_observer["reduce_range"] = REDUCE_RANGE
-        kl_activation_observer["reduce_range"] = REDUCE_RANGE
-    if scheme == "sym":
-        minmax_activation_observer["qscheme"] = "torch.per_tensor_symmetric"
-        minmax_activation_observer["dtype"] = "torch.qint8"
-        minmax_activation_observer["quant_min"] = -128
-        minmax_activation_observer["quant_max"] = 127
-        kl_activation_observer["qscheme"] = "torch.per_tensor_symmetric"
-        kl_activation_observer["dtype"] = "torch.qint8"
-        kl_activation_observer["quant_min"] = -128
-        kl_activation_observer["quant_max"] = 127
-    if smooth_quant and smooth_quant_enable:
-        if algorithm == "kl":
-            return smoothquant_kl_activation_observer
-        if algorithm == "minmax":
-            return smoothquant_minmax_activation_observer
-    else:
-        if algorithm == "kl":
-            return kl_activation_observer
-        if algorithm == "minmax":
-            return minmax_activation_observer
 
 
 def check_cfg_and_qconfig(
@@ -2275,67 +2180,3 @@ class WrapperLayer(torch.nn.Module):
             output = self.orig_layer(x)
         self.output = output
         return output
-
-
-class CpuInfo(object):  # pragma: no cover
-    """Get CPU Info."""
-
-    def __init__(self):
-        """Get whether the cpu numerical format is bf16, the number of sockets, cores and cores per socket."""
-        self._bf16 = False
-        self._vnni = False
-        info = cpuinfo.get_cpu_info()
-        if "arch" in info and "X86" in info["arch"]:
-            cpuid = cpuinfo.CPUID()
-            max_extension_support = cpuid.get_max_extension_support()
-            if max_extension_support >= 7:
-                ecx = cpuid._run_asm(
-                    b"\x31\xC9",  # xor ecx, ecx
-                    b"\xB8\x07\x00\x00\x00" b"\x0f\xa2" b"\x89\xC8" b"\xC3",  # mov eax, 7  # cpuid  # mov ax, cx  # ret
-                )
-                self._vnni = bool(ecx & (1 << 11))
-                eax = cpuid._run_asm(
-                    b"\xB9\x01\x00\x00\x00",  # mov ecx, 1
-                    b"\xB8\x07\x00\x00\x00" b"\x0f\xa2" b"\xC3",  # mov eax, 7  # cpuid  # ret
-                )
-                self._bf16 = bool(eax & (1 << 5))
-        if "arch" in info and "ARM" in info["arch"]:  # pragma: no cover
-            self._sockets = 1
-        else:
-            self._sockets = self.get_number_of_sockets()
-        self._cores = psutil.cpu_count(logical=False)
-        self._cores_per_socket = int(self._cores / self._sockets)
-
-    @property
-    def bf16(self):
-        """Get whether it is bf16."""
-        return self._bf16
-
-    @property
-    def vnni(self):
-        """Get whether it is vnni."""
-        return self._vnni
-
-    @property
-    def cores_per_socket(self):
-        """Get the cores per socket."""
-        return self._cores_per_socket
-
-    def get_number_of_sockets(self) -> int:
-        """Get number of sockets in platform."""
-        cmd = "cat /proc/cpuinfo | grep 'physical id' | sort -u | wc -l"
-        if psutil.WINDOWS:
-            cmd = r'wmic cpu get DeviceID | C:\Windows\System32\find.exe /C "CPU"'
-
-        with subprocess.Popen(
-            args=cmd,
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            universal_newlines=False,
-        ) as proc:
-            proc.wait()
-            if proc.stdout:
-                for line in proc.stdout:
-                    return int(line.decode("utf-8", errors="ignore").strip())
-        return 0

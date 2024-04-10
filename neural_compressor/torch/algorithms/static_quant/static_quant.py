@@ -51,6 +51,12 @@ def static_quantize(model, tune_cfg, run_fn, example_inputs, inplace=True):
     Returns:
         A quantized model.
     """
+    _, cfgs, default_cfgs, fuse_ops, op_infos_from_cfgs, output_tensor_id_op_name = get_quantizable_ops_recursively(
+        model, example_inputs
+    )
+    qscheme = cfg_to_qconfig(
+        tune_cfg, cfgs, default_cfgs, fuse_ops, op_infos_from_cfgs, output_tensor_id_op_name
+    )  # update json file in ipex_config_path
     model.eval()
 
     if ipex_ver.release >= Version("1.12.0").release:
@@ -80,8 +86,6 @@ def static_quantize(model, tune_cfg, run_fn, example_inputs, inplace=True):
 
     else:  # pragma: no cover
         # for IPEX version < 1.12
-        _, cfgs, default_cfgs, fuse_ops = get_quantizable_ops_recursively(model, example_inputs)
-        qscheme = cfg_to_qconfig(tune_cfg, cfgs, default_cfgs, fuse_ops)
         ipex_conf = ipex.quantization.QuantConf(
             configure_file=ipex_config_path, qscheme=qscheme
         )  # pylint: disable=E1101
