@@ -1,8 +1,0 @@
-transformers
-onnx>=1.7.0
-onnxruntime
-coloredlogs
-torch
-sympy
-onnxruntime-extensions; python_version < '3.11'
-tqdm

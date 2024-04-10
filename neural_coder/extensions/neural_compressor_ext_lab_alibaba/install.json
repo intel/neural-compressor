@@ -1,5 +1,0 @@
-{
-  "packageManager": "python",
-  "packageName": "neural_compressor_ext_lab_alibaba",
-  "uninstallInstructions": "Use your Python package manager (pip, conda, etc.) to uninstall the package neural_compressor_ext_lab_alibaba"
-}

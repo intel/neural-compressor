@@ -1,4 +1,0 @@
-pillow 
-diffusers 
-transformers 
-accelerate
