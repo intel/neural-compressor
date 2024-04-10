@@ -12,16 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
 import copy
 from pathlib import Path
-from neural_compressor.torch.algorithms import algo_quantizers
-from typing import Union, Any, Callable, Dict, Tuple
+from typing import Any, Callable, Dict, Tuple, Union
 
+import torch
 
+from neural_compressor.common import logger
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
 from neural_compressor.common.utils import log_quant_execution
-from neural_compressor.common import logger
+from neural_compressor.torch.algorithms import algo_quantizers
 
 FRAMEWORK_NAME = "torch"
 
@@ -29,7 +29,12 @@ FRAMEWORK_NAME = "torch"
 def need_apply(configs_mapping: Dict[Tuple[str, callable], BaseConfig], algo_name):
     return any(config.name == algo_name for config in configs_mapping.values())
 
-def prepare(model: torch.nn.Module, quant_config: Union[BaseConfig, str, Path], inplace: bool = True,):
+
+def prepare(
+    model: torch.nn.Module,
+    quant_config: Union[BaseConfig, str, Path],
+    inplace: bool = True,
+):
     """Prepare the model for calibration.
 
     Insert observers into the model so that it can monitor the input and output tensors during calibration.
@@ -77,7 +82,9 @@ def convert(model: torch.nn.Module, quant_config: Union[BaseConfig, str, Path] =
         model (torch.nn.Module): the prepared model
         quant_config (Union[BaseConfig, str, Path]): path to quantization config
     """
-    assert getattr(model, "prepared", False) or quant_config is not None, "Please pass quant_config to convert function."
+    assert (
+        getattr(model, "prepared", False) or quant_config is not None
+    ), "Please pass quant_config to convert function."
     if getattr(model, "prepared", False):
         if quant_config is None:
             quant_config = model.quant_config
@@ -107,7 +114,9 @@ def convert(model: torch.nn.Module, quant_config: Union[BaseConfig, str, Path] =
 
 def finalize_calibration(model):
     from neural_compressor.torch.algorithms.habana_fp8 import save_calib_result
+
     save_calib_result(model)
+
 
 def load(model, fname="./saved_results"):
     pass

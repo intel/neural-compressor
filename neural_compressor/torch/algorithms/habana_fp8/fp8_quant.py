@@ -13,9 +13,16 @@
 # limitations under the License.
 
 import os
-from neural_compressor.torch.algorithms.habana_fp8 import get_mod_list, update_mode, restore_patched_module, with_patched_module
-from neural_compressor.torch.algorithms import algo_quantizer_register, AlgoBase
+
 from neural_compressor.common.utils import FP8_QUANT
+from neural_compressor.torch.algorithms import AlgoBase, algo_quantizer_register
+from neural_compressor.torch.algorithms.habana_fp8 import (
+    get_mod_list,
+    restore_patched_module,
+    update_mode,
+    with_patched_module,
+)
+
 
 @algo_quantizer_register(name=FP8_QUANT)
 class FP8Quantizer(AlgoBase):
@@ -28,18 +35,19 @@ class FP8Quantizer(AlgoBase):
 
     def prepare(self, model):
         # set environment
-        os.environ['QUANT_CONFIG'] = self.quant_config
+        os.environ["QUANT_CONFIG"] = self.quant_config
         _prepare(model)
         return model
 
     def convert(self, model):
         # set environment
 
-        os.environ['QUANT_CONFIG'] = self.quant_config
+        os.environ["QUANT_CONFIG"] = self.quant_config
         if with_patched_module(model):
             restore_patched_module(model)
         _convert(model)
         return model
+
 
 def _convert(model):
     from habana_quantization_toolkit._hook_method import config, quantize_hooks, scale_method_mapping, scaling_params
@@ -48,11 +56,12 @@ def _convert(model):
     update_mode(quant_step=True)
 
     mod_list = get_mod_list(model)
-    scaling_method_name = scale_method_mapping[(config.cfg['scale_method'], config.cfg['observer'])]
-    scaling_params[scaling_method_name].update(config.cfg['scale_params'])
-    config.cfg['scale_params'] = scaling_params[scaling_method_name]
+    scaling_method_name = scale_method_mapping[(config.cfg["scale_method"], config.cfg["observer"])]
+    scaling_params[scaling_method_name].update(config.cfg["scale_params"])
+    config.cfg["scale_params"] = scaling_params[scaling_method_name]
 
     return quantize_hooks(model, mod_list)
+
 
 def _prepare(model):
     from habana_quantization_toolkit._hook_method import prepare_model_for_measure

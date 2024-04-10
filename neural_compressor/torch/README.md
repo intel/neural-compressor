@@ -69,7 +69,7 @@ model(input.to("hpu"))
 ```
 
 
-Whole scrip and config refer to [sample.py](../../test/sample.py), [maxabs_measure.json](../../test/maxabs_measure.json) and [maxabs_quant.json](../../test/maxabs_quant.json).
+Whole script and config refer to [sample.py](../../test/sample.py), [maxabs_measure.json](../../test/maxabs_measure.json) and [maxabs_quant.json](../../test/maxabs_quant.json).
 
 First, measure the tensor quantization statistic:
 ```shell
@@ -113,7 +113,7 @@ model(input.to("hpu"))
 + model = convert(model)
 ```
 
-Whole scrip and config refer to [sample_one_step.py](../../test/sample_one_step.py).
+Whole script and config refer to [sample_one_step.py](../../test/sample_one_step.py).
 
 ```shell
 python sample_one_step.py --calib_result ./hqt_output/measure --quant_config=quant_config.json

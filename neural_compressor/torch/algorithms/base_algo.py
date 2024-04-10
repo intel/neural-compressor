@@ -16,11 +16,14 @@ from abc import ABC, abstractmethod
 
 algo_quantizers = {}
 
+
 def algo_quantizer_register(name):
     def decorator(algo_quantizer):
         algo_quantizers[name] = algo_quantizer
         return algo_quantizer
+
     return decorator
+
 
 class AlgoBase(ABC):
     def __init__(self, config):

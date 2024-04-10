@@ -13,12 +13,13 @@
 # limitations under the License.
 
 import json
-import torch
-from typing import Callable, List, NamedTuple, Optional, Union, Tuple
+from typing import Callable, List, NamedTuple, Optional, Tuple, Union
 
+import torch
+
+from neural_compressor.common import logger
 from neural_compressor.common.base_config import BaseConfig, register_config
 from neural_compressor.common.utils import DEFAULT_WHITE_LIST, FP8_QUANT, OP_NAME_OR_MODULE_TYPE
-from neural_compressor.common import logger
 
 FRAMEWORK_NAME = "torch"
 
@@ -79,7 +80,7 @@ class FP8QuantConfig(BaseConfig):
     def from_json_file(cls, filename):
         with open(filename, "r", encoding="utf-8") as file:
             config_dict = json.load(file)
-        config_dict['json_file'] = filename
+        config_dict["json_file"] = filename
         config = cls.from_dict(config_dict)
         return config
 
