@@ -147,7 +147,7 @@ class TestConv2DBiasAddAddReluFusion(unittest.TestCase):
                 sess=sess, input_graph_def=sess.graph_def, output_node_names=[out_name]
             )
 
-            from neural_compressor.tensorflow import quantize_model, Model
+            from neural_compressor.tensorflow import Model, quantize_model
             from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
             dataset = DummyDataset(shape=(100, 56, 56, 16), label=True)
@@ -162,7 +162,7 @@ class TestConv2DBiasAddAddReluFusion(unittest.TestCase):
                     },
                 }
             }
-            fp32_model = Model(fp32_graph_def, conf={"performance_only":True})
+            fp32_model = Model(fp32_graph_def, conf={"performance_only": True})
             qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
 
             found_conv_fusion = False
@@ -193,7 +193,7 @@ class TestConv2DBiasAddAddReluFusion(unittest.TestCase):
                 sess=sess, input_graph_def=sess.graph_def, output_node_names=[out_name]
             )
 
-            from neural_compressor.tensorflow import quantize_model, Model
+            from neural_compressor.tensorflow import Model, quantize_model
             from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
             dataset = DummyDataset(shape=(100, 56, 56, 16), label=True)
@@ -208,7 +208,7 @@ class TestConv2DBiasAddAddReluFusion(unittest.TestCase):
                     },
                 }
             }
-            fp32_model = Model(fp32_graph_def, conf={"performance_only":True})
+            fp32_model = Model(fp32_graph_def, conf={"performance_only": True})
             qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
 
             found_conv_fusion = False
@@ -226,7 +226,7 @@ class TestConv2DBiasAddAddReluFusion(unittest.TestCase):
     def test_depthwiseconv2dnative_biasadd_add_relu6_mul_mul_fusion(self):
         fp32_graph_def = build_conv2d_biasadd_add_relu6_mul_mul()
 
-        from neural_compressor.tensorflow import quantize_model, Model
+        from neural_compressor.tensorflow import Model, quantize_model
         from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
         dataset = DummyDataset(shape=(100, 224, 224, 3), label=True)
@@ -241,7 +241,7 @@ class TestConv2DBiasAddAddReluFusion(unittest.TestCase):
                 },
             }
         }
-        fp32_model = Model(fp32_graph_def, conf={"performance_only":True})
+        fp32_model = Model(fp32_graph_def, conf={"performance_only": True})
         qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
 
         found_conv_fusion = False

@@ -19,12 +19,7 @@ from neural_compressor.common.base_config import BaseConfig
 from neural_compressor.common.utils import SMOOTH_QUANT, STATIC_QUANT
 from neural_compressor.tensorflow.algorithms import KerasAdaptor, Tensorflow_ITEXAdaptor, TensorFlowAdaptor
 from neural_compressor.tensorflow.quantization.config import SmoothQuantConfig
-from neural_compressor.tensorflow.utils import (
-    BaseModel, 
-    KerasModel, 
-    TFConfig,
-    register_algo,
-)
+from neural_compressor.tensorflow.utils import BaseModel, KerasModel, TFConfig, register_algo
 
 
 @register_algo(name=STATIC_QUANT)
