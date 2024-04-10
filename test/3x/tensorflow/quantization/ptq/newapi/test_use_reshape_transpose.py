@@ -34,7 +34,7 @@ class TestFuseReshapeTransposeOptimizer(unittest.TestCase):
             sess.run(z, feed_dict={x: x_data, y: y_data})
             fp32_graph_def = sess.graph.as_graph_def()
 
-            from neural_compressor.tensorflow import quantize_model, Model
+            from neural_compressor.tensorflow import Model, quantize_model
             from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
             dataset = DummyDataset(shape=(2, 2), label=True)
@@ -51,7 +51,6 @@ class TestFuseReshapeTransposeOptimizer(unittest.TestCase):
             }
             fp32_model = Model(fp32_graph_def, conf={"performance_only": True})
             qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
-
 
             for i in qmodel.graph_def.node:
                 if i.op == "MatMul":
@@ -83,7 +82,7 @@ class TestFuseReshapeTransposeOptimizer(unittest.TestCase):
             sess.run(z, feed_dict={x: x_data, y: y_data})
             fp32_graph_def = sess.graph.as_graph_def()
 
-            from neural_compressor.tensorflow import quantize_model, Model
+            from neural_compressor.tensorflow import Model, quantize_model
             from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
 
             dataset = DummyDataset(shape=(2, 2), label=True)
@@ -98,7 +97,7 @@ class TestFuseReshapeTransposeOptimizer(unittest.TestCase):
                     },
                 }
             }
-            
+
             fp32_model = Model(fp32_graph_def, conf={"performance_only": True})
             qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
 

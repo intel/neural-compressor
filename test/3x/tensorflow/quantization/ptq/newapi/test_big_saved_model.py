@@ -101,7 +101,7 @@ class TestBigSavedModel(unittest.TestCase):
             """The function that maps name from AutoTrackable variables to graph nodes."""
             name = name.replace("dense", "StatefulPartitionedCall/sequential/dense/MatMul")
             name = name.replace("conv2d", "StatefulPartitionedCall/sequential/conv2d/Conv2D")
-            index = name.find('kernel')
+            index = name.find("kernel")
             if index != -1:
                 name = name.replace(name[index:], "ReadVariableOp")
             return name
@@ -118,7 +118,7 @@ class TestBigSavedModel(unittest.TestCase):
         sq_config = SmoothQuantConfig(alpha=0.6, op_types=["MatMul"])
         static_config = {
             "static_quant": {
-                "local":{
+                "local": {
                     "StatefulPartitionedCall/sequential/conv2d/Conv2D": {
                         "weight_dtype": "fp32",
                         "act_dtype": "fp32",
