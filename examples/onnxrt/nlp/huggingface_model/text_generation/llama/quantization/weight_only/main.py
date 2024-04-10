@@ -118,6 +118,26 @@ parser.add_argument(
     type=str,
     help="benchmark mode of performance or accuracy"
 )
+parser.add_argument(
+    "--intra_op_num_threads",
+    default=24,
+    type=int,
+)
+parser.add_argument(
+    "--iter_num",
+    default=10,
+    type=int,
+)
+parser.add_argument(
+    "--warmup_num",
+    default=3,
+    type=int,
+)
+parser.add_argument(
+    "--max_new_tokens",
+    default=32,
+    type=int,
+)
 args = parser.parse_args()
 
 # load model
@@ -268,23 +288,80 @@ class GPTQDataloader:
         except StopIteration:
             return
 
+def benchmark(model):
+    import json
+    import time
+    from itertools import chain
+    sess_options = ort.SessionOptions()
+    sess_options.intra_op_num_threads = args.intra_op_num_threads
+
+    if args.backend.lower() == "mlas":
+        session = ORTModelForCausalLM.load_model(  # pylint: disable=E1123
+                    os.path.join(model, "model.onnx"),
+                    session_options=sess_options,
+                    provider="CPUExecutionProvider"
+                    )
+    else:
+        session = ORTModelForCausalLM.load_model(  # pylint: disable=E1123
+                    os.path.join(model, "model.onnx"),
+                    session_options=sess_options,
+                    provider="DnnlExecutionProvider",
+                    provider_options={"num_of_threads": args.intra_op_num_threads}
+                    )
+
+    inputs_names = session.get_inputs()
+    key_value_input_names = [key.name for key in inputs_names if (".key" in key.name) or (".value" in key.name)]
+    use_cache = len(key_value_input_names) > 0
+
+    model = ORTModelForCausalLM(session,  # pylint: disable=E1121
+                                config,
+                                use_cache=True if use_cache else False,
+                                use_io_binding=True if use_cache else False,)
+
+    input_tokens = str(args.seqlen)
+    max_new_tokens = args.max_new_tokens
+    with open('prompt.json') as f:
+        prompt_pool = json.load(f)
+    if input_tokens in prompt_pool:
+        prompt = prompt_pool[input_tokens]
+    else:
+        raise SystemExit('[ERROR] Unsupported input_tokens')
+
+    input_size = tokenizer(prompt, return_tensors="pt").input_ids.size(dim=1)
+    print("---- Prompt size:", input_size)
+
+    num_iter = args.iter_num
+    num_warmup = args.warmup_num
+    batch_size = 1
+    prompt = [prompt] * batch_size
+    total_list = []
+
+    generate_kwargs = {}
+    generate_kwargs["token_latency"] = True
+    for i in range(num_iter):
+        input_ids = tokenizer(prompt, return_tensors="pt").input_ids
+        output = model.generate(input_ids, max_new_tokens=max_new_tokens, **generate_kwargs)
+        gen_ids = output[0]
+        gen_text = tokenizer.batch_decode(gen_ids, skip_special_tokens=True)
+        print(gen_text, flush=True)
+        if i >= num_warmup:
+            total_list.append(output[2])
+
+    first_latency = np.mean([x[0] for x in total_list])
+    average_2n = list(chain(*[x[1:] for x in total_list]))
+    average_2n.sort()
+    average_2n_latency = np.mean(average_2n)
+    print("First token average latency: %.6f sec." % first_latency)
+    print("Average 2... latency: %.6f sec." % average_2n_latency)
+
+
 if __name__ == "__main__":
     from neural_compressor import set_workspace
     set_workspace(args.workspace)
     backend = 'default' if args.backend.lower() == 'mlas' else 'onnxrt_dnnl_ep'
     if args.benchmark:
         if args.mode == 'performance':
-            from neural_compressor.benchmark import fit
-            from neural_compressor.config import BenchmarkConfig
-            model_name = "model.onnx" # require optimum >= 1.14.0
-            model_path = os.path.join(args.model_path, model_name)
-            dataloader = KVDataloader(model_path, pad_max=args.pad_max, batch_size=1)
-            conf = BenchmarkConfig(iteration=20,
-                                   cores_per_instance=24,
-                                   num_of_instance=1,
-                                   backend=backend,
-                                   )
-            fit(model_path, conf, b_dataloader=dataloader)
+            benchmark(args.model_path)
         elif args.mode == 'accuracy':
             acc_result = eval_func(args.model_path)
             print("Batch size = %d" % args.batch_size)
@@ -298,7 +375,6 @@ if __name__ == "__main__":
         model_name = "model.onnx" # require optimum >= 1.14.0
         model_path = os.path.join(args.model_path, model_name)
         if args.algorithm.upper() == "RTN":
-            dataloader = KVDataloader(model_path, pad_max=args.pad_max, batch_size=1)
             ptq_config = PostTrainingQuantConfig(
                 backend=backend,
                 approach="weight_only",

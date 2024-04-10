@@ -7,7 +7,33 @@ This example confirms llama's weight only accuracy on [lambada](https://huggingf
 
 ## 1. Environment
 ```shell
-pip install neural-compressor
+# build and install onnxruntime
+git clone https://github.com/luoyu-intel/ort.git
+cd ort
+./build.sh --config RelWithDebInfo --build_shared_lib --parallel --compile_no_warning_as_error --skip_submodule_sync --skip_tests --build_wheel --skip_submodule_sync --use_dnnl
+pip install build/Linux/RelWithDebInfo/dist/onnxruntime_dnnl-xxx.whl
+
+# install neural-compressor
+git clone -b mengni/ns_ort https://github.com/intel/neural-compressor.git
+cd neural-compressor
+pip install -e .
+cd examples/onnxrt/nlp/huggingface_model/text_generation/llama/quantization/weight_only
+
+# install transformers
+git clone -b v4.31.0 https://github.com/huggingface/transformers.git
+cp transformer_patch transformers
+cd transformers
+git apply transformer_patch
+pip install -e .
+cd ..
+
+# install optimum
+git clone -b v1.17.1 https://github.com/huggingface/optimum.git
+cp optimum_patch optimum
+git apply optimum_patch
+pip install -e .
+cd ..
+
 pip install -r requirements.txt
 ```
 > Note: Validated ONNX Runtime [Version](/docs/source/installation_guide.md#validated-software-environment).
@@ -48,7 +74,7 @@ bash run_quant.sh --input_model=/path/to/model \ # folder path of onnx model
                   --dataset=NeelNanda/pile-10k \
                   --tokenizer=meta-llama/Llama-2-7b-hf \ # model name or folder path containing all relevant files for model's tokenizer
                   --backend=onednn \ # or mlas
-                  --algorithm=WOQ_TUNE # support WOQ_TUNE, RTN, AWQ, GPTQ
+                  --algorithm=RTN # support WOQ_TUNE, RTN, AWQ, GPTQ
 ```
 
 ## 2. Benchmark
@@ -66,9 +92,14 @@ bash run_benchmark.sh --input_model=path/to/model \ # folder path of onnx model
 
 Performance:
 ```bash
-bash run_benchmark.sh --input_model=path/to/model \ # folder path of onnx model
-                      --mode=performance \
-                      --batch_size=batch_size # optional \
-                      --backend=onednn \ # or mlas
-                      --tokenizer=meta-llama/Llama-2-7b-hf \ # model name or folder path containing all relevant files for model's tokenizer
+numactl -C 0-23 bash run_benchmark.sh --input_model=path/to/model \ # folder path of onnx model
+                                      --mode=performance \
+                                      --batch_size=batch_size # optional \
+                                      --backend=onednn \ # or mlas
+                                      --tokenizer=meta-llama/Llama-2-7b-hf \ # model name or folder path containing all relevant files for model's tokenizer
+                                      --seqlen=1024 \
+                                      --max_new_tokens=32 \
+                                      --iter_num=10 \
+                                      --warmup_num=3 \
+                                      --intra_op_num_threads=24 
 ```

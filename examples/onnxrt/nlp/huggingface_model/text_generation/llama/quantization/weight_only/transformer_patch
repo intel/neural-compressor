@@ -1,0 +1,178 @@
+diff --git a/src/transformers/generation/utils.py b/src/transformers/generation/utils.py
+index b4ef0af..a9a36dd 100644
+--- a/src/transformers/generation/utils.py
++++ b/src/transformers/generation/utils.py
+@@ -23,6 +23,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Un
+ import torch
+ import torch.distributed as dist
+ from torch import nn
++import time
+ 
+ from ..deepspeed import is_deepspeed_zero3_enabled
+ from ..modeling_outputs import CausalLMOutputWithPast, Seq2SeqLMOutput
+@@ -1259,6 +1260,7 @@ class GenerationMixin:
+ 
+         # 1. Handle `generation_config` and kwargs that might update it, and validate the `.generate()` call
+         self._validate_model_class()
++        self.token_latency = kwargs.pop("token_latency", None)
+ 
+         # priority: `generation_config` argument > `model.generation_config` (the default generation config)
+         if generation_config is None:
+@@ -1957,6 +1959,7 @@ class GenerationMixin:
+         batch_size = input_ids.shape[0]
+ 
+         while True:
++            tic = time.time()
+             if synced_gpus:
+                 # Under synced_gpus the `forward` call must continue until all gpus complete their sequence.
+                 # The following logic allows an early break if all peers finished generating their sequence
+@@ -2191,6 +2194,7 @@ class GenerationMixin:
+         else:
+             return input_ids
+ 
++
+     def greedy_search(
+         self,
+         input_ids: torch.LongTensor,
+@@ -2300,6 +2304,8 @@ class GenerationMixin:
+         ["It might be possible to get a better understanding of the nature of the problem, but it's not"]
+         ```"""
+         # init values
++        latency_list = []
++        latency_list2 = []
+         logits_processor = logits_processor if logits_processor is not None else LogitsProcessorList()
+         stopping_criteria = stopping_criteria if stopping_criteria is not None else StoppingCriteriaList()
+         if max_length is not None:
+@@ -2345,6 +2351,7 @@ class GenerationMixin:
+ 
+         this_peer_finished = False  # used by synced_gpus only
+         while True:
++            tic = time.time()
+             if synced_gpus:
+                 # Under synced_gpus the `forward` call must continue until all gpus complete their sequence.
+                 # The following logic allows an early break if all peers finished generating their sequence
+@@ -2359,7 +2366,7 @@ class GenerationMixin:
+             model_inputs = self.prepare_inputs_for_generation(input_ids, **model_kwargs)
+ 
+             # forward pass to get next token
+-            outputs = self(
++            outputs, use_time = self(
+                 **model_inputs,
+                 return_dict=True,
+                 output_attentions=output_attentions,
+@@ -2419,6 +2426,8 @@ class GenerationMixin:
+                 if unfinished_sequences.max() == 0:
+                     this_peer_finished = True
+ 
++            latency_list.append(time.time() - tic)
++            latency_list2.append(use_time)
+             # stop if we exceed the maximum length
+             if stopping_criteria(input_ids, scores):
+                 this_peer_finished = True
+@@ -2431,7 +2440,7 @@ class GenerationMixin:
+ 
+         if return_dict_in_generate:
+             if self.config.is_encoder_decoder:
+-                return GreedySearchEncoderDecoderOutput(
++                output_result = GreedySearchEncoderDecoderOutput(
+                     sequences=input_ids,
+                     scores=scores,
+                     encoder_attentions=encoder_attentions,
+@@ -2439,16 +2448,21 @@ class GenerationMixin:
+                     decoder_attentions=decoder_attentions,
+                     cross_attentions=cross_attentions,
+                     decoder_hidden_states=decoder_hidden_states,
+-                )
++                ), latency_list
+             else:
+-                return GreedySearchDecoderOnlyOutput(
++                output_result = GreedySearchDecoderOnlyOutput(
+                     sequences=input_ids,
+                     scores=scores,
+                     attentions=decoder_attentions,
+                     hidden_states=decoder_hidden_states,
+-                )
++                ), latency_list
+         else:
+-            return input_ids
++            output_result = input_ids
++
++        if self.token_latency is not None:
++            return (output_result, latency_list, latency_list2)
++        else:
++            return output_result
+ 
+     def sample(
+         self,
+@@ -2623,8 +2637,10 @@ class GenerationMixin:
+         unfinished_sequences = torch.ones(input_ids.shape[0], dtype=torch.long, device=input_ids.device)
+ 
+         this_peer_finished = False  # used by synced_gpus only
++
+         # auto-regressive generation
+         while True:
++            tic = time.time()
+             if synced_gpus:
+                 # Under synced_gpus the `forward` call must continue until all gpus complete their sequence.
+                 # The following logic allows an early break if all peers finished generating their sequence
+@@ -2855,6 +2871,7 @@ class GenerationMixin:
+         ['Wie alt bist du?']
+         ```"""
+         # init values
++        latency_list = []
+         logits_processor = logits_processor if logits_processor is not None else LogitsProcessorList()
+         stopping_criteria = stopping_criteria if stopping_criteria is not None else StoppingCriteriaList()
+         if max_length is not None:
+@@ -2917,6 +2934,7 @@ class GenerationMixin:
+ 
+         this_peer_finished = False  # used by synced_gpus only
+         while True:
++            tic = time.time()
+             if synced_gpus:
+                 # Under synced_gpus the `forward` call must continue until all gpus complete their sequence.
+                 # The following logic allows an early break if all peers finished generating their sequence
+@@ -3009,6 +3027,7 @@ class GenerationMixin:
+ 
+             # increase cur_len
+             cur_len = cur_len + 1
++            latency_list.append(time.time() - tic)
+ 
+             if beam_scorer.is_done or stopping_criteria(input_ids, scores):
+                 if not synced_gpus:
+@@ -3032,7 +3051,7 @@ class GenerationMixin:
+                 sequence_outputs["sequence_scores"] = None
+ 
+             if self.config.is_encoder_decoder:
+-                return BeamSearchEncoderDecoderOutput(
++                output_result = BeamSearchEncoderDecoderOutput(
+                     sequences=sequence_outputs["sequences"],
+                     sequences_scores=sequence_outputs["sequence_scores"],
+                     scores=scores,
+@@ -3042,18 +3061,23 @@ class GenerationMixin:
+                     decoder_attentions=decoder_attentions,
+                     cross_attentions=cross_attentions,
+                     decoder_hidden_states=decoder_hidden_states,
+-                )
++                ), latency_list
+             else:
+-                return BeamSearchDecoderOnlyOutput(
++                output_result = BeamSearchDecoderOnlyOutput(
+                     sequences=sequence_outputs["sequences"],
+                     sequences_scores=sequence_outputs["sequence_scores"],
+                     scores=scores,
+                     beam_indices=sequence_outputs["beam_indices"],
+                     attentions=decoder_attentions,
+                     hidden_states=decoder_hidden_states,
+-                )
++                ), latency_list
+         else:
+-            return sequence_outputs["sequences"]
++            output_result = sequence_outputs["sequences"]
++
++        if self.token_latency is not None:
++            return (output_result, latency_list)
++        else:
++            return output_result
+ 
+     def beam_sample(
+         self,

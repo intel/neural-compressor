@@ -1,0 +1,69 @@
+diff --git a/optimum/onnxruntime/modeling_decoder.py b/optimum/onnxruntime/modeling_decoder.py
+index f752051..5ed31b3 100644
+--- a/optimum/onnxruntime/modeling_decoder.py
++++ b/optimum/onnxruntime/modeling_decoder.py
+@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+ 
+ import numpy as np
+ import onnx
++import time
+ import torch
+ from onnx.tools import update_model_dims
+ from transformers import AutoModelForCausalLM, GenerationConfig
+@@ -250,12 +251,14 @@ class ORTModelForCausalLM(ORTModel, GenerationMixin):
+                 ordered_input_names=self._ordered_input_names,
+             )
+ 
++            tic = time.time()
+             if self.device.type == "cpu":
+                 self.model.run_with_iobinding(io_binding)
+             else:
+                 io_binding.synchronize_inputs()
+                 self.model.run_with_iobinding(io_binding)
+                 io_binding.synchronize_outputs()
++            use_time = time.time() - tic
+ 
+             if self.use_cache:
+                 # Tuple of length equal to : number of layer * number of past_key_value per decoder layer(2)
+@@ -289,7 +292,9 @@ class ORTModelForCausalLM(ORTModel, GenerationMixin):
+             if use_cache_branch is not None:
+                 inputs["use_cache_branch"] = use_cache_branch.cpu().detach().numpy() if use_torch else use_cache_branch
+ 
++            tic = time.time()
+             outputs = self.model.run(None, inputs)
++            use_time = time.time() - tic
+ 
+             if self.use_cache:
+                 # Tuple of length equal to : number of layer * number of past_key_value per decoder layer (2 for the self-attention)
+@@ -309,7 +314,7 @@ class ORTModelForCausalLM(ORTModel, GenerationMixin):
+                 past_key_values[i : i + self.num_pkv] for i in range(0, len(past_key_values), self.num_pkv)
+             )
+ 
+-        return CausalLMOutputWithPast(loss=loss, logits=logits, past_key_values=past_key_values)
++        return CausalLMOutputWithPast(loss=loss, logits=logits, past_key_values=past_key_values), use_time
+ 
+     def prepare_past_key_values(
+         self,
+diff --git a/optimum/onnxruntime/utils.py b/optimum/onnxruntime/utils.py
+index e269c8d..e162060 100644
+--- a/optimum/onnxruntime/utils.py
++++ b/optimum/onnxruntime/utils.py
+@@ -279,12 +279,12 @@ def check_io_binding(providers: List[str], use_io_binding: Optional[bool] = None
+     """
+     if use_io_binding is None and providers[0] == "CUDAExecutionProvider":
+         use_io_binding = True
+-    elif providers[0] != "CPUExecutionProvider" and providers[0] != "CUDAExecutionProvider":
+-        if use_io_binding is True:
+-            logger.warning(
+-                "No need to enable IO Binding if the provider used is neither CPUExecutionProvider nor CUDAExecutionProvider. IO Binding will be turned off."
+-            )
+-        use_io_binding = False
++    #elif providers[0] != "CPUExecutionProvider" and providers[0] != "CUDAExecutionProvider":
++    #    if use_io_binding is True:
++    #        logger.warning(
++    #            "No need to enable IO Binding if the provider used is neither CPUExecutionProvider nor CUDAExecutionProvider. IO Binding will be turned off."
++    #        )
++    #    use_io_binding = False
+ 
+     return use_io_binding
+ 

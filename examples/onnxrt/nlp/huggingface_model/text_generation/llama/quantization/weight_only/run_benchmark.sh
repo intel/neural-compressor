@@ -28,6 +28,21 @@ function init_params {
       --backend=*)
           backend=$(echo $var |cut -f2 -d=)
       ;;
+      --seqlen=*)
+          seqlen=$(echo $var |cut -f2 -d=)
+      ;;
+      --max_new_tokens=*)
+          max_new_tokens=$(echo $var |cut -f2 -d=)
+      ;;
+      --iter_num=*)
+          iter_num=$(echo $var |cut -f2 -d=)
+      ;;
+      --warmup_num=*)
+          warmup_num=$(echo $var |cut -f2 -d=)
+      ;;
+      --intra_op_num_threads=*)
+          intra_op_num_threads=$(echo $var |cut -f2 -d=)
+      ;;
     esac
   done
 
@@ -49,6 +64,11 @@ function run_benchmark {
             --tasks=${tasks-lambada_openai} \
             --mode=${mode} \
             --backend=${backend} \
+            --seqlen=${seqlen-1024} \
+            --max_new_tokens=${max_new_tokens-32} \
+            --iter_num=${iter_num-10} \
+            --warmup_num=${warmup_num-3} \
+            --intra_op_num_threads=${intra_op_num_threads-24} \
             --benchmark
             
 }
