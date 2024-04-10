@@ -254,7 +254,7 @@ class BaseConfig(ABC):
     def from_json_file(cls, filename):
         with open(filename, "r", encoding="utf-8") as file:
             config_dict = json.load(file)
-        return cls.from_dict(**config_dict)
+        return cls.from_dict(config_dict)
 
     def to_json_file(self, filename):
         config_dict = self.to_dict()

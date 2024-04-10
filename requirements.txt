@@ -1,14 +1,19 @@
+auto-round
 deprecated >= 1.2.13
-numpy < 2.0
+intel_extension_for_pytorch
+numpy
 opencv-python-headless
 pandas
+peft
 Pillow
 prettytable
 psutil
 py-cpuinfo
 pycocotools; sys_platform != 'win32' or python_version > '3.8'
 pycocotools-windows; sys_platform == 'win32' and python_version <= '3.8'
+pydantic
 pyyaml
 requests
 schema
 scikit-learn
+torch
