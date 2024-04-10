@@ -1,5 +1,5 @@
 neural-compressor==2.4
-transformers==4.32.0
+transformers==4.38.0
 datasets
 accelerate
 sentencepiece
