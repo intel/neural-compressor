@@ -18,7 +18,7 @@ from typing import Any, Callable, Dict, Tuple
 
 import torch
 
-from neural_compressor.common.utils import AUTOROUND, AWQ, FP8_QUANT, GPTQ, HQQ, RTN, SMOOTH_QUANT, STATIC_QUANT, TEQ
+from neural_compressor.common.utils import AUTOROUND, AWQ, FP8_QUANT, GPTQ, HQQ, RTN, SMOOTH_QUANT, STATIC_QUANT, TEQ, MX_QUANT
 from neural_compressor.torch.quantization import (
     AutoRoundConfig,
     AWQConfig,
@@ -29,6 +29,7 @@ from neural_compressor.torch.quantization import (
     SmoothQuantConfig,
     StaticQuantConfig,
     TEQConfig,
+    MXQuantConfig,
 )
 from neural_compressor.torch.utils import Mode, logger, register_algo
 
@@ -489,3 +490,29 @@ if is_hpex_available():
         model.qconfig = configs_mapping
         model.save = MethodType(save, model)
         return model
+
+
+###################### MX Quant Algo Entry ##################################
+@register_algo(name=MX_QUANT)
+@torch.no_grad()
+def mx_quant_entry(
+    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], MXQuantConfig], *args, **kwargs
+) -> torch.nn.Module:
+    logger.info("Quantize model with the mx quant algorithm.")
+    from neural_compressor.torch.algorithms.mx_quant import mx_quantize
+
+    quant_config_mapping = {}
+    for (op_name, op_type), quant_config in configs_mapping.items():
+        if quant_config.name != MX_QUANT:
+            continue
+        quant_config_mapping[op_name] = {
+            "w_dtype": quant_config.w_dtype,
+            "act_dtype": quant_config.act_dtype,
+            "out_dtype": quant_config.out_dtype,
+            "blocksize": quant_config.blocksize,
+            "round_method": quant_config.round_method,
+            "weight_only": quant_config.weight_only,
+        }
+
+    model = mx_quantize(model, weight_config=weight_config)
+    return model
