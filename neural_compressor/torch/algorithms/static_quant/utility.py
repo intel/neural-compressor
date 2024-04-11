@@ -159,7 +159,16 @@ def check_cfg_and_qconfig(user_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_
                         inc_scheme = inc_op_cfg["activation"]["scheme"]
                         inc_algorithm = inc_op_cfg["activation"]["algorithm"]
                         ipex_op_cfg["input_tensor_infos"] = input_tensor_infos
-                        activation_observer = generate_activation_observer(inc_scheme, inc_algorithm)
+                        if (
+                            "op_type" in ipex_op_cfg
+                            and ipex_op_cfg["op_type"] == "<class 'torch.nn.modules.linear.Linear'>"
+                        ):
+                            smooth_quant_enable = True
+                        else:
+                            smooth_quant_enable = False
+                        activation_observer = generate_activation_observer(
+                            inc_scheme, inc_algorithm, smooth_quant=False, smooth_quant_enable=smooth_quant_enable
+                        )
                         if inc_scheme == "sym":
                             input_tensor_infos[index]["force_dtype"] = "torch.qint8"
                         if inc_scheme == "asym":
@@ -192,7 +201,7 @@ def check_cfg_and_qconfig(user_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_
     return cfgs
 
 
-def generate_activation_observer(scheme, algorithm):  # pragma: no cover
+def generate_activation_observer(scheme, algorithm, smooth_quant=False, smooth_quant_enable=False):  # pragma: no cover
     """This is a helper method to generate a dict containing activation observer info.
 
     Args:
@@ -202,11 +211,25 @@ def generate_activation_observer(scheme, algorithm):  # pragma: no cover
     Returns:
         A dict containing observer info.zs
     """
+    from intel_extension_for_pytorch.quantization._smooth_quant import SmoothQuantActivationObserver
     from intel_extension_for_pytorch.quantization._utils import _get_observer_setting
+    from torch.quantization import HistogramObserver, MinMaxObserver
 
-    kl_activation_observer = _get_observer_setting(torch.quantization.HistogramObserver(reduce_range=False))
+    kl_activation_observer = _get_observer_setting(HistogramObserver(reduce_range=False))
     minmax_activation_observer = _get_observer_setting(
-        torch.quantization.MinMaxObserver(qscheme=torch.per_tensor_affine, dtype=torch.quint8)
+        MinMaxObserver(qscheme=torch.per_tensor_affine, dtype=torch.quint8)
+    )
+    smoothquant_kl_activation_observer = _get_observer_setting(
+        SmoothQuantActivationObserver(
+            reduce_range=False,
+            smooth_quant_enabled=smooth_quant_enable,
+        )
+    )
+    smoothquant_minmax_activation_observer = _get_observer_setting(
+        SmoothQuantActivationObserver(
+            reduce_range=False,
+            smooth_quant_enabled=smooth_quant_enable,
+        )
     )
 
     REDUCE_RANGE = False if CpuInfo().vnni else True
@@ -222,10 +245,16 @@ def generate_activation_observer(scheme, algorithm):  # pragma: no cover
         kl_activation_observer["dtype"] = "torch.qint8"
         kl_activation_observer["quant_min"] = -128
         kl_activation_observer["quant_max"] = 127
-    if algorithm == "kl":
-        return kl_activation_observer
-    if algorithm == "minmax":
-        return minmax_activation_observer
+    if smooth_quant and smooth_quant_enable:
+        if algorithm == "kl":
+            return smoothquant_kl_activation_observer
+        if algorithm == "minmax":
+            return smoothquant_minmax_activation_observer
+    else:
+        if algorithm == "kl":
+            return kl_activation_observer
+        if algorithm == "minmax":
+            return minmax_activation_observer
 
 
 def get_quantizable_ops_recursively(model, example_inputs):  # pragma: no cover
