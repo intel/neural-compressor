@@ -16,11 +16,8 @@ import copy
 import json
 import os
 import re
-import subprocess
 from typing import Dict, List, Union
 
-import cpuinfo
-import psutil
 import torch
 from packaging.version import Version
 
@@ -30,7 +27,7 @@ try:
 except:
     pass
 
-from neural_compressor.common.utils import DEFAULT_WORKSPACE
+from neural_compressor.common.utils import DEFAULT_WORKSPACE, CpuInfo
 from neural_compressor.torch.utils import get_ipex_version, get_torch_version, logger
 
 version = get_torch_version()
@@ -123,29 +120,27 @@ def cfg_to_qconfig(
 
     else:
         op_infos = copy.deepcopy(op_infos_from_cfgs)
-        cfgs = check_cfg_and_qconfig(tune_cfg["op"], cfgs, op_infos, output_tensor_id_op_name, smooth_quant=False)
+        cfgs = check_cfg_and_qconfig(tune_cfg["op"], cfgs, op_infos, output_tensor_id_op_name)
 
         with open(ipex_config_path, "w") as write_f:
             json.dump(cfgs, write_f, indent=4)
         return None
 
 
-def check_cfg_and_qconfig(
-    tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_op_name, smooth_quant=False
-):  # pragma: no cover
+def check_cfg_and_qconfig(user_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_op_name):  # pragma: no cover
     """Check configs and quantization configs.
 
     Args:
-        tune_cfg (dict): dictionary of quantization configuration.
-        cfgs (dict): the input configs.
-        op_infos_from_cfgs (dict): op infos from configs.
-        output_tensor_ids_op_name (dict): dictionary of output tensor op names.
+        user_cfg (dict): quantization configuration for ops.
+        cfgs (dict): configs loaded from ipex config path.
+        op_infos_from_cfgs (dict): dict containing configs that have been parsed for each op.
+        output_tensor_ids_op_name (dict): dict containing op names corresponding to 'op_infos_from_cfgs'.
 
     Returns:
-        cfgs (dict).
+        cfgs (dict): updated configs.
     """
-    for op_name in tune_cfg:
-        inc_op_cfg = tune_cfg[op_name]
+    for op_name in user_cfg:
+        inc_op_cfg = user_cfg[op_name]
         for i, name in enumerate(op_name[0]):
             # to int8
             ipex_op_cfg = op_infos_from_cfgs[name]
@@ -164,21 +159,11 @@ def check_cfg_and_qconfig(
                         inc_scheme = inc_op_cfg["activation"]["scheme"]
                         inc_algorithm = inc_op_cfg["activation"]["algorithm"]
                         ipex_op_cfg["input_tensor_infos"] = input_tensor_infos
-                        if (
-                            "op_type" in ipex_op_cfg
-                            and ipex_op_cfg["op_type"] == "<class 'torch.nn.modules.linear.Linear'>"
-                        ):
-                            smooth_quant_enable = True
-                        else:
-                            smooth_quant_enable = False
-                        activation_observer = generate_activation_observer(
-                            inc_scheme, inc_algorithm, smooth_quant, smooth_quant_enable
-                        )
-                        if not smooth_quant:
-                            if inc_scheme == "sym":
-                                input_tensor_infos[index]["force_dtype"] = "torch.qint8"
-                            if inc_scheme == "asym":
-                                input_tensor_infos[index]["force_dtype"] = "torch.quint8"
+                        activation_observer = generate_activation_observer(inc_scheme, inc_algorithm)
+                        if inc_scheme == "sym":
+                            input_tensor_infos[index]["force_dtype"] = "torch.qint8"
+                        if inc_scheme == "asym":
+                            input_tensor_infos[index]["force_dtype"] = "torch.quint8"
                         ipex_op_cfg["activation_observer"] = activation_observer
                     # int8 -> fp32
                     else:
@@ -207,74 +192,23 @@ def check_cfg_and_qconfig(
     return cfgs
 
 
-def generate_activation_observer(scheme, algorithm, smooth_quant=False, smooth_quant_enable=False):  # pragma: no cover
-    """This is a helper method to generate an activation observer.
+def generate_activation_observer(scheme, algorithm):  # pragma: no cover
+    """This is a helper method to generate a dict containing activation observer info.
 
     Args:
         scheme (str): Quantization scheme to be used.
         algorithm (str): What algorithm for computing the quantization parameters based on.
 
     Returns:
-        An observer.
+        A dict containing observer info.zs
     """
-    kl_activation_observer = {
-        "name": "HistogramObserver",
-        "bins": 2048,
-        "upsample_rate": 128,
-        "dtype": "torch.quint8",
-        "qscheme": "torch.per_tensor_affine",
-        "reduce_range": False,
-        "quant_min": 0,
-        "quant_max": 255,
-    }
-    minmax_activation_observer = {
-        "name": "MinMaxObserver",
-        "dtype": "torch.quint8",
-        "qscheme": "torch.per_tensor_affine",
-        "reduce_range": False,
-        "quant_min": 0,
-        "quant_max": 255,
-    }
-    smoothquant_kl_activation_observer = {
-        "name": "SmoothQuantActivationObserver",
-        "smooth_quant_enabled": smooth_quant_enable,
-        "dtype": "torch.quint8",
-        "qscheme": "torch.per_tensor_affine",
-        "reduce_range": False,
-        "quant_min": 0,
-        "quant_max": 255,
-        "alpha": 0.5,
-        "act_observer": kl_activation_observer,
-        "act_ic_observer": {
-            "name": "PerChannelMinMaxObserver",
-            "ch_axis": -1,
-            "dtype": "torch.quint8",
-            "qscheme": "torch.per_channel_affine",
-            "reduce_range": False,
-            "quant_min": 0,
-            "quant_max": 255,
-        },
-    }
-    smoothquant_minmax_activation_observer = {
-        "name": "SmoothQuantActivationObserver",
-        "smooth_quant_enabled": smooth_quant_enable,
-        "dtype": "torch.quint8",
-        "qscheme": "torch.per_tensor_affine",
-        "reduce_range": False,
-        "quant_min": 0,
-        "quant_max": 255,
-        "alpha": 0.5,
-        "act_observer": minmax_activation_observer,
-        "act_ic_observer": {
-            "name": "PerChannelMinMaxObserver",
-            "ch_axis": -1,
-            "dtype": "torch.quint8",
-            "qscheme": "torch.per_channel_affine",
-            "reduce_range": False,
-            "quant_min": 0,
-            "quant_max": 255,
-        },
-    }
+    from intel_extension_for_pytorch.quantization._utils import _get_observer_setting
+
+    kl_activation_observer = _get_observer_setting(torch.quantization.HistogramObserver(reduce_range=False))
+    minmax_activation_observer = _get_observer_setting(
+        torch.quantization.MinMaxObserver(qscheme=torch.per_tensor_affine, dtype=torch.quint8)
+    )
+
     REDUCE_RANGE = False if CpuInfo().vnni else True
     if REDUCE_RANGE:
         minmax_activation_observer["reduce_range"] = REDUCE_RANGE
@@ -288,16 +222,10 @@ def generate_activation_observer(scheme, algorithm, smooth_quant=False, smooth_q
         kl_activation_observer["dtype"] = "torch.qint8"
         kl_activation_observer["quant_min"] = -128
         kl_activation_observer["quant_max"] = 127
-    if smooth_quant and smooth_quant_enable:
-        if algorithm == "kl":
-            return smoothquant_kl_activation_observer
-        if algorithm == "minmax":
-            return smoothquant_minmax_activation_observer
-    else:
-        if algorithm == "kl":
-            return kl_activation_observer
-        if algorithm == "minmax":
-            return minmax_activation_observer
+    if algorithm == "kl":
+        return kl_activation_observer
+    if algorithm == "minmax":
+        return minmax_activation_observer
 
 
 def get_quantizable_ops_recursively(model, example_inputs):  # pragma: no cover
@@ -859,67 +787,3 @@ class TransformerBasedModelBlockPatternDetector:  # pragma: no cover
                     if ffn_block:
                         ffn_block_lst.append(ffn_block)
         return attention_block_lst, ffn_block_lst
-
-
-class CpuInfo(object):  # pragma: no cover
-    """Get CPU Info."""
-
-    def __init__(self):
-        """Get whether the cpu numerical format is bf16, the number of sockets, cores and cores per socket."""
-        self._bf16 = False
-        self._vnni = False
-        info = cpuinfo.get_cpu_info()
-        if "arch" in info and "X86" in info["arch"]:
-            cpuid = cpuinfo.CPUID()
-            max_extension_support = cpuid.get_max_extension_support()
-            if max_extension_support >= 7:
-                ecx = cpuid._run_asm(
-                    b"\x31\xC9",  # xor ecx, ecx
-                    b"\xB8\x07\x00\x00\x00" b"\x0f\xa2" b"\x89\xC8" b"\xC3",  # mov eax, 7  # cpuid  # mov ax, cx  # ret
-                )
-                self._vnni = bool(ecx & (1 << 11))
-                eax = cpuid._run_asm(
-                    b"\xB9\x01\x00\x00\x00",  # mov ecx, 1
-                    b"\xB8\x07\x00\x00\x00" b"\x0f\xa2" b"\xC3",  # mov eax, 7  # cpuid  # ret
-                )
-                self._bf16 = bool(eax & (1 << 5))
-        if "arch" in info and "ARM" in info["arch"]:  # pragma: no cover
-            self._sockets = 1
-        else:
-            self._sockets = self.get_number_of_sockets()
-        self._cores = psutil.cpu_count(logical=False)
-        self._cores_per_socket = int(self._cores / self._sockets)
-
-    @property
-    def bf16(self):
-        """Get whether it is bf16."""
-        return self._bf16
-
-    @property
-    def vnni(self):
-        """Get whether it is vnni."""
-        return self._vnni
-
-    @property
-    def cores_per_socket(self):
-        """Get the cores per socket."""
-        return self._cores_per_socket
-
-    def get_number_of_sockets(self) -> int:
-        """Get number of sockets in platform."""
-        cmd = "cat /proc/cpuinfo | grep 'physical id' | sort -u | wc -l"
-        if psutil.WINDOWS:
-            cmd = r'wmic cpu get DeviceID | C:\Windows\System32\find.exe /C "CPU"'
-
-        with subprocess.Popen(
-            args=cmd,
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            universal_newlines=False,
-        ) as proc:
-            proc.wait()
-            if proc.stdout:
-                for line in proc.stdout:
-                    return int(line.decode("utf-8", errors="ignore").strip())
-        return 0
