@@ -20,10 +20,12 @@
 
 
 from enum import Enum, IntEnum
+
 import torch
 
 FP32_EXPONENT_BIAS = 127
 FP32_MIN_NORMAL = 2 ** (-FP32_EXPONENT_BIAS + 1)
+
 
 class ElemFormat(Enum):
     int8 = 1
@@ -42,49 +44,49 @@ class ElemFormat(Enum):
 
     @staticmethod
     def from_str(s):
-        assert(s != None), "String elem_format == None"
+        assert s != None, "String elem_format == None"
         s = s.lower()
         if hasattr(ElemFormat, s):
             return getattr(ElemFormat, s)
         else:
             raise Exception("Undefined elem format", s)
-        
+
     @staticmethod
     def is_bf(s):
         if isinstance(s, str):
-            assert(s != None), "String elem_format == None"
+            assert s != None, "String elem_format == None"
             s = s.lower()
             if hasattr(ElemFormat, s):
                 return getattr(ElemFormat, s).value == 10
         elif isinstance(s, int):
             return s == 10
-        
+
         raise Exception("Undefined elem format", s)
 
     @staticmethod
     def is_fp(s):
         if isinstance(s, str):
-            assert(s != None), "String elem_format == None"
+            assert s != None, "String elem_format == None"
             s = s.lower()
             if hasattr(ElemFormat, s):
                 return 4 <= getattr(ElemFormat, s).value <= 9
         elif isinstance(s, int):
             return 4 <= s <= 9
-        
-        raise Exception("Undefined elem format", s)
 
+        raise Exception("Undefined elem format", s)
 
     @staticmethod
     def is_int(s):
         if isinstance(s, str):
-            assert(s != None), "String elem_format == None"
+            assert s != None, "String elem_format == None"
             s = s.lower()
             if hasattr(ElemFormat, s):
                 return 1 <= getattr(ElemFormat, s).value <= 3
         elif isinstance(s, int):
             return 1 <= s <= 3
-        
+
         raise Exception("Undefined elem format", s)
+
 
 class RoundingMode(IntEnum):
     nearest = 0
@@ -95,33 +97,38 @@ class RoundingMode(IntEnum):
     def string_enums():
         return [s.name for s in list(RoundingMode)]
 
+
 def _get_min_norm(ebits):
-    """ Valid for all float formats """
+    """Valid for all float formats."""
     emin = 2 - (2 ** (ebits - 1))
-    return 0 if ebits == 0 else 2 ** emin
+    return 0 if ebits == 0 else 2**emin
+
 
 def _get_max_norm(ebits, mbits):
-    """ Valid only for floats that define NaN """
-    assert(ebits >= 5), "invalid for floats that don't define NaN"
-    emax = 0 if ebits==0 else 2**(ebits - 1) - 1
-    return 2**emax * float(2**(mbits-1) - 1) / 2**(mbits-2)
+    """Valid only for floats that define NaN."""
+    assert ebits >= 5, "invalid for floats that don't define NaN"
+    emax = 0 if ebits == 0 else 2 ** (ebits - 1) - 1
+    return 2**emax * float(2 ** (mbits - 1) - 1) / 2 ** (mbits - 2)
+
 
 _FORMAT_CACHE = {}
-def _get_format_params(fmt):
-    """ Allowed formats:
-        - intX:         2 <= X <= 32, assume sign-magnitude, 1.xxx representation
-        - floatX/fpX:   16 <= X <= 28, assume top exp is used for NaN/Inf
-        - bfloatX/bfX:  9 <= X <= 32
-        - fp4,                  no NaN/Inf
-        - fp6_e3m2/e2m3,        no NaN/Inf 
-        - fp8_e4m3/e5m2,        e5m2 normal NaN/Inf, e4m3 special behavior
 
-        Returns:
-          ebits: exponent bits
-          mbits: mantissa bits: includes sign and implicit bits
-          emax: max normal exponent
-          max_norm: max normal number
-          min_norm: min normal number
+
+def _get_format_params(fmt):
+    """Allowed formats:
+    - intX:         2 <= X <= 32, assume sign-magnitude, 1.xxx representation
+    - floatX/fpX:   16 <= X <= 28, assume top exp is used for NaN/Inf
+    - bfloatX/bfX:  9 <= X <= 32
+    - fp4,                  no NaN/Inf
+    - fp6_e3m2/e2m3,        no NaN/Inf
+    - fp8_e4m3/e5m2,        e5m2 normal NaN/Inf, e4m3 special behavior
+
+    Returns:
+      ebits: exponent bits
+      mbits: mantissa bits: includes sign and implicit bits
+      emax: max normal exponent
+      max_norm: max normal number
+      min_norm: min normal number
     """
     if type(fmt) is str:
         fmt = ElemFormat.from_str(fmt)
@@ -140,30 +147,30 @@ def _get_format_params(fmt):
         emax = 0
     elif fmt == ElemFormat.fp8_e5m2:
         ebits, mbits = 5, 4
-        emax = 2**(ebits - 1) - 1
+        emax = 2 ** (ebits - 1) - 1
     elif fmt == ElemFormat.fp8_e4m3:
         ebits, mbits = 4, 5
-        emax = 2**(ebits - 1)
+        emax = 2 ** (ebits - 1)
     elif fmt == ElemFormat.fp6_e3m2:
         ebits, mbits = 3, 4
-        emax = 2**(ebits - 1)
+        emax = 2 ** (ebits - 1)
     elif fmt == ElemFormat.fp6_e2m3:
         ebits, mbits = 2, 5
-        emax = 2**(ebits - 1)
+        emax = 2 ** (ebits - 1)
     elif fmt == ElemFormat.fp4:
         ebits, mbits = 2, 3
-        emax = 2**(ebits - 1)
+        emax = 2 ** (ebits - 1)
     elif fmt == ElemFormat.float16:
         ebits, mbits = 5, 12
-        emax = 2**(ebits - 1) - 1
+        emax = 2 ** (ebits - 1) - 1
     elif fmt == ElemFormat.bfloat16:
         ebits, mbits = 8, 9
-        emax = 2**(ebits - 1) - 1
+        emax = 2 ** (ebits - 1) - 1
     else:
         raise Exception("Unknown element format %s" % fmt)
-    
+
     if fmt != ElemFormat.fp8_e4m3:
-        max_norm = 2**emax * float(2**(mbits-1) - 1) / 2**(mbits-2)
+        max_norm = 2**emax * float(2 ** (mbits - 1) - 1) / 2 ** (mbits - 2)
     else:
         max_norm = 2**emax * 1.75  # FP8 has custom max_norm
 
@@ -173,19 +180,22 @@ def _get_format_params(fmt):
 
     return ebits, mbits, emax, max_norm, min_norm
 
+
 # Never explicitly compute 2**(-exp) since subnorm numbers have
 # exponents smaller than -126
 def _safe_lshift(x, bits, exp):
     if exp is None:
         return x * (2**bits)
     else:
-        return x / (2 ** exp) * (2**bits)
+        return x / (2**exp) * (2**bits)
+
 
 def _safe_rshift(x, bits, exp):
     if exp is None:
         return x / (2**bits)
     else:
-        return x / (2**bits) * (2 ** exp)
+        return x / (2**bits) * (2**exp)
+
 
 def _round_mantissa(A, bits, round, clamp=False):
     """
@@ -220,9 +230,10 @@ def _round_mantissa(A, bits, round, clamp=False):
         A = torch.clamp(A, -max_mantissa, max_mantissa)
     return A
 
+
 def _shared_exponents(A, method="max", axes=None, ebits=0):
-    """
-    Get shared exponents for the passed matrix A.
+    """Get shared exponents for the passed matrix A.
+
     Args:
       A      {PyTorch tensor} -- Input tensor
       method {str}            -- Exponent selection method.
@@ -247,16 +258,12 @@ def _shared_exponents(A, method="max", axes=None, ebits=0):
         raise Exception("Unrecognized shared exponent selection method %s" % (method))
 
     # log2(shared_exp) and truncate to integer
-    shared_exp = torch.floor(
-        torch.log2(
-            shared_exp + FP32_MIN_NORMAL * (shared_exp == 0).type(shared_exp.dtype)
-        )
-    )
+    shared_exp = torch.floor(torch.log2(shared_exp + FP32_MIN_NORMAL * (shared_exp == 0).type(shared_exp.dtype)))
 
     # Restrict to [-emax, emax] range
     if ebits > 0:
-        emax = 2**(ebits-1) - 1
-        #shared_exp = torch.clamp(shared_exp, -emax, emax)
+        emax = 2 ** (ebits - 1) - 1
+        # shared_exp = torch.clamp(shared_exp, -emax, emax)
         # Overflow to Inf
         shared_exp[shared_exp > emax] = float("NaN")
         # Underflows are set to -127 which causes them to be
@@ -265,12 +272,10 @@ def _shared_exponents(A, method="max", axes=None, ebits=0):
 
     return shared_exp
 
+
 def _reshape_to_blocks(A, axes, block_size):
     if axes is None:
-        raise Exception(
-            "axes required in order to determine which "
-            "dimension to apply block size to"
-        )
+        raise Exception("axes required in order to determine which " "dimension to apply block size to")
     if block_size == 0:
         raise Exception("block_size == 0 in _reshape_to_blocks")
 
@@ -326,6 +331,7 @@ def _reshape_to_blocks(A, axes, block_size):
     A = A.view(reshape)
     return A, axes, orig_shape, padded_shape
 
+
 def _undo_reshape_to_blocks(A, padded_shape, orig_shape, axes):
     # Undo tile reshaping
     A = A.view(padded_shape)
@@ -338,9 +344,9 @@ def _undo_reshape_to_blocks(A, padded_shape, orig_shape, axes):
         A = torch.squeeze(A, dim=axis + 1)
     return A
 
-def _quantize_elemwise_core(A, bits, exp_bits, max_norm, round='nearest',
-                            saturate_normals=False, allow_denorm=True):
-    """ Core function used for element-wise quantization
+
+def _quantize_elemwise_core(A, bits, exp_bits, max_norm, round="nearest", saturate_normals=False, allow_denorm=True):
+    """Core function used for element-wise quantization
     Arguments:
       A         {PyTorch tensor} -- A tensor to be quantized
       bits      {int}            -- Number of mantissa bits. Includes
@@ -364,11 +370,10 @@ def _quantize_elemwise_core(A, bits, exp_bits, max_norm, round='nearest',
         out = A
 
     if exp_bits != 0:
-        private_exp = torch.floor(torch.log2(
-            torch.abs(A) + (A == 0).type(A.dtype)))
+        private_exp = torch.floor(torch.log2(torch.abs(A) + (A == 0).type(A.dtype)))
 
         # The minimum representable exponent for 8 exp bits is -126
-        min_exp = -(2**(exp_bits-1)) + 2
+        min_exp = -(2 ** (exp_bits - 1)) + 2
         private_exp = private_exp.clip(min=min_exp)
     else:
         private_exp = None
@@ -385,8 +390,7 @@ def _quantize_elemwise_core(A, bits, exp_bits, max_norm, round='nearest',
     if saturate_normals or exp_bits == 0:
         out = torch.clamp(out, min=-max_norm, max=max_norm)
     else:
-        out = torch.where((torch.abs(out) > max_norm),
-                           torch.sign(out) * float("Inf"), out)
+        out = torch.where((torch.abs(out) > max_norm), torch.sign(out) * float("Inf"), out)
 
     # handle Inf/NaN
     out[A == float("Inf")] = float("Inf")
@@ -395,9 +399,11 @@ def _quantize_elemwise_core(A, bits, exp_bits, max_norm, round='nearest',
 
     return out
 
-def _quantize_fp(A, exp_bits=None, mantissa_bits=None,
-                 round='nearest', allow_denorm=True):
-    """ Quantize values to IEEE fpX format. The format defines NaN/Inf
+
+def _quantize_fp(A, exp_bits=None, mantissa_bits=None, round="nearest", allow_denorm=True):
+    """Quantize values to IEEE fpX format.
+
+    The format defines NaN/Inf
         and subnorm numbers in the same way as FP32 and FP16.
     Arguments:
         exp_bits        {int} -- number of bits used to store exponent
@@ -409,16 +415,17 @@ def _quantize_fp(A, exp_bits=None, mantissa_bits=None,
     if exp_bits is None or mantissa_bits is None:
         return A
 
-    max_norm = _get_max_norm(exp_bits, mantissa_bits+2)
+    max_norm = _get_max_norm(exp_bits, mantissa_bits + 2)
 
     output = _quantize_elemwise_core(
-            A, bits=mantissa_bits + 2, exp_bits=exp_bits,
-            max_norm=max_norm, round=round, allow_denorm=allow_denorm)
+        A, bits=mantissa_bits + 2, exp_bits=exp_bits, max_norm=max_norm, round=round, allow_denorm=allow_denorm
+    )
 
     return output
 
-def _quantize_bfloat(A, bfloat, round='nearest', allow_denorm=True):
-    """ Quantize values to bfloatX format
+
+def _quantize_bfloat(A, bfloat, round="nearest", allow_denorm=True):
+    """Quantize values to bfloatX format
     Arguments:
       bfloat      {int}       -- Total number of bits for bfloatX format,
                                  Includes 1 sign, 8 exp bits, and variable
@@ -428,11 +435,12 @@ def _quantize_bfloat(A, bfloat, round='nearest', allow_denorm=True):
     if bfloat == 0 or bfloat == 32:
         return A
 
-    max_norm = _get_max_norm(8, bfloat-7)
+    max_norm = _get_max_norm(8, bfloat - 7)
 
     return _quantize_elemwise_core(
-            A, bits=bfloat-7, exp_bits=8, max_norm=max_norm, round=round,
-            allow_denorm=allow_denorm)
+        A, bits=bfloat - 7, exp_bits=8, max_norm=max_norm, round=round, allow_denorm=allow_denorm
+    )
+
 
 def quantize_elemwise_op(A, mx_specs):
     """A function used for element-wise quantization with mx_specs
@@ -450,32 +458,30 @@ def quantize_elemwise_op(A, mx_specs):
     elem_format = ElemFormat.from_str(out_dtype)
     ebits, mbits, _, _, _ = _get_format_params(elem_format)
     if ElemFormat.is_bf(out_dtype):
-        A = _quantize_bfloat(A, bfloat=ebits+mbits-1, round=round,
-                             allow_denorm=True)
+        A = _quantize_bfloat(A, bfloat=ebits + mbits - 1, round=round, allow_denorm=True)
     elif ElemFormat.is_fp(out_dtype):
-        A = _quantize_fp(A, exp_bits=5, mantissa_bits=ebits+mbits-1 - 6,
-                         round=round, allow_denorm=True)
+        A = _quantize_fp(A, exp_bits=5, mantissa_bits=ebits + mbits - 1 - 6, round=round, allow_denorm=True)
     else:
         raise ValueError("Cannot set {} for output dtype.".format(out_dtype))
     return A
 
+
 def _quantize_mx(
     A,
     scale_bits,
-    elem_format,    # can be None for no quantization
+    elem_format,  # can be None for no quantization
     shared_exp_method="max",
     axes=None,
     block_size=32,
     round="nearest",
     flush_fp32_subnorms=False,
 ):
-    """Function used for MX* quantization
-    """
+    """Function used for MX* quantization."""
     # Shortcut for no quantization
     if elem_format == None:
         return A
 
-    assert(scale_bits > 0)
+    assert scale_bits > 0
 
     # Make sure axes is a list of non-negative numbers
     axes = [axes] if type(axes) == int else axes
@@ -484,9 +490,7 @@ def _quantize_mx(
     ebits, mbits, emax, max_norm, _ = _get_format_params(elem_format)
 
     # Perform tiling to the hardware vector size
-    A, axes, orig_shape, padded_shape = _reshape_to_blocks(
-        A, axes, block_size
-    )
+    A, axes, orig_shape, padded_shape = _reshape_to_blocks(A, axes, block_size)
 
     ####################
     # Quantize
@@ -495,7 +499,10 @@ def _quantize_mx(
 
     # Get shared exponents
     shared_exp = _shared_exponents(
-        A, method=shared_exp_method, axes=shared_exp_axes, ebits=0,
+        A,
+        method=shared_exp_method,
+        axes=shared_exp_axes,
+        ebits=0,
     )
 
     # Flush subnormal FP32 inputs to zero
@@ -506,15 +513,13 @@ def _quantize_mx(
     # in the element data format
     shared_exp = shared_exp - emax
 
-    scale_emax = 2**(scale_bits-1) - 1
+    scale_emax = 2 ** (scale_bits - 1) - 1
     shared_exp[shared_exp > scale_emax] = float("NaN")
     shared_exp[shared_exp < -scale_emax] = -scale_emax
 
     A = A / (2**shared_exp)
 
-    A = _quantize_elemwise_core(
-            A, mbits, ebits, max_norm, round=round,
-            allow_denorm=True, saturate_normals=True)
+    A = _quantize_elemwise_core(A, mbits, ebits, max_norm, round=round, allow_denorm=True, saturate_normals=True)
 
     A = A * (2**shared_exp)
 
@@ -522,6 +527,7 @@ def _quantize_mx(
     A = _undo_reshape_to_blocks(A, padded_shape, orig_shape, axes)
 
     return A
+
 
 def quantize_mx_op(
     A,
@@ -538,9 +544,12 @@ def quantize_mx_op(
         elem_format = ElemFormat.from_str(elem_format)
 
     return _quantize_mx(
-            A, scale_bits,
-            elem_format, block_size=block_size,
-            axes=axes, round=round,
-            shared_exp_method="max",
-            flush_fp32_subnorms=False)
-
+        A,
+        scale_bits,
+        elem_format,
+        block_size=block_size,
+        axes=axes,
+        round=round,
+        shared_exp_method="max",
+        flush_fp32_subnorms=False,
+    )

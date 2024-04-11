@@ -34,12 +34,12 @@ from neural_compressor.common.utils import (
     FP8_QUANT,
     GPTQ,
     HQQ,
+    MX_QUANT,
     OP_NAME_OR_MODULE_TYPE,
     RTN,
     SMOOTH_QUANT,
     STATIC_QUANT,
     TEQ,
-    MX_QUANT,
 )
 from neural_compressor.torch.utils import is_hpex_available, logger
 from neural_compressor.torch.utils.constants import (
@@ -825,8 +825,32 @@ class MXQuantConfig(BaseConfig):
     def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
         linear_mx_config = MXQuantConfig(
-            w_dtype=["int8", "int4", "int2", "fp8_e5m2", "fp8_e4m3", "fp6_e3m2", "fp6_e2m3", "fp4", "float16", "bfloat16", "float32"],
-            act_dtype=["int8", "int4", "int2", "fp8_e5m2", "fp8_e4m3", "fp6_e3m2", "fp6_e2m3", "fp4", "float16", "bfloat16", "float32"],
+            w_dtype=[
+                "int8",
+                "int4",
+                "int2",
+                "fp8_e5m2",
+                "fp8_e4m3",
+                "fp6_e3m2",
+                "fp6_e2m3",
+                "fp4",
+                "float16",
+                "bfloat16",
+                "float32",
+            ],
+            act_dtype=[
+                "int8",
+                "int4",
+                "int2",
+                "fp8_e5m2",
+                "fp8_e4m3",
+                "fp6_e3m2",
+                "fp6_e2m3",
+                "fp4",
+                "float16",
+                "bfloat16",
+                "float32",
+            ],
             out_dtype=["bfloat16", "float16", "float32"],
             blocksize=[2, 4, 8, 16, 32, 64, 128, 256, 512],
             round_method=["nearest", "dither", "floor", "even"],
@@ -838,7 +862,10 @@ class MXQuantConfig(BaseConfig):
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
-        white_list = (torch.nn.Linear, torch.nn.functional.linear,)
+        white_list = (
+            torch.nn.Linear,
+            torch.nn.functional.linear,
+        )
 
         filter_result = []
         for op_name, module in model.named_modules():
@@ -851,6 +878,7 @@ class MXQuantConfig(BaseConfig):
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "MXQuantConfig", List["MXQuantConfig"]]:
         return MXQuantConfig(weight_only=[False, True])
+
 
 def get_default_mx_config() -> MXQuantConfig:
     """Generate the default mx config.

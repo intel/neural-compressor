@@ -18,11 +18,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .utils import quantize_elemwise_op, quantize_mx_op
-from neural_compressor.torch.utils import set_module
 from neural_compressor.common.logger import Logger
+from neural_compressor.torch.utils import set_module
+
+from .utils import quantize_elemwise_op, quantize_mx_op
 
 logger = Logger().get_logger()
+
+
 class MXLinearFunction(Function):
     @staticmethod
     def forward(ctx, input, weight, bias=None, mx_specs=None):
@@ -51,6 +54,7 @@ class MXLinearFunction(Function):
 
         return output
 
+
 class MXLinear(torch.nn.Linear):
     def __init__(
         self,
@@ -69,14 +73,10 @@ class MXLinear(torch.nn.Linear):
     def apply_mx_specs(self):
         if self.mx_specs is not None:
             if self.mx_specs.get("out_dtype", "float32") != "float32":
-                self.weight.data = quantize_elemwise_op(
-                    self.weight.data, mx_specs=self.mx_specs
-                )
+                self.weight.data = quantize_elemwise_op(self.weight.data, mx_specs=self.mx_specs)
 
                 if self.bias is not None:
-                    self.bias.data = quantize_elemwise_op(
-                        self.bias.data, mx_specs=self.mx_specs
-                    )
+                    self.bias.data = quantize_elemwise_op(self.bias.data, mx_specs=self.mx_specs)
 
             # MX quantize everything along input size
             self.weight.data = quantize_mx_op(
@@ -93,8 +93,9 @@ class MXLinear(torch.nn.Linear):
     def forward(self, inputs):
         if self.mx_none:
             return super().forward(inputs)
-        
+
         return MXLinearFunction.apply(inputs, self.weight, self.bias, self.mx_specs)
+
 
 def mx_quantize(
     model,
