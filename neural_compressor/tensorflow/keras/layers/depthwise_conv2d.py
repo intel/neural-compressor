@@ -55,6 +55,17 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
             activity_regularizer=None,
             depthwise_constraint=None,
             bias_constraint=None,
+            act_min_value=None,
+            act_max_value=None,
+            weight_min_value=None,
+            weight_max_value=None,
+            granularity="per_tensor",
+            quant_status="calib",
+            quant_mode="SCALED",
+            quant_T="s8",
+            quant_round_mode="HALF_AWAY_FROM_ZERO",
+            quant_narrow_range=False,
+            quant_axis=None,
             **kwargs
         ):
             super().__init__(
@@ -76,26 +87,71 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
                 bias_constraint=bias_constraint,
                 **kwargs
             )
-            self.min_value = json.loads(min_value)
-            self.max_value = json.loads(max_value)
+            T_map = {"s8": tf.qint8, "u8": tf.quint8}
+            self.reverse_T_map = {tf.qint8: "s8", tf.quint8: "u8"}
+            self.weight_min_value = weight_min_value
+            self.weight_max_value = weight_max_value
+            self.act_min_value = act_min_value
+            self.act_max_value = act_max_value
+            self.granularity = granularity
+            self.quant_status= quant_status
+            self.quant_mode = quant_mode
+            self.quant_T = T_map[quant_T]
+            self.quant_round_mode = quant_round_mode
+            self.quant_narrow_range = quant_narrow_range
+            self.quant_axis = quant_axis
 
         def call(self, inputs):
-            # add the Q/DQ here
-            kernel, _, _ = quantization.quantize(
-                self.depthwise_kernel, self.min_value, self.max_value, tf.qint8, axis=3, mode="SCALED"
-            )
-            kernel = quantization.dequantize(
-                kernel,
-                self.min_value,
-                self.max_value,
-                axis=3,
-                mode="SCALED",
-            )
+            if self.quant_status == "calib" and not isinstance(inputs, tf.keras.KerasTensor):
+                if self.granularity == "per_tensor":
+                    self.act_min_value = tf.math.reduce_min(inputs)
+                    self.act_max_value = tf.math.reduce_max(inputs)
+                else:
+                    self.act_min_value = tf.math.reduce_min(inputs, axis=self.axis)
+                    self.act_max_value = tf.math.reduce_max(inputs, axis=self.axis)
+                kernel = self.kernel
+            elif self.quant_status == "quantize":
+                assert self.act_min_value is not None, "Invalid activation min-max values, please check calibration process"
+                inputs, _, _ = tf.quantization.quantize(
+                    inputs,
+                    self.act_min_value,
+                    self.act_max_value,
+                    self.quant_T,
+                    mode=self.quant_mode,
+                    round_mode=self.quant_round_mode,
+                    narrow_range=self.quant_narrow_range,
+                    axis=self.quant_axis,
+                )
+                inputs =  tf.quantization.dequantize(
+                    inputs,
+                    self.act_min_value,
+                    self.act_max_value,
+                    mode=self.quant_mode,
+                    narrow_range=self.quant_narrow_range,
+                    axis=self.quant_axis,
+                )
+
+                # add the Q/DQ here
+                kernel, _, _ = quantization.quantize(
+                    self.kernel, 
+                    self.weight_min_value, 
+                    self.weight_max_value, 
+                    tf.qint8, 
+                    axis=3, 
+                    mode="SCALED"
+                )
+                kernel = quantization.dequantize(
+                    kernel,
+                    self.weight_min_value,
+                    self.weight_max_value,
+                    axis=3,
+                    mode="SCALED",
+                )
 
             input_channel = self._get_input_channel(inputs.shape)
             outputs = ops.depthwise_conv(
                 inputs,
-                self.kernel,
+                kernel,
                 strides=self.strides,
                 padding=self.padding,
                 dilation_rate=self.dilation_rate,
@@ -113,6 +169,30 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
             if self.activation is not None:
                 return self.activation(outputs)
             return outputs
+
+        @classmethod
+        def from_config(cls, config):
+            return cls(**config)
+
+        def get_config(self):
+            config = super(QConv2D, self).get_config()
+            config.update(
+                {
+                    "act_min_value": self.act_min_value,
+                    "act_max_value": self.act_max_value,
+                    "weight_min_value": self.weight_min_value,
+                    "weight_max_value": self.weight_max_value,
+                    "granularity": self.granularity,
+                    "quant_status": self.quant_status,
+                    "quant_mode": self.quant_mode,
+                    "quant_T": self.reverse_T_map[self.quant_T],
+                    "quant_round_mode": self.quant_round_mode,
+                    "quant_narrow_range": self.quant_narrow_range,
+                    "quant_axis": self.quant_axis,
+                }
+            )
+            
+            return config
 
 else:
 
@@ -136,6 +216,17 @@ else:
             activity_regularizer=None,
             depthwise_constraint=None,
             bias_constraint=None,
+            act_min_value=None,
+            act_max_value=None,
+            weight_min_value=None,
+            weight_max_value=None,
+            granularity="per_tensor",
+            quant_status="calib",
+            quant_mode="SCALED",
+            quant_T="s8",
+            quant_round_mode="HALF_AWAY_FROM_ZERO",
+            quant_narrow_range=False,
+            quant_axis=None,
             **kwargs
         ):
             super().__init__(
@@ -157,24 +248,70 @@ else:
                 bias_constraint=bias_constraint,
                 **kwargs
             )
-            self.min_value = json.loads(min_value)
-            self.max_value = json.loads(max_value)
+            T_map = {"s8": tf.qint8, "u8": tf.quint8}
+            self.reverse_T_map = {tf.qint8: "s8", tf.quint8: "u8"}
+            self.weight_min_value = weight_min_value
+            self.weight_max_value = weight_max_value
+            self.act_min_value = act_min_value
+            self.act_max_value = act_max_value
+            self.granularity = granularity
+            self.quant_status= quant_status
+            self.quant_mode = quant_mode
+            self.quant_T = T_map[quant_T]
+            self.quant_round_mode = quant_round_mode
+            self.quant_narrow_range = quant_narrow_range
+            self.quant_axis = quant_axis
 
         def call(self, inputs):
-            # add the Q/DQ here
-            kernel, _, _ = quantization.quantize(
-                self.depthwise_kernel, self.min_value, self.max_value, tf.qint8, axis=3, mode="SCALED"
-            )
-            kernel = quantization.dequantize(
-                kernel,
-                self.min_value,
-                self.max_value,
-                axis=3,
-                mode="SCALED",
-            )
+            if self.quant_status == "calib" and not isinstance(inputs, tf.keras.KerasTensor):
+                if self.granularity == "per_tensor":
+                    self.act_min_value = tf.math.reduce_min(inputs)
+                    self.act_max_value = tf.math.reduce_max(inputs)
+                else:
+                    self.act_min_value = tf.math.reduce_min(inputs, axis=self.axis)
+                    self.act_max_value = tf.math.reduce_max(inputs, axis=self.axis)
+                depthwise_kernel = self.depthwise_kernel
+            elif self.quant_status == "quantize":
+                assert self.act_min_value is not None, "Invalid activation min-max values, please check calibration process"
+                inputs, _, _ = tf.quantization.quantize(
+                    inputs,
+                    self.act_min_value,
+                    self.act_max_value,
+                    self.quant_T,
+                    mode=self.quant_mode,
+                    round_mode=self.quant_round_mode,
+                    narrow_range=self.quant_narrow_range,
+                    axis=self.quant_axis,
+                )
+                inputs =  tf.quantization.dequantize(
+                    inputs,
+                    self.act_min_value,
+                    self.act_max_value,
+                    mode=self.quant_mode,
+                    narrow_range=self.quant_narrow_range,
+                    axis=self.quant_axis,
+                )
+
+                # add the Q/DQ here
+                depthwise_kernel, _, _ = quantization.quantize(
+                    self.depthwise_kernel, 
+                    self.weight_min_value, 
+                    self.weight_max_value, 
+                    tf.qint8, 
+                    axis=3, 
+                    mode="SCALED"
+                )
+                depthwise_kernel = quantization.dequantize(
+                    depthwise_kernel,
+                    self.weight_min_value,
+                    self.weight_max_value,
+                    axis=3,
+                    mode="SCALED",
+                )
+
             outputs = tf.keras.backend.depthwise_conv2d(
                 inputs,
-                kernel,
+                depthwise_kernel,
                 strides=self.strides,
                 padding=self.padding,
                 data_format=self.data_format,
@@ -192,6 +329,26 @@ else:
         @classmethod
         def from_config(cls, config):
             return cls(**config)
+
+        def get_config(self):
+            config = super(QConv2D, self).get_config()
+            config.update(
+                {
+                    "act_min_value": self.act_min_value,
+                    "act_max_value": self.act_max_value,
+                    "weight_min_value": self.weight_min_value,
+                    "weight_max_value": self.weight_max_value,
+                    "granularity": self.granularity,
+                    "quant_status": self.quant_status,
+                    "quant_mode": self.quant_mode,
+                    "quant_T": self.reverse_T_map[self.quant_T],
+                    "quant_round_mode": self.quant_round_mode,
+                    "quant_narrow_range": self.quant_narrow_range,
+                    "quant_axis": self.quant_axis,
+                }
+            )
+            
+            return config
 
         @tf_utils.shape_type_conversion
         def compute_output_shape(self, input_shape):

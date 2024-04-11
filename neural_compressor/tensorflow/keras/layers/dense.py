@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2022 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,10 +22,12 @@ from tensorflow import quantization
 from tensorflow.keras import activations, backend, constraints, initializers, regularizers
 from tensorflow.keras.layers import Dense
 
+from neural_compressor.tensorflow.utils import version1_gte_version2
 
 class QDense(Dense):
     def __init__(
         self,
+        name,
         units,
         activation=None,
         use_bias=True,
@@ -36,11 +38,21 @@ class QDense(Dense):
         activity_regularizer=None,
         kernel_constraint=None,
         bias_constraint=None,
-        min_value=-10000,
-        max_value=10000,
+        act_min_value=None,
+        act_max_value=None,
+        weight_min_value=None,
+        weight_max_value=None,
+        granularity="per_tensor",
+        quant_status="calib",
+        quant_mode="SCALED",
+        quant_T="s8",
+        quant_round_mode="HALF_AWAY_FROM_ZERO",
+        quant_narrow_range=False,
+        quant_axis=None,
         **kwargs
     ):
         super(QDense, self).__init__(
+            name=name,
             units=units,
             activation=activation,
             use_bias=use_bias,
@@ -53,26 +65,74 @@ class QDense(Dense):
             bias_constraint=bias_constraint,
             **kwargs
         )
-        self.min_value = json.loads(min_value)
-        self.max_value = json.loads(max_value)
+        T_map = {"s8": tf.qint8, "u8": tf.quint8}
+        self.reverse_T_map = {tf.qint8: "s8", tf.quint8: "u8"}
+        self.weight_min_value = weight_min_value
+        self.weight_max_value = weight_max_value
+        self.act_min_value = act_min_value
+        self.act_max_value = act_max_value
+        self.granularity = granularity
+        self.quant_status= quant_status
+        self.quant_mode = quant_mode
+        self.quant_T = T_map[quant_T]
+        self.quant_round_mode = quant_round_mode
+        self.quant_narrow_range = quant_narrow_range
+        self.quant_axis = quant_axis
 
     def call(self, inputs):
-        # add the Q/DQ here
-        kernel, _, _ = quantization.quantize(
-            self.kernel,
-            self.min_value,
-            self.max_value,
-            tf.qint8,
-            axis=1,
-            mode="SCALED",
-        )
-        kernel = quantization.dequantize(
-            kernel,
-            self.min_value,
-            self.max_value,
-            axis=1,
-            mode="SCALED",
-        )
+        if self.quant_status == "calib" and not isinstance(inputs, tf.keras.KerasTensor):
+            if self.granularity == "per_tensor":
+                self.act_min_value = tf.math.reduce_min(inputs)
+                self.act_max_value = tf.math.reduce_max(inputs)
+            else:
+                self.act_min_value = tf.math.reduce_min(inputs, axis=self.axis)
+                self.act_max_value = tf.math.reduce_max(inputs, axis=self.axis)
+            kernel = self.kernel
+        elif self.quant_status == "quantize":
+            assert self.act_min_value is not None, "Invalid activation min-max values, please check calibration process"
+            inputs, _, _ = tf.quantization.quantize(
+                inputs,
+                self.act_min_value,
+                self.act_max_value,
+                self.quant_T,
+                mode=self.quant_mode,
+                round_mode=self.quant_round_mode,
+                narrow_range=self.quant_narrow_range,
+                axis=self.quant_axis,
+            )
+            inputs =  tf.quantization.dequantize(
+                inputs,
+                self.act_min_value,
+                self.act_max_value,
+                mode=self.quant_mode,
+                narrow_range=self.quant_narrow_range,
+                axis=self.quant_axis,
+            )
+
+            kernel_size = self.kernel.shape[-1]
+
+            if not self.weight_min_value:
+                self.weight_min_value = [-10000] * kernel_size
+            if not self.weight_max_value:
+                self.weight_max_value = [10000] * kernel_size
+
+            # add the Q/DQ here
+            kernel, _, _ = quantization.quantize(
+                self.kernel,
+                self.weight_min_value,
+                self.weight_max_value,
+                tf.qint8,
+                axis=1,
+                mode="SCALED",
+            )
+            kernel = quantization.dequantize(
+                kernel,
+                self.weight_min_value,
+                self.weight_max_value,
+                axis=1,
+                mode="SCALED",
+            )
+
         outputs = tf.keras.backend.dot(inputs, kernel)
 
         if self.use_bias:
@@ -80,3 +140,74 @@ class QDense(Dense):
         if self.activation is not None:
             outputs = self.activation(outputs)
         return outputs
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+    def get_config(self):
+        config = super(QDense, self).get_config()
+        config.update(
+            {
+                "act_min_value": self.act_min_value,
+                "act_max_value": self.act_max_value,
+                "weight_min_value": self.weight_min_value,
+                "weight_max_value": self.weight_max_value,
+                "granularity": self.granularity,
+                "quant_status": self.quant_status,
+                "quant_mode": self.quant_mode,
+                "quant_T": self.reverse_T_map[self.quant_T],
+                "quant_round_mode": self.quant_round_mode,
+                "quant_narrow_range": self.quant_narrow_range,
+                "quant_axis": self.quant_axis,
+            }
+        )
+        
+
+        return config
+
+
+def initialize_int8_dense(fp32_layer, q_config):
+    kwargs = fp32_layer.get_config()
+
+    if "name" in kwargs:
+        del kwargs["name"]
+    if "units" in kwargs:
+        del kwargs["units"]
+    if "activation" in kwargs:
+        del kwargs["activation"]
+    if "use_bias" in kwargs:
+        del kwargs["use_bias"]
+    if "kernel_initializer" in kwargs:
+        del kwargs["kernel_initializer"]
+    if "bias_initializer" in kwargs:
+        del kwargs["bias_initializer"]
+    if "kernel_regularizer" in kwargs:
+        del kwargs["kernel_regularizer"]
+    if "activity_regularizer" in kwargs:
+        del kwargs["activity_regularizer"]
+    if "bias_regularizer" in kwargs:
+        del kwargs["bias_regularizer"]
+    if "kernel_constraint" in kwargs:
+        del kwargs["kernel_constraint"]
+    if "bias_constraint" in kwargs:
+        del kwargs["bias_constraint"]
+
+    q_layer = QDense(
+        name=fp32_layer.name,
+        units=fp32_layer.units,
+        activation=fp32_layer.activation,
+        use_bias=fp32_layer.use_bias,
+        kernel_initializer=fp32_layer.kernel_initializer,
+        bias_initializer=fp32_layer.bias_initializer,
+        kernel_regularizer=fp32_layer.kernel_regularizer,
+        bias_regularizer=fp32_layer.bias_regularizer,
+        activity_regularizer=fp32_layer.activity_regularizer,
+        kernel_constraint=fp32_layer.kernel_constraint,
+        bias_constraint=fp32_layer.bias_constraint,
+        quant_T=q_config["T"],
+        granularity=q_config["granularity"],
+        **kwargs
+    )
+
+    return q_layer
