@@ -19,10 +19,7 @@
 # limitations under the License.
 
 from .utils import quantize_elemwise_op, quantize_mx_op
-from typing import Dict, Tuple
-from neural_compressor.torch.utils import register_algo, set_module
-from neural_compressor.common.utility import MX_QUANT
-from neural_compressor.torch.quantization.config import MXQuantConfig
+from neural_compressor.torch.utils import set_module
 from neural_compressor.common.logger import Logger
 
 logger = Logger().get_logger()
