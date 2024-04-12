@@ -39,10 +39,7 @@ class TestTensorflowGraphInsertLogging(unittest.TestCase):
                 "Conv2D": (False, "minmax", False, 7.0),
             }
             op_wise_sequences = TensorflowQuery(
-                local_config_file=os.path.join(
-                    os.path.dirname(neural_compressor.__path__[0]),
-                    "/tensorflow/algorithms/static_quant/tensorflow.yaml",
-                )
+                local_config_file=neural_compressor.__path__[0] + "/tensorflow/algorithms/static_quant/tensorflow.yaml"
             ).get_eightbit_patterns()
 
             output_graph, _, _ = QuantizeGraphForIntel(

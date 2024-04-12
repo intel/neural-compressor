@@ -12,16 +12,6 @@ import cpuinfo
 import tensorflow as tf
 
 
-class ForbiddenModules(MetaPathFinder):
-    def __init__(self, modules):
-        super().__init__()
-        self.modules = modules
-
-    def find_spec(self, fullname, path, target=None):
-        if fullname in self.modules:
-            raise ImportError(fullname)
-
-
 class TestTensorflowGpu(unittest.TestCase):
     mb_model_url = (
         "https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb"
@@ -33,7 +23,6 @@ class TestTensorflowGpu(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        sys.meta_path.insert(0, ForbiddenModules({"intel_extension_for_pytorch"}))
         if not os.path.exists(cls.pb_path):
             if cls.platforms == "linux":
                 os.system("mkdir -p /tmp/.neural_compressor && wget {} -O {} ".format(cls.mb_model_url, cls.pb_path))
@@ -62,10 +51,9 @@ class TestTensorflowGpu(unittest.TestCase):
         from neural_compressor.tensorflow.algorithms.static_quant.tensorflow import TensorflowQuery
 
         cls.op_wise_sequences = TensorflowQuery(
-            local_config_file=os.path.join(
-                os.path.dirname(neural_compressor.__path__[0]), "/tensorflow/algorithms/static_quant/tensorflow.yaml"
-            )
+            local_config_file=neural_compressor.__path__[0] + "/tensorflow/algorithms/static_quant/tensorflow.yaml"
         ).get_eightbit_patterns()
+
         cls.logger_nc.warning(
             f"After importing neural_compressor: {sys.modules[__name__].__file__}-{cls.__name__}, "
             f"Root_Logger_Level = {cls.logger_root.level}"
