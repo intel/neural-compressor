@@ -152,10 +152,9 @@ class TestBiasCorrectionOldApi(unittest.TestCase):
         )
         relu = tf.nn.relu(normed, name="Relu_0")
         op_wise_sequences = TensorflowQuery(
-            local_config_file=os.path.join(
-                os.path.dirname(neural_compressor.__path__[0]), "/tensorflow/algorithms/static_quant/tensorflow.yaml"
-            )
+            local_config_file=neural_compressor.__path__[0]+"/tensorflow/algorithms/static_quant/tensorflow.yaml"
         ).get_eightbit_patterns()
+        
         with tf.compat.v1.Session() as sess:
             sess.run(tf.compat.v1.global_variables_initializer())
             output_graph_def = graph_util.convert_variables_to_constants(
