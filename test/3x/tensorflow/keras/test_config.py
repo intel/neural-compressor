@@ -117,6 +117,7 @@ class TestTF3xNewApi(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         shutil.rmtree("baseline_model", ignore_errors=True)
+        os.environ["ITEX_ONEDNN_GRAPH"] = "0"
 
     def test_static_quant_from_dict_default(self):
         logger.info("test_static_quant_from_dict_default")

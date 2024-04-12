@@ -115,6 +115,7 @@ class TestTensorflowNewQdqConvFusion(unittest.TestCase):
                     bf16_matmul = True
 
             self.assertEqual(bf16_matmul, True)
+            os.environ["FORCE_BF16"] = "0"
 
 
 if __name__ == "__main__":

@@ -14,6 +14,10 @@ class TestDqCastFusion(unittest.TestCase):
     def setUpClass(self):
         os.environ["FORCE_BF16"] = "1"
 
+    @classmethod
+    def tearDownClass(self):
+        os.environ["FORCE_BF16"] = "0"
+
     @disable_random()
     def test_dq_all_outputs_bf16(self):
         x = tf.compat.v1.placeholder(tf.float32, [1, 56, 56, 16], name="input")

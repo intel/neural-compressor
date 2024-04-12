@@ -288,7 +288,9 @@ class TestBF16Convert(unittest.TestCase):
                     if i.op == "MatMul" and i.attr["T"] == DT_BFLOAT16:
                         is_bf16 = True
                         break
+
             self.assertEqual(is_bf16, True)
+            os.environ["FORCE_BF16"] = "0"
 
     @unittest.skipIf(tf.__version__ < "2.0", "currently bf16 convert does not support 1.15up3")
     def test_rn50_convert(self):
@@ -326,7 +328,9 @@ class TestBF16Convert(unittest.TestCase):
         for node in qmodel.graph_def.node:
             if node.op == "Cast":
                 cast_op_count += 1
+
         self.assertTrue(cast_op_count == 0)
+        os.environ["FORCE_BF16"] = "0"
 
 
 if __name__ == "__main__":
