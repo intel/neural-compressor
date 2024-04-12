@@ -16,7 +16,13 @@
 # limitations under the License.
 
 from neural_compressor.common.utils import DEFAULT_WORKSPACE
-from neural_compressor.tensorflow.utils.model_wrappers import BaseModel, KerasModel, TensorflowModel, get_tf_model_type
+from neural_compressor.tensorflow.utils.model_wrappers import (
+    BaseModel, 
+    KerasModel, 
+    TensorflowModel, 
+    get_tf_model_type,
+    TensorflowSubclassedKerasModel,
+)
 
 framework_specific_info = {
     "device": "cpu",
@@ -44,6 +50,8 @@ class Model(object):
         from neural_compressor.tensorflow.utils import itex_installed
 
         if isinstance(root, BaseModel):
+            if isinstance(root, TensorflowSubclassedKerasModel):
+                framework_specific_info["backend"] = "itex"
             return root
 
         if kwargs.get("approach", None) == "quant_aware_training":

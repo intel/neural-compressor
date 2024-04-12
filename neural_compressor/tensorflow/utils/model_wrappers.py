@@ -1317,6 +1317,62 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
         shutil.rmtree(self.model_path, ignore_errors=True)
 
 
+class TensorflowSubclassedKerasModel(TensorflowSavedModelModel):
+    """Build a subclassed Keras model."""
+
+    def __init__(self, model="", **kwargs):
+        """Initialize a subclassed Keras model.
+
+        Args:
+            model (string or  tf.keras.Model object): model path or model object.
+        """
+        super(TensorflowSubclassedKerasModel, self).__init__(model)
+        self.model_type = "saved_model"
+        self._keras_model = None
+
+    def _build_as_functional_model(self, model_path):
+        TFSMlayer = tf.keras.layers.TFSMLayer(model_path, call_endpoint="serving_default")
+        inputs = tf.keras.Input(shape=(3, 224, 224))
+        outputs = TFSMlayer(inputs)
+        return tf.keras.Model(inputs, outputs)
+
+    @property
+    def model(self):
+        """Return model in Keras Functional object."""
+        if self._keras_model:
+            return self._keras_model
+
+
+        root = DEFAULT_WORKSPACE + "/keras_model.keras"
+        root = os.path.abspath(os.path.expanduser(root))
+        if os.path.exists(root):
+            shutil.rmtree(root)
+        os.makedirs(root, exist_ok=True)
+        if not self._sess:
+            self._load_sess(self._model, **self.kwargs)
+        _, builder = self.build_saved_model(root)
+        builder.save()
+        self._keras_model =  self._build_as_functional_model(root)
+        shutil.rmtree(root)
+
+        return self._keras_model
+
+    @model.setter
+    def model(self, q_model):
+        """Set model itself."""
+        self._keras_model = q_model
+
+    def save(self, root=None):
+        """Save Tensorflow QAT model."""
+        if not root:
+            root = DEFAULT_WORKSPACE + "/keras_model.keras"
+        root = os.path.abspath(os.path.expanduser(root))
+        os.makedirs(os.path.dirname(root), exist_ok=True)
+
+        self.model.save(root)
+        return root
+
+
 class TensorflowQATModel(TensorflowSavedModelModel):
     """Build Tensorflow QAT model."""
 
