@@ -1,14 +1,7 @@
-deprecated >= 1.2.13
-numpy < 2.0
-opencv-python-headless
-pandas
-Pillow
-prettytable
+numpy
+onnx
+onnxruntime
+onnxruntime-extensions
 psutil
 py-cpuinfo
-pycocotools; sys_platform != 'win32' or python_version > '3.8'
-pycocotools-windows; sys_platform == 'win32' and python_version <= '3.8'
-pyyaml
-requests
-schema
-scikit-learn
+pydantic

@@ -1,3 +1,0 @@
-neural-compressor>=2.3
-torch
-torchvision

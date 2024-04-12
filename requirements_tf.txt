@@ -1,6 +1,0 @@
-prettytable
-psutil
-py-cpuinfo
-pydantic
-pyyaml
-tensorflow<=2.15.1

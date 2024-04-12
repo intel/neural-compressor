@@ -1,9 +1,0 @@
-cryptography
-Flask
-Flask-Cors
-Flask-SocketIO
-gevent
-gevent-websocket
-neural_compressor>=2.2
-pywin32; sys_platform != 'linux'
-torchinfo

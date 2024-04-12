@@ -1,8 +1,0 @@
-onnx
-onnxruntime
-intel-tensorflow==2.12.0
-tf2onnx
-torch
-onnxruntime-extensions; python_version < '3.11'
-pillow>=8.1.0 # not directly required, pinned by Snyk to avoid a vulnerability
-tqdm

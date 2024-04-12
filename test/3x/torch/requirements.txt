@@ -1,5 +1,0 @@
-numpy
-prettytable
-psutil
-pytest
-transformers

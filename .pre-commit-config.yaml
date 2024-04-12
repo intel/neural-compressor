@@ -5,11 +5,6 @@ ci:
 exclude: |
   (?x)^(
       conda_meta/.+|
-      neural_insights/gui.+|
-      neural_insights/test.+|
-      neural_solution/frontend/gRPC/proto/neural_solution_pb2.py|
-      neural_coder/extensions/.+|
-      neural_coder/examples/.+
   )$
 
 repos:
@@ -31,9 +26,6 @@ repos:
         exclude: |
           (?x)^(
             conda_meta/|
-            neural_compressor/template/pruning.yaml|
-            neural_compressor/adaptor/tensorflow_itex.yaml|
-            neural_compressor/adaptor/tensorflow.yaml
           )$
       - id: debug-statements
       - id: file-contents-sorter
@@ -58,16 +50,6 @@ repos:
     rev: v1.5.5
     hooks:
       - id: insert-license
-        files: |
-          (?x)^(
-            neural_solution/.*(py|yaml|yml|sh)|
-            neural_compressor/.*(py|yaml|yml|sh)|
-            neural_insights/.*(py|yaml|yml|sh)
-          )$
-        exclude: |
-          (?x)^(
-              neural_solution/test/.*
-          )$
         args:
           [
             --license-filepath=.github/license_template.txt,
@@ -114,8 +96,6 @@ repos:
         files: (.*\.py)$
         exclude: |
           (?x)^(
-              neural_compressor/conf/config.py|
-              neural_compressor/conf/pythonic_config.py|
               examples/.+
           )$
 
@@ -142,9 +122,6 @@ repos:
         exclude: |
           (?x)^(
               examples/.*(txt|patch)|
-              examples/onnxrt/nlp/huggingface_model/text_generation/llama/quantization/ptq_static/prompt.json|
-              examples/notebook/dynas/ResNet50_Quantiation_Search_Supernet_NAS.ipynb|
-              examples/notebook/dynas/Transformer_LT_Supernet_NAS.ipynb
           )$
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
