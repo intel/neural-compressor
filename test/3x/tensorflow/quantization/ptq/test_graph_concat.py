@@ -31,7 +31,7 @@ class TestTensorflowConcat(unittest.TestCase):
         if not os.path.exists(self.pb_path) and self.platform == "linux":
             os.system("mkdir -p /tmp/.neural_compressor && wget {} -O {} ".format(self.mb_model_url, self.pb_path))
         self.op_wise_sequences = TensorflowQuery(
-            local_config_file=neural_compressor.__path__[0]+"/tensorflow/algorithms/static_quant/tensorflow.yaml"
+            local_config_file=neural_compressor.__path__[0] + "/tensorflow/algorithms/static_quant/tensorflow.yaml"
         ).get_eightbit_patterns()
 
     @unittest.skipIf(tf.__version__ < "2.0", "does not support on 1.15up3")

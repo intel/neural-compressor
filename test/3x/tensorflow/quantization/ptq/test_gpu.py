@@ -51,9 +51,9 @@ class TestTensorflowGpu(unittest.TestCase):
         from neural_compressor.tensorflow.algorithms.static_quant.tensorflow import TensorflowQuery
 
         cls.op_wise_sequences = TensorflowQuery(
-            local_config_file=neural_compressor.__path__[0]+"/tensorflow/algorithms/static_quant/tensorflow.yaml"
+            local_config_file=neural_compressor.__path__[0] + "/tensorflow/algorithms/static_quant/tensorflow.yaml"
         ).get_eightbit_patterns()
-        
+
         cls.logger_nc.warning(
             f"After importing neural_compressor: {sys.modules[__name__].__file__}-{cls.__name__}, "
             f"Root_Logger_Level = {cls.logger_root.level}"

@@ -18,7 +18,7 @@ class TestGraphMatMulFusion(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         self.op_wise_sequences = TensorflowQuery(
-            local_config_file=neural_compressor.__path__[0]+"/tensorflow/algorithms/static_quant/tensorflow.yaml"
+            local_config_file=neural_compressor.__path__[0] + "/tensorflow/algorithms/static_quant/tensorflow.yaml"
         ).get_eightbit_patterns()
 
     @disable_random()

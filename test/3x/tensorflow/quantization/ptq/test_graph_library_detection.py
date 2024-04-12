@@ -33,7 +33,7 @@ class TestGraphLibraryDetection(unittest.TestCase):
         tf.compat.v1.disable_eager_execution()
 
         op_wise_sequences = TensorflowQuery(
-            local_config_file=neural_compressor.__path__[0]+"/tensorflow/algorithms/static_quant/tensorflow.yaml"
+            local_config_file=neural_compressor.__path__[0] + "/tensorflow/algorithms/static_quant/tensorflow.yaml"
         ).get_eightbit_patterns()
 
         qt_config = {"calib_iteration": 1, "op_wise_config": {}}
