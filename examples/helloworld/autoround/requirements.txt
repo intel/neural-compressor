@@ -1,0 +1,3 @@
+auto-round
+torch
+transformers>=4.34.0
