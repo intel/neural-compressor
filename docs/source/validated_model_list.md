@@ -5,17 +5,17 @@ Intel® Neural Compressor validated examples with multiple compression technique
 
 1. [Validated Quantization Examples](#Validated-Quantization-Examples)
 
-    1.1. [TensorFlow Models with TensorFlow 2.15.0](#tensorflow-models-with-Intel-tensorflow-2150)
+    1.1. [TensorFlow Models with TensorFlow 2.15.0](#tensorflow-models-with-tensorflow-2150)
 
-    1.2. [PyTorch Models with Torch 2.0.1+cpu in PTQ Mode](#pytorch-models-with-torch-221cpu-in-ptq-mode)
+    1.2. [PyTorch Models with Torch 2.2.1+cpu in PTQ Mode](#pytorch-models-with-torch-221cpu-in-ptq-mode)
 
-    1.3. [PyTorch Models with Torch 2.0.1+cpu in QAT Mode](#pytorch-models-with-torch-221cpu-in-qat-mode)
+    1.3. [PyTorch Models with Torch 2.2.1+cpu in QAT Mode](#pytorch-models-with-torch-221cpu-in-qat-mode)
 
-    1.5. [PyTorch Models with Torch 2.0.1+cpu in WOQ Mode](#pytorch-models-with-torch-201cpu-in-woq-mode)
+    1.4. [PyTorch Models with Torch 2.0.1+cpu in WOQ Mode](#pytorch-models-with-torch-201cpu-in-woq-mode)
 
-    1.6. [ONNX Models with ONNX Runtime 1.15.1](#onnx-models-with-onnx-runtime-1171)
+    1.5. [ONNX Models with ONNX Runtime 1.17.1](#onnx-models-with-onnx-runtime-1171)
 
-    1.7. [ONNX Models with ONNX Runtime 1.15.0 in WOQ Mode](#onnx-models-with-onnx-runtime-1150-in-woq-mode)
+    1.6. [ONNX Models with ONNX Runtime 1.15.0 in WOQ Mode](#onnx-models-with-onnx-runtime-1150-in-woq-mode)
 
 2. [Validated Pruning Examples](#Validated-Pruning-Examples)
 
@@ -53,7 +53,7 @@ For more complete information about performance and benchmark results, visit www
 </thead>
 <tbody>
   <tr>
-    <td>ResNet50&nbsp;&nbsp;&nbsp;v1.0</td>
+    <td>ResNet50 v1.0</td>
     <td>pb</td>
     <td>74.11%</td>
     <td>74.27%</td>
