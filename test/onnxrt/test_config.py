@@ -7,7 +7,7 @@ import numpy as np
 import onnx
 from optimum.exporters.onnx import main_export
 
-from neural_compressor.common import Logger
+from neural_compressor_ort.common import Logger
 
 logger = Logger().get_logger()
 
@@ -84,8 +84,8 @@ class TestQuantizationConfig(unittest.TestCase):
         return len(op_names)
 
     def test_config_white_lst(self):
-        from neural_compressor.onnxrt import RTNConfig
-        from neural_compressor.onnxrt.quantization.quantize import _quantize
+        from neural_compressor_ort.quantization import RTNConfig
+        from neural_compressor_ort.quantization.quantize import _quantize
 
         global_config = RTNConfig(weight_bits=4)
         # set operator instance
@@ -98,8 +98,8 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertFalse(self._check_node_is_quantized(qmodel, "/h.4/mlp/fc_out/MatMul"))
 
     def test_config_white_lst2(self):
-        from neural_compressor.onnxrt import RTNConfig
-        from neural_compressor.onnxrt.quantization.quantize import _quantize
+        from neural_compressor_ort.quantization import RTNConfig
+        from neural_compressor_ort.quantization.quantize import _quantize
 
         global_config = RTNConfig(weight_dtype="fp32")
         # set operator instance
@@ -112,8 +112,8 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertTrue(self._check_node_is_quantized(qmodel, "/h.4/mlp/fc_out/MatMul"))
 
     def test_config_white_lst3(self):
-        from neural_compressor.onnxrt import RTNConfig
-        from neural_compressor.onnxrt.utils.utility import get_model_info
+        from neural_compressor_ort.quantization import RTNConfig
+        from neural_compressor_ort.utils.utility import get_model_info
 
         global_config = RTNConfig(weight_bits=4)
         # set operator instance
@@ -129,7 +129,7 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertTrue(configs_mapping[("/h.4/mlp/fc_in/MatMul", "MatMul")].weight_bits == 4)
 
     def test_config_from_dict(self):
-        from neural_compressor.onnxrt import RTNConfig
+        from neural_compressor_ort.quantization import RTNConfig
 
         quant_config = {
             "rtn": {
@@ -150,7 +150,7 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertIsNotNone(config.local_config)
 
     def test_config_to_dict(self):
-        from neural_compressor.onnxrt import RTNConfig
+        from neural_compressor_ort.quantization import RTNConfig
 
         quant_config = RTNConfig(weight_bits=4)
         fc_out_config = RTNConfig(weight_bits=8)
@@ -160,7 +160,7 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertIn("local", config_dict)
 
     def test_same_type_configs_addition(self):
-        from neural_compressor.onnxrt import RTNConfig
+        from neural_compressor_ort.quantization import RTNConfig
 
         quant_config1 = {
             "rtn": {
@@ -193,8 +193,8 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertNotEqual(q3_dict["global"]["weight_bits"], quant_config2["rtn"]["global"]["weight_bits"])
 
     def test_config_mapping(self):
-        from neural_compressor.onnxrt import RTNConfig
-        from neural_compressor.onnxrt.utils.utility import get_model_info
+        from neural_compressor_ort.quantization import RTNConfig
+        from neural_compressor_ort.utils.utility import get_model_info
 
         quant_config = RTNConfig(weight_bits=4)
         # set operator instance
@@ -219,7 +219,7 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertTrue(configs_mapping[("/h.1/mlp/fc_out/MatMul", "MatMul")].weight_bits == 3)
 
     def test_diff_types_configs_addition(self):
-        from neural_compressor.onnxrt import GPTQConfig, RTNConfig
+        from neural_compressor_ort.quantization import GPTQConfig, RTNConfig
 
         quant_config1 = {
             "rtn": {
@@ -239,7 +239,7 @@ class TestQuantizationConfig(unittest.TestCase):
 class TestQuantConfigForAutotune(unittest.TestCase):
     def test_expand_config(self):
         # test the expand functionalities, the user is not aware it
-        from neural_compressor.onnxrt import RTNConfig
+        from neural_compressor_ort.quantization import RTNConfig
 
         tune_config = RTNConfig(weight_bits=[4, 8])
         expand_config_list = RTNConfig.expand(tune_config)

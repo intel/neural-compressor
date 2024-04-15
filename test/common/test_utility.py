@@ -9,8 +9,8 @@ All tests will be included for each framework CI.
 
 import unittest
 
-from neural_compressor.common import options
-from neural_compressor.common.utils import (
+from neural_compressor_ort.common import options
+from neural_compressor_ort.common.utils import (
     CpuInfo,
     LazyImport,
     set_random_seed,

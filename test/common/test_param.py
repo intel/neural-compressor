@@ -1,7 +1,7 @@
 import unittest
 from typing import List
 
-from neural_compressor.common.tuning_param import TuningParam
+from neural_compressor_ort.common.tuning_param import TuningParam
 
 
 class TestTuningParam(unittest.TestCase):

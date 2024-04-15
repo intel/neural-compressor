@@ -9,7 +9,7 @@ All tests will be included for each framework CI.
 
 import unittest
 
-from neural_compressor.common.utils import Logger
+from neural_compressor_ort.common.utils import Logger
 
 log_msg_lst = [
     "call logger log function.",
@@ -29,7 +29,7 @@ log_msg_lst = [
 
 class TestLogger(unittest.TestCase):
     def test_logger(self):
-        from neural_compressor.common import logger
+        from neural_compressor_ort.common import logger
 
         for msg in log_msg_lst:
             logger.log(0, msg)
@@ -61,7 +61,7 @@ class TestLogger(unittest.TestCase):
         # logger.warning(({"msg": [{"sub_msg": "call logger"}, {"sub_msg2": "call warning function"}]}, {"msg2": "done"}))
 
     # def test_logger_func_and_pretty_dict(self):
-    #     from neural_compressor.common.utils import debug, error, fatal, info, log, warning
+    #     from neural_compressor_ort.common.utils import debug, error, fatal, info, log, warning
 
     #     for msg in log_msg_lst:
     #         log(0, msg)
