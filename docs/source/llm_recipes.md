@@ -10,7 +10,7 @@ This document aims to publish the specific recipes we achieved for the popular L
 > - The quantization algorithms provide by [Intel® Neural Compressor](https://github.com/intel/neural-compressor) and the evaluate functions provide by [Intel® Extension for Transformers](https://github.com/intel/intel-extension-for-transformers).
 > - The model list are continuing update, please expect to find more LLMs in the future.
 
-## IPEX key models recipes
+## Large Language Models Recipes
 
 |             Models              | SQ INT8 | WOQ INT8 | WOQ INT4 |
 | :-----------------------------: | :-----: | :------: | :------: |
@@ -39,7 +39,7 @@ This document aims to publish the specific recipes we achieved for the popular L
 > - This model list comes from [IPEX](https://intel.github.io/intel-extension-for-pytorch/cpu/latest/tutorials/llm.html).
 > - The WIP recipes will be published soon.
 
-## IPEX key models accuracy
+## Large Language Models Accuracy
 <table>
 <thead>
   <tr>
