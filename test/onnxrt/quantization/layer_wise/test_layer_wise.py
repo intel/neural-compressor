@@ -1,10 +1,10 @@
+import copy
 import os
 import shutil
 import unittest
 from copy import deepcopy
 
 import onnx
-import copy
 import onnxruntime as ort
 import onnxruntime.tools.symbolic_shape_infer as symbolic_shape_infer
 import torch
@@ -137,8 +137,10 @@ class TestLayerWiseQuant(unittest.TestCase):
 
         # get qmodel without layer_wise_quant
         algo_config = matmul_4bits_quantizer.RTNWeightOnlyQuantConfig(layer_wise_quant=False)
-        quant = matmul_4bits_quantizer.MatMul4BitsQuantizer(copy.deepcopy(self.llama),
-                                                            algo_config=algo_config,)
+        quant = matmul_4bits_quantizer.MatMul4BitsQuantizer(
+            copy.deepcopy(self.llama),
+            algo_config=algo_config,
+        )
         quant.process()
         qmodel = quant.model
         self.assertIsNotNone(qmodel)
@@ -146,8 +148,10 @@ class TestLayerWiseQuant(unittest.TestCase):
 
         # get qmodel with layer_wise_quant
         algo_config = matmul_4bits_quantizer.RTNWeightOnlyQuantConfig(layer_wise_quant=True)
-        quant = matmul_4bits_quantizer.MatMul4BitsQuantizer(copy.deepcopy(self.llama),
-                                                            algo_config=algo_config,)
+        quant = matmul_4bits_quantizer.MatMul4BitsQuantizer(
+            copy.deepcopy(self.llama),
+            algo_config=algo_config,
+        )
         quant.process()
         qmodel_lwq = quant.model
         self.assertIsNotNone(qmodel_lwq)
@@ -184,9 +188,12 @@ class TestLayerWiseQuant(unittest.TestCase):
 
         # get qmodel without layer_wise_quant
         algo_config = matmul_4bits_quantizer.GPTQWeightOnlyQuantConfig(
-            layer_wise_quant=False, calibration_data_reader=self.calibration_data_reader)
-        quant = matmul_4bits_quantizer.MatMul4BitsQuantizer(copy.deepcopy(self.llama),
-                                                            algo_config=algo_config,)
+            layer_wise_quant=False, calibration_data_reader=self.calibration_data_reader
+        )
+        quant = matmul_4bits_quantizer.MatMul4BitsQuantizer(
+            copy.deepcopy(self.llama),
+            algo_config=algo_config,
+        )
         quant.process()
         qmodel = quant.model
         self.assertIsNotNone(qmodel)
@@ -194,9 +201,12 @@ class TestLayerWiseQuant(unittest.TestCase):
 
         # get qmodel with layer_wise_quant
         algo_config = matmul_4bits_quantizer.GPTQWeightOnlyQuantConfig(
-            layer_wise_quant=True, calibration_data_reader=self.calibration_data_reader)
-        quant = matmul_4bits_quantizer.MatMul4BitsQuantizer(copy.deepcopy(self.llama),
-                                                            algo_config=algo_config,)
+            layer_wise_quant=True, calibration_data_reader=self.calibration_data_reader
+        )
+        quant = matmul_4bits_quantizer.MatMul4BitsQuantizer(
+            copy.deepcopy(self.llama),
+            algo_config=algo_config,
+        )
         quant.process()
         qmodel_lwq = quant.model
         self.assertIsNotNone(qmodel_lwq)

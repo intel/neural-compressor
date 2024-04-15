@@ -27,13 +27,14 @@ from neural_compressor_ort.utils.utility import algos_mapping
 
 logger = Logger().get_logger()
 
+
 # ORT-like user-facing API
 def quantize(
     model_input: Union[str, Path, onnx.ModelProto],
     model_output: Union[str, Path],
     quant_config: QuantConfig,
 ):
-    from neural_compressor_ort.quantization.config import StaticQuantConfig, DynamicQuantConfig
+    from neural_compressor_ort.quantization.config import DynamicQuantConfig, StaticQuantConfig
 
     if isinstance(quant_config, StaticQuantConfig):
         if quant_config.extra_options.get("SmoothQuant", False):
@@ -42,7 +43,8 @@ def quantize(
 
             inc_sq_config = generate_inc_sq_config(quant_config)
             smooth_quant_entry(
-                model_input, inc_sq_config, quant_config.calibration_data_reader, model_output=model_output)
+                model_input, inc_sq_config, quant_config.calibration_data_reader, model_output=model_output
+            )
         else:
             # call static_quant_entry
             pass

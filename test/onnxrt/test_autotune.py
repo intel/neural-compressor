@@ -35,7 +35,7 @@ from neural_compressor_ort.quantization import (
     GPTQConfig,
     RTNConfig,
     SmoothQuantConfig,
-    autotune
+    autotune,
 )
 
 logger = Logger().get_logger()

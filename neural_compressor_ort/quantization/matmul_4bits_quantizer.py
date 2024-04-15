@@ -12,19 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from onnx.onnx_pb import ModelProto
 from typing import List, Union
 
+from onnx.onnx_pb import ModelProto
 from onnxruntime.quantization.matmul_4bits_quantizer import WeightOnlyQuantConfig
 
 from neural_compressor_ort.quantization.matmul_nbits_quantizer import (
+    AWQWeightOnlyQuantConfig,
+    GPTQWeightOnlyQuantConfig,
     MatMulNBitsQuantizer,
-    AWQWeightOnlyQuantConfig
-)
-from neural_compressor_ort.quantization.matmul_nbits_quantizer import (
     RTNWeightOnlyQuantConfig,
-    GPTQWeightOnlyQuantConfig
 )
+
 
 class MatMul4BitsQuantizer(MatMulNBitsQuantizer):
     def __init__(

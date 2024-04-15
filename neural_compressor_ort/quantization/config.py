@@ -25,16 +25,15 @@ import numpy as np
 import onnx
 from onnxruntime.quantization.calibrate import CalibrationMethod
 from onnxruntime.quantization.quant_utils import QuantFormat, QuantType
-
+from onnxruntime.quantization.quantize import DynamicQuantConfig as ORTDynamicQuantConfig
 from onnxruntime.quantization.quantize import QuantConfig
 from onnxruntime.quantization.quantize import StaticQuantConfig as ORTStaticQuantConfig
-from onnxruntime.quantization.quantize import DynamicQuantConfig as ORTDynamicQuantConfig
 
 from neural_compressor_ort.common import Logger
 from neural_compressor_ort.common.base_config import BaseConfig, register_config, register_supported_configs_for_fwk
 from neural_compressor_ort.common.utils import AWQ, DEFAULT_WHITE_LIST, GPTQ, OP_NAME_OR_MODULE_TYPE, RTN, SMOOTH_QUANT
-from neural_compressor_ort.utils import PRIORITY_AWQ, PRIORITY_GPTQ, PRIORITY_RTN, PRIORITY_SMOOTH_QUANT
 from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
+from neural_compressor_ort.utils import PRIORITY_AWQ, PRIORITY_GPTQ, PRIORITY_RTN, PRIORITY_SMOOTH_QUANT
 
 logger = Logger().get_logger()
 
@@ -595,7 +594,9 @@ class SmoothQuantConfig(BaseConfig, ORTStaticQuantConfig):
         return filter_result
 
     @classmethod
-    def get_config_set_for_tuning(cls) -> Union[None, "SmoothQuantConfig", List["SmoothQuantConfig"]]:  # pragma: no cover
+    def get_config_set_for_tuning(
+        cls,
+    ) -> Union[None, "SmoothQuantConfig", List["SmoothQuantConfig"]]:  # pragma: no cover
         # TODO fwk owner needs to update it.
         return SmoothQuantConfig(alpha=np.arange(0.3, 0.7, 0.05))
 
@@ -624,14 +625,9 @@ register_supported_configs_for_fwk(fwk_name=FRAMEWORK_NAME)
 
 ##################### Config for ONNXRuntime-like user-facing API ############
 
+
 class StaticQuantConfig(ORTStaticQuantConfig):
-    def __init__(
-        self,
-        calibration_data_reader: CalibrationDataReader,
-        extra_options=None,
-        *args,
-        **kwargs
-    ):
+    def __init__(self, calibration_data_reader: CalibrationDataReader, extra_options=None, *args, **kwargs):
         """This is a class for static Quant Configuration.
 
         Inherit from StaticQuantConfig:
@@ -658,12 +654,7 @@ class StaticQuantConfig(ORTStaticQuantConfig):
                 If enabled, each op will have an individual scale, mainlyfor accuracy.
                 If not enabled,  ops with the same input will share a scale, mainly for performance.
         """
-        super().__init__(
-            calibration_data_reader=calibration_data_reader,
-            extra_options=extra_options,
-            *args,
-            **kwargs
-        )
+        super().__init__(calibration_data_reader=calibration_data_reader, extra_options=extra_options, *args, **kwargs)
 
     def to_dict(self):
         return self.__dict__
@@ -675,6 +666,7 @@ class DynamicQuantConfig(ORTDynamicQuantConfig):
     Inherit from DynamicQuantConfig:
         https://github.com/microsoft/onnxruntime/blob/v1.17.1/onnxruntime/python/tools/quantization/quantize.py#L206
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -684,8 +676,7 @@ def generate_inc_sq_config(quant_config: QuantConfig):
     quant_kwargs = {
         "alpha": extra_options.get("SmoothQuantAlpha", 0.5),
         "folding": extra_options.get("SmoothQuantFolding", True),
-        "op_types": extra_options.get("SmoothQuantOpTypes",
-            ["Gemm", "Conv", "MatMul", "FusedConv"]),
+        "op_types": extra_options.get("SmoothQuantOpTypes", ["Gemm", "Conv", "MatMul", "FusedConv"]),
         "calib_iter": extra_options.get("SmoothQuantCalibIter", 100),
         "scales_per_op": extra_options.get("SmoothQuantScalesPerOp", True),
     }

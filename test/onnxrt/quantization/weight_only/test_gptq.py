@@ -1,9 +1,9 @@
+import copy
 import os
 import shutil
 import unittest
 
 import torch
-import copy
 from optimum.exporters.onnx import main_export
 from transformers import AutoTokenizer
 
@@ -97,6 +97,7 @@ class TestGPTQQuant(unittest.TestCase):
         qmodel = _quantize(fp32_model, quant_config, calibration_data_reader=self.calibration_data_reader)
         self.assertIsNotNone(qmodel)
         return qmodel
+
 
 class TestGPTQQuantWithInternalAPI(TestGPTQQuant):
     def test_gptq_params_combination(self):
@@ -225,12 +226,15 @@ class TestGPTQQuantWithORTLikeAPI(TestGPTQQuant):
         from neural_compressor_ort.quantization import matmul_4bits_quantizer
 
         algo_config = matmul_4bits_quantizer.GPTQWeightOnlyQuantConfig(
-            calibration_data_reader=self.calibration_data_reader)
+            calibration_data_reader=self.calibration_data_reader
+        )
 
-        quant = matmul_4bits_quantizer.MatMul4BitsQuantizer(copy.deepcopy(self.gptj),
-                                                            block_size=32,
-                                                            is_symmetric=False,
-                                                            algo_config=algo_config,)
+        quant = matmul_4bits_quantizer.MatMul4BitsQuantizer(
+            copy.deepcopy(self.gptj),
+            block_size=32,
+            is_symmetric=False,
+            algo_config=algo_config,
+        )
         quant.process()
         self.assertIsNotNone(quant.model)
         self.assertTrue(self._check_model_is_quantized(quant.model))
@@ -239,13 +243,16 @@ class TestGPTQQuantWithORTLikeAPI(TestGPTQQuant):
         from neural_compressor_ort.quantization import matmul_4bits_quantizer
 
         algo_config = matmul_4bits_quantizer.GPTQWeightOnlyQuantConfig(
-            calibration_data_reader=self.calibration_data_reader)
+            calibration_data_reader=self.calibration_data_reader
+        )
 
-        quant = matmul_4bits_quantizer.MatMul4BitsQuantizer(copy.deepcopy(self.gptj),
-                                                            block_size=32,
-                                                            is_symmetric=False,
-                                                            algo_config=algo_config,
-                                                            nodes_to_exclude=["/h.4/mlp/fc_out/MatMul"])
+        quant = matmul_4bits_quantizer.MatMul4BitsQuantizer(
+            copy.deepcopy(self.gptj),
+            block_size=32,
+            is_symmetric=False,
+            algo_config=algo_config,
+            nodes_to_exclude=["/h.4/mlp/fc_out/MatMul"],
+        )
         quant.process()
         self.assertIsNotNone(quant.model)
         self.assertTrue(self._check_model_is_quantized(quant.model))
@@ -255,14 +262,17 @@ class TestGPTQQuantWithORTLikeAPI(TestGPTQQuant):
         from neural_compressor_ort.quantization import matmul_nbits_quantizer
 
         algo_config = matmul_nbits_quantizer.GPTQWeightOnlyQuantConfig(
-            calibration_data_reader=self.calibration_data_reader)
+            calibration_data_reader=self.calibration_data_reader
+        )
 
         for n_bits in [3, 4, 8]:
-            quant = matmul_nbits_quantizer.MatMulNBitsQuantizer(copy.deepcopy(self.gptj),
-                                                                n_bits=n_bits,
-                                                                block_size=32,
-                                                                is_symmetric=False,
-                                                                algo_config=algo_config,)
+            quant = matmul_nbits_quantizer.MatMulNBitsQuantizer(
+                copy.deepcopy(self.gptj),
+                n_bits=n_bits,
+                block_size=32,
+                is_symmetric=False,
+                algo_config=algo_config,
+            )
             quant.process()
             self.assertIsNotNone(quant.model)
             self.assertEqual(self._count_woq_matmul(quant.model, bits=n_bits, group_size=32), 30)
@@ -271,19 +281,21 @@ class TestGPTQQuantWithORTLikeAPI(TestGPTQQuant):
         from neural_compressor_ort.quantization import matmul_nbits_quantizer
 
         algo_config = matmul_nbits_quantizer.GPTQWeightOnlyQuantConfig(
-            calibration_data_reader=self.calibration_data_reader)
+            calibration_data_reader=self.calibration_data_reader
+        )
 
         for n_bits in [3, 4, 8]:
-            quant = matmul_nbits_quantizer.MatMulNBitsQuantizer(copy.deepcopy(self.gptj),
-                                                                n_bits=n_bits,
-                                                                block_size=32,
-                                                                is_symmetric=False,
-                                                                algo_config=algo_config,
-                                                                nodes_to_exclude=["/h.4/mlp/fc_out/MatMul"])
+            quant = matmul_nbits_quantizer.MatMulNBitsQuantizer(
+                copy.deepcopy(self.gptj),
+                n_bits=n_bits,
+                block_size=32,
+                is_symmetric=False,
+                algo_config=algo_config,
+                nodes_to_exclude=["/h.4/mlp/fc_out/MatMul"],
+            )
             quant.process()
             self.assertIsNotNone(quant.model)
             self.assertEqual(self._count_woq_matmul(quant.model, bits=n_bits, group_size=32), 29)
-
 
 
 if __name__ == "__main__":

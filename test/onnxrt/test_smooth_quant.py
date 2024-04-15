@@ -25,7 +25,12 @@ import onnx
 from optimum.exporters.onnx import main_export
 
 from neural_compressor_ort.common import Logger
-from neural_compressor_ort.quantization import CalibrationDataReader, QuantType, SmoothQuantConfig, get_default_sq_config
+from neural_compressor_ort.quantization import (
+    CalibrationDataReader,
+    QuantType,
+    SmoothQuantConfig,
+    get_default_sq_config,
+)
 from neural_compressor_ort.quantization.quantize import _quantize
 
 logger = Logger().get_logger()
@@ -131,15 +136,15 @@ class TestONNXRT3xSmoothQuant(unittest.TestCase):
             self.data_reader,
             weight_type=QuantType.QUInt8,
             activation_type=QuantType.QUInt8,
-            extra_options={"SmoothQuant": True,
-                           "SmoothQuantAlpha": 0.7,
-                           "SmoothQuantCalibIter": 1})
+            extra_options={"SmoothQuant": True, "SmoothQuantAlpha": 0.7, "SmoothQuantCalibIter": 1},
+        )
         quantize(self.gptj, self.quant_gptj, config)
         model = onnx.load(self.quant_gptj)
         num_muls = len([i for i in model.graph.node if i.name.endswith("_smooth_mul") and i.op_type == "Mul"])
         self.assertTrue(2 in [i.data_type for i in model.graph.initializer])
         self.assertTrue(3 not in [i.data_type for i in model.graph.initializer])
         self.assertEqual(num_muls, 30)
+
 
 if __name__ == "__main__":
     unittest.main()
