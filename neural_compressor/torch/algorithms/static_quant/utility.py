@@ -63,68 +63,12 @@ BLOCK_PATTERNS = [
 ]
 
 
-def cfg_to_qconfig(
-    tune_cfg, cfgs, default_cfgs, fuse_ops, op_infos_from_cfgs, output_tensor_id_op_name
-):  # pragma: no cover
+def cfg_to_qconfig(tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_id_op_name):  # pragma: no cover
     assert cfgs is not None, "No configure for IPEX int8 model..."
-    if ipex_ver.release < Version("1.12.0").release:  # pragma: no cover
-        for key in tune_cfg["op"]:
-            try:
-                scheme = tune_cfg["op"][key]["activation"]["scheme"]
-            except:
-                scheme = "asym"
-            if scheme not in ["asym", "sym"]:
-                scheme = "asym"
-            break
-        for key in tune_cfg["op"]:
-            value = tune_cfg["op"][key]
-            pattern = get_pattern(key, fuse_ops)
-            assert isinstance(value, dict)
-            assert "activation" in value
-            if value["activation"]["dtype"] == "fp32":
-                if "weight" in value:
-                    assert value["weight"]["dtype"] == "fp32"
-                for op_cfg in cfgs:
-                    if op_cfg["id"] == key[0]:
-                        if key[1] in ["relu_", "add_"]:
-                            continue
-                        num_inputs = len(op_cfg["inputs_quantized"])
-                        num_outputs = len(op_cfg["outputs_quantized"])
-                        for i_num in range(num_inputs):
-                            op_cfg["inputs_quantized"][i_num] = False
-                        for o_num in range(num_outputs):
-                            op_cfg["outputs_quantized"][o_num] = False
-                        if pattern:
-                            if pattern[1] in ["relu_", "add_"]:
-                                continue
-                            tune_cfg["op"][pattern]["activation"]["dtype"] = "fp32"
-                            if "weight" in tune_cfg["op"][pattern]:
-                                tune_cfg["op"][pattern]["weight"]["dtype"] = "fp32"
-            else:
-                for op_cfg in cfgs:
-                    if op_cfg["id"] == key[0]:
-                        if key[1] in ["relu_", "add_"]:
-                            continue
-                        num_inputs = len(op_cfg["inputs_quantized"])
-                        num_outputs = len(op_cfg["outputs_quantized"])
-                        for i_num in range(num_inputs):
-                            op_cfg["inputs_quantized"][i_num] = default_cfgs[key[0]]["inputs_quantized"][i_num]
-                        for o_num in range(num_outputs):
-                            op_cfg["outputs_quantized"][o_num] = default_cfgs[key[0]]["outputs_quantized"][o_num]
-        with open(ipex_config_path, "w") as write_f:
-            json.dump(cfgs, write_f)
-        if scheme == "asym":
-            return torch.per_tensor_affine
-        else:
-            return torch.per_tensor_symmetric
-
-    else:
-        op_infos = copy.deepcopy(op_infos_from_cfgs)
-        cfgs = check_cfg_and_qconfig(tune_cfg["op"], cfgs, op_infos, output_tensor_id_op_name)
-
-        with open(ipex_config_path, "w") as write_f:
-            json.dump(cfgs, write_f, indent=4)
-        return None
+    op_infos = copy.deepcopy(op_infos_from_cfgs)
+    cfgs = check_cfg_and_qconfig(tune_cfg["op"], cfgs, op_infos, output_tensor_id_op_name)
+    with open(ipex_config_path, "w") as write_f:
+        json.dump(cfgs, write_f, indent=4)
 
 
 def check_cfg_and_qconfig(user_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_op_name):  # pragma: no cover
@@ -315,71 +259,49 @@ def get_quantizable_ops_recursively(model, example_inputs):  # pragma: no cover
     map_op_name_to_fqn = {}
     with open(ipex_config_path, "r") as f:
         cfgs = json.load(f)
-        default_cfgs = {}
-        fuse_ops = []
-        op_infos_from_cfgs = {}
-        output_tensor_id_op_name = {}
+        (
+            ops_name,
+            op_infos_from_cfgs,
+            input_tensor_id_op_name,
+            output_tensor_id_op_name,
+        ) = paser_cfgs(cfgs)
+        quantizable_op_names = get_quantizable_ops_from_cfgs(ops_name, op_infos_from_cfgs, input_tensor_id_op_name)
+        for name in quantizable_op_names:
+            # name : list
+            if len(name) == 1:
+                module_key = name[0][0]
+                op_cfg_id = name[0][2]
+                ipex_op_type = cfgs[module_key]["q_op_infos"][op_cfg_id]["op_type"]
+                module_fqn = cfgs[module_key]["q_op_infos"][op_cfg_id].get("fqn", None)
 
-        if ipex_ver.release < Version("1.12.0").release:  # pragma: no cover
-            default_cfgs = copy.deepcopy(cfgs)
-            fuse_ops = get_fuse_ops(cfgs)
-            for op_cfg in cfgs:
-                if op_cfg["name"] in unify_op_type_mapping_ipex:
-                    quantizable_ops.append((op_cfg["id"], unify_op_type_mapping_ipex[op_cfg["name"]]))
+                if ipex_op_type in unify_op_type_mapping_ipex:
+                    quantizable_ops.append((tuple(name), unify_op_type_mapping_ipex[ipex_op_type]))
+                    map_op_name_to_fqn[(tuple(name), ipex_op_type)] = module_fqn
                 else:
                     re_flag = False
                     for pattern, unify_op_type in unify_op_type_mapping_ipex["re"].items():
-                        if re.match(pattern, op_cfg["name"]):
+                        if re.match(pattern, ipex_op_type):
                             re_flag = True
-                            quantizable_ops.append((op_cfg["id"], unify_op_type))
+                            quantizable_ops.append((tuple(name), unify_op_type))
+                            map_op_name_to_fqn[(tuple(name), unify_op_type)] = module_fqn
                             break
                     if not re_flag:
-                        quantizable_ops.append((op_cfg["id"], op_cfg["name"]))
-
-        else:
-            (
-                ops_name,
-                op_infos_from_cfgs,
-                input_tensor_id_op_name,
-                output_tensor_id_op_name,
-            ) = paser_cfgs(cfgs)
-            quantizable_op_names = get_quantizable_ops_from_cfgs(ops_name, op_infos_from_cfgs, input_tensor_id_op_name)
-            for name in quantizable_op_names:
-                # name : list
-                if len(name) == 1:
-                    module_key = name[0][0]
-                    op_cfg_id = name[0][2]
-                    ipex_op_type = cfgs[module_key]["q_op_infos"][op_cfg_id]["op_type"]
-                    module_fqn = cfgs[module_key]["q_op_infos"][op_cfg_id].get("fqn", None)
-
-                    if ipex_op_type in unify_op_type_mapping_ipex:
-                        quantizable_ops.append((tuple(name), unify_op_type_mapping_ipex[ipex_op_type]))
+                        quantizable_ops.append((tuple(name), ipex_op_type))
                         map_op_name_to_fqn[(tuple(name), ipex_op_type)] = module_fqn
-                    else:
-                        re_flag = False
-                        for pattern, unify_op_type in unify_op_type_mapping_ipex["re"].items():
-                            if re.match(pattern, ipex_op_type):
-                                re_flag = True
-                                quantizable_ops.append((tuple(name), unify_op_type))
-                                map_op_name_to_fqn[(tuple(name), unify_op_type)] = module_fqn
-                                break
-                        if not re_flag:
-                            quantizable_ops.append((tuple(name), ipex_op_type))
-                            map_op_name_to_fqn[(tuple(name), ipex_op_type)] = module_fqn
-                else:
-                    op_type = ""
-                    for op_name in name:
-                        module_key = op_name[0]
-                        op_cfg_id = op_name[2]
-                        single_op_type = cfgs[module_key]["q_op_infos"][op_cfg_id]["op_type"]
-                        if single_op_type in unify_op_type_mapping_ipex:
-                            single_op_type = unify_op_type_mapping_ipex[single_op_type]
-                        op_type += "&" + single_op_type if op_type else single_op_type
-                    quantizable_ops.append((tuple(name), op_type))
-                    _module_key = name[0][0]
-                    _op_cfg_id = name[0][2]
-                    module_fqn = cfgs[_module_key]["q_op_infos"][_op_cfg_id]["fqn"]
-                    map_op_name_to_fqn[(tuple(name), op_type)] = module_fqn
+            else:
+                op_type = ""
+                for op_name in name:
+                    module_key = op_name[0]
+                    op_cfg_id = op_name[2]
+                    single_op_type = cfgs[module_key]["q_op_infos"][op_cfg_id]["op_type"]
+                    if single_op_type in unify_op_type_mapping_ipex:
+                        single_op_type = unify_op_type_mapping_ipex[single_op_type]
+                    op_type += "&" + single_op_type if op_type else single_op_type
+                quantizable_ops.append((tuple(name), op_type))
+                _module_key = name[0][0]
+                _op_cfg_id = name[0][2]
+                module_fqn = cfgs[_module_key]["q_op_infos"][_op_cfg_id]["fqn"]
+                map_op_name_to_fqn[(tuple(name), op_type)] = module_fqn
 
     logger.debug("Map op name to fqn: ")
     logger.debug(map_op_name_to_fqn)
@@ -387,7 +309,7 @@ def get_quantizable_ops_recursively(model, example_inputs):  # pragma: no cover
     logger.info(attention_block)
     logger.info("FFN Blocks : ")
     logger.info(ffn_blocks)
-    return quantizable_ops, cfgs, default_cfgs, fuse_ops, op_infos_from_cfgs, output_tensor_id_op_name
+    return quantizable_ops, cfgs, op_infos_from_cfgs, output_tensor_id_op_name
 
 
 def simple_inference(q_model, example_inputs, iterations=1):
@@ -452,42 +374,6 @@ def dump_model_op_stats(tune_cfg):
     Statistics(
         output_data, header="Mixed Precision Statistics", field_names=["Op Type", "Total", "INT8", "BF16", "FP32"]
     ).print_stat()
-
-
-def get_fuse_ops(default_cfgs):  # pragma: no cover
-    elt_wise = ["relu", "sigmoid", "gelu"]
-    inplace_ops = ["relu_", "add_"]
-    op_patterns = []
-    num_ops = len(default_cfgs)
-    for cur_id in range(num_ops):
-        cur_op = default_cfgs[cur_id]["name"]
-        if cur_op == "dropout":
-            continue
-        inputs = default_cfgs[cur_id]["inputs_flow"]
-        num_input = len(inputs)
-        pre_ops = {}
-        for i_num in range(num_input):
-            inp = inputs[i_num]
-            for pre_id in range(cur_id):
-                pre_op = default_cfgs[pre_id]["name"]
-                pre_out = default_cfgs[pre_id]["outputs_flow"]
-                num_out = len(pre_out)
-                for o_num in range(num_out):
-                    if pre_out[o_num] == inp:
-                        if cur_op in inplace_ops and (pre_op in ["conv2d", "conv3d", "linear"]):
-                            op_patterns.append([(pre_id, pre_op), (cur_id, cur_op)])
-                        if cur_op in elt_wise and (pre_op in ["conv2d", "conv3d", "linear", "add"]):
-                            op_patterns.append([(pre_id, pre_op), (cur_id, cur_op)])
-                        if cur_op == "add":
-                            pre_ops[i_num] = [pre_id, pre_op]
-        if len(pre_ops) > 0:
-            for key, value in pre_ops.items():
-                if (
-                    value[1] in ["conv2d", "conv3d", "linear"]
-                    and default_cfgs[cur_id]["inputs_quantized"][key] is False
-                ):
-                    op_patterns.append([(value[0], value[1]), (cur_id, cur_op)])
-    return op_patterns
 
 
 def get_depth(d) -> int:
@@ -634,16 +520,6 @@ def get_quantizable_ops_from_cfgs(ops_name, op_infos_from_cfgs, input_tensor_ids
             for q_op in q_ops:
                 quantizable_ops.append(q_op)
     return quantizable_ops
-
-
-def get_pattern(fallback_op, fuse_ops):  # pragma: no cover
-    for fuse_pattern in fuse_ops:
-        if fuse_pattern[0] == fallback_op:
-            if fuse_pattern[1] in ["relu_", "add_"]:
-                return None
-            else:
-                return fuse_pattern[1]
-    return None
 
 
 class Statistics:  # pragma: no cover

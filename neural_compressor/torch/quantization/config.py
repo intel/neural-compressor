@@ -818,7 +818,7 @@ class StaticQuantConfig(BaseConfig):
     def get_model_info(model: torch.nn.Module, example_inputs) -> List[Tuple[str, Callable]]:
         from neural_compressor.torch.algorithms.static_quant import get_quantizable_ops_recursively
 
-        model_info, _, _, _, _, _ = get_quantizable_ops_recursively(model, example_inputs=example_inputs)
+        model_info, _, _, _ = get_quantizable_ops_recursively(model, example_inputs=example_inputs)
         return model_info
 
     @classmethod
