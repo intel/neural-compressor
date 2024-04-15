@@ -46,18 +46,6 @@ repos:
               examples/.+
           )$
 
-  - repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.5.5
-    hooks:
-      - id: insert-license
-        args:
-          [
-            --license-filepath=.github/license_template.txt,
-            --use-current-year,
-            --detect-license-in-X-top-lines=40,
-            --skip-license-insertion-comment=Copyright,
-          ]
-
   - repo: https://github.com/asottile/yesqa
     rev: v1.5.0
     hooks:
