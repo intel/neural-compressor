@@ -50,7 +50,7 @@ def smooth_quant_entry(
     assert calibration_data_reader is not None, "Please provide calibration_data_reader"
     assert isinstance(
         calibration_data_reader, CalibrationDataReader
-    ), "Please follow neural_compressor_ort/onnxrt/quantization/calibrate.py to implement calibration_data_reader"
+    ), "Please follow neural_compressor_ort/quantization/calibrate.py to implement calibration_data_reader"
 
     # smooth operation
     calibration_data_reader.rewind()
@@ -113,7 +113,7 @@ def gptq_quantize_entry(
     assert calibration_data_reader is not None, "Please provide calibration_data_reader"
     assert isinstance(
         calibration_data_reader, CalibrationDataReader
-    ), "Please follow neural_compressor_ort/onnxrt/quantization/calibrate.py to implement calibration_data_reader"
+    ), "Please follow neural_compressor_ort/quantization/calibrate.py to implement calibration_data_reader"
 
     from neural_compressor_ort.algorithms import apply_gptq_on_model
 
@@ -137,7 +137,7 @@ def awq_quantize_entry(
     assert calibration_data_reader is not None, "Please provide calibration_data_reader"
     assert isinstance(
         calibration_data_reader, CalibrationDataReader
-    ), "Please follow neural_compressor_ort/onnxrt/quantization/calibrate.py to implement calibration_data_reader"
+    ), "Please follow neural_compressor_ort/quantization/calibrate.py to implement calibration_data_reader"
 
     from neural_compressor_ort.algorithms import apply_awq_on_model
 
