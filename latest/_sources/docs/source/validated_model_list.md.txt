@@ -5,19 +5,17 @@ Intel® Neural Compressor validated examples with multiple compression technique
 
 1. [Validated Quantization Examples](#Validated-Quantization-Examples)
 
-    1.1. [TensorFlow Models with Intel TensorFlow 2.13.0](#tensorflow-models-with-Intel-tensorflow-2130)
+    1.1. [TensorFlow Models with TensorFlow 2.15.0](#tensorflow-models-with-tensorflow-2150)
 
-    1.2. [PyTorch Models with Torch 2.0.1+cpu in PTQ Mode](#pytorch-models-with-torch-201cpu-in-ptq-mode)
+    1.2. [PyTorch Models with Torch 2.2.1+cpu in PTQ Mode](#pytorch-models-with-torch-221cpu-in-ptq-mode)
 
-    1.3. [PyTorch Models with Torch 2.0.1+cpu in QAT Mode](#pytorch-models-with-torch-201cpu-in-qat-mode)
+    1.3. [PyTorch Models with Torch 2.2.1+cpu in QAT Mode](#pytorch-models-with-torch-221cpu-in-qat-mode)
 
-    1.4. [PyTorch Models with Intel® Extension for PyTorch* 2.0.1+cpu](#pytorch-models-with-intel-extension-for-pytorch-201cpu)
+    1.4. [PyTorch Models with Torch 2.0.1+cpu in WOQ Mode](#pytorch-models-with-torch-201cpu-in-woq-mode)
 
-    1.5. [PyTorch Models with Torch 2.0.1+cpu in WOQ Mode](#pytorch-models-with-torch-201cpu-in-woq-mode)
+    1.5. [ONNX Models with ONNX Runtime 1.17.1](#onnx-models-with-onnx-runtime-1171)
 
-    1.6. [ONNX Models with ONNX Runtime 1.15.1](#onnx-models-with-onnx-runtime-1151)
-
-    1.7. [ONNX Models with ONNX Runtime 1.15.0 in WOQ Mode](#onnx-models-with-onnx-runtime-1150-in-woq-mode)
+    1.6. [ONNX Models with ONNX Runtime 1.15.0 in WOQ Mode](#onnx-models-with-onnx-runtime-1150-in-woq-mode)
 
 2. [Validated Pruning Examples](#Validated-Pruning-Examples)
 
@@ -27,15 +25,14 @@ Intel® Neural Compressor validated examples with multiple compression technique
 
 ## Validated Quantization Examples
 
-System summary: Test by Intel on 09/01/2023. 1-node, 1x Intel(R) Xeon(R) Platinum 8480+ @3.8GHz, 56 cores/socket, HT On, Turbo On, Total Memory 256GB (16x16GB DDR5 4800 MT/s [4800 MT/s]), BIOS 3A14.TEL2P1, microcode 0x2b0001b0,   
+System summary: Test by Intel on 3/18/2024. 1-node, 1x Intel(R) Xeon(R) Platinum 8480+ @3.8GHz, 56 cores/socket, HT On, Turbo On, Total Memory 256GB (16x16GB DDR5 4800 MT/s [4800 MT/s]), BIOS 3A14.TEL2P1, microcode 0x2b0001b0,   
 CentOS Stream 8, gcc (GCC) 8.5.0 20210514 (Red Hat 8.5.0-10), DL Models, Frameworks: TensorFlow/ONNXRT/PyTorch, Datatype: FP32/INT8/BF16.  
-Using 1 socket, 4 cores/instance, 14 instances and batch size 1 to benchmark most of the model.  
-Using 1 socket, 56 cores/instance, 1 instance and batch size 1 for some large models performance measurement.   
+Using 1 socket, 4 cores/instance, 14 instances and batch size 1 to benchmark most of the model.
 
 Performance varies by use, configuration and other factors.  
 For more complete information about performance and benchmark results, visit www.intel.com/benchmarks
 
-### TensorFlow Models with Intel TensorFlow 2.13.0
+### TensorFlow Models with TensorFlow 2.15.0
 
 <table>
 <thead>
@@ -58,408 +55,277 @@ For more complete information about performance and benchmark results, visit www
   <tr>
     <td>ResNet50 v1.0</td>
     <td>pb</td>
-    <td>74.12%</td>
+    <td>74.11%</td>
     <td>74.27%</td>
-    <td>-0.21%</td>
-    <td>2914.42</td>
-    <td>621.91</td>
-    <td>4.69x</td>
+    <td>-0.22%</td>
+    <td>1720.00</td>
+    <td>582.18</td>
+    <td>2.95x</td>
   </tr>
   <tr>
     <td>ResNet50 v1.5</td>
     <td>pb</td>
-    <td>76.23%</td>
+    <td>76.25%</td>
     <td>76.46%</td>
-    <td>-0.31%</td>
-    <td>2160.07</td>
-    <td>545.47</td>
-    <td>3.96x</td>
+    <td>-0.28%</td>
+    <td>1517.38</td>
+    <td>570.65</td>
+    <td>2.66x</td>
   </tr>
   <tr>
     <td>ResNet101</td>
     <td>pb</td>
-    <td>77.50%</td>
+    <td>77.52%</td>
     <td>76.45%</td>
-    <td>1.37%</td>
-    <td>1508.97</td>
-    <td>428.02</td>
-    <td>3.53x</td>
+    <td>1.41%</td>
+    <td>1058.93</td>
+    <td>382.96</td>
+    <td>2.77x</td>
   </tr>
   <tr>
     <td>Inception V1</td>
     <td>pb</td>
-    <td>70.44%</td>
+    <td>70.45%</td>
     <td>69.74%</td>
-    <td>1.01%</td>
-    <td>3290.75</td>
-    <td>1229.78</td>
-    <td>2.68x</td>
+    <td>1.03%</td>
+    <td>2080.56</td>
+    <td>951.85</td>
+    <td>2.19x</td>
   </tr>
   <tr>
     <td>Inception V2</td>
     <td>pb</td>
-    <td>74.38%</td>
+    <td>74.33%</td>
     <td>73.97%</td>
-    <td>0.57%</td>
-    <td>2404.57</td>
-    <td>1048.49</td>
-    <td>2.29x</td>
+    <td>0.49%</td>
+    <td>1587.53</td>
+    <td>863.37</td>
+    <td>1.84x</td>
   </tr>
   <tr>
     <td>Inception V3</td>
     <td>pb</td>
-    <td>76.71%</td>
+    <td>76.72%</td>
     <td>76.75%</td>
-    <td>-0.05%</td>
-    <td>1669.09</td>
-    <td>500.95</td>
-    <td>3.33x</td>
+    <td>-0.03%</td>
+    <td>1052.91</td>
+    <td>434.27</td>
+    <td>2.42x</td>
   </tr>
   <tr>
     <td>Inception V4</td>
     <td>pb</td>
-    <td>80.18%</td>
+    <td>80.13%</td>
     <td>80.27%</td>
-    <td>-0.11%</td>
-    <td>1073.14</td>
-    <td>245.13</td>
-    <td>4.38x</td>
+    <td>-0.18%</td>
+    <td>707.41</td>
+    <td>234.38</td>
+    <td>3.02x</td>
   </tr>
   <tr>
     <td>Inception ResNet V2</td>
     <td>pb</td>
-    <td>80.34%</td>
+    <td>80.25%</td>
     <td>80.40%</td>
-    <td>-0.07%</td>
-    <td>374.52</td>
-    <td>172.06</td>
-    <td>2.18x</td>
+    <td>-0.18%</td>
+    <td>320.37</td>
+    <td>179.46</td>
+    <td>1.79x</td>
   </tr>
   <tr>
     <td>MobileNet V1</td>
     <td>pb</td>
-    <td>71.78%</td>
+    <td>71.79%</td>
     <td>70.96%</td>
-    <td>1.16%</td>
-    <td>5478.88</td>
-    <td>1756.33</td>
-    <td>3.12x</td>
+    <td>1.18%</td>
+    <td>4312.31</td>
+    <td>1512.59</td>
+    <td>2.85x</td>
   </tr>
   <tr>
     <td>MobileNet V2</td>
     <td>pb</td>
-    <td>72.52%</td>
+    <td>72.48%</td>
     <td>71.76%</td>
-    <td>1.07%</td>
-    <td>4133.01</td>
-    <td>1748.06</td>
-    <td>2.36x</td>
+    <td>1.01%</td>
+    <td>2287.77</td>
+    <td>1406.75</td>
+    <td>1.63x</td>
   </tr>
   <tr>
     <td>VGG16</td>
     <td>pb</td>
-    <td>72.64%</td>
+    <td>72.69%</td>
     <td>70.89%</td>
-    <td>2.47%</td>
-    <td>1534.50</td>
-    <td>236.62</td>
-    <td>6.49x</td>
+    <td>2.55%</td>
+    <td>1367.34</td>
+    <td>207.41</td>
+    <td>6.59x</td>
   </tr>
   <tr>
     <td>VGG19</td>
     <td>pb</td>
-    <td>72.69%</td>
+    <td>72.67%</td>
     <td>71.01%</td>
-    <td>2.37%</td>
-    <td>1377.40</td>
-    <td>197.77</td>
-    <td>6.96x</td>
+    <td>2.33%</td>
+    <td>1244.82</td>
+    <td>176.79</td>
+    <td>7.04x</td>
   </tr>
   <tr>
     <td>ResNetV2 50</td>
     <td>pb</td>
-    <td>70.39%</td>
+    <td>70.37%</td>
     <td>69.64%</td>
-    <td>1.07%</td>
-    <td>1125.32</td>
-    <td>656.38</td>
-    <td>1.71x</td>
+    <td>1.05%</td>
+    <td>780.51</td>
+    <td>582.96</td>
+    <td>1.34x</td>
   </tr>
   <tr>
     <td>ResNetV2 101</td>
     <td>pb</td>
-    <td>72.62%</td>
+    <td>72.64%</td>
     <td>71.87%</td>
-    <td>1.04%</td>
-    <td>709.50</td>
-    <td>367.00</td>
-    <td>1.93x</td>
+    <td>1.08%</td>
+    <td>494.43</td>
+    <td>329.51</td>
+    <td>1.50x</td>
   </tr>
   <tr>
     <td>ResNetV2 152</td>
     <td>pb</td>
-    <td>73.11%</td>
+    <td>73.12%</td>
     <td>72.37%</td>
-    <td>1.03%</td>
-    <td>497.24</td>
-    <td>265.34</td>
-    <td>1.87x</td>
+    <td>1.04%</td>
+    <td>349.42</td>
+    <td>235.48</td>
+    <td>1.48x</td>
   </tr>
   <tr>
-    <td>Densenet 121</td>
+    <td>Densenet&nbsp;&nbsp;&nbsp;161</td>
     <td>pb</td>
-    <td>73.59%</td>
-    <td>72.89%</td>
-    <td>0.97%</td>
-    <td>557.67</td>
-    <td>456.61</td>
-    <td>1.22x</td>
-  </tr>
-  <tr>
-    <td>Densenet 161</td>
-    <td>pb</td>
-    <td>76.35%</td>
     <td>76.29%</td>
-    <td>0.08%</td>
-    <td>353.18</td>
-    <td>235.35</td>
-    <td>1.50x</td>
-  </tr>
-  <tr>
-    <td>Densenet 169</td>
-    <td>pb</td>
-    <td>74.34%</td>
-    <td>74.65%</td>
-    <td>-0.41%</td>
-    <td>435.44</td>
-    <td>385.73</td>
-    <td>1.13x</td>
-  </tr>
-  <tr>
-    <td>EfficientNet B0</td>
-    <td>ckpt</td>
-    <td>76.15%</td>
-    <td>76.76%</td>
-    <td>-0.79%</td>
-    <td>786.55</td>
-    <td>723.69</td>
-    <td>1.09x</td>
+    <td>76.29%</td>
+    <td>0.00%</td>
+    <td>282.31</td>
+    <td>223.19</td>
+    <td>1.26x</td>
   </tr>
   <tr>
     <td>SSD ResNet50 V1</td>
     <td>pb</td>
-    <td>37.88%</td>
+    <td>37.91%</td>
     <td>38.00%</td>
-    <td>-0.31%</td>
-    <td>130.09</td>
-    <td>30.78</td>
-    <td>4.23x</td>
+    <td>-0.24%</td>
+    <td>139.49</td>
+    <td>30.99</td>
+    <td>4.50x</td>
   </tr>
   <tr>
     <td>SSD MobileNet V1</td>
     <td>pb</td>
-    <td>22.98%</td>
+    <td>23.00%</td>
     <td>23.13%</td>
-    <td>-0.64%</td>
-    <td>1291.02</td>
-    <td>683.50</td>
-    <td>1.89x</td>
+    <td>-0.57%</td>
+    <td>1284.41</td>
+    <td>756.56</td>
+    <td>1.70x</td>
   </tr>
   <tr>
     <td>SSD ResNet50 v1</td>
     <td>ckpt</td>
-    <td>37.89%</td>
+    <td>37.88%</td>
     <td>38.00%</td>
-    <td>-0.30%</td>
-    <td>127.30</td>
-    <td>27.63</td>
-    <td>4.61x</td>
+    <td>-0.31%</td>
+    <td>139.56</td>
+    <td>27.79</td>
+    <td>5.02x</td>
   </tr>
   <tr>
     <td>SSD MobileNet v1</td>
     <td>ckpt</td>
     <td>22.96%</td>
     <td>23.13%</td>
-    <td>-0.72%</td>
-    <td>1295.23</td>
-    <td>453.76</td>
-    <td>2.85x</td>
-  </tr>
-  <tr>
-    <td>SSD ResNet34</td>
-    <td>pb</td>
-    <td>21.70%</td>
-    <td>22.09%</td>
-    <td>-1.76%</td>
-    <td>242.91</td>
-    <td>14.03</td>
-    <td>17.31x</td>
-  </tr>
-  <tr>
-    <td>Faster R-CNN Inception ResNet V2</td>
-    <td>pb</td>
-    <td>37.47%</td>
-    <td>38.31%</td>
-    <td>-2.18%</td>
-    <td>5.44</td>
-    <td>3.02</td>
-    <td>1.80x</td>
-  </tr>
-  <tr>
-    <td>Faster R-CNN Inception ResNet V2</td>
-    <td>SavedModel</td>
-    <td>37.79%</td>
-    <td>38.31%</td>
-    <td>-1.34%</td>
-    <td>5.43</td>
-    <td>3.00</td>
-    <td>1.81x</td>
+    <td>-0.71%</td>
+    <td>1280.88</td>
+    <td>530.23</td>
+    <td>2.42x</td>
   </tr>
   <tr>
     <td>Faster R-CNN ResNet101</td>
     <td>pb</td>
     <td>30.32%</td>
     <td>30.39%</td>
-    <td>-0.23%</td>
-    <td>166.37</td>
-    <td>23.54</td>
-    <td>7.07x</td>
-  </tr>
-  <tr>
-    <td>Faster R-CNN ResNet101</td>
-    <td>SavedModel</td>
-    <td>30.33%</td>
-    <td>30.39%</td>
-    <td>-0.20%</td>
-    <td>151.54</td>
-    <td>18.58</td>
-    <td>8.16x</td>
+    <td>-0.22%</td>
+    <td>161.19</td>
+    <td>23.80</td>
+    <td>6.77x</td>
   </tr>
   <tr>
     <td>Faster R-CNN ResNet50</td>
     <td>pb</td>
-    <td>26.64%</td>
+    <td>26.61%</td>
     <td>26.59%</td>
-    <td>0.21%</td>
-    <td>173.33</td>
-    <td>28.58</td>
-    <td>6.07x</td>
+    <td>0.09%</td>
+    <td>178.89</td>
+    <td>29.20</td>
+    <td>6.13x</td>
   </tr>
   <tr>
     <td>YOLOv3</td>
     <td>pb</td>
-    <td>82.13%</td>
+    <td>83.28%</td>
     <td>82.35%</td>
-    <td>-0.28%</td>
-    <td>230.69</td>
-    <td>88.35</td>
-    <td>2.61x</td>
+    <td>1.12%</td>
+    <td>249.35</td>
+    <td>94.44</td>
+    <td>2.64x</td>
   </tr>
   <tr>
     <td>BERT large SQuAD</td>
     <td>pb</td>
-    <td>92.36</td>
+    <td>92.44</td>
     <td>92.99</td>
-    <td>-0.67%</td>
-    <td>59.76</td>
-    <td>17.71</td>
-    <td>3.37x</td>
+    <td>-0.58%</td>
+    <td>46.54</td>
+    <td>20.37</td>
+    <td>2.28x</td>
   </tr>
   <tr>
     <td>BERT large SQuAD (ONNX Model Zoo)</td>
     <td>pb</td>
-    <td>92.26</td>
+    <td>92.36</td>
     <td>92.98</td>
-    <td>-0.78%</td>
-    <td>41.65</td>
-    <td>16.14</td>
-    <td>2.58x</td>
+    <td>-0.67%</td>
+    <td>42.65</td>
+    <td>20.79</td>
+    <td>2.05x</td>
   </tr>
   <tr>
     <td>BERT base MRPC</td>
     <td>ckpt</td>
-    <td>87.01%</td>
+    <td>85.78%</td>
     <td>86.52%</td>
-    <td>0.57%</td>
-    <td>416.57</td>
-    <td>177.06</td>
-    <td>2.35x</td>
+    <td>-0.85%</td>
+    <td>390.36</td>
+    <td>212.96</td>
+    <td>1.83x</td>
   </tr>
   <tr>
-    <td>Transformer LT</td>
+    <td>VIT</td>
     <td>pb</td>
-    <td>25.68</td>
-    <td>25.86</td>
-    <td>-0.67%</td>
-    <td>41.19</td>
-    <td>21.94</td>
-    <td>1.88x</td>
-  </tr>
-  <tr>
-    <td>Transformer lt MLPerf</td>
-    <td>pb</td>
-    <td>27.27</td>
-    <td>27.17</td>
-    <td>0.39%</td>
-    <td>9.77</td>
-    <td>4.51</td>
-    <td>2.17x</td>
-  </tr>
-  <tr>
-    <td>Wide Deep large DS</td>
-    <td>pb</td>
-    <td>77.75%</td>
-    <td>77.67%</td>
-    <td>0.10%</td>
-    <td>75552.26</td>
-    <td>50803.82</td>
-    <td>1.49x</td>
+    <td>81.39%</td>
+    <td>81.92%</td>
+    <td>-0.64%</td>
+    <td>230.91</td>
+    <td>142.24</td>
+    <td>1.62x</td>
   </tr>
 </tbody>
 </table>
 
-<table>
-<thead>
-  <tr>
-    <th rowspan="2">Model</th>
-    <th rowspan="2">Example</th>
-    <th colspan="3">Accuracy</th>
-    <th colspan="3">Performance 1s56c1ins1bs<br>Throughput(samples/sec)</th>
-  </tr>
-  <tr>
-    <th>INT8</th>
-    <th>FP32</th>
-    <th>Accuracy Ratio<br>[(INT8-FP32)/FP32]</th>
-    <th>INT8</th>
-    <th>FP32</th>
-    <th>Performance Ratio<br>[INT8/FP32]</th>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-    <td>Mask R-CNN Inception V2</td>
-    <td>pb</td>
-    <td>28.60%</td>
-    <td>28.73%</td>
-    <td>-0.44%</td>
-    <td>41.96</td>
-    <td>25.66</td>
-    <td>1.64x</td>
-  </tr>
-  <tr>
-    <td>Mask R-CNN Inception V2</td>
-    <td>ckpt</td>
-    <td>28.60%</td>
-    <td>28.73%</td>
-    <td>-0.44%</td>
-    <td>41.56</td>
-    <td>24.35</td>
-    <td>1.71x</td>
-  </tr>
-</tbody>
-</table>
-
-### PyTorch Models with Torch 2.0.1+cpu in PTQ Mode
+### PyTorch Models with Torch 2.2.1+cpu in PTQ Mode
 
 <table>
 <thead>
@@ -482,162 +348,142 @@ For more complete information about performance and benchmark results, visit www
   <tr>
     <td>ResNet18</td>
     <td>static</td>
-    <td>69.61%</td>
+    <td>69.59%</td>
     <td>69.76%</td>
-    <td>-0.22%</td>
-    <td>1673.05</td>
-    <td>653.13</td>
-    <td>2.56x</td>
+    <td>-0.24%</td>
+    <td>1989.72</td>
+    <td>600.45</td>
+    <td>3.31x</td>
   </tr>
   <tr>
     <td>ResNet50</td>
     <td>static</td>
-    <td>75.92%</td>
+    <td>75.98%</td>
     <td>76.15%</td>
-    <td>-0.30%</td>
-    <td>1170.62</td>
-    <td>329.70</td>
-    <td>3.55x</td>
+    <td>-0.21%</td>
+    <td>1165.92</td>
+    <td>303.91</td>
+    <td>3.84x</td>
   </tr>
   <tr>
     <td>Inception V3</td>
     <td>static</td>
-    <td>69.47%</td>
+    <td>69.46%</td>
     <td>69.52%</td>
-    <td>-0.07%</td>
-    <td>977.08</td>
-    <td>335.55</td>
-    <td>2.91x</td>
+    <td>-0.09%</td>
+    <td>953.35</td>
+    <td>302.52</td>
+    <td>3.15x</td>
   </tr>
   <tr>
     <td>ResNeSt50</td>
     <td>static</td>
-    <td>80.80%</td>
+    <td>80.76%</td>
     <td>81.04%</td>
-    <td>-0.30%</td>
-    <td>404.51</td>
-    <td>40.04</td>
-    <td>10.10x</td>
+    <td>-0.35%</td>
+    <td>365.44</td>
+    <td>39.66</td>
+    <td>9.21x</td>
   </tr>
   <tr>
     <td>ResNeXt101_32x8d</td>
     <td>static</td>
-    <td>78.94%</td>
+    <td>78.92%</td>
     <td>79.31%</td>
-    <td>-0.46%</td>
-    <td>562.16</td>
-    <td>109.77</td>
-    <td>5.12x</td>
+    <td>-0.49%</td>
+    <td>548.78</td>
+    <td>104.14</td>
+    <td>5.27x</td>
   </tr>
   <tr>
     <td>Efficientnet_b0</td>
     <td>static</td>
-    <td>76.89%</td>
+    <td>76.94%</td>
     <td>77.67%</td>
-    <td>-1.01%</td>
-    <td>696.79</td>
-    <td>667.27</td>
-    <td>1.04x</td>
+    <td>-0.94%</td>
+    <td>636.62</td>
+    <td>566.42</td>
+    <td>1.12x</td>
   </tr>
   <tr>
     <td>Efficientnet_b3</td>
     <td>static</td>
-    <td>77.82%</td>
+    <td>77.78%</td>
     <td>78.54%</td>
-    <td>-0.93%</td>
-    <td>508.85</td>
-    <td>397.32</td>
-    <td>1.28x</td>
-  </tr>
-  <tr>
-    <td>Efficientnet_b7</td>
-    <td>static</td>
-    <td>73.55%</td>
-    <td>73.92%</td>
-    <td>-0.50%</td>
-    <td>234.87</td>
-    <td>149.65</td>
-    <td>1.57x</td>
+    <td>-0.98%</td>
+    <td>471.61</td>
+    <td>358.59</td>
+    <td>1.32x</td>
   </tr>
   <tr>
     <td>Peleenet</td>
     <td>static</td>
-    <td>71.85%</td>
+    <td>71.83%</td>
     <td>72.10%</td>
-    <td>-0.35%</td>
-    <td>858.18</td>
-    <td>588.33</td>
-    <td>1.46x</td>
-  </tr>
-  <tr>
-    <td>SE_ResNeXt50_32x4d</td>
-    <td>static</td>
-    <td>79.03%</td>
-    <td>79.08%</td>
-    <td>-0.07%</td>
-    <td>739.61</td>
-    <td>283.60</td>
-    <td>2.61x</td>
+    <td>-0.37%</td>
+    <td>790.03</td>
+    <td>504.44</td>
+    <td>1.57x</td>
   </tr>
   <tr>
     <td>YOLO V3</td>
     <td>static</td>
-    <td>55.09%</td>
+    <td>55.10%</td>
     <td>54.93%</td>
     <td>0.31%</td>
-    <td>161.92</td>
-    <td>60.48</td>
-    <td>2.68x</td>
+    <td>162.98</td>
+    <td>57.37</td>
+    <td>2.84x</td>
   </tr>
   <tr>
     <td>SSD ResNet34</td>
     <td>static</td>
-    <td>19.52</td>
+    <td>19.48</td>
     <td>19.63</td>
-    <td>-0.58%</td>
-    <td>141.26</td>
-    <td>11.78</td>
-    <td>11.99x</td>
+    <td>-0.77%</td>
+    <td>137.89</td>
+    <td>11.61</td>
+    <td>11.88x</td>
   </tr>
   <tr>
     <td>Roberta base MRPC</td>
     <td>static</td>
-    <td>92.69%</td>
+    <td>92.97%</td>
     <td>93.59%</td>
-    <td>-0.96%</td>
-    <td>404.62</td>
-    <td>174.02</td>
-    <td>2.33x</td>
+    <td>-0.66%</td>
+    <td>390.95</td>
+    <td>175.44</td>
+    <td>2.23x</td>
   </tr>
   <tr>
     <td>CamemBERT base MRPC</td>
     <td>static</td>
-    <td>88.93%</td>
+    <td>88.47%</td>
     <td>89.28%</td>
-    <td>-0.39%</td>
-    <td>395.08</td>
-    <td>171.78</td>
-    <td>2.30x</td>
+    <td>-0.91%</td>
+    <td>393.70</td>
+    <td>174.51</td>
+    <td>2.26x</td>
   </tr>
   <tr>
     <td>DistilBERT base MRPC</td>
     <td>static</td>
-    <td>89.53%</td>
+    <td>90.30%</td>
     <td>90.27%</td>
-    <td>-0.82%</td>
-    <td>795.98</td>
-    <td>341.60</td>
-    <td>2.33x</td>
+    <td>0.04%</td>
+    <td>783.37</td>
+    <td>344.91</td>
+    <td>2.27x</td>
   </tr>
   <tr>
     <td>DistilBERT base MRPC</td>
     <td>dynamic</td>
-    <td>90.20%</td>
+    <td>90.02%</td>
     <td>90.27%</td>
-    <td>-0.07%</td>
-    <td>744.78</td>
-    <td>343.36</td>
-    <td>2.17x</td>
+    <td>-0.28%</td>
+    <td>684.20</td>
+    <td>344.68</td>
+    <td>1.99x</td>
   </tr>
   <tr>
     <td>ALBERT base MRPC</td>
@@ -645,119 +491,119 @@ For more complete information about performance and benchmark results, visit www
     <td>92.63%</td>
     <td>92.63%</td>
     <td>0.00%</td>
-    <td>374.41</td>
-    <td>163.39</td>
-    <td>2.29x</td>
+    <td>312.48</td>
+    <td>155.60</td>
+    <td>2.01x</td>
   </tr>
   <tr>
-    <td>Funnel MRPC</td>
+    <td>Funnel&nbsp;&nbsp;&nbsp;MRPC</td>
     <td>static</td>
-    <td>91.60%</td>
+    <td>91.94%</td>
     <td>92.25%</td>
-    <td>-0.71%</td>
-    <td>300.02</td>
-    <td>182.21</td>
-    <td>1.65x</td>
+    <td>-0.34%</td>
+    <td>281.83</td>
+    <td>179.04</td>
+    <td>1.57x</td>
   </tr>
   <tr>
     <td>Xlm Roberta MRPC</td>
     <td>static</td>
-    <td>88.36%</td>
+    <td>89.46%</td>
     <td>88.62%</td>
-    <td>-0.29%</td>
-    <td>399.27</td>
-    <td>173.62</td>
-    <td>2.30x</td>
+    <td>0.94%</td>
+    <td>395.91</td>
+    <td>173.59</td>
+    <td>2.28x</td>
   </tr>
   <tr>
     <td>Xlm Roberta MRPC</td>
     <td>dynamic</td>
+    <td>88.54%</td>
     <td>88.24%</td>
-    <td>88.24%</td>
-    <td>0.00%</td>
-    <td>385.00</td>
-    <td>174.37</td>
-    <td>2.21x</td>
+    <td>0.35%</td>
+    <td>373.90</td>
+    <td>173.91</td>
+    <td>2.15x</td>
   </tr>
   <tr>
     <td>BERT base MRPC</td>
     <td>static</td>
-    <td>89.63%</td>
+    <td>89.56%</td>
     <td>90.42%</td>
-    <td>-0.87%</td>
-    <td>407.79</td>
-    <td>173.24</td>
-    <td>2.35x</td>
+    <td>-0.95%</td>
+    <td>405.08</td>
+    <td>176.38</td>
+    <td>2.30x</td>
   </tr>
   <tr>
     <td>BERT base COLA</td>
     <td>static</td>
-    <td>54.51%</td>
+    <td>52.86%</td>
     <td>53.39%</td>
-    <td>2.10%</td>
-    <td>412.12</td>
-    <td>172.97</td>
-    <td>2.38x</td>
+    <td>-0.99%</td>
+    <td>395.37</td>
+    <td>177.37</td>
+    <td>2.23x</td>
   </tr>
   <tr>
     <td>BERT base STSB</td>
     <td>static</td>
-    <td>87.55%</td>
+    <td>87.39%</td>
     <td>88.05%</td>
-    <td>-0.57%</td>
-    <td>413.19</td>
-    <td>173.17</td>
-    <td>2.39x</td>
+    <td>-0.74%</td>
+    <td>396.71</td>
+    <td>173.80</td>
+    <td>2.28x</td>
   </tr>
   <tr>
     <td>BERT base SST-2</td>
     <td>static</td>
-    <td>91.51%</td>
+    <td>91.97%</td>
     <td>92.32%</td>
-    <td>-0.87%</td>
-    <td>409.94</td>
-    <td>172.77</td>
-    <td>2.37x</td>
+    <td>-0.37%</td>
+    <td>393.20</td>
+    <td>173.65</td>
+    <td>2.26x</td>
   </tr>
   <tr>
     <td>BERT large COLA</td>
     <td>static</td>
-    <td>62.84%</td>
+    <td>62.80%</td>
     <td>63.35%</td>
-    <td>-0.80%</td>
-    <td>141.90</td>
-    <td>51.55</td>
-    <td>2.75x</td>
+    <td>-0.88%</td>
+    <td>136.55</td>
+    <td>51.82</td>
+    <td>2.64x</td>
   </tr>
   <tr>
     <td>BERT base RTE</td>
     <td>static</td>
+    <td>73.29%</td>
     <td>72.56%</td>
-    <td>72.56%</td>
-    <td>0.00%</td>
-    <td>401.42</td>
-    <td>174.02</td>
-    <td>2.31x</td>
+    <td>1.00%</td>
+    <td>377.79</td>
+    <td>173.84</td>
+    <td>2.17x</td>
   </tr>
   <tr>
     <td>BERT large MRPC</td>
     <td>static</td>
-    <td>90.22%</td>
+    <td>89.36%</td>
     <td>90.38%</td>
-    <td>-0.17%</td>
-    <td>139.59</td>
-    <td>51.66</td>
-    <td>2.70x</td>
+    <td>-1.12%</td>
+    <td>136.72</td>
+    <td>51.87</td>
+    <td>2.64x</td>
   </tr>
   <tr>
     <td>BERT large QNLI</td>
     <td>static</td>
-    <td>90.87%</td>
+    <td>90.79%</td>
     <td>91.54%</td>
-    <td>-0.74%</td>
-    <td>406.48</td>
-    <td>172.94</td>
-    <td>2.35x</td>
+    <td>-0.82%</td>
+    <td>391.67</td>
+    <td>173.82</td>
+    <td>2.25x</td>
   </tr>
   <tr>
     <td>BERT large RTE</td>
@@ -765,115 +611,45 @@ For more complete information about performance and benchmark results, visit www
     <td>73.29%</td>
     <td>74.01%</td>
     <td>-0.98%</td>
-    <td>141.92</td>
-    <td>51.41</td>
-    <td>2.76x</td>
+    <td>135.20</td>
+    <td>51.90</td>
+    <td>2.61x</td>
   </tr>
   <tr>
     <td>BERT large RTE</td>
     <td>dynamic</td>
-    <td>71.48%</td>
+    <td>73.29%</td>
     <td>74.01%</td>
-    <td>-3.41%</td>
-    <td>128.46</td>
-    <td>51.61</td>
-    <td>2.49x</td>
+    <td>-0.98%</td>
+    <td>117.14</td>
+    <td>51.74</td>
+    <td>2.26x</td>
   </tr>
   <tr>
     <td>BERT large SQuAD</td>
     <td>static</td>
-    <td>92.27</td>
+    <td>92.29</td>
     <td>93.16</td>
-    <td>-0.95%</td>
-    <td>37.59</td>
-    <td>16.48</td>
-    <td>2.28x</td>
-  </tr>
-  <tr>
-    <td>Reformer Crime and Punishment</td>
-    <td>static</td>
-    <td>1.88</td>
-    <td>1.87</td>
-    <td>0.23%</td>
-    <td>446.29</td>
-    <td>398.25</td>
-    <td>1.12x</td>
+    <td>-0.93%</td>
+    <td>32.61</td>
+    <td>16.88</td>
+    <td>1.93x</td>
   </tr>
   <tr>
     <td>lvwerra/pegasus-samsum</td>
     <td>static</td>
-    <td>42.50</td>
+    <td>42.32</td>
     <td>42.67</td>
-    <td>-0.39%</td>
-    <td>102.63</td>
-    <td>37.94</td>
-    <td>2.71x</td>
-  </tr>
-  <tr>
-    <td>T5 Small </td>
-    <td>dynamic</td>
-    <td>2.65</td>
-    <td>3.16</td>
-    <td>-16.25%</td>
-    <td>770.18</td>
-    <td>450.79</td>
-    <td>1.71x</td>
+    <td>-0.82%</td>
+    <td>93.80</td>
+    <td>37.59</td>
+    <td>2.50x</td>
   </tr>
 </tbody>
 </table>
 
-<table>
-<thead>
-  <tr>
-    <th rowspan="2">Model</th>
-    <th rowspan="2">Example</th>
-    <th colspan="3">Accuracy</th>
-    <th colspan="3">Performance 1s56c1ins1bs<br>Throughput(samples/sec)</th>
-  </tr>
-  <tr>
-    <th>INT8</th>
-    <th>FP32</th>
-    <th>Accuracy Ratio<br>[(INT8-FP32)/FP32]</th>
-    <th>INT8</th>
-    <th>FP32</th>
-    <th>Performance Ratio<br>[INT8/FP32]</th>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-    <td>EleutherAI/gpt-j-6B</td>
-    <td>static</td>
-    <td>3.36</td>
-    <td>2.34</td>
-    <td>43.85%</td>
-    <td>0.88</td>
-    <td>0.28</td>
-    <td>3.14x</td>
-  </tr>
-  <tr>
-    <td>openai/whisper-large</td>
-    <td>dynamic</td>
-    <td>97.07%</td>
-    <td>96.96%</td>
-    <td>0.12%</td>
-    <td>0.59</td>
-    <td>0.47</td>
-    <td>1.25x</td>
-  </tr>
-  <tr>
-    <td>abeja/gpt-neox-japanese-2.7b</td>
-    <td>static</td>
-    <td>4.30</td>
-    <td>3.52</td>
-    <td>22.06%</td>
-    <td>1.04</td>
-    <td>0.55</td>
-    <td>1.90x</td>
-  </tr>
-</tbody>
-</table>
 
-### PyTorch Models with Torch 2.0.1+cpu in QAT Mode
+### PyTorch Models with Torch 2.2.1+cpu in QAT Mode
 
 <table>
 <thead>
@@ -899,163 +675,39 @@ For more complete information about performance and benchmark results, visit www
     <td>69.74%</td>
     <td>69.76%</td>
     <td>-0.03%</td>
-    <td>1646.74</td>
-    <td>657.43</td>
-    <td>2.50x</td>
+    <td>1981.66</td>
+    <td>598.39</td>
+    <td>3.31x</td>
   </tr>
   <tr>
     <td>ResNet50</td>
     <td>static</td>
-    <td>76.05%</td>
+    <td>76.03%</td>
     <td>76.15%</td>
-    <td>-0.12%</td>
-    <td>1098.80</td>
-    <td>322.34</td>
-    <td>3.41x</td>
+    <td>-0.15%</td>
+    <td>1095.95</td>
+    <td>298.92</td>
+    <td>3.67x</td>
   </tr>
   <tr>
     <td>ResNeXt101_32x8d</td>
     <td>static</td>
-    <td>79.28%</td>
     <td>79.31%</td>
-    <td>-0.04%</td>
-    <td>568.02</td>
-    <td>109.50</td>
-    <td>5.19x</td>
-  </tr>
-  <tr>
-    <td>MobileNet V2</td>
-    <td>static</td>
-    <td>69.73%</td>
-    <td>71.84%</td>
-    <td>-2.93%</td>
-    <td>1383.77</td>
-    <td>761.35</td>
-    <td>1.82x</td>
+    <td>79.31%</td>
+    <td>0.00%</td>
+    <td>549.02</td>
+    <td>103.72</td>
+    <td>5.29x</td>
   </tr>
   <tr>
     <td>BERT base MRPC</td>
     <td>static</td>
-    <td>89.50%</td>
+    <td>89.40%</td>
     <td>90.40%</td>
-    <td>-1.00%</td>
-    <td>401.83</td>
-    <td>173.17</td>
-    <td>2.32x</td>
-  </tr>
-</tbody>
-</table>
-
-### PyTorch Models with Intel® Extension for PyTorch* 2.0.1+cpu
-
-<table>
-<thead>
-  <tr>
-    <th rowspan="2">Model</th>
-    <th rowspan="2">Example</th>
-    <th colspan="3">Accuracy</th>
-    <th colspan="3">Performance 1s4c14ins1bs<br>Throughput(samples/sec)</th>
-  </tr>
-  <tr>
-    <th>INT8</th>
-    <th>FP32</th>
-    <th>Accuracy Ratio<br>[(INT8-FP32)/FP32]</th>
-    <th>INT8</th>
-    <th>FP32</th>
-    <th>Performance Ratio<br>[INT8/FP32]</th>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-    <td>ResNet18</td>
-    <td>static</td>
-    <td>69.56%</td>
-    <td>69.76%</td>
-    <td>-0.29%</td>
-    <td>5701.04</td>
-    <td>1593.88</td>
-    <td>3.58x</td>
-  </tr>
-  <tr>
-    <td>ResNet50</td>
-    <td>static</td>
-    <td>75.98%</td>
-    <td>76.15%</td>
-    <td>-0.22%</td>
-    <td>2090.03</td>
-    <td>685.29</td>
-    <td>3.05x</td>
-  </tr>
-  <tr>
-    <td>ResNeXt101_32x16d_wsl</td>
-    <td>static</td>
-    <td>84.04%</td>
-    <td>84.17%</td>
-    <td>-0.15%</td>
-    <td>556.86</td>
-    <td>79.42</td>
-    <td>7.01x</td>
-  </tr>
-  <tr>
-    <td>SSD ResNet34</td>
-    <td>static</td>
-    <td>19.93%</td>
-    <td>20.00%</td>
-    <td>-0.38%</td>
-    <td>91.53</td>
-    <td>15.62</td>
-    <td>5.86x</td>
-  </tr>
-  <tr>
-    <td>bert-large-uncased-whole-word-masking-finetuned-squad</td>
-    <td>static</td>
-    <td>92.93</td>
-    <td>93.16</td>
-    <td>-0.25%</td>
-    <td>162.94</td>
-    <td>22.37</td>
-    <td>7.29x</td>
-  </tr>
-  <tr>
-    <td>distilbert-base-uncased-distilled-squad</td>
-    <td>static</td>
-    <td>86.09</td>
-    <td>86.84</td>
-    <td>-0.86%</td>
-    <td>558.66</td>
-    <td>151.25</td>
-    <td>3.69x</td>
-  </tr>
-</tbody>
-</table>
-
-<table>
-<thead>
-  <tr>
-    <th rowspan="2">Model</th>
-    <th rowspan="2">Example</th>
-    <th colspan="3">Accuracy</th>
-    <th colspan="3">Performance 1s56c1ins1bs<br>Throughput(samples/sec)</th>
-  </tr>
-  <tr>
-    <th>INT8</th>
-    <th>FP32</th>
-    <th>Accuracy Ratio<br>[(INT8-FP32)/FP32]</th>
-    <th>INT8</th>
-    <th>FP32</th>
-    <th>Performance Ratio<br>[INT8/FP32]</th>
-  </tr>
-</thead>
-<tbody align="center">
-  <tr>
-    <td>EleutherAI/gpt-j-6B</td>
-    <td>static</td>
-    <td>78.70%</td>
-    <td>79.20%</td>
-    <td>-0.63%</td>
-    <td>4.88</td>
-    <td>1.57</td>
-    <td>3.11x</td>
+    <td>-1.11%</td>
+    <td>375.61</td>
+    <td>176.15</td>
+    <td>2.13x</td>
   </tr>
 </tbody>
 </table>
@@ -1751,7 +1403,7 @@ For more complete information about performance and benchmark results, visit www
 </table>
 
 
-### ONNX Models with ONNX Runtime 1.15.1
+### ONNX Models with ONNX Runtime 1.17.1
 
 <table>
 <thead>
@@ -1772,244 +1424,224 @@ For more complete information about performance and benchmark results, visit www
 </thead>
 <tbody>
   <tr>
-    <td>ResNet50 V1.5</td>
+    <td>ResNet50&nbsp;&nbsp;&nbsp;V1.5</td>
     <td>qlinearops</td>
     <td>72.16%</td>
     <td>72.29%</td>
-    <td>-0.19%</td>
-    <td>1566.70</td>
-    <td>724.89</td>
-    <td>2.16x</td>
+    <td>-0.18%</td>
+    <td>1666.73</td>
+    <td>734.16</td>
+    <td>2.27x</td>
   </tr>
   <tr>
     <td>ResNet50 V1.5</td>
     <td>qdq</td>
-    <td>72.14%</td>
+    <td>72.19%</td>
     <td>72.29%</td>
-    <td>-0.22%</td>
-    <td>1567.15</td>
-    <td>716.57</td>
-    <td>2.19x</td>
+    <td>-0.15%</td>
+    <td>1658.10</td>
+    <td>734.33</td>
+    <td>2.26x</td>
   </tr>
   <tr>
     <td>ResNet50 V1.5 MLPerf</td>
     <td>qlinearops</td>
-    <td>76.11%</td>
+    <td>76.15%</td>
     <td>76.46%</td>
-    <td>-0.46%</td>
-    <td>1414.92</td>
-    <td>718.25</td>
-    <td>1.97x</td>
+    <td>-0.41%</td>
+    <td>1495.15</td>
+    <td>733.59</td>
+    <td>2.04x</td>
   </tr>
   <tr>
     <td>ResNet50 V1.5 MLPerf</td>
     <td>qdq</td>
-    <td>76.13%</td>
+    <td>76.12%</td>
     <td>76.46%</td>
     <td>-0.44%</td>
-    <td>1459.45</td>
-    <td>721.54</td>
-    <td>2.02x</td>
+    <td>1661.90</td>
+    <td>732.04</td>
+    <td>2.27x</td>
   </tr>
   <tr>
     <td>ResNet50 V1.5 (ONNX Model Zoo)</td>
     <td>qlinearops</td>
-    <td>74.82%</td>
+    <td>74.77%</td>
     <td>74.99%</td>
-    <td>-0.22%</td>
-    <td>1593.71</td>
-    <td>753.89</td>
-    <td>2.11x</td>
+    <td>-0.29%</td>
+    <td>1713.86</td>
+    <td>767.91</td>
+    <td>2.23x</td>
   </tr>
   <tr>
     <td>ResNet50 V1.5 (ONNX Model Zoo)</td>
     <td>qdq</td>
-    <td>74.82%</td>
+    <td>74.48%</td>
     <td>74.99%</td>
-    <td>-0.23%</td>
-    <td>1582.24</td>
-    <td>752.38</td>
-    <td>2.10x</td>
+    <td>-0.67%</td>
+    <td>1747.21</td>
+    <td>770.14</td>
+    <td>2.27x</td>
   </tr>
   <tr>
     <td>MobileNet V2</td>
     <td>qlinearops</td>
-    <td>65.49%</td>
+    <td>65.55%</td>
     <td>66.89%</td>
-    <td>-2.09%</td>
-    <td>7139.93</td>
-    <td>4289.29</td>
-    <td>1.66x</td>
+    <td>-2.01%</td>
+    <td>7519.95</td>
+    <td>4430.84</td>
+    <td>1.70x</td>
   </tr>
   <tr>
     <td>MobileNet V2</td>
     <td>qdq</td>
-    <td>65.49%</td>
+    <td>65.60%</td>
     <td>66.89%</td>
-    <td>-2.10%</td>
-    <td>7335.80</td>
-    <td>4080.31</td>
-    <td>1.80x</td>
+    <td>-1.93%</td>
+    <td>7572.97</td>
+    <td>4413.58</td>
+    <td>1.72x</td>
   </tr>
   <tr>
     <td>MobileNet V2 (ONNX Model Zoo)</td>
     <td>qlinearops</td>
-    <td>68.38%</td>
+    <td>68.51%</td>
     <td>69.48%</td>
-    <td>-1.59%</td>
-    <td>7236.84</td>
-    <td>4299.29</td>
-    <td>1.68x</td>
-  </tr>
-  <tr>
-    <td>MobileNet V2 (ONNX Model Zoo)</td>
-    <td>qdq</td>
-    <td>68.38%</td>
-    <td>69.48%</td>
-    <td>-1.59%</td>
-    <td>6842.58</td>
-    <td>4496.44</td>
-    <td>1.52x</td>
+    <td>-1.41%</td>
+    <td>7190.26</td>
+    <td>4019.16</td>
+    <td>1.79x</td>
   </tr>
   <tr>
     <td>VGG16</td>
     <td>qlinearops</td>
-    <td>66.56%</td>
+    <td>66.55%</td>
     <td>66.69%</td>
-    <td>-0.19%</td>
-    <td>591.43</td>
-    <td>178.91</td>
-    <td>3.31x</td>
+    <td>-0.20%</td>
+    <td>613.47</td>
+    <td>170.95</td>
+    <td>3.59x</td>
   </tr>
   <tr>
     <td>VGG16</td>
     <td>qdq</td>
-    <td>66.59%</td>
+    <td>66.62%</td>
     <td>66.69%</td>
-    <td>-0.15%</td>
-    <td>614.91</td>
-    <td>183.79</td>
-    <td>3.35x</td>
+    <td>-0.11%</td>
+    <td>611.78</td>
+    <td>186.21</td>
+    <td>3.29x</td>
   </tr>
   <tr>
     <td>VGG16 (ONNX Model Zoo)</td>
     <td>qlinearops</td>
-    <td>72.33%</td>
+    <td>72.37%</td>
     <td>72.40%</td>
-    <td>-0.09%</td>
-    <td>590.04</td>
-    <td>182.90</td>
-    <td>3.23x</td>
+    <td>-0.04%</td>
+    <td>619.00</td>
+    <td>184.35</td>
+    <td>3.36x</td>
   </tr>
   <tr>
     <td>VGG16 (ONNX Model Zoo)</td>
     <td>qdq</td>
-    <td>72.33%</td>
+    <td>72.37%</td>
     <td>72.40%</td>
-    <td>-0.09%</td>
-    <td>614.75</td>
-    <td>179.93</td>
-    <td>3.42x</td>
+    <td>-0.03%</td>
+    <td>623.02</td>
+    <td>172.27</td>
+    <td>3.62x</td>
   </tr>
   <tr>
     <td>MobileNet V3 MLPerf</td>
     <td>qlinearops</td>
-    <td>75.56%</td>
+    <td>75.51%</td>
     <td>75.74%</td>
-    <td>-0.24%</td>
-    <td>5703.81</td>
-    <td>2578.80</td>
+    <td>-0.30%</td>
+    <td>5711.04</td>
+    <td>2584.17</td>
     <td>2.21x</td>
   </tr>
   <tr>
     <td>MobileNet V3 MLPerf</td>
     <td>qdq</td>
-    <td>75.56%</td>
+    <td>75.51%</td>
     <td>75.74%</td>
-    <td>-0.24%</td>
-    <td>5610.37</td>
-    <td>2603.41</td>
-    <td>2.16x</td>
+    <td>-0.30%</td>
+    <td>6136.36</td>
+    <td>2630.21</td>
+    <td>2.33x</td>
   </tr>
   <tr>
     <td>ShuffleNet V2 (ONNX Model Zoo)</td>
     <td>qlinearops</td>
-    <td>66.09%</td>
+    <td>66.13%</td>
     <td>66.36%</td>
-    <td>-0.41%</td>
-    <td>6689.57</td>
-    <td>3690.63</td>
-    <td>1.81x</td>
-  </tr>
-  <tr>
-    <td>ShuffleNet V2 (ONNX Model Zoo)</td>
-    <td>qdq</td>
-    <td>66.09%</td>
-    <td>66.36%</td>
-    <td>-0.41%</td>
-    <td>5692.38</td>
-    <td>3758.23</td>
-    <td>1.51x</td>
+    <td>-0.36%</td>
+    <td>6820.89</td>
+    <td>3686.46</td>
+    <td>1.85x</td>
   </tr>
   <tr>
     <td>GoogleNet (ONNX Model Zoo)</td>
     <td>qlinearops</td>
-    <td>67.71%</td>
+    <td>67.69%</td>
     <td>67.79%</td>
-    <td>-0.12%</td>
-    <td>1792.52</td>
-    <td>1111.26</td>
+    <td>-0.14%</td>
+    <td>1971.18</td>
+    <td>1120.08</td>
+    <td>1.76x</td>
+  </tr>
+  <tr>
+    <td>GoogleNet (ONNX Model Zoo)</td>
+    <td>qdq</td>
+    <td>67.64%</td>
+    <td>67.79%</td>
+    <td>-0.22%</td>
+    <td>1838.28</td>
+    <td>1142.35</td>
     <td>1.61x</td>
   </tr>
   <tr>
-    <td>GoogleNet (ONNX Model Zoo)</td>
-    <td>qdq</td>
-    <td>67.73%</td>
-    <td>67.79%</td>
-    <td>-0.09%</td>
-    <td>1821.10</td>
-    <td>1104.52</td>
-    <td>1.65x</td>
-  </tr>
-  <tr>
     <td>SqueezeNet (ONNX Model Zoo)</td>
     <td>qlinearops</td>
-    <td>56.54%</td>
+    <td>56.49%</td>
     <td>56.87%</td>
-    <td>-0.57%</td>
-    <td>9472.72</td>
-    <td>5582.40</td>
-    <td>1.70x</td>
+    <td>-0.67%</td>
+    <td>10163.13</td>
+    <td>5771.89</td>
+    <td>1.76x</td>
   </tr>
   <tr>
     <td>SqueezeNet (ONNX Model Zoo)</td>
     <td>qdq</td>
-    <td>56.54%</td>
+    <td>56.33%</td>
     <td>56.87%</td>
-    <td>-0.57%</td>
-    <td>9861.50</td>
-    <td>5566.72</td>
-    <td>1.77x</td>
+    <td>-0.94%</td>
+    <td>10339.14</td>
+    <td>6002.84</td>
+    <td>1.72x</td>
   </tr>
   <tr>
     <td>CaffeNet (ONNX Model Zoo)</td>
     <td>qlinearops</td>
-    <td>56.21%</td>
+    <td>56.26%</td>
     <td>56.30%</td>
-    <td>-0.16%</td>
-    <td>3348.37</td>
-    <td>1141.01</td>
-    <td>2.93x</td>
+    <td>-0.07%</td>
+    <td>2805.96</td>
+    <td>1077.80</td>
+    <td>2.60x</td>
   </tr>
   <tr>
     <td>CaffeNet (ONNX Model Zoo)</td>
     <td>qdq</td>
-    <td>56.25%</td>
+    <td>56.18%</td>
     <td>56.30%</td>
-    <td>-0.09%</td>
-    <td>3509.70</td>
-    <td>1142.19</td>
-    <td>3.07x</td>
+    <td>-0.21%</td>
+    <td>4351.65</td>
+    <td>822.71</td>
+    <td>5.29x</td>
   </tr>
   <tr>
     <td>AlexNet (ONNX Model Zoo)</td>
@@ -2017,349 +1649,199 @@ For more complete information about performance and benchmark results, visit www
     <td>54.73%</td>
     <td>54.79%</td>
     <td>-0.10%</td>
-    <td>2426.58</td>
-    <td>987.34</td>
-    <td>2.46x</td>
+    <td>2169.83</td>
+    <td>893.06</td>
+    <td>2.43x</td>
   </tr>
   <tr>
     <td>AlexNet (ONNX Model Zoo)</td>
     <td>qdq</td>
-    <td>54.71%</td>
+    <td>54.74%</td>
     <td>54.79%</td>
-    <td>-0.14%</td>
-    <td>2208.63</td>
-    <td>1016.53</td>
-    <td>2.17x</td>
+    <td>-0.08%</td>
+    <td>2232.07</td>
+    <td>841.46</td>
+    <td>2.65x</td>
   </tr>
   <tr>
     <td>ZFNet (ONNX Model Zoo)</td>
     <td>qlinearops</td>
-    <td>55.84%</td>
+    <td>55.83%</td>
     <td>55.96%</td>
-    <td>-0.21%</td>
-    <td>930.06</td>
-    <td>532.61</td>
+    <td>-0.24%</td>
+    <td>921.09</td>
+    <td>525.21</td>
     <td>1.75x</td>
   </tr>
   <tr>
     <td>ZFNet (ONNX Model Zoo)</td>
     <td>qdq</td>
-    <td>55.86%</td>
+    <td>55.82%</td>
     <td>55.96%</td>
-    <td>-0.18%</td>
-    <td>919.83</td>
-    <td>417.00</td>
-    <td>2.21x</td>
+    <td>-0.24%</td>
+    <td>925.69</td>
+    <td>534.05</td>
+    <td>1.73x</td>
   </tr>
   <tr>
     <td>Inception V1 (ONNX Model Zoo)</td>
     <td>qlinearops</td>
-    <td>67.21%</td>
+    <td>67.23%</td>
     <td>67.24%</td>
-    <td>-0.05%</td>
-    <td>1880.94</td>
-    <td>1159.97</td>
-    <td>1.62x</td>
+    <td>-0.02%</td>
+    <td>1862.37</td>
+    <td>1161.55</td>
+    <td>1.60x</td>
   </tr>
   <tr>
     <td>Inception V1 (ONNX Model Zoo)</td>
     <td>qdq</td>
-    <td>67.21%</td>
+    <td>67.19%</td>
     <td>67.24%</td>
-    <td>-0.05%</td>
-    <td>1798.96</td>
-    <td>1151.37</td>
-    <td>1.56x</td>
+    <td>-0.07%</td>
+    <td>1956.47</td>
+    <td>1262.64</td>
+    <td>1.55x</td>
   </tr>
   <tr>
     <td>EfficientNet (ONNX Model Zoo)</td>
     <td>qlinearops</td>
-    <td>76.98%</td>
+    <td>77.02%</td>
     <td>77.11%</td>
-    <td>-0.17%</td>
-    <td>2890.97</td>
-    <td>1380.23</td>
-    <td>2.09x</td>
+    <td>-0.12%</td>
+    <td>2793.23</td>
+    <td>1383.39</td>
+    <td>2.02x</td>
   </tr>
   <tr>
-    <td>EfficientNet (ONNX Model Zoo)</td>
-    <td>qdq</td>
-    <td>76.99%</td>
-    <td>77.11%</td>
-    <td>-0.16%</td>
-    <td>2548.20</td>
-    <td>1362.69</td>
-    <td>1.87x</td>
-  </tr>
-  <tr>
-    <td>DenseNet (ONNX Model Zoo)</td>
+    <td>BEIT</td>
     <td>qlinearops</td>
-    <td>60.53%</td>
-    <td>60.96%</td>
-    <td>-0.70%</td>
-    <td>657.12</td>
-    <td>507.94</td>
-    <td>1.29x</td>
-  </tr>
-  <tr>
-    <td>SSD (ONNX Model Zoo)</td>
-    <td>qlinearops</td>
-    <td>18.47%</td>
-    <td>18.98%</td>
-    <td>-2.69%</td>
-    <td>57.63</td>
-    <td>14.64</td>
-    <td>3.94x</td>
+    <td>85.07</td>
+    <td>85.28</td>
+    <td>-0.25%</td>
+    <td>206.50</td>
+    <td>128.13</td>
+    <td>1.61x</td>
   </tr>
   <tr>
     <td>SSD (ONNX Model Zoo)</td>
     <td>qdq</td>
     <td>18.62%</td>
     <td>18.98%</td>
-    <td>-1.89%</td>
-    <td>56.96</td>
-    <td>14.58</td>
+    <td>-1.90%</td>
+    <td>56.97</td>
+    <td>14.57</td>
     <td>3.91x</td>
-  </tr>
-  <tr>
-    <td>SSD MobileNet V1</td>
-    <td>qlinearops</td>
-    <td>22.44%</td>
-    <td>23.10%</td>
-    <td>-2.86%</td>
-    <td>1286.79</td>
-    <td>904.83</td>
-    <td>1.42x</td>
-  </tr>
-  <tr>
-    <td>SSD MobileNet V1</td>
-    <td>qdq</td>
-    <td>22.44%</td>
-    <td>23.10%</td>
-    <td>-2.86%</td>
-    <td>1121.02</td>
-    <td>856.82</td>
-    <td>1.31x</td>
-  </tr>
-  <tr>
-    <td>SSD MobileNet V1 (ONNX Model Zoo)</td>
-    <td>qlinearops</td>
-    <td>22.96%</td>
-    <td>23.02%</td>
-    <td>-0.27%</td>
-    <td>1098.80</td>
-    <td>829.55</td>
-    <td>1.32x</td>
-  </tr>
-  <tr>
-    <td>SSD MobileNet V1 (ONNX Model Zoo)</td>
-    <td>qdq</td>
-    <td>22.96%</td>
-    <td>23.02%</td>
-    <td>-0.27%</td>
-    <td>1044.34</td>
-    <td>790.39</td>
-    <td>1.32x</td>
-  </tr>
-  <tr>
-    <td>SSD MobileNet V2</td>
-    <td>qlinearops</td>
-    <td>23.87%</td>
-    <td>24.67%</td>
-    <td>-3.25%</td>
-    <td>849.89</td>
-    <td>627.62</td>
-    <td>1.35x</td>
-  </tr>
-  <tr>
-    <td>YOLOv3 (ONNX Model Zoo)</td>
-    <td>qlinearops</td>
-    <td>27.01%</td>
-    <td>28.73%</td>
-    <td>-5.99%</td>
-    <td>66.22</td>
-    <td>83.98</td>
-    <td>0.79x</td>
-  </tr>
-  <tr>
-    <td>YOLOv4 (ONNX Model Zoo)</td>
-    <td>qlinearops</td>
-    <td>32.30%</td>
-    <td>33.71%</td>
-    <td>-4.19%</td>
-    <td>70.87</td>
-    <td>66.16</td>
-    <td>1.07x</td>
   </tr>
   <tr>
     <td>DUC (ONNX Model Zoo)</td>
     <td>qlinearops</td>
-    <td>81.63%</td>
+    <td>81.62%</td>
     <td>81.92%</td>
-    <td>-0.36%</td>
-    <td>9.15</td>
-    <td>4.90</td>
-    <td>1.87x</td>
-  </tr>
-  <tr>
-    <td>Tiny YOLOv3 (ONNX Model Zoo)</td>
-    <td>qlinearops</td>
-    <td>11.74%</td>
-    <td>12.42%</td>
-    <td>-5.48%</td>
-    <td>1119.16</td>
-    <td>161.90</td>
-    <td>6.91x</td>
+    <td>-0.37%</td>
+    <td>8.76</td>
+    <td>5.03</td>
+    <td>1.74x</td>
   </tr>
   <tr>
     <td>Ultra Face (ONNX Model Zoo)</td>
     <td>qlinearops</td>
-    <td>83.17%</td>
+    <td>83.33%</td>
     <td>83.65%</td>
-    <td>-0.57%</td>
-    <td>8537.50</td>
-    <td>1934.53</td>
-    <td>4.41x</td>
+    <td>-0.38%</td>
+    <td>8780.52</td>
+    <td>1920.30</td>
+    <td>4.57x</td>
   </tr>
   <tr>
     <td>Emotion FERPlus (ONNX Model Zoo)</td>
     <td>qlinearops</td>
-    <td>7.97%</td>
+    <td>7.94%</td>
     <td>8.00%</td>
-    <td>-0.35%</td>
-    <td>3568.69</td>
-    <td>3121.38</td>
-    <td>1.14x</td>
+    <td>-0.70%</td>
+    <td>6360.85</td>
+    <td>3067.12</td>
+    <td>2.07x</td>
   </tr>
   <tr>
     <td>ArcFace (ONNX Model Zoo)</td>
     <td>qlinearops</td>
+    <td>99.82%</td>
     <td>99.80%</td>
-    <td>99.80%</td>
-    <td>0.00%</td>
-    <td>494.07</td>
-    <td>244.21</td>
-    <td>2.02x</td>
+    <td>0.02%</td>
+    <td>449.50</td>
+    <td>235.01</td>
+    <td>1.91x</td>
   </tr>
   <tr>
     <td>BERT base MRPC</td>
     <td>qlinearops</td>
-    <td>85.54%</td>
+    <td>85.78%</td>
     <td>86.03%</td>
-    <td>-0.57%</td>
-    <td>398.76</td>
-    <td>226.09</td>
-    <td>1.76x</td>
+    <td>-0.28%</td>
+    <td>511.36</td>
+    <td>225.15</td>
+    <td>2.27x</td>
   </tr>
   <tr>
     <td>BERT base MRPC</td>
     <td>qdq</td>
-    <td>85.54%</td>
+    <td>85.78%</td>
     <td>86.03%</td>
-    <td>-0.57%</td>
-    <td>392.94</td>
-    <td>223.06</td>
-    <td>1.76x</td>
+    <td>-0.28%</td>
+    <td>484.44</td>
+    <td>222.43</td>
+    <td>2.18x</td>
   </tr>
   <tr>
     <td>BERT base MRPC</td>
+    <td>integerops</td>
+    <td>85.78%</td>
+    <td>86.03%</td>
+    <td>-0.28%</td>
+    <td>728.48</td>
+    <td>222.35</td>
+    <td>3.28x</td>
+  </tr>
+  <tr>
+    <td>DistilBERT base MRPC</td>
+    <td>qdq</td>
+    <td>85.05%</td>
+    <td>84.56%</td>
+    <td>0.58%</td>
+    <td>635.93</td>
+    <td>405.58</td>
+    <td>1.57x</td>
+  </tr>
+  <tr>
+    <td>DistilBERT base MRPC</td>
     <td>integerops</td>
     <td>85.29%</td>
-    <td>86.03%</td>
-    <td>-0.85%</td>
-    <td>473.72</td>
-    <td>223.12</td>
-    <td>2.12x</td>
-  </tr>
-  <tr>
-    <td>DistilBERT base MRPC</td>
-    <td>qdq</td>
-    <td>84.07%</td>
     <td>84.56%</td>
-    <td>-0.58%</td>
-    <td>548.57</td>
-    <td>400.62</td>
-    <td>1.37x</td>
-  </tr>
-  <tr>
-    <td>DistilBERT base MRPC</td>
-    <td>integerops</td>
-    <td>85.54%</td>
-    <td>84.56%</td>
-    <td>1.16%</td>
-    <td>964.62</td>
-    <td>400.86</td>
-    <td>2.41x</td>
-  </tr>
-  <tr>
-    <td>Mobile bert MRPC</td>
-    <td>qdq</td>
-    <td>85.54%</td>
-    <td>86.28%</td>
-    <td>-0.85%</td>
-    <td>540.59</td>
-    <td>394.98</td>
-    <td>1.37x</td>
-  </tr>
-  <tr>
-    <td>Mobile bert MRPC</td>
-    <td>integerops</td>
-    <td>85.54%</td>
-    <td>86.28%</td>
-    <td>-0.85%</td>
-    <td>602.34</td>
-    <td>397.35</td>
-    <td>1.52x</td>
+    <td>0.87%</td>
+    <td>1324.26</td>
+    <td>405.48</td>
+    <td>3.27x</td>
   </tr>
   <tr>
     <td>Roberta base MRPC</td>
-    <td>integerops</td>
-    <td>90.93%</td>
+    <td>qdq</td>
+    <td>88.24%</td>
     <td>89.95%</td>
-    <td>1.09%</td>
-    <td>487.62</td>
-    <td>222.08</td>
-    <td>2.20x</td>
+    <td>-1.91%</td>
+    <td>484.00</td>
+    <td>223.37</td>
+    <td>2.17x</td>
   </tr>
   <tr>
-    <td>BERT SQuAD (ONNX Model Zoo)</td>
+    <td>BERT&nbsp;&nbsp;&nbsp;SQuAD (ONNX Model Zoo)</td>
     <td>integerops</td>
     <td>80.29</td>
     <td>80.67</td>
     <td>-0.47%</td>
-    <td>189.27</td>
-    <td>97.40</td>
-    <td>1.94x</td>
-  </tr>
-  <tr>
-    <td>MobileBERT SQuAD MLPerf (ONNX Model Zoo)</td>
-    <td>integerops</td>
-    <td>89.87</td>
-    <td>90.03</td>
-    <td>-0.17%</td>
-    <td>146.72</td>
-    <td>125.33</td>
-    <td>1.17x</td>
-  </tr>
-  <tr>
-    <td>BiDAF (ONNX Model Zoo)</td>
-    <td>integerops</td>
-    <td>65.93%</td>
-    <td>66.08%</td>
-    <td>-0.23%</td>
-    <td>2757.59</td>
-    <td>2277.14</td>
-    <td>1.21x</td>
-  </tr>
-  <tr>
-    <td>GPT2 lm head WikiText (ONNX Model Zoo)</td>
-    <td>integerops</td>
-    <td>31.98</td>
-    <td>29.00</td>
-    <td>10.31%</td>
-    <td>15.47</td>
-    <td>9.78</td>
-    <td>1.58x</td>
+    <td>244.93</td>
+    <td>99.29</td>
+    <td>2.47x</td>
   </tr>
   <tr>
     <td>BERT base cased MRPC (HuggingFace)</td>
@@ -2367,9 +1849,9 @@ For more complete information about performance and benchmark results, visit www
     <td>90.21%</td>
     <td>90.42%</td>
     <td>-0.23%</td>
-    <td>360.90</td>
-    <td>212.41</td>
-    <td>1.70x</td>
+    <td>440.17</td>
+    <td>214.15</td>
+    <td>2.06x</td>
   </tr>
   <tr>
     <td>BERT base uncased MRPC (HuggingFace)</td>
@@ -2377,9 +1859,9 @@ For more complete information about performance and benchmark results, visit www
     <td>89.58%</td>
     <td>90.42%</td>
     <td>-0.93%</td>
-    <td>484.68</td>
-    <td>212.34</td>
-    <td>2.28x</td>
+    <td>715.22</td>
+    <td>201.24</td>
+    <td>3.55x</td>
   </tr>
   <tr>
     <td>Roberta base MRPC (HuggingFace)</td>
@@ -2387,9 +1869,9 @@ For more complete information about performance and benchmark results, visit www
     <td>91.00%</td>
     <td>91.38%</td>
     <td>-0.41%</td>
-    <td>353.24</td>
-    <td>213.83</td>
-    <td>1.65x</td>
+    <td>434.48</td>
+    <td>214.20</td>
+    <td>2.03x</td>
   </tr>
   <tr>
     <td>Roberta base MRPC (HuggingFace)</td>
@@ -2397,9 +1879,9 @@ For more complete information about performance and benchmark results, visit www
     <td>90.85%</td>
     <td>91.38%</td>
     <td>-0.58%</td>
-    <td>490.42</td>
-    <td>212.57</td>
-    <td>2.31x</td>
+    <td>714.20</td>
+    <td>213.54</td>
+    <td>3.34x</td>
   </tr>
   <tr>
     <td>XLM Roberta base MRPC (HuggingFace)</td>
@@ -2407,9 +1889,9 @@ For more complete information about performance and benchmark results, visit www
     <td>89.37%</td>
     <td>90.10%</td>
     <td>-0.81%</td>
-    <td>304.10</td>
-    <td>214.51</td>
-    <td>1.42x</td>
+    <td>339.02</td>
+    <td>214.41</td>
+    <td>1.58x</td>
   </tr>
   <tr>
     <td>XLM Roberta base MRPC (HuggingFace)</td>
@@ -2417,19 +1899,9 @@ For more complete information about performance and benchmark results, visit www
     <td>89.66%</td>
     <td>90.10%</td>
     <td>-0.50%</td>
-    <td>347.25</td>
-    <td>214.13</td>
-    <td>1.62x</td>
-  </tr>
-  <tr>
-    <td>Camembert base MRPC (HuggingFace)</td>
-    <td>qlinearops</td>
-    <td>89.28%</td>
-    <td>89.28%</td>
-    <td>0.00%</td>
-    <td>272.62</td>
-    <td>216.98</td>
-    <td>1.26x</td>
+    <td>406.04</td>
+    <td>215.12</td>
+    <td>1.89x</td>
   </tr>
   <tr>
     <td>Camembert base MRPC (HuggingFace)</td>
@@ -2437,9 +1909,9 @@ For more complete information about performance and benchmark results, visit www
     <td>89.19%</td>
     <td>89.28%</td>
     <td>-0.10%</td>
-    <td>489.58</td>
-    <td>216.06</td>
-    <td>2.27x</td>
+    <td>712.67</td>
+    <td>217.68</td>
+    <td>3.27x</td>
   </tr>
   <tr>
     <td>MiniLM L12 H384 uncased MRPC (HuggingFace)</td>
@@ -2447,9 +1919,9 @@ For more complete information about performance and benchmark results, visit www
     <td>90.13%</td>
     <td>90.97%</td>
     <td>-0.93%</td>
-    <td>1054.31</td>
-    <td>585.78</td>
-    <td>1.80x</td>
+    <td>1209.98</td>
+    <td>588.93</td>
+    <td>2.05x</td>
   </tr>
   <tr>
     <td>MiniLM L12 H384 uncased MRPC (HuggingFace)</td>
@@ -2457,9 +1929,9 @@ For more complete information about performance and benchmark results, visit www
     <td>91.07%</td>
     <td>90.97%</td>
     <td>0.10%</td>
-    <td>1072.47</td>
-    <td>590.03</td>
-    <td>1.82x</td>
+    <td>1268.43</td>
+    <td>588.05</td>
+    <td>2.16x</td>
   </tr>
   <tr>
     <td>DistilBERT base uncased SST-2 (HuggingFace)</td>
@@ -2467,9 +1939,9 @@ For more complete information about performance and benchmark results, visit www
     <td>90.71%</td>
     <td>91.06%</td>
     <td>-0.38%</td>
-    <td>890.23</td>
-    <td>398.72</td>
-    <td>2.23x</td>
+    <td>1253.85</td>
+    <td>399.52</td>
+    <td>3.14x</td>
   </tr>
   <tr>
     <td>DistilBERT base uncased SST-2 (HuggingFace)</td>
@@ -2477,29 +1949,9 @@ For more complete information about performance and benchmark results, visit www
     <td>90.25%</td>
     <td>91.06%</td>
     <td>-0.88%</td>
-    <td>746.66</td>
-    <td>397.78</td>
-    <td>1.88x</td>
-  </tr>
-  <tr>
-    <td>Albert base v2 SST-2 (HuggingFace)</td>
-    <td>qlinearops</td>
-    <td>92.09%</td>
-    <td>92.32%</td>
-    <td>-0.25%</td>
-    <td>268.37</td>
-    <td>211.96</td>
-    <td>1.27x</td>
-  </tr>
-  <tr>
-    <td>Albert base v2 SST-2 (HuggingFace)</td>
-    <td>integerops</td>
-    <td>91.74%</td>
-    <td>92.32%</td>
-    <td>-0.62%</td>
-    <td>265.65</td>
-    <td>212.21</td>
-    <td>1.25x</td>
+    <td>925.68</td>
+    <td>399.54</td>
+    <td>2.32x</td>
   </tr>
   <tr>
     <td>MiniLM L6 H384 uncased SST-2 (HuggingFace)</td>
@@ -2507,9 +1959,9 @@ For more complete information about performance and benchmark results, visit www
     <td>89.45%</td>
     <td>90.14%</td>
     <td>-0.76%</td>
-    <td>1958.82</td>
-    <td>1130.40</td>
-    <td>1.73x</td>
+    <td>2209.72</td>
+    <td>1139.62</td>
+    <td>1.94x</td>
   </tr>
   <tr>
     <td>MiniLM L6 H384 uncased SST-2 (HuggingFace)</td>
@@ -2517,9 +1969,9 @@ For more complete information about performance and benchmark results, visit www
     <td>89.91%</td>
     <td>90.14%</td>
     <td>-0.26%</td>
-    <td>2022.09</td>
-    <td>1130.14</td>
-    <td>1.79x</td>
+    <td>2365.97</td>
+    <td>1137.32</td>
+    <td>2.08x</td>
   </tr>
   <tr>
     <td>MiniLM L6 H384 uncased SST-2 (HuggingFace)</td>
@@ -2527,9 +1979,9 @@ For more complete information about performance and benchmark results, visit www
     <td>87.70%</td>
     <td>88.29%</td>
     <td>-0.67%</td>
-    <td>397.45</td>
-    <td>212.84</td>
-    <td>1.87x</td>
+    <td>497.73</td>
+    <td>214.32</td>
+    <td>2.32x</td>
   </tr>
   <tr>
     <td>MiniLM L6 H384 uncased SST-2 (HuggingFace)</td>
@@ -2537,9 +1989,9 @@ For more complete information about performance and benchmark results, visit www
     <td>88.19%</td>
     <td>88.29%</td>
     <td>-0.12%</td>
-    <td>489.19</td>
-    <td>213.14</td>
-    <td>2.30x</td>
+    <td>718.26</td>
+    <td>214.32</td>
+    <td>3.35x</td>
   </tr>
   <tr>
     <td>Electra small discriminator MRPC (HuggingFace)</td>
@@ -2547,9 +1999,9 @@ For more complete information about performance and benchmark results, visit www
     <td>89.92%</td>
     <td>89.83%</td>
     <td>0.09%</td>
-    <td>1797.98</td>
-    <td>1077.51</td>
-    <td>1.67x</td>
+    <td>1951.07</td>
+    <td>1142.89</td>
+    <td>1.71x</td>
   </tr>
   <tr>
     <td>Electra small discriminator MRPC (HuggingFace)</td>
@@ -2557,9 +2009,9 @@ For more complete information about performance and benchmark results, visit www
     <td>89.27%</td>
     <td>89.83%</td>
     <td>-0.63%</td>
-    <td>1930.55</td>
-    <td>1139.74</td>
-    <td>1.69x</td>
+    <td>2198.93</td>
+    <td>1129.20</td>
+    <td>1.95x</td>
   </tr>
   <tr>
     <td>BERT mini MRPC (HuggingFace)</td>
@@ -2567,9 +2019,9 @@ For more complete information about performance and benchmark results, visit www
     <td>86.21%</td>
     <td>86.52%</td>
     <td>-0.35%</td>
-    <td>5510.81</td>
-    <td>3334.89</td>
-    <td>1.65x</td>
+    <td>5814.17</td>
+    <td>3388.02</td>
+    <td>1.72x</td>
   </tr>
   <tr>
     <td>BERT mini MRPC (HuggingFace)</td>
@@ -2577,39 +2029,9 @@ For more complete information about performance and benchmark results, visit www
     <td>86.16%</td>
     <td>86.52%</td>
     <td>-0.41%</td>
-    <td>5627.19</td>
-    <td>3365.08</td>
-    <td>1.67x</td>
-  </tr>
-  <tr>
-    <td>Xlnet base cased MRPC (HuggingFace)</td>
-    <td>qlinearops</td>
-    <td>90.05%</td>
-    <td>89.86%</td>
-    <td>0.21%</td>
-    <td>108.83</td>
-    <td>92.24</td>
-    <td>1.18x</td>
-  </tr>
-  <tr>
-    <td>Xlnet base cased MRPC (HuggingFace)</td>
-    <td>integerops</td>
-    <td>89.58%</td>
-    <td>89.86%</td>
-    <td>-0.31%</td>
-    <td>110.83</td>
-    <td>90.80</td>
-    <td>1.22x</td>
-  </tr>
-  <tr>
-    <td>BART large MRPC (HuggingFace)</td>
-    <td>qlinearops</td>
-    <td>91.77%</td>
-    <td>91.20%</td>
-    <td>0.63%</td>
-    <td>59.18</td>
-    <td>51.49</td>
-    <td>1.15x</td>
+    <td>6396.89</td>
+    <td>3445.06</td>
+    <td>1.86x</td>
   </tr>
   <tr>
     <td>BART large MRPC (HuggingFace)</td>
@@ -2617,29 +2039,9 @@ For more complete information about performance and benchmark results, visit www
     <td>92.36%</td>
     <td>91.20%</td>
     <td>1.28%</td>
-    <td>96.38</td>
-    <td>51.47</td>
-    <td>1.87x</td>
-  </tr>
-  <tr>
-    <td>DeBERTa v3 base MRPC (HuggingFace)</td>
-    <td>qlinearops</td>
-    <td>91.85%</td>
-    <td>92.23%</td>
-    <td>-0.40%</td>
-    <td>163.17</td>
-    <td>146.13</td>
-    <td>1.12x</td>
-  </tr>
-  <tr>
-    <td>DeBERTa v3 base MRPC (HuggingFace)</td>
-    <td>integerops</td>
-    <td>92.39%</td>
-    <td>92.23%</td>
-    <td>0.17%</td>
-    <td>168.41</td>
-    <td>145.58</td>
-    <td>1.16x</td>
+    <td>126.31</td>
+    <td>52.28</td>
+    <td>2.42x</td>
   </tr>
   <tr>
     <td>Spanbert SQuAD (HuggingFace)</td>
@@ -2647,9 +2049,9 @@ For more complete information about performance and benchmark results, visit www
     <td>91.14</td>
     <td>91.98</td>
     <td>-0.91%</td>
-    <td>69.53</td>
-    <td>42.72</td>
-    <td>1.63x</td>
+    <td>75.86</td>
+    <td>43.48</td>
+    <td>1.74x</td>
   </tr>
   <tr>
     <td>Spanbert SQuAD (HuggingFace)</td>
@@ -2657,9 +2059,9 @@ For more complete information about performance and benchmark results, visit www
     <td>91.40</td>
     <td>91.98</td>
     <td>-0.63%</td>
-    <td>79.82</td>
-    <td>42.58</td>
-    <td>1.87x</td>
+    <td>92.24</td>
+    <td>43.51</td>
+    <td>2.12x</td>
   </tr>
   <tr>
     <td>Bert base multilingual cased SQuAD (HuggingFace)</td>
@@ -2667,9 +2069,9 @@ For more complete information about performance and benchmark results, visit www
     <td>88.42</td>
     <td>89.13</td>
     <td>-0.79%</td>
-    <td>70.47</td>
-    <td>42.73</td>
-    <td>1.65x</td>
+    <td>79.06</td>
+    <td>43.45</td>
+    <td>1.82x</td>
   </tr>
   <tr>
     <td>Bert base multilingual cased SQuAD (HuggingFace)</td>
@@ -2677,9 +2079,9 @@ For more complete information about performance and benchmark results, visit www
     <td>88.70</td>
     <td>89.13</td>
     <td>-0.48%</td>
-    <td>79.35</td>
-    <td>42.46</td>
-    <td>1.87x</td>
+    <td>93.03</td>
+    <td>43.23</td>
+    <td>2.15x</td>
   </tr>
   <tr>
     <td>DistilBert base uncased SQuAD (HuggingFace)</td>
@@ -2687,9 +2089,9 @@ For more complete information about performance and benchmark results, visit www
     <td>86.33</td>
     <td>86.86</td>
     <td>-0.62%</td>
-    <td>113.00</td>
-    <td>67.85</td>
-    <td>1.67x</td>
+    <td>118.68</td>
+    <td>68.43</td>
+    <td>1.73x</td>
   </tr>
   <tr>
     <td>DistilBert base uncased SQuAD (HuggingFace)</td>
@@ -2697,9 +2099,9 @@ For more complete information about performance and benchmark results, visit www
     <td>86.05</td>
     <td>86.86</td>
     <td>-0.94%</td>
-    <td>159.51</td>
-    <td>67.90</td>
-    <td>2.35x</td>
+    <td>186.33</td>
+    <td>68.41</td>
+    <td>2.72x</td>
   </tr>
   <tr>
     <td>BERT large uncased whole word masking SQuAD (HuggingFace)</td>
@@ -2707,9 +2109,9 @@ For more complete information about performance and benchmark results, visit www
     <td>92.34</td>
     <td>93.16</td>
     <td>-0.88%</td>
-    <td>24.64</td>
-    <td>12.75</td>
-    <td>1.93x</td>
+    <td>28.67</td>
+    <td>13.12</td>
+    <td>2.19x</td>
   </tr>
   <tr>
     <td>BERT large uncased whole word masking SQuAD (HuggingFace)</td>
@@ -2717,19 +2119,9 @@ For more complete information about performance and benchmark results, visit www
     <td>92.99</td>
     <td>93.16</td>
     <td>-0.18%</td>
-    <td>26.79</td>
-    <td>12.76</td>
-    <td>2.10x</td>
-  </tr>
-  <tr>
-    <td>Roberta large SQuAD v2 (HuggingFace)</td>
-    <td>qlinearops</td>
-    <td>89.03</td>
-    <td>89.02</td>
-    <td>0.02%</td>
-    <td>16.91</td>
-    <td>12.98</td>
-    <td>1.30x</td>
+    <td>32.32</td>
+    <td>13.14</td>
+    <td>2.46x</td>
   </tr>
   <tr>
     <td>Roberta large SQuAD v2 (HuggingFace)</td>
@@ -2737,230 +2129,49 @@ For more complete information about performance and benchmark results, visit www
     <td>89.04</td>
     <td>89.02</td>
     <td>0.02%</td>
-    <td>26.80</td>
-    <td>12.95</td>
-    <td>2.07x</td>
-  </tr>
-  <tr>
-    <td>GPT2 WikiText (HuggingFace)</td>
-    <td>qlinearops</td>
-    <td>30.25</td>
-    <td>29.00</td>
-    <td>4.33%</td>
-    <td>12.82</td>
-    <td>9.80</td>
-    <td>1.31x</td>
-  </tr>
-  <tr>
-    <td>GPT2 WikiText (HuggingFace)</td>
-    <td>integerops</td>
-    <td>29.68</td>
-    <td>29.00</td>
-    <td>2.36%</td>
-    <td>13.68</td>
-    <td>9.76</td>
-    <td>1.40x</td>
-  </tr>
-  <tr>
-    <td>DistilGPT2 WikiText (HuggingFace)</td>
-    <td>qlinearops</td>
-    <td>44.93</td>
-    <td>43.43</td>
-    <td>3.46%</td>
-    <td>20.66</td>
-    <td>16.78</td>
-    <td>1.23x</td>
-  </tr>
-  <tr>
-    <td>DistilGPT2 WikiText (HuggingFace)</td>
-    <td>integerops</td>
-    <td>44.62</td>
-    <td>43.43</td>
-    <td>2.74%</td>
-    <td>21.97</td>
-    <td>16.77</td>
-    <td>1.31x</td>
-  </tr>
-  <tr>
-    <td>LayoutLM FUNSD (HuggingFace)</td>
-    <td>qlinearops</td>
-    <td>78.15%</td>
-    <td>78.35%</td>
-    <td>-0.25%</td>
-    <td>59.50</td>
-    <td>42.98</td>
-    <td>1.38x</td>
-  </tr>
-  <tr>
-    <td>LayoutLM FUNSD (HuggingFace)</td>
-    <td>integerops</td>
-    <td>77.58%</td>
-    <td>78.35%</td>
-    <td>-0.98%</td>
-    <td>64.93</td>
-    <td>43.20</td>
-    <td>1.50x</td>
+    <td>32.37</td>
+    <td>13.40</td>
+    <td>2.42x</td>
   </tr>
   <tr>
     <td>LayoutLMv3 FUNSD (HuggingFace)</td>
     <td>qlinearops</td>
-    <td>90.00%</td>
+    <td>89.66%</td>
     <td>90.49%</td>
-    <td>-0.54%</td>
-    <td>30.97</td>
-    <td>27.97</td>
-    <td>1.11x</td>
-  </tr>
-  <tr>
-    <td>LayoutLMv3 FUNSD (HuggingFace)</td>
-    <td>integerops</td>
-    <td>90.07%</td>
-    <td>90.49%</td>
-    <td>-0.46%</td>
-    <td>35.15</td>
-    <td>27.72</td>
-    <td>1.27x</td>
-  </tr>
-  <tr>
-    <td>LayoutLMv2 (HuggingFace)</td>
-    <td>qlinearops</td>
-    <td>81.36%</td>
-    <td>81.17%</td>
-    <td>0.23%</td>
-    <td>48.61</td>
-    <td>38.93</td>
-    <td>1.25x</td>
-  </tr>
-  <tr>
-    <td>LayoutLMv2 (HuggingFace)</td>
-    <td>integerops</td>
-    <td>80.86%</td>
-    <td>81.17%</td>
-    <td>-0.39%</td>
-    <td>45.52</td>
-    <td>36.10</td>
-    <td>1.26x</td>
-  </tr>
-  <tr>
-    <td>CodeBert  (HuggingFace)</td>
-    <td>qlinearops</td>
-    <td>64.97%</td>
-    <td>65.41%</td>
-    <td>-0.67%</td>
-    <td>64.99</td>
-    <td>44.20</td>
-    <td>1.47x</td>
-  </tr>
-  <tr>
-    <td>CodeBert  (HuggingFace)</td>
-    <td>integerops</td>
-    <td>64.93%</td>
-    <td>65.41%</td>
-    <td>-0.73%</td>
-    <td>77.99</td>
-    <td>43.63</td>
-    <td>1.79x</td>
-  </tr>
-</tbody>
-</table>
-
-<table>
-<thead>
-  <tr>
-    <th rowspan="2">Model</th>
-    <th rowspan="2">Example</th>
-    <th colspan="3">Accuracy</th>
-    <th colspan="3">Performance 1s56c1ins1bs<br>Throughput(samples/sec)</th>
-  </tr>
-  <tr>
-    <th>INT8</th>
-    <th>FP32</th>
-    <th>Accuracy Ratio<br>[(INT8-FP32)/FP32]</th>
-    <th>INT8</th>
-    <th>FP32</th>
-    <th>Performance Ratio<br>[INT8/FP32]</th>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-    <td>Faster R-CNN (ONNX Model Zoo)</td>
-    <td>qlinearops</td>
-    <td>34.06%</td>
-    <td>34.37%</td>
-    <td>-0.88%</td>
-    <td>4.15</td>
-    <td>3.47</td>
-    <td>1.20x</td>
-  </tr>
-  <tr>
-    <td>Faster R-CNN (ONNX Model Zoo)</td>
-    <td>qdq</td>
-    <td>33.98%</td>
-    <td>34.37%</td>
-    <td>-1.12%</td>
-    <td>4.19</td>
-    <td>3.49</td>
-    <td>1.20x</td>
-  </tr>
-  <tr>
-    <td>Mask R-CNN (ONNX Model Zoo)</td>
-    <td>qlinearops</td>
-    <td>33.13%</td>
-    <td>33.72%</td>
-    <td>-1.74%</td>
-    <td>3.46</td>
-    <td>3.02</td>
-    <td>1.15x</td>
-  </tr>
-  <tr>
-    <td>Mask R-CNN (ONNX Model Zoo)</td>
-    <td>qdq</td>
-    <td>33.29%</td>
-    <td>33.72%</td>
-    <td>-1.28%</td>
-    <td>3.46</td>
-    <td>3.02</td>
-    <td>1.15x</td>
-  </tr>
-  <tr>
-    <td>FCN (ONNX Model Zoo)</td>
-    <td>qlinearops</td>
-    <td>64.54%</td>
-    <td>64.98%</td>
-    <td>-0.67%</td>
-    <td>28.04</td>
-    <td>12.59</td>
-    <td>2.23x</td>
-  </tr>
-  <tr>
-    <td>FCN (ONNX Model Zoo)</td>
-    <td>qdq</td>
-    <td>64.54%</td>
-    <td>64.98%</td>
-    <td>-0.67%</td>
-    <td>28.22</td>
-    <td>12.67</td>
-    <td>2.23x</td>
-  </tr>
-  <tr>
-    <td>GPT-J-6B (HuggingFace)</td>
-    <td>qlinearops</td>
-    <td>78.46%</td>
-    <td>79.17%</td>
     <td>-0.91%</td>
-    <td>1.74</td>
-    <td>0.66</td>
-    <td>2.62x</td>
+    <td>47.60</td>
+    <td>27.28</td>
+    <td>1.74x</td>
   </tr>
   <tr>
-    <td>GPT-J-6B (HuggingFace)</td>
+    <td>LayoutLMv3 FUNSD (HuggingFace)</td>
     <td>integerops</td>
-    <td>78.93%</td>
-    <td>79.17%</td>
-    <td>-0.31%</td>
-    <td>1.68</td>
-    <td>0.67</td>
-    <td>2.52x</td>
+    <td>89.95%</td>
+    <td>90.49%</td>
+    <td>-0.59%</td>
+    <td>56.26</td>
+    <td>27.43</td>
+    <td>2.05x</td>
+  </tr>
+  <tr>
+    <td>LayoutLMv2 (HuggingFace)</td>
+    <td>qlinearops</td>
+    <td>80.95%</td>
+    <td>81.17%</td>
+    <td>-0.27%</td>
+    <td>64.14</td>
+    <td>38.91</td>
+    <td>1.65x</td>
+  </tr>
+  <tr>
+    <td>LayoutLMv2 (HuggingFace)</td>
+    <td>integerops</td>
+    <td>80.60%</td>
+    <td>81.17%</td>
+    <td>-0.71%</td>
+    <td>67.01</td>
+    <td>38.84</td>
+    <td>1.73x</td>
   </tr>
 </tbody>
 </table>
