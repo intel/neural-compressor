@@ -99,9 +99,6 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.TorchSmoothQuant" title="neural_compressor.torch.algorithms.smooth_quant.utility.TorchSmoothQuant"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TorchSmoothQuant</span></code></a></p></td>
 <td><p>Fake input channel quantization, for more details please refer to</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.CpuInfo" title="neural_compressor.torch.algorithms.smooth_quant.utility.CpuInfo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CpuInfo</span></code></a></p></td>
-<td><p>Get CPU Info.</p></td>
-</tr>
 </tbody>
 </table>
 </section>
@@ -109,14 +106,8 @@
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.generate_activation_observer" title="neural_compressor.torch.algorithms.smooth_quant.utility.generate_activation_observer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_activation_observer</span></code></a>(scheme, algorithm[, ...])</p></td>
-<td><p>This is a helper method to generate an activation observer.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.check_cfg_and_qconfig" title="neural_compressor.torch.algorithms.smooth_quant.utility.check_cfg_and_qconfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_cfg_and_qconfig</span></code></a>(tune_cfg, cfgs, ...[, smooth_quant])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.check_cfg_and_qconfig" title="neural_compressor.torch.algorithms.smooth_quant.utility.check_cfg_and_qconfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_cfg_and_qconfig</span></code></a>(tune_cfg, cfgs, ...[, smooth_quant])</p></td>
 <td><p>Check configs and quantization configs.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.get_quantizable_ops_recursively" title="neural_compressor.torch.algorithms.smooth_quant.utility.get_quantizable_ops_recursively"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_quantizable_ops_recursively</span></code></a>(model, example_inputs)</p></td>
-<td><p>Get all quantizable ops from model.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.get_module" title="neural_compressor.torch.algorithms.smooth_quant.utility.get_module"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_module</span></code></a>(model, key)</p></td>
 <td><p>Get module from model by key name.</p></td>
@@ -142,23 +133,6 @@
 </tbody>
 </table>
 <dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.smooth_quant.utility.generate_activation_observer">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.smooth_quant.utility.</span></span><span class="sig-name descname"><span class="pre">generate_activation_observer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scheme</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth_quant</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth_quant_enable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/smooth_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.smooth_quant.utility.generate_activation_observer" title="Permalink to this definition"></a></dt>
-<dd><p>This is a helper method to generate an activation observer.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>scheme</strong> (<em>str</em>) – Quantization scheme to be used.</p></li>
-<li><p><strong>algorithm</strong> (<em>str</em>) – What algorithm for computing the quantization parameters based on.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>An observer.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.torch.algorithms.smooth_quant.utility.check_cfg_and_qconfig">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.smooth_quant.utility.</span></span><span class="sig-name descname"><span class="pre">check_cfg_and_qconfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tune_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cfgs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_infos_from_cfgs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_ids_op_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth_quant</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/smooth_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.smooth_quant.utility.check_cfg_and_qconfig" title="Permalink to this definition"></a></dt>
 <dd><p>Check configs and quantization configs.</p>
@@ -173,27 +147,6 @@
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>cfgs (dict).</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.smooth_quant.utility.get_quantizable_ops_recursively">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.smooth_quant.utility.</span></span><span class="sig-name descname"><span class="pre">get_quantizable_ops_recursively</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/smooth_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.smooth_quant.utility.get_quantizable_ops_recursively" title="Permalink to this definition"></a></dt>
-<dd><p>Get all quantizable ops from model.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<em>object</em>) – input model</p></li>
-<li><p><strong>example_inputs</strong> (<em>dict</em><em>|</em><em>list</em><em>|</em><em>tuple</em><em>|</em><em>torch.Tensor</em>) – used to trace torch model.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>list of tuples of op_name and op_type.
-cfgs (dict): dict of configuration</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>quantizable_ops (list)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -296,12 +249,6 @@ Currently, we only handle the layers whose smooth scale could be absorbed, we wi
 to recover the weights if needed</p>
 </dd></dl>
 
-<dl class="py class">
-<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.smooth_quant.utility.CpuInfo">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.smooth_quant.utility.</span></span><span class="sig-name descname"><span class="pre">CpuInfo</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/smooth_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.smooth_quant.utility.CpuInfo" title="Permalink to this definition"></a></dt>
-<dd><p>Get CPU Info.</p>
-</dd></dl>
-
 </section>
 </section>
 </section>
@@ -320,7 +267,7 @@ to recover the weights if needed</p>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f53e8fe7640> 
+   <jinja2.runtime.BlockReference object at 0x7f6b3c896a70> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

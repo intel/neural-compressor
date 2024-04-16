@@ -109,6 +109,12 @@
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.static_quant.utility.check_cfg_and_qconfig" title="neural_compressor.torch.algorithms.static_quant.utility.check_cfg_and_qconfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_cfg_and_qconfig</span></code></a>(user_cfg, cfgs, ...)</p></td>
+<td><p>Check configs and quantization configs.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.static_quant.utility.generate_activation_observer" title="neural_compressor.torch.algorithms.static_quant.utility.generate_activation_observer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_activation_observer</span></code></a>(scheme, algorithm[, ...])</p></td>
+<td><p>This is a helper method to generate a dict containing activation observer info.</p></td>
+</tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.static_quant.utility.get_quantizable_ops_recursively" title="neural_compressor.torch.algorithms.static_quant.utility.get_quantizable_ops_recursively"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_quantizable_ops_recursively</span></code></a>(model, example_inputs)</p></td>
 <td><p>Get all quantizable ops from model.</p></td>
 </tr>
@@ -135,6 +141,45 @@
 </tr>
 </tbody>
 </table>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.static_quant.utility.check_cfg_and_qconfig">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.static_quant.utility.</span></span><span class="sig-name descname"><span class="pre">check_cfg_and_qconfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cfgs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_infos_from_cfgs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_ids_op_name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/static_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.static_quant.utility.check_cfg_and_qconfig" title="Permalink to this definition"></a></dt>
+<dd><p>Check configs and quantization configs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>user_cfg</strong> (<em>dict</em>) – quantization configuration for ops.</p></li>
+<li><p><strong>cfgs</strong> (<em>dict</em>) – configs loaded from ipex config path.</p></li>
+<li><p><strong>op_infos_from_cfgs</strong> (<em>dict</em>) – dict containing configs that have been parsed for each op.</p></li>
+<li><p><strong>output_tensor_ids_op_name</strong> (<em>dict</em>) – dict containing op names corresponding to ‘op_infos_from_cfgs’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>updated configs.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>cfgs (dict)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.static_quant.utility.generate_activation_observer">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.static_quant.utility.</span></span><span class="sig-name descname"><span class="pre">generate_activation_observer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scheme</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth_quant</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth_quant_enable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/static_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.static_quant.utility.generate_activation_observer" title="Permalink to this definition"></a></dt>
+<dd><p>This is a helper method to generate a dict containing activation observer info.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scheme</strong> (<em>str</em>) – Quantization scheme to be used.</p></li>
+<li><p><strong>algorithm</strong> (<em>str</em>) – What algorithm for computing the quantization parameters based on.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dict containing observer info.zs</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.torch.algorithms.static_quant.utility.get_quantizable_ops_recursively">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.static_quant.utility.</span></span><span class="sig-name descname"><span class="pre">get_quantizable_ops_recursively</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/static_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.static_quant.utility.get_quantizable_ops_recursively" title="Permalink to this definition"></a></dt>
@@ -262,7 +307,7 @@ output_tensor_ids_op_name (dict): dictionary of output tensor op names.</p>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f53e8cd0d60> 
+   <jinja2.runtime.BlockReference object at 0x7f6b41c013f0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

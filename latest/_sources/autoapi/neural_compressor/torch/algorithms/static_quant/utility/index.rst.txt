@@ -24,6 +24,8 @@ Functions
 
 .. autoapisummary::
 
+   neural_compressor.torch.algorithms.static_quant.utility.check_cfg_and_qconfig
+   neural_compressor.torch.algorithms.static_quant.utility.generate_activation_observer
    neural_compressor.torch.algorithms.static_quant.utility.get_quantizable_ops_recursively
    neural_compressor.torch.algorithms.static_quant.utility.simple_inference
    neural_compressor.torch.algorithms.static_quant.utility.dump_model_op_stats
@@ -33,6 +35,35 @@ Functions
    neural_compressor.torch.algorithms.static_quant.utility.paser_cfgs
    neural_compressor.torch.algorithms.static_quant.utility.get_quantizable_ops_from_cfgs
 
+
+
+.. py:function:: check_cfg_and_qconfig(user_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_op_name)
+
+   Check configs and quantization configs.
+
+   :param user_cfg: quantization configuration for ops.
+   :type user_cfg: dict
+   :param cfgs: configs loaded from ipex config path.
+   :type cfgs: dict
+   :param op_infos_from_cfgs: dict containing configs that have been parsed for each op.
+   :type op_infos_from_cfgs: dict
+   :param output_tensor_ids_op_name: dict containing op names corresponding to 'op_infos_from_cfgs'.
+   :type output_tensor_ids_op_name: dict
+
+   :returns: updated configs.
+   :rtype: cfgs (dict)
+
+
+.. py:function:: generate_activation_observer(scheme, algorithm, smooth_quant=False, smooth_quant_enable=False)
+
+   This is a helper method to generate a dict containing activation observer info.
+
+   :param scheme: Quantization scheme to be used.
+   :type scheme: str
+   :param algorithm: What algorithm for computing the quantization parameters based on.
+   :type algorithm: str
+
+   :returns: A dict containing observer info.zs
 
 
 .. py:function:: get_quantizable_ops_recursively(model, example_inputs)

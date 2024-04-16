@@ -15,7 +15,6 @@ Classes
 .. autoapisummary::
 
    neural_compressor.torch.algorithms.smooth_quant.utility.TorchSmoothQuant
-   neural_compressor.torch.algorithms.smooth_quant.utility.CpuInfo
 
 
 
@@ -24,9 +23,7 @@ Functions
 
 .. autoapisummary::
 
-   neural_compressor.torch.algorithms.smooth_quant.utility.generate_activation_observer
    neural_compressor.torch.algorithms.smooth_quant.utility.check_cfg_and_qconfig
-   neural_compressor.torch.algorithms.smooth_quant.utility.get_quantizable_ops_recursively
    neural_compressor.torch.algorithms.smooth_quant.utility.get_module
    neural_compressor.torch.algorithms.smooth_quant.utility.set_module
    neural_compressor.torch.algorithms.smooth_quant.utility.update_sq_scale
@@ -35,18 +32,6 @@ Functions
    neural_compressor.torch.algorithms.smooth_quant.utility.reshape_scale_as_input
    neural_compressor.torch.algorithms.smooth_quant.utility.register_autotune
 
-
-
-.. py:function:: generate_activation_observer(scheme, algorithm, smooth_quant=False, smooth_quant_enable=False)
-
-   This is a helper method to generate an activation observer.
-
-   :param scheme: Quantization scheme to be used.
-   :type scheme: str
-   :param algorithm: What algorithm for computing the quantization parameters based on.
-   :type algorithm: str
-
-   :returns: An observer.
 
 
 .. py:function:: check_cfg_and_qconfig(tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_op_name, smooth_quant=False)
@@ -63,20 +48,6 @@ Functions
    :type output_tensor_ids_op_name: dict
 
    :returns: cfgs (dict).
-
-
-.. py:function:: get_quantizable_ops_recursively(model, example_inputs)
-
-   Get all quantizable ops from model.
-
-   :param model: input model
-   :type model: object
-   :param example_inputs: used to trace torch model.
-   :type example_inputs: dict|list|tuple|torch.Tensor
-
-   :returns: list of tuples of op_name and op_type.
-             cfgs (dict): dict of configuration
-   :rtype: quantizable_ops (list)
 
 
 .. py:function:: get_module(model, key)
@@ -153,13 +124,5 @@ Functions
 
    We only support inplace mode which means the model weights will be changed, you can call recover function
    to recover the weights if needed
-
-
-.. py:class:: CpuInfo
-
-
-
-
-   Get CPU Info.
 
 
