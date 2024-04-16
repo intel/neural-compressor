@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Note - The `W8A8StaticQuantizer` is aligned with with the torch.ao's unified quantization API.
+# Note - The `W8A8StaticQuantizer` is aligned with with the pytorch-labs/ao's unified quantization API.
 # https://github.com/pytorch-labs/ao/blob/5401df093564825c06691f4c2c10cdcf1a32a40c/torchao/quantization/unified.py#L15-L26
 # Some code snippets are taken from the X86InductorQuantizer tutorial.
 # https://pytorch.org/tutorials/prototype/pt2e_quant_x86_inductor.html
@@ -132,6 +132,7 @@ class TestW8A8StaticQuantizer:
         w8a8_static_quantizer = W8A8StaticQuantizer()
         # export model
         exported_model = w8a8_static_quantizer.export_model(model,  example_inputs=example_inputs)
+        assert exported_model is None
         call_args_list = mock_error.call_args_list
         print([info[0][0] for info in call_args_list])
         assert any(["Failed to export the model" in msg for msg in [info[0][0] for info in call_args_list]])
