@@ -16,6 +16,7 @@ inc_path=$(python -c 'import neural_compressor; print(neural_compressor.__path__
 cd /neural-compressor/test/3x || exit 1
 rm -rf torch
 rm -rf onnxrt
+rm -rf tensorflow/quantization/ptq/newapi
 mv tensorflow/keras ../3x_keras
 mv tensorflow/quantization/itex ./3x_itex
 
