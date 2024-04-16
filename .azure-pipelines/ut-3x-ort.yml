@@ -5,7 +5,7 @@ pr:
   drafts: false
   branches:
     include:
-      - master
+      - ONC
   paths:
     include:
       - neural_compressor_ort/common
