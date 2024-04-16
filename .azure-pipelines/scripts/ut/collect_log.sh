@@ -2,14 +2,14 @@ source /neural-compressor/.azure-pipelines/scripts/change_color.sh
 
 set -e
 pip install coverage
-export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/3x/coverage.${1}
+export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/coverage.ort
 coverage_log="/neural-compressor/log_dir/coverage_log"
 coverage_log_base="/neural-compressor/log_dir/coverage_log_base"
 coverage_compare="/neural-compressor/log_dir/coverage_compare.html"
 cd /neural-compressor/log_dir
 
 $BOLD_YELLOW && echo "collect coverage for PR branch" && $RESET
-cp ut_3x_coverage/.coverage /neural-compressor/
+cp ut_coverage/.coverage /neural-compressor/
 mkdir -p coverage_PR
 cd /neural-compressor
 coverage report -m --rcfile=${COVERAGE_RCFILE} | tee ${coverage_log}
@@ -25,14 +25,14 @@ git config --global --add safe.directory /neural-compressor
 git fetch
 git checkout master
 rm -rf build dist *egg-info
-echo y | pip uninstall neural_compressor_${1}
-cd /neural-compressor/.azure-pipelines-pr/scripts && bash install_nc.sh ${1}
+echo y | pip uninstall neural_compressor_ort
+cd /neural-compressor/.azure-pipelines-pr/scripts && bash install_nc.sh
 
 coverage erase
 cd /neural-compressor/log_dir
 mkdir -p coverage_base
 rm -rf /neural-compressor/.coverage || true
-cp ut_3x_baseline_coverage/.coverage /neural-compressor
+cp ut_baseline_coverage/.coverage /neural-compressor
 
 cd /neural-compressor
 coverage report -m --rcfile=${COVERAGE_RCFILE} | tee ${coverage_log_base}

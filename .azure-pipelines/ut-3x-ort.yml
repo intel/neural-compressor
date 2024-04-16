@@ -8,13 +8,13 @@ pr:
       - master
   paths:
     include:
-      - neural_compressor/common
-      - neural_compressor/onnxrt
-      - test/3x/onnxrt
-      - test/3x/common
+      - neural_compressor_ort/common
+      - neural_compressor_ort/common
+      - test/onnxrt
+      - test/common
       - setup.py
-      - requirements_ort.txt
-      - .azure-pipelines/scripts/ut/3x/run_3x_ort.sh
+      - requirements.txt
+      - .azure-pipelines/scripts/ut
 
 pool: ICX-16C
 
@@ -23,38 +23,38 @@ variables:
   IMAGE_TAG: "py310"
   UPLOAD_PATH: $(Build.SourcesDirectory)/log_dir
   DOWNLOAD_PATH: $(Build.SourcesDirectory)/log_dir
-  ARTIFACT_NAME: "UT_coverage_report_3x_ort"
+  ARTIFACT_NAME: "UT_coverage_report_ort"
   REPO: $(Build.Repository.Uri)
 
 stages:
   - stage: ONNXRT
-    displayName: Unit Test 3x ONNXRT
+    displayName: Unit Test ONNXRT
     dependsOn: []
     jobs:
       - job:
-        displayName: Unit Test 3x ONNXRT
+        displayName: Unit Test ONNXRT
         steps:
           - template: template/ut-template.yml
             parameters:
               dockerConfigName: "commonDockerConfig"
-              utScriptFileName: "3x/run_3x_ort"
+              utScriptFileName: "run_ort"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut_3x"
+              utArtifact: "ut"
 
 
   - stage: ONNXRT_baseline
-    displayName: Unit Test 3x ONNXRT baseline
+    displayName: Unit Test ONNXRT baseline
     dependsOn: []
     jobs:
       - job:
-        displayName: Unit Test 3x ONNXRT baseline
+        displayName: Unit Test ONNXRT baseline
         steps:
           - template: template/ut-template.yml
             parameters:
               dockerConfigName: "gitCloneDockerConfig"
-              utScriptFileName: "3x/run_3x_ort"
+              utScriptFileName: "run_ort"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut_3x_baseline"
+              utArtifact: "ut_baseline"
               repo: $(REPO)
 
   - stage: Coverage
@@ -89,8 +89,8 @@ stages:
               docker ps
               echo "--- collect logs ---"
               docker exec collectLogs /bin/bash  +x -c "cd /neural-compressor/.azure-pipelines/scripts \
-              && bash install_nc.sh 3x_ort \
-              && bash ut/3x/collect_log_3x.sh 3x_ort"
+              && bash install_nc.sh \
+              && bash ut/collect_log.sh"
             displayName: "Collect UT Coverage"
 
           - task: PublishPipelineArtifact@1

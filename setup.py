@@ -43,7 +43,7 @@ except Exception as error:
 if __name__ == "__main__":
 
     setup(
-        name="neural-compressor-ort",
+        name="neural_compressor_ort",
         author="Intel AIPT Team",
         version=get_build_version(),
         author_email="tai.huang@intel.com, mengni.wang@intel.com, yuwen.zhou@intel.com, suyue.chen@intel.com",
