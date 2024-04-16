@@ -331,9 +331,62 @@ if args.quantize:
                 model=user_model, quant_config=quant_config, run_fn=run_fn_for_gptq, run_args=(dataloader_for_calibration, )
             )
     else:
-        # TODO: smooth quant
-        print("Only support WeightOnlyQuant now")
+        if args.sq:
+            from neural_compressor.torch.quantization import SmoothQuantConfig, quantize
+
+            # alpha can be a float number of a list of float number.
+            args.alpha = args.alpha if args.alpha == "auto" else eval(args.alpha)
+            if re.search("falcon", user_model.config.model_type):
+                quant_config = SmoothQuantConfig(alpha=args.alpha, folding=False)
+            else:
+                quant_config = SmoothQuantConfig(alpha=args.alpha, folding=True)
+            
+            if re.search("gpt", user_model.config.model_type):
+                quant_config.set_local("add", SmoothQuantConfig(w_dtype="fp32", act_dtype="fp32"))
+        else:
+            from neural_compressor.torch.quantization import quantize, get_default_static_config, StaticQuantConfig
+
+            quant_config =  get_default_static_config()
+            if re.search("gpt", user_model.config.model_type):
+                quant_config.set_local("add", StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
+
+        from neural_compressor.torch.algorithms.smooth_quant import move_input_to_device
+        from tqdm import tqdm
+        def run_fn(model):
+            for batch in tqdm(calib_dataloader):
+                batch = move_input_to_device(batch, device=None)
+                try:
+                    if isinstance(batch, tuple) or isinstance(batch, list):
+                        model(batch[0])
+                    elif isinstance(batch, dict):
+                        model(**batch)
+                    else:
+                        model(batch)
+                except ValueError:
+                    pass
+            return
+            
+        from utils import get_example_inputs
+        example_inputs = get_example_inputs(user_model, calib_dataloader)
+        user_model = quantize(
+            model=user_model, quant_config=quant_config, example_inputs=example_inputs, run_fn=run_fn
+        )
+        user_model.save(args.output_dir)
+
+if args.int8 or args.int8_bf16_mixed:
+    print("load int8 model")
+
+    from neural_compressor.torch.algorithms.static_quant import load
+
+    if args.ipex:
+        user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)))
+    else:
+        # TODO: WOQ save&load
+        print("Int8 model loading does not support WeightOnlyQuant now.")
         pass
+else:
+    user_model, _ = get_user_model()
+
 
 if args.accuracy:
     user_model.eval()
