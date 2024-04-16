@@ -587,7 +587,7 @@ class PyTorchModel(PyTorchBaseModel):
                         compression_dtype=compression_dtype,
                         compression_dim=compression_dim,
                         scale_dtype=scale_dtype,
-                        device=device,
+                        device="cuda" if torch.cuda.is_available() else device,
                         use_optimum_format=use_optimum_format,
                     )
                     new_module.pack(int_weight, autoround_scale, autoround_zp, m.bias, None)
