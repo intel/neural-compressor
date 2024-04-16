@@ -101,12 +101,6 @@ class TestW8A8StaticQuantizer:
         bar = Bar()
         return bar, example_inputs
 
-
-        # opt_bar = torch.compile(bar, backend=custom_backend)
-
-        # opt_bar(inp1, inp2)
-        # opt_bar(inp1, -inp2)
-    
     def test_quantizer_on_llm(self):
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
