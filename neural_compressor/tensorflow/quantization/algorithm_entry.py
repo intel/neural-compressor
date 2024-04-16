@@ -42,7 +42,7 @@ def static_quant_entry(
     """
     if isinstance(model, KerasModel):
         framework = KerasAdaptor
-    elif TFConfig.global_config == "itex":
+    elif TFConfig.global_config["backend"] == "itex":
         framework = Tensorflow_ITEXAdaptor
     else:
         framework = TensorFlowAdaptor
