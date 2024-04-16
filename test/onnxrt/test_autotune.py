@@ -27,10 +27,16 @@ import onnx
 import onnxruntime as ort
 from optimum.exporters.onnx import main_export
 
-from neural_compressor.common import Logger
-from neural_compressor.common.base_tuning import Evaluator, TuningConfig
-from neural_compressor.onnxrt import AWQConfig, CalibrationDataReader, GPTQConfig, RTNConfig, SmoohQuantConfig
-from neural_compressor.onnxrt.quantization import autotune
+from neural_compressor_ort.common import Logger
+from neural_compressor_ort.common.base_tuning import Evaluator, TuningConfig
+from neural_compressor_ort.quantization import (
+    AWQConfig,
+    CalibrationDataReader,
+    GPTQConfig,
+    RTNConfig,
+    SmoothQuantConfig,
+    autotune,
+)
 
 logger = Logger().get_logger()
 
@@ -90,7 +96,7 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
             session = ort.InferenceSession(model.SerializeToString(), providers=["CPUExecutionProvider"])
             return next(acc_data)
 
-        custom_tune_config = TuningConfig(config_set=[SmoohQuantConfig(alpha=0.5), SmoohQuantConfig(alpha=0.6)])
+        custom_tune_config = TuningConfig(config_set=[SmoothQuantConfig(alpha=0.5), SmoothQuantConfig(alpha=0.6)])
         with self.assertRaises(SystemExit):
             best_model = autotune(
                 model_input=self.gptj,
@@ -129,7 +135,7 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
             result = evaluator.evaluate(model)
             return result
 
-        custom_tune_config = TuningConfig(config_set=[SmoohQuantConfig(alpha=0.5), SmoohQuantConfig(alpha=0.6)])
+        custom_tune_config = TuningConfig(config_set=[SmoothQuantConfig(alpha=0.5), SmoothQuantConfig(alpha=0.6)])
         best_model = autotune(
             model_input=self.gptj,
             tune_config=custom_tune_config,
@@ -138,7 +144,7 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
         )
         self.assertIsNotNone(best_model)
 
-        custom_tune_config = TuningConfig(config_set=[SmoohQuantConfig(alpha=[0.5, 0.6])])
+        custom_tune_config = TuningConfig(config_set=[SmoothQuantConfig(alpha=[0.5, 0.6])])
         best_model = autotune(
             model_input=self.gptj,
             tune_config=custom_tune_config,

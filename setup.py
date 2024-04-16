@@ -33,7 +33,7 @@ def get_build_version():
 
 
 try:
-    filepath = "./neural_compressor/version.py"
+    filepath = "./neural_compressor_ort/version.py"
     with open(filepath) as version_file:
         (__version__,) = re.findall('__version__ = "(.*)"', version_file.read())
 except Exception as error:
@@ -43,11 +43,11 @@ except Exception as error:
 if __name__ == "__main__":
 
     setup(
-        name="neural-compressor",
+        name="neural-compressor-ort",
         author="Intel AIPT Team",
         version=get_build_version(),
         author_email="tai.huang@intel.com, mengni.wang@intel.com, yuwen.zhou@intel.com, suyue.chen@intel.com",
-        description="Repository of Neural Compressor",
+        description="Repository of Neural Compressor ORT",
         long_description=open("README.md", "r", encoding="utf-8").read(),
         long_description_content_type="text/markdown",
         keywords="quantization",

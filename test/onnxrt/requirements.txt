@@ -1,3 +1,4 @@
 optimum
 pytest
+torch
 transformers==4.37.2 # limitation for test_layer_wise
