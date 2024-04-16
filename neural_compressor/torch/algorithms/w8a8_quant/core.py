@@ -18,7 +18,7 @@
 # https://pytorch.org/tutorials/prototype/pt2e_quant_x86_inductor.html
 
 
-from typing import Any, Tuple
+from typing import Any, Tuple, Optional
 
 import torch
 import torch.ao.quantization.quantizer.x86_inductor_quantizer as xiq
@@ -37,6 +37,18 @@ class W8A8StaticQuantizer:
         # TODO: add the logic to update the quantizer based on the quant_config
         quantizer.set_global(xiq.get_default_x86_inductor_quantization_config())
         return quantizer
+    
+    @staticmethod
+    def export_model(model, example_inputs: Tuple[Any]) -> Optional[GraphModule]:
+        exported_model = None
+        try:
+            with torch.no_grad():
+                # Note 1: `capture_pre_autograd_graph` is also a short-term API, it will be
+                # updated to use the official `torch.export` API when that is ready.
+                exported_model = capture_pre_autograd_graph(model, example_inputs)
+        except Exception as e:
+            logger.error(f"Failed to export the model: {e}")
+        return exported_model
 
     def prepare(
         self, model: torch.nn.Module, quant_config, example_inputs: Tuple[Any], *args: Any, **kwargs: Any
@@ -52,10 +64,9 @@ class W8A8StaticQuantizer:
         model = model.eval()
 
         # 1) Capture the FX Graph to be quantized
-        with torch.no_grad():
-            # Note 1: `capture_pre_autograd_graph` is also a short-term API, it will be
-            # updated to use the official `torch.export` API when that is ready.
-            exported_model = capture_pre_autograd_graph(model, example_inputs)
+        exported_model = self.export_model(model, example_inputs)
+        if exported_model is None:
+            return
 
         # 2) create the `quantizer` according to the `quant_config`, and insert the observers accordingly.
         quantizer = X86InductorQuantizer()
@@ -71,7 +82,31 @@ class W8A8StaticQuantizer:
         return converted_model
 
 
+from unittest.mock import patch
 class TestW8A8StaticQuantizer:
+    
+    @staticmethod
+    def get_toy_model():
+        class Bar(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+            def forward(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
+                x = a / (torch.abs(a) + 1)
+                if b.sum() < 0:
+                    b = b * -1
+                return x * b
+        inp1 = torch.randn(10)
+        inp2 = torch.randn(10)
+        example_inputs = (inp1, inp2)
+        bar = Bar()
+        return bar, example_inputs
+
+
+        # opt_bar = torch.compile(bar, backend=custom_backend)
+
+        # opt_bar(inp1, inp2)
+        # opt_bar(inp1, -inp2)
+    
     def test_quantizer_on_llm(self):
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -95,4 +130,14 @@ class TestW8A8StaticQuantizer:
         config.freezing = True
         opt_model = torch.compile(converted_model)
         out = opt_model(*example_inputs)
-        assert out is not None
+        assert out.logits is not None
+
+    @patch("neural_compressor.torch.algorithms.w8a8_quant.core.logger.error")
+    def test_export_model_failed(self, mock_error):
+        model, example_inputs = self.get_toy_model()
+        w8a8_static_quantizer = W8A8StaticQuantizer()
+        # export model
+        exported_model = w8a8_static_quantizer.export_model(model,  example_inputs=example_inputs)
+        call_args_list = mock_error.call_args_list
+        print([info[0][0] for info in call_args_list])
+        assert any(["Failed to export the model" in msg for msg in [info[0][0] for info in call_args_list]])
