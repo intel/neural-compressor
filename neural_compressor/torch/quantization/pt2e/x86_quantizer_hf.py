@@ -23,6 +23,7 @@ import torch.ao.quantization.quantizer.x86_inductor_quantizer as xiq
 from torch._export import capture_pre_autograd_graph
 from torch.ao.quantization.quantize_pt2e import convert_pt2e, prepare_pt2e
 from torch.ao.quantization.quantizer.x86_inductor_quantizer import X86InductorQuantizer
+from torch import comppwdile
 
 # set TOKENIZERS_PARALLELISM to false
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -32,7 +33,7 @@ import argparse
 from tqdm import tqdm
 
 
-def quant(model_name_or_path, fold_quantize=False, eval=False):
+def quant(model_name_or_path, fold_quantize=False, eval=False, use_dynamic_shape=False):
     # Create the Eager Model
     # model_name = "resnet18"
     # model = models.__dict__[model_name](pretrained=True)
@@ -45,7 +46,7 @@ def quant(model_name_or_path, fold_quantize=False, eval=False):
     encoded_input = tokenizer(text, return_tensors="pt")
 
     example_inputs = encoded_input
-    print(example_inputs)
+    print(f"example_inputs: {example_inputs}")
 
     tuple_inputs = (example_inputs["input_ids"],)
 
@@ -53,17 +54,25 @@ def quant(model_name_or_path, fold_quantize=False, eval=False):
     model = model.eval()
 
     # Create the data, using the dummy data here as an example
-
+    
     with torch.no_grad():
         float_output = model(*tuple_inputs)
-        print(float_output)
+        print(float_output.logits.shape)
 
     # Capture the FX Graph to be quantized
     with torch.no_grad():
         # if you are using the PyTorch nightlies or building from source with the pytorch master,
         # use the API of `capture_pre_autograd_graph`
         # Note 1: `capture_pre_autograd_graph` is also a short-term API, it will be updated to use the official `torch.export` API when that is ready.
-        exported_model = capture_pre_autograd_graph(model, tuple_inputs)
+        if use_dynamic_shape:
+            from torch.export import dims, Dim
+            # batch, seq_len = dims("batch", "seq_len")
+            batch = None
+            seq_len = Dim(name="seq_len")
+            dynamic_shapes = {"input_ids": (batch, seq_len)}
+
+        exported_model = capture_pre_autograd_graph(model, tuple_inputs, dynamic_shapes=dynamic_shapes)
+
         # Note 2: if you are using the PyTorch 2.1 release binary or building from source with the PyTorch 2.1 release branch,
         # please use the API of `torch._dynamo.export` to capture the FX Graph.
         # exported_model, guards = torch._dynamo.export(
@@ -76,10 +85,18 @@ def quant(model_name_or_path, fold_quantize=False, eval=False):
     quantizer.set_global(xiq.get_default_x86_inductor_quantization_config())
 
     prepared_model = prepare_pt2e(exported_model, quantizer)
-
+    input1 = tuple_inputs[0]
+    input2 = torch.cat((tuple_inputs[0], tuple_inputs[0]), dim=-1)
+    print(input2.shape)
+    
+    calib_datas = [input1, input2]
+    
+    # with torch.no_grad():
+    #     for i in tqdm(range(2)):
+    #         prepared_model(*tuple_inputs)
     with torch.no_grad():
-        for i in tqdm(range(2)):
-            prepared_model(*tuple_inputs)
+        for _input in calib_datas:
+            prepared_model(_input)
 
     converted_model = convert_pt2e(prepared_model, fold_quantize=fold_quantize)
 
@@ -88,8 +105,9 @@ def quant(model_name_or_path, fold_quantize=False, eval=False):
 
     # # Running some benchmark
     with torch.no_grad():
-        optimized_model = torch.compile(converted_model)
-        output = optimized_model(*tuple_inputs)
+        # optimized_model = torch.compile(converted_model)
+        # output = optimized_model(*tuple_inputs)
+        return converted_model
         print(output)
         return output is not None
     return False
