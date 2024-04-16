@@ -5,7 +5,7 @@ Intel® Neural Compressor
 <h3> An open-source Python library supporting popular model compression techniques on all mainstream deep learning frameworks (TensorFlow, PyTorch, ONNX Runtime, and MXNet)</h3>
 
 [![python](https://img.shields.io/badge/python-3.8%2B-blue)](https://github.com/intel/neural-compressor)
-[![version](https://img.shields.io/badge/release-2.4.1-green)](https://github.com/intel/neural-compressor/releases)
+[![version](https://img.shields.io/badge/release-2.5-green)](https://github.com/intel/neural-compressor/releases)
 [![license](https://img.shields.io/badge/license-Apache%202-blue)](https://github.com/intel/neural-compressor/blob/master/LICENSE)
 [![coverage](https://img.shields.io/badge/coverage-85%25-green)](https://github.com/intel/neural-compressor)
 [![Downloads](https://static.pepy.tech/personalized-badge/neural-compressor?period=total&units=international_system&left_color=grey&right_color=green&left_text=downloads)](https://pepy.tech/project/neural-compressor)
@@ -25,6 +25,9 @@ In particular, the tool provides the key features, typical examples, and open co
 
 * Collaborate with cloud marketplaces such as [Google Cloud Platform](https://console.cloud.google.com/marketplace/product/bitnami-launchpad/inc-tensorflow-intel?project=verdant-sensor-286207), [Amazon Web Services](https://aws.amazon.com/marketplace/pp/prodview-yjyh2xmggbmga#pdp-support), and [Azure](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/bitnami.inc-tensorflow-intel), software platforms such as [Alibaba Cloud](https://www.intel.com/content/www/us/en/developer/articles/technical/quantize-ai-by-oneapi-analytics-on-alibaba-cloud.html), [Tencent TACO](https://new.qq.com/rain/a/20221202A00B9S00) and [Microsoft Olive](https://github.com/microsoft/Olive), and open AI ecosystem such as [Hugging Face](https://huggingface.co/blog/intel), [PyTorch](https://pytorch.org/tutorials/recipes/intel_neural_compressor_for_pytorch.html), [ONNX](https://github.com/onnx/models#models), [ONNX Runtime](https://github.com/microsoft/onnxruntime), and [Lightning AI](https://github.com/Lightning-AI/lightning/blob/master/docs/source-pytorch/advanced/post_training_quantization.rst)
 
+## What's New
+* [2024/03] A new SOTA approach [AutoRound](https://github.com/intel/auto-round) Weight-Only Quantization on [Intel Gaudi2 AI accelerator](https://habana.ai/products/gaudi2/) is available for LLMs.
+
 ## Installation
 
 ### Install from pypi
@@ -32,27 +35,65 @@ In particular, the tool provides the key features, typical examples, and open co
 pip install neural-compressor
 ```
 > **Note**: 
-> More installation methods can be found at [Installation Guide](https://github.com/intel/neural-compressor/blob/master/docs/source/installation_guide.md). Please check out our [FAQ](https://github.com/intel/neural-compressor/blob/master/docs/source/faq.md) for more details.
+> Further installation methods can be found under [Installation Guide](https://github.com/intel/neural-compressor/blob/master/docs/source/installation_guide.md). check out our [FAQ](https://github.com/intel/neural-compressor/blob/master/docs/source/faq.md) for more details.
 
 ## Getting Started
 
-Setting up the environment:
+Setting up the environment:  
 ```bash
 pip install "neural-compressor>=2.3" "transformers>=4.34.0" torch torchvision
 ```
 After successfully installing these packages, try your first quantization program.
 
-### Weight-Only Quantization (LLMs) 
+### Weight-Only Quantization (LLMs)
+Following example code demonstrates Weight-Only Quantization on LLMs, it supports Intel CPU, Intel Gauid2 AI Accelerator, Nvidia GPU, best device will be selected automatically. 
+
+To try on Intel Gaudi2, docker image with Gaudi Software Stack is recommended, please refer to following script for environment setup. More details can be found in [Gaudi Guide](https://docs.habana.ai/en/latest/Installation_Guide/Bare_Metal_Fresh_OS.html#launch-docker-image-that-was-built). 
+```bash
+docker run -it --runtime=habana -e HABANA_VISIBLE_DEVICES=all -e OMPI_MCA_btl_vader_single_copy_mechanism=none --cap-add=sys_nice --net=host --ipc=host vault.habana.ai/gaudi-docker/1.14.0/ubuntu22.04//habanalabs/pytorch-installer-2.1.1:latest
+
+# Check the container ID
+docker ps
+
+# Login into container
+docker exec -it <container_id> bash
+
+# Install the optimum-habana
+pip install --upgrade-strategy eager optimum[habana]
+
+# Install INC/auto_round
+pip install neural-compressor auto_round
+```
+Run the example:
 ```python
-from transformers import AutoModel
+from transformers import AutoModel, AutoTokenizer
 
 from neural_compressor.config import PostTrainingQuantConfig
 from neural_compressor.quantization import fit
+from neural_compressor.adaptor.torch_utils.auto_round import get_dataloader
 
-float_model = AutoModel.from_pretrained("mistralai/Mistral-7B-v0.1")
-woq_conf = PostTrainingQuantConfig(approach="weight_only")
-quantized_model = fit(model=float_model, conf=woq_conf)
+model_name = "EleutherAI/gpt-neo-125m"
+float_model = AutoModel.from_pretrained(model_name)
+tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+dataloader = get_dataloader(tokenizer, seqlen=2048)
+
+woq_conf = PostTrainingQuantConfig(
+    approach="weight_only",
+    op_type_dict={
+        ".*": {  # match all ops
+            "weight": {
+                "dtype": "int",
+                "bits": 4,
+                "algorithm": "AUTOROUND",
+            },
+        }
+    },
+)
+quantized_model = fit(model=float_model, conf=woq_conf, calib_dataloader=dataloader)
 ```
+**Note:** 
+
+To try INT4 model inference, please directly use [Intel Extension for Transformers](https://github.com/intel/intel-extension-for-transformers), which leverages Intel Neural Compressor for model quantization.        
 
 ### Static Quantization (Non-LLMs)
 
@@ -151,7 +192,7 @@ quantized_model = fit(model=float_model, conf=static_quant_conf, calib_dataloade
 </table>
 
 > **Note**: 
-> More documentations can be found at [User Guide](https://github.com/intel/neural-compressor/blob/master/docs/source/user_guide.md).
+> Further documentations can be found at [User Guide](https://github.com/intel/neural-compressor/blob/master/docs/source/user_guide.md).
 
 ## Selected Publications/Events
 * Blog by Intel: [Effective Weight-Only Quantization for Large Language Models with Intel® Neural Compressor](https://community.intel.com/t5/Blogs/Tech-Innovation/Artificial-Intelligence-AI/Effective-Weight-Only-Quantization-for-Large-Language-Models/post/1529552) (Oct 2023)

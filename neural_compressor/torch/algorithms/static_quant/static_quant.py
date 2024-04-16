@@ -51,50 +51,38 @@ def static_quantize(model, tune_cfg, run_fn, example_inputs, inplace=True):
     Returns:
         A quantized model.
     """
+    _, cfgs, op_infos_from_cfgs, output_tensor_id_op_name = get_quantizable_ops_recursively(model, example_inputs)
+    cfg_to_qconfig(tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_id_op_name)  # update json file in ipex_config_path
     model.eval()
 
-    if ipex_ver.release >= Version("1.12.0").release:
-        # Check save_qconf_summary part is a workaround for IPEX bug.
-        # Sometimes the prepared model from get_op_capablitiy loss this attribute
-        if not hasattr(model, "save_qconf_summary") or not hasattr(model, "load_qconf_summary"):
-            from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
+    # Check save_qconf_summary part is a workaround for IPEX bug.
+    # Sometimes the prepared model from get_op_capablitiy loss this attribute
+    if not hasattr(model, "save_qconf_summary") or not hasattr(model, "load_qconf_summary"):
+        from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
 
-            if ipex_ver.release >= Version("2.1").release:
-                static_qconfig = ipex.quantization.default_static_qconfig_mapping
-            else:
-                static_qconfig = QConfig(
-                    activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_affine, dtype=torch.quint8),
-                    weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_channel_symmetric),
-                )
-            if isinstance(example_inputs, dict):
-                model = ipex.quantization.prepare(
-                    model, static_qconfig, example_kwarg_inputs=example_inputs, inplace=inplace
-                )
-            else:
-                model = ipex.quantization.prepare(model, static_qconfig, example_inputs=example_inputs, inplace=inplace)
+        if ipex_ver.release >= Version("2.1").release:
+            static_qconfig = ipex.quantization.default_static_qconfig_mapping
+        else:
+            static_qconfig = QConfig(
+                activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_channel_symmetric),
+            )
+        if isinstance(example_inputs, dict):
+            model = ipex.quantization.prepare(
+                model, static_qconfig, example_kwarg_inputs=example_inputs, inplace=inplace
+            )
+        else:
+            model = ipex.quantization.prepare(model, static_qconfig, example_inputs=example_inputs, inplace=inplace)
 
-        model.load_qconf_summary(qconf_summary=ipex_config_path)
-        run_fn(model)
-        model.save_qconf_summary(qconf_summary=ipex_config_path)
-        model = _ipex_post_quant_process(model, example_inputs, inplace=inplace)
-
-    else:  # pragma: no cover
-        # for IPEX version < 1.12
-        _, cfgs, default_cfgs, fuse_ops = get_quantizable_ops_recursively(model, example_inputs)
-        qscheme = cfg_to_qconfig(tune_cfg, cfgs, default_cfgs, fuse_ops)
-        ipex_conf = ipex.quantization.QuantConf(
-            configure_file=ipex_config_path, qscheme=qscheme
-        )  # pylint: disable=E1101
-        run_fn(model)
-        ipex_conf.save(ipex_config_path)
-        ipex_conf = ipex.quantization.QuantConf(ipex_config_path)  # pylint: disable=E1101
-        model = ipex.quantization.convert(model, ipex_conf, example_inputs, inplace=True)  # pylint: disable=E1121
+    model.load_qconf_summary(qconf_summary=ipex_config_path)
+    run_fn(model)
+    model.save_qconf_summary(qconf_summary=ipex_config_path)
+    model = _ipex_post_quant_process(model, example_inputs, inplace=inplace)
 
     with open(ipex_config_path, "r") as f:
         model.tune_cfg = json.load(f)
     model.ipex_config_path = ipex_config_path
-    if ipex_ver.release >= Version("1.12.0").release:
-        dump_model_op_stats(tune_cfg)
+    dump_model_op_stats(tune_cfg)
     return model
 
 

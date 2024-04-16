@@ -5,7 +5,7 @@ import torch.nn as nn
 
 def eval_model(model, model_name, tokenizer, tasks=["lambada_openai", "hellaswag", "winogrande", "piqa"], eval_bs=32):
     try:
-        from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate as lm_evaluate
+        from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate as lm_evaluate
         print("evaluation with itrex lm-eval", flush=True)
 
         if str(model.device) == "cpu":
