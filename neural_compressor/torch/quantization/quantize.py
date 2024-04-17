@@ -113,7 +113,7 @@ def convert(model: torch.nn.Module, quant_config: Union[BaseConfig, str, Path] =
 
 
 def finalize_calibration(model):
-    from neural_compressor.torch.algorithms.habana_fp8 import save_calib_result
+    from neural_compressor.torch.algorithms.fp8_quant import save_calib_result
 
     save_calib_result(model)
 

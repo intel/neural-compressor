@@ -1,0 +1,8 @@
+{
+    "mode": "QUANTIZE",
+    "observer": "maxabs",
+    "scale_method": "unit_scale",
+    "allowlist": {"types": [], "names":  []},
+    "blocklist": {"types": [], "names":  ["lm_head"]},
+    "dump_stats_path": "./test_outputs/unit_test"
+}

@@ -12,5 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from neural_compressor.torch.algorithms.base_algo import AlgoBase, algo_quantizer_register, algo_quantizers
-from neural_compressor.torch.algorithms.fp8_quant import FP8Quantizer
+from neural_compressor.torch.algorithms.fp8_quant.common import (
+    update_mode,
+    save_calib_result,
+    restore_patched_module,
+    with_patched_module,
+)
+from neural_compressor.torch.algorithms.fp8_quant.fp8_quant import FP8Quantizer
