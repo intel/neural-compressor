@@ -161,11 +161,11 @@ class MatMulNBitsQuantizer:
         logger.info(f"start to quantize model with {self.algorithm} algorithm...")
         model = self.model_path or self.model.model
         if self.algorithm == "RTN":
-            self.model = rtn_quantize_entry(model, config)
+            self.model.model = rtn_quantize_entry(model, config)
         elif self.algorithm == "GPTQ":
-            self.model = gptq_quantize_entry(model, config, self.algo_config.calibration_data_reader)
+            self.model.model = gptq_quantize_entry(model, config, self.algo_config.calibration_data_reader)
         elif self.algorithm == "AWQ":
-            self.model = awq_quantize_entry(model, config, self.algo_config.calibration_data_reader)
+            self.model.model = awq_quantize_entry(model, config, self.algo_config.calibration_data_reader)
         logger.info(f"complete quantization of model with {self.algorithm} algorithm.")
 
     def process(self):
