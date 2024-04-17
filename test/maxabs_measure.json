@@ -1,5 +1,4 @@
 {
-    "method": "HOOKS",
     "mode": "MEASURE",
     "observer": "maxabs",
     "allowlist": {"types": [], "names":  []},

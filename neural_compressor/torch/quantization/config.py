@@ -37,48 +37,32 @@ class FP8QuantConfig(BaseConfig):
 
     name = FP8_QUANT
     params_list = [
-        "method",
         "dump_stats_path",
-        "dump_stats_xlsx_path",
-        "history_len",
-        "collect_mse",
-        "check_std",
-        "stochastic",
         "fp8_config",
         "hp_dtype",
-        "clip",
         "blocklist",
         "allowlist",
         "mode"
-        "sweep_mse",
         "scale_method",
         "scale_params",
-        "fake_quant",
         "observer",
         "mod_dict",
+        "measure_exclude",
     ]
 
     def __init__(
         self,
-        method: str = "HOOKS",
         dump_stats_path: str = "./hqt_output/measure",
-        dump_stats_xlsx_path : str = "./hqt_output/measure/stats.xlsx",
-        history_len: int = 350,
-        collect_mse: dict = {'collect': False},
-        check_std: dict = {'check': False,'limit': 0.2},
-        stochastic: bool = True,
-        fp8_config: torch.dtype = torch.float8_e4m3fn,
+        fp8_config: str = "E4M3",
         hp_dtype: torch.dtype = torch.bfloat16,
-        clip: bool = True,
         blocklist: dict = {'names': [], 'types': ()},
         allowlist: dict = {'names': [], 'types': ('torch.nn.Linear', 'torch.nn.Conv2d', 'BMM')},
         mode: str = "AUTO",
-        sweep_mse: bool = False,
         scale_method: str = "maxabs_hw",
         scale_params: dict = {},
-        fake_quant: bool = False,
         observer: str = "maxabs",
         mod_dict: dict = {},
+        measure_exclude: str = "OUTPUT",
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
         **kwargs,
     ):
@@ -87,21 +71,25 @@ class FP8QuantConfig(BaseConfig):
         Args:
         """
         super().__init__(white_list=white_list)
-        self.method = method
+        self.dump_stats_path =dump_stats_path
+        self.fp8_config = fp8_config
+        self.hp_dtype = hp_dtype
+        self.blocklist = blocklist
+        self.allowlist = allowlist
         self.mode = mode
+        self.scale_method = scale_method
+        self.scale_params = scale_params
         self.observer = observer
-        self.dump_stats_path = dump_stats_path
+        self.mod_dict = mod_dict
         self._json_file = None
         self._post_init()
 
     @property
     def calibrate(self):
-        assert self.mode is not None, "Please set 'mode' to 'MEASURE' or 'QUANTIZE' in your config file"
         return self.mode == "MEASURE"
 
     @property
     def quantize(self):
-        assert self.mode is not None, "Please set 'mode' to 'MEASURE' or 'QUANTIZE' in your config file"
         return self.mode == "QUANTIZE"
 
     @property
@@ -130,7 +118,7 @@ class FP8QuantConfig(BaseConfig):
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "FP8QuantConfig", List["FP8QuantConfig"]]:
         # TODO: for auto-tune
-        return FP8QuantConfig(act_observer=["minmax", "kl"])
+        return FP8QuantConfig(fp8_config=["E4M3", "E5M2"])
 
     @classmethod
     def register_supported_configs(cls):

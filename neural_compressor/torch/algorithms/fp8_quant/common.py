@@ -23,9 +23,8 @@ import torch
 
 
 def save_calib_result(model):
-    # from neural_compressor.torch.algorithms.fp8_quant import quantization_toolkit
-    from neural_compressor.torch.algorithms.fp8_quant import habana_quantization_toolkit
-    habana_quantization_toolkit.finish_measurements(model)
+    from neural_compressor.torch.algorithms.fp8_quant.prepare_quant.prepare_model import finish_measurements
+    finish_measurements(model)
 
 
 def update_mode(config_path, calib_step=False, quant_step=False):
@@ -63,7 +62,7 @@ def generate_model_info(model):
 
 
 def get_patched_mod_list():
-    from neural_compressor.torch.algorithms.fp8_quant.habana_quantization_toolkit._core.common import mod_default_dict
+    from neural_compressor.torch.algorithms.fp8_quant._core.common import mod_default_dict
 
     patched_mod_list = []
     for patched_mod in mod_default_dict.values():

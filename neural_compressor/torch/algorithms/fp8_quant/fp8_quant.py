@@ -33,15 +33,10 @@ class FP8Quantizer(AlgoBase):
             self.quant_config = json_file[0]
 
     def prepare(self, model):
-        # set environment
-        # os.environ["QUANT_CONFIG"] = self.quant_config
         _prepare(model, self.quant_config)
         return model
 
     def convert(self, model):
-        # set environment
-
-        # os.environ["QUANT_CONFIG"] = self.quant_config
         if with_patched_module(model):
             restore_patched_module(model)
         _convert(model, self.quant_config)
@@ -49,18 +44,18 @@ class FP8Quantizer(AlgoBase):
 
 
 def _convert(model, config_path):
-    from neural_compressor.torch.algorithms.fp8_quant import habana_quantization_toolkit
+    from neural_compressor.torch.algorithms.fp8_quant.prepare_quant.prepare_model import prep_model
 
     # update mode to QUANTIZE
     config_path = update_mode(config_path, quant_step=True)
 
-    return habana_quantization_toolkit.prep_model(model, config_path)
+    return prep_model(model, config_path)
 
 
 def _prepare(model, config_path):
-    from neural_compressor.torch.algorithms.fp8_quant import habana_quantization_toolkit
+    from neural_compressor.torch.algorithms.fp8_quant.prepare_quant.prepare_model import prep_model
 
     # update mode to MEASURE
     config_path = update_mode(config_path, calib_step=True)
 
-    return habana_quantization_toolkit.prep_model(model, config_path)
+    return prep_model(model, config_path)
