@@ -107,7 +107,7 @@ class TestBiasCorrectionOldApi(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         tf.compat.v1.enable_eager_execution()
-        
+
     @disable_random()
     def test_bias_correction_old_api(self):
         tf.compat.v1.disable_eager_execution()
