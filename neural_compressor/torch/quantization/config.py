@@ -42,8 +42,7 @@ class FP8QuantConfig(BaseConfig):
         "hp_dtype",
         "blocklist",
         "allowlist",
-        "mode"
-        "scale_method",
+        "mode" "scale_method",
         "scale_params",
         "observer",
         "mod_dict",
@@ -55,8 +54,8 @@ class FP8QuantConfig(BaseConfig):
         dump_stats_path: str = "./hqt_output/measure",
         fp8_config: str = "E4M3",
         hp_dtype: torch.dtype = torch.bfloat16,
-        blocklist: dict = {'names': [], 'types': ()},
-        allowlist: dict = {'names': [], 'types': ('torch.nn.Linear', 'torch.nn.Conv2d', 'BMM')},
+        blocklist: dict = {"names": [], "types": ()},
+        allowlist: dict = {"names": [], "types": ("torch.nn.Linear", "torch.nn.Conv2d", "BMM")},
         mode: str = "AUTO",
         scale_method: str = "maxabs_hw",
         scale_params: dict = {},
@@ -71,7 +70,7 @@ class FP8QuantConfig(BaseConfig):
         Args:
         """
         super().__init__(white_list=white_list)
-        self.dump_stats_path =dump_stats_path
+        self.dump_stats_path = dump_stats_path
         self.fp8_config = fp8_config
         self.hp_dtype = hp_dtype
         self.blocklist = blocklist
@@ -132,9 +131,7 @@ class FP8QuantConfig(BaseConfig):
         logger.debug(f"Get model info: {filter_result}")
         return filter_result
 
-    def to_config_mapping(
-        self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
-    ):
+    def to_config_mapping(self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None):
         config_mapping = OrderedDict()
         if config_list is None:
             config_list = [self]

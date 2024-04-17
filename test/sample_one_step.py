@@ -1,6 +1,8 @@
 import argparse
-import torch
+
 import habana_frameworks.torch.core as htcore
+import torch
+
 htcore.hpu_set_env()
 
 from neural_compressor.torch import FP8QuantConfig, convert, finalize_calibration, prepare

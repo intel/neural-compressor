@@ -1,12 +1,25 @@
+# Copyright (c) 2024 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import os
-import habana_frameworks.torch.core as htcore
 from typing import Optional
-from .._quant_common.quant_config import Fp8cfg, QuantMode
+
+import habana_frameworks.torch.core as htcore
+
 from .._core import prepare_model
 from .._core.measure import save_measurements
-from .._core import prepare_model
-from .._core.measure import save_measurements
-from .._quant_common.quant_config import _read_config_from_file, Fp8cfg, get_hqt_config, set_hqt_config
+from .._quant_common.quant_config import Fp8cfg, QuantMode, _read_config_from_file, get_hqt_config, set_hqt_config
 
 
 def _prep_model_with_predefined_config(model, *, config: Fp8cfg):
@@ -15,8 +28,8 @@ def _prep_model_with_predefined_config(model, *, config: Fp8cfg):
 
 
 def prep_model(model, config_path: Optional[str] = None):
-    """
-    Prepare this model with the given (absolute or relative) path of the json file containing the configuration.
+    """Prepare this model with the given (absolute or relative) path of the json file containing the configuration.
+
     If `config_path` is not given or `None`,
     instead perform the legacy behavior of checking for env variable `QUANT_CONFIG`.
     """
@@ -37,5 +50,3 @@ def prep_model(model, config_path: Optional[str] = None):
 def finish_measurements(model):
     save_measurements(model)
     print("Dumping measurements")
-
-

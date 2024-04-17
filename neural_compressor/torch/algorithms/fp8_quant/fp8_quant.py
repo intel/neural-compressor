@@ -16,11 +16,7 @@ import os
 
 from neural_compressor.common.utils import FP8_QUANT
 from neural_compressor.torch.algorithms import AlgoBase, algo_quantizer_register
-from neural_compressor.torch.algorithms.fp8_quant import (
-    restore_patched_module,
-    update_mode,
-    with_patched_module,
-)
+from neural_compressor.torch.algorithms.fp8_quant import restore_patched_module, update_mode, with_patched_module
 
 
 @algo_quantizer_register(name=FP8_QUANT)
