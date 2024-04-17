@@ -114,6 +114,11 @@ parser.add_argument(
     type=str,
     help="benchmark mode of performance or accuracy"
 )
+parser.add_argument(
+    "--intra_op_num_threads",
+    type=int,
+    default=24
+)
 args = parser.parse_args()
 
 # load model
@@ -181,14 +186,8 @@ def benchmark(model):
                                 use_cache=True if use_cache else False,
                                 use_io_binding=True if use_cache else False,)
 
-    input_tokens = '32'
     max_new_tokens = 32
-    with open('prompt.json') as f:
-        prompt_pool = json.load(f)
-    if input_tokens in prompt_pool:
-        prompt = prompt_pool[input_tokens]
-    else:
-        raise SystemExit('[ERROR] Please use --prompt if want to use custom input.')
+    prompt = "Once upon a time, there existed a little girl who liked to have adventures. She wanted to go to places and meet new people, and have fun"
 
     input_size = tokenizer(prompt, return_tensors="pt").input_ids.size(dim=1)
     print("---- Prompt size:", input_size)

@@ -61,8 +61,10 @@ bash run_benchmark.sh --input_model=path/to/model \ # folder path of onnx model
 
 Performance:
 ```bash
-bash run_benchmark.sh --input_model=path/to/model \ # folder path of onnx model
-                      --mode=performance \
-                      --batch_size=batch_size # optional \
-                      --tokenizer=meta-llama/Llama-2-7b-hf \ # model name or folder path containing all relevant files for model's tokenizer
+numactl -m 0 -C 0-23 bash run_benchmark.sh --input_model=path/to/model \ # folder path of onnx model
+                                           --mode=performance \
+                                           --batch_size=batch_size # optional \
+                                           --tokenizer=meta-llama/Llama-2-7b-hf \ # model name or folder path containing all relevant files for model's tokenizer
+                                           --intra_op_num_threads=24
+
 ```
