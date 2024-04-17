@@ -440,6 +440,8 @@ def get_model_input_shape(model):
                 _shape = [item.value for item in _shape]
             if len(_shape) > 1 and isinstance(_shape[0], int):
                 return _shape[0]
+            elif isinstance(_shape, list) and hasattr(_shape[0], "value"):
+                return _shape[0].value
     return 1
 
 

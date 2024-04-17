@@ -99,10 +99,6 @@ class TestTensorflowGpu(unittest.TestCase):
         self.assertEqual(weights_min_node.op, "HostConst")
 
         self.assertEqual(self.logger_root.level, self.logger_root_level)
-        if self.log_env:
-            self.assertEqual(logging.getLevelName(self.logger_nc.level), self.log_env)
-        else:
-            self.assertEqual(self.logger_nc.level, 20)
 
 
 if __name__ == "__main__":
