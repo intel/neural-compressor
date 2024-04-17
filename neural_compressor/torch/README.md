@@ -1,34 +1,3 @@
-### File tree:
-```bash
-├── neural_compressor
-│   ├── common
-│   ├── torch
-│   │   ├── algorithms
-│   │   │   └── habana_fp8
-│   │   │         ├──__init__.py
-│   │   │         ├── fp8_quant.py # FP8Quantizer
-│   │   │         ├── helper_modules.py # revert patched module to origin module
-│   │   │         └── common.py
-|   |   ├── base_algo.py # base class for different algos
-│   │   └── __init__.md
-│   │   ├── quantization
-│   │   │   ├── __init__.py
-│   │   │   ├── config.py
-│   │   │   └── quantize.py
-│   │   ├── __init__.py
-│   │   └── README.md
-│   ├── __init__.py
-│   └── version.py
-├── test
-│   ├── sample.py
-│   ├── sample_one_step.py
-│   ├── maxabs_measure.json
-│   ├── maxabs_quant.py
-│   └── quant_config.py
-
-
-```
-
 ### Usage demo:
 
 #### two steps to get quantized model (HQT flow)

@@ -1,7 +1,9 @@
 import argparse
-
-import habana_frameworks.torch.core as htcore
 import torch
+import habana_frameworks.torch.core as htcore
+htcore.hpu_set_env()
+
+from neural_compressor.torch import FP8QuantConfig, convert, finalize_calibration, prepare
 
 torch.manual_seed(1)
 
@@ -26,11 +28,6 @@ def eval_func(model):
     input = torch.randn(1, 10)
     model(input.to("hpu"))
 
-
-
-from neural_compressor.torch import FP8QuantConfig, convert, finalize_calibration, prepare
-
-htcore.hpu_set_env()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(

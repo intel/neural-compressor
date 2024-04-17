@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import json
+from collections import OrderedDict
 from typing import Callable, List, NamedTuple, Optional, Tuple, Union
 
 import torch
@@ -37,20 +38,47 @@ class FP8QuantConfig(BaseConfig):
     name = FP8_QUANT
     params_list = [
         "method",
-        "mode",
-        "observer",
         "dump_stats_path",
+        "dump_stats_xlsx_path",
+        "history_len",
+        "collect_mse",
+        "check_std",
+        "stochastic",
+        "fp8_config",
+        "hp_dtype",
+        "clip",
+        "blocklist",
+        "allowlist",
+        "mode"
+        "sweep_mse",
         "scale_method",
+        "scale_params",
+        "fake_quant",
+        "observer",
+        "mod_dict",
     ]
 
     def __init__(
         self,
         method: str = "HOOKS",
+        dump_stats_path: str = "./hqt_output/measure",
+        dump_stats_xlsx_path : str = "./hqt_output/measure/stats.xlsx",
+        history_len: int = 350,
+        collect_mse: dict = {'collect': False},
+        check_std: dict = {'check': False,'limit': 0.2},
+        stochastic: bool = True,
+        fp8_config: torch.dtype = torch.float8_e4m3fn,
+        hp_dtype: torch.dtype = torch.bfloat16,
+        clip: bool = True,
+        blocklist: dict = {'names': [], 'types': ()},
+        allowlist: dict = {'names': [], 'types': ('torch.nn.Linear', 'torch.nn.Conv2d', 'BMM')},
         mode: str = "AUTO",
-        observer: str = "maxabs",
-        dump_stats_path: str = "./hqt_output/measure2",
+        sweep_mse: bool = False,
         scale_method: str = "maxabs_hw",
-        json_file: str = None,
+        scale_params: dict = {},
+        fake_quant: bool = False,
+        observer: str = "maxabs",
+        mod_dict: dict = {},
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
         **kwargs,
     ):
@@ -63,7 +91,7 @@ class FP8QuantConfig(BaseConfig):
         self.mode = mode
         self.observer = observer
         self.dump_stats_path = dump_stats_path
-        self.json_file = json_file
+        self._json_file = None
         self._post_init()
 
     @property
@@ -76,12 +104,27 @@ class FP8QuantConfig(BaseConfig):
         assert self.mode is not None, "Please set 'mode' to 'MEASURE' or 'QUANTIZE' in your config file"
         return self.mode == "QUANTIZE"
 
+    @property
+    def json_file(self):
+        if self._json_file is None:
+            import tempfile
+            from pathlib import Path
+
+            json_file_tmp = tempfile.NamedTemporaryFile(suffix=".json")
+            self.to_json_file(json_file_tmp.name)
+            self.json_file(json_file_tmp.name)
+        return self._json_file
+
+    @json_file.setter
+    def json_file(self, json_file):
+        self._json_file = json_file
+
     @classmethod
     def from_json_file(cls, filename):
         with open(filename, "r", encoding="utf-8") as file:
             config_dict = json.load(file)
-        config_dict["json_file"] = filename
         config = cls.from_dict(config_dict)
+        config.json_file = filename
         return config
 
     @classmethod
@@ -100,6 +143,17 @@ class FP8QuantConfig(BaseConfig):
         filter_result = [("*", "*")]
         logger.debug(f"Get model info: {filter_result}")
         return filter_result
+
+    def to_config_mapping(
+        self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
+    ):
+        config_mapping = OrderedDict()
+        if config_list is None:
+            config_list = [self]
+        for config in config_list:
+            for op_name, op_type in model_info:
+                config_mapping[(op_name, op_type)] = self
+        return config_mapping
 
 
 def get_default_fp8_config() -> FP8QuantConfig:

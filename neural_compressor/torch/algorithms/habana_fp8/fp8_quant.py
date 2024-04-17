@@ -17,7 +17,6 @@ import os
 from neural_compressor.common.utils import FP8_QUANT
 from neural_compressor.torch.algorithms import AlgoBase, algo_quantizer_register
 from neural_compressor.torch.algorithms.habana_fp8 import (
-    get_mod_list,
     restore_patched_module,
     update_mode,
     with_patched_module,
@@ -50,25 +49,18 @@ class FP8Quantizer(AlgoBase):
 
 
 def _convert(model):
-    from habana_quantization_toolkit._hook_method import config, quantize_hooks, scale_method_mapping, scaling_params
+    from neural_compressor.torch.algorithms.habana_fp8 import quantization_toolkit
 
     # update mode to QUANTIZE
     update_mode(quant_step=True)
 
-    mod_list = get_mod_list(model)
-    scaling_method_name = scale_method_mapping[(config.cfg["scale_method"], config.cfg["observer"])]
-    scaling_params[scaling_method_name].update(config.cfg["scale_params"])
-    config.cfg["scale_params"] = scaling_params[scaling_method_name]
-
-    return quantize_hooks(model, mod_list)
+    return quantization_toolkit.prep_model(model)
 
 
 def _prepare(model):
-    from habana_quantization_toolkit._hook_method import prepare_model_for_measure
+    from neural_compressor.torch.algorithms.habana_fp8 import quantization_toolkit
 
     # update mode to MEASURE
     update_mode(calib_step=True)
 
-    mod_list = get_mod_list(model)
-
-    return prepare_model_for_measure(model, mod_list)
+    return quantization_toolkit.prep_model(model)

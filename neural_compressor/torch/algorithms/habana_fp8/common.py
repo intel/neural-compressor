@@ -23,105 +23,18 @@ import torch
 
 
 def save_calib_result(model):
-    import habana_quantization_toolkit
-
-    habana_quantization_toolkit.finish_measurements(model)
-
-
-def save_fp8_model(model, fname):
-    # TODO: save fp8 model
-    pass
-
-
-def update_stats_path_in_config(old_stats_path, new_stats_path):
-    from habana_quantization_toolkit._hook_method import config
-
-    new_base_name = new_stats_path.split("/")[-1]
-    new_folder_name = new_stats_path[: -(len(new_base_name))]
-    os.makedirs(new_folder_name, exist_ok=True)
-    old_dump_stats_base_path = config.cfg["dump_stats_base_path"]
-    config.cfg["dump_stats_base_path"] = config.cfg["dump_stats_base_path"].replace(
-        old_dump_stats_base_path, new_folder_name
-    )
-
-    stats_path_related_keys = ["dump_stats_path", "dump_stats_base_path", "shape_file", "scale_file", "measure_file"]
-    for key in stats_path_related_keys:
-        config.cfg[key] = config.cfg[key].replace(old_stats_path, new_stats_path)
-
-    # remove old dump_stats_path folder
-    if old_dump_stats_base_path != new_folder_name:
-        os.removedirs(old_dump_stats_base_path)
+    from neural_compressor.torch.algorithms.habana_fp8 import quantization_toolkit
+    quantization_toolkit.finish_measurements(model)
 
 
 def update_mode(calib_step=False, quant_step=False):
-    from habana_quantization_toolkit._hook_method import config
-    from habana_quantization_toolkit._quant_common.quant_config import QuantMode
+    from neural_compressor.torch.algorithms.habana_fp8.quantization_toolkit.prepare_quant.prepare_model import config
+    from neural_compressor.torch.algorithms.habana_fp8.quantization_toolkit._quant_common.quant_config import QuantMode
 
     if calib_step:
-        config.cfg["mode"] = QuantMode.MEASURE
+        config["mode"] = QuantMode.MEASURE
     if quant_step:
-        config.cfg["mode"] = QuantMode.QUANTIZE
-
-
-def get_mod_list(model):
-    from habana_quantization_toolkit._hook_method import config
-
-    _update_mod_dict(config)
-    allowlist = set(config.cfg["mod_dict"].keys())
-    blocklist = set()
-    for type_st in config.cfg["blocklist"]["types"]:
-        blocklist.add(type_st)
-    allowlist.difference_update(blocklist)
-    allowlist_tuple = tuple(allowlist)
-
-    mod_list = []
-    for name, mod in model.named_modules():
-        mod_type = mod.__class__.__name__
-        if (
-            (mod_type in allowlist_tuple)
-            and (_is_substr(config.cfg["allowlist"]["names"], name) or len(config.cfg["allowlist"]["names"]) == 0)
-            and (not _is_substr(config.cfg["blocklist"]["names"], name))
-        ):
-            mod_list.append(name)
-    if config.cfg["verbose"]:
-        print(f"Module list: {mod_list}")
-    return mod_list
-
-
-def _get_mod_default_dict():
-    from collections import namedtuple
-
-    from habana_quantization_toolkit._quant_common.helper_modules import (
-        PatchedConv2d,
-        PatchedKVCache,
-        PatchedLinear,
-        PatchedLoRACompatibleConv,
-        PatchedLoRACompatibleLinear,
-        PatchedMatmul,
-        PatchedSoftmax,
-    )
-
-    module_info = namedtuple("ModuleInfo", ["type", "patched_module"])
-    mod_default_dict = {
-        "Matmul": module_info("matmul", PatchedMatmul),
-        "Linear": module_info("linear", PatchedLinear),
-        "FalconLinear": module_info("linear", PatchedLinear),
-        "KVCache": module_info("kv_cache", PatchedKVCache),
-        "Conv2d": module_info("linear", PatchedConv2d),
-        "LoRACompatibleLinear": module_info("linear", PatchedLoRACompatibleLinear),
-        "LoRACompatibleConv": module_info("linear", PatchedLoRACompatibleConv),
-        "Softmax": module_info("softmax", PatchedSoftmax),
-    }
-    return mod_default_dict
-
-
-def _update_mod_dict(config):
-    mod_default_dict = _get_mod_default_dict()
-    config.cfg["mod_dict"].update({k: mod_default_dict[k].type for k in mod_default_dict})
-
-
-def _is_substr(substr_list, target):
-    return any([x in target for x in substr_list])
+        config["mode"] = QuantMode.QUANTIZE
 
 
 def generate_model_info(model):
@@ -137,31 +50,38 @@ def generate_model_info(model):
     return parent_child_mod_dict
 
 
-from .helper_modules import Linear
+def get_patched_mod_list():
+    from neural_compressor.torch.algorithms.habana_fp8.quantization_toolkit._hook_method.common import mod_default_dict
 
-revert_module_dict = {"PatchedLinear": Linear}
-
-
-def patch_module(parent_child_mod_dict, patched_mod):
-    parent = parent_child_mod_dict[patched_mod].parent
-    name = parent_child_mod_dict[patched_mod].name
-    origin_mod = revert_module_dict[patched_mod.__class__.__name__](patched_mod)
-    origin_mod.forward = patched_mod.forward_orig
-    setattr(parent, name, origin_mod)
+    patched_mod_list = []
+    for patched_mod in mod_default_dict.values():
+        patched_mod_list.append(patched_mod.patched_module.__name__)
+    return patched_mod_list
 
 
 def restore_patched_module(patched_model):
+    from neural_compressor.torch.algorithms.habana_fp8.helper_modules import helper_mods
+    patched_mod_list = get_patched_mod_list()
+
     parent_child_mod_dict = generate_model_info(patched_model)
     with torch.no_grad():
         for name, patched_mod in patched_model.named_modules():
             patched_mod_type_str = patched_mod.__class__.__name__
-            if patched_mod_type_str in revert_module_dict:
-                patch_module(parent_child_mod_dict, patched_mod)
+            if patched_mod_type_str in patched_mod_list:
+                parent = parent_child_mod_dict[patched_mod].parent
+                name = parent_child_mod_dict[patched_mod].name
+                class_name_org = getattr(patched_mod, "class_name_org", None) or \
+                    patched_mod.__class__.__name__.split("Patched")[-1]
+                origin_mod = helper_mods[class_name_org](patched_mod)
+                origin_mod.forward = patched_mod.forward_orig
+                setattr(parent, name, origin_mod)
 
 
 def with_patched_module(model):
+    patched_mod_list = get_patched_mod_list()
+
     for name, mod in model.named_modules():
         mod_type = mod.__class__.__name__
-        if mod_type in revert_module_dict.keys():
+        if mod_type in patched_mod_list:
             return True
     return False

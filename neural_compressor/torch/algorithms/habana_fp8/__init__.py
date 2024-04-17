@@ -13,11 +13,8 @@
 # limitations under the License.
 
 from neural_compressor.torch.algorithms.habana_fp8.common import (
-    get_mod_list,
-    update_stats_path_in_config,
     update_mode,
     save_calib_result,
-    save_fp8_model,
     restore_patched_module,
     with_patched_module,
 )
