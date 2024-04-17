@@ -85,5 +85,5 @@ model(input.to("hpu"))
 Whole script and config refer to [sample_one_step.py](../../test/sample_one_step.py).
 
 ```shell
-python sample_one_step.py --calib_result ./hqt_output/measure --quant_config=quant_config.json
+python sample_one_step.py --quant_config=quant_config.json
 ```
