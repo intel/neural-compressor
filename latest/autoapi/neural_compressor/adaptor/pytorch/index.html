@@ -111,6 +111,9 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.pytorch.PyTorchWeightOnlyAdaptor" title="neural_compressor.adaptor.pytorch.PyTorchWeightOnlyAdaptor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchWeightOnlyAdaptor</span></code></a></p></td>
 <td><p>Adaptor of PyTorch framework, all PyTorch API is in this class.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.pytorch.PyTorchQuery" title="neural_compressor.adaptor.pytorch.PyTorchQuery"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchQuery</span></code></a></p></td>
+<td><p>Base class that defines Query Interface.</p></td>
+</tr>
 </tbody>
 </table>
 </section>
@@ -202,6 +205,13 @@
 </dl>
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.pytorch.PyTorchQuery">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.pytorch.</span></span><span class="sig-name descname"><span class="pre">PyTorchQuery</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">local_config_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/adaptor/pytorch.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.pytorch.PyTorchQuery" title="Permalink to this definition"></a></dt>
+<dd><p>Base class that defines Query Interface.</p>
+<p>Each adaption layer should implement the inherited class for specific backend on their own.</p>
+</dd></dl>
+
 </section>
 </section>
 </section>
@@ -220,7 +230,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f847fa540a0> 
+   <jinja2.runtime.BlockReference object at 0x7febd9ba18a0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
