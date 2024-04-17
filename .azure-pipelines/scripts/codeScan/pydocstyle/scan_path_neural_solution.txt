@@ -1,4 +1,0 @@
-/neural-compressor/neural_solution/backend
-/neural-compressor/neural_solution/frontend
-/neural-compressor/neural_solution/utils
-
