@@ -102,8 +102,8 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.quantization.config.GPTQConfig" title="neural_compressor.torch.quantization.config.GPTQConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GPTQConfig</span></code></a></p></td>
 <td><p>Config class for GPTQ.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">HQQConfig</span></code></p></td>
-<td><p></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.quantization.config.HQQConfig" title="neural_compressor.torch.quantization.config.HQQConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">HQQConfig</span></code></a></p></td>
+<td><p>The base config for all algorithm configs.</p></td>
 </tr>
 </tbody>
 </table>
@@ -159,9 +159,15 @@
 </dl>
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.torch.quantization.config.HQQConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.quantization.config.</span></span><span class="sig-name descname"><span class="pre">HQQConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_zero</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_scale</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_quant_group_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_lm_head</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">white_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">DEFAULT_WHITE_LIST</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/quantization/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.quantization.config.HQQConfig" title="Permalink to this definition"></a></dt>
+<dd><p>The base config for all algorithm configs.</p>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.torch.quantization.config.get_default_hqq_config">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.quantization.config.</span></span><span class="sig-name descname"><span class="pre">get_default_hqq_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">HQQConfig</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/quantization/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.quantization.config.get_default_hqq_config" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.quantization.config.</span></span><span class="sig-name descname"><span class="pre">get_default_hqq_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#neural_compressor.torch.quantization.config.HQQConfig" title="neural_compressor.torch.quantization.config.HQQConfig"><span class="pre">HQQConfig</span></a></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/quantization/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.quantization.config.get_default_hqq_config" title="Permalink to this definition"></a></dt>
 <dd><p>Generate the default HQQ config.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -188,7 +194,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f2d8f9c5f90> 
+   <jinja2.runtime.BlockReference object at 0x7f84818a7280> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
