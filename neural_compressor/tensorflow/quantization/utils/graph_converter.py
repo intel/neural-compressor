@@ -944,7 +944,7 @@ class GraphConverter:
 
     def _convert_qdq(self):
         """Convert Dequantize + Op + QuantizeV2 into QuantizedOps."""
-        if self.itex_mode:
+        if self.itex_mode or self._tmp_model.model_type=="llm_saved_model":
             self._tmp_graph_def, quantizev2_max = FreezeValueTransformer(
                 self._tmp_graph_def, self._calibration_data, "__max:", self.itex_mode
             ).do_transformation()
@@ -969,7 +969,7 @@ class GraphConverter:
             ).do_transformation()
 
             self._tmp_graph_def = ShareQDQForItexYPatternOptimizer(self._tmp_graph_def).do_transformation()
-            self._tmp_graph_def = MergeDuplicatedQDQOptimizer(self._tmp_graph_def).do_transformation()
+            # self._tmp_graph_def = MergeDuplicatedQDQOptimizer(self._tmp_graph_def).do_transformation()
             from neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.convert_qdq_to_uniform_qdq import ConvertUniformQDQOptimizer
             self._tmp_graph_def = ConvertUniformQDQOptimizer(self._tmp_graph_def).do_transformation()
             self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)

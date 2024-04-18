@@ -1188,6 +1188,7 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
     def graph_def(self, graph_def):
         """Set graph definition."""
         self._graph_def = graph_def
+        self.adjust_weight(self.graph_def)
         # the attributes of some nodes can't be correctly read if don't import the graph_def
         tf.import_graph_def(self._graph_def, name="")
 
@@ -1219,7 +1220,6 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
         """Return dict of weight scaler for smooth quantization."""
         if not self._sq_weight_scale_dict:
             self._sq_weight_scale_dict = self.kwargs.get("sq_weight_scale_dict", None)
-        assert self._weight_name_mapping is not None, "sq_weight_scale_dict should not be None!"
         return self._sq_weight_scale_dict
 
     @sq_weight_scale_dict.setter
@@ -1279,16 +1279,31 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
 
         from neural_compressor.tensorflow.quantization.utils.utility import reconstruct_saved_model
 
+        if not self.model_path:
+            self.model_path = DEFAULT_WORKSPACE
+        self.model_path = os.path.abspath(os.path.expanduser(self.model_path))
+        if os.path.exists(self.model_path):
+            import shutil
+            shutil.rmtree(self.model_path)
+        os.makedirs(self.model_path, exist_ok=True)
+
         reconstruct_saved_model(graph_def, self.func, self.frozen_func, self._saved_model, self.model_path)
         model = load.load(self.model_path, [tag_constants.SERVING])
 
+        if not self._sq_weight_scale_dict:
+            self._auto_trackable = model
+            return 
+        
         for idx, weight_tensor in enumerate(model.variables):
             parsed_weight_name = self.weight_name_mapping(weight_tensor.name)
             if parsed_weight_name in self.sq_weight_scale_dict:
-                weight_array = np.transpose(weight_tensor, [1, 0])
-                weight_array *= self.sq_weight_scale_dict[parsed_weight_name]
-                weight_array = np.transpose(weight_array, [1, 0])
-                tf.compat.v1.assign(model.variables[idx], weight_array)
+                try:
+                    weight_array = np.transpose(weight_tensor, [1, 0])
+                    weight_array *= self.sq_weight_scale_dict[parsed_weight_name]
+                    weight_array = np.transpose(weight_array, [1, 0])
+                    tf.compat.v1.assign(model.variables[idx], weight_array)
+                except:
+                    breakpoint()
             else:
                 weight_array = weight_tensor
 
@@ -1309,68 +1324,13 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
             shutil.rmtree(root)
         os.makedirs(root, exist_ok=True)
 
-        self.adjust_weight(self._graph_def)
-        graph_def, _saved_model, func, frozen_func, _, _ = parse_saved_model(self._auto_trackable)
+        if self.sq_weight_scale_dict:
+            self.adjust_weight(self._graph_def)
+        graph_def, _saved_model, func, frozen_func, _, _ = parse_saved_model(self.model)
         reconstruct_saved_model(graph_def, func, frozen_func, _saved_model, root)
         logger.info("Save quantized model to {}.".format(root))
         # delete the LLM file saved in this temporary path
         shutil.rmtree(self.model_path, ignore_errors=True)
-
-
-class TensorflowSubclassedKerasModel(TensorflowSavedModelModel):
-    """Build a subclassed Keras model."""
-
-    def __init__(self, model="", **kwargs):
-        """Initialize a subclassed Keras model.
-
-        Args:
-            model (string or  tf.keras.Model object): model path or model object.
-        """
-        super(TensorflowSubclassedKerasModel, self).__init__(model)
-        self.model_type = "saved_model"
-        self._keras_model = None
-
-    def _build_as_functional_model(self, model_path):
-        TFSMlayer = tf.keras.layers.TFSMLayer(model_path, call_endpoint="serving_default")
-        inputs = tf.keras.Input(shape=(3, 224, 224))
-        outputs = TFSMlayer(inputs)
-        return tf.keras.Model(inputs, outputs)
-
-    @property
-    def model(self):
-        """Return model in Keras Functional object."""
-        if self._keras_model:
-            return self._keras_model
-
-
-        root = DEFAULT_WORKSPACE + "/keras_model.keras"
-        root = os.path.abspath(os.path.expanduser(root))
-        if os.path.exists(root):
-            shutil.rmtree(root)
-        os.makedirs(root, exist_ok=True)
-        if not self._sess:
-            self._load_sess(self._model, **self.kwargs)
-        _, builder = self.build_saved_model(root)
-        builder.save()
-        self._keras_model =  self._build_as_functional_model(root)
-        shutil.rmtree(root)
-
-        return self._keras_model
-
-    @model.setter
-    def model(self, q_model):
-        """Set model itself."""
-        self._keras_model = q_model
-
-    def save(self, root=None):
-        """Save Tensorflow QAT model."""
-        if not root:
-            root = DEFAULT_WORKSPACE + "/keras_model.keras"
-        root = os.path.abspath(os.path.expanduser(root))
-        os.makedirs(os.path.dirname(root), exist_ok=True)
-
-        self.model.save(root)
-        return root
 
 
 class TensorflowQATModel(TensorflowSavedModelModel):

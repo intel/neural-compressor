@@ -16,7 +16,7 @@
 ---
 -
   version:
-    name: ['2.11.0202242', '2.11.0202250', '2.11.0202317', '2.11.0202323', '2.14.0202335', '2.14.dev202335', '2.15.0202341', '2.16.1, '2.17.0']
+    name: ['default']
 
   bf16: ["_MklLayerNorm", "Conv2D", "Conv2DBackpropFilter", "Conv2DBackpropInput", "Conv3D", "Conv3DBackpropFilterV2", "Conv3DBackpropInputV2",
           "DepthwiseConv2dNative", "DepthwiseConv2dNativeBackpropFilter", "DepthwiseConv2dNativeBackpropInput", "GRUBlockCell",
@@ -35,8 +35,9 @@
           "ReverseV2","Round", "Select","SelectV2","Shape","ShapeN","Sign","Slice","Snapshot","SpaceToBatch","SpaceToBatchND","SpaceToDepth",
           "Split","SplitV","Squeeze","StopGradient","StridedSlice","StridedSliceGrad","Switch","Tile","TopK","TopKV2","Transpose",
           "Where","Unpack","ZerosLike" #clear list
-          ]
+  ]
   fp32: ['*'] # '*' means all op types
+
   int8: {
     'static': {
         'Conv2D': {
@@ -87,7 +88,7 @@
           'weight': {
                       'dtype': ['int8'],
                       'scheme': ['sym'],
-                      'granularity': ['per_tensor', 'per_channel'],
+                      'granularity': ['per_tensor'],
                       'algorithm': ['minmax']
                       },
           'activation': {
@@ -139,105 +140,10 @@
         'MaxPool': *ref_default_static,
         'MaxPool3D': *ref_default_static,
         'AvgPool': *ref_default_static,
+        '_MklFusedInstanceNorm': *ref_default_static,
         'Conv2DBackpropInput': *ref_default_static,
         'Conv3DBackpropInputV2': *ref_default_static,
         'default': *ref_default_static
-    },
-    'dynamic': {
-    }
-  }
-
-
--
-  version:
-    name: ['2.1.0', '2.2.0', '2.3.0', '2.4.0', '2.5.0', '2.6.0', '2.6.1', '2.6.2', '2.7.0', '2.8.0', '2.9.0', '2.9.1', '2.10.0', '2.11.0', '2.12.0', '2.13.0', '1.15.0-up1', '1.15.0-up2', '1.15.0-up3']
-
-  bf16: ['Conv2D', 'Conv3D', 'MatMul', 'BatchMatMul', 'MaxPool', 'MaxPool3D', 'AvgPool', 'AvgPool3D', 'DepthwiseConv2dNative']
-  fp32: ['*'] # '*' means all op types
-
-  int8: {
-    'static': {
-      'Conv2D': {
-        'weight': {
-                    'dtype': ['int8'],
-                    'scheme': ['sym'],
-                    'granularity': ['per_channel','per_tensor'],
-                    'algorithm': ['minmax']
-                    },
-        'activation': {
-                    'dtype': ['int8', 'uint8'],
-                    'scheme': ['sym'],
-                    'granularity': ['per_tensor'],
-                    'algorithm': ['minmax', 'kl']
-                    }
-                },
-      'MatMul': {
-        'weight': {
-                    'dtype': ['int8'],
-                    'scheme': ['sym'],
-                    'granularity': ['per_tensor'],
-                    'algorithm': ['minmax']
-                    },
-        'activation': {
-                    'dtype': ['int8', 'uint8'],
-                    'scheme': ['asym', 'sym'],
-                    'granularity': ['per_tensor'],
-                    'algorithm': ['minmax']
-                    }
-                },
-      'DepthwiseConv2dNative': *ref_default_static,
-      'ConcatV2': *ref_default_static,
-      'MaxPool': *ref_default_static,
-      'AvgPool': *ref_default_static,
-      'default': *ref_default_static
-    },
-    'dynamic': {
-    }
-  }
-
-
-
--
-  version:
-    name: ['default', '1.15.0', '1.15.2', '2.0.0', '2.0.1']
-
-  bf16: []
-  fp32: ['*'] # '*' means all op types
-  int8: {
-    'static': {
-      'Conv2D': {
-        'weight': {
-                    'dtype': ['int8'],
-                    'scheme': ['sym'],
-                    'granularity': ['per_channel','per_tensor'],
-                    'algorithm': ['minmax']
-                    },
-        'activation': {
-                    'dtype': ['uint8'],
-                    'scheme': ['sym'],
-                    'granularity': ['per_tensor'],
-                    'algorithm': ['minmax', 'kl']
-                    }
-                },
-      'MatMul': {
-        'weight': {
-                    'dtype': ['int8'],
-                    'scheme': ['sym'],
-                    'granularity': ['per_tensor'],
-                    'algorithm': ['minmax']
-                    },
-        'activation': {
-                    'dtype': ['uint8'],
-                    'scheme': ['asym', 'sym'],
-                    'granularity': ['per_tensor'],
-                    'algorithm': ['minmax']
-                    }
-                },
-      'DepthwiseConv2dNative': *ref_default_static,
-      'ConcatV2': *ref_default_static,
-      'MaxPool': *ref_default_static,
-      'AvgPool': *ref_default_static,
-      'default': *ref_default_static
     },
     'dynamic': {
     }
