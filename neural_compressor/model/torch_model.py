@@ -575,6 +575,12 @@ class PyTorchModel(PyTorchBaseModel):
                     autoround_zp = None if scheme == "sym" else torch.tensor(autoround_conf["zero"], dtype=torch.int32)
                     int_weight = quant_weight_w_scale(fp32_weight, autoround_scale, autoround_zp, group_size)
                     int_weight = int_weight.type(torch.int32)
+                    if torch.cuda.is_available():
+                        device = "cuda"
+                    elif hasattr(torch, 'xpu') and torch.xpu.is_available():
+                        device = "xpu"
+                    else:
+                        device = "cpu"
                     new_module = WeightOnlyLinear(
                         m.in_features,
                         m.out_features,
