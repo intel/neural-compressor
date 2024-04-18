@@ -329,8 +329,10 @@ class GPTQDataloader(CalibrationDataReader):
         self.iter_next = iter(self.encoded_list)
 
 if __name__ == "__main__":
-    from neural_compressor import set_workspace
+    from neural_compressor_ort.common import set_workspace
     set_workspace(args.workspace)
+    if not os.path.exists(args.workspace):
+        os.mkdir(args.workspace)
 
     if args.benchmark:
         if args.mode == 'performance':
@@ -346,6 +348,7 @@ if __name__ == "__main__":
         model_path = os.path.join(args.model_path, model_name)
 
         # do graph optimization
+        logger.info("Start graph optimization...")
         sess_options = ort.SessionOptions()
         sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED
         sess_options.optimized_model_filepath = os.path.join(args.workspace, "Optimized_model.onnx")
@@ -356,6 +359,7 @@ if __name__ == "__main__":
             "session.optimized_model_external_initializers_min_size_in_bytes", "1024"
         )
         sess = ort.InferenceSession(model_path, sess_options, providers=["CPUExecutionProvider"])
+        logger.info("Graph optimization done.")
 
         if args.algorithm.upper() == "RTN":
             algo_config = matmul_nbits_quantizer.RTNWeightOnlyQuantConfig()
