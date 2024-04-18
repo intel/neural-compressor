@@ -59,7 +59,7 @@ __all__ = [
     "get_default_awq_config",
     "SmoothQuantConfig",
     "get_default_sq_config",
-    "get_woq_tuning_config" ,
+    "get_woq_tuning_config",
     "get_all_config_set",
     "StaticQuantConfig",
     "DynamicQuantConfig",

@@ -169,7 +169,10 @@ class RTNConfig(BaseConfig):
                     if re.match(op_name_pattern, op_name):
                         config_mapping[(op_name, op_type)] = op_name_config_dict[op_name_pattern]
         if not self.quant_last_matmul:
-            config_mapping[model_info[-1]] = {"weight": {"dtype": "fp32"}, "activation": {"dtype": "fp32", "quant_mode": "fp32"}}
+            config_mapping[model_info[-1]] = {
+                "weight": {"dtype": "fp32"},
+                "activation": {"dtype": "fp32", "quant_mode": "fp32"},
+            }
         return config_mapping
 
     @staticmethod
@@ -332,7 +335,10 @@ class GPTQConfig(BaseConfig):
                     if re.match(op_name_pattern, op_name):
                         config_mapping[(op_name, op_type)] = op_name_config_dict[op_name_pattern]
         if not self.quant_last_matmul:
-            config_mapping[model_info[-1]] = {"weight": {"dtype": "fp32"}, "activation": {"dtype": "fp32", "quant_mode": "fp32"}}
+            config_mapping[model_info[-1]] = {
+                "weight": {"dtype": "fp32"},
+                "activation": {"dtype": "fp32", "quant_mode": "fp32"},
+            }
         return config_mapping
 
     @staticmethod
@@ -481,7 +487,10 @@ class AWQConfig(BaseConfig):
                     if re.match(op_name_pattern, op_name):
                         config_mapping[(op_name, op_type)] = op_name_config_dict[op_name_pattern]
         if not self.quant_last_matmul:
-            config_mapping[model_info[-1]] = {"weight": {"dtype": "fp32"}, "activation": {"dtype": "fp32", "quant_mode": "fp32"}}
+            config_mapping[model_info[-1]] = {
+                "weight": {"dtype": "fp32"},
+                "activation": {"dtype": "fp32", "quant_mode": "fp32"},
+            }
         return config_mapping
 
     @staticmethod
@@ -633,6 +642,7 @@ def get_default_sq_config() -> SmoothQuantConfig:
 
 
 ######################## WOQ Tuning Config ###############################
+
 
 def get_woq_tuning_config() -> list:
     """Generate the config set for WOQ tuning.
