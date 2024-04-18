@@ -342,11 +342,13 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
         self.assertIsNotNone(best_model)
         self.assertEqual(
             len(op_names),
-            len([
-                i.name
-                for i in best_model.graph.node
-                if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q{}G{}".format(4, 32))
-            ])
+            len(
+                [
+                    i.name
+                    for i in best_model.graph.node
+                    if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q{}G{}".format(4, 32))
+                ]
+            )
             + 1,
         )
 
