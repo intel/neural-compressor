@@ -1,0 +1,60 @@
+{
+    "onnxrt": {
+      "llama-2-7b-rtn": {
+        "model_src_dir": "nlp/huggingface_model/text_generation/llama/quantization/weight_only",
+        "dataset_location": "",
+        "input_model": "/tf_dataset2/models/onnx/Llama-2-7b-hf",
+        "main_script": "main.py",
+        "batch_size": 1
+      },
+      "llama-2-7b-rtn-with-past": {
+        "model_src_dir": "nlp/huggingface_model/text_generation/llama/quantization/weight_only",
+        "dataset_location": "",
+        "input_model": "/tf_dataset2/models/onnx/Llama-2-7b-hf-with-past",
+        "main_script": "main.py",
+        "batch_size": 1
+      },
+      "llama-2-7b-awq": {
+        "model_src_dir": "nlp/huggingface_model/text_generation/llama/quantization/weight_only",
+        "dataset_location": "",
+        "input_model": "/tf_dataset2/models/onnx/Llama-2-7b-hf",
+        "main_script": "main.py",
+        "batch_size": 1
+      },
+      "llama-2-7b-awq-with-past": {
+        "model_src_dir": "nlp/huggingface_model/text_generation/llama/quantization/weight_only",
+        "dataset_location": "",
+        "input_model": "/tf_dataset2/models/onnx/Llama-2-7b-hf-with-past",
+        "main_script": "main.py",
+        "batch_size": 1
+      },
+      "llama-2-7b-gptq": {
+        "model_src_dir": "nlp/huggingface_model/text_generation/llama/quantization/weight_only",
+        "dataset_location": "",
+        "input_model": "/tf_dataset2/models/onnx/Llama-2-7b-hf",
+        "main_script": "main.py",
+        "batch_size": 1
+      },
+      "llama-2-7b-gptq-with-past": {
+        "model_src_dir": "nlp/huggingface_model/text_generation/llama/quantization/weight_only",
+        "dataset_location": "",
+        "input_model": "/tf_dataset2/models/onnx/Llama-2-7b-hf-with-past",
+        "main_script": "main.py",
+        "batch_size": 1
+      },
+      "llama-2-7b-woq_tune": {
+        "model_src_dir": "nlp/huggingface_model/text_generation/llama/quantization/weight_only",
+        "dataset_location": "",
+        "input_model": "/tf_dataset2/models/onnx/Llama-2-7b-hf",
+        "main_script": "main.py",
+        "batch_size": 1
+      },
+      "llama-2-7b-woq_tune-with-past": {
+        "model_src_dir": "nlp/huggingface_model/text_generation/llama/quantization/weight_only",
+        "dataset_location": "",
+        "input_model": "/tf_dataset2/models/onnx/Llama-2-7b-hf-with-past",
+        "main_script": "main.py",
+        "batch_size": 1
+      },
+    }
+  }
