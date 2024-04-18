@@ -37,6 +37,7 @@ from neural_compressor_ort.quantization import (
     RTNConfig,
     SmoothQuantConfig,
     autotune,
+    get_woq_tuning_config,
 )
 
 logger = Logger().get_logger()
@@ -312,8 +313,6 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
         self.assertTrue(len(op_names) > 0)
 
     def test_woq_auto_tune(self):
-        from neural_compressor_ort.quantization import AWQConfig, GPTQConfig, RTNConfig, get_woq_tuning_config
-
         partial_fake_eval = partial(fake_eval, eval_result_lst=[1.0, 0.8, 0.99, 1.0, 0.99, 0.99])
 
         custom_tune_config = TuningConfig(config_set=[RTNConfig(weight_bits=4), AWQConfig(weight_bits=8)])
