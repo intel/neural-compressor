@@ -424,3 +424,4 @@ if __name__ == "__main__":
                 os.path.join(args.output_model, model_name),
                 save_as_external_data=True,
             )
+            config.to_json_file(os.path.join(args.output_model, "config.json"), use_diff=False)
