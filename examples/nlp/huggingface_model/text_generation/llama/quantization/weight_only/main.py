@@ -81,8 +81,8 @@ parser.add_argument(
 parser.add_argument(
     "--algorithm",
     type=str,
-    default="RTN",
-    choices=["RTN", "AWQ", "GPTQ"],
+    default="WOQ_TUNE",
+    choices=["WOQ_TUNE", "RTN", "AWQ", "GPTQ"],
     help="weight only algorithm"
 )
 parser.add_argument(
@@ -370,6 +370,8 @@ if __name__ == "__main__":
                 is_symmetric=True,
                 algo_config=algo_config,
             )
+            quant.process()
+            quant.model.save(os.path.join(args.output_model, model_name))
 
         elif args.algorithm.upper() == "AWQ":
             calibration_data_reader = AWQDataloader(model_path, pad_max=args.pad_max, batch_size=1)
@@ -384,9 +386,11 @@ if __name__ == "__main__":
                 is_symmetric=True,
                 algo_config=algo_config,
             )
+            quant.process()
+            quant.model.save(os.path.join(args.output_model, model_name))
 
         elif args.algorithm.upper() == "GPTQ":
-            calibration_data_reader = GPTQDataloader(model_path, batch_size=1)
+            calibration_data_reader = GPTQDataloader(model_path, seqlen=args.seqlen, batch_size=1)
             algo_config = matmul_nbits_quantizer.GPTQWeightOnlyQuantConfig(
                 calibration_data_reader=calibration_data_reader,
             )
@@ -397,6 +401,23 @@ if __name__ == "__main__":
                 is_symmetric=False,
                 algo_config=algo_config,
             )
+            quant.process()
+            quant.model.save(os.path.join(args.output_model, model_name))
 
-        quant.process()
-        quant.model.save(os.path.join(args.output_model, model_name))
+        elif args.algorithm.upper() == "WOQ_TUNE":
+            from neural_compressor_ort.quantization import get_woq_tuning_config, autotune
+            from neural_compressor_ort.common.base_tuning import TuningConfig
+            calibration_data_reader = GPTQDataloader(model_path, seqlen=args.seqlen, batch_size=1)
+            # set tolerable_loss to 0.5% for test, default is 1%
+            custom_tune_config = TuningConfig(config_set=get_woq_tuning_config(), tolerable_loss=0.005)
+            best_model = autotune(
+                model_input=model_path,
+                tune_config=custom_tune_config,
+                eval_fn=eval_func,
+                calibration_data_reader=calibration_data_reader,
+            )
+            onnx.save_model(
+                best_model,
+                os.path.join(args.output_model, model_name),
+                save_as_external_data=True,
+            )
