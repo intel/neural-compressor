@@ -8,13 +8,13 @@ dataset = load_dataset("huggingface/cats-image")
 image = dataset["test"]["image"][0]
 
 image_processor = AutoImageProcessor.from_pretrained("microsoft/resnet-50")
-inputs = image_processor(image, return_tensors="tf")
+input_data = image_processor(image, return_tensors="tf")
 
 class Dataset(object):
     def __init__(self, batch_size=100):
         self.length = 100
         self.batch_size = 1
-        self.data = [inputs['pixel_values'].numpy()]*100
+        self.data = [input_data['pixel_values'].numpy()]*100
 
     def __len__(self):
         return len(self.data)
@@ -33,9 +33,9 @@ model = Model("resnet50-saved-model/saved_model/1", modelType="llm_saved_model")
 model.weight_name_mapping = weight_name_mapping
 
 q_model = quantize_model(model, quant_config, calib_dataloader)
-q_model.save("int8_model")
+q_model.save("resnet50_uniform_qdq")
 
-TFSMlayer = tf.keras.layers.TFSMLayer("int8_model", call_endpoint="serving_default")
+TFSMlayer = tf.keras.layers.TFSMLayer("resnet50_uniform_qdq", call_endpoint="serving_default")
 inputs = tf.keras.Input(shape=(3, 224, 224))
 outputs = TFSMlayer(inputs)
 model = tf.keras.Model(inputs, outputs)
@@ -43,5 +43,5 @@ model = tf.keras.Model(inputs, outputs)
 model.save("quantized_resnet50.keras")
 model.summary()
 
-preds = model.predict(inputs['pixel_values'])
+preds = model.predict(input_data['pixel_values'])
 print(preds)

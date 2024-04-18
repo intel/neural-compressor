@@ -16,7 +16,7 @@
 ---
 -
   version:
-    name: ['2.11.0202242', '2.11.0202250', '2.11.0202317', '2.11.0202323', '2.14.0202335', '2.14.dev202335', '2.15.0202341', '2.16.1, '2.17.0']
+    name: ['2.11.0202242', '2.11.0202250', '2.11.0202317', '2.11.0202323', '2.14.0202335', '2.14.dev202335', '2.15.0202341', '2.16.1', '2.17.0']
 
   bf16: ["_MklLayerNorm", "Conv2D", "Conv2DBackpropFilter", "Conv2DBackpropInput", "Conv3D", "Conv3DBackpropFilterV2", "Conv3DBackpropInputV2",
           "DepthwiseConv2dNative", "DepthwiseConv2dNativeBackpropFilter", "DepthwiseConv2dNativeBackpropInput", "GRUBlockCell",
