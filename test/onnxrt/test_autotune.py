@@ -19,13 +19,13 @@ import glob
 import os
 import shutil
 import unittest
+from functools import partial
 from typing import Callable, Dict, List, Optional, Union
 from unittest.mock import patch
 
 import numpy as np
 import onnx
 import onnxruntime as ort
-from functools import partial
 from optimum.exporters.onnx import main_export
 
 from neural_compressor_ort.common import Logger
@@ -45,6 +45,7 @@ logger = Logger().get_logger()
 def fake_eval(model, eval_result_lst):
     acc = eval_result_lst.pop(0)
     return acc
+
 
 def _create_evaluator_for_eval_fns(eval_fns: Optional[Union[Callable, Dict, List[Dict]]] = None) -> Evaluator:
     evaluator = Evaluator()
@@ -311,7 +312,8 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
         self.assertTrue(len(op_names) > 0)
 
     def test_woq_auto_tune(self):
-        from neural_compressor_ort.quantization import RTNConfig, AWQConfig, GPTQConfig
+        from neural_compressor_ort.quantization import AWQConfig, GPTQConfig, RTNConfig
+
         partial_fake_eval = partial(fake_eval, eval_result_lst=[1.0, 0.8, 0.99, 1.0, 0.99, 0.99])
 
         custom_tune_config = TuningConfig(config_set=[RTNConfig(weight_bits=4), AWQConfig(weight_bits=8)])
@@ -328,6 +330,7 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
             if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q{}G{}".format(8, 32))
         ]
         self.assertTrue(len(op_names) > 0)
+
 
 if __name__ == "__main__":
     unittest.main()
