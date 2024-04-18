@@ -361,6 +361,7 @@ if __name__ == "__main__":
         sess = ort.InferenceSession(model_path, sess_options, providers=["CPUExecutionProvider"])
         logger.info("Graph optimization done.")
 
+        best_model = None
         if args.algorithm.upper() == "RTN":
             algo_config = matmul_nbits_quantizer.RTNWeightOnlyQuantConfig()
             quant = matmul_nbits_quantizer.MatMulNBitsQuantizer(
@@ -371,7 +372,7 @@ if __name__ == "__main__":
                 algo_config=algo_config,
             )
             quant.process()
-            quant.model.save(os.path.join(args.output_model, model_name))
+            best_model = quant.model
 
         elif args.algorithm.upper() == "AWQ":
             calibration_data_reader = AWQDataloader(model_path, pad_max=args.pad_max, batch_size=1)
@@ -387,7 +388,7 @@ if __name__ == "__main__":
                 algo_config=algo_config,
             )
             quant.process()
-            quant.model.save(os.path.join(args.output_model, model_name))
+            best_model = quant.model
 
         elif args.algorithm.upper() == "GPTQ":
             calibration_data_reader = GPTQDataloader(model_path, seqlen=args.seqlen, batch_size=1)
@@ -402,7 +403,7 @@ if __name__ == "__main__":
                 algo_config=algo_config,
             )
             quant.process()
-            quant.model.save(os.path.join(args.output_model, model_name))
+            best_model = quant.model
 
         elif args.algorithm.upper() == "WOQ_TUNE":
             from neural_compressor_ort.quantization import get_woq_tuning_config, autotune
@@ -416,6 +417,8 @@ if __name__ == "__main__":
                 eval_fn=eval_func,
                 calibration_data_reader=calibration_data_reader,
             )
+
+        if best_model is not None:
             onnx.save_model(
                 best_model,
                 os.path.join(args.output_model, model_name),
