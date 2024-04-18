@@ -331,7 +331,7 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
         ]
         self.assertTrue(len(op_names) > 0)
 
-        partial_fake_eval = partial(fake_eval, eval_result_lst=[1.0, 0.8, 0.99, 1.0, 0.99, 0.99])
+        partial_fake_eval = partial(fake_eval, eval_result_lst=[1.0, 0.8, 0.81, 1.0, 0.99, 0.99])
 
         custom_tune_config = TuningConfig(config_set=get_woq_tuning_config())
         best_model = autotune(
@@ -342,16 +342,16 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
         )
         self.assertIsNotNone(best_model)
         self.assertEqual(
-            op_names,
-            [
+            len(op_names),
+            len([
                 i.name
                 for i in best_model.graph.node
-                if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q{}G{}".format(8, 32))
-            ]
+                if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q{}G{}".format(4, 32))
+            ])
             + 1,
         )
 
-        partial_fake_eval = partial(fake_eval, eval_result_lst=[1.0, 0.8, 0.99, 0.99, 1.0, 0.99])
+        partial_fake_eval = partial(fake_eval, eval_result_lst=[1.0, 0.8, 0.81, 0.81, 1.0, 0.99])
 
         custom_tune_config = TuningConfig(config_set=get_woq_tuning_config())
         best_model = autotune(
