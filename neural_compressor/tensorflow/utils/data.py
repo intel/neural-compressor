@@ -17,16 +17,220 @@
 # ==============================================================================
 """BaseDataloder of all dataloaders."""
 
+import collections
+import math
 import sys
 from abc import abstractmethod
 
 import numpy as np
+import tensorflow as tf
 
 from neural_compressor.common import logger
 
 
+def default_collate(batch):  # pragma: no cover
+    """Merge data with outer dimension batch size."""
+    elem = batch[0]
+    if isinstance(elem, collections.abc.Mapping):
+        return {key: default_collate([d[key] for d in batch]) for key in elem}
+    elif isinstance(elem, collections.abc.Sequence):
+        batch = zip(*batch)
+        return [default_collate(samples) for samples in batch]
+    elif isinstance(elem, np.ndarray):
+        try:
+            return np.stack(batch)
+        except:
+            return batch
+    else:
+        return batch
+
+
+class IterableFetcher:
+    """Iterate to get next batch-size samples as a batch."""
+
+    def __init__(self, dataset, collate_fn, drop_last, distributed):
+        """Initialize IterableFetcher.
+
+        Args:
+            dataset (object): dataset object from which to get data
+            collate_fn (callable): merge data with outer dimension batch size
+            drop_last (bool): whether to drop the last batch if it is incomplete
+            distributed (bool): whether the dataloader is distributed
+        """
+        self.dataset = dataset
+        self.collate_fn = collate_fn
+        self.drop_last = drop_last
+        self.dataset_iter = iter(dataset)
+        self.index_whole = 0
+        self.process_rank = 0  # The default rank is 0, which represents the main process
+        self.process_size = 1  # By default, process_size=1, only the main process is running
+        if distributed:
+            import horovod.tensorflow as hvd
+
+            hvd.init()
+            self.process_rank = hvd.rank()
+            self.process_size = hvd.size()
+            if self.process_size < 2:
+                raise EnvironmentError(
+                    "The program is now trying to traverse"
+                    " the distributed TensorFlow DefaultDataLoader in only one process."
+                    " If you do not want to use distributed DataLoader, please set"
+                    " 'distributed: False'. Or If you want to use distributed DataLoader,"
+                    " please set 'distributed: True' and launch multiple processes."
+                )
+
+    def __call__(self, batched_indices):
+        """Fetch data.
+
+        Args:
+            batched_indices (list): fetch data according to batched_indices
+        """
+        batch_data = []
+        batch_size = len(batched_indices)
+        while True:
+            try:
+                iter_data = next(self.dataset_iter)
+                if (self.index_whole - self.process_rank) % self.process_size == 0:
+                    batch_data.append(iter_data)
+                self.index_whole += 1
+                if len(batch_data) == batch_size:
+                    break
+            except StopIteration:
+                break
+        if len(batch_data) == 0 or (self.drop_last and len(batch_data) < len(batched_indices)):
+            raise StopIteration
+        return self.collate_fn(batch_data)
+
+
+class IndexFetcher:
+    """Take single index or a batch of indices to fetch samples as a batch."""
+
+    def __init__(self, dataset, collate_fn, drop_last, distributed):
+        """Initialize IndexFetcher.
+
+        Args:
+            dataset (object): dataset object from which to get data
+            collate_fn (callable): merge data with outer dimension batch size
+            drop_last (bool): whether to drop the last batch if it is incomplete
+            distributed (bool): whether the dataloader is distributed
+        """
+        self.dataset = dataset
+        self.collate_fn = collate_fn
+        self.drop_last = drop_last
+
+    def __call__(self, batched_indices):
+        """Fetch data.
+
+        Args:
+            batched_indices (list): fetch data according to batched_indices
+        """
+        data = [self.dataset[idx] for idx in batched_indices]
+        return self.collate_fn(data)
+
+
+class IterableSampler:
+    """Internally samples elements.
+
+    Used for datasets retrieved element by iterator. Yield None to act as a placeholder for each iteration.
+    """
+
+    def __init__(self, dataset):
+        """Initialize IterableSampler.
+
+        Args:
+            dataset (object): dataset object from which to get data
+        """
+        self.whole_dataset = dataset
+
+    def __iter__(self):
+        """Yield data in iterative order."""
+        while True:
+            yield None
+
+    def __len__(self):
+        """Return the length of dataset."""
+        return len(self.whole_dataset)
+
+
+class SequentialSampler:
+    """Sequentially samples elements, used for datasets retrieved element by index."""
+
+    def __init__(self, dataset, distributed):
+        """Initialize SequentialSampler.
+
+        Args:
+            dataset (object): dataset object from which to get data
+            distributed (bool): whether the dataloader is distributed
+        """
+        self.whole_dataset = dataset
+        self.distributed = distributed
+
+    def __iter__(self):
+        """Yield data in iterative order."""
+        self.process_rank = 0  # The default rank is 0, which represents the main process
+        self.process_size = 1  # By default, process_size=1, only the main process is running
+        if self.distributed:
+            import horovod.tensorflow as hvd
+
+            hvd.init()
+            self.process_rank = hvd.rank()
+            self.process_size = hvd.size()
+            if self.process_size < 2:
+                raise EnvironmentError(
+                    "The program is now trying to traverse"
+                    " the distributed TensorFlow DefaultDataLoader in only one process."
+                    " If you do not want to use distributed DataLoader, please set"
+                    " 'distributed: False'. Or If you want to use distributed DataLoader,"
+                    " please set 'distributed: True' and launch multiple processes."
+                )
+        return iter(range(self.process_rank, len(self.whole_dataset), self.process_size))
+
+    def __len__(self):
+        """Return the length of dataset."""
+        return len(self.whole_dataset)
+
+
+class BatchSampler:
+    """Yield a batch of indices and number of batches."""
+
+    def __init__(self, sampler, batch_size, drop_last=True):
+        """Initialize BatchSampler.
+
+        Args:
+            sampler (Sampler): sampler used for generating batches
+            batch_size (int): size of batch
+            drop_last (bool, optional): whether to drop the last batch if it is incomplete. Defaults to True.
+        """
+        if isinstance(drop_last, bool):
+            self.drop_last = drop_last
+        else:
+            raise ValueError("last_batch only support bool as input")
+
+        self.sampler = sampler
+        self.batch_size = batch_size
+        self.drop_last = drop_last
+
+    def __iter__(self):
+        """Yield data in iterative order."""
+        batch = []
+        for idx in self.sampler:
+            batch.append(idx)
+            if len(batch) == self.batch_size:
+                yield batch
+                batch = []
+        if len(batch) > 0 and not self.drop_last:
+            yield batch
+
+    def __len__(self):
+        """Return the number of batches."""
+        if self.drop_last:
+            return len(self.sampler) // self.batch_size
+        else:
+            return (len(self.sampler) + self.batch_size - 1) // self.batch_size
+
+
 class BaseDataLoader:  # pragma: no cover
-    """Base class for all DataLoaders.
+    """Base class for TF DataLoaders.
 
     _generate_dataloader is needed to create a dataloader object
     from the general params like batch_size and sampler. The dynamic batching is just to
@@ -46,7 +250,7 @@ class BaseDataLoader:  # pragma: no cover
         shuffle=False,
         distributed=False,
     ):
-        """Initialize BaseDataLoader.
+        """Initialize DefaultDataLoader.
 
         Args:
             dataset (object): dataset from which to load the data
@@ -63,73 +267,63 @@ class BaseDataLoader:  # pragma: no cover
             distributed (bool, optional): whether the dataloader is distributed. Defaults to False.
         """
         self.dataset = dataset
-        self.collate_fn = collate_fn
+        self.last_batch = last_batch
         self.sampler = sampler
         self.batch_sampler = batch_sampler
         self.num_workers = num_workers
         self.pin_memory = pin_memory
-        self._batch_size = batch_size
+        self.collate_fn = collate_fn
+        self.batch_size = batch_size
         self.shuffle = shuffle
         self.distributed = distributed
-        self.last_batch = last_batch
         self.drop_last = False if last_batch == "rollover" else True
+        if self.collate_fn is None:
+            self.collate_fn = default_collate
 
-        self.dataloader = self._generate_dataloader(
-            self.dataset,
-            batch_size=batch_size,
-            last_batch=last_batch,
-            collate_fn=collate_fn,
-            sampler=sampler,
-            batch_sampler=batch_sampler,
-            num_workers=num_workers,
-            pin_memory=pin_memory,
-            shuffle=shuffle,
-            distributed=distributed,
-        )
-
-    def batch(self, batch_size, last_batch=None):
-        """Set batch size for dataloader.
-
-        Args:
-            batch_size (int): number of samples per batch.
-            last_batch (str, optional): whether to drop the last batch if it is incomplete.
-                                        Support ['rollover', 'discard'], rollover means False, discard means True.
-                                        Defaults to None.
-        """
-        self._batch_size = batch_size
-        if last_batch is not None:
-            self.last_batch = last_batch
-        self.dataloader = self._generate_dataloader(
-            self.dataset,
-            batch_size,
-            self.last_batch,
-            self.collate_fn,
-            self.sampler,
-            self.batch_sampler,
-            self.num_workers,
-            self.pin_memory,
-            self.shuffle,
-            self.distributed,
-        )
+    def batch(self, batch_size, last_batch="rollover"):
+        """Set batch_size and last_batch."""
+        self.batch_size = batch_size
+        self.last_batch = last_batch
 
     @property
-    def batch_size(self):
-        """Get dataloader's batch_size.
-
-        Returns:
-            int: batch_size
-        """
-        return self._batch_size
+    def dataloader(self):
+        """Return dataloader."""
+        return self
 
     def __iter__(self):
-        """Yield data in iterative order.
+        """Yield data in iterative order."""
+        return self._generate_dataloader(
+            self.dataset,
+            batch_size=self.batch_size,
+            last_batch=self.last_batch,
+            collate_fn=self.collate_fn,
+            sampler=self.sampler,
+            batch_sampler=self.batch_sampler,
+            num_workers=self.num_workers,
+            pin_memory=self.pin_memory,
+            shuffle=self.shuffle,
+            distributed=self.distributed,
+        )
 
-        Returns:
-            iterator: iterator for dataloder
-        """
-        return iter(self.dataloader)
+    def __len__(self):
+        """Get dataset length."""
+        try:
+            dataset_len = self.dataset.__len__()
+        except (AttributeError, TypeError):
+            dataset_len = 0
+            for _ in self.dataset:
+                dataset_len += 1
+        except Exception:
+            raise ValueError(
+                f"{self.dataset} is invalid, {self.dataset}"
+                " does not support calculating the length of its dataloader"
+            )
+        if self.drop_last is False:
+            dataloader_len = math.ceil(dataset_len / self.batch_size)
+        else:
+            dataloader_len = math.floor(dataset_len / self.batch_size)
+        return dataloader_len
 
-    @abstractmethod
     def _generate_dataloader(
         self,
         dataset,
@@ -143,7 +337,30 @@ class BaseDataLoader:  # pragma: no cover
         shuffle,
         distributed,
     ):
-        raise NotImplementedError
+        sampler = self._generate_sampler(dataset, distributed)
+        self.batch_sampler = BatchSampler(sampler, batch_size, self.drop_last)
+
+        if self.dataset_type == "index":
+            self.fetcher = IndexFetcher(dataset, collate_fn, self.drop_last, distributed)
+        elif self.dataset_type == "iter":
+            self.fetcher = IterableFetcher(dataset, collate_fn, self.drop_last, distributed)
+
+        for batched_indices in self.batch_sampler:
+            try:
+                data = self.fetcher(batched_indices)
+                yield data
+            except StopIteration:
+                return
+
+    def _generate_sampler(self, dataset, distributed):
+        if hasattr(dataset, "__getitem__"):
+            self.dataset_type = "index"
+            return SequentialSampler(dataset, distributed)
+        elif hasattr(dataset, "__iter__"):
+            self.dataset_type = "iter"
+            return IterableSampler(dataset)
+        else:
+            raise ValueError("dataset type only support (index, iter)")
 
 
 class DummyDataset:  # pragma: no cover

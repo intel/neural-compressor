@@ -15,17 +15,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from neural_compressor.common.utils import DEFAULT_WORKSPACE
-from neural_compressor.tensorflow.utils.model_wrappers import BaseModel, KerasModel, TensorflowModel, get_tf_model_type
+import copy
 
-framework_specific_info = {
-    "device": "cpu",
-    "backend": "default",
-    "approach": "post_training_static_quant",
-    "random_seed": 1978,
-    "workspace_path": DEFAULT_WORKSPACE,
-    "format": "default",
-}
+from neural_compressor.common.utils import DEFAULT_WORKSPACE
+from neural_compressor.tensorflow.utils.constants import TENSORFLOW_DEFAULT_CONFIG
+from neural_compressor.tensorflow.utils.model_wrappers import BaseModel, KerasModel, TensorflowModel, get_tf_model_type
+from neural_compressor.tensorflow.utils.utility import singleton
+
+
+@singleton
+class TensorflowGlobalConfig:
+    global_config = {
+        "device": "cpu",
+        "backend": "default",
+        "approach": "post_training_static_quant",
+        "random_seed": 1978,
+        "workspace_path": DEFAULT_WORKSPACE,
+        "format": "default",
+        "use_bf16": True,
+    }
+
+    def reset_global_config(self):
+        self.global_config = copy.deepcopy(TENSORFLOW_DEFAULT_CONFIG)
+        self.global_config["workspace_path"] = DEFAULT_WORKSPACE
+
+
+TFConfig = TensorflowGlobalConfig()
 
 
 class Model(object):
@@ -57,45 +72,42 @@ class Model(object):
             model_type = "saved_model"
 
         model = TensorflowModel(model_type, root, **kwargs)
-        conf = kwargs.pop("conf", "NA")
-        cls.set_framework_info(conf, model)
+        conf = kwargs.pop("conf", None)
+        cls.set_tf_config(conf, model)
 
         return model
 
     @staticmethod
-    def set_framework_info(conf, model):
-        if conf == "NA":
-            return
+    def set_tf_config(conf, model):
+        config = TFConfig.global_config
         framework = "keras" if isinstance(model, KerasModel) else "tensorflow"
 
-        if conf.device:
-            framework_specific_info["device"] = conf.device
-        if conf.approach:
-            framework_specific_info["approach"] = conf.approach
-        if conf.random_seed:
-            framework_specific_info["random_seed"] = conf.random_seed
-        if conf.inputs:
-            framework_specific_info["inputs"] = conf.inputs
-        if conf.outputs:
-            framework_specific_info["outputs"] = conf.outputs
+        if conf and "device" in conf:
+            config["device"] = conf["device"]
+        if conf and "approach" in conf:
+            config["approach"] = conf["approach"]
+        if conf and "random_seed" in conf:
+            config["random_seed"] = conf["random_seed"]
+        if conf and "inputs" in conf:
+            config["inputs"] = conf["inputs"]
+        if conf and "outputs" in conf:
+            config["outputs"] = conf["outputs"]
 
         if framework == "keras":
-            framework_specific_info["backend"] = "itex"
+            config["backend"] = "itex"
             return
 
         from neural_compressor.tensorflow.utils import itex_installed
 
-        if conf.performance_only:
-            framework_specific_info["performance_only"] = conf.performance_only
+        if conf and "performance_only" in conf:
+            config["performance_only"] = conf["performance_only"]
         if itex_installed():
-            framework_specific_info["backend"] = "itex"
-        if conf.workspace_path:
-            framework_specific_info["workspace_path"] = conf.workspace_path
-        if conf.recipes:
-            framework_specific_info["recipes"] = conf.recipes
-
-        framework_specific_info["use_bf16"] = conf.use_bf16 if conf.use_bf16 else False
+            config["backend"] = "itex"
+        if conf and "workspace_path" in conf:
+            config["workspace_path"] = conf["workspace_path"]
+        if conf and "recipes" in conf:
+            config["recipes"] = conf["recipes"]
 
         for item in ["scale_propagation_max_pooling", "scale_propagation_concat"]:
-            if framework_specific_info["recipes"] and item not in framework_specific_info["recipes"]:
-                framework_specific_info["recipes"].update({item: True})
+            if "recipes" in config and item not in config["recipes"]:
+                config["recipes"].update({item: True})

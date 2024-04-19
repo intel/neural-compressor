@@ -5,7 +5,7 @@ intel_extension_for_transformers
 optimum
 peft
 sentencepiece
-transformers==4.36.0
+transformers==4.38.0
 torch
 tqdm
 tiktoken
