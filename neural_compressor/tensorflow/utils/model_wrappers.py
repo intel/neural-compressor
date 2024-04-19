@@ -1375,9 +1375,13 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
         for idx, weight_tensor in enumerate(model.variables):
             parsed_weight_name = self.weight_name_mapping(weight_tensor.name)
             if parsed_weight_name in self.sq_weight_scale_dict:
-                weight_array = np.transpose(weight_tensor, [1, 0])
+                if len(weight_tensor.shape) == 4:
+                    shape_parm = [0, 1, 3, 2]
+                elif len(weight_tensor.shape) == 2:
+                    shape_parm = [1, 0]
+                weight_array = np.transpose(weight_tensor, shape_parm)
                 weight_array *= self.sq_weight_scale_dict[parsed_weight_name]
-                weight_array = np.transpose(weight_array, [1, 0])
+                weight_array = np.transpose(weight_array, shape_parm)
                 tf.compat.v1.assign(model.variables[idx], weight_array)
             else:
                 weight_array = weight_tensor
