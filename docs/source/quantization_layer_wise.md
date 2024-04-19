@@ -28,7 +28,7 @@ Large language models (LLMs) have shown exceptional performance across various t
 <tbody>
   <tr>
     <td style="text-align:center;vertical-align:middle" colspan="2">W8A8 Post Training Static Quantization</td>
-    <td style="text-align:center;vertical-align:middle">&#10004;</td>
+    <td style="text-align:center;vertical-align:middle">&#10005;</td>
   </tr>
   <tr>
     <td style="text-align:center;vertical-align:middle" rowspan="3">Weight-only Quantization</td>
