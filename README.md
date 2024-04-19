@@ -37,7 +37,7 @@ pip install neural-compressor
 
 Setting up the environment:  
 ```bash
-pip install "neural-compressor>=2.3" onnxruntime onnx
+pip install "neural-compressor>=2.3" "onnxruntime>=1.17.0" onnx
 ```
 After successfully installing these packages, try your first quantization program.
 
