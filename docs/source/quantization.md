@@ -71,7 +71,6 @@ Sometimes the reduce_range feature, that's using 7 bit width (1 sign bit + 6 dat
 Quantization has three different approaches:
 1) post training dynamic quantization
 2) post training static  quantization
-3) quantization aware training.
 
 The first two approaches belong to optimization on inference. The last belongs to optimization during training. Currently. ONNX Runtime doesn't support the last one.
 
@@ -86,10 +85,6 @@ This approach is widely used in dynamic length neural networks, like NLP model.
 Compared with `post training dynamic quantization`, the min/max range in weights and activations are collected offline on a so-called `calibration` dataset. This dataset should be able to represent the data distribution of those unseen inference dataset. The `calibration` process runs on the original fp32 model and dumps out all the tensor distributions for `Scale` and `ZeroPoint` calculations. Usually preparing 100 samples are enough for calibration.
 
 This approach is major quantization approach people should try because it could provide the better performance comparing with `post training dynamic quantization`.
-
-#### Quantization Aware Training
-
-Quantization aware training emulates inference-time quantization in the forward pass of the training process by inserting `fake quant` ops before those quantizable ops. With `quantization aware training`, all weights and activations are `fake quantized` during both the forward and backward passes of training: that is, float values are rounded to mimic int8 values, but all computations are still done with floating point numbers. Thus, all the weight adjustments during training are made while aware of the fact that the model will ultimately be quantized; after quantizing, therefore, this method will usually yield higher accuracy than either dynamic quantization or post-training static quantization.
 
 ## With or Without Accuracy Aware Tuning
 
