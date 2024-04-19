@@ -13,8 +13,6 @@
 # limitations under the License.
 
 import torch
-from auto_round import AutoRound  # pylint: disable=E0401
-from auto_round.calib_dataset import CALIB_DATASETS  # pylint: disable=E0401
 
 from neural_compressor.torch.utils import logger
 
@@ -42,6 +40,7 @@ def get_autoround_default_run_fn(
     Args:
         n_samples (int): The number of samples to use for calibration.
     """
+    from auto_round.calib_dataset import CALIB_DATASETS  # pylint: disable=E0401
     if dataloader is None:
         get_dataloader = CALIB_DATASETS.get(dataset_name, CALIB_DATASETS["NeelNanda/pile-10k"])
         dataloader = get_dataloader(
@@ -197,6 +196,7 @@ def autoround_quantize(
         run_fn = get_autoround_default_run_fn
     dataloader = recover_dataloader_from_calib_fn(run_fn, run_args)
 
+    from auto_round import AutoRound  # pylint: disable=E0401
     rounder = AutoRound(
         model=model,
         tokenizer=None,
