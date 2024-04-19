@@ -18,7 +18,6 @@ Functions
 
 .. autoapisummary::
 
-   neural_compressor.tensorflow.quantization.utils.utility.disable_random
    neural_compressor.tensorflow.quantization.utils.utility.read_graph
    neural_compressor.tensorflow.quantization.utils.utility.write_graph
    neural_compressor.tensorflow.quantization.utils.utility.is_ckpt_format
@@ -29,12 +28,12 @@ Functions
    neural_compressor.tensorflow.quantization.utils.utility.get_input_output_node_names
    neural_compressor.tensorflow.quantization.utils.utility.fix_ref_type_of_graph_def
    neural_compressor.tensorflow.quantization.utils.utility.strip_unused_nodes
+   neural_compressor.tensorflow.quantization.utils.utility.get_estimator_graph
    neural_compressor.tensorflow.quantization.utils.utility.strip_equivalent_nodes
    neural_compressor.tensorflow.quantization.utils.utility.get_graph_def
    neural_compressor.tensorflow.quantization.utils.utility.get_model_input_shape
    neural_compressor.tensorflow.quantization.utils.utility.get_tensor_val_from_graph_node
    neural_compressor.tensorflow.quantization.utils.utility.int8_node_name_reverse
-   neural_compressor.tensorflow.quantization.utils.utility.tf_diagnosis_helper
    neural_compressor.tensorflow.quantization.utils.utility.generate_feed_dict
    neural_compressor.tensorflow.quantization.utils.utility.get_weight_from_input_tensor
    neural_compressor.tensorflow.quantization.utils.utility.apply_inlining
@@ -42,11 +41,6 @@ Functions
    neural_compressor.tensorflow.quantization.utils.utility.parse_saved_model
    neural_compressor.tensorflow.quantization.utils.utility.reconstruct_saved_model
 
-
-
-.. py:function:: disable_random(seed=1)
-
-   A Decorator to disable tf random seed.
 
 
 .. py:function:: read_graph(in_graph, in_graph_is_binary=True)
@@ -148,6 +142,16 @@ Functions
    of official tensorflow r1.15 branch
 
 
+.. py:function:: get_estimator_graph(estimator, input_fn)
+
+   Get the graph of the estimator.
+
+   :param estimator: tf estimator model
+   :param input_fn: input function
+
+   :returns: graph
+
+
 .. py:function:: strip_equivalent_nodes(graph_def, output_node_names)
 
    Strip nodes with the same input and attr.
@@ -177,11 +181,6 @@ Functions
 .. py:function:: int8_node_name_reverse(node)
 
    Reverse int8 node name.
-
-
-.. py:function:: tf_diagnosis_helper(fp32_model, quan_model, tune_cfg, save_path)
-
-   Tensorflow diagnosis helper function.
 
 
 .. py:function:: generate_feed_dict(input_tensor, inputs)

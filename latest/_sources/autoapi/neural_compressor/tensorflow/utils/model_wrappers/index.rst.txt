@@ -40,6 +40,7 @@ Functions
    neural_compressor.tensorflow.utils.model_wrappers.graph_def_session
    neural_compressor.tensorflow.utils.model_wrappers.frozen_pb_session
    neural_compressor.tensorflow.utils.model_wrappers.load_saved_model
+   neural_compressor.tensorflow.utils.model_wrappers.try_loading_keras
    neural_compressor.tensorflow.utils.model_wrappers.keras_session
    neural_compressor.tensorflow.utils.model_wrappers.slim_session
    neural_compressor.tensorflow.utils.model_wrappers.checkpoint_session
@@ -152,6 +153,23 @@ Functions
              input_tensors: List of input tensors.
              output_tensors: List of output tensors.
    :rtype: graph_def
+
+
+.. py:function:: try_loading_keras(model, input_tensor_names, output_tensor_names)
+
+   Try different ways of loading keras models.
+
+   :param model: model path or tf.keras.Model object.
+   :type model: string or tf.keras.Model
+   :param input_tensor_names: input tensor names of the model.
+   :type input_tensor_names: list of string
+   :param output_tensor_names: output tensor names of the model.
+   :type output_tensor_names: list of string
+
+   :returns: tf.compat.v1.Session object.
+             input_names (list of string): validated input names.
+             output_names (list of string): validated output names.
+   :rtype: graph_def (tf.compat.v1.Session)
 
 
 .. py:function:: keras_session(model, input_tensor_names, output_tensor_names, **kwargs)
