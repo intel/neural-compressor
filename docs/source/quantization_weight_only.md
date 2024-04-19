@@ -95,9 +95,8 @@ Notes:
 ### **User Code Example**
 ```python
 from neural_compressor_ort.quantization import matmul_4bits_quantizer
-algo_config = matmul_4bits_quantizer.GPTQWeightOnlyQuantConfig(
-    calibration_data_reader=calibration_data_reader
-)
+
+algo_config = matmul_4bits_quantizer.GPTQWeightOnlyQuantConfig(calibration_data_reader=calibration_data_reader)
 quant = matmul_4bits_quantizer.MatMul4BitsQuantizer(
     model,
     block_size=32,

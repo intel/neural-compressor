@@ -57,4 +57,3 @@ The following prerequisites and requirements must be satisfied for a successful 
 * OS version: CentOS 8.4, Ubuntu 22.04, MacOS Ventura 13.5
 * Python version: 3.8, 3.9, 3.10, 3.11
 * ONNX Runtime version: 1.14.1, 1.15.1, 1.16.3
-

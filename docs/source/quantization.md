@@ -131,15 +131,15 @@ This means user could leverage Intel(R) Neural Compressor to directly generate a
 from neural_compressor_ort.quantization import StaticQuantConfig, DynamicQuantConfig, quantize
 from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
 
+
 class DataReader(CalibrationDataReader):
-    def get_next(self):
-        ...
+    def get_next(self): ...
 
-    def rewind(self):
-        ...
+    def rewind(self): ...
 
-calibration_data_reader = DataReader() # only needed by StaticQuantConfig
-config = StaticQuantConfig(calibration_data_reader) # or config = DynamicQuantConfig()
+
+calibration_data_reader = DataReader()  # only needed by StaticQuantConfig
+config = StaticQuantConfig(calibration_data_reader)  # or config = DynamicQuantConfig()
 quantize(model, q_model_path, config)
 ```
 
@@ -157,12 +157,12 @@ from neural_compressor_ort.quantization import (
     get_woq_tuning_config,
 )
 
-class DataReader(CalibrationDataReader):
-    def get_next(self):
-        ...
 
-    def rewind(self):
-        ...
+class DataReader(CalibrationDataReader):
+    def get_next(self): ...
+
+    def rewind(self): ...
+
 
 data_reader = DataReader()
 

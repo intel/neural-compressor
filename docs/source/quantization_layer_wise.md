@@ -50,6 +50,7 @@ Large language models (LLMs) have shown exceptional performance across various t
 
 ```python
 from neural_compressor_ort.quantization import matmul_4bits_quantizer
+
 algo_config = matmul_4bits_quantizer.RTNWeightOnlyQuantConfig(layer_wise_quant=True)
 quant = matmul_4bits_quantizer.MatMul4BitsQuantizer(
     model,

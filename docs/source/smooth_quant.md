@@ -304,12 +304,13 @@ In our experiments, an $\alpha$ range of [0.0, 1.0] with a step_size of 0.1 is f
 
 ```python
 from neural_compressor_ort.algorithms import Smoother
+
 smoother = Smoother(
-        model,
-        calibration_data_reader,
-        providers=["CPUExecutionProvider"],
-    )
-smoothed_model = smoother.transform(alpha=0.7) #alpha could 'auto' to enable auto-tuning
+    model,
+    calibration_data_reader,
+    providers=["CPUExecutionProvider"],
+)
+smoothed_model = smoother.transform(alpha=0.7)  # alpha could 'auto' to enable auto-tuning
 ```
 
 *support lots of fusing patterns*: when applying the conversion per-channel scales, a mul layer needs to be inserted, which will introduce some overhead. The official code fuses this op to the previous layernorm, while we support more operator types like MatMul, Conv. Currently we only handle the operator whose scale could be fused, we are trying to support other operators, please stay tuned.
@@ -323,13 +324,9 @@ To set a fixed alpha for the entire model, users can follow this example:
 
 ```python
 from neural_compressor_ort.quantization import StaticQuantConfig
+
 config = StaticQuantConfig(
-    data_reader,
-    extra_options={
-        "SmoothQuant": True,
-        "SmoothQuantAlpha": 0.5,
-        "SmoothQuantFolding": True
-    }
+    data_reader, extra_options={"SmoothQuant": True, "SmoothQuantAlpha": 0.5, "SmoothQuantFolding": True}
 )
 ```
 Supported parameters description:
@@ -350,8 +347,8 @@ Here is an example:
 ```python
 from neural_compressor_ort.common.base_tuning import TuningConfig
 from neural_compressor_ort.quantization import SmoothQuantConfig, autotune
-config = TuningConfig(
-    config_set=[SmoothQuantConfig(alpha=np.arange(0.1, 0.5, 0.05).tolist())])
+
+config = TuningConfig(config_set=[SmoothQuantConfig(alpha=np.arange(0.1, 0.5, 0.05).tolist())])
 best_model = autotune(
     model_input=model,
     tune_config=config,
@@ -365,6 +362,7 @@ Here is an example:
 
 ```python
 from neural_compressor_ort.quantization import StaticQuantConfig, quantize
+
 config = StaticQuantConfig(
     data_reader,
     extra_options={
@@ -372,11 +370,11 @@ config = StaticQuantConfig(
         "SmoothQuantAlpha": "auto",
         "SmoothQuantCalibIter": 1,
         "AutoAlphaArgs": {
-            "alpha_min": 0.3, # min value of auto-tuning alpha search space
-            "alpha_max": 0.7, # max value of auto-tuning alpha search space
-            "alpha_step": 0.05, # step_size of auto-tuning alpha search space
-            "attn_method": "min"
-        }
+            "alpha_min": 0.3,  # min value of auto-tuning alpha search space
+            "alpha_max": 0.7,  # max value of auto-tuning alpha search space
+            "alpha_step": 0.05,  # step_size of auto-tuning alpha search space
+            "attn_method": "min",
+        },
     },
 )
 quantize(model, output_model_path, config)
