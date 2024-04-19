@@ -5,7 +5,6 @@
 3. [SmoothQuant and Our Enhancement](#SmoothQuant-and-Our-Enhancement)
 4. [Validated Models](#Validated-Models)
 5. [Usage](#Usage)
-6. [Supported Framework Matrix](#Supported-Framework-Matrix)
 
 
 
