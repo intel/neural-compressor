@@ -137,7 +137,7 @@ class RTNConfig(BaseConfig):
         supported_configs = []
         linear_rtn_config = RTNConfig(
             weight_dtype=["int"],
-            weight_bits=[4, 3, 8],
+            weight_bits=[1, 2, 3, 4, 5, 6, 7, 8],
             weight_group_size=[32, -1, 1, 16, 64, 128, 256, 512, 1024],
             weight_sym=[True, False],
             act_dtype=["fp32"],
@@ -292,7 +292,7 @@ class GPTQConfig(BaseConfig):
         supported_configs = []
         linear_gptq_config = GPTQConfig(
             weight_dtype=["int"],
-            weight_bits=[4, 3, 8],
+            weight_bits=[1, 2, 3, 4, 5, 6, 7, 8],
             weight_group_size=[32, -1, 1, 16, 64, 128, 256, 512, 1024],
             weight_sym=[True, False],
             act_dtype=["fp32"],
@@ -437,7 +437,7 @@ class AWQConfig(BaseConfig):
         supported_configs = []
         linear_awq_config = AWQConfig(
             weight_dtype=["int"],
-            weight_bits=[4, 3, 8],
+            weight_bits=[1, 2, 3, 4, 5, 6, 7, 8],
             weight_group_size=[32, -1, 1, 16, 64, 128, 256, 512, 1024],
             weight_sym=[True, False],
             act_dtype=["fp32"],
