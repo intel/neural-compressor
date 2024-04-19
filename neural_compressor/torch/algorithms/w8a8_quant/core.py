@@ -18,7 +18,7 @@
 # https://pytorch.org/tutorials/prototype/pt2e_quant_x86_inductor.html
 
 
-from typing import Any, Tuple, Optional
+from typing import Any, Tuple, Optional, Union, Dict
 
 import torch
 import torch.ao.quantization.quantizer.x86_inductor_quantizer as xiq
@@ -39,13 +39,13 @@ class W8A8StaticQuantizer:
         return quantizer
     
     @staticmethod
-    def export_model(model, example_inputs: Tuple[Any]) -> Optional[GraphModule]:
+    def export_model(model, example_inputs: Tuple[Any], dynamic_shapes: Optional[Union[Dict[str, Any], Tuple[Any]]] = None,) -> Optional[GraphModule]:
         exported_model = None
         try:
             with torch.no_grad():
                 # Note 1: `capture_pre_autograd_graph` is also a short-term API, it will be
                 # updated to use the official `torch.export` API when that is ready.
-                exported_model = capture_pre_autograd_graph(model, example_inputs)
+                exported_model = capture_pre_autograd_graph(model, example_inputs, dynamic_shapes=dynamic_shapes)
         except Exception as e:
             logger.error(f"Failed to export the model: {e}")
         return exported_model
@@ -64,7 +64,9 @@ class W8A8StaticQuantizer:
         model = model.eval()
 
         # 1) Capture the FX Graph to be quantized
-        exported_model = self.export_model(model, example_inputs)
+        dynamic_shapes = kwargs.get("dynamic_shapes", None)
+        exported_model = self.export_model(model, example_inputs, dynamic_shapes=dynamic_shapes)
+        logger.info("Exported the model to Aten IR successfully.")
         if exported_model is None:
             return
 
