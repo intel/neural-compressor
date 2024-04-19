@@ -18,7 +18,7 @@
 # https://pytorch.org/tutorials/prototype/pt2e_quant_x86_inductor.html
 
 
-from typing import Any, Tuple, Optional, Union, Dict
+from typing import Any, Dict, Optional, Tuple, Union
 
 import torch
 import torch.ao.quantization.quantizer.x86_inductor_quantizer as xiq
@@ -37,9 +37,13 @@ class W8A8StaticQuantizer:
         # TODO: add the logic to update the quantizer based on the quant_config
         quantizer.set_global(xiq.get_default_x86_inductor_quantization_config())
         return quantizer
-    
+
     @staticmethod
-    def export_model(model, example_inputs: Tuple[Any], dynamic_shapes: Optional[Union[Dict[str, Any], Tuple[Any]]] = None,) -> Optional[GraphModule]:
+    def export_model(
+        model,
+        example_inputs: Tuple[Any],
+        dynamic_shapes: Optional[Union[Dict[str, Any], Tuple[Any]]] = None,
+    ) -> Optional[GraphModule]:
         exported_model = None
         try:
             with torch.no_grad():
@@ -82,4 +86,3 @@ class W8A8StaticQuantizer:
         converted_model = convert_pt2e(model, fold_quantize=fold_quantize)
         logger.warning("Converted the model in qdq mode, please compile it to accelerate inference.")
         return converted_model
-

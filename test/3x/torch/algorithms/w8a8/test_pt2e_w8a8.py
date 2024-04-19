@@ -1,22 +1,27 @@
 import unittest
+from unittest.mock import patch
+
 import pytest
-from neural_compressor.common.utils import logger
 import torch
 
+from neural_compressor.common.utils import logger
 from neural_compressor.torch.algorithms.w8a8_quant.core import W8A8StaticQuantizer
-from unittest.mock import patch
+
+
 class TestW8A8StaticQuantizer:
-    
+
     @staticmethod
     def get_toy_model():
         class Bar(torch.nn.Module):
             def __init__(self):
                 super().__init__()
+
             def forward(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
                 x = a / (torch.abs(a) + 1)
                 if b.sum() < 0:
                     b = b * -1
                 return x * b
+
         inp1 = torch.randn(10)
         inp2 = torch.randn(10)
         example_inputs = (inp1, inp2)
@@ -53,7 +58,7 @@ class TestW8A8StaticQuantizer:
         model, example_inputs = self.get_toy_model()
         w8a8_static_quantizer = W8A8StaticQuantizer()
         # export model
-        exported_model = w8a8_static_quantizer.export_model(model,  example_inputs=example_inputs)
+        exported_model = w8a8_static_quantizer.export_model(model, example_inputs=example_inputs)
         assert exported_model is None
         call_args_list = mock_error.call_args_list
         print([info[0][0] for info in call_args_list])
