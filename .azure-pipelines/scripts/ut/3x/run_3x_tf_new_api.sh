@@ -26,9 +26,16 @@ ut_log_name=${LOG_DIR}/ut_3x_new_tf.log
 
 mkdir -p tensorflow/quantization/ptq
 mv ../3x_newapi tensorflow/quantization/ptq/newapi
+
+pytest -vs --disable-warnings --html=report_new_tf_quant_one_case.html --self-contained-html ./tensorflow/quantization/ptq/newapi/test_big_saved_model.py 2>&1 | tee -a ${ut_log_name}
+rm -rf tensorflow/quantization/ptq/newapi/test_big_saved_model.py
 pytest -vs --disable-warnings --html=report_new_tf_quant.html --self-contained-html ./tensorflow/quantization/ptq/newapi 2>&1 | tee -a ${ut_log_name}
 
-cp report_new_tf_quant.html ${LOG_DIR}/
+mkdir -p report
+mv *.html report
+pytest_html_merger -i ./report -o ./report.html
+
+cp report.html ${LOG_DIR}/
 
 if [ $(grep -c '== FAILURES ==' ${ut_log_name}) != 0 ] || [ $(grep -c '== ERRORS ==' ${ut_log_name}) != 0 ] || [ $(grep -c ' passed' ${ut_log_name}) == 0 ]; then
     echo "Find errors in pytest case, please check the output..."
