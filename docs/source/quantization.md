@@ -197,7 +197,6 @@ Neural-Compressor will detect the hardware and software status automatically to 
 <table class="center">
     <thead>
         <tr>
-            <th>Framework</th>
             <th>Backend</th>
             <th>Backend Library</th>
             <th>Support Device(cpu as default)</th> 
@@ -205,7 +204,6 @@ Neural-Compressor will detect the hardware and software status automatically to 
     </thead>
     <tbody>
         <tr>
-            <td rowspan="5" align="left">ONNX Runtime</td>
             <td align="left">CPUExecutionProvider</td>
             <td align="left">MLAS</td>
             <td align="left">cpu</td>
