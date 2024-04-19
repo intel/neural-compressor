@@ -498,6 +498,17 @@ class PyTorchModel(PyTorchBaseModel):
             gptq_config = self.gptq_config if hasattr(self, "gptq_config") else {}
 
         autoround_config = self.autoround_config if hasattr(self, "autoround_config") else {}
+        # check availiable device, priority: ["xpu", "cuda", "cpu"]
+        availiable_device = []
+        if hasattr(torch, 'xpu') and torch.xpu.is_available():
+            availiable_device.append("xpu")
+        if torch.cuda.is_available():
+            availiable_device.append("cuda")
+        orig_device = device
+        for i in availiable_device:
+            if i in device: # cuda in cuda:0
+                device == i
+                break
         if gptq_config:
             for k, v in weight_config.items():
                 logger.debug(f"Compressing {k} on device {device}")
@@ -558,7 +569,7 @@ class PyTorchModel(PyTorchBaseModel):
                 new_module.pack(int_weight, gptq_scale, gptq_zp, m.bias, gptq_perm)
                 set_module(self.model, k, new_module)
         elif autoround_config:
-            if device == "xpu":
+            if orig_device == "xpu":
                 for k, v in weight_config.items():
                     logger.debug(f"Compressing {k} on device {device}")
                     if v["dtype"] == "fp32":
@@ -575,12 +586,6 @@ class PyTorchModel(PyTorchBaseModel):
                     autoround_zp = None if scheme == "sym" else torch.tensor(autoround_conf["zero"], dtype=torch.int32)
                     int_weight = quant_weight_w_scale(fp32_weight, autoround_scale, autoround_zp, group_size)
                     int_weight = int_weight.type(torch.int32)
-                    if torch.cuda.is_available():
-                        device = "cuda"
-                    elif hasattr(torch, 'xpu') and torch.xpu.is_available():
-                        device = "xpu"
-                    else:
-                        device = "cpu"
                     new_module = WeightOnlyLinear(
                         m.in_features,
                         m.out_features,
@@ -593,7 +598,7 @@ class PyTorchModel(PyTorchBaseModel):
                         compression_dtype=compression_dtype,
                         compression_dim=compression_dim,
                         scale_dtype=scale_dtype,
-                        device="cuda" if torch.cuda.is_available() else device,
+                        device=device,
                         use_optimum_format=use_optimum_format,
                     )
                     new_module.pack(int_weight, autoround_scale, autoround_zp, m.bias, None)
