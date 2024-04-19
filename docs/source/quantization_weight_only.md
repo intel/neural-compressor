@@ -109,7 +109,7 @@ q_model = quant.model
 
 ## WOQ Algorithms Tuning
 
-To find the best algorithm, users can omit specifying a particular algorithm. In comparison to setting a specific algorithm, this tuning process will traverse through a set of pre-defined WOQ configurations and identify the optimal one with the best result. Users can specify a list of candidate configurations or get our pre-defined configurations.
+To find the best algorithm, users can leverage the `autotune` feature to explore a set of configurations. It automatically searches for the optimal one with the best result. Users have the option to specify their own list of potential configurations or utilize the pre-defined configuration set.
 
 **Pre-defined configurations**
 
