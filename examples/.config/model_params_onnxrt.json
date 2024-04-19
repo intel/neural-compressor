@@ -55,6 +55,6 @@
         "input_model": "/tf_dataset2/models/onnx/Llama-2-7b-hf-with-past",
         "main_script": "main.py",
         "batch_size": 1
-      },
+      }
     }
   }
