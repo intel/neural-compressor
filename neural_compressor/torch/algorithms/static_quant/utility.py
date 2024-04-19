@@ -306,12 +306,12 @@ def get_quantizable_ops_recursively(model, example_inputs):  # pragma: no cover
                     for pattern, unify_op_type in unify_op_type_mapping_ipex["re"].items():
                         if re.match(pattern, ipex_op_type):
                             re_flag = True
-                            quantizable_ops.append(((tuple(name), unify_op_type)))
+                            quantizable_ops.append((tuple(name), unify_op_type))
                             map_op_name_to_fqn[(tuple(name), unify_op_type)] = module_fqn
                             op_name_info.append((module_fqn, ipex_op_type))
                             break
                     if not re_flag:
-                        quantizable_ops.append(((tuple(name), ipex_op_type)))
+                        quantizable_ops.append((tuple(name), ipex_op_type))
                         map_op_name_to_fqn[(tuple(name), ipex_op_type)] = module_fqn
                         op_name_info.append((module_fqn, ipex_op_type))
             else:

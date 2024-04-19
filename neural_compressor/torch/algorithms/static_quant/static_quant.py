@@ -82,7 +82,7 @@ def static_quantize(model, tune_cfg, run_fn, example_inputs, inplace=True):
     with open(ipex_config_path, "r") as f:
         model.tune_cfg = json.load(f)
     model.ipex_config_path = ipex_config_path
-    # dump_model_op_stats(tune_cfg)
+    dump_model_op_stats(tune_cfg)
     return model
 
 
