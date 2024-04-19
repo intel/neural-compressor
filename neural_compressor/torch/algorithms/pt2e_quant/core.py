@@ -80,7 +80,7 @@ class W8A8StaticQuantizer:
         prepared_model = prepare_pt2e(exported_model, quantizer)
         return prepared_model
 
-    def convert(self, model: torch.fx.GraphModule, *args: Any, **kwargs: Any) -> GraphModule:
+    def convert(self, model: GraphModule, *args: Any, **kwargs: Any) -> GraphModule:
         """Convert the calibrated model into qdq mode."""
         fold_quantize = kwargs.get("fold_quantize", False)
         converted_model = convert_pt2e(model, fold_quantize=fold_quantize)
