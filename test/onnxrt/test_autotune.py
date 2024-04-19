@@ -19,6 +19,7 @@ import glob
 import os
 import shutil
 import unittest
+from functools import partial
 from typing import Callable, Dict, List, Optional, Union
 from unittest.mock import patch
 
@@ -36,9 +37,15 @@ from neural_compressor_ort.quantization import (
     RTNConfig,
     SmoothQuantConfig,
     autotune,
+    get_woq_tuning_config,
 )
 
 logger = Logger().get_logger()
+
+
+def fake_eval(model, eval_result_lst):
+    acc = eval_result_lst.pop(0)
+    return acc
 
 
 def _create_evaluator_for_eval_fns(eval_fns: Optional[Union[Callable, Dict, List[Dict]]] = None) -> Evaluator:
@@ -302,6 +309,63 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
             i.name
             for i in best_model.graph.node
             if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q{}G{}".format(4, 32))
+        ]
+        self.assertTrue(len(op_names) > 0)
+
+    def test_woq_auto_tune(self):
+        partial_fake_eval = partial(fake_eval, eval_result_lst=[1.0, 0.8, 0.99, 1.0, 0.99, 0.99])
+
+        custom_tune_config = TuningConfig(config_set=[RTNConfig(weight_bits=4), AWQConfig(weight_bits=8)])
+        best_model = autotune(
+            model_input=self.gptj,
+            tune_config=custom_tune_config,
+            eval_fn=partial_fake_eval,
+            calibration_data_reader=self.data_reader,
+        )
+        self.assertIsNotNone(best_model)
+        op_names = [
+            i.name
+            for i in best_model.graph.node
+            if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q{}G{}".format(8, 32))
+        ]
+        self.assertTrue(len(op_names) > 0)
+
+        partial_fake_eval = partial(fake_eval, eval_result_lst=[1.0, 0.8, 0.81, 1.0, 0.99, 0.99])
+
+        custom_tune_config = TuningConfig(config_set=get_woq_tuning_config())
+        best_model = autotune(
+            model_input=self.gptj,
+            tune_config=custom_tune_config,
+            eval_fn=partial_fake_eval,
+            calibration_data_reader=self.data_reader,
+        )
+        self.assertIsNotNone(best_model)
+        self.assertEqual(
+            len(op_names),
+            len(
+                [
+                    i.name
+                    for i in best_model.graph.node
+                    if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q{}G{}".format(4, 32))
+                ]
+            )
+            + 1,
+        )
+
+        partial_fake_eval = partial(fake_eval, eval_result_lst=[1.0, 0.8, 0.81, 0.81, 1.0, 0.99])
+
+        custom_tune_config = TuningConfig(config_set=get_woq_tuning_config())
+        best_model = autotune(
+            model_input=self.gptj,
+            tune_config=custom_tune_config,
+            eval_fn=partial_fake_eval,
+            calibration_data_reader=self.data_reader,
+        )
+        self.assertIsNotNone(best_model)
+        op_names = [
+            i.name
+            for i in best_model.graph.node
+            if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q{}G{}".format(4, 128))
         ]
         self.assertTrue(len(op_names) > 0)
 
