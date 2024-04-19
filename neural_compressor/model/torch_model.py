@@ -505,10 +505,13 @@ class PyTorchModel(PyTorchBaseModel):
         if torch.cuda.is_available():
             availiable_device.append("cuda")
         orig_device = device
-        for i in availiable_device:
-            if i in device: # cuda in cuda:0
-                device == i
-                break
+        if device not in availiable_device and "cuda" not in device: # cuda in cuda:0
+            for dev in availiable_device:
+                if dev in device:
+                    logger.info(f"{device} is not detected in current environment, please check.")
+                    device == dev
+                    logger.info(f"The compression device has been changed to {device}.")
+                    break
         if gptq_config:
             for k, v in weight_config.items():
                 logger.debug(f"Compressing {k} on device {device}")
