@@ -15,7 +15,7 @@ Intel® Neural Compressor
 ---
 <div align="left">
 
-Intel® Neural Compressor aims to provide popular model compression techniques such as quantization on [ONNX Runtime](https://onnxruntime.ai/).
+Intel® Neural Compressor aims to provide popular model compression techniques such as weight-only quantization, smooth quant on [ONNX Runtime](https://onnxruntime.ai/).
 In particular, the tool provides the key features, typical examples, and open collaborations as below:
 
 * Support a wide range of Intel hardware such as [Intel Xeon Scalable Processors](https://www.intel.com/content/www/us/en/products/details/processors/xeon/scalable.html), [Intel Xeon CPU Max Series](https://www.intel.com/content/www/us/en/products/details/processors/xeon/max-series.html); support AMD CPU, ARM CPU, and NVidia GPU with limited testing
@@ -97,7 +97,7 @@ quantize(model, output_model_path, config)
     <tr>
       <td colspan="3" align="center"><a href="./docs/source/design.md#architecture">Architecture</a></td>
       <td colspan="3" align="center"><a href="./docs/source/design.md#workflow">Workflow</a></td>
-      <td colspan="3" align="center"><a href="examples/README.md">Examples</a></td>
+      <td colspan="3" align="center"><a href="./examples/">Examples</a></td>
     </tr>
   </tbody>
   <thead>

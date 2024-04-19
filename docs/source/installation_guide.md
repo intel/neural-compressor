@@ -50,7 +50,7 @@ The following prerequisites and requirements must be satisfied for a successful 
 
 #### Support multiple hardware vendors:
 
-* Intel CPU, AMD/ARM CPU, and NVidia GPU. Please refer to the validated model [list](./validated_model_list.md#validated-onnx-qdq-int8-models-on-multiple-hardware-through-onnx-runtime).
+* Intel CPU, AMD/ARM CPU, and NVidia GPU.
 
 ### Validated Software Environment
 
