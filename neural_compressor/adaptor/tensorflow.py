@@ -111,8 +111,8 @@ class TensorFlowAdaptor(Adaptor):
         cfg_yaml_name = "{}.yaml".format(self.__class__.__name__[: -len("Adaptor")].lower())
         self.itex_mode = self.backend == "itex" or cfg_yaml_name == "tensorflow_itex.yaml"
 
-        if self.itex_mode:
-            self._check_itex()
+        # if self.itex_mode:
+        #     self._check_itex()
 
         self.query_handler = TensorflowQuery(
             local_config_file=os.path.join(os.path.dirname(__file__), cfg_yaml_name),

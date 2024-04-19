@@ -935,8 +935,9 @@ class GraphConverter:
             ).do_transformation()
 
             self._tmp_graph_def = ShareQDQForItexYPatternOptimizer(self._tmp_graph_def).do_transformation()
-            self._tmp_graph_def = MergeDuplicatedQDQOptimizer(self._tmp_graph_def).do_transformation()
-
+            # self._tmp_graph_def = MergeDuplicatedQDQOptimizer(self._tmp_graph_def).do_transformation()
+            from neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.convert_qdq_to_uniform_qdq import ConvertUniformQDQOptimizer
+            self._tmp_graph_def = ConvertUniformQDQOptimizer(self._tmp_graph_def).do_transformation()
             self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
             self._tmp_model.graph_def = self._tmp_graph_def
             self._tmp_model.graph_def.library.CopyFrom(self.model.graph_def.library)

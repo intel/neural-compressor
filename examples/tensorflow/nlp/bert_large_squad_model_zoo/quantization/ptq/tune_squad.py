@@ -137,10 +137,14 @@ def main(_):
         from neural_compressor.config import PostTrainingQuantConfig
         conf = PostTrainingQuantConfig(inputs=['input_ids', 'input_mask', 'segment_ids'],
                                        outputs=['start_logits', 'end_logits'],
-                                       calibration_sampling_size=[500])
+                                       calibration_sampling_size=[500],
+                                       backend="itex")
         q_model = quantization.fit(FLAGS.input_model, conf=conf,
                                    calib_dataloader=dataloader, eval_func=eval)
-        q_model.save(FLAGS.output_model)
+        from neural_compressor.model.tensorflow_model import TensorflowSavedModelModel
+        SMmodel = TensorflowSavedModelModel(qmodel._model)
+        SMmodel.graph_def = q_model.graph_def
+        SMmodel.save(FLAGS.output_model)
 
 if __name__ == "__main__":
     tf.compat.v1.app.run()

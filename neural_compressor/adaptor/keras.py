@@ -655,11 +655,15 @@ class KerasAdaptor(Adaptor):
             if qlayer.get_weights():
                 if qlayer.name in layer_weights:
                     qlayer.set_weights(layer_weights[qlayer.name])
+                    if hasattr(qlayer, "kernel"):
+                        qlayer.kernel = qlayer.kernel.numpy()
                 else:
                     hit_layer = False
                     for sub_layer in qlayer.submodules:
                         if sub_layer.name in layer_weights:
                             qlayer.set_weights(layer_weights[sub_layer.name])
+                            if hasattr(qlayer, "kernel"):
+                                qlayer.kernel = qlayer.kernel.numpy()
                             hit_layer = True
                             break
                     if not hit_layer:
