@@ -6,7 +6,7 @@ from urllib import request
 from timm.models import create_model
 import beit_modeling_finetune
 
-MODEL_URLS = {"beit_base_patch16_224": "https://conversationhub.blob.core.windows.net/beit-share-public/beit/beit_base_patch16_224_pt22k_ft22kto1k.pth?sv=2021-10-04&st=2023-06-08T11%3A16%3A02Z&se=2033-06-09T11%3A16%3A00Z&sr=c&sp=r&sig=N4pfCVmSeq4L4tS8QbrFVsX6f6q844eft8xSuXdxU48%3D",}
+MODEL_URLS = {"beit_base_patch16_224": "https://github.com/addf400/files/releases/download/v1.0/beit_base_patch16_224_pt22k_ft22kto1k.pth",}
 MODEL_FILES = {"beit_base_patch16_224": "beit_base_patch16_224_pt22k_ft22kto1k.pth"}
 MAX_TIMES_RETRY_DOWNLOAD = 5
 
