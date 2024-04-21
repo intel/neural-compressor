@@ -127,7 +127,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
         self.work_space = framework_specific_info["workspace_path"]
         self.reduce_range = (
-            framework_specific_info["reduce_range"] if "reduce_range" in framework_specific_info else not CpuInfo().vnni
+            framework_specific_info["reduce_range"]
+            if framework_specific_info.get("reduce_range", None) is not None
+            else not CpuInfo().vnni
         )
         self.benchmark = GLOBAL_STATE.STATE == MODE.BENCHMARK
         os.makedirs(self.work_space, exist_ok=True)

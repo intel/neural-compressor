@@ -497,6 +497,7 @@ def recover_model_from_json(model, json_file_path, example_inputs):
         model = ipex.quantization.prepare(model, qconfig, example_inputs=example_inputs, inplace=True)
     model.load_qconf_summary(qconf_summary=json_file_path)
     model = ipex.quantization.convert(model, inplace=True)
+    model.eval()
     with torch.no_grad():
         try:
             if isinstance(example_inputs, dict):

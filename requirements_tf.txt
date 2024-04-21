@@ -3,4 +3,4 @@ psutil
 py-cpuinfo
 pydantic
 pyyaml
-tensorflow
+tensorflow<=2.15.1

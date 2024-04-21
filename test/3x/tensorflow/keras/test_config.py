@@ -21,9 +21,9 @@ import shutil
 import time
 import unittest
 
+import keras
 import numpy as np
 import tensorflow as tf
-from tensorflow import keras
 
 from neural_compressor.common import Logger
 
@@ -48,15 +48,15 @@ def build_model():
         [
             keras.layers.InputLayer(input_shape=(28, 28)),
             keras.layers.Reshape(target_shape=(28, 28, 1)),
-            keras.layers.Conv2D(filters=12, kernel_size=(3, 3), activation="relu"),
+            keras.layers.Conv2D(filters=12, kernel_size=(3, 3), activation="relu", name="conv2d"),
             keras.layers.MaxPooling2D(pool_size=(2, 2)),
             keras.layers.Flatten(),
-            keras.layers.Dense(10),
+            keras.layers.Dense(10, name="dense"),
         ]
     )
     # Train the digit classification model
     model.compile(
-        optimizer="adam", loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True), metrics=["accuracy"]
+        optimizer="adam", loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True), metrics=["accuracy"]
     )
 
     model.fit(
@@ -69,7 +69,7 @@ def build_model():
     _, baseline_model_accuracy = model.evaluate(test_images, test_labels, verbose=0)
 
     print("Baseline test accuracy:", baseline_model_accuracy)
-    model.save("baseline_model.keras")
+    model.save("baseline_model")
 
 
 class Dataset(object):
@@ -117,6 +117,7 @@ class TestTF3xNewApi(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         shutil.rmtree("baseline_model", ignore_errors=True)
+        os.environ["ITEX_ONEDNN_GRAPH"] = "0"
 
     def test_static_quant_from_dict_default(self):
         logger.info("test_static_quant_from_dict_default")
@@ -124,13 +125,15 @@ class TestTF3xNewApi(unittest.TestCase):
         from neural_compressor.tensorflow.keras import get_default_static_quant_config
 
         calib_dataloader = MyDataloader(dataset=Dataset())
-        fp32_model = keras.models.load_model("baseline_model.keras")
+        fp32_model = keras.models.load_model("baseline_model")
         qmodel = quantize_model(fp32_model, get_default_static_quant_config(), calib_dataloader)
         self.assertIsNotNone(qmodel)
 
         for layer in qmodel.layers:
             if layer.name == "dense":
                 self.assertEqual(layer.__class__.__name__, "QDense")
+            if layer.name == "conv2d":
+                self.assertEqual(layer.__class__.__name__, "QConv2D")
 
     def test_static_quant_from_dict_beginner(self):
         logger.info("test_static_quant_from_dict_beginner")
@@ -149,13 +152,15 @@ class TestTF3xNewApi(unittest.TestCase):
             }
         }
         calib_dataloader = MyDataloader(dataset=Dataset())
-        fp32_model = keras.models.load_model("baseline_model.keras")
+        fp32_model = keras.models.load_model("baseline_model")
         qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
         self.assertIsNotNone(qmodel)
 
         for layer in qmodel.layers:
             if layer.name == "dense":
                 self.assertEqual(layer.__class__.__name__, "QDense")
+            if layer.name == "conv2d":
+                self.assertEqual(layer.__class__.__name__, "QConv2D")
 
     def test_static_quant_from_class_default(self):
         logger.info("test_static_quant_from_class_default")
@@ -163,7 +168,7 @@ class TestTF3xNewApi(unittest.TestCase):
         from neural_compressor.tensorflow.keras import StaticQuantConfig
 
         calib_dataloader = MyDataloader(dataset=Dataset())
-        fp32_model = keras.models.load_model("baseline_model.keras")
+        fp32_model = keras.models.load_model("baseline_model")
         quant_config = StaticQuantConfig()
         qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
         self.assertIsNotNone(qmodel)
@@ -171,6 +176,8 @@ class TestTF3xNewApi(unittest.TestCase):
         for layer in qmodel.layers:
             if layer.name == "dense":
                 self.assertEqual(layer.__class__.__name__, "QDense")
+            if layer.name == "conv2d":
+                self.assertEqual(layer.__class__.__name__, "QConv2D")
 
     def test_static_quant_from_class_beginner(self):
         logger.info("test_static_quant_from_class_beginner")
@@ -178,7 +185,7 @@ class TestTF3xNewApi(unittest.TestCase):
         from neural_compressor.tensorflow.keras import StaticQuantConfig
 
         calib_dataloader = MyDataloader(dataset=Dataset())
-        fp32_model = keras.models.load_model("baseline_model.keras")
+        fp32_model = keras.models.load_model("baseline_model")
         quant_config = StaticQuantConfig(
             weight_dtype="int8",
             weight_sym=True,
@@ -193,13 +200,15 @@ class TestTF3xNewApi(unittest.TestCase):
         for layer in qmodel.layers:
             if layer.name == "dense":
                 self.assertEqual(layer.__class__.__name__, "QDense")
+            if layer.name == "conv2d":
+                self.assertEqual(layer.__class__.__name__, "QConv2D")
 
     def test_static_quant_from_dict_advance(self):
         logger.info("test_static_quant_from_dict_advance")
         from neural_compressor.tensorflow import quantize_model
 
         calib_dataloader = MyDataloader(dataset=Dataset())
-        fp32_model = keras.models.load_model("baseline_model.keras")
+        fp32_model = keras.models.load_model("baseline_model")
         quant_config = {
             "static_quant": {
                 "global": {
@@ -222,8 +231,8 @@ class TestTF3xNewApi(unittest.TestCase):
         self.assertIsNotNone(qmodel)
 
         for layer in qmodel.layers:
-            if layer.name == "dense":
-                self.assertNotEqual(layer.__class__.__name__, "QDense")
+            if layer.name == "conv2d":
+                self.assertEqual(layer.__class__.__name__, "QConv2D")
 
     def test_static_quant_from_class_advance(self):
         logger.info("test_static_quant_from_class_advance")
@@ -245,13 +254,13 @@ class TestTF3xNewApi(unittest.TestCase):
         )
         quant_config.set_local("dense", dense_config)
         # get model and quantize
-        fp32_model = keras.models.load_model("baseline_model.keras")
+        fp32_model = keras.models.load_model("baseline_model")
         qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
         self.assertIsNotNone(qmodel)
 
         for layer in qmodel.layers:
-            if layer.name == "dense":
-                self.assertNotEqual(layer.__class__.__name__, "QDense")
+            if layer.name == "conv2d":
+                self.assertEqual(layer.__class__.__name__, "QConv2D")
 
     def test_config_from_dict(self):
         logger.info("test_config_from_dict")
