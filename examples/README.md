@@ -10,7 +10,8 @@ Intel® Neural Compressor validated examples with multiple compression technique
 * [Quick Get Started Notebook of Intel® Neural Compressor for Pytorch](/examples/notebook/pytorch/Quick_Started_Notebook_of_INC_for_Pytorch.ipynb)
 
 # Helloworld Examples
-
+* [torch_llm](/examples/helloworld/torch_llm): apply the weight-only quantization to LLMs.
+* [torch_non_llm](/examples/helloworld/torch_non_llm): apply the static quantization to non-LLMs.
 * [tf_example1](/examples/helloworld/tf_example1): quantize with built-in dataloader and metric.
 * [tf_example2](/examples/helloworld/tf_example2): quantize keras model with customized metric and dataloader.
 * [tf_example3](/examples/helloworld/tf_example3): convert model with mix precision.
