@@ -52,7 +52,8 @@ def static_quantize(model, tune_cfg, run_fn, example_inputs, inplace=True):
         A quantized model.
     """
     _, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, _ = get_quantizable_ops_recursively(model, example_inputs)
-    cfg_to_qconfig(tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_id_op_name)  # update json file in ipex_config_path
+    # update json file in ipex_config_path; map ipex op_name to pt op_name
+    user_cfg = cfg_to_qconfig(tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_id_op_name)
     model.eval()
 
     # Check save_qconf_summary part is a workaround for IPEX bug.
@@ -82,7 +83,7 @@ def static_quantize(model, tune_cfg, run_fn, example_inputs, inplace=True):
     with open(ipex_config_path, "r") as f:
         model.tune_cfg = json.load(f)
     model.ipex_config_path = ipex_config_path
-    dump_model_op_stats(tune_cfg)
+    dump_model_op_stats(user_cfg)
     return model
 
 
