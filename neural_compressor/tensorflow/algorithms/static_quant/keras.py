@@ -157,7 +157,6 @@ class KerasAdaptor:
                 else:
                     input_layer_dict[layer_name].append(layer.name)
 
-
         for layer in model.layers:
             if layer.__class__.__name__ in self.supported_op:
                 self.conv_format[layer.name] = "s8"
@@ -431,7 +430,7 @@ class KerasAdaptor:
                 if layer.__class__.__name__[1:] in self.supported_op and layer.name in self.quantize_config["op_wise_config"]:
                     min_value = layer.act_min_value.numpy()
                     max_value = layer.act_max_value.numpy()
-                    assert min_value < max_value, "The min value must be lower than the max value in quantization."
+                    assert min_value <= max_value, "The min value must be not greater than the max value in quantization."
 
                     if layer.name not in results:
                         results[layer.name] = {"min": [min_value], "max": [max_value]}
@@ -603,7 +602,7 @@ class KerasAdaptor:
         """Parse tune_config and set framework variables.
 
         Args:
-            tuning_cfg (dict): The dict of tunning config.
+            tuning_cfg (dict): The dict of tuning config.
         """
         self.quantize_config["calib_iteration"] = tuning_cfg["calib_iteration"]
         self.quantize_config["device"] = self.device

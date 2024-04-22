@@ -175,7 +175,7 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
             return cls(**config)
 
         def get_config(self):
-            config = super(QConv2D, self).get_config()
+            config = super(QDepthwiseConv2D, self).get_config()
             config.update(
                 {
                     "act_min_value": self.act_min_value,
@@ -331,7 +331,7 @@ else:
             return cls(**config)
 
         def get_config(self):
-            config = super(QConv2D, self).get_config()
+            config = super(QDepthwiseConv2D, self).get_config()
             config.update(
                 {
                     "act_min_value": self.act_min_value,
@@ -379,3 +379,67 @@ else:
                 return (input_shape[0], out_filters, rows, cols)
             elif self.data_format == "channels_last":
                 return (input_shape[0], rows, cols, out_filters)
+
+
+def initialize_int8_depthwise_conv2d(fp32_layer, q_config):
+    kwargs = fp32_layer.get_config()
+    q_name = fp32_layer.name
+
+    if "name" in kwargs:
+        del kwargs["name"]
+    if "kernel_size" in kwargs:
+        del kwargs["kernel_size"]
+    if "strides" in kwargs:
+        del kwargs["strides"]
+    if "padding" in kwargs:
+        del kwargs["padding"]
+    if "depth_multiplier" in kwargs:
+        del kwargs["depth_multiplier"]
+    if "data_format" in kwargs:
+        del kwargs["data_format"]
+    if "dilation_rate" in kwargs:
+        del kwargs["dilation_rate"]
+    if "activation" in kwargs:
+        del kwargs["activation"]
+    if "use_bias" in kwargs:
+        del kwargs["use_bias"]
+    if "depthwise_initializer" in kwargs:
+        del kwargs["depthwise_initializer"]
+    if "bias_initializer" in kwargs:
+        del kwargs["bias_initializer"]
+    if "depthwise_regularizer" in kwargs:
+        del kwargs["depthwise_regularizer"]
+    if "activity_regularizer" in kwargs:
+        del kwargs["activity_regularizer"]
+    if "bias_regularizer" in kwargs:
+        del kwargs["bias_regularizer"]
+    if "depthwise_constraint" in kwargs:
+        del kwargs["depthwise_constraint"]
+    if "bias_constraint" in kwargs:
+        del kwargs["bias_constraint"]
+    if "min_value" in kwargs:
+        del kwargs["min_value"]
+    if "max_value" in kwargs:
+        del kwargs["max_value"]
+
+    return QDepthwiseConv2D(
+        name=q_name,
+        kernel_size=fp32_layer.kernel_size,
+        strides=fp32_layer.strides,
+        padding=fp32_layer.padding,
+        depth_multiplier=fp32_layer.depth_multiplier,
+        data_format=fp32_layer.data_format,
+        dilation_rate=fp32_layer.dilation_rate,
+        activation=fp32_layer.activation,
+        use_bias=fp32_layer.use_bias,
+        depthwise_initializer=fp32_layer.depthwise_initializer,
+        bias_initializer=fp32_layer.bias_initializer,
+        depthwise_regularizer=fp32_layer.depthwise_regularizer,
+        bias_regularizer=fp32_layer.bias_regularizer,
+        activity_regularizer=fp32_layer.activity_regularizer,
+        depthwise_constraint=fp32_layer.depthwise_constraint,
+        bias_constraint=fp32_layer.bias_constraint,
+        quant_T=q_config["T"],
+        granularity=q_config["granularity"],
+        **kwargs
+    )

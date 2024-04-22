@@ -22,7 +22,6 @@ from tensorflow import quantization
 from tensorflow.keras import activations, backend, constraints, initializers, regularizers
 from tensorflow.keras.layers import Dense
 
-from neural_compressor.tensorflow.utils import version1_gte_version2
 
 class QDense(Dense):
     def __init__(

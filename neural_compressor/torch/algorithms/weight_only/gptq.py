@@ -34,6 +34,7 @@ from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerat
 from .modules import WeightOnlyLinear
 
 DEBUG = False
+accelerator = auto_detect_accelerator()
 
 
 # ================ device related ===================
@@ -542,8 +543,10 @@ class GPTQuantizer(object):
         if self.run_fn:
             if self.run_args:
                 self.run_fn(self.model, *self.run_args)
+                accelerator.mark_step()
             else:
                 self.run_fn(self.model)
+                accelerator.mark_step()
         else:
             for batch in tqdm(self.dataloader):
                 if not self.use_layer_wise:
@@ -663,6 +666,7 @@ class GPTQuantizer(object):
             for j in range(batch_num):
                 cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                 cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
+                accelerator.mark_step()
                 out = transformer_block(*cache_positional_batch, **cache_keyword_batch)
                 out = self.track_hidden_states(out)
             self.cache_key_arguments["batch_num"] = batch_num
@@ -682,6 +686,9 @@ class GPTQuantizer(object):
                     W = load_value(self.model, full_layer_name + ".weight", model_path)
                 else:
                     W = sub_layers[layer_name].weight.data.clone()
+                accelerator.mark_step()
+                if "hpu" in self.device:
+                    W = W.to("cpu")
                 scale, zp, Q = gptq_for_this_block[layer_name].fasterquant(
                     W,
                     blocksize=weight_config_this_layer["block_size"],
@@ -854,6 +861,8 @@ class GPTQ:
             self.quantizer.find_params(W, weight=True)
 
         H = self.H
+        if "hpu" in self.device:
+            H = H.to("cpu")
         del self.H
         dead = torch.diag(H) == 0
         H[dead, dead] = 1
@@ -958,6 +967,10 @@ class GPTQ:
             zero.append(self.quantizer.zero)
         scale = torch.cat(scale, dim=1)
         zero = torch.cat(zero, dim=1)
+        if "hpu" in self.device:
+            scale = scale.to(self.device)
+            zero = zero.to(self.device)
+            Q = Q.to(self.device)
         return scale, zero, Q
 
     def free(self):
@@ -973,25 +986,25 @@ class GPTQ:
 class Quantizer(nn.Module):
     def __init__(self, shape=1):
         super(Quantizer, self).__init__()
-        self.register_buffer("maxq", torch.tensor(0))
+        self.maxq = 0
         self.register_buffer("scale", torch.zeros(shape))
         self.register_buffer("zero", torch.zeros(shape))
 
     def configure(self, weight_config_this_layer, norm=2.4, grid=100, maxshrink=0.8, trits=False):
         for k, v in weight_config_this_layer.items():
             setattr(self, k, v)
-        self.maxq = torch.tensor(2**self.bits - 1)
+        # self.maxq = torch.tensor(2**self.bits - 1)
+        self.maxq = 2**self.bits - 1
         self.scheme = "sym" if self.sym else "asym"
         self.double_quant_scheme = "sym" if self.double_quant_sym else "asym"
         self.norm = norm
         self.grid = grid
         self.maxshrink = maxshrink
         if trits:
-            self.maxq = torch.tensor(-1)
+            self.maxq = -1
 
     def find_params(self, x, weight=False):
         dev = x.device
-        self.maxq = self.maxq.to(dev)
         # NF4 FP4
         if self.dtype != "int":
             from .utility import quant_tensor
