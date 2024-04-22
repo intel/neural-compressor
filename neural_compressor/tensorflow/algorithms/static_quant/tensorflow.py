@@ -440,7 +440,6 @@ class TensorFlowAdaptor:
             if "activation" in tuning_cfg["op"][each_op_info]:
                 is_asymmetric = tuning_cfg["op"][each_op_info]["activation"]["scheme"] == "asym"
             self.quantize_config["op_wise_config"][op_name] = (is_perchannel, algorithm, is_asymmetric, weight_bit)
-
         self.fp32_ops = fp32_ops
         self.bf16_ops = bf16_ops
 
@@ -1521,6 +1520,12 @@ class TensorFlowAdaptor:
 
         return converter.convert_without_calib()
 
+    def diagnosis_helper(self, fp32_model, quan_model, tune_cfg, save_path):
+        """Tensorflow diagnosis helper function."""
+        from neural_compressor.tensorflow.quantization.utils.utility import tf_diagnosis_helper
+
+        return tf_diagnosis_helper(fp32_model, quan_model, tune_cfg, save_path)
+
     def get_output_op_names(self, qmodel):
         """Get the oupur OPs's names."""
         from neural_compressor.tensorflow.quantization.utils.graph_util import GraphAnalyzer
@@ -1751,7 +1756,7 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
                 tmp_iterations = int(math.ceil(self.calib_sampling_size / calib_batch_size))
                 calib_dataloader.batch(calib_batch_size)
                 self.quantize_config["calib_iteration"] = tmp_iterations
-
+               
                 converted_model = GraphConverter(
                     model,
                     qt_config=self.quantize_config,

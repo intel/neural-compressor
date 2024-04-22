@@ -263,14 +263,10 @@ class FuseMatMulRequantizeTransformer(GraphRewriterBase):
 
             weight_node = self.graph_info[new_node.input[1]].node
             bias_node = self.graph_info[new_node.input[2]].node
+            max_input_node = self.graph_info[last_node.input[-1]].node
+            min_input_node = self.graph_info[last_node.input[-2]].node
 
-            max_input_node = None
-            min_input_node = None
-            if last_node.op.find("Requantize") != -1 or last_node.op.find("QuantizeV2") != -1:
-                max_input_node = self.graph_info[last_node.input[-1]].node
-                min_input_node = self.graph_info[last_node.input[-2]].node
-
-            if max_input_node and max_input_node.op == "Enter":  # pragma: no cover
+            if max_input_node.op == "Enter":  # pragma: no cover
                 min_input_parent_name = Helper.node_name_from_input(min_input_node.input[0])
                 max_input_parent_name = Helper.node_name_from_input(max_input_node.input[0])
                 min_input_parent_node = self.graph_info[min_input_parent_name].node

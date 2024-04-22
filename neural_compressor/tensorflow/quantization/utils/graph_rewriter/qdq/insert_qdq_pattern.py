@@ -551,6 +551,8 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                 min_value = -range_value
                 max_value = range_value
         elif weight_node.op == "ReadVariableOp":
+            if not self.llm_weight_minmax:
+                return
             min_value = self.llm_weight_minmax[weight_node.name][0]
             max_value = self.llm_weight_minmax[weight_node.name][1]
             min_value *= range_coefficent

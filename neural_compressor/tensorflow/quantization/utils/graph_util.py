@@ -541,6 +541,8 @@ class GraphAnalyzer:
                     self.node_name_details[each_input_node_name].node.ClearField("input")
                     self.node_name_details[each_input_node_name].node.input.extend(new_input_name)
 
+        
+
     def replace_node(self, new_node, old_node_name, output_nodes_name):
         """Replace the node into the internal data structure node_name_details.
 
@@ -704,6 +706,7 @@ class GraphAnalyzer:
             # update the upper node's output information.
             for each_input in node_details.node.input:
                 self.node_name_details[GraphRewriterHelper.node_name_from_input(each_input)].outputs.append(node_name)
+
 
         return self.node_name_details
 

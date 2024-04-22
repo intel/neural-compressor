@@ -67,7 +67,7 @@ def get_model_type(model):
     if isinstance(model, str):
         model = os.path.abspath(os.path.expanduser(model))
         if (
-            ((model.endswith(".h5") or model.endswith(".keras")) and os.path.isfile(model))
+            (model.endswith(".h5") and os.path.isfile(model))
             or is_saved_model_format(os.path.dirname(model))
             or (os.path.isdir(model) and is_saved_model_format(model))
         ):
@@ -325,62 +325,23 @@ def load_saved_model(model, saved_model_tags, input_tensor_names, output_tensor_
         return opt, input_tensor_names, output_tensor_names
 
 
-def _get_graph_from_saved_model_v3(model, input_tensor_names, output_tensor_names):
-    """The version 3 function that get graph from saved_model.
-
-    Args:
-        model (string or tf.keras.Model): model path or tf.keras.Model object.
-        input_tensor_names (list of string): input tensor names of the model.
-        output_tensor_names (list of string): output tensor names of the model.
-    Returns:
-        graph_def (tf.compat.v1.Session): tf.compat.v1.Session object.
-        inputs (list of string): validated input names.
-        outputs (list of string): validated output names.
-    """
-    from neural_compressor.adaptor.tf_utils.util import parse_saved_model
-
-    if isinstance(model, tf.keras.Model):
-        tmp_dir = DEFAULT_WORKSPACE + "/saved_model"
-        model.save(tmp_dir)
-        model = tmp_dir
-    graph_def, _, _, _, input_names, output_names = parse_saved_model(
-        model, True, input_tensor_names, output_tensor_names
-    )
-
-    return graph_def, input_names, output_names
-
-
 def _get_graph_from_saved_model_v2(saved_model_dir, input_tensor_names, output_tensor_names):
-    """The version 2 function that get graph from the original keras model.
-
-    Args:
-        saved_model_dir (string): model path of a temporary saved_model.
-        input_tensor_names (list of string): input tensor names of the model.
-        output_tensor_names (list of string): output tensor names of the model.
-
-    Returns:
-        graph_def (tf.compat.v1.Session): tf.compat.v1.Session object.
-        input_names (list of string): validated input names.
-        output_names (list of string): validated output names.
-    """
     from tensorflow.python.saved_model import signature_constants, tag_constants
+
+    from neural_compressor.tensorflow.quantization.utils.utility import parse_saved_model
 
     saved_model_exported_names = [signature_constants.DEFAULT_SERVING_SIGNATURE_DEF_KEY]
     saved_model_tags = set([tag_constants.SERVING])
+    try:
+        graph_def, _saved_model, _, _, input_names, output_names = parse_saved_model(
+            saved_model_dir, True, input_tensor_names, output_tensor_names
+        )
+    except:
+        return load_saved_model(saved_model_dir, saved_model_tags, input_tensor_names, output_tensor_names)
+    return graph_def, input_names, output_names
 
-    return load_saved_model(saved_model_dir, saved_model_tags, input_tensor_names, output_tensor_names)
 
-
-def _get_graph_from_original_keras_v2(model):
-    """The version 2 function that get graph from the original keras model.
-
-    Args:
-        model (string or tf.keras.Model): model path or tf.keras.Model object.
-    Returns:
-        graph_def (tf.compat.v1.Session): tf.compat.v1.Session object.
-        input_names (list of string): validated input names.
-        output_names (list of string): validated output names.
-    """
+def _get_graph_from_original_keras_v2(model, output_dir):
     from tensorflow.lite.python.convert import OpsSet
     from tensorflow.lite.python.util import (
         get_grappler_config,
@@ -425,16 +386,6 @@ def _get_graph_from_original_keras_v2(model):
 
 
 def _check_keras_format(model, saved_model_dir):
-    """Decide which method will be used to get graph from the saved_model .
-
-    Args:
-        model (string or tf.keras.Model): model path or tf.keras.Model object.
-        saved_model_dir (string): the path to save a temporary saved_model.
-    Returns:
-        graph_def (tf.compat.v1.Session): tf.compat.v1.Session object.
-        inputs (list of string): validated input names.
-        outputs (list of string): validated output names.
-    """
     from tensorflow.python import saved_model
     from tensorflow.python.saved_model import save_options
     from tensorflow.python.saved_model.load import load
@@ -455,15 +406,6 @@ def _check_keras_format(model, saved_model_dir):
 
 
 def _get_graph_from_saved_model_v1(model):
-    """The version 1 function that get graph from saved_model.
-
-    Args:
-        model (string or tf.keras.Model): model path or tf.keras.Model object.
-    Returns:
-        graph_def (tf.compat.v1.Session): tf.compat.v1.Session object.
-        inputs (list of string): validated input names.
-        outputs (list of string): validated output names.
-    """
     from tensorflow.lite.python.convert_saved_model import get_inputs_outputs, get_meta_graph_def, get_signature_def
     from tensorflow.python.client import session
     from tensorflow.python.framework import ops
@@ -504,50 +446,6 @@ def _get_graph_from_saved_model_v1(model):
     return graph_def, inputs, outputs
 
 
-def try_loading_keras(model, input_tensor_names, output_tensor_names):
-    """Try different ways of loading keras models.
-
-    Args:
-        model (string or tf.keras.Model): model path or tf.keras.Model object.
-        input_tensor_names (list of string): input tensor names of the model.
-        output_tensor_names (list of string): output tensor names of the model.
-    Returns:
-        graph_def (tf.compat.v1.Session): tf.compat.v1.Session object.
-        input_names (list of string): validated input names.
-        output_names (list of string): validated output names.
-    """
-    temp_dir = tempfile.mkdtemp()
-    if not isinstance(model, tf.keras.Model):
-        model = tf.keras.models.load_model(model)
-    keras_format = _check_keras_format(model, temp_dir)
-
-    if keras_format == "saved_model_v2":
-        try:
-            graph_def, input_names, output_names = _get_graph_from_saved_model_v2(
-                temp_dir, input_tensor_names, output_tensor_names
-            )
-            if "_FusedBatchNormEx" in [node.op for node in graph_def.node]:
-                keras_format = "trackable_object"
-        except:
-            keras_format = "trackable_object"
-
-    if keras_format == "trackable_object":
-        try:
-            graph_def, input_names, output_names = _get_graph_from_original_keras_v2(model)
-        except:
-            keras_format = "saved_model_v1"
-
-    if keras_format == "saved_model_v1":  # pragma: no cover
-        try:
-            tf.keras.backend.set_learning_phase(0)
-            graph_def, input_names, output_names = _get_graph_from_saved_model_v1(model)
-        except:
-            raise ValueError("Not supported keras model type...")
-
-    shutil.rmtree(temp_dir, True)
-    return graph_def, input_names, output_names
-
-
 def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
     """Build session with keras model.
 
@@ -561,18 +459,37 @@ def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
         input_tensor_names (list of string): validated input_tensor_names.
         output_tensor_names (list of string): validated output_tensor_names.
     """
+    temp_dir = tempfile.mkdtemp()
     if tf.version.VERSION > "2.1.0":
-        try:
-            graph_def, input_names, output_names = _get_graph_from_saved_model_v3(
-                model, input_tensor_names, output_tensor_names
-            )
-        except:
-            graph_def, input_names, output_names = try_loading_keras(model, input_tensor_names, output_tensor_names)
+        if not isinstance(model, tf.keras.Model):
+            model = tf.keras.models.load_model(model)
+        keras_format = _check_keras_format(model, temp_dir)
+        if keras_format == "saved_model_v2":
+            try:
+                graph_def, input_names, output_names = _get_graph_from_saved_model_v2(
+                    temp_dir, input_tensor_names, output_tensor_names
+                )
+                if "_FusedBatchNormEx" in [node.op for node in graph_def.node]:
+                    keras_format = "trackable_object"
+            except:
+                keras_format = "trackable_object"
+        if keras_format == "trackable_object":
+            try:
+                graph_def, input_names, output_names = _get_graph_from_original_keras_v2(model, temp_dir)
+            except:
+                keras_format = "saved_model_v1"
+        if keras_format == "saved_model_v1":  # pragma: no cover
+            try:
+                tf.keras.backend.set_learning_phase(0)
+                graph_def, input_names, output_names = _get_graph_from_saved_model_v1(model)
+            except:
+                raise ValueError("Not supported keras model type...")
+
     # tensorflow 1.x use v1 convert method
     else:
         tf.keras.backend.set_learning_phase(0)
         graph_def, input_names, output_names = _get_graph_from_saved_model_v1(model)
-
+    shutil.rmtree(temp_dir, True)
     return graph_def_session(graph_def, input_names, output_names, **kwargs)
 
 
@@ -741,19 +658,12 @@ def saved_model_session(model, input_tensor_names, output_tensor_names, **kwargs
         output_tensor_names (list of string): validated output_tensor_names.
     """
     try:
-        graph_def, input_names, output_names = _get_graph_from_saved_model_v3(
+        graph_def, input_names, output_names = _get_graph_from_saved_model_v2(
             model, input_tensor_names, output_tensor_names
         )
     except:
-        try:
-            graph_def, input_names, output_names = _get_graph_from_saved_model_v2(
-                model, input_tensor_names, output_tensor_names
-            )
-        except:
-            graph_def, input_names, output_names = _get_graph_from_saved_model_v1(model)
-
+        graph_def, input_names, output_names = _get_graph_from_saved_model_v1(model)
     assert graph_def is not None, "Can not parse the saved model..."
-
     return graph_def_session(graph_def, input_names, output_names, **kwargs)
 
 
@@ -1278,6 +1188,7 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
     def graph_def(self, graph_def):
         """Set graph definition."""
         self._graph_def = graph_def
+        self.adjust_weight(self.graph_def)
         # the attributes of some nodes can't be correctly read if don't import the graph_def
         tf.import_graph_def(self._graph_def, name="")
 
@@ -1309,7 +1220,6 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
         """Return dict of weight scaler for smooth quantization."""
         if not self._sq_weight_scale_dict:
             self._sq_weight_scale_dict = self.kwargs.get("sq_weight_scale_dict", None)
-        assert self._weight_name_mapping is not None, "sq_weight_scale_dict should not be None!"
         return self._sq_weight_scale_dict
 
     @sq_weight_scale_dict.setter
@@ -1369,20 +1279,31 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
 
         from neural_compressor.tensorflow.quantization.utils.utility import reconstruct_saved_model
 
+        if not self.model_path:
+            self.model_path = DEFAULT_WORKSPACE
+        self.model_path = os.path.abspath(os.path.expanduser(self.model_path))
+        if os.path.exists(self.model_path):
+            import shutil
+            shutil.rmtree(self.model_path)
+        os.makedirs(self.model_path, exist_ok=True)
+
         reconstruct_saved_model(graph_def, self.func, self.frozen_func, self._saved_model, self.model_path)
         model = load.load(self.model_path, [tag_constants.SERVING])
 
+        if not self._sq_weight_scale_dict:
+            self._auto_trackable = model
+            return 
+        
         for idx, weight_tensor in enumerate(model.variables):
             parsed_weight_name = self.weight_name_mapping(weight_tensor.name)
             if parsed_weight_name in self.sq_weight_scale_dict:
-                if len(weight_tensor.shape) == 4:
-                    shape_parm = [0, 1, 3, 2]
-                elif len(weight_tensor.shape) == 2:
-                    shape_parm = [1, 0]
-                weight_array = np.transpose(weight_tensor, shape_parm)
-                weight_array *= self.sq_weight_scale_dict[parsed_weight_name]
-                weight_array = np.transpose(weight_array, shape_parm)
-                tf.compat.v1.assign(model.variables[idx], weight_array)
+                try:
+                    weight_array = np.transpose(weight_tensor, [1, 0])
+                    weight_array *= self.sq_weight_scale_dict[parsed_weight_name]
+                    weight_array = np.transpose(weight_array, [1, 0])
+                    tf.compat.v1.assign(model.variables[idx], weight_array)
+                except:
+                    breakpoint()
             else:
                 weight_array = weight_tensor
 
@@ -1403,12 +1324,70 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
             shutil.rmtree(root)
         os.makedirs(root, exist_ok=True)
 
-        self.adjust_weight(self._graph_def)
-        graph_def, _saved_model, func, frozen_func, _, _ = parse_saved_model(self._auto_trackable)
+        if self.sq_weight_scale_dict:
+            self.adjust_weight(self._graph_def)
+        graph_def, _saved_model, func, frozen_func, _, _ = parse_saved_model(self.model)
         reconstruct_saved_model(graph_def, func, frozen_func, _saved_model, root)
         logger.info("Save quantized model to {}.".format(root))
         # delete the LLM file saved in this temporary path
         shutil.rmtree(self.model_path, ignore_errors=True)
+
+
+class TensorflowSubclassedKerasModel(TensorflowSavedModelModel):
+    """Build a subclassed Keras model."""
+
+    def __init__(self, model="", **kwargs):
+        """Initialize a subclassed Keras model.
+
+        Args:
+            model (string or  tf.keras.Model object): model path or model object.
+        """
+        super(TensorflowSubclassedKerasModel, self).__init__(model)
+        self.model_type = "saved_model"
+        self._keras_model = None
+
+    def _build_as_functional_model(self, model_path):
+        breakpoint()
+        TFSMlayer = tf.keras.layers.TFSMLayer(model_path, call_endpoint="serving_default")
+        inputs = tf.keras.Input(shape=(3, 224, 224))
+        outputs = TFSMlayer(inputs)
+        return tf.keras.Model(inputs, outputs)
+
+    @property
+    def model(self):
+        """Return model in Keras Functional object."""
+        if self._keras_model:
+            return self._keras_model
+
+
+        root = DEFAULT_WORKSPACE + "/saved_model"
+        root = os.path.abspath(os.path.expanduser(root))
+        if os.path.exists(root):
+            shutil.rmtree(root)
+        os.makedirs(root, exist_ok=True)
+        if not self._sess:
+            self._load_sess(self._model, **self.kwargs)
+        _, builder = self.build_saved_model(root)
+        builder.save()
+        self._keras_model =  self._build_as_functional_model(root)
+        shutil.rmtree(root)
+
+        return self._keras_model
+
+    @model.setter
+    def model(self, q_model):
+        """Set model itself."""
+        self._keras_model = q_model
+
+    def save(self, root=None):
+        """Save Tensorflow QAT model."""
+        if not root:
+            root = DEFAULT_WORKSPACE + "/keras_model.keras"
+        root = os.path.abspath(os.path.expanduser(root))
+        os.makedirs(os.path.dirname(root), exist_ok=True)
+
+        self.model.save(root)
+        return root
 
 
 class TensorflowQATModel(TensorflowSavedModelModel):
@@ -1642,24 +1621,12 @@ class KerasModel(BaseModel):
     @property
     def input_node_names(self):
         """Return input node names."""
-        names = (
-            self.model.input_names
-            if version1_lt_version2(tf.version.VERSION, "2.16.1")
-            else [tensor.name for tensor in self.model.inputs]
-        )
-
-        return names
+        return self.model.input_names
 
     @property
     def output_node_names(self):
         """Return output node names."""
-        names = (
-            self.model.output_names
-            if version1_lt_version2(tf.version.VERSION, "2.16.1")
-            else [tensor.name for tensor in self.model.outputs]
-        )
-
-        return names
+        return self.model.output_names
 
 
 TENSORFLOW_MODELS = {

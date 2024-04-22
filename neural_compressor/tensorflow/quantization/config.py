@@ -107,11 +107,11 @@ class StaticQuantConfig(BaseConfig):
     def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
         static_quant_config = StaticQuantConfig(
-            weight_dtype=["int8", "bf16", "fp32"],
+            weight_dtype=["int8", "fp32"],
             weight_sym=[True, False],
             weight_granularity=["per_tensor", "per_channel"],
             weight_algorithm=["minmax", "kl"],
-            act_dtype=["int8", "bf16", "fp32"],
+            act_dtype=["int8", "fp32"],
             act_sym=[True, False],
             act_granularity=["per_tensor", "per_channel"],
             act_algorithm=["minmax", "kl"],
@@ -137,11 +137,10 @@ class StaticQuantConfig(BaseConfig):
     @staticmethod
     def get_model_info(model) -> List[Tuple[str, Callable]]:
         white_list = [
+            "MatMul",
             "Conv2D",
-            "FusedBatchNormV3",
             "Conv3D",
             "_MklFusedInstanceNorm",
-            "MatMul",
             "BatchMatMul",
             "BatchMatMulV2",
             "DepthwiseConv2dNative",
@@ -151,8 +150,9 @@ class StaticQuantConfig(BaseConfig):
             "MaxPool",
             "MaxPool3D",
             "AvgPool",
+            "_MklFusedInstanceNorm",
             "Conv2DBackpropInput",
-            "Conv3DBackpropInputV2",
+            "Conv2DBackpropInputV2",
         ]
         filter_result = []
         for node in model.graph_def.node:

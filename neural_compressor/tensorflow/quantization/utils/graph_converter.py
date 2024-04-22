@@ -243,6 +243,7 @@ class GraphConverter:
         # INC needs turn off ITEX optimization pass in calibration stage.
         # TODO ITEX will provide API to replace setting environment variable.
         os.environ["ITEX_REMAPPER"] = "0"
+        
         sess = model.sess
         iter_op = model.iter_op
         input_tensor = model.input_tensor
@@ -328,6 +329,9 @@ class GraphConverter:
         os.environ["ITEX_REMAPPER"] = "1"
 
     def _inference_llm(self, model):
+        logger.info("Start sampling on calibration dataset.")
+        f=tf.io.gfile.GFile('calib_qdq.pb','wb')
+        f.write(model.graph_def.SerializeToString()) 
         input_tensor_names = model.input_tensor_names
         auto_trackable = model.model
         infer = auto_trackable.signatures["serving_default"]
@@ -340,7 +344,7 @@ class GraphConverter:
                 for i, input_tensor_name in enumerate(input_tensor_names):
                     feed_dict[input_tensor_name] = inputs[i]
 
-            _ = infer(**feed_dict)
+            pred = infer(**feed_dict)
 
             if idx >= self.calib_iteration:
                 break
@@ -870,7 +874,7 @@ class GraphConverter:
         )
 
         self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
-
+        
         # Find out the quantized nodes
         self.quantized_node_info = OptimizeQDQGraph(
             self._tmp_graph_def,
@@ -898,6 +902,7 @@ class GraphConverter:
         # TODO: this is a workaround to make Min/Max node be completely eliminated in int8 graph
         # after enabling pad+conv2d in new API.
         non_pad_ops = list(list(set(self.fp32_ops).union(set(self.bf16_ops))))
+
         sampling_graph_def = FusePadWithFP32Conv2DOptimizer(
             sampling_graph_def, non_pad_ops, self._tmp_model.input_node_names, self.op_wise_config, self.new_api, True
         ).do_transformation()
@@ -912,6 +917,7 @@ class GraphConverter:
             sampling_graph_def.library.CopyFrom(self.model.graph_def.library)
             self._sampling_model.graph_def = sampling_graph_def
             self._sampling_model.output_tensor_names = output_tensor_names
+
             tmp_dump_file = tempfile.mkstemp(suffix=".log")[1]
             with CaptureOutputToFile(tmp_dump_file):
                 self._inference(self._sampling_model)
@@ -944,7 +950,7 @@ class GraphConverter:
 
     def _convert_qdq(self):
         """Convert Dequantize + Op + QuantizeV2 into QuantizedOps."""
-        if self.itex_mode:
+        if self.itex_mode or self._tmp_model.model_type=="llm_saved_model":
             self._tmp_graph_def, quantizev2_max = FreezeValueTransformer(
                 self._tmp_graph_def, self._calibration_data, "__max:", self.itex_mode
             ).do_transformation()
@@ -969,8 +975,9 @@ class GraphConverter:
             ).do_transformation()
 
             self._tmp_graph_def = ShareQDQForItexYPatternOptimizer(self._tmp_graph_def).do_transformation()
-            self._tmp_graph_def = MergeDuplicatedQDQOptimizer(self._tmp_graph_def).do_transformation()
-
+            # self._tmp_graph_def = MergeDuplicatedQDQOptimizer(self._tmp_graph_def).do_transformation()
+            from neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.convert_qdq_to_uniform_qdq import ConvertUniformQDQOptimizer
+            self._tmp_graph_def = ConvertUniformQDQOptimizer(self._tmp_graph_def).do_transformation()
             self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
             self._tmp_model.graph_def = self._tmp_graph_def
             self._tmp_model.graph_def.library.CopyFrom(self.model.graph_def.library)

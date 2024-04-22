@@ -23,102 +23,332 @@ from tensorflow.keras import activations, constraints, initializers, regularizer
 
 from neural_compressor.tensorflow.utils import version1_gte_version2
 
-if version1_gte_version2(tf.__version__, "2.13.0"):
+if version1_gte_version2(tf.__version__, "2.16.1"):
+    from keras import ops
+    from keras.src.layers.convolutional.base_conv import BaseConv  # pylint: disable=E0401
+elif version1_gte_version2(tf.__version__, "2.13.0"):
     from keras.src.layers.convolutional.base_conv import Conv  # pylint: disable=E0401
 else:
     from keras.layers.convolutional.base_conv import Conv  # pylint: disable=E0401
 
-
-class QConv2D(Conv):
-    def __init__(
-        self,
-        name,
-        filters,
-        kernel_size,
-        strides=(1, 1),
-        padding="valid",
-        data_format=None,
-        dilation_rate=(1, 1),
-        groups=1,
-        activation=None,
-        use_bias=True,
-        kernel_initializer="glorot_uniform",
-        bias_initializer="zeros",
-        kernel_regularizer=None,
-        bias_regularizer=None,
-        activity_regularizer=None,
-        kernel_constraint=None,
-        bias_constraint=None,
-        min_value=None,
-        max_value=None,
-        **kwargs
-    ):
-        super(QConv2D, self).__init__(
-            name=name,
-            rank=2,
-            filters=filters,
-            kernel_size=kernel_size,
-            strides=strides,
-            padding=padding,
-            data_format=data_format,
-            dilation_rate=dilation_rate,
-            groups=groups,
-            activation=activations.get(activation),
-            use_bias=use_bias,
-            kernel_initializer=initializers.get(kernel_initializer),
-            bias_initializer=initializers.get(bias_initializer),
-            kernel_regularizer=regularizers.get(kernel_regularizer),
-            bias_regularizer=regularizers.get(bias_regularizer),
-            activity_regularizer=regularizers.get(activity_regularizer),
-            kernel_constraint=constraints.get(kernel_constraint),
-            bias_constraint=constraints.get(bias_constraint),
+if version1_gte_version2(tf.__version__, "2.16.1"):
+    class QConv2D(BaseConv):
+        def __init__(
+            self,
+            name,
+            filters,
+            kernel_size,
+            strides=(1, 1),
+            padding="valid",
+            data_format=None,
+            dilation_rate=(1, 1),
+            groups=1,
+            activation=None,
+            use_bias=True,
+            kernel_initializer="glorot_uniform",
+            bias_initializer="zeros",
+            kernel_regularizer=None,
+            bias_regularizer=None,
+            activity_regularizer=None,
+            kernel_constraint=None,
+            bias_constraint=None,
+            act_min_value=None,
+            act_max_value=None,
+            weight_min_value=None,
+            weight_max_value=None,
+            granularity="per_tensor",
+            quant_status="calib",
+            quant_mode="SCALED",
+            quant_T="s8",
+            quant_round_mode="HALF_AWAY_FROM_ZERO",
+            quant_narrow_range=False,
+            quant_axis=None,
             **kwargs
-        )
-        self.min_value = min_value
-        self.max_value = max_value
+        ):
+            super(QConv2D, self).__init__(
+                name=name,
+                rank=2,
+                filters=filters,
+                kernel_size=kernel_size,
+                strides=strides,
+                padding=padding,
+                data_format=data_format,
+                dilation_rate=dilation_rate,
+                groups=groups,
+                activation=activations.get(activation),
+                use_bias=use_bias,
+                kernel_initializer=initializers.get(kernel_initializer),
+                bias_initializer=initializers.get(bias_initializer),
+                kernel_regularizer=regularizers.get(kernel_regularizer),
+                bias_regularizer=regularizers.get(bias_regularizer),
+                activity_regularizer=regularizers.get(activity_regularizer),
+                kernel_constraint=constraints.get(kernel_constraint),
+                bias_constraint=constraints.get(bias_constraint),
+                **kwargs
+            )
+            T_map = {"s8": tf.qint8, "u8": tf.quint8}
+            self.reverse_T_map = {tf.qint8: "s8", tf.quint8: "u8"}
+            self.weight_min_value = weight_min_value
+            self.weight_max_value = weight_max_value
+            self.act_min_value = act_min_value
+            self.act_max_value = act_max_value
+            self.granularity = granularity
+            self.quant_status= quant_status
+            self.quant_mode = quant_mode
+            self.quant_T = T_map[quant_T]
+            self.quant_round_mode = quant_round_mode
+            self.quant_narrow_range = quant_narrow_range
+            self.quant_axis = quant_axis
 
-    def call(self, inputs):
-        kernel_size = self.kernel.shape[-1]
+        def call(self, inputs):
+            if self.quant_status == "calib" and not isinstance(inputs, tf.keras.KerasTensor):
+                if self.granularity == "per_tensor":
+                    self.act_min_value = tf.math.reduce_min(inputs)
+                    self.act_max_value = tf.math.reduce_max(inputs)
+                else:
+                    self.act_min_value = tf.math.reduce_min(inputs, axis=self.axis)
+                    self.act_max_value = tf.math.reduce_max(inputs, axis=self.axis)
+                kernel = self.kernel
+            elif self.quant_status == "quantize":
+                assert self.act_min_value is not None, "Invalid activation min-max values, please check calibration process"
+                inputs, _, _ = tf.quantization.quantize(
+                    inputs,
+                    self.act_min_value,
+                    self.act_max_value,
+                    self.quant_T,
+                    mode=self.quant_mode,
+                    round_mode=self.quant_round_mode,
+                    narrow_range=self.quant_narrow_range,
+                    axis=self.quant_axis,
+                )
+                inputs =  tf.quantization.dequantize(
+                    inputs,
+                    self.act_min_value,
+                    self.act_max_value,
+                    mode=self.quant_mode,
+                    narrow_range=self.quant_narrow_range,
+                    axis=self.quant_axis,
+                )
 
-        if not self.min_value:
-            self.min_value = [-10000] * kernel_size
-        if not self.max_value:
-            self.max_value = [10000] * kernel_size
+                kernel_size = self.kernel.shape[-1]
 
-        # add the Q/DQ here
-        kernel, _, _ = quantization.quantize(
-            self.kernel, self.min_value, self.max_value, tf.qint8, axis=3, mode="SCALED"
-        )
-        kernel = quantization.dequantize(
-            kernel,
-            self.min_value,
-            self.max_value,
-            axis=3,
-            mode="SCALED",
-        )
-        outputs = tf.keras.backend.conv2d(
-            inputs,
-            kernel,
-            strides=self.strides,
-            padding=self.padding,
-            data_format=self.data_format,
-            dilation_rate=self.dilation_rate,
-        )
+                if not self.weight_min_value:
+                    self.weight_min_value = [-10000]*kernel_size
+                if not self.weight_max_value:
+                    self.weight_max_value = [10000]*kernel_size
 
-        if self.use_bias:
-            outputs = tf.keras.backend.bias_add(outputs, self.bias, data_format=self.data_format)
+                # add the Q/DQ here
+                kernel, _, _ = quantization.quantize(
+                    self.kernel, self.weight_min_value, self.weight_max_value, tf.qint8, axis=3, mode="SCALED"
+                )
+                kernel = quantization.dequantize(
+                    kernel,
+                    self.weight_min_value,
+                    self.weight_max_value,
+                    axis=3,
+                    mode="SCALED",
+                )
 
-        if self.activation is not None:
-            return self.activation(outputs)
+            outputs = self.convolution_op(
+                inputs,
+                kernel,
+            )
+            if self.use_bias:
+                if self.data_format == "channels_last":
+                    bias_shape = (1,) * (self.rank + 1) + (self.filters,)
+                else:
+                    bias_shape = (1, self.filters) + (1,) * self.rank
+                bias = ops.reshape(self.bias, bias_shape)
+                outputs += bias
 
-        return outputs
+            if self.activation is not None:
+                return self.activation(outputs)
+            return outputs
 
-    @classmethod
-    def from_config(cls, config):
-        return cls(**config)
+        @classmethod
+        def from_config(cls, config):
+            return cls(**config)
+
+        def get_config(self):
+            config = super(QConv2D, self).get_config()
+            config.update(
+                {
+                    "act_min_value": self.act_min_value,
+                    "act_max_value": self.act_max_value,
+                    "weight_min_value": self.weight_min_value,
+                    "weight_max_value": self.weight_max_value,
+                    "granularity": self.granularity,
+                    "quant_status": self.quant_status,
+                    "quant_mode": self.quant_mode,
+                    "quant_T": self.reverse_T_map[self.quant_T],
+                    "quant_round_mode": self.quant_round_mode,
+                    "quant_narrow_range": self.quant_narrow_range,
+                    "quant_axis": self.quant_axis,
+                }
+            )
+            
+            return config
+
+else:
+    class QConv2D(Conv):
+        def __init__(
+            self,
+            name,
+            filters,
+            kernel_size,
+            strides=(1, 1),
+            padding="valid",
+            data_format=None,
+            dilation_rate=(1, 1),
+            groups=1,
+            activation=None,
+            use_bias=True,
+            kernel_initializer="glorot_uniform",
+            bias_initializer="zeros",
+            kernel_regularizer=None,
+            bias_regularizer=None,
+            activity_regularizer=None,
+            kernel_constraint=None,
+            bias_constraint=None,
+            act_min_value=None,
+            act_max_value=None,
+            weight_min_value=None,
+            weight_max_value=None,
+            granularity="per_tensor",
+            quant_status="calib",
+            quant_mode="SCALED",
+            quant_T="s8",
+            quant_round_mode="HALF_AWAY_FROM_ZERO",
+            quant_narrow_range=False,
+            quant_axis=None,
+            **kwargs
+        ):
+            super(QConv2D, self).__init__(
+                name=name,
+                rank=2,
+                filters=filters,
+                kernel_size=kernel_size,
+                strides=strides,
+                padding=padding,
+                data_format=data_format,
+                dilation_rate=dilation_rate,
+                groups=groups,
+                activation=activations.get(activation),
+                use_bias=use_bias,
+                kernel_initializer=initializers.get(kernel_initializer),
+                bias_initializer=initializers.get(bias_initializer),
+                kernel_regularizer=regularizers.get(kernel_regularizer),
+                bias_regularizer=regularizers.get(bias_regularizer),
+                activity_regularizer=regularizers.get(activity_regularizer),
+                kernel_constraint=constraints.get(kernel_constraint),
+                bias_constraint=constraints.get(bias_constraint),
+                **kwargs
+            )
+            T_map = {"s8": tf.qint8, "u8": tf.quint8}
+            self.reverse_T_map = {tf.qint8: "s8", tf.quint8: "u8"}
+            self.weight_min_value = weight_min_value
+            self.weight_max_value = weight_max_value
+            self.act_min_value = act_min_value
+            self.act_max_value = act_max_value
+            self.granularity = granularity
+            self.quant_status= quant_status
+            self.quant_mode = quant_mode
+            self.quant_T = T_map[quant_T]
+            self.quant_round_mode = quant_round_mode
+            self.quant_narrow_range = quant_narrow_range
+            self.quant_axis = quant_axis
+
+        def call(self, inputs):
+            if self.quant_status == "calib" and not isinstance(inputs, tf.keras.KerasTensor):
+                if self.granularity == "per_tensor":
+                    self.act_min_value = tf.math.reduce_min(inputs)
+                    self.act_max_value = tf.math.reduce_max(inputs)
+                else:
+                    self.act_min_value = tf.math.reduce_min(inputs, axis=self.axis)
+                    self.act_max_value = tf.math.reduce_max(inputs, axis=self.axis)
+                kernel = self.kernel
+            elif self.quant_status == "quantize":
+                assert self.act_min_value is not None, "Invalid activation min-max values, please check calibration process"
+                inputs, _, _ = tf.quantization.quantize(
+                    inputs,
+                    self.act_min_value,
+                    self.act_max_value,
+                    self.quant_T,
+                    mode=self.quant_mode,
+                    round_mode=self.quant_round_mode,
+                    narrow_range=self.quant_narrow_range,
+                    axis=self.quant_axis,
+                )
+                inputs =  tf.quantization.dequantize(
+                    inputs,
+                    self.act_min_value,
+                    self.act_max_value,
+                    mode=self.quant_mode,
+                    narrow_range=self.quant_narrow_range,
+                    axis=self.quant_axis,
+                )
+
+                kernel_size = self.kernel.shape[-1]
+
+                if not self.weight_min_value:
+                    self.weight_min_value = [-10000]*kernel_size
+                if not self.weight_max_value:
+                    self.weight_max_value = [10000]*kernel_size
+
+                # add the Q/DQ here
+                kernel, _, _ = quantization.quantize(
+                    self.kernel, self.weight_min_value, self.weight_max_value, tf.qint8, axis=3, mode="SCALED"
+                )
+                kernel = quantization.dequantize(
+                    kernel,
+                    self.weight_min_value,
+                    self.weight_max_value,
+                    axis=3,
+                    mode="SCALED",
+                )
+            outputs = tf.keras.backend.conv2d(
+                inputs,
+                kernel,
+                strides=self.strides,
+                padding=self.padding,
+                data_format=self.data_format,
+                dilation_rate=self.dilation_rate,
+            )
+
+            if self.use_bias:
+                outputs = tf.keras.backend.bias_add(outputs, self.bias, data_format=self.data_format)
+
+            if self.activation is not None:
+                return self.activation(outputs)
+
+            return outputs
+
+        @classmethod
+        def from_config(cls, config):
+            return cls(**config)
+
+        def get_config(self):
+            config = super(QConv2D, self).get_config()
+            config.update(
+                {
+                    "act_min_value": self.act_min_value,
+                    "act_max_value": self.act_max_value,
+                    "weight_min_value": self.weight_min_value,
+                    "weight_max_value": self.weight_max_value,
+                    "granularity": self.granularity,
+                    "quant_status": self.quant_status,
+                    "quant_mode": self.quant_mode,
+                    "quant_T": self.reverse_T_map[self.quant_T],
+                    "quant_round_mode": self.quant_round_mode,
+                    "quant_narrow_range": self.quant_narrow_range,
+                    "quant_axis": self.quant_axis,
+                }
+            )
+            
+            return config
 
 
-def initialize_int8_conv2d(fp32_layer):
+def initialize_int8_conv2d(fp32_layer, q_config):
     kwargs = fp32_layer.get_config()
 
     if "name" in kwargs:
@@ -155,10 +385,6 @@ def initialize_int8_conv2d(fp32_layer):
         del kwargs["kernel_constraint"]
     if "bias_constraint" in kwargs:
         del kwargs["bias_constraint"]
-    if "min_value" in kwargs:
-        del kwargs["min_value"]
-    if "max_value" in kwargs:
-        del kwargs["max_value"]
 
     return QConv2D(
         name=fp32_layer.name,
@@ -178,7 +404,7 @@ def initialize_int8_conv2d(fp32_layer):
         activity_regularizer=fp32_layer.activity_regularizer,
         kernel_constraint=fp32_layer.kernel_constraint,
         bias_constraint=fp32_layer.bias_constraint,
-        min_value=fp32_layer.min_value,
-        max_value=fp32_layer.max_value,
+        quant_T=q_config["T"],
+        granularity=q_config["granularity"],
         **kwargs
     )

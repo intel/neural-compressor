@@ -97,7 +97,7 @@ def deep_get(dictionary, keys, default=None):
 def itex_installed():
     """Check if the Intel® Extension for TensorFlow has been installed."""
     try:
-        import intel_extension_for_tensorflow
+        # import intel_extension_for_tensorflow
 
         return True
     except:
