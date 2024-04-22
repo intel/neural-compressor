@@ -391,20 +391,14 @@ if args.accuracy:
     user_model.eval()
     from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
     eval_args = LMEvalParser(
-        model="hf",
-        model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
+        model="hf", 
         user_model=user_model,
-        tokenizer = tokenizer,
+        tokenizer=tokenizer,
         batch_size=args.batch_size,
         tasks=args.tasks,
         device="cpu",
     )
     results = evaluate(eval_args)
-
-    dumped = json.dumps(results, indent=2)
-    if args.save_accuracy_path:
-        with open(args.save_accuracy_path, "w") as f:
-            f.write(dumped)
     for task_name in args.tasks.split(","):
         if task_name == "wikitext":
             acc = results["results"][task_name]["word_perplexity,none"]
@@ -415,16 +409,14 @@ if args.accuracy:
 
 if args.performance:
     user_model.eval()
-    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate
+    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
     import time
 
     samples = args.iters * args.batch_size
-    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
     eval_args = LMEvalParser(
-        model="hf",
-        model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
+        model="hf", 
         user_model=user_model,
-        tokenizer = tokenizer,
+        tokenizer=tokenizer,
         batch_size=args.batch_size,
         tasks=args.tasks,
         limit=samples,

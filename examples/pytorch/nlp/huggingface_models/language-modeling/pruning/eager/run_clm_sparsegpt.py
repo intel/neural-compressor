@@ -51,7 +51,6 @@ from transformers.utils.versions import require_version
 from timers import CPUTimer, GPUTimer
 from neural_compressor.training import WeightPruningConfig, prepare_pruning
 from neural_compressor.compression.pruner import (parse_auto_slim_config)
-from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate
 
 check_min_version("4.27.0.dev0")
 logger = logging.getLogger(__name__)
@@ -271,8 +270,8 @@ def parse_args():
         help="Transformers parameter: use the external repo")
     
     # Evaluation config
-    parser.add_argument("--tasks", default=["lambada_openai"],
-        help="Usually chosen with ['lambada_openai','hellaswag','winogrande','piqa']",
+    parser.add_argument("--tasks", default="lambada_openai",
+        type=str, help="tasks list for accuracy validation",
     )
     parser.add_argument("--use_accelerate", action='store_true',
         help="Usually use to accelerate evaluation for large models"
@@ -588,14 +587,17 @@ def main():
     model_args = f'pretrained={model_name},tokenizer={model_name},dtype={dtype},use_accelerate={args.use_accelerate},trust_remote_code={args.trust_remote_code}'
     eval_batch = args.per_device_eval_batch_size
     user_model = None if args.use_accelerate else model
-    results = evaluate(
-            model="hf-causal",
-            model_args=model_args,
-            user_model=user_model,
-            batch_size=eval_batch,
-            tasks=args.tasks,
-            device=device,
+
+    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
+    eval_args = LMEvalParser(
+        model="hf", 
+        user_model=user_model,
+        tokenizer=tokenizer,
+        batch_size=eval_batch,
+        tasks=args.tasks,
+        device=device,
     )
+    results = evaluate(eval_args)
     
 if __name__ == "__main__":
     main()
