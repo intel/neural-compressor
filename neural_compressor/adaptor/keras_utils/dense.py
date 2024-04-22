@@ -63,8 +63,8 @@ class QDense(Dense):
             scales=self.scales,
             zero_points=self.zero_points,
             Tout=tf.qint8,
-            quantization_min_val=-127,
-            quantization_max_val=128,
+            quantization_min_val=-128,
+            quantization_max_val=127,
             quantization_axis=1,)
 
         kernel = tf.raw_ops.UniformDequantize(
@@ -72,8 +72,8 @@ class QDense(Dense):
             scales=self.scales,
             zero_points=self.zero_points,
             Tout=tf.float32,
-            quantization_min_val=-127,
-            quantization_max_val=128,
+            quantization_min_val=-128,
+            quantization_max_val=127,
             quantization_axis=1,)
 
         outputs = tf.keras.backend.dot(inputs, kernel)

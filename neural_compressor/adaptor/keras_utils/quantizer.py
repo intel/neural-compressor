@@ -152,8 +152,8 @@ class UniformQuantize(Layer):
         self.zero_points = int(zero_points)
         self.T = T_map[T]
         self.quantization_axis = quantization_axis
-        self.quantization_min_val = -127 if T=="s8" else 0
-        self.quantization_max_val = 128 if T=="s8" else 255
+        self.quantization_min_val = -128 if T=="s8" else 0
+        self.quantization_max_val = 127 if T=="s8" else 255
 
     def call(self, inputs):
         outputs = tf.raw_ops.UniformQuantize(
@@ -193,8 +193,8 @@ class UniformDeQuantize(Layer):
         self.zero_points = int(zero_points)
         self.T = T_map[T]
         self.quantization_axis = quantization_axis
-        self.quantization_min_val = -127 if T=="s8" else 0
-        self.quantization_max_val = 128 if T=="s8" else 255
+        self.quantization_min_val = -128 if T=="s8" else 0
+        self.quantization_max_val = 127 if T=="s8" else 255
 
     def call(self, inputs):
         return tf.raw_ops.UniformDequantize(
