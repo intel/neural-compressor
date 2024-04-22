@@ -341,6 +341,7 @@ if args.accuracy:
         model="hf",
         model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
         user_model=user_model,
+        tokenizer = tokenizer,
         batch_size=args.batch_size,
         tasks=args.tasks,
     )
@@ -364,15 +365,18 @@ if args.performance:
     import time
 
     samples = args.iters * args.batch_size
-    start = time.time()
-    results = evaluate(
-        model="hf-causal",
+    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
+    eval_args = LMEvalParser(
+        model="hf",
         model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
         user_model=user_model,
+        tokenizer = tokenizer,
         batch_size=args.batch_size,
         tasks=args.tasks,
         limit=samples,
     )
+    start = time.time()
+    results = evaluate(eval_args)
     end = time.time()
     for task_name in args.tasks:
         if task_name == "wikitext":
