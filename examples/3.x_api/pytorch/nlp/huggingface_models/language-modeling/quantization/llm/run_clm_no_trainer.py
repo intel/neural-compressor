@@ -344,6 +344,7 @@ if args.accuracy:
         tokenizer = tokenizer,
         batch_size=args.batch_size,
         tasks=args.tasks,
+        device="cpu",
     )
     results = evaluate(eval_args)
 
@@ -374,6 +375,7 @@ if args.performance:
         batch_size=args.batch_size,
         tasks=args.tasks,
         limit=samples,
+        device="cpu",
     )
     start = time.time()
     results = evaluate(eval_args)
