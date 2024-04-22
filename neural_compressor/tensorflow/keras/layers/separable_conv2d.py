@@ -181,7 +181,7 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
             return cls(**config)
 
         def get_config(self):
-            config = super(QConv2D, self).get_config()
+            config = super(QSeparableConv2D, self).get_config()
             config.update(
                 {
                     "act_min_value": self.act_min_value,
@@ -348,7 +348,7 @@ else:
             return cls(**config)
 
         def get_config(self):
-            config = super(QConv2D, self).get_config()
+            config = super(QSeparableConv2D, self).get_config()
             config.update(
                 {
                     "act_min_value": self.act_min_value,
