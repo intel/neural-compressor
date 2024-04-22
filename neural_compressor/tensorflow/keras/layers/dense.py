@@ -71,7 +71,7 @@ class QDense(Dense):
         self.act_min_value = act_min_value
         self.act_max_value = act_max_value
         self.granularity = granularity
-        self.quant_status= quant_status
+        self.quant_status = quant_status
         self.quant_mode = quant_mode
         self.quant_T = T_map[quant_T]
         self.quant_round_mode = quant_round_mode
@@ -99,7 +99,7 @@ class QDense(Dense):
                 narrow_range=self.quant_narrow_range,
                 axis=self.quant_axis,
             )
-            inputs =  tf.quantization.dequantize(
+            inputs = tf.quantization.dequantize(
                 inputs,
                 self.act_min_value,
                 self.act_max_value,
@@ -161,7 +161,6 @@ class QDense(Dense):
                 "quant_axis": self.quant_axis,
             }
         )
-        
 
         return config
 

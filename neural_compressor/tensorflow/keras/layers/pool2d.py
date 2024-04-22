@@ -54,7 +54,7 @@ class QAvgPool2D(AveragePooling2D):
         self.act_min_value = act_min_value
         self.act_max_value = act_max_value
         self.granularity = granularity
-        self.quant_status= quant_status
+        self.quant_status = quant_status
         self.quant_mode = quant_mode
         self.quant_T = T_map[quant_T]
         self.quant_round_mode = quant_round_mode
@@ -80,7 +80,7 @@ class QAvgPool2D(AveragePooling2D):
                 narrow_range=self.quant_narrow_range,
                 axis=self.quant_axis,
             )
-            inputs =  tf.quantization.dequantize(
+            inputs = tf.quantization.dequantize(
                 inputs,
                 self.act_min_value,
                 self.act_max_value,
@@ -147,7 +147,7 @@ class QMaxPool2D(MaxPooling2D):
         self.act_min_value = act_min_value
         self.act_max_value = act_max_value
         self.granularity = granularity
-        self.quant_status= quant_status
+        self.quant_status = quant_status
         self.quant_mode = quant_mode
         self.quant_T = T_map[quant_T]
         self.quant_round_mode = quant_round_mode
@@ -174,7 +174,7 @@ class QMaxPool2D(MaxPooling2D):
                 narrow_range=self.quant_narrow_range,
                 axis=self.quant_axis,
             )
-            inputs =  tf.quantization.dequantize(
+            inputs = tf.quantization.dequantize(
                 inputs,
                 self.act_min_value,
                 self.act_max_value,
@@ -208,6 +208,7 @@ class QMaxPool2D(MaxPooling2D):
         )
 
         return config
+
 
 def initialize_int8_avgpool(fp32_layer, q_config):
     kwargs = fp32_layer.get_config()

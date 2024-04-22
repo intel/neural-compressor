@@ -88,10 +88,7 @@ class KerasAdaptor:
         self.keras3 = True if version1_gte_version2(tf.__version__, "2.16.1") else False
         if not os.path.exists(DEFAULT_WORKSPACE):
             os.mkdir(DEFAULT_WORKSPACE)
-        self.tmp_dir = (
-            (DEFAULT_WORKSPACE + "tmp_model.keras")
-            if self.keras3 else (DEFAULT_WORKSPACE + "tmp_model")
-        )
+        self.tmp_dir = (DEFAULT_WORKSPACE + "tmp_model.keras") if self.keras3 else (DEFAULT_WORKSPACE + "tmp_model")
 
     def _check_itex(self):
         """Check if the Intel® Extension for TensorFlow has been installed."""
@@ -346,7 +343,7 @@ class KerasAdaptor:
 
         bn_fused_model.save(self.tmp_dir)
         bn_fused_model = tf.keras.models.load_model(self.tmp_dir)
-        
+
         return bn_fused_model
 
     @dump_elapsed_time("Pass quantize model")
@@ -427,10 +424,15 @@ class KerasAdaptor:
         for idx, (inputs, _) in enumerate(dataloader):
             _ = model.predict_on_batch(inputs)
             for layer in model.layers:
-                if layer.__class__.__name__[1:] in self.supported_op and layer.name in self.quantize_config["op_wise_config"]:
+                if (
+                    layer.__class__.__name__[1:] in self.supported_op
+                    and layer.name in self.quantize_config["op_wise_config"]
+                ):
                     min_value = layer.act_min_value.numpy()
                     max_value = layer.act_max_value.numpy()
-                    assert min_value <= max_value, "The min value must be not greater than the max value in quantization."
+                    assert (
+                        min_value <= max_value
+                    ), "The min value must be not greater than the max value in quantization."
 
                     if layer.name not in results:
                         results[layer.name] = {"min": [min_value], "max": [max_value]}
@@ -441,7 +443,10 @@ class KerasAdaptor:
                 break
 
         for idx, layer in enumerate(model.layers):
-            if layer.__class__.__name__[1:] in self.supported_op and layer.name in self.quantize_config["op_wise_config"]:
+            if (
+                layer.__class__.__name__[1:] in self.supported_op
+                and layer.name in self.quantize_config["op_wise_config"]
+            ):
                 layer.act_min_value = min(results[layer.name]["min"])
                 layer.act_max_value = max(results[layer.name]["max"])
                 layer.quant_status = "quantize"
@@ -464,7 +469,7 @@ class KerasAdaptor:
 
         model.save(self.tmp_dir)
         quantized_model = tf.keras.models.load_model(self.tmp_dir)
-        
+
         return quantized_model
 
     @dump_elapsed_time(customized_msg="Model inference")
@@ -803,10 +808,7 @@ class KerasSurgery:
         """
         self.model_outputs = []
         self.keras3 = True if version1_gte_version2(tf.__version__, "2.16.1") else False
-        self.tmp_dir = (
-            (DEFAULT_WORKSPACE + "tmp_model.keras")
-            if self.keras3 else (DEFAULT_WORKSPACE + "tmp_model")
-        )
+        self.tmp_dir = (DEFAULT_WORKSPACE + "tmp_model.keras") if self.keras3 else (DEFAULT_WORKSPACE + "tmp_model")
         model.save(self.tmp_dir)
         self.model = tf.keras.models.load_model(self.tmp_dir)
 
@@ -814,8 +816,8 @@ class KerasSurgery:
         """Create a input_layer_dict from model.
 
         Args:
-            fuse_layers: The layers in which fused BNs have been excluded, defualt to be None.
-            conv_weights_keys: The names of conv layers where BNs are going to be fused, defualt to be None.
+            fuse_layers: The layers in which fused BNs have been excluded, default to be None.
+            conv_weights_keys: The names of conv layers where BNs are going to be fused, default to be None.
 
         Returns:
             input_layer_dict: The dict that mapping for layer names to their input layer names.
@@ -831,8 +833,11 @@ class KerasSurgery:
                     and out_layer.__class__.__name__ in ("BatchNormalization")
                     and layer.name in conv_weights_keys
                 ):
-                    out_layer_names = [node.operation.name for node in out_layer._outbound_nodes] \
-                        if self.keras3 else [node.outbound_layer.name for node in out_layer._outbound_nodes]
+                    out_layer_names = (
+                        [node.operation.name for node in out_layer._outbound_nodes]
+                        if self.keras3
+                        else [node.outbound_layer.name for node in out_layer._outbound_nodes]
+                    )
 
                 for out_layer_name in out_layer_names:
                     if out_layer_name not in input_layer_dict:
@@ -865,7 +870,7 @@ class KerasSurgery:
 
             while isinstance(input_tensors, list) and len(input_tensors) == 1:
                 input_tensors = input_tensors[0]
-            
+
             if self.keras3:
                 layer._inbound_nodes.clear()
 
@@ -874,7 +879,7 @@ class KerasSurgery:
             output_tensor_dict[layer.name] = x
             if layer.name in self.model.output_names:
                 self.model_outputs.append(x)
-        
+
         return tf.keras.models.Model(inputs=self.model.inputs, outputs=self.model_outputs)
 
     def insert_quant_layers(self, q_layer_dict=None):

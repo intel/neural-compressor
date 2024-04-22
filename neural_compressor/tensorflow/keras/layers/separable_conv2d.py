@@ -103,7 +103,7 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
             self.act_min_value = act_min_value
             self.act_max_value = act_max_value
             self.granularity = granularity
-            self.quant_status= quant_status
+            self.quant_status = quant_status
             self.quant_mode = quant_mode
             self.quant_T = T_map[quant_T]
             self.quant_round_mode = quant_round_mode
@@ -120,7 +120,9 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
                     self.act_max_value = tf.math.reduce_max(inputs, axis=self.axis)
                 depthwise_kernel = self.depthwise_kernel
             elif self.quant_status == "quantize":
-                assert self.act_min_value is not None, "Invalid activation min-max values, please check calibration process"
+                assert (
+                    self.act_min_value is not None
+                ), "Invalid activation min-max values, please check calibration process"
                 inputs, _, _ = tf.quantization.quantize(
                     inputs,
                     self.act_min_value,
@@ -131,7 +133,7 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
                     narrow_range=self.quant_narrow_range,
                     axis=self.quant_axis,
                 )
-                inputs =  tf.quantization.dequantize(
+                inputs = tf.quantization.dequantize(
                     inputs,
                     self.act_min_value,
                     self.act_max_value,
@@ -142,12 +144,7 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
 
                 # (TODO) it's ugly that we can't get the point_wise min/max here
                 depthwise_kernel, _, _ = quantization.quantize(
-                    self.depthwise_kernel, 
-                    self.weight_min_value, 
-                    self.weight_max_value, 
-                    tf.qint8, 
-                    axis=3, 
-                    mode="SCALED"
+                    self.depthwise_kernel, self.weight_min_value, self.weight_max_value, tf.qint8, axis=3, mode="SCALED"
                 )
                 depthwise_kernel = quantization.dequantize(
                     depthwise_kernel,
@@ -200,7 +197,7 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
                     "quant_axis": self.quant_axis,
                 }
             )
-            
+
             return config
 
 else:
@@ -272,7 +269,7 @@ else:
             self.act_min_value = act_min_value
             self.act_max_value = act_max_value
             self.granularity = granularity
-            self.quant_status= quant_status
+            self.quant_status = quant_status
             self.quant_mode = quant_mode
             self.quant_T = T_map[quant_T]
             self.quant_round_mode = quant_round_mode
@@ -289,7 +286,9 @@ else:
                     self.act_max_value = tf.math.reduce_max(inputs, axis=self.axis)
                 depthwise_kernel = self.depthwise_kernel
             elif self.quant_status == "quantize":
-                assert self.act_min_value is not None, "Invalid activation min-max values, please check calibration process"
+                assert (
+                    self.act_min_value is not None
+                ), "Invalid activation min-max values, please check calibration process"
                 inputs, _, _ = tf.quantization.quantize(
                     inputs,
                     self.act_min_value,
@@ -300,7 +299,7 @@ else:
                     narrow_range=self.quant_narrow_range,
                     axis=self.quant_axis,
                 )
-                inputs =  tf.quantization.dequantize(
+                inputs = tf.quantization.dequantize(
                     inputs,
                     self.act_min_value,
                     self.act_max_value,
@@ -311,12 +310,7 @@ else:
 
                 # (TODO) it's ugly that we can't get the point_wise min/max here
                 depthwise_kernel, _, _ = quantization.quantize(
-                    self.depthwise_kernel, 
-                    self.weight_min_value, 
-                    self.weight_max_value, 
-                    tf.qint8, 
-                    axis=3, 
-                    mode="SCALED"
+                    self.depthwise_kernel, self.weight_min_value, self.weight_max_value, tf.qint8, axis=3, mode="SCALED"
                 )
                 depthwise_kernel = quantization.dequantize(
                     depthwise_kernel,
@@ -370,7 +364,7 @@ else:
                     "quant_axis": self.quant_axis,
                 }
             )
-            
+
             return config
 
 
