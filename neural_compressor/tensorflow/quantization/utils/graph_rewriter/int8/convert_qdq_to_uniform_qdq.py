@@ -52,8 +52,8 @@ class ConvertUniformQDQOptimizer(GraphRewriterBase):
         if dtype == attr_value_pb2.AttrValue(type=self.int8_type):
             zp = 0
             scale_range = 127
-            self.quantization_min_val = -127
-            self.quantization_max_val = 128
+            self.quantization_min_val = -128
+            self.quantization_max_val = 127
         elif dtype == attr_value_pb2.AttrValue(type=self.uint8_type):
             zp = 128
             scale_range = 255
