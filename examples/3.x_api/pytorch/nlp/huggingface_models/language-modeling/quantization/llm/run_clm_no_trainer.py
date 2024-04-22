@@ -352,7 +352,7 @@ if args.accuracy:
     if args.save_accuracy_path:
         with open(args.save_accuracy_path, "w") as f:
             f.write(dumped)
-    for task_name in args.tasks:
+    for task_name in args.tasks.split(","):
         if task_name == "wikitext":
             acc = results["results"][task_name]["word_perplexity,none"]
         else:
