@@ -354,9 +354,9 @@ if args.accuracy:
             f.write(dumped)
     for task_name in args.tasks:
         if task_name == "wikitext":
-            acc = results["results"][task_name]["word_perplexity"]
+            acc = results["results"][task_name]["word_perplexity,none"]
         else:
-            acc = results["results"][task_name]["acc"]
+            acc = results["results"][task_name]["acc,none"]
     print("Accuracy: %.5f" % acc)
     print('Batch size = %d' % args.batch_size)
 
@@ -382,9 +382,9 @@ if args.performance:
     end = time.time()
     for task_name in args.tasks:
         if task_name == "wikitext":
-            acc = results["results"][task_name]["word_perplexity"]
+            acc = results["results"][task_name]["word_perplexity,none"]
         else:
-            acc = results["results"][task_name]["acc"]
+            acc = results["results"][task_name]["acc,none"]
     print("Accuracy: %.5f" % acc)
     print('Throughput: %.3f samples/sec' % (samples / (end - start)))
     print('Latency: %.3f ms' % ((end - start) * 1000 / samples))
