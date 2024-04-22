@@ -133,18 +133,15 @@ def main(_):
             print("Accuracy: %.5f" % acc_result)
 
     elif FLAGS.tune:
-        from neural_compressor import quantization
-        from neural_compressor.config import PostTrainingQuantConfig
-        conf = PostTrainingQuantConfig(inputs=['input_ids', 'input_mask', 'segment_ids'],
-                                       outputs=['start_logits', 'end_logits'],
-                                       calibration_sampling_size=[500],
-                                       backend="itex")
-        q_model = quantization.fit(FLAGS.input_model, conf=conf,
-                                   calib_dataloader=dataloader, eval_func=eval)
-        from neural_compressor.model.tensorflow_model import TensorflowSavedModelModel
-        SMmodel = TensorflowSavedModelModel(qmodel._model)
+        from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
+        from neural_compressor.tensorflow.utils.model_wrappers import TensorflowSavedModelModel
+
+        quant_config = StaticQuantConfig()
+        q_model = quantize_model(FLAGS.input_model, quant_config, dataloader)
+        SMmodel = TensorflowSavedModelModel('')
         SMmodel.graph_def = q_model.graph_def
         SMmodel.save(FLAGS.output_model)
+
 
 if __name__ == "__main__":
     tf.compat.v1.app.run()

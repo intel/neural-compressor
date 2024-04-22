@@ -73,6 +73,11 @@ class Model(object):
 
     @staticmethod
     def set_framework_info(conf, model):
+        from neural_compressor.tensorflow.utils import itex_installed
+
+        if itex_installed():
+            framework_specific_info["backend"] = "itex"
+
         if conf == "NA":
             return
         framework = "keras" if isinstance(model, KerasModel) else "tensorflow"
@@ -92,12 +97,9 @@ class Model(object):
             framework_specific_info["backend"] = "itex"
             return
 
-        from neural_compressor.tensorflow.utils import itex_installed
-
         if conf.performance_only:
             framework_specific_info["performance_only"] = conf.performance_only
-        if itex_installed():
-            framework_specific_info["backend"] = "itex"
+
         if conf.workspace_path:
             framework_specific_info["workspace_path"] = conf.workspace_path
         if conf.recipes:
