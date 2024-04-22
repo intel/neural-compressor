@@ -337,15 +337,16 @@ if args.quantize:
 
 if args.accuracy:
     user_model.eval()
-    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate
-
-    results = evaluate(
-        model="hf-causal",
+    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
+    eval_args = LMEvalParser(
+        model="hf",
         model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
         user_model=user_model,
         batch_size=args.batch_size,
         tasks=args.tasks,
     )
+    results = evaluate(eval_args)
+
     dumped = json.dumps(results, indent=2)
     if args.save_accuracy_path:
         with open(args.save_accuracy_path, "w") as f:
