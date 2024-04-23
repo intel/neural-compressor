@@ -85,8 +85,10 @@ class FakeOpType:
     def __repr__(self) -> str:
         return "FakeModule"
 
+
 class OP_TYPE1(FakeOpType):
     pass
+
 
 class OP_TYPE2(FakeOpType):
     pass
@@ -94,6 +96,7 @@ class OP_TYPE2(FakeOpType):
 
 def build_simple_fake_model():
     return FakeModel()
+
 
 @register_config(framework_name=FAKE_FRAMEWORK_NAME, algo_name=FAKE_CONFIG_NAME, priority=PRIORITY_FAKE_ALGO)
 class FakeAlgoConfig(BaseConfig):
