@@ -163,7 +163,7 @@ def dynamic_quantize_entry(
 ) -> onnx.ModelProto:
     """The main entry to apply dynamic quantization."""
     from neural_compressor_ort.algorithms import DynamicQuantizer
-
+    from neural_compressor_ort.utils.utility import dump_model_op_stats
     # map config to each op
     model_info = quant_config.get_model_info(model=model)
     configs_mapping = quant_config.to_config_mapping(model_info=model_info)
@@ -178,4 +178,5 @@ def dynamic_quantize_entry(
         )
     quantizer.quantize_model()
     quantizer.model.save(model_output)
+    dump_model_op_stats(quantizer.model.model, configs_mapping, quant_config.white_list)
     return quantizer.model.model
