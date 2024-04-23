@@ -52,11 +52,18 @@ __all__ = [
 FRAMEWORK_NAME = "onnxrt"
 
 
-class _OperatorConfig(NamedTuple):
+class OperatorConfig(NamedTuple):
     config: BaseConfig
     operators: List[Union[str, Callable]]
     valid_func_list: List[Callable] = []
 
+class _OperatorConfig(BaseConfig):
+    weight_dtype: str
+    weight_sym: bool
+    weight_per_channel: bool
+    act_dtype: str
+    act_sym: bool
+    act_per_channel: bool
 
 ######################## RNT Config ###############################
 
@@ -65,7 +72,7 @@ class _OperatorConfig(NamedTuple):
 class RTNConfig(BaseConfig):
     """Config class for round-to-nearest weight-only quantization."""
 
-    supported_configs: List[_OperatorConfig] = []
+    supported_configs: List[OperatorConfig] = []
     params_list: List[str] = [
         "weight_dtype",
         "weight_bits",
@@ -133,7 +140,7 @@ class RTNConfig(BaseConfig):
         return result
 
     @classmethod
-    def register_supported_configs(cls) -> List[_OperatorConfig]:
+    def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
         linear_rtn_config = RTNConfig(
             weight_dtype=["int"],
@@ -143,7 +150,7 @@ class RTNConfig(BaseConfig):
             act_dtype=["fp32"],
         )
         operators = ["MatMul"]
-        supported_configs.append(_OperatorConfig(config=linear_rtn_config, operators=operators))
+        supported_configs.append(OperatorConfig(config=linear_rtn_config, operators=operators))
         cls.supported_configs = supported_configs
 
     def to_config_mapping(self, config_list: List[BaseConfig] = None, model_info: list = None):
@@ -202,7 +209,7 @@ def get_default_rtn_config() -> RTNConfig:
 class GPTQConfig(BaseConfig):
     """Config class for gptq weight-only quantization."""
 
-    supported_configs: List[_OperatorConfig] = []
+    supported_configs: List[OperatorConfig] = []
     params_list: List[str] = [
         "weight_dtype",
         "weight_bits",
@@ -288,7 +295,7 @@ class GPTQConfig(BaseConfig):
         return result
 
     @classmethod
-    def register_supported_configs(cls) -> List[_OperatorConfig]:
+    def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
         linear_gptq_config = GPTQConfig(
             weight_dtype=["int"],
@@ -301,7 +308,7 @@ class GPTQConfig(BaseConfig):
             perchannel=[True, False],
         )
         operators = ["MatMul"]
-        supported_configs.append(_OperatorConfig(config=linear_gptq_config, operators=operators))
+        supported_configs.append(OperatorConfig(config=linear_gptq_config, operators=operators))
         cls.supported_configs = supported_configs
 
     def to_config_mapping(self, config_list: list = None, model_info: list = None) -> OrderedDict:
@@ -366,7 +373,7 @@ def get_default_gptq_config() -> GPTQConfig:
 class AWQConfig(BaseConfig):
     """Config class for awq weight-only quantization."""
 
-    supported_configs: List[_OperatorConfig] = []
+    supported_configs: List[OperatorConfig] = []
     params_list: List[str] = [
         "weight_dtype",
         "weight_bits",
@@ -433,7 +440,7 @@ class AWQConfig(BaseConfig):
         return result
 
     @classmethod
-    def register_supported_configs(cls) -> List[_OperatorConfig]:
+    def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
         linear_awq_config = AWQConfig(
             weight_dtype=["int"],
@@ -445,7 +452,7 @@ class AWQConfig(BaseConfig):
             enable_mse_search=[True, False],
         )
         operators = ["MatMul"]
-        supported_configs.append(_OperatorConfig(config=linear_awq_config, operators=operators))
+        supported_configs.append(OperatorConfig(config=linear_awq_config, operators=operators))
         cls.supported_configs = supported_configs
 
     def to_config_mapping(self, config_list: list = None, model_info: list = None) -> OrderedDict:
@@ -509,7 +516,7 @@ def get_default_awq_config() -> AWQConfig:
 class SmoothQuantConfig(BaseConfig, ORTStaticQuantConfig):
     """Smooth quant quantization config."""
 
-    supported_configs: List[_OperatorConfig] = []
+    supported_configs: List[OperatorConfig] = []
     params_list: List[str] = [
         # smooth parameters
         "alpha",
@@ -575,11 +582,11 @@ class SmoothQuantConfig(BaseConfig, ORTStaticQuantConfig):
         self._post_init()
 
     @classmethod
-    def register_supported_configs(cls) -> List[_OperatorConfig]:
+    def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
         smooth_quant_config = SmoothQuantConfig()
         operators = ["Gemm", "Conv", "MatMul", "FusedConv"]
-        supported_configs.append(_OperatorConfig(config=smooth_quant_config, operators=operators))
+        supported_configs.append(OperatorConfig(config=smooth_quant_config, operators=operators))
         cls.supported_configs = supported_configs
 
     @staticmethod
@@ -670,45 +677,39 @@ class DynamicQuantConfig(ORTDynamicQuantConfig, BaseConfig):
     def __init__(self, white_list: List[OP_NAME_OR_MODULE_TYPE] = DEFAULT_WHITE_LIST, *args, **kwargs):
         ORTDynamicQuantConfig.__init__(*args, **kwargs)
         BaseConfig.__init__(white_list=white_list)
+        self._post_init()
 
     @classmethod
-    def register_supported_configs(cls) -> List[_OperatorConfig]:
+    def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
-        smooth_quant_config = SmoothQuantConfig()
         supported_configs.append(
-            _OperatorConfig(
-                config=DynamicQuantConfig(
-                    activation_type=QuantType.QUInt8,
-                    weight_type=QuantType.QUInt8,
-                    per_channel=False,
-                    extra_options={
-                        "WeightSymmetric": False,
-                        "ActivationSymmetric": False,
-                    },
+            OperatorConfig(
+                config=_OperatorConfig(
+                    weight_dtype="uint8",
+                    weight_sym=False,
+                    weight_per_channel=False,
+                    act_dtype="uint8",
+                    act_sym=False,
                 ),
                 operators=["FusedConv", "Conv", "EmbedLayerNormalization"]))
         supported_configs.append(
-            _OperatorConfig(
-                config=DynamicQuantConfig(
-                    activation_type=QuantType.QUInt8,
-                    weight_type=QuantType.QInt8,
-                    per_channel=True,
-                    extra_options={
-                        "WeightSymmetric": True,
-                        "ActivationSymmetric": False,
-                    },
+            OperatorConfig(
+                config=_OperatorConfig(
+                    weight_dtype="int8",
+                    weight_sym=True,
+                    weight_per_channel=True,
+                    act_dtype="uint8",
+                    act_sym=False,
                 ),
                 operators=["MatMul"]))
         supported_configs.append(
-            _OperatorConfig(
-                config=DynamicQuantConfig(
-                    activation_type=QuantType.QUInt8,
-                    weight_type=QuantType.QInt8,
-                    per_channel=False,
-                    extra_options={
-                        "WeightSymmetric": True,
-                        "ActivationSymmetric": False,
-                    },
+            OperatorConfig(
+                config=_OperatorConfig(
+                    weight_dtype="int8",
+                    weight_sym=True,
+                    weight_per_channel=False,
+                    act_dtype="uint8",
+                    act_sym=False,
                 ),
                 operators=["Gather", "Attention", "LSTM"]))
         cls.supported_configs = supported_configs
@@ -723,6 +724,38 @@ class DynamicQuantConfig(ORTDynamicQuantConfig, BaseConfig):
                 filter_result.append(pair)
         logger.debug(f"Get model info: {filter_result}")
         return filter_result
+
+    def to_config_mapping(self, config_list: list = None, model_info: list = None) -> OrderedDict:
+        config_mapping = OrderedDict()
+        if config_list is None:
+            config_list = [self]
+        for config in config_list:
+            # update model level setting
+            config_mapping.update(config.get_model_params_dict())
+
+            # update node level setting
+            global_config = config.global_config
+            op_type_config_dict, op_name_config_dict = config._get_op_name_op_type_config()
+            for op_name, op_type in model_info:
+                if self.global_config is not None:
+                    config_mapping[(op_name, op_type)] = global_config
+                    continue
+
+                for op_name_pattern in op_name_config_dict:
+                    if re.match(op_name_pattern, op_name):
+                        config_mapping[(op_name, op_type)] = op_name_config_dict[op_name_pattern]
+                        break
+
+                if op_type in op_type_config_dict:
+                    config_mapping[(op_name, op_type)] = op_name_config_dict[op_type]
+                    continue
+
+                for op_config in cls.supported_configs:
+                    if op_type in op_config.operators:
+                        config_mapping[(op_name, op_type)] = op_config.config
+                        break
+
+        return config_mapping
 
 def generate_inc_sq_config(quant_config: QuantConfig):
     extra_options = quant_config.extra_options
