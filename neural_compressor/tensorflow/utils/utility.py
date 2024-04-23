@@ -253,6 +253,16 @@ def disable_random(seed=1):
 
     return decorator
 
+def valid_keras_format(model):
+    """Check if the input model is Sequential or Functional model."""
+    import keras
+    
+    if isinstance(model, keras.src.model.Sequential) \
+        or isinstance(model, keras.src.model.Functional):
+        return True
+    
+    return False
+
 
 @singleton
 class CpuInfo(object):

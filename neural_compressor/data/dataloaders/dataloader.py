@@ -91,7 +91,6 @@ class DataLoader(object):
             "onnxrt_integerops",
             "mxnet",
         ), "framework support tensorflow pytorch mxnet onnxruntime"
-        breakpoint()
         return DATALOADERS[framework](
             dataset=dataset,
             batch_size=batch_size,

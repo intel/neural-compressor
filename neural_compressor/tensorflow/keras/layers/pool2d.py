@@ -67,8 +67,8 @@ class QAvgPool2D(AveragePooling2D):
                 self.act_min_value = tf.math.reduce_min(inputs)
                 self.act_max_value = tf.math.reduce_max(inputs)
             else:
-                self.act_min_value = tf.math.reduce_min(inputs, axis=self.axis)
-                self.act_max_value = tf.math.reduce_max(inputs, axis=self.axis)
+                self.act_min_value = tf.math.reduce_min(inputs, axis=1)
+                self.act_max_value = tf.math.reduce_max(inputs, axis=1)
         elif self.quant_status == "quantize" and not isinstance(inputs, tf.keras.KerasTensor):
             inputs, _, _ = tf.quantization.quantize(
                 inputs,
@@ -160,8 +160,8 @@ class QMaxPool2D(MaxPooling2D):
                 self.act_min_value = tf.math.reduce_min(inputs)
                 self.act_max_value = tf.math.reduce_max(inputs)
             else:
-                self.act_min_value = tf.math.reduce_min(inputs, axis=self.axis)
-                self.act_max_value = tf.math.reduce_max(inputs, axis=self.axis)
+                self.act_min_value = tf.math.reduce_min(inputs, axis=1)
+                self.act_max_value = tf.math.reduce_max(inputs, axis=1)
         elif self.quant_status == "quantize" and not isinstance(inputs, tf.keras.KerasTensor):
             assert self.act_min_value is not None, "Invalid activation min-max values, please check calibration process"
             inputs, _, _ = tf.quantization.quantize(

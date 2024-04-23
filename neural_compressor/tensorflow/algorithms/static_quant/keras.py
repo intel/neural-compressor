@@ -338,7 +338,7 @@ class KerasAdaptor:
                 fused_layers[idx] = conv_layer
 
         bn_surgery = KerasSurgery(model)
-        bn_fused_model = bn_surgery.fuse_bn_layers(fused_layers, self.conv_weights.keys())
+        bn_fused_model = bn_surgery.convert(fused_layers, self.conv_weights.keys())
         bn_fused_model = self._set_weights(bn_fused_model, self.layer_weights)
 
         bn_fused_model.save(self.tmp_dir)
@@ -367,8 +367,8 @@ class KerasAdaptor:
             converted_model = self.convert_bf16()
             return converted_model
 
-        if self.backend == "itex":
-            self._check_itex()
+        # if self.backend == "itex":
+        #     self._check_itex()
 
         logger.debug("Dump quantization configurations:")
         logger.debug(self.quantize_config)
@@ -397,7 +397,7 @@ class KerasAdaptor:
                 q_layer_dict[layer.name] = q_layer
 
         calib_surgery = KerasSurgery(self.pre_optimized_model)
-        calibration_model = calib_surgery.insert_quant_layers(q_layer_dict)
+        calibration_model = calib_surgery.convert(q_layer_dict=q_layer_dict)
         calibration_model = self._set_weights(calibration_model, self.layer_weights)
 
         quantized_model = self._calibrate(
@@ -430,9 +430,6 @@ class KerasAdaptor:
                 ):
                     min_value = layer.act_min_value.numpy()
                     max_value = layer.act_max_value.numpy()
-                    assert (
-                        min_value <= max_value
-                    ), "The min value must be not greater than the max value in quantization."
 
                     if layer.name not in results:
                         results[layer.name] = {"min": [min_value], "max": [max_value]}
@@ -447,8 +444,8 @@ class KerasAdaptor:
                 layer.__class__.__name__[1:] in self.supported_op
                 and layer.name in self.quantize_config["op_wise_config"]
             ):
-                layer.act_min_value = min(results[layer.name]["min"])
-                layer.act_max_value = max(results[layer.name]["max"])
+                layer.act_min_value = np.min(results[layer.name]["min"])
+                layer.act_max_value = np.max(results[layer.name]["max"])
                 layer.quant_status = "quantize"
                 # for layers that have weights
                 if layer.name in self.layer_weights:
@@ -806,32 +803,35 @@ class KerasSurgery:
         Args:
             model: the model to be modified.
         """
+        import shutil
+        
         self.model_outputs = []
         self.keras3 = True if version1_gte_version2(tf.__version__, "2.16.1") else False
         self.tmp_dir = (DEFAULT_WORKSPACE + "tmp_model.keras") if self.keras3 else (DEFAULT_WORKSPACE + "tmp_model")
         model.save(self.tmp_dir)
         self.model = tf.keras.models.load_model(self.tmp_dir)
+        shutil.rmtree(self.tmp_dir, ignore_errors=True)
 
-    def _create_input_dict(self, fuse_layers=None, conv_weights_keys=None):
+    def _parse_inputs(self, BN_fused_layers=None, conv_names=None):
         """Create a input_layer_dict from model.
 
         Args:
-            fuse_layers: The layers in which fused BNs have been excluded, default to be None.
-            conv_weights_keys: The names of conv layers where BNs are going to be fused, default to be None.
+            BN_fused_layers: The layers in which BN layers have been fused.
+            conv_names: The name list of conv layers where BNs are fused.
 
         Returns:
             input_layer_dict: The dict that mapping for layer names to their input layer names.
         """
         input_layer_dict = {}
-        layers = fuse_layers if fuse_layers else self.model.layers
+        layers = BN_fused_layers if BN_fused_layers else self.model.layers
         for layer in layers:
             for node in layer._outbound_nodes:
                 out_layer = node.operation if self.keras3 else node.outbound_layer
                 out_layer_names = [out_layer.name]
                 if (
-                    conv_weights_keys
+                    conv_names
                     and out_layer.__class__.__name__ in ("BatchNormalization")
-                    and layer.name in conv_weights_keys
+                    and layer.name in conv_names
                 ):
                     out_layer_names = (
                         [node.operation.name for node in out_layer._outbound_nodes]
@@ -841,23 +841,33 @@ class KerasSurgery:
 
                 for out_layer_name in out_layer_names:
                     if out_layer_name not in input_layer_dict:
-                        input_layer_dict[out_layer_name] = [layer.name]
+                        input_layer_dict[out_layer_name] = set([layer.name])
                     else:
-                        input_layer_dict[out_layer_name].append(layer.name)
+                        input_layer_dict[out_layer_name].add(layer.name)
 
-        return input_layer_dict
+        for key in input_layer_dict.keys():
+            input_layer_dict[key] = list(input_layer_dict[key])
 
-    def fuse_bn_layers(self, fuse_layers, conv_weights_keys):
-        """Fuse BN layers and rebuild the model.
+        try:
+            model_input = self.model.input
+        except ValueError:
+            model_input = self.model.inputs[0]
+
+        return input_layer_dict, model_input
+
+    def convert(self, BN_fused_layers=None, conv_names=None, q_layer_dict=None):
+        """Generate optimized model by fusing BN layers or replacing Keras layers to custom quantized layers.
 
         Args:
-            fuse_layers: The layers in which fused BNs have been excluded.
-            conv_weights_keys: The names of conv layers where BNs are going to be fused.
+            BN_fused_layers: The layers in which BN layers have been fused.
+            conv_names: The name list of conv layers where BNs are fused.
+            q_layer_dict: The dict mapping from keras layers to custom quantized layers.
         """
-        self.input_layer_dict = self._create_input_dict(fuse_layers, conv_weights_keys)
-        output_tensor_dict = {"keras.Input": self.model.input}
+        input_layer_dict, model_input = self._parse_inputs(BN_fused_layers, conv_names)
+        output_tensor_dict = {"keras.Input": model_input}
+        layers = BN_fused_layers if BN_fused_layers else self.model.layers
 
-        for idx, layer in enumerate(fuse_layers):
+        for idx, layer in enumerate(layers):
             if layer.__class__.__name__ == "InputLayer":
                 output_tensor_dict[layer.name] = output_tensor_dict["keras.Input"]
                 continue
@@ -865,7 +875,7 @@ class KerasSurgery:
             input_tensors = (
                 output_tensor_dict["keras.Input"]
                 if idx == 0
-                else [output_tensor_dict[input_layer] for input_layer in self.input_layer_dict[layer.name]]
+                else [output_tensor_dict[input_layer] for input_layer in input_layer_dict[layer.name]]
             )
 
             while isinstance(input_tensors, list) and len(input_tensors) == 1:
@@ -873,46 +883,15 @@ class KerasSurgery:
 
             if self.keras3:
                 layer._inbound_nodes.clear()
-
-            x = layer(input_tensors)
-
-            output_tensor_dict[layer.name] = x
-            if layer.name in self.model.output_names:
-                self.model_outputs.append(x)
-
-        return tf.keras.models.Model(inputs=self.model.inputs, outputs=self.model_outputs)
-
-    def insert_quant_layers(self, q_layer_dict=None):
-        """Insert FakeQuant or QDQ layers before the target layers and replace
-           Keras layers to Quantized layers.
-
-        Args:
-            q_layer_dict: The dict mapping from layers to be replacement to the quantized layers.
-        """
-        self.input_layer_dict = self._create_input_dict()
-        output_tensor_dict = {"keras.Input": self.model.input}
-
-        for idx, layer in enumerate(self.model.layers):
-            if layer.__class__.__name__ == "InputLayer":
-                output_tensor_dict[layer.name] = output_tensor_dict["keras.Input"]
-                continue
-
-            input_tensors = (
-                output_tensor_dict["keras.Input"]
-                if idx == 0
-                else [output_tensor_dict[input_layer] for input_layer in self.input_layer_dict[layer.name]]
-            )
-            while isinstance(input_tensors, list) and len(input_tensors) == 1:
-                input_tensors = input_tensors[0]
-
-            if self.keras3:
-                layer._inbound_nodes.clear()
-
+            
             cur_layer = q_layer_dict[layer.name] if q_layer_dict and layer.name in q_layer_dict else layer
             x = cur_layer(input_tensors)
-
             output_tensor_dict[layer.name] = x
-            if layer.name in self.model.output_names:
+
+            if not isinstance(self.model, tf.keras.models.Sequential) and layer.name in self.model.output_names:
                 self.model_outputs.append(x)
+
+        if not self.model_outputs:
+            self.model_outputs.append(x)
 
         return tf.keras.models.Model(inputs=self.model.inputs, outputs=self.model_outputs)

@@ -34,8 +34,8 @@ class FakeQuant(Layer):
             self.min_value = tf.math.reduce_min(inputs)
             self.max_value = tf.math.reduce_max(inputs)
         else:
-            self.min_value = tf.math.reduce_min(inputs, axis=self.axis)
-            self.max_value = tf.math.reduce_max(inputs, axis=self.axis)
+            self.min_value = tf.math.reduce_min(inputs, axis=1)
+            self.max_value = tf.math.reduce_max(inputs, axis=1)
 
         return inputs
 

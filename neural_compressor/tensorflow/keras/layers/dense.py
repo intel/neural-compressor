@@ -84,8 +84,8 @@ class QDense(Dense):
                 self.act_min_value = tf.math.reduce_min(inputs)
                 self.act_max_value = tf.math.reduce_max(inputs)
             else:
-                self.act_min_value = tf.math.reduce_min(inputs, axis=self.axis)
-                self.act_max_value = tf.math.reduce_max(inputs, axis=self.axis)
+                self.act_min_value = tf.math.reduce_min(inputs, axis=1)
+                self.act_max_value = tf.math.reduce_max(inputs, axis=1)
             kernel = self.kernel
         elif self.quant_status == "quantize":
             assert self.act_min_value is not None, "Invalid activation min-max values, please check calibration process"

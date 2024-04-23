@@ -116,8 +116,8 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
                     self.act_min_value = tf.math.reduce_min(inputs)
                     self.act_max_value = tf.math.reduce_max(inputs)
                 else:
-                    self.act_min_value = tf.math.reduce_min(inputs, axis=self.axis)
-                    self.act_max_value = tf.math.reduce_max(inputs, axis=self.axis)
+                    self.act_min_value = tf.math.reduce_min(inputs, axis=1)
+                    self.act_max_value = tf.math.reduce_max(inputs, axis=1)
                 depthwise_kernel = self.depthwise_kernel
             elif self.quant_status == "quantize":
                 assert (
@@ -282,8 +282,8 @@ else:
                     self.act_min_value = tf.math.reduce_min(inputs)
                     self.act_max_value = tf.math.reduce_max(inputs)
                 else:
-                    self.act_min_value = tf.math.reduce_min(inputs, axis=self.axis)
-                    self.act_max_value = tf.math.reduce_max(inputs, axis=self.axis)
+                    self.act_min_value = tf.math.reduce_min(inputs, axis=1)
+                    self.act_max_value = tf.math.reduce_max(inputs, axis=1)
                 depthwise_kernel = self.depthwise_kernel
             elif self.quant_status == "quantize":
                 assert (
