@@ -4,7 +4,7 @@ import pytest
 import torch
 import transformers
 
-from neural_compressor.torch.algorithms.weight_only import WeightOnlyLinear
+from neural_compressor.torch.algorithms.weight_only.modules import WeightOnlyLinear
 from neural_compressor.torch.quantization import (
     RTNConfig,
     get_default_double_quant_config,
