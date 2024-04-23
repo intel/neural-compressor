@@ -50,6 +50,21 @@ class TestStaticQuant:
         assert q_model is not None, "Quantization failed!"
 
     @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
+    def test_static_quant_fallback(self):
+        fp32_model = copy.deepcopy(self.fp32_model)
+        quant_config = get_default_static_config()
+        example_inputs = self.input
+        # fallback by op_type
+        quant_config.set_local(torch.nn.modules.linear.Linear, StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
+        q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
+        assert q_model is not None, "Quantization failed!"
+
+        # fallback by op_name
+        quant_config.set_local("fc1", StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
+        q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
+        assert q_model is not None, "Quantization failed!"
+
+    @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
     @pytest.mark.parametrize(
         "act_sym, act_algo",
         [

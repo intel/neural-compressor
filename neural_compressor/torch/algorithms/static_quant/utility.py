@@ -16,6 +16,7 @@ import copy
 import json
 import os
 import re
+from collections import OrderedDict
 from typing import Dict, List, Union
 
 import torch
@@ -66,9 +67,10 @@ BLOCK_PATTERNS = [
 def cfg_to_qconfig(tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_id_op_name):  # pragma: no cover
     assert cfgs is not None, "No configure for IPEX int8 model..."
     op_infos = copy.deepcopy(op_infos_from_cfgs)
-    cfgs = check_cfg_and_qconfig(tune_cfg["op"], cfgs, op_infos, output_tensor_id_op_name)
+    cfgs, user_cfg = check_cfg_and_qconfig(tune_cfg["op"], cfgs, op_infos, output_tensor_id_op_name)
     with open(ipex_config_path, "w") as write_f:
         json.dump(cfgs, write_f, indent=4)
+    return user_cfg
 
 
 def check_cfg_and_qconfig(user_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_op_name):  # pragma: no cover
@@ -83,6 +85,15 @@ def check_cfg_and_qconfig(user_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_
     Returns:
         cfgs (dict): updated configs.
     """
+    tmp_user_cfg = OrderedDict()
+    for op in user_cfg:  # map ipex op_name to pt op_name
+        for i, op_name in enumerate(op):
+            for ops, _ in op_infos_from_cfgs.items():
+                if "fqn" in op_infos_from_cfgs[ops].keys() and op_infos_from_cfgs[ops]["fqn"] == op_name:
+                    ori_op = (tuple(ops), unify_op_type_mapping_ipex[op_infos_from_cfgs[ops]["op_type"]])
+                    tmp_user_cfg[((ori_op[0],), ori_op[1])] = user_cfg[op]
+                    break
+    user_cfg = tmp_user_cfg
     for op_name in user_cfg:
         inc_op_cfg = user_cfg[op_name]
         for i, name in enumerate(op_name[0]):
@@ -142,7 +153,7 @@ def check_cfg_and_qconfig(user_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_
                         else:
                             pass
             cfgs[name[0]][name[1]][name[2]] = ipex_op_cfg
-    return cfgs
+    return cfgs, user_cfg
 
 
 def generate_activation_observer(scheme, algorithm, smooth_quant=False, smooth_quant_enable=False):  # pragma: no cover
@@ -212,6 +223,7 @@ def get_quantizable_ops_recursively(model, example_inputs):  # pragma: no cover
         cfgs (dict): dict of configuration
     """
     quantizable_ops = []
+    op_name_info = []
     # group ops by position for transform-based model
     detector = TransformerBasedModelBlockPatternDetector(model)
     detect_result = detector.detect_block()
@@ -277,6 +289,17 @@ def get_quantizable_ops_recursively(model, example_inputs):  # pragma: no cover
                 if ipex_op_type in unify_op_type_mapping_ipex:
                     quantizable_ops.append((tuple(name), unify_op_type_mapping_ipex[ipex_op_type]))
                     map_op_name_to_fqn[(tuple(name), ipex_op_type)] = module_fqn
+                    if "class" in ipex_op_type:  # "<class 'torch.nn.modules.activation.ReLU'>"
+                        op_type = ipex_op_type.split("'")[1]
+                        op_name_info.append((module_fqn, eval(op_type)))
+                    elif "method" in ipex_op_type:  # "<method 'add' of 'torch._C._TensorBase' objects>"
+                        method = ipex_op_type.split("'")[1]
+                        op_type = getattr(
+                            torch._C._TensorBase if ipex_ver.release < Version("2.2") else torch._C.TensorBase, method
+                        )
+                        op_name_info.append((module_fqn, op_type))
+                    else:
+                        op_name_info.append((module_fqn, op_type))
                 else:
                     re_flag = False
                     for pattern, unify_op_type in unify_op_type_mapping_ipex["re"].items():
@@ -284,10 +307,12 @@ def get_quantizable_ops_recursively(model, example_inputs):  # pragma: no cover
                             re_flag = True
                             quantizable_ops.append((tuple(name), unify_op_type))
                             map_op_name_to_fqn[(tuple(name), unify_op_type)] = module_fqn
+                            op_name_info.append((module_fqn, ipex_op_type))
                             break
                     if not re_flag:
                         quantizable_ops.append((tuple(name), ipex_op_type))
                         map_op_name_to_fqn[(tuple(name), ipex_op_type)] = module_fqn
+                        op_name_info.append((module_fqn, ipex_op_type))
             else:
                 op_type = ""
                 for op_name in name:
@@ -302,6 +327,7 @@ def get_quantizable_ops_recursively(model, example_inputs):  # pragma: no cover
                 _op_cfg_id = name[0][2]
                 module_fqn = cfgs[_module_key]["q_op_infos"][_op_cfg_id]["fqn"]
                 map_op_name_to_fqn[(tuple(name), op_type)] = module_fqn
+                op_name_info.append((module_fqn, op_type))
 
     logger.debug("Map op name to fqn: ")
     logger.debug(map_op_name_to_fqn)
@@ -309,7 +335,7 @@ def get_quantizable_ops_recursively(model, example_inputs):  # pragma: no cover
     logger.info(attention_block)
     logger.info("FFN Blocks : ")
     logger.info(ffn_blocks)
-    return quantizable_ops, cfgs, op_infos_from_cfgs, output_tensor_id_op_name
+    return quantizable_ops, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, op_name_info
 
 
 def simple_inference(q_model, example_inputs, iterations=1):
@@ -323,16 +349,16 @@ def simple_inference(q_model, example_inputs, iterations=1):
             q_model(example_inputs)
 
 
-def dump_model_op_stats(tune_cfg):
+def dump_model_op_stats(user_cfg):
     """This is a function to dump quantizable ops of model to user.
 
     Args:
-        tune_cfg (dict): quantization config
+        user_cfg (dict): quantization config
     Returns:
         None
     """
     res = dict()
-    for k, v in tune_cfg["op"].items():
+    for k, v in user_cfg.items():
         op_type_list = k[-1].split("><")
         op_type = ""
         for op in op_type_list:
