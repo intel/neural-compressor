@@ -191,7 +191,7 @@ quant_config.set_local("/h.4/mlp/fc_out/MatMul", fp32_config)
 
 ### Specify Quantization Backend and Device
 
-Neural-Compressor will quantized models with user-specified backend or detecting the hardware and software status automatically to decide which backend should be used. The automatically selected prioritiy is: GPU/NPU > CPU.
+Neural-Compressor will quantized models with user-specified backend or detecting the hardware and software status automatically to decide which backend should be used. The automatically selected priority is: GPU/NPU > CPU.
 
 
 <table class="center">
