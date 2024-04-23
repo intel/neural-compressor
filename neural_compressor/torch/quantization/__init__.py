@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from neural_compressor.torch.quantization.quantize import quantize
+from neural_compressor.torch.quantization.quantize import quantize, prepare, convert
 from neural_compressor.torch.quantization.config import (
     RTNConfig,
     get_default_rtn_config,

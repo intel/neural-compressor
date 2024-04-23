@@ -40,32 +40,12 @@ def rtn_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], RTNConfig], *args, **kwargs
 ) -> torch.nn.Module:
     """The main entry to apply rtn quantization."""
-    from neural_compressor.torch.algorithms.weight_only.rtn import rtn_quantize
+    from neural_compressor.torch.algorithms.weight_only.rtn import RTNQuantizer
 
-    # rebuild weight_config for rtn_quantize function
-    weight_config = {}
-    for (op_name, op_type), quant_config in configs_mapping.items():
-        if quant_config.name != RTN:
-            continue
-        weight_config[op_name] = {
-            "dtype": quant_config.dtype,
-            "bits": quant_config.bits,
-            "scheme": "sym" if quant_config.use_sym else "asym",
-            "group_size": quant_config.group_size,
-            "group_dim": quant_config.group_dim,
-            "use_full_range": quant_config.use_full_range,
-            "use_mse_search": quant_config.use_mse_search,
-            "use_layer_wise": quant_config.use_layer_wise,
-            "export_compressed_model": quant_config.export_compressed_model,
-            "use_double_quant": quant_config.use_double_quant,
-            "double_quant_dtype": quant_config.double_quant_dtype,
-            "double_quant_bits": quant_config.double_quant_bits,
-            "double_quant_scheme": "sym" if quant_config.double_quant_use_sym else "asym",
-            "double_quant_group_size": quant_config.double_quant_group_size,
-        }
-
-    model = rtn_quantize(model, weight_config=weight_config)
-    return model
+    logger.info("Quantize model with the RTN algorithm.")
+    algo = RTNQuantizer(configs_mapping)
+    q_model = algo.quantize(model)
+    return q_model
 
 
 ###################### GPTQ Algo Entry ##################################
@@ -120,46 +100,17 @@ def gptq_entry(
 def static_quant_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], StaticQuantConfig], *args, **kwargs
 ) -> torch.nn.Module:
+    from neural_compressor.torch.algorithms.static_quant import StaticQuantQuantizer
+
     logger.info("Quantize model with the static quant algorithm.")
-    from neural_compressor.torch.algorithms.static_quant import save, static_quantize
-
-    # convert the user config into internal format
-    quant_config_mapping = {}
-    cfgs = deepcopy(configs_mapping)
-    quant_config_mapping["op"] = cfgs
-    for (op_name, op_type), cfg in cfgs.items():
-        if cfg.name != STATIC_QUANT:
-            continue
-        quant_config_mapping["op"][(op_name, op_type)] = {
-            "weight": {
-                "dtype": cfg.w_dtype,
-                "scheme": "sym",
-                "granularity": cfg.w_granularity,
-                "algorithm": cfg.w_algo,
-            },
-            "activation": {
-                "dtype": cfg.act_dtype,
-                "scheme": "sym" if cfg.act_sym else "asym",
-                "granularity": cfg.act_granularity,
-                "algorithm": cfg.act_algo,
-            },
-        }
-
+    algo = StaticQuantQuantizer(configs_mapping)
     run_fn = kwargs.get("run_fn", None)
     example_inputs = kwargs.get("example_inputs", None)
     inplace = kwargs.get("inplace", True)
-    assert example_inputs is not None, "Please provide example_inputs for static quantization."
-    q_model = static_quantize(
-        model=model,
-        tune_cfg=quant_config_mapping,
-        run_fn=run_fn,
-        example_inputs=example_inputs,
-        inplace=inplace,
-    )
-    logger.info("Static quantization done.")
-    q_model.ori_save = q_model.save
-    q_model.save = MethodType(save, q_model)
-    return q_model
+    model = algo.prepare(model, example_inputs=example_inputs, inplace=inplace)
+    run_fn(model)
+    model = algo.convert(model, example_inputs=example_inputs, inplace=inplace)
+    return model
 
 
 ###################### Smooth Quant Algo Entry ##################################
