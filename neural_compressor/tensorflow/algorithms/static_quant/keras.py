@@ -804,7 +804,7 @@ class KerasSurgery:
             model: the model to be modified.
         """
         import shutil
-        
+
         self.model_outputs = []
         self.keras3 = True if version1_gte_version2(tf.__version__, "2.16.1") else False
         self.tmp_dir = (DEFAULT_WORKSPACE + "tmp_model.keras") if self.keras3 else (DEFAULT_WORKSPACE + "tmp_model")
@@ -828,11 +828,7 @@ class KerasSurgery:
             for node in layer._outbound_nodes:
                 out_layer = node.operation if self.keras3 else node.outbound_layer
                 out_layer_names = [out_layer.name]
-                if (
-                    conv_names
-                    and out_layer.__class__.__name__ in ("BatchNormalization")
-                    and layer.name in conv_names
-                ):
+                if conv_names and out_layer.__class__.__name__ in ("BatchNormalization") and layer.name in conv_names:
                     out_layer_names = (
                         [node.operation.name for node in out_layer._outbound_nodes]
                         if self.keras3
@@ -883,7 +879,7 @@ class KerasSurgery:
 
             if self.keras3:
                 layer._inbound_nodes.clear()
-            
+
             cur_layer = q_layer_dict[layer.name] if q_layer_dict and layer.name in q_layer_dict else layer
             x = cur_layer(input_tensors)
             output_tensor_dict[layer.name] = x

@@ -117,8 +117,9 @@ class TestTF3xNewApi(unittest.TestCase):
     def setUpClass(self):
         build_model()
         os.environ["ITEX_ONEDNN_GRAPH"] = "1"
-        self.fp32_model_path = "baseline_model.keras" \
-            if version1_gte_version2(tf.__version__, "2.16.1") else "baseline_model"
+        self.fp32_model_path = (
+            "baseline_model.keras" if version1_gte_version2(tf.__version__, "2.16.1") else "baseline_model"
+        )
 
     @classmethod
     def tearDownClass(self):
