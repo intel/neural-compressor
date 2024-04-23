@@ -5,7 +5,7 @@ Intel® Neural Compressor features an architecture and workflow that aids in inc
 ## Architecture
 
 <a target="_blank" href="imgs/architecture.png">
-  <img src="imgs/architecture.png" alt="Architecture" width=914 height=370>
+  <img src="imgs/architecture.png" alt="Architecture" width=914 height=350>
 </a>
 
 ## Workflow
