@@ -22,8 +22,8 @@ from enum import Enum
 
 import numpy as np
 
-from neural_compressor_ort.utils import logger
-from neural_compressor_ort.utils.utility import LazyImport
+from neural_compressor_ort.common.utils import logger
+from neural_compressor_ort.common.utils import LazyImport
 
 helper = LazyImport("onnx.helper")
 numpy_helper = LazyImport("onnx.numpy_helper")
