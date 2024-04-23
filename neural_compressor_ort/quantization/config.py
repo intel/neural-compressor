@@ -668,8 +668,8 @@ class DynamicQuantConfig(ORTDynamicQuantConfig, BaseConfig):
     """
 
     def __init__(self, white_list: List[OP_NAME_OR_MODULE_TYPE] = DEFAULT_WHITE_LIST, *args, **kwargs):
-        ORTDynamicQuantConfig.__init__(*args, **kwargs)
-        BaseConfig.__init__(white_list=white_list)
+        ORTDynamicQuantConfig.__init__(self, *args, **kwargs)
+        BaseConfig.__init__(self, white_list=white_list)
 
     @classmethod
     def register_supported_configs(cls) -> List[_OperatorConfig]:
@@ -715,7 +715,7 @@ class DynamicQuantConfig(ORTDynamicQuantConfig, BaseConfig):
 
     @staticmethod
     def get_model_info(model) -> list:
-        white_list = ["Gemm", "Conv", "MatMul", "FusedConv"]
+        white_list = ["Conv", "MatMul", "FusedConv"]
         filter_result = []
         for node in model.graph.node:
             if node.op_type in white_list:
@@ -723,6 +723,14 @@ class DynamicQuantConfig(ORTDynamicQuantConfig, BaseConfig):
                 filter_result.append(pair)
         logger.debug(f"Get model info: {filter_result}")
         return filter_result
+
+    @classmethod
+    def get_config_set_for_tuning(
+        cls,
+    ) -> Union[None, "DynamicQuantConfig", List["DynamicQuantConfig"]]:  # pragma: no cover
+        # TODO fwk owner needs to update it.
+        return DynamicQuantConfig()
+
 
 def generate_inc_sq_config(quant_config: QuantConfig):
     extra_options = quant_config.extra_options
