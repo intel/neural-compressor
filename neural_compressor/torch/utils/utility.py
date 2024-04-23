@@ -107,7 +107,7 @@ def get_model_info(model: torch.nn.Module, white_module_list: List[Callable]) ->
     filter_result_set = set()
     for op_name, module in module_dict.items():
         if isinstance(module, tuple(white_module_list)):
-            pair = (op_name, type(module))
+            pair = (op_name, type(module).__name__)
             if pair not in filter_result_set:
                 filter_result_set.add(pair)
                 filter_result.append(pair)
