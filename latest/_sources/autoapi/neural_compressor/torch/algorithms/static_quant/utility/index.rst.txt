@@ -85,12 +85,12 @@ Functions
    The function is used for ipex warm-up inference.
 
 
-.. py:function:: dump_model_op_stats(tune_cfg)
+.. py:function:: dump_model_op_stats(user_cfg)
 
    This is a function to dump quantizable ops of model to user.
 
-   :param tune_cfg: quantization config
-   :type tune_cfg: dict
+   :param user_cfg: quantization config
+   :type user_cfg: dict
 
    :returns: None
 
