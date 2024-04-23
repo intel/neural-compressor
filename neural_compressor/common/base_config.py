@@ -198,7 +198,7 @@ class BaseConfig(ABC):
     def local_config(self, config):
         self._local_config = config
 
-    def set_local(self, operator_name: str, config: BaseConfig) -> BaseConfig:
+    def set_local(self, operator_name: Union[str, Callable], config: BaseConfig) -> BaseConfig:
         if operator_name in self.local_config:
             logger.warning("The configuration for %s has already been set, update it.", operator_name)
         self.local_config[operator_name] = config

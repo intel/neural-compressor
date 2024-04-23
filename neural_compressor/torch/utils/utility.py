@@ -101,7 +101,7 @@ def set_module(model, op_name, new_module):
             setattr(second_last_module, name_list[-1], new_module)
 
 
-def get_model_info(model: torch.nn.Module, white_module_list: List[Callable]) -> List[Tuple[str, Callable]]:
+def get_model_info(model: torch.nn.Module, white_module_list: List[Callable]) -> List[Tuple[str, str]]:
     module_dict = dict(model.named_modules())
     filter_result = []
     filter_result_set = set()
