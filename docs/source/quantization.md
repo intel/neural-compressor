@@ -100,7 +100,7 @@ Currently `accuracy aware tuning` only supports `post training quantization`.
 
 User could refer to below chart to understand the whole tuning flow.
 
-<img src="./imgs/workflow.png" width=600 height=480 alt="accuracy aware tuning working flow">
+<img src="./imgs/workflow.png" width=600 height=280 alt="accuracy aware tuning working flow">
 
 
 ## Get Started

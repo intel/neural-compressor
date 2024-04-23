@@ -8,8 +8,6 @@
 
     1.3. [Install from Source](#install-from-source)
 
-    1.4. [Install from AI Kit](#install-from-ai-kit)
-
 2. [System Requirements](#system-requirements)
 
    2.1. [Validated Hardware Environment](#validated-hardware-environment)
@@ -25,7 +23,6 @@ The following prerequisites and requirements must be satisfied for a successful 
 - Python version: 3.8 or 3.9 or 3.10 or 3.11
 
 ### Install from Binary
-- Install from Pypi
   ```Shell
   # install stable basic version from pypi
   pip install neural-compressor
