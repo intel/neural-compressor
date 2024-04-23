@@ -9,6 +9,7 @@ from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fold
     FoldBatchNormNodesOptimizer,
 )
 from neural_compressor.tensorflow.quantization.utils.quantize_graph_common import QuantizeGraphHelper
+from neural_compressor.tensorflow.utils import version1_gte_version2
 
 
 class TestFoldBatchnorm(unittest.TestCase):
@@ -22,7 +23,11 @@ class TestFoldBatchnorm(unittest.TestCase):
     gamma = tf.compat.v1.get_variable(name="gamma", shape=[32], initializer=tf.compat.v1.random_normal_initializer())
     conv1 = tf.nn.conv2d(x, conv_weights, strides=[1, 1, 1, 1], padding="SAME")
     conv_bias = tf.nn.bias_add(conv1, conv_bias)
-    normed = tf.compat.v1.layers.batch_normalization(conv_bias)
+    normed = (
+        tf.keras.layers.BatchNormalization()(conv_bias)
+        if version1_gte_version2(tf.__version__, "2.16.1")
+        else tf.compat.v1.layers.batch_normalization(conv_bias)
+    )
     with tf.compat.v1.Session() as sess:
         sess.run(tf.compat.v1.global_variables_initializer())
         output_graph_def = graph_util.convert_variables_to_constants(

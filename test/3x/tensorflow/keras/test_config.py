@@ -18,7 +18,6 @@
 import math
 import os
 import shutil
-import time
 import unittest
 
 import keras
@@ -123,7 +122,10 @@ class TestTF3xNewApi(unittest.TestCase):
 
     @classmethod
     def tearDownClass(self):
-        shutil.rmtree(self.fp32_model_path, ignore_errors=True)
+        if self.fp32_model_path.endswith(".keras"):
+            os.remove(self.fp32_model_path)
+        else:
+            shutil.rmtree(self.fp32_model_path, ignore_errors=True)
         os.environ["ITEX_ONEDNN_GRAPH"] = "0"
 
     def test_static_quant_from_dict_default(self):

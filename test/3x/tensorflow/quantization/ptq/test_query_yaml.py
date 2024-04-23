@@ -10,7 +10,7 @@ from tensorflow.compat.v1 import graph_util
 
 import neural_compressor
 from neural_compressor.tensorflow.algorithms.static_quant.tensorflow import TensorflowQuery
-from neural_compressor.tensorflow.utils import disable_random
+from neural_compressor.tensorflow.utils import disable_random, version1_gte_version2
 
 
 def build_fake_framework_yaml():
@@ -168,7 +168,11 @@ class TestTFQueryYaml(unittest.TestCase):
 
         x = tf.nn.relu(x)
         conv = tf.nn.conv2d(x, conv_weights, strides=[1, 2, 2, 1], padding="SAME", name="last")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = (
+            tf.keras.layers.BatchNormalization()(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv)
+        )
 
         relu = tf.nn.relu(normed)
         relu2 = tf.nn.relu(relu)

@@ -8,7 +8,7 @@ import tensorflow as tf
 import yaml
 from tensorflow.compat.v1 import graph_util
 
-from neural_compressor.tensorflow.utils import disable_random
+from neural_compressor.tensorflow.utils import disable_random, version1_gte_version2
 
 
 class TestMetaPass(unittest.TestCase):
@@ -20,7 +20,11 @@ class TestMetaPass(unittest.TestCase):
             "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.nn.conv2d(top_relu, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = (
+            tf.keras.layers.BatchNormalization()(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv)
+        )
 
         relu = tf.nn.relu(normed)
         sq = tf.squeeze(relu, [0])
@@ -78,7 +82,11 @@ class TestMetaPass(unittest.TestCase):
             "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.nn.conv2d(top_relu, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = (
+            tf.keras.layers.BatchNormalization()(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv)
+        )
 
         relu = tf.nn.relu(normed)
         sq = tf.squeeze(relu, [0])
@@ -87,7 +95,11 @@ class TestMetaPass(unittest.TestCase):
             "weight2", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv2 = tf.nn.conv2d(reshape, conv_weights2, strides=[1, 2, 2, 1], padding="VALID")
-        normed2 = tf.compat.v1.layers.batch_normalization(conv2)
+        normed2 = (
+            tf.keras.layers.BatchNormalization()(conv2)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv2)
+        )
 
         relu6 = tf.nn.relu6(normed2, name="op_to_store")
 
@@ -134,7 +146,11 @@ class TestMetaPass(unittest.TestCase):
             "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.nn.conv2d(top_relu, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = (
+            tf.keras.layers.BatchNormalization()(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv)
+        )
 
         relu = tf.nn.relu(normed)
         reshape = tf.reshape(relu, [1, 27, 27, 16])
@@ -142,7 +158,11 @@ class TestMetaPass(unittest.TestCase):
             "weight2", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv2 = tf.nn.conv2d(reshape, conv_weights2, strides=[1, 2, 2, 1], padding="VALID")
-        normed2 = tf.compat.v1.layers.batch_normalization(conv2)
+        normed2 = (
+            tf.keras.layers.BatchNormalization()(conv2)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv2)
+        )
 
         relu6 = tf.nn.relu6(normed2, name="op_to_store")
 

@@ -21,7 +21,7 @@ from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.stri
 from neural_compressor.tensorflow.quantization.utils.quantize_graph.quantize_graph_for_intel_cpu import (
     QuantizeGraphForIntel,
 )
-from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset, disable_random
+from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset, disable_random, version1_gte_version2
 
 
 class TestConvBiasAddAddReluFusion(unittest.TestCase):
@@ -80,8 +80,9 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.nn.depthwise_conv2d(x_pad, conv_weights, strides=[1, 1, 1, 1], padding="VALID")
-
-        normed = tf.compat.v1.layers.batch_normalization(conv, name="op_to_store")
+        normed = tf.keras.layers.BatchNormalization(name="op_to_store")(conv) \
+            if version1_gte_version2(tf.__version__, "2.16.1") \
+            else tf.compat.v1.layers.batch_normalization(conv, name="op_to_store")
         out_name = normed.name.split(":")[0]
 
         with tf.compat.v1.Session() as sess:
@@ -121,8 +122,9 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.nn.depthwise_conv2d(x_pad, conv_weights, strides=[1, 1, 1, 1], padding="VALID")
-
-        normed = tf.compat.v1.layers.batch_normalization(conv, name="op_to_store")
+        normed = tf.keras.layers.BatchNormalization(name="op_to_store")(conv) \
+            if version1_gte_version2(tf.__version__, "2.16.1") \
+            else tf.compat.v1.layers.batch_normalization(conv, name="op_to_store")
         out_name = normed.name.split(":")[0]
 
         with tf.compat.v1.Session() as sess:
@@ -166,7 +168,9 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.nn.conv2d(x_pad, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = tf.keras.layers.BatchNormalization(name="op_to_store")(conv) \
+            if version1_gte_version2(tf.__version__, "2.16.1") \
+            else tf.compat.v1.layers.batch_normalization(conv, name="op_to_store")
 
         relu6 = tf.nn.relu6(normed, name="op_to_store")
 
@@ -294,14 +298,18 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.nn.conv2d(x_pad, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = tf.keras.layers.BatchNormalization(name="op_to_store")(conv) \
+            if version1_gte_version2(tf.__version__, "2.16.1") \
+            else tf.compat.v1.layers.batch_normalization(conv, name="op_to_store")
         # relu = tf.nn.relu(normed)
 
         conv_weights2 = tf.compat.v1.get_variable(
             "weight2", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv2 = tf.nn.conv2d(top_relu, conv_weights2, strides=[1, 2, 2, 1], padding="SAME")
-        normed2 = tf.compat.v1.layers.batch_normalization(conv2)
+        normed2 = tf.keras.layers.BatchNormalization(name="op_to_store")(conv2) \
+            if version1_gte_version2(tf.__version__, "2.16.1") \
+            else tf.compat.v1.layers.batch_normalization(conv2, name="op_to_store")
         # relu2 = tf.nn.relu(normed2)
         add = tf.raw_ops.AddV2(x=normed, y=normed2, name="addv2")
         relu = tf.nn.relu(add)
@@ -346,14 +354,18 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.nn.conv2d(x_pad, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = tf.keras.layers.BatchNormalization(name="op_to_store")(conv) \
+            if version1_gte_version2(tf.__version__, "2.16.1") \
+            else tf.compat.v1.layers.batch_normalization(conv, name="op_to_store")
         # relu = tf.nn.relu(normed)
 
         conv_weights2 = tf.compat.v1.get_variable(
             "weight2", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv2 = tf.nn.conv2d(top_relu, conv_weights2, strides=[1, 2, 2, 1], padding="SAME")
-        normed2 = tf.compat.v1.layers.batch_normalization(conv2)
+        normed2 = tf.keras.layers.BatchNormalization(name="op_to_store")(conv2) \
+            if version1_gte_version2(tf.__version__, "2.16.1") \
+            else tf.compat.v1.layers.batch_normalization(conv2, name="op_to_store")
         # relu2 = tf.nn.relu(normed2)
         add = tf.raw_ops.AddV2(x=normed, y=normed2, name="addv2")
         relu = tf.nn.relu(add)
@@ -398,7 +410,9 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.nn.conv2d(top_relu, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = tf.keras.layers.BatchNormalization(name="op_to_store")(conv) \
+            if version1_gte_version2(tf.__version__, "2.16.1") \
+            else tf.compat.v1.layers.batch_normalization(conv, name="op_to_store")
 
         relu = tf.nn.relu(normed)
         pooling = tf.nn.max_pool(relu, ksize=1, strides=[1, 2, 2, 1], padding="SAME")
@@ -452,7 +466,9 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.nn.conv2d(top_relu, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = tf.keras.layers.BatchNormalization(name="op_to_store")(conv) \
+            if version1_gte_version2(tf.__version__, "2.16.1") \
+            else tf.compat.v1.layers.batch_normalization(conv, name="op_to_store")
 
         relu = tf.nn.relu(normed)
         pooling = tf.nn.max_pool(relu, ksize=1, strides=[1, 2, 2, 1], padding="SAME")
@@ -508,7 +524,9 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
             "weight2", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.nn.conv2d(pooling, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-        biasadd = tf.compat.v1.layers.batch_normalization(conv, name="op_to_store")
+        biasadd = tf.keras.layers.BatchNormalization(name="op_to_store")(conv) \
+            if version1_gte_version2(tf.__version__, "2.16.1") \
+            else tf.compat.v1.layers.batch_normalization(conv, name="op_to_store")
         out_name = biasadd.name.split(":")[0]
         with tf.compat.v1.Session() as sess:
             sess.run(tf.compat.v1.global_variables_initializer())
