@@ -22,6 +22,7 @@ from typing import Any, Dict, Optional, Tuple, Union
 
 import torch
 import torch.ao.quantization.quantizer.x86_inductor_quantizer as xiq
+from packaging.version import Version
 from torch._export import capture_pre_autograd_graph
 from torch.ao.quantization.quantize_pt2e import convert_pt2e, prepare_pt2e
 from torch.ao.quantization.quantizer.x86_inductor_quantizer import X86InductorQuantizer
@@ -29,7 +30,6 @@ from torch.fx.graph_module import GraphModule
 
 from neural_compressor.common.utils import logger
 from neural_compressor.torch.utils import get_torch_version
-from packaging.version import Version
 
 
 class W8A8StaticQuantizer:
@@ -54,13 +54,19 @@ class W8A8StaticQuantizer:
                 cur_version = get_torch_version()
                 v2_2_2 = Version("2.2.2")
                 if cur_version <= v2_2_2:
-                    logger.warning(("`dynamic_shapes` is not supported in the current version(%s) of PyTorch,"
-                                    "If you want to use `dynamic_shapes` to export model, "
-                                    "please upgrade to 2.3.0 or later."),cur_version
+                    logger.warning(
+                        (
+                            "`dynamic_shapes` is not supported in the current version(%s) of PyTorch,"
+                            "If you want to use `dynamic_shapes` to export model, "
+                            "please upgrade to 2.3.0 or later."
+                        ),
+                        cur_version,
                     )
                     exported_model = capture_pre_autograd_graph(model, args=example_inputs)
                 else:
-                    exported_model = capture_pre_autograd_graph(model, args=example_inputs, dynamic_shapes=dynamic_shapes)
+                    exported_model = capture_pre_autograd_graph(
+                        model, args=example_inputs, dynamic_shapes=dynamic_shapes
+                    )
         except Exception as e:
             logger.error(f"Failed to export the model: {e}")
         return exported_model
