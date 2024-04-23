@@ -35,7 +35,6 @@ def quantize(
     quant_config: QuantConfig,
 ):
     from neural_compressor_ort.quantization.config import DynamicQuantConfig, StaticQuantConfig
-
     if isinstance(quant_config, StaticQuantConfig):
         if quant_config.extra_options.get("SmoothQuant", False):
             from neural_compressor_ort.quantization.algorithm_entry import smooth_quant_entry

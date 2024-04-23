@@ -22,8 +22,8 @@ from enum import Enum
 
 import numpy as np
 
-from neural_compressor.utils import logger
-from neural_compressor.utils.utility import LazyImport
+from neural_compressor_ort.utils import logger
+from neural_compressor_ort.utils.utility import LazyImport
 
 helper = LazyImport("onnx.helper")
 numpy_helper = LazyImport("onnx.numpy_helper")
@@ -662,3 +662,46 @@ def infer_shapes(in_mp, int_max=2**31 - 1, auto_merge=False, guess_output_rank=F
         onnx.save_model(symbolic_shape_inference.out_mp_, "sym_shape_infer_temp.onnx", save_as_external_data=True)
         raise Exception("Incomplete symbolic shape inference")
     return symbolic_shape_inference.out_mp_
+
+def dump_model_op_stats(model, quantize_config, fp32_op_list):
+    from neural_compressor_ort.utils.util import Statistics
+    qdq_ops = ["QuantizeLinear", "DequantizeLinear", "DynamicQuantizeLinear"]
+    res = {}
+    for op_type in fp32_op_list:
+        res[op_type] = {"INT8": 0, "FP32": 0}
+    for op_type in qdq_ops:
+        res[op_type] = {"INT8": 0, "FP32": 0}
+
+    for node in model.graph.node:
+        if node.name.endswith("_quant"):
+            if node.op_type.startswith("QLinear"):
+                origin_op_type = node.op_type.split("QLinear")[-1]
+            else:
+                origin_op_type = node.op_type.split("Integer")[0]
+
+            if origin_op_type in ["QAttention", "QGemm"]:
+                origin_op_type = origin_op_type[1:]
+            elif origin_op_type == "DynamicQuantizeLSTM":
+                origin_op_type = "LSTM"
+            elif origin_op_type == "QEmbedLayerNormalization":
+                origin_op_type = "EmbedLayerNormalization"
+            res[origin_op_type]["INT8"] += 1
+
+        elif node.op_type in qdq_ops:
+            res[node.op_type]["INT8"] += 1
+
+        elif node.op_type in res:
+            res[node.op_type]["FP32"] += 1
+
+    field_names = ["Op Type", "Total", "INT8", "FP32"]
+    output_data = [
+        [
+            op_type,
+            sum(res[op_type].values()),
+            res[op_type]["INT8"],
+            res[op_type]["FP32"],
+        ]
+        for op_type in res.keys()
+    ]
+
+    Statistics(output_data, header="Quantization Statistics", field_names=field_names).print_stat()
