@@ -410,11 +410,9 @@ class BaseConfig(ABC):
                 if self.global_config is not None:
                     config_mapping[(op_name, op_type)] = global_config
                 if op_type in op_type_config_dict:
-                    config_mapping[(op_name, op_type)] = op_name_config_dict[op_type]
+                    config_mapping[(op_name, op_type)] = op_type_config_dict[op_type]
                 for op_name_pattern in op_name_config_dict:
-                    if isinstance(op_name, str) and re.match(op_name_pattern, op_name):
-                        config_mapping[(op_name, op_type)] = op_name_config_dict[op_name_pattern]
-                    elif op_name_pattern == op_name:  # TODO: map ipex opname to stock pt op_name
+                    if re.match(op_name_pattern, op_name):
                         config_mapping[(op_name, op_type)] = op_name_config_dict[op_name_pattern]
         return config_mapping
 
