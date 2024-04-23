@@ -53,7 +53,7 @@ class TestW8A8StaticQuantizer:
         out = opt_model(*example_inputs)
         assert out.logits is not None
 
-    @patch("neural_compressor.torch.algorithms.w8a8_quant.core.logger.error")
+    @patch("neural_compressor.torch.algorithms.pt2e_quant.core.logger.error")
     def test_export_model_failed(self, mock_error):
         model, example_inputs = self.get_toy_model()
         w8a8_static_quantizer = W8A8StaticQuantizer()
