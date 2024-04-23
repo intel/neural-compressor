@@ -75,6 +75,26 @@ class FakeModel:
         return "FakeModel"
 
 
+class FakeOpType:
+    def __init__(self) -> None:
+        self.name = "fake_module"
+
+    def __call__(self, x) -> Any:
+        return x
+
+    def __repr__(self) -> str:
+        return "FakeModule"
+
+class OP_TYPE1(FakeOpType):
+    pass
+
+class OP_TYPE2(FakeOpType):
+    pass
+
+
+def build_simple_fake_model():
+    return FakeModel()
+
 @register_config(framework_name=FAKE_FRAMEWORK_NAME, algo_name=FAKE_CONFIG_NAME, priority=PRIORITY_FAKE_ALGO)
 class FakeAlgoConfig(BaseConfig):
     """Config class for fake algo."""
@@ -256,6 +276,32 @@ class TestBaseConfig(unittest.TestCase):
         config_mapping = mixed_config.to_config_mapping(model_info=model_info)
         self.assertIn(OP1_NAME, [op_info[0] for op_info in config_mapping])
         self.assertIn(OP2_NAME, [op_info[0] for op_info in config_mapping])
+
+    def test_set_local_op_name(self):
+        quant_config = FakeAlgoConfig(weight_bits=4)
+        # set `OP1_NAME`
+        fc1_config = FakeAlgoConfig(weight_bits=6)
+        quant_config.set_local("OP1_NAME", fc1_config)
+        model_info = FAKE_MODEL_INFO
+        logger.info(quant_config)
+        configs_mapping = quant_config.to_config_mapping(model_info=model_info)
+        logger.info(configs_mapping)
+        self.assertTrue(configs_mapping[("OP1_NAME", "OP_TYPE1")].weight_bits == 6)
+        self.assertTrue(configs_mapping[("OP2_NAME", "OP_TYPE1")].weight_bits == 4)
+        self.assertTrue(configs_mapping[("OP3_NAME", "OP_TYPE2")].weight_bits == 4)
+
+    def test_set_local_op_type(self):
+        quant_config = FakeAlgoConfig(weight_bits=4)
+        # set all `OP_TYPE1`
+        fc1_config = FakeAlgoConfig(weight_bits=6)
+        quant_config.set_local(OP_TYPE1, fc1_config)
+        model_info = FAKE_MODEL_INFO
+        logger.info(quant_config)
+        configs_mapping = quant_config.to_config_mapping(model_info=model_info)
+        logger.info(configs_mapping)
+        self.assertTrue(configs_mapping[("OP1_NAME", "OP_TYPE1")].weight_bits == 6)
+        self.assertTrue(configs_mapping[("OP2_NAME", "OP_TYPE1")].weight_bits == 6)
+        self.assertTrue(configs_mapping[("OP3_NAME", "OP_TYPE2")].weight_bits == 4)
 
 
 class TestConfigSet(unittest.TestCase):
