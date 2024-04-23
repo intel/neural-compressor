@@ -5,7 +5,7 @@ import pytest
 import torch
 
 from neural_compressor.common.utils import logger
-from neural_compressor.torch.algorithms.w8a8_quant.core import W8A8StaticQuantizer
+from neural_compressor.torch.algorithms.pt2e_quant.core import W8A8StaticQuantizer
 
 
 class TestW8A8StaticQuantizer:

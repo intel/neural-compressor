@@ -49,7 +49,7 @@ class W8A8StaticQuantizer:
             with torch.no_grad():
                 # Note 1: `capture_pre_autograd_graph` is also a short-term API, it will be
                 # updated to use the official `torch.export` API when that is ready.
-                exported_model = capture_pre_autograd_graph(model, example_inputs, dynamic_shapes=dynamic_shapes)
+                exported_model = capture_pre_autograd_graph(model, args=example_inputs, dynamic_shapes=dynamic_shapes)
         except Exception as e:
             logger.error(f"Failed to export the model: {e}")
         return exported_model
