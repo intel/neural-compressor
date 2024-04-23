@@ -8,10 +8,8 @@ pr:
       - ONC
   paths:
     include:
-      - neural_compressor_ort/common
-      - neural_compressor_ort/common
-      - test/onnxrt
-      - test/common
+      - neural_compressor_ort
+      - test
       - setup.py
       - requirements.txt
       - .azure-pipelines/scripts/ut
