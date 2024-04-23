@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from neural_compressor_ort.algorithms.post_training_quant.dynamic_quant import dynamic_quantizer
-from neural_compressor_ort.algorithms.post_training_quant.static_quant import static_quantizer
+from neural_compressor_ort.algorithms.post_training_quant.dynamic_quant import DynamicQuantizer
 from neural_compressor_ort.algorithms.post_training_quant.base_quantizer import Quantizer
 
-__all__ = ["dynamic_quantizer", "static_quantizer", "Quantizer"]
+__all__ = ["DynamicQuantizer", "Quantizer"]

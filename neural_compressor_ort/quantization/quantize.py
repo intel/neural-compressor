@@ -50,8 +50,7 @@ def quantize(
             # call static_quant_entry
             pass
     elif isinstance(quant_config, DynamicQuantConfig):
-        from neural_compressor_ort.quantization.algorithm_entry import 
-        inc_dynamic_config = generate_inc_dynamic_config(model_input, quant_config)
+        from neural_compressor_ort.quantization.algorithm_entry import dynamic_quantize_entry
         dynamic_quantize_entry(model_input, quant_config, model_output=model_output)
     else:
         raise TypeError("Invalid quantization config type, it must be either StaticQuantConfig or DynamicQuantConfig.")

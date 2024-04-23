@@ -24,8 +24,8 @@ from onnx import onnx_pb as onnx_proto
 from onnx import shape_inference
 from onnxruntime import GraphOptimizationLevel, InferenceSession, SessionOptions
 
-from neural_compressor.adaptor.ox_utils.operators import OPERATORS
-from neural_compressor.adaptor.ox_utils.util import (
+from neural_compressor_ort.algorithms.post_training_quant.operators import OPERATORS
+from neural_compressor_ort.algorithms.post_training_quant.utils import (
     QuantizedInitializer,
     QuantizedValue,
     QuantizedValueType,
@@ -175,7 +175,7 @@ class Quantizer:
         # step 2: convert q-node-dq to qoperator format if needed
         self.convert_qdq_to_operator_oriented()
 
-        self.merge_dedicated_qdq_pair()
+        #self.merge_dedicated_qdq_pair()
 
         self.model.remove_unused_nodes()
 
@@ -189,7 +189,7 @@ class Quantizer:
         """Insert Q/DQ pairs."""
         for node in self.model.nodes():
             if self.should_quantize(node):
-                op_quantizer = OPERATORS[node.op_type](self, node)
+                op_quantizer = OPERATORS[self.mode][node.op_type](self, node)
                 if op_quantizer.quantize_check():
                     op_quantizer.quantize()
         self.model.graph().node.extend(self.new_nodes)
@@ -472,7 +472,7 @@ class Quantizer:
 
         return True, scale_name, zero_point_name, scale_shape, zero_point_shape
 
-    def _get_quantized_weight(self, initializer, qType, scheme):
+    def _get_quantized_weight(self, initializer, qType, sym):
         """Get quantized weight."""
         name = (
             ("_").join([initializer.name, str(qType)])
@@ -487,7 +487,7 @@ class Quantizer:
             else self.tensor_proto_to_array(initializer)
         )
         rmin, rmax, zero_point, scale, quantized_weights_data = quantize_data(
-            weights_data.flatten().tolist(), _get_qrange_for_qType(qType, self.reduce_range), qType, scheme
+            weights_data.flatten().tolist(), _get_qrange_for_qType(qType, self.reduce_range), qType, sym
         )
         weight = QuantizedInitializer(
             name,

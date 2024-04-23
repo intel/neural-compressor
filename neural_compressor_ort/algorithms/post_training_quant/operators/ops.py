@@ -16,7 +16,10 @@
 # limitations under the License.
 """Base Operator."""
 
-OPERATORS = {}
+OPERATORS = {
+    "dynamic_quant": {},
+    "static_quant": {},
+}
 
 
 def op_registry(op_types, mode):
@@ -58,14 +61,12 @@ class Operator(object):
         self.activation_scheme = "asym"
         if self.node.name in self.quantizer.config:
             if self.quantizer.config[self.node.name] not in self.quantizer.fallback_list:
-                if "weight" in self.quantizer.config[self.node.name].keys():
-                    self.per_channel = self.quantizer.config[self.node.name]["weight"]["granularity"] == "per_channel"
-                    self.algorithm = self.quantizer.config[self.node.name]["weight"]["algorithm"]
-                    self.weight_scheme = self.quantizer.config[self.node.name]["weight"]["scheme"]
-                    self.weight_dtype = self.quantizer.config[self.node.name]["weight"]["dtype"]
-                if "activation" in self.quantizer.config[self.node.name].keys():
-                    self.activation_dtype = self.quantizer.config[self.node.name]["activation"]["dtype"]
-                    self.activation_scheme = self.quantizer.config[self.node.name]["activation"]["scheme"]
+                self.per_channel = self.quantizer.config[self.node.name].weight_per_channel
+                self.algorithm = self.quantizer.config[self.node.name].weight_calib_method
+                self.weight_scheme = "sym" if self.quantizer.config[self.node.name].weight_sym else "asym"
+                self.weight_dtype = self.quantizer.config[self.node.name].weight_dtype
+                self.activation_dtype = self.quantizer.config[self.node.name].act_dtype
+                self.activation_scheme = "sym" if self.quantizer.config[self.node.name].act_sym else "asym"
 
     def quantize_check(self):
         """Check if quantizaion can be done."""
@@ -86,6 +87,6 @@ class Operator(object):
             return False
         return True
 
-    def convert(self, convert_format):
+    def convert(self):
         """Convert to QOperator format."""
         return

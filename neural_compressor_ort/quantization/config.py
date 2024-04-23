@@ -23,6 +23,7 @@ from typing import Callable, List, NamedTuple, Union
 
 import numpy as np
 import onnx
+import onnx.onnx_pb as onnx_proto
 from onnxruntime.quantization.calibrate import CalibrationMethod
 from onnxruntime.quantization.quant_utils import QuantFormat, QuantType
 from onnxruntime.quantization.quantize import DynamicQuantConfig as ORTDynamicQuantConfig
@@ -51,19 +52,20 @@ __all__ = [
 
 FRAMEWORK_NAME = "onnxrt"
 
-
-class OperatorConfig(NamedTuple):
-    config: BaseConfig
-    operators: List[Union[str, Callable]]
-    valid_func_list: List[Callable] = []
-
-class _OperatorConfig(BaseConfig):
+class _OperatorConfig(NamedTuple):
     weight_dtype: str
     weight_sym: bool
     weight_per_channel: bool
+    weight_calib_method: str
     act_dtype: str
     act_sym: bool
     act_per_channel: bool
+    act_calib_method: str
+
+class OperatorConfig(NamedTuple):
+    config: Union[BaseConfig, _OperatorConfig]
+    operators: List[Union[str, Callable]]
+    valid_func_list: List[Callable] = []
 
 ######################## RNT Config ###############################
 
@@ -673,11 +675,41 @@ class DynamicQuantConfig(ORTDynamicQuantConfig, BaseConfig):
     Inherit from DynamicQuantConfig:
         https://github.com/microsoft/onnxruntime/blob/v1.17.1/onnxruntime/python/tools/quantization/quantize.py#L206
     """
+    supported_configs: List[OperatorConfig] = []
 
-    def __init__(self, white_list: List[OP_NAME_OR_MODULE_TYPE] = DEFAULT_WHITE_LIST, *args, **kwargs):
-        ORTDynamicQuantConfig.__init__(self, *args, **kwargs)
+    params_list: List[str] = [
+        "op_types_to_quantize",
+    ]
+ 
+    #name: str = DYNAMIC_QUANT
+
+    def __init__(
+        self,
+        weight_type=QuantType.QInt8,
+        op_types_to_quantize=None,
+        nodes_to_quantize=None,
+        nodes_to_exclude=None,
+        per_channel=False,
+        reduce_range=False,
+        use_external_data_format=False,
+        extra_options=None,
+        white_list=["Conv", "MatMul", "FusedConv"],
+        ):
+        ORTDynamicQuantConfig.__init__(
+            self,
+            weight_type=weight_type,
+            op_types_to_quantize=op_types_to_quantize,
+            nodes_to_quantize=nodes_to_quantize,
+            nodes_to_exclude=nodes_to_exclude,
+            per_channel=per_channel,
+            reduce_range=reduce_range,
+            use_external_data_format=use_external_data_format,
+            extra_options=extra_options,
+            )
         BaseConfig.__init__(self, white_list=white_list)
-        self._post_init()
+        self.white_list = white_list
+        #self._post_init()
+        DynamicQuantConfig.register_supported_configs()
 
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
@@ -685,39 +717,48 @@ class DynamicQuantConfig(ORTDynamicQuantConfig, BaseConfig):
         supported_configs.append(
             OperatorConfig(
                 config=_OperatorConfig(
-                    weight_dtype="uint8",
+                    weight_dtype=onnx_proto.TensorProto.UINT8,
                     weight_sym=False,
                     weight_per_channel=False,
-                    act_dtype="uint8",
+                    weight_calib_method="minmax",
+                    act_dtype=onnx_proto.TensorProto.UINT8,
                     act_sym=False,
+                    act_per_channel=False,
+                    act_calib_method="minmax",
                 ),
                 operators=["FusedConv", "Conv", "EmbedLayerNormalization"]))
         supported_configs.append(
             OperatorConfig(
                 config=_OperatorConfig(
-                    weight_dtype="int8",
+                    weight_dtype=onnx_proto.TensorProto.INT8,
                     weight_sym=True,
                     weight_per_channel=True,
-                    act_dtype="uint8",
+                    weight_calib_method="minmax",
+                    act_dtype=onnx_proto.TensorProto.UINT8,
                     act_sym=False,
+                    act_per_channel=False,
+                    act_calib_method="minmax",
                 ),
                 operators=["MatMul"]))
         supported_configs.append(
             OperatorConfig(
                 config=_OperatorConfig(
-                    weight_dtype="int8",
+                    weight_dtype=onnx_proto.TensorProto.INT8,
                     weight_sym=True,
                     weight_per_channel=False,
-                    act_dtype="uint8",
+                    weight_calib_method="minmax",
+                    act_dtype=onnx_proto.TensorProto.UINT8,
                     act_sym=False,
+                    act_per_channel=False,
+                    act_calib_method="minmax",
                 ),
                 operators=["Gather", "Attention", "LSTM"]))
         cls.supported_configs = supported_configs
 
     @staticmethod
     def get_model_info(model) -> list:
-        white_list = ["Conv", "MatMul", "FusedConv"]
         filter_result = []
+        white_list=["Conv", "MatMul", "FusedConv"]
         for node in model.graph.node:
             if node.op_type in white_list:
                 pair = (node.name, node.op_type)
@@ -738,28 +779,24 @@ class DynamicQuantConfig(ORTDynamicQuantConfig, BaseConfig):
             config_list = [self]
         for config in config_list:
             # update model level setting
-            config_mapping.update(config.get_model_params_dict())
+            # config_mapping.update(config.get_model_params_dict())
 
             # update node level setting
             global_config = config.global_config
             op_type_config_dict, op_name_config_dict = config._get_op_name_op_type_config()
             for op_name, op_type in model_info:
-                if self.global_config is not None:
-                    config_mapping[(op_name, op_type)] = global_config
-                    continue
-
                 for op_name_pattern in op_name_config_dict:
                     if re.match(op_name_pattern, op_name):
-                        config_mapping[(op_name, op_type)] = op_name_config_dict[op_name_pattern]
+                        config_mapping[op_name] = op_name_config_dict[op_name_pattern]
                         break
 
                 if op_type in op_type_config_dict:
-                    config_mapping[(op_name, op_type)] = op_name_config_dict[op_type]
+                    config_mapping[op_name] = op_name_config_dict[op_type]
                     continue
 
-                for op_config in cls.supported_configs:
+                for op_config in DynamicQuantConfig.supported_configs:
                     if op_type in op_config.operators:
-                        config_mapping[(op_name, op_type)] = op_config.config
+                        config_mapping[op_name] = op_config.config
                         break
 
         return config_mapping

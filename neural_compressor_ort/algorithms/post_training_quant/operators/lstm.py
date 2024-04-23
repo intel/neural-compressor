@@ -20,7 +20,7 @@ import numpy
 import onnx
 
 from neural_compressor_ort.algorithms.post_training_quant.operators.ops import op_registry, Operator
-from neural_compressor_ort.algorithms.post_training_quant.utils.import attribute_to_kwarg, find_by_name, ms_domain
+from neural_compressor_ort.algorithms.post_training_quant.utils import attribute_to_kwarg, find_by_name, ms_domain
 from neural_compressor_ort.common.utils import DYNAMIC_QUANT, STATIC_QUANT
 
 
@@ -36,7 +36,7 @@ class LSTMOperator(Operator):
         """Do quantizaion."""
         return
 
-    def convert_check(self, convert_format):
+    def convert_check(self):
         """Check if conversion can be done."""
         node = self.node
 
@@ -54,7 +54,7 @@ class LSTMOperator(Operator):
 
         return True
 
-    def convert(self, convert_format):
+    def convert(self):
         """Convert to QOperator format."""
         node = self.node
 

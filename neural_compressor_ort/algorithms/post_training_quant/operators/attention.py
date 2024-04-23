@@ -19,7 +19,7 @@
 import onnx
 
 from neural_compressor_ort.algorithms.post_training_quant.operators.ops import op_registry, Operator
-from neural_compressor_ort.algorithms.post_training_quant.utils.import attribute_to_kwarg, find_by_name, ms_domain
+from neural_compressor_ort.algorithms.post_training_quant.utils import attribute_to_kwarg, find_by_name, ms_domain
 from neural_compressor_ort.common.utils import DYNAMIC_QUANT, STATIC_QUANT
 
 
@@ -37,7 +37,7 @@ class AttentionOperator(Operator):
         self.quantizer.quantize_inputs(node, [0, 1, 2])
         node.name = node.name + "_quant"
 
-    def convert(self, convert_format):
+    def convert(self):
         """Convert QDQ mode to QOperator format."""
         node = self.node
         parents = self.quantizer.model.get_parents(node)

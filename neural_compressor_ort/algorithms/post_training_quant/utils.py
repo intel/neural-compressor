@@ -278,7 +278,7 @@ def collate_preds(results):
     return collate_results
 
 
-def quantize_data_with_scale_zero(data, qType, scheme, scale, zero_point):
+def quantize_data_with_scale_zero(data, qType, sym, scale, zero_point):
     """Quantize data with scale and zero point.
 
     To pack weights, we compute a linear transformation
@@ -289,25 +289,25 @@ def quantize_data_with_scale_zero(data, qType, scheme, scale, zero_point):
     Args:
         data (np.array): data to quantize
         qType (int): data type to quantize to. Supported types UINT8 and INT8
-        scheme (string): sym or asym quantization.
+        sym (bool): sym quantization.
         scale (float): computed scale of quantized data
         zero_point (uint8 or int8): computed zero point of quantized data
     """
     data = np.asarray(data)
-    if qType == onnx_proto.TensorProto.INT8 and scheme == "sym":
+    if qType == onnx_proto.TensorProto.INT8 and sym:
         # signed byte type
         quantized_data = (data.astype(np.float32) / scale).round().astype("b")
-    elif qType == onnx_proto.TensorProto.UINT8 and scheme == "asym":
+    elif qType == onnx_proto.TensorProto.UINT8 and not sym:
         quantized_data = ((data.astype(np.float32) / scale).round() + zero_point).astype("B")
     else:
-        raise ValueError("Unexpected combination of data type {} and scheme {}.".format(qType, scheme))
+        raise ValueError("Unexpected combination of data type {} and sym {}.".format(qType, sym))
     return quantized_data
 
 
-def calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme):
+def calculate_scale_zp(rmin, rmax, quantize_range, qType, sym):
     """Calculate scale and zero point."""
     if isinstance(rmax, np.ndarray):
-        if scheme == "sym":
+        if sym:
             max_range = np.maximum(abs(rmin), abs(rmax))
             scale = np.ones(rmax.shape, dtype="float32")
             scale[max_range > 0] = np.array(
@@ -320,7 +320,7 @@ def calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme):
                 [float(i) / quantize_range for i in (rmax - rmin)[rmin != rmax].flatten().tolist()], dtype="float32"
             )
 
-        if scheme == "sym" and qType == onnx_proto.TensorProto.INT8:
+        if sym and qType == onnx_proto.TensorProto.INT8:
             zero_point = np.zeros(scale.shape, dtype="int8") if isinstance(scale, np.ndarray) else 0
         elif isinstance(scale, np.ndarray) and (scale == 1).all():
             zero_point = (
@@ -336,13 +336,13 @@ def calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme):
             ).round()
 
     else:
-        if scheme == "sym":
+        if sym:
             max_range = max(abs(rmin), abs(rmax))
             scale = (float(max_range) * 2) / quantize_range if max_range > 0 else 1
         else:
             scale = (float(rmax) - float(rmin)) / quantize_range if rmin != rmax else 1
 
-        if scale == 1 or (scheme == "sym" and qType == onnx_proto.TensorProto.INT8):
+        if scale == 1 or (sym and qType == onnx_proto.TensorProto.INT8):
             zero_point = 0
         elif qType == onnx_proto.TensorProto.UINT8:
             zero_point = round((0 - float(rmin)) / scale)
@@ -354,7 +354,7 @@ def calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme):
     return scale, zero_point
 
 
-def quantize_data(data, quantize_range, qType, scheme):
+def quantize_data(data, quantize_range, qType, sym):
     """Quantize data.
 
     To pack weights, we compute a linear transformation
@@ -372,13 +372,13 @@ def quantize_data(data, quantize_range, qType, scheme):
         data (array): data to quantize
         quantize_range (list): list of data to weight pack.
         qType (int): data type to quantize to. Supported types UINT8 and INT8
-        scheme (string): sym or asym quantization.
+        sym (bool): sym quantization.
     """
     rmin = min(min(data), 0)
     rmax = max(max(data), 0)
 
-    scale, zero_point = calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme)
-    quantized_data = quantize_data_with_scale_zero(data, qType, scheme, scale, zero_point)
+    scale, zero_point = calculate_scale_zp(rmin, rmax, quantize_range, qType, sym)
+    quantized_data = quantize_data_with_scale_zero(data, qType, sym, scale, zero_point)
     return rmin, rmax, zero_point, scale, quantized_data
 
 

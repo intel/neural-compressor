@@ -21,7 +21,7 @@ import onnx
 from onnx import onnx_pb as onnx_proto
 
 from neural_compressor_ort.algorithms.post_training_quant.operators.ops import op_registry, Operator
-from neural_compressor_ort.algorithms.post_training_quant.utils.import attribute_to_kwarg, find_by_name, ms_domain
+from neural_compressor_ort.algorithms.post_training_quant.utils import attribute_to_kwarg, find_by_name, ms_domain
 from neural_compressor_ort.common.utils import DYNAMIC_QUANT, STATIC_QUANT
 
 @op_registry(op_types="Conv, FusedConv", mode=[DYNAMIC_QUANT])
@@ -58,7 +58,7 @@ class ConvOperator(Operator):
 
         node.name = node.name + "_quant"
 
-    def convert(self, convert_format):
+    def convert(self):
         """Convert to QOperator format."""
         node = self.node
         inputs = []

@@ -23,7 +23,7 @@ from neural_compressor_ort.algorithms import Smoother
 from neural_compressor_ort.common import Logger
 from neural_compressor_ort.common.utils import AWQ, GPTQ, RTN, SMOOTH_QUANT, STATIC_QUANT, DYNAMIC_QUANT
 from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
-from neural_compressor_ort.quantization.config import AWQConfig, GPTQConfig, RTNConfig, SmoothQuantConfig
+from neural_compressor_ort.quantization.config import AWQConfig, GPTQConfig, RTNConfig, SmoothQuantConfig, DynamicQuantConfig
 from neural_compressor_ort.utils.utility import register_algo
 
 logger = Logger().get_logger()
@@ -169,7 +169,13 @@ def dynamic_quantize_entry(
     configs_mapping = quant_config.to_config_mapping(model_info=model_info)
     logger.debug(configs_mapping)
 
-    quantizer = DynamicQuantizer(model, configs_mapping)
+    quantizer = DynamicQuantizer(
+        model,
+        configs_mapping,
+        op_types_to_quantize=quant_config.op_types_to_quantize if \
+            len(quant_config.op_types_to_quantize) > 0 else \
+            quant_config.white_list,
+        )
     quantizer.quantize_model()
     quantizer.model.save(model_output)
     return quantizer.model.model

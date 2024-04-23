@@ -23,8 +23,8 @@ from onnx import TensorProto
 from onnx import onnx_pb as onnx_proto
 from onnx import shape_inference
 from neural_compressor_ort.algorithms.post_training_quant.base_quantizer import Quantizer
-from neural_compressor_ort.algorithms.post_training_quant.dynamic_quant.operators import OPERATORS
-from neural_compressor_ort.utils.utility import (
+from neural_compressor_ort.algorithms.post_training_quant.operators import OPERATORS
+from neural_compressor_ort.algorithms.post_training_quant.utils import (
     QuantizedInitializer,
     QuantizedValue,
     QuantizedValueType,
@@ -68,16 +68,24 @@ class DynamicQuantizer(Quantizer):
             dedicated_qdq_pair (bool, optional): dedicate QDQ pair or not. Defaults to False.
             backend (str, optional): backend of onnxrt adaptor. Defaults to CPUExecutionProvider
         """
-        self.model = ONNXModel(model) if not isinstance(model, ONNXModel) else model
-        model = (
-            onnx.shape_inference.infer_shapes(self.model.model) if not self.model.is_large_model else self.model.model
-        )
-        self.config = q_config
+        super().__init__(
+            mode="dynamic_quant",
+            model=model,
+            q_config=q_config,
+            static=False,
+            quantization_params=quantization_params,
+            op_types_to_quantize=op_types_to_quantize,
+            )
+        #self.model = ONNXModel(model) if not isinstance(model, ONNXModel) else model
+        #model = (
+        #    onnx.shape_inference.infer_shapes(self.model.model) if not self.model.is_large_model else self.model.model
+        #)
+        #self.config = q_config
         self.backend = backend
         self.reduce_range = reduce_range
         self.fuse_dynamic_quant = False
-        self.quantization_params = quantization_params
-        self.op_types_to_quantize = op_types_to_quantize
+        #self.quantization_params = quantization_params
+        #self.op_types_to_quantize = op_types_to_quantize
         self.fallback_list = fallback_list
         self.new_nodes = []
 
@@ -134,7 +142,7 @@ class DynamicQuantizer(Quantizer):
         self.replace_input = []
         for node in self.model.nodes():
             if node.op_type not in ["QuantizeLinear", "DequantizeLinear"] and self.should_convert(node):
-                op_converter = OPERATORS[node.op_type](self, node)
+                op_converter = OPERATORS[self.mode][node.op_type](self, node)
                 if op_converter.convert_check():
                     op_converter.convert()
         self.model.graph().node.extend(self.new_nodes)
@@ -157,17 +165,17 @@ class DynamicQuantizer(Quantizer):
                     dtype = (
                         onnx_proto.TensorProto.INT8 if initializer_use_weight_qType else onnx_proto.TensorProto.UINT8
                     )
-                    scheme = "sym" if initializer_use_weight_qType else "asym"
+                    sym = True if initializer_use_weight_qType else False
                 else:
                     dtype = (
-                        self.config[node.name]["weight"]["dtype"]
+                        self.config[node.name].weight_dtype
                         if initializer_use_weight_qType
-                        else self.config[node.name]["activation"]["dtype"]
+                        else self.config[node.name].act_dtype
                     )
                     scheme = (
-                        self.config[node.name]["weight"]["scheme"]
+                        self.config[node.name].weight_sym
                         if initializer_use_weight_qType
-                        else self.config[node.name]["activation"]["scheme"]
+                        else self.config[node.name].act_sym
                     )
 
                 weight = self._get_quantized_weight(initializer, dtype, scheme)
@@ -210,8 +218,8 @@ class DynamicQuantizer(Quantizer):
                 if qlinear_node is None:
                     if (
                         self.fuse_dynamic_quant
-                        and self.config[node.name]["activation"]["dtype"] == onnx_proto.TensorProto.UINT8
-                        and self.config[node.name]["activation"]["scheme"] == "asym"
+                        and self.config[node.name].act_dtype == onnx_proto.TensorProto.UINT8
+                        and not self.config[node.name].act_sym
                     ):
                         # DynamicQuantizeLinear supports uint8 input for CPU EP, supports uint8 and int8 for DML EP
                         scale_name = tensor_name + "_scale"
@@ -228,7 +236,7 @@ class DynamicQuantizer(Quantizer):
                         )
                     else:
                         scale_name, zp_name, _, _ = self._get_dynamic_input_quantization_params(
-                            tensor_name, self.config[node.name]["activation"]["dtype"]
+                            tensor_name, self.config[node.name].act_dtype
                         )
                         qlinear_node = make_quant_node(
                             tensor_name + "_QuantizeLinear",
@@ -242,7 +250,7 @@ class DynamicQuantizer(Quantizer):
                         qlinear_node.output[0],
                         scale_name,
                         zp_name,
-                        self.config[node.name]["activation"]["dtype"],
+                        self.config[node.name].act_dtype,
                     )
                 self.replace_input.append([node, tensor_name, qlinear_node.output[0]])
 
