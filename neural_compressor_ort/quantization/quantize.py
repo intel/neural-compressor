@@ -45,12 +45,14 @@ def quantize(
             smooth_quant_entry(
                 model_input, inc_sq_config, quant_config.calibration_data_reader, model_output=model_output
             )
+            return model
         else:
             # call static_quant_entry
             pass
     elif isinstance(quant_config, DynamicQuantConfig):
-        # call dynamic_quant_entry
-        pass
+        from neural_compressor_ort.quantization.algorithm_entry import 
+        inc_dynamic_config = generate_inc_dynamic_config(model_input, quant_config)
+        dynamic_quantize_entry(model_input, quant_config, model_output=model_output)
     else:
         raise TypeError("Invalid quantization config type, it must be either StaticQuantConfig or DynamicQuantConfig.")
 

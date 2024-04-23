@@ -29,6 +29,7 @@ BASE_CONFIG = "base_config"
 COMPOSABLE_CONFIG = "composable_config"
 RTN = "rtn"
 STATIC_QUANT = "static_quant"
+DYNAMIC_QUANT = "dynamic_quant"
 SMOOTH_QUANT = "smooth_quant"
 GPTQ = "gptq"
 AWQ = "awq"  # pragma: no cover

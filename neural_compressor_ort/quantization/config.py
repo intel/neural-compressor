@@ -660,16 +660,69 @@ class StaticQuantConfig(ORTStaticQuantConfig):
         return self.__dict__
 
 
-class DynamicQuantConfig(ORTDynamicQuantConfig):
+class DynamicQuantConfig(ORTDynamicQuantConfig, BaseConfig):
     """This is a class for dynamic Quant Configuration.
 
     Inherit from DynamicQuantConfig:
         https://github.com/microsoft/onnxruntime/blob/v1.17.1/onnxruntime/python/tools/quantization/quantize.py#L206
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, white_list: List[OP_NAME_OR_MODULE_TYPE] = DEFAULT_WHITE_LIST, *args, **kwargs):
+        ORTDynamicQuantConfig.__init__(*args, **kwargs)
+        BaseConfig.__init__(white_list=white_list)
 
+    @classmethod
+    def register_supported_configs(cls) -> List[_OperatorConfig]:
+        supported_configs = []
+        smooth_quant_config = SmoothQuantConfig()
+        supported_configs.append(
+            _OperatorConfig(
+                config=DynamicQuantConfig(
+                    activation_type=QuantType.QUInt8,
+                    weight_type=QuantType.QUInt8,
+                    per_channel=False,
+                    extra_options={
+                        "WeightSymmetric": False,
+                        "ActivationSymmetric": False,
+                    },
+                ),
+                operators=["FusedConv", "Conv", "EmbedLayerNormalization"]))
+        supported_configs.append(
+            _OperatorConfig(
+                config=DynamicQuantConfig(
+                    activation_type=QuantType.QUInt8,
+                    weight_type=QuantType.QInt8,
+                    per_channel=True,
+                    extra_options={
+                        "WeightSymmetric": True,
+                        "ActivationSymmetric": False,
+                    },
+                ),
+                operators=["MatMul"]))
+        supported_configs.append(
+            _OperatorConfig(
+                config=DynamicQuantConfig(
+                    activation_type=QuantType.QUInt8,
+                    weight_type=QuantType.QInt8,
+                    per_channel=False,
+                    extra_options={
+                        "WeightSymmetric": True,
+                        "ActivationSymmetric": False,
+                    },
+                ),
+                operators=["Gather", "Attention", "LSTM"]))
+        cls.supported_configs = supported_configs
+
+    @staticmethod
+    def get_model_info(model) -> list:
+        white_list = ["Gemm", "Conv", "MatMul", "FusedConv"]
+        filter_result = []
+        for node in model.graph.node:
+            if node.op_type in white_list:
+                pair = (node.name, node.op_type)
+                filter_result.append(pair)
+        logger.debug(f"Get model info: {filter_result}")
+        return filter_result
 
 def generate_inc_sq_config(quant_config: QuantConfig):
     extra_options = quant_config.extra_options

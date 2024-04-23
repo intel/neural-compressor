@@ -21,7 +21,7 @@ from onnxruntime.quantization import quantize
 
 from neural_compressor_ort.algorithms import Smoother
 from neural_compressor_ort.common import Logger
-from neural_compressor_ort.common.utils import AWQ, GPTQ, RTN, SMOOTH_QUANT
+from neural_compressor_ort.common.utils import AWQ, GPTQ, RTN, SMOOTH_QUANT, STATIC_QUANT, DYNAMIC_QUANT
 from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
 from neural_compressor_ort.quantization.config import AWQConfig, GPTQConfig, RTNConfig, SmoothQuantConfig
 from neural_compressor_ort.utils.utility import register_algo
@@ -33,6 +33,7 @@ __all__ = [
     "rtn_quantize_entry",
     "gptq_quantize_entry",
     "awq_quantize_entry",
+    "dynamic_quantize_entry",
 ]
 
 
@@ -150,3 +151,25 @@ def awq_quantize_entry(
     calibration_data_reader.rewind()
     model = apply_awq_on_model(model, configs_mapping, calibration_data_reader)
     return model
+
+###################### AWQ Algo Entry ##################################
+@register_algo(name=DYNAMIC_QUANT)
+def dynamic_quantize_entry(
+    model: Union[Path, str],
+    quant_config: DynamicQuantConfig,
+    model_output: Union[Path, str] = None,
+    *args,
+    **kwargs,
+) -> onnx.ModelProto:
+    """The main entry to apply dynamic quantization."""
+    from neural_compressor_ort.algorithms import DynamicQuantizer
+
+    # map config to each op
+    model_info = quant_config.get_model_info(model=model)
+    configs_mapping = quant_config.to_config_mapping(model_info=model_info)
+    logger.debug(configs_mapping)
+
+    quantizer = DynamicQuantizer(model, configs_mapping)
+    quantizer.quantize_model()
+    quantizer.model.save(model_output)
+    return quantizer.model.model
