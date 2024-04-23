@@ -40,7 +40,7 @@ def rtn_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], RTNConfig], *args, **kwargs
 ) -> torch.nn.Module:
     """The main entry to apply rtn quantization."""
-    from neural_compressor.torch.algorithms.weight_only import rtn_quantize
+    from neural_compressor.torch.algorithms.weight_only.rtn import rtn_quantize
 
     # rebuild weight_config for rtn_quantize function
     weight_config = {}
@@ -75,7 +75,7 @@ def gptq_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], GPTQConfig], *args, **kwargs
 ) -> torch.nn.Module:
     logger.info("Quantize model with the GPTQ algorithm.")
-    from neural_compressor.torch.algorithms.weight_only import gptq_quantize
+    from neural_compressor.torch.algorithms.weight_only.gptq import gptq_quantize
 
     # rebuild weight_config for gptq_quantize function
     weight_config = {}
@@ -228,7 +228,7 @@ def awq_quantize_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], AWQConfig], *args, **kwargs
 ) -> torch.nn.Module:
     logger.info("Quantize model with the AWQ algorithm.")
-    from neural_compressor.torch.algorithms.weight_only import awq_quantize
+    from neural_compressor.torch.algorithms.weight_only.awq import awq_quantize
 
     weight_config = {}
     for (op_name, op_type), op_config in configs_mapping.items():
@@ -288,7 +288,7 @@ def awq_quantize_entry(
 def teq_quantize_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], TEQConfig], *args, **kwargs
 ) -> torch.nn.Module:
-    from neural_compressor.torch.algorithms.weight_only import teq_quantize
+    from neural_compressor.torch.algorithms.weight_only.teq import teq_quantize
 
     logger.info("Quantize model with the TEQ algorithm.")
     weight_config = {}
@@ -338,7 +338,7 @@ def teq_quantize_entry(
 def autoround_quantize_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], AutoRoundConfig], *args, **kwargs
 ) -> torch.nn.Module:
-    from neural_compressor.torch.algorithms.weight_only import autoround_quantize
+    from neural_compressor.torch.algorithms.weight_only.autoround import autoround_quantize
 
     logger.info("Quantize model with the AutoRound algorithm.")
     calib_func = kwargs.get("run_fn", None)
@@ -407,7 +407,7 @@ def autoround_quantize_entry(
 def hqq_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, Callable], HQQConfig], *args, **kwargs
 ) -> torch.nn.Module:
-    from neural_compressor.torch.algorithms.weight_only import hqq_quantize
+    from neural_compressor.torch.algorithms.weight_only.hqq import hqq_quantize
 
     logger.info("Quantize model with the HQQ algorithm.")
     q_model = hqq_quantize(model, configs_mapping)
