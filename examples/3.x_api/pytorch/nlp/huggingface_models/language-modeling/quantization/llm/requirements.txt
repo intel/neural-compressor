@@ -8,6 +8,6 @@ pytest
 wandb
 einops
 neural-compressor
-git+https://github.com/intel/intel-extension-for-transformers.git@8f5febc10227231266aa8c55bc5aa2c982afb2f3
+intel-extension-for-transformers
 lm_eval==0.4.2
 peft
