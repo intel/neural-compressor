@@ -50,8 +50,7 @@ parser.add_argument("--pad_max_length", default=512, type=int,
                     help="Pad input ids to max length.")
 parser.add_argument("--calib_iters", default=512, type=int,
                     help="calibration iters.")
-parser.add_argument("--tasks", nargs='+', default=["lambada_openai",
-                                                   "hellaswag", "winogrande", "piqa", "wikitext"],
+parser.add_argument("--tasks", default="lambada_openai,hellaswag,winogrande,piqa,wikitext",
                     type=str, help="tasks list for accuracy validation")
 parser.add_argument("--peft_model_id", type=str, default=None, help="model_name_or_path of peft model")
 # ============SmoothQuant configs==============
@@ -390,24 +389,27 @@ else:
 
 if args.accuracy:
     user_model.eval()
-    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate
-
-    results = evaluate(
-        model="hf-causal",
+    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
+    eval_args = LMEvalParser(
+        model="hf",
         model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
         user_model=user_model,
+        tokenizer = tokenizer,
         batch_size=args.batch_size,
         tasks=args.tasks,
+        device="cpu",
     )
+    results = evaluate(eval_args)
+
     dumped = json.dumps(results, indent=2)
     if args.save_accuracy_path:
         with open(args.save_accuracy_path, "w") as f:
             f.write(dumped)
-    for task_name in args.tasks:
+    for task_name in args.tasks.split(","):
         if task_name == "wikitext":
-            acc = results["results"][task_name]["word_perplexity"]
+            acc = results["results"][task_name]["word_perplexity,none"]
         else:
-            acc = results["results"][task_name]["acc"]
+            acc = results["results"][task_name]["acc,none"]
     print("Accuracy: %.5f" % acc)
     print('Batch size = %d' % args.batch_size)
 
@@ -417,21 +419,25 @@ if args.performance:
     import time
 
     samples = args.iters * args.batch_size
-    start = time.time()
-    results = evaluate(
-        model="hf-causal",
+    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
+    eval_args = LMEvalParser(
+        model="hf",
         model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
         user_model=user_model,
+        tokenizer = tokenizer,
         batch_size=args.batch_size,
         tasks=args.tasks,
         limit=samples,
+        device="cpu",
     )
+    start = time.time()
+    results = evaluate(eval_args)
     end = time.time()
-    for task_name in args.tasks:
+    for task_name in args.tasks.split(","):
         if task_name == "wikitext":
-            acc = results["results"][task_name]["word_perplexity"]
+            acc = results["results"][task_name]["word_perplexity,none"]
         else:
-            acc = results["results"][task_name]["acc"]
+            acc = results["results"][task_name]["acc,none"]
     print("Accuracy: %.5f" % acc)
     print('Throughput: %.3f samples/sec' % (samples / (end - start)))
     print('Latency: %.3f ms' % ((end - start) * 1000 / samples))
