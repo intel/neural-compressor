@@ -29,7 +29,7 @@ from torch.ao.quantization.quantizer.x86_inductor_quantizer import X86InductorQu
 from torch.fx.graph_module import GraphModule
 
 from neural_compressor.common.utils import logger
-from neural_compressor.torch.utils import get_torch_version
+from neural_compressor.torch.utils import TORCH_VERSION_2_2_2, get_torch_version
 
 
 class W8A8StaticQuantizer:
@@ -52,8 +52,7 @@ class W8A8StaticQuantizer:
                 # Note 1: `capture_pre_autograd_graph` is also a short-term API, it will be
                 # updated to use the official `torch.export` API when that is ready.
                 cur_version = get_torch_version()
-                v2_2_2 = Version("2.2.2")
-                if cur_version <= v2_2_2:
+                if cur_version <= TORCH_VERSION_2_2_2:
                     logger.warning(
                         (
                             "`dynamic_shapes` is not supported in the current version(%s) of PyTorch,"
@@ -64,6 +63,7 @@ class W8A8StaticQuantizer:
                     )
                     exported_model = capture_pre_autograd_graph(model, args=example_inputs)
                 else:
+                    # pylint: disable=E1123
                     exported_model = capture_pre_autograd_graph(
                         model, args=example_inputs, dynamic_shapes=dynamic_shapes
                     )
