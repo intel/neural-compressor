@@ -636,7 +636,7 @@ register_supported_configs_for_fwk(fwk_name=FRAMEWORK_NAME)
 
 
 class StaticQuantConfig(ORTStaticQuantConfig):
-    def __init__(self, calibration_data_reader: CalibrationDataReader, extra_options=None, *args, **kwargs):
+    def __init__(self, calibration_data_reader: CalibrationDataReader, extra_options=None, **kwargs):
         """This is a class for static Quant Configuration.
 
         Inherit from StaticQuantConfig:
@@ -663,7 +663,8 @@ class StaticQuantConfig(ORTStaticQuantConfig):
                 If enabled, each op will have an individual scale, mainlyfor accuracy.
                 If not enabled,  ops with the same input will share a scale, mainly for performance.
         """
-        super().__init__(calibration_data_reader=calibration_data_reader, extra_options=extra_options, *args, **kwargs)
+        super().__init__(calibration_data_reader=calibration_data_reader, extra_options=extra_options, **kwargs)
+        self.calibration_sampling_size = kwargs.get("calibration_sampling_size", 100)
 
     def to_dict(self):
         return self.__dict__

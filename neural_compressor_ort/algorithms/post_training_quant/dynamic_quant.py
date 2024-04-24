@@ -112,18 +112,6 @@ class DynamicQuantizer(Quantizer):
         self.fixed_zero_zp_name = "fixed_zero_zp"
         self.op_types_to_exclude_output_quantization = op_types_to_quantize
 
-    def should_quantize(self, node):
-        """Check if node should be quantized."""
-        if node.name in self.config and self.config[node.name] not in self.fallback_list:
-            return True
-        elif (
-            get_node_original_name(node) in self.config
-            and self.config[get_node_original_name(node)] not in self.fallback_list
-        ):
-            return True
-        else:
-            return False
-
     def should_convert(self, node):
         """Check if node should be converted."""
         name = get_node_original_name(node)
@@ -134,22 +122,6 @@ class DynamicQuantizer(Quantizer):
             return True
         else:
             return False
-
-    def convert_qdq_to_operator_oriented(self):
-        """Convert QDQ to QOperator format."""
-        self.new_nodes = []
-        self.remove_nodes = []
-        self.replace_input = []
-        for node in self.model.nodes():
-            if node.op_type not in ["QuantizeLinear", "DequantizeLinear"] and self.should_convert(node):
-                op_converter = OPERATORS[self.mode][node.op_type](self, node)
-                if op_converter.convert_check():
-                    op_converter.convert()
-        self.model.graph().node.extend(self.new_nodes)
-        self.model.remove_nodes(self.remove_nodes)
-        for node, old_input_name, new_input_name in self.replace_input:
-            self.model.replace_node_input(node, old_input_name, new_input_name)
-        self.model.update()
 
     def quantize_inputs(self, node, indices=None, initializer_use_weight_qType=True, direct_int8=False):
         """Quantize node inputs."""
@@ -275,95 +247,6 @@ class DynamicQuantizer(Quantizer):
 
             # Replace weight_name with output of DequantizeLinear
             self.replace_input.append([node, weight_name, dequant_node.output[0]])
-
-    def quantize_weight_per_channel(self, weight_name, weight_qType, scheme, channel_axis):
-        """Quantize weight per-channel."""
-        name = (
-            ("_").join([weight_name, str(weight_qType)])
-            if self.model.get_initializer_share_num(weight_name) > 1
-            else weight_name
-        )
-        if name in self.quantized_value_map:
-            return (name + "_quantized", name + "_zero_point", name + "_scale")
-
-        initializer = find_by_name(weight_name, self.model.initializer())
-        if initializer is None:
-            raise ValueError("{} is not an initializer", weight_name)
-
-        weights = (
-            self.tensor_proto_to_array(initializer, os.path.dirname(self.model.model_path))
-            if self.model.model_path is not None
-            else self.tensor_proto_to_array(initializer)
-        )
-        rmin, rmax, zero_point, scale, quantized_weights = quantize_data_per_channel(
-            weights, channel_axis, _get_qrange_for_qType(weight_qType, self.reduce_range), weight_qType, scheme
-        )
-
-        weight = QuantizedInitializer(
-            name,
-            initializer,
-            rmin,
-            rmax,
-            zero_point,
-            scale,
-            weights,
-            quantized_weights.flatten().tolist(),
-            channel_axis,
-            weight_qType,
-        )
-
-        self._update_weight(weight)
-        quantized_value = QuantizedValue(
-            weight.name,
-            weight.name + "_quantized",
-            weight.name + "_scale",
-            weight.name + "_zero_point",
-            QuantizedValueType.Initializer,
-            None,
-            weight_qType,
-        )
-        self.quantized_value_map[weight.name] = quantized_value
-
-        return (weight.name + "_quantized", weight.name + "_zero_point", weight.name + "_scale")
-
-    def get_bias_add_nodes(self, node, weight_name, last_output, quantized_bias_name):
-        """Given a node, this function handles bias add by adding a "reshape" node on bias and an "add" node.
-
-        Args:
-            node (NodeProto): current node (Conv)
-            weight_name (string): weight name
-            last_output (_type_): output of previous node (input to bias add)
-            quantized_bias_name (string): bias name
-        """
-        # Add tensors for the shape to be reshaped to
-        weight = find_by_name(weight_name, self.model.initializer())
-        if weight is None:
-            raise ValueError("Expected {} to be an initializer".format(node.input[1]))
-
-        # Add reshape for correct broadcast
-        reshape_input_data = quantized_bias_name
-        reshape_input_shape = quantized_bias_name + "_reshape_shape"
-        reshape_input = [reshape_input_data, reshape_input_shape]
-        reshape_shape = np.ones((len(weight.dims)), dtype=np.int64)
-        reshape_shape[1] = -1
-        init_shape = onnx.helper.make_tensor(
-            reshape_input_shape, onnx_proto.TensorProto.INT64, [len(weight.dims)], reshape_shape
-        )
-        self.model.add_initializer(init_shape)
-
-        reshape_op_output = node.output[0] + "_reshape"
-        reshape_node = onnx.helper.make_node(
-            "Reshape", reshape_input, [reshape_op_output], quantized_bias_name + "reshape"
-        )
-        self.new_nodes.append(reshape_node)
-
-        # Add an Add operation for bias
-        bias_add_input = [last_output]
-        bias_add_input.append(reshape_op_output)
-        add_node_output = node.output[0] + "_bias_add"
-        add_node = onnx.helper.make_node("Add", bias_add_input, [add_node_output], quantized_bias_name + "bias_add")
-        self.new_nodes.append(add_node)
-        return add_node_output
 
     def _get_dynamic_input_quantization_params(self, input_name, qType):
         """Create nodes for dynamic quantization of input.

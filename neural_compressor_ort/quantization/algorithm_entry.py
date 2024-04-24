@@ -152,7 +152,7 @@ def awq_quantize_entry(
     model = apply_awq_on_model(model, configs_mapping, calibration_data_reader)
     return model
 
-###################### AWQ Algo Entry ##################################
+###################### Dynamic quant Entry ##################################
 @register_algo(name=DYNAMIC_QUANT)
 def dynamic_quantize_entry(
     model: Union[Path, str],
@@ -172,6 +172,54 @@ def dynamic_quantize_entry(
     quantizer = DynamicQuantizer(
         model,
         configs_mapping,
+        op_types_to_quantize=quant_config.op_types_to_quantize if \
+            len(quant_config.op_types_to_quantize) > 0 else \
+            quant_config.white_list,
+        )
+    quantizer.quantize_model()
+    quantizer.model.save(model_output)
+    dump_model_op_stats(quantizer.model.model, configs_mapping, quant_config.white_list)
+    return quantizer.model.model
+
+###################### Static quant Entry ##################################
+@register_algo(name=STATIC_QUANT)
+def static_quantize_entry(
+    model: Union[Path, str],
+    quant_config: DynamicQuantConfig,
+    calibration_data_reader: CalibrationDataReader,
+    model_output: Union[Path, str] = None,
+    *args,
+    **kwargs,
+) -> onnx.ModelProto:
+    """The main entry to apply dynamic quantization."""
+    assert calibration_data_reader is not None, "Please provide calibration_data_reader"
+    assert isinstance(
+        calibration_data_reader, CalibrationDataReader
+    ), "Please follow neural_compressor_ort/quantization/calibrate.py to implement calibration_data_reader"
+
+    from neural_compressor_ort.algorithms import StaticQuantizer
+    from neural_compressor_ort.utils.utility import dump_model_op_stats
+    # map config to each op
+    model_info = quant_config.get_model_info(model=model)
+    configs_mapping = quant_config.to_config_mapping(model_info=model_info)
+    logger.debug(configs_mapping)
+
+    augment = ONNXRTAugment(
+        model,
+        calibration_data_reader,
+        dump_op_types=quant_config.op_types_to_quantize if \
+            len(quant_config.op_types_to_quantize) > 0 else \
+            quant_config.white_list,
+        iterations=list(range(0, quant_config.calibration_sampling_size)),
+    )
+    min_max = augment.dump_minmax(quantize_config)
+    quantize_params = augment.dump_calibration(quantize_config, min_max=min_max)
+
+    quantizer = StaticQuantizer(
+        model,
+        configs_mapping,
+        quant_format=quant_config.quant_format,
+        quantization_params=quantize_params,
         op_types_to_quantize=quant_config.op_types_to_quantize if \
             len(quant_config.op_types_to_quantize) > 0 else \
             quant_config.white_list,
