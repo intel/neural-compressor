@@ -66,26 +66,15 @@ class GemmOperator(Operator):
             self.quantizer.quantize_outputs(node)
         node.name = node.name + "_quant"
 
-    def convert_check(self):
-        """Check if conversion can be done."""
-        node = self.node
-        children = self.quantizer.model.get_children(node)
-        if len(children) == 0 or not node.name.endswith("_quant"):
-            return False
-        return True
-
     def convert(self):
         """Convert to QOperator format."""
         node = self.node
 
         parents = self.quantizer.model.get_parents(node)
-        child = self.quantizer.model.get_children(node)[0]
-        qgemm_output = child.output[0]
         qgemm_inputs = []
         for parent in parents[:-1]:
             qgemm_inputs.extend(parent.input)
         qgemm_inputs.append(parents[-1].input[0])
-        qgemm_inputs.extend(child.input[1:])
 
         kwargs = {}
         for attribute in node.attribute:
@@ -93,9 +82,14 @@ class GemmOperator(Operator):
                 kwargs.update(attribute_to_kwarg(attribute))
                 kwargs["domain"] = ms_domain
 
+        qgemm_output = node.output[0]
+        if not self.disable_qdq_for_node_output:
+            child = self.quantizer.model.get_children(node)[0]
+            self.quantizer.remove_nodes.append(child)
+            qgemm_output = child.output[0]
+            qgemm_inputs.extend(child.input[1:])
         qgemm_node = onnx.helper.make_node("QGemm", qgemm_inputs, [qgemm_output], node.name, **kwargs)
 
         self.quantizer.new_nodes.append(qgemm_node)
         self.quantizer.remove_nodes.extend(parents)
-        self.quantizer.remove_nodes.append(child)
         self.quantizer.remove_nodes.append(node)
