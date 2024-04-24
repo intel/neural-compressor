@@ -12,4 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .base_algorithm import Quantizer, TwoStepQuantizer, algo_quantizer_register, algo_quantizers
+from .base_algorithm import Quantizer, algo_quantizer_register, algo_quantizers

@@ -31,7 +31,7 @@ from collections import OrderedDict
 from packaging.version import Version
 
 from neural_compressor.common.utils import STATIC_QUANT
-from neural_compressor.torch.algorithms import TwoStepQuantizer, algo_quantizer_register
+from neural_compressor.torch.algorithms import Quantizer, algo_quantizer_register
 from neural_compressor.torch.utils import logger
 
 from .utility import (
@@ -47,19 +47,16 @@ ipex_ver = get_ipex_version()
 
 
 @algo_quantizer_register(name=STATIC_QUANT)
-class StaticQuantQuantizer(TwoStepQuantizer):
-    def __init__(self, config: OrderedDict = {}):
-        super().__init__(config)
-        self._preprocess_config()
+class StaticQuantQuantizer(Quantizer):
+    def __init__(self, tune_cfg: OrderedDict = {}):
+        super().__init__(tune_cfg)
 
-    def prepare(self, model, example_inputs, inplace=True):
+    def prepare(self, model, example_inputs, inplace=True, *args, **kwargs):
         assert example_inputs is not None, "Please provide example_inputs for static quantization."
 
         _, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, _ = get_quantizable_ops_recursively(model, example_inputs)
         # update json file in ipex_config_path; map ipex op_name to pt op_name
-        user_cfg = cfg_to_qconfig(self.config, cfgs, op_infos_from_cfgs, output_tensor_id_op_name)
-        print('user_cfg 1',user_cfg)
-        setattr(model, "user_cfg", user_cfg)
+        user_cfg = cfg_to_qconfig(self.tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_id_op_name)
         model.eval()
 
         # Check save_qconf_summary part is a workaround for IPEX bug.
@@ -82,10 +79,13 @@ class StaticQuantQuantizer(TwoStepQuantizer):
                 model = ipex.quantization.prepare(model, static_qconfig, example_inputs=example_inputs, inplace=inplace)
 
         model.load_qconf_summary(qconf_summary=ipex_config_path)
+        setattr(model, "user_cfg", user_cfg)
         return model
 
-    def convert(self, model, example_inputs, inplace=True):
+    def convert(self, model, example_inputs, inplace=True, *args, **kwargs):
         from neural_compressor.torch.algorithms.static_quant import save
+
+        user_cfg = getattr(model, "user_cfg", OrderedDict())
 
         model.save_qconf_summary(qconf_summary=ipex_config_path)
         model = _ipex_post_quant_process(model, example_inputs, inplace=inplace)
@@ -94,8 +94,6 @@ class StaticQuantQuantizer(TwoStepQuantizer):
             model.tune_cfg = json.load(f)
         model.ipex_config_path = ipex_config_path
 
-        user_cfg = getattr(model, "user_cfg", OrderedDict())
-        print('user_cfg 2',user_cfg)
         dump_model_op_stats(user_cfg)
 
         logger.info("Static quantization done.")
@@ -103,31 +101,11 @@ class StaticQuantQuantizer(TwoStepQuantizer):
         model.save = MethodType(save, model)
         return model
 
-    def _preprocess_config(self):
-        logger.info("Quantize model with the static quant algorithm.")
-
-        # convert the user config into internal format
-        quant_config_mapping = {}
-        cfgs = deepcopy(self.config)
-        quant_config_mapping["op"] = cfgs
-        for (op_name, op_type), cfg in cfgs.items():
-            if cfg.name != STATIC_QUANT:
-                continue
-            quant_config_mapping["op"][(op_name, op_type)] = {
-                "weight": {
-                    "dtype": cfg.w_dtype,
-                    "scheme": "sym",
-                    "granularity": cfg.w_granularity,
-                    "algorithm": cfg.w_algo,
-                },
-                "activation": {
-                    "dtype": cfg.act_dtype,
-                    "scheme": "sym" if cfg.act_sym else "asym",
-                    "granularity": cfg.act_granularity,
-                    "algorithm": cfg.act_algo,
-                },
-            }
-        self.config = quant_config_mapping
+    def quantize(self, model, example_inputs, run_fn, inplace=True, *args, **kwargs):
+        model = self.prepare(model, example_inputs=example_inputs, inplace=inplace)
+        run_fn(model)
+        model = self.convert(model, example_inputs=example_inputs, inplace=inplace)
+        return model
 
 
 def _ipex_post_quant_process(model, example_inputs, inplace=False):

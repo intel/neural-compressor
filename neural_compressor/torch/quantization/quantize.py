@@ -20,7 +20,6 @@ import torch
 
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
 from neural_compressor.common.utils import log_quant_execution
-from neural_compressor.torch.algorithms import algo_quantizers
 from neural_compressor.torch.quantization.config import SmoothQuantConfig, StaticQuantConfig
 from neural_compressor.torch.utils import is_ipex_available, logger
 from neural_compressor.torch.utils.utility import WHITE_MODULE_LIST, algos_mapping, get_model_info
@@ -83,6 +82,7 @@ def quantize(
                 run_fn=run_fn,
                 run_args=run_args,
                 example_inputs=example_inputs,
+                mode="quantize",
             )
     return q_model
 
@@ -130,18 +130,20 @@ def prepare(
     logger.debug(configs_mapping)
 
     # TODO: Need to consider composableConfig situation
-    for algo_name, algo_quantizer in algo_quantizers.items():
+    for algo_name, algo_func in algos_mapping.items():
         if need_apply(configs_mapping, algo_name):
             logger.info(f"Start to prepare model with {algo_name}.")
-            quantizer = algo_quantizer(configs_mapping)
-            prepared_model = quantizer.prepare(
+            prepared_model = algo_func(
                 prepared_model,
+                configs_mapping,
                 example_inputs=example_inputs,
+                mode="prepare",
             )
             setattr(prepared_model, "prepared", True)
     setattr(prepared_model, "quant_config", quant_config)
     setattr(prepared_model, "example_inputs", example_inputs)
     return prepared_model
+
 
 
 @log_quant_execution
@@ -192,12 +194,13 @@ def convert(
     logger.debug(configs_mapping)
 
     # TODO: Need to consider composableConfig situation
-    for algo_name, algo_quantizer in algo_quantizers.items():
+    for algo_name, algo_func in algos_mapping.items():
         if need_apply(configs_mapping, algo_name):
             logger.info(f"Start to convert model with {algo_name}.")
-            quantizer = algo_quantizer(configs_mapping)
-            q_model = quantizer.convert(
+            q_model = algo_func(
                 q_model,
+                configs_mapping,
                 example_inputs=example_inputs,
+                mode="convert",
             )
     return q_model

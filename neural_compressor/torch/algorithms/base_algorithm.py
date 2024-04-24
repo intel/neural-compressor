@@ -32,24 +32,31 @@ def algo_quantizer_register(name):
 class Quantizer(ABC):
     """The base quantizer for one step algorithm quantizers."""
 
-    def __init__(self, config: OrderedDict = {}):
-        self.config = config
+    def __init__(self, tune_cfg: OrderedDict = {}):
+        self.tune_cfg = tune_cfg
 
     @abstractmethod
     def quantize(self, model: torch.nn.Module, *args: Any, **kwargs: Any) -> torch.nn.Module:
-        raise NotImplementedError
+        raise NotImplementedError("{} doesn't implement `quantize` function.".format(
+            self.__class__.__name__))
 
-
-class TwoStepQuantizer(ABC):
-    """The base quantizer for two steps algorithm quantizers."""
-
-    def __init__(self, config: OrderedDict = {}):
-        self.config = config
-
-    @abstractmethod
     def prepare(self, model: torch.nn.Module, *args: Any, **kwargs: Any) -> torch.nn.Module:
-        raise NotImplementedError
+        raise NotImplementedError("{} doesn't implement `prepare` function. "
+            "Please implement `prepare` function or "
+            "switch to call `from neural_compressor.torch.quantization import quantize` to do quantization.".format(
+            self.__class__.__name__))
 
-    @abstractmethod
     def convert(self, model: torch.nn.Module, *args: Any, **kwargs: Any) -> torch.nn.Module:
-        raise NotImplementedError
+        raise NotImplementedError("{} doesn't implement `convert` function. "
+            "Please implement `convert` function or "
+            "switch to call `from neural_compressor.torch.quantization import quantize` to do quantization.".format(
+            self.__class__.__name__))
+
+    def execute(self, model, mode, *args: Any, **kwargs: Any):
+        if mode == "prepare":
+            model = self.prepare(model, *args, **kwargs)
+        elif mode == "convert":
+            model = self.convert(model, *args, **kwargs)
+        elif mode == "quantize":
+            model = self.quantize(model, *args, **kwargs)
+        return model

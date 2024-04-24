@@ -431,8 +431,7 @@ class ActAwareWeightQuant:
         logger.info("Quantizing the AWQ optimized fp32 model")
         from .rtn import RTNQuantizer
 
-        rtn_quantizer = RTNQuantizer()
-        rtn_quantizer.config = self.weight_config
+        rtn_quantizer = RTNQuantizer(tune_cfg=self.weight_config)
         rtn_quantizer.quantize(
             self.model,
             bits=self.bits,

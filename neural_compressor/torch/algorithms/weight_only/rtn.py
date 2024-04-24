@@ -32,9 +32,8 @@ from .utility import quant_tensor, search_clip
 
 @algo_quantizer_register(name=RTN)
 class RTNQuantizer(Quantizer):
-    def __init__(self, config: OrderedDict = {}):
-        super().__init__(config)
-        self._preprocess_config()
+    def __init__(self, tune_cfg: OrderedDict = {}):
+        super().__init__(tune_cfg)
 
     @torch.no_grad()
     def quantize(
@@ -84,7 +83,7 @@ class RTNQuantizer(Quantizer):
             model: fake quantized torch module
         """
         device = get_device(kwargs.pop("device", "auto"))
-        weight_config = self.config
+        weight_config = self.tune_cfg
 
         # Put model on device explicitly
         # TODO: refine it later, Put module on device one by one instead of the whole model
@@ -201,27 +200,3 @@ class RTNQuantizer(Quantizer):
                     m.weight.t_().contiguous()
                 m.weight.data.copy_(weight)
         return model
-
-    def _preprocess_config(self):
-        # rebuild weight_config for rtn_quantize function
-        weight_config = {}
-        for (op_name, op_type), quant_config in self.config.items():
-            if quant_config.name != RTN:
-                continue
-            weight_config[op_name] = {
-                "dtype": quant_config.dtype,
-                "bits": quant_config.bits,
-                "scheme": "sym" if quant_config.use_sym else "asym",
-                "group_size": quant_config.group_size,
-                "group_dim": quant_config.group_dim,
-                "use_full_range": quant_config.use_full_range,
-                "use_mse_search": quant_config.use_mse_search,
-                "use_layer_wise": quant_config.use_layer_wise,
-                "export_compressed_model": quant_config.export_compressed_model,
-                "use_double_quant": quant_config.use_double_quant,
-                "double_quant_dtype": quant_config.double_quant_dtype,
-                "double_quant_bits": quant_config.double_quant_bits,
-                "double_quant_scheme": "sym" if quant_config.double_quant_use_sym else "asym",
-                "double_quant_group_size": quant_config.double_quant_group_size,
-            }
-        self.config = weight_config
