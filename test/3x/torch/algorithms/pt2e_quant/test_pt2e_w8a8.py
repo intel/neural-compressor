@@ -6,6 +6,7 @@ import torch
 
 from neural_compressor.common.utils import logger
 from neural_compressor.torch.algorithms.pt2e_quant.core import W8A8StaticQuantizer
+from neural_compressor.torch.utils import TORCH_VERSION_2_2_2, get_torch_version
 
 
 class TestW8A8StaticQuantizer:
@@ -28,6 +29,46 @@ class TestW8A8StaticQuantizer:
         bar = Bar()
         return bar, example_inputs
 
+    @staticmethod
+    def build_simple_torch_model_and_example_inputs():
+        class SimpleModel(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.fc1 = torch.nn.Linear(10, 20)
+                self.fc2 = torch.nn.Linear(20, 10)
+
+            def forward(self, x: torch.Tensor) -> torch.Tensor:
+                x = self.fc1(x)
+                x = torch.nn.functional.relu(x)
+                x = self.fc2(x)
+                return x
+
+        model = SimpleModel()
+        example_inputs = (torch.randn(10, 10),)
+        return model, example_inputs
+
+    @pytest.mark.skipif(get_torch_version() <= TORCH_VERSION_2_2_2, reason="Requires torch>=2.3.0")
+    def test_quantizer_on_simple_model(self):
+        model, example_inputs = self.build_simple_torch_model_and_example_inputs()
+        quant_config = None
+        w8a8_static_quantizer = W8A8StaticQuantizer()
+        # prepare
+        prepare_model = w8a8_static_quantizer.prepare(model, quant_config, example_inputs=example_inputs)
+        # calibrate
+        for i in range(2):
+            prepare_model(*example_inputs)
+        # convert
+        converted_model = w8a8_static_quantizer.convert(prepare_model)
+        # inference
+        from torch._inductor import config
+
+        config.freezing = True
+        opt_model = torch.compile(converted_model)
+        out = opt_model(*example_inputs)
+        logger.warning("out shape is %s", out.shape)
+        assert out is not None
+
+    @pytest.mark.skipif(get_torch_version() <= TORCH_VERSION_2_2_2, reason="Requires torch>=2.3.0")
     def test_quantizer_on_llm(self):
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
