@@ -117,7 +117,7 @@ class MatMulOperator(Operator):
 
 
 @op_registry(op_types="MatMul", mode=[STATIC_QUANT])
-class MatMulOperatorStatic(MatMulOperator):
+class StaticMatMulOperator(MatMulOperator):
     """MatMul Operator."""
 
     def __init__(self, onnx_quantizer, onnx_node):

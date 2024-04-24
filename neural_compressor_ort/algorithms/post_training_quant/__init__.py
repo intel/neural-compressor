@@ -12,7 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from neural_compressor_ort.algorithms.post_training_quant.static_quant import StaticQuantizer
 from neural_compressor_ort.algorithms.post_training_quant.dynamic_quant import DynamicQuantizer
 from neural_compressor_ort.algorithms.post_training_quant.base_quantizer import Quantizer
+from neural_compressor_ort.algorithms.post_training_quant.calibrate import ONNXRTAugment
 
-__all__ = ["DynamicQuantizer", "Quantizer"]
+
+__all__ = ["StaticQuantizer", "DynamicQuantizer", "Quantizer", "ONNXRTAugment"]

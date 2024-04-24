@@ -136,7 +136,7 @@ class ConvOperator(Operator):
         self.quantizer.remove_nodes.append(node)
 
 @op_registry(op_types="Conv, FusedConv", mode=[STATIC_QUANT])
-class ConvOperatorStatic(Operator):
+class StaticConvOperator(Operator):
     """Conv Operator."""
 
     def __init__(self, onnx_quantizer, onnx_node):

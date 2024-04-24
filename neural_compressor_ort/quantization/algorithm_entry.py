@@ -34,6 +34,7 @@ __all__ = [
     "gptq_quantize_entry",
     "awq_quantize_entry",
     "dynamic_quantize_entry",
+    "static_quantize_entry",
 ]
 
 
@@ -197,7 +198,7 @@ def static_quantize_entry(
         calibration_data_reader, CalibrationDataReader
     ), "Please follow neural_compressor_ort/quantization/calibrate.py to implement calibration_data_reader"
 
-    from neural_compressor_ort.algorithms import StaticQuantizer
+    from neural_compressor_ort.algorithms import StaticQuantizer, ONNXRTAugment
     from neural_compressor_ort.utils.utility import dump_model_op_stats
     # map config to each op
     model_info = quant_config.get_model_info(model=model)
@@ -212,8 +213,8 @@ def static_quantize_entry(
             quant_config.white_list,
         iterations=list(range(0, quant_config.calibration_sampling_size)),
     )
-    min_max = augment.dump_minmax(quantize_config)
-    quantize_params = augment.dump_calibration(quantize_config, min_max=min_max)
+    min_max = augment.dump_minmax(configs_mapping)
+    quantize_params = augment.dump_calibration(configs_mapping, min_max=min_max)
 
     quantizer = StaticQuantizer(
         model,

@@ -23,7 +23,7 @@ from neural_compressor_ort.algorithms.post_training_quant.utils import attribute
 from neural_compressor_ort.common.utils import DYNAMIC_QUANT, STATIC_QUANT
 
 
-@op_registry(op_types="Attention", mode=[DYNAMIC_QUANT])
+@op_registry(op_types="Attention", mode=[DYNAMIC_QUANT, STATIC_QUANT])
 class AttentionOperator(Operator):
     """Attention operator."""
 
@@ -49,6 +49,11 @@ class AttentionOperator(Operator):
                 quantized_name.append(parent.output[0])
                 scale.append(parent.output[1])
                 zp.append(parent.output[2])
+            elif parent.op_type == "DequantizeLinear":
+                quantized_name.append(parent.input[0])
+                scale.append(parent.input[1])
+                zp.append(parent.input[2])
+                self.quantizer.remove_nodes.append(parent)
 
         inputs = []
         inputs.extend(quantized_name)

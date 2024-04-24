@@ -34,16 +34,10 @@ import onnx.numpy_helper as numpy_helper
 import onnxruntime
 from onnx import TensorProto, helper, shape_inference
 from packaging.version import Version
-
-from neural_compressor.adaptor.ox_utils.calibrator import CALIBRATOR
-from neural_compressor.adaptor.ox_utils.util import (
-    _get_qrange_for_qType,
-    calculate_scale_zp,
-    is_B_transposed,
-    make_dquant_node,
-    to_numpy,
-)
-from neural_compressor.model.onnx_model import ONNXModel
+from neural_compressor_ort.utils.utility import get_qrange_for_qType
+from neural_compressor_ort.algorithms.post_training_quant.calibrator import CALIBRATOR
+from neural_compressor_ort.algorithms.post_training_quant.utils import calculate_scale_zp, make_dquant_node, is_B_transposed, to_numpy
+from neural_compressor_ort.utils.onnx_model import ONNXModel
 
 logger = logging.getLogger("neural_compressor")
 ONNX18_VERSION = Version("1.8.0")
@@ -77,8 +71,8 @@ class ONNXRTAugment:
             backend (list, optional): execution provider for onnxruntime. Defaults to ['CPUExecutionProvider'].
             reduce_range (bool, optional): use 7 bit or not. Defaults to False.
         """
-        self.model_wrapper = model_wrapper
-        self.model = model_wrapper.model
+        self.model_wrapper = model_wrapper if isinstance(model_wrapper, ONNXModel) else ONNXModel(model_wrapper, load_external_data=True)
+        self.model = self.model_wrapper.model
         ai_onnx_domain = [opset for opset in self.model.opset_import if not opset.domain or opset.domain == "ai.onnx"]
         self.opset_version = ai_onnx_domain[0].version
         self.dataloader = dataloader
@@ -266,8 +260,8 @@ class ONNXRTAugment:
             if not self.model_wrapper.is_large_model
             else ONNXModel(self.model_wrapper.model_path + "_augment.onnx", load_external_data=False)
         )
-        input_name_to_nodes = augment_model_wrapper.input_name_to_nodes
-        output_name_to_node = augment_model_wrapper.output_name_to_node
+        input_name_to_nodes = augment_model_wrapper.input_name_to_nodes()
+        output_name_to_node = augment_model_wrapper.output_name_to_node()
         name_to_node = {}
         for data_name in node_output_names:
             node = None
@@ -282,27 +276,8 @@ class ONNXRTAugment:
         intermediate_tensor = {}
         name_to_calibrator = {}
         ort_inputs_for_next_split_model = []
-        for idx, (inputs, labels) in enumerate(self.dataloader):
-            ort_inputs = {}
-
-            if len_inputs == 1:
-                if isinstance(inputs, dict):
-                    for name, input in inputs.items():
-                        ort_inputs.update({name: to_numpy(input)})
-                else:
-                    ort_inputs.update({inputs_names[0]: to_numpy(inputs)})
-            else:
-                # skip check input length for layer-wise calibration
-                if not self.layer_wise:
-                    assert len_inputs == len(inputs), "number of input tensors must align with graph inputs"
-
-                if isinstance(inputs, dict):
-                    for name, input in inputs.items():
-                        ort_inputs.update({name: to_numpy(input)})
-                else:
-                    ort_inputs = dict(zip(inputs_names, [to_numpy(i) for i in inputs]))
-
-            def _collect_data(ort_inputs):
+        for idx, inputs in enumerate(self.dataloader):
+            def _collect_data(inputs):
                 if self.layer_wise:
                     # for layer-wise calibration
                     ort_inputs = {
@@ -311,7 +286,7 @@ class ONNXRTAugment:
                         if input_name in self.split_model_input_names
                     }
 
-                for output_idx, output in enumerate(session.run(None, ort_inputs)):
+                for output_idx, output in enumerate(session.run(None, inputs)):
                     if q_config is not None and output.size != 0:
                         node_name = name_to_node[node_output_names[output_idx]]
                         if node_output_names[output_idx] not in name_to_calibrator:
@@ -353,9 +328,9 @@ class ONNXRTAugment:
                 if idx > max(self.iterations):
                     break
                 if idx in self.iterations:
-                    _collect_data(ort_inputs)
+                    _collect_data(inputs)
             else:
-                _collect_data(ort_inputs)
+                _collect_data(inputs)
 
         # for kl and percentile method, collect calibration range after all tensors are collected.
         merged_dict = intermediate_tensor
@@ -597,8 +572,8 @@ class ONNXRTAugment:
         quantization_params = {}
         model = self.model
 
-        input_name_to_nodes = self.model_wrapper.input_name_to_nodes
-        output_name_to_nodes = self.model_wrapper.output_name_to_node
+        input_name_to_nodes = self.model_wrapper.input_name_to_nodes()
+        output_name_to_nodes = self.model_wrapper.output_name_to_node()
 
         for tensor_name in quantization_thresholds.keys():
             child = None
@@ -612,10 +587,10 @@ class ONNXRTAugment:
             if tensor_name in output_name_to_nodes:
                 parent = output_name_to_nodes[tensor_name]
             if parent and parent.name in q_config and q_config[parent.name] not in ["fp32", "fp16", "bf16"]:
-                scheme = q_config[parent.name]["activation"]["scheme"]
-                qType = q_config[parent.name]["activation"]["dtype"]
+                scheme = q_config[parent.name].act_sym
+                qType = q_config[parent.name].act_dtype
             elif self.backend in ["TensorrtExecutionProvider"]:
-                scheme = "sym"
+                scheme = True # sym
                 qType = 3
             node_thresholds = quantization_thresholds[tensor_name]
             node_params = self.calculate_scale_zeropoint(
@@ -625,7 +600,7 @@ class ONNXRTAugment:
                 node_thresholds[1],
                 scheme,
                 qType,
-                _get_qrange_for_qType(qType, self.reduce_range),
+                get_qrange_for_qType(qType, self.reduce_range),
             )
             quantization_params[tensor_name] = node_params
 

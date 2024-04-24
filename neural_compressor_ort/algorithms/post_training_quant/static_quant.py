@@ -33,27 +33,41 @@ from onnx import onnx_pb as onnx_proto
 from onnx import shape_inference
 from onnxruntime import GraphOptimizationLevel, InferenceSession, SessionOptions
 from onnxruntime.quantization.quant_utils import QuantFormat
-from neural_compressor.adaptor.ox_utils.operators import OPERATORS
-from neural_compressor.adaptor.ox_utils.util import (
+from neural_compressor_ort.algorithms.post_training_quant.base_quantizer import Quantizer
+from neural_compressor_ort.algorithms.post_training_quant.operators import OPERATORS
+from neural_compressor_ort.algorithms.post_training_quant.utils import (
     QuantizedInitializer,
     QuantizedValue,
     QuantizedValueType,
-    ValueInfo,
-    __producer__,
-    __version__,
     _get_qrange_for_qType,
-    cast_tensor,
-    dtype_mapping,
-    dtype_to_name,
     find_by_name,
     get_node_original_name,
     make_dquant_node,
     make_quant_node,
-    quantize_data,
     quantize_data_per_channel,
-    support_pair,
 )
-from neural_compressor.model.onnx_model import ONNXModel
+from neural_compressor_ort.utils.onnx_model import ONNXModel
+#from neural_compressor.adaptor.ox_utils.operators import OPERATORS
+#from neural_compressor.adaptor.ox_utils.util import (
+#    QuantizedInitializer,
+#    QuantizedValue,
+#    QuantizedValueType,
+#    ValueInfo,
+#    __producer__,
+#    __version__,
+#    _get_qrange_for_qType,
+#    cast_tensor,
+#    dtype_mapping,
+#    dtype_to_name,
+#    find_by_name,
+#    get_node_original_name,
+#    make_dquant_node,
+#    make_quant_node,
+#    quantize_data,
+#    quantize_data_per_channel,
+#    support_pair,
+#)
+#from neural_compressor.model.onnx_model import ONNXModel
 
 logger = logging.getLogger("neural_compressor")
 
@@ -106,12 +120,12 @@ class StaticQuantizer(Quantizer):
         # self.config = q_config
         self.backend = backend
         self.reduce_range = reduce_range
-        self.static = static  # use static quantization for inputs.
+        self.static = True  # use static quantization for inputs.
         self.fuse_dynamic_quant = False
         self.quantization_params = quantization_params
         self.op_types_to_quantize = op_types_to_quantize
         self.fallback_list = fallback_list
-        self.new_nodes = {}
+        self.new_nodes = []
         self.quant_format = "qoperator" if quant_format.value == 0 else "qdq"
 
         self.opset_version = self.check_opset_version()
@@ -198,7 +212,7 @@ class StaticQuantizer(Quantizer):
             dequant_node_name = tensor_name + "_DequantizeLinear"
             qlinear_node = make_quant_node(quant_node_name, [q_input, scale_name, zp_name], [q_output])
             dequant_node = make_dquant_node(dequant_node_name, [dq_input, scale_name, zp_name], [dq_output])
-            self.new_nodes.update([qlinear_node, dequant_node])
+            self.new_nodes.extend([qlinear_node, dequant_node])
             
             if tensor_name not in self.quantized_value_map:
                 quantized_value = QuantizedValue(tensor_name, dq_output, scale_name, zp_name, QuantizedValueType.Input)
@@ -243,7 +257,7 @@ class StaticQuantizer(Quantizer):
                         [weight.name + "_quantized", scale_name, zp_name],
                         [weight.name + "_dequantized"],
                     )
-                    self.new_nodes.update([qlinear_node, dequant_node])
+                    self.new_nodes.extend([qlinear_node, dequant_node])
 
                 else:
                     node.input[idx] = weight.name
@@ -256,7 +270,7 @@ class StaticQuantizer(Quantizer):
                     dequant_node = onnx.helper.make_node(
                         "DequantizeLinear", inputs, [weight.name + "_dequantized"], weight.name + "_DequantizeLinear"
                     )
-                    self.new_nodes.add(dequant_node)
+                    self.new_nodes.append(dequant_node)
 
                 self.replace_input.append([node, weight.name, dequant_node.output[0]])
                 if weight.name not in self.quantized_value_map:
@@ -305,7 +319,7 @@ class StaticQuantizer(Quantizer):
                 dequant_node_name = tensor_name + "_DequantizeLinear"
                 qlinear_node = make_quant_node(quant_node_name, [q_input, scale_name, zp_name], [q_output])
                 dequant_node = make_dquant_node(dequant_node_name, [dq_input, scale_name, zp_name], [dq_output])
-                self.new_nodes.update([qlinear_node, dequant_node])
+                self.new_nodes.extend([qlinear_node, dequant_node])
 
                 if tensor_name not in self.quantized_value_map:
                     quantized_value = QuantizedValue(

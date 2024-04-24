@@ -692,6 +692,7 @@ class StaticQuantConfig(ORTStaticQuantConfig, BaseConfig):
         self,
         calibration_data_reader: CalibrationDataReader,
         weight_type=QuantType.QInt8,
+        quant_format=QuantFormat.QOperator,
         op_types_to_quantize=None,
         nodes_to_quantize=None,
         nodes_to_exclude=None,
@@ -742,12 +743,12 @@ class StaticQuantConfig(ORTStaticQuantConfig, BaseConfig):
             reduce_range=reduce_range,
             use_external_data_format=use_external_data_format,
             extra_options=extra_options,
-            **kwargs,
+            quant_format=quant_format,
             )
         BaseConfig.__init__(self, white_list=white_list)
         self.white_list = white_list
         #self._post_init()
-        ORTStaticQuantConfig.register_supported_configs()
+        StaticQuantConfig.register_supported_configs()
         self.calibration_sampling_size = kwargs.get("calibration_sampling_size", 100)
 
     @classmethod
@@ -849,7 +850,7 @@ class StaticQuantConfig(ORTStaticQuantConfig, BaseConfig):
             "Pad", "Split", "Add", "Squeeze", "Reshape", "Concat", "AveragePool",
             "Unsqueeze", "Transpose", "ArgMax", "Resize", "Abs", "Shrink", "Sign",
             "Flatten", "Expand", "Slice", "Mod", "ReduceMax", "ReduceMin", "CenterCropPad"
-            ],
+            ]
         for node in model.graph.node:
             if node.op_type in white_list:
                 pair = (node.name, node.op_type)
@@ -860,9 +861,9 @@ class StaticQuantConfig(ORTStaticQuantConfig, BaseConfig):
     @classmethod
     def get_config_set_for_tuning(
         cls,
-    ) -> Union[None, "DynamicQuantConfig", List["DynamicQuantConfig"]]:  # pragma: no cover
+    ) -> Union[None, "StaticQuantConfig", List["StaticQuantConfig"]]:  # pragma: no cover
         # TODO fwk owner needs to update it.
-        return DynamicQuantConfig()
+        return StaticQuantConfig()
 
     def to_config_mapping(self, config_list: list = None, model_info: list = None) -> OrderedDict:
         config_mapping = OrderedDict()
@@ -885,7 +886,7 @@ class StaticQuantConfig(ORTStaticQuantConfig, BaseConfig):
                     config_mapping[op_name] = op_name_config_dict[op_type]
                     continue
 
-                for op_config in DynamicQuantConfig.supported_configs:
+                for op_config in StaticQuantConfig.supported_configs:
                     if op_type in op_config.operators:
                         config_mapping[op_name] = op_config.config
                         break

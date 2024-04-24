@@ -33,6 +33,93 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(format = "%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
                     datefmt = "%m/%d/%Y %H:%M:%S",
                     level = logging.WARN)
+logger.info("Evaluating ONNXRuntime full precision accuracy and performance:")
+parser = argparse.ArgumentParser(
+description="BERT fine-tune examples for classification/regression tasks.",
+formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument(
+    "--model_path",
+    type=str,
+    help="Pre-trained model on onnx file"
+)
+parser.add_argument(
+    "--benchmark",
+    action="store_true", \
+    default=False
+)
+parser.add_argument(
+    "--tune",
+    action="store_true", \
+    default=False,
+    help="whether quantize the model"
+)
+parser.add_argument(
+    "--output_model",
+    type=str,
+    help="output model path"
+)
+parser.add_argument(
+    "--mode",
+    type=str,
+    help="benchmark mode of performance or accuracy"
+)
+parser.add_argument(
+    "--model_name_or_path",
+    type=str,
+    help="pretrained model name or path"
+)
+parser.add_argument(
+    "--data_path",
+    type=str,
+    help="input data path"
+)
+parser.add_argument(
+    "--batch_size",
+    default=8,
+    type=int,
+)
+parser.add_argument(
+    "--task",
+    type=str,
+    default="mrpc",
+    choices=["mrpc", "qqp", "qnli", "rte", "sts-b", "cola", \
+            "mnli", "wnli", "sst-2"],
+    help="GLUE task name"
+)
+parser.add_argument(
+    "--quant_format",
+    type=str,
+    default="QOperator", 
+    choices=["QDQ", "QOperator"],
+    help="quantization format"
+)
+parser.add_argument(
+    "--dynamic_length",
+    type=bool,
+    default=False, 
+    help="dynamic length"
+)
+parser.add_argument(
+    "--max_seq_length",
+    type=int,
+    default=128, 
+    help="max sequence length"
+)
+parser.add_argument(
+    "--model_type",
+    type=str,
+    default="bert", 
+    choices=["distilbert", "bert", "mobilebert", "roberta"],
+    help="model type"
+)
+parser.add_argument(
+    '--device',
+    type=str,
+    default='cpu',
+    choices=['cpu', 'npu'],
+)
+args = parser.parse_args()
+
 
 class ONNXRTBertDataset:
     """Dataset used for model Bert.
@@ -274,11 +361,14 @@ class ONNXRTGLUE:
 class DataReader(CalibrationDataReader):
     def __init__(self, model_path, dynamic_length=False, batch_size=1, calibration_sampling_size=8):
         self.encoded_list = []
-        self.pad_max = pad_max
         self.batch_size=batch_size
-        dataset = load_dataset(args.dataset, split=sub_folder)
-        dataset = dataset.map(tokenize_function, batched=True)
-        dataset.set_format(type="torch", columns=["input_ids", "attention_mask"])
+        dataset = ONNXRTBertDataset(args.model_path,
+            data_dir=args.data_path,
+            model_name_or_path=args.model_name_or_path,
+            max_seq_length=args.max_seq_length,
+            task=args.task,
+            model_type=args.model_type,
+            dynamic_length=args.dynamic_length)
         dataloader = DataLoader(
             dataset,
             sampler=SequentialSampler(dataset),
@@ -293,8 +383,8 @@ class DataReader(CalibrationDataReader):
             if idx + 1 > calibration_sampling_size:
                 break
             ort_input = {}
-            batch_seq_length = max_seq_length if not dynamic_length else torch.max(batch[-2], 0)[0].item()
-            batch = tuple(t.detach().cpu().numpy() if not isinstance(t, np.ndarray) else t for t in batch)
+            batch_seq_length = args.max_seq_length if not args.dynamic_length else torch.max(batch[0][-2], 0)[0].item()
+            batch = tuple(t.detach().cpu().numpy() if not isinstance(t, np.ndarray) else t for t in batch[0])
 
             for name, data in zip(inputs_names, batch):
                 ort_input[name] = data[:, :batch_seq_length]
@@ -310,104 +400,9 @@ class DataReader(CalibrationDataReader):
         self.iter_next = iter(self.encoded_list)
 
 if __name__ == "__main__":
-    logger.info("Evaluating ONNXRuntime full precision accuracy and performance:")
-    parser = argparse.ArgumentParser(
-    description="BERT fine-tune examples for classification/regression tasks.",
-    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument(
-        "--model_path",
-        type=str,
-        help="Pre-trained model on onnx file"
-    )
-    parser.add_argument(
-        "--benchmark",
-        action="store_true", \
-        default=False
-    )
-    parser.add_argument(
-        "--tune",
-        action="store_true", \
-        default=False,
-        help="whether quantize the model"
-    )
-    parser.add_argument(
-        "--output_model",
-        type=str,
-        help="output model path"
-    )
-    parser.add_argument(
-        "--mode",
-        type=str,
-        help="benchmark mode of performance or accuracy"
-    )
-    parser.add_argument(
-        "--model_name_or_path",
-        type=str,
-        help="pretrained model name or path"
-    )
-    parser.add_argument(
-        "--data_path",
-        type=str,
-        help="input data path"
-    )
-    parser.add_argument(
-        "--batch_size",
-        default=8,
-        type=int,
-    )
-    parser.add_argument(
-        "--task",
-        type=str,
-        default="mrpc",
-        choices=["mrpc", "qqp", "qnli", "rte", "sts-b", "cola", \
-                "mnli", "wnli", "sst-2"],
-        help="GLUE task name"
-    )
-    parser.add_argument(
-        "--quant_format",
-        type=str,
-        default="QOperator", 
-        choices=["QDQ", "QOperator"],
-        help="quantization format"
-    )
-    parser.add_argument(
-        "--dynamic_length",
-        type=bool,
-        default=False, 
-        help="dynamic length"
-    )
-    parser.add_argument(
-        "--max_seq_length",
-        type=int,
-        default=128, 
-        help="max sequence length"
-    )
-    parser.add_argument(
-        "--model_type",
-        type=str,
-        default="bert", 
-        choices=["distilbert", "bert", "mobilebert", "roberta"],
-        help="model type"
-    )
-    parser.add_argument(
-        '--device',
-        type=str,
-        default='cpu',
-        choices=['cpu', 'npu'],
-    )
-    args = parser.parse_args()
-
     # set config for npu test
     backend = 'onnxrt_dml_ep' if args.device == 'npu' else 'default'
 
-    dataset = ONNXRTBertDataset(args.model_path,
-                                data_dir=args.data_path,
-                                model_name_or_path=args.model_name_or_path,
-                                max_seq_length=args.max_seq_length,
-                                task=args.task,
-                                model_type=args.model_type,
-                                dynamic_length=args.dynamic_length)
-    dataloader = DataLoader(framework='onnxruntime', dataset=dataset, batch_size=args.batch_size)
     metric = ONNXRTGLUE(args.task)
 
     def eval_func(model):
@@ -470,12 +465,13 @@ if __name__ == "__main__":
             model = onnx.load(args.model_path)
 
         from neural_compressor_ort.quantization import quantize, StaticQuantConfig
+        from onnxruntime.quantization.quant_utils import QuantFormat
         calibration_data_reader = DataReader(args.model_path)
         config = StaticQuantConfig(
             calibration_data_reader=calibration_data_reader,
-            quant_format=args.quant_format,
+            quant_format=QuantFormat.QOperator if args.quant_format == "QOperator" else QuantFormat.QDQ,
             calibration_sampling_size=8,
             extra_options={"optypes_to_exclude_output_quant": ["MatMul", "Gemm", "Attention", "FusedGemm"]},
             execution_provider=backend
         )
-        quantize(model, config, args.output_model)
+        quantize(model, args.output_model, config)

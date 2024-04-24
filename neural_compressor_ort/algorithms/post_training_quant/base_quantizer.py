@@ -165,6 +165,7 @@ class Quantizer:
     def quantize_model(self):
         """Quantize onnx model."""
         # step 1: insert q-dq, cast-cast pairs
+
         self.insert_qdq()
 
         # step 2: convert q-node-dq to qoperator format if needed

@@ -47,7 +47,7 @@ def quantize(
             return model
         else:
             from neural_compressor_ort.quantization.algorithm_entry import static_quantize_entry
-            static_quantize_entry(model_input, quant_config, model_output=model_output)
+            static_quantize_entry(model_input, quant_config, model_output=model_output, calibration_data_reader=quant_config.calibration_data_reader)
     elif isinstance(quant_config, DynamicQuantConfig):
         from neural_compressor_ort.quantization.algorithm_entry import dynamic_quantize_entry
         dynamic_quantize_entry(model_input, quant_config, model_output=model_output)
