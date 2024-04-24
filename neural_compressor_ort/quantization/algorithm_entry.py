@@ -223,6 +223,7 @@ def static_quantize_entry(
         op_types_to_quantize=quant_config.op_types_to_quantize if \
             len(quant_config.op_types_to_quantize) > 0 else \
             quant_config.white_list,
+        optypes_to_exclude_output_quant=quant_config.extra_options.get("optypes_to_exclude_output_quant", []),
         )
     quantizer.quantize_model()
     quantizer.model.save(model_output)

@@ -26,7 +26,8 @@ import torch
 import numpy as np
 from dataclasses import dataclass
 from typing import List, Optional, Union
-from neural_compressor.data import DataLoader
+from torch.utils.data import DataLoader, SequentialSampler
+from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format = "%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
@@ -270,6 +271,44 @@ class ONNXRTGLUE:
             self.task, processed_preds, self.label_list)
         return result[self.return_key[self.task]]
 
+class DataReader(CalibrationDataReader):
+    def __init__(self, model_path, dynamic_length=False, batch_size=1, calibration_sampling_size=8):
+        self.encoded_list = []
+        self.pad_max = pad_max
+        self.batch_size=batch_size
+        dataset = load_dataset(args.dataset, split=sub_folder)
+        dataset = dataset.map(tokenize_function, batched=True)
+        dataset.set_format(type="torch", columns=["input_ids", "attention_mask"])
+        dataloader = DataLoader(
+            dataset,
+            sampler=SequentialSampler(dataset),
+            batch_size=self.batch_size,
+            shuffle=False,
+        )
+        model = onnx.load(model_path, load_external_data=False)
+        inputs_names = [input.name for input in model.graph.input]
+        self.batch_size=batch_size
+
+        for idx, batch in enumerate(dataloader):
+            if idx + 1 > calibration_sampling_size:
+                break
+            ort_input = {}
+            batch_seq_length = max_seq_length if not dynamic_length else torch.max(batch[-2], 0)[0].item()
+            batch = tuple(t.detach().cpu().numpy() if not isinstance(t, np.ndarray) else t for t in batch)
+
+            for name, data in zip(inputs_names, batch):
+                ort_input[name] = data[:, :batch_seq_length]
+
+            self.encoded_list.append(ort_input)
+
+        self.iter_next = iter(self.encoded_list)
+
+    def get_next(self):
+        return next(self.iter_next, None)
+
+    def rewind(self):
+        self.iter_next = iter(self.encoded_list)
+
 if __name__ == "__main__":
     logger.info("Evaluating ONNXRuntime full precision accuracy and performance:")
     parser = argparse.ArgumentParser(
@@ -431,10 +470,11 @@ if __name__ == "__main__":
             model = onnx.load(args.model_path)
 
         from neural_compressor_ort.quantization import quantize, StaticQuantConfig
+        calibration_data_reader = DataReader(args.model_path)
         config = StaticQuantConfig(
-            calibration_data_reader=
+            calibration_data_reader=calibration_data_reader,
             quant_format=args.quant_format,
-            calibration_sampling_size=[8, 16, 32],
+            calibration_sampling_size=8,
             extra_options={"optypes_to_exclude_output_quant": ["MatMul", "Gemm", "Attention", "FusedGemm"]},
             execution_provider=backend
         )
