@@ -62,8 +62,7 @@ class W8A8StaticQuantizer:
                     )
                     exported_model = capture_pre_autograd_graph(model, args=example_inputs)
                 else:  # pragma: no cover
-                    # pylint: disable=E1123
-                    exported_model = capture_pre_autograd_graph(
+                    exported_model = capture_pre_autograd_graph(  # pylint: disable=E1123
                         model, args=example_inputs, dynamic_shapes=dynamic_shapes
                     )
         except Exception as e:
