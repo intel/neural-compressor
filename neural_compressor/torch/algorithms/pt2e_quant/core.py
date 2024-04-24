@@ -22,7 +22,6 @@ from typing import Any, Dict, Optional, Tuple, Union
 
 import torch
 import torch.ao.quantization.quantizer.x86_inductor_quantizer as xiq
-from packaging.version import Version
 from torch._export import capture_pre_autograd_graph
 from torch.ao.quantization.quantize_pt2e import convert_pt2e, prepare_pt2e
 from torch.ao.quantization.quantizer.x86_inductor_quantizer import X86InductorQuantizer
@@ -52,7 +51,7 @@ class W8A8StaticQuantizer:
                 # Note 1: `capture_pre_autograd_graph` is also a short-term API, it will be
                 # updated to use the official `torch.export` API when that is ready.
                 cur_version = get_torch_version()
-                if cur_version <= TORCH_VERSION_2_2_2:
+                if cur_version <= TORCH_VERSION_2_2_2:  # pragma: no cover
                     logger.warning(
                         (
                             "`dynamic_shapes` is not supported in the current version(%s) of PyTorch,"
@@ -62,7 +61,7 @@ class W8A8StaticQuantizer:
                         cur_version,
                     )
                     exported_model = capture_pre_autograd_graph(model, args=example_inputs)
-                else:
+                else:  # pragma: no cover
                     # pylint: disable=E1123
                     exported_model = capture_pre_autograd_graph(
                         model, args=example_inputs, dynamic_shapes=dynamic_shapes
