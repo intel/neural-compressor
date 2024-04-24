@@ -112,7 +112,7 @@ class StaticQuantizer(Quantizer):
         self.op_types_to_quantize = op_types_to_quantize
         self.fallback_list = fallback_list
         self.new_nodes = {}
-        self.quant_format = quant_format
+        self.quant_format = "qoperator" if quant_format.value == 0 else "qdq"
 
         self.opset_version = self.check_opset_version()
         self.value_infos = {vi.name: vi for vi in model.graph.value_info}
@@ -143,6 +143,11 @@ class StaticQuantizer(Quantizer):
 
         self.add_qdq_pair_to_weight = add_qdq_pair_to_weight
         self.dedicated_qdq_pair = dedicated_qdq_pair
+        if self.opset_version < 13 and self.quant_format == "qdq":
+            logger.warning(
+                "Per-channel support with QDQ format requires opset version >= 13,"
+                " use per-tensor granularity instead"
+            )
 
     def should_convert(self, node):
         """Check if node should be converted."""
@@ -150,7 +155,7 @@ class StaticQuantizer(Quantizer):
         if (
             name in self.config
             and self.config[name] not in self.fallback_list
-            and self.quant_format != QuantFormat.QDQ
+            and self.quant_format != "qdq"
         ):
             return True
         else:
@@ -158,6 +163,8 @@ class StaticQuantizer(Quantizer):
 
     def quantize_outputs(self, node, initializer_use_weight_qType=True, direct_int8=False):
         """Quantize node outputs."""
+        if self.quant_format == "qdq":
+            return
         for idx, tensor_name in enumerate(node.output):
             if (
                 tensor_name in self.value_infos
@@ -221,7 +228,7 @@ class StaticQuantizer(Quantizer):
                 weight = self._get_quantized_weight(initializer, dtype, scheme)
                 self._update_weight(weight)
 
-                if self.add_qdq_pair_to_weight and self.mode == "qdq":
+                if self.add_qdq_pair_to_weight and self.quant_format == "qdq":
                     node.input[idx] = weight.name
                     q_weight_name = weight.name + "_quantized"
                     zp_name = weight.name + "_zero_point"
@@ -308,7 +315,7 @@ class StaticQuantizer(Quantizer):
                 
     def quantize_weights_per_channel(self, node, indices, weight_qType, scheme, axis):
         """Quantize weights per-channel."""
-        if self.opset_version < 13 and self.mode == "qdq":
+        if self.opset_version < 13 and self.quant_format == "qdq":
             self.quantize_inputs(node, indices)
             return
 
@@ -316,7 +323,7 @@ class StaticQuantizer(Quantizer):
             if idx not in indices:
                 continue
 
-            if self.add_qdq_pair_to_weight and self.mode == "qdq":
+            if self.add_qdq_pair_to_weight and self.quant_format == "qdq":
                 q_name, zp_name, scale_name = self.quantize_weight_per_channel(inp, weight_qType, scheme, axis)
                 weight_name = (
                     ("_").join([inp, str(weight_qType)]) if self.model.get_initializer_share_num(inp) > 1 else inp

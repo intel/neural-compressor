@@ -676,12 +676,39 @@ register_supported_configs_for_fwk(fwk_name=FRAMEWORK_NAME)
 ##################### Config for ONNXRuntime-like user-facing API ############
 
 
-class StaticQuantConfig(ORTStaticQuantConfig):
-    def __init__(self, calibration_data_reader: CalibrationDataReader, extra_options=None, **kwargs):
-        """This is a class for static Quant Configuration.
+class StaticQuantConfig(ORTStaticQuantConfig, BaseConfig):
+    """This is a class for static Quant Configuration.
 
-        Inherit from StaticQuantConfig:
-        https://github.com/microsoft/onnxruntime/blob/v1.17.1/onnxruntime/python/tools/quantization/quantize.py#L78
+    Inherit from StaticQuantConfig:
+    https://github.com/microsoft/onnxruntime/blob/v1.17.1/onnxruntime/python/tools/quantization/quantize.py#L78
+    """
+    supported_configs: List[OperatorConfig] = []
+
+    params_list: List[str] = [
+        "op_types_to_quantize",
+    ]
+
+    def __init__(
+        self,
+        calibration_data_reader: CalibrationDataReader,
+        weight_type=QuantType.QInt8,
+        op_types_to_quantize=None,
+        nodes_to_quantize=None,
+        nodes_to_exclude=None,
+        per_channel=False,
+        reduce_range=False,
+        use_external_data_format=False,
+        extra_options=None,
+        white_list=[
+            "FusedConv", "Conv", "Gather", "GatherElements", "GatherND", "Tile", 
+            "MatMul", "Gemm", "EmbedLayerNormalization", "Attention", "Mul",
+            "Relu", "Clip", "LeakyRelu", "Sigmoid", "MaxPool", "GlobalAveragePool",
+            "Pad", "Split", "Add", "Squeeze", "Reshape", "Concat", "AveragePool",
+            "Unsqueeze", "Transpose", "ArgMax", "Resize", "Abs", "Shrink", "Sign",
+            "Flatten", "Expand", "Slice", "Mod", "ReduceMax", "ReduceMin", "CenterCropPad"
+            ],
+        **kwargs):
+        """
         extra_options:
             Support smoothquant args.
             - SmoothQuant = True/False :
@@ -704,8 +731,166 @@ class StaticQuantConfig(ORTStaticQuantConfig):
                 If enabled, each op will have an individual scale, mainlyfor accuracy.
                 If not enabled,  ops with the same input will share a scale, mainly for performance.
         """
-        super().__init__(calibration_data_reader=calibration_data_reader, extra_options=extra_options, **kwargs)
+        ORTStaticQuantConfig.__init__(
+            self,
+            calibration_data_reader=calibration_data_reader,
+            weight_type=weight_type,
+            op_types_to_quantize=op_types_to_quantize,
+            nodes_to_quantize=nodes_to_quantize,
+            nodes_to_exclude=nodes_to_exclude,
+            per_channel=per_channel,
+            reduce_range=reduce_range,
+            use_external_data_format=use_external_data_format,
+            extra_options=extra_options,
+            **kwargs,
+            )
+        BaseConfig.__init__(self, white_list=white_list)
+        self.white_list = white_list
+        #self._post_init()
+        ORTStaticQuantConfig.register_supported_configs()
         self.calibration_sampling_size = kwargs.get("calibration_sampling_size", 100)
+
+    @classmethod
+    def register_supported_configs(cls) -> List[OperatorConfig]:
+        supported_configs = []
+        supported_configs.append(
+            OperatorConfig(
+                config=_OperatorConfig(
+                    weight_dtype=onnx_proto.TensorProto.UINT8,
+                    weight_sym=False,
+                    weight_per_channel=True,
+                    weight_calib_method="minmax",
+                    act_dtype=onnx_proto.TensorProto.UINT8,
+                    act_sym=False,
+                    act_per_channel=False,
+                    act_calib_method="minmax",
+                ),
+                operators=["GatherND", "GatherElements", "Gather", "FusedConv"]))
+        supported_configs.append(
+            OperatorConfig(
+                config=_OperatorConfig(
+                    weight_dtype=onnx_proto.TensorProto.INT8,
+                    weight_sym=True,
+                    weight_per_channel=True,
+                    weight_calib_method="minmax",
+                    act_dtype=onnx_proto.TensorProto.UINT8,
+                    act_sym=False,
+                    act_per_channel=False,
+                    act_calib_method="minmax",
+                ),
+                operators=["Gemm"]))
+        supported_configs.append(
+            OperatorConfig(
+                config=_OperatorConfig(
+                    weight_dtype=onnx_proto.TensorProto.UINT8,
+                    weight_sym=False,
+                    weight_per_channel=False,
+                    weight_calib_method="minmax",
+                    act_dtype=onnx_proto.TensorProto.UINT8,
+                    act_sym=False,
+                    act_per_channel=False,
+                    act_calib_method="minmax",
+                ),
+                operators=["EmbedLayerNormalization"]))
+        supported_configs.append(
+            OperatorConfig(
+                config=_OperatorConfig(
+                    weight_dtype=onnx_proto.TensorProto.INT8,
+                    weight_sym=True,
+                    weight_per_channel=True,
+                    weight_calib_method="minmax",
+                    act_dtype=onnx_proto.TensorProto.UINT8,
+                    act_sym=False,
+                    act_per_channel=False,
+                    act_calib_method="minmax",
+                ),
+                operators=["Conv", "MatMul"]))
+        supported_configs.append(
+            OperatorConfig(
+                config=_OperatorConfig(
+                    weight_dtype=onnx_proto.TensorProto.INT8,
+                    weight_sym=True,
+                    weight_per_channel=False,
+                    weight_calib_method="minmax",
+                    act_dtype=onnx_proto.TensorProto.UINT8,
+                    act_sym=False,
+                    act_per_channel=False,
+                    act_calib_method="minmax",
+                ),
+                operators=["Add", "Mul", "ArgMax"]))
+        supported_configs.append(
+            OperatorConfig(
+                config=_OperatorConfig(
+                    weight_dtype=onnx_proto.TensorProto.INT8,
+                    weight_sym=True,
+                    weight_per_channel=False,
+                    weight_calib_method="minmax",
+                    act_dtype=onnx_proto.TensorProto.UINT8,
+                    act_sym=False,
+                    act_per_channel=False,
+                    act_calib_method="minmax",
+                ),
+                operators=[
+                    "Relu", "Clip", "LeakyRelu", "Sigmoid", "MaxPool", "GlobalAveragePool",
+                    "Pad", "Split", "Squeeze", "Reshape", "Concat", "AveragePool", "Tile", 
+                    "Unsqueeze", "Transpose", "Resize", "Abs", "Shrink", "Sign", "Attention",
+                    "Flatten", "Expand", "Slice", "Mod", "ReduceMax", "ReduceMin", "CenterCropPad"
+                ],
+            ))
+        cls.supported_configs = supported_configs
+
+    @staticmethod
+    def get_model_info(model) -> list:
+        filter_result = []
+        white_list = [
+            "FusedConv", "Conv", "Gather", "GatherElements", "GatherND", "Tile", 
+            "MatMul", "Gemm", "EmbedLayerNormalization", "Attention", "Mul",
+            "Relu", "Clip", "LeakyRelu", "Sigmoid", "MaxPool", "GlobalAveragePool",
+            "Pad", "Split", "Add", "Squeeze", "Reshape", "Concat", "AveragePool",
+            "Unsqueeze", "Transpose", "ArgMax", "Resize", "Abs", "Shrink", "Sign",
+            "Flatten", "Expand", "Slice", "Mod", "ReduceMax", "ReduceMin", "CenterCropPad"
+            ],
+        for node in model.graph.node:
+            if node.op_type in white_list:
+                pair = (node.name, node.op_type)
+                filter_result.append(pair)
+        logger.debug(f"Get model info: {filter_result}")
+        return filter_result
+
+    @classmethod
+    def get_config_set_for_tuning(
+        cls,
+    ) -> Union[None, "DynamicQuantConfig", List["DynamicQuantConfig"]]:  # pragma: no cover
+        # TODO fwk owner needs to update it.
+        return DynamicQuantConfig()
+
+    def to_config_mapping(self, config_list: list = None, model_info: list = None) -> OrderedDict:
+        config_mapping = OrderedDict()
+        if config_list is None:
+            config_list = [self]
+        for config in config_list:
+            # update model level setting
+            # config_mapping.update(config.get_model_params_dict())
+
+            # update node level setting
+            global_config = config.global_config
+            op_type_config_dict, op_name_config_dict = config._get_op_name_op_type_config()
+            for op_name, op_type in model_info:
+                for op_name_pattern in op_name_config_dict:
+                    if re.match(op_name_pattern, op_name):
+                        config_mapping[op_name] = op_name_config_dict[op_name_pattern]
+                        break
+
+                if op_type in op_type_config_dict:
+                    config_mapping[op_name] = op_name_config_dict[op_type]
+                    continue
+
+                for op_config in DynamicQuantConfig.supported_configs:
+                    if op_type in op_config.operators:
+                        config_mapping[op_name] = op_config.config
+                        break
+
+        return config_mapping
 
     def to_dict(self):
         return self.__dict__

@@ -148,11 +148,6 @@ class Quantizer:
             self.model.model.opset_import.extend([onnx.helper.make_opsetid("", 11)])
             opset_version = 11
 
-        if opset_version < 13 and self.mode == "qdq":
-            logger.warning(
-                "Per-channel support with QDQ format requires opset version >= 13,"
-                " use per-tensor granularity instead"
-            )
         return opset_version
 
     def should_quantize(self, node):

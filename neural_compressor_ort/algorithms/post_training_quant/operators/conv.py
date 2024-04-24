@@ -134,3 +134,75 @@ class ConvOperator(Operator):
         )
         self.quantizer.remove_nodes.extend(parents[1:])
         self.quantizer.remove_nodes.append(node)
+
+@op_registry(op_types="Conv, FusedConv", mode=[STATIC_QUANT])
+class ConvOperatorStatic(Operator):
+    """Conv Operator."""
+
+    def __init__(self, onnx_quantizer, onnx_node):
+        """Initialization."""
+        super(ConvOperator, self).__init__(onnx_quantizer, onnx_node)
+
+    def quantize(self):
+        """Do quantizaion."""
+        node = self.node
+        if node.op_type == "FusedConv":
+            kwargs = {}
+            for attribute in node.attribute:
+                if attribute.name == "activation" and attribute.s in [b"Relu", b"Clip"]:
+                    continue
+                if attribute.name == "activation_params":
+                    continue
+                kwargs.update(attribute_to_kwarg(attribute))
+            conv = onnx.helper.make_node("Conv", node.input, node.output, node.name, **kwargs)
+            node.CopyFrom(conv)
+
+        self.quantizer.quantize_inputs(node, [0])
+
+        if self.per_channel:
+            self.quantizer.quantize_weights_per_channel(node, [1], self.weight_dtype, self.weight_scheme, 0)
+        else:
+            self.quantizer.quantize_inputs(node, [1])
+
+        if not self.disable_qdq_for_node_output:
+            self.quantizer.quantize_outputs(node)
+
+        if len(node.input) == 3:
+            self.quantizer.quantize_bias_tensor(node)
+
+        node.name = node.name + "_quant"
+
+    def convert(self):
+        """Convert to QOperator format."""
+        node = self.node
+
+        if len(self.quantizer.model.get_children(node)) == 0 or not node.name.endswith(
+            "_quant"
+        ):  # pragma: no cover
+            return
+        parents = self.quantizer.model.get_parents(node)
+        child = self.quantizer.model.get_children(node)[0]
+        qlinear_conv_inputs = []
+        for parent in parents[0:2]:
+            qlinear_conv_inputs.extend(parent.input)
+        qlinear_conv_inputs.extend(child.input[1:])
+        if len(parents) == 3:
+            qlinear_conv_inputs.append(parents[-1].input[0])
+
+        qlinear_conv_output = child.output[0]
+
+        kwargs = {}
+        for attribute in node.attribute:
+            if attribute.name == "activation" and attribute.s in [b"Relu", b"Clip"]:  # pragma: no cover
+                continue
+            if attribute.name == "activation_params":  # pragma: no cover
+                continue
+            kwargs.update(attribute_to_kwarg(attribute))
+
+        qlinear_conv_node = onnx.helper.make_node(
+            "QLinearConv", qlinear_conv_inputs, [qlinear_conv_output], node.name, **kwargs
+        )
+        self.quantizer.new_nodes.append(qlinear_conv_node)
+        self.quantizer.remove_nodes.extend(parents)
+        self.quantizer.remove_nodes.append(child)
+        self.quantizer.remove_nodes.append(node)

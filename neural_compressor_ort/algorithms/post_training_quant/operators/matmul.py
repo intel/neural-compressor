@@ -114,3 +114,56 @@ class MatMulOperator(Operator):
         if parents[1].op_type == "DequantizeLinear":
             self.quantizer.remove_nodes.append(parents[1])
         self.quantizer.remove_nodes.append(node)
+
+
+@op_registry(op_types="MatMul", mode=[STATIC_QUANT])
+class MatMulOperatorStatic(MatMulOperator):
+    """MatMul Operator."""
+
+    def __init__(self, onnx_quantizer, onnx_node):
+        """Initialization."""
+        super(MatMulOperator, self).__init__(onnx_quantizer, onnx_node)
+
+    def quantize(self):
+        """Do quantizaion."""
+        node = self.node
+        self.quantizer.quantize_inputs(node, [0])
+        if self.per_channel and find_by_name(node.input[1], self.quantizer.model.initializer()):
+            self.quantizer.quantize_weights_per_channel(node, [1], self.weight_dtype, self.weight_scheme, 1)
+        else:
+            self.quantizer.quantize_inputs(node, [1])
+
+        if not self.disable_qdq_for_node_output:
+            self.quantizer.quantize_outputs(node)
+        node.name = node.name + "_quant"
+
+    def convert(self):
+        """Convert to QOperator format."""
+        node = self.node
+
+        parents = self.quantizer.model.get_parents(node)
+        if len(self.quantizer.model.get_children(node)) == 0 or not node.name.endswith(
+            "_quant"
+        ):  # pragma: no cover
+            return
+
+        qlinear_matmul_inputs = []
+        if self.disable_qdq_for_node_output:
+            for i in range(len(parents[0].input)):
+                qlinear_matmul_inputs.extend([parent.input[i] for parent in parents])
+            qlinear_matmul_node = onnx.helper.make_node(
+                "MatMulIntegerToFloat", qlinear_matmul_inputs, node.output, node.name, domain="com.microsoft"
+            )
+        else:
+            child = self.quantizer.model.get_children(node)[0]
+            qlinear_matmul_output = child.output[0]
+            for parent in parents:
+                qlinear_matmul_inputs.extend(parent.input)
+            qlinear_matmul_inputs.extend(child.input[1:])
+            qlinear_matmul_node = onnx.helper.make_node(
+                "QLinearMatMul", qlinear_matmul_inputs, [qlinear_matmul_output], node.name
+            )
+            self.quantizer.remove_nodes.append(child)
+        self.quantizer.new_nodes.append(qlinear_matmul_node)
+        self.quantizer.remove_nodes.extend(parents)
+        self.quantizer.remove_nodes.append(node)
