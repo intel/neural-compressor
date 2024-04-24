@@ -430,8 +430,9 @@ if __name__ == "__main__":
                            "Try to upgrade onnxruntime to avoid this error")
             model = onnx.load(args.model_path)
 
-        from neural_compressor_ort import quantize, StaticQuantConfig
+        from neural_compressor_ort.quantization import quantize, StaticQuantConfig
         config = StaticQuantConfig(
+            calibration_data_reader=
             quant_format=args.quant_format,
             calibration_sampling_size=[8, 16, 32],
             extra_options={"optypes_to_exclude_output_quant": ["MatMul", "Gemm", "Attention", "FusedGemm"]},

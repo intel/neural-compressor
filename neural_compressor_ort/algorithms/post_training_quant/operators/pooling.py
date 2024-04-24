@@ -18,8 +18,9 @@
 
 import onnx
 
-from neural_compressor.adaptor.ox_utils.operators.ops import Operator, QOperator, op_registry, qop_registry
-from neural_compressor.adaptor.ox_utils.util import attribute_to_kwarg, ms_domain
+from neural_compressor_ort.algorithms.post_training_quant.operators.ops import op_registry, Operator
+from neural_compressor_ort.algorithms.post_training_quant.utils import attribute_to_kwarg, find_by_name, ms_domain
+from neural_compressor_ort.common.utils import DYNAMIC_QUANT, STATIC_QUANT
 
 
 @op_registry(op_types="AveragePool", mode=[STATIC_QUANT])
