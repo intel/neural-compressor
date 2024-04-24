@@ -1834,7 +1834,7 @@ For more complete information about performance and benchmark results, visit www
     <td>2.17x</td>
   </tr>
   <tr>
-    <td>BERT&nbsp;&nbsp;&nbsp;SQuAD (ONNX Model Zoo)</td>
+    <td>BERT SQuAD (ONNX Model Zoo)</td>
     <td>integerops</td>
     <td>80.29</td>
     <td>80.67</td>
@@ -1974,7 +1974,7 @@ For more complete information about performance and benchmark results, visit www
     <td>2.08x</td>
   </tr>
   <tr>
-    <td>MiniLM L6 H384 uncased SST-2 (HuggingFace)</td>
+    <td>BERT base cased MRPC (HuggingFace)</td>
     <td>qlinearops</td>
     <td>87.70%</td>
     <td>88.29%</td>
@@ -1984,7 +1984,7 @@ For more complete information about performance and benchmark results, visit www
     <td>2.32x</td>
   </tr>
   <tr>
-    <td>MiniLM L6 H384 uncased SST-2 (HuggingFace)</td>
+    <td>BERT base cased MRPC (HuggingFace)</td>
     <td>integerops</td>
     <td>88.19%</td>
     <td>88.29%</td>
