@@ -101,6 +101,7 @@ class RTNConfig(BaseConfig):
         ratios: dict = {},
         providers: List[str] = ["CPUExecutionProvider"],
         layer_wise_quant: bool = False,
+        quant_last_matmul: bool = True,
         white_list: List[OP_NAME_OR_MODULE_TYPE] = DEFAULT_WHITE_LIST,
     ):
         """Init RTN weight-only quantization config.
@@ -120,6 +121,7 @@ class RTNConfig(BaseConfig):
                 Check below link for details
                 https://github.com/intel/neural-compressor/blob/master/docs/source/quantization_layer_wise.md,
                 default is False.
+            quant_last_matmul (bool, optional): whether to quantize the last matmul of the model, default is True.
             white_list (list, optional): op in white_list will be applied current config.
                 Defaults to DEFAULT_WHITE_LIST.
         """
@@ -133,6 +135,7 @@ class RTNConfig(BaseConfig):
         self.ratios = ratios
         self.providers = providers
         self.layer_wise_quant = layer_wise_quant
+        self.quant_last_matmul = quant_last_matmul
         self._post_init()
 
     def get_model_params_dict(self):
@@ -174,6 +177,11 @@ class RTNConfig(BaseConfig):
                 for op_name_pattern in op_name_config_dict:
                     if re.match(op_name_pattern, op_name):
                         config_mapping[(op_name, op_type)] = op_name_config_dict[op_name_pattern]
+        if not self.quant_last_matmul:
+            config_mapping[model_info[-1]] = {
+                "weight": {"dtype": "fp32"},
+                "activation": {"dtype": "fp32", "quant_mode": "fp32"},
+            }
         return config_mapping
 
     @staticmethod
@@ -246,6 +254,7 @@ class GPTQConfig(BaseConfig):
         perchannel: bool = True,
         providers: List[str] = ["CPUExecutionProvider"],
         layer_wise_quant: bool = False,
+        quant_last_matmul: bool = True,
         white_list: List[OP_NAME_OR_MODULE_TYPE] = DEFAULT_WHITE_LIST,
     ):
         """Init GPTQ weight-only quantization config.
@@ -271,6 +280,7 @@ class GPTQConfig(BaseConfig):
                 Check below link for details
                 https://github.com/intel/neural-compressor/blob/master/docs/source/quantization_layer_wise.md,
                 default is False.
+            quant_last_matmul (bool, optional): whether to quantize the last matmul of the model, default is True.
             white_list (list, optional): op in white_list will be applied current config.
                 Defaults to DEFAULT_WHITE_LIST.
         """
@@ -288,6 +298,7 @@ class GPTQConfig(BaseConfig):
         self.perchannel = perchannel
         self.providers = providers
         self.layer_wise_quant = layer_wise_quant
+        self.quant_last_matmul = quant_last_matmul
         self._post_init()
 
     def get_model_params_dict(self):
@@ -332,6 +343,11 @@ class GPTQConfig(BaseConfig):
                 for op_name_pattern in op_name_config_dict:
                     if re.match(op_name_pattern, op_name):
                         config_mapping[(op_name, op_type)] = op_name_config_dict[op_name_pattern]
+        if not self.quant_last_matmul:
+            config_mapping[model_info[-1]] = {
+                "weight": {"dtype": "fp32"},
+                "activation": {"dtype": "fp32", "quant_mode": "fp32"},
+            }
         return config_mapping
 
     @staticmethod
@@ -402,6 +418,7 @@ class AWQConfig(BaseConfig):
         enable_auto_scale: bool = True,
         enable_mse_search: bool = True,
         providers: List[str] = ["CPUExecutionProvider"],
+        quant_last_matmul: bool = True,
         white_list: List[OP_NAME_OR_MODULE_TYPE] = DEFAULT_WHITE_LIST,
     ):
         """Init AWQ weight-only quantization config.
@@ -420,6 +437,7 @@ class AWQConfig(BaseConfig):
             enable_mse_search (bool, optional): whether to search for the best clip range from range
                 [0.91, 1.0, 0.01]. Defaults to True.
             providers (list, optional): execution providers to use. Defaults to ["CPUExecutionProvider"].
+            quant_last_matmul (bool, optional): whether to quantize the last matmul of the model, default is True.
             white_list (list, optional): op in white_list will be applied current config.
                 Defaults to DEFAULT_WHITE_LIST.
         """
@@ -433,6 +451,7 @@ class AWQConfig(BaseConfig):
         self.enable_auto_scale = enable_auto_scale
         self.enable_mse_search = enable_mse_search
         self.providers = providers
+        self.quant_last_matmul = quant_last_matmul
         self._post_init()
 
     def get_model_params_dict(self):
@@ -476,6 +495,11 @@ class AWQConfig(BaseConfig):
                 for op_name_pattern in op_name_config_dict:
                     if re.match(op_name_pattern, op_name):
                         config_mapping[(op_name, op_type)] = op_name_config_dict[op_name_pattern]
+        if not self.quant_last_matmul:
+            config_mapping[model_info[-1]] = {
+                "weight": {"dtype": "fp32"},
+                "activation": {"dtype": "fp32", "quant_mode": "fp32"},
+            }
         return config_mapping
 
     @staticmethod
@@ -624,6 +648,23 @@ def get_default_sq_config() -> SmoothQuantConfig:
         the default smooth quant config.
     """
     return SmoothQuantConfig()
+
+
+######################## WOQ Tuning Config ###############################
+
+
+def get_woq_tuning_config() -> list:
+    """Generate the config set for WOQ tuning.
+
+    Returns:
+        the list of WOQ quant config.
+    """
+    RTN_G32ASYM = RTNConfig(weight_sym=False)
+    GPTQ_G32ASYM = GPTQConfig(weight_sym=False)
+    GPTQ_G32ASYM_DISABLE_LAST_MATMUL = GPTQConfig(weight_sym=False, quant_last_matmul=False)
+    GPTQ_G128ASYM = GPTQConfig(weight_group_size=128, weight_sym=False)
+    AWQ_G32ASYM = AWQConfig(weight_sym=False)
+    return [RTN_G32ASYM, GPTQ_G32ASYM, GPTQ_G32ASYM_DISABLE_LAST_MATMUL, GPTQ_G128ASYM, AWQ_G32ASYM]
 
 
 ##################### INC Algo Configs End ###################################

@@ -30,10 +30,10 @@ from neural_compressor_ort.quantization.config import (
     get_default_sq_config,
     StaticQuantConfig,
     DynamicQuantConfig,
+    get_woq_tuning_config,
 )
 from neural_compressor_ort.quantization.autotune import autotune, get_all_config_set
 
-#
 from neural_compressor_ort.quantization.matmul_4bits_quantizer import MatMul4BitsQuantizer
 from neural_compressor_ort.quantization.matmul_nbits_quantizer import (
     RTNWeightOnlyQuantConfig,
@@ -59,6 +59,7 @@ __all__ = [
     "get_default_awq_config",
     "SmoothQuantConfig",
     "get_default_sq_config",
+    "get_woq_tuning_config",
     "get_all_config_set",
     "StaticQuantConfig",
     "DynamicQuantConfig",

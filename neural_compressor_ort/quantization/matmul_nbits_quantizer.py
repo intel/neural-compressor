@@ -97,8 +97,9 @@ class MatMulNBitsQuantizer:
     ):
         if nodes_to_exclude is None:
             nodes_to_exclude = []
-        self.model = ONNXModel(onnx.load(model)) if isinstance(model, str) else ONNXModel(model)
         self.model_path = model if isinstance(model, str) else None
+        self.model = model
+        self.model = ONNXModel(onnx.load(model)) if isinstance(model, str) else ONNXModel(model)
         self.block_size = block_size
         self.is_symmetric = is_symmetric
         self.accuracy_level = accuracy_level
@@ -159,7 +160,7 @@ class MatMulNBitsQuantizer:
         config = self._generate_inc_config()
 
         logger.info(f"start to quantize model with {self.algorithm} algorithm...")
-        model = self.model_path or self.model.model
+        model = self.model_path or self.model
         if self.algorithm == "RTN":
             self.model = rtn_quantize_entry(model, config)
         elif self.algorithm == "GPTQ":
