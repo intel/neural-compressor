@@ -197,7 +197,6 @@ class TestStaticQuantWithNewAPI:
         q_model = convert(prepared_model)
         assert q_model is not None, "Quantization failed!"
 
-
     @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
     @pytest.mark.parametrize(
         "act_sym, act_algo",

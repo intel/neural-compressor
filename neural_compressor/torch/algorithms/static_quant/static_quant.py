@@ -54,7 +54,9 @@ class StaticQuantQuantizer(Quantizer):
     def prepare(self, model, example_inputs, inplace=True, *args, **kwargs):
         assert example_inputs is not None, "Please provide example_inputs for static quantization."
 
-        _, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, _ = get_quantizable_ops_recursively(model, example_inputs)
+        _, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, _ = get_quantizable_ops_recursively(
+            model, example_inputs
+        )
         # update json file in ipex_config_path; map ipex op_name to pt op_name
         user_cfg = cfg_to_qconfig(self.tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_id_op_name)
         model.eval()

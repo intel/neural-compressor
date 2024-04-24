@@ -145,7 +145,6 @@ def prepare(
     return prepared_model
 
 
-
 @log_quant_execution
 def convert(
     model: torch.nn.Module,
