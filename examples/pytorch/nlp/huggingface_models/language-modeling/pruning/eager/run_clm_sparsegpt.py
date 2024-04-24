@@ -271,7 +271,7 @@ def parse_args():
     
     # Evaluation config
     parser.add_argument("--tasks", default="lambada_openai",
-        type=str, help="tasks list for accuracy validation",
+        type=str, help="tasks for accuracy validation",
     )
     parser.add_argument("--use_accelerate", action='store_true',
         help="Usually use to accelerate evaluation for large models"

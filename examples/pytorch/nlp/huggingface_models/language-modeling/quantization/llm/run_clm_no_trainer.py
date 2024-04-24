@@ -51,7 +51,7 @@ parser.add_argument("--pad_max_length", default=512, type=int,
 parser.add_argument("--calib_iters", default=512, type=int,
                     help="calibration iters.")
 parser.add_argument("--tasks", default="lambada_openai,hellaswag,winogrande,piqa,wikitext",
-                    type=str, help="tasks list for accuracy validation, text-generation and code-generation tasks are different.")
+                    type=str, help="tasks for accuracy validation, text-generation and code-generation tasks are different.")
 parser.add_argument("--peft_model_id", type=str, default=None, help="model_name_or_path of peft model")
 # ============SmoothQuant configs==============
 parser.add_argument("--sq", action="store_true")
@@ -398,7 +398,7 @@ if args.performance:
         results = evaluate(
             model=user_model,
             tokenizer=tokenizer,
-            tasks=",".join(args.tasks),
+            tasks=args.tasks,
             batch_size=args.batch_size,
             args=args,
         )
