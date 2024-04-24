@@ -80,6 +80,12 @@ FP4_E2M1_BIT = [-1, -2, -3, -4, -5, -6, -7, 0, 1, 2, 3, 4, 5, 6, 7]
 
 FLOAT_MAPPING = {"nf4": NF4, "fp4": FP4_BNB, "fp4_e2m1_bnb": FP4_BNB, "fp4_e2m1": FP4_E2M1}
 INT_MAPPING = {"nf4": NF4_BIT, "fp4": FP4_BNB_BIT, "fp4_e2m1_bnb": FP4_BNB_BIT, "fp4_e2m1": FP4_E2M1_BIT}
+FP8_MAPPING = {
+    "fp8_e5m2": torch.float8_e5m2,
+    "fp8_e5m2fnuz": torch.float8_e4m3fnuz,
+    "fp8_e4m3fn": torch.float8_e4m3fn,
+    "fp8_e4m3fnuz": torch.float8_e4m3fnuz,
+}
 
 
 def quantize_4bit(tensor, quantile=1.0, dtype="nf4", return_int=False, **kwargs):
@@ -119,6 +125,17 @@ def quantize_4bit(tensor, quantile=1.0, dtype="nf4", return_int=False, **kwargs)
     if return_int or keep_scale:
         return tensor, scale, None
     return tensor.mul_(scale)
+
+
+def cast_fp8(tensor, dtype="fp8_e4m3fn", use_qdq=True):
+    torch_dtype = FP8_MAPPING[dtype]
+    if not use_qdq:
+        return tensor.to(torch_dtype)
+    else:
+        orig_dtype = tensor.dtype
+        fp8_tensor = tensor.to(torch_dtype)
+        tensor.copy_(fp8_tensor.to(orig_dtype))
+        return tensor
 
 
 def qdq_weight_asym(weight, bits=4, quantile=1.0, return_int=False, **kwargs):
