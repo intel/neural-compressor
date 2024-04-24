@@ -82,7 +82,7 @@ FLOAT_MAPPING = {"nf4": NF4, "fp4": FP4_BNB, "fp4_e2m1_bnb": FP4_BNB, "fp4_e2m1"
 INT_MAPPING = {"nf4": NF4_BIT, "fp4": FP4_BNB_BIT, "fp4_e2m1_bnb": FP4_BNB_BIT, "fp4_e2m1": FP4_E2M1_BIT}
 FP8_MAPPING = {
     "fp8_e5m2": torch.float8_e5m2,
-    "fp8_e5m2fnuz": torch.float8_e4m3fnuz,
+    "fp8_e5m2fnuz": torch.float8_e5m2fnuz,
     "fp8_e4m3fn": torch.float8_e4m3fn,
     "fp8_e4m3fnuz": torch.float8_e4m3fnuz,
 }
