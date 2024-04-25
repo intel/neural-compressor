@@ -498,6 +498,18 @@ class PyTorchModel(PyTorchBaseModel):
             gptq_config = self.gptq_config if hasattr(self, "gptq_config") else {}
 
         autoround_config = self.autoround_config if hasattr(self, "autoround_config") else {}
+        # check available device, priority: ["xpu", "cuda", "cpu"]
+        availiable_device = []
+        if hasattr(torch, "xpu") and torch.xpu.is_available():
+            availiable_device.append("xpu")
+        if torch.cuda.is_available():
+            availiable_device.append("cuda")
+        availiable_device.append("cpu")
+        orig_device = device
+        if device not in availiable_device and "cuda" not in device:  # cuda in cuda:0
+            logger.info(f"{device} is not detected in current environment, please check.")
+            device = availiable_device[0]
+            logger.info(f"The compression device has been changed to {device}.")
         if gptq_config:
             for k, v in weight_config.items():
                 logger.debug(f"Compressing {k} on device {device}")
@@ -558,7 +570,7 @@ class PyTorchModel(PyTorchBaseModel):
                 new_module.pack(int_weight, gptq_scale, gptq_zp, m.bias, gptq_perm)
                 set_module(self.model, k, new_module)
         elif autoround_config:
-            if device == "xpu":
+            if orig_device == "xpu":
                 for k, v in weight_config.items():
                     logger.debug(f"Compressing {k} on device {device}")
                     if v["dtype"] == "fp32":
