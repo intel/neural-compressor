@@ -376,6 +376,7 @@ def autoround_quantize_entry(
             scale_dtype = quant_config.scale_dtype
 
     kwargs.pop("example_inputs")
+    kwargs.pop("mode")  # TODO: will be removed after auto_round refactoring
     model, autoround_config = autoround_quantize(
         model=model,
         weight_config=weight_config,
