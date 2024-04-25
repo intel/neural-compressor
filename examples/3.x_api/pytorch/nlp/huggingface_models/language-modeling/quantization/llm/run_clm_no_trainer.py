@@ -51,7 +51,7 @@ parser.add_argument("--pad_max_length", default=512, type=int,
 parser.add_argument("--calib_iters", default=512, type=int,
                     help="calibration iters.")
 parser.add_argument("--tasks", default="lambada_openai,hellaswag,winogrande,piqa,wikitext",
-                    type=str, help="tasks list for accuracy validation")
+                    type=str, help="tasks for accuracy validation")
 parser.add_argument("--peft_model_id", type=str, default=None, help="model_name_or_path of peft model")
 # ============SmoothQuant configs==============
 parser.add_argument("--sq", action="store_true")
@@ -372,39 +372,36 @@ if args.quantize:
         )
         user_model.save(args.output_dir)
 
-if args.int8 or args.int8_bf16_mixed:
-    print("load int8 model")
 
-    from neural_compressor.torch.algorithms.static_quant import load
+# TODO: we need run_benchmark.sh for loading and remove --accuracy in run_quant.sh, currently run_quant.sh will get fp32 result
+# if args.int8 or args.int8_bf16_mixed:
+#     print("load int8 model")
 
-    if args.ipex:
-        user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)))
-    else:
-        # TODO: WOQ save&load
-        print("Int8 model loading does not support WeightOnlyQuant now.")
-        pass
-else:
-    user_model, _ = get_user_model()
+#     # TODO: from neural_compressor.torch.quantization import load
+#     from neural_compressor.torch.algorithms.static_quant import load
+
+#     if args.ipex:
+#         user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)))
+#     else:
+#         # TODO: WOQ save&load
+#         print("Int8 model loading does not support WeightOnlyQuant now.")
+#         pass
+# else:
+#     user_model, _ = get_user_model()
 
 
 if args.accuracy:
     user_model.eval()
     from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
     eval_args = LMEvalParser(
-        model="hf",
-        model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
+        model="hf", 
         user_model=user_model,
-        tokenizer = tokenizer,
+        tokenizer=tokenizer,
         batch_size=args.batch_size,
         tasks=args.tasks,
         device="cpu",
     )
     results = evaluate(eval_args)
-
-    dumped = json.dumps(results, indent=2)
-    if args.save_accuracy_path:
-        with open(args.save_accuracy_path, "w") as f:
-            f.write(dumped)
     for task_name in args.tasks.split(","):
         if task_name == "wikitext":
             acc = results["results"][task_name]["word_perplexity,none"]
@@ -415,16 +412,14 @@ if args.accuracy:
 
 if args.performance:
     user_model.eval()
-    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate
+    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
     import time
 
     samples = args.iters * args.batch_size
-    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
     eval_args = LMEvalParser(
-        model="hf",
-        model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
+        model="hf", 
         user_model=user_model,
-        tokenizer = tokenizer,
+        tokenizer=tokenizer,
         batch_size=args.batch_size,
         tasks=args.tasks,
         limit=samples,

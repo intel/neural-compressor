@@ -50,9 +50,8 @@ parser.add_argument("--pad_max_length", default=512, type=int,
                     help="Pad input ids to max length.")
 parser.add_argument("--calib_iters", default=512, type=int,
                     help="calibration iters.")
-parser.add_argument("--tasks", nargs='+', default=["lambada_openai",
-                                                   "hellaswag", "winogrande", "piqa", "wikitext"],
-                    type=str, help="tasks list for accuracy validation, text-generation and code-generation tasks are different.")
+parser.add_argument("--tasks", default="lambada_openai,hellaswag,winogrande,piqa,wikitext",
+                    type=str, help="tasks for accuracy validation, text-generation and code-generation tasks are different.")
 parser.add_argument("--peft_model_id", type=str, default=None, help="model_name_or_path of peft model")
 # ============SmoothQuant configs==============
 parser.add_argument("--sq", action="store_true")
@@ -351,62 +350,82 @@ else:
 if args.accuracy:
     user_model.eval()
     if args.code_generation:
-        from intel_extension_for_transformers.llm.evaluation.lm_code_eval import evaluate
+        from intel_extension_for_transformers.transformers.llm.evaluation.bigcode_eval import evaluate
         from transformers import AutoTokenizer
         tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=args.trust_remote_code)
         results = evaluate(
             model=user_model,
             tokenizer=tokenizer,
-            tasks=",".join(args.tasks),
+            tasks=args.tasks,
             batch_size=args.batch_size,
             args=args,
         )
+        for task_name in args.tasks:
+            if task_name == "truthfulqa_mc":
+                acc = results["results"][task_name]["mc1"]
+            else:
+                acc = results["results"][task_name]["acc"]
     else:
-        from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate
-        results = evaluate(
-            model="hf-causal",
-            model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
+        from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
+        eval_args = LMEvalParser(
+            model="hf", 
             user_model=user_model,
+            tokenizer=tokenizer,
             batch_size=args.batch_size,
             tasks=args.tasks,
+            device="cpu",
         )
+        results = evaluate(eval_args)
+        for task_name in args.tasks.split(","):
+            if task_name == "wikitext":
+                acc = results["results"][task_name]["word_perplexity,none"]
+            else:
+                acc = results["results"][task_name]["acc,none"]
 
-    dumped = json.dumps(results, indent=2)
-    if args.save_accuracy_path:
-        with open(args.save_accuracy_path, "w") as f:
-            f.write(dumped)
-    for task_name in args.tasks:
-        if task_name == "wikitext":
-            acc = results["results"][task_name]["word_perplexity"]
-        else:
-            acc = results["results"][task_name]["acc"]
     print("Accuracy: %.5f" % acc)
     print('Batch size = %d' % args.batch_size)
 
 if args.performance:
-    user_model.eval()
-    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate
     import time
-
+    user_model.eval()
     samples = args.iters * args.batch_size
-    start = time.time()
-    results = evaluate(
-        model="hf-causal",
-        model_args='pretrained=' + args.model + ',tokenizer=' + args.model \
-            + ',dtype=float32' + ",trust_remote_code=" + str(args.trust_remote_code),
-        user_model=user_model,
-        batch_size=args.batch_size,
-        tasks=args.tasks,
-        limit=samples,
-    )
-    end = time.time()
-    for task_name in args.tasks:
-        if task_name == "wikitext":
-            acc = results["results"][task_name]["word_perplexity"]
-        elif task_name == "truthfulqa_mc":
-            acc = results["results"][task_name]["mc1"]
-        else:
-            acc = results["results"][task_name]["acc"]
+
+    if args.code_generation:
+        from intel_extension_for_transformers.transformers.llm.evaluation.bigcode_eval import evaluate
+        from transformers import AutoTokenizer
+        tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=args.trust_remote_code)
+        start = time.time()
+        results = evaluate(
+            model=user_model,
+            tokenizer=tokenizer,
+            tasks=args.tasks,
+            batch_size=args.batch_size,
+            args=args,
+        )
+        end = time.time()
+        for task_name in args.tasks:
+            if task_name == "truthfulqa_mc":
+                acc = results["results"][task_name]["mc1"]
+            else:
+                acc = results["results"][task_name]["acc"]
+    else:
+        from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
+        eval_args = LMEvalParser(
+            model="hf", 
+            user_model=user_model,
+            tokenizer=tokenizer,
+            batch_size=args.batch_size,
+            tasks=args.tasks,
+            device="cpu",
+        )
+        start = time.time()
+        results = evaluate(eval_args)
+        end = time.time()
+        for task_name in args.tasks.split(","):
+            if task_name == "wikitext":
+                acc = results["results"][task_name]["word_perplexity,none"]
+            else:
+                acc = results["results"][task_name]["acc,none"]
     print("Accuracy: %.5f" % acc)
     print('Throughput: %.3f samples/sec' % (samples / (end - start)))
     print('Latency: %.3f ms' % ((end - start) * 1000 / samples))
