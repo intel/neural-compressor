@@ -153,7 +153,7 @@ class TestPytorchFP8Adaptor:
         from neural_compressor.torch.quantization import load
 
         m = copy.deepcopy(self.model)
-        m = load(m, "saved_results")
+        m = load("saved_results", m)
         recovered_out = m(inp)
         assert (recovered_out == fp8_out).all(), "Unexpected result. Please double check."
         assert isinstance(m.fc1, FP8Linear), "Unexpected result. Please double check."
