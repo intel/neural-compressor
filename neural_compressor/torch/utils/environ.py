@@ -53,6 +53,9 @@ def get_ipex_version():
         return None
 
 
+TORCH_VERSION_2_2_2 = Version("2.2.2")
+
+
 def get_torch_version():
     try:
         torch_version = torch.__version__.split("+")[0]
