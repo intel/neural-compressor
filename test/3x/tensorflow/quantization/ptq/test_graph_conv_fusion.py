@@ -112,6 +112,9 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
                 if i.op == "QuantizedDepthwiseConv2DWithBias":
                     found_conv_fusion = True
                     break
+                if i.op == "QuantizedDepthwiseConv2D" and version1_gte_version2(tf.__version__, "2.16.1"):
+                    found_conv_fusion = True
+                    break
 
             self.assertEqual(found_conv_fusion, True)
 
