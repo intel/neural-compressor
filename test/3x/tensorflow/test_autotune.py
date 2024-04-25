@@ -11,8 +11,8 @@ from tensorflow import keras
 
 from neural_compressor.common import logger
 from neural_compressor.common.base_tuning import Evaluator, TuningConfig
-from neural_compressor.tensorflow.utils import version1_gte_version2
 from neural_compressor.tensorflow.quantization import SmoothQuantConfig, StaticQuantConfig, autotune
+from neural_compressor.tensorflow.utils import version1_gte_version2
 
 
 def _create_evaluator_for_eval_fns(eval_fns: Optional[Union[Callable, Dict, List[Dict]]] = None) -> Evaluator:
