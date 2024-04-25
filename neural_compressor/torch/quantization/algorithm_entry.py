@@ -109,6 +109,7 @@ def gptq_entry(
         }
     )
     kwargs.pop("example_inputs")
+    kwargs.pop("mode") # TODO: will be removed after GPTQ refactoring
 
     logger.warning("lm_head in transformer model is skipped by GPTQ")
     model, quantization_perm = gptq_quantize(model=model, weight_config=weight_config, *args, **kwargs)
@@ -155,7 +156,12 @@ def static_quant_entry(
     assert example_inputs is not None, "Please provide example_inputs for static quantization."
 
     quantizer = StaticQuantQuantizer(tune_cfg=quant_config_mapping)
-    model = quantizer.execute(model, mode=mode, run_fn=run_fn, example_inputs=example_inputs, inplace=inplace)
+    model = quantizer.execute(
+        model,
+        mode=mode,
+        run_fn=run_fn,
+        example_inputs=example_inputs,
+        inplace=inplace)
     return model
 
 

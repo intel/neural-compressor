@@ -21,7 +21,7 @@ import torch
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
 from neural_compressor.common.utils import log_quant_execution
 from neural_compressor.torch.quantization.config import SmoothQuantConfig, StaticQuantConfig
-from neural_compressor.torch.utils import is_ipex_available, logger
+from neural_compressor.torch.utils import is_ipex_available, logger, Mode
 from neural_compressor.torch.utils.utility import WHITE_MODULE_LIST, algos_mapping, get_model_info
 
 FRAMEWORK_NAME = "torch"
@@ -82,12 +82,11 @@ def quantize(
                 run_fn=run_fn,
                 run_args=run_args,
                 example_inputs=example_inputs,
-                mode="quantize",
+                mode=Mode.QUANTIZE,
             )
     return q_model
 
 
-@log_quant_execution
 def prepare(
     model: torch.nn.Module,
     quant_config: BaseConfig,
@@ -137,7 +136,7 @@ def prepare(
                 prepared_model,
                 configs_mapping,
                 example_inputs=example_inputs,
-                mode="prepare",
+                mode=Mode.PREPARE,
             )
             setattr(prepared_model, "prepared", True)
     setattr(prepared_model, "quant_config", quant_config)
@@ -145,7 +144,6 @@ def prepare(
     return prepared_model
 
 
-@log_quant_execution
 def convert(
     model: torch.nn.Module,
     quant_config: BaseConfig = None,
@@ -200,6 +198,6 @@ def convert(
                 q_model,
                 configs_mapping,
                 example_inputs=example_inputs,
-                mode="convert",
+                mode=Mode.CONVERT,
             )
     return q_model

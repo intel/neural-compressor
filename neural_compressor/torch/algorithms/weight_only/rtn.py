@@ -23,14 +23,11 @@ from collections import OrderedDict
 
 import torch
 
-from neural_compressor.common.utils import RTN
-from neural_compressor.torch.algorithms import Quantizer, algo_quantizer_register
+from neural_compressor.torch.algorithms import Quantizer
 from neural_compressor.torch.utils import get_device, logger, set_module
 
 from .utility import quant_tensor, search_clip
 
-
-@algo_quantizer_register(name=RTN)
 class RTNQuantizer(Quantizer):
     def __init__(self, tune_cfg: OrderedDict = {}):
         super().__init__(tune_cfg)
