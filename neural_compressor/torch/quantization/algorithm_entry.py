@@ -64,6 +64,7 @@ def rtn_entry(
             "double_quant_group_size": quant_config.double_quant_group_size,
         }
 
+    # import pdb; pdb.set_trace()
     model = rtn_quantize(model, weight_config=weight_config)
     return model
 

@@ -12,6 +12,19 @@ from neural_compressor.torch.quantization import (
     quantize,
 )
 
+import transformers
+class ModelConv1d(torch.nn.Module):
+    def __init__(self):
+        super(ModelConv1d, self).__init__()
+        self.fc1 = transformers.Conv1D(50, 30)
+        self.fc2 = torch.nn.Linear(50, 30)
+        self.fc3 = torch.nn.Linear(30, 5)
+
+    def forward(self, x):
+        out = self.fc1(x)
+        out = self.fc2(out)
+        out = self.fc3(out)
+        return out
 
 class TestRTNQuant:
     def setup_class(self):
@@ -219,3 +232,12 @@ class TestRTNQuant:
         model = quantize(model, double_quant_config_dict)
         out2 = model(self.example_inputs)[0]
         assert torch.allclose(out2, self.label, atol=0.1), "Accuracy gap atol > 0.1 is unexpected."
+
+    def test_conv1d(self):
+        model = ModelConv1d()
+        input = torch.randn(1, 30)
+        quant_config = RTNConfig()
+        out1 = model(input)
+        model = quantize(model, quant_config)
+        out2 = model(input)
+        assert torch.allclose(out2, out1, atol=1e-2), "Accuracy gap atol > 0.01 is unexpected."

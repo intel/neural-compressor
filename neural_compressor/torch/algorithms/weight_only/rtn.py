@@ -20,6 +20,7 @@
 
 
 import torch
+import transformers
 
 from neural_compressor.torch.utils import get_device, logger, set_module
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
@@ -81,7 +82,7 @@ def rtn_quantize(
     model.to(device)
 
     assert isinstance(model, torch.nn.Module), "only support torch module"
-    supported_layers = (torch.nn.Linear,)
+    supported_layers = (torch.nn.Linear, transformers.Conv1D)
     # initialize global configuration
     double_quant_config = {
         "double_quant": kwargs.get("use_double_quant", False),
@@ -134,7 +135,9 @@ def rtn_quantize(
             continue
         logger.debug(f"RTN quantized module:{name, m}")
         logger.debug(log_msg)
-        if group_dim == 0:
+        # for only group_dim is 0 or only `transformers.Conv1D`, we need transpose weight.
+        transpose = (group_dim == 0) ^ (isinstance(m, transformers.Conv1D))
+        if transpose:
             weight = m.weight.t_().contiguous()
         else:
             weight = m.weight
@@ -152,9 +155,9 @@ def rtn_quantize(
                 full_range=use_full_range,
                 **double_quant_config,
             )
-            int_weight = int_weight.t_().contiguous() if group_dim == 0 else int_weight
-            scale = scale.t_().contiguous() if group_dim == 0 else scale
-            zp = zp.t_().contiguous() if group_dim == 0 and zp is not None else zp
+            int_weight = int_weight.t_().contiguous() if transpose else int_weight
+            scale = scale.t_().contiguous() if transpose else scale
+            zp = zp.t_().contiguous() if transpose and zp is not None else zp
             from .modules import WeightOnlyLinear
 
             new_module = WeightOnlyLinear(
@@ -184,8 +187,8 @@ def rtn_quantize(
                 full_range=use_full_range,
                 **double_quant_config,
             )
-            if group_dim == 0:
-                # for group_dim is 0, we need to transpose the quantized tensor and module's weight back
+            if transpose:
+                # for only group_dim is 0 or only `transformers.Conv1D`, we need to transpose the quantized tensor and module's weight back
                 weight = weight.t_().contiguous()
                 m.weight.t_().contiguous()
             m.weight.data.copy_(weight)
