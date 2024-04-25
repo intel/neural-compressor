@@ -57,17 +57,6 @@ class RTNQuantizer(Quantizer):
             scheme (str, optional): sym or asym. Defaults to "sym".
             quantile (float, optional): percentile of clip. Defaults to 1.0.
             dtype (str, optional): select from int, nf4, fp4. Defaults to int.
-            weight_config (dict, optional): specific layer wise configurations. Defaults to {}.
-                For example,
-                    weight_config={
-                        'fc2':
-                            {
-                                'dtype': 'int',
-                                'bits': 4,
-                                'group_size': 32,
-                                'scheme': 'sym'
-                            }
-                    }
             export_compressed_model (bool, optional): Choose return fp32 or int32 model.
                                         Defaults to False.
             use_full_range (bool, optional): Choose sym range whether use -2**(bits-1).

@@ -22,16 +22,49 @@ from neural_compressor.torch.utils import Mode
 
 
 class Quantizer(ABC):
-    """The base quantizer for one step algorithm quantizers."""
+    """The base quantizer for all algorithm quantizers."""
 
     def __init__(self, tune_cfg: OrderedDict = {}):
+        """Init a Quantizer object.
+
+        Args:
+            tune_cfg (OrderedDict, optional): quantization config for ops. Defaults to {}.
+                Take weight-only quantization as an example,
+                    tune_cfg={
+                        'fc2':
+                            {
+                                'dtype': 'int',
+                                'bits': 4,
+                                'group_size': 32,
+                                'scheme': 'sym'
+                            }
+                    }
+        """
         self.tune_cfg = tune_cfg
 
     @abstractmethod
-    def quantize(self, model: torch.nn.Module, *args: Any, **kwargs: Any) -> torch.nn.Module:
+    def quantize(self, model: torch.nn.Module, *args: Any, **kwargs: Any):
+        """Quantizes a given torch model.
+
+        Args:
+            model (torch.nn.Module): The torch model to be quantized.
+
+        Returns:
+            A quantized model.
+        """
         raise NotImplementedError("{} doesn't implement `quantize` function.".format(self.__class__.__name__))
 
-    def prepare(self, model: torch.nn.Module, *args: Any, **kwargs: Any) -> torch.nn.Module:
+    def prepare(self, model: torch.nn.Module, *args: Any, **kwargs: Any):
+        """Prepares a given model for quantization.
+
+        Insert observers into the model so that it can monitor the input and output tensors during calibration.
+
+        Args:
+            model (torch.nn.Module): The model to be prepared.
+
+        Returns:
+            A prepared model.
+        """
         raise NotImplementedError(
             "{} doesn't implement `prepare` function. "
             "Please implement `prepare` function or "
@@ -40,7 +73,15 @@ class Quantizer(ABC):
             )
         )
 
-    def convert(self, model: torch.nn.Module, *args: Any, **kwargs: Any) -> torch.nn.Module:
+    def convert(self, model: torch.nn.Module, *args: Any, **kwargs: Any):
+        """Converts a prepared model to a quantized model.
+
+        Args:
+            model (torch.nn.Module): The prepared model to be converted.
+
+        Returns:
+            A quantized model.
+        """
         raise NotImplementedError(
             "{} doesn't implement `convert` function. "
             "Please implement `convert` function or "
@@ -49,7 +90,13 @@ class Quantizer(ABC):
             )
         )
 
-    def execute(self, model, mode, *args: Any, **kwargs: Any):
+    def execute(self, model: torch.nn.Module, mode, *args: Any, **kwargs: Any):
+        """Execute according to mode.
+
+        Args:
+            model (torch.nn.Module): The model to be executed.
+            mode (Mode): The mode of current phase, including 'prepare', 'convert' and 'quantize'.
+        """
         if mode == Mode.PREPARE:
             model = self.prepare(model, *args, **kwargs)
         elif mode == Mode.CONVERT:

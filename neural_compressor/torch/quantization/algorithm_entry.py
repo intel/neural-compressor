@@ -30,14 +30,18 @@ from neural_compressor.torch.quantization import (
     StaticQuantConfig,
     TEQConfig,
 )
-from neural_compressor.torch.utils import logger, register_algo
+from neural_compressor.torch.utils import logger, register_algo, Mode
 
 
 ###################### RTN Algo Entry ##################################
 @register_algo(RTN)
 @torch.no_grad()
 def rtn_entry(
-    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], RTNConfig], *args, **kwargs
+    model: torch.nn.Module,
+    configs_mapping: Dict[Tuple[str, callable], RTNConfig],
+    mode: Mode = Mode.QUANTIZE,
+    *args,
+    **kwargs
 ) -> torch.nn.Module:
     """The main entry to apply rtn quantization."""
     from neural_compressor.torch.algorithms.weight_only.rtn import RTNQuantizer
@@ -63,8 +67,6 @@ def rtn_entry(
             "double_quant_scheme": "sym" if quant_config.double_quant_use_sym else "asym",
             "double_quant_group_size": quant_config.double_quant_group_size,
         }
-
-    mode = kwargs.get("mode", "quantize")
 
     quantizer = RTNQuantizer(tune_cfg=weight_config)
     model = quantizer.execute(model, mode=mode)
@@ -122,7 +124,11 @@ def gptq_entry(
 @register_algo(name=STATIC_QUANT)
 @torch.no_grad()
 def static_quant_entry(
-    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], StaticQuantConfig], *args, **kwargs
+    model: torch.nn.Module,
+    configs_mapping: Dict[Tuple[str, callable], StaticQuantConfig],
+    mode: Mode = Mode.QUANTIZE,
+    *args,
+    **kwargs
 ) -> torch.nn.Module:
     logger.info("Quantize model with the static quant algorithm.")
     from neural_compressor.torch.algorithms.static_quant import StaticQuantQuantizer
@@ -152,7 +158,6 @@ def static_quant_entry(
     run_fn = kwargs.get("run_fn", None)
     example_inputs = kwargs.get("example_inputs", None)
     inplace = kwargs.get("inplace", True)
-    mode = kwargs.get("mode", "quantize")
     assert example_inputs is not None, "Please provide example_inputs for static quantization."
 
     quantizer = StaticQuantQuantizer(tune_cfg=quant_config_mapping)

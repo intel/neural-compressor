@@ -47,9 +47,24 @@ ipex_ver = get_ipex_version()
 
 class StaticQuantQuantizer(Quantizer):
     def __init__(self, tune_cfg: OrderedDict = {}):
+        """Init a StaticQuantQuantizer object.
+
+        Args:
+            tune_cfg (OrderedDict, optional): quantization config for ops. Defaults to {}.
+        """
         super().__init__(tune_cfg)
 
     def prepare(self, model, example_inputs, inplace=True, *args, **kwargs):
+        """Prepares a given model for quantization.
+
+        Args:
+            model: A float model to be quantized.
+            example_inputs: Used to trace torch model.
+            inplace: Whether to carry out model transformations in-place. Defaults to True.
+
+        Returns:
+            A prepared model.
+        """
         assert example_inputs is not None, "Please provide example_inputs for static quantization."
 
         _, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, _ = get_quantizable_ops_recursively(
@@ -83,6 +98,16 @@ class StaticQuantQuantizer(Quantizer):
         return model
 
     def convert(self, model, example_inputs, inplace=True, *args, **kwargs):
+        """Converts a prepared model to a quantized model.
+
+        Args:
+            model: The prepared model to be converted.
+            example_inputs: Used to trace torch model.
+            inplace: Whether to carry out model transformations in-place. Defaults to True.
+
+        Returns:
+            A quantized model.
+        """
         from neural_compressor.torch.algorithms.static_quant import save
 
         user_cfg = getattr(model, "user_cfg", OrderedDict())
@@ -102,6 +127,17 @@ class StaticQuantQuantizer(Quantizer):
         return model
 
     def quantize(self, model, example_inputs, run_fn, inplace=True, *args, **kwargs):
+        """Quantizes a given torch model.
+
+        Args:
+            model: A float model to be quantized.
+            example_inputs: Used to trace torch model.
+            run_fn: a calibration function for calibrating the model.
+            inplace: Whether to carry out model transformations in-place. Defaults to True.
+
+        Returns:
+            A quantized model.
+        """
         model = self.prepare(model, example_inputs=example_inputs, inplace=inplace)
         run_fn(model)
         model = self.convert(model, example_inputs=example_inputs, inplace=inplace)
