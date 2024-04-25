@@ -30,7 +30,7 @@ from neural_compressor.torch.quantization import (
     StaticQuantConfig,
     TEQConfig,
 )
-from neural_compressor.torch.utils import logger, register_algo, Mode
+from neural_compressor.torch.utils import Mode, logger, register_algo
 
 
 ###################### RTN Algo Entry ##################################
