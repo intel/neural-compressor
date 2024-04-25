@@ -10,6 +10,7 @@ pr:
     include:
       - neural_compressor/common
       - neural_compressor/torch
+      - examples/3.x_api/pytorch/nlp/huggingface_models/language-modeling/quantization/llm
       - setup.py
       - requirements_pt.txt
       - .azure-pipelines/scripts/models
