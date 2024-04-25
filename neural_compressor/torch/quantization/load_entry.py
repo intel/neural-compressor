@@ -24,15 +24,23 @@ config_name_mapping = {
 }
 
 
-def load(model, output_dir="./saved_results"):
+def load(output_dir="./saved_results", model=None):
     from neural_compressor.common.base_config import ConfigRegistry
 
     qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), "qconfig.json")
-    config_mapping = load_config_mapping(qconfig_file_path, ConfigRegistry.get_all_configs()["torch"])
-    model.qconfig = config_mapping
-    # select load function
-    config_object = config_mapping[next(iter(config_mapping))]
-    if isinstance(config_object, FP8Config):
-        from neural_compressor.torch.algorithms.habana_fp8 import load
+    with open(qconfig_file_path, "r") as f:
+        per_op_qconfig = json.load(f)
+    if " " in per_op_qconfig.keys():  # ipex qconfig format: {' ': {'q_op_infos': {'0': {'op_type': ...
+        from neural_compressor.torch.algorithms.static_quant import load
 
-        return load(model, output_dir)
+        return load(output_dir)
+
+    else:  # FP8
+        config_mapping = load_config_mapping(qconfig_file_path, ConfigRegistry.get_all_configs()["torch"])
+        model.qconfig = config_mapping
+        # select load function
+        config_object = config_mapping[next(iter(config_mapping))]
+        if isinstance(config_object, FP8Config):
+            from neural_compressor.torch.algorithms.habana_fp8 import load
+
+            return load(model, output_dir)

@@ -147,7 +147,7 @@ class TestStaticQuant:
         assert torch.allclose(inc_out, ipex_out, atol=2e-02), "Unexpected result. Please double check."
         q_model.save("saved_results")
 
-        from neural_compressor.torch.algorithms.static_quant import load
+        from neural_compressor.torch.quantization import load
 
         # load
         loaded_model = load("saved_results")
