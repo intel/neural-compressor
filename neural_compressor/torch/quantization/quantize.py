@@ -21,7 +21,7 @@ import torch
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
 from neural_compressor.common.utils import log_quant_execution
 from neural_compressor.torch.quantization.config import SmoothQuantConfig, StaticQuantConfig
-from neural_compressor.torch.utils import is_ipex_available, logger, Mode
+from neural_compressor.torch.utils import Mode, is_ipex_available, logger
 from neural_compressor.torch.utils.utility import WHITE_MODULE_LIST, algos_mapping, get_model_info
 
 FRAMEWORK_NAME = "torch"
@@ -92,7 +92,7 @@ def prepare(
     quant_config: BaseConfig,
     inplace: bool = True,
     example_inputs: Any = None,
-): # pragma: no cover
+):  # pragma: no cover
     """Prepare the model for calibration.
 
     Insert observers into the model so that it can monitor the input and output tensors during calibration.
@@ -149,7 +149,7 @@ def convert(
     model: torch.nn.Module,
     quant_config: BaseConfig = None,
     inplace: bool = True,
-): # pragma: no cover
+):  # pragma: no cover
     """Convert the prepared model to a quantized model.
 
     Args:

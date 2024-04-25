@@ -90,7 +90,7 @@ class Quantizer(ABC):
             )
         )
 
-    def execute(self, model: torch.nn.Module, mode, *args: Any, **kwargs: Any): # pragma: no cover
+    def execute(self, model: torch.nn.Module, mode, *args: Any, **kwargs: Any):  # pragma: no cover
         """Execute according to mode.
 
         Args:
