@@ -1,3 +1,2 @@
 optimum
 pytest
-transformers
