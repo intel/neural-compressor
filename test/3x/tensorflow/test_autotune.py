@@ -11,6 +11,7 @@ from tensorflow import keras
 
 from neural_compressor.common import logger
 from neural_compressor.common.base_tuning import Evaluator, TuningConfig
+from neural_compressor.tensorflow.utils import version1_gte_version2
 from neural_compressor.tensorflow.quantization import SmoothQuantConfig, StaticQuantConfig, autotune
 
 
@@ -59,7 +60,10 @@ def build_model():
     _, baseline_model_accuracy = model.evaluate(test_images, test_labels, verbose=0)
 
     print("Baseline test accuracy:", baseline_model_accuracy)
-    model.save("baseline_model")
+    if version1_gte_version2(tf.__version__, "2.16.1"):
+        tf.saved_model.save(model, "baseline_model")
+    else:
+        model.save("baseline_model")
 
 
 class Dataset(object):
