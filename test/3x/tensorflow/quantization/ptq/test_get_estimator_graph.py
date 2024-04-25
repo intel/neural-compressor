@@ -7,8 +7,8 @@ import unittest
 
 import tensorflow as tf
 
-from neural_compressor.tensorflow.utils import version1_gte_version2
 from neural_compressor.tensorflow.quantization.utils.utility import get_estimator_graph
+from neural_compressor.tensorflow.utils import version1_gte_version2
 
 
 class TestEstimatorGraphConvert(unittest.TestCase):
@@ -16,15 +16,14 @@ class TestEstimatorGraphConvert(unittest.TestCase):
     def setUpClass(self):
         if version1_gte_version2(tf.version.VERSION, "2.16.1"):
             return
-        
+
         self.dst_path = "/tmp/.neural_compressor/train.csv"
         self.titanic_file = tf.keras.utils.get_file(
             self.dst_path, "https://storage.googleapis.com/tf-datasets/titanic/train.csv"
         )
 
     @unittest.skipIf(
-        version1_gte_version2(tf.version.VERSION, "2.16.1"), 
-        "The estimator APIs are deleted after TF2.16.1"
+        version1_gte_version2(tf.version.VERSION, "2.16.1"), "The estimator APIs are deleted after TF2.16.1"
     )
     def test_get_estimator_graph(self):
         def train_input_fn():

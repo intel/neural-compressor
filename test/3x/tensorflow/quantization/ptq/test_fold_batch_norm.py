@@ -5,11 +5,11 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.compat.v1 import graph_util
 
-from neural_compressor.tensorflow.utils import version1_gte_version2
 from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fold_batch_norm import (
     FoldBatchNormNodesOptimizer,
 )
 from neural_compressor.tensorflow.quantization.utils.quantize_graph_common import QuantizeGraphHelper
+from neural_compressor.tensorflow.utils import version1_gte_version2
 
 
 class TestFoldBatchnorm(unittest.TestCase):
@@ -21,7 +21,9 @@ class TestFoldBatchnorm(unittest.TestCase):
         )
         conv_bias = tf.compat.v1.get_variable("bias", [32], initializer=tf.compat.v1.random_normal_initializer())
         beta = tf.compat.v1.get_variable(name="beta", shape=[32], initializer=tf.compat.v1.random_normal_initializer())
-        gamma = tf.compat.v1.get_variable(name="gamma", shape=[32], initializer=tf.compat.v1.random_normal_initializer())
+        gamma = tf.compat.v1.get_variable(
+            name="gamma", shape=[32], initializer=tf.compat.v1.random_normal_initializer()
+        )
         conv1 = tf.nn.conv2d(x, conv_weights, strides=[1, 1, 1, 1], padding="SAME")
         conv_bias = tf.nn.bias_add(conv1, conv_bias)
         normed = tf.compat.v1.layers.batch_normalization(conv_bias)
@@ -37,10 +39,10 @@ class TestFoldBatchnorm(unittest.TestCase):
             fold_graph_def = FoldBatchNormNodesOptimizer(output_graph_def).do_transformation()
 
     @unittest.skipIf(
-        version1_gte_version2(tf.version.VERSION, "2.16.1"), 
-        "The TF BN is deleted after 2.16.1 while the fusion of Keras BN is not supported now"
+        version1_gte_version2(tf.version.VERSION, "2.16.1"),
+        "The TF BN is deleted after 2.16.1 while the fusion of Keras BN is not supported now",
     )
-    def test_fold_output_values(self):  
+    def test_fold_output_values(self):
         input_data = np.random.randn(1, 224, 224, 3)
         graph = tf.compat.v1.Graph()
         fold_graph = tf.compat.v1.Graph()
@@ -64,8 +66,8 @@ class TestFoldBatchnorm(unittest.TestCase):
         assert np.allclose(y, y_fold, rtol=1e-05, atol=1e-05)
 
     @unittest.skipIf(
-        version1_gte_version2(tf.version.VERSION, "2.16.1"), 
-        "The TF BN is deleted after 2.16.1 while the fusion of Keras BN is not supported now"
+        version1_gte_version2(tf.version.VERSION, "2.16.1"),
+        "The TF BN is deleted after 2.16.1 while the fusion of Keras BN is not supported now",
     )
     def test_do_transform(self):
         for node in self.fold_graph_def.node:
