@@ -198,7 +198,7 @@ class BaseConfig(ABC):
     def local_config(self, config):
         self._local_config = config
 
-    def set_local(self, operator_name: str, config: BaseConfig) -> BaseConfig:
+    def set_local(self, operator_name: Union[str, Callable], config: BaseConfig) -> BaseConfig:
         if operator_name in self.local_config:
             logger.warning("The configuration for %s has already been set, update it.", operator_name)
         self.local_config[operator_name] = config
@@ -392,14 +392,16 @@ class BaseConfig(ABC):
         op_name_config_dict = dict()
         for name, config in self.local_config.items():
             if self._is_op_type(name):
-                op_type_config_dict[name] = config
+                # Convert the Callable to String.
+                new_name = self._op_type_to_str(name)
+                op_type_config_dict[new_name] = config
             else:
                 op_name_config_dict[name] = config
         return op_type_config_dict, op_name_config_dict
 
     def to_config_mapping(
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
-    ) -> OrderedDict[Union[str, Callable], OrderedDict[str, BaseConfig]]:
+    ) -> OrderedDict[Union[str, str], OrderedDict[str, BaseConfig]]:
         config_mapping = OrderedDict()
         if config_list is None:
             config_list = [self]
@@ -415,6 +417,14 @@ class BaseConfig(ABC):
                     if re.match(op_name_pattern, op_name):
                         config_mapping[(op_name, op_type)] = op_name_config_dict[op_name_pattern]
         return config_mapping
+
+    @staticmethod
+    def _op_type_to_str(op_type: Callable) -> str:
+        # * Ort and TF may override this method.
+        op_type_name = getattr(op_type, "__name__", "")
+        if op_type_name == "":
+            logger.warning("The op_type %s has no attribute __name__.", op_type)
+        return op_type_name
 
     @staticmethod
     def _is_op_type(name: str) -> bool:
