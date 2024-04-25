@@ -17,7 +17,9 @@ from collections import OrderedDict
 from typing import Any
 
 import torch
+
 from neural_compressor.torch.utils import Mode
+
 
 class Quantizer(ABC):
     """The base quantizer for one step algorithm quantizers."""
@@ -27,20 +29,25 @@ class Quantizer(ABC):
 
     @abstractmethod
     def quantize(self, model: torch.nn.Module, *args: Any, **kwargs: Any) -> torch.nn.Module:
-        raise NotImplementedError("{} doesn't implement `quantize` function.".format(
-            self.__class__.__name__))
+        raise NotImplementedError("{} doesn't implement `quantize` function.".format(self.__class__.__name__))
 
     def prepare(self, model: torch.nn.Module, *args: Any, **kwargs: Any) -> torch.nn.Module:
-        raise NotImplementedError("{} doesn't implement `prepare` function. "
+        raise NotImplementedError(
+            "{} doesn't implement `prepare` function. "
             "Please implement `prepare` function or "
             "switch to call `from neural_compressor.torch.quantization import quantize` to do quantization.".format(
-            self.__class__.__name__))
+                self.__class__.__name__
+            )
+        )
 
     def convert(self, model: torch.nn.Module, *args: Any, **kwargs: Any) -> torch.nn.Module:
-        raise NotImplementedError("{} doesn't implement `convert` function. "
+        raise NotImplementedError(
+            "{} doesn't implement `convert` function. "
             "Please implement `convert` function or "
             "switch to call `from neural_compressor.torch.quantization import quantize` to do quantization.".format(
-            self.__class__.__name__))
+                self.__class__.__name__
+            )
+        )
 
     def execute(self, model, mode, *args: Any, **kwargs: Any):
         if mode == Mode.PREPARE:

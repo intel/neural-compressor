@@ -28,6 +28,7 @@ from neural_compressor.torch.utils import get_device, logger, set_module
 
 from .utility import quant_tensor, search_clip
 
+
 class RTNQuantizer(Quantizer):
     def __init__(self, tune_cfg: OrderedDict = {}):
         super().__init__(tune_cfg)

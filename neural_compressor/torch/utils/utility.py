@@ -126,6 +126,7 @@ def get_double_quant_config(double_quant_type):
     )
     return DOUBLE_QUANT_CONFIGS[double_quant_type]
 
+
 class Mode(Enum):
     PREPARE = "prepare"
     CONVERT = "convert"
