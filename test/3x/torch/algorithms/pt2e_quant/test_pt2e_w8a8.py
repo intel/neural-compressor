@@ -102,5 +102,4 @@ class TestW8A8StaticQuantizer:
         exported_model = w8a8_static_quantizer.export_model(model, example_inputs=example_inputs)
         assert exported_model is None
         call_args_list = mock_error.call_args_list
-        print([info[0][0] for info in call_args_list])
         assert any(["Failed to export the model" in msg for msg in [info[0][0] for info in call_args_list]])
