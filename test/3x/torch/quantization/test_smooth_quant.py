@@ -133,8 +133,8 @@ class TestSmoothQuant:
         q_model.save("saved_results")
         inc_out = q_model(example_inputs)
 
-        from neural_compressor.torch.quantization import load
         from neural_compressor.torch.algorithms.smooth_quant import recover_model_from_json
+        from neural_compressor.torch.quantization import load
 
         # load using saved model
         loaded_model = load("saved_results")
