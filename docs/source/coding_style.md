@@ -62,7 +62,7 @@ logger.info("extraneous leading spaces.")
 - Recommend
 
 ```python
-from neural_compressor.common import logger
+from neural_compressor_ort import logger
 
 logger.info("Current TensorFlow Version is: %s", tf.__version__)  # Use a pattern-string (with %-placeholders)
 
@@ -179,54 +179,6 @@ __all__ = [
     "BaseConfig",
 ]
 ```
-
-
-## Folder structure
-
-```shell
-├── project_name
-│   ├── __init__.py
-│   ├── quantization
-│   │   ├── algorithm_entry.py
-│   │   ├── autotune.py
-│   │   ├── config.py
-│   │   ├── __init__.py
-│   │   └── quantize.py
-│   ├── algorithms
-│   │   ├── __init__.py
-│   │   ├── smooth_quant
-│   │   │   ├── __init__.py
-│   │   │   ├── smooth_quant.py
-│   │   │   └── utility.py
-│   │   ├── post_training_quant
-│   │   │   ├── __init__.py
-│   │   │   ├── static_quant.py
-│   │   │   └── utility.py
-│   │   └── weight_only
-│   │       ├── gptq.py
-│   │       ├── __init__.py
-│   │       └── rtn.py
-│   └── utils
-│       ├── __init__.py
-│       └── utility.py
-└── __init__.py
-```
-
-```python
-# * Note: some code snippets about register algorithm entry
-# filepath: neural_compressor/fwk_name/quantization/algorithm_entry.py
-@register_algo(RTN)
-def rtn_algo_entry()
-    from neural_compressor.algorithms import rtn
-    ...
-
-@register_algo(SMOOTH_QUANT)
-def smooth_quant_entry():
-    from neural_compressor.algorithms import smooth_quant
-    ...
-
-```
-
 
 ## Recommend VS Code `settings.json`
 To keep the coding style consistent, we suggest you replace `.vscode/settings.json` with `neural-compressor/.vscode/settings_recommended.json`.
