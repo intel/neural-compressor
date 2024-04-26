@@ -24,7 +24,7 @@ import torch
 from neural_compressor.torch.utils import get_device, logger, set_module
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
-from .utility import quant_tensor, search_clip
+from .utility import cast_fp8, quant_tensor, search_clip
 
 
 @torch.no_grad()
@@ -100,6 +100,12 @@ def rtn_quantize(
             dtype = weight_config[name].get("dtype", "int")
             if dtype == "fp32":
                 continue
+            ### FP8 cast part
+            if dtype in ["fp8_e5m2", "fp8_e5m2fnuz", "fp8_e4m3fn", "fp8_e4m3fnuz"]:
+                logger.debug("Cast module {} to FP8 using qdq mode, no scaling".format(name))
+                m.weight = cast_fp8(m.weight, dtype, use_qdq=True)
+                continue
+            ####
             logger.debug("Apply RTN on module %s.", name)
             bits = weight_config[name].get("bits", 4)
             group_size = weight_config[name]["group_size"]
