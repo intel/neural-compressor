@@ -54,6 +54,7 @@ class Quantizer(ABC):
         """
         raise NotImplementedError("{} doesn't implement `quantize` function.".format(self.__class__.__name__))
 
+    @abstractmethod
     def prepare(self, model: torch.nn.Module, *args: Any, **kwargs: Any):
         """Prepares a given model for quantization.
 
@@ -65,14 +66,9 @@ class Quantizer(ABC):
         Returns:
             A prepared model.
         """
-        raise NotImplementedError(
-            "{} doesn't implement `prepare` function. "
-            "Please implement `prepare` function or "
-            "switch to call `from neural_compressor.torch.quantization import quantize` to do quantization.".format(
-                self.__class__.__name__
-            )
-        )
+        raise NotImplementedError( "{} doesn't implement `prepare` function. ".format(self.__class__.__name__))
 
+    @abstractmethod
     def convert(self, model: torch.nn.Module, *args: Any, **kwargs: Any):
         """Converts a prepared model to a quantized model.
 
@@ -82,13 +78,7 @@ class Quantizer(ABC):
         Returns:
             A quantized model.
         """
-        raise NotImplementedError(
-            "{} doesn't implement `convert` function. "
-            "Please implement `convert` function or "
-            "switch to call `from neural_compressor.torch.quantization import quantize` to do quantization.".format(
-                self.__class__.__name__
-            )
-        )
+        raise NotImplementedError("{} doesn't implement `convert` function. ".format(self.__class__.__name__))
 
     def execute(self, model: torch.nn.Module, mode, *args: Any, **kwargs: Any):  # pragma: no cover
         """Execute according to mode.

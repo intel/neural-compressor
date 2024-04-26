@@ -37,16 +37,12 @@ from neural_compressor.torch.utils import Mode, logger, register_algo
 @register_algo(RTN)
 @torch.no_grad()
 def rtn_entry(
-    model: torch.nn.Module,
-    configs_mapping: Dict[Tuple[str, callable], RTNConfig],
-    mode: Mode = Mode.QUANTIZE,
-    *args,
-    **kwargs
+    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], RTNConfig], *args, **kwargs
 ) -> torch.nn.Module:
     """The main entry to apply rtn quantization."""
-    from neural_compressor.torch.algorithms.weight_only.rtn import RTNQuantizer
+    from neural_compressor.torch.algorithms.weight_only.rtn import rtn_quantize
 
-    # rebuild weight_config for RTNQuantizer class
+    # rebuild weight_config for rtn_quantize function
     weight_config = {}
     for (op_name, op_type), quant_config in configs_mapping.items():
         if quant_config.name != RTN:
@@ -68,8 +64,7 @@ def rtn_entry(
             "double_quant_group_size": quant_config.double_quant_group_size,
         }
 
-    quantizer = RTNQuantizer(tune_cfg=weight_config)
-    model = quantizer.execute(model, mode=mode)
+    model = rtn_quantize(model, weight_config=weight_config)
     return model
 
 

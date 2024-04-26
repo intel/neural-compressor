@@ -13,8 +13,7 @@
 # limitations under the License.
 
 import copy
-from pathlib import Path
-from typing import Any, Callable, Dict, Tuple, Union
+from typing import Any, Callable, Dict, Tuple
 
 import torch
 
