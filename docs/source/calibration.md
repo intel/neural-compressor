@@ -10,7 +10,7 @@ Quantization proves beneficial in terms of reducing the memory and computational
 
 ## Calibration Algorithms
 
-Currently, Intel® Neural Compressor supports three popular calibration algorithms:
+Currently, ONNX Neural Compressor supports three popular calibration algorithms:
 
 - MinMax: This method gets the maximum and minimum of input values as $α$ and $β$ [^1]. It preserves the entire range and is the simplest approach.
 
@@ -18,7 +18,7 @@ Currently, Intel® Neural Compressor supports three popular calibration algorith
 
 - Percentile: This method only considers a specific percentage of values for calculating the range, ignoring the remainder which may contain outliers [^3]. It enhances resolution by excluding extreme values but still retaining noteworthy data.
 
-> `kl` is used to represent the Entropy calibration algorithm in Intel® Neural Compressor.
+> `kl` is used to represent the Entropy calibration algorithm in ONNX Neural Compressor.
 
 ## Reference
 
