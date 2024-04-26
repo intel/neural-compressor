@@ -18,7 +18,6 @@
 import json
 
 import tensorflow as tf
-from tensorflow import quantization
 from tensorflow.keras import activations, constraints, initializers, regularizers
 
 from neural_compressor.tensorflow.utils import version1_gte_version2
@@ -97,7 +96,6 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
             )
 
             T_map = {"s8": tf.qint8, "u8": tf.quint8}
-            self.reverse_T_map = {tf.qint8: "s8", tf.quint8: "u8"}
             self.weight_min_value = weight_min_value
             self.weight_max_value = weight_max_value
             self.act_min_value = act_min_value
@@ -143,10 +141,10 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
                 )
 
                 # (TODO) it's ugly that we can't get the point_wise min/max here
-                depthwise_kernel, _, _ = quantization.quantize(
+                depthwise_kernel, _, _ = tf.quantization.quantize(
                     self.depthwise_kernel, self.weight_min_value, self.weight_max_value, tf.qint8, axis=3, mode="SCALED"
                 )
-                depthwise_kernel = quantization.dequantize(
+                depthwise_kernel = tf.quantization.dequantize(
                     depthwise_kernel,
                     self.weight_min_value,
                     self.weight_max_value,
@@ -191,7 +189,7 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
                     "granularity": self.granularity,
                     "quant_status": self.quant_status,
                     "quant_mode": self.quant_mode,
-                    "quant_T": self.reverse_T_map[self.quant_T],
+                    "quant_T": "s8" if self.quant_T == tf.qint8 else "u8",
                     "quant_round_mode": self.quant_round_mode,
                     "quant_narrow_range": self.quant_narrow_range,
                     "quant_axis": self.quant_axis,
@@ -263,7 +261,6 @@ else:
                 **kwargs
             )
             T_map = {"s8": tf.qint8, "u8": tf.quint8}
-            self.reverse_T_map = {tf.qint8: "s8", tf.quint8: "u8"}
             self.weight_min_value = weight_min_value
             self.weight_max_value = weight_max_value
             self.act_min_value = act_min_value
@@ -277,7 +274,7 @@ else:
             self.quant_axis = quant_axis
 
         def call(self, inputs):
-            if self.quant_status == "calib" and not isinstance(inputs, tf.keras.KerasTensor):
+            if self.quant_status == "calib":
                 if self.granularity == "per_tensor":
                     self.act_min_value = tf.math.reduce_min(inputs)
                     self.act_max_value = tf.math.reduce_max(inputs)
@@ -309,10 +306,10 @@ else:
                 )
 
                 # (TODO) it's ugly that we can't get the point_wise min/max here
-                depthwise_kernel, _, _ = quantization.quantize(
+                depthwise_kernel, _, _ = tf.quantization.quantize(
                     self.depthwise_kernel, self.weight_min_value, self.weight_max_value, tf.qint8, axis=3, mode="SCALED"
                 )
-                depthwise_kernel = quantization.dequantize(
+                depthwise_kernel = tf.quantization.dequantize(
                     depthwise_kernel,
                     self.weight_min_value,
                     self.weight_max_value,
@@ -358,7 +355,7 @@ else:
                     "granularity": self.granularity,
                     "quant_status": self.quant_status,
                     "quant_mode": self.quant_mode,
-                    "quant_T": self.reverse_T_map[self.quant_T],
+                    "quant_T": "s8" if self.quant_T == tf.qint8 else "u8",
                     "quant_round_mode": self.quant_round_mode,
                     "quant_narrow_range": self.quant_narrow_range,
                     "quant_axis": self.quant_axis,

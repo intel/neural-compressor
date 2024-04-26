@@ -18,9 +18,9 @@
 import json
 
 import tensorflow as tf
-from tensorflow import quantization
-from tensorflow.keras import activations, backend, constraints, initializers, regularizers
 from tensorflow.keras.layers import AveragePooling2D, MaxPooling2D
+
+from neural_compressor.tensorflow.utils import version1_gte_version2
 
 
 class QAvgPool2D(AveragePooling2D):
@@ -48,7 +48,6 @@ class QAvgPool2D(AveragePooling2D):
             name=name, pool_size=pool_size, strides=strides, padding=padding, data_format=data_format, **kwargs
         )
         T_map = {"s8": tf.qint8, "u8": tf.quint8}
-        self.reverse_T_map = {tf.qint8: "s8", tf.quint8: "u8"}
         self.weight_min_value = weight_min_value
         self.weight_max_value = weight_max_value
         self.act_min_value = act_min_value
@@ -62,14 +61,16 @@ class QAvgPool2D(AveragePooling2D):
         self.quant_axis = quant_axis
 
     def __call__(self, inputs):
-        if self.quant_status == "calib" and not isinstance(inputs, tf.keras.KerasTensor):
+        if self.quant_status == "calib" and not \
+            (version1_gte_version2(tf.__version__, "2.16.1") \
+            and isinstance(inputs, tf.keras.KerasTensor)):
             if self.granularity == "per_tensor":
                 self.act_min_value = tf.math.reduce_min(inputs)
                 self.act_max_value = tf.math.reduce_max(inputs)
             else:
                 self.act_min_value = tf.math.reduce_min(inputs, axis=1)
                 self.act_max_value = tf.math.reduce_max(inputs, axis=1)
-        elif self.quant_status == "quantize" and not isinstance(inputs, tf.keras.KerasTensor):
+        elif self.quant_status == "quantize":
             inputs, _, _ = tf.quantization.quantize(
                 inputs,
                 self.act_min_value,
@@ -106,7 +107,7 @@ class QAvgPool2D(AveragePooling2D):
                 "granularity": self.granularity,
                 "quant_status": self.quant_status,
                 "quant_mode": self.quant_mode,
-                "quant_T": self.reverse_T_map[self.quant_T],
+                "quant_T": "s8" if self.quant_T == tf.qint8 else "u8",
                 "quant_round_mode": self.quant_round_mode,
                 "quant_narrow_range": self.quant_narrow_range,
                 "quant_axis": self.quant_axis,
@@ -141,7 +142,6 @@ class QMaxPool2D(MaxPooling2D):
             name=name, pool_size=pool_size, strides=strides, padding=padding, data_format=data_format, **kwargs
         )
         T_map = {"s8": tf.qint8, "u8": tf.quint8}
-        self.reverse_T_map = {tf.qint8: "s8", tf.quint8: "u8"}
         self.weight_min_value = weight_min_value
         self.weight_max_value = weight_max_value
         self.act_min_value = act_min_value
@@ -155,14 +155,16 @@ class QMaxPool2D(MaxPooling2D):
         self.quant_axis = quant_axis
 
     def __call__(self, inputs):
-        if self.quant_status == "calib" and not isinstance(inputs, tf.keras.KerasTensor):
+        if self.quant_status == "calib" and not \
+            (version1_gte_version2(tf.__version__, "2.16.1") \
+            and isinstance(inputs, tf.keras.KerasTensor)):
             if self.granularity == "per_tensor":
                 self.act_min_value = tf.math.reduce_min(inputs)
                 self.act_max_value = tf.math.reduce_max(inputs)
             else:
                 self.act_min_value = tf.math.reduce_min(inputs, axis=1)
                 self.act_max_value = tf.math.reduce_max(inputs, axis=1)
-        elif self.quant_status == "quantize" and not isinstance(inputs, tf.keras.KerasTensor):
+        elif self.quant_status == "quantize":
             assert self.act_min_value is not None, "Invalid activation min-max values, please check calibration process"
             inputs, _, _ = tf.quantization.quantize(
                 inputs,
@@ -200,7 +202,7 @@ class QMaxPool2D(MaxPooling2D):
                 "granularity": self.granularity,
                 "quant_status": self.quant_status,
                 "quant_mode": self.quant_mode,
-                "quant_T": self.reverse_T_map[self.quant_T],
+                "quant_T": "s8" if self.quant_T == tf.qint8 else "u8",
                 "quant_round_mode": self.quant_round_mode,
                 "quant_narrow_range": self.quant_narrow_range,
                 "quant_axis": self.quant_axis,

@@ -18,10 +18,10 @@
 import json
 
 import tensorflow as tf
-from tensorflow import quantization
 from tensorflow.keras import activations, backend, constraints, initializers, regularizers
 from tensorflow.keras.layers import Dense
 
+from neural_compressor.tensorflow.utils import version1_gte_version2
 
 class QDense(Dense):
     def __init__(
@@ -65,7 +65,6 @@ class QDense(Dense):
             **kwargs
         )
         T_map = {"s8": tf.qint8, "u8": tf.quint8}
-        self.reverse_T_map = {tf.qint8: "s8", tf.quint8: "u8"}
         self.weight_min_value = weight_min_value
         self.weight_max_value = weight_max_value
         self.act_min_value = act_min_value
@@ -79,7 +78,9 @@ class QDense(Dense):
         self.quant_axis = quant_axis
 
     def call(self, inputs):
-        if self.quant_status == "calib" and not isinstance(inputs, tf.keras.KerasTensor):
+        if self.quant_status == "calib" and not \
+            (version1_gte_version2(tf.__version__, "2.16.1") \
+            and isinstance(inputs, tf.keras.KerasTensor)):
             if self.granularity == "per_tensor":
                 self.act_min_value = tf.math.reduce_min(inputs)
                 self.act_max_value = tf.math.reduce_max(inputs)
@@ -116,7 +117,7 @@ class QDense(Dense):
                 self.weight_max_value = [10000] * kernel_size
 
             # add the Q/DQ here
-            kernel, _, _ = quantization.quantize(
+            kernel, _, _ = tf.quantization.quantize(
                 self.kernel,
                 self.weight_min_value,
                 self.weight_max_value,
@@ -124,7 +125,7 @@ class QDense(Dense):
                 axis=1,
                 mode="SCALED",
             )
-            kernel = quantization.dequantize(
+            kernel = tf.quantization.dequantize(
                 kernel,
                 self.weight_min_value,
                 self.weight_max_value,
@@ -155,7 +156,7 @@ class QDense(Dense):
                 "granularity": self.granularity,
                 "quant_status": self.quant_status,
                 "quant_mode": self.quant_mode,
-                "quant_T": self.reverse_T_map[self.quant_T],
+                "quant_T": "s8" if self.quant_T == tf.qint8 else "u8",
                 "quant_round_mode": self.quant_round_mode,
                 "quant_narrow_range": self.quant_narrow_range,
                 "quant_axis": self.quant_axis,

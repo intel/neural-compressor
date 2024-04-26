@@ -41,7 +41,7 @@ def static_quant_entry(
         q_model: the quantized model.
     """
     if isinstance(model, KerasModel):
-        assert valid_keras_format(KerasModel.model), "Only Sequential or Functional models are supported now."
+        assert valid_keras_format(model.model), "Only Sequential or Functional models are supported now."
         framework = KerasAdaptor
     elif TFConfig.global_config["backend"] == "itex":
         framework = Tensorflow_ITEXAdaptor
