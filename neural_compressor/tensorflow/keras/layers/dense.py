@@ -23,6 +23,7 @@ from tensorflow.keras.layers import Dense
 
 from neural_compressor.tensorflow.utils import version1_gte_version2
 
+
 class QDense(Dense):
     def __init__(
         self,
@@ -78,9 +79,9 @@ class QDense(Dense):
         self.quant_axis = quant_axis
 
     def call(self, inputs):
-        if self.quant_status == "calib" and not \
-            (version1_gte_version2(tf.__version__, "2.16.1") \
-            and isinstance(inputs, tf.keras.KerasTensor)):
+        if self.quant_status == "calib" and not (
+            version1_gte_version2(tf.__version__, "2.16.1") and isinstance(inputs, tf.keras.KerasTensor)
+        ):
             if self.granularity == "per_tensor":
                 self.act_min_value = tf.math.reduce_min(inputs)
                 self.act_max_value = tf.math.reduce_max(inputs)

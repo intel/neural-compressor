@@ -61,9 +61,9 @@ class QAvgPool2D(AveragePooling2D):
         self.quant_axis = quant_axis
 
     def __call__(self, inputs):
-        if self.quant_status == "calib" and not \
-            (version1_gte_version2(tf.__version__, "2.16.1") \
-            and isinstance(inputs, tf.keras.KerasTensor)):
+        if self.quant_status == "calib" and not (
+            version1_gte_version2(tf.__version__, "2.16.1") and isinstance(inputs, tf.keras.KerasTensor)
+        ):
             if self.granularity == "per_tensor":
                 self.act_min_value = tf.math.reduce_min(inputs)
                 self.act_max_value = tf.math.reduce_max(inputs)
@@ -155,9 +155,9 @@ class QMaxPool2D(MaxPooling2D):
         self.quant_axis = quant_axis
 
     def __call__(self, inputs):
-        if self.quant_status == "calib" and not \
-            (version1_gte_version2(tf.__version__, "2.16.1") \
-            and isinstance(inputs, tf.keras.KerasTensor)):
+        if self.quant_status == "calib" and not (
+            version1_gte_version2(tf.__version__, "2.16.1") and isinstance(inputs, tf.keras.KerasTensor)
+        ):
             if self.granularity == "per_tensor":
                 self.act_min_value = tf.math.reduce_min(inputs)
                 self.act_max_value = tf.math.reduce_max(inputs)
