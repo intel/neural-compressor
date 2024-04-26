@@ -66,7 +66,7 @@ class Quantizer(ABC):
         Returns:
             A prepared model.
         """
-        raise NotImplementedError( "{} doesn't implement `prepare` function. ".format(self.__class__.__name__))
+        raise NotImplementedError("{} doesn't implement `prepare` function. ".format(self.__class__.__name__))
 
     @abstractmethod
     def convert(self, model: torch.nn.Module, *args: Any, **kwargs: Any):
