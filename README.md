@@ -121,7 +121,6 @@ quantize(model, output_model_path, config)
 ## Additional Content
 
 * [Contribution Guidelines](./docs/source/CONTRIBUTING.md)
-* [Legal Information](./docs/source/legal_information.md)
 * [Security Policy](SECURITY.md)
 
 ## Communication 
