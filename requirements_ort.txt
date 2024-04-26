@@ -5,3 +5,4 @@ onnxruntime-extensions
 psutil
 py-cpuinfo
 pydantic
+transformers
