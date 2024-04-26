@@ -31,7 +31,7 @@ The following prerequisites and requirements must be satisfied for a successful 
 ### Install from Source
 
   ```Shell
-  git clone https://github.com/intel/neural-compressor.git
+  git clone https://github.com/onnx/neural-compressor.git
   cd neural-compressor
   pip install -r requirements.txt
   python setup.py install
@@ -40,7 +40,7 @@ The following prerequisites and requirements must be satisfied for a successful 
 ## System Requirements
 
 ### Validated Hardware Environment
-#### Intel® Neural Compressor supports CPUs based on [Intel 64 architecture or compatible processors](https://en.wikipedia.org/wiki/X86-64):
+#### ONNX Neural Compressor supports CPUs based on [Intel 64 architecture or compatible processors](https://en.wikipedia.org/wiki/X86-64):
 
 * Intel Xeon Scalable processor (formerly Skylake, Cascade Lake, Cooper Lake, Ice Lake, and Sapphire Rapids)
 * Intel Xeon CPU Max Series (formerly Sapphire Rapids HBM)
