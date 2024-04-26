@@ -1,10 +1,11 @@
-import os
 import unittest
 
+import numpy as np
 import tensorflow as tf
 from tensorflow.compat.v1 import graph_util
 
 import neural_compressor
+from neural_compressor.tensorflow.utils import version1_gte_version2
 from neural_compressor.tensorflow.algorithms.static_quant.tensorflow import TensorflowQuery
 from neural_compressor.tensorflow.quantization.utils.quantize_graph.quantize_graph_for_intel_cpu import (
     QuantizeGraphForIntel,
@@ -20,10 +21,13 @@ class TestBiasCorrection(unittest.TestCase):
 
         if tf.version.VERSION <= "2.1.0":
             x = tf.nn.relu(x)
-        conv_weights = tf.compat.v1.get_variable(
-            "weight", [3, 3, 3, 32], initializer=tf.compat.v1.random_normal_initializer()
-        )
-        conv_bias = tf.compat.v1.get_variable("bias", [32], initializer=tf.compat.v1.random_normal_initializer())
+
+        conv_weights = tf.Variable(np.random.rand(3, 3, 3, 32).tolist(), name="weight") \
+            if version1_gte_version2(tf.version.VERSION, "2.16.1") else \
+            tf.compat.v1.get_variable("weight", [3, 3, 3, 32], initializer=tf.compat.v1.random_normal_initializer())
+        conv_bias = tf.Variable(np.random.rand(32).tolist(), name="bias") \
+            if version1_gte_version2(tf.version.VERSION, "2.16.1") else \
+            tf.compat.v1.get_variable("bias", [32], initializer=tf.compat.v1.random_normal_initializer())
         conv1 = tf.nn.conv2d(x, conv_weights, strides=[1, 1, 1, 1], padding="SAME")
         conv_bias = tf.nn.bias_add(conv1, conv_bias)
         relu = tf.nn.relu(conv_bias, name="Relu_1")
