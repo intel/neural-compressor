@@ -51,7 +51,6 @@ And generally use [Azure Cloud Instance](https://azure.microsoft.com/en-us/prici
 |     Pre-commit CI                 |      [pre-comnnit config](../../.pre-commit-config.yaml)      |     PASS          |
 |     [DCO](https://github.com/apps/dco/)     |     Use `git commit -s` to sign off     |     PASS          |
 |     Unit Test                 |     Pytest scripts under [test](/test)                |      PASS (No failure, No core dump, No segmentation fault, No coverage drop)      |
-|     Model Test                |     ONNX Runtime         |      PASS (Functionality pass, FP32/INT8 No performance regression)       |
 
 ## Support
 
