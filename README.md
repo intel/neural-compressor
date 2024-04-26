@@ -24,10 +24,14 @@ In particular, the tool provides the key features, typical examples, and open co
 
 ## Installation
 
-### Install from pypi
+### Install from source
 ```Shell
-pip install neural-compressor-ort
+git clone https://github.com/onnx/neural-compressor.git
+cd neural-compressor
+pip install -r requirements.txt
+python setup.py install
 ```
+
 > **Note**: 
 > Further installation methods can be found under [Installation Guide](./docs/source/installation_guide.md).
 
