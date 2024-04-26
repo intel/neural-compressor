@@ -160,7 +160,19 @@ class RTNConfig(BaseConfig):
     def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
         linear_rtn_config = RTNConfig(
-            dtype=["int", "int8", "int4", "nf4", "fp4", "fp4_e2m1_bnb", "fp4_e2m1"],
+            dtype=[
+                "int",
+                "int8",
+                "int4",
+                "nf4",
+                "fp4",
+                "fp4_e2m1_bnb",
+                "fp4_e2m1",
+                "fp8_e5m2",
+                "fp8_e5m2fnuz",
+                "fp8_e4m3fn",
+                "fp8_e4m3fnuz",
+            ],
             bits=[4, 1, 2, 3, 5, 6, 7, 8],
             use_sym=[True, False],
             group_size=[32, -1, 1, 4, 8, 16, 64, 128, 256, 512, 1024],
