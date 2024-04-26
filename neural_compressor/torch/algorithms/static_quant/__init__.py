@@ -14,5 +14,5 @@
 # limitations under the License.
 
 from .utility import *
-from .static_quant import static_quantize
+from .static_quant import StaticQuantQuantizer
 from .save_load import save, load
