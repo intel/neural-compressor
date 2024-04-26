@@ -6,7 +6,7 @@ import tensorflow as tf
 import yaml
 from tensorflow.compat.v1 import graph_util
 
-from neural_compressor.tensorflow.utils import disable_random
+from neural_compressor.tensorflow.utils import disable_random, version1_gte_version2
 
 
 class TestPostCSEOptimizer(unittest.TestCase):
@@ -29,14 +29,22 @@ class TestPostCSEOptimizer(unittest.TestCase):
             "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.nn.conv2d(z, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = (
+            tf.keras.layers.BatchNormalization()(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv)
+        )
         relu = tf.nn.relu(normed)
 
         conv_weights2 = tf.compat.v1.get_variable(
             "weight2", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv2 = tf.nn.conv2d(z, conv_weights2, strides=[1, 2, 2, 1], padding="VALID")
-        normed2 = tf.compat.v1.layers.batch_normalization(conv2)
+        normed2 = (
+            tf.keras.layers.BatchNormalization()(conv2)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv2)
+        )
         relu2 = tf.nn.relu(normed2)
         add = tf.math.add(relu, relu2, name="op_to_store")
         out_name = add.name.split(":")[0]
@@ -87,14 +95,22 @@ class TestPostCSEOptimizer(unittest.TestCase):
             "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.nn.conv2d(z, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = (
+            tf.keras.layers.BatchNormalization()(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv)
+        )
         relu = tf.nn.relu(normed)
 
         conv_weights2 = tf.compat.v1.get_variable(
             "weight2", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv2 = tf.nn.conv2d(z, conv_weights2, strides=[1, 2, 2, 1], padding="VALID")
-        normed2 = tf.compat.v1.layers.batch_normalization(conv2)
+        normed2 = (
+            tf.keras.layers.BatchNormalization()(conv2)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv2)
+        )
         relu2 = tf.nn.relu(normed2)
         add = tf.math.add(relu, relu2)
         ones_const = tf.constant(1, dtype=tf.float32)

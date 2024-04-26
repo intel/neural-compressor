@@ -11,7 +11,7 @@ from tensorflow.compat.v1 import graph_util
 from tensorflow.core.framework import attr_value_pb2, graph_pb2, node_def_pb2
 from tensorflow.python.framework import dtypes, tensor_util
 
-from neural_compressor.tensorflow.utils import disable_random
+from neural_compressor.tensorflow.utils import disable_random, version1_gte_version2
 
 
 def build_Conv2dBiasAddAddRelu6MulMul():
@@ -140,7 +140,11 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
         )
         conv = tf.nn.depthwise_conv2d(x, conv_weights, strides=[1, 1, 1, 1], padding="VALID")
 
-        normed = tf.compat.v1.layers.batch_normalization(conv, name="op_to_store")
+        normed = (
+            tf.keras.layers.BatchNormalization(name="op_to_store")(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv, name="op_to_store")
+        )
         out_name = normed.name.split(":")[0]
 
         with tf.compat.v1.Session() as sess:
@@ -211,7 +215,11 @@ class TestConvBiasAddAddReluFusion(unittest.TestCase):
         )
         conv = tf.nn.depthwise_conv2d(x, conv_weights, strides=[1, 1, 1, 1], padding="VALID")
 
-        normed = tf.compat.v1.layers.batch_normalization(conv, name="op_to_store")
+        normed = (
+            tf.keras.layers.BatchNormalization(name="op_to_store")(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv, name="op_to_store")
+        )
 
         leakyrelu = tf.nn.leaky_relu(normed)
         out_name = leakyrelu.name.split(":")[0]
