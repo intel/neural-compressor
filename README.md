@@ -1,13 +1,13 @@
 <div align="center">
 
-Intel® Neural Compressor
+ONNX Neural Compressor
 ===========================
 <h3> An open-source Python library supporting popular model compression techniques on ONNX Runtime</h3>
 
-[![python](https://img.shields.io/badge/python-3.8%2B-blue)](https://github.com/intel/neural-compressor)
-[![version](https://img.shields.io/badge/release-2.5-green)](https://github.com/intel/neural-compressor/releases)
-[![license](https://img.shields.io/badge/license-Apache%202-blue)](https://github.com/intel/neural-compressor/blob/master/LICENSE)
-[![coverage](https://img.shields.io/badge/coverage-85%25-green)](https://github.com/intel/neural-compressor)
+[![python](https://img.shields.io/badge/python-3.8%2B-blue)](https://github.com/onnx/neural-compressor)
+[![version](https://img.shields.io/badge/release-2.5-green)](https://github.com/onnx/neural-compressor/releases)
+[![license](https://img.shields.io/badge/license-Apache%202-blue)](https://github.com/onnx/neural-compressor/blob/master/LICENSE)
+[![coverage](https://img.shields.io/badge/coverage-85%25-green)](https://github.com/onnx/neural-compressor)
 [![Downloads](https://static.pepy.tech/personalized-badge/neural-compressor?period=total&units=international_system&left_color=grey&right_color=green&left_text=downloads)](https://pepy.tech/project/neural-compressor)
 
 
@@ -15,7 +15,7 @@ Intel® Neural Compressor
 ---
 <div align="left">
 
-Intel® Neural Compressor aims to provide popular model compression techniques such as weight-only quantization, smooth quant on [ONNX Runtime](https://onnxruntime.ai/).
+ONNX Neural Compressor aims to provide popular model compression techniques such as weight-only quantization, smooth quant on [ONNX Runtime](https://onnxruntime.ai/).
 In particular, the tool provides the key features, typical examples, and open collaborations as below:
 
 * Support a wide range of Intel hardware such as [Intel Xeon Scalable Processors](https://www.intel.com/content/www/us/en/products/details/processors/xeon/scalable.html), [Intel Xeon CPU Max Series](https://www.intel.com/content/www/us/en/products/details/processors/xeon/max-series.html); support AMD CPU, ARM CPU, and NVidia GPU with limited testing
@@ -28,7 +28,7 @@ In particular, the tool provides the key features, typical examples, and open co
 
 ### Install from pypi
 ```Shell
-pip install neural-compressor
+pip install neural-compressor-ort
 ```
 > **Note**: 
 > Further installation methods can be found under [Installation Guide](./docs/source/installation_guide.md).
@@ -37,7 +37,7 @@ pip install neural-compressor
 
 Setting up the environment:  
 ```bash
-pip install "neural-compressor>=2.3" "onnxruntime>=1.17.0" onnx
+pip install neural-compressor-ort "onnxruntime>=1.17.0" onnx
 ```
 After successfully installing these packages, try your first quantization program.
 
@@ -127,5 +127,5 @@ quantize(model, output_model_path, config)
 * [Security Policy](SECURITY.md)
 
 ## Communication 
-- [GitHub Issues](https://github.com/intel/neural-compressor/issues): mainly for bug reports, new feature requests, question asking, etc.
+- [GitHub Issues](https://github.com/onnx/neural-compressor/issues): mainly for bug reports, new feature requests, question asking, etc.
 - [Email](mailto:inc.maintainers@intel.com): welcome to raise any interesting research ideas on model compression techniques by email for collaborations.  
