@@ -43,7 +43,6 @@ class RTNQuantizer(Quantizer):
         group_size=32,
         group_dim=1,
         quantile=1.0,
-        weight_config={},
         export_compressed_model=False,
         use_full_range=False,
         use_mse_search=False,
