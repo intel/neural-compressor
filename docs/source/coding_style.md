@@ -9,7 +9,7 @@ There are many style guides, and they may conflict with each other. To avoid ove
 
 - [Google Python Style](https://google.github.io/styleguide/pyguide.html#s3.8-comments-and-docstrings), [PEP 8](https://peps.python.org/pep-0008/)
 - Framework Style
-- INC Internal Style
+- Internal Style
 - Sub-module specific Style
 
 ## Rules
