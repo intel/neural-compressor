@@ -129,7 +129,7 @@ def quantize_4bit(tensor, quantile=1.0, dtype="nf4", return_int=False, **kwargs)
 
 def cast_fp8(tensor, dtype="fp8_e4m3fn", use_qdq=True):
     torch_dtype = FP8_MAPPING[dtype]
-    if not use_qdq:
+    if not use_qdq:  # pragma: no cover
         return tensor.to(torch_dtype)
     else:
         orig_dtype = tensor.dtype
