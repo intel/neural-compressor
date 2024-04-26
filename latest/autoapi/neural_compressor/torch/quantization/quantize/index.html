@@ -99,12 +99,6 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.quantization.quantize.quantize" title="neural_compressor.torch.quantization.quantize.quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quantize</span></code></a>(→ torch.nn.Module)</p></td>
 <td><p>The main entry to quantize model with static mode.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.quantization.quantize.prepare" title="neural_compressor.torch.quantization.quantize.prepare"><code class="xref py py-obj docutils literal notranslate"><span class="pre">prepare</span></code></a>(model, quant_config[, inplace, example_inputs])</p></td>
-<td><p>Prepare the model for calibration.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.quantization.quantize.convert" title="neural_compressor.torch.quantization.quantize.convert"><code class="xref py py-obj docutils literal notranslate"><span class="pre">convert</span></code></a>(model[, quant_config, inplace])</p></td>
-<td><p>Convert the prepared model to a quantized model.</p></td>
-</tr>
 </tbody>
 </table>
 <dl class="py function">
@@ -119,44 +113,6 @@
 <li><p><strong>run_fn</strong> – a calibration function for calibrating the model. Defaults to None.</p></li>
 <li><p><strong>run_args</strong> – positional arguments for <cite>run_fn</cite>. Defaults to None.</p></li>
 <li><p><strong>example_inputs</strong> – used to trace torch model.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The quantized model.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.torch.quantization.quantize.prepare">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.quantization.quantize.</span></span><span class="sig-name descname"><span class="pre">prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../../common/base_config/index.html#neural_compressor.common.base_config.BaseConfig" title="neural_compressor.common.base_config.BaseConfig"><span class="pre">neural_compressor.common.base_config.BaseConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/quantization/quantize.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.quantization.quantize.prepare" title="Permalink to this definition"></a></dt>
-<dd><p>Prepare the model for calibration.</p>
-<p>Insert observers into the model so that it can monitor the input and output tensors during calibration.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<em>torch.nn.Module</em>) – origin model</p></li>
-<li><p><strong>quant_config</strong> (<a class="reference internal" href="../../../common/base_config/index.html#neural_compressor.common.base_config.BaseConfig" title="neural_compressor.common.base_config.BaseConfig"><em>BaseConfig</em></a>) – path to quantization config</p></li>
-<li><p><strong>inplace</strong> (<em>bool</em>) – It will change the given model in-place if True.</p></li>
-<li><p><strong>example_inputs</strong> – used to trace torch model.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>prepared and calibrated module.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.torch.quantization.quantize.convert">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.quantization.quantize.</span></span><span class="sig-name descname"><span class="pre">convert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../../common/base_config/index.html#neural_compressor.common.base_config.BaseConfig" title="neural_compressor.common.base_config.BaseConfig"><span class="pre">neural_compressor.common.base_config.BaseConfig</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/quantization/quantize.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.quantization.quantize.convert" title="Permalink to this definition"></a></dt>
-<dd><p>Convert the prepared model to a quantized model.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<em>torch.nn.Module</em>) – the prepared model</p></li>
-<li><p><strong>quant_config</strong> (<a class="reference internal" href="../../../common/base_config/index.html#neural_compressor.common.base_config.BaseConfig" title="neural_compressor.common.base_config.BaseConfig"><em>BaseConfig</em></a><em>, </em><em>optional</em>) – path to quantization config</p></li>
-<li><p><strong>inplace</strong> (<em>bool</em><em>, </em><em>optional</em>) – It will change the given model in-place if True.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -183,7 +139,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f83b3dafcd0> 
+   <jinja2.runtime.BlockReference object at 0x7f61f325b790> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

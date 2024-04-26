@@ -9,14 +9,6 @@
 Module Contents
 ---------------
 
-Classes
-~~~~~~~
-
-.. autoapisummary::
-
-   neural_compressor.torch.utils.utility.Mode
-
-
 
 Functions
 ~~~~~~~~~
@@ -69,15 +61,5 @@ Functions
    :type new_module: object
 
    :returns: module (object).
-
-
-.. py:class:: Mode
-
-
-
-
-   Generic enumeration.
-
-   Derive from this class to define new enumerations.
 
 

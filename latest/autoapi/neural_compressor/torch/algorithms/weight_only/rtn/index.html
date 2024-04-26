@@ -92,19 +92,65 @@
 <span id="neural-compressor-torch-algorithms-weight-only-rtn"></span><h1><a class="reference internal" href="#module-neural_compressor.torch.algorithms.weight_only.rtn" title="neural_compressor.torch.algorithms.weight_only.rtn"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.torch.algorithms.weight_only.rtn</span></code></a><a class="headerlink" href="#module-neural_compressor.torch.algorithms.weight_only.rtn" title="Permalink to this heading"></a></h1>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
-<section id="classes">
-<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.rtn.RTNQuantizer" title="neural_compressor.torch.algorithms.weight_only.rtn.RTNQuantizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RTNQuantizer</span></code></a></p></td>
-<td><p>The base quantizer for all algorithm quantizers.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.rtn.rtn_quantize" title="neural_compressor.torch.algorithms.weight_only.rtn.rtn_quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rtn_quantize</span></code></a>(model[, dtype, bits, scheme, group_size, ...])</p></td>
+<td><p>Quant the model with round to nearest method and inplace is True.</p></td>
 </tr>
 </tbody>
 </table>
-<dl class="py class">
-<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.rtn.RTNQuantizer">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.rtn.</span></span><span class="sig-name descname"><span class="pre">RTNQuantizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tune_cfg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.OrderedDict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/weight_only/rtn.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.rtn.RTNQuantizer" title="Permalink to this definition"></a></dt>
-<dd><p>The base quantizer for all algorithm quantizers.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.rtn.rtn_quantize">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.rtn.</span></span><span class="sig-name descname"><span class="pre">rtn_quantize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'int'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sym'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">export_compressed_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_full_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_mse_search</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/weight_only/rtn.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.rtn.rtn_quantize" title="Permalink to this definition"></a></dt>
+<dd><p>Quant the model with round to nearest method and inplace is True.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> – torch module</p></li>
+<li><p><strong>bits</strong> – num bits. Defaults to 4.</p></li>
+<li><p><strong>group_size</strong> (<em>int</em><em>, </em><em>optional</em>) – how many elements share one scale/zp. Defaults to 32.</p></li>
+<li><p><strong>scheme</strong> (<em>str</em><em>, </em><em>optional</em>) – sym or asym. Defaults to “sym”.</p></li>
+<li><p><strong>quantile</strong> (<em>float</em><em>, </em><em>optional</em>) – percentile of clip. Defaults to 1.0.</p></li>
+<li><p><strong>dtype</strong> (<em>str</em><em>, </em><em>optional</em>) – select from int, nf4, fp4. Defaults to int.</p></li>
+<li><p><strong>weight_config</strong> (<em>dict</em><em>, </em><em>optional</em>) – <p>specific layer wise configurations. Defaults to {}.
+For example,</p>
+<blockquote>
+<div><dl>
+<dt>weight_config={</dt><dd><dl>
+<dt>‘fc2’:</dt><dd><dl class="simple">
+<dt>{</dt><dd><p>‘dtype’: ‘int’,
+‘bits’: 4,
+‘group_size’: 32,
+‘scheme’: ‘sym’</p>
+</dd>
+</dl>
+<p>}</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>}</p>
+</div></blockquote>
+</p></li>
+<li><p><strong>export_compressed_model</strong> (<em>bool</em><em>, </em><em>optional</em>) – Choose return fp32 or int32 model.
+Defaults to False.</p></li>
+<li><p><strong>use_full_range</strong> (<em>bool</em><em>, </em><em>optional</em>) – Choose sym range whether use -2**(bits-1).
+Defaults to False.</p></li>
+<li><p><strong>use_mse_search</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether search clip range.
+Defaults to True.</p></li>
+<li><p><strong>group_dim</strong> (<em>int</em><em>, </em><em>optional</em>) – 0 means splitting output channel,
+1 means splitting input channel. Defaults to 1.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>fake quantized torch module</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>model</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
@@ -125,7 +171,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f83b799c3a0> 
+   <jinja2.runtime.BlockReference object at 0x7f61f1241b70> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
