@@ -88,7 +88,7 @@ This approach is major quantization approach people should try because it could 
 
 ## With or Without Accuracy Aware Tuning
 
-Accuracy aware tuning is one of unique features provided by Intel(R) Neural Compressor, compared with other 3rd party model compression tools. This feature can be used to solve accuracy loss pain points brought by applying low precision quantization and other lossy optimization methods. 
+Accuracy aware tuning is one of unique features provided by Neural Compressor, compared with other 3rd party model compression tools. This feature can be used to solve accuracy loss pain points brought by applying low precision quantization and other lossy optimization methods. 
 
 This tuning algorithm creates a tuning space based on user-defined configurations, generates quantized graph, and evaluates the accuracy of this quantized graph. The optimal model will be yielded if the pre-defined accuracy goal is met.
 
@@ -105,7 +105,7 @@ User could refer to below chart to understand the whole tuning flow.
 
 ## Get Started
 
-The design philosophy of the quantization interface of Intel(R) Neural Compressor is easy-of-use. It requests user to provide `model`, `calibration dataloader`, and `evaluation function`. Those parameters would be used to quantize and tune the model. 
+The design philosophy of the quantization interface of ONNX Neural Compressor is easy-of-use. It requests user to provide `model`, `calibration dataloader`, and `evaluation function`. Those parameters would be used to quantize and tune the model. 
 
 `model` is the framework model location or the framework model object.
 
@@ -120,7 +120,7 @@ User could execute:
 
 1. Without Accuracy Aware Tuning
 
-This means user could leverage Intel(R) Neural Compressor to directly generate a fully quantized model without accuracy aware tuning. It's user responsibility to ensure the accuracy of the quantized model meets expectation. Intel(R) Neural Compressor supports `Post Training Static Quantization` and `Post Training Dynamic Quantization`.
+This means user could leverage ONNX Neural Compressor to directly generate a fully quantized model without accuracy aware tuning. It's user responsibility to ensure the accuracy of the quantized model meets expectation. ONNX Neural Compressor supports `Post Training Static Quantization` and `Post Training Dynamic Quantization`.
 
 ``` python
 from neural_compressor_ort.quantization import StaticQuantConfig, DynamicQuantConfig, quantize
@@ -140,7 +140,7 @@ quantize(model, q_model_path, config)
 
 2. With Accuracy Aware Tuning
 
-This means user could leverage the advance feature of Intel(R) Neural Compressor to tune out a best quantized model which has best accuracy and good performance. User should provide `eval_fn`.
+This means user could leverage the advance feature of ONNX Neural Compressor to tune out a best quantized model which has best accuracy and good performance. User should provide `eval_fn`.
 
 ``` python
 from neural_compressor_ort.common.base_tuning import Evaluator, TuningConfig
@@ -175,7 +175,7 @@ best_model = autotune(
 ```
 
 ### Specify Quantization Rules
-Intel(R) Neural Compressor support specify quantization rules by operator name. Users can use `set_local` API of configs to achieve the above purpose by below code:
+ONNX Neural Compressor support specify quantization rules by operator name. Users can use `set_local` API of configs to achieve the above purpose by below code:
 
 ```python
 fp32_config = GPTQConfig(weight_dtype="fp32")
