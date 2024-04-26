@@ -3,7 +3,7 @@
 
 ## Background
 
-To improve the quality and maintainability of INC code, we summarized some common coding standards and conventions.
+To improve the quality and maintainability of the code, we summarized some common coding standards and conventions.
 
 There are many style guides, and they may conflict with each other. To avoid overly arguing formatting, we make decisions based on the following priorities:
 
