@@ -1,0 +1,29 @@
+:orphan:
+
+:py:mod:`neural_compressor.torch.algorithms.base_algorithm`
+===========================================================
+
+.. py:module:: neural_compressor.torch.algorithms.base_algorithm
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.base_algorithm.Quantizer
+
+
+
+
+.. py:class:: Quantizer(tune_cfg: collections.OrderedDict = {})
+
+
+
+
+   The base quantizer for all algorithm quantizers.
+
+

@@ -92,33 +92,19 @@
 <span id="neural-compressor-torch-algorithms-static-quant-static-quant"></span><h1><a class="reference internal" href="#module-neural_compressor.torch.algorithms.static_quant.static_quant" title="neural_compressor.torch.algorithms.static_quant.static_quant"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.torch.algorithms.static_quant.static_quant</span></code></a><a class="headerlink" href="#module-neural_compressor.torch.algorithms.static_quant.static_quant" title="Permalink to this heading"></a></h1>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
-<section id="functions">
-<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.static_quant.static_quant.static_quantize" title="neural_compressor.torch.algorithms.static_quant.static_quant.static_quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">static_quantize</span></code></a>(model, tune_cfg, run_fn, example_inputs)</p></td>
-<td><p>Execute the quantize process on the specified model.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.static_quant.static_quant.StaticQuantQuantizer" title="neural_compressor.torch.algorithms.static_quant.static_quant.StaticQuantQuantizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">StaticQuantQuantizer</span></code></a></p></td>
+<td><p>The base quantizer for all algorithm quantizers.</p></td>
 </tr>
 </tbody>
 </table>
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.static_quant.static_quant.static_quantize">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.static_quant.static_quant.</span></span><span class="sig-name descname"><span class="pre">static_quantize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tune_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/static_quant/static_quant.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.static_quant.static_quant.static_quantize" title="Permalink to this definition"></a></dt>
-<dd><p>Execute the quantize process on the specified model.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> – a float model to be quantized.</p></li>
-<li><p><strong>tune_cfg</strong> – quantization config for ops.</p></li>
-<li><p><strong>run_fn</strong> – a calibration function for calibrating the model.</p></li>
-<li><p><strong>example_inputs</strong> – used to trace torch model.</p></li>
-<li><p><strong>inplace</strong> – whether to carry out model transformations in-place.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A quantized model.</p>
-</dd>
-</dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.static_quant.static_quant.StaticQuantQuantizer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.static_quant.static_quant.</span></span><span class="sig-name descname"><span class="pre">StaticQuantQuantizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tune_cfg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">collections.OrderedDict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/static_quant/static_quant.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.static_quant.static_quant.StaticQuantQuantizer" title="Permalink to this definition"></a></dt>
+<dd><p>The base quantizer for all algorithm quantizers.</p>
 </dd></dl>
 
 </section>
@@ -139,7 +125,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7ff7b5d450f0> 
+   <jinja2.runtime.BlockReference object at 0x7f83b4b32c80> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
