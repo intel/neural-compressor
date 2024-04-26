@@ -127,7 +127,8 @@ class RTNQuantizer(Quantizer):
                     bits = int(dtype.lstrip("int"))
                     dtype = "int"
             log_msg = (
-                f"RTN quantization config: bits={bits}, group_size={group_size}, " + f"scheme={scheme}, quantile={quantile}"
+                f"RTN quantization config: bits={bits}, group_size={group_size}, "
+                + f"scheme={scheme}, quantile={quantile}"
             )
             if dtype != "int":
                 log_msg += f", dtype={dtype}"
