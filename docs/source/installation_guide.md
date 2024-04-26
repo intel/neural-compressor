@@ -25,7 +25,7 @@ The following prerequisites and requirements must be satisfied for a successful 
 ### Install from Binary
   ```Shell
   # install stable basic version from pypi
-  pip install neural-compressor
+  pip install neural-compressor-ort
   ```
 
 ### Install from Source
