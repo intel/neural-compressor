@@ -155,7 +155,10 @@ class TestRTNQuant:
                 out1, out2
             ), "Exporting compressed model should have the same output as quantized model. Please double check"
 
-    @pytest.mark.parametrize("dtype", ["int4", "nf4", "fp4", "fp4_e2m1_bnb", "fp4_e2m1"])
+    @pytest.mark.parametrize(
+        "dtype",
+        ["int4", "nf4", "fp4", "fp4_e2m1_bnb", "fp4_e2m1", "fp8_e5m2", "fp8_e5m2fnuz", "fp8_e4m3fn", "fp8_e4m3fnuz"],
+    )
     def test_dtype_params(self, dtype):
         model = copy.deepcopy(self.tiny_gptj)
         quant_config = RTNConfig(

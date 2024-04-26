@@ -26,7 +26,7 @@ import torch
 from neural_compressor.torch.algorithms import Quantizer
 from neural_compressor.torch.utils import get_device, logger, set_module
 
-from .utility import quant_tensor, search_clip
+from .utility import cast_fp8, quant_tensor, search_clip
 
 
 class RTNQuantizer(Quantizer):
@@ -43,6 +43,7 @@ class RTNQuantizer(Quantizer):
         group_size=32,
         group_dim=1,
         quantile=1.0,
+        weight_config={},
         export_compressed_model=False,
         use_full_range=False,
         use_mse_search=False,
@@ -96,6 +97,12 @@ class RTNQuantizer(Quantizer):
                 dtype = weight_config[name].get("dtype", "int")
                 if dtype == "fp32":
                     continue
+                ### FP8 cast part
+                if dtype in ["fp8_e5m2", "fp8_e5m2fnuz", "fp8_e4m3fn", "fp8_e4m3fnuz"]:
+                    logger.debug("Cast module {} to FP8 using qdq mode, no scaling".format(name))
+                    m.weight = cast_fp8(m.weight, dtype, use_qdq=True)
+                    continue
+                ####
                 logger.debug("Apply RTN on module %s.", name)
                 bits = weight_config[name].get("bits", 4)
                 group_size = weight_config[name]["group_size"]
@@ -120,8 +127,7 @@ class RTNQuantizer(Quantizer):
                     bits = int(dtype.lstrip("int"))
                     dtype = "int"
             log_msg = (
-                f"RTN quantization config: bits={bits}, group_size={group_size}, "
-                + f"scheme={scheme}, quantile={quantile}"
+                f"RTN quantization config: bits={bits}, group_size={group_size}, " + f"scheme={scheme}, quantile={quantile}"
             )
             if dtype != "int":
                 log_msg += f", dtype={dtype}"
