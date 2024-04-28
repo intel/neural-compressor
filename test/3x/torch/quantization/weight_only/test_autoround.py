@@ -1,18 +1,17 @@
 import pytest
 import torch
 import transformers
-from neural_compressor.torch.quantization import (
-    AutoRoundConfig,
-    get_default_AutoRound_config,
-    quantize
-)
+
+from neural_compressor.torch.quantization import AutoRoundConfig, get_default_AutoRound_config, quantize
 from neural_compressor.torch.utils import logger
 
 try:
     import auto_round
+
     auto_round_installed = True
 except ImportError:
     auto_round_installed = False
+
 
 @pytest.fixture(scope="module")
 def gpt_j():
