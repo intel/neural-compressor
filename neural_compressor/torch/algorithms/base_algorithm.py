@@ -87,8 +87,10 @@ class Quantizer(ABC):
         """
         run_fn = kwargs.get("run_fn", None)
         run_args = kwargs.get("run_args", None)
-        assert run_fn is not None, "Can't find run_func. Please provide run_func to quantize API " \
+        assert run_fn is not None, (
+            "Can't find run_func. Please provide run_func to quantize API "
             "or overwrite quantize member function in your Quantizer class."
+        )
 
         model = self.prepare(model, *args, **kwargs)
         if run_args:
