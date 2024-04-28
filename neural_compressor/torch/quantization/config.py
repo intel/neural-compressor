@@ -48,6 +48,7 @@ from neural_compressor.torch.utils.constants import (
     PRIORITY_HQQ,
     PRIORITY_RTN,
     PRIORITY_TEQ,
+    PT2E_STATIC_QUANT,
 )
 
 __all__ = [
@@ -773,6 +774,70 @@ def get_default_AutoRound_config() -> AutoRoundConfig:
         the default AUTOROUND config.
     """
     return AutoRoundConfig()
+
+
+######################## PT2E Static Quant Config ###############################
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=PT2E_STATIC_QUANT)
+class PT2EStaticQuantConfig(BaseConfig):
+    """Config class for static quantization."""
+
+    name = STATIC_QUANT
+    params_list = [
+        "w_dtype",
+        "w_sym",
+        "w_granularity",
+        "w_algo",
+        "act_dtype",
+        "act_sym",
+        "act_granularity",
+        "act_algo",
+    ]
+    supported_configs: List[OperatorConfig] = []
+
+    def __init__(
+        self,
+        w_dtype: str = "int8",
+        w_sym: bool = True,
+        w_granularity: str = "per_channel",
+        w_algo: str = "minmax",
+        act_dtype: str = "uint8",
+        act_sym: bool = False,
+        act_granularity: str = "per_tensor",
+        act_algo: str = "kl",
+        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+    ):
+        """Init PT2E Static Quant Configs."""
+        super().__init__(white_list=white_list)
+        self.w_dtype = w_dtype
+        self.w_sym = w_sym
+        self.w_granularity = w_granularity
+        self.w_algo = w_algo
+        self.act_dtype = act_dtype
+        self.act_sym = act_sym
+        self.act_granularity = act_granularity
+        self.act_algo = act_algo
+        self._post_init()
+
+    @classmethod
+    def register_supported_configs(cls) -> List[OperatorConfig]:
+        supported_configs = []
+        linear_static_config = cls()
+        operators = [torch.nn.Linear]
+        supported_configs.append(OperatorConfig(config=linear_static_config, operators=operators))
+        cls.supported_configs = supported_configs
+
+    @staticmethod
+    def get_model_info(model: torch.nn.Module, example_inputs) -> List[Tuple[str, Callable]]:
+        pass
+
+    @classmethod
+    def get_config_set_for_tuning(cls) -> Union[None, "PT2EStaticQuantConfig", List["PT2EStaticQuantConfig"]]:
+        return cls(act_sym=[True, False], act_algo=["kl", "minmax"])
+
+    def to_config_mapping(
+        self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
+    ) -> OrderedDict[Union[str, str], OrderedDict[str, BaseConfig]]:
+        pass
 
 
 ######################## Static Quant Config ###############################

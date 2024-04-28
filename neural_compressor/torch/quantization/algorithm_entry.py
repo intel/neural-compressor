@@ -31,6 +31,7 @@ from neural_compressor.torch.quantization import (
     TEQConfig,
 )
 from neural_compressor.torch.utils import Mode, logger, register_algo
+from neural_compressor.torch.utils.constants import PT2E_STATIC_QUANT
 
 
 ###################### RTN Algo Entry ##################################
@@ -157,6 +158,22 @@ def static_quant_entry(
 
     quantizer = StaticQuantQuantizer(tune_cfg=quant_config_mapping)
     model = quantizer.execute(model, mode=mode, run_fn=run_fn, example_inputs=example_inputs, inplace=inplace)
+    return model
+
+
+###################### PT2E Static Quant Algo Entry ##################################
+@register_algo(name=PT2E_STATIC_QUANT)
+@torch.no_grad()
+def pt2e_static_quant_entry(model: torch.nn.Module, configs_mapping, mode: Mode, *args, **kwargs) -> torch.nn.Module:
+    logger.info("Quantize model with the PT2E static quant algorithm.")
+    from neural_compressor.torch.algorithms.pt2e_quant.core import W8A8StaticQuantizer
+
+    quant_config = configs_mapping._original_config
+    w8a8_quantizer = W8A8StaticQuantizer(quant_config=quant_config)
+    run_fn = kwargs.get("run_fn", None)
+    example_inputs = kwargs.get("example_inputs", None)
+    inplace = kwargs.get("inplace", True)
+    model = w8a8_quantizer.execute(model, mode=mode, run_fn=run_fn, example_inputs=example_inputs, inplace=inplace)
     return model
 
 
