@@ -71,7 +71,7 @@ class StaticQuantQuantizer(Quantizer):
             model, example_inputs
         )
         # update json file in ipex_config_path; map ipex op_name to pt op_name
-        user_cfg = cfg_to_qconfig(self.tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_id_op_name)
+        user_cfg = cfg_to_qconfig(self.quant_config, cfgs, op_infos_from_cfgs, output_tensor_id_op_name)
         model.eval()
 
         # Check save_qconf_summary part is a workaround for IPEX bug.
