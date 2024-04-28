@@ -132,7 +132,7 @@ class AutoRoundQuantizer(Quantizer):
         model = self.convert(model)
         return model
 
-    def prepare(self, model, *args, **kwargs):
+    def prepare(self, model: torch.nn.Module, *args, **kwargs):
         """Prepares a given model for quantization.
         Args:
             model (torch.nn.Module): The model to be prepared.
