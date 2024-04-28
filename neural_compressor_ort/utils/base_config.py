@@ -27,7 +27,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 from typing_extensions import Self
 
-from neural_compressor_ort.utils.tuning_param import TuningParam
+from neural_compressor_ort.utils import logger
 from neural_compressor_ort.utils.constants import (
     BASE_CONFIG,
     COMPOSABLE_CONFIG,
@@ -38,7 +38,7 @@ from neural_compressor_ort.utils.constants import (
     LOCAL,
     OP_NAME_OR_MODULE_TYPE,
 )
-from neural_compressor_ort.utils import logger
+from neural_compressor_ort.utils.tuning_param import TuningParam
 
 __all__ = [
     "options",
@@ -93,9 +93,7 @@ class ConfigRegistry(object):
     @classmethod
     def get_sorted_configs(cls) -> Dict[str, OrderedDict[str, Dict[str, object]]]:
         """Get registered configurations sorted by priority."""
-        return OrderedDict(
-            sorted(cls.registered_configs.items(), key=lambda x: x[1]["priority"], reverse=True)
-        )
+        return OrderedDict(sorted(cls.registered_configs.items(), key=lambda x: x[1]["priority"], reverse=True))
 
     @classmethod
     def get_cls_configs(cls) -> Dict[str, Dict[str, object]]:

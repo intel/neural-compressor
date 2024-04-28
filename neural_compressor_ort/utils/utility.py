@@ -12,22 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from neural_compressor_ort.utils import logger
+import importlib
+import os
+import subprocess
+import time
 from pathlib import Path
 from typing import Callable, Dict, List, Tuple, Union
+
+import cpuinfo
 import numpy as np
 import onnx
 import onnxruntime.tools.symbolic_shape_infer as symbolic_shape_infer
-import os
+import psutil
 from packaging.version import Version
 
-import importlib
-import subprocess
-import time
-
-import cpuinfo
-import psutil
-
+from neural_compressor_ort.utils import logger
 
 __all__ = [
     "set_workspace",
@@ -216,7 +215,9 @@ def set_resume_from(resume_from: str):
 
 def log_quant_execution(func):
     from neural_compressor_ort.utils import TuningLogger
+
     default_tuning_logger = TuningLogger()
+
     def wrapper(*args, **kwargs):
         default_tuning_logger.quantization_start(stacklevel=4)
 

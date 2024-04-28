@@ -29,22 +29,21 @@ from onnxruntime.quantization.quantize import DynamicQuantConfig as ORTDynamicQu
 from onnxruntime.quantization.quantize import QuantConfig
 from onnxruntime.quantization.quantize import StaticQuantConfig as ORTStaticQuantConfig
 
-from neural_compressor_ort.utils.base_config import BaseConfig, register_config, register_supported_configs
 from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
 from neural_compressor_ort.utils import (
-    logger,
     AWQ,
     DEFAULT_WHITE_LIST,
     GPTQ,
     OP_NAME_OR_MODULE_TYPE,
-    RTN,
-    SMOOTH_QUANT,
     PRIORITY_AWQ,
     PRIORITY_GPTQ,
     PRIORITY_RTN,
     PRIORITY_SMOOTH_QUANT,
+    RTN,
+    SMOOTH_QUANT,
+    logger,
 )
-
+from neural_compressor_ort.utils.base_config import BaseConfig, register_config, register_supported_configs
 
 __all__ = [
     "RTNConfig",
@@ -56,7 +55,6 @@ __all__ = [
     "SmoothQuantConfig",
     "get_default_sq_config",
 ]
-
 
 
 class _OperatorConfig(NamedTuple):

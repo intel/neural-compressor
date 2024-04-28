@@ -35,13 +35,8 @@ from neural_compressor_ort.algorithms.weight_only.utility import (
     quant_tensor,
 )
 from neural_compressor_ort.quantization.config import RTNConfig
+from neural_compressor_ort.utils import ONNXRT116_VERSION, ONNXRT1161_VERSION, dtype_mapping, simple_progress_bar
 from neural_compressor_ort.utils.onnx_model import ONNXModel
-from neural_compressor_ort.utils import (
-    ONNXRT116_VERSION,
-    ONNXRT1161_VERSION,
-    dtype_mapping,
-    simple_progress_bar,
-)
 
 __all__ = ["apply_rtn_on_model", "rtn_quantize"]
 

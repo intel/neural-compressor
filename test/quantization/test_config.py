@@ -10,7 +10,6 @@ from optimum.exporters.onnx import main_export
 from neural_compressor_ort.utils import logger
 
 
-
 def find_onnx_file(folder_path):
     # return first .onnx file path in folder_path
     for root, dirs, files in os.walk(folder_path):

@@ -5,11 +5,11 @@ import unittest
 from neural_compressor_ort.utils import (
     CpuInfo,
     LazyImport,
+    options,
     set_random_seed,
     set_resume_from,
     set_workspace,
     singleton,
-    options,
 )
 
 
