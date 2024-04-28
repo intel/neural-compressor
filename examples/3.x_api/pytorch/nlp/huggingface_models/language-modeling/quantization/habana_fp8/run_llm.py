@@ -143,7 +143,7 @@ if args.approach in ["dynamic", "static"] and not args.load:
 
 if args.load:
     from neural_compressor.torch.quantization import load
-    user_model = load(user_model, "saved_results")
+    user_model = load("saved_results", user_model)
 
 
 if args.approach in ["dynamic", "static"] or args.load:
