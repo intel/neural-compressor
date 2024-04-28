@@ -377,7 +377,7 @@ def autoround_quantize_entry(
 
     kwargs.pop("example_inputs")
     
-    quanrizer = AutoRoundQuantizer(
+    quantizer = AutoRoundQuantizer(
         model=model,
         weight_config=weight_config,
         enable_full_range=enable_full_range,
@@ -398,9 +398,8 @@ def autoround_quantize_entry(
         not_use_best_mse=not_use_best_mse,
         dynamic_max_gap=dynamic_max_gap,
         scale_dtype=scale_dtype,
-        **kwargs
     )
-    model = quanrizer.execute(model, mode=mode, run_fn=run_fn, run_args=run_args)
+    model = quantizer.execute(model=model, mode=mode, *args, **kwargs)
     logger.info("AutoRound quantization done.")
     return model
 

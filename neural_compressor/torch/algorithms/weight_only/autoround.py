@@ -13,8 +13,10 @@
 # limitations under the License.
 
 import torch
+import time
 from auto_round import AutoRound  # pylint: disable=E0401
 from auto_round.calib_dataset import CALIB_DATASETS  # pylint: disable=E0401
+from auto_round.utils import get_block_names # pylint: disable=E0401
 
 from neural_compressor.torch.utils import logger
 from neural_compressor.torch.algorithms import Quantizer
@@ -43,9 +45,7 @@ class AutoRoundQuantizer(Quantizer):
         gradient_accumulate_steps: int = 1,
         not_use_best_mse: bool = False,
         dynamic_max_gap: int = -1,
-        scale_dtype="fp16",
-        run_fn=None,
-        run_args=None,
+        scale_dtype="fp32",
     ):
         """Init a AutQRoundQuantizer object.
         Args:
@@ -87,14 +87,7 @@ class AutoRoundQuantizer(Quantizer):
         dynamic_max_gap (int): The dynamic maximum gap (default is -1).
         scale_dtype (str): The data type of quantization scale to be used (default is "float32"), different kernels
                             have different choices.
-        run_fn: a calibration function for calibrating the model. Defaults to None.
-        run_args: positional arguments for `run_fn`. Defaults to None.
         """
-        self.tune_cfg = weight_config
-        if run_fn is None or run_fn == get_autoround_default_run_fn:
-            assert run_args is not None, "Please provide tokenizer for AutoRound default calibration."
-        run_fn = get_autoround_default_run_fn
-        dataloader = recover_dataloader_from_calib_fn(run_fn, run_args)
         
         self.model = model
         self.tokenizer = None
@@ -104,7 +97,6 @@ class AutoRoundQuantizer(Quantizer):
         self.amp = amp
         self.device = device
         self.lr_scheduler = lr_scheduler
-        self.dataloader = dataloader
         self.use_quant_input = use_quant_input
         self.enable_minmax_tuning = enable_minmax_tuning
         self.lr = lr
@@ -123,15 +115,23 @@ class AutoRoundQuantizer(Quantizer):
         self.scale_dtype = scale_dtype
         
 
-    def quantize(self, model: torch.nn.Module, run_fn, run_args, *args, **kwargs):
-        model = self.prepare(model, run_fn=run_fn, run_args=run_args)
-        # calibration in convert function
-        # run_fn(model) 
+    def quantize(self, model: torch.nn.Module, *args, **kwargs):
+        run_fn = kwargs.get("run_fn", None)
+        run_args = kwargs.get("run_args", None)
+        assert run_fn is not None, (
+            "Can't find run_func. Please provide run_func to quantize API "
+            "or overwrite quantize member function in your Quantizer class."
+        )
+        model = self.prepare(model)
+        if run_args:
+            run_fn(model, *run_args)
+        else:
+            run_fn(model)
         model = self.convert(model)
         return model
           
         
-    def prepare(self, model, run_fn, run_args, *args, **kwargs):
+    def prepare(self, model, *args, **kwargs):
         """Prepares a given model for quantization.
         Args:
             model (torch.nn.Module): The model to be prepared.
@@ -139,11 +139,7 @@ class AutoRoundQuantizer(Quantizer):
         Returns:
             A prepared model.
         """
-        if run_fn is None or run_fn == get_autoround_default_run_fn:
-            assert run_args is not None, "Please provide tokenizer for AutoRound default calibration."
-        run_fn = get_autoround_default_run_fn
-        dataloader = recover_dataloader_from_calib_fn(run_fn, run_args)
-        self.rounder = AutoRound(
+        self.rounder = AutoRoundProcessor(
             model=model,
             tokenizer=None,
             weight_config=self.weight_config,
@@ -152,7 +148,6 @@ class AutoRoundQuantizer(Quantizer):
             amp=self.amp,
             device=self.device,
             lr_scheduler=self.lr_scheduler,
-            dataloader=self.dataloader,
             use_quant_input=self.use_quant_input,
             enable_minmax_tuning=self.enable_minmax_tuning,
             lr=self.lr,
@@ -170,9 +165,11 @@ class AutoRoundQuantizer(Quantizer):
             data_type=self.data_type,
             scale_dtype=self.scale_dtype,
         )
+        self.rounder.prepare()
+        return model
     
     def convert(self, model: torch.nn.Module, *args, **kwargs):
-        model, weight_config = self.rounder.quantize()
+        model, weight_config = self.rounder.convert()
         model.autoround_config = weight_config
         return model
         
@@ -251,142 +248,99 @@ def get_autoround_default_run_fn(
             "Effective samples size: {}, Target sample size: {}".format(total_cnt, n_samples)
         )
 
+class AutoRoundProcessor(AutoRound):
+    
+    def prepare(self):
+        """Quantize the model and return the quantized model along with weight configurations.
 
-class InputCaptureModule(torch.nn.Module):
+        Returns:
+        The quantized model and weight configurations.
+        """
+        # logger.info("cache block input")
+        self.start_time = time.time()
+        self.block_names = get_block_names(self.model)
+        if len(self.block_names) == 0:
+            logger.warning("could not find blocks, exit with original model")
+            return
+        if self.amp:
+            self.model = self.model.to(self.amp_dtype)
+        if not self.low_gpu_mem_usage:
+            self.model = self.model.to(self.device)
+        # inputs = self.cache_block_input(block_names[0], self.n_samples)
+        
+        # cache block input
+        self.inputs = {}
+        self.tmp_block_name = self.block_names[0]
+        self._replace_forward()
+    
+    def convert(self):
+        # self.calib(self.n_samples)
+        self._recover_forward()
+        inputs = self.inputs[self.tmp_block_name]
+        del self.tmp_block_name
+        
+        del self.inputs
+        if "input_ids" in inputs.keys():
+            dim = int((hasattr(self.model, "config") and "chatglm" in self.model.config.model_type))
+            total_samples = inputs["input_ids"].shape[dim]
+            self.n_samples = total_samples
+            if total_samples < self.train_bs:
+                self.train_bs = total_samples
+                logger.warning(f"force the train batch size to {total_samples} ")
+        self.model = self.model.to("cpu")
+        torch.cuda.empty_cache()
+        self.qdq_weight_round(
+            self.model,
+            inputs,
+            self.block_names,
+            n_blocks=self.n_blocks,
+            device=self.device,
+        )
+        for n, m in self.model.named_modules():
+            if n in self.weight_config.keys():
+                if hasattr(m, "scale"):
+                    self.weight_config[n]["scale"] = m.scale
+                    self.weight_config[n]["zp"] = m.zp
+                    if self.group_size <= 0:
+                        self.weight_config[n]["g_idx"] = torch.tensor(
+                            [0 for i in range(m.weight.shape[1])], dtype=torch.int32, device="cpu"
+                        )
+                    else:
+                        self.weight_config[n]["g_idx"] = torch.tensor(
+                            [i // self.group_size for i in range(m.weight.shape[1])], dtype=torch.int32, device="cpu"
+                        )
+                    delattr(m, "scale")
+                    delattr(m, "zp")
+                else:
+                    self.weight_config[n]["data_type"] = "float"
+                    if self.amp_dtype == torch.bfloat16:
+                        self.weight_config[n]["data_type"] = "bfloat"
+                    self.weight_config[n]["bits"] = 16
+                    self.weight_config[n]["group_size"] = None
+                    self.weight_config[n]["sym"] = None
 
-    def __init__(self) -> None:
-        super().__init__()
-        self.data_pairs = []
-        self.device = "cpu"
+        end_time = time.time()
+        cost_time = end_time - self.start_time
+        logger.info(f"quantization tuning time {cost_time}")
+        ## dump a summary
+        quantized_layers = []
+        unquantized_layers = []
+        for n, m in self.model.named_modules():
+            if isinstance(m, tuple(self.supported_types)):
+                if self.weight_config[n]["bits"] == 16:
+                    unquantized_layers.append(n)
+                else:
+                    quantized_layers.append(n)
+        summary_info = (
+            f"Summary: quantized {len(quantized_layers)}/{len(quantized_layers) + len(unquantized_layers)} in the model"
+        )
+        if len(unquantized_layers) > 0:
+            summary_info += f",  {unquantized_layers} have not been quantized"
 
-    def forward(self, *args, **kwargs):
-        if kwargs and len(args) == 0:
-            # Handle cases where input data is a dict
-            self.data_pairs.append(kwargs)
-        elif args and len(args) == 1:
-            # Handle cases where input data is a Tensor
-            self.data_pairs.append(args[0])
-        else:
-            logger.error("Handle cases where input data is neither a Tensor nor a dict")
+        logger.info(summary_info)
+        if len(unquantized_layers) > 0:
+            logger.info(f"Summary: {unquantized_layers} have not been quantized")
 
-
-def recover_dataloader_from_calib_fn(run_fn, run_args):
-    input_capture_model = InputCaptureModule()
-    input_capture_model.eval()
-    run_fn(input_capture_model, *run_args)
-    dataloader = torch.utils.data.DataLoader(input_capture_model.data_pairs)
-    return dataloader
-
-
-def autoround_quantize(
-    model,
-    weight_config: dict = {},
-    enable_full_range: bool = False,  ##for symmetric, TODO support later
-    batch_size: int = 8,
-    amp: bool = True,
-    device=None,
-    lr_scheduler=None,
-    use_quant_input: bool = True,
-    enable_minmax_tuning: bool = True,
-    lr: float = None,
-    minmax_lr: float = None,
-    low_gpu_mem_usage: bool = True,
-    iters: int = 200,
-    seqlen: int = 2048,
-    n_samples: int = 512,
-    sampler: str = "rand",
-    seed: int = 42,
-    n_blocks: int = 1,
-    gradient_accumulate_steps: int = 1,
-    not_use_best_mse: bool = False,
-    dynamic_max_gap: int = -1,
-    scale_dtype="fp16",
-    run_fn=None,
-    run_args=None,
-):
-    """The entry point of the autoround weight-only quantization.
-    Args:
-    model: The PyTorch model to be quantized.
-    weight_config (dict): Configuration for weight quantization (default is an empty dictionary).
-    weight_config={
-                'layer1':##layer_name
-                {
-                    'data_type': 'int',
-                    'bits': 4,
-                    'group_size': 32,
-                    'sym': False,
-                }
-                ...
-            }
-        keys:
-            data_type (str): The data type to be used (default is "int").
-            bits (int): Number of bits for quantization (default is 4).
-            group_size (int): Size of the quantization group (default is 128).
-            sym (bool): Whether to use symmetric quantization. (default is None).
-    enable_full_range (bool): Whether to enable full range quantization (default is False).
-    batch_size (int): Batch size for training (default is 8).
-    amp (bool): Whether to use automatic mixed precision (default is True). Automatically detect and set.
-    device: The device to be used for tuning (default is None). Automatically detect and set.
-    lr_scheduler: The learning rate scheduler to be used.
-    use_quant_input (bool): Whether to use quantized input data (default is True).
-    enable_minmax_tuning (bool): Whether to enable min-max tuning (default is True).
-    lr (float): The learning rate (default is 0.005).
-    minmax_lr (float): The learning rate for min-max tuning (default is None).
-    low_gpu_mem_usage (bool): Whether to use low GPU memory (default is True).
-    iters (int): Number of iterations (default is 200).
-    seqlen (int): Length of the sequence.
-    n_samples (int): Number of samples (default is 512).
-    sampler (str): The sampling method (default is "rand").
-    seed (int): The random seed (default is 42).
-    n_blocks (int): Number of blocks (default is 1).
-    gradient_accumulate_steps (int): Number of gradient accumulation steps (default is 1).
-    not_use_best_mse (bool): Whether to use mean squared error (default is False).
-    dynamic_max_gap (int): The dynamic maximum gap (default is -1).
-    scale_dtype (str): The data type of quantization scale to be used (default is "float32"), different kernels
-                           have different choices.
-    run_fn: a calibration function for calibrating the model. Defaults to None.
-    run_args: positional arguments for `run_fn`. Defaults to None.
-
-    Returns:
-        The quantized model.
-    """
-    if run_fn is None or run_fn == get_autoround_default_run_fn:
-        assert run_args is not None, "Please provide tokenizer for AutoRound default calibration."
-        run_fn = get_autoround_default_run_fn
-    dataloader = recover_dataloader_from_calib_fn(run_fn, run_args)
-
-    rounder = AutoRound(
-        model=model,
-        tokenizer=None,
-        bits=4,
-        group_size=128,
-        sym=False,
-        weight_config=weight_config,
-        enable_full_range=enable_full_range,  ##for symmetric, TODO support later
-        batch_size=batch_size,
-        amp=amp,
-        device=device,
-        lr_scheduler=lr_scheduler,
-        dataloader=dataloader,
-        use_quant_input=use_quant_input,
-        enable_minmax_tuning=enable_minmax_tuning,
-        lr=lr,
-        minmax_lr=minmax_lr,
-        low_gpu_mem_usage=low_gpu_mem_usage,
-        iters=iters,
-        seqlen=seqlen,
-        n_samples=n_samples,
-        sampler=sampler,
-        seed=seed,
-        n_blocks=n_blocks,
-        gradient_accumulate_steps=gradient_accumulate_steps,
-        not_use_best_mse=not_use_best_mse,
-        dynamic_max_gap=dynamic_max_gap,
-        data_type="int",
-        scale_dtype=scale_dtype,
-        run_fn=run_fn,
-        run_args=run_args,
-    )
-    qdq_model, weight_config = rounder.quantize()
-    return qdq_model, weight_config
-
+        self.quantized = True
+        self.model = self.model.to(self.model_orig_dtype)
+        return self.model, self.weight_config
