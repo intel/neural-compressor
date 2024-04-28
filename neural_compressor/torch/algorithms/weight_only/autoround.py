@@ -17,7 +17,165 @@ from auto_round import AutoRound  # pylint: disable=E0401
 from auto_round.calib_dataset import CALIB_DATASETS  # pylint: disable=E0401
 
 from neural_compressor.torch.utils import logger
+from neural_compressor.torch.algorithms import Quantizer
 
+class AutoRoundQuantizer(Quantizer):
+    def __init__(
+        self, 
+        model,
+        weight_config: dict = {},
+        enable_full_range: bool = False,
+        batch_size: int = 8,
+        amp: bool = True,
+        device=None,
+        lr_scheduler=None,
+        use_quant_input: bool = True,
+        enable_minmax_tuning: bool = True,
+        lr: float = None,
+        minmax_lr: float = None,
+        low_gpu_mem_usage: bool = True,
+        iters: int = 200,
+        seqlen: int = 2048,
+        n_samples: int = 512,
+        sampler: str = "rand",
+        seed: int = 42,
+        n_blocks: int = 1,
+        gradient_accumulate_steps: int = 1,
+        not_use_best_mse: bool = False,
+        dynamic_max_gap: int = -1,
+        scale_dtype="fp16",
+        run_fn=None,
+        run_args=None,
+    ):
+        """Init a AutQRoundQuantizer object.
+        Args:
+        model: The PyTorch model to be quantized.
+        weight_config (dict): Configuration for weight quantization (default is an empty dictionary).
+        weight_config={
+                    'layer1':##layer_name
+                    {
+                        'data_type': 'int',
+                        'bits': 4,
+                        'group_size': 32,
+                        'sym': False,
+                    }
+                    ...
+                }
+            keys:
+                data_type (str): The data type to be used (default is "int").
+                bits (int): Number of bits for quantization (default is 4).
+                group_size (int): Size of the quantization group (default is 128).
+                sym (bool): Whether to use symmetric quantization. (default is None).
+        enable_full_range (bool): Whether to enable full range quantization (default is False).
+        batch_size (int): Batch size for training (default is 8).
+        amp (bool): Whether to use automatic mixed precision (default is True). Automatically detect and set.
+        device: The device to be used for tuning (default is None). Automatically detect and set.
+        lr_scheduler: The learning rate scheduler to be used.
+        use_quant_input (bool): Whether to use quantized input data (default is True).
+        enable_minmax_tuning (bool): Whether to enable min-max tuning (default is True).
+        lr (float): The learning rate (default is 0.005).
+        minmax_lr (float): The learning rate for min-max tuning (default is None).
+        low_gpu_mem_usage (bool): Whether to use low GPU memory (default is True).
+        iters (int): Number of iterations (default is 200).
+        seqlen (int): Length of the sequence.
+        n_samples (int): Number of samples (default is 512).
+        sampler (str): The sampling method (default is "rand").
+        seed (int): The random seed (default is 42).
+        n_blocks (int): Number of blocks (default is 1).
+        gradient_accumulate_steps (int): Number of gradient accumulation steps (default is 1).
+        not_use_best_mse (bool): Whether to use mean squared error (default is False).
+        dynamic_max_gap (int): The dynamic maximum gap (default is -1).
+        scale_dtype (str): The data type of quantization scale to be used (default is "float32"), different kernels
+                            have different choices.
+        run_fn: a calibration function for calibrating the model. Defaults to None.
+        run_args: positional arguments for `run_fn`. Defaults to None.
+        """
+        self.tune_cfg = weight_config
+        if run_fn is None or run_fn == get_autoround_default_run_fn:
+            assert run_args is not None, "Please provide tokenizer for AutoRound default calibration."
+        run_fn = get_autoround_default_run_fn
+        dataloader = recover_dataloader_from_calib_fn(run_fn, run_args)
+        
+        self.model = model
+        self.tokenizer = None
+        self.weight_config = weight_config
+        self.enable_full_range = enable_full_range
+        self.batch_size = batch_size
+        self.amp = amp
+        self.device = device
+        self.lr_scheduler = lr_scheduler
+        self.dataloader = dataloader
+        self.use_quant_input = use_quant_input
+        self.enable_minmax_tuning = enable_minmax_tuning
+        self.lr = lr
+        self.minmax_lr = minmax_lr
+        self.low_gpu_mem_usage = low_gpu_mem_usage
+        self.iters = iters
+        self.seqlen = seqlen
+        self.n_samples = n_samples
+        self.sampler = sampler
+        self.seed = seed
+        self.n_blocks = n_blocks
+        self.gradient_accumulate_steps = gradient_accumulate_steps
+        self.not_use_best_mse = not_use_best_mse
+        self.dynamic_max_gap = dynamic_max_gap
+        self.data_type = "int"
+        self.scale_dtype = scale_dtype
+        
+
+    def quantize(self, model: torch.nn.Module, run_fn, run_args, *args, **kwargs):
+        model = self.prepare(model, run_fn=run_fn, run_args=run_args)
+        # calibration in convert function
+        # run_fn(model) 
+        model = self.convert(model)
+        return model
+          
+        
+    def prepare(self, model, run_fn, run_args, *args, **kwargs):
+        """Prepares a given model for quantization.
+        Args:
+            model (torch.nn.Module): The model to be prepared.
+
+        Returns:
+            A prepared model.
+        """
+        if run_fn is None or run_fn == get_autoround_default_run_fn:
+            assert run_args is not None, "Please provide tokenizer for AutoRound default calibration."
+        run_fn = get_autoround_default_run_fn
+        dataloader = recover_dataloader_from_calib_fn(run_fn, run_args)
+        self.rounder = AutoRound(
+            model=model,
+            tokenizer=None,
+            weight_config=self.weight_config,
+            enable_full_range=self.enable_full_range,
+            batch_size=self.batch_size,
+            amp=self.amp,
+            device=self.device,
+            lr_scheduler=self.lr_scheduler,
+            dataloader=self.dataloader,
+            use_quant_input=self.use_quant_input,
+            enable_minmax_tuning=self.enable_minmax_tuning,
+            lr=self.lr,
+            minmax_lr=self.minmax_lr,
+            low_gpu_mem_usage=self.low_gpu_mem_usage,
+            iters=self.iters,
+            seqlen=self.seqlen,
+            n_samples=self.n_samples,
+            sampler=self.sampler,
+            seed=self.seed,
+            n_blocks=self.n_blocks,
+            gradient_accumulate_steps=self.gradient_accumulate_steps,
+            not_use_best_mse=self.not_use_best_mse,
+            dynamic_max_gap=self.dynamic_max_gap,
+            data_type=self.data_type,
+            scale_dtype=self.scale_dtype,
+        )
+    
+    def convert(self, model: torch.nn.Module, *args, **kwargs):
+        model, weight_config = self.rounder.quantize()
+        model.autoround_config = weight_config
+        return model
+        
 
 @torch.no_grad()
 def get_autoround_default_run_fn(
@@ -231,3 +389,4 @@ def autoround_quantize(
     )
     qdq_model, weight_config = rounder.quantize()
     return qdq_model, weight_config
+
