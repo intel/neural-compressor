@@ -51,18 +51,6 @@ class Quantizer(ABC):
         self.quant_config = quant_config
 
     @abstractmethod
-    def quantize(self, model: torch.nn.Module, *args: Any, **kwargs: Any):
-        """Quantizes a given float model.
-
-        Args:
-            model (torch.nn.Module): The float model to be quantized.
-
-        Returns:
-            A quantized model.
-        """
-        raise NotImplementedError("{} doesn't implement `quantize` function.".format(self.__class__.__name__))
-
-    @abstractmethod
     def prepare(self, model: torch.nn.Module, *args: Any, **kwargs: Any):
         """Prepares a given model for quantization.
 
@@ -87,6 +75,23 @@ class Quantizer(ABC):
             A quantized model.
         """
         raise NotImplementedError("{} doesn't implement `convert` function. ".format(self.__class__.__name__))
+
+    def quantize(self, model: torch.nn.Module, *args: Any, **kwargs: Any):
+        """Quantizes a given float model.
+
+        Args:
+            model (torch.nn.Module): The float model to be quantized.
+
+        Returns:
+            A quantized model.
+        """
+        run_fn = kwargs.get("run_fn", None)
+        assert run_fn is not None, "Can't find run_func. Please provide run_func to quantize API " \
+            "or overwrite quantize member function in your Quantizer class."
+        model = self.prepare(model, *args, **kwargs)
+        run_fn(model)
+        model = self.convert(model, *args, **kwargs)
+        return model
 
     def execute(self, model: torch.nn.Module, mode, *args: Any, **kwargs: Any):  # pragma: no cover
         """Execute according to mode.

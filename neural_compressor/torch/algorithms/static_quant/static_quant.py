@@ -126,23 +126,6 @@ class StaticQuantQuantizer(Quantizer):
         model.save = MethodType(save, model)
         return model
 
-    def quantize(self, model, example_inputs, run_fn, inplace=True, *args, **kwargs):
-        """Quantizes a given torch model.
-
-        Args:
-            model: A float model to be quantized.
-            example_inputs: Used to trace torch model.
-            run_fn: a calibration function for calibrating the model.
-            inplace: Whether to carry out model transformations in-place. Defaults to True.
-
-        Returns:
-            A quantized model.
-        """
-        model = self.prepare(model, example_inputs=example_inputs, inplace=inplace)
-        run_fn(model)
-        model = self.convert(model, example_inputs=example_inputs, inplace=inplace)
-        return model
-
 
 def _ipex_post_quant_process(model, example_inputs, inplace=False):
     """Convert to a jit model.
