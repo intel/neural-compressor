@@ -343,8 +343,6 @@ def autoround_quantize_entry(
     from neural_compressor.torch.algorithms.weight_only.autoround import AutoRoundQuantizer
 
     logger.info("Quantize model with the AutoRound algorithm.")
-    run_fn = kwargs.get("run_fn", None)
-    run_args = kwargs.get("run_args", None)
     weight_config = {}
     for (op_name, op_type), quant_config in configs_mapping.items():
         if quant_config.name != AUTOROUND or quant_config.dtype == "fp32":

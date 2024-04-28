@@ -253,10 +253,7 @@ def get_autoround_default_run_fn(
 class AutoRoundProcessor(AutoRound):
 
     def prepare(self):
-        """Quantize the model and return the quantized model along with weight configurations.
-
-        Returns:
-        The quantized model and weight configurations.
+        """Prepares a given model for quantization.
         """
         # logger.info("cache block input")
         self.start_time = time.time()
@@ -276,7 +273,8 @@ class AutoRoundProcessor(AutoRound):
         self._replace_forward()
 
     def convert(self):
-        # self.calib(self.n_samples)
+        """Converts a prepared model to a quantized model.
+        """
         self._recover_forward()
         inputs = self.inputs[self.tmp_block_name]
         del self.tmp_block_name
