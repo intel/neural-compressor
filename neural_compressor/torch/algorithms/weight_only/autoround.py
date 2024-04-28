@@ -253,8 +253,7 @@ def get_autoround_default_run_fn(
 class AutoRoundProcessor(AutoRound):
 
     def prepare(self):
-        """Prepares a given model for quantization.
-        """
+        """Prepares a given model for quantization."""
         # logger.info("cache block input")
         self.start_time = time.time()
         self.block_names = get_block_names(self.model)
@@ -273,8 +272,7 @@ class AutoRoundProcessor(AutoRound):
         self._replace_forward()
 
     def convert(self):
-        """Converts a prepared model to a quantized model.
-        """
+        """Converts a prepared model to a quantized model."""
         self._recover_forward()
         inputs = self.inputs[self.tmp_block_name]
         del self.tmp_block_name
