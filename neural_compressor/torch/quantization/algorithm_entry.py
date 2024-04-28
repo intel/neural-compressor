@@ -223,10 +223,14 @@ def smooth_quant_entry(
 @register_algo(name=AWQ)
 @torch.no_grad()
 def awq_quantize_entry(
-    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], AWQConfig], *args, **kwargs
+    model: torch.nn.Module,
+    configs_mapping: Dict[Tuple[str, callable], AWQConfig],
+    mode: Mode = Mode.QUANTIZE,
+    *args,
+    **kwargs
 ) -> torch.nn.Module:
     logger.info("Quantize model with the AWQ algorithm.")
-    from neural_compressor.torch.algorithms.weight_only.awq import awq_quantize
+    from neural_compressor.torch.algorithms.weight_only.awq import awq_quantize, AWQQuantizer
 
     weight_config = {}
     for (op_name, op_type), op_config in configs_mapping.items():
@@ -262,22 +266,22 @@ def awq_quantize_entry(
             return_int = op_config.export_compressed_model
             use_full_range = op_config.use_full_range
 
-    calib_func = kwargs.get("run_fn", None)
+    run_fn = kwargs.get("run_fn", None)
     example_inputs = kwargs.get("example_inputs", None)
     assert example_inputs is not None, "Please provide example_inputs for AWQ quantization."
-    model = awq_quantize(
+
+    quantizer = AWQQuantizer(tune_cfg=weight_config)
+    model = quantizer.execute(
         model,
-        bits=-1,  # no quantize for op not in weight_config
-        example_inputs=example_inputs,  # must be required
-        calib_func=calib_func,
-        weight_config=weight_config,
+        mode=mode,
+        bits=-1,
+        example_inputs=example_inputs,
+        run_fn=run_fn,
         use_auto_scale=use_auto_scale,
         use_mse_search=use_mse_search,
         folding=folding,
         return_int=return_int,
-        use_full_range=use_full_range,
-    )
-    logger.info("AWQ quantization done.")
+        use_full_range=use_full_range,)
     return model
 
 
