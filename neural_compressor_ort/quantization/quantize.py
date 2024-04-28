@@ -21,7 +21,6 @@ from onnxruntime.quantization.quantize import QuantConfig
 from neural_compressor_ort.utils.base_config import BaseConfig, ComposableConfig, config_registry
 from neural_compressor_ort.utils import logger, algos_mapping, log_quant_execution
 from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
-from neural_compressor_ort.quantization.config import FRAMEWORK_NAME
 
 
 
@@ -76,7 +75,7 @@ def _quantize(
     """
     registered_configs = config_registry.get_cls_configs()
     if isinstance(quant_config, dict):
-        quant_config = ComposableConfig.from_dict(quant_config, config_registry=registered_configs[FRAMEWORK_NAME])
+        quant_config = ComposableConfig.from_dict(quant_config, config_registry=registered_configs)
         logger.info(f"Parsed a config dict to construct the quantization config: {quant_config}.")
     else:
         assert isinstance(

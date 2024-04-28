@@ -29,7 +29,6 @@ from neural_compressor_ort.quantization.algorithm_entry import (
     rtn_quantize_entry,
 )
 from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
-from neural_compressor_ort.quantization.config import FRAMEWORK_NAME
 from neural_compressor_ort.utils.onnx_model import ONNXModel
 
 
@@ -114,7 +113,7 @@ class MatMulNBitsQuantizer:
         ], "Only RTN, GPTQ and AWQ algorithms are supported, but get {} algorithm".format(self.algorithm)
 
     def _generate_inc_config(self):
-        config_class = config_registry.get_cls_configs()[FRAMEWORK_NAME][self.algorithm.lower()]
+        config_class = config_registry.get_cls_configs()[self.algorithm.lower()]
 
         quant_kwargs = {
             "weight_bits": self.n_bits,

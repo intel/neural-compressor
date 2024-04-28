@@ -23,7 +23,6 @@ from neural_compressor_ort.utils import logger
 from neural_compressor_ort.utils.base_config import BaseConfig, get_all_config_set_from_config_registry
 from neural_compressor_ort.utils.base_tuning import EvaluationFuncWrapper, TuningConfig, init_tuning
 from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
-from neural_compressor_ort.quantization.config import FRAMEWORK_NAME
 from neural_compressor_ort.quantization.quantize import _quantize
 
 __all__ = [
@@ -33,7 +32,7 @@ __all__ = [
 
 
 def get_all_config_set() -> Union[BaseConfig, List[BaseConfig]]:
-    return get_all_config_set_from_config_registry(fwk_name=FRAMEWORK_NAME)
+    return get_all_config_set_from_config_registry()
 
 
 def autotune(

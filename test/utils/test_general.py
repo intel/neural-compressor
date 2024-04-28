@@ -9,7 +9,7 @@ from neural_compressor_ort.utils.base_config import (
     config_registry,
     get_all_config_set_from_config_registry,
     register_config,
-    register_supported_configs_for_fwk,
+    register_supported_configs,
 )
 from neural_compressor_ort.utils.tuning_param import TuningParam
 from neural_compressor_ort.utils.base_tuning import ConfigLoader, ConfigSet, Evaluator, SequentialSampler
@@ -22,7 +22,6 @@ PRIORITY_FAKE_ALGO_1 = 90
 FAKE_CONFIG_NAME_1 = "fake_one"
 DEFAULT_WEIGHT_BITS = [4, 6]
 
-FAKE_FRAMEWORK_NAME = "FAKE_FWK"
 
 FAKE_MODEL_INFO = [("OP1_NAME", "OP_TYPE1"), ("OP2_NAME", "OP_TYPE1"), ("OP3_NAME", "OP_TYPE2")]
 
@@ -38,7 +37,7 @@ class FakeModel:
         return "FakeModel"
 
 
-@register_config(framework_name=FAKE_FRAMEWORK_NAME, algo_name=FAKE_CONFIG_NAME, priority=PRIORITY_FAKE_ALGO)
+@register_config(algo_name=FAKE_CONFIG_NAME, priority=PRIORITY_FAKE_ALGO)
 class FakeAlgoConfig(BaseConfig):
     """Config class for fake algo."""
 
@@ -98,7 +97,7 @@ def get_default_fake_config() -> FakeAlgoConfig:
     return FakeAlgoConfig()
 
 
-@register_config(framework_name=FAKE_FRAMEWORK_NAME, algo_name=FAKE_CONFIG_NAME_1, priority=PRIORITY_FAKE_ALGO_1)
+@register_config(algo_name=FAKE_CONFIG_NAME_1, priority=PRIORITY_FAKE_ALGO_1)
 class FakeAlgoOneConfig(BaseConfig):
     """Config class for fake algo."""
 
@@ -150,10 +149,10 @@ class FakeAlgoOneConfig(BaseConfig):
 
 
 def get_all_config_set() -> Union[BaseConfig, List[BaseConfig]]:
-    return get_all_config_set_from_config_registry(fwk_name=FAKE_FRAMEWORK_NAME)
+    return get_all_config_set_from_config_registry()
 
 
-register_supported_configs_for_fwk(fwk_name=FAKE_FRAMEWORK_NAME)
+register_supported_configs()
 
 
 class TestEvaluator(unittest.TestCase):
@@ -197,7 +196,7 @@ class TestBaseConfig(unittest.TestCase):
         fake_default_config = get_default_fake_config()
         self.assertEqual(fake_default_config.weight_dtype, "int")
         config_set = get_all_config_set()
-        self.assertEqual(len(config_set), len(config_registry.get_all_config_cls_by_fwk_name(FAKE_FRAMEWORK_NAME)))
+        self.assertEqual(len(config_set), len(config_registry.get_all_config_cls()))
         self.assertEqual(config_set[0].weight_bits, DEFAULT_WEIGHT_BITS)
 
     def test_config_expand_complex_tunable_type(self):

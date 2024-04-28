@@ -44,7 +44,7 @@ __all__ = [
     "options",
     "register_config",
     "get_all_config_set_from_config_registry",
-    "register_supported_configs_for_fwk",
+    "register_supported_configs",
     "BaseConfig",
     "ConfigRegistry",
     "ComposableConfig",
@@ -63,26 +63,24 @@ class ConfigRegistry(object):
         return cls._config_registry
 
     @classmethod
-    def register_config_impl(cls, framework_name: str, algo_name: str, priority: Union[float, int] = 0):
+    def register_config_impl(cls, algo_name: str, priority: Union[float, int] = 0):
         """Register config decorator.
 
-        The register the configuration classes for different algorithms within specific frameworks.
+        The register the configuration classes for different algorithms.
 
         Usage example:
-            @ConfigRegistry.register_config(framework_name=FRAMEWORK_NAME, algo_name=ExampleAlgorithm, priority=100)
+            @ConfigRegistry.register_config(algo_name=ExampleAlgorithm, priority=100)
             class ExampleAlgorithmConfig:
                 # Configuration details for the ExampleAlgorithm
 
         Args:
-            framework_name: the framework name.
             algo_name: the algorithm name.
             priority: priority: the priority of the configuration. A larger number indicates a higher priority,
                 which will be tried first at the auto-tune stage. Defaults to 0.
         """
 
         def decorator(config_cls):
-            cls.registered_configs.setdefault(framework_name, {})
-            cls.registered_configs[framework_name][algo_name] = {"priority": priority, "cls": config_cls}
+            cls.registered_configs[algo_name] = {"priority": priority, "cls": config_cls}
             return config_cls
 
         return decorator
@@ -95,27 +93,22 @@ class ConfigRegistry(object):
     @classmethod
     def get_sorted_configs(cls) -> Dict[str, OrderedDict[str, Dict[str, object]]]:
         """Get registered configurations sorted by priority."""
-        sorted_configs = OrderedDict()
-        for framework_name, algos in sorted(cls.registered_configs.items()):
-            sorted_configs[framework_name] = OrderedDict(
-                sorted(algos.items(), key=lambda x: x[1]["priority"], reverse=True)
-            )
-        return sorted_configs
+        return OrderedDict(
+            sorted(cls.registered_configs.items(), key=lambda x: x[1]["priority"], reverse=True)
+        )
 
     @classmethod
     def get_cls_configs(cls) -> Dict[str, Dict[str, object]]:
         """Get registered configurations without priority."""
         cls_configs = {}
-        for framework_name, algos in cls.registered_configs.items():
-            cls_configs[framework_name] = {}
-            for algo_name, config_data in algos.items():
-                cls_configs[framework_name][algo_name] = config_data["cls"]
+        for algo_name, config_data in cls.registered_configs.items():
+            cls_configs[algo_name] = config_data["cls"]
         return cls_configs
 
     @classmethod
-    def get_all_config_cls_by_fwk_name(cls, fwk_name: str) -> List[Type[BaseConfig]]:
+    def get_all_config_cls(cls) -> List[Type[BaseConfig]]:
         configs_cls = []
-        for algo_name, config_pairs in cls.registered_configs.get(fwk_name, {}).items():
+        for algo_name, config_pairs in cls.registered_configs.items():
             configs_cls.append(config_pairs["cls"])
         return configs_cls
 
@@ -123,24 +116,23 @@ class ConfigRegistry(object):
 config_registry = ConfigRegistry()
 
 
-def register_config(framework_name: str, algo_name: str, priority: Union[float, int] = 0):
+def register_config(algo_name: str, priority: Union[float, int] = 0):
     """Register config decorator.
 
-    The register the configuration classes for different algorithms within specific frameworks.
+    The register the configuration classes for different algorithms.
 
     Usage example:
-        @register_config(framework_name=FRAMEWORK_NAME, algo_name=ExampleAlgorithm, priority=100)
+        @register_config(algo_name=ExampleAlgorithm, priority=100)
         class ExampleAlgorithmConfig:
             # Configuration details for the ExampleAlgorithm
 
     Args:
-        framework_name: the framework name.
         algo_name: the algorithm name.
         priority: the priority of the configuration. A larger number indicates a higher priority,
             which will be tried first at the auto-tune stage. Defaults to 0.
     """
 
-    return config_registry.register_config_impl(framework_name=framework_name, algo_name=algo_name, priority=priority)
+    return config_registry.register_config_impl(algo_name=algo_name, priority=priority)
 
 
 class BaseConfig(ABC):
@@ -497,21 +489,17 @@ class ComposableConfig(BaseConfig):
         return model_info_dict
 
 
-def get_all_config_set_from_config_registry(fwk_name: str) -> Union[BaseConfig, List[BaseConfig]]:
-    all_registered_config_cls: List[BaseConfig] = config_registry.get_all_config_cls_by_fwk_name(fwk_name)
+def get_all_config_set_from_config_registry() -> Union[BaseConfig, List[BaseConfig]]:
+    all_registered_config_cls: List[BaseConfig] = config_registry.get_all_config_cls()
     config_set = []
     for config_cls in all_registered_config_cls:
         config_set.append(config_cls.get_config_set_for_tuning())
     return config_set
 
 
-def register_supported_configs_for_fwk(fwk_name: str):
-    """Register supported configs for specific framework.
-
-    Args:
-        fwk_name: the framework name.
-    """
-    all_registered_config_cls: List[BaseConfig] = config_registry.get_all_config_cls_by_fwk_name(fwk_name)
+def register_supported_configs():
+    """Register supported configs."""
+    all_registered_config_cls: List[BaseConfig] = config_registry.get_all_config_cls()
     for config_cls in all_registered_config_cls:
         config_cls.register_supported_configs()
 
