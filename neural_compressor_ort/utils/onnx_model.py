@@ -20,9 +20,8 @@ from pathlib import Path
 import onnx
 from onnxruntime.quantization.onnx_model import ONNXModel as ORTONNXModel
 
-from neural_compressor_ort.common import Logger
+from neural_compressor_ort.utils import logger
 
-logger = Logger().get_logger()
 
 __all__ = ["ONNXModel"]
 
@@ -73,7 +72,7 @@ class ONNXModel(ORTONNXModel):
 
     def check_is_large_model(self):
         """Check model > 2GB."""
-        from neural_compressor_ort.utils.utility import MAXIMUM_PROTOBUF
+        from neural_compressor_ort.utils import MAXIMUM_PROTOBUF
 
         init_size = 0
         for init in self.model.graph.initializer:

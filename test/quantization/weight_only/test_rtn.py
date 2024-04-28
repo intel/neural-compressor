@@ -3,14 +3,9 @@ import os
 import shutil
 import unittest
 
-import torch
 from optimum.exporters.onnx import main_export
-from transformers import AutoTokenizer
 
-from neural_compressor_ort.common import Logger
-from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
-
-logger = Logger().get_logger()
+from neural_compressor_ort.utils import logger
 
 
 def find_onnx_file(folder_path):
@@ -22,35 +17,7 @@ def find_onnx_file(folder_path):
     return None
 
 
-class DummyNLPDataloader(CalibrationDataReader):
-    def __init__(self, model_name):
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.sequence_a = "intel-extension-for-transformers is based in SH"
-        self.sequence_b = "Where is intel-extension-for-transformers based? NYC or SH"
-
-        self.encoded_list = []
-        encoded_input = dict(self.tokenizer(self.sequence_a, self.sequence_b, return_tensors="pt"))
-        input_shape = encoded_input["input_ids"].shape
-        encoded_input["position_ids"] = (
-            torch.arange(0, input_shape[-1], dtype=torch.long).unsqueeze(0).view(-1, input_shape[-1])
-        )
-
-        # convert torch tensor to numpy
-        for input_name, input_value in encoded_input.items():
-            if isinstance(input_value, torch.Tensor):
-                encoded_input[input_name] = input_value.numpy()
-
-        self.encoded_list.append(encoded_input)
-        self.iter_next = iter(self.encoded_list)
-
-    def get_next(self):
-        return next(self.iter_next, None)
-
-    def rewind(self):
-        self.iter_next = iter(self.encoded_list)
-
-
-class TestGPTQQuant(unittest.TestCase):
+class TestRTNQuant(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         main_export(
@@ -58,7 +25,6 @@ class TestGPTQQuant(unittest.TestCase):
             output="gptj",
         )
         self.gptj = find_onnx_file("./gptj")
-        self.calibration_data_reader = DummyNLPDataloader("hf-internal-testing/tiny-random-gptj")
 
     @classmethod
     def tearDownClass(self):
@@ -66,15 +32,7 @@ class TestGPTQQuant(unittest.TestCase):
 
     def setUp(self):
         # print the test name
-        logger.info(f"Running ONNXRT TestGPTQQuant test: {self.id()}")
-
-    def _count_woq_matmul(self, q_model, bits=4, group_size=32):
-        op_names = [
-            i.name
-            for i in q_model.graph.node
-            if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q{}G{}".format(bits, group_size))
-        ]
-        return len(op_names)
+        logger.info(f"Running ONNXRT TestRTNQuant test: {self.id()}")
 
     def _check_model_is_quantized(self, model):
         node_optypes = [node.op_type for node in model.graph.node]
@@ -89,101 +47,109 @@ class TestGPTQQuant(unittest.TestCase):
                 return True
         return False
 
-    def _apply_gptq(self, quant_config):
-        logger.info(f"Test GPTQ with config {quant_config}")
+    def _count_woq_matmul(self, q_model, bits=4, group_size=32):
+        op_names = [
+            i.name
+            for i in q_model.graph.node
+            if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q{}G{}".format(bits, group_size))
+        ]
+        return len(op_names)
+
+    def _apply_rtn(self, quant_config):
+        logger.info(f"Test RTN with config {quant_config}")
         from neural_compressor_ort.quantization.quantize import _quantize
 
         fp32_model = copy.deepcopy(self.gptj)
-        qmodel = _quantize(fp32_model, quant_config, calibration_data_reader=self.calibration_data_reader)
+        qmodel = _quantize(fp32_model, quant_config)
         self.assertIsNotNone(qmodel)
         return qmodel
 
 
-class TestGPTQQuantWithInternalAPI(TestGPTQQuant):
-    def test_gptq_params_combination(self):
-        from neural_compressor_ort.quantization import GPTQConfig
+class TestRTNQuantWithInternalAPI(TestRTNQuant):
+    def test_rtn_params_combination(self):
+        from neural_compressor_ort.quantization import RTNConfig
 
         # some tests were skipped to accelerate the CI
         # TODO: check params combination.
         # TODO: Add number check for group_size.
-        gptq_options = {
+        rtn_options = {
             "weight_dtype": ["int"],
-            "weight_bits": [4],
+            "weight_bits": [4, 3, 8],
             "weight_group_size": [32],
             "weight_sym": [True, False],
             "act_dtype": ["fp32"],
-            "accuracy_level": [0],
-            "percdamp": [0.01],
-            "blocksize": [128],
-            "actorder": [True, False],
-            "mse": [True, False],
-            "perchannel": [True, False],
         }
         from itertools import product
 
-        keys = GPTQConfig.params_list
-        for value in product(*gptq_options.values()):
+        keys = RTNConfig.params_list
+        for value in product(*rtn_options.values()):
             d = dict(zip(keys, value))
-            print(d)
-            quant_config = GPTQConfig(**d)
-            qmodel = self._apply_gptq(quant_config)
+            quant_config = RTNConfig(**d)
+            qmodel = self._apply_rtn(quant_config)
             self.assertEqual(self._count_woq_matmul(qmodel, bits=value[1], group_size=value[2]), 30)
 
-    def test_gptq_config(self):
-        from neural_compressor_ort.quantization import GPTQConfig
+    def test_rtn_config(self):
+        from neural_compressor_ort.quantization import RTNConfig
 
-        gptq_config1 = GPTQConfig(weight_bits=4)
+        rtn_config1 = RTNConfig(weight_bits=4)
         quant_config_dict = {
-            "gptq": {"weight_bits": 4},
+            "rtn": {"weight_bits": 4},
         }
-        gptq_config2 = GPTQConfig.from_dict(quant_config_dict["gptq"])
-        self.assertEqual(gptq_config1.to_dict(), gptq_config2.to_dict())
+        rtn_config2 = RTNConfig.from_dict(quant_config_dict["rtn"])
+        self.assertEqual(rtn_config1.to_dict(), rtn_config2.to_dict())
 
-    def test_quantize_gptq_from_dict_default(self):
-        from neural_compressor_ort.quantization import get_default_gptq_config
+    def test_quantize_rtn_from_dict_default(self):
+        from neural_compressor_ort.quantization import get_default_rtn_config
+        from neural_compressor_ort.quantization.quantize import _quantize
 
-        qmodel = self._apply_gptq(quant_config=get_default_gptq_config())
+        qmodel = self._apply_rtn(quant_config=get_default_rtn_config())
         self.assertIsNotNone(qmodel)
         self.assertTrue(self._check_model_is_quantized(qmodel))
 
-    def test_quantize_gptq_from_dict_beginner(self):
+    def test_quantize_rtn_from_dict_beginner(self):
+        from neural_compressor_ort.quantization.quantize import _quantize
+
         quant_config = {
-            "gptq": {
+            "rtn": {
                 "weight_bits": 4,
                 "weight_group_size": 32,
             },
         }
-        qmodel = self._apply_gptq(quant_config)
+        qmodel = self._apply_rtn(quant_config)
         self.assertIsNotNone(qmodel)
         self.assertIsNotNone(qmodel)
         self.assertTrue(self._check_model_is_quantized(qmodel))
 
-    def test_quantize_gptq_from_class_beginner(self):
-        from neural_compressor_ort.quantization import GPTQConfig
+    def test_quantize_rtn_from_class_beginner(self):
+        from neural_compressor_ort.quantization import RTNConfig
+        from neural_compressor_ort.quantization.quantize import _quantize
 
-        quant_config = GPTQConfig(weight_bits=4, weight_group_size=32)
-        qmodel = self._apply_gptq(quant_config)
+        quant_config = RTNConfig(weight_bits=4, weight_group_size=32)
+        qmodel = self._apply_rtn(quant_config)
         self.assertIsNotNone(qmodel)
 
-    def test_quantize_gptq_fallback_from_class_beginner(self):
-        from neural_compressor_ort.quantization import GPTQConfig
+    def test_quantize_rtn_fallback_from_class_beginner(self):
+        from neural_compressor_ort.quantization import RTNConfig
+        from neural_compressor_ort.quantization.quantize import _quantize
 
-        fp32_config = GPTQConfig(weight_dtype="fp32")
-        quant_config = GPTQConfig(
+        fp32_config = RTNConfig(weight_dtype="fp32")
+        quant_config = RTNConfig(
             weight_bits=4,
             weight_dtype="int",
             weight_sym=False,
             weight_group_size=32,
         )
         quant_config.set_local("/h.4/mlp/fc_out/MatMul", fp32_config)
-        qmodel = self._apply_gptq(quant_config)
+        qmodel = self._apply_rtn(quant_config)
         self.assertIsNotNone(qmodel)
         self.assertEqual(self._count_woq_matmul(qmodel), 29)
         self.assertFalse(self._check_node_is_quantized(qmodel, "/h.4/mlp/fc_out/MatMul"))
 
-    def test_quantize_gptq_from_dict_advance(self):
+    def test_quantize_rtn_from_dict_advance(self):
+        from neural_compressor_ort.quantization.quantize import _quantize
+
         quant_config = {
-            "gptq": {
+            "rtn": {
                 "global": {
                     "weight_bits": 4,
                     "weight_group_size": 32,
@@ -195,13 +161,13 @@ class TestGPTQQuantWithInternalAPI(TestGPTQQuant):
                 },
             }
         }
-        qmodel = self._apply_gptq(quant_config)
+        qmodel = self._apply_rtn(quant_config)
         self.assertIsNotNone(qmodel)
         self.assertEqual(self._count_woq_matmul(qmodel), 29)
         self.assertFalse(self._check_node_is_quantized(qmodel, "/h.4/mlp/fc_out/MatMul"))
 
         quant_config = {
-            "gptq": {
+            "rtn": {
                 "global": {
                     "weight_bits": 4,
                     "weight_group_size": 32,
@@ -214,20 +180,18 @@ class TestGPTQQuantWithInternalAPI(TestGPTQQuant):
                 },
             }
         }
-        qmodel = self._apply_gptq(quant_config)
+        qmodel = self._apply_rtn(quant_config)
         self.assertIsNotNone(qmodel)
         for node in qmodel.graph.node:
             if node.name == "/h.4/mlp/fc_out/MatMul":
                 self.assertTrue(node.input[1].endswith("Q8G32"))
 
 
-class TestGPTQQuantWithORTLikeAPI(TestGPTQQuant):
-    def test_gptq_config_4bits(self):
+class TestRTNQuantWithORTLikeAPI(TestRTNQuant):
+    def test_rtn_config_4bits(self):
         from neural_compressor_ort.quantization import matmul_4bits_quantizer
 
-        algo_config = matmul_4bits_quantizer.GPTQWeightOnlyQuantConfig(
-            calibration_data_reader=self.calibration_data_reader
-        )
+        algo_config = matmul_4bits_quantizer.RTNWeightOnlyQuantConfig()
 
         quant = matmul_4bits_quantizer.MatMul4BitsQuantizer(
             copy.deepcopy(self.gptj),
@@ -239,12 +203,10 @@ class TestGPTQQuantWithORTLikeAPI(TestGPTQQuant):
         self.assertIsNotNone(quant.model)
         self.assertTrue(self._check_model_is_quantized(quant.model))
 
-    def test_gptq_config_4bits_with_exclude_node(self):
+    def test_rtn_config_4bits_with_exclude_node(self):
         from neural_compressor_ort.quantization import matmul_4bits_quantizer
 
-        algo_config = matmul_4bits_quantizer.GPTQWeightOnlyQuantConfig(
-            calibration_data_reader=self.calibration_data_reader
-        )
+        algo_config = matmul_4bits_quantizer.RTNWeightOnlyQuantConfig()
 
         quant = matmul_4bits_quantizer.MatMul4BitsQuantizer(
             copy.deepcopy(self.gptj),
@@ -258,12 +220,10 @@ class TestGPTQQuantWithORTLikeAPI(TestGPTQQuant):
         self.assertTrue(self._check_model_is_quantized(quant.model))
         self.assertFalse(self._check_node_is_quantized(quant.model, "/h.4/mlp/fc_out/MatMul"))
 
-    def test_gptq_config_nbits(self):
+    def test_rtn_config_nbits(self):
         from neural_compressor_ort.quantization import matmul_nbits_quantizer
 
-        algo_config = matmul_nbits_quantizer.GPTQWeightOnlyQuantConfig(
-            calibration_data_reader=self.calibration_data_reader
-        )
+        algo_config = matmul_nbits_quantizer.RTNWeightOnlyQuantConfig()
 
         for n_bits in [3, 4, 8]:
             quant = matmul_nbits_quantizer.MatMulNBitsQuantizer(
@@ -277,12 +237,10 @@ class TestGPTQQuantWithORTLikeAPI(TestGPTQQuant):
             self.assertIsNotNone(quant.model)
             self.assertEqual(self._count_woq_matmul(quant.model, bits=n_bits, group_size=32), 30)
 
-    def test_gptq_config_nbits_with_exclude_node(self):
+    def test_rtn_config_nbits_with_exclude_node(self):
         from neural_compressor_ort.quantization import matmul_nbits_quantizer
 
-        algo_config = matmul_nbits_quantizer.GPTQWeightOnlyQuantConfig(
-            calibration_data_reader=self.calibration_data_reader
-        )
+        algo_config = matmul_nbits_quantizer.RTNWeightOnlyQuantConfig()
 
         for n_bits in [3, 4, 8]:
             quant = matmul_nbits_quantizer.MatMulNBitsQuantizer(

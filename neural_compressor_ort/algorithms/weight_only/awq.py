@@ -28,13 +28,11 @@ from packaging.version import Version
 
 from neural_compressor_ort.algorithms.weight_only.rtn import rtn_quantize
 from neural_compressor_ort.algorithms.weight_only.utility import pad_tensor, prepare_inputs, qdq_tensor
-from neural_compressor_ort.common import Logger
 from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
 from neural_compressor_ort.quantization.config import AWQConfig
 from neural_compressor_ort.utils.onnx_model import ONNXModel
-from neural_compressor_ort.utils.utility import ONNXRT116_VERSION, ONNXRT1161_VERSION, dtype_mapping
+from neural_compressor_ort.utils import ONNXRT116_VERSION, ONNXRT1161_VERSION, dtype_mapping, logger
 
-logger = Logger().get_logger()
 
 __all__ = ["apply_awq_on_model", "awq_quantize"]
 

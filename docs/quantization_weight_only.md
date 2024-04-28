@@ -125,7 +125,7 @@ To find the best algorithm, users can leverage the `autotune` feature to explore
 
 ```python
 from neural_compressor_ort.quantization import get_woq_tuning_config, autotune
-from neural_compressor_ort.common.base_tuning import TuningConfig
+from neural_compressor_ort.utils.base_tuning import TuningConfig
 
 tune_config = TuningConfig(config_set=get_woq_tuning_config())
 best_model = autotune(

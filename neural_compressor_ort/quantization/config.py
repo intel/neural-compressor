@@ -29,13 +29,22 @@ from onnxruntime.quantization.quantize import DynamicQuantConfig as ORTDynamicQu
 from onnxruntime.quantization.quantize import QuantConfig
 from onnxruntime.quantization.quantize import StaticQuantConfig as ORTStaticQuantConfig
 
-from neural_compressor_ort.common import Logger
-from neural_compressor_ort.common.base_config import BaseConfig, register_config, register_supported_configs_for_fwk
-from neural_compressor_ort.common.utils import AWQ, DEFAULT_WHITE_LIST, GPTQ, OP_NAME_OR_MODULE_TYPE, RTN, SMOOTH_QUANT
+from neural_compressor_ort.utils.base_config import BaseConfig, register_config, register_supported_configs_for_fwk
 from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
-from neural_compressor_ort.utils import PRIORITY_AWQ, PRIORITY_GPTQ, PRIORITY_RTN, PRIORITY_SMOOTH_QUANT
+from neural_compressor_ort.utils import (
+    logger,
+    AWQ,
+    DEFAULT_WHITE_LIST,
+    GPTQ,
+    OP_NAME_OR_MODULE_TYPE,
+    RTN,
+    SMOOTH_QUANT,
+    PRIORITY_AWQ,
+    PRIORITY_GPTQ,
+    PRIORITY_RTN,
+    PRIORITY_SMOOTH_QUANT,
+)
 
-logger = Logger().get_logger()
 
 __all__ = [
     "FRAMEWORK_NAME",

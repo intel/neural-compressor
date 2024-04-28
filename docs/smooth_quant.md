@@ -344,7 +344,7 @@ The tuning process looks for the optimal `alpha` value from a list of `alpha` va
 Here is an example:
 
 ```python
-from neural_compressor_ort.common.base_tuning import TuningConfig
+from neural_compressor_ort.utils.base_tuning import TuningConfig
 from neural_compressor_ort.quantization import SmoothQuantConfig, autotune
 
 config = TuningConfig(config_set=[SmoothQuantConfig(alpha=np.arange(0.1, 0.5, 0.05).tolist())])

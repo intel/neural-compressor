@@ -19,9 +19,9 @@ from typing import Any, Callable, List, Optional, Tuple, Union
 
 import onnx
 
-from neural_compressor_ort.common import logger
-from neural_compressor_ort.common.base_config import BaseConfig, get_all_config_set_from_config_registry
-from neural_compressor_ort.common.base_tuning import EvaluationFuncWrapper, TuningConfig, init_tuning
+from neural_compressor_ort.utils import logger
+from neural_compressor_ort.utils.base_config import BaseConfig, get_all_config_set_from_config_registry
+from neural_compressor_ort.utils.base_tuning import EvaluationFuncWrapper, TuningConfig, init_tuning
 from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
 from neural_compressor_ort.quantization.config import FRAMEWORK_NAME
 from neural_compressor_ort.quantization.quantize import _quantize

@@ -14,4 +14,4 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Intel® Neural Compressor ORT: An open-source Python library supporting popular model compression techniques for ONNXRuntime Framework."""
+"""ONNX Neural Compressor: An open-source Python library supporting popular model compression techniques for ONNXRuntime Framework."""

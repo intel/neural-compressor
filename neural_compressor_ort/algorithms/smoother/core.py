@@ -24,7 +24,7 @@ from onnx import helper, numpy_helper
 from onnx import onnx_pb as onnx_proto
 
 from neural_compressor_ort.algorithms.smoother.calibrator import Calibrator
-from neural_compressor_ort.common import Logger
+from neural_compressor_ort.utils import logger
 from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
 from neural_compressor_ort.utils.onnx_model import ONNXModel
 from neural_compressor_ort.utils.utility import (
@@ -34,7 +34,6 @@ from neural_compressor_ort.utils.utility import (
     simple_progress_bar,
 )
 
-logger = Logger().get_logger()
 
 __all__ = ["Smoother"]
 

@@ -24,7 +24,6 @@ import numpy as np
 import onnx
 from optimum.exporters.onnx import main_export
 
-from neural_compressor_ort.common import Logger
 from neural_compressor_ort.quantization import (
     CalibrationDataReader,
     QuantType,
@@ -33,7 +32,6 @@ from neural_compressor_ort.quantization import (
 )
 from neural_compressor_ort.quantization.quantize import _quantize
 
-logger = Logger().get_logger()
 
 
 class DataReader(CalibrationDataReader):

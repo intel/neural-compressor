@@ -143,7 +143,7 @@ quantize(model, q_model_path, config)
 This means user could leverage the advance feature of ONNX Neural Compressor to tune out a best quantized model which has best accuracy and good performance. User should provide `eval_fn`.
 
 ``` python
-from neural_compressor_ort.common.base_tuning import Evaluator, TuningConfig
+from neural_compressor_ort.base_tuning import Evaluator, TuningConfig
 from neural_compressor_ort.quantization import (
     CalibrationDataReader,
     GPTQConfig,

@@ -1,23 +1,15 @@
-"""Tests for common components.
-
-!!! Please do not import any framework-specific modules in this file. !!!
-* Note, we may need to add some auto check mechanisms to ensure this.
-
-These tests aim to assess the fundamental functionalities of common utils and enhance code coverage.
-All tests will be included for each framework CI.
-"""
+"""Tests for utils components."""
 
 import unittest
 
-from neural_compressor_ort.common import options
-from neural_compressor_ort.common.utils import (
+from neural_compressor_ort.utils import (
     CpuInfo,
     LazyImport,
     set_random_seed,
     set_resume_from,
-    set_tensorboard,
     set_workspace,
     singleton,
+    options,
 )
 
 
@@ -51,16 +43,6 @@ class TestOptions(unittest.TestCase):
         resume_from = 12345
         with self.assertRaises(AssertionError):
             set_resume_from(resume_from)
-
-    def test_set_tensorboard(self):
-        tensorboard = True
-        set_tensorboard(tensorboard)
-        self.assertEqual(options.tensorboard, tensorboard)
-
-        # non bool type
-        tensorboard = 123
-        with self.assertRaises(AssertionError):
-            set_tensorboard(tensorboard)
 
 
 class TestCPUInfo(unittest.TestCase):

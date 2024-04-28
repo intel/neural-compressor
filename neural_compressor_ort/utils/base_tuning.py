@@ -17,8 +17,8 @@ import copy
 import uuid
 from typing import Any, Callable, Dict, Generator, Iterator, List, Optional, Sized, Tuple, Union
 
-from neural_compressor_ort.common.base_config import BaseConfig
-from neural_compressor_ort.common.utils import TuningLogger, logger
+from neural_compressor_ort.utils.base_config import BaseConfig
+from neural_compressor_ort.utils import logger
 
 __all__ = [
     "Evaluator",
@@ -240,6 +240,7 @@ class ConfigLoader:
             yield self.config_set[index]
 
 
+
 class TuningConfig:
     """Config for auto tuning pipeline.
 
@@ -345,6 +346,45 @@ class TuningMonitor:
         )
         # [-1] is the last element representing the latest trail record.
         return reach_max_trials or meet_accuracy_goal
+
+
+class TuningLogger:
+    """A unified logger for the tuning/quantization process.
+
+    It assists validation teams in retrieving logs.
+    """
+
+    @classmethod
+    def tuning_start(cls) -> None:
+        logger.info("Tuning started.")
+
+    @classmethod
+    def trial_start(cls, trial_index: int = None) -> None:
+        logger.info("%d-trail started.", trial_index)
+
+    @classmethod
+    def quantization_start(cls, stacklevel=2) -> None:
+        logger.info("Quantization started.", stacklevel=stacklevel)
+
+    @classmethod
+    def quantization_end(cls, stacklevel=2) -> None:
+        logger.info("Quantization end.", stacklevel=stacklevel)
+
+    @classmethod
+    def evaluation_start(cls) -> None:
+        logger.info("Evaluation started.")
+
+    @classmethod
+    def evaluation_end(cls) -> None:
+        logger.info("Evaluation end.")
+
+    @classmethod
+    def trial_end(cls, trial_index: int = None) -> None:
+        logger.info("%d-trail end.", trial_index)
+
+    @classmethod
+    def tuning_end(cls) -> None:
+        logger.info("Tuning completed.")
 
 
 def init_tuning(tuning_config: TuningConfig) -> Tuple[ConfigLoader, TuningLogger, TuningMonitor]:

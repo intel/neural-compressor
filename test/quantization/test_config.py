@@ -7,9 +7,8 @@ import numpy as np
 import onnx
 from optimum.exporters.onnx import main_export
 
-from neural_compressor_ort.common import Logger
+from neural_compressor_ort.utils import logger
 
-logger = Logger().get_logger()
 
 
 def find_onnx_file(folder_path):

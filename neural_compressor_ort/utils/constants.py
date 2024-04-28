@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 # All constants
 
 # constants for configs
@@ -32,10 +31,6 @@ STATIC_QUANT = "static_quant"
 SMOOTH_QUANT = "smooth_quant"
 GPTQ = "gptq"
 AWQ = "awq"  # pragma: no cover
-HQQ = "hqq"  # pragma: no cover
-TEQ = "teq"  # pragma: no cover
-AUTOROUND = "autoround"
-FP8_QUANT = "fp8_quant"
 
 # options
 import datetime
@@ -45,3 +40,17 @@ DEFAULT_WORKSPACE = "./nc_workspace/{}/".format(datetime.datetime.now().strftime
 from typing import Callable, Union
 
 OP_NAME_OR_MODULE_TYPE = Union[str, Callable]
+
+from packaging.version import Version
+
+ONNXRT116_VERSION = Version("1.16.0")
+ONNXRT1161_VERSION = Version("1.16.1")
+
+PRIORITY_RTN = 60
+PRIORITY_GPTQ = 70
+PRIORITY_AWQ = 50
+PRIORITY_SMOOTH_QUANT = 80
+
+MAXIMUM_PROTOBUF = 2147483648
+
+WHITE_MODULE_LIST = ["MatMul", "Conv"]

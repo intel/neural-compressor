@@ -36,7 +36,7 @@ from neural_compressor_ort.algorithms.weight_only.utility import (
 )
 from neural_compressor_ort.quantization.config import RTNConfig
 from neural_compressor_ort.utils.onnx_model import ONNXModel
-from neural_compressor_ort.utils.utility import (
+from neural_compressor_ort.utils import (
     ONNXRT116_VERSION,
     ONNXRT1161_VERSION,
     dtype_mapping,

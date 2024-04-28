@@ -27,8 +27,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 from typing_extensions import Self
 
-from neural_compressor_ort.common.tuning_param import TuningParam
-from neural_compressor_ort.common.utils import (
+from neural_compressor_ort.utils.tuning_param import TuningParam
+from neural_compressor_ort.utils.constants import (
     BASE_CONFIG,
     COMPOSABLE_CONFIG,
     DEFAULT_WHITE_LIST,
@@ -37,8 +37,8 @@ from neural_compressor_ort.common.utils import (
     GLOBAL,
     LOCAL,
     OP_NAME_OR_MODULE_TYPE,
-    logger,
 )
+from neural_compressor_ort.utils import logger
 
 __all__ = [
     "options",
@@ -526,7 +526,7 @@ def _check_value(name, src, supported_type, supported_value=[]):
 
     Example::
 
-        from neural_compressor_ort.common.base_config import _check_value
+        from neural_compressor_ort.base_config import _check_value
 
         def datatype(self, datatype):
             if _check_value("datatype", datatype, list, ["fp32", "bf16", "uint8", "int8"]):
@@ -556,11 +556,10 @@ class Options:
     """Option Class for configs.
 
     This class is used for configuring global variables. The global variable options is created with this class.
-    If you want to change global variables, you should use functions from neural_compressor_ort.common.utils.utility.py:
+    If you want to change global variables, you should use functions from neural_compressor_ort.utils.utility.py:
         set_random_seed(seed: int)
         set_workspace(workspace: str)
         set_resume_from(resume_from: str)
-        set_tensorboard(tensorboard: bool)
 
     Args:
         random_seed(int): Random seed used in neural compressor.
@@ -572,25 +571,20 @@ class Options:
                           The tuning history was automatically saved in the workspace directory
                                during the last tune process.
                           Default value is None.
-        tensorboard(bool): This flag indicates whether to save the weights of the model and the inputs of each layer
-                               for visual display.
-                           Default value is False.
 
     Example::
 
-        from neural_compressor_ort.common import set_random_seed, set_workspace, set_resume_from, set_tensorboard
+        from neural_compressor_ort import set_random_seed, set_workspace, set_resume_from
         set_random_seed(2022)
         set_workspace("workspace_path")
         set_resume_from("workspace_path")
-        set_tensorboard(True)
     """
 
-    def __init__(self, random_seed=1978, workspace=DEFAULT_WORKSPACE, resume_from=None, tensorboard=False):
+    def __init__(self, random_seed=1978, workspace=DEFAULT_WORKSPACE, resume_from=None):
         """Init an Option object."""
         self.random_seed = random_seed
         self.workspace = workspace
         self.resume_from = resume_from
-        self.tensorboard = tensorboard
 
     @property
     def random_seed(self):
@@ -624,17 +618,6 @@ class Options:
         """Set resume_from."""
         if resume_from is None or _check_value("resume_from", resume_from, str):
             self._resume_from = resume_from
-
-    @property
-    def tensorboard(self):
-        """Get tensorboard."""
-        return self._tensorboard
-
-    @tensorboard.setter
-    def tensorboard(self, tensorboard):
-        """Set tensorboard."""
-        if _check_value("tensorboard", tensorboard, bool):
-            self._tensorboard = tensorboard
 
 
 options = Options()
