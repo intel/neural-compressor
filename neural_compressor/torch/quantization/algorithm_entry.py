@@ -30,7 +30,7 @@ from neural_compressor.torch.quantization import (
     StaticQuantConfig,
     TEQConfig,
 )
-from neural_compressor.torch.utils import logger, register_algo
+from neural_compressor.torch.utils import Mode, logger, register_algo
 
 
 ###################### RTN Algo Entry ##################################
@@ -106,6 +106,7 @@ def gptq_entry(
         }
     )
     kwargs.pop("example_inputs")
+    kwargs.pop("mode")  # TODO: will be removed after GPTQ refactoring
 
     logger.warning("lm_head in transformer model is skipped by GPTQ")
     model, quantization_perm = gptq_quantize(model=model, weight_config=weight_config, *args, **kwargs)
@@ -118,10 +119,14 @@ def gptq_entry(
 @register_algo(name=STATIC_QUANT)
 @torch.no_grad()
 def static_quant_entry(
-    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], StaticQuantConfig], *args, **kwargs
+    model: torch.nn.Module,
+    configs_mapping: Dict[Tuple[str, callable], StaticQuantConfig],
+    mode: Mode = Mode.QUANTIZE,
+    *args,
+    **kwargs
 ) -> torch.nn.Module:
     logger.info("Quantize model with the static quant algorithm.")
-    from neural_compressor.torch.algorithms.static_quant import save, static_quantize
+    from neural_compressor.torch.algorithms.static_quant import StaticQuantQuantizer
 
     # convert the user config into internal format
     quant_config_mapping = {}
@@ -149,17 +154,10 @@ def static_quant_entry(
     example_inputs = kwargs.get("example_inputs", None)
     inplace = kwargs.get("inplace", True)
     assert example_inputs is not None, "Please provide example_inputs for static quantization."
-    q_model = static_quantize(
-        model=model,
-        tune_cfg=quant_config_mapping,
-        run_fn=run_fn,
-        example_inputs=example_inputs,
-        inplace=inplace,
-    )
-    logger.info("Static quantization done.")
-    q_model.ori_save = q_model.save
-    q_model.save = MethodType(save, q_model)
-    return q_model
+
+    quantizer = StaticQuantQuantizer(tune_cfg=quant_config_mapping)
+    model = quantizer.execute(model, mode=mode, run_fn=run_fn, example_inputs=example_inputs, inplace=inplace)
+    return model
 
 
 ###################### Smooth Quant Algo Entry ##################################
@@ -373,6 +371,7 @@ def autoround_quantize_entry(
             scale_dtype = quant_config.scale_dtype
 
     kwargs.pop("example_inputs")
+    kwargs.pop("mode")  # TODO: will be removed after auto_round refactoring
     model, autoround_config = autoround_quantize(
         model=model,
         weight_config=weight_config,
