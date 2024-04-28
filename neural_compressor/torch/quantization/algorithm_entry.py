@@ -334,7 +334,7 @@ def teq_quantize_entry(
 ###################### AUTOROUND Algo Entry ##################################
 @register_algo(name=AUTOROUND)
 def autoround_quantize_entry(
-    model: torch.nn.Module, 
+    model: torch.nn.Module,
     configs_mapping: Dict[Tuple[str, callable], AutoRoundConfig],
     mode: Mode = Mode.QUANTIZE,
     *args,
@@ -376,7 +376,7 @@ def autoround_quantize_entry(
             scale_dtype = quant_config.scale_dtype
 
     kwargs.pop("example_inputs")
-    
+
     quantizer = AutoRoundQuantizer(
         model=model,
         weight_config=weight_config,

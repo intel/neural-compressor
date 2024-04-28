@@ -12,18 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
 import time
+
+import torch
 from auto_round import AutoRound  # pylint: disable=E0401
 from auto_round.calib_dataset import CALIB_DATASETS  # pylint: disable=E0401
-from auto_round.utils import get_block_names # pylint: disable=E0401
+from auto_round.utils import get_block_names  # pylint: disable=E0401
 
-from neural_compressor.torch.utils import logger
 from neural_compressor.torch.algorithms import Quantizer
+from neural_compressor.torch.utils import logger
+
 
 class AutoRoundQuantizer(Quantizer):
     def __init__(
-        self, 
+        self,
         model,
         weight_config: dict = {},
         enable_full_range: bool = False,
@@ -48,6 +50,7 @@ class AutoRoundQuantizer(Quantizer):
         scale_dtype="fp32",
     ):
         """Init a AutQRoundQuantizer object.
+
         Args:
         model: The PyTorch model to be quantized.
         weight_config (dict): Configuration for weight quantization (default is an empty dictionary).
@@ -88,7 +91,7 @@ class AutoRoundQuantizer(Quantizer):
         scale_dtype (str): The data type of quantization scale to be used (default is "float32"), different kernels
                             have different choices.
         """
-        
+
         self.model = model
         self.tokenizer = None
         self.weight_config = weight_config
@@ -113,7 +116,6 @@ class AutoRoundQuantizer(Quantizer):
         self.dynamic_max_gap = dynamic_max_gap
         self.data_type = "int"
         self.scale_dtype = scale_dtype
-        
 
     def quantize(self, model: torch.nn.Module, *args, **kwargs):
         run_fn = kwargs.get("run_fn", None)
@@ -129,8 +131,7 @@ class AutoRoundQuantizer(Quantizer):
             run_fn(model)
         model = self.convert(model)
         return model
-          
-        
+
     def prepare(self, model, *args, **kwargs):
         """Prepares a given model for quantization.
         Args:
@@ -167,12 +168,12 @@ class AutoRoundQuantizer(Quantizer):
         )
         self.rounder.prepare()
         return model
-    
+
     def convert(self, model: torch.nn.Module, *args, **kwargs):
         model, weight_config = self.rounder.convert()
         model.autoround_config = weight_config
         return model
-        
+
 
 @torch.no_grad()
 def get_autoround_default_run_fn(
@@ -248,8 +249,9 @@ def get_autoround_default_run_fn(
             "Effective samples size: {}, Target sample size: {}".format(total_cnt, n_samples)
         )
 
+
 class AutoRoundProcessor(AutoRound):
-    
+
     def prepare(self):
         """Quantize the model and return the quantized model along with weight configurations.
 
@@ -267,18 +269,18 @@ class AutoRoundProcessor(AutoRound):
         if not self.low_gpu_mem_usage:
             self.model = self.model.to(self.device)
         # inputs = self.cache_block_input(block_names[0], self.n_samples)
-        
+
         # cache block input
         self.inputs = {}
         self.tmp_block_name = self.block_names[0]
         self._replace_forward()
-    
+
     def convert(self):
         # self.calib(self.n_samples)
         self._recover_forward()
         inputs = self.inputs[self.tmp_block_name]
         del self.tmp_block_name
-        
+
         del self.inputs
         if "input_ids" in inputs.keys():
             dim = int((hasattr(self.model, "config") and "chatglm" in self.model.config.model_type))
