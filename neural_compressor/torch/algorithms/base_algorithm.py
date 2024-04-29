@@ -14,7 +14,7 @@
 
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from typing import Any
+from typing import Any, Optional
 
 import torch
 
@@ -22,37 +22,33 @@ from neural_compressor.torch.utils import Mode
 
 
 class Quantizer(ABC):
-    """The base quantizer for all algorithm quantizers."""
+    """The base quantizer for all algorithm quantizers.
 
-    def __init__(self, tune_cfg: OrderedDict = {}):
+    The `Quantizer` unifies the interfaces across various quantization algorithms, including GPTQ, RTN, etc.
+    Given a float model, `Quantizer` apply the quantization algorithm to the model according to the `quant_config`.
+
+    To implement a new quantization algorithm,, inherit from `Quantizer` and implement the following methods:
+        - `prepare`: prepare a given model for convert.
+        - `convert`: convert a prepared model to a quantized model.
+    Note: `quantize` and `execute` are optional for new quantization algorithms.
+    """
+
+    def __init__(self, quant_config: Optional[Any] = None):
         """Init a Quantizer object.
 
         Args:
-            tune_cfg (OrderedDict, optional): quantization config for ops. Defaults to {}.
-                Take weight-only quantization as an example,
-                    tune_cfg={
-                        'fc2':
-                            {
-                                'dtype': 'int',
-                                'bits': 4,
-                                'group_size': 32,
-                                'scheme': 'sym'
-                            }
-                    }
+            quant_config : Specifies how to apply the algorithm on the given model.
+            The format of `quant_config` can be defined by `Quantized` itself.
+            For example, `quant_config` can be a dictionary as below:
+                quant_config={
+                'fc2':{
+                    'dtype': 'int',
+                    'bits': 4,
+                    'group_size': 32,
+                    'scheme': 'sym'
+                    }}
         """
-        self.tune_cfg = tune_cfg
-
-    @abstractmethod
-    def quantize(self, model: torch.nn.Module, *args: Any, **kwargs: Any):
-        """Quantizes a given torch model.
-
-        Args:
-            model (torch.nn.Module): The torch model to be quantized.
-
-        Returns:
-            A quantized model.
-        """
-        raise NotImplementedError("{} doesn't implement `quantize` function.".format(self.__class__.__name__))
+        self.quant_config = quant_config
 
     @abstractmethod
     def prepare(self, model: torch.nn.Module, *args: Any, **kwargs: Any):
@@ -79,6 +75,30 @@ class Quantizer(ABC):
             A quantized model.
         """
         raise NotImplementedError("{} doesn't implement `convert` function. ".format(self.__class__.__name__))
+
+    def quantize(self, model: torch.nn.Module, *args: Any, **kwargs: Any):
+        """Quantizes a given float model.
+
+        Args:
+            model (torch.nn.Module): The float model to be quantized.
+
+        Returns:
+            A quantized model.
+        """
+        run_fn = kwargs.get("run_fn", None)
+        run_args = kwargs.get("run_args", None)
+        assert run_fn is not None, (
+            "Can't find run_func. Please provide run_func to quantize API "
+            "or overwrite quantize member function in your Quantizer class."
+        )
+
+        model = self.prepare(model, *args, **kwargs)
+        if run_args:
+            run_fn(model, *run_args)
+        else:
+            run_fn(model)
+        model = self.convert(model, *args, **kwargs)
+        return model
 
     def execute(self, model: torch.nn.Module, mode, *args: Any, **kwargs: Any):  # pragma: no cover
         """Execute according to mode.
