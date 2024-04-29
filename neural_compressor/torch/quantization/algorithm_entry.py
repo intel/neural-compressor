@@ -402,7 +402,7 @@ def autoround_quantize_entry(
     if getattr(model, "quantizer", False):
         del model.quantizer
     else:
-        model.quantizer = quantizer 
+        model.quantizer = quantizer
     logger.info("AutoRound quantization done.")
     return model
 

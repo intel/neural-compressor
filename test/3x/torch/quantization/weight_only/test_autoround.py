@@ -1,7 +1,8 @@
+import copy
+
 import pytest
 import torch
 import transformers
-import copy
 
 from neural_compressor.torch.algorithms.weight_only.autoround import AutoRoundQuantizer, get_autoround_default_run_fn
 from neural_compressor.torch.quantization import (
@@ -20,6 +21,7 @@ try:
 except ImportError:
     auto_round_installed = False
 
+
 def get_gpt_j():
     tiny_gptj = transformers.AutoModelForCausalLM.from_pretrained(
         "hf-internal-testing/tiny-random-GPTJForCausalLM",
@@ -27,11 +29,12 @@ def get_gpt_j():
     )
     return tiny_gptj
 
+
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
 class TestAutoRound:
     def setup_class(self):
-        self.gptj= get_gpt_j()
-    
+        self.gptj = get_gpt_j()
+
     def setup_method(self, method):
         logger.info(f"Running TestAutoRound test: {method.__name__}")
 
@@ -100,7 +103,7 @@ class TestAutoRound:
             }
         }
         quantizer = AutoRoundQuantizer(weight_config=weight_config)
-        fp32_model = gpt_j_model        
+        fp32_model = gpt_j_model
 
         # quantizer execute
         model = quantizer.prepare(model=fp32_model)
