@@ -135,7 +135,6 @@ class TestAutoRound:
             20,
             10,
         )
-        # quantizer = AutoRoundQuantizer(weight_config=quant_config)
         fp32_model = gpt_j_model
 
         # quantizer execute
