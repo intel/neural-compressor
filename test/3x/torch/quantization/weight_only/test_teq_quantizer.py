@@ -20,7 +20,7 @@ def generate_random_corpus(nsamples=32):
 
 def train(
     model,
-    train_steps=1000,
+    train_steps=100,
     lr=1e-3,
     warmup_ratio=0.05,
     gradient_accumulation_steps=1,
@@ -98,10 +98,13 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
         }
         absorb_dict = {"transformer.h.0.mlp.fc_in": ["transformer.h.0.mlp.fc_out"]}
 
-        quantizer = TrainableEquivalentQuantizer(quant_config=weight_config, folding=True, absorb_to_layer=absorb_dict)
-        model = quantizer.quantize(model, run_fn=train)
+        quantizer = TrainableEquivalentQuantizer(
+            quant_config=weight_config, folding=True, absorb_to_layer=absorb_dict, example_inputs=example_inputs
+        )
+        model = quantizer.quantize(copy.deepcopy(self.gptj), run_fn=train)
         out1 = model(test_input)
         self.assertTrue(torch.allclose(out1[0], out0[0], atol=0.03))
+
         quant_config = {
             "teq": {
                 "global": {
@@ -127,8 +130,9 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
                 },
             }
         }
-
-        qdq_model = quantize(model=self.gptj, quant_config=quant_config, run_fn=train, example_inputs=example_inputs)
+        qdq_model = quantize(
+            model=copy.deepcopy(self.gptj), quant_config=quant_config, run_fn=train, example_inputs=example_inputs
+        )
         self.assertTrue(isinstance(qdq_model, torch.nn.Module))
         out2 = qdq_model(test_input)
         self.assertTrue(torch.allclose(out1[0], out2[0]))

@@ -320,7 +320,7 @@ def teq_quantize_entry(
             folding = quant_config.folding
     assert isinstance(model, torch.nn.Module), "only support torch module"
     quantizer = TrainableEquivalentQuantizer(
-        quant_config=weight_config, folding=folding, absorb_to_layer=absorb_to_layer
+        quant_config=weight_config, folding=folding, absorb_to_layer=absorb_to_layer, example_inputs=example_inputs
     )
     model = quantizer.execute(model, mode=mode, run_fn=run_fn, example_inputs=example_inputs, inplace=inplace)
     return model
