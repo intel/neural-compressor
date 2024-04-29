@@ -50,10 +50,9 @@ class TestW8A8StaticQuantizer:
     @pytest.mark.skipif(get_torch_version() <= TORCH_VERSION_2_2_2, reason="Requires torch>=2.3.0")
     def test_quantizer_on_simple_model(self):
         model, example_inputs = self.build_simple_torch_model_and_example_inputs()
-        quant_config = None
         w8a8_static_quantizer = W8A8StaticQuantizer()
         # prepare
-        prepare_model = w8a8_static_quantizer.prepare(model, quant_config, example_inputs=example_inputs)
+        prepare_model = w8a8_static_quantizer.prepare(model, example_inputs=example_inputs)
         # calibrate
         for i in range(2):
             prepare_model(*example_inputs)
@@ -80,7 +79,7 @@ class TestW8A8StaticQuantizer:
         quant_config = None
         w8a8_static_quantizer = W8A8StaticQuantizer()
         # prepare
-        prepare_model = w8a8_static_quantizer.prepare(model, quant_config, example_inputs=example_inputs)
+        prepare_model = w8a8_static_quantizer.prepare(model, example_inputs=example_inputs)
         # calibrate
         for i in range(2):
             prepare_model(*example_inputs)

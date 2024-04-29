@@ -84,6 +84,8 @@ class W8A8StaticQuantizer(Quantizer):
 
         # 1) Capture the FX Graph to be quantized
         dynamic_shapes = kwargs.get("dynamic_shapes", None)
+        if quant_config is not None:
+            dynamic_shapes = quant_config.dynamic_shapes
         exported_model = self.export_model(model, example_inputs, dynamic_shapes=dynamic_shapes)
         logger.info("Exported the model to Aten IR successfully.")
         if exported_model is None:

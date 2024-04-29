@@ -807,7 +807,7 @@ class PT2EStaticQuantConfig(BaseConfig):
         act_sym: bool = False,
         act_granularity: str = "per_tensor",
         act_algo: str = "kl",
-        dynamic_shape: Optional[Union[Dict[str, Any], Tuple[Any]]] = None,
+        dynamic_shapes: Optional[Union[Dict[str, Any], Tuple[Any]]] = None,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init PT2E Static Quant Configs."""
@@ -820,8 +820,8 @@ class PT2EStaticQuantConfig(BaseConfig):
         self.act_sym = act_sym
         self.act_granularity = act_granularity
         self.act_algo = act_algo
-        # used by export to specific dynamic shape of example inputs
-        self.dynamic_shape = dynamic_shape
+        # used by export to specific dynamic shapes of example inputs
+        self.dynamic_shapes = dynamic_shapes
         self._post_init()
 
     @classmethod
