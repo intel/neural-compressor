@@ -334,12 +334,15 @@ def teq_quantize_entry(
 ###################### AUTOROUND Algo Entry ##################################
 @register_algo(name=AUTOROUND)
 def autoround_quantize_entry(
-    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], AutoRoundConfig], *args, **kwargs
+    model: torch.nn.Module,
+    configs_mapping: Dict[Tuple[str, callable], AutoRoundConfig],
+    mode: Mode = Mode.QUANTIZE,
+    *args,
+    **kwargs
 ) -> torch.nn.Module:
-    from neural_compressor.torch.algorithms.weight_only.autoround import autoround_quantize
+    from neural_compressor.torch.algorithms.weight_only.autoround import AutoRoundQuantizer
 
     logger.info("Quantize model with the AutoRound algorithm.")
-    calib_func = kwargs.get("run_fn", None)
     weight_config = {}
     for (op_name, op_type), quant_config in configs_mapping.items():
         if quant_config.name != AUTOROUND or quant_config.dtype == "fp32":
@@ -371,9 +374,8 @@ def autoround_quantize_entry(
             scale_dtype = quant_config.scale_dtype
 
     kwargs.pop("example_inputs")
-    kwargs.pop("mode")  # TODO: will be removed after auto_round refactoring
-    model, autoround_config = autoround_quantize(
-        model=model,
+
+    quantizer = AutoRoundQuantizer(
         weight_config=weight_config,
         enable_full_range=enable_full_range,
         batch_size=batch_size,
@@ -393,9 +395,8 @@ def autoround_quantize_entry(
         not_use_best_mse=not_use_best_mse,
         dynamic_max_gap=dynamic_max_gap,
         scale_dtype=scale_dtype,
-        **kwargs
     )
-    model.autoround_config = autoround_config
+    model = quantizer.execute(model=model, mode=mode, *args, **kwargs)
     logger.info("AutoRound quantization done.")
     return model
 
