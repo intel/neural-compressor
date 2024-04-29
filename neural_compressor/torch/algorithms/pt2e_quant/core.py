@@ -32,7 +32,7 @@ from neural_compressor.torch.algorithms.base_algorithm import Quantizer
 from neural_compressor.torch.utils import TORCH_VERSION_2_2_2, get_torch_version
 
 
-class W8A8StaticQuantizer:
+class W8A8StaticQuantizer(Quantizer):
 
     @staticmethod
     def update_quantizer_based_on_quant_config(quantizer: X86InductorQuantizer, quant_config) -> X86InductorQuantizer:
@@ -70,15 +70,14 @@ class W8A8StaticQuantizer:
             logger.error(f"Failed to export the model: {e}")
         return exported_model
 
-    def prepare(
-        self, model: torch.nn.Module, quant_config, example_inputs: Tuple[Any], *args: Any, **kwargs: Any
-    ) -> GraphModule:
+    def prepare(self, model: torch.nn.Module, example_inputs, inplace=True, *args, **kwargs) -> GraphModule:
         """Prepare the model for calibration.
 
         There are two steps in this process:
             1) export the eager model into model with Aten IR.
             2) create the `quantizer` according to the `quant_config`, and insert the observers accordingly.
         """
+        quant_config = self.quant_config
         assert isinstance(example_inputs, tuple), f"Expected `example_inputs` to be a tuple, got {type(example_inputs)}"
         # Set the model to eval mode
         model = model.eval()
