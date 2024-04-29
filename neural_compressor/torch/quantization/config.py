@@ -17,7 +17,7 @@
 # pylint:disable=import-error
 
 from collections import OrderedDict
-from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple, Union
 
 import torch
 
@@ -50,6 +50,7 @@ from neural_compressor.torch.utils.constants import (
     PRIORITY_TEQ,
     PT2E_STATIC_QUANT,
 )
+from neural_compressor.torch.utils.utility import _ConfigMappingWrapper
 
 __all__ = [
     "RTNConfig",
@@ -58,6 +59,8 @@ __all__ = [
     "get_default_gptq_config",
     "HQQConfig",
     "get_default_hqq_config",
+    "PT2EStaticQuantConfig",
+    "get_default_pt2e_static_config",
 ]
 
 
@@ -779,9 +782,9 @@ def get_default_AutoRound_config() -> AutoRoundConfig:
 ######################## PT2E Static Quant Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=PT2E_STATIC_QUANT)
 class PT2EStaticQuantConfig(BaseConfig):
-    """Config class for static quantization."""
+    """Config class for PT2E static quantization."""
 
-    name = STATIC_QUANT
+    name = PT2E_STATIC_QUANT
     params_list = [
         "w_dtype",
         "w_sym",
@@ -804,6 +807,7 @@ class PT2EStaticQuantConfig(BaseConfig):
         act_sym: bool = False,
         act_granularity: str = "per_tensor",
         act_algo: str = "kl",
+        dynamic_shape: Optional[Union[Dict[str, Any], Tuple[Any]]] = None,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init PT2E Static Quant Configs."""
@@ -816,6 +820,8 @@ class PT2EStaticQuantConfig(BaseConfig):
         self.act_sym = act_sym
         self.act_granularity = act_granularity
         self.act_algo = act_algo
+        # used by export to specific dynamic shape of example inputs
+        self.dynamic_shape = dynamic_shape
         self._post_init()
 
     @classmethod
@@ -827,7 +833,7 @@ class PT2EStaticQuantConfig(BaseConfig):
         cls.supported_configs = supported_configs
 
     @staticmethod
-    def get_model_info(model: torch.nn.Module, example_inputs) -> List[Tuple[str, Callable]]:
+    def get_model_info(model: torch.nn.Module, example_inputs=None) -> List[Tuple[str, Callable]]:
         pass
 
     @classmethod
@@ -837,7 +843,17 @@ class PT2EStaticQuantConfig(BaseConfig):
     def to_config_mapping(
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDict[Union[str, str], OrderedDict[str, BaseConfig]]:
-        pass
+        config_mapping = OrderedDict({self.name: self})
+        return config_mapping
+
+
+def get_default_pt2e_static_config() -> PT2EStaticQuantConfig:
+    """Generate the default pt2e static quant config.
+
+    Returns:
+        the default pt2e static quant config.
+    """
+    return PT2EStaticQuantConfig()
 
 
 ######################## Static Quant Config ###############################

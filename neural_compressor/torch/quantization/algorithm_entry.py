@@ -168,13 +168,16 @@ def pt2e_static_quant_entry(model: torch.nn.Module, configs_mapping, mode: Mode,
     logger.info("Quantize model with the PT2E static quant algorithm.")
     from neural_compressor.torch.algorithms.pt2e_quant.core import W8A8StaticQuantizer
 
-    quant_config = configs_mapping._original_config
-    w8a8_quantizer = W8A8StaticQuantizer(quant_config=quant_config)
-    run_fn = kwargs.get("run_fn", None)
-    example_inputs = kwargs.get("example_inputs", None)
-    inplace = kwargs.get("inplace", True)
-    model = w8a8_quantizer.execute(model, mode=mode, run_fn=run_fn, example_inputs=example_inputs, inplace=inplace)
-    return model
+    for _, quant_config in configs_mapping.items():
+        if quant_config.name == PT2E_STATIC_QUANT:
+            w8a8_quantizer = W8A8StaticQuantizer(quant_config=quant_config)
+            run_fn = kwargs.get("run_fn", None)
+            example_inputs = kwargs.get("example_inputs", None)
+            inplace = kwargs.get("inplace", True)
+            model = w8a8_quantizer.execute(
+                model, mode=mode, run_fn=run_fn, example_inputs=example_inputs, inplace=inplace
+            )
+            return model
 
 
 ###################### Smooth Quant Algo Entry ##################################

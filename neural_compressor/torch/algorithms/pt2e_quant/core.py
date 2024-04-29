@@ -28,6 +28,7 @@ from torch.ao.quantization.quantizer.x86_inductor_quantizer import X86InductorQu
 from torch.fx.graph_module import GraphModule
 
 from neural_compressor.common.utils import logger
+from neural_compressor.torch.algorithms.base_algorithm import Quantizer
 from neural_compressor.torch.utils import TORCH_VERSION_2_2_2, get_torch_version
 
 

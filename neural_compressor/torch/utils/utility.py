@@ -13,6 +13,7 @@
 # limitations under the License.
 
 
+from collections import OrderedDict
 from enum import Enum
 from typing import Callable, Dict, List, Tuple, Union
 
@@ -131,3 +132,17 @@ class Mode(Enum):
     PREPARE = "prepare"
     CONVERT = "convert"
     QUANTIZE = "quantize"
+
+
+class _ConfigMappingWrapper(OrderedDict):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._orig_config = None
+
+    @property
+    def orig_config(self):
+        return self.orig_config
+
+    @orig_config.setter
+    def orig_config(self, value):
+        self.orig_config = value
