@@ -29,15 +29,17 @@ from torch.fx.graph_module import GraphModule
 
 from neural_compressor.common.utils import logger
 from neural_compressor.torch.algorithms.base_algorithm import Quantizer
-from neural_compressor.torch.utils import TORCH_VERSION_2_2_2, get_torch_version
+from neural_compressor.torch.utils import TORCH_VERSION_2_2_2, create_xiq_quantizer_from_pt2e_config, get_torch_version
 
 
 class W8A8StaticQuantizer(Quantizer):
 
     @staticmethod
-    def update_quantizer_based_on_quant_config(quantizer: X86InductorQuantizer, quant_config) -> X86InductorQuantizer:
-        # TODO: add the logic to update the quantizer based on the quant_config
-        quantizer.set_global(xiq.get_default_x86_inductor_quantization_config())
+    def update_quantizer_based_on_quant_config(quant_config=None) -> X86InductorQuantizer:
+        if not quant_config:
+            quantizer = X86InductorQuantizer(xiq.get_default_x86_inductor_quantization_config())
+        else:
+            quantizer = create_xiq_quantizer_from_pt2e_config(quant_config)
         return quantizer
 
     @staticmethod
@@ -92,8 +94,7 @@ class W8A8StaticQuantizer(Quantizer):
             return
 
         # 2) create the `quantizer` according to the `quant_config`, and insert the observers accordingly.
-        quantizer = X86InductorQuantizer()
-        quantizer = self.update_quantizer_based_on_quant_config(quantizer, quant_config)
+        quantizer = self.update_quantizer_based_on_quant_config(quant_config)
         prepared_model = prepare_pt2e(exported_model, quantizer)
         return prepared_model
 

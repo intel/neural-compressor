@@ -50,7 +50,6 @@ from neural_compressor.torch.utils.constants import (
     PRIORITY_TEQ,
     PT2E_STATIC_QUANT,
 )
-from neural_compressor.torch.utils.utility import _ConfigMappingWrapper
 
 __all__ = [
     "RTNConfig",
