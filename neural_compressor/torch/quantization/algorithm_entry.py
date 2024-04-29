@@ -324,15 +324,6 @@ def teq_quantize_entry(
     )
     model = quantizer.execute(model, mode=mode, run_fn=run_fn, example_inputs=example_inputs, inplace=inplace)
     return model
-    # model = teq_quantize(
-    #     model,
-    #     example_inputs=example_inputs,
-    #     folding=folding,
-    #     absorb_to_layer=absorb_to_layer,
-    #     calib_func=calib_func,
-    #     weight_config=weight_config,
-    # )
-    logger.info("TEQ quantization done.")
 
 
 ###################### AUTOROUND Algo Entry ##################################
