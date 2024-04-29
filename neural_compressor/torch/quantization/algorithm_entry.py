@@ -279,14 +279,15 @@ def awq_quantize_entry(
     model = quantizer.execute(
         model,
         mode=mode,
-        bits=-1, # no quantize for op not in weight_config
-        example_inputs=example_inputs, # must be required
+        bits=-1,  # no quantize for op not in weight_config
+        example_inputs=example_inputs,  # must be required
         run_fn=run_fn,
         use_auto_scale=use_auto_scale,
         use_mse_search=use_mse_search,
         folding=folding,
         return_int=return_int,
-        use_full_range=use_full_range,)
+        use_full_range=use_full_range,
+    )
     return model
 
 

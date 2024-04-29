@@ -7,11 +7,11 @@ import transformers
 from neural_compressor.torch.algorithms.weight_only.modules import WeightOnlyLinear
 from neural_compressor.torch.quantization import (
     RTNConfig,
+    convert,
     get_default_double_quant_config,
     get_default_rtn_config,
-    quantize,
     prepare,
-    convert,
+    quantize,
 )
 
 
@@ -224,6 +224,7 @@ class TestRTNQuant:
         model = quantize(model, double_quant_config_dict)
         out2 = model(self.example_inputs)[0]
         assert torch.allclose(out2, self.label, atol=0.1), "Accuracy gap atol > 0.1 is unexpected."
+
 
 class TestRTNQuantWithNewAPI:
     def setup_class(self):

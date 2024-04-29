@@ -109,6 +109,7 @@ class TestHQQCUDA:
             scale_quant_group_size=scale_quant_group_size,
         )
 
+
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="test requires a GPU")
 class TestHQQCUDAWithNewAPI:
     @classmethod
@@ -118,7 +119,7 @@ class TestHQQCUDAWithNewAPI:
         hqq_global_option.use_half = True
 
     def test_hqq_quant(self):
-        from neural_compressor.torch.quantization import get_default_hqq_config, prepare, convert
+        from neural_compressor.torch.quantization import convert, get_default_hqq_config, prepare
 
         model = AutoModelForCausalLM.from_pretrained("facebook/opt-125m")
         example_inputs = torch.tensor(

@@ -19,8 +19,8 @@ from collections import OrderedDict
 
 import torch
 
-from neural_compressor.torch.utils import get_device, logger
 from neural_compressor.torch.algorithms import Quantizer
+from neural_compressor.torch.utils import get_device, logger
 
 from .modules import MulLinear
 from .utility import (
@@ -29,9 +29,9 @@ from .utility import (
     get_block_prefix,
     get_example_input,
     get_module_input_output,
-    set_module,
-    replace_forward,
     recover_forward,
+    replace_forward,
+    set_module,
 )
 
 __all__ = ["AWQQuantizer"]
@@ -532,7 +532,7 @@ class AWQQuantizer(Quantizer):
         use_full_range=False,
         data_type="int",
         *args,
-        **kwargs
+        **kwargs,
     ):
         """Converts a prepared model to a quantized model.
 

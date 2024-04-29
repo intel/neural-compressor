@@ -121,7 +121,7 @@ class TestHQQCPUWithNewAPI:
         monkeypatch.setattr(hqq_global_option, "use_half", False)
 
     def test_hqq_quant(self, force_use_cpu, force_not_half):
-        from neural_compressor.torch.quantization import get_default_hqq_config, prepare, convert
+        from neural_compressor.torch.quantization import convert, get_default_hqq_config, prepare
 
         hqq_global_option.use_half = False
         model = AutoModelForCausalLM.from_pretrained("facebook/opt-125m")
@@ -160,6 +160,7 @@ class TestHQQCPUWithNewAPI:
             quant_scale=quant_scale,
             scale_quant_group_size=scale_quant_group_size,
         )
+
 
 # _common_cpu_test(
 #     nbits=4,

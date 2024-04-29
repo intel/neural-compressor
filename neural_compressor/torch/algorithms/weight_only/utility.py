@@ -925,6 +925,7 @@ def get_example_input(dataloader, i=1):
                 iter += 1
     return example_inp
 
+
 def replace_forward(model):
     """Replace forward to get the input args and kwargs of first block for AWQ algorithm.
 
@@ -967,6 +968,7 @@ def replace_forward(model):
     model.forward = partial(model_forward, model)
     return model
 
+
 def recover_forward(model):
     """Recover model and block forward for AWQ algorithm.
 
@@ -983,6 +985,7 @@ def recover_forward(model):
     first_block = block_list[0]
     first_block.forward = first_block.forward_orig
     return model
+
 
 # copy from neural_compressor/adaptor/torch_utils/util.py
 def get_module_input_output(

@@ -16,16 +16,11 @@ from typing import Callable, List, Optional, Tuple
 
 import torch
 
+from neural_compressor.torch.algorithms import Quantizer
 from neural_compressor.torch.utils import logger
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
-from neural_compressor.torch.algorithms import Quantizer
 
-from .config import (
-    ConfigMappingType,
-    hqq_global_option,
-    HQQModuleConfig,
-    QTensorConfig
-)
+from .config import ConfigMappingType, HQQModuleConfig, QTensorConfig, hqq_global_option
 from .core import HQQLinear
 
 
@@ -146,7 +141,11 @@ class HQQuantizer(Quantizer):
         scale_quant_group_size = config.scale_quant_group_size
 
         weight_qconfig = QTensorConfig(
-            nbits=nbits, channel_wise=True, group_size=group_size, optimize=True, round_zero=True if nbits == 4 else False
+            nbits=nbits,
+            channel_wise=True,
+            group_size=group_size,
+            optimize=True,
+            round_zero=True if nbits == 4 else False,
         )
         zero_qconfig = None
         if quant_zero:
@@ -157,7 +156,6 @@ class HQQuantizer(Quantizer):
         hqq_module_config = HQQModuleConfig(weight=weight_qconfig, scale=scale_qconfig, zero=zero_qconfig)
         logger.debug(hqq_module_config)
         return hqq_module_config
-
 
     def _parse_hqq_configs_mapping(self, configs_mapping):
         qconfig_mapping = {}

@@ -7,13 +7,7 @@ import transformers
 from neural_compressor.common import Logger
 
 logger = Logger().get_logger()
-from neural_compressor.torch.quantization import (
-    AWQConfig,
-    get_default_awq_config,
-    quantize,
-    prepare,
-    convert,
-)
+from neural_compressor.torch.quantization import AWQConfig, convert, get_default_awq_config, prepare, quantize
 
 
 def get_gpt_j():
@@ -64,6 +58,7 @@ class TestAWQ(unittest.TestCase):
         out2 = qdq_model(example_inputs)
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-1))
 
+
 class TestAWQWithNewAPI(unittest.TestCase):
     @classmethod
     def setUpClass(self):
@@ -89,17 +84,24 @@ class TestAWQWithNewAPI(unittest.TestCase):
         out1 = self.gptj(example_inputs)
         quant_config = AWQConfig(bits=8, group_size=-1)
         logger.info(f"Test AWQ with config {quant_config}")
-        model = prepare(model=self.gptj, quant_config=quant_config, example_inputs=self.lm_input,)
+        model = prepare(
+            model=self.gptj,
+            quant_config=quant_config,
+            example_inputs=self.lm_input,
+        )
         calib_func(model)
         qdq_model = convert(model)
         out2 = qdq_model(example_inputs)
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-2))
 
-
         # default awq_quantize is 4 bits, 32 group size, use big atol=1e-1
         quant_config = AWQConfig()
         logger.info(f"Test AWQ with config {quant_config}")
-        model = prepare(model=self.gptj, quant_config=quant_config, example_inputs=self.lm_input,)
+        model = prepare(
+            model=self.gptj,
+            quant_config=quant_config,
+            example_inputs=self.lm_input,
+        )
         calib_func(model)
         qdq_model = convert(model)
         out2 = qdq_model(example_inputs)

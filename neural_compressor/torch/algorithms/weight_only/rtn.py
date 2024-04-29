@@ -23,8 +23,8 @@ from collections import OrderedDict
 
 import torch
 
-from neural_compressor.torch.utils import get_device, logger, set_module
 from neural_compressor.torch.algorithms import Quantizer
+from neural_compressor.torch.utils import get_device, logger, set_module
 
 from .utility import cast_fp8, quant_tensor, search_clip
 
@@ -143,7 +143,8 @@ class RTNQuantizer(Quantizer):
                     bits = int(dtype.lstrip("int"))
                     dtype = "int"
             log_msg = (
-                f"RTN quantization config: bits={bits}, group_size={group_size}, " + f"scheme={scheme}, quantile={quantile}"
+                f"RTN quantization config: bits={bits}, group_size={group_size}, "
+                + f"scheme={scheme}, quantile={quantile}"
             )
             if dtype != "int":
                 log_msg += f", dtype={dtype}"
