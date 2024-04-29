@@ -398,11 +398,11 @@ def autoround_quantize_entry(
             dynamic_max_gap=dynamic_max_gap,
             scale_dtype=scale_dtype,
         )
+    model = quantizer.execute(model=model, mode=mode, *args, **kwargs)
     if getattr(model, "quantizer", False):
         del model.quantizer
     else:
-        model.quantizer = quantizer
-    model = quantizer.execute(model=model, mode=mode, *args, **kwargs)
+        model.quantizer = quantizer 
     logger.info("AutoRound quantization done.")
     return model
 

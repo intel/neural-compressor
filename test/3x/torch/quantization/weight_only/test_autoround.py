@@ -1,6 +1,7 @@
 import pytest
 import torch
 import transformers
+import copy
 
 from neural_compressor.torch.algorithms.weight_only.autoround import AutoRoundQuantizer, get_autoround_default_run_fn
 from neural_compressor.torch.quantization import (
@@ -19,29 +20,24 @@ try:
 except ImportError:
     auto_round_installed = False
 
-
-@pytest.fixture(scope="module")
-def gpt_j():
+def get_gpt_j():
     tiny_gptj = transformers.AutoModelForCausalLM.from_pretrained(
         "hf-internal-testing/tiny-random-GPTJForCausalLM",
         torchscript=True,
     )
     return tiny_gptj
 
-
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
 class TestAutoRound:
-    @staticmethod
-    @pytest.fixture(scope="class", autouse=True)
-    def gpt_j_model(gpt_j):
-        yield gpt_j
-
+    def setup_class(self):
+        self.gptj= get_gpt_j()
+    
     def setup_method(self, method):
         logger.info(f"Running TestAutoRound test: {method.__name__}")
 
-    def test_autoround(self, gpt_j_model):
+    def test_autoround(self):
         inp = torch.ones([1, 10], dtype=torch.long)
-
+        gpt_j_model = copy.deepcopy(self.gptj)
         tokenizer = transformers.AutoTokenizer.from_pretrained(
             "hf-internal-testing/tiny-random-GPTJForCausalLM", trust_remote_code=True
         )
@@ -79,9 +75,9 @@ class TestAutoRound:
         assert "scale" in q_model.autoround_config["transformer.h.0.attn.k_proj"].keys()
         assert torch.float32 == q_model.autoround_config["transformer.h.0.attn.k_proj"]["scale_dtype"]
 
-    def test_quantizer(self, gpt_j_model):
+    def test_quantizer(self):
         inp = torch.ones([1, 10], dtype=torch.long)
-
+        gpt_j_model = copy.deepcopy(self.gptj)
         tokenizer = transformers.AutoTokenizer.from_pretrained(
             "hf-internal-testing/tiny-random-GPTJForCausalLM", trust_remote_code=True
         )
@@ -104,7 +100,7 @@ class TestAutoRound:
             }
         }
         quantizer = AutoRoundQuantizer(weight_config=weight_config)
-        fp32_model = gpt_j_model
+        fp32_model = gpt_j_model        
 
         # quantizer execute
         model = quantizer.prepare(model=fp32_model)
@@ -117,9 +113,9 @@ class TestAutoRound:
         assert "scale" in q_model.autoround_config["transformer.h.0.attn.k_proj"].keys()
         assert torch.float32 == q_model.autoround_config["transformer.h.0.attn.k_proj"]["scale_dtype"]
 
-    def test_new_api(self, gpt_j_model):
+    def test_new_api(self):
         inp = torch.ones([1, 10], dtype=torch.long)
-
+        gpt_j_model = copy.deepcopy(self.gptj)
         tokenizer = transformers.AutoTokenizer.from_pretrained(
             "hf-internal-testing/tiny-random-GPTJForCausalLM", trust_remote_code=True
         )
