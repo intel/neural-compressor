@@ -16,6 +16,9 @@
 # limitations under the License.
 #
 
+import copy
+from typing import Any
+
 import torch
 import transformers
 
@@ -24,7 +27,7 @@ from neural_compressor.torch.utils import get_device, logger
 from .modules import MulLinear, TEQLinearFakeQuant
 from .utility import get_module, quant_tensor, set_module
 
-__all__ = ["teq_quantize", "TEQuantizer"]
+__all__ = ["TEQuantizer", "TrainableEquivalentQuantizer"]
 
 
 class TEQuantizer:
@@ -309,43 +312,43 @@ class TEQuantizer:
             torch.save(self.model.state_dict(), save_state_dict_file)
 
 
-def teq_quantize(
-    model, weight_config={}, absorb_to_layer={}, folding=True, dataloader=None, calib_func=None, example_inputs=None
-):
-    """Run TEQ weight-only quantization."""
-    assert isinstance(model, torch.nn.Module), "only support torch module"
-    logger.info("TEQ quantizing start.")
-    if example_inputs is None:
-        if dataloader is None:  # pragma: no cover
-            assert False, "Please provide dataloader or example_inputs for TEQ algorithm."
-        try:
-            for idx, (input, label) in enumerate(dataloader):
-                example_inputs = input
-                break
-        except:  # pragma: no cover
-            for idx, input in enumerate(dataloader):
-                example_inputs = input
-                break
+from neural_compressor.torch.algorithms.base_algorithm import Quantizer
 
-    teq_quantizer = TEQuantizer(model, weight_config, absorb_to_layer, folding, example_inputs)
 
-    # 1. wrapper tuning scale to model
-    teq_quantizer.add_tuning_scale()
+class TrainableEquivalentQuantizer(Quantizer):
 
-    # 2. tuning
-    # custom train function, there calls calib_func
-    if calib_func:  # pragma: no cover
-        calib_func(teq_quantizer.model)
-    else:
-        if dataloader is None:  # pragma: no cover
-            assert False, "Please provide dataloader to train."
-        teq_quantizer.train(dataloader)
+    def __init__(self, quant_config, folding, absorb_to_layer):
+        super().__init__(quant_config=quant_config)
+        self.folding = folding
+        self.absorb_to_layer = absorb_to_layer
 
-    # 3. apply scale to model
-    teq_quantizer.transform()
+    def prepare(self, model, example_inputs, inplace=True, *args, **kwargs):
+        """Prepares a given model for quantization.
 
-    # 4. get quantized model
-    teq_quantizer.quantize()
+        Args:
+            model: A float model to be quantized.
+            example_inputs: Used to trace torch model.
+            inplace: Whether to carry out model transformations in-place. Defaults to True.
 
-    logger.info("TEQ quantizing done.")
-    return teq_quantizer.model
+        Returns:
+            A prepared model.
+        """
+        if not inplace:
+            float_model = copy.deepcopy(model)
+        else:
+            float_model = model
+        assert isinstance(model, torch.nn.Module), "only support torch module"
+        logger.info("TEQ quantizing start.")
+        assert example_inputs is not None, "Please provide example_inputs for TEQ algorithm."
+        weight_config = self.quant_config
+        self.teq_quantizer = TEQuantizer(float_model, weight_config, self.absorb_to_layer, self.folding, example_inputs)
+        # 1. wrapper tuning scale to model
+        self.teq_quantizer.add_tuning_scale()
+        return float_model
+
+    def convert(self, model, *args: Any, **kwargs: Any):
+        self.teq_quantizer.model = model
+        self.teq_quantizer.transform()
+        self.teq_quantizer.quantize()
+        logger.info("TEQ quantizing done.")
+        return self.teq_quantizer.model

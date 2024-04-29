@@ -5,7 +5,7 @@ import torch
 import transformers
 
 from neural_compressor.common import logger
-from neural_compressor.torch.algorithms.weight_only.teq import teq_quantize
+from neural_compressor.torch.algorithms.weight_only.teq import TrainableEquivalentQuantizer
 from neural_compressor.torch.quantization import quantize
 
 
@@ -98,14 +98,8 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
         }
         absorb_dict = {"transformer.h.0.mlp.fc_in": ["transformer.h.0.mlp.fc_out"]}
 
-        model = teq_quantize(
-            model,
-            weight_config=weight_config,
-            absorb_to_layer=absorb_dict,
-            folding=True,
-            calib_func=train,
-            example_inputs=example_inputs,
-        )
+        quantizer = TrainableEquivalentQuantizer(quant_config=weight_config, folding=True, absorb_to_layer=absorb_dict)
+        model = quantizer.quantize(model, run_fn=train)
         out1 = model(test_input)
         self.assertTrue(torch.allclose(out1[0], out0[0], atol=0.03))
         quant_config = {
