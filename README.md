@@ -18,7 +18,7 @@ In particular, the tool provides the key features, typical examples, and open co
 
 * Support a wide range of Intel hardware such as [Intel Xeon Scalable Processors](https://www.intel.com/content/www/us/en/products/details/processors/xeon/scalable.html), [Intel Xeon CPU Max Series](https://www.intel.com/content/www/us/en/products/details/processors/xeon/max-series.html); support AMD CPU, ARM CPU, and NVidia GPU with limited testing
 
-* Validate popular LLMs such as [LLama2](./examples/onnxrt/nlp/huggingface_model/text_generation/llama/) and broad models such as [BERT-base](./examples/onnxrt/nlp/onnx_model_zoo/bert-squad/), and [ResNet50](./examples/onnxrt/image_recognition/onnx_model_zoo/resnet50/) from popular model hubs such as [Hugging Face](https://huggingface.co/), [ONNX Model Zoo](https://github.com/onnx/models#models), by leveraging automatic [accuracy-driven](./docs/design.md#workflow) quantization strategies
+* Validate popular LLMs such as [LLama2](./examples/nlp/huggingface_model/text_generation/llama/) and broad models such as [BERT-base](./examples/nlp/onnx_model_zoo/bert-squad/), and [ResNet50](./examples/image_recognition/onnx_model_zoo/resnet50/) from popular model hubs such as [Hugging Face](https://huggingface.co/), [ONNX Model Zoo](https://github.com/onnx/models#models), by leveraging automatic [accuracy-driven](./docs/design.md#workflow) quantization strategies
 
 * Collaborate with software platforms such as [Microsoft Olive](https://github.com/microsoft/Olive), and open AI ecosystem such as [Hugging Face](https://huggingface.co/blog/intel), [ONNX](https://github.com/onnx/models#models) and [ONNX Runtime](https://github.com/microsoft/onnxruntime)
 
