@@ -109,6 +109,61 @@ class TestHQQCUDA:
             scale_quant_group_size=scale_quant_group_size,
         )
 
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="test requires a GPU")
+class TestHQQCUDAWithNewAPI:
+    @classmethod
+    def setup_class(cls):
+        torch.manual_seed(0)
+        torch.cuda.manual_seed(0)
+        hqq_global_option.use_half = True
+
+    def test_hqq_quant(self):
+        from neural_compressor.torch.quantization import get_default_hqq_config, prepare, convert
+
+        model = AutoModelForCausalLM.from_pretrained("facebook/opt-125m")
+        example_inputs = torch.tensor(
+            [[10, 20, 30, 40, 50, 60]], dtype=torch.long, device=auto_detect_accelerator().current_device()
+        )
+        # test_default_config
+        quant_config = get_default_hqq_config()
+        model = prepare(model, quant_config)
+        model = convert(model)
+        q_label = model(example_inputs)[0]
+        print(q_label)
+
+    @pytest.mark.parametrize(
+        "nbits, group_size, quant_zero, quant_scale, scale_quant_group_size",
+        [
+            (4, 64, True, False, 128),
+            (4, 64, False, False, 128),
+            (4, 64, True, True, 128),
+            (4, 64, False, True, 128),
+            (8, 64, True, False, 128),
+            (8, 64, False, False, 128),
+            (8, 64, True, True, 128),
+            (8, 64, False, True, 128),
+            (4, 64, True, False, 64),
+            (4, 64, False, False, 64),
+            (4, 64, True, True, 64),
+            (4, 64, False, True, 64),
+        ],
+    )
+    def test_hqq_module_cuda(
+        self,
+        nbits,
+        group_size,
+        quant_zero,
+        quant_scale,
+        scale_quant_group_size,
+    ):
+        _common_cuda_test(
+            nbits=nbits,
+            group_size=group_size,
+            quant_zero=quant_zero,
+            quant_scale=quant_scale,
+            scale_quant_group_size=scale_quant_group_size,
+        )
+
 
 # _common_cuda_test(
 #     nbits=4,

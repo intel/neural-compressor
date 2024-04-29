@@ -34,7 +34,7 @@ from .utility import (
     recover_forward,
 )
 
-__all__ = ["awq_quantize"]
+__all__ = ["AWQQuantizer"]
 
 
 def _get_absorb_per_block(model, example_inputs, folding=False, weight_config={}):
@@ -493,13 +493,13 @@ class ActAwareWeightQuant:
 
 
 class AWQQuantizer(Quantizer):
-    def __init__(self, tune_cfg: OrderedDict = {}):
+    def __init__(self, quant_config: OrderedDict = {}):
         """Init an AWQQuantizer object.
 
         Args:
-            tune_cfg (OrderedDict, optional): quantization config for ops. Defaults to {}.
+            quant_config (OrderedDict, optional): quantization config for ops. Defaults to {}.
         """
-        super().__init__(tune_cfg)
+        super().__init__(quant_config)
 
     @torch.no_grad()
     def prepare(self, model, *args, **kwargs):
@@ -540,7 +540,7 @@ class AWQQuantizer(Quantizer):
             group_size=group_size,
             scheme=scheme,
             use_full_range=use_full_range,
-            weight_config=self.tune_cfg,
+            weight_config=self.quant_config,
             total_block_args=total_block_args,
             total_block_kwargs=total_block_kwargs,
         )
@@ -551,21 +551,3 @@ class AWQQuantizer(Quantizer):
             return_int=return_int,
         )
         return qdq_model
-
-
-    @torch.no_grad()
-    def quantize(self, model, *args, **kwargs):
-        run_fn = kwargs.get("run_fn", None)
-        run_args = kwargs.get("run_args", None)
-        assert run_fn is not None, (
-            "Can't find run_func. Please provide run_func to quantize API "
-            "or overwrite quantize member function in your Quantizer class."
-        )
-
-        model = self.prepare(model, *args, **kwargs)
-        if run_args:
-            run_fn(model, *run_args)
-        else:
-            run_fn(model)
-        model = self.convert(model, *args, **kwargs)
-        return model

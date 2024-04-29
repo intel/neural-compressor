@@ -37,10 +37,14 @@ from neural_compressor.torch.utils import Mode, logger, register_algo
 @register_algo(RTN)
 @torch.no_grad()
 def rtn_entry(
-    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], RTNConfig], *args, **kwargs
+    model: torch.nn.Module,
+    configs_mapping: Dict[Tuple[str, callable], RTNConfig],
+    mode: Mode = Mode.QUANTIZE,
+    *args,
+    **kwargs
 ) -> torch.nn.Module:
     """The main entry to apply rtn quantization."""
-    from neural_compressor.torch.algorithms.weight_only.rtn import rtn_quantize
+    from neural_compressor.torch.algorithms.weight_only.rtn import RTNQuantizer
 
     # rebuild weight_config for rtn_quantize function
     weight_config = {}
@@ -64,7 +68,8 @@ def rtn_entry(
             "double_quant_group_size": quant_config.double_quant_group_size,
         }
 
-    model = rtn_quantize(model, weight_config=weight_config)
+    quantizer = RTNQuantizer(quant_config=weight_config)
+    model = quantizer.execute(model, mode=mode)
     return model
 
 
@@ -230,7 +235,7 @@ def awq_quantize_entry(
     **kwargs
 ) -> torch.nn.Module:
     logger.info("Quantize model with the AWQ algorithm.")
-    from neural_compressor.torch.algorithms.weight_only.awq import awq_quantize, AWQQuantizer
+    from neural_compressor.torch.algorithms.weight_only.awq import AWQQuantizer
 
     weight_config = {}
     for (op_name, op_type), op_config in configs_mapping.items():
@@ -270,7 +275,7 @@ def awq_quantize_entry(
     example_inputs = kwargs.get("example_inputs", None)
     assert example_inputs is not None, "Please provide example_inputs for AWQ quantization."
 
-    quantizer = AWQQuantizer(tune_cfg=weight_config)
+    quantizer = AWQQuantizer(quant_config=weight_config)
     model = quantizer.execute(
         model,
         mode=mode,
@@ -408,13 +413,18 @@ def autoround_quantize_entry(
 @register_algo(name=HQQ)
 @torch.no_grad()
 def hqq_entry(
-    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, Callable], HQQConfig], *args, **kwargs
+    model: torch.nn.Module,
+    configs_mapping: Dict[Tuple[str, Callable], HQQConfig],
+    mode: Mode = Mode.QUANTIZE,
+    *args,
+    **kwargs
 ) -> torch.nn.Module:
-    from neural_compressor.torch.algorithms.weight_only.hqq import hqq_quantize
+    from neural_compressor.torch.algorithms.weight_only.hqq import HQQuantizer
 
     logger.info("Quantize model with the HQQ algorithm.")
-    q_model = hqq_quantize(model, configs_mapping)
-    return q_model
+    quantizer = HQQuantizer(quant_config=configs_mapping)
+    model = quantizer.execute(model, mode=mode)
+    return model
 
 
 ###################### Habana FP8 Algo Entry ##################################
