@@ -5,7 +5,7 @@ echo "${test_case}"
 
 # install requirements
 echo "set up UT env..."
-pip install -r /neural-compressor/test/onnxrt/requirements.txt
+pip install -r /neural-compressor/test/requirements.txt
 pip install pytest-cov
 pip install pytest-html
 pip list
