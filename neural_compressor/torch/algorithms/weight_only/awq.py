@@ -429,14 +429,15 @@ class ActAwareWeightQuant:
         """
         # apply quantization and clip
         logger.info("Quantizing the AWQ optimized fp32 model")
-        from .rtn import rtn_quantize
+        from .rtn import RTNQuantizer
 
-        self.model = rtn_quantize(
+        rtn_quantizer = RTNQuantizer(quant_config=self.weight_config)
+
+        self.model = rtn_quantizer.quantize(
             self.model,
-            num_bits=self.bits,
+            bits=self.bits,
             group_size=self.group_size,
             scheme=self.scheme,
-            weight_config=self.weight_config,
             return_int=return_int,
             use_full_range=self.use_full_range,
         )
@@ -503,6 +504,14 @@ class AWQQuantizer(Quantizer):
 
     @torch.no_grad()
     def prepare(self, model, *args, **kwargs):
+        """Prepare a given model to get hidden states and kwargs of first block.
+
+        Args:
+            model: A float torch model.
+
+        Returns:
+            A prepared model.
+        """
         assert isinstance(model, torch.nn.Module), "AWQ algorithm only supports torch module"
         model = replace_forward(model)
         return model
@@ -525,6 +534,26 @@ class AWQQuantizer(Quantizer):
         *args,
         **kwargs
     ):
+        """Converts a prepared model to a quantized model.
+
+        Args:
+            model: torch model.
+            bits: num bits. Defaults to 4.
+            group_size: how many elements share one scale/zp. Defaults to 32.
+            scheme: sym or asym. Defaults to "asym".
+            example_inputs: example_inputs. Defaults to None.
+            dataloader: datalaoder or example_inputs is required. Defaults to None.
+            use_auto_scale: whether enable scale for salient weight. Defaults to True.
+            use_mse_search: whether enable clip for weight by checking mse. Defaults to True.
+            folding: False will allow insert mul before linear when the scale cannot be absorbed
+                by last layer, else won't. Defaults to False.
+            return_int: Choose return fp32 or int32 model. Defaults to False.
+            use_full_range: Choose sym range whether use -2**(bits-1). Defaults to False.
+            data_type: data type. Defaults to "int".
+
+        Returns:
+            model: fake quantized model
+        """
         model = recover_forward(model)
         total_block_args = getattr(model, "total_block_args", [])
         total_block_kwargs = getattr(model, "total_block_kwargs", [])

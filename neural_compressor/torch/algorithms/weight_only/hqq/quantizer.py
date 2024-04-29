@@ -85,20 +85,43 @@ def replacement_fn(mod: torch.nn.Module, name: str, config_mapping: ConfigMappin
 
 class HQQuantizer(Quantizer):
     def __init__(self, quant_config: ConfigMappingType) -> None:
+        """Init a HQQuantizer object.
+
+        Args:
+            quant_config (ConfigMappingType): quantization config for ops.
+        """
         quant_config = self._parse_hqq_configs_mapping(quant_config)
         super().__init__(quant_config=quant_config)
 
+    @torch.no_grad()
     def prepare(self, model: torch.nn.Module, *args, **kwargs) -> Optional[torch.nn.Module]:
+        """Prepares a given model for quantization.
+
+        Will return model directly in HQQ algorithm.
+
+        Args:
+            model (torch.nn.Module): The model to be prepared.
+        """
         return model
 
+    @torch.no_grad()
     def convert(self, model: torch.nn.Module, *args, **kwargs) -> Optional[torch.nn.Module]:
+        """Converts a prepared model to a quantized model.
+
+        Args:
+            model (torch.nn.Module): The prepared model to be converted.
+
+        Returns:
+            Optional[torch.nn.Module]: A quantized model.
+        """
         _replace_with_custom_fn_if_matches_filter(
             model, replacement_fn=replacement_fn, filter_fn=filter_fn, config_mapping=self.quant_config
         )
         return model
 
+    @torch.no_grad()
     def quantize(self, model: torch.nn.Module, *args, **kwargs):
-        """Quantizes a given torch model.
+        """Quantizes a float torch model.
 
         Args:
             model: A float model to be quantized.

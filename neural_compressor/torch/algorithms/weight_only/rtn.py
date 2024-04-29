@@ -40,6 +40,13 @@ class RTNQuantizer(Quantizer):
 
     @torch.no_grad()
     def prepare(self, model, *args, **kwargs):
+        """Prepares a given model for quantization.
+
+        Will return model directly in RTN algorithm.
+
+        Args:
+            model (torch.nn.Module): The model to be prepared.
+        """
         return model
 
     @torch.no_grad()
@@ -62,19 +69,19 @@ class RTNQuantizer(Quantizer):
 
         Args:
             model: torch module
-            bits: num bits. Defaults to 4.
-            group_size (int, optional): how many elements share one scale/zp. Defaults to 32.
-            scheme (str, optional): sym or asym. Defaults to "sym".
-            quantile (float, optional): percentile of clip. Defaults to 1.0.
             dtype (str, optional): select from int, nf4, fp4. Defaults to int.
+            bits: num bits. Defaults to 4.
+            scheme (str, optional): sym or asym. Defaults to "sym".
+            group_size (int, optional): how many elements share one scale/zp. Defaults to 32.
+            group_dim (int, optional):  0 means splitting output channel,
+                                        1 means splitting input channel. Defaults to 1.
+            quantile (float, optional): percentile of clip. Defaults to 1.0.
             export_compressed_model (bool, optional): Choose return fp32 or int32 model.
                                         Defaults to False.
             use_full_range (bool, optional): Choose sym range whether use -2**(bits-1).
                                         Defaults to False.
             use_mse_search (bool, optional):  Whether search clip range.
                                         Defaults to True.
-            group_dim (int, optional):   0 means splitting output channel,
-                                        1 means splitting input channel. Defaults to 1.
 
         Returns:
             model: fake quantized torch module

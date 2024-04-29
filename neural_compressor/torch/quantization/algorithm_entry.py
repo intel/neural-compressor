@@ -46,7 +46,7 @@ def rtn_entry(
     """The main entry to apply rtn quantization."""
     from neural_compressor.torch.algorithms.weight_only.rtn import RTNQuantizer
 
-    # rebuild weight_config for rtn_quantize function
+    # rebuild weight_config for RTNQuantizer class
     weight_config = {}
     for (op_name, op_type), quant_config in configs_mapping.items():
         if quant_config.name != RTN:
@@ -279,8 +279,8 @@ def awq_quantize_entry(
     model = quantizer.execute(
         model,
         mode=mode,
-        bits=-1,
-        example_inputs=example_inputs,
+        bits=-1, # no quantize for op not in weight_config
+        example_inputs=example_inputs, # must be required
         run_fn=run_fn,
         use_auto_scale=use_auto_scale,
         use_mse_search=use_mse_search,
