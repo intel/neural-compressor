@@ -210,17 +210,3 @@ class RTNQuantizer(Quantizer):
                     m.weight.t_().contiguous()
                 m.weight.data.copy_(weight)
         return model
-
-    @torch.no_grad()
-    def quantize(self, model, *args, **kwargs):
-        """Quantizes a given torch model.
-
-        Args:
-            model: A float model to be quantized.
-
-        Returns:
-            A quantized model.
-        """
-        model = self.prepare(model, *args, **kwargs)
-        model = self.convert(model, *args, **kwargs)
-        return model

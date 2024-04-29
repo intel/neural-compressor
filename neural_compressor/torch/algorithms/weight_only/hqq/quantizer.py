@@ -114,20 +114,6 @@ class HQQuantizer(Quantizer):
         )
         return model
 
-    @torch.no_grad()
-    def quantize(self, model: torch.nn.Module, *args, **kwargs):
-        """Quantizes a float torch model.
-
-        Args:
-            model: A float model to be quantized.
-
-        Returns:
-            A quantized model.
-        """
-        model = self.prepare(model, *args, **kwargs)
-        model = self.convert(model, *args, **kwargs)
-        return model
-
     def save(self, model, path):
         # TODO: to implement it in the next PR
         pass
