@@ -27,11 +27,10 @@ import onnx
 import onnxruntime as ort
 import transformers
 
-from neural_compressor_ort.utils import logger
 from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
+from neural_compressor_ort.utils import logger
 from neural_compressor_ort.utils.onnx_model import ONNXModel
 from neural_compressor_ort.utils.utility import check_model_with_infer_shapes
-
 
 __all__ = [
     "layer_wise_quant",

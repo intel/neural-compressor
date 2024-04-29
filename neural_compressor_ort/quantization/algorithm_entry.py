@@ -20,11 +20,10 @@ import onnx
 from onnxruntime.quantization import quantize
 
 from neural_compressor_ort.algorithms import Smoother
-from neural_compressor_ort.utils import AWQ, GPTQ, RTN, SMOOTH_QUANT, logger
 from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
 from neural_compressor_ort.quantization.config import AWQConfig, GPTQConfig, RTNConfig, SmoothQuantConfig
+from neural_compressor_ort.utils import AWQ, GPTQ, RTN, SMOOTH_QUANT, logger
 from neural_compressor_ort.utils.utility import register_algo
-
 
 __all__ = [
     "smooth_quant_entry",

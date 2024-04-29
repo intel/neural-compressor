@@ -18,10 +18,9 @@ from typing import Union
 import onnx
 from onnxruntime.quantization.quantize import QuantConfig
 
-from neural_compressor_ort.utils.base_config import BaseConfig, ComposableConfig, config_registry
-from neural_compressor_ort.utils import logger, algos_mapping, log_quant_execution
 from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
-
+from neural_compressor_ort.utils import algos_mapping, log_quant_execution, logger
+from neural_compressor_ort.utils.base_config import BaseConfig, ComposableConfig, config_registry
 
 
 # ORT-like user-facing API

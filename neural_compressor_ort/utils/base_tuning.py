@@ -17,8 +17,8 @@ import copy
 import uuid
 from typing import Any, Callable, Dict, Generator, Iterator, List, Optional, Sized, Tuple, Union
 
-from neural_compressor_ort.utils.base_config import BaseConfig
 from neural_compressor_ort.utils import logger
+from neural_compressor_ort.utils.base_config import BaseConfig
 
 __all__ = [
     "Evaluator",
@@ -238,7 +238,6 @@ class ConfigLoader:
     def __iter__(self) -> Generator[BaseConfig, Any, None]:
         for index in self._sampler:
             yield self.config_set[index]
-
 
 
 class TuningConfig:

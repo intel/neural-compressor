@@ -33,7 +33,6 @@ from neural_compressor_ort.quantization import (
 from neural_compressor_ort.quantization.quantize import _quantize
 
 
-
 class DataReader(CalibrationDataReader):
     def __init__(self, model):
         model = onnx.load(model)

@@ -22,7 +22,6 @@ from onnxruntime.quantization.onnx_model import ONNXModel as ORTONNXModel
 
 from neural_compressor_ort.utils import logger
 
-
 __all__ = ["ONNXModel"]
 
 

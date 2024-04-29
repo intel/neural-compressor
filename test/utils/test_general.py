@@ -1,9 +1,9 @@
 """Tests for utils components."""
 
 import unittest
-
 from typing import Any, List, Optional, Tuple, Union
 
+from neural_compressor_ort.utils import logger
 from neural_compressor_ort.utils.base_config import (
     BaseConfig,
     config_registry,
@@ -11,10 +11,9 @@ from neural_compressor_ort.utils.base_config import (
     register_config,
     register_supported_configs,
 )
-from neural_compressor_ort.utils.tuning_param import TuningParam
 from neural_compressor_ort.utils.base_tuning import ConfigLoader, ConfigSet, Evaluator, SequentialSampler
-from neural_compressor_ort.utils import logger
 from neural_compressor_ort.utils.constants import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE
+from neural_compressor_ort.utils.tuning_param import TuningParam
 
 PRIORITY_FAKE_ALGO = 100
 FAKE_CONFIG_NAME = "fake"

@@ -7,9 +7,8 @@ import torch
 from optimum.exporters.onnx import main_export
 from transformers import AutoTokenizer
 
-from neural_compressor_ort.utils import logger
 from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
-
+from neural_compressor_ort.utils import logger
 
 
 def find_onnx_file(folder_path):

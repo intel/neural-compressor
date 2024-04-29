@@ -34,13 +34,8 @@ from neural_compressor_ort.algorithms.weight_only.utility import (
 )
 from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
 from neural_compressor_ort.quantization.config import GPTQConfig
+from neural_compressor_ort.utils import ONNXRT116_VERSION, ONNXRT1161_VERSION, dtype_mapping, simple_progress_bar
 from neural_compressor_ort.utils.onnx_model import ONNXModel
-from neural_compressor_ort.utils import (
-    ONNXRT116_VERSION,
-    ONNXRT1161_VERSION,
-    dtype_mapping,
-    simple_progress_bar,
-)
 
 __all__ = [
     "apply_gptq_on_model",
