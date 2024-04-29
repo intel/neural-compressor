@@ -26,7 +26,6 @@ from neural_compressor.torch.utils import logger
 class AutoRoundQuantizer(Quantizer):
     def __init__(
         self,
-        model,
         weight_config: dict = {},
         enable_full_range: bool = False,
         batch_size: int = 8,
@@ -52,7 +51,6 @@ class AutoRoundQuantizer(Quantizer):
         """Init a AutQRoundQuantizer object.
 
         Args:
-        model: The PyTorch model to be quantized.
         weight_config (dict): Configuration for weight quantization (default is an empty dictionary).
         weight_config={
                     'layer1':##layer_name
@@ -92,7 +90,6 @@ class AutoRoundQuantizer(Quantizer):
                             have different choices.
         """
 
-        self.model = model
         self.tokenizer = None
         self.weight_config = weight_config
         self.enable_full_range = enable_full_range
@@ -116,21 +113,6 @@ class AutoRoundQuantizer(Quantizer):
         self.dynamic_max_gap = dynamic_max_gap
         self.data_type = "int"
         self.scale_dtype = scale_dtype
-
-    def quantize(self, model: torch.nn.Module, *args, **kwargs):
-        run_fn = kwargs.get("run_fn", None)
-        run_args = kwargs.get("run_args", None)
-        assert run_fn is not None, (
-            "Can't find run_func. Please provide run_func to quantize API "
-            "or overwrite quantize member function in your Quantizer class."
-        )
-        model = self.prepare(model)
-        if run_args:
-            run_fn(model, *run_args)
-        else:
-            run_fn(model)
-        model = self.convert(model)
-        return model
 
     def prepare(self, model: torch.nn.Module, *args, **kwargs):
         """Prepares a given model for quantization.

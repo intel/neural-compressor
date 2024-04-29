@@ -376,7 +376,6 @@ def autoround_quantize_entry(
     kwargs.pop("example_inputs")
 
     quantizer = AutoRoundQuantizer(
-        model=model,
         weight_config=weight_config,
         enable_full_range=enable_full_range,
         batch_size=batch_size,
