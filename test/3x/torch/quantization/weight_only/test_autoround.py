@@ -5,10 +5,10 @@ import transformers
 from neural_compressor.torch.algorithms.weight_only.autoround import AutoRoundQuantizer, get_autoround_default_run_fn
 from neural_compressor.torch.quantization import (
     AutoRoundConfig,
-    quantize,
-    prepare,
     convert,
-    get_default_AutoRound_config
+    get_default_AutoRound_config,
+    prepare,
+    quantize,
 )
 from neural_compressor.torch.utils import logger
 
@@ -116,7 +116,7 @@ class TestAutoRound:
         assert "transformer.h.0.attn.k_proj" in q_model.autoround_config.keys()
         assert "scale" in q_model.autoround_config["transformer.h.0.attn.k_proj"].keys()
         assert torch.float32 == q_model.autoround_config["transformer.h.0.attn.k_proj"]["scale_dtype"]
-    
+
     def test_new_api(self, gpt_j_model):
         inp = torch.ones([1, 10], dtype=torch.long)
 
@@ -127,7 +127,7 @@ class TestAutoRound:
         out1 = gpt_j_model(inp)
         quant_config = get_default_AutoRound_config()
         logger.info(f"Test AutoRound with config {quant_config}")
-    
+
         run_fn = get_autoround_default_run_fn
         run_args = (
             tokenizer,
