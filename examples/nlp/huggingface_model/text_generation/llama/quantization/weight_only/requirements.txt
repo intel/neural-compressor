@@ -1,0 +1,12 @@
+torch
+transformers
+accelerate
+onnx
+onnxruntime
+onnxruntime-extensions; python_version < '3.11'
+datasets
+optimum
+evaluate
+intel-extension-for-transformers
+peft
+git+https://github.com/EleutherAI/lm-evaluation-harness.git@cc9778fbe4fa1a709be2abed9deb6180fd40e7e2
