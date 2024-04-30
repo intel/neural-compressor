@@ -32,7 +32,10 @@ __all__ = ["TrainableEquivalentTransformation", "TEQuantizer"]
 
 
 class TrainableEquivalentTransformation:
-    """Weight-only quantization, Trainable Equivalent Transformation (TEQ): linear wrapper to apply scale to input."""
+    """Weight-only quantization, Trainable Equivalent Transformation (TEQ)."""
+
+    _PREPARE_ATTRS: list[str] = ["weight_config", "trained_alphas"]
+    _PREPARE_ATTRS_PREFIX = "_prepare_"
 
     def __init__(self, model, weight_config={}, absorb_to_layer={}, folding=True, example_inputs=None):
         """
@@ -47,7 +50,6 @@ class TrainableEquivalentTransformation:
         self.device = self._get_device()
         self.trained_alphas = {}
         self.absorb_to_layer = absorb_to_layer
-        self._prepared_attrs = ["weight_config", "trained_alphas"]
         self._post_initialized = False
 
     def _post_init(self):
@@ -353,13 +355,13 @@ class TEQuantizer(Quantizer):
         self._quantizer.model = float_model
         logger.info("TEQ quantizing start.")
         self._quantizer.add_tuning_scale()
-        for attr in self._quantizer._prepared_attrs:
-            setattr(float_model, "_" + attr, getattr(self._quantizer, attr))
+        for attr in self._quantizer._PREPARE_ATTRS:
+            setattr(float_model, self._quantizer._PREPARE_ATTRS_PREFIX + attr, getattr(self._quantizer, attr))
         return float_model
 
     def convert(self, model, *args: Any, **kwargs: Any):
-        for attr in self._quantizer._prepared_attrs:
-            setattr(self._quantizer, attr, getattr(model, "_" + attr, None))
+        for attr in self._quantizer._PREPARE_ATTRS:
+            setattr(self._quantizer, attr, getattr(model, self._quantizer._PREPARE_ATTRS_PREFIX + attr, None))
         self._quantizer.model = model
         self._quantizer.transform()
         self._quantizer.quantize()
