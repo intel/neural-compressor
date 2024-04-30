@@ -2,7 +2,6 @@
 
 import os
 import platform
-import shutil
 import unittest
 
 import numpy as np
@@ -51,10 +50,10 @@ class TestModelWrappers(unittest.TestCase):
 
     @classmethod
     def tearDownClass(self):
-        shutil.rmtree("simple_model.h5", ignore_errors=True)
-        shutil.rmtree("keras_model.h5", ignore_errors=True)
-        shutil.rmtree("simple_model.keras", ignore_errors=True)
-        shutil.rmtree("keras_model.keras", ignore_errors=True)
+        os.remove("simple_model.h5")
+        os.remove("keras_model.h5")
+        os.remove("simple_model.keras")
+        os.remove("keras_model.keras")
 
     def test_keras_h5_model(self):
         if parse_version(tf.version.VERSION) < parse_version("2.3.0"):

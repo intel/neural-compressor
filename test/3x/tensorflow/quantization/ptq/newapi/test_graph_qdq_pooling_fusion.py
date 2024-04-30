@@ -10,7 +10,7 @@ import yaml
 from tensorflow.compat.v1 import graph_util
 from tensorflow.python.framework import dtypes
 
-from neural_compressor.tensorflow.utils import disable_random
+from neural_compressor.tensorflow.utils import disable_random, version1_gte_version2
 
 
 class TestGraphQDQPoolingFusion(unittest.TestCase):
@@ -23,7 +23,11 @@ class TestGraphQDQPoolingFusion(unittest.TestCase):
         conv_bias = tf.compat.v1.get_variable("bias", [1], initializer=tf.compat.v1.random_normal_initializer())
         x = tf.nn.relu(x)
         conv = tf.nn.conv2d(x, conv_weights, strides=[1, 2, 2, 1], padding="SAME", name="last")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = (
+            tf.keras.layers.BatchNormalization()(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv)
+        )
 
         relu = tf.nn.relu(normed)
         relu2 = tf.nn.relu(relu)
@@ -65,7 +69,11 @@ class TestGraphQDQPoolingFusion(unittest.TestCase):
         conv_bias = tf.compat.v1.get_variable("bias", [1], initializer=tf.compat.v1.random_normal_initializer())
         x = tf.nn.relu(x)
         conv = tf.nn.conv2d(x, conv_weights, strides=[1, 2, 2, 1], padding="SAME", name="last")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = (
+            tf.keras.layers.BatchNormalization()(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv)
+        )
 
         relu = tf.nn.relu(normed)
         relu2 = tf.nn.relu(relu)

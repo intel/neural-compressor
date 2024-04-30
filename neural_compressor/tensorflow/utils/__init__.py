@@ -55,4 +55,5 @@ from neural_compressor.tensorflow.utils.utility import (
     Statistics,
     CaptureOutputToFile,
     LazyImport,
+    valid_keras_format,
 )

@@ -7,7 +7,7 @@ import tensorflow as tf
 from tensorflow.compat.v1 import graph_util
 from tensorflow.python.ops import control_flow_ops
 
-from neural_compressor.tensorflow.utils import disable_random
+from neural_compressor.tensorflow.utils import disable_random, version1_gte_version2
 
 
 class TestSwitchOptimizer(unittest.TestCase):
@@ -21,7 +21,11 @@ class TestSwitchOptimizer(unittest.TestCase):
         conv_weights = tf.constant(np.random.random((3, 3, 16, 16)).astype(np.float32), name="y")
         _, switch_true = control_flow_ops.switch(conv_weights, y)
         conv = tf.nn.conv2d(x_pad, switch_true, strides=[1, 2, 2, 1], padding="VALID")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = (
+            tf.keras.layers.BatchNormalization()(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv)
+        )
         relu = tf.nn.relu(normed, name="op_to_store")
         out_name = relu.name.split(":")[0]
         with tf.compat.v1.Session() as sess:
@@ -51,7 +55,11 @@ class TestSwitchOptimizer(unittest.TestCase):
         conv_weights = tf.constant(np.random.random((3, 3, 16, 16)).astype(np.float32), name="y")
         _, switch_true = control_flow_ops.switch(conv_weights, y)
         conv = tf.nn.conv2d(x_pad, switch_true, strides=[1, 2, 2, 1], padding="VALID")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = (
+            tf.keras.layers.BatchNormalization()(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv)
+        )
         relu = tf.nn.relu(normed, name="op_to_store")
         out_name = relu.name.split(":")[0]
         with tf.compat.v1.Session() as sess:
@@ -87,7 +95,11 @@ class TestSwitchOptimizer(unittest.TestCase):
         conv_weights = tf.constant(np.random.random((3, 3, 16, 16)).astype(np.float32), name="y")
         switch_false, _ = control_flow_ops.switch(conv_weights, y)
         conv = tf.nn.conv2d(x_pad, switch_false, strides=[1, 2, 2, 1], padding="VALID")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = (
+            tf.keras.layers.BatchNormalization()(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv)
+        )
         relu = tf.nn.relu(normed, name="op_to_store")
         out_name = relu.name.split(":")[0]
         with tf.compat.v1.Session() as sess:
