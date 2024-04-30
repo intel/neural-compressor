@@ -1,6 +1,7 @@
 source /neural-compressor/.azure-pipelines/scripts/change_color.sh
 
 set -e
+set -x
 pip install coverage
 export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/coverage.ort
 coverage_log="/neural-compressor/log_dir/coverage_log"
