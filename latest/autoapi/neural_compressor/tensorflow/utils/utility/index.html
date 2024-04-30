@@ -169,6 +169,9 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.disable_random" title="neural_compressor.tensorflow.utils.utility.disable_random"><code class="xref py py-obj docutils literal notranslate"><span class="pre">disable_random</span></code></a>([seed])</p></td>
 <td><p>A Decorator to disable tf random seed.</p></td>
 </tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.valid_keras_format" title="neural_compressor.tensorflow.utils.utility.valid_keras_format"><code class="xref py py-obj docutils literal notranslate"><span class="pre">valid_keras_format</span></code></a>(model)</p></td>
+<td><p>Check if the input model is Sequential or Functional model.</p></td>
+</tr>
 </tbody>
 </table>
 <dl class="py function">
@@ -343,6 +346,12 @@ deep_get(person, “person.name.first”) will output ‘John’.</p>
 <dd><p>A Decorator to disable tf random seed.</p>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.utility.valid_keras_format">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.utility.</span></span><span class="sig-name descname"><span class="pre">valid_keras_format</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/tensorflow/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.utility.valid_keras_format" title="Permalink to this definition"></a></dt>
+<dd><p>Check if the input model is Sequential or Functional model.</p>
+</dd></dl>
+
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.utility.CpuInfo">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.utility.</span></span><span class="sig-name descname"><span class="pre">CpuInfo</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/tensorflow/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.utility.CpuInfo" title="Permalink to this definition"></a></dt>
@@ -386,7 +395,7 @@ deep_get(person, “person.name.first”) will output ‘John’.</p>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f891ab3f0d0> 
+   <jinja2.runtime.BlockReference object at 0x7f9525a4ca30> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

@@ -44,6 +44,7 @@ Functions
    neural_compressor.tensorflow.utils.utility.load_data_from_pkl
    neural_compressor.tensorflow.utils.utility.singleton
    neural_compressor.tensorflow.utils.utility.disable_random
+   neural_compressor.tensorflow.utils.utility.valid_keras_format
 
 
 
@@ -171,6 +172,11 @@ Functions
 .. py:function:: disable_random(seed=1)
 
    A Decorator to disable tf random seed.
+
+
+.. py:function:: valid_keras_format(model)
+
+   Check if the input model is Sequential or Functional model.
 
 
 .. py:class:: CpuInfo
