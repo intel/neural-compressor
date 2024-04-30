@@ -36,7 +36,7 @@ from .model_wrapper import MulLinear, TEQLinearFakeQuant
 from .weight_only import quant_weight
 
 
-class TEQuantizer:
+class TrainableEquivalentTransformation:
     """Weight-only quantization, Trainable Equivalent Transformation (TEQ): linear wrapper to apply scale to input."""
 
     def __init__(self, model, weight_config={}, absorb_to_layer={}, extra_config={}, example_inputs=None):

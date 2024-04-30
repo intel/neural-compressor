@@ -28,10 +28,10 @@ from neural_compressor.torch.utils import get_device, logger
 from .modules import MulLinear, TEQLinearFakeQuant
 from .utility import get_module, quant_tensor, set_module
 
-__all__ = ["TEQuantizer", "TrainableEquivalentQuantizer"]
+__all__ = ["TrainableEquivalentTransformation", "TEQuantizer"]
 
 
-class TEQuantizer:
+class TrainableEquivalentTransformation:
     """Weight-only quantization, Trainable Equivalent Transformation (TEQ): linear wrapper to apply scale to input."""
 
     def __init__(self, model, weight_config={}, absorb_to_layer={}, folding=True, example_inputs=None):
@@ -325,14 +325,14 @@ class TEQuantizer:
             torch.save(self.model.state_dict(), save_state_dict_file)
 
 
-class TrainableEquivalentQuantizer(Quantizer):
+class TEQuantizer(Quantizer):
 
     def __init__(self, quant_config, folding, absorb_to_layer, example_inputs):
         super().__init__(quant_config=quant_config)
         self.folding = folding
         self.absorb_to_layer = absorb_to_layer
         self.example_inputs = example_inputs
-        self._quantizer = TEQuantizer(
+        self._quantizer = TrainableEquivalentTransformation(
             model=None,
             weight_config=quant_config,
             absorb_to_layer=absorb_to_layer,
