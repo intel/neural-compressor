@@ -1,7 +1,6 @@
 source /neural-compressor/.azure-pipelines/scripts/change_color.sh
 
 set -e
-set -x
 pip install coverage
 export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/coverage.ort
 coverage_log="/neural-compressor/log_dir/coverage_log"
@@ -125,11 +124,10 @@ if [[ ${#fail_items[@]} -ne 0 ]]; then
         $BOLD_RED && echo "Unit Test failed with ${item} coverage decrease ${decrease}%" && $RESET
     done
     $BOLD_RED && echo "compare coverage to give detail info" && $RESET
-    bash -x /neural-compressor/.azure-pipelines-pr/scripts/ut/compare_coverage.sh ${coverage_compare} ${coverage_log} ${coverage_log_base} "FAILED" ${coverage_PR_lines_rate} ${coverage_base_lines_rate} ${coverage_PR_branches_rate} ${coverage_base_branches_rate}
+    bash /neural-compressor/.azure-pipelines-pr/scripts/ut/compare_coverage.sh ${coverage_compare} ${coverage_log} ${coverage_log_base} "FAILED" ${coverage_PR_lines_rate} ${coverage_base_lines_rate} ${coverage_PR_branches_rate} ${coverage_base_branches_rate}
     exit 1
 else
     $BOLD_GREEN && echo "Unit Test success with coverage lines: ${coverage_PR_lines_rate}%, branches: ${coverage_PR_branches_rate}%" && $RESET
     $BOLD_GREEN && echo "compare coverage to give detail info" && $RESET
-    bash -x /neural-compressor/.azure-pipelines-pr/scripts/ut/compare_coverage.sh ${coverage_compare} ${coverage_log} ${coverage_log_base} "SUCCESS" ${coverage_PR_lines_rate} ${coverage_base_lines_rate} ${coverage_PR_branches_rate} ${coverage_base_branches_rate}
-    ll /neural-compressor/log_dir
+    bash /neural-compressor/.azure-pipelines-pr/scripts/ut/compare_coverage.sh ${coverage_compare} ${coverage_log} ${coverage_log_base} "SUCCESS" ${coverage_PR_lines_rate} ${coverage_base_lines_rate} ${coverage_PR_branches_rate} ${coverage_base_branches_rate}
 fi
