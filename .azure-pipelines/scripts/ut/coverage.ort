@@ -3,7 +3,7 @@ branch = True
 
 [report]
 include =
- */neural_compressor_ort/*
+ */neural_compressor_ort/**
 exclude_lines =
  pragma: no cover
  raise NotImplementedError

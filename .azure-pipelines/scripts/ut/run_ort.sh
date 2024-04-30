@@ -17,7 +17,7 @@ cd /neural-compressor/test || exit 1
 LOG_DIR=/neural-compressor/log_dir
 mkdir -p ${LOG_DIR}
 ut_log_name=${LOG_DIR}/ut_ort.log
-pytest --cov="${inc_path}" -vs --disable-warnings --html=report.html --self-contained-html ./utils 2>&1 | tee -a ${ut_log_name}
+pytest --cov="${inc_path}" -vs --disable-warnings --html=report.html --self-contained-html . 2>&1 | tee -a ${ut_log_name}
 
 cp report.html ${LOG_DIR}/
 
