@@ -21,18 +21,15 @@ from onnxruntime.quantization.matmul_4bits_quantizer import RTNWeightOnlyQuantCo
 from onnxruntime.quantization.matmul_4bits_quantizer import WeightOnlyQuantConfig
 from packaging import version
 
-from neural_compressor_ort.common import Logger
-from neural_compressor_ort.common.base_config import config_registry
 from neural_compressor_ort.quantization.algorithm_entry import (
     awq_quantize_entry,
     gptq_quantize_entry,
     rtn_quantize_entry,
 )
 from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
-from neural_compressor_ort.quantization.config import FRAMEWORK_NAME
+from neural_compressor_ort.utils import logger
+from neural_compressor_ort.utils.base_config import config_registry
 from neural_compressor_ort.utils.onnx_model import ONNXModel
-
-logger = Logger().get_logger()
 
 
 class RTNWeightOnlyQuantConfig(ORTRTNWeightOnlyQuantConfig):
@@ -115,7 +112,7 @@ class MatMulNBitsQuantizer:
         ], "Only RTN, GPTQ and AWQ algorithms are supported, but get {} algorithm".format(self.algorithm)
 
     def _generate_inc_config(self):
-        config_class = config_registry.get_cls_configs()[FRAMEWORK_NAME][self.algorithm.lower()]
+        config_class = config_registry.get_cls_configs()[self.algorithm.lower()]
 
         quant_kwargs = {
             "weight_bits": self.n_bits,

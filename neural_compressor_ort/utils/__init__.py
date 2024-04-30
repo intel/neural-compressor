@@ -12,13 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from neural_compressor_ort.utils.logger import *
 from neural_compressor_ort.utils.onnx_model import ONNXModel
-from neural_compressor_ort.utils.utility import PRIORITY_RTN, PRIORITY_GPTQ, PRIORITY_AWQ, PRIORITY_SMOOTH_QUANT
+from neural_compressor_ort.utils.constants import *
+from neural_compressor_ort.utils.utility import *
+from neural_compressor_ort.utils.base_config import options
+
 
 __all__ = [
     "ONNXModel",
+    "CpuInfo",
+    "LazyImport",
+    "singleton",
     "PRIORITY_RTN",
     "PRIORITY_GPTQ",
     "PRIORITY_AWQ",
     "PRIORITY_SMOOTH_QUANT",
+    "options",
+    "level",
+    "logger",
+    "set_workspace",
+    "set_random_seed",
+    "set_resume_from",
+    "dump_elapsed_time",
 ]

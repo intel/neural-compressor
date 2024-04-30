@@ -29,16 +29,23 @@ from onnxruntime.quantization.quantize import DynamicQuantConfig as ORTDynamicQu
 from onnxruntime.quantization.quantize import QuantConfig
 from onnxruntime.quantization.quantize import StaticQuantConfig as ORTStaticQuantConfig
 
-from neural_compressor_ort.common import Logger
-from neural_compressor_ort.common.base_config import BaseConfig, register_config, register_supported_configs_for_fwk
-from neural_compressor_ort.common.utils import AWQ, DEFAULT_WHITE_LIST, GPTQ, OP_NAME_OR_MODULE_TYPE, RTN, SMOOTH_QUANT
 from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
-from neural_compressor_ort.utils import PRIORITY_AWQ, PRIORITY_GPTQ, PRIORITY_RTN, PRIORITY_SMOOTH_QUANT
-
-logger = Logger().get_logger()
+from neural_compressor_ort.utils import (
+    AWQ,
+    DEFAULT_WHITE_LIST,
+    GPTQ,
+    OP_NAME_OR_MODULE_TYPE,
+    PRIORITY_AWQ,
+    PRIORITY_GPTQ,
+    PRIORITY_RTN,
+    PRIORITY_SMOOTH_QUANT,
+    RTN,
+    SMOOTH_QUANT,
+    logger,
+)
+from neural_compressor_ort.utils.base_config import BaseConfig, register_config, register_supported_configs
 
 __all__ = [
-    "FRAMEWORK_NAME",
     "RTNConfig",
     "get_default_rtn_config",
     "GPTQConfig",
@@ -48,8 +55,6 @@ __all__ = [
     "SmoothQuantConfig",
     "get_default_sq_config",
 ]
-
-FRAMEWORK_NAME = "onnxrt"
 
 
 class _OperatorConfig(NamedTuple):
@@ -61,7 +66,7 @@ class _OperatorConfig(NamedTuple):
 ######################## RNT Config ###############################
 
 
-@register_config(framework_name=FRAMEWORK_NAME, algo_name=RTN, priority=PRIORITY_RTN)
+@register_config(algo_name=RTN, priority=PRIORITY_RTN)
 class RTNConfig(BaseConfig):
     """Config class for round-to-nearest weight-only quantization."""
 
@@ -190,7 +195,6 @@ class RTNConfig(BaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "RTNConfig", List["RTNConfig"]]:  # pragma: no cover
-        # TODO fwk owner needs to update it.
         return RTNConfig(weight_bits=[4, 8], weight_sym=[True, False])
 
 
@@ -206,7 +210,7 @@ def get_default_rtn_config() -> RTNConfig:
 ######################## GPTQ Config ###############################
 
 
-@register_config(framework_name=FRAMEWORK_NAME, algo_name=GPTQ, priority=PRIORITY_GPTQ)
+@register_config(algo_name=GPTQ, priority=PRIORITY_GPTQ)
 class GPTQConfig(BaseConfig):
     """Config class for gptq weight-only quantization."""
 
@@ -356,7 +360,6 @@ class GPTQConfig(BaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "GPTQConfig", List["GPTQConfig"]]:  # pragma: no cover
-        # TODO fwk owner needs to update it.
         return GPTQConfig(
             weight_bits=[4, 8],
             weight_sym=[True, False],
@@ -378,7 +381,7 @@ def get_default_gptq_config() -> GPTQConfig:
 ######################## AWQ Config ###############################
 
 
-@register_config(framework_name=FRAMEWORK_NAME, algo_name=AWQ, priority=PRIORITY_AWQ)
+@register_config(algo_name=AWQ, priority=PRIORITY_AWQ)
 class AWQConfig(BaseConfig):
     """Config class for awq weight-only quantization."""
 
@@ -508,7 +511,6 @@ class AWQConfig(BaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "AWQConfig", List["AWQConfig"]]:  # pragma: no cover
-        # TODO fwk owner needs to update it.
         return AWQConfig(
             weight_bits=[4, 8],
             weight_sym=[True, False],
@@ -529,7 +531,7 @@ def get_default_awq_config() -> AWQConfig:
 ######################## SmoohQuant Config ###############################
 
 
-@register_config(framework_name=FRAMEWORK_NAME, algo_name=SMOOTH_QUANT, priority=PRIORITY_SMOOTH_QUANT)
+@register_config(algo_name=SMOOTH_QUANT, priority=PRIORITY_SMOOTH_QUANT)
 class SmoothQuantConfig(BaseConfig, ORTStaticQuantConfig):
     """Smooth quant quantization config."""
 
@@ -621,7 +623,6 @@ class SmoothQuantConfig(BaseConfig, ORTStaticQuantConfig):
     def get_config_set_for_tuning(
         cls,
     ) -> Union[None, "SmoothQuantConfig", List["SmoothQuantConfig"]]:  # pragma: no cover
-        # TODO fwk owner needs to update it.
         return SmoothQuantConfig(alpha=np.arange(0.3, 0.7, 0.05))
 
     def convert_to_ort_config(self):
@@ -661,7 +662,7 @@ def get_woq_tuning_config() -> list:
 ##################### INC Algo Configs End ###################################
 
 
-register_supported_configs_for_fwk(fwk_name=FRAMEWORK_NAME)
+register_supported_configs()
 
 
 ##################### Config for ONNXRuntime-like user-facing API ############
