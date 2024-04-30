@@ -18,14 +18,9 @@ from typing import Union
 import onnx
 from onnxruntime.quantization.quantize import QuantConfig
 
-from neural_compressor_ort.common import Logger
-from neural_compressor_ort.common.base_config import BaseConfig, ComposableConfig, config_registry
-from neural_compressor_ort.common.utils import log_quant_execution
 from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
-from neural_compressor_ort.quantization.config import FRAMEWORK_NAME
-from neural_compressor_ort.utils.utility import algos_mapping
-
-logger = Logger().get_logger()
+from neural_compressor_ort.utils import algos_mapping, log_quant_execution, logger
+from neural_compressor_ort.utils.base_config import BaseConfig, ComposableConfig, config_registry
 
 
 # ORT-like user-facing API
@@ -79,7 +74,7 @@ def _quantize(
     """
     registered_configs = config_registry.get_cls_configs()
     if isinstance(quant_config, dict):
-        quant_config = ComposableConfig.from_dict(quant_config, config_registry=registered_configs[FRAMEWORK_NAME])
+        quant_config = ComposableConfig.from_dict(quant_config, config_registry=registered_configs)
         logger.info(f"Parsed a config dict to construct the quantization config: {quant_config}.")
     else:
         assert isinstance(
