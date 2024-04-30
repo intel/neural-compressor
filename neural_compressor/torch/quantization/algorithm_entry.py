@@ -120,7 +120,7 @@ def gptq_entry(
     kwargs.pop("example_inputs")
     logger.warning("lm_head in transformer model is skipped by GPTQ")
 
-    if CurrentQuantizer.quantizer is None or mode == [Mode.PREPARE, Mode.QUANTIZE]:
+    if CurrentQuantizer.quantizer is None or mode in [Mode.PREPARE, Mode.QUANTIZE]:
         CurrentQuantizer.quantizer = INCGPTQQuantizer(quant_config=weight_config)
     model = CurrentQuantizer.quantizer.execute(model, mode=mode, *args, **kwargs)
     return model
