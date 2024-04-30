@@ -284,16 +284,17 @@ def awq_quantize_entry(
 ###################### TEQ Algo Entry ##################################
 @register_algo(name=TEQ)
 def teq_quantize_entry(
-    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], TEQConfig], *args, **kwargs
+    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], TEQConfig], mode: Mode, *args, **kwargs
 ) -> torch.nn.Module:
-    from neural_compressor.torch.algorithms.weight_only.teq import teq_quantize
+    from neural_compressor.torch.algorithms.weight_only.teq import TEQuantizer
 
     logger.info("Quantize model with the TEQ algorithm.")
     weight_config = {}
     absorb_to_layer = {}
     example_inputs = kwargs.get("example_inputs", None)
     assert example_inputs is not None, "Please provide example_inputs for TEQ quantization."
-    calib_func = kwargs.get("run_fn", None)
+    run_fn = kwargs.get("run_fn", None)
+    inplace = kwargs.get("inplace", True)
     folding = True
     for (op_name, op_type), quant_config in configs_mapping.items():
         if quant_config.dtype == "fp32":
@@ -318,16 +319,10 @@ def teq_quantize_entry(
             absorb_to_layer = quant_config.absorb_to_layer
             folding = quant_config.folding
     assert isinstance(model, torch.nn.Module), "only support torch module"
-
-    model = teq_quantize(
-        model,
-        example_inputs=example_inputs,
-        folding=folding,
-        absorb_to_layer=absorb_to_layer,
-        calib_func=calib_func,
-        weight_config=weight_config,
+    quantizer = TEQuantizer(
+        quant_config=weight_config, folding=folding, absorb_to_layer=absorb_to_layer, example_inputs=example_inputs
     )
-    logger.info("TEQ quantization done.")
+    model = quantizer.execute(model, mode=mode, run_fn=run_fn, example_inputs=example_inputs, inplace=inplace)
     return model
 
 
