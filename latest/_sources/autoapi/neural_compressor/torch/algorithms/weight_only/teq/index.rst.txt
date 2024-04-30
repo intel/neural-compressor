@@ -14,27 +14,31 @@ Classes
 
 .. autoapisummary::
 
+   neural_compressor.torch.algorithms.weight_only.teq.TrainableEquivalentTransformation
    neural_compressor.torch.algorithms.weight_only.teq.TEQuantizer
 
 
 
-Functions
-~~~~~~~~~
 
-.. autoapisummary::
-
-   neural_compressor.torch.algorithms.weight_only.teq.teq_quantize
+.. py:class:: TrainableEquivalentTransformation(model, weight_config={}, absorb_to_layer={}, folding=True, example_inputs=None)
 
 
-
-.. py:class:: TEQuantizer(model, weight_config={}, absorb_to_layer={}, folding=True, example_inputs=None)
-
-
-   Weight-only quantization, Trainable Equivalent Transformation (TEQ): linear wrapper to apply scale to input.
+   Weight-only quantization, Trainable Equivalent Transformation (TEQ).
 
 
-.. py:function:: teq_quantize(model, weight_config={}, absorb_to_layer={}, folding=True, dataloader=None, calib_func=None, example_inputs=None)
+.. py:class:: TEQuantizer(quant_config, folding, absorb_to_layer, example_inputs)
 
-   Run TEQ weight-only quantization.
+
+
+
+   The base quantizer for all algorithm quantizers.
+
+   The `Quantizer` unifies the interfaces across various quantization algorithms, including GPTQ, RTN, etc.
+   Given a float model, `Quantizer` apply the quantization algorithm to the model according to the `quant_config`.
+
+   To implement a new quantization algorithm,, inherit from `Quantizer` and implement the following methods:
+       - `prepare`: prepare a given model for convert.
+       - `convert`: convert a prepared model to a quantized model.
+   Note: `quantize` and `execute` are optional for new quantization algorithms.
 
 
