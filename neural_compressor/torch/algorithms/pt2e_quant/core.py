@@ -37,7 +37,8 @@ class W8A8StaticQuantizer(Quantizer):
     @staticmethod
     def update_quantizer_based_on_quant_config(quant_config=None) -> X86InductorQuantizer:
         if not quant_config:
-            quantizer = X86InductorQuantizer(xiq.get_default_x86_inductor_quantization_config())
+            quantizer = X86InductorQuantizer()
+            quantizer.set_global(xiq.get_default_x86_inductor_quantization_config())
         else:
             quantizer = create_xiq_quantizer_from_pt2e_config(quant_config)
         return quantizer
