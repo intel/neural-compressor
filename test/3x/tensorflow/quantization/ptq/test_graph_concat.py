@@ -69,7 +69,7 @@ class TestTensorflowConcat(unittest.TestCase):
     @disable_random()
     def test_concat_with_different_input_type(self):
         from neural_compressor.tensorflow import quantize_model
-        from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset
+        from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDataset, version1_gte_version2
 
         x = tf.compat.v1.placeholder(tf.float32, [1, 128, 128, 16], name="input")
         conv_weights = tf.compat.v1.get_variable(
@@ -81,7 +81,11 @@ class TestTensorflowConcat(unittest.TestCase):
         sqrt = tf.math.sqrt(x)
         relu_sqrt = tf.nn.relu(sqrt)
         conv = tf.nn.conv2d(relu_sqrt, conv_weights, strides=[1, 2, 2, 1], padding="SAME", name="last")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = (
+            tf.keras.layers.BatchNormalization()(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv)
+        )
 
         relu = tf.nn.relu(normed)
         conv1 = tf.nn.conv2d(x, conv_weights, strides=[1, 2, 2, 1], padding="SAME", name="last")

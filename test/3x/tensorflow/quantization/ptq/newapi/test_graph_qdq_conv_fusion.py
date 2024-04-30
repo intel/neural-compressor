@@ -11,7 +11,7 @@ import yaml
 from tensorflow.compat.v1 import graph_util
 from tensorflow.python.framework import function
 
-from neural_compressor.tensorflow.utils import disable_random
+from neural_compressor.tensorflow.utils import disable_random, version1_gte_version2
 
 
 class TestTensorflowQdqConvFusion(unittest.TestCase):
@@ -25,7 +25,11 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.nn.conv2d(x_pad, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = (
+            tf.keras.layers.BatchNormalization()(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv)
+        )
         relu = tf.nn.relu(normed, name="op_to_store")
         out_name = relu.name.split(":")[0]
         with tf.compat.v1.Session() as sess:
@@ -116,7 +120,11 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.nn.conv2d(x_pad, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = (
+            tf.keras.layers.BatchNormalization()(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv)
+        )
 
         relu6 = tf.nn.relu6(normed, name="op_to_store")
 
@@ -162,7 +170,11 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.nn.conv2d(x_pad, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = (
+            tf.keras.layers.BatchNormalization()(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv)
+        )
 
         @function.Defun(tf.float32, func_name="swish_f32")
         def swish_f32(x):
@@ -304,14 +316,22 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.nn.conv2d(x_pad, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = (
+            tf.keras.layers.BatchNormalization()(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv)
+        )
         # relu = tf.nn.relu(normed)
 
         conv_weights2 = tf.compat.v1.get_variable(
             "weight2", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv2 = tf.nn.conv2d(top_relu, conv_weights2, strides=[1, 2, 2, 1], padding="SAME")
-        normed2 = tf.compat.v1.layers.batch_normalization(conv2)
+        normed2 = (
+            tf.keras.layers.BatchNormalization()(conv2)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv2)
+        )
         # relu2 = tf.nn.relu(normed2)
         add = tf.raw_ops.AddV2(x=normed, y=normed2, name="addv2")
         relu = tf.nn.relu(add)
@@ -363,7 +383,11 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.nn.conv2d(top_relu, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = (
+            tf.keras.layers.BatchNormalization()(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv)
+        )
 
         relu = tf.nn.relu(normed)
         pooling = tf.nn.max_pool(relu, ksize=1, strides=[1, 2, 2, 1], padding="SAME")
@@ -424,7 +448,11 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             "weight2", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.nn.conv2d(pooling, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-        biasadd = tf.compat.v1.layers.batch_normalization(conv, name="op_to_store")
+        biasadd = (
+            tf.keras.layers.BatchNormalization(name="op_to_store")(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv, name="op_to_store")
+        )
         out_name = biasadd.name.split(":")[0]
         with tf.compat.v1.Session() as sess:
             sess.run(tf.compat.v1.global_variables_initializer())
@@ -471,7 +499,11 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.nn.conv2d(x_pad, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-        normed = tf.compat.v1.layers.batch_normalization(conv, name="op_to_store")
+        normed = (
+            tf.keras.layers.BatchNormalization(name="op_to_store")(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv, name="op_to_store")
+        )
 
         out_name = normed.name.split(":")[0]
         with tf.compat.v1.Session() as sess:
@@ -515,7 +547,11 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
         )
         conv = tf.nn.depthwise_conv2d(top_relu, conv_weights, strides=[1, 1, 1, 1], padding="VALID")
 
-        normed = tf.compat.v1.layers.batch_normalization(conv, name="op_to_store")
+        normed = (
+            tf.keras.layers.BatchNormalization(name="op_to_store")(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv, name="op_to_store")
+        )
 
         out_name = normed.name.split(":")[0]
         with tf.compat.v1.Session() as sess:
@@ -557,7 +593,11 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.nn.conv2d(x, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = (
+            tf.keras.layers.BatchNormalization()(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv)
+        )
 
         relu = tf.nn.relu(normed, name="op_to_store")
 
@@ -601,7 +641,11 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.nn.conv2d(x, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = (
+            tf.keras.layers.BatchNormalization()(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv)
+        )
 
         leaky_relu = tf.nn.leaky_relu(normed, name="op_to_store")
 
@@ -645,7 +689,11 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.compat.v1.nn.depthwise_conv2d_native(x, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = (
+            tf.keras.layers.BatchNormalization()(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv)
+        )
 
         relu6 = tf.nn.relu6(normed, name="op_to_store")
 
@@ -689,7 +737,11 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.compat.v1.nn.depthwise_conv2d_native(x, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = (
+            tf.keras.layers.BatchNormalization()(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv)
+        )
 
         relu6 = tf.nn.relu6(normed, name="op_to_store")
 
@@ -790,7 +842,11 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.nn.conv2d(top_relu, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = (
+            tf.keras.layers.BatchNormalization()(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv)
+        )
 
         relu = tf.nn.relu(normed)
         pooling = tf.nn.max_pool(relu, ksize=1, strides=[1, 2, 2, 1], padding="SAME")
@@ -897,7 +953,11 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.compat.v1.nn.depthwise_conv2d_native(x, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = (
+            tf.keras.layers.BatchNormalization()(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv)
+        )
 
         leaky_relu = tf.nn.leaky_relu(normed, name="op_to_store")
 
@@ -944,14 +1004,22 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.nn.conv2d(x_pad, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = (
+            tf.keras.layers.BatchNormalization()(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv)
+        )
         # relu = tf.nn.relu(normed)
 
         conv_weights2 = tf.compat.v1.get_variable(
             "weight2", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv2 = tf.nn.conv2d(top_relu, conv_weights2, strides=[1, 2, 2, 1], padding="SAME")
-        normed2 = tf.compat.v1.layers.batch_normalization(conv2)
+        normed2 = (
+            tf.keras.layers.BatchNormalization()(conv2)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv2)
+        )
         # relu2 = tf.nn.relu(normed2)
         add = tf.raw_ops.AddV2(x=normed, y=normed2, name="addv2")
         relu = tf.nn.relu(add)
@@ -997,7 +1065,11 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.nn.conv2d(x, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = (
+            tf.keras.layers.BatchNormalization()(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv)
+        )
 
         elu = tf.nn.elu(normed, name="op_to_store")
 
@@ -1041,7 +1113,11 @@ class TestTensorflowQdqConvFusion(unittest.TestCase):
             "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.nn.conv2d(x, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = (
+            tf.keras.layers.BatchNormalization()(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv)
+        )
 
         sigmoid = tf.math.sigmoid(normed, name="op_to_store")
 
