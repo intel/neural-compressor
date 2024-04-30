@@ -18,7 +18,7 @@ from typing import Callable, Dict, List, Tuple, Union
 
 import torch
 import torch.ao.quantization.quantizer.x86_inductor_quantizer as xiq
-from torch.ao.quantization.observer import HistogramObserver, MovingAverageMinMaxObserver
+from torch.ao.quantization.observer import HistogramObserver, MinMaxObserver
 from torch.ao.quantization.quantizer import QuantizationSpec
 from torch.ao.quantization.quantizer.x86_inductor_quantizer import QuantizationConfig, X86InductorQuantizer
 from typing_extensions import TypeAlias
@@ -138,17 +138,15 @@ class Mode(Enum):
 
 
 def create_quant_spec_from_config(dtype, sym, granularity, algo) -> QuantizationSpec:
-    dtype_mapping = {"int8": torch.int8, "uint8": torch.uint8}
+    dtype_mapping: Dict[str, torch.dtype] = {"int8": torch.int8, "uint8": torch.uint8}
     qscheme_mapping = {
         "per_channel": {True: torch.per_channel_symmetric, False: torch.per_tensor_affine},
         "per_tensor": {True: torch.per_tensor_symmetric, False: torch.per_tensor_affine},
     }
     observer_mapping = {
-        "minmax": MovingAverageMinMaxObserver,
+        "minmax": MinMaxObserver,
         "kl": HistogramObserver,
     }
-    # dtype
-    dtype = dtype_mapping[dtype]
     # algo
     observer_or_fake_quant_ctr = observer_mapping[algo]
     # qscheme

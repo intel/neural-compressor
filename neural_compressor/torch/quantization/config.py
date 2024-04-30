@@ -800,7 +800,7 @@ class PT2EStaticQuantConfig(BaseConfig):
         self,
         w_dtype: str = "int8",
         w_sym: bool = True,
-        w_granularity: str = "per_channel",
+        w_granularity: str = "per_tensor",
         w_algo: str = "minmax",
         act_dtype: str = "uint8",
         act_sym: bool = False,
