@@ -616,11 +616,9 @@ def teq_quantize(
                 example_inputs = input
                 break
 
-    from .teq import TrainableEquivalentTransformation
+    from .teq import TEQuantizer
 
-    teq_quantizer = TrainableEquivalentTransformation(
-        model, weight_config, absorb_to_layer, extra_config, example_inputs
-    )
+    teq_quantizer = TEQuantizer(model, weight_config, absorb_to_layer, extra_config, example_inputs)
 
     # 1. wrapper tuning scale to model
     teq_quantizer.add_tuning_scale()
