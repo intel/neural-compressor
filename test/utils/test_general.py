@@ -196,7 +196,7 @@ class TestBaseConfig(unittest.TestCase):
         self.assertEqual(fake_default_config.weight_dtype, "int")
         config_set = get_all_config_set()
         self.assertEqual(len(config_set), len(config_registry.get_all_config_cls()))
-        self.assertEqual(config_set[0].weight_bits, DEFAULT_WEIGHT_BITS)
+        self.assertEqual([i for i in config_set if i.name == FAKE_CONFIG_NAME][0].weight_bits, DEFAULT_WEIGHT_BITS)
 
     def test_config_expand_complex_tunable_type(self):
         target_op_type_list_options = [["Conv", "Gemm"], ["Conv", "Matmul"]]
