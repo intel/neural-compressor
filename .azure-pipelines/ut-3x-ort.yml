@@ -6,6 +6,7 @@ pr:
   branches:
     include:
       - ONC
+      - main
   paths:
     include:
       - neural_compressor_ort
@@ -13,6 +14,7 @@ pr:
       - setup.py
       - requirements.txt
       - .azure-pipelines/scripts/ut
+      - .azure-pipelines/ut-3x-ort.yml
 
 pool: ICX-16C
 
