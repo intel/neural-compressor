@@ -62,6 +62,7 @@ class TensorFlowAdaptor(Adaptor):
     unify_op_type_mapping = {
         "Conv2D": "conv2d",
         "Conv3D": "conv3d",
+        "_FusedConv2D": "conv2d"
         "DepthwiseConv2dNative": "conv2d",
         "FusedBatchNormV3": "batchnorm",
         "_MklFusedInstanceNorm": "instancenorm",

@@ -66,6 +66,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             "ConcatV2",
             "Conv2D",
             "Conv3D",
+            "_FusedConv2D",
             "DepthwiseConv2D",
             "QuantizeV2",
             "DepthwiseConv2dNative",
@@ -145,6 +146,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                 [
                     "Conv2D",
                     "Conv3D",
+                    "_FusedConv2D",
                     "DepthwiseConv2dNative",
                     "MatMul",
                     "BatchMatMul",

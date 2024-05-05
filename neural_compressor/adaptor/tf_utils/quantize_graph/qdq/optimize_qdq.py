@@ -78,6 +78,7 @@ class OptimizeQDQGraph(QuantizeGraphBase):
         self.register_transformer("MaxPool3D", FuseNodeStartWithPooling)
         self.register_transformer("Conv2D", FuseNodeStartWithConv2d)
         self.register_transformer("Conv3D", FuseNodeStartWithConv2d)
+        self.register_transformer("_FusedConv2D", FuseNodeStartWithConv2d)
         self.register_transformer("DepthwiseConv2dNative", FuseNodeStartWithConv2d)
         self.register_transformer("FusedBatchNormV3", FuseNodeStartWithFusedBatchNormV3)
         self.register_transformer("_MklFusedInstanceNorm", FuseNodeStartWithFusedInstanceNorm)

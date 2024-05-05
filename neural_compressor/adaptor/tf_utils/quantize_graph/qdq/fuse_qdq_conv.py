@@ -38,6 +38,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
         if self.new_api:
             # fmt: off
             self.fusion_mapping = {
+                'Dequantize_FusedConv2DQuantizeV2': self.apply_newly_fused_conv,
                 'DequantizeConv2DBiasAddQuantizeV2': self.apply_newly_conv_biasadd_fusion,
                 'DequantizeConv2DBiasAddAddNReluQuantizeV2': self.apply_newly_conv_biasadd_addn_relu_fusion,
                 'DequantizeConv2DAddNReluQuantizeV2': self.apply_newly_conv_biasadd_relu_fusion,
@@ -1176,6 +1177,111 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
                 quantize_down_name = self._add_quantize_down_nodes(node, quantized_node_name, dtypes.qint8, False)
                 self._intel_cpu_add_dequantize_result_node(
                     quantize_down_name, match_node_name[2], dtypes.qint8, performance_only=self.performance_only
+                )
+
+            else:
+                new_node = node_def_pb2.NodeDef()
+                new_node.CopyFrom(node)
+                self.add_output_graph_node(new_node)
+
+    def apply_newly_fused_conv(self, match_node_name):
+        """Apply _FusedConv2D single fusion.
+
+        Dequantize + _FusedConv2D + QuantizeV2
+        """
+        skip_node_name = match_node_name[2:]
+        matched_node = self.node_name_mapping[match_node_name[1]]
+        control_inputs, normal_inputs = self._get_node_input(matched_node.node.name)
+        _, q_inputs = self._get_node_input(normal_inputs[0])
+        _, q_weights_inputs = self._get_node_input(normal_inputs[1])
+
+        quantizev2_weights_name = q_weights_inputs[0]
+        _, weights_name = self._get_node_input(quantizev2_weights_name)
+        weights_min_name = weights_name[1]
+        weights_max_name = weights_name[2]
+
+        q_weights_name, q_weights_min_name, q_weights_max_name = self._intel_cpu_quantize_weight_eightbit(
+            matched_node.node.op, self.node_name_mapping[weights_name[0]].node, self.per_channel
+        )
+
+        all_input_names = q_inputs[:1] + [q_weights_name] + q_inputs[1:]
+        all_input_names.append(q_weights_min_name)
+        all_input_names.append(q_weights_max_name)
+        skip_node_name.append(normal_inputs[0])
+        skip_node_name.append(normal_inputs[1])
+        skip_node_name.append(weights_name[0])
+        skip_node_name.append(weights_min_name)
+        skip_node_name.append(weights_max_name)
+        skip_node_name.append(quantizev2_weights_name)
+
+        for _, node in enumerate(self.input_graph.node):
+            if node.name in skip_node_name:
+                self.logger.debug("skip node {}".format(node.name))
+            elif node.name == match_node_name[1]:
+                self.logger.debug("Matched node {} with input {}.".format(node.name, node.input))
+
+                quantized_node_name = node.name + "_eightbit_quantized_conv"
+
+                node_op = "_FusedQuantizedConv2D"
+                quantized_conv_node = helper.create_node(node_op, quantized_node_name, all_input_names)
+
+                helper.copy_attr(quantized_conv_node, "strides", node.attr["strides"])
+                helper.copy_attr(quantized_conv_node, "padding", node.attr["padding"])
+                helper.copy_attr(quantized_conv_node, "fused_ops", node.attr["fused_ops"])
+                if "filter_format" in node.attr:
+                    helper.copy_attr(quantized_conv_node, "filter_format", node.attr["filter_format"])
+                if "epsilon" in node.attr:
+                    helper.copy_attr(quantized_conv_node, "epsilon", node.attr["epsilon"])
+                if "explicit_paddings" in node.attr:
+                    helper.copy_attr(quantized_conv_node, "explicit_paddings", node.attr["explicit_paddings"])
+                if "leakyrelu_alpha" in node.attr:
+                    helper.copy_attr(quantized_conv_node, "leakyrelu_alpha", node.attr["leakyrelu_alpha"])
+                if "num_args" in node.attr:
+                    helper.copy_attr(quantized_conv_node, "num_args", node.attr["num_args"])
+                if "num_host_args" in node.attr:
+                    helper.copy_attr(quantized_conv_node, "num_host_args", node.attr["num_host_args"])
+                if "use_cudnn_on_gpu" in node.attr:
+                    helper.copy_attr(quantized_conv_node, "use_cudnn_on_gpu", node.attr["use_cudnn_on_gpu"])
+                if "_input_shapes" in node.attr:
+                    helper.copy_attr(quantized_conv_node, "_input_shapes", node.attr["_input_shapes"])
+                helper.copy_attr(quantized_conv_node, "dilations", node.attr["dilations"])
+                input_data_type = dtypes.quint8 if self._find_relu_node(node) else dtypes.qint8
+                helper.set_attr_dtype(quantized_conv_node, "Tinput", input_data_type)
+                helper.set_attr_dtype(quantized_conv_node, "Tfilter", dtypes.qint8)
+                helper.set_attr_dtype(quantized_conv_node, "Tsummand", dtypes.qint32)
+                # helper.set_attr_string(quantized_conv_node, '_kernel', b'QuantizedMklOp')
+                helper.set_attr_dtype(quantized_conv_node, "out_type", dtypes.qint32)
+                # helper.set_attr_dtype(quantized_conv_node, "alpha", dtypes.quint8)
+                helper.set_attr_dtype(quantized_conv_node, "Tbias", dtypes.float32)
+                # if self.device == 'gpu' else dtypes.qint32)
+
+                helper.set_attr_type_list(
+                    quantized_conv_node,
+                    "Thost_inputs",
+                    [
+                        input_data_type.as_datatype_enum,
+                        dtypes.qint8.as_datatype_enum,
+                        # dtypes.float32.as_datatype_enum if self.device == 'gpu' else dtypes.qint32.as_datatype_enum,
+                        dtypes.float32.as_datatype_enum,
+                        dtypes.float32.as_datatype_enum,
+                        dtypes.float32.as_datatype_enum,
+                        dtypes.float32.as_datatype_enum,
+                    ],
+                )
+                helper.set_attr_type_list(
+                    quantized_conv_node,
+                    "Thost_outputs",
+                    [
+                        dtypes.qint32.as_datatype_enum,
+                        dtypes.float32.as_datatype_enum,
+                        dtypes.float32.as_datatype_enum,
+                    ],
+                )
+
+                self.add_output_graph_node(quantized_conv_node)
+                quantize_down_name = self._add_quantize_down_nodes(node, quantized_node_name, dtypes.qint8, False)
+                self._intel_cpu_add_dequantize_result_node(
+                    quantize_down_name, match_node_name[1], dtypes.qint8, performance_only=self.performance_only
                 )
 
             else:
