@@ -87,7 +87,7 @@ def gptq_entry(
     **kwargs,
 ) -> torch.nn.Module:
     logger.info("Quantize model with the GPTQ algorithm.")
-    from neural_compressor.torch.algorithms.weight_only.gptq import INCGPTQQuantizer
+    from neural_compressor.torch.algorithms.weight_only.gptq import GPTQuantizer
 
     # rebuild weight_config for gptq_quantize function
     weight_config = {}
@@ -119,10 +119,15 @@ def gptq_entry(
     )
     kwargs.pop("example_inputs")
     logger.warning("lm_head in transformer model is skipped by GPTQ")
-
-    if CurrentQuantizer.quantizer is None or mode in [Mode.PREPARE, Mode.QUANTIZE]:
-        CurrentQuantizer.quantizer = INCGPTQQuantizer(quant_config=weight_config)
-    model = CurrentQuantizer.quantizer.execute(model, mode=mode, *args, **kwargs)
+    if getattr(model, "quantizer", False):
+        quantizer = model.quantizer
+    else:
+        quantizer = GPTQuantizer(quant_config=weight_config)
+    model = quantizer.execute(model, mode=mode, *args, **kwargs)
+    if getattr(model, "quantizer", False):
+        del model.quantizer
+    else:
+        model.quantizer = quantizer
     return model
 
 

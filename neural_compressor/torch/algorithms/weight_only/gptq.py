@@ -183,7 +183,7 @@ def quantize(x, scale, zero, maxq):
     return scale * (q - zero)
 
 
-class GPTQuantizer(object):
+class RAWGPTQuantizer(object):
     """Main API for GPTQ algorithm.
 
     Please refer to:
@@ -1121,7 +1121,7 @@ class Quantizer(nn.Module):
 from neural_compressor.torch.algorithms import Quantizer as INCQuantizer
 
 
-class INCGPTQQuantizer(INCQuantizer):
+class GPTQuantizer(INCQuantizer):
     def __init__(self, quant_config={}):
         """Init a RTNQuantizer object.
 
@@ -1149,9 +1149,8 @@ class INCGPTQQuantizer(INCQuantizer):
         assert isinstance(model, torch.nn.Module), "only support torch module"
         if use_layer_wise:
             assert model_path is not None, "model_path should not be None when use layer wise mode"
-        from .gptq import GPTQuantizer
 
-        self.gptq_quantizer = GPTQuantizer(
+        self.gptq_quantizer = RAWGPTQuantizer(
             model,
             weight_config=self.quant_config,
             nsamples=nsamples,
