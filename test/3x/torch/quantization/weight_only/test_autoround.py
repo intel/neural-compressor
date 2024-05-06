@@ -116,7 +116,7 @@ class TestAutoRound:
         assert "scale" in q_model.autoround_config["transformer.h.0.attn.k_proj"].keys()
         assert torch.float32 == q_model.autoround_config["transformer.h.0.attn.k_proj"]["scale_dtype"]
 
-    def test_new_api(self):
+    def test_prepare_and_convert_api(self):
         inp = torch.ones([1, 10], dtype=torch.long)
         gpt_j_model = copy.deepcopy(self.gptj)
         tokenizer = transformers.AutoTokenizer.from_pretrained(
