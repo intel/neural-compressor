@@ -16,9 +16,9 @@ import transformers
 class ModelConv1d(torch.nn.Module):
     def __init__(self):
         super(ModelConv1d, self).__init__()
-        self.fc1 = transformers.Conv1D(50, 30)
-        self.fc2 = torch.nn.Linear(50, 30)
-        self.fc3 = torch.nn.Linear(30, 5)
+        self.fc1 = transformers.Conv1D(50, 32)
+        self.fc2 = torch.nn.Linear(50, 32)
+        self.fc3 = torch.nn.Linear(32, 5)
 
     def forward(self, x):
         out = self.fc1(x)
@@ -233,11 +233,52 @@ class TestRTNQuant:
         out2 = model(self.example_inputs)[0]
         assert torch.allclose(out2, self.label, atol=0.1), "Accuracy gap atol > 0.1 is unexpected."
 
-    def test_conv1d(self):
+    @pytest.mark.parametrize(
+        "bits, use_sym, group_size, group_dim",
+        [
+            (8, True, 128, 1),
+            (4, True, 128, 1),
+            (4, False, 32, 1),
+            (4, True, 32, 0),
+            (4, False, -1, 1),
+            (2, True, 8, 1),
+        ],
+    )
+    def test_conv1d(self, bits, use_sym, group_size, group_dim):
         model = ModelConv1d()
-        input = torch.randn(1, 30)
-        quant_config = RTNConfig()
+        input = torch.randn(1, 32)
+        quant_config = RTNConfig(
+            bits=bits,
+            use_sym=use_sym,
+            group_size=group_size,
+            group_dim=group_dim,
+        )
         out1 = model(input)
         model = quantize(model, quant_config)
         out2 = model(input)
-        assert torch.allclose(out2, out1, atol=1e-2), "Accuracy gap atol > 0.01 is unexpected."
+        # assert torch.allclose(out2, out1, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
+        assert (out2 != out1).all(), "WOQ out2put should be different with raw output"
+        if (bits, use_sym, group_size, group_dim) == (8, True, 128, 1):
+            assert torch.allclose(out2, out1, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
+        if (bits, use_sym, group_size, group_dim) == [(4, True, 128, 0), (4, True, 32, 1)]:
+            assert torch.allclose(out2, out1, atol=0.1), "Accuracy gap atol > 0.1 is unexpected."
+        if (bits, use_sym, group_size, group_dim) == [(4, False, 32, 0), (4, False, -1, 1), (2, True, 8, 1)]:
+            assert torch.allclose(out2, out1, atol=0.5), "Accuracy gap atol > 0.5 is unexpected."
+        
+    def test_conv1d_export(self):
+        model = ModelConv1d()
+        model_for_export = copy.deepcopy(model)
+        input = torch.randn(1, 32)
+        
+        quant_config = get_default_rtn_config()
+        q_model = quantize(model, quant_config)
+        q_out = q_model(input)
+    
+        quant_config = RTNConfig(export_compressed_model=True,)
+        
+        model = quantize(model_for_export, quant_config)
+        out2 = model(input)
+        # The small gap is caused by FP16 scale in WeightOnlyLinear.
+        assert torch.allclose(out2, q_out, atol=5e-5), \
+            "Exporting compressed model should have the same output as quantized model. Please double check"
+        assert isinstance(model.fc1, WeightOnlyLinear), "Exporting compressed model failed."

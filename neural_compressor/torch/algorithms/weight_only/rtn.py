@@ -158,11 +158,20 @@ def rtn_quantize(
             int_weight = int_weight.t_().contiguous() if transpose else int_weight
             scale = scale.t_().contiguous() if transpose else scale
             zp = zp.t_().contiguous() if transpose and zp is not None else zp
+            if isinstance(m, torch.nn.Linear):
+                in_features = m.in_features
+                out_features = m.out_features
+            elif isinstance(m, transformers.Conv1D):
+                in_features = m.weight.shape[1]
+                out_features = m.weight.shape[0]
+                int_weight = int_weight.t_().contiguous()
+                scale = scale.t_().contiguous()
+                zp = zp.t_().contiguous() if zp is not None else zp
             from .modules import WeightOnlyLinear
-
+            
             new_module = WeightOnlyLinear(
-                m.in_features,
-                m.out_features,
+                in_features,
+                out_features,
                 dtype=dtype,
                 bits=bits,
                 group_size=group_size,
