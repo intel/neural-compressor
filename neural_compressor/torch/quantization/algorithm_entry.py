@@ -33,19 +33,11 @@ from neural_compressor.torch.quantization import (
 from neural_compressor.torch.utils import Mode, logger, register_algo
 
 
-class CurrentQuantizer:
-    quantizer = None
-
-
 ###################### RTN Algo Entry ##################################
 @register_algo(RTN)
 @torch.no_grad()
 def rtn_entry(
-    model: torch.nn.Module,
-    configs_mapping: Dict[Tuple[str, callable], RTNConfig],
-    mode: Mode = Mode.QUANTIZE,
-    *args,
-    **kwargs,
+    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], RTNConfig], *args, **kwargs
 ) -> torch.nn.Module:
     """The main entry to apply rtn quantization."""
     from neural_compressor.torch.algorithms.weight_only.rtn import rtn_quantize
@@ -239,11 +231,7 @@ def smooth_quant_entry(
 @register_algo(name=AWQ)
 @torch.no_grad()
 def awq_quantize_entry(
-    model: torch.nn.Module,
-    configs_mapping: Dict[Tuple[str, callable], AWQConfig],
-    mode: Mode = Mode.QUANTIZE,
-    *args,
-    **kwargs,
+    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], AWQConfig], *args, **kwargs
 ) -> torch.nn.Module:
     logger.info("Quantize model with the AWQ algorithm.")
     from neural_compressor.torch.algorithms.weight_only.awq import awq_quantize
@@ -426,11 +414,7 @@ def autoround_quantize_entry(
 @register_algo(name=HQQ)
 @torch.no_grad()
 def hqq_entry(
-    model: torch.nn.Module,
-    configs_mapping: Dict[Tuple[str, Callable], HQQConfig],
-    mode: Mode = Mode.QUANTIZE,
-    *args,
-    **kwargs,
+    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, Callable], HQQConfig], *args, **kwargs
 ) -> torch.nn.Module:
     from neural_compressor.torch.algorithms.weight_only.hqq import hqq_quantize
 
