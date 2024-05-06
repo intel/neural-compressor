@@ -89,7 +89,7 @@ class AutoRoundQuantizer(Quantizer):
         scale_dtype (str): The data type of quantization scale to be used (default is "float32"), different kernels
                             have different choices.
         """
-
+        super().__init__(weight_config)
         self.tokenizer = None
         self.weight_config = weight_config
         self.enable_full_range = enable_full_range

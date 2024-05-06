@@ -369,29 +369,35 @@ def autoround_quantize_entry(
             scale_dtype = quant_config.scale_dtype
 
     kwargs.pop("example_inputs")
-
-    quantizer = AutoRoundQuantizer(
-        weight_config=weight_config,
-        enable_full_range=enable_full_range,
-        batch_size=batch_size,
-        lr_scheduler=lr_scheduler,
-        use_quant_input=use_quant_input,
-        enable_minmax_tuning=enable_minmax_tuning,
-        lr=lr,
-        minmax_lr=minmax_lr,
-        low_gpu_mem_usage=low_gpu_mem_usage,
-        iters=iters,
-        seqlen=seqlen,
-        n_samples=n_samples,
-        sampler=sampler,
-        seed=seed,
-        n_blocks=n_blocks,
-        gradient_accumulate_steps=gradient_accumulate_steps,
-        not_use_best_mse=not_use_best_mse,
-        dynamic_max_gap=dynamic_max_gap,
-        scale_dtype=scale_dtype,
-    )
+    if getattr(model, "quantizer", False):
+        quantizer = model.quantizer
+    else:
+        quantizer = AutoRoundQuantizer(
+            weight_config=weight_config,
+            enable_full_range=enable_full_range,
+            batch_size=batch_size,
+            lr_scheduler=lr_scheduler,
+            use_quant_input=use_quant_input,
+            enable_minmax_tuning=enable_minmax_tuning,
+            lr=lr,
+            minmax_lr=minmax_lr,
+            low_gpu_mem_usage=low_gpu_mem_usage,
+            iters=iters,
+            seqlen=seqlen,
+            n_samples=n_samples,
+            sampler=sampler,
+            seed=seed,
+            n_blocks=n_blocks,
+            gradient_accumulate_steps=gradient_accumulate_steps,
+            not_use_best_mse=not_use_best_mse,
+            dynamic_max_gap=dynamic_max_gap,
+            scale_dtype=scale_dtype,
+        )
     model = quantizer.execute(model=model, mode=mode, *args, **kwargs)
+    if getattr(model, "quantizer", False):
+        del model.quantizer
+    else:
+        model.quantizer = quantizer
     logger.info("AutoRound quantization done.")
     return model
 
