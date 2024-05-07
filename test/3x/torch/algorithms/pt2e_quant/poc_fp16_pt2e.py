@@ -5,7 +5,6 @@
 
 import torch
 import torch.ao.quantization.quantizer.x86_inductor_quantizer as xiq
-import torchvision.models as models
 from torch._export import capture_pre_autograd_graph
 from torch.ao.quantization.quantize_pt2e import convert_pt2e, prepare_pt2e
 from torch.ao.quantization.quantizer.x86_inductor_quantizer import X86InductorQuantizer
@@ -97,6 +96,7 @@ def replace_with_vis(g, search_pattern, replace_pattern):
     subgraph_rewriter.replace_pattern(g, search_pattern, replace_pattern)
 
 
+@torch.no_grad()
 def test_quantizer_on_simple_model():
     model, example_inputs = build_model_include_conv_and_linear()
 
@@ -119,9 +119,9 @@ def test_quantizer_on_simple_model():
     print(f"int8 + float32: {out}")
 
     # Option1
-    replace_with_vis(converted_model, linear_pattern_bias, linear_replace)
-    # Option 2
-    # replace_with_vis(converted_model, linear_pattern_bias, linear_replace_pattern_bias)
+    # replace_with_vis(converted_model, linear_pattern_bias, linear_replace)
+    # Option 2 (Rec.)
+    replace_with_vis(converted_model, linear_pattern_bias, linear_replace_pattern_bias)
 
     new_out = converted_model(*example_inputs)
     print(f"int8 + float16: {new_out}")
@@ -135,11 +135,13 @@ def test_quantizer_on_simple_model():
     from torch._inductor import config
 
     config.freezing = True
-    # opt_model = torch.compile(converted_model)
-    opt_model = converted_model
-    out = opt_model(*example_inputs)
+    opt_model = torch.compile(converted_model)
+    # opt_model = converted_model
+    opt_out = opt_model(*example_inputs)
     # logger.warning("out shape is %s", out.shape)
-    print(out)
+    print(f"opt_out: {opt_out}")
+    diff_opt = (new_out - opt_out).abs().max()
+    assert torch.allclose(new_out, opt_out, atol=1e-5)
     assert out is not None
 
 
