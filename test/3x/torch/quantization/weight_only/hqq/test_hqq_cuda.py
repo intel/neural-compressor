@@ -76,6 +76,20 @@ class TestHQQCUDA:
         q_label = model(example_inputs)[0]
         print(q_label)
 
+    def test_hqq_quant_with_new_api(self):
+        from neural_compressor.torch.quantization import convert, get_default_hqq_config, prepare
+
+        model = AutoModelForCausalLM.from_pretrained("facebook/opt-125m")
+        example_inputs = torch.tensor(
+            [[10, 20, 30, 40, 50, 60]], dtype=torch.long, device=auto_detect_accelerator().current_device()
+        )
+        # test_default_config
+        quant_config = get_default_hqq_config()
+        model = prepare(model, quant_config)
+        model = convert(model)
+        q_label = model(example_inputs)[0]
+        print(q_label)
+
     @pytest.mark.parametrize(
         "nbits, group_size, quant_zero, quant_scale, scale_quant_group_size",
         [
@@ -118,19 +132,7 @@ class TestHQQCUDAWithNewAPI:
         torch.cuda.manual_seed(0)
         hqq_global_option.use_half = True
 
-    def test_hqq_quant(self):
-        from neural_compressor.torch.quantization import convert, get_default_hqq_config, prepare
 
-        model = AutoModelForCausalLM.from_pretrained("facebook/opt-125m")
-        example_inputs = torch.tensor(
-            [[10, 20, 30, 40, 50, 60]], dtype=torch.long, device=auto_detect_accelerator().current_device()
-        )
-        # test_default_config
-        quant_config = get_default_hqq_config()
-        model = prepare(model, quant_config)
-        model = convert(model)
-        q_label = model(example_inputs)[0]
-        print(q_label)
 
     @pytest.mark.parametrize(
         "nbits, group_size, quant_zero, quant_scale, scale_quant_group_size",

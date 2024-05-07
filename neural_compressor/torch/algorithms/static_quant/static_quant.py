@@ -53,6 +53,7 @@ class StaticQuantQuantizer(Quantizer):
             quant_config (OrderedDict, optional): quantization config for ops. Defaults to {}.
         """
         super().__init__(quant_config)
+        self.user_cfg = OrderedDict()
 
     def prepare(self, model, example_inputs, inplace=True, *args, **kwargs):
         """Prepares a given model for quantization.
@@ -71,7 +72,7 @@ class StaticQuantQuantizer(Quantizer):
             model, example_inputs
         )
         # update json file in ipex_config_path; map ipex op_name to pt op_name
-        user_cfg = cfg_to_qconfig(self.quant_config, cfgs, op_infos_from_cfgs, output_tensor_id_op_name)
+        self.user_cfg = cfg_to_qconfig(self.quant_config, cfgs, op_infos_from_cfgs, output_tensor_id_op_name)
         model.eval()
 
         # Check save_qconf_summary part is a workaround for IPEX bug.
@@ -94,7 +95,6 @@ class StaticQuantQuantizer(Quantizer):
                 model = ipex.quantization.prepare(model, static_qconfig, example_inputs=example_inputs, inplace=inplace)
 
         model.load_qconf_summary(qconf_summary=ipex_config_path)
-        setattr(model, "user_cfg", user_cfg)
         return model
 
     def convert(self, model, example_inputs, inplace=True, *args, **kwargs):
@@ -110,8 +110,6 @@ class StaticQuantQuantizer(Quantizer):
         """
         from neural_compressor.torch.algorithms.static_quant import save
 
-        user_cfg = getattr(model, "user_cfg", OrderedDict())
-
         model.save_qconf_summary(qconf_summary=ipex_config_path)
         model = _ipex_post_quant_process(model, example_inputs, inplace=inplace)
 
@@ -119,7 +117,7 @@ class StaticQuantQuantizer(Quantizer):
             model.tune_cfg = json.load(f)
         model.ipex_config_path = ipex_config_path
 
-        dump_model_op_stats(user_cfg)
+        dump_model_op_stats(self.user_cfg)
 
         logger.info("Static quantization done.")
         model.ori_save = model.save

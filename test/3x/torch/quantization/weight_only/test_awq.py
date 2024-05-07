@@ -58,22 +58,7 @@ class TestAWQ(unittest.TestCase):
         out2 = qdq_model(example_inputs)
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-1))
 
-
-class TestAWQWithNewAPI(unittest.TestCase):
-    @classmethod
-    def setUpClass(self):
-        self.lm_input = torch.ones([1, 10], dtype=torch.long)
-        self.gptj = get_gpt_j()
-
-    @classmethod
-    def tearDownClass(self):
-        pass
-
-    def setUp(self):
-        # print the test name
-        logger.info(f"Running TestAWQ test: {self.id()}")
-
-    def test_awq(self):
+    def test_awq_with_new_api(self):
         example_inputs = torch.ones([1, 10], dtype=torch.long)
 
         @torch.no_grad()

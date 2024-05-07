@@ -68,8 +68,17 @@ def rtn_entry(
             "double_quant_group_size": quant_config.double_quant_group_size,
         }
 
-    quantizer = RTNQuantizer(quant_config=weight_config)
+    if getattr(model, "quantizer", False):
+        quantizer = model.quantizer
+    else:
+        quantizer = RTNQuantizer(quant_config=weight_config)
+
     model = quantizer.execute(model, mode=mode)
+
+    if getattr(model, "quantizer", False):
+        del model.quantizer
+    else:
+        model.quantizer = quantizer
     return model
 
 
@@ -160,8 +169,17 @@ def static_quant_entry(
     inplace = kwargs.get("inplace", True)
     assert example_inputs is not None, "Please provide example_inputs for static quantization."
 
-    quantizer = StaticQuantQuantizer(quant_config=quant_config_mapping)
+    if getattr(model, "quantizer", False):
+        quantizer = model.quantizer
+    else:
+        quantizer = StaticQuantQuantizer(quant_config=quant_config_mapping)
+
     model = quantizer.execute(model, mode=mode, run_fn=run_fn, example_inputs=example_inputs, inplace=inplace)
+
+    if getattr(model, "quantizer", False):
+        del model.quantizer
+    else:
+        model.quantizer = quantizer
     return model
 
 
@@ -275,7 +293,11 @@ def awq_quantize_entry(
     example_inputs = kwargs.get("example_inputs", None)
     assert example_inputs is not None, "Please provide example_inputs for AWQ quantization."
 
-    quantizer = AWQQuantizer(quant_config=weight_config)
+    if getattr(model, "quantizer", False):
+        quantizer = model.quantizer
+    else:
+        quantizer = AWQQuantizer(quant_config=weight_config)
+
     model = quantizer.execute(
         model,
         mode=mode,
@@ -288,6 +310,11 @@ def awq_quantize_entry(
         return_int=return_int,
         use_full_range=use_full_range,
     )
+
+    if getattr(model, "quantizer", False):
+        del model.quantizer
+    else:
+        model.quantizer = quantizer
     return model
 
 
@@ -425,8 +452,17 @@ def hqq_entry(
     from neural_compressor.torch.algorithms.weight_only.hqq import HQQuantizer
 
     logger.info("Quantize model with the HQQ algorithm.")
-    quantizer = HQQuantizer(quant_config=configs_mapping)
+    if getattr(model, "quantizer", False):
+        quantizer = model.quantizer
+    else:
+        quantizer = HQQuantizer(quant_config=configs_mapping)
+
     model = quantizer.execute(model, mode=mode)
+
+    if getattr(model, "quantizer", False):
+        del model.quantizer
+    else:
+        model.quantizer = quantizer
     return model
 
 
