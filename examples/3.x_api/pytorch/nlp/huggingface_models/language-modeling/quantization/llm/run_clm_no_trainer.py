@@ -341,13 +341,13 @@ if args.quantize:
                 quant_config = SmoothQuantConfig(alpha=args.alpha, folding=True)
             
             if re.search("gpt", user_model.config.model_type):
-                quant_config.set_local("add", SmoothQuantConfig(w_dtype="fp32", act_dtype="fp32"))
+                quant_config.set_local(torch.add, SmoothQuantConfig(w_dtype="fp32", act_dtype="fp32"))
         else:
             from neural_compressor.torch.quantization import quantize, get_default_static_config, StaticQuantConfig
 
             quant_config =  get_default_static_config()
             if re.search("gpt", user_model.config.model_type):
-                quant_config.set_local("add", StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
+                quant_config.set_local(torch.add, StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
 
         from neural_compressor.torch.algorithms.smooth_quant import move_input_to_device
         from tqdm import tqdm
