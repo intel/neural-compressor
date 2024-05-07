@@ -132,8 +132,6 @@ class TestHQQCUDAWithNewAPI:
         torch.cuda.manual_seed(0)
         hqq_global_option.use_half = True
 
-
-
     @pytest.mark.parametrize(
         "nbits, group_size, quant_zero, quant_scale, scale_quant_group_size",
         [
