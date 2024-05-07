@@ -6,3 +6,32 @@
 .. py:module:: neural_compressor.torch.algorithms.weight_only.hqq.quantizer
 
 
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.hqq.quantizer.HQQuantizer
+
+
+
+
+.. py:class:: HQQuantizer(quant_config: neural_compressor.torch.algorithms.weight_only.hqq.config.ConfigMappingType)
+
+
+
+
+   The base quantizer for all algorithm quantizers.
+
+   The `Quantizer` unifies the interfaces across various quantization algorithms, including GPTQ, RTN, etc.
+   Given a float model, `Quantizer` apply the quantization algorithm to the model according to the `quant_config`.
+
+   To implement a new quantization algorithm,, inherit from `Quantizer` and implement the following methods:
+       - `prepare`: prepare a given model for convert.
+       - `convert`: convert a prepared model to a quantized model.
+   Note: `quantize` and `execute` are optional for new quantization algorithms.
+
+

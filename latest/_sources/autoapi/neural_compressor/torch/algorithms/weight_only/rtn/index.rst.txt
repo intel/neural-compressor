@@ -9,56 +9,29 @@
 Module Contents
 ---------------
 
-
-Functions
-~~~~~~~~~
+Classes
+~~~~~~~
 
 .. autoapisummary::
 
-   neural_compressor.torch.algorithms.weight_only.rtn.rtn_quantize
+   neural_compressor.torch.algorithms.weight_only.rtn.RTNQuantizer
 
 
 
-.. py:function:: rtn_quantize(model, dtype='int', bits=4, scheme='sym', group_size=32, group_dim=1, quantile=1.0, weight_config={}, export_compressed_model=False, use_full_range=False, use_mse_search=False, **kwargs)
 
-   Quant the model with round to nearest method and inplace is True.
+.. py:class:: RTNQuantizer(quant_config: collections.OrderedDict = {})
 
-   :param model: torch module
-   :param bits: num bits. Defaults to 4.
-   :param group_size: how many elements share one scale/zp. Defaults to 32.
-   :type group_size: int, optional
-   :param scheme: sym or asym. Defaults to "sym".
-   :type scheme: str, optional
-   :param quantile: percentile of clip. Defaults to 1.0.
-   :type quantile: float, optional
-   :param dtype: select from int, nf4, fp4. Defaults to int.
-   :type dtype: str, optional
-   :param weight_config: specific layer wise configurations. Defaults to {}.
-                         For example,
-                             weight_config={
-                                 'fc2':
-                                     {
-                                         'dtype': 'int',
-                                         'bits': 4,
-                                         'group_size': 32,
-                                         'scheme': 'sym'
-                                     }
-                             }
-   :type weight_config: dict, optional
-   :param export_compressed_model: Choose return fp32 or int32 model.
-                                   Defaults to False.
-   :type export_compressed_model: bool, optional
-   :param use_full_range: Choose sym range whether use -2**(bits-1).
-                          Defaults to False.
-   :type use_full_range: bool, optional
-   :param use_mse_search: Whether search clip range.
-                          Defaults to True.
-   :type use_mse_search: bool, optional
-   :param group_dim: 0 means splitting output channel,
-                     1 means splitting input channel. Defaults to 1.
-   :type group_dim: int, optional
 
-   :returns: fake quantized torch module
-   :rtype: model
+
+
+   The base quantizer for all algorithm quantizers.
+
+   The `Quantizer` unifies the interfaces across various quantization algorithms, including GPTQ, RTN, etc.
+   Given a float model, `Quantizer` apply the quantization algorithm to the model according to the `quant_config`.
+
+   To implement a new quantization algorithm,, inherit from `Quantizer` and implement the following methods:
+       - `prepare`: prepare a given model for convert.
+       - `convert`: convert a prepared model to a quantized model.
+   Note: `quantize` and `execute` are optional for new quantization algorithms.
 
 

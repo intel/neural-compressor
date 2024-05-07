@@ -6,12 +6,3 @@
 .. py:module:: neural_compressor.torch.algorithms.weight_only.hqq
 
 
-Submodules
-----------
-.. toctree::
-   :titlesonly:
-   :maxdepth: 1
-
-   quant_api/index.rst
-
-
