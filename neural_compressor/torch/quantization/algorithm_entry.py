@@ -72,10 +72,14 @@ def rtn_entry(
 @register_algo(GPTQ)
 @torch.no_grad()
 def gptq_entry(
-    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], GPTQConfig], *args, **kwargs
+    model: torch.nn.Module,
+    configs_mapping: Dict[Tuple[str, callable], GPTQConfig],
+    mode: Mode = Mode.QUANTIZE,
+    *args,
+    **kwargs,
 ) -> torch.nn.Module:
     logger.info("Quantize model with the GPTQ algorithm.")
-    from neural_compressor.torch.algorithms.weight_only.gptq import gptq_quantize
+    from neural_compressor.torch.algorithms.weight_only.gptq import GPTQuantizer
 
     # rebuild weight_config for gptq_quantize function
     weight_config = {}
@@ -106,12 +110,16 @@ def gptq_entry(
         }
     )
     kwargs.pop("example_inputs")
-    kwargs.pop("mode")  # TODO: will be removed after GPTQ refactoring
-
     logger.warning("lm_head in transformer model is skipped by GPTQ")
-    model, quantization_perm = gptq_quantize(model=model, weight_config=weight_config, *args, **kwargs)
-    # Assign the gptq config as an attribute of model
-    model._gptq_quantization_perm = quantization_perm
+    if getattr(model, "quantizer", False):
+        quantizer = model.quantizer
+    else:
+        quantizer = GPTQuantizer(quant_config=weight_config)
+    model = quantizer.execute(model, mode=mode, *args, **kwargs)
+    if getattr(model, "quantizer", False):
+        del model.quantizer
+    else:
+        model.quantizer = quantizer
     return model
 
 
@@ -123,7 +131,7 @@ def static_quant_entry(
     configs_mapping: Dict[Tuple[str, callable], StaticQuantConfig],
     mode: Mode = Mode.QUANTIZE,
     *args,
-    **kwargs
+    **kwargs,
 ) -> torch.nn.Module:
     logger.info("Quantize model with the static quant algorithm.")
     from neural_compressor.torch.algorithms.static_quant import StaticQuantQuantizer
@@ -333,7 +341,7 @@ def autoround_quantize_entry(
     configs_mapping: Dict[Tuple[str, callable], AutoRoundConfig],
     mode: Mode = Mode.QUANTIZE,
     *args,
-    **kwargs
+    **kwargs,
 ) -> torch.nn.Module:
     from neural_compressor.torch.algorithms.weight_only.autoround import AutoRoundQuantizer
 
