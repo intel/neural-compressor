@@ -291,15 +291,12 @@ def get_quantizable_ops_recursively(model, example_inputs):  # pragma: no cover
                     map_op_name_to_fqn[(tuple(name), ipex_op_type)] = module_fqn
                     if "class" in ipex_op_type:  # "<class 'torch.nn.modules.activation.ReLU'>"
                         op_type = ipex_op_type.split("'")[1]
-                        op_name_info.append((module_fqn, eval(op_type)))
+                        op_name_info.append((module_fqn, eval(op_type).__name__))
                     elif "method" in ipex_op_type:  # "<method 'add' of 'torch._C._TensorBase' objects>"
                         method = ipex_op_type.split("'")[1]
-                        op_type = getattr(
-                            torch._C._TensorBase if ipex_ver.release < Version("2.2") else torch._C.TensorBase, method
-                        )
-                        op_name_info.append((module_fqn, op_type))
-                    else:
-                        op_name_info.append((module_fqn, op_type))
+                        op_name_info.append((module_fqn, method))
+                    elif "Convolution" in ipex_op_type:  # "Convolution_Relu"
+                        op_name_info.append((module_fqn, "Conv2d"))
                 else:
                     re_flag = False
                     for pattern, unify_op_type in unify_op_type_mapping_ipex["re"].items():
