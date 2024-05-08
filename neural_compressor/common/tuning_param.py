@@ -98,3 +98,6 @@ class TuningParam:
         except Exception as e:
             logger.debug(f"Failed to validate the input_args: {e}")
             return False
+
+    def __str__(self) -> str:
+        return self.name
