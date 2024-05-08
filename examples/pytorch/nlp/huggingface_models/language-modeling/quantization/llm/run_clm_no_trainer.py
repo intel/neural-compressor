@@ -51,7 +51,7 @@ parser.add_argument("--pad_max_length", default=512, type=int,
 parser.add_argument("--calib_iters", default=512, type=int,
                     help="calibration iters.")
 parser.add_argument("--tasks", nargs='+', default=["lambada_openai",
-                                                   "hellaswag", "winogrande", "piqa", "wikitext"],
+                                                   "hellaswag", "winogrande", "piqa"],
                     type=str, help="tasks list for accuracy validation, text-generation and code-generation tasks are different.")
 parser.add_argument("--peft_model_id", type=str, default=None, help="model_name_or_path of peft model")
 # ============SmoothQuant configs==============
@@ -78,7 +78,8 @@ parser.add_argument('--gptq_pad_max_length', type=int, default=2048, help='Calib
                                                                            this should align with your model config, \
                                                                            and your dataset builder args: args.pad_max_length')
 parser.add_argument('--gptq_static_groups', action='store_true', help='Use determined group to do quantization')
-parser.add_argument('--gptq_true_sequential', nargs='+', default=None, type=str, help="Whether to run in true_sequential model.")
+parser.add_argument('--gptq_true_sequential', action='store_true', help="Whether to run in true_sequential model.")
+parser.add_argument('--gptq_lm_head', action='store_true', help="Whether to use GPTQ to quantize the output layer of the LLMs.")
 # ==============code generation args===========
 parser.add_argument("--code_generation", action="store_true")
 parser.add_argument("--n_samples", default=200, type=int)
@@ -287,6 +288,7 @@ if args.quantize:
             'pad_max_length': args.gptq_pad_max_length,
             'static_groups': args.gptq_static_groups,
             "true_sequential": args.gptq_true_sequential,
+            "lm_head": args.gptq_lm_head,
         }
         # GPTQ: use assistive functions to modify calib_dataloader and calib_func
         # TEQ: set calib_func=None, use default training func as calib_func
@@ -332,6 +334,8 @@ if args.quantize:
                 acc = evaluator.evaluate(model)
                 return acc
 
+    user_model.to(DEV)
+
     q_model = quantization.fit(
         user_model,
         conf,
@@ -340,7 +344,7 @@ if args.quantize:
         eval_func=eval_func,
     )
 
-    # q_model.save(args.output_dir)
+    q_model.save(args.output_dir)
 
 if args.int8 or args.int8_bf16_mixed:
     print("load int8 model")
@@ -357,11 +361,6 @@ else:
 
 if args.accuracy:
     user_model.eval()
-    if torch.cuda.is_available():
-        DEV = torch.device("cuda:0")
-    else:
-        DEV = torch.device("cpu")
-    q_model.model.to(DEV)
     if args.code_generation:
         from intel_extension_for_transformers.llm.evaluation.lm_code_eval import evaluate
         from transformers import AutoTokenizer
@@ -378,10 +377,9 @@ if args.accuracy:
         results = evaluate(
             model="hf-causal",
             model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32' + ",trust_remote_code=" + str(args.trust_remote_code),
-            user_model=q_model.model,
+            user_model=user_model,
             batch_size=args.batch_size,
             tasks=args.tasks,
-            device=DEV.type
         )
 
     dumped = json.dumps(results, indent=2)
