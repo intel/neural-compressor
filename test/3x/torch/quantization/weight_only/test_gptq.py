@@ -5,7 +5,19 @@ import torch
 import transformers
 
 from neural_compressor.torch.algorithms.weight_only.modules import WeightOnlyLinear
-from neural_compressor.torch.quantization import GPTQConfig, get_default_gptq_config, get_default_rtn_config, quantize
+from neural_compressor.torch.quantization import (
+    GPTQConfig,
+    convert,
+    get_default_gptq_config,
+    get_default_rtn_config,
+    prepare,
+    quantize,
+)
+
+
+def run_fn_for_rtn(model):
+    model(torch.tensor([[10, 20, 30]], dtype=torch.long))
+    model(torch.tensor([[40, 50, 60]], dtype=torch.long))
 
 
 def run_fn(model):
@@ -32,17 +44,39 @@ class TestGPTQQuant:
         # test_default_rtn_config
         model = copy.deepcopy(self.tiny_gptj)
         quant_config = get_default_rtn_config()
-        model = quantize(model, quant_config, run_fn=run_fn)
+        model = prepare(model, quant_config)
+        run_fn_for_rtn(model)
+        model = convert(model)
         rtn_label = model(self.example_inputs)[0]
         rtn_atol = (rtn_label - self.label).amax()
         # test_default_gptq_config
         model = copy.deepcopy(self.tiny_gptj)
         quant_config = get_default_gptq_config()
-        model = quantize(model, quant_config, run_fn=run_fn)
+        model = prepare(model, quant_config)
+        run_fn(model)
+        model = convert(model)
         gptq_label = model(self.example_inputs)[0]
         gptq_atol = (gptq_label - self.label).amax()
         # 0.05 VS 0.08
         assert gptq_atol < rtn_atol, "GPTQ should have lower atol than RTN, please double check."
+
+    def test_quantize_API(self):
+        # test_default_gptq_config
+        model = copy.deepcopy(self.tiny_gptj)
+        quant_config = get_default_gptq_config()
+        model = prepare(model, quant_config)
+        run_fn(model)
+        model = convert(model)
+        gptq_label = model(self.example_inputs)[0]
+        gptq_atol_1 = (gptq_label - self.label).amax()
+        # quantize API
+        model = copy.deepcopy(self.tiny_gptj)
+        quant_config = get_default_gptq_config()
+        model = quantize(model, quant_config, run_fn=run_fn)
+        gptq_label = model(self.example_inputs)[0]
+        gptq_atol_2 = (gptq_label - self.label).amax()
+        # 0.05 VS 0.08
+        assert gptq_atol_1 == gptq_atol_2, "GPTQ should have lower atol than RTN, please double check."
 
     @pytest.mark.parametrize(
         "bits, use_sym, group_size",
@@ -62,7 +96,9 @@ class TestGPTQQuant:
             use_sym=use_sym,
             group_size=group_size,
         )
-        model = quantize(model, quant_config, run_fn=run_fn)
+        model = prepare(model, quant_config)
+        run_fn(model)
+        model = convert(model)
         out = model(self.example_inputs)[0]
         assert (out != self.label).all(), "WOQ output should be different with raw output"
         if (bits, use_sym, group_size) == (8, True, 128):
@@ -78,7 +114,9 @@ class TestGPTQQuant:
         quant_config = GPTQConfig(
             use_mse_search=False,
         )
-        model = quantize(model, quant_config, run_fn=run_fn)
+        model = prepare(model, quant_config)
+        run_fn(model)
+        model = convert(model)
         out = model(self.example_inputs)[0]
         atol_false = (out - self.label).amax()
         # use_mse_search=True
@@ -86,7 +124,9 @@ class TestGPTQQuant:
         quant_config = GPTQConfig(
             use_mse_search=True,
         )
-        model = quantize(model, quant_config, run_fn=run_fn)
+        model = prepare(model, quant_config)
+        run_fn(model)
+        model = convert(model)
         out = model(self.example_inputs)[0]
         atol_true = (out - self.label).amax()
         # compare atol, this case is an ideal case.
@@ -110,7 +150,9 @@ class TestGPTQQuant:
             dtype=dtype,
             export_compressed_model=False,
         )
-        model = quantize(model, quant_config, run_fn=run_fn)
+        model = prepare(model, quant_config)
+        run_fn(model)
+        model = convert(model)
         out1 = model(self.example_inputs)[0]
         # export_compressed_model = True
         model = copy.deepcopy(self.tiny_gptj)
@@ -118,7 +160,9 @@ class TestGPTQQuant:
             dtype=dtype,
             export_compressed_model=True,
         )
-        model = quantize(model, quant_config, run_fn=run_fn)
+        model = prepare(model, quant_config)
+        run_fn(model)
+        model = convert(model)
         out2 = model(self.example_inputs)[0]
         assert isinstance(model.transformer.h[0].attn.k_proj, WeightOnlyLinear), "Exporting compressed model failed."
 
@@ -139,7 +183,9 @@ class TestGPTQQuant:
         quant_config = GPTQConfig(
             dtype=dtype,
         )
-        model = quantize(model, quant_config, run_fn=run_fn)
+        model = prepare(model, quant_config)
+        run_fn(model)
+        model = convert(model)
         out = model(self.example_inputs)[0]
         atol = (out - self.label).amax()
         assert atol < 0.12, "Accuracy gap atol > 0.12 is unexpected. Please double check."
@@ -159,7 +205,9 @@ class TestGPTQQuant:
             double_quant_use_sym=False,
             double_quant_group_size=double_quant_group_size,
         )
-        model = quantize(model, quant_config, run_fn=run_fn)
+        model = prepare(model, quant_config)
+        run_fn(model)
+        model = convert(model)
         out = model(self.example_inputs)[0]
         atol_false = (out - self.label).amax()
         model = copy.deepcopy(self.tiny_gptj)
@@ -171,7 +219,9 @@ class TestGPTQQuant:
             double_quant_use_sym=True,
             double_quant_group_size=double_quant_group_size,
         )
-        model = quantize(model, quant_config, run_fn=run_fn)
+        model = prepare(model, quant_config)
+        run_fn(model)
+        model = convert(model)
         out = model(self.example_inputs)[0]
         atol_true = (out - self.label).amax()
         # compare atol, this case is not an ideal case.

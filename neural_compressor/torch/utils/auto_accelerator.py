@@ -137,7 +137,6 @@ class Auto_Accelerator(ABC):
     def synchronize(self):
         pass
 
-    @abstractmethod
     def mark_step(self):
         pass
 
@@ -173,9 +172,6 @@ class CPU_Accelerator(Auto_Accelerator):
         pass
 
     def synchronize(self):
-        pass
-
-    def mark_step(self):
         pass
 
 

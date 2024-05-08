@@ -19,7 +19,7 @@ from neural_compressor.common.base_config import BaseConfig
 from neural_compressor.common.utils import SMOOTH_QUANT, STATIC_QUANT
 from neural_compressor.tensorflow.algorithms import KerasAdaptor, Tensorflow_ITEXAdaptor, TensorFlowAdaptor
 from neural_compressor.tensorflow.quantization.config import SmoothQuantConfig
-from neural_compressor.tensorflow.utils import BaseModel, KerasModel, TFConfig, register_algo
+from neural_compressor.tensorflow.utils import BaseModel, KerasModel, TFConfig, register_algo, valid_keras_format
 
 
 @register_algo(name=STATIC_QUANT)
@@ -41,6 +41,7 @@ def static_quant_entry(
         q_model: the quantized model.
     """
     if isinstance(model, KerasModel):
+        assert valid_keras_format(model.model), "Only Sequential or Functional models are supported now."
         framework = KerasAdaptor
     elif TFConfig.global_config["backend"] == "itex":
         framework = Tensorflow_ITEXAdaptor

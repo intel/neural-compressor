@@ -11,7 +11,7 @@ import yaml
 from tensorflow.compat.v1 import graph_util
 
 from neural_compressor.tensorflow.algorithms.static_quant.tensorflow import TensorflowQuery
-from neural_compressor.tensorflow.utils import disable_random
+from neural_compressor.tensorflow.utils import disable_random, version1_gte_version2
 
 
 class TestConvRequantizedFusionNewAPI(unittest.TestCase):
@@ -25,7 +25,11 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
             "weight0", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.nn.conv2d(x_pad, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = (
+            tf.keras.layers.BatchNormalization()(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv)
+        )
 
         relu6 = tf.nn.relu6(normed, name="op_to_store")
 
@@ -367,7 +371,11 @@ class TestConvRequantizedFusionNewAPI(unittest.TestCase):
             "weight12", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.nn.conv2d(x_pad, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = (
+            tf.keras.layers.BatchNormalization()(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv)
+        )
         add = normed + tf.constant(np.random.randn(16), dtype=tf.float32)
         relu6 = tf.nn.relu6(add, name="op_to_store")
 

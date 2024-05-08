@@ -12,7 +12,7 @@ from neural_compressor.tensorflow.quantization.utils.quantize_graph.quantize_gra
     QuantizeGraphForIntel,
 )
 from neural_compressor.tensorflow.quantization.utils.utility import read_graph
-from neural_compressor.tensorflow.utils import disable_random
+from neural_compressor.tensorflow.utils import disable_random, version1_gte_version2
 
 
 class TestTensorflowQdqConcatFusion(unittest.TestCase):
@@ -80,7 +80,11 @@ class TestTensorflowQdqConcatFusion(unittest.TestCase):
         sqrt = tf.math.sqrt(x)
         relu_sqrt = tf.nn.relu(sqrt)
         conv = tf.nn.conv2d(relu_sqrt, conv_weights, strides=[1, 2, 2, 1], padding="SAME", name="last")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = (
+            tf.keras.layers.BatchNormalization()(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv)
+        )
 
         relu = tf.nn.relu(normed)
         conv1 = tf.nn.conv2d(x, conv_weights, strides=[1, 2, 2, 1], padding="SAME", name="last")

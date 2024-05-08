@@ -10,7 +10,7 @@ import yaml
 from tensorflow.compat.v1 import graph_util
 from tensorflow.python.framework import function
 
-from neural_compressor.tensorflow.utils import disable_random
+from neural_compressor.tensorflow.utils import disable_random, version1_gte_version2
 
 
 class TestTensorflowNewQdqConvFusion(unittest.TestCase):
@@ -22,7 +22,11 @@ class TestTensorflowNewQdqConvFusion(unittest.TestCase):
             "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )
         conv = tf.nn.conv2d(x, conv_weights, strides=[1, 2, 2, 1], padding="SAME")
-        normed = tf.compat.v1.layers.batch_normalization(conv)
+        normed = (
+            tf.keras.layers.BatchNormalization()(conv)
+            if version1_gte_version2(tf.__version__, "2.16.1")
+            else tf.compat.v1.layers.batch_normalization(conv)
+        )
         conv2_weights = tf.compat.v1.get_variable(
             "weight_conv2", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
         )

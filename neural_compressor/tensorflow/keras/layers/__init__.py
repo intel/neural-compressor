@@ -19,6 +19,5 @@ from neural_compressor.tensorflow.keras.layers.conv2d import QConv2D
 from neural_compressor.tensorflow.keras.layers.dense import QDense
 from neural_compressor.tensorflow.keras.layers.depthwise_conv2d import QDepthwiseConv2D
 from neural_compressor.tensorflow.keras.layers.pool2d import QAvgPool2D, QMaxPool2D
-from neural_compressor.tensorflow.keras.layers.quantizer import DeQuantize, FakeQuant, Quantize
 from neural_compressor.tensorflow.keras.layers.separable_conv2d import QSeparableConv2D
 from neural_compressor.tensorflow.keras.layers.layer_initializer import layer_initializer_dict
