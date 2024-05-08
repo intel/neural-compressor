@@ -40,7 +40,7 @@ from neural_compressor.common.utils import (
     STATIC_QUANT,
     TEQ,
 )
-from neural_compressor.torch.utils import is_hpex_available, logger
+from neural_compressor.torch.utils import is_hpex_available, is_ipex_imported, logger
 from neural_compressor.torch.utils.constants import (
     PRIORITY_AUTOROUND,
     PRIORITY_AWQ,
@@ -58,8 +58,6 @@ __all__ = [
     "get_default_gptq_config",
     "HQQConfig",
     "get_default_hqq_config",
-    "PT2EStaticQuantConfig",
-    "get_default_pt2e_static_config",
 ]
 
 
@@ -780,8 +778,11 @@ def get_default_AutoRound_config() -> AutoRoundConfig:
 
 ######################## PT2E Static Quant Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=PT2E_STATIC_QUANT)
-class PT2EStaticQuantConfig(BaseConfig):
-    """Config class for PT2E static quantization."""
+class _PT2EStaticQuantConfig(BaseConfig):
+    """Config class for PT2E static quantization.
+
+    This config is align with `StaticQuantConfig` and invisible to users.
+    """
 
     name = PT2E_STATIC_QUANT
     params_list = [
@@ -806,7 +807,6 @@ class PT2EStaticQuantConfig(BaseConfig):
         act_sym: bool = False,
         act_granularity: str = "per_tensor",
         act_algo: str = "kl",
-        dynamic_shapes: Optional[Union[Dict[str, Any], Tuple[Any]]] = None,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init PT2E Static Quant Configs."""
@@ -819,8 +819,6 @@ class PT2EStaticQuantConfig(BaseConfig):
         self.act_sym = act_sym
         self.act_granularity = act_granularity
         self.act_algo = act_algo
-        # used by export to specific dynamic shapes of example inputs
-        self.dynamic_shapes = dynamic_shapes
         self._post_init()
 
     @classmethod
@@ -836,7 +834,7 @@ class PT2EStaticQuantConfig(BaseConfig):
         pass
 
     @classmethod
-    def get_config_set_for_tuning(cls) -> Union[None, "PT2EStaticQuantConfig", List["PT2EStaticQuantConfig"]]:
+    def get_config_set_for_tuning(cls) -> Union[None, "_PT2EStaticQuantConfig", List["_PT2EStaticQuantConfig"]]:
         return cls(act_sym=[True, False], act_algo=["kl", "minmax"])
 
     def to_config_mapping(
@@ -846,13 +844,13 @@ class PT2EStaticQuantConfig(BaseConfig):
         return config_mapping
 
 
-def get_default_pt2e_static_config() -> PT2EStaticQuantConfig:
+def _get_default_pt2e_static_config() -> _PT2EStaticQuantConfig:
     """Generate the default pt2e static quant config.
 
     Returns:
         the default pt2e static quant config.
     """
-    return PT2EStaticQuantConfig()
+    return _PT2EStaticQuantConfig()
 
 
 ######################## Static Quant Config ###############################
@@ -886,6 +884,19 @@ class StaticQuantConfig(BaseConfig):
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init Static Quant Configs."""
+        if not is_ipex_imported():
+            _PT2EStaticQuantConfig(
+                w_dtype=w_dtype,
+                w_sym=w_sym,
+                w_granularity=w_granularity,
+                w_algo=w_algo,
+                act_dtype=act_dtype,
+                act_sym=act_sym,
+                act_granularity=act_granularity,
+                act_algo=act_algo,
+                white_list=white_list,
+            )
+            return
         super().__init__(white_list=white_list)
         self.w_dtype = w_dtype
         self.w_sym = w_sym
@@ -924,6 +935,8 @@ def get_default_static_config() -> StaticQuantConfig:
     Returns:
         the default static quant config.
     """
+    if not is_ipex_imported():
+        return _get_default_pt2e_static_config()
     return StaticQuantConfig()
 
 

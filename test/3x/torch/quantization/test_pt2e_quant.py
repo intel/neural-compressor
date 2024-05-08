@@ -6,14 +6,15 @@ import pytest
 import torch
 
 from neural_compressor.common.utils import logger
+from neural_compressor.torch.export import export
 from neural_compressor.torch.quantization import (
-    PT2EStaticQuantConfig,
+    StaticQuantConfig,
     convert,
-    get_default_pt2e_static_config,
+    get_default_static_config,
     prepare,
     quantize,
 )
-from neural_compressor.torch.utils import TORCH_VERSION_2_2_2, get_torch_version
+from neural_compressor.torch.utils import TORCH_VERSION_2_2_2, get_torch_version, is_ipex_imported
 
 
 class TestPT2EQuantization:
@@ -52,8 +53,10 @@ class TestPT2EQuantization:
 
         model = SimpleModel()
         example_inputs = (torch.randn(10, 10),)
-        return model, example_inputs
+        exported_model = export(model, example_inputs=example_inputs)
+        return exported_model, example_inputs
 
+    @pytest.mark.skipif(is_ipex_imported(), reason="IPEX is imported")
     @pytest.mark.skipif(get_torch_version() <= TORCH_VERSION_2_2_2, reason="Requires torch>=2.3.0")
     def test_quantize_simple_model(self):
         model, example_inputs = self.build_simple_torch_model_and_example_inputs()
@@ -63,8 +66,8 @@ class TestPT2EQuantization:
             for i in range(2):
                 model(*example_inputs)
 
-        quant_config = get_default_pt2e_static_config()
-        q_model = quantize(model=model, quant_config=quant_config, example_inputs=example_inputs, run_fn=calib_fn)
+        quant_config = get_default_static_config()
+        q_model = quantize(model=model, quant_config=quant_config, run_fn=calib_fn)
         from torch._inductor import config
 
         config.freezing = True
@@ -73,6 +76,7 @@ class TestPT2EQuantization:
         logger.warning("out shape is %s", out.shape)
         assert out is not None
 
+    @pytest.mark.skipif(is_ipex_imported(), reason="IPEX is imported")
     @pytest.mark.skipif(get_torch_version() <= TORCH_VERSION_2_2_2, reason="Requires torch>=2.3.0")
     def test_prepare_and_convert_on_simple_model(self):
         model, example_inputs = self.build_simple_torch_model_and_example_inputs()
@@ -82,9 +86,9 @@ class TestPT2EQuantization:
             for i in range(2):
                 model(*example_inputs)
 
-        quant_config = get_default_pt2e_static_config()
+        quant_config = get_default_static_config()
 
-        prepared_model = prepare(model, quant_config=quant_config, example_inputs=example_inputs)
+        prepared_model = prepare(model, quant_config=quant_config)
         calib_fn(prepared_model)
         q_model = convert(prepared_model)
         assert q_model is not None, "Quantization failed!"
@@ -97,6 +101,7 @@ class TestPT2EQuantization:
         logger.warning("out shape is %s", out.shape)
         assert out is not None
 
+    @pytest.mark.skipif(is_ipex_imported(), reason="IPEX is imported")
     @pytest.mark.skipif(get_torch_version() <= TORCH_VERSION_2_2_2, reason="Requires torch>=2.3.0")
     def test_prepare_and_convert_on_llm(self):
         from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -110,9 +115,11 @@ class TestPT2EQuantization:
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         input_ids = tokenizer("Hello, my dog is cute", return_tensors="pt")["input_ids"]
         example_inputs = (input_ids,)
-        quant_config = get_default_pt2e_static_config()
+        model = export(model, example_inputs=example_inputs)
+
+        quant_config = get_default_static_config()
         # prepare
-        prepare_model = prepare(model, quant_config, example_inputs=example_inputs)
+        prepare_model = prepare(model, quant_config)
         # calibrate
         for i in range(2):
             prepare_model(*example_inputs)

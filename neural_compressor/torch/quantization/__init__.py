@@ -34,8 +34,6 @@ from neural_compressor.torch.quantization.config import (
     FP8Config,
     get_default_fp8_config,
     get_default_fp8_config_set,
-    PT2EStaticQuantConfig,
-    get_default_pt2e_static_config,
 )
 
 from neural_compressor.torch.quantization.autotune import (
