@@ -30,7 +30,7 @@ from neural_compressor.torch.quantization import (
     StaticQuantConfig,
     TEQConfig,
 )
-from neural_compressor.torch.utils import Mode, logger, register_algo
+from neural_compressor.torch.utils import Mode, is_ipex_imported, logger, register_algo
 from neural_compressor.torch.utils.constants import PT2E_STATIC_QUANT
 
 
@@ -126,6 +126,8 @@ def static_quant_entry(
     *args,
     **kwargs
 ) -> torch.nn.Module:
+    if not is_ipex_imported():
+        return pt2e_static_quant_entry(model, configs_mapping, mode, *args, **kwargs)
     logger.info("Quantize model with the static quant algorithm.")
     from neural_compressor.torch.algorithms.static_quant import StaticQuantQuantizer
 
@@ -172,7 +174,7 @@ def pt2e_static_quant_entry(model: torch.nn.Module, configs_mapping, mode: Mode,
     example_inputs = kwargs.get("example_inputs", None)
     inplace = kwargs.get("inplace", True)
     for _, quant_config in configs_mapping.items():
-        if quant_config.name == PT2E_STATIC_QUANT:
+        if quant_config.name == STATIC_QUANT:
             w8a8_quantizer = W8A8StaticQuantizer(quant_config=quant_config)
             model = w8a8_quantizer.execute(
                 model, mode=mode, run_fn=run_fn, example_inputs=example_inputs, inplace=inplace
