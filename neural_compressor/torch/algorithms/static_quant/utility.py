@@ -90,9 +90,10 @@ def check_cfg_and_qconfig(user_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_
         for i, op_name in enumerate(op):
             for ops, _ in op_infos_from_cfgs.items():
                 if "fqn" in op_infos_from_cfgs[ops].keys() and op_infos_from_cfgs[ops]["fqn"] == op_name:
-                    ori_op = (tuple(ops), unify_op_type_mapping_ipex[op_infos_from_cfgs[ops]["op_type"]])
-                    tmp_user_cfg[((ori_op[0],), ori_op[1])] = user_cfg[op]
-                    break
+                    if op_infos_from_cfgs[ops]["op_type"] in unify_op_type_mapping_ipex:
+                        ori_op = (tuple(ops), unify_op_type_mapping_ipex[op_infos_from_cfgs[ops]["op_type"]])
+                        tmp_user_cfg[((ori_op[0],), ori_op[1])] = user_cfg[op]
+                        break
     user_cfg = tmp_user_cfg
     for op_name in user_cfg:
         inc_op_cfg = user_cfg[op_name]
