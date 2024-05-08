@@ -41,7 +41,7 @@ def rtn_entry(
     configs_mapping: Dict[Tuple[str, callable], RTNConfig],
     mode: Mode = Mode.QUANTIZE,
     *args,
-    **kwargs
+    **kwargs,
 ) -> torch.nn.Module:
     """The main entry to apply rtn quantization."""
     from neural_compressor.torch.algorithms.weight_only.rtn import RTNQuantizer
@@ -258,7 +258,7 @@ def awq_quantize_entry(
     configs_mapping: Dict[Tuple[str, callable], AWQConfig],
     mode: Mode = Mode.QUANTIZE,
     *args,
-    **kwargs
+    **kwargs,
 ) -> torch.nn.Module:
     logger.info("Quantize model with the AWQ algorithm.")
     from neural_compressor.torch.algorithms.weight_only.awq import AWQQuantizer
@@ -455,7 +455,7 @@ def hqq_entry(
     configs_mapping: Dict[Tuple[str, Callable], HQQConfig],
     mode: Mode = Mode.QUANTIZE,
     *args,
-    **kwargs
+    **kwargs,
 ) -> torch.nn.Module:
     from neural_compressor.torch.algorithms.weight_only.hqq import HQQuantizer
 
