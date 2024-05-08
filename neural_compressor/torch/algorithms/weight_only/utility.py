@@ -28,13 +28,13 @@ __all__ = [
     "INT_MAPPING",
     "NF4",
     "NF4_BIT",
-    "calibration",
     "fetch_module",
     "forward_wrapper",
     "get_absorb_layers",
     "get_block_prefix",
     "get_example_input",
-    "get_hidden_states",
+    "replace_forward",
+    "recover_forward",
     "get_module",
     "get_module_input_output",
     "get_parent",
@@ -926,40 +926,36 @@ def get_example_input(dataloader, i=1):
     return example_inp
 
 
-# copy from neural_compressor/adaptor/torch_utils/util.py
-def get_hidden_states(model, dataloader=None, n_samples=128, calib_func=None):
-    """Get the input args and kwargs of first block.
+def replace_forward(model):
+    """Replace forward to get the input args and kwargs of first block for AWQ algorithm.
 
     Args:
-        model (torch.nn.Module): input model
-        dataloader (dataloader, optional): input dataloader. Defaults to None.
-        n_samples (int, optional): number samples from dataloader. Defaults to 128.
-        calib_func (func, optional): a calib func to replace dataloader. Defaults to None.
+        model (torch.nn.Module): input model.
 
     Raises:
-        ValueError: to avoid inference of rest parts in model
+        ValueError: to avoid inference of rest parts in model.
 
     Returns:
-        total_block_args(list): a list of input args of each batch
-        total_block_kwargs(list):  a list of input kwargs of each batch
+        torch.nn.Module: model with replaced forward.
     """
     # Step 1: replace block_forward to collect block inputs and avoid entire inference
-    total_block_args = []
-    total_block_kwargs = []
+    setattr(model, "total_block_args", [])
+    setattr(model, "total_block_kwargs", [])
 
     def forward(layer, *args, **kwargs):
         # update total_hidden_states, total_block_kwargs, per batch
-        total_block_args.append(list(args))
-        total_block_kwargs.append(kwargs)
+        model.total_block_args.append(list(args))
+        model.total_block_kwargs.append(kwargs)
         raise ValueError
 
     block_prefix, block_num = get_block_prefix(model)
     block_list = fetch_module(model, block_prefix)
     first_block = block_list[0]
-    block_forward_cache = first_block.forward
+    first_block.forward_orig = first_block.forward
     first_block.forward = partial(forward, first_block)
 
     # Step 2: replace model_forward to avoid ValueError
+    model.forward_orig = model.forward
     model_forward_cache = model.forward
 
     def model_forward(model, *args, **kwargs):
@@ -970,44 +966,25 @@ def get_hidden_states(model, dataloader=None, n_samples=128, calib_func=None):
             pass
 
     model.forward = partial(model_forward, model)
-
-    # Step 3: execute calibration
-    calibration(model, dataloader=dataloader, n_samples=n_samples, calib_func=calib_func)
-    logger.info("The hidden_states collection is done.")
-
-    # Step 4: recover model and block forward
-    model.forward = model_forward_cache
-    first_block.forward = block_forward_cache
-    return total_block_args, total_block_kwargs
+    return model
 
 
-# copy from neural_compressor/adaptor/torch_utils/util.py
-def calibration(model, dataloader=None, n_samples=128, calib_func=None):
-    """Calibration with dataloader or calib_func.
+def recover_forward(model):
+    """Recover model and block forward for AWQ algorithm.
 
     Args:
-        model (torch.nn.Module): input model
-        dataloader: dataloader. Defaults to None.
-        n_samples (int, optional): n_samples. Defaults to 128.
-        calib_func: calib_func. Defaults to None.
-    """
-    # calibration with dataloader or calib_func
-    if calib_func is not None:
-        calib_func(model)
-    else:
-        # from .smooth_quant import model_forward, move into this file
+        model (torch.nn.Module): input model.
 
-        batch_size = dataloader.batch_size
-        iters = int(math.ceil(n_samples / batch_size))
-        if n_samples % batch_size != 0:
-            logger.info(
-                "calibration samples increase from {} to {} due to batch_size is {}".format(
-                    n_samples,
-                    iters * batch_size,
-                    batch_size,
-                )
-            )
-        model_forward(model, dataloader, iters, next(model.parameters()).device)
+    Returns:
+        torch.nn.Module: model with recovered forward.
+    """
+    model.forward = model.forward_orig
+
+    block_prefix, _ = get_block_prefix(model)
+    block_list = fetch_module(model, block_prefix)
+    first_block = block_list[0]
+    first_block.forward = first_block.forward_orig
+    return model
 
 
 # copy from neural_compressor/adaptor/torch_utils/util.py

@@ -5,7 +5,8 @@ import torch
 import transformers
 
 from neural_compressor.common import logger
-from neural_compressor.torch.quantization import TEQConfig, convert, get_default_teq_config, prepare, quantize
+from neural_compressor.torch.algorithms.weight_only.teq import TEQuantizer
+from neural_compressor.torch.quantization import quantize
 
 
 def generate_random_corpus(nsamples=32):
@@ -81,11 +82,28 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
         )
         self.gptj.seqlen = 512
 
-    def test_teq_quantize(self):
+    def train_func(self):
+        pass
+
+    def test_teq(self):
         example_inputs = torch.ones([1, 512], dtype=torch.long)
         test_input = torch.ones([1, 512], dtype=torch.long)
         model = copy.deepcopy(self.gptj)
         out0 = model(test_input)
+
+        weight_config = {
+            # 'op_name': (bit, group_size, scheme)
+            "transformer.h.0.mlp.fc_in": {"bits": 8, "group_size": -1, "scheme": "sym"},
+            "transformer.h.0.mlp.fc_out": {"bits": 4, "group_size": 32, "scheme": "asym"},
+        }
+        absorb_dict = {"transformer.h.0.mlp.fc_in": ["transformer.h.0.mlp.fc_out"]}
+
+        quantizer = TEQuantizer(
+            quant_config=weight_config, folding=True, absorb_to_layer=absorb_dict, example_inputs=example_inputs
+        )
+        model = quantizer.quantize(copy.deepcopy(self.gptj), run_fn=train)
+        out1 = model(test_input)
+        self.assertTrue(torch.allclose(out1[0], out0[0], atol=0.03))
 
         quant_config = {
             "teq": {
@@ -117,43 +135,9 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
         )
         self.assertTrue(isinstance(qdq_model, torch.nn.Module))
         out2 = qdq_model(test_input)
+        self.assertTrue(torch.allclose(out1[0], out2[0]))
         self.assertTrue(torch.allclose(out2[0], out0[0], atol=0.03))
 
-    def test_teq_prepare_convert(self):
-        example_inputs = torch.ones([1, 512], dtype=torch.long)
-        test_input = torch.ones([1, 512], dtype=torch.long)
-        model = copy.deepcopy(self.gptj)
-        out0 = model(test_input)
 
-        quant_config = {
-            "teq": {
-                "global": {
-                    "dtype": "fp32",
-                },
-                "local": {
-                    "transformer.h.0.mlp.fc_in": {
-                        "dtype": "int",
-                        "bits": 8,
-                        "group_size": -1,
-                        "use_sym": True,
-                        "folding": True,
-                        "absorb_to_layer": {"transformer.h.0.mlp.fc_in": ["transformer.h.0.mlp.fc_out"]},
-                    },
-                    "transformer.h.0.mlp.fc_out": {
-                        "dtype": "int",
-                        "bits": 4,
-                        "group_size": 32,
-                        "use_sym": False,
-                        "folding": True,
-                        "absorb_to_layer": {"transformer.h.0.mlp.fc_in": ["transformer.h.0.mlp.fc_out"]},
-                    },
-                },
-            }
-        }
-        prepared_model = prepare(model, quant_config=quant_config, example_inputs=example_inputs)
-        train(prepared_model)
-        qdq_model = convert(prepared_model)
-        assert qdq_model is not None, "Quantization failed!"
-        self.assertTrue(isinstance(qdq_model, torch.nn.Module))
-        out1 = qdq_model(test_input)
-        self.assertTrue(torch.allclose(out1[0], out0[0], atol=0.03))
+if __name__ == "__main__":
+    unittest.main()
