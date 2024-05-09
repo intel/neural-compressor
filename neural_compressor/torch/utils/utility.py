@@ -131,3 +131,39 @@ class Mode(Enum):
     PREPARE = "prepare"
     CONVERT = "convert"
     QUANTIZE = "quantize"
+
+
+def preprocess_quantizer(model, quantizer_cls, quant_config=None, *args, **kwargs):
+    """Process quantizer.
+
+    Initialize a quantizer or get `quantizer` attribute from model.
+
+    Args:
+        model (torch.nn.Module): pytorch model.
+        quantizer_cls (Quantizer): quantizer class of a specific algorithm.
+        quant_config (dict, optional): Specifies how to apply the algorithm on the given model.
+            Defaults to None.
+
+    Returns:
+        quantizer object.
+    """
+    if not hasattr(model, "quantizer"):
+        quantizer = quantizer_cls(quant_config=quant_config, *args, **kwargs)
+        return quantizer
+    else:
+        return model.quantizer
+
+
+def postprocess_model(model, mode, quantizer):
+    """Process `quantizer` attribute of model according to current mode.
+
+    Args:
+        model (torch.nn.Module): pytorch model.
+        mode (Mode): The mode of current phase, including 'prepare', 'convert' and 'quantize'.
+        quantizer (Quantizer): quantizer object.
+    """
+    if mode == Mode.PREPARE:
+        model.quantizer = quantizer
+    elif mode == Mode.CONVERT or mode == Mode.QUANTIZE:
+        if getattr(model, "quantizer", False):
+            del model.quantizer
