@@ -1,0 +1,28 @@
+:orphan:
+
+:py:mod:`neural_compressor.torch.export._export`
+================================================
+
+.. py:module:: neural_compressor.torch.export._export
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.export._export.export_model_for_pt2e_quant
+   neural_compressor.torch.export._export.export
+
+
+
+.. py:function:: export_model_for_pt2e_quant(model: torch.nn.Module, example_inputs: Tuple[Any], dynamic_shapes: Optional[Union[Dict[str, Any], Tuple[Any]]] = None) -> Optional[torch.fx.graph_module.GraphModule]
+
+   Export the eager model into model with Aten IR.
+
+
+
