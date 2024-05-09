@@ -12,5 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-from neural_compressor.torch.algorithms.pt2e_quant.core import W8A8StaticQuantizer
+from neural_compressor.torch.export._export import export_model_for_pt2e_quant, export
