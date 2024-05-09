@@ -133,8 +133,8 @@ class Mode(Enum):
     QUANTIZE = "quantize"
 
 
-def preprocess_quantizer(model, quantizer_cls, quant_config=None, *args, **kwargs):
-    """Process quantizer.
+def get_quantizer(model, quantizer_cls, quant_config=None, *args, **kwargs):
+    """Get the quantizer.
 
     Initialize a quantizer or get `quantizer` attribute from model.
 
@@ -155,7 +155,12 @@ def preprocess_quantizer(model, quantizer_cls, quant_config=None, *args, **kwarg
 
 
 def postprocess_model(model, mode, quantizer):
-    """Process `quantizer` attribute of model according to current mode.
+    """Process `quantizer` attribute of model according to current phase.
+
+    In `prepare` phase, the `quantizer` is set as an attribute of the model
+    to avoid redundant initialization during `convert` phase.
+
+    In 'convert' or 'quantize' phase, the unused `quantizer` attribute is removed.
 
     Args:
         model (torch.nn.Module): pytorch model.

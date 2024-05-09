@@ -30,7 +30,7 @@ from neural_compressor.torch.quantization import (
     StaticQuantConfig,
     TEQConfig,
 )
-from neural_compressor.torch.utils import Mode, logger, postprocess_model, preprocess_quantizer, register_algo
+from neural_compressor.torch.utils import Mode, logger, postprocess_model, get_quantizer, register_algo
 
 
 ###################### RTN Algo Entry ##################################
@@ -68,7 +68,7 @@ def rtn_entry(
             "double_quant_group_size": quant_config.double_quant_group_size,
         }
 
-    quantizer = preprocess_quantizer(model, quantizer_cls=RTNQuantizer, quant_config=weight_config)
+    quantizer = get_quantizer(model, quantizer_cls=RTNQuantizer, quant_config=weight_config)
     model = quantizer.execute(model, mode=mode)
     postprocess_model(model, mode, quantizer)
     return model
@@ -118,7 +118,7 @@ def gptq_entry(
     kwargs.pop("example_inputs")
     logger.warning("lm_head in transformer model is skipped by GPTQ")
 
-    quantizer = preprocess_quantizer(model, quantizer_cls=GPTQuantizer, quant_config=weight_config)
+    quantizer = get_quantizer(model, quantizer_cls=GPTQuantizer, quant_config=weight_config)
     model = quantizer.execute(model, mode=mode, *args, **kwargs)
     postprocess_model(model, mode, quantizer)
 
@@ -165,7 +165,7 @@ def static_quant_entry(
     inplace = kwargs.get("inplace", True)
     assert example_inputs is not None, "Please provide example_inputs for static quantization."
 
-    quantizer = preprocess_quantizer(model, quantizer_cls=StaticQuantQuantizer, quant_config=quant_config_mapping)
+    quantizer = get_quantizer(model, quantizer_cls=StaticQuantQuantizer, quant_config=quant_config_mapping)
     model = quantizer.execute(model, mode=mode, run_fn=run_fn, example_inputs=example_inputs, inplace=inplace)
     postprocess_model(model, mode, quantizer)
 
@@ -282,7 +282,7 @@ def awq_quantize_entry(
     example_inputs = kwargs.get("example_inputs", None)
     assert example_inputs is not None, "Please provide example_inputs for AWQ quantization."
 
-    quantizer = preprocess_quantizer(model, quantizer_cls=AWQQuantizer, quant_config=weight_config)
+    quantizer = get_quantizer(model, quantizer_cls=AWQQuantizer, quant_config=weight_config)
     model = quantizer.execute(
         model,
         mode=mode,
@@ -339,7 +339,7 @@ def teq_quantize_entry(
             folding = quant_config.folding
     assert isinstance(model, torch.nn.Module), "only support torch module"
 
-    quantizer = preprocess_quantizer(
+    quantizer = get_quantizer(
         model,
         quantizer_cls=TEQuantizer,
         quant_config=weight_config,
@@ -397,7 +397,7 @@ def autoround_quantize_entry(
 
     kwargs.pop("example_inputs")
 
-    quantizer = preprocess_quantizer(
+    quantizer = get_quantizer(
         model,
         quantizer_cls=AutoRoundQuantizer,
         quant_config=weight_config,
@@ -441,7 +441,7 @@ def hqq_entry(
 
     logger.info("Quantize model with the HQQ algorithm.")
 
-    quantizer = preprocess_quantizer(model, quantizer_cls=HQQuantizer, quant_config=configs_mapping)
+    quantizer = get_quantizer(model, quantizer_cls=HQQuantizer, quant_config=configs_mapping)
     model = quantizer.execute(model, mode=mode)
     postprocess_model(model, mode, quantizer)
 
