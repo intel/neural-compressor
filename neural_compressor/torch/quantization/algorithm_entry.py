@@ -30,19 +30,24 @@ from neural_compressor.torch.quantization import (
     StaticQuantConfig,
     TEQConfig,
 )
-from neural_compressor.torch.utils import logger, register_algo
+from neural_compressor.torch.utils import Mode, is_ipex_imported, logger, register_algo
+from neural_compressor.torch.utils.constants import PT2E_STATIC_QUANT
 
 
 ###################### RTN Algo Entry ##################################
 @register_algo(RTN)
 @torch.no_grad()
 def rtn_entry(
-    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], RTNConfig], *args, **kwargs
+    model: torch.nn.Module,
+    configs_mapping: Dict[Tuple[str, callable], RTNConfig],
+    mode: Mode = Mode.QUANTIZE,
+    *args,
+    **kwargs,
 ) -> torch.nn.Module:
     """The main entry to apply rtn quantization."""
-    from neural_compressor.torch.algorithms.weight_only import rtn_quantize
+    from neural_compressor.torch.algorithms.weight_only.rtn import RTNQuantizer
 
-    # rebuild weight_config for rtn_quantize function
+    # rebuild weight_config for RTNQuantizer class
     weight_config = {}
     for (op_name, op_type), quant_config in configs_mapping.items():
         if quant_config.name != RTN:
@@ -64,7 +69,17 @@ def rtn_entry(
             "double_quant_group_size": quant_config.double_quant_group_size,
         }
 
-    model = rtn_quantize(model, weight_config=weight_config)
+    if getattr(model, "quantizer", False):
+        quantizer = model.quantizer
+    else:
+        quantizer = RTNQuantizer(quant_config=weight_config)
+
+    model = quantizer.execute(model, mode=mode)
+
+    if getattr(model, "quantizer", False):
+        del model.quantizer
+    else:
+        model.quantizer = quantizer
     return model
 
 
@@ -72,10 +87,14 @@ def rtn_entry(
 @register_algo(GPTQ)
 @torch.no_grad()
 def gptq_entry(
-    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], GPTQConfig], *args, **kwargs
+    model: torch.nn.Module,
+    configs_mapping: Dict[Tuple[str, callable], GPTQConfig],
+    mode: Mode = Mode.QUANTIZE,
+    *args,
+    **kwargs,
 ) -> torch.nn.Module:
     logger.info("Quantize model with the GPTQ algorithm.")
-    from neural_compressor.torch.algorithms.weight_only import gptq_quantize
+    from neural_compressor.torch.algorithms.weight_only.gptq import GPTQuantizer
 
     # rebuild weight_config for gptq_quantize function
     weight_config = {}
@@ -106,11 +125,16 @@ def gptq_entry(
         }
     )
     kwargs.pop("example_inputs")
-
     logger.warning("lm_head in transformer model is skipped by GPTQ")
-    model, quantization_perm = gptq_quantize(model=model, weight_config=weight_config, *args, **kwargs)
-    # Assign the gptq config as an attribute of model
-    model._gptq_quantization_perm = quantization_perm
+    if getattr(model, "quantizer", False):
+        quantizer = model.quantizer
+    else:
+        quantizer = GPTQuantizer(quant_config=weight_config)
+    model = quantizer.execute(model, mode=mode, *args, **kwargs)
+    if getattr(model, "quantizer", False):
+        del model.quantizer
+    else:
+        model.quantizer = quantizer
     return model
 
 
@@ -118,10 +142,16 @@ def gptq_entry(
 @register_algo(name=STATIC_QUANT)
 @torch.no_grad()
 def static_quant_entry(
-    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], StaticQuantConfig], *args, **kwargs
+    model: torch.nn.Module,
+    configs_mapping: Dict[Tuple[str, callable], StaticQuantConfig],
+    mode: Mode = Mode.QUANTIZE,
+    *args,
+    **kwargs,
 ) -> torch.nn.Module:
+    if not is_ipex_imported():
+        return pt2e_static_quant_entry(model, configs_mapping, mode, *args, **kwargs)
     logger.info("Quantize model with the static quant algorithm.")
-    from neural_compressor.torch.algorithms.static_quant import save, static_quantize
+    from neural_compressor.torch.algorithms.static_quant import StaticQuantQuantizer
 
     # convert the user config into internal format
     quant_config_mapping = {}
@@ -149,17 +179,38 @@ def static_quant_entry(
     example_inputs = kwargs.get("example_inputs", None)
     inplace = kwargs.get("inplace", True)
     assert example_inputs is not None, "Please provide example_inputs for static quantization."
-    q_model = static_quantize(
-        model=model,
-        tune_cfg=quant_config_mapping,
-        run_fn=run_fn,
-        example_inputs=example_inputs,
-        inplace=inplace,
-    )
-    logger.info("Static quantization done.")
-    q_model.ori_save = q_model.save
-    q_model.save = MethodType(save, q_model)
-    return q_model
+
+    if getattr(model, "quantizer", False):
+        quantizer = model.quantizer
+    else:
+        quantizer = StaticQuantQuantizer(quant_config=quant_config_mapping)
+
+    model = quantizer.execute(model, mode=mode, run_fn=run_fn, example_inputs=example_inputs, inplace=inplace)
+
+    if getattr(model, "quantizer", False):
+        del model.quantizer
+    else:
+        model.quantizer = quantizer
+    return model
+
+
+###################### PT2E Static Quant Algo Entry ##################################
+@register_algo(name=PT2E_STATIC_QUANT)
+@torch.no_grad()
+def pt2e_static_quant_entry(model: torch.nn.Module, configs_mapping, mode: Mode, *args, **kwargs) -> torch.nn.Module:
+    logger.info("Quantize model with the PT2E static quant algorithm.")
+    from neural_compressor.torch.algorithms.pt2e_quant.core import W8A8StaticQuantizer
+
+    run_fn = kwargs.get("run_fn", None)
+    example_inputs = kwargs.get("example_inputs", None)
+    inplace = kwargs.get("inplace", True)
+    for _, quant_config in configs_mapping.items():
+        if quant_config.name == STATIC_QUANT:
+            w8a8_quantizer = W8A8StaticQuantizer(quant_config=quant_config)
+            model = w8a8_quantizer.execute(
+                model, mode=mode, run_fn=run_fn, example_inputs=example_inputs, inplace=inplace
+            )
+            return model
 
 
 ###################### Smooth Quant Algo Entry ##################################
@@ -225,10 +276,14 @@ def smooth_quant_entry(
 @register_algo(name=AWQ)
 @torch.no_grad()
 def awq_quantize_entry(
-    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], AWQConfig], *args, **kwargs
+    model: torch.nn.Module,
+    configs_mapping: Dict[Tuple[str, callable], AWQConfig],
+    mode: Mode = Mode.QUANTIZE,
+    *args,
+    **kwargs,
 ) -> torch.nn.Module:
     logger.info("Quantize model with the AWQ algorithm.")
-    from neural_compressor.torch.algorithms.weight_only import awq_quantize
+    from neural_compressor.torch.algorithms.weight_only.awq import AWQQuantizer
 
     weight_config = {}
     for (op_name, op_type), op_config in configs_mapping.items():
@@ -264,38 +319,49 @@ def awq_quantize_entry(
             return_int = op_config.export_compressed_model
             use_full_range = op_config.use_full_range
 
-    calib_func = kwargs.get("run_fn", None)
+    run_fn = kwargs.get("run_fn", None)
     example_inputs = kwargs.get("example_inputs", None)
     assert example_inputs is not None, "Please provide example_inputs for AWQ quantization."
-    model = awq_quantize(
+
+    if getattr(model, "quantizer", False):
+        quantizer = model.quantizer
+    else:
+        quantizer = AWQQuantizer(quant_config=weight_config)
+
+    model = quantizer.execute(
         model,
+        mode=mode,
         bits=-1,  # no quantize for op not in weight_config
         example_inputs=example_inputs,  # must be required
-        calib_func=calib_func,
-        weight_config=weight_config,
+        run_fn=run_fn,
         use_auto_scale=use_auto_scale,
         use_mse_search=use_mse_search,
         folding=folding,
         return_int=return_int,
         use_full_range=use_full_range,
     )
-    logger.info("AWQ quantization done.")
+
+    if getattr(model, "quantizer", False):
+        del model.quantizer
+    else:
+        model.quantizer = quantizer
     return model
 
 
 ###################### TEQ Algo Entry ##################################
 @register_algo(name=TEQ)
 def teq_quantize_entry(
-    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], TEQConfig], *args, **kwargs
+    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], TEQConfig], mode: Mode, *args, **kwargs
 ) -> torch.nn.Module:
-    from neural_compressor.torch.algorithms.weight_only import teq_quantize
+    from neural_compressor.torch.algorithms.weight_only.teq import TEQuantizer
 
     logger.info("Quantize model with the TEQ algorithm.")
     weight_config = {}
     absorb_to_layer = {}
     example_inputs = kwargs.get("example_inputs", None)
     assert example_inputs is not None, "Please provide example_inputs for TEQ quantization."
-    calib_func = kwargs.get("run_fn", None)
+    run_fn = kwargs.get("run_fn", None)
+    inplace = kwargs.get("inplace", True)
     folding = True
     for (op_name, op_type), quant_config in configs_mapping.items():
         if quant_config.dtype == "fp32":
@@ -320,28 +386,25 @@ def teq_quantize_entry(
             absorb_to_layer = quant_config.absorb_to_layer
             folding = quant_config.folding
     assert isinstance(model, torch.nn.Module), "only support torch module"
-
-    model = teq_quantize(
-        model,
-        example_inputs=example_inputs,
-        folding=folding,
-        absorb_to_layer=absorb_to_layer,
-        calib_func=calib_func,
-        weight_config=weight_config,
+    quantizer = TEQuantizer(
+        quant_config=weight_config, folding=folding, absorb_to_layer=absorb_to_layer, example_inputs=example_inputs
     )
-    logger.info("TEQ quantization done.")
+    model = quantizer.execute(model, mode=mode, run_fn=run_fn, example_inputs=example_inputs, inplace=inplace)
     return model
 
 
 ###################### AUTOROUND Algo Entry ##################################
 @register_algo(name=AUTOROUND)
 def autoround_quantize_entry(
-    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], AutoRoundConfig], *args, **kwargs
+    model: torch.nn.Module,
+    configs_mapping: Dict[Tuple[str, callable], AutoRoundConfig],
+    mode: Mode = Mode.QUANTIZE,
+    *args,
+    **kwargs,
 ) -> torch.nn.Module:
-    from neural_compressor.torch.algorithms.weight_only import autoround_quantize
+    from neural_compressor.torch.algorithms.weight_only.autoround import AutoRoundQuantizer
 
     logger.info("Quantize model with the AutoRound algorithm.")
-    calib_func = kwargs.get("run_fn", None)
     weight_config = {}
     for (op_name, op_type), quant_config in configs_mapping.items():
         if quant_config.name != AUTOROUND or quant_config.dtype == "fp32":
@@ -373,30 +436,35 @@ def autoround_quantize_entry(
             scale_dtype = quant_config.scale_dtype
 
     kwargs.pop("example_inputs")
-    model, autoround_config = autoround_quantize(
-        model=model,
-        weight_config=weight_config,
-        enable_full_range=enable_full_range,
-        batch_size=batch_size,
-        lr_scheduler=lr_scheduler,
-        use_quant_input=use_quant_input,
-        enable_minmax_tuning=enable_minmax_tuning,
-        lr=lr,
-        minmax_lr=minmax_lr,
-        low_gpu_mem_usage=low_gpu_mem_usage,
-        iters=iters,
-        seqlen=seqlen,
-        n_samples=n_samples,
-        sampler=sampler,
-        seed=seed,
-        n_blocks=n_blocks,
-        gradient_accumulate_steps=gradient_accumulate_steps,
-        not_use_best_mse=not_use_best_mse,
-        dynamic_max_gap=dynamic_max_gap,
-        scale_dtype=scale_dtype,
-        **kwargs
-    )
-    model.autoround_config = autoround_config
+    if getattr(model, "quantizer", False):
+        quantizer = model.quantizer
+    else:
+        quantizer = AutoRoundQuantizer(
+            weight_config=weight_config,
+            enable_full_range=enable_full_range,
+            batch_size=batch_size,
+            lr_scheduler=lr_scheduler,
+            use_quant_input=use_quant_input,
+            enable_minmax_tuning=enable_minmax_tuning,
+            lr=lr,
+            minmax_lr=minmax_lr,
+            low_gpu_mem_usage=low_gpu_mem_usage,
+            iters=iters,
+            seqlen=seqlen,
+            n_samples=n_samples,
+            sampler=sampler,
+            seed=seed,
+            n_blocks=n_blocks,
+            gradient_accumulate_steps=gradient_accumulate_steps,
+            not_use_best_mse=not_use_best_mse,
+            dynamic_max_gap=dynamic_max_gap,
+            scale_dtype=scale_dtype,
+        )
+    model = quantizer.execute(model=model, mode=mode, *args, **kwargs)
+    if getattr(model, "quantizer", False):
+        del model.quantizer
+    else:
+        model.quantizer = quantizer
     logger.info("AutoRound quantization done.")
     return model
 
@@ -405,13 +473,27 @@ def autoround_quantize_entry(
 @register_algo(name=HQQ)
 @torch.no_grad()
 def hqq_entry(
-    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, Callable], HQQConfig], *args, **kwargs
+    model: torch.nn.Module,
+    configs_mapping: Dict[Tuple[str, Callable], HQQConfig],
+    mode: Mode = Mode.QUANTIZE,
+    *args,
+    **kwargs,
 ) -> torch.nn.Module:
-    from neural_compressor.torch.algorithms.weight_only import hqq_quantize
+    from neural_compressor.torch.algorithms.weight_only.hqq import HQQuantizer
 
     logger.info("Quantize model with the HQQ algorithm.")
-    q_model = hqq_quantize(model, configs_mapping)
-    return q_model
+    if getattr(model, "quantizer", False):
+        quantizer = model.quantizer
+    else:
+        quantizer = HQQuantizer(quant_config=configs_mapping)
+
+    model = quantizer.execute(model, mode=mode)
+
+    if getattr(model, "quantizer", False):
+        del model.quantizer
+    else:
+        model.quantizer = quantizer
+    return model
 
 
 ###################### Habana FP8 Algo Entry ##################################

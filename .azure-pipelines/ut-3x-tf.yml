@@ -41,6 +41,19 @@ stages:
               uploadPath: $(UPLOAD_PATH)
               utArtifact: "ut_3x"
 
+  - stage: NewTF
+    displayName: Unit Test 3x New TF API
+    dependsOn: []
+    jobs:
+      - job:
+        displayName: Unit Test 3x New TF API
+        steps:
+          - template: template/ut-template.yml
+            parameters:
+              dockerConfigName: "commonDockerConfig"
+              utScriptFileName: "3x/run_3x_tf_new_api"
+              uploadPath: $(UPLOAD_PATH)
+              utArtifact: "ut_3x_tf_new_api"
 
   - stage: TensorFlow_baseline
     displayName: Unit Test 3x TensorFlow baseline

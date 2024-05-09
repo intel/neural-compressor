@@ -29,11 +29,15 @@ from typing import Any, Callable, List
 
 import torch
 
+from neural_compressor.common.utils import LazyImport
 from neural_compressor.torch.utils import logger
 
+htcore = LazyImport("habana_frameworks.torch.core")
+
 PRIORITY_HPU = 100
-PRIORITY_CUDA = 95
-PRIORITY_CPU = 90
+PRIORITY_XPU = 95
+PRIORITY_CUDA = 90
+PRIORITY_CPU = 80
 
 
 class AcceleratorRegistry:
@@ -133,6 +137,9 @@ class Auto_Accelerator(ABC):
     def synchronize(self):
         pass
 
+    def mark_step(self):
+        pass
+
 
 @register_accelerator(name="cpu", priority=PRIORITY_CPU)
 class CPU_Accelerator(Auto_Accelerator):
@@ -204,6 +211,45 @@ class CUDA_Accelerator(Auto_Accelerator):
         return torch.cuda.empty_cache()
 
 
+@register_accelerator(name="xpu", priority=PRIORITY_XPU)
+class XPU_Accelerator(Auto_Accelerator):
+    def __init__(self) -> None:
+        self._name = "xpu"
+
+    def name(self) -> str:
+        return self._name
+
+    @classmethod
+    def is_available(cls) -> bool:
+        if hasattr(torch, "xpu") and torch.xpu.is_available():
+            return True
+        else:
+            return False
+
+    def device_name(self, device_indx) -> str:
+        if device_indx is None:
+            return "xpu"
+        return f"xpu:{device_indx}"
+
+    def synchronize(self):
+        return torch.xpu.synchronize()
+
+    def set_device(self, device_index):
+        return torch.xpu.set_device(device_index)
+
+    def current_device(self):
+        return torch.xpu.current_device()
+
+    def current_device_name(self):
+        return "xpu:{}".format(torch.xpu.current_device())
+
+    def device(self, device_index=None):
+        return torch.xpu.device(device_index)
+
+    def empty_cache(self):
+        return torch.xpu.empty_cache()
+
+
 @register_accelerator(name="hpu", priority=PRIORITY_HPU)
 class HPU_Accelerator(Auto_Accelerator):
     def __init__(self) -> None:
@@ -243,6 +289,9 @@ class HPU_Accelerator(Auto_Accelerator):
 
     def empty_cache(self):
         return torch.hpu.empty_cache()
+
+    def mark_step(self):
+        return htcore.mark_step()
 
 
 def auto_detect_accelerator(device_name="auto") -> Auto_Accelerator:

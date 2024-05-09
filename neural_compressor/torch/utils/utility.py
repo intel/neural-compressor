@@ -13,9 +13,14 @@
 # limitations under the License.
 
 
+from enum import Enum
 from typing import Callable, Dict, List, Tuple, Union
 
 import torch
+import torch.ao.quantization.quantizer.x86_inductor_quantizer as xiq
+from torch.ao.quantization.observer import HistogramObserver, MinMaxObserver
+from torch.ao.quantization.quantizer import QuantizationSpec
+from torch.ao.quantization.quantizer.x86_inductor_quantizer import QuantizationConfig, X86InductorQuantizer
 from typing_extensions import TypeAlias
 
 from neural_compressor.common import logger
@@ -101,13 +106,13 @@ def set_module(model, op_name, new_module):
             setattr(second_last_module, name_list[-1], new_module)
 
 
-def get_model_info(model: torch.nn.Module, white_module_list: List[Callable]) -> List[Tuple[str, Callable]]:
+def get_model_info(model: torch.nn.Module, white_module_list: List[Callable]) -> List[Tuple[str, str]]:
     module_dict = dict(model.named_modules())
     filter_result = []
     filter_result_set = set()
     for op_name, module in module_dict.items():
         if isinstance(module, tuple(white_module_list)):
-            pair = (op_name, type(module))
+            pair = (op_name, type(module).__name__)
             if pair not in filter_result_set:
                 filter_result_set.add(pair)
                 filter_result.append(pair)
@@ -124,3 +129,62 @@ def get_double_quant_config(double_quant_type):
         list(DOUBLE_QUANT_CONFIGS.keys())
     )
     return DOUBLE_QUANT_CONFIGS[double_quant_type]
+
+
+class Mode(Enum):
+    PREPARE = "prepare"
+    CONVERT = "convert"
+    QUANTIZE = "quantize"
+
+
+def create_quant_spec_from_config(dtype, sym, granularity, algo) -> QuantizationSpec:
+    dtype_mapping: Dict[str, torch.dtype] = {"int8": torch.int8, "uint8": torch.uint8}
+    qscheme_mapping = {
+        "per_channel": {True: torch.per_channel_symmetric, False: torch.per_tensor_affine},
+        "per_tensor": {True: torch.per_tensor_symmetric, False: torch.per_tensor_affine},
+    }
+    observer_mapping = {
+        "minmax": MinMaxObserver,
+        "kl": HistogramObserver,
+    }
+    # algo
+    observer_or_fake_quant_ctr = observer_mapping[algo]
+    # qscheme
+    qscheme = qscheme_mapping[granularity][sym]
+    quantization_spec = QuantizationSpec(
+        dtype=dtype_mapping[dtype], observer_or_fake_quant_ctr=observer_or_fake_quant_ctr, qscheme=qscheme
+    )
+    return quantization_spec
+
+
+def _map_inc_config_to_torch_quant_config(inc_config) -> QuantizationConfig:
+    default_quant_config = xiq.get_default_x86_inductor_quantization_config()
+    input_act_quant_spec = create_quant_spec_from_config(
+        inc_config.act_dtype, inc_config.act_sym, inc_config.act_granularity, inc_config.act_algo
+    )
+    weight_quant_spec = create_quant_spec_from_config(
+        inc_config.w_dtype, inc_config.w_sym, inc_config.w_granularity, inc_config.w_algo
+    )
+    quant_config = QuantizationConfig(
+        input_activation=input_act_quant_spec,
+        output_activation=default_quant_config.output_activation,
+        weight=weight_quant_spec,
+        bias=default_quant_config.bias,
+        is_qat=False,
+    )
+    return quant_config
+
+
+def create_xiq_quantizer_from_pt2e_config(config) -> X86InductorQuantizer:
+    quantizer = xiq.X86InductorQuantizer()
+    # set global
+    global_config = _map_inc_config_to_torch_quant_config(config)
+    quantizer.set_global(global_config)
+    # set local
+    for module_or_func_name, local_config in config.local_config.items():
+        local_quant_config = _map_inc_config_to_torch_quant_config(local_config)
+        if isinstance(module_or_func_name, torch.nn.Module):
+            quantizer.set_module_type_qconfig(module_or_func_name, local_quant_config)
+        else:
+            quantizer.set_function_type_qconfig(module_or_func_name, local_quant_config)
+    return quantizer

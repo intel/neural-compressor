@@ -5,8 +5,7 @@ import torch
 import transformers
 
 from neural_compressor.common import logger
-from neural_compressor.torch.algorithms.weight_only.teq import teq_quantize
-from neural_compressor.torch.quantization import quantize
+from neural_compressor.torch.quantization import TEQConfig, convert, get_default_teq_config, prepare, quantize
 
 
 def generate_random_corpus(nsamples=32):
@@ -20,7 +19,7 @@ def generate_random_corpus(nsamples=32):
 
 def train(
     model,
-    train_steps=1000,
+    train_steps=100,
     lr=1e-3,
     warmup_ratio=0.05,
     gradient_accumulation_steps=1,
@@ -82,32 +81,12 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
         )
         self.gptj.seqlen = 512
 
-    def train_func(self):
-        pass
-
-    def test_teq(self):
+    def test_teq_quantize(self):
         example_inputs = torch.ones([1, 512], dtype=torch.long)
         test_input = torch.ones([1, 512], dtype=torch.long)
         model = copy.deepcopy(self.gptj)
         out0 = model(test_input)
 
-        weight_config = {
-            # 'op_name': (bit, group_size, scheme)
-            "transformer.h.0.mlp.fc_in": {"bits": 8, "group_size": -1, "scheme": "sym"},
-            "transformer.h.0.mlp.fc_out": {"bits": 4, "group_size": 32, "scheme": "asym"},
-        }
-        absorb_dict = {"transformer.h.0.mlp.fc_in": ["transformer.h.0.mlp.fc_out"]}
-
-        model = teq_quantize(
-            model,
-            weight_config=weight_config,
-            absorb_to_layer=absorb_dict,
-            folding=True,
-            calib_func=train,
-            example_inputs=example_inputs,
-        )
-        out1 = model(test_input)
-        self.assertTrue(torch.allclose(out1[0], out0[0], atol=0.03))
         quant_config = {
             "teq": {
                 "global": {
@@ -133,13 +112,48 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
                 },
             }
         }
-
-        qdq_model = quantize(model=self.gptj, quant_config=quant_config, run_fn=train, example_inputs=example_inputs)
+        qdq_model = quantize(
+            model=copy.deepcopy(self.gptj), quant_config=quant_config, run_fn=train, example_inputs=example_inputs
+        )
         self.assertTrue(isinstance(qdq_model, torch.nn.Module))
         out2 = qdq_model(test_input)
-        self.assertTrue(torch.allclose(out1[0], out2[0]))
         self.assertTrue(torch.allclose(out2[0], out0[0], atol=0.03))
 
+    def test_teq_prepare_convert(self):
+        example_inputs = torch.ones([1, 512], dtype=torch.long)
+        test_input = torch.ones([1, 512], dtype=torch.long)
+        model = copy.deepcopy(self.gptj)
+        out0 = model(test_input)
 
-if __name__ == "__main__":
-    unittest.main()
+        quant_config = {
+            "teq": {
+                "global": {
+                    "dtype": "fp32",
+                },
+                "local": {
+                    "transformer.h.0.mlp.fc_in": {
+                        "dtype": "int",
+                        "bits": 8,
+                        "group_size": -1,
+                        "use_sym": True,
+                        "folding": True,
+                        "absorb_to_layer": {"transformer.h.0.mlp.fc_in": ["transformer.h.0.mlp.fc_out"]},
+                    },
+                    "transformer.h.0.mlp.fc_out": {
+                        "dtype": "int",
+                        "bits": 4,
+                        "group_size": 32,
+                        "use_sym": False,
+                        "folding": True,
+                        "absorb_to_layer": {"transformer.h.0.mlp.fc_in": ["transformer.h.0.mlp.fc_out"]},
+                    },
+                },
+            }
+        }
+        prepared_model = prepare(model, quant_config=quant_config, example_inputs=example_inputs)
+        train(prepared_model)
+        qdq_model = convert(prepared_model)
+        assert qdq_model is not None, "Quantization failed!"
+        self.assertTrue(isinstance(qdq_model, torch.nn.Module))
+        out1 = qdq_model(test_input)
+        self.assertTrue(torch.allclose(out1[0], out0[0], atol=0.03))

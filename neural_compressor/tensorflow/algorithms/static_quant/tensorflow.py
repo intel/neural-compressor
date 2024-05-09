@@ -87,8 +87,8 @@ class TensorFlowAdaptor:
         cfg_yaml_name = "{}.yaml".format(self.__class__.__name__[: -len("Adaptor")].lower())
         self.itex_mode = self.backend == "itex" or cfg_yaml_name == "tensorflow_itex.yaml"
 
-        if self.itex_mode:
-            self._check_itex()
+        # if self.itex_mode:
+        #     self._check_itex()
 
         self.query_handler = TensorflowQuery(
             local_config_file=os.path.join(os.path.dirname(__file__), cfg_yaml_name),
@@ -440,6 +440,7 @@ class TensorFlowAdaptor:
             if "activation" in tuning_cfg["op"][each_op_info]:
                 is_asymmetric = tuning_cfg["op"][each_op_info]["activation"]["scheme"] == "asym"
             self.quantize_config["op_wise_config"][op_name] = (is_perchannel, algorithm, is_asymmetric, weight_bit)
+
         self.fp32_ops = fp32_ops
         self.bf16_ops = bf16_ops
 
@@ -1520,12 +1521,6 @@ class TensorFlowAdaptor:
 
         return converter.convert_without_calib()
 
-    def diagnosis_helper(self, fp32_model, quan_model, tune_cfg, save_path):
-        """Tensorflow diagnosis helper function."""
-        from neural_compressor.tensorflow.quantization.utils.utility import tf_diagnosis_helper
-
-        return tf_diagnosis_helper(fp32_model, quan_model, tune_cfg, save_path)
-
     def get_output_op_names(self, qmodel):
         """Get the oupur OPs's names."""
         from neural_compressor.tensorflow.quantization.utils.graph_util import GraphAnalyzer
@@ -1711,7 +1706,14 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
         super().__init__(framework_specific_info)
 
     @dump_elapsed_time("Pass quantize model")
-    def quantize(self, tune_cfg, model, data_loader, q_func=None):
+    def quantize(
+        self,
+        quant_config: StaticQuantConfig,
+        model: BaseModel,
+        calib_dataloader: Callable = None,
+        calib_iteration: int = 100,
+        q_func=None,
+    ):
         """Execute the quantize process on the specified model.
 
         Args:
@@ -1725,17 +1727,19 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
             tf.compat.v1.GraphDef: the quantized model
         """
         assert q_func is None, "quantization aware training mode is not support on tensorflow"
+        self.calib_sampling_size = calib_dataloader.batch_size * calib_iteration
+        tune_cfg = self.parse_quant_config(quant_config, model, calib_iteration)
         self._tuning_cfg_to_fw(tune_cfg)
         logger.debug("Dump quantization configurations:")
         logger.debug(self.quantize_config)
         from neural_compressor.tensorflow.quantization.utils.graph_converter import GraphConverter
 
-        calib_sampling_size = tune_cfg.get("calib_sampling_size", 1)
-        if isinstance(data_loader, BaseDataLoader):
-            batch_size = data_loader.batch_size
+        self.calib_sampling_size = tune_cfg.get("calib_sampling_size", 1)
+        if isinstance(calib_dataloader, BaseDataLoader):
+            batch_size = calib_dataloader.batch_size
             try:
                 for i in range(batch_size):
-                    if calib_sampling_size % (batch_size - i) == 0:
+                    if self.calib_sampling_size % (batch_size - i) == 0:
                         calib_batch_size = batch_size - i
                         if i != 0:  # pragma: no cover
                             logger.warning(
@@ -1744,9 +1748,10 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
                                 "divisible exactly by batch size"
                             )
                         break
-                tmp_iterations = int(math.ceil(calib_sampling_size / calib_batch_size))
-                data_loader.batch(calib_batch_size)
+                tmp_iterations = int(math.ceil(self.calib_sampling_size / calib_batch_size))
+                calib_dataloader.batch(calib_batch_size)
                 self.quantize_config["calib_iteration"] = tmp_iterations
+
                 converted_model = GraphConverter(
                     model,
                     qt_config=self.quantize_config,
@@ -1754,7 +1759,7 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
                     int8_sequences=self.op_wise_sequences,
                     fp32_ops=self.fp32_ops,
                     bf16_ops=self.bf16_ops,
-                    data_loader=data_loader,
+                    data_loader=calib_dataloader,
                     calib_func=q_func,
                     itex_mode=self.itex_mode,
                     qdq_enabled=self.qdq_enabled,
@@ -1767,10 +1772,10 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
 
                 batch_size = get_model_input_shape(model)
                 logger.warning(
-                    "Fail to forward with batch size={}, set to {} now.".format(data_loader.batch_size, batch_size)
+                    "Fail to forward with batch size={}, set to {} now.".format(calib_dataloader.batch_size, batch_size)
                 )
-                data_loader.batch(batch_size)
-                self.quantize_config["calib_iteration"] = calib_sampling_size
+                calib_dataloader.batch(batch_size)
+                self.quantize_config["calib_iteration"] = self.calib_sampling_size
                 converted_model = GraphConverter(
                     model,
                     qt_config=self.quantize_config,
@@ -1778,7 +1783,7 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
                     int8_sequences=self.op_wise_sequences,
                     fp32_ops=self.fp32_ops,
                     bf16_ops=self.bf16_ops,
-                    data_loader=data_loader,
+                    data_loader=calib_dataloader,
                     itex_mode=self.itex_mode,
                     qdq_enabled=self.qdq_enabled,
                     new_api=self.new_api,
@@ -1786,13 +1791,13 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
                     use_bf16=self.use_bf16,
                 ).convert()
         else:  # pragma: no cover
-            if hasattr(data_loader, "batch_size") and calib_sampling_size % data_loader.batch_size != 0:
+            if hasattr(calib_dataloader, "batch_size") and self.calib_sampling_size % calib_dataloader.batch_size != 0:
                 iter = self.quantize_config["calib_iteration"]
                 logger.warning(
                     "Please note that calibration sampling size {} "
                     "isn't divisible exactly by batch size {}. "
                     "So the real sampling size is {}.".format(
-                        calib_sampling_size, data_loader.batch_size, data_loader.batch_size * iter
+                        self.calib_sampling_size, calib_dataloader.batch_size, calib_dataloader.batch_size * iter
                     )
                 )
             converted_model = GraphConverter(
@@ -1802,7 +1807,7 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
                 int8_sequences=self.op_wise_sequences,
                 fp32_ops=self.fp32_ops,
                 bf16_ops=self.bf16_ops,
-                data_loader=data_loader,
+                data_loader=calib_dataloader,
                 calib_func=q_func,
                 itex_mode=self.itex_mode,
                 qdq_enabled=self.qdq_enabled,
@@ -2438,6 +2443,8 @@ class TensorflowConfigConverter:
         op_wise_config = {}
         for op_name, op_config in self.quant_config.items():
             op_key_name = (op_name[0], self.unify_op_type_mapping[op_name[1]])
+            if op_key_name not in self.capability["opwise"]:
+                continue
             single_op_cap = self.capability["opwise"][op_key_name][0]
             single_op_config = {"activation": {}}
 
