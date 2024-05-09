@@ -137,6 +137,47 @@ class Mode(Enum):
     QUANTIZE = "quantize"
 
 
+def get_quantizer(model, quantizer_cls, quant_config=None, *args, **kwargs):
+    """Get the quantizer.
+
+    Initialize a quantizer or get `quantizer` attribute from model.
+
+    Args:
+        model (torch.nn.Module): pytorch model.
+        quantizer_cls (Quantizer): quantizer class of a specific algorithm.
+        quant_config (dict, optional): Specifies how to apply the algorithm on the given model.
+            Defaults to None.
+
+    Returns:
+        quantizer object.
+    """
+    if not hasattr(model, "quantizer"):
+        quantizer = quantizer_cls(quant_config=quant_config, *args, **kwargs)
+        return quantizer
+    else:
+        return model.quantizer
+
+
+def postprocess_model(model, mode, quantizer):
+    """Process `quantizer` attribute of model according to current phase.
+
+    In `prepare` phase, the `quantizer` is set as an attribute of the model
+    to avoid redundant initialization during `convert` phase.
+
+    In 'convert' or 'quantize' phase, the unused `quantizer` attribute is removed.
+
+    Args:
+        model (torch.nn.Module): pytorch model.
+        mode (Mode): The mode of current phase, including 'prepare', 'convert' and 'quantize'.
+        quantizer (Quantizer): quantizer object.
+    """
+    if mode == Mode.PREPARE:
+        model.quantizer = quantizer
+    elif mode == Mode.CONVERT or mode == Mode.QUANTIZE:
+        if getattr(model, "quantizer", False):
+            del model.quantizer
+
+
 def create_quant_spec_from_config(dtype, sym, granularity, algo) -> QuantizationSpec:
     dtype_mapping: Dict[str, torch.dtype] = {"int8": torch.int8, "uint8": torch.uint8}
     qscheme_mapping = {
