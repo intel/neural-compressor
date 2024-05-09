@@ -17,7 +17,7 @@
 # pylint:disable=import-error
 
 from collections import OrderedDict
-from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple, Union
 
 import torch
 
@@ -40,7 +40,7 @@ from neural_compressor.common.utils import (
     STATIC_QUANT,
     TEQ,
 )
-from neural_compressor.torch.utils import is_hpex_available, logger
+from neural_compressor.torch.utils import is_hpex_available, is_ipex_imported, logger
 from neural_compressor.torch.utils.constants import (
     PRIORITY_AUTOROUND,
     PRIORITY_AWQ,
@@ -820,18 +820,30 @@ class StaticQuantConfig(BaseConfig):
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
-        # TODO(Yi)
         linear_static_config = StaticQuantConfig()
         operators = [torch.nn.Linear]
         supported_configs.append(OperatorConfig(config=linear_static_config, operators=operators))
         cls.supported_configs = supported_configs
 
     @staticmethod
-    def get_model_info(model: torch.nn.Module, example_inputs) -> List[Tuple[str, Callable]]:
+    def get_model_info_for_ipex(model: torch.nn.Module, example_inputs) -> List[Tuple[str, Callable]]:
         from neural_compressor.torch.algorithms.static_quant import get_quantizable_ops_recursively
 
         _, _, _, _, model_info = get_quantizable_ops_recursively(model, example_inputs=example_inputs)
         return model_info
+
+    @staticmethod
+    def get_model_info(model: torch.nn.Module, example_inputs=None) -> List[Tuple[str, Callable]]:
+        if is_ipex_imported():
+            return StaticQuantConfig.get_model_info_for_ipex(model, example_inputs)
+
+    def to_config_mapping(
+        self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
+    ) -> OrderedDict[Union[str, str], OrderedDict[str, BaseConfig]]:
+        if is_ipex_imported():
+            return super().to_config_mapping(config_list, model_info)
+        config_mapping = OrderedDict({self.name: self})
+        return config_mapping
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "StaticQuantConfig", List["StaticQuantConfig"]]:
@@ -844,6 +856,8 @@ def get_default_static_config() -> StaticQuantConfig:
     Returns:
         the default static quant config.
     """
+    if not is_ipex_imported():
+        return StaticQuantConfig(w_granularity="per_tensor")
     return StaticQuantConfig()
 
 

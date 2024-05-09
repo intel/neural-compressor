@@ -6,6 +6,7 @@ import torch
 
 from neural_compressor.common.utils import logger
 from neural_compressor.torch.algorithms.pt2e_quant.core import W8A8StaticQuantizer
+from neural_compressor.torch.export import export_model_for_pt2e_quant
 from neural_compressor.torch.utils import TORCH_VERSION_2_2_2, get_torch_version
 
 
@@ -45,15 +46,15 @@ class TestW8A8StaticQuantizer:
 
         model = SimpleModel()
         example_inputs = (torch.randn(10, 10),)
-        return model, example_inputs
+        exported_model = export_model_for_pt2e_quant(model, example_inputs=example_inputs)
+        return exported_model, example_inputs
 
     @pytest.mark.skipif(get_torch_version() <= TORCH_VERSION_2_2_2, reason="Requires torch>=2.3.0")
     def test_quantizer_on_simple_model(self):
         model, example_inputs = self.build_simple_torch_model_and_example_inputs()
-        quant_config = None
         w8a8_static_quantizer = W8A8StaticQuantizer()
         # prepare
-        prepare_model = w8a8_static_quantizer.prepare(model, quant_config, example_inputs=example_inputs)
+        prepare_model = w8a8_static_quantizer.prepare(model, example_inputs=example_inputs)
         # calibrate
         for i in range(2):
             prepare_model(*example_inputs)
@@ -77,10 +78,12 @@ class TestW8A8StaticQuantizer:
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         input_ids = tokenizer("Hello, my dog is cute", return_tensors="pt")["input_ids"]
         example_inputs = (input_ids,)
+        model = export_model_for_pt2e_quant(model, example_inputs=example_inputs)
+
         quant_config = None
         w8a8_static_quantizer = W8A8StaticQuantizer()
         # prepare
-        prepare_model = w8a8_static_quantizer.prepare(model, quant_config, example_inputs=example_inputs)
+        prepare_model = w8a8_static_quantizer.prepare(model)
         # calibrate
         for i in range(2):
             prepare_model(*example_inputs)
@@ -97,9 +100,8 @@ class TestW8A8StaticQuantizer:
     @patch("neural_compressor.torch.algorithms.pt2e_quant.core.logger.error")
     def test_export_model_failed(self, mock_error):
         model, example_inputs = self.get_toy_model()
-        w8a8_static_quantizer = W8A8StaticQuantizer()
         # export model
-        exported_model = w8a8_static_quantizer.export_model(model, example_inputs=example_inputs)
+        exported_model = export_model_for_pt2e_quant(model, example_inputs=example_inputs)
         assert exported_model is None
         call_args_list = mock_error.call_args_list
         assert any(["Failed to export the model" in msg for msg in [info[0][0] for info in call_args_list]])

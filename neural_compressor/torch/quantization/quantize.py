@@ -91,7 +91,7 @@ def prepare(
     quant_config: BaseConfig,
     inplace: bool = True,
     example_inputs: Any = None,
-):  # pragma: no cover
+):
     """Prepare the model for calibration.
 
     Insert observers into the model so that it can monitor the input and output tensors during calibration.
@@ -105,7 +105,6 @@ def prepare(
     Returns:
         prepared and calibrated module.
     """
-    # TODO: remove '# pragma: no cover' once CI test can cover this function
     prepared_model = model if inplace else copy.deepcopy(model)
     registered_configs = config_registry.get_cls_configs()
     if isinstance(quant_config, dict):
@@ -148,7 +147,7 @@ def convert(
     model: torch.nn.Module,
     quant_config: BaseConfig = None,
     inplace: bool = True,
-):  # pragma: no cover
+):
     """Convert the prepared model to a quantized model.
 
     Args:
@@ -159,7 +158,6 @@ def convert(
     Returns:
         The quantized model.
     """
-    # TODO: remove '# pragma: no cover' once CI test can cover this function
     q_model = model if inplace else copy.deepcopy(model)
 
     # TODO: Optimize the check for prepared flag after adding HQT FP8 Quant
