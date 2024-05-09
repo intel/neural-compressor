@@ -44,7 +44,7 @@ class ElemFormat(Enum):
 
     @staticmethod
     def from_str(s):
-        assert s != None, "String elem_format == None"
+        assert s is not None, "String elem_format == None"
         s = s.lower()
         if hasattr(ElemFormat, s):
             return getattr(ElemFormat, s)
@@ -54,7 +54,7 @@ class ElemFormat(Enum):
     @staticmethod
     def is_bf(s):
         if isinstance(s, str):
-            assert s != None, "String elem_format == None"
+            assert s is not None, "String elem_format == None"
             s = s.lower()
             if hasattr(ElemFormat, s):
                 return getattr(ElemFormat, s).value == 10
@@ -66,7 +66,7 @@ class ElemFormat(Enum):
     @staticmethod
     def is_fp(s):
         if isinstance(s, str):
-            assert s != None, "String elem_format == None"
+            assert s is not None, "String elem_format == None"
             s = s.lower()
             if hasattr(ElemFormat, s):
                 return 4 <= getattr(ElemFormat, s).value <= 9
@@ -78,7 +78,7 @@ class ElemFormat(Enum):
     @staticmethod
     def is_int(s):
         if isinstance(s, str):
-            assert s != None, "String elem_format == None"
+            assert s is not None, "String elem_format == None"
             s = s.lower()
             if hasattr(ElemFormat, s):
                 return 1 <= getattr(ElemFormat, s).value <= 3
@@ -478,7 +478,7 @@ def _quantize_mx(
 ):
     """Function used for MX* quantization."""
     # Shortcut for no quantization
-    if elem_format == None:
+    if elem_format is None:
         return A
 
     assert scale_bits > 0
@@ -538,7 +538,7 @@ def quantize_mx_op(
     axes=None,
     expand_and_reshape=False,
 ):
-    if elem_format == None:
+    if elem_format is None:
         return A
     elif type(elem_format) is str:
         elem_format = ElemFormat.from_str(elem_format)
