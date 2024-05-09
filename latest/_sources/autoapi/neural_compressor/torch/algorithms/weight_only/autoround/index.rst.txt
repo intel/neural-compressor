@@ -27,7 +27,7 @@ Functions
 
 
 
-.. py:class:: AutoRoundQuantizer(weight_config: dict = {}, enable_full_range: bool = False, batch_size: int = 8, amp: bool = True, device=None, lr_scheduler=None, use_quant_input: bool = True, enable_minmax_tuning: bool = True, lr: float = None, minmax_lr: float = None, low_gpu_mem_usage: bool = True, iters: int = 200, seqlen: int = 2048, n_samples: int = 512, sampler: str = 'rand', seed: int = 42, n_blocks: int = 1, gradient_accumulate_steps: int = 1, not_use_best_mse: bool = False, dynamic_max_gap: int = -1, scale_dtype='fp32')
+.. py:class:: AutoRoundQuantizer(quant_config: dict = None, enable_full_range: bool = False, batch_size: int = 8, amp: bool = True, device=None, lr_scheduler=None, use_quant_input: bool = True, enable_minmax_tuning: bool = True, lr: float = None, minmax_lr: float = None, low_gpu_mem_usage: bool = True, iters: int = 200, seqlen: int = 2048, n_samples: int = 512, sampler: str = 'rand', seed: int = 42, n_blocks: int = 1, gradient_accumulate_steps: int = 1, not_use_best_mse: bool = False, dynamic_max_gap: int = -1, scale_dtype='fp32')
 
 
 

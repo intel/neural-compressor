@@ -115,6 +115,12 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.utility.set_module" title="neural_compressor.torch.utils.utility.set_module"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_module</span></code></a>(model, op_name, new_module)</p></td>
 <td><p>Set module with a given op name.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.utility.get_quantizer" title="neural_compressor.torch.utils.utility.get_quantizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_quantizer</span></code></a>(model, quantizer_cls[, quant_config])</p></td>
+<td><p>Get the quantizer.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.utility.postprocess_model" title="neural_compressor.torch.utils.utility.postprocess_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">postprocess_model</span></code></a>(model, mode, quantizer)</p></td>
+<td><p>Process <cite>quantizer</cite> attribute of model according to current phase.</p></td>
+</tr>
 </tbody>
 </table>
 <dl class="py function">
@@ -184,6 +190,44 @@ def example_algo(model: torch.nn.Module, quant_config: RTNConfig) -&gt; torch.nn
 <p>Derive from this class to define new enumerations.</p>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.utility.get_quantizer">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_quantizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantizer_cls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.utility.get_quantizer" title="Permalink to this definition"></a></dt>
+<dd><p>Get the quantizer.</p>
+<p>Initialize a quantizer or get <cite>quantizer</cite> attribute from model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>torch.nn.Module</em>) – pytorch model.</p></li>
+<li><p><strong>quantizer_cls</strong> (<a class="reference internal" href="../../../adaptor/ox_utils/quantizer/index.html#neural_compressor.adaptor.ox_utils.quantizer.Quantizer" title="neural_compressor.adaptor.ox_utils.quantizer.Quantizer"><em>Quantizer</em></a>) – quantizer class of a specific algorithm.</p></li>
+<li><p><strong>quant_config</strong> (<em>dict</em><em>, </em><em>optional</em>) – Specifies how to apply the algorithm on the given model.
+Defaults to None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>quantizer object.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.utility.postprocess_model">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.utility.</span></span><span class="sig-name descname"><span class="pre">postprocess_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantizer</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.utility.postprocess_model" title="Permalink to this definition"></a></dt>
+<dd><p>Process <cite>quantizer</cite> attribute of model according to current phase.</p>
+<p>In <cite>prepare</cite> phase, the <cite>quantizer</cite> is set as an attribute of the model
+to avoid redundant initialization during <cite>convert</cite> phase.</p>
+<p>In ‘convert’ or ‘quantize’ phase, the unused <cite>quantizer</cite> attribute is removed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>torch.nn.Module</em>) – pytorch model.</p></li>
+<li><p><strong>mode</strong> (<a class="reference internal" href="#neural_compressor.torch.utils.utility.Mode" title="neural_compressor.torch.utils.utility.Mode"><em>Mode</em></a>) – The mode of current phase, including ‘prepare’, ‘convert’ and ‘quantize’.</p></li>
+<li><p><strong>quantizer</strong> (<a class="reference internal" href="../../../adaptor/ox_utils/quantizer/index.html#neural_compressor.adaptor.ox_utils.quantizer.Quantizer" title="neural_compressor.adaptor.ox_utils.quantizer.Quantizer"><em>Quantizer</em></a>) – quantizer object.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 </section>
@@ -202,7 +246,7 @@ def example_algo(model: torch.nn.Module, quant_config: RTNConfig) -&gt; torch.nn
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f58d59f2200> 
+   <jinja2.runtime.BlockReference object at 0x7fd667dc7a60> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
