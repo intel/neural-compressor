@@ -176,6 +176,8 @@ def postprocess_model(model, mode, quantizer):
     elif mode == Mode.CONVERT or mode == Mode.QUANTIZE:
         if getattr(model, "quantizer", False):
             del model.quantizer
+
+
 def create_quant_spec_from_config(dtype, sym, granularity, algo) -> QuantizationSpec:
     dtype_mapping: Dict[str, torch.dtype] = {"int8": torch.int8, "uint8": torch.uint8}
     qscheme_mapping = {

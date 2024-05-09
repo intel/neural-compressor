@@ -32,11 +32,11 @@ from neural_compressor.torch.quantization import (
 )
 from neural_compressor.torch.utils import (
     Mode,
+    get_quantizer,
     is_ipex_imported,
     logger,
+    postprocess_model,
     register_algo,
-    get_quantizer,
-    postprocess_model
 )
 from neural_compressor.torch.utils.constants import PT2E_STATIC_QUANT
 
