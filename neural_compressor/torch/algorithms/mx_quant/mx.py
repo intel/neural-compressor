@@ -18,41 +18,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from neural_compressor.common.logger import Logger
-from neural_compressor.torch.utils import set_module
-
+import torch
+from neural_compressor.torch.utils import set_module, logger
+from torch.nn import functional as F
 from .utils import quantize_elemwise_op, quantize_mx_op
-
-logger = Logger().get_logger()
-
-
-class MXLinearFunction(Function):
-    @staticmethod
-    def forward(ctx, input, weight, bias=None, mx_specs=None):
-        # element-wise quantize for input
-        if mx_specs.get("out_dtype", "float32") != "float32":
-            input = quantize_elemwise_op(input, mx_specs=mx_specs)
-
-        if not mx_specs.get("weight_only", False):
-            # MX quantize everything along input size
-            input = quantize_mx_op(
-                input,
-                mx_specs.get("act_dtype", "bfloat16"),
-                self.mx_specs["round_method"],
-                self.mx_specs["blocksize"],
-                axes=[-1],
-            )
-        # compute output
-        output = F.linear(input, weight)
-        if mx_specs.get("out_dtype", "float32") != "float32":
-            output = quantize_elemwise_op(output, mx_specs=mx_specs)
-
-        if bias is not None:
-            output = output + bias
-            if mx_specs.get("out_dtype", "float32") != "float32":
-                output = quantize_elemwise_op(output, mx_specs=mx_specs)
-
-        return output
 
 
 class MXLinear(torch.nn.Linear):
@@ -72,7 +41,7 @@ class MXLinear(torch.nn.Linear):
 
     def apply_mx_specs(self):
         if self.mx_specs is not None:
-            if self.mx_specs.get("out_dtype", "float32") != "float32":
+            if self.mx_specs.out_dtype != "float32":
                 self.weight.data = quantize_elemwise_op(self.weight.data, mx_specs=self.mx_specs)
 
                 if self.bias is not None:
@@ -81,20 +50,43 @@ class MXLinear(torch.nn.Linear):
             # MX quantize everything along input size
             self.weight.data = quantize_mx_op(
                 self.weight.data,
-                self.mx_specs.get("w_dtype", "bfloat16"),
-                self.mx_specs["round_method"],
-                self.mx_specs["blocksize"],
+                self.mx_specs.w_dtype,
+                self.mx_specs.round_method,
+                self.mx_specs.blocksize,
                 axes=[-1],
             )
 
     def append_name(self, postfix):
         self.name += postfix
 
-    def forward(self, inputs):
+    def forward(self, input):
         if self.mx_none:
-            return super().forward(inputs)
+            return super().forward(input)
 
-        return MXLinearFunction.apply(inputs, self.weight, self.bias, self.mx_specs)
+        # element-wise quantize for input
+        if self.mx_specs.out_dtype != "float32":
+            input = quantize_elemwise_op(input, mx_specs=self.mx_specs)
+
+        if not self.mx_specs.weight_only:
+            # MX quantize everything along input size
+            input = quantize_mx_op(
+                input,
+                self.mx_specs.act_dtype,
+                self.mx_specs.round_method,
+                self.mx_specs.blocksize,
+                axes=[-1],
+            )
+        # compute output
+        output = F.linear(input, self.weight)
+        if self.mx_specs.out_dtype != "float32":
+            output = quantize_elemwise_op(output, mx_specs=self.mx_specs)
+
+        if self.bias is not None:
+            output = output + self.bias
+            if self.mx_specs.out_dtype != "float32":
+                output = quantize_elemwise_op(output, mx_specs=self.mx_specs)
+
+        return output
 
 
 def mx_quantize(
@@ -124,14 +116,15 @@ def mx_quantize(
     assert isinstance(model, torch.nn.Module), "only support torch module"
     supported_layers = ["Linear"]
     for name, m in model.named_modules():
-        if m.__class__.__name__ not in supported_layers:
+        if type(m).__name__ not in supported_layers:
             continue
-        if name not in config:  # pragma: no cover
+        if (name, type(m).__name__) not in config:  # pragma: no cover
             continue
         logger.debug(f"MX quantized module:{name, m}")
         log_msg = (
-            f"MX quantization config: w_dtype={config[name]['w_dtype']}, config[name]['act_dtype'], "
-            + f"out_dtype={config[name]['out_dtype']}"
+            f"MX quantization config: w_dtype={config[(name, type(m).__name__)].w_dtype}, "
+            + f"config[(name, type(m).__name__)].act_dtype, "
+            + f"out_dtype={config[(name, type(m).__name__)].out_dtype}"
         )
         logger.debug(log_msg)
         tmp_stat = m.state_dict()
@@ -139,7 +132,7 @@ def mx_quantize(
             m.in_features,
             m.out_features,
             bias=m.bias is not None,
-            mx_specs=config[name],
+            mx_specs=config[(name, type(m).__name__)],
             name=name,
         )
         new_module.load_state_dict(tmp_stat)

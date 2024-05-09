@@ -56,7 +56,7 @@ def get_user_model():
 
 user_model, tokenizer = get_user_model()
 if args.quantize:
-    from neural_compressor.torch import MXQuantConfig, quantize
+    from neural_compressor.torch.quantization import MXQuantConfig, quantize
     quant_config = MXQuantConfig(w_dtype=args.w_dtype, act_dtype=args.act_dtype, weight_only=args.woq)
     user_model = quantize(model=user_model, quant_config=quant_config)
 

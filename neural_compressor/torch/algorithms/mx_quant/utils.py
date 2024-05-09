@@ -453,8 +453,8 @@ def quantize_elemwise_op(A, mx_specs):
     if mx_specs is None:
         return A
 
-    out_dtype = mx_specs["out_dtype"]
-    round = mx_specs["round_method"]
+    out_dtype = mx_specs.out_dtype
+    round = mx_specs.round_method
     elem_format = ElemFormat.from_str(out_dtype)
     ebits, mbits, _, _, _ = _get_format_params(elem_format)
     if ElemFormat.is_bf(out_dtype):

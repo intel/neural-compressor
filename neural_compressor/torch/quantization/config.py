@@ -802,7 +802,7 @@ class MXQuantConfig(BaseConfig):
         weight_only: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
-        """Init RTN weight-only quantization config.
+        """Init MX quantization config.
 
         Args:
             w_dtype (str): Data type for weights, default is "int8".
@@ -869,7 +869,7 @@ class MXQuantConfig(BaseConfig):
 
         filter_result = []
         for op_name, module in model.named_modules():
-            if module in white_list:
+            if module.__class__ in white_list:
                 pair = (op_name, type(module).__name__)
                 filter_result.append(pair)
         logger.debug(f"Get model info: {filter_result}")
