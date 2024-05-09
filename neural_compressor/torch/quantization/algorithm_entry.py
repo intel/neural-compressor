@@ -45,6 +45,7 @@ def rtn_entry(
 ) -> torch.nn.Module:
     """The main entry to apply rtn quantization."""
     from neural_compressor.torch.algorithms.weight_only.rtn import RTNQuantizer
+    from neural_compressor.torch.algorithms.weight_only.save_load import save
 
     # rebuild weight_config for RTNQuantizer class
     weight_config = {}
@@ -60,7 +61,7 @@ def rtn_entry(
             "use_full_range": quant_config.use_full_range,
             "use_mse_search": quant_config.use_mse_search,
             "use_layer_wise": quant_config.use_layer_wise,
-            "export_compressed_model": quant_config.export_compressed_model,
+            "export_compressed_model": True,
             "use_double_quant": quant_config.use_double_quant,
             "double_quant_dtype": quant_config.double_quant_dtype,
             "double_quant_bits": quant_config.double_quant_bits,
@@ -73,13 +74,15 @@ def rtn_entry(
     else:
         quantizer = RTNQuantizer(quant_config=weight_config)
 
-    model = quantizer.execute(model, mode=mode)
+    q_model = quantizer.execute(model, mode=mode)
 
     if getattr(model, "quantizer", False):
-        del model.quantizer
+        del q_model.quantizer
     else:
-        model.quantizer = quantizer
-    return model
+        q_model.quantizer = quantizer
+    q_model.qconfig = configs_mapping
+    q_model.save = MethodType(save, q_model)
+    return q_model
 
 
 ###################### GPTQ Algo Entry ##################################
