@@ -358,40 +358,10 @@ Intel® Neural Compressor validated examples with multiple compression technique
 </thead>
 <tbody>
   <tr>
-    <td>ResNet50 V1</td>
-    <td>Image Recognition</td>
-    <td>TF2ONNX</td>
-    <td><a href="./tensorflow/image_recognition/tensorflow_models/resnet50_v1/export">int8 fp32</a></td>
-  </tr>
-  <tr>
     <td>ResNet50 V1.5</td>
     <td>Image Recognition</td>
     <td>TF2ONNX</td>
     <td><a href="./tensorflow/image_recognition/tensorflow_models/resnet50_v1_5/export">int8 fp32</a></td>
-  </tr>
-  <tr>
-    <td>MobileNet V2</td>
-    <td>Image Recognition</td>
-    <td>TF2ONNX</td>
-    <td><a href="./tensorflow/image_recognition/tensorflow_models/mobilenet_v2/export">int8 fp32</a></td>
-  </tr>
-  <tr>
-    <td>VGG16</td>
-    <td>Image Recognition</td>
-    <td>TF2ONNX</td>
-    <td><a href="./tensorflow/image_recognition/tensorflow_models/vgg16/export">int8 fp32</a></td>
-  </tr>
-  <tr>
-    <td>Faster R-CNN ResNet50</td>
-    <td>Object Detection</td>
-    <td>TF2ONNX</td>
-    <td><a href="./tensorflow/object_detection/tensorflow_models/faster_rcnn_resnet50/export">int8 fp32</a></td>
-  </tr>
-  <tr>
-    <td>SSD MobileNet V1</td>
-    <td>Object Detection</td>
-    <td>TF2ONNX</td>
-    <td><a href="./tensorflow/object_detection/tensorflow_models/ssd_mobilenet_v1/export">int8 fp32</a></td>
   </tr>
 </tbody>
 </table>

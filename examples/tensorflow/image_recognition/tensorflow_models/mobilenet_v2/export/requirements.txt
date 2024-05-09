@@ -1,6 +1,0 @@
-tensorflow==2.14.0
-intel-extension-for-tensorflow[cpu]==2.14.0.1
-tf2onnx==1.16.1
-onnx==1.14.1
-onnxruntime==1.16.3
-onnxruntime-extensions==0.10.1; python_version < '3.11'
