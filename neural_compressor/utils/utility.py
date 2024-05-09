@@ -310,17 +310,21 @@ class CpuInfo(object):
         elif psutil.MACOS:  # pragma: no cover
             cmd = "sysctl -n machdep.cpu.core_count"
 
-        with subprocess.Popen(
-            args=cmd,
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            universal_newlines=False,
-        ) as proc:
-            proc.wait()
-            if proc.stdout:
-                for line in proc.stdout:
-                    num_sockets = int(line.decode("utf-8", errors="ignore").strip())
+        num_sockets = None
+        try:
+            with subprocess.Popen(
+                args=cmd,
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                universal_newlines=False,
+            ) as proc:
+                proc.wait()
+                if proc.stdout:
+                    for line in proc.stdout:
+                        num_sockets = int(line.decode("utf-8", errors="ignore").strip())
+        except Exception as e:
+            logger.error("Failed to get number of sockets: %s" % e)
         if isinstance(num_sockets, int) and num_sockets >= 1:
             return num_sockets
         else:
