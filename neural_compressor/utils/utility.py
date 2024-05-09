@@ -262,12 +262,14 @@ class CpuInfo(object):
 
     @property
     def cores(self):
+        """Get the number of cores in platform."""
         if self._cores is None:
             self._cores = self._detect_cores()
         return self._cores
 
     @cores.setter
     def cores(self, num_of_cores):
+        """Set the number of cores in platform."""
         self._cores = num_of_cores
 
     @property
@@ -289,17 +291,17 @@ class CpuInfo(object):
 
     @property
     def sockets(self):
+        """Get the number of sockets in platform."""
         if self._sockets is None:
             self._sockets = self._get_number_of_sockets()
         return self._sockets
 
     @sockets.setter
     def sockets(self, num_of_sockets):
+        """Set the number of sockets in platform."""
         self._sockets = num_of_sockets
 
     def _get_number_of_sockets(self) -> int:
-        """Get number of sockets in platform."""
-
         if "arch" in self._info and "ARM" in self._info["arch"]:  # pragma: no cover
             return 1
 
