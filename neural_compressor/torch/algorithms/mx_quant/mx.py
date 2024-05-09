@@ -19,8 +19,10 @@
 # limitations under the License.
 
 import torch
-from neural_compressor.torch.utils import set_module, logger
 from torch.nn import functional as F
+
+from neural_compressor.torch.utils import logger, set_module
+
 from .utils import quantize_elemwise_op, quantize_mx_op
 
 
@@ -123,7 +125,7 @@ def mx_quantize(
         logger.debug(f"MX quantized module:{name, m}")
         log_msg = (
             f"MX quantization config: w_dtype={config[(name, type(m).__name__)].w_dtype}, "
-            + f"config[(name, type(m).__name__)].act_dtype, "
+            + "config[(name, type(m).__name__)].act_dtype, "
             + f"out_dtype={config[(name, type(m).__name__)].out_dtype}"
         )
         logger.debug(log_msg)
