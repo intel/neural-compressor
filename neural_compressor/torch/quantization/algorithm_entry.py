@@ -30,13 +30,7 @@ from neural_compressor.torch.quantization import (
     StaticQuantConfig,
     TEQConfig,
 )
-from neural_compressor.torch.utils import (
-    Mode,
-    logger,
-    register_algo,
-    preprocess_quantizer,
-    postprocess_model,
-)
+from neural_compressor.torch.utils import Mode, logger, postprocess_model, preprocess_quantizer, register_algo
 
 
 ###################### RTN Algo Entry ##################################
@@ -124,8 +118,7 @@ def gptq_entry(
     kwargs.pop("example_inputs")
     logger.warning("lm_head in transformer model is skipped by GPTQ")
 
-    quantizer = preprocess_quantizer(
-        model, quantizer_cls=GPTQuantizer, quant_config=weight_config)
+    quantizer = preprocess_quantizer(model, quantizer_cls=GPTQuantizer, quant_config=weight_config)
     model = quantizer.execute(model, mode=mode, *args, **kwargs)
     postprocess_model(model, mode, quantizer)
 
@@ -172,8 +165,7 @@ def static_quant_entry(
     inplace = kwargs.get("inplace", True)
     assert example_inputs is not None, "Please provide example_inputs for static quantization."
 
-    quantizer = preprocess_quantizer(
-        model, quantizer_cls=StaticQuantQuantizer, quant_config=quant_config_mapping)
+    quantizer = preprocess_quantizer(model, quantizer_cls=StaticQuantQuantizer, quant_config=quant_config_mapping)
     model = quantizer.execute(model, mode=mode, run_fn=run_fn, example_inputs=example_inputs, inplace=inplace)
     postprocess_model(model, mode, quantizer)
 
@@ -353,7 +345,8 @@ def teq_quantize_entry(
         quant_config=weight_config,
         folding=folding,
         absorb_to_layer=absorb_to_layer,
-        example_inputs=example_inputs)
+        example_inputs=example_inputs,
+    )
     model = quantizer.execute(model, mode=mode, run_fn=run_fn, example_inputs=example_inputs, inplace=inplace)
     postprocess_model(model, mode, quantizer)
 
@@ -425,7 +418,8 @@ def autoround_quantize_entry(
         gradient_accumulate_steps=gradient_accumulate_steps,
         not_use_best_mse=not_use_best_mse,
         dynamic_max_gap=dynamic_max_gap,
-        scale_dtype=scale_dtype,)
+        scale_dtype=scale_dtype,
+    )
     model = quantizer.execute(model=model, mode=mode, *args, **kwargs)
     postprocess_model(model, mode, quantizer)
 
