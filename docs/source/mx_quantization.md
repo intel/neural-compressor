@@ -51,6 +51,7 @@ To get a model quantized with Microscaling Data Types, users can use the Microsc
 
 ```python
 from neural_compressor.torch.quantization import MXQuantConfig, quantize
+
 quant_config = MXQuantConfig(w_dtype=args.w_dtype, act_dtype=args.act_dtype, weight_only=args.woq)
 user_model = quantize(model=user_model, quant_config=quant_config)
 ```
