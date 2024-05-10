@@ -4,8 +4,7 @@ import unittest
 from typing import Any, List, Optional, Tuple, Union
 
 from neural_compressor_ort import constants
-from neural_compressor_ort.quantization import config
-from neural_compressor_ort.quantization import tuning
+from neural_compressor_ort.quantization import config, tuning
 
 PRIORITY_FAKE_ALGO = 100
 FAKE_CONFIG_NAME = "fake"

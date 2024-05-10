@@ -25,9 +25,7 @@ import onnx
 import onnxruntime as ort
 from packaging import version
 
-from neural_compressor_ort import constants
-from neural_compressor_ort import data_reader
-from neural_compressor_ort import utility
+from neural_compressor_ort import constants, data_reader, utility
 from neural_compressor_ort.algorithms.weight_only import rtn
 from neural_compressor_ort.algorithms.weight_only import utility as woq_utility
 from neural_compressor_ort.quantization import config
@@ -98,7 +96,9 @@ def _apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits,
                 weight = woq_utility.pad_tensor(weight, group_size, (org_w_shape[0] + group_size - 1) // group_size).T
 
                 if (version.Version(ort.__version__) > constants.ONNXRT1161_VERSION and num_bits == 4) or (
-                    version.Version(ort.__version__) >= constants.ONNXRT116_VERSION and num_bits == 4 and group_size == 32
+                    version.Version(ort.__version__) >= constants.ONNXRT116_VERSION
+                    and num_bits == 4
+                    and group_size == 32
                 ):  # pragma: no cover
                     # MatMulFpQ4 support 4 bits and 32 group_size with ort 1.16.0 and 1.16.1 versions
                     # MatMulNBits supports 4 bits and 2^n group_size with ort > 1.16.1
@@ -251,7 +251,9 @@ def _apply_awq_clip(model, weight_config, absorb_pairs, output_dicts, num_bits, 
                 ratio = 1 - i_s / 100
                 weight = copy.deepcopy(org_weight)
                 if (version.Version(ort.__version__) > constants.ONNXRT1161_VERSION and num_bits == 4) or (
-                    version.Version(ort.__version__) >= constants.ONNXRT116_VERSION and num_bits == 4 and group_size == 32
+                    version.Version(ort.__version__) >= constants.ONNXRT116_VERSION
+                    and num_bits == 4
+                    and group_size == 32
                 ):  # pragma: no cover
                     # MatMulFpQ4 support 4 bits and 32 group_size with ort 1.16.0 and 1.16.1 versions
                     # MatMulNBits supports 4 bits and 2^n group_size with ort > 1.16.1

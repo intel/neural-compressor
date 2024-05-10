@@ -32,9 +32,7 @@ import onnx
 from onnxruntime import quantization
 from typing_extensions import Self
 
-from neural_compressor_ort import constants
-from neural_compressor_ort import data_reader
-from neural_compressor_ort import utility
+from neural_compressor_ort import constants, data_reader, utility
 
 
 class ParamLevel(enum.Enum):

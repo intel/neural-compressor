@@ -27,8 +27,7 @@ from optimum.exporters.onnx import main_export
 from neural_compressor_ort import data_reader
 from neural_compressor_ort.quantization import QuantType
 from neural_compressor_ort.quantization import algorithm_entry as algos
-from neural_compressor_ort.quantization import config
-from neural_compressor_ort.quantization import quantize
+from neural_compressor_ort.quantization import config, quantize
 
 
 class DataReader(data_reader.CalibrationDataReader):

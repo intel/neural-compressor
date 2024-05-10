@@ -18,10 +18,7 @@ import onnx
 import packaging
 from onnxruntime.quantization import matmul_4bits_quantizer
 
-from neural_compressor_ort import data_reader
-from neural_compressor_ort import version
-from neural_compressor_ort import onnx_model
-from neural_compressor_ort import utility
+from neural_compressor_ort import data_reader, onnx_model, utility, version
 from neural_compressor_ort.quantization import algorithm_entry as algos
 from neural_compressor_ort.quantization import config
 
