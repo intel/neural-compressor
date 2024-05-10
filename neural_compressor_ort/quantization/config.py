@@ -112,7 +112,6 @@ class TuningParam:
             return False
 
 
-
 # Config registry to store all registered configs.
 class ConfigRegistry(object):
     registered_configs = {}

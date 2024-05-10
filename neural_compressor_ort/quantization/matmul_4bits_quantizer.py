@@ -23,6 +23,7 @@ RTNWeightOnlyQuantConfig = matmul_nbits_quantizer.RTNWeightOnlyQuantConfig
 AWQWeightOnlyQuantConfig = matmul_nbits_quantizer.AWQWeightOnlyQuantConfig
 GPTQWeightOnlyQuantConfig = matmul_nbits_quantizer.GPTQWeightOnlyQuantConfig
 
+
 class MatMul4BitsQuantizer(matmul_nbits_quantizer.MatMulNBitsQuantizer):
 
     def __init__(

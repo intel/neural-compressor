@@ -11,7 +11,8 @@ import transformers
 from optimum.exporters.onnx import main_export
 
 from neural_compressor_ort import data_reader, utility
-from neural_compressor_ort.quantization import matmul_4bits_quantizer, config, algorithm_entry as algos
+from neural_compressor_ort.quantization import algorithm_entry as algos
+from neural_compressor_ort.quantization import config, matmul_4bits_quantizer
 
 
 def find_onnx_file(folder_path):
