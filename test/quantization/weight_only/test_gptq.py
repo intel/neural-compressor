@@ -5,12 +5,11 @@ import shutil
 import unittest
 
 import torch
+import transformers
 from optimum.exporters.onnx import main_export
-from transformers import AutoTokenizer
 
-from neural_compressor_ort import utility
-from neural_compressor_ort.quantization import algorithm_entry as algos
-from neural_compressor_ort.quantization import calibrate, config, matmul_4bits_quantizer, matmul_nbits_quantizer
+from neural_compressor_ort import utility, data_reader
+from neural_compressor_ort.quantization import config, matmul_4bits_quantizer, matmul_nbits_quantizer, algorithm_entry as algos
 
 
 def find_onnx_file(folder_path):
@@ -22,10 +21,10 @@ def find_onnx_file(folder_path):
     return None
 
 
-class DummyNLPDataloader(calibrate.CalibrationDataReader):
+class DummyNLPDataloader(data_reader.CalibrationDataReader):
 
     def __init__(self, model_name):
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.tokenizer = transformers.AutoTokenizer.from_pretrained(model_name)
         self.sequence_a = "intel-extension-for-transformers is based in SH"
         self.sequence_b = "Where is intel-extension-for-transformers based? NYC or SH"
 

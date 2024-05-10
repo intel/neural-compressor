@@ -32,8 +32,8 @@ import onnx
 from onnxruntime import quantization
 from typing_extensions import Self
 
-from neural_compressor_ort import constants, utility
-from neural_compressor_ort.quantization import calibrate, tuning
+from neural_compressor_ort import constants, utility, data_reader
+from neural_compressor_ort.quantization import tuning
 
 __all__ = [
     "RTNConfig",
@@ -1147,7 +1147,7 @@ register_supported_configs()
 
 class StaticQuantConfig(quantization.StaticQuantConfig):
 
-    def __init__(self, calibration_data_reader: calibrate.CalibrationDataReader, extra_options=None, *args, **kwargs):
+    def __init__(self, calibration_data_reader: data_reader.CalibrationDataReader, extra_options=None, *args, **kwargs):
         """This is a class for static Quant Configuration.
 
         Inherit from StaticQuantConfig:

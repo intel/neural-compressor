@@ -18,9 +18,8 @@ import onnx
 import packaging
 from onnxruntime.quantization import matmul_4bits_quantizer
 
-from neural_compressor_ort import nc_version
-from neural_compressor_ort.quantization import algorithm_entry as algos
-from neural_compressor_ort.quantization import calibrate, config
+from neural_compressor_ort import nc_version, data_reader
+from neural_compressor_ort.quantization import algorithm_entry as algos, config
 
 
 class RTNWeightOnlyQuantConfig(matmul_4bits_quantizer.RTNWeightOnlyQuantConfig):
@@ -34,7 +33,7 @@ class GPTQWeightOnlyQuantConfig(matmul_4bits_quantizer.GPTQWeightOnlyQuantConfig
 
     def __init__(
         self,
-        calibration_data_reader: calibrate.CalibrationDataReader,
+        calibration_data_reader: data_reader.CalibrationDataReader,
         percdamp=0.01,
         blocksize=128,
         actorder=False,
@@ -57,7 +56,7 @@ class AWQWeightOnlyQuantConfig(matmul_4bits_quantizer.WeightOnlyQuantConfig):
 
     def __init__(
         self,
-        calibration_data_reader: calibrate.CalibrationDataReader,
+        calibration_data_reader: data_reader.CalibrationDataReader,
         enable_auto_scale=True,
         enable_mse_search=True,
     ):

@@ -19,9 +19,9 @@ from typing import Union
 import onnx
 from onnxruntime import quantization
 
-from neural_compressor_ort import constants, utility
+from neural_compressor_ort import constants, utility, data_reader
 from neural_compressor_ort.algorithms.smoother import core
-from neural_compressor_ort.quantization import calibrate, config
+from neural_compressor_ort.quantization import config
 
 
 ###################### SmoothQuant Entry ##################################
@@ -29,7 +29,7 @@ from neural_compressor_ort.quantization import calibrate, config
 def smooth_quant_entry(
     model: Union[pathlib.Path, str],
     quant_config: config.SmoothQuantConfig,
-    calibration_data_reader: calibrate.CalibrationDataReader,
+    calibration_data_reader: data_reader.CalibrationDataReader,
     model_output: Union[pathlib.Path, str] = None,
     *args,
     **kwargs
@@ -37,8 +37,8 @@ def smooth_quant_entry(
     """Apply smooth quant."""
     assert calibration_data_reader is not None, "Please provide calibration_data_reader"
     assert isinstance(
-        calibration_data_reader, calibrate.CalibrationDataReader
-    ), "Please follow neural_compressor_ort/quantization/calibrate.py to implement calibration_data_reader"
+        calibration_data_reader, data_reader.CalibrationDataReader
+    ), "Please follow neural_compressor_ort/data_reader.py to implement calibration_data_reader"
 
     # smooth operation
     calibration_data_reader.rewind()
@@ -99,15 +99,15 @@ def rtn_quantize_entry(
 def gptq_quantize_entry(
     model: Union[pathlib.Path, str],
     quant_config: config.GPTQConfig,
-    calibration_data_reader: calibrate.CalibrationDataReader,
+    calibration_data_reader: data_reader.CalibrationDataReader,
     *args,
     **kwargs
 ) -> onnx.ModelProto:
     """The main entry to apply gptq quantization."""
     assert calibration_data_reader is not None, "Please provide calibration_data_reader"
     assert isinstance(
-        calibration_data_reader, calibrate.CalibrationDataReader
-    ), "Please follow neural_compressor_ort/quantization/calibrate.py to implement calibration_data_reader"
+        calibration_data_reader, data_reader.CalibrationDataReader
+    ), "Please follow neural_compressor_ort/data_reader.py to implement calibration_data_reader"
 
     from neural_compressor_ort.algorithms import apply_gptq_on_model
 
@@ -127,15 +127,15 @@ def gptq_quantize_entry(
 def awq_quantize_entry(
     model: Union[pathlib.Path, str],
     quant_config: config.AWQConfig,
-    calibration_data_reader: calibrate.CalibrationDataReader,
+    calibration_data_reader: data_reader.CalibrationDataReader,
     *args,
     **kwargs
 ) -> onnx.ModelProto:
     """The main entry to apply awq quantization."""
     assert calibration_data_reader is not None, "Please provide calibration_data_reader"
     assert isinstance(
-        calibration_data_reader, calibrate.CalibrationDataReader
-    ), "Please follow neural_compressor_ort/quantization/calibrate.py to implement calibration_data_reader"
+        calibration_data_reader, data_reader.CalibrationDataReader
+    ), "Please follow neural_compressor_ort/data_reader.py to implement calibration_data_reader"
 
     from neural_compressor_ort.algorithms import apply_awq_on_model
 

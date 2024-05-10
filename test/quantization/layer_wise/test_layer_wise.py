@@ -10,9 +10,8 @@ import torch
 import transformers
 from optimum.exporters.onnx import main_export
 
-from neural_compressor_ort import utility
-from neural_compressor_ort.quantization import algorithm_entry as algos
-from neural_compressor_ort.quantization import calibrate, matmul_4bits_quantizer
+from neural_compressor_ort import utility, data_reader
+from neural_compressor_ort.quantization import matmul_4bits_quantizer, algorithm_entry as algos
 
 
 def find_onnx_file(folder_path):
@@ -24,7 +23,7 @@ def find_onnx_file(folder_path):
     return None
 
 
-class DummyNLPDataloader(calibrate.CalibrationDataReader):
+class DummyNLPDataloader(data_reader.CalibrationDataReader):
 
     def __init__(self, model_name):
         self.tokenizer = transformers.AutoTokenizer.from_pretrained(model_name)

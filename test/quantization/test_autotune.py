@@ -28,8 +28,8 @@ import onnx
 import onnxruntime as ort
 from optimum.exporters.onnx import main_export
 
-from neural_compressor_ort.quantization import calibrate, config, tuning
-
+from neural_compressor_ort.quantization import config, tuning
+from neural_compressor_ort import data_reader
 
 def fake_eval(model, eval_result_lst):
     acc = eval_result_lst.pop(0)
@@ -42,7 +42,7 @@ def _create_evaluator_for_eval_fns(eval_fns: Optional[Union[Callable, Dict, List
     return evaluator
 
 
-class DataReader(calibrate.CalibrationDataReader):
+class DataReader(data_reader.CalibrationDataReader):
 
     def __init__(self, model):
         model = onnx.load(model)

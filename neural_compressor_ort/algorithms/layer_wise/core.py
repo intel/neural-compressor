@@ -27,15 +27,14 @@ import onnx
 import onnxruntime as ort
 import transformers
 
-from neural_compressor_ort import onnx_model, utility
-from neural_compressor_ort.quantization import calibrate
+from neural_compressor_ort import onnx_model, utility, data_reader
 
 
 def layer_wise_quant(
     model: Union[onnx.ModelProto, onnx_model.ONNXModel, pathlib.Path, str],
     quant_func: Callable,
     weight_config: dict,
-    data_reader: calibrate.CalibrationDataReader = None,
+    data_reader: data_reader.CalibrationDataReader = None,
     *args,
     **kwargs
 ) -> onnx_model.ONNXModel:
@@ -45,7 +44,7 @@ def layer_wise_quant(
         model (Union[onnx.ModelProto, onnx_model.ONNXModel, pathlib.Path, str]): onnx model.
         quant_func (Callable): quantization algo function.
         weight_config (dict): quantization config.
-        data_reader (calibrate.CalibrationDataReader, optional): data_reader for calibration. Defaults to None.
+        data_reader (data_reader.CalibrationDataReader, optional): data_reader for calibration. Defaults to None.
 
     Returns:
         _type_: _description_
@@ -212,7 +211,7 @@ def layer_wise_quant(
     return quantized_model_merged
 
 
-class DataReader(calibrate.CalibrationDataReader):
+class DataReader(data_reader.CalibrationDataReader):
     """Data reader for layer-wise quantization."""
 
     def __init__(self, data_list):
@@ -226,15 +225,15 @@ class DataReader(calibrate.CalibrationDataReader):
         self.iter_next = iter(self.data_list)
 
 
-def _filter_data_reader_for_current_split_model(model: onnx.ModelProto, data_reader: calibrate.CalibrationDataReader):
+def _filter_data_reader_for_current_split_model(model: onnx.ModelProto, data_reader: data_reader.CalibrationDataReader):
     """Filter data reader to remove data that is not in model input.
 
     Args:
         model (onnx.ModelProto): onnx model.
-        data_reader (calibrate.CalibrationDataReader): data reader.
+        data_reader (data_reader.CalibrationDataReader): data reader.
 
     Returns:
-        calibrate.CalibrationDataReader: filtered data reader.
+        data_reader.CalibrationDataReader: filtered data reader.
     """
     filter_inputs = []
     input_names = [input.name for input in model.graph.input]
@@ -251,7 +250,7 @@ def _filter_data_reader_for_current_split_model(model: onnx.ModelProto, data_rea
 
 def _prepare_data_reader_for_next_split_model(
     model_path: str,
-    data_reader: calibrate.CalibrationDataReader,
+    data_reader: data_reader.CalibrationDataReader,
     providers: List[str] = ["CPUExecutionProvider"],
 ):
     """Prepare data reader for next split model.
@@ -260,11 +259,11 @@ def _prepare_data_reader_for_next_split_model(
 
     Args:
         model (str): path to onnx model.
-        data_reader (calibrate.CalibrationDataReader): data reader
+        data_reader (data_reader.CalibrationDataReader): data reader
         providers (List[str], optional): providers to use. Defaults to ["CPUExecutionProvider"].
 
     Returns:
-        calibrate.CalibrationDataReader: data reader for next split model.
+        data_reader.CalibrationDataReader: data reader for next split model.
     """
     data_reader = copy.deepcopy(data_reader)
 

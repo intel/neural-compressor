@@ -25,10 +25,10 @@ import onnx
 import onnxruntime as ort
 from packaging.version import Version
 
-from neural_compressor_ort import constants, utility
+from neural_compressor_ort import constants, utility, data_reader
 from neural_compressor_ort.algorithms.weight_only import rtn
 from neural_compressor_ort.algorithms.weight_only import utility as woq_utility
-from neural_compressor_ort.quantization import calibrate, config
+from neural_compressor_ort.quantization import config
 
 __all__ = ["apply_awq_on_model", "awq_quantize"]
 
@@ -275,7 +275,7 @@ def _apply_awq_clip(model, weight_config, absorb_pairs, output_dicts, num_bits, 
 
 def awq_quantize(
     model: Union[onnx.ModelProto, onnx_model.ONNXModel, pathlib.Path, str],
-    data_reader: calibrate.CalibrationDataReader,
+    data_reader: data_reader.CalibrationDataReader,
     weight_config: dict = {},
     num_bits: int = 4,
     group_size: int = 32,
@@ -289,7 +289,7 @@ def awq_quantize(
 
     Args:
         model (Union[onnx.ModelProto, onnx_model.ONNXModel, pathlib.Path, str]): onnx model.
-        data_reader (calibrate.CalibrationDataReader): data_reader for calibration.
+        data_reader (data_reader.CalibrationDataReader): data_reader for calibration.
         weight_config (dict, optional): quantization config
             For example,
             weight_config = {
@@ -413,14 +413,14 @@ def awq_quantize(
 def apply_awq_on_model(
     model: Union[onnx.ModelProto, onnx_model.ONNXModel, pathlib.Path, str],
     quant_config: dict,
-    calibration_data_reader: calibrate.CalibrationDataReader,
+    calibration_data_reader: data_reader.CalibrationDataReader,
 ) -> onnx.ModelProto:
     """Apply Activation-aware Weight quantization(AWQ) on onnx model.
 
     Args:
         model (Union[onnx.ModelProto, onnx_model.ONNXModel, pathlib.Path, str]): nnx model.
         quant_config (dict): quantization config.
-        calibration_data_reader (calibrate.CalibrationDataReader): data_reader for calibration.
+        calibration_data_reader (data_reader.CalibrationDataReader): data_reader for calibration.
 
     Returns:
         onnx.ModelProto: quantized onnx model.

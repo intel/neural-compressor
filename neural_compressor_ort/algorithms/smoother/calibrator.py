@@ -23,8 +23,7 @@ import numpy as np
 import onnx
 import onnxruntime
 
-from neural_compressor_ort import onnx_model
-from neural_compressor_ort.quantization import calibrate
+from neural_compressor_ort import onnx_model, data_reader
 
 
 class Calibrator:
@@ -33,7 +32,7 @@ class Calibrator:
     def __init__(
         self,
         model: onnx_model.ONNXModel,
-        dataloader: calibrate.CalibrationDataReader,
+        dataloader: data_reader.CalibrationDataReader,
         iterations: List[int] = [],
         providers: List[str] = ["CPUExecutionProvider"],
         **kwargs,
@@ -42,7 +41,7 @@ class Calibrator:
 
         Args:
             model (onnx_model.ONNXModel): onnx_model.ONNXModel object.
-            dataloader (calibrate.CalibrationDataReader): user implemented object to read in and preprocess calibration dataset.
+            dataloader (data_reader.CalibrationDataReader): user implemented object to read in and preprocess calibration dataset.
             iterations (List[int], optional): tensor of which iteration will be collected. Defaults to [].
             providers (List[str], optional): execution provider for onnxruntime. Defaults to ["CPUExecutionProvider"].
         """

@@ -32,7 +32,8 @@ from torch.nn import functional
 from torch.utils import data
 from intel_extension_for_transformers.transformers.llm.evaluation import lm_eval
 from optimum import onnxruntime
-from neural_compressor_ort.quantization import matmul_nbits_quantizer, config, tuning, calibrate
+from neural_compressor_ort.quantization import matmul_nbits_quantizer, config, tuning
+from neural_compressor_ort import data_reader
 
 utility.logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -212,7 +213,7 @@ def benchmark(model):
     print("Throughput: {} samples/s".format(throughput))
 
 
-class AWQDataloader(calibrate.CalibrationDataReader):
+class AWQDataloader(data_reader.CalibrationDataReader):
 
     def __init__(self,
                  model_path,
@@ -289,7 +290,7 @@ class AWQDataloader(calibrate.CalibrationDataReader):
         self.iter_next = iter(self.encoded_list)
 
 
-class GPTQDataloader(calibrate.CalibrationDataReader):
+class GPTQDataloader(data_reader.CalibrationDataReader):
 
     def __init__(self,
                  model_path,

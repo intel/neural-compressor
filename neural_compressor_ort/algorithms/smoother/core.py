@@ -22,9 +22,8 @@ import numpy as np
 import onnx
 import onnxruntime as ort
 
-from neural_compressor_ort import utility
 from neural_compressor_ort.algorithms.smoother import calibrator
-from neural_compressor_ort.quantization import calibrate, onnx_model
+from neural_compressor_ort import data_reader, onnx_model, utility
 
 _dtype_map = {
     np.dtype("float32"): 1,
@@ -100,7 +99,7 @@ class Smoother:
     def __init__(
         self,
         model: Union[onnx.ModelProto, onnx_model.ONNXModel, pathlib.Path, str],
-        dataloader: calibrate.CalibrationDataReader,
+        dataloader: data_reader.CalibrationDataReader,
         providers: List[str] = ["CPUExecutionProvider"],
     ):
         """Initialize the attributes of class."""

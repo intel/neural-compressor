@@ -18,7 +18,6 @@ from neural_compressor_ort.quantization.algorithm_entry import (
     gptq_quantize_entry,
     awq_quantize_entry,
 )
-from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
 from neural_compressor_ort.quantization.config import (
     RTNConfig,
     get_default_rtn_config,
