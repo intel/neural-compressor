@@ -21,9 +21,9 @@ import sys
 
 import onnx
 from onnxruntime.quantization import onnx_model
+from transformers import PretrainedConfig
 
 from neural_compressor_ort import constants, utility
-from transformers import PretrainedConfig
 
 
 class ONNXModel(onnx_model.ONNXModel):

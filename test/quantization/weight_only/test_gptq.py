@@ -5,8 +5,8 @@ import shutil
 import unittest
 
 import torch
-from transformers import AutoTokenizer
 from optimum.exporters.onnx import main_export
+from transformers import AutoTokenizer
 
 from neural_compressor_ort import data_reader, utility
 from neural_compressor_ort.quantization import algorithm_entry as algos

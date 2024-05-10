@@ -5,8 +5,8 @@ import shutil
 import unittest
 
 import torch
-from transformers import AutoTokenizer
 from optimum.exporters.onnx import main_export
+from transformers import AutoTokenizer
 
 from neural_compressor_ort import data_reader, utility
 from neural_compressor_ort.quantization import algorithm_entry as algos
@@ -169,7 +169,9 @@ class TestAWQQuantWithORTLikeAPI(TestAWQQuant):
 
     def test_awq_config_4bits(self):
 
-        algo_config = matmul_4bits_quantizer.AWQWeightOnlyQuantConfig(calibration_data_reader=self.calibration_data_reader)
+        algo_config = matmul_4bits_quantizer.AWQWeightOnlyQuantConfig(
+            calibration_data_reader=self.calibration_data_reader
+        )
 
         quant = matmul_4bits_quantizer.MatMul4BitsQuantizer(
             copy.deepcopy(self.gptj),
@@ -183,7 +185,9 @@ class TestAWQQuantWithORTLikeAPI(TestAWQQuant):
 
     def test_awq_config_4bits_with_exclude_node(self):
 
-        algo_config = matmul_4bits_quantizer.AWQWeightOnlyQuantConfig(calibration_data_reader=self.calibration_data_reader)
+        algo_config = matmul_4bits_quantizer.AWQWeightOnlyQuantConfig(
+            calibration_data_reader=self.calibration_data_reader
+        )
 
         quant = matmul_4bits_quantizer.MatMul4BitsQuantizer(
             copy.deepcopy(self.gptj),
@@ -217,7 +221,9 @@ class TestAWQQuantWithORTLikeAPI(TestAWQQuant):
 
     def test_awq_config_nbits_with_exclude_node(self):
 
-        algo_config = matmul_nbits_quantizer.AWQWeightOnlyQuantConfig(calibration_data_reader=self.calibration_data_reader)
+        algo_config = matmul_nbits_quantizer.AWQWeightOnlyQuantConfig(
+            calibration_data_reader=self.calibration_data_reader
+        )
 
         for n_bits in [3, 4, 8]:
             quant = matmul_nbits_quantizer.MatMulNBitsQuantizer(

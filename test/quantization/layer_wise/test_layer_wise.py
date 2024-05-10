@@ -7,8 +7,8 @@ import onnx
 import onnxruntime as ort
 import onnxruntime.tools.symbolic_shape_infer as symbolic_shape_infer
 import torch
-from transformers import AutoTokenizer
 from optimum.exporters.onnx import main_export
+from transformers import AutoTokenizer
 
 from neural_compressor_ort import data_reader, utility
 from neural_compressor_ort.quantization import algorithm_entry as algos
