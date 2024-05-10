@@ -387,7 +387,7 @@ if args.quantize:
 #         print("Int8 model loading does not support WeightOnlyQuant now.")
 #         pass
 # else:
-user_model, _ = get_user_model()
+        user_model, _ = get_user_model()
 
 
 if args.accuracy:
