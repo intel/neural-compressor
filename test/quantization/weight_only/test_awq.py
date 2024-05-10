@@ -8,9 +8,12 @@ import torch
 import transformers
 from optimum.exporters.onnx import main_export
 
+from neural_compressor_ort import data_reader
 from neural_compressor_ort import utility
 from neural_compressor_ort.quantization import algorithm_entry as algos
 from neural_compressor_ort.quantization import config
+from neural_compressor_ort.quantization import matmul_nbits_quantizer
+from neural_compressor_ort.quantization import matmul_4bits_quantizer
 
 
 def find_onnx_file(folder_path):
@@ -22,7 +25,7 @@ def find_onnx_file(folder_path):
     return None
 
 
-class DummyNLPDataloader(quantization.CalibrationDataReader):
+class DummyNLPDataloader(data_reader.CalibrationDataReader):
 
     def __init__(self, model_name):
         self.tokenizer = transformers.AutoTokenizer.from_pretrained(model_name)
@@ -139,7 +142,7 @@ class TestAWQQuantWithInternalAPI(TestAWQQuant):
 
     def test_quantize_awq_from_dict_default(self):
 
-        qmodel = self._apply_awq(quant_config=quantization.get_default_awq_config())
+        qmodel = self._apply_awq(quant_config=config.get_default_awq_config())
         self.assertIsNotNone(qmodel)
         self.assertTrue(self._check_model_is_quantized(qmodel))
 
@@ -220,9 +223,9 @@ class TestAWQQuantWithORTLikeAPI(TestAWQQuant):
 
     def test_awq_config_4bits(self):
 
-        algo_config = quantization.AWQWeightOnlyQuantConfig(calibration_data_reader=self.calibration_data_reader)
+        algo_config = config.AWQWeightOnlyQuantConfig(calibration_data_reader=self.calibration_data_reader)
 
-        quant = quantization.MatMul4BitsQuantizer(
+        quant = matmul_4bits_quantizer.MatMul4BitsQuantizer(
             copy.deepcopy(self.gptj),
             block_size=32,
             is_symmetric=False,
@@ -234,9 +237,9 @@ class TestAWQQuantWithORTLikeAPI(TestAWQQuant):
 
     def test_awq_config_4bits_with_exclude_node(self):
 
-        algo_config = quantization.AWQWeightOnlyQuantConfig(calibration_data_reader=self.calibration_data_reader)
+        algo_config = config.AWQWeightOnlyQuantConfig(calibration_data_reader=self.calibration_data_reader)
 
-        quant = quantization.MatMul4BitsQuantizer(
+        quant = matmul_4bits_quantizer.MatMul4BitsQuantizer(
             copy.deepcopy(self.gptj),
             block_size=32,
             is_symmetric=False,
@@ -255,7 +258,7 @@ class TestAWQQuantWithORTLikeAPI(TestAWQQuant):
         )
 
         for n_bits in [3, 4, 8]:
-            quant = quantization.MatMulNBitsQuantizer(
+            quant = matmul_nbits_quantizer.MatMulNBitsQuantizer(
                 copy.deepcopy(self.gptj),
                 n_bits=n_bits,
                 block_size=32,
@@ -268,10 +271,10 @@ class TestAWQQuantWithORTLikeAPI(TestAWQQuant):
 
     def test_awq_config_nbits_with_exclude_node(self):
 
-        algo_config = quantization.AWQWeightOnlyQuantConfig(calibration_data_reader=self.calibration_data_reader)
+        algo_config = config.AWQWeightOnlyQuantConfig(calibration_data_reader=self.calibration_data_reader)
 
         for n_bits in [3, 4, 8]:
-            quant = quantization.MatMulNBitsQuantizer(
+            quant = matmul_nbits_quantizer.MatMulNBitsQuantizer(
                 copy.deepcopy(self.gptj),
                 n_bits=n_bits,
                 block_size=32,

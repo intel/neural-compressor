@@ -25,6 +25,7 @@ import numpy as np
 import onnx
 import psutil
 
+from onnxruntime.quantization import onnx_model
 from neural_compressor_ort import constants
 
 # Dictionary to store a mapping between algorithm names and corresponding algo implementation(function)
@@ -36,15 +37,15 @@ algos_mapping: Dict[str, Callable] = {}
 #######################################################
 
 
-def _check_value(name, src, supported_type, supported_value=[]):
+def check_value(name, src, supported_type, supported_value=[]):
     """Check if the given object is the given supported type and in the given supported value.
 
     Example::
 
-        from neural_compressor_ort.base_config import _check_value
+        from neural_compressor_ort import utility
 
         def datatype(self, datatype):
-            if _check_value("datatype", datatype, list, ["fp32", "bf16", "uint8", "int8"]):
+            if utility.check_value("datatype", datatype, list, ["fp32", "bf16", "uint8", "int8"]):
                 self._datatype = datatype
     """
     if isinstance(src, list) and any([not isinstance(i, supported_type) for i in src]):
@@ -111,7 +112,7 @@ class Options:
     @random_seed.setter
     def random_seed(self, random_seed):
         """Set random seed."""
-        if _check_value("random_seed", random_seed, int):
+        if check_value("random_seed", random_seed, int):
             self._random_seed = random_seed
 
     @property
@@ -122,7 +123,7 @@ class Options:
     @workspace.setter
     def workspace(self, workspace):
         """Set workspace."""
-        if _check_value("workspace", workspace, str):
+        if check_value("workspace", workspace, str):
             self._workspace = workspace
 
     @property
@@ -133,7 +134,7 @@ class Options:
     @resume_from.setter
     def resume_from(self, resume_from):
         """Set resume_from."""
-        if resume_from is None or _check_value("resume_from", resume_from, str):
+        if resume_from is None or check_value("resume_from", resume_from, str):
             self._resume_from = resume_from
 
 
@@ -542,7 +543,7 @@ def get_model_info(
             if pair not in filter_result_set:
                 filter_result_set.add(pair)
                 filter_result.append(pair)
-    utility.logger.debug(f"Get model info: {filter_result}")
+    logger.debug(f"Get model info: {filter_result}")
     return filter_result
 
 

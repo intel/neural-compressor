@@ -7,6 +7,7 @@ import numpy as np
 import onnx
 from optimum.exporters.onnx import main_export
 
+from neural_compressor_ort import utility
 from neural_compressor_ort.quantization import algorithm_entry as algos
 from neural_compressor_ort.quantization import config
 

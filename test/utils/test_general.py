@@ -4,7 +4,8 @@ import unittest
 from typing import Any, List, Optional, Tuple, Union
 
 from neural_compressor_ort import constants
-from neural_compressor_ort.quantization import config, tuning
+from neural_compressor_ort.quantization import config
+from neural_compressor_ort.quantization import tuning
 
 PRIORITY_FAKE_ALGO = 100
 FAKE_CONFIG_NAME = "fake"
@@ -142,7 +143,7 @@ def get_all_config_set() -> Union[config.BaseConfig, List[config.BaseConfig]]:
     return config.get_all_config_set_from_config_registry()
 
 
-register_supported_configs()
+config.register_supported_configs()
 
 
 class TestEvaluator(unittest.TestCase):
@@ -242,8 +243,8 @@ class TestConfigLoader(unittest.TestCase):
 
     def test_config_loader(self) -> None:
         self.assertEqual(len(list(self.loader)), len(self.config_set))
-        for i, config in enumerate(self.loader):
-            self.assertEqual(config, self.config_set[i])
+        for i, cfg in enumerate(self.loader):
+            self.assertEqual(cfg, self.config_set[i])
 
 
 if __name__ == "__main__":

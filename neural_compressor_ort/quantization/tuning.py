@@ -24,6 +24,7 @@ import onnx
 import pydantic
 
 from neural_compressor_ort import utility
+from neural_compressor_ort import data_reader
 from neural_compressor_ort.quantization import config
 
 
@@ -405,22 +406,22 @@ def _need_apply(quant_config: config.BaseConfig, algo_name):
 def _quantize(
     model_input: Union[pathlib.Path, str],
     quant_config: config.BaseConfig,
-    calibration_data_reader: quantization.CalibrationDataReader = None,
+    calibration_data_reader: data_reader.CalibrationDataReader = None,
 ) -> onnx.ModelProto:
     """The main entry to quantize a model.
 
     Args:
         model_input (Union[pathlib.Path, str]): Path or str to the model to quantize.
         quant_config (config.BaseConfig): a quantization configuration.
-        calibration_data_reader (quantization.CalibrationDataReader, optional): dataloader for calibration.
+        calibration_data_reader (data_reader.CalibrationDataReader, optional): dataloader for calibration.
             Defaults to None.
 
     Returns:
         onnx.ModelProto: The quantized model.
     """
-    registered_configs = config_registry.get_cls_configs()
+    registered_configs = config.config_registry.get_cls_configs()
     if isinstance(quant_config, dict):
-        quant_config = ComposableConfig.from_dict(quant_config, config_registry=registered_configs)
+        quant_config = config.ComposableConfig.from_dict(quant_config, config_registry=registered_configs)
         utility.logger.info(f"Parsed a config dict to construct the quantization config: {quant_config}.")
     else:
         assert isinstance(
@@ -441,7 +442,7 @@ def autotune(
     tune_config: TuningConfig,
     eval_fn: Callable,
     eval_args: Optional[Tuple[Any]] = None,
-    calibration_data_reader: quantization.CalibrationDataReader = None,
+    calibration_data_reader: data_reader.CalibrationDataReader = None,
 ) -> Union[None, onnx.ModelProto]:
     """The main entry of auto-tune.
 
@@ -457,7 +458,7 @@ def autotune(
         eval_args (Optional[Tuple[Any]]): evaluate arguments.
             Positional arguments for `eval_fn`.
 
-        calibration_data_reader (quantization.CalibrationDataReader): dataloader for calibration.
+        calibration_data_reader (data_reader.CalibrationDataReader): dataloader for calibration.
     """
     best_quant_model = None
     eval_func_wrapper = EvaluationFuncWrapper(eval_fn, eval_args)

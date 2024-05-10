@@ -22,17 +22,20 @@ import inspect
 import itertools
 import json
 import pathlib
+import pydantic
 import re
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple, Type, Union, _GenericAlias
 
 import numpy as np
 import onnx
 from onnxruntime import quantization
 from typing_extensions import Self
 
-from neural_compressor_ort import constants, data_reader, utility
+from neural_compressor_ort import constants
+from neural_compressor_ort import data_reader
+from neural_compressor_ort import utility
 
 
 class ParamLevel(enum.Enum):
@@ -563,42 +566,6 @@ def register_supported_configs():
     all_registered_config_cls: List[BaseConfig] = config_registry.get_all_config_cls()
     for config_cls in all_registered_config_cls:
         config_cls.register_supported_configs()
-
-
-#######################################################
-####   Options
-#######################################################
-
-
-def _check_value(name, src, supported_type, supported_value=[]):
-    """Check if the given object is the given supported type and in the given supported value.
-
-    Example::
-
-        from neural_compressor_ort.base_config import _check_value
-
-        def datatype(self, datatype):
-            if _check_value("datatype", datatype, list, ["fp32", "bf16", "uint8", "int8"]):
-                self._datatype = datatype
-    """
-    if isinstance(src, list) and any([not isinstance(i, supported_type) for i in src]):
-        assert False, "Type of {} items should be {} but not {}".format(
-            name, str(supported_type), [type(i) for i in src]
-        )
-    elif not isinstance(src, list) and not isinstance(src, supported_type):
-        assert False, "Type of {} should be {} but not {}".format(name, str(supported_type), type(src))
-
-    if len(supported_value) > 0:
-        if isinstance(src, str) and src not in supported_value:
-            assert False, "{} is not in supported {}: {}. Skip setting it.".format(src, name, str(supported_value))
-        elif (
-            isinstance(src, list)
-            and all([isinstance(i, str) for i in src])
-            and any([i not in supported_value for i in src])
-        ):
-            assert False, "{} is not in supported {}: {}. Skip setting it.".format(src, name, str(supported_value))
-
-    return True
 
 
 class _OperatorConfig(NamedTuple):

@@ -27,9 +27,10 @@ import onnx
 import onnxruntime as ort
 from packaging import version
 
-from neural_compressor_ort import constants, utility
+from neural_compressor_ort import constants
+from neural_compressor_ort import utility
 
-if sys.version_info < (3, 11) and find_spec("onnxruntime_extensions"):  # pragma: no cover
+if sys.version_info < (3, 11) and util.find_spec("onnxruntime_extensions"):  # pragma: no cover
     import onnxruntime_extensions
 
 
@@ -203,7 +204,7 @@ def prepare_inputs(model, data_reader, providers):
     """
 
     so = ort.SessionOptions()
-    if sys.version_info < (3, 11) and find_spec("onnxruntime_extensions"):  # pragma: no cover
+    if sys.version_info < (3, 11) and util.find_spec("onnxruntime_extensions"):  # pragma: no cover
         so.register_custom_ops_library(onnxruntime_extensions.get_library_path())
     if model.is_large_model:
         onnx.save_model(
