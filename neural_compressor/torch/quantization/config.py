@@ -17,7 +17,9 @@
 # pylint:disable=import-error
 
 from collections import OrderedDict
-from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, NamedTuple, Optional
+from typing import OrderedDict as OrderedDictType
+from typing import Tuple, Union
 
 import torch
 
@@ -57,6 +59,7 @@ __all__ = [
     "get_default_gptq_config",
     "HQQConfig",
     "get_default_hqq_config",
+    "get_woq_tuning_config",
 ]
 
 
@@ -839,7 +842,7 @@ class StaticQuantConfig(BaseConfig):
 
     def to_config_mapping(
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
-    ) -> OrderedDict[Union[str, str], OrderedDict[str, BaseConfig]]:
+    ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
         if is_ipex_imported():
             return super().to_config_mapping(config_list, model_info)
         config_mapping = OrderedDict({self.name: self})
@@ -1140,3 +1143,23 @@ register_supported_configs_for_fwk(fwk_name=FRAMEWORK_NAME)
 def get_all_registered_configs() -> Dict[str, BaseConfig]:
     registered_configs = config_registry.get_all_configs()
     return registered_configs.get(FRAMEWORK_NAME, {})
+
+
+# =============================================================================
+# Tuning Config
+# =============================================================================
+
+
+######################## WOQ Tuning Config ###############################
+def get_woq_tuning_config() -> list:
+    """Generate the config set for WOQ tuning.
+
+    Returns:
+        the list of WOQ quant config.
+    """
+    RTN_G32ASYM = RTNConfig(use_sym=False, group_size=32)
+    GPTQ_G32ASYM = GPTQConfig(use_sym=False, group_size=32)
+    GPTQ_G32ASYM_DISABLE_LAST_LINEAR = GPTQConfig(use_sym=False).set_local("*.lm_head", GPTQConfig(dtype="fp32"))
+    GPTQ_G128ASYM = GPTQConfig(group_size=128, use_sym=False)
+    AWQ_G32ASYM = AWQConfig(use_sym=False, group_size=32)
+    return [RTN_G32ASYM, GPTQ_G32ASYM, GPTQ_G32ASYM_DISABLE_LAST_LINEAR, GPTQ_G128ASYM, AWQ_G32ASYM]
