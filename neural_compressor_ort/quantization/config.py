@@ -33,18 +33,84 @@ from onnxruntime import quantization
 from typing_extensions import Self
 
 from neural_compressor_ort import constants, data_reader, utility
-from neural_compressor_ort.quantization import tuning
 
-__all__ = [
-    "RTNConfig",
-    "get_default_rtn_config",
-    "GPTQConfig",
-    "get_default_gptq_config",
-    "AWQConfig",
-    "get_default_awq_config",
-    "SmoothQuantConfig",
-    "get_default_sq_config",
-]
+
+class ParamLevel(enum.Enum):
+    OP_LEVEL = enum.auto()
+    OP_TYPE_LEVEL = enum.auto()
+    MODEL_LEVEL = enum.auto()
+
+
+class TuningParam:
+    """Define the tunable parameter for the algorithm.
+
+    Example:
+        Class FakeAlgoConfig(config.BaseConfig):
+            '''Fake algo config.'''.
+
+            params_list = [
+                ...
+                # For simple tunable types, like a list of int, giving
+                # the param name is enough. `config.BaseConfig` class will
+                # create the `TuningParam` implicitly.
+                "simple_attr"
+
+                # For complex tunable types, like a list of lists,
+                # developers need to create the `TuningParam` explicitly.
+                TuningParam("complex_attr", tunable_type=List[List[str]])
+
+                # The default parameter level is `ParamLevel.OP_LEVEL`.
+                # If the parameter is at a different level, developers need
+                # to specify it explicitly.
+                TuningParam("model_attr", level=ParamLevel.MODEL_LEVEL)
+
+            ...
+
+    # TODO: more examples to explain the usage of `TuningParam`.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        default_val: Any = None,
+        tunable_type=None,
+        options=None,
+        level: ParamLevel = ParamLevel.OP_LEVEL,
+    ) -> None:
+        self.name = name
+        self.default_val = default_val
+        self.tunable_type = tunable_type
+        self.options = options
+        self.level = level
+
+    @staticmethod
+    def create_input_args_model(expect_args_type: Any) -> type:
+        """Dynamically create an InputArgsModel based on the provided type hint.
+
+        Parameters:
+        - expect_args_type (Any): The user-provided type hint for input_args.
+
+        Returns:
+        - type: The dynamically created InputArgsModel class.
+        """
+
+        class DynamicInputArgsModel(pydantic.BaseModel):
+            input_args: expect_args_type
+
+        return DynamicInputArgsModel
+
+    def is_tunable(self, value: Any) -> bool:
+        # Use `Pydantic` to validate the input_args.
+        # TODO: refine the implementation in further.
+        assert isinstance(self.tunable_type, _GenericAlias), f"Expected a type hint, got {self.tunable_type} instead."
+        DynamicInputArgsModel = TuningParam.create_input_args_model(self.tunable_type)
+        try:
+            new_args = DynamicInputArgsModel(input_args=value)
+            return True
+        except Exception as e:
+            utility.logger.debug(f"Failed to validate the input_args: {e}")
+            return False
+
 
 
 # Config registry to store all registered configs.
@@ -347,8 +413,8 @@ class BaseConfig(ABC):
             # 2. The param is a `tuning.TuningParam` instance.
             if isinstance(param, str):
                 default_param = self.get_the_default_value_of_param(config, param)
-                tuning_param = tuning.TuningParam(name=param, tunable_type=List[type(default_param)])
-            elif isinstance(param, tuning.TuningParam):
+                tuning_param = TuningParam(name=param, tunable_type=List[type(default_param)])
+            elif isinstance(param, TuningParam):
                 tuning_param = param
             else:
                 raise ValueError(f"Unsupported param type: {param}")

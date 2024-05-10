@@ -18,7 +18,7 @@ import onnx
 import packaging
 from onnxruntime.quantization import matmul_4bits_quantizer
 
-from neural_compressor_ort import data_reader, nc_version
+from neural_compressor_ort import data_reader, version, onnx_model, utility
 from neural_compressor_ort.quantization import algorithm_entry as algos
 from neural_compressor_ort.quantization import config
 
@@ -162,8 +162,4 @@ class MatMulNBitsQuantizer:
         utility.logger.info(f"complete quantization of model with {self.algorithm} algorithm.")
 
     def process(self):
-        assert packaging.version.parse(nc_version.__version__) >= packaging.version.parse(
-            "2.6"
-        ), "Require neural-compressor >= 2.6 to support weight only quantization!"
-
         self.int4_quant_algo()
