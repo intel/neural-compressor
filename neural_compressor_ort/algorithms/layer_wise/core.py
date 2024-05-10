@@ -27,7 +27,7 @@ import onnx
 import onnxruntime as ort
 import transformers
 
-from neural_compressor_ort import onnx_model, utility, data_reader
+from neural_compressor_ort import data_reader, onnx_model, utility
 
 
 def layer_wise_quant(

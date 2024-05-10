@@ -32,7 +32,7 @@ import onnx
 from onnxruntime import quantization
 from typing_extensions import Self
 
-from neural_compressor_ort import constants, utility, data_reader
+from neural_compressor_ort import constants, data_reader, utility
 from neural_compressor_ort.quantization import tuning
 
 __all__ = [

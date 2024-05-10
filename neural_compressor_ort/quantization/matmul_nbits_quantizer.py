@@ -18,8 +18,9 @@ import onnx
 import packaging
 from onnxruntime.quantization import matmul_4bits_quantizer
 
-from neural_compressor_ort import nc_version, data_reader
-from neural_compressor_ort.quantization import algorithm_entry as algos, config
+from neural_compressor_ort import data_reader, nc_version
+from neural_compressor_ort.quantization import algorithm_entry as algos
+from neural_compressor_ort.quantization import config
 
 
 class RTNWeightOnlyQuantConfig(matmul_4bits_quantizer.RTNWeightOnlyQuantConfig):

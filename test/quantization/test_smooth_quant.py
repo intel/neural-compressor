@@ -24,8 +24,11 @@ import numpy as np
 import onnx
 from optimum.exporters.onnx import main_export
 
-from neural_compressor_ort.quantization import config, quantize, algorithm_entry as algos, QuantType
 from neural_compressor_ort import data_reader
+from neural_compressor_ort.quantization import QuantType
+from neural_compressor_ort.quantization import algorithm_entry as algos
+from neural_compressor_ort.quantization import config, quantize
+
 
 class DataReader(data_reader.CalibrationDataReader):
 

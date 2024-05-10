@@ -22,8 +22,8 @@ import numpy as np
 import onnx
 import onnxruntime as ort
 
-from neural_compressor_ort.algorithms.smoother import calibrator
 from neural_compressor_ort import data_reader, onnx_model, utility
+from neural_compressor_ort.algorithms.smoother import calibrator
 
 _dtype_map = {
     np.dtype("float32"): 1,

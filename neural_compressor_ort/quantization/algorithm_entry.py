@@ -19,7 +19,7 @@ from typing import Union
 import onnx
 from onnxruntime import quantization
 
-from neural_compressor_ort import constants, utility, data_reader
+from neural_compressor_ort import constants, data_reader, utility
 from neural_compressor_ort.algorithms.smoother import core
 from neural_compressor_ort.quantization import config
 
