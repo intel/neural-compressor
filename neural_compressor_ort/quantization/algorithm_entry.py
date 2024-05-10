@@ -19,8 +19,13 @@ from typing import Union
 import onnx
 from onnxruntime import quantization
 
-from neural_compressor_ort import constants, data_reader, utility
+from neural_compressor_ort import constants
+from neural_compressor_ort import data_reader
+from neural_compressor_ort import utility
 from neural_compressor_ort.algorithms.smoother import core
+from neural_compressor_ort.algorithms.weight_only import rtn
+from neural_compressor_ort.algorithms.weight_only import awq
+from neural_compressor_ort.algorithms.weight_only import gptq
 from neural_compressor_ort.quantization import config
 
 
@@ -84,13 +89,11 @@ def rtn_quantize_entry(
     model: Union[pathlib.Path, str], quant_config: config.RTNConfig, *args, **kwargs
 ) -> onnx.ModelProto:
     """The main entry to apply rtn quantization."""
-    from neural_compressor_ort.algorithms import apply_rtn_on_model
-
     # map config to each op
     model_info = quant_config.get_model_info(model=model)
     configs_mapping = quant_config.to_config_mapping(model_info=model_info)
     utility.logger.debug(configs_mapping)
-    model = apply_rtn_on_model(model, configs_mapping)
+    model = rtn.apply_rtn_on_model(model, configs_mapping)
     return model
 
 
@@ -109,8 +112,6 @@ def gptq_quantize_entry(
         calibration_data_reader, data_reader.CalibrationDataReader
     ), "Please follow neural_compressor_ort/data_reader.py to implement calibration_data_reader"
 
-    from neural_compressor_ort.algorithms import apply_gptq_on_model
-
     # map config to each op
     model_info = quant_config.get_model_info(model=model)
     configs_mapping = quant_config.to_config_mapping(model_info=model_info)
@@ -118,7 +119,7 @@ def gptq_quantize_entry(
 
     # regenerate to ensure data exists
     calibration_data_reader.rewind()
-    model = apply_gptq_on_model(model, configs_mapping, calibration_data_reader)
+    model = gptq.apply_gptq_on_model(model, configs_mapping, calibration_data_reader)
     return model
 
 
@@ -137,8 +138,6 @@ def awq_quantize_entry(
         calibration_data_reader, data_reader.CalibrationDataReader
     ), "Please follow neural_compressor_ort/data_reader.py to implement calibration_data_reader"
 
-    from neural_compressor_ort.algorithms import apply_awq_on_model
-
     # map config to each op
     model_info = quant_config.get_model_info(model=model)
     configs_mapping = quant_config.to_config_mapping(model_info=model_info)
@@ -146,5 +145,5 @@ def awq_quantize_entry(
 
     # regenerate to ensure data exists
     calibration_data_reader.rewind()
-    model = apply_awq_on_model(model, configs_mapping, calibration_data_reader)
+    model = awq.apply_awq_on_model(model, configs_mapping, calibration_data_reader)
     return model

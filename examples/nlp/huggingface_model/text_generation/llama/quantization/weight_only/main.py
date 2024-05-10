@@ -32,7 +32,9 @@ from torch.nn import functional
 from torch.utils import data
 from intel_extension_for_transformers.transformers.llm.evaluation import lm_eval
 from optimum import onnxruntime
-from neural_compressor_ort.quantization import matmul_nbits_quantizer, config, tuning
+from neural_compressor_ort.quantization import matmul_nbits_quantizer
+from neural_compressor_ort.quantization import config
+from neural_compressor_ort.quantization import tuning
 from neural_compressor_ort import data_reader
 
 utility.logger = logging.getLogger(__name__)

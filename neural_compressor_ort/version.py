@@ -15,4 +15,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ONNX Neural Compressor: An open-source Python library supporting popular model compression techniques for ONNXRuntime Framework."""
-__version__ = "0.0"
+__version__ = "0.9.0"

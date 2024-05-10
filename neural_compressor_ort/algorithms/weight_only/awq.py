@@ -23,14 +23,14 @@ from typing import List, Union
 import numpy as np
 import onnx
 import onnxruntime as ort
-from packaging.version import Version
+from packaging import version
 
-from neural_compressor_ort import constants, data_reader, utility
+from neural_compressor_ort import constants
+from neural_compressor_ort import data_reader
+from neural_compressor_ort import utility
 from neural_compressor_ort.algorithms.weight_only import rtn
 from neural_compressor_ort.algorithms.weight_only import utility as woq_utility
 from neural_compressor_ort.quantization import config
-
-__all__ = ["apply_awq_on_model", "awq_quantize"]
 
 
 def _get_weight_scale(weight, group_size):
@@ -97,8 +97,8 @@ def _apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits,
                 weight = weight.T * scales
                 weight = woq_utility.pad_tensor(weight, group_size, (org_w_shape[0] + group_size - 1) // group_size).T
 
-                if (Version(ort.__version__) > constants.ONNXRT1161_VERSION and num_bits == 4) or (
-                    Version(ort.__version__) >= constants.ONNXRT116_VERSION and num_bits == 4 and group_size == 32
+                if (version.Version(ort.__version__) > constants.ONNXRT1161_VERSION and num_bits == 4) or (
+                    version.Version(ort.__version__) >= constants.ONNXRT116_VERSION and num_bits == 4 and group_size == 32
                 ):  # pragma: no cover
                     # MatMulFpQ4 support 4 bits and 32 group_size with ort 1.16.0 and 1.16.1 versions
                     # MatMulNBits supports 4 bits and 2^n group_size with ort > 1.16.1
@@ -250,8 +250,8 @@ def _apply_awq_clip(model, weight_config, absorb_pairs, output_dicts, num_bits, 
             for i_s in range(10):
                 ratio = 1 - i_s / 100
                 weight = copy.deepcopy(org_weight)
-                if (Version(ort.__version__) > constants.ONNXRT1161_VERSION and num_bits == 4) or (
-                    Version(ort.__version__) >= constants.ONNXRT116_VERSION and num_bits == 4 and group_size == 32
+                if (version.Version(ort.__version__) > constants.ONNXRT1161_VERSION and num_bits == 4) or (
+                    version.Version(ort.__version__) >= constants.ONNXRT116_VERSION and num_bits == 4 and group_size == 32
                 ):  # pragma: no cover
                     # MatMulFpQ4 support 4 bits and 32 group_size with ort 1.16.0 and 1.16.1 versions
                     # MatMulNBits supports 4 bits and 2^n group_size with ort > 1.16.1

@@ -89,7 +89,9 @@ class Options:
 
     Example::
 
-        from neural_compressor_ort import set_random_seed, set_workspace, set_resume_from
+        from neural_compressor_ort import set_random_seed
+        from neural_compressor_ort import set_workspace
+        from neural_compressor_ort import set_resume_from
         set_random_seed(2022)
         set_workspace("workspace_path")
         set_resume_from("workspace_path")
