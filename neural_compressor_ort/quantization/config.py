@@ -22,7 +22,6 @@ import inspect
 import itertools
 import json
 import pathlib
-import pydantic
 import re
 from abc import ABC, abstractmethod
 from collections import OrderedDict
@@ -30,12 +29,11 @@ from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple, Type,
 
 import numpy as np
 import onnx
+import pydantic
 from onnxruntime import quantization
 from typing_extensions import Self
 
-from neural_compressor_ort import constants
-from neural_compressor_ort import data_reader
-from neural_compressor_ort import utility
+from neural_compressor_ort import constants, data_reader, utility
 
 
 class ParamLevel(enum.Enum):

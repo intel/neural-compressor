@@ -8,12 +8,9 @@ import torch
 import transformers
 from optimum.exporters.onnx import main_export
 
-from neural_compressor_ort import data_reader
-from neural_compressor_ort import utility
+from neural_compressor_ort import data_reader, utility
 from neural_compressor_ort.quantization import algorithm_entry as algos
-from neural_compressor_ort.quantization import config
-from neural_compressor_ort.quantization import matmul_4bits_quantizer
-from neural_compressor_ort.quantization import matmul_nbits_quantizer
+from neural_compressor_ort.quantization import config, matmul_4bits_quantizer, matmul_nbits_quantizer
 
 
 def find_onnx_file(folder_path):

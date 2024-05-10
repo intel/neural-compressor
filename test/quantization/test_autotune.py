@@ -29,8 +29,7 @@ import onnxruntime as ort
 from optimum.exporters.onnx import main_export
 
 from neural_compressor_ort import data_reader
-from neural_compressor_ort.quantization import config
-from neural_compressor_ort.quantization import tuning
+from neural_compressor_ort.quantization import config, tuning
 
 
 def fake_eval(model, eval_result_lst):

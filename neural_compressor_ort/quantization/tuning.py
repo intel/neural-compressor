@@ -23,8 +23,7 @@ from typing import Any, Callable, Dict, Generator, Iterator, List, Optional, Siz
 import onnx
 import pydantic
 
-from neural_compressor_ort import utility
-from neural_compressor_ort import data_reader
+from neural_compressor_ort import data_reader, utility
 from neural_compressor_ort.quantization import config
 
 

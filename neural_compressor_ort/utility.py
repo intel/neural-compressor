@@ -24,8 +24,8 @@ import cpuinfo
 import numpy as np
 import onnx
 import psutil
-
 from onnxruntime.quantization import onnx_model
+
 from neural_compressor_ort import constants
 
 # Dictionary to store a mapping between algorithm names and corresponding algo implementation(function)

@@ -25,10 +25,7 @@ import onnx
 import onnxruntime as ort
 from packaging.version import Version
 
-from neural_compressor_ort import constants
-from neural_compressor_ort import data_reader
-from neural_compressor_ort import utility
-from neural_compressor_ort import onnx_model
+from neural_compressor_ort import constants, data_reader, onnx_model, utility
 from neural_compressor_ort.algorithms.weight_only import utility as woq_utility
 from neural_compressor_ort.quantization import config
 
