@@ -3,17 +3,8 @@
 import unittest
 from typing import Any, List, Optional, Tuple, Union
 
-from neural_compressor_ort.utils import logger
-from neural_compressor_ort.utils.base_config import (
-    BaseConfig,
-    config_registry,
-    get_all_config_set_from_config_registry,
-    register_config,
-    register_supported_configs,
-)
-from neural_compressor_ort.utils.base_tuning import ConfigLoader, ConfigSet, Evaluator, SequentialSampler
-from neural_compressor_ort.utils.constants import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE
-from neural_compressor_ort.utils.tuning_param import TuningParam
+from neural_compressor_ort import constants
+from neural_compressor_ort.quantization import config, tuning
 
 PRIORITY_FAKE_ALGO = 100
 FAKE_CONFIG_NAME = "fake"
@@ -21,11 +12,12 @@ PRIORITY_FAKE_ALGO_1 = 90
 FAKE_CONFIG_NAME_1 = "fake_one"
 DEFAULT_WEIGHT_BITS = [4, 6]
 
-
-FAKE_MODEL_INFO = [("OP1_NAME", "OP_TYPE1"), ("OP2_NAME", "OP_TYPE1"), ("OP3_NAME", "OP_TYPE2")]
+FAKE_MODEL_INFO = [("OP1_NAME", "OP_TYPE1"), ("OP2_NAME", "OP_TYPE1"),
+                   ("OP3_NAME", "OP_TYPE2")]
 
 
 class FakeModel:
+
     def __init__(self) -> None:
         self.name = "fake_model"
 
@@ -36,15 +28,15 @@ class FakeModel:
         return "FakeModel"
 
 
-@register_config(algo_name=FAKE_CONFIG_NAME, priority=PRIORITY_FAKE_ALGO)
-class FakeAlgoConfig(BaseConfig):
+@config.register_config(algo_name=FAKE_CONFIG_NAME, priority=PRIORITY_FAKE_ALGO)
+class FakeAlgoConfig(config.BaseConfig):
     """Config class for fake algo."""
 
     supported_configs: List = []
     params_list = [
         "weight_dtype",
         "weight_bits",
-        TuningParam("target_op_type_list", tunable_type=List[List[str]]),
+        tuning.TuningParam("target_op_type_list", tunable_type=List[List[str]]),
     ]
     name = FAKE_CONFIG_NAME
 
@@ -53,7 +45,7 @@ class FakeAlgoConfig(BaseConfig):
         weight_dtype: str = "int",
         weight_bits: int = 4,
         target_op_type_list: List[str] = ["Conv", "Gemm"],
-        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+        white_list: Optional[List[constants.OP_NAME_OR_MODULE_TYPE]] = constants.DEFAULT_WHITE_LIST,
     ):
         """Init fake config.
 
@@ -83,7 +75,8 @@ class FakeAlgoConfig(BaseConfig):
         return FAKE_MODEL_INFO
 
     @classmethod
-    def get_config_set_for_tuning(cls) -> Union[None, "FakeAlgoConfig", List["FakeAlgoConfig"]]:
+    def get_config_set_for_tuning(
+            cls) -> Union[None, "FakeAlgoConfig", List["FakeAlgoConfig"]]:
         return FakeAlgoConfig(weight_bits=DEFAULT_WEIGHT_BITS)
 
 
@@ -96,15 +89,15 @@ def get_default_fake_config() -> FakeAlgoConfig:
     return FakeAlgoConfig()
 
 
-@register_config(algo_name=FAKE_CONFIG_NAME_1, priority=PRIORITY_FAKE_ALGO_1)
-class FakeAlgoOneConfig(BaseConfig):
+@config.register_config(algo_name=FAKE_CONFIG_NAME_1, priority=PRIORITY_FAKE_ALGO_1)
+class FakeAlgoOneConfig(config.BaseConfig):
     """Config class for fake algo."""
 
     supported_configs: List = []
     params_list = [
         "weight_dtype",
         "weight_bits",
-        TuningParam("target_op_type_list", tunable_type=List[List[str]]),
+        tuning.TuningParam("target_op_type_list", tunable_type=List[List[str]]),
     ]
     name = FAKE_CONFIG_NAME_1
 
@@ -113,7 +106,7 @@ class FakeAlgoOneConfig(BaseConfig):
         weight_dtype: str = "int",
         weight_bits: int = 4,
         target_op_type_list: List[str] = ["Conv", "Gemm"],
-        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+        white_list: Optional[List[constants.OP_NAME_OR_MODULE_TYPE]] = constants.DEFAULT_WHITE_LIST,
     ):
         """Init fake config.
 
@@ -143,23 +136,26 @@ class FakeAlgoOneConfig(BaseConfig):
         return FAKE_MODEL_INFO
 
     @classmethod
-    def get_config_set_for_tuning(cls) -> Union[None, "FakeAlgoOneConfig", List["FakeAlgoOneConfig"]]:
+    def get_config_set_for_tuning(
+            cls) -> Union[None, "FakeAlgoOneConfig", List["FakeAlgoOneConfig"]]:
         return FakeAlgoOneConfig(weight_bits=DEFAULT_WEIGHT_BITS)
 
 
-def get_all_config_set() -> Union[BaseConfig, List[BaseConfig]]:
-    return get_all_config_set_from_config_registry()
+def get_all_config_set() -> Union[config.BaseConfig, List[config.BaseConfig]]:
+    return config.get_all_config_set_from_config_registry()
 
 
 register_supported_configs()
 
 
 class TestEvaluator(unittest.TestCase):
+
     def test_single_eval_fn(self):
+
         def fake_eval_fn(model):
             return 1.0
 
-        evaluator = Evaluator()
+        evaluator = tuning.Evaluator()
         evaluator.set_eval_fn_registry(fake_eval_fn)
         evaluator.self_check()
         self.assertEqual(evaluator.get_number_of_eval_functions(), 1)
@@ -172,13 +168,14 @@ class TestEvaluator(unittest.TestCase):
 
         eval_fns = {"eval_fn": eval_acc_fn, "weight": 0.5, "name": "accuracy"}
 
-        evaluator = Evaluator()
+        evaluator = tuning.Evaluator()
         evaluator.set_eval_fn_registry(eval_fns)
         evaluator.self_check()
         self.assertEqual(evaluator.get_number_of_eval_functions(), 1)
 
 
 class TestBaseConfig(unittest.TestCase):
+
     @classmethod
     def setUpClass(self):
         pass
@@ -189,22 +186,26 @@ class TestBaseConfig(unittest.TestCase):
 
     def setUp(self):
         # print the test name
-        logger.info(f"Running TestBaseConfig test: {self.id()}")
+        utility.logger.info(f"Running TestBaseConfig test: {self.id()}")
 
     def test_api(self):
         fake_default_config = get_default_fake_config()
         self.assertEqual(fake_default_config.weight_dtype, "int")
         config_set = get_all_config_set()
-        self.assertEqual(len(config_set), len(config_registry.get_all_config_cls()))
-        self.assertEqual([i for i in config_set if i.name == FAKE_CONFIG_NAME][0].weight_bits, DEFAULT_WEIGHT_BITS)
+        self.assertEqual(len(config_set),
+                         len(config.config_registry.get_all_config_cls()))
+        self.assertEqual([i for i in config_set if i.name == FAKE_CONFIG_NAME
+                         ][0].weight_bits, DEFAULT_WEIGHT_BITS)
 
     def test_config_expand_complex_tunable_type(self):
         target_op_type_list_options = [["Conv", "Gemm"], ["Conv", "Matmul"]]
-        configs = FakeAlgoConfig(target_op_type_list=target_op_type_list_options)
+        configs = FakeAlgoConfig(
+            target_op_type_list=target_op_type_list_options)
         configs_list = configs.expand()
         self.assertEqual(len(configs_list), len(target_op_type_list_options))
         for i in range(len(configs_list)):
-            self.assertEqual(configs_list[i].target_op_type_list, target_op_type_list_options[i])
+            self.assertEqual(configs_list[i].target_op_type_list,
+                             target_op_type_list_options[i])
 
     def test_mixed_two_algos(self):
         model = FakeModel()
@@ -220,28 +221,36 @@ class TestBaseConfig(unittest.TestCase):
 
 
 class TestConfigSet(unittest.TestCase):
+
     def setUp(self):
         self.config_set = [get_default_fake_config(), get_default_fake_config()]
-        self.config_set_obj = ConfigSet.from_fwk_configs(self.config_set)
+        self.config_set_obj = tuning.ConfigSet.from_fwk_configs(self.config_set)
 
     def test_config_set(self) -> None:
         self.assertEqual(len(self.config_set_obj), len(self.config_set))
-        self.assertEqual(self.config_set_obj[0].weight_bits, self.config_set[0].weight_bits)
+        self.assertEqual(self.config_set_obj[0].weight_bits,
+                         self.config_set[0].weight_bits)
 
 
 class TestConfigSampler(unittest.TestCase):
+
     def setUp(self):
         self.config_set = [get_default_fake_config(), get_default_fake_config()]
-        self.seq_sampler = SequentialSampler(self.config_set)
+        self.seq_sampler = tuning.SequentialSampler(self.config_set)
 
     def test_config_sampler(self) -> None:
-        self.assertEqual(list(self.seq_sampler), list(range(len(self.config_set))))
+        self.assertEqual(list(self.seq_sampler),
+                         list(range(len(self.config_set))))
 
 
 class TestConfigLoader(unittest.TestCase):
+
     def setUp(self):
-        self.config_set = [FakeAlgoConfig(weight_bits=4), FakeAlgoConfig(weight_bits=8)]
-        self.loader = ConfigLoader(self.config_set)
+        self.config_set = [
+            FakeAlgoConfig(weight_bits=4),
+            FakeAlgoConfig(weight_bits=8)
+        ]
+        self.loader = tuning.ConfigLoader(self.config_set)
 
     def test_config_loader(self) -> None:
         self.assertEqual(len(list(self.loader)), len(self.config_set))

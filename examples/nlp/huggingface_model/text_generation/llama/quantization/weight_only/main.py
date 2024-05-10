@@ -17,33 +17,34 @@
 # pylint:disable=redefined-outer-name,logging-format-interpolation
 import os
 import onnx
+import time
 import json
 import random
 import torch
 import logging
 import argparse
+import random
 import numpy as np
-from datasets import load_dataset
+import datasets
 import onnxruntime as ort
-from torch.nn.functional import pad
-from torch.utils.data import DataLoader
-from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate
-from optimum.onnxruntime import ORTModelForCausalLM
-from transformers import LlamaConfig, LlamaTokenizer
-from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
+import transformers
+from torch.nn import functional
+from torch.utils import data
+from intel_extension_for_transformers.transformers.llm.evaluation import lm_eval
+from optimum import onnxruntime
+from neural_compressor_ort.quantization import matmul_nbits_quantizer, config, tuning, calibrate
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(format = "%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
-                    datefmt = "%m/%d/%Y %H:%M:%S",
-                    level = logging.WARN)
+utility.logger = logging.getLogger(__name__)
+logging.basicConfig(
+    format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
+    datefmt="%m/%d/%Y %H:%M:%S",
+    level=logging.WARN)
 
 parser = argparse.ArgumentParser(
-formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument(
-    "--model_path",
-    type=str,
-    help="Folder path of pre-trained onnx model"
-)
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument("--model_path",
+                    type=str,
+                    help="Folder path of pre-trained onnx model")
 parser.add_argument(
     "--benchmark",
     action="store_true", \
@@ -55,36 +56,28 @@ parser.add_argument(
     default=False,
     help="whether quantize the model"
 )
-parser.add_argument(
-    "--output_model",
-    type=str,
-    default=None,
-    help="output model path"
-)
+parser.add_argument("--output_model",
+                    type=str,
+                    default=None,
+                    help="output model path")
 parser.add_argument(
     "--batch_size",
     default=1,
     type=int,
 )
-parser.add_argument(
-    "--tokenizer",
-    type=str,
-    help="pretrained model name or path of tokenizer files",
-    default="meta-llama/Llama-2-7b-hf"
-)
-parser.add_argument(
-    "--workspace",
-    type=str,
-    help="workspace to save intermediate files",
-    default="nc_workspace"
-)
-parser.add_argument(
-    "--algorithm",
-    type=str,
-    default="WOQ_TUNE",
-    choices=["WOQ_TUNE", "RTN", "AWQ", "GPTQ"],
-    help="weight only algorithm"
-)
+parser.add_argument("--tokenizer",
+                    type=str,
+                    help="pretrained model name or path of tokenizer files",
+                    default="meta-llama/Llama-2-7b-hf")
+parser.add_argument("--workspace",
+                    type=str,
+                    help="workspace to save intermediate files",
+                    default="nc_workspace")
+parser.add_argument("--algorithm",
+                    type=str,
+                    default="WOQ_TUNE",
+                    choices=["WOQ_TUNE", "RTN", "AWQ", "GPTQ"],
+                    help="weight only algorithm")
 parser.add_argument(
     "--pad_max",
     default=196,
@@ -103,31 +96,25 @@ parser.add_argument(
     type=str,
     help="tasks list for accuracy validation"
 )
-parser.add_argument(
-    "--dataset",
-    nargs="?",
-    default="NeelNanda/pile-10k",
-    const="NeelNanda/pile-10k"
-)
-parser.add_argument(
-    '--mode',
-    type=str,
-    help="benchmark mode of performance or accuracy"
-)
-parser.add_argument(
-    "--intra_op_num_threads",
-    type=int,
-    default=24
-)
+parser.add_argument("--dataset",
+                    nargs="?",
+                    default="NeelNanda/pile-10k",
+                    const="NeelNanda/pile-10k")
+parser.add_argument('--mode',
+                    type=str,
+                    help="benchmark mode of performance or accuracy")
+parser.add_argument("--intra_op_num_threads", type=int, default=24)
 args = parser.parse_args()
 
 # load model
-tokenizer = LlamaTokenizer.from_pretrained(args.tokenizer)
-config = LlamaConfig.from_pretrained(args.model_path)
+tokenizer = transformers.LlamaTokenizer.from_pretrained(args.tokenizer)
+config = transformers.LlamaConfig.from_pretrained(args.model_path)
+
 
 def tokenize_function(examples):
     example = tokenizer(examples["text"])
     return example
+
 
 def replace_architectures(json_path):
     # replace 'LLaMATokenizer' to lowercase 'LlamaTokenizer'
@@ -140,6 +127,7 @@ def replace_architectures(json_path):
     with open(json_path, 'w') as file:
         json.dump(data, file, indent=4)
 
+
 def eval_func(model):
     model_dir = model
     if isinstance(model, str) and model.endswith(".onnx"):
@@ -147,9 +135,9 @@ def eval_func(model):
 
     replace_architectures(os.path.join(model_dir, "config.json"))
 
-    results = evaluate(
+    results = lm_eval.evaluate(
         model="hf-causal",
-        model_args="pretrained=" + model_dir + ",tokenizer="+ args.tokenizer,
+        model_args="pretrained=" + model_dir + ",tokenizer=" + args.tokenizer,
         batch_size=args.batch_size,
         tasks=args.tasks,
         model_format="onnx",
@@ -158,10 +146,12 @@ def eval_func(model):
     eval_acc = 0
     for task_name in args.tasks:
         if task_name == "wikitext":
-            print("Accuracy for %s is: %s" % (task_name, results["results"][task_name]["word_perplexity"]))
+            print("Accuracy for %s is: %s" %
+                  (task_name, results["results"][task_name]["word_perplexity"]))
             eval_acc += results["results"][task_name]["word_perplexity"]
         else:
-            print("Accuracy for %s is: %s" % (task_name, results["results"][task_name]["acc"]))
+            print("Accuracy for %s is: %s" %
+                  (task_name, results["results"][task_name]["acc"]))
             eval_acc += results["results"][task_name]["acc"]
 
     if len(args.tasks) != 0:
@@ -169,22 +159,28 @@ def eval_func(model):
 
     return eval_acc
 
+
 def benchmark(model):
-    import time
     sess_options = ort.SessionOptions()
     sess_options.intra_op_num_threads = args.intra_op_num_threads
 
-    session = ORTModelForCausalLM.load_model(  # pylint: disable=E1123
-                os.path.join(model, "model.onnx"),
-                session_options=sess_options)
+    session = onnxruntime.ORTModelForCausalLM.load_model(  # pylint: disable=E1123
+        os.path.join(model, "model.onnx"),
+        session_options=sess_options)
     inputs_names = session.get_inputs()
-    key_value_input_names = [key.name for key in inputs_names if (".key" in key.name) or (".value" in key.name)]
+    key_value_input_names = [
+        key.name
+        for key in inputs_names
+        if (".key" in key.name) or (".value" in key.name)
+    ]
     use_cache = len(key_value_input_names) > 0
 
-    model = ORTModelForCausalLM(session,  # pylint: disable=E1121
-                                config,
-                                use_cache=True if use_cache else False,
-                                use_io_binding=True if use_cache else False,)
+    model = onnxruntime.ORTModelForCausalLM(
+        session,  # pylint: disable=E1121
+        config,
+        use_cache=True if use_cache else False,
+        use_io_binding=True if use_cache else False,
+    )
 
     max_new_tokens = 32
     prompt = "Once upon a time, there existed a little girl who liked to have adventures. She wanted to go to places and meet new people, and have fun"
@@ -215,15 +211,23 @@ def benchmark(model):
     throughput = (num_iter - num_warmup) / total_time
     print("Throughput: {} samples/s".format(throughput))
 
-class AWQDataloader(CalibrationDataReader):
-    def __init__(self, model_path, pad_max=196, batch_size=1, sub_folder='train', calibration_sampling_size=8):
+
+class AWQDataloader(calibrate.CalibrationDataReader):
+
+    def __init__(self,
+                 model_path,
+                 pad_max=196,
+                 batch_size=1,
+                 sub_folder='train',
+                 calibration_sampling_size=8):
         self.encoded_list = []
         self.pad_max = pad_max
-        self.batch_size=batch_size
-        dataset = load_dataset(args.dataset, split=sub_folder)
+        self.batch_size = batch_size
+        dataset = datasets.load_dataset(args.dataset, split=sub_folder)
         dataset = dataset.map(tokenize_function, batched=True)
-        dataset.set_format(type="torch", columns=["input_ids", "attention_mask"])
-        dataloader = DataLoader(
+        dataset.set_format(type="torch",
+                           columns=["input_ids", "attention_mask"])
+        dataloader = data.DataLoader(
             dataset,
             batch_size=self.batch_size,
             shuffle=False,
@@ -231,24 +235,30 @@ class AWQDataloader(CalibrationDataReader):
         )
         model = onnx.load(model_path, load_external_data=False)
         inputs_names = [input.name for input in model.graph.input]
-        key_value_input_names = [key for key in inputs_names if (".key" in key) or (".value" in key)]
+        key_value_input_names = [
+            key for key in inputs_names if (".key" in key) or (".value" in key)
+        ]
         use_cache = len(key_value_input_names) > 0
-        self.batch_size=batch_size
+        self.batch_size = batch_size
 
         for idx, (input_ids, attention_mask) in enumerate(dataloader):
             if idx + 1 > calibration_sampling_size:
                 break
             ort_input = {}
-            ort_input["input_ids"] = input_ids[:, :-1].detach().cpu().numpy().astype("int64")
-            ort_input["attention_mask"] = attention_mask[:, :-1].detach().cpu().numpy().astype("int64")
+            ort_input["input_ids"] = input_ids[:, :-1].detach().cpu().numpy(
+            ).astype("int64")
+            ort_input["attention_mask"] = attention_mask[:, :-1].detach().cpu(
+            ).numpy().astype("int64")
             position_ids = attention_mask.long().cumsum(-1) - 1
             position_ids.masked_fill_(attention_mask == 0, 1)
-            ort_input["position_ids"] = position_ids[:,:-1].detach().cpu().numpy().astype("int64")
+            ort_input["position_ids"] = position_ids[:, :-1].detach().cpu(
+            ).numpy().astype("int64")
             if use_cache:
                 # Create dummy past_key_values for decoder
                 num_attention_heads = config.num_key_value_heads
                 embed_size_per_head = config.hidden_size // config.num_attention_heads
-                shape = (self.batch_size, num_attention_heads, 0, embed_size_per_head)
+                shape = (self.batch_size, num_attention_heads, 0,
+                         embed_size_per_head)
                 key_or_value = np.zeros(shape, dtype=np.float32)
                 for key_value_input_name in key_value_input_names:
                     ort_input[key_value_input_name] = key_or_value
@@ -265,11 +275,12 @@ class AWQDataloader(CalibrationDataReader):
             input_ids = text["input_ids"]
             pad_len = self.pad_max - input_ids.shape[0]
             attention_mask = torch.ones(len(input_ids))
-            input_ids = pad(input_ids, (0, pad_len), value=1)
-            attention_mask = pad(attention_mask, (0, pad_len), value=0)
+            input_ids = functional.pad(input_ids, (0, pad_len), value=1)
+            attention_mask = functional.pad(attention_mask, (0, pad_len), value=0)
             input_ids_padded.append(input_ids)
             attention_mask_padded.append(attention_mask)
-        return torch.vstack(input_ids_padded), torch.vstack(attention_mask_padded)
+        return torch.vstack(input_ids_padded), torch.vstack(
+            attention_mask_padded)
 
     def get_next(self):
         return next(self.iter_next, None)
@@ -277,20 +288,29 @@ class AWQDataloader(CalibrationDataReader):
     def rewind(self):
         self.iter_next = iter(self.encoded_list)
 
-class GPTQDataloader(CalibrationDataReader):
-    def __init__(self, model_path, batch_size=1, seqlen=2048, sub_folder="train", calibration_sampling_size=8):
-        import random
+
+class GPTQDataloader(calibrate.CalibrationDataReader):
+
+    def __init__(self,
+                 model_path,
+                 batch_size=1,
+                 seqlen=2048,
+                 sub_folder="train",
+                 calibration_sampling_size=8):
         random.seed(0)
         self.encoded_list = []
 
-        self.batch_size=batch_size
-        traindata = load_dataset(args.dataset, split=sub_folder)
+        self.batch_size = batch_size
+        traindata = datasets.load_dataset(args.dataset, split=sub_folder)
         traindata = traindata.map(tokenize_function, batched=True)
-        traindata.set_format(type="torch", columns=["input_ids", "attention_mask"])
+        traindata.set_format(type="torch",
+                             columns=["input_ids", "attention_mask"])
 
         session = ort.InferenceSession(model_path)
         inputs_names = [input.name for input in session.get_inputs()]
-        key_value_input_names = [key for key in inputs_names if (".key" in key) or (".value" in key)]
+        key_value_input_names = [
+            key for key in inputs_names if (".key" in key) or (".value" in key)
+        ]
         use_cache = len(key_value_input_names) > 0
 
         for i in range(calibration_sampling_size):
@@ -306,15 +326,19 @@ class GPTQDataloader(CalibrationDataReader):
 
             ort_input = {}
             ort_input["input_ids"] = inp.detach().cpu().numpy().astype("int64")
-            ort_input["attention_mask"] = mask.detach().cpu().numpy().astype("int64")
+            ort_input["attention_mask"] = mask.detach().cpu().numpy().astype(
+                "int64")
             input_shape = ort_input["input_ids"].shape
-            position_ids = torch.arange(0, input_shape[-1], dtype=torch.long).unsqueeze(0).view(-1, input_shape[-1])
+            position_ids = torch.arange(0, input_shape[-1],
+                                        dtype=torch.long).unsqueeze(0).view(
+                                            -1, input_shape[-1])
             ort_input["position_ids"] = position_ids.numpy()
             if use_cache:
                 # create dummy past_key_values for decoder first generation step
                 num_attention_heads = config.num_key_value_heads
                 embed_size_per_head = config.hidden_size // config.num_attention_heads
-                shape = (self.batch_size, num_attention_heads, 0, embed_size_per_head)
+                shape = (self.batch_size, num_attention_heads, 0,
+                         embed_size_per_head)
                 key_or_value = np.zeros(shape, dtype=np.float32)
                 for key_value_input_name in key_value_input_names:
                     ort_input[key_value_input_name] = key_or_value
@@ -328,9 +352,9 @@ class GPTQDataloader(CalibrationDataReader):
     def rewind(self):
         self.iter_next = iter(self.encoded_list)
 
+
 if __name__ == "__main__":
-    from neural_compressor_ort import set_workspace
-    set_workspace(args.workspace)
+    utility.set_workspace(args.workspace)
     if not os.path.exists(args.workspace):
         os.mkdir(args.workspace)
 
@@ -343,23 +367,25 @@ if __name__ == "__main__":
             print("Accuracy: %.5f" % acc_result)
 
     if args.tune:
-        from neural_compressor_ort.quantization import matmul_nbits_quantizer
-        model_name = "model.onnx" # require optimum >= 1.14.0
+        model_name = "model.onnx"  # require optimum >= 1.14.0
         model_path = os.path.join(args.model_path, model_name)
 
         # do graph optimization
-        logger.info("Start graph optimization...")
+        utility.logger.info("Start graph optimization...")
         sess_options = ort.SessionOptions()
         sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED
-        sess_options.optimized_model_filepath = os.path.join(args.workspace, "Optimized_model.onnx")
+        sess_options.optimized_model_filepath = os.path.join(
+            args.workspace, "Optimized_model.onnx")
         sess_options.add_session_config_entry(
-            "session.optimized_model_external_initializers_file_name", "Optimized_model.onnx_data"
-        )
+            "session.optimized_model_external_initializers_file_name",
+            "Optimized_model.onnx_data")
         sess_options.add_session_config_entry(
-            "session.optimized_model_external_initializers_min_size_in_bytes", "1024"
-        )
-        sess = ort.InferenceSession(model_path, sess_options, providers=["CPUExecutionProvider"])
-        logger.info("Graph optimization done.")
+            "session.optimized_model_external_initializers_min_size_in_bytes",
+            "1024")
+        sess = ort.InferenceSession(model_path,
+                                    sess_options,
+                                    providers=["CPUExecutionProvider"])
+        utility.logger.info("Graph optimization done.")
 
         best_model = None
         if args.algorithm.upper() == "RTN":
@@ -375,11 +401,12 @@ if __name__ == "__main__":
             best_model = quant.model
 
         elif args.algorithm.upper() == "AWQ":
-            calibration_data_reader = AWQDataloader(model_path, pad_max=args.pad_max, batch_size=1)
+            calibration_data_reader = AWQDataloader(model_path,
+                                                    pad_max=args.pad_max,
+                                                    batch_size=1)
             algo_config = matmul_nbits_quantizer.AWQWeightOnlyQuantConfig(
                 calibration_data_reader=calibration_data_reader,
-                enable_mse_search=False
-            )
+                enable_mse_search=False)
             quant = matmul_nbits_quantizer.MatMulNBitsQuantizer(
                 sess_options.optimized_model_filepath,
                 n_bits=4,
@@ -391,10 +418,11 @@ if __name__ == "__main__":
             best_model = quant.model
 
         elif args.algorithm.upper() == "GPTQ":
-            calibration_data_reader = GPTQDataloader(model_path, seqlen=args.seqlen, batch_size=1)
+            calibration_data_reader = GPTQDataloader(model_path,
+                                                     seqlen=args.seqlen,
+                                                     batch_size=1)
             algo_config = matmul_nbits_quantizer.GPTQWeightOnlyQuantConfig(
-                calibration_data_reader=calibration_data_reader,
-            )
+                calibration_data_reader=calibration_data_reader,)
             quant = matmul_nbits_quantizer.MatMulNBitsQuantizer(
                 sess_options.optimized_model_filepath,
                 n_bits=4,
@@ -406,12 +434,13 @@ if __name__ == "__main__":
             best_model = quant.model
 
         elif args.algorithm.upper() == "WOQ_TUNE":
-            from neural_compressor_ort.quantization import get_woq_tuning_config, autotune
-            from neural_compressor_ort.base_tuning import TuningConfig
-            calibration_data_reader = GPTQDataloader(model_path, seqlen=args.seqlen, batch_size=1)
+            calibration_data_reader = GPTQDataloader(model_path,
+                                                     seqlen=args.seqlen,
+                                                     batch_size=1)
             # set tolerable_loss to 0.5% for test, default is 1%
-            custom_tune_config = TuningConfig(config_set=get_woq_tuning_config(), tolerable_loss=0.005)
-            best_model = autotune(
+            custom_tune_config = tuning.TuningConfig(
+                config_set=config.get_woq_tuning_config(), tolerable_loss=0.005)
+            best_model = tuning.autotune(
                 model_input=model_path,
                 tune_config=custom_tune_config,
                 eval_fn=eval_func,
@@ -424,4 +453,5 @@ if __name__ == "__main__":
                 os.path.join(args.output_model, model_name),
                 save_as_external_data=True,
             )
-            config.to_json_file(os.path.join(args.output_model, "config.json"), use_diff=False)
+            config.to_json_file(os.path.join(args.output_model, "config.json"),
+                                use_diff=False)

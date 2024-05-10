@@ -35,7 +35,8 @@ AWQ = "awq"  # pragma: no cover
 # options
 import datetime
 
-DEFAULT_WORKSPACE = "./nc_workspace/{}/".format(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+DEFAULT_WORKSPACE = "./nc_workspace/{}/".format(
+    datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
 
 from typing import Callable, Union
 

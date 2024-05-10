@@ -17,12 +17,10 @@
 
 import abc
 
-from onnxruntime.quantization import CalibrationDataReader as ORTCalibrationDataReader
-
-__all__ = ["CalibrationDataReader"]
+from onnxruntime import quantization
 
 
-class CalibrationDataReader(ORTCalibrationDataReader):
+class CalibrationDataReader(quantization.CalibrationDataReader):
     """Get data for calibration.
 
     We define our CalibrationDataReader based on the class in below link:

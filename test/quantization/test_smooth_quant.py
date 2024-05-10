@@ -25,29 +25,32 @@ import onnx
 from optimum.exporters.onnx import main_export
 
 from neural_compressor_ort.quantization import (
-    CalibrationDataReader,
+    calibrate,
     QuantType,
-    SmoothQuantConfig,
-    get_default_sq_config,
 )
-from neural_compressor_ort.quantization.quantize import _quantize
 
+from neural_compressor_ort.quantization import config, quantize, algorithm_entry as algos
 
-class DataReader(CalibrationDataReader):
+class DataReader(calibrate.CalibrationDataReader):
+
     def __init__(self, model):
         model = onnx.load(model)
         batch_size = 1
         sequence_length = 1
         self.data = {
-            "input_ids": np.random.randint(10, size=(batch_size, sequence_length)).astype("int64"),
-            "attention_mask": np.zeros((batch_size, sequence_length)).astype("int64"),
+            "input_ids":
+                np.random.randint(10, size=(batch_size,
+                                            sequence_length)).astype("int64"),
+            "attention_mask":
+                np.zeros((batch_size, sequence_length)).astype("int64"),
         }
         for inp in model.graph.input:
             if inp.name in self.data:
                 continue
             if inp.name == "position_ids":
                 # model is exported with optimum >= 1.14.0 with new input 'position_ids'
-                self.data[inp.name] = np.random.randint(10, size=(batch_size, sequence_length)).astype("int64")
+                self.data[inp.name] = np.random.randint(
+                    10, size=(batch_size, sequence_length)).astype("int64")
 
         self.enum_data = None
 
@@ -61,6 +64,7 @@ class DataReader(CalibrationDataReader):
 
 
 class TestONNXRT3xSmoothQuant(unittest.TestCase):
+
     @classmethod
     def setUpClass(self):
         main_export(
@@ -77,16 +81,22 @@ class TestONNXRT3xSmoothQuant(unittest.TestCase):
 
     def test_sq_from_class_beginner(self):
         self.data_reader.rewind()
-        config = get_default_sq_config()
-        model = _quantize(self.gptj, config, self.data_reader)
-        num_muls = len([i for i in model.graph.node if i.name.endswith("_smooth_mul") and i.op_type == "Mul"])
+        config = config.get_default_sq_config()
+        model = algos.smooth_quant_entry(self.gptj, config, self.data_reader)
+        num_muls = len([
+            i for i in model.graph.node
+            if i.name.endswith("_smooth_mul") and i.op_type == "Mul"
+        ])
         self.assertEqual(num_muls, 30)
 
     def test_sq_auto_tune_from_class_beginner(self):
         self.data_reader.rewind()
-        config = SmoothQuantConfig(alpha="auto", scales_per_op=False)
-        model = _quantize(self.gptj, config, self.data_reader)
-        num_muls = len([i for i in model.graph.node if i.name.endswith("_smooth_mul") and i.op_type == "Mul"])
+        config = config.SmoothQuantConfig(alpha="auto", scales_per_op=False)
+        model = algos.smooth_quant_entry(self.gptj, config, self.data_reader)
+        num_muls = len([
+            i for i in model.graph.node
+            if i.name.endswith("_smooth_mul") and i.op_type == "Mul"
+        ])
         self.assertEqual(num_muls, 15)
 
     def test_sq_from_dict_beginner(self):
@@ -99,45 +109,54 @@ class TestONNXRT3xSmoothQuant(unittest.TestCase):
             }
         }
         self.data_reader.rewind()
-        model = _quantize(self.gptj, config, self.data_reader)
-        num_muls = len([i for i in model.graph.node if i.name.endswith("_smooth_mul") and i.op_type == "Mul"])
+        model = algos.smooth_quant_entry(self.gptj, config, self.data_reader)
+        num_muls = len([
+            i for i in model.graph.node
+            if i.name.endswith("_smooth_mul") and i.op_type == "Mul"
+        ])
         self.assertEqual(num_muls, 15)
 
     def test_sq_auto_tune_from_dict_beginner(self):
-        config = {
-            "smooth_quant": {
-                "global": {
-                    "alpha": "auto",
-                },
-            }
-        }
+        config = {"smooth_quant": {"global": {"alpha": "auto",},}}
         self.data_reader.rewind()
-        model = _quantize(self.gptj, config, self.data_reader)
-        num_muls = len([i for i in model.graph.node if i.name.endswith("_smooth_mul") and i.op_type == "Mul"])
+        model = algos.smooth_quant_entry(self.gptj, config, self.data_reader)
+        num_muls = len([
+            i for i in model.graph.node
+            if i.name.endswith("_smooth_mul") and i.op_type == "Mul"
+        ])
         self.assertEqual(num_muls, 30)
 
     def test_sq_ort_param_class_beginner(self):
         self.data_reader.rewind()
-        config = SmoothQuantConfig(weight_type=QuantType.QUInt8, activation_type=QuantType.QUInt8)
-        model = _quantize(self.gptj, config, self.data_reader)
-        num_muls = len([i for i in model.graph.node if i.name.endswith("_smooth_mul") and i.op_type == "Mul"])
+        config = config.SmoothQuantConfig(weight_type=QuantType.QUInt8,
+                                   activation_type=QuantType.QUInt8)
+        model = algos.smooth_quant_entry(self.gptj, config, self.data_reader)
+        num_muls = len([
+            i for i in model.graph.node
+            if i.name.endswith("_smooth_mul") and i.op_type == "Mul"
+        ])
         self.assertTrue(2 in [i.data_type for i in model.graph.initializer])
         self.assertTrue(3 not in [i.data_type for i in model.graph.initializer])
         self.assertEqual(num_muls, 30)
 
     def test_sq_with_ort_like_api(self):
-        from neural_compressor_ort.quantization import StaticQuantConfig, quantize
-
         self.data_reader.rewind()
-        config = StaticQuantConfig(
+        config = config.StaticQuantConfig(
             self.data_reader,
             weight_type=QuantType.QUInt8,
             activation_type=QuantType.QUInt8,
-            extra_options={"SmoothQuant": True, "SmoothQuantAlpha": 0.7, "SmoothQuantCalibIter": 1},
+            extra_options={
+                "SmoothQuant": True,
+                "SmoothQuantAlpha": 0.7,
+                "SmoothQuantCalibIter": 1
+            },
         )
         quantize(self.gptj, self.quant_gptj, config)
         model = onnx.load(self.quant_gptj)
-        num_muls = len([i for i in model.graph.node if i.name.endswith("_smooth_mul") and i.op_type == "Mul"])
+        num_muls = len([
+            i for i in model.graph.node
+            if i.name.endswith("_smooth_mul") and i.op_type == "Mul"
+        ])
         self.assertTrue(2 in [i.data_type for i in model.graph.initializer])
         self.assertTrue(3 not in [i.data_type for i in model.graph.initializer])
         self.assertEqual(num_muls, 30)

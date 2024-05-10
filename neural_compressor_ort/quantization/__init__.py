@@ -32,7 +32,7 @@ from neural_compressor_ort.quantization.config import (
     DynamicQuantConfig,
     get_woq_tuning_config,
 )
-from neural_compressor_ort.quantization.autotune import autotune, get_all_config_set
+from neural_compressor_ort.quantization.tuning import autotune, get_all_config_set
 
 from neural_compressor_ort.quantization.matmul_4bits_quantizer import MatMul4BitsQuantizer
 from neural_compressor_ort.quantization.matmul_nbits_quantizer import (

@@ -16,43 +16,245 @@ import importlib
 import os
 import subprocess
 import time
-from pathlib import Path
+import pathlib
 from typing import Callable, Dict, List, Tuple, Union
-
+import logging
 import cpuinfo
 import numpy as np
 import onnx
-import onnxruntime.tools.symbolic_shape_infer as symbolic_shape_infer
 import psutil
-from packaging.version import Version
-
-from neural_compressor_ort.utils import logger
-
-__all__ = [
-    "set_workspace",
-    "set_random_seed",
-    "set_resume_from",
-    "dump_elapsed_time",
-    "log_quant_execution",
-    "singleton",
-    "LazyImport",
-    "CpuInfo",
-    "algos_mapping",
-    "dtype_mapping",
-    "find_by_name",
-    "simple_progress_bar",
-    "register_algo",
-    "get_model_info",
-    "is_B_transposed",
-    "get_qrange_for_qType",
-    "quantize_data",
-    "check_model_with_infer_shapes",
-]
-
+from neural_compressor_ort import constants
+from neural_compressor_ort.quantization import config
 
 # Dictionary to store a mapping between algorithm names and corresponding algo implementation(function)
 algos_mapping: Dict[str, Callable] = {}
 
+
+class Options:
+    """Option Class for configs.
+
+    This class is used for configuring global variables. The global variable options is created with this class.
+    If you want to change global variables, you should use functions from neural_compressor_ort.utility.py:
+        set_random_seed(seed: int)
+        set_workspace(workspace: str)
+        set_resume_from(resume_from: str)
+
+    Args:
+        random_seed(int): Random seed used in neural compressor.
+                          Default value is 1978.
+        workspace(str): The directory where intermediate files and tuning history file are stored.
+                        Default value is:
+                            "./nc_workspace/{}/".format(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")).
+        resume_from(str): The directory you want to resume tuning history file from.
+                          The tuning history was automatically saved in the workspace directory
+                               during the last tune process.
+                          Default value is None.
+
+    Example::
+
+        from neural_compressor_ort import set_random_seed, set_workspace, set_resume_from
+        set_random_seed(2022)
+        set_workspace("workspace_path")
+        set_resume_from("workspace_path")
+    """
+
+    def __init__(self,
+                 random_seed=1978,
+                 workspace=constants.DEFAULT_WORKSPACE,
+                 resume_from=None):
+        """Init an Option object."""
+        self.random_seed = random_seed
+        self.workspace = workspace
+        self.resume_from = resume_from
+
+    @property
+    def random_seed(self):
+        """Get random seed."""
+        return self._random_seed
+
+    @random_seed.setter
+    def random_seed(self, random_seed):
+        """Set random seed."""
+        if _check_value("random_seed", random_seed, int):
+            self._random_seed = random_seed
+
+    @property
+    def workspace(self):
+        """Get workspace."""
+        return self._workspace
+
+    @workspace.setter
+    def workspace(self, workspace):
+        """Set workspace."""
+        if _check_value("workspace", workspace, str):
+            self._workspace = workspace
+
+    @property
+    def resume_from(self):
+        """Get resume_from."""
+        return self._resume_from
+
+    @resume_from.setter
+    def resume_from(self, resume_from):
+        """Set resume_from."""
+        if resume_from is None or _check_value("resume_from", resume_from, str):
+            self._resume_from = resume_from
+
+
+options = Options()
+
+def _pretty_dict(value, indent=0):
+    """Make the logger dict pretty."""
+    prefix = "\n" + " " * (indent + 4)
+    if isinstance(value, dict):
+        items = [
+            prefix + repr(key) + ": " + _pretty_dict(value[key], indent + 4)
+            for key in value
+        ]
+        return "{%s}" % (",".join(items) + "\n" + " " * indent)
+    elif isinstance(value, list):
+        items = [prefix + _pretty_dict(item, indent + 4) for item in value]
+        return "[%s]" % (",".join(items) + "\n" + " " * indent)
+    elif isinstance(value, tuple):
+        items = [prefix + _pretty_dict(item, indent + 4) for item in value]
+        return "(%s)" % (",".join(items) + "\n" + " " * indent)
+    else:
+        return repr(value)
+
+
+class Logger(object):
+    """Logger class."""
+
+    __instance = None
+
+    def __new__(cls):
+        """Create a singleton Logger instance."""
+        if Logger.__instance is None:
+            Logger.__instance = object.__new__(cls)
+            Logger.__instance._log()
+        return Logger.__instance
+
+    def _log(self):
+        """Setup the logger format and handler."""
+        LOGLEVEL = os.environ.get("LOGLEVEL", "INFO").upper()
+        self._logger = logging.getLogger("neural_compressor_ort")
+        self._logger.handlers.clear()
+        self._logger.setLevel(LOGLEVEL)
+        formatter = logging.Formatter(
+            "%(asctime)s [%(levelname)s][%(filename)s:%(lineno)d] %(message)s",
+            "%Y-%m-%d %H:%M:%S")
+        streamHandler = logging.StreamHandler()
+        streamHandler.setFormatter(formatter)
+        self._logger.addHandler(streamHandler)
+        self._logger.propagate = False
+
+    def get_logger(self):
+        """Get the logger."""
+        return self._logger
+
+    @staticmethod
+    def log(level, msg, *args, **kwargs):
+        """Output log with the level as a parameter."""
+        kwargs.setdefault("stacklevel", 2)
+        if isinstance(msg, dict):
+            for _, line in enumerate(_pretty_dict(msg).split("\n")):
+                Logger().get_logger().log(level, line, *args, **kwargs)
+        else:
+            Logger().get_logger().log(level, msg, *args, **kwargs)
+
+    @staticmethod
+    def debug(msg, *args, **kwargs):
+        """Output log with the debug level."""
+        kwargs.setdefault("stacklevel", 2)
+        if isinstance(msg, dict):
+            for _, line in enumerate(_pretty_dict(msg).split("\n")):
+                Logger().get_logger().debug(line, *args, **kwargs)
+        else:
+            Logger().get_logger().debug(msg, *args, **kwargs)
+
+    @staticmethod
+    def error(msg, *args, **kwargs):
+        """Output log with the error level."""
+        kwargs.setdefault("stacklevel", 2)
+        if isinstance(msg, dict):
+            for _, line in enumerate(_pretty_dict(msg).split("\n")):
+                Logger().get_logger().error(line, *args, **kwargs)
+        else:
+            Logger().get_logger().error(msg, *args, **kwargs)
+
+    @staticmethod
+    def fatal(msg, *args, **kwargs):
+        """Output log with the fatal level."""
+        kwargs.setdefault("stacklevel", 2)
+        if isinstance(msg, dict):
+            for _, line in enumerate(_pretty_dict(msg).split("\n")):
+                Logger().get_logger().fatal(line, *args, **kwargs)
+        else:
+            Logger().get_logger().fatal(msg, *args, **kwargs)
+
+    @staticmethod
+    def info(msg, *args, **kwargs):
+        """Output log with the info level."""
+        kwargs.setdefault("stacklevel", 2)
+        if isinstance(msg, dict):
+            for _, line in enumerate(_pretty_dict(msg).split("\n")):
+                Logger().get_logger().info(line, *args, **kwargs)
+        else:
+            Logger().get_logger().info(msg, *args, **kwargs)
+
+    @staticmethod
+    def warning(msg, *args, **kwargs):
+        """Output log with the warning level (Alias of the method warn)."""
+        kwargs.setdefault("stacklevel", 2)
+        if isinstance(msg, dict):
+            for _, line in enumerate(_pretty_dict(msg).split("\n")):
+                Logger().get_logger().warning(line, *args, **kwargs)
+        else:
+            Logger().get_logger().warning(msg, *args, **kwargs)
+
+
+level = Logger().get_logger().level
+
+logger = Logger
+
+
+class TuningLogger:
+    """A unified logger for the tuning/quantization process.
+
+    It assists validation teams in retrieving logs.
+    """
+
+    @classmethod
+    def tuning_start(cls) -> None:
+        logger.info("Tuning started.")
+
+    @classmethod
+    def trial_start(cls, trial_index: int = None) -> None:
+        logger.info("%d-trail started.", trial_index)
+
+    @classmethod
+    def quantization_start(cls, stacklevel=2) -> None:
+        logger.info("Quantization started.", stacklevel=stacklevel)
+
+    @classmethod
+    def quantization_end(cls, stacklevel=2) -> None:
+        logger.info("Quantization end.", stacklevel=stacklevel)
+
+    @classmethod
+    def evaluation_start(cls) -> None:
+        logger.info("Evaluation started.")
+
+    @classmethod
+    def evaluation_end(cls) -> None:
+        logger.info("Evaluation end.")
+
+    @classmethod
+    def trial_end(cls, trial_index: int = None) -> None:
+        logger.info("%d-trail end.", trial_index)
+
+    @classmethod
+    def tuning_end(cls) -> None:
+        logger.info("Tuning completed.")
 
 def singleton(cls):
     """Singleton decorator."""
@@ -115,12 +317,17 @@ class CpuInfo(object):
             if max_extension_support >= 7:
                 ecx = cpuid._run_asm(
                     b"\x31\xC9",  # xor ecx, ecx
-                    b"\xB8\x07\x00\x00\x00" b"\x0f\xa2" b"\x89\xC8" b"\xC3",  # mov eax, 7  # cpuid  # mov ax, cx  # ret
+                    b"\xB8\x07\x00\x00\x00"
+                    b"\x0f\xa2"
+                    b"\x89\xC8"
+                    b"\xC3",  # mov eax, 7  # cpuid  # mov ax, cx  # ret
                 )
                 self._vnni = bool(ecx & (1 << 11))
                 eax = cpuid._run_asm(
                     b"\xB9\x01\x00\x00\x00",  # mov ecx, 1
-                    b"\xB8\x07\x00\x00\x00" b"\x0f\xa2" b"\xC3",  # mov eax, 7  # cpuid  # ret
+                    b"\xB8\x07\x00\x00\x00"
+                    b"\x0f\xa2"
+                    b"\xC3",  # mov eax, 7  # cpuid  # ret
                 )
                 self._bf16 = bool(eax & (1 << 5))
         # TODO: The implementation will be refined in the future.
@@ -156,11 +363,11 @@ class CpuInfo(object):
             cmd = "sysctl -n machdep.cpu.core_count"
 
         with subprocess.Popen(
-            args=cmd,
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            universal_newlines=False,
+                args=cmd,
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                universal_newlines=False,
         ) as proc:
             proc.wait()
             if proc.stdout:
@@ -177,14 +384,15 @@ def dump_elapsed_time(customized_msg=""):
     """
 
     def f(func):
+
         def fi(*args, **kwargs):
             start = time.time()
             res = func(*args, **kwargs)
             end = time.time()
             logger.info(
-                "%s elapsed time: %s ms"
-                % (customized_msg if customized_msg else func.__qualname__, round((end - start) * 1000, 2))
-            )
+                "%s elapsed time: %s ms" %
+                (customized_msg if customized_msg else func.__qualname__,
+                 round((end - start) * 1000, 2)))
             return res
 
         return fi
@@ -194,28 +402,20 @@ def dump_elapsed_time(customized_msg=""):
 
 def set_random_seed(seed: int):
     """Set the random seed in config."""
-    from neural_compressor_ort.utils.base_config import options
-
     options.random_seed = seed
 
 
 def set_workspace(workspace: str):
     """Set the workspace in config."""
-    from neural_compressor_ort.utils.base_config import options
-
     options.workspace = workspace
 
 
 def set_resume_from(resume_from: str):
     """Set the resume_from in config."""
-    from neural_compressor_ort.utils.base_config import options
-
     options.resume_from = resume_from
 
 
 def log_quant_execution(func):
-    from neural_compressor_ort.utils import TuningLogger
-
     default_tuning_logger = TuningLogger()
 
     def wrapper(*args, **kwargs):
@@ -257,7 +457,9 @@ def find_by_name(name, item_list):
     """Helper function to find item by name in a list."""
     items = []
     for item in item_list:
-        assert hasattr(item, "name"), "{} should have a 'name' attribute defined".format(item)  # pragma: no cover
+        assert hasattr(
+            item, "name"), "{} should have a 'name' attribute defined".format(
+                item)  # pragma: no cover
         if item.name == name:
             items.append(item)
     if len(items) > 0:
@@ -281,7 +483,7 @@ def register_algo(name):
 
     Usage example:
         @register_algo(name=example_algo)
-        def example_algo(model: Union[onnx.ModelProto, Path, str],
+        def example_algo(model: Union[onnx.ModelProto, pathlib.Path, str],
                          quant_config: RTNConfig) -> onnx.ModelProto:
             ...
 
@@ -300,8 +502,8 @@ def register_algo(name):
 
 
 def get_model_info(
-    model: Union[onnx.ModelProto, Path, str], white_op_type_list: List[Callable]
-) -> List[Tuple[str, Callable]]:
+        model: Union[onnx.ModelProto, pathlib.Path, str],
+        white_op_type_list: List[Callable]) -> List[Tuple[str, Callable]]:
     if not isinstance(model, onnx.ModelProto):
         model = onnx.load(model)
     filter_result = []
@@ -312,7 +514,7 @@ def get_model_info(
             if pair not in filter_result_set:
                 filter_result_set.add(pair)
                 filter_result.append(pair)
-    logger.debug(f"Get model info: {filter_result}")
+    utility.logger.debug(f"Get model info: {filter_result}")
     return filter_result
 
 
@@ -360,9 +562,12 @@ def _quantize_data_with_scale_zero(data, qType, scheme, scale, zero_point):
         # signed byte type
         quantized_data = (data.astype(np.float32) / scale).round().astype("b")
     elif qType == onnx.onnx_pb.TensorProto.UINT8 and scheme == "asym":
-        quantized_data = ((data.astype(np.float32) / scale).round() + zero_point).astype("B")
+        quantized_data = ((data.astype(np.float32) / scale).round() +
+                          zero_point).astype("B")
     else:
-        raise ValueError("Unexpected combination of data type {} and scheme {}.".format(qType, scheme))
+        raise ValueError(
+            "Unexpected combination of data type {} and scheme {}.".format(
+                qType, scheme))
     return quantized_data
 
 
@@ -373,46 +578,57 @@ def _calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme):
             max_range = np.maximum(abs(rmin), abs(rmax))
             scale = np.ones(rmax.shape, dtype="float32")
             scale[max_range > 0] = np.array(
-                [float(i) / quantize_range for i in (max_range[max_range > 0] * 2.0).flatten().tolist()],
+                [
+                    float(i) / quantize_range
+                    for i in (max_range[max_range > 0] *
+                              2.0).flatten().tolist()
+                ],
                 dtype="float32",
             )
         else:
             scale = np.ones(rmax.shape, dtype="float32")
-            scale[rmin != rmax] = np.array(
-                [float(i) / quantize_range for i in (rmax - rmin)[rmin != rmax].flatten().tolist()], dtype="float32"
-            )
+            scale[rmin != rmax] = np.array([
+                float(i) / quantize_range
+                for i in (rmax - rmin)[rmin != rmax].flatten().tolist()
+            ],
+                                           dtype="float32")
 
         if scheme == "sym" and qType == onnx.onnx_pb.TensorProto.INT8:
-            zero_point = np.zeros(scale.shape, dtype="int8") if isinstance(scale, np.ndarray) else 0
+            zero_point = np.zeros(scale.shape, dtype="int8") if isinstance(
+                scale, np.ndarray) else 0
         elif isinstance(scale, np.ndarray) and (scale == 1).all():
-            zero_point = (
-                np.zeros(scale.shape, dtype="int8")
-                if qType == onnx.onnx_pb.TensorProto.INT8
-                else np.zeros(scale.shape, dtype="uint8")
-            )
+            zero_point = (np.zeros(scale.shape, dtype="int8")
+                          if qType == onnx.onnx_pb.TensorProto.INT8 else
+                          np.zeros(scale.shape, dtype="uint8"))
         elif qType == onnx.onnx_pb.TensorProto.UINT8:
-            zero_point = np.maximum(0, np.minimum(255, ((0 - float(rmin)) / scale).round()).round()).astype("uint8")
+            zero_point = np.maximum(
+                0,
+                np.minimum(255, ((0 - float(rmin)) /
+                                 scale).round()).round()).astype("uint8")
         else:
-            zero_point = (
-                (-64 - rmin) / float(scale) if quantize_range == 128 else (-127 - rmin) / float(scale)
-            ).round()
+            zero_point = ((-64 - rmin) /
+                          float(scale) if quantize_range == 128 else
+                          (-127 - rmin) / float(scale)).round()
 
     else:
         if scheme == "sym":
             max_range = max(abs(rmin), abs(rmax))
-            scale = (float(max_range) * 2) / quantize_range if max_range > 0 else 1
+            scale = (float(max_range) *
+                     2) / quantize_range if max_range > 0 else 1
         else:
-            scale = (float(rmax) - float(rmin)) / quantize_range if rmin != rmax else 1
+            scale = (float(rmax) -
+                     float(rmin)) / quantize_range if rmin != rmax else 1
 
-        if scale == 1 or (scheme == "sym" and qType == onnx.onnx_pb.TensorProto.INT8):
+        if scale == 1 or (scheme == "sym" and
+                          qType == onnx.onnx_pb.TensorProto.INT8):
             zero_point = 0
         elif qType == onnx.onnx_pb.TensorProto.UINT8:
             zero_point = round((0 - float(rmin)) / scale)
             zero_point = np.uint8(round(max(0, min(255, zero_point))))
         else:
-            zero_point = (
-                round((-64 - float(rmin)) / scale) if quantize_range == 128 else round((-127 - float(rmin)) / scale)
-            )
+            zero_point = (round((-64 - float(rmin)) /
+                                scale) if quantize_range == 128 else round(
+                                    (-127 - float(rmin)) / scale))
     return scale, zero_point
 
 
@@ -439,18 +655,20 @@ def quantize_data(data, quantize_range, qType, scheme):
     rmin = min(min(data), 0)
     rmax = max(max(data), 0)
 
-    scale, zero_point = _calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme)
-    quantized_data = _quantize_data_with_scale_zero(data, qType, scheme, scale, zero_point)
+    scale, zero_point = _calculate_scale_zp(rmin, rmax, quantize_range, qType,
+                                            scheme)
+    quantized_data = _quantize_data_with_scale_zero(data, qType, scheme, scale,
+                                                    zero_point)
     return rmin, rmax, zero_point, scale, quantized_data
 
 
 def check_model_with_infer_shapes(model):
     """Check if the model has been shape inferred."""
-    from neural_compressor_ort.utils.onnx_model import ONNXModel
+    
 
-    if isinstance(model, (Path, str)):
+    if isinstance(model, (pathlib.Path, str)):
         model = onnx.load(model, load_external_data=False)
-    elif isinstance(model, ONNXModel):
+    elif isinstance(model, onnx_model.ONNXModel):
         model = model.model
     if len(model.graph.value_info) > 0:
         return True

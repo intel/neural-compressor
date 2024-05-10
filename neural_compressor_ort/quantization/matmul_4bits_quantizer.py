@@ -12,28 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import onnx
+
 from typing import List, Union
+from onnxruntime.quantization import matmul_4bits_quantizer
 
-from onnx.onnx_pb import ModelProto
-from onnxruntime.quantization.matmul_4bits_quantizer import WeightOnlyQuantConfig
-
-from neural_compressor_ort.quantization.matmul_nbits_quantizer import (
-    AWQWeightOnlyQuantConfig,
-    GPTQWeightOnlyQuantConfig,
-    MatMulNBitsQuantizer,
-    RTNWeightOnlyQuantConfig,
-)
+from neural_compressor_ort.quantization import matmul_nbits_quantizer
+import matmul_nbits_quantizer.AWQWeightOnlyQuantConfig as AWQWeightOnlyQuantConfig
+import matmul_nbits_quantizer.GPTQWeightOnlyQuantConfig as GPTQWeightOnlyQuantConfig
+import matmul_nbits_quantizer.RTNWeightOnlyQuantConfig as RTNWeightOnlyQuantConfig
+import matmul_nbits_quantizer.MatMulNBitsQuantizer as MatMulNBitsQuantizer
 
 
 class MatMul4BitsQuantizer(MatMulNBitsQuantizer):
+
     def __init__(
         self,
-        model: Union[ModelProto, str],
+        model: Union[onnx.ModelProto, str],
         block_size: int = 128,
         is_symmetric: bool = False,
         accuracy_level: int = 0,
         nodes_to_exclude=None,
-        algo_config: WeightOnlyQuantConfig = None,
+        algo_config: matmul_4bits_quantizer.WeightOnlyQuantConfig = None,
         providers: List[str] = ["CPUExecutionProvider"],
     ):
         super().__init__(

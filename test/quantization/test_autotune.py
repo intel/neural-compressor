@@ -19,9 +19,9 @@ import glob
 import os
 import shutil
 import unittest
-from functools import partial
+import functools
 from typing import Callable, Dict, List, Optional, Union
-from unittest.mock import patch
+from unittest import mock
 
 import numpy as np
 import onnx
@@ -29,15 +29,10 @@ import onnxruntime as ort
 from optimum.exporters.onnx import main_export
 
 from neural_compressor_ort.quantization import (
-    AWQConfig,
-    CalibrationDataReader,
-    GPTQConfig,
-    RTNConfig,
-    SmoothQuantConfig,
-    autotune,
-    get_woq_tuning_config,
+    config,
+    calibrate,
+    tuning,
 )
-from neural_compressor_ort.utils.base_tuning import Evaluator, TuningConfig
 
 
 def fake_eval(model, eval_result_lst):
@@ -45,27 +40,34 @@ def fake_eval(model, eval_result_lst):
     return acc
 
 
-def _create_evaluator_for_eval_fns(eval_fns: Optional[Union[Callable, Dict, List[Dict]]] = None) -> Evaluator:
-    evaluator = Evaluator()
+def _create_evaluator_for_eval_fns(
+        eval_fns: Optional[Union[Callable, Dict,
+                                 List[Dict]]] = None) -> tuning.Evaluator:
+    evaluator = tuning.Evaluator()
     evaluator.set_eval_fn_registry(eval_fns)
     return evaluator
 
 
-class DataReader(CalibrationDataReader):
+class DataReader(calibrate.CalibrationDataReader):
+
     def __init__(self, model):
         model = onnx.load(model)
         batch_size = 1
         sequence_length = 1
         self.data = {
-            "input_ids": np.random.randint(10, size=(batch_size, sequence_length)).astype("int64"),
-            "attention_mask": np.zeros((batch_size, sequence_length)).astype("int64"),
+            "input_ids":
+                np.random.randint(10, size=(batch_size,
+                                            sequence_length)).astype("int64"),
+            "attention_mask":
+                np.zeros((batch_size, sequence_length)).astype("int64"),
         }
         for inp in model.graph.input:
             if inp.name in self.data:
                 continue
             if inp.name == "position_ids":
                 # model is exported with optimum >= 1.14.0 with new input 'position_ids'
-                self.data[inp.name] = np.random.randint(10, size=(batch_size, sequence_length)).astype("int64")
+                self.data[inp.name] = np.random.randint(
+                    10, size=(batch_size, sequence_length)).astype("int64")
 
         self.enum_data = None
 
@@ -79,6 +81,7 @@ class DataReader(CalibrationDataReader):
 
 
 class TestONNXRT3xAutoTune(unittest.TestCase):
+
     @classmethod
     def setUpClass(self):
         main_export(
@@ -92,17 +95,21 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
     def tearDownClass(self):
         shutil.rmtree("./gptj", ignore_errors=True)
 
-    @patch("logging.Logger.warning")
+    @mock.patch("logging.Logger.warning")
     def test_auto_tune_warning(self, mock_warning):
         acc_data = iter([1.0, 0.8, 0.99, 1.0, 0.99, 0.99])
 
         def eval_acc_fn(model) -> float:
-            session = ort.InferenceSession(model.SerializeToString(), providers=["CPUExecutionProvider"])
+            session = ort.InferenceSession(model.SerializeToString(),
+                                           providers=["CPUExecutionProvider"])
             return next(acc_data)
 
-        custom_tune_config = TuningConfig(config_set=[SmoothQuantConfig(alpha=0.5), SmoothQuantConfig(alpha=0.6)])
+        custom_tune_config = tuning.TuningConfig(config_set=[
+            config.SmoothQuantConfig(alpha=0.5),
+            config.SmoothQuantConfig(alpha=0.6)
+        ])
         with self.assertRaises(SystemExit):
-            best_model = autotune(
+            best_model = tuning.autotune(
                 model_input=self.gptj,
                 tune_config=custom_tune_config,
                 eval_fn=eval_acc_fn,
@@ -111,8 +118,8 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
         call_args_list = mock_warning.call_args_list
         # There may be multiple calls to warning, so we need to check all of them
         self.assertIn(
-            "Please refine your eval_fn to accept model path (str) as input.", [info[0][0] for info in call_args_list]
-        )
+            "Please refine your eval_fn to accept model path (str) as input.",
+            [info[0][0] for info in call_args_list])
 
     def test_sq_auto_tune(self):
         acc_data = iter([1.0, 0.8, 0.99, 1.0, 0.99, 0.99])
@@ -126,7 +133,11 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
             return next(perf_data)
 
         eval_fns = [
-            {"eval_fn": eval_acc_fn, "weight": 0.5, "name": "accuracy"},
+            {
+                "eval_fn": eval_acc_fn,
+                "weight": 0.5,
+                "name": "accuracy"
+            },
             {
                 "eval_fn": eval_perf_fn,
                 "weight": 0.5,
@@ -139,8 +150,11 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
             result = evaluator.evaluate(model)
             return result
 
-        custom_tune_config = TuningConfig(config_set=[SmoothQuantConfig(alpha=0.5), SmoothQuantConfig(alpha=0.6)])
-        best_model = autotune(
+        custom_tune_config = tuning.TuningConfig(config_set=[
+            config.SmoothQuantConfig(alpha=0.5),
+            config.SmoothQuantConfig(alpha=0.6)
+        ])
+        best_model = tuning.autotune(
             model_input=self.gptj,
             tune_config=custom_tune_config,
             eval_fn=eval_acc_fn,
@@ -148,8 +162,9 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
         )
         self.assertIsNotNone(best_model)
 
-        custom_tune_config = TuningConfig(config_set=[SmoothQuantConfig(alpha=[0.5, 0.6])])
-        best_model = autotune(
+        custom_tune_config = tuning.TuningConfig(
+            config_set=[config.SmoothQuantConfig(alpha=[0.5, 0.6])])
+        best_model = tuning.autotune(
             model_input=self.gptj,
             tune_config=custom_tune_config,
             eval_fn=eval_fn_wrapper,
@@ -170,7 +185,11 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
             return next(perf_data)
 
         eval_fns = [
-            {"eval_fn": eval_acc_fn, "weight": 0.5, "name": "accuracy"},
+            {
+                "eval_fn": eval_acc_fn,
+                "weight": 0.5,
+                "name": "accuracy"
+            },
             {
                 "eval_fn": eval_perf_fn,
                 "weight": 0.5,
@@ -183,8 +202,11 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
             result = evaluator.evaluate(model)
             return result
 
-        custom_tune_config = TuningConfig(config_set=[RTNConfig(weight_group_size=32), RTNConfig(weight_group_size=64)])
-        best_model = autotune(
+        custom_tune_config = tuning.TuningConfig(config_set=[
+            config.RTNConfig(weight_group_size=32),
+            config.RTNConfig(weight_group_size=64)
+        ])
+        best_model = tuning.autotune(
             model_input=self.gptj,
             tune_config=custom_tune_config,
             eval_fn=eval_acc_fn,
@@ -192,8 +214,9 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
         )
         self.assertIsNone(best_model)
 
-        custom_tune_config = TuningConfig(config_set=[RTNConfig(weight_group_size=[32, 64])])
-        best_model = autotune(
+        custom_tune_config = tuning.TuningConfig(
+            config_set=[config.RTNConfig(weight_group_size=[32, 64])])
+        best_model = tuning.autotune(
             model_input=self.gptj,
             tune_config=custom_tune_config,
             eval_fn=eval_fn_wrapper,
@@ -204,7 +227,8 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
         op_names = [
             i.name
             for i in best_model.graph.node
-            if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q{}G{}".format(4, 32))
+            if i.op_type.startswith("MatMul") and
+            i.input[1].endswith("_Q{}G{}".format(4, 32))
         ]
         self.assertTrue(len(op_names) > 0)
 
@@ -220,7 +244,11 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
             return next(perf_data)
 
         eval_fns = [
-            {"eval_fn": eval_acc_fn, "weight": 0.5, "name": "accuracy"},
+            {
+                "eval_fn": eval_acc_fn,
+                "weight": 0.5,
+                "name": "accuracy"
+            },
             {
                 "eval_fn": eval_perf_fn,
                 "weight": 0.5,
@@ -233,8 +261,11 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
             result = evaluator.evaluate(model)
             return result
 
-        custom_tune_config = TuningConfig(config_set=[AWQConfig(weight_group_size=32), AWQConfig(weight_group_size=64)])
-        best_model = autotune(
+        custom_tune_config = tuning.TuningConfig(config_set=[
+            config.AWQConfig(weight_group_size=32),
+            config.AWQConfig(weight_group_size=64)
+        ])
+        best_model = tuning.autotune(
             model_input=self.gptj,
             tune_config=custom_tune_config,
             eval_fn=eval_acc_fn,
@@ -242,8 +273,9 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
         )
         self.assertIsNone(best_model)
 
-        custom_tune_config = TuningConfig(config_set=[AWQConfig(weight_group_size=[32, 64])])
-        best_model = autotune(
+        custom_tune_config = tuning.TuningConfig(
+            config_set=[config.AWQConfig(weight_group_size=[32, 64])])
+        best_model = tuning.autotune(
             model_input=self.gptj,
             tune_config=custom_tune_config,
             eval_fn=eval_fn_wrapper,
@@ -254,7 +286,8 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
         op_names = [
             i.name
             for i in best_model.graph.node
-            if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q{}G{}".format(4, 32))
+            if i.op_type.startswith("MatMul") and
+            i.input[1].endswith("_Q{}G{}".format(4, 32))
         ]
         self.assertTrue(len(op_names) > 0)
 
@@ -270,7 +303,11 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
             return next(perf_data)
 
         eval_fns = [
-            {"eval_fn": eval_acc_fn, "weight": 0.5, "name": "accuracy"},
+            {
+                "eval_fn": eval_acc_fn,
+                "weight": 0.5,
+                "name": "accuracy"
+            },
             {
                 "eval_fn": eval_perf_fn,
                 "weight": 0.5,
@@ -282,10 +319,11 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
             result = evaluator.evaluate(model)
             return result
 
-        custom_tune_config = TuningConfig(
-            config_set=[GPTQConfig(weight_group_size=32), GPTQConfig(weight_group_size=64)]
-        )
-        best_model = autotune(
+        custom_tune_config = tuning.TuningConfig(config_set=[
+            config.GPTQConfig(weight_group_size=32),
+            config.GPTQConfig(weight_group_size=64)
+        ])
+        best_model = tuning.autotune(
             model_input=self.gptj,
             tune_config=custom_tune_config,
             eval_fn=eval_acc_fn,
@@ -293,8 +331,9 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
         )
         self.assertIsNone(best_model)
 
-        custom_tune_config = TuningConfig(config_set=[GPTQConfig(weight_group_size=[32, 64])])
-        best_model = autotune(
+        custom_tune_config = tuning.TuningConfig(
+            config_set=[config.GPTQConfig(weight_group_size=[32, 64])])
+        best_model = tuning.autotune(
             model_input=self.gptj,
             tune_config=custom_tune_config,
             eval_fn=eval_fn_wrapper,
@@ -305,15 +344,19 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
         op_names = [
             i.name
             for i in best_model.graph.node
-            if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q{}G{}".format(4, 32))
+            if i.op_type.startswith("MatMul") and
+            i.input[1].endswith("_Q{}G{}".format(4, 32))
         ]
         self.assertTrue(len(op_names) > 0)
 
     def test_woq_auto_tune(self):
-        partial_fake_eval = partial(fake_eval, eval_result_lst=[1.0, 0.8, 0.99, 1.0, 0.99, 0.99])
+        partial_fake_eval = functools.partial(
+            fake_eval, eval_result_lst=[1.0, 0.8, 0.99, 1.0, 0.99, 0.99])
 
-        custom_tune_config = TuningConfig(config_set=[RTNConfig(weight_bits=4), AWQConfig(weight_bits=8)])
-        best_model = autotune(
+        custom_tune_config = tuning.TuningConfig(
+            config_set=[config.RTNConfig(weight_bits=4),
+                        config.AWQConfig(weight_bits=8)])
+        best_model = tuning.autotune(
             model_input=self.gptj,
             tune_config=custom_tune_config,
             eval_fn=partial_fake_eval,
@@ -323,14 +366,16 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
         op_names = [
             i.name
             for i in best_model.graph.node
-            if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q{}G{}".format(8, 32))
+            if i.op_type.startswith("MatMul") and
+            i.input[1].endswith("_Q{}G{}".format(8, 32))
         ]
         self.assertTrue(len(op_names) > 0)
 
-        partial_fake_eval = partial(fake_eval, eval_result_lst=[1.0, 0.8, 0.81, 1.0, 0.99, 0.99])
+        partial_fake_eval = functools.partial(
+            fake_eval, eval_result_lst=[1.0, 0.8, 0.81, 1.0, 0.99, 0.99])
 
-        custom_tune_config = TuningConfig(config_set=get_woq_tuning_config())
-        best_model = autotune(
+        custom_tune_config = tuning.TuningConfig(config_set=config.get_woq_tuning_config())
+        best_model = tuning.autotune(
             model_input=self.gptj,
             tune_config=custom_tune_config,
             eval_fn=partial_fake_eval,
@@ -339,20 +384,17 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
         self.assertIsNotNone(best_model)
         self.assertEqual(
             len(op_names),
-            len(
-                [
-                    i.name
-                    for i in best_model.graph.node
-                    if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q{}G{}".format(4, 32))
-                ]
-            )
-            + 1,
+            len([
+                i.name for i in best_model.graph.node if i.op_type.startswith(
+                    "MatMul") and i.input[1].endswith("_Q{}G{}".format(4, 32))
+            ]) + 1,
         )
 
-        partial_fake_eval = partial(fake_eval, eval_result_lst=[1.0, 0.8, 0.81, 0.81, 1.0, 0.99])
+        partial_fake_eval = functools.partial(
+            fake_eval, eval_result_lst=[1.0, 0.8, 0.81, 0.81, 1.0, 0.99])
 
-        custom_tune_config = TuningConfig(config_set=get_woq_tuning_config())
-        best_model = autotune(
+        custom_tune_config = tuning.TuningConfig(config_set=config.get_woq_tuning_config())
+        best_model = tuning.autotune(
             model_input=self.gptj,
             tune_config=custom_tune_config,
             eval_fn=partial_fake_eval,
@@ -362,7 +404,8 @@ class TestONNXRT3xAutoTune(unittest.TestCase):
         op_names = [
             i.name
             for i in best_model.graph.node
-            if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q{}G{}".format(4, 128))
+            if i.op_type.startswith("MatMul") and
+            i.input[1].endswith("_Q{}G{}".format(4, 128))
         ]
         self.assertTrue(len(op_names) > 0)
 

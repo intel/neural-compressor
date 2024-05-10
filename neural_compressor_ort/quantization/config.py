@@ -17,33 +17,25 @@
 
 import re
 from collections import OrderedDict
-from enum import Enum
-from pathlib import Path
-from typing import Callable, List, NamedTuple, Union
-
+import enum
+import pathlib
 import numpy as np
 import onnx
-from onnxruntime.quantization.calibrate import CalibrationMethod
-from onnxruntime.quantization.quant_utils import QuantFormat, QuantType
-from onnxruntime.quantization.quantize import DynamicQuantConfig as ORTDynamicQuantConfig
-from onnxruntime.quantization.quantize import QuantConfig
-from onnxruntime.quantization.quantize import StaticQuantConfig as ORTStaticQuantConfig
+from onnxruntime import quantization
 
-from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
-from neural_compressor_ort.utils import (
-    AWQ,
-    DEFAULT_WHITE_LIST,
-    GPTQ,
-    OP_NAME_OR_MODULE_TYPE,
-    PRIORITY_AWQ,
-    PRIORITY_GPTQ,
-    PRIORITY_RTN,
-    PRIORITY_SMOOTH_QUANT,
-    RTN,
-    SMOOTH_QUANT,
-    logger,
-)
-from neural_compressor_ort.utils.base_config import BaseConfig, register_config, register_supported_configs
+from neural_compressor_ort.quantization import calibrate, tuning
+from neural_compressor_ort import constants, utility
+
+from __future__ import annotations
+
+import inspect
+import json
+from abc import ABC, abstractmethod
+import itertools 
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union, NamedTuple
+
+from typing_extensions import Self
+
 
 __all__ = [
     "RTNConfig",
@@ -57,6 +49,540 @@ __all__ = [
 ]
 
 
+# Config registry to store all registered configs.
+class ConfigRegistry(object):
+    registered_configs = {}
+    _config_registry = None
+
+    def __new__(cls) -> Self:
+        if cls._config_registry is None:
+            cls._config_registry = super(ConfigRegistry, cls).__new__(cls)
+
+        return cls._config_registry
+
+    @classmethod
+    def register_config_impl(cls,
+                             algo_name: str,
+                             priority: Union[float, int] = 0):
+        """Register config decorator.
+
+        The register the configuration classes for different algorithms.
+
+        Usage example:
+            @ConfigRegistry.register_config(algo_name=ExampleAlgorithm, priority=100)
+            class ExampleAlgorithmConfig:
+                # Configuration details for the ExampleAlgorithm
+
+        Args:
+            algo_name: the algorithm name.
+            priority: priority: the priority of the configuration. A larger number indicates a higher priority,
+                which will be tried first at the auto-tune stage. Defaults to 0.
+        """
+
+        def decorator(config_cls):
+            cls.registered_configs[algo_name] = {
+                "priority": priority,
+                "cls": config_cls
+            }
+            return config_cls
+
+        return decorator
+
+    @classmethod
+    def get_all_configs(cls) -> Dict[str, Dict[str, Dict[str, object]]]:
+        """Get all registered configurations."""
+        return cls.registered_configs
+
+    @classmethod
+    def get_sorted_configs(
+            cls) -> Dict[str, OrderedDict[str, Dict[str, object]]]:
+        """Get registered configurations sorted by priority."""
+        return OrderedDict(
+            sorted(cls.registered_configs.items(),
+                   key=lambda x: x[1]["priority"],
+                   reverse=True))
+
+    @classmethod
+    def get_cls_configs(cls) -> Dict[str, Dict[str, object]]:
+        """Get registered configurations without priority."""
+        cls_configs = {}
+        for algo_name, config_data in cls.registered_configs.items():
+            cls_configs[algo_name] = config_data["cls"]
+        return cls_configs
+
+    @classmethod
+    def get_all_config_cls(cls) -> List[Type[BaseConfig]]:
+        configs_cls = []
+        for algo_name, config_pairs in cls.registered_configs.items():
+            configs_cls.append(config_pairs["cls"])
+        return configs_cls
+
+
+config_registry = ConfigRegistry()
+
+
+def register_config(algo_name: str, priority: Union[float, int] = 0):
+    """Register config decorator.
+
+    The register the configuration classes for different algorithms.
+
+    Usage example:
+        @register_config(algo_name=ExampleAlgorithm, priority=100)
+        class ExampleAlgorithmConfig:
+            # Configuration details for the ExampleAlgorithm
+
+    Args:
+        algo_name: the algorithm name.
+        priority: the priority of the configuration. A larger number indicates a higher priority,
+            which will be tried first at the auto-tune stage. Defaults to 0.
+    """
+
+    return config_registry.register_config_impl(algo_name=algo_name,
+                                                priority=priority)
+
+
+class BaseConfig(ABC):
+    """The base config for all algorithm configs."""
+
+    name = constants.BASE_CONFIG
+    params_list = []
+
+    def __init__(
+        self,
+        white_list: Optional[List[constants.OP_NAME_OR_MODULE_TYPE]] = constants.DEFAULT_WHITE_LIST
+    ) -> None:
+        self._global_config: Optional[BaseConfig] = None
+        # For PyTorch, operator_type is the collective name for module type and functional operation type,
+        # for example, `torch.nn.Linear`, and `torch.nn.functional.linear`.
+        # local config is the collections of operator_type configs and operator configs
+        self._local_config: Dict[str, Optional[BaseConfig]] = {}
+        self._white_list = white_list
+
+    def _post_init(self):
+        if self.white_list == constants.DEFAULT_WHITE_LIST:
+            global_config = self.get_params_dict()
+            self._global_config = self.__class__(**global_config,
+                                                 white_list=None)
+        elif isinstance(self.white_list, list) and len(self.white_list) > 0:
+            for op_name_or_type in self.white_list:
+                global_config = self.get_params_dict()
+                tmp_config = self.__class__(**global_config, white_list=None)
+                self.set_local(op_name_or_type, tmp_config)
+        elif self.white_list == constants.EMPTY_WHITE_LIST:
+            return
+        else:
+            raise NotImplementedError(
+                f"The white list should be one of {constants.DEFAULT_WHITE_LIST}, {constants.EMPTY_WHITE_LIST},"
+                " a not empty list, but got {self.white_list}")
+
+    @property
+    def white_list(self):
+        return self._white_list
+
+    @white_list.setter
+    def white_list(
+            self, op_name_or_type_list: Optional[List[constants.OP_NAME_OR_MODULE_TYPE]]):
+        self._white_list = op_name_or_type_list
+
+    @property
+    def global_config(self):
+        return self._global_config
+
+    @global_config.setter
+    def global_config(self, config):
+        self._global_config = config
+
+    @property
+    def local_config(self):
+        return self._local_config
+
+    @local_config.setter
+    def local_config(self, config):
+        self._local_config = config
+
+    def set_local(self, operator_name: str, config: BaseConfig) -> BaseConfig:
+        if operator_name in self.local_config:
+            utility.logger.warning(
+                "The configuration for %s has already been set, update it.",
+                operator_name)
+        self.local_config[operator_name] = config
+        return self
+
+    def to_dict(self):
+        result = {}
+        global_config = self.get_params_dict()
+        if bool(self.local_config):
+            result[constants.LOCAL] = {}
+            for op_name, config in self.local_config.items():
+                result[constants.LOCAL][op_name] = config.to_dict()
+            if self.global_config:
+                result[constants.GLOBAL] = global_config
+        else:
+            result = global_config
+        return result
+
+    def get_params_dict(self):
+        result = dict()
+        for param, value in self.__dict__.items():
+            if param not in ["_global_config", "_local_config", "_white_list"]:
+                result[param] = value
+        return result
+
+    @classmethod
+    def from_dict(cls, config_dict):
+        """Construct config from a dict.
+
+        Args:
+            config_dict: _description_
+
+        Returns:
+            The constructed config.
+        """
+        if constants.GLOBAL not in config_dict and constants.LOCAL not in config_dict:
+            config = cls(**config_dict)
+            return config
+        else:
+            config = cls(**config_dict.get(constants.GLOBAL, {}))
+            operator_config = config_dict.get(constants.LOCAL, {})
+            if operator_config:
+                for op_name, op_config in operator_config.items():
+                    config.set_local(op_name, cls(**op_config))
+            return config
+
+    @classmethod
+    def to_diff_dict(cls, instance) -> Dict[str, Any]:
+        # TODO (Yi) to implement it
+        return {}
+
+    @classmethod
+    def from_json_file(cls, filename):
+        with open(filename, "r", encoding="utf-8") as file:
+            config_dict = json.load(file)
+        return cls.from_dict(**config_dict)
+
+    def to_json_file(self, filename):
+        config_dict = self.to_dict()
+        with open(filename, "w", encoding="utf-8") as file:
+            json.dump(config_dict, file, indent=4)
+        utility.logger.info("Dump the config into %s.", filename)
+
+    def to_json_string(self, use_diff: bool = False) -> str:
+        """Serializes this instance to a JSON string.
+
+        Args:
+            use_diff (`bool`, *optional*, defaults to `True`):
+                If set to `True`, only the difference between the config instance and the default `BaseConfig()`
+                is serialized to JSON string.
+
+        Returns:
+            `str`: String containing all the attributes that make up this configuration instance in JSON format.
+        """
+        if use_diff is True:
+            config_dict = self.to_diff_dict(self)
+        else:
+            config_dict = self.to_dict()
+        try:
+            return json.dumps(config_dict, indent=2) + "\n"
+        except:
+            return config_dict
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__} {self.to_json_string()}"
+
+    @classmethod
+    @abstractmethod
+    def register_supported_configs(cls):
+        """Add all supported configs."""
+        raise NotImplementedError
+
+    @classmethod
+    def validate(self, user_config: BaseConfig):
+        # TODO(Yi) validate the user config
+        pass
+
+    def __add__(self, other: BaseConfig) -> BaseConfig:
+        if isinstance(other, type(self)):
+            for op_name, config in other.local_config.items():
+                self.set_local(op_name, config)
+            return self
+        else:
+            return ComposableConfig(configs=[self, other])
+
+    @staticmethod
+    def get_the_default_value_of_param(config: BaseConfig, param: str) -> Any:
+        # Get the signature of the __init__ method
+        signature = inspect.signature(config.__init__)
+
+        # Get the parameters and their default values
+        parameters = signature.parameters
+        return parameters.get(param).default
+
+    def expand(self) -> List[BaseConfig]:
+        """Expand the config.
+
+        case 1
+            {
+                "global": { "weight_bits": [4, 6]}
+            }
+            expand to :
+            1st trial config:
+            {
+                "global": { "weight_bits": 4}
+            }
+            2nd trial config:
+            {
+                "global": { "weight_bits": 6}
+            }
+        case 2
+        # TODO (Yi) to support the expansion of config with `local`
+        {
+            "global": {
+                "weight_bits": [4, 6]
+            },
+            "local":
+            {
+                "fc1":{
+                    "weight_bits": [6, 8]
+                },
+                "fc2":{
+                    "weight_bits": [4]
+                }
+            }
+
+        } -> ?
+        """
+        config_list: List[BaseConfig] = []
+        params_list = self.params_list
+        config = self
+        tuning_param_list = []
+        not_tuning_param_pair = {
+        }  # key is the param name, value is the user specified value
+        for param in params_list:
+            # Create `tuning.TuningParam` for each param
+            # There are two cases:
+            # 1. The param is a string.
+            # 2. The param is a `tuning.TuningParam` instance.
+            if isinstance(param, str):
+                default_param = self.get_the_default_value_of_param(
+                    config, param)
+                tuning_param = tuning.TuningParam(
+                    name=param, tunable_type=List[type(default_param)])
+            elif isinstance(param, tuning.TuningParam):
+                tuning_param = param
+            else:
+                raise ValueError(f"Unsupported param type: {param}")
+            # Assign the options to the `tuning.TuningParam` instance
+            param_val = getattr(config, tuning_param.name)
+            if param_val is not None:
+                if tuning_param.is_tunable(param_val):
+                    tuning_param.options = param_val
+                    tuning_param_list.append(tuning_param)
+                else:
+                    not_tuning_param_pair[tuning_param.name] = param_val
+        utility.logger.debug("Tuning param list: %s", tuning_param_list)
+        utility.logger.debug("Not tuning param pair: %s", not_tuning_param_pair)
+        if len(tuning_param_list) == 0:
+            config_list = [config]
+        else:
+            tuning_param_name_lst = [
+                tuning_param.name for tuning_param in tuning_param_list
+            ]
+            for params_values in itertools.product(
+                    *
+                [tuning_param.options for tuning_param in tuning_param_list]):
+                tuning_param_pair = dict(
+                    zip(tuning_param_name_lst, params_values))
+                tmp_params_dict = {**not_tuning_param_pair, **tuning_param_pair}
+                new_config = self.__class__(**tmp_params_dict)
+                utility.logger.info(new_config.to_dict())
+                config_list.append(new_config)
+        utility.logger.info("Expanded the %s and got %d configs.", self.__class__.name,
+                    len(config_list))
+        return config_list
+
+    def _get_op_name_op_type_config(self):
+        op_type_config_dict = dict()
+        op_name_config_dict = dict()
+        for name, config in self.local_config.items():
+            if self._is_op_type(name):
+                op_type_config_dict[name] = config
+            else:
+                op_name_config_dict[name] = config
+        return op_type_config_dict, op_name_config_dict
+
+    def to_config_mapping(
+        self,
+        config_list: List[BaseConfig] = None,
+        model_info: List[Tuple[str, str]] = None
+    ) -> OrderedDict[Union[str, Callable], OrderedDict[str, BaseConfig]]:
+        config_mapping = OrderedDict()
+        if config_list is None:
+            config_list = [self]
+        for config in config_list:
+            global_config = config.global_config
+            op_type_config_dict, op_name_config_dict = config._get_op_name_op_type_config(
+            )
+            for op_name, op_type in model_info:
+                if self.global_config is not None:
+                    config_mapping[(op_name, op_type)] = global_config
+                if op_type in op_type_config_dict:
+                    config_mapping[(op_name,
+                                    op_type)] = op_name_config_dict[op_type]
+                for op_name_pattern in op_name_config_dict:
+                    if isinstance(op_name, str) and re.match(
+                            op_name_pattern, op_name):
+                        config_mapping[(
+                            op_name,
+                            op_type)] = op_name_config_dict[op_name_pattern]
+                    elif op_name_pattern == op_name:  # TODO: map ipex opname to stock pt op_name
+                        config_mapping[(
+                            op_name,
+                            op_type)] = op_name_config_dict[op_name_pattern]
+        return config_mapping
+
+    @staticmethod
+    def _is_op_type(name: str) -> bool:
+        # * Ort and TF may override this method.
+        return not isinstance(name, str)
+
+    @classmethod
+    @abstractmethod
+    def get_config_set_for_tuning(cls):
+        raise NotImplementedError
+
+
+class ComposableConfig(BaseConfig):
+    name = constants.COMPOSABLE_CONFIG
+
+    def __init__(self, configs: List[BaseConfig]) -> None:
+        self.config_list = configs
+
+    def __add__(self, other: BaseConfig) -> BaseConfig:
+        if isinstance(other, type(self)):
+            self.config_list.extend(other.config_list)
+        else:
+            self.config_list.append(other)
+        return self
+
+    def to_dict(self, params_list=[], operator2str=None):
+        result = {}
+        for config in self.config_list:
+            result[config.name] = config.to_dict()
+        return result
+
+    @classmethod
+    def from_dict(cls, config_dict: OrderedDict[str, Dict],
+                  config_registry: Dict[str, BaseConfig]):
+        assert len(
+            config_dict
+        ) >= 1, "The config dict must include at least one configuration."
+        num_configs = len(config_dict)
+        name, value = next(iter(config_dict.items()))
+        config = config_registry[name].from_dict(value)
+        for _ in range(num_configs - 1):
+            name, value = next(iter(config_dict.items()))
+            config += config_registry[name].from_dict(value)
+        return config
+
+    def to_json_string(self, use_diff: bool = False) -> str:
+        return json.dumps(self.to_dict(), indent=2) + "\n"
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__} {self.to_json_string()}"
+
+    def to_config_mapping(
+            self,
+            config_list: List[BaseConfig] = None,
+            model_info: Dict[str, Any] = None) -> OrderedDict[str, BaseConfig]:
+        config_mapping = OrderedDict()
+        for config in self.config_list:
+            op_type_config_dict, op_name_config_dict = config._get_op_name_op_type_config(
+            )
+            single_config_model_info = model_info.get(config.name, None)
+            for op_name, op_type in single_config_model_info:
+                if op_type in op_type_config_dict:
+                    config_mapping[(op_name,
+                                    op_type)] = op_name_config_dict[op_type]
+                for op_name_pattern in op_name_config_dict:
+                    if re.match(op_name_pattern, op_name):
+                        config_mapping[(
+                            op_name,
+                            op_type)] = op_name_config_dict[op_name_pattern]
+        return config_mapping
+
+    @classmethod
+    def register_supported_configs(cls):
+        """Add all supported configs."""
+        raise NotImplementedError
+
+    @classmethod
+    def get_config_set_for_tuning(cls) -> None:
+        # TODO (Yi) handle the composable config in `tuning_config`
+        return None
+
+    def get_model_info(self, model, *args, **kwargs):
+        model_info_dict = dict()
+        for config in self.config_list:
+            model_info_dict.update(
+                {config.name: config.get_model_info(model, *args, **kwargs)})
+        return model_info_dict
+
+
+def get_all_config_set_from_config_registry(
+) -> Union[BaseConfig, List[BaseConfig]]:
+    all_registered_config_cls: List[
+        BaseConfig] = config_registry.get_all_config_cls()
+    config_set = []
+    for config_cls in all_registered_config_cls:
+        config_set.append(config_cls.get_config_set_for_tuning())
+    return config_set
+
+
+def register_supported_configs():
+    """Register supported configs."""
+    all_registered_config_cls: List[
+        BaseConfig] = config_registry.get_all_config_cls()
+    for config_cls in all_registered_config_cls:
+        config_cls.register_supported_configs()
+
+
+#######################################################
+####   Options
+#######################################################
+
+
+def _check_value(name, src, supported_type, supported_value=[]):
+    """Check if the given object is the given supported type and in the given supported value.
+
+    Example::
+
+        from neural_compressor_ort.base_config import _check_value
+
+        def datatype(self, datatype):
+            if _check_value("datatype", datatype, list, ["fp32", "bf16", "uint8", "int8"]):
+                self._datatype = datatype
+    """
+    if isinstance(src, list) and any(
+        [not isinstance(i, supported_type) for i in src]):
+        assert False, "Type of {} items should be {} but not {}".format(
+            name, str(supported_type), [type(i) for i in src])
+    elif not isinstance(src, list) and not isinstance(src, supported_type):
+        assert False, "Type of {} should be {} but not {}".format(
+            name, str(supported_type), type(src))
+
+    if len(supported_value) > 0:
+        if isinstance(src, str) and src not in supported_value:
+            assert False, "{} is not in supported {}: {}. Skip setting it.".format(
+                src, name, str(supported_value))
+        elif (isinstance(src, list) and
+              all([isinstance(i, str) for i in src]) and
+              any([i not in supported_value for i in src])):
+            assert False, "{} is not in supported {}: {}. Skip setting it.".format(
+                src, name, str(supported_value))
+
+    return True
+
+
 class _OperatorConfig(NamedTuple):
     config: BaseConfig
     operators: List[Union[str, Callable]]
@@ -66,7 +592,7 @@ class _OperatorConfig(NamedTuple):
 ######################## RNT Config ###############################
 
 
-@register_config(algo_name=RTN, priority=PRIORITY_RTN)
+@register_config(algo_name=constants.RTN, priority=constants.PRIORITY_RTN)
 class RTNConfig(BaseConfig):
     """Config class for round-to-nearest weight-only quantization."""
 
@@ -84,7 +610,7 @@ class RTNConfig(BaseConfig):
         "providers",
         "layer_wise_quant",
     ]
-    name: str = RTN
+    name: str = constants.RTN
 
     def __init__(
         self,
@@ -98,7 +624,7 @@ class RTNConfig(BaseConfig):
         providers: List[str] = ["CPUExecutionProvider"],
         layer_wise_quant: bool = False,
         quant_last_matmul: bool = True,
-        white_list: List[OP_NAME_OR_MODULE_TYPE] = DEFAULT_WHITE_LIST,
+        white_list: List[constants.OP_NAME_OR_MODULE_TYPE] = constants.DEFAULT_WHITE_LIST,
     ):
         """Init RTN weight-only quantization config.
 
@@ -119,7 +645,7 @@ class RTNConfig(BaseConfig):
                 default is False.
             quant_last_matmul (bool, optional): whether to quantize the last matmul of the model, default is True.
             white_list (list, optional): op in white_list will be applied current config.
-                Defaults to DEFAULT_WHITE_LIST.
+                Defaults to constants.DEFAULT_WHITE_LIST.
         """
         super().__init__(white_list=white_list)
         self.weight_bits = weight_bits
@@ -151,10 +677,13 @@ class RTNConfig(BaseConfig):
             act_dtype=["fp32"],
         )
         operators = ["MatMul"]
-        supported_configs.append(_OperatorConfig(config=linear_rtn_config, operators=operators))
+        supported_configs.append(
+            _OperatorConfig(config=linear_rtn_config, operators=operators))
         cls.supported_configs = supported_configs
 
-    def to_config_mapping(self, config_list: List[BaseConfig] = None, model_info: list = None):
+    def to_config_mapping(self,
+                          config_list: List[BaseConfig] = None,
+                          model_info: list = None):
         config_mapping = OrderedDict()
         if config_list is None:
             config_list = [self]
@@ -164,24 +693,33 @@ class RTNConfig(BaseConfig):
 
             # update node level setting
             global_config = config.global_config
-            op_type_config_dict, op_name_config_dict = config._get_op_name_op_type_config()
+            op_type_config_dict, op_name_config_dict = config._get_op_name_op_type_config(
+            )
             for op_name, op_type in model_info:
                 if self.global_config is not None:
                     config_mapping[(op_name, op_type)] = global_config
                 if op_type in op_type_config_dict:
-                    config_mapping[(op_name, op_type)] = op_name_config_dict[op_type]
+                    config_mapping[(op_name,
+                                    op_type)] = op_name_config_dict[op_type]
                 for op_name_pattern in op_name_config_dict:
                     if re.match(op_name_pattern, op_name):
-                        config_mapping[(op_name, op_type)] = op_name_config_dict[op_name_pattern]
+                        config_mapping[(
+                            op_name,
+                            op_type)] = op_name_config_dict[op_name_pattern]
         if not self.quant_last_matmul:
             config_mapping[model_info[-1]] = {
-                "weight": {"dtype": "fp32"},
-                "activation": {"dtype": "fp32", "quant_mode": "fp32"},
+                "weight": {
+                    "dtype": "fp32"
+                },
+                "activation": {
+                    "dtype": "fp32",
+                    "quant_mode": "fp32"
+                },
             }
         return config_mapping
 
     @staticmethod
-    def get_model_info(model: Union[onnx.ModelProto, Path, str]) -> list:
+    def get_model_info(model: Union[onnx.ModelProto, pathlib.Path, str]) -> list:
         if not isinstance(model, onnx.ModelProto):
             model = onnx.load(model, load_external_data=False)
         white_list = ["MatMul"]
@@ -190,11 +728,13 @@ class RTNConfig(BaseConfig):
             if node.op_type in white_list:
                 pair = (node.name, node.op_type)
                 filter_result.append(pair)
-        logger.debug(f"Get model info: {filter_result}")
+        utility.logger.debug(f"Get model info: {filter_result}")
         return filter_result
 
     @classmethod
-    def get_config_set_for_tuning(cls) -> Union[None, "RTNConfig", List["RTNConfig"]]:  # pragma: no cover
+    def get_config_set_for_tuning(
+            cls
+    ) -> Union[None, "RTNConfig", List["RTNConfig"]]:  # pragma: no cover
         return RTNConfig(weight_bits=[4, 8], weight_sym=[True, False])
 
 
@@ -210,7 +750,7 @@ def get_default_rtn_config() -> RTNConfig:
 ######################## GPTQ Config ###############################
 
 
-@register_config(algo_name=GPTQ, priority=PRIORITY_GPTQ)
+@register_config(algo_name=constants.GPTQ, priority=constants.PRIORITY_GPTQ)
 class GPTQConfig(BaseConfig):
     """Config class for gptq weight-only quantization."""
 
@@ -232,7 +772,7 @@ class GPTQConfig(BaseConfig):
         "providers",
         "layer_wise_quant",
     ]
-    name: str = GPTQ
+    name: str = constants.GPTQ
 
     def __init__(
         self,
@@ -250,7 +790,7 @@ class GPTQConfig(BaseConfig):
         providers: List[str] = ["CPUExecutionProvider"],
         layer_wise_quant: bool = False,
         quant_last_matmul: bool = True,
-        white_list: List[OP_NAME_OR_MODULE_TYPE] = DEFAULT_WHITE_LIST,
+        white_list: List[constants.OP_NAME_OR_MODULE_TYPE] = constants.DEFAULT_WHITE_LIST,
     ):
         """Init GPTQ weight-only quantization config.
 
@@ -277,7 +817,7 @@ class GPTQConfig(BaseConfig):
                 default is False.
             quant_last_matmul (bool, optional): whether to quantize the last matmul of the model, default is True.
             white_list (list, optional): op in white_list will be applied current config.
-                Defaults to DEFAULT_WHITE_LIST.
+                Defaults to constants.DEFAULT_WHITE_LIST.
         """
         super().__init__(white_list=white_list)
         self.weight_bits = weight_bits
@@ -316,10 +856,13 @@ class GPTQConfig(BaseConfig):
             perchannel=[True, False],
         )
         operators = ["MatMul"]
-        supported_configs.append(_OperatorConfig(config=linear_gptq_config, operators=operators))
+        supported_configs.append(
+            _OperatorConfig(config=linear_gptq_config, operators=operators))
         cls.supported_configs = supported_configs
 
-    def to_config_mapping(self, config_list: list = None, model_info: list = None) -> OrderedDict:
+    def to_config_mapping(self,
+                          config_list: list = None,
+                          model_info: list = None) -> OrderedDict:
         config_mapping = OrderedDict()
         if config_list is None:
             config_list = [self]
@@ -329,24 +872,33 @@ class GPTQConfig(BaseConfig):
 
             # update node level setting
             global_config = config.global_config
-            op_type_config_dict, op_name_config_dict = config._get_op_name_op_type_config()
+            op_type_config_dict, op_name_config_dict = config._get_op_name_op_type_config(
+            )
             for op_name, op_type in model_info:
                 if self.global_config is not None:
                     config_mapping[(op_name, op_type)] = global_config
                 if op_type in op_type_config_dict:
-                    config_mapping[(op_name, op_type)] = op_name_config_dict[op_type]
+                    config_mapping[(op_name,
+                                    op_type)] = op_name_config_dict[op_type]
                 for op_name_pattern in op_name_config_dict:
                     if re.match(op_name_pattern, op_name):
-                        config_mapping[(op_name, op_type)] = op_name_config_dict[op_name_pattern]
+                        config_mapping[(
+                            op_name,
+                            op_type)] = op_name_config_dict[op_name_pattern]
         if not self.quant_last_matmul:
             config_mapping[model_info[-1]] = {
-                "weight": {"dtype": "fp32"},
-                "activation": {"dtype": "fp32", "quant_mode": "fp32"},
+                "weight": {
+                    "dtype": "fp32"
+                },
+                "activation": {
+                    "dtype": "fp32",
+                    "quant_mode": "fp32"
+                },
             }
         return config_mapping
 
     @staticmethod
-    def get_model_info(model: Union[onnx.ModelProto, Path, str]) -> list:
+    def get_model_info(model: Union[onnx.ModelProto, pathlib.Path, str]) -> list:
         if not isinstance(model, onnx.ModelProto):
             model = onnx.load(model, load_external_data=False)
         white_list = ["MatMul"]
@@ -355,11 +907,13 @@ class GPTQConfig(BaseConfig):
             if node.op_type in white_list:
                 pair = (node.name, node.op_type)
                 filter_result.append(pair)
-        logger.debug(f"Get model info: {filter_result}")
+        utility.logger.debug(f"Get model info: {filter_result}")
         return filter_result
 
     @classmethod
-    def get_config_set_for_tuning(cls) -> Union[None, "GPTQConfig", List["GPTQConfig"]]:  # pragma: no cover
+    def get_config_set_for_tuning(
+        cls
+    ) -> Union[None, "GPTQConfig", List["GPTQConfig"]]:  # pragma: no cover
         return GPTQConfig(
             weight_bits=[4, 8],
             weight_sym=[True, False],
@@ -381,7 +935,7 @@ def get_default_gptq_config() -> GPTQConfig:
 ######################## AWQ Config ###############################
 
 
-@register_config(algo_name=AWQ, priority=PRIORITY_AWQ)
+@register_config(algo_name=constants.AWQ, priority=constants.PRIORITY_AWQ)
 class AWQConfig(BaseConfig):
     """Config class for awq weight-only quantization."""
 
@@ -399,7 +953,7 @@ class AWQConfig(BaseConfig):
         "enable_mse_search",
         "providers",
     ]
-    name: str = AWQ
+    name: str = constants.AWQ
 
     def __init__(
         self,
@@ -413,7 +967,7 @@ class AWQConfig(BaseConfig):
         enable_mse_search: bool = True,
         providers: List[str] = ["CPUExecutionProvider"],
         quant_last_matmul: bool = True,
-        white_list: List[OP_NAME_OR_MODULE_TYPE] = DEFAULT_WHITE_LIST,
+        white_list: List[constants.OP_NAME_OR_MODULE_TYPE] = constants.DEFAULT_WHITE_LIST,
     ):
         """Init AWQ weight-only quantization config.
 
@@ -433,7 +987,7 @@ class AWQConfig(BaseConfig):
             providers (list, optional): execution providers to use. Defaults to ["CPUExecutionProvider"].
             quant_last_matmul (bool, optional): whether to quantize the last matmul of the model, default is True.
             white_list (list, optional): op in white_list will be applied current config.
-                Defaults to DEFAULT_WHITE_LIST.
+                Defaults to constants.DEFAULT_WHITE_LIST.
         """
         super().__init__(white_list=white_list)
         self.weight_bits = weight_bits
@@ -467,10 +1021,13 @@ class AWQConfig(BaseConfig):
             enable_mse_search=[True, False],
         )
         operators = ["MatMul"]
-        supported_configs.append(_OperatorConfig(config=linear_awq_config, operators=operators))
+        supported_configs.append(
+            _OperatorConfig(config=linear_awq_config, operators=operators))
         cls.supported_configs = supported_configs
 
-    def to_config_mapping(self, config_list: list = None, model_info: list = None) -> OrderedDict:
+    def to_config_mapping(self,
+                          config_list: list = None,
+                          model_info: list = None) -> OrderedDict:
         config_mapping = OrderedDict()
         if config_list is None:
             config_list = [self]
@@ -480,24 +1037,33 @@ class AWQConfig(BaseConfig):
 
             # update node level setting
             global_config = config.global_config
-            op_type_config_dict, op_name_config_dict = config._get_op_name_op_type_config()
+            op_type_config_dict, op_name_config_dict = config._get_op_name_op_type_config(
+            )
             for op_name, op_type in model_info:
                 if self.global_config is not None:
                     config_mapping[(op_name, op_type)] = global_config
                 if op_type in op_type_config_dict:
-                    config_mapping[(op_name, op_type)] = op_name_config_dict[op_type]
+                    config_mapping[(op_name,
+                                    op_type)] = op_name_config_dict[op_type]
                 for op_name_pattern in op_name_config_dict:
                     if re.match(op_name_pattern, op_name):
-                        config_mapping[(op_name, op_type)] = op_name_config_dict[op_name_pattern]
+                        config_mapping[(
+                            op_name,
+                            op_type)] = op_name_config_dict[op_name_pattern]
         if not self.quant_last_matmul:
             config_mapping[model_info[-1]] = {
-                "weight": {"dtype": "fp32"},
-                "activation": {"dtype": "fp32", "quant_mode": "fp32"},
+                "weight": {
+                    "dtype": "fp32"
+                },
+                "activation": {
+                    "dtype": "fp32",
+                    "quant_mode": "fp32"
+                },
             }
         return config_mapping
 
     @staticmethod
-    def get_model_info(model: Union[onnx.ModelProto, Path, str]) -> list:
+    def get_model_info(model: Union[onnx.ModelProto, pathlib.Path, str]) -> list:
         if not isinstance(model, onnx.ModelProto):
             model = onnx.load(model, load_external_data=False)
         white_list = ["MatMul"]
@@ -506,11 +1072,13 @@ class AWQConfig(BaseConfig):
             if node.op_type in white_list:
                 pair = (node.name, node.op_type)
                 filter_result.append(pair)
-        logger.debug(f"Get model info: {filter_result}")
+        utility.logger.debug(f"Get model info: {filter_result}")
         return filter_result
 
     @classmethod
-    def get_config_set_for_tuning(cls) -> Union[None, "AWQConfig", List["AWQConfig"]]:  # pragma: no cover
+    def get_config_set_for_tuning(
+            cls
+    ) -> Union[None, "AWQConfig", List["AWQConfig"]]:  # pragma: no cover
         return AWQConfig(
             weight_bits=[4, 8],
             weight_sym=[True, False],
@@ -531,8 +1099,8 @@ def get_default_awq_config() -> AWQConfig:
 ######################## SmoohQuant Config ###############################
 
 
-@register_config(algo_name=SMOOTH_QUANT, priority=PRIORITY_SMOOTH_QUANT)
-class SmoothQuantConfig(BaseConfig, ORTStaticQuantConfig):
+@register_config(algo_name=constants.SMOOTH_QUANT, priority=constants.PRIORITY_SMOOTH_QUANT)
+class SmoothQuantConfig(BaseConfig, quantization.StaticQuantConfig):
     """Smooth quant quantization config."""
 
     supported_configs: List[_OperatorConfig] = []
@@ -544,7 +1112,7 @@ class SmoothQuantConfig(BaseConfig, ORTStaticQuantConfig):
         "calib_iter",
         "scales_per_op",
     ]
-    name: str = SMOOTH_QUANT
+    name: str = constants.SMOOTH_QUANT
 
     def __init__(
         self,
@@ -553,9 +1121,14 @@ class SmoothQuantConfig(BaseConfig, ORTStaticQuantConfig):
         op_types: List[str] = ["Gemm", "Conv", "MatMul", "FusedConv"],
         calib_iter: int = 100,
         scales_per_op: bool = True,
-        auto_alpha_args: dict = {"alpha_min": 0.3, "alpha_max": 0.7, "alpha_step": 0.05, "attn_method": "min"},
+        auto_alpha_args: dict = {
+            "alpha_min": 0.3,
+            "alpha_max": 0.7,
+            "alpha_step": 0.05,
+            "attn_method": "min"
+        },
         providers: List[str] = ["CPUExecutionProvider"],
-        white_list: List[OP_NAME_OR_MODULE_TYPE] = DEFAULT_WHITE_LIST,
+        white_list: List[constants.OP_NAME_OR_MODULE_TYPE] = constants.DEFAULT_WHITE_LIST,
         **kwargs,
     ):
         """Init smooth quant config.
@@ -575,13 +1148,13 @@ class SmoothQuantConfig(BaseConfig, ORTStaticQuantConfig):
             providers (list, optional): providers used for inference.
                 Defaults to ["CPUExecutionProvider"].
             white_list (list, optional): op in white_list will be applied current config.
-                Defaults to DEFAULT_WHITE_LIST.
+                Defaults to constants.DEFAULT_WHITE_LIST.
             kwargs (dict): kwargs in below link are supported except calibration_data_reader:
                 https://github.com/microsoft/onnxruntime/blob/main/onnxruntime/python/tools/quantization/quantize.py#L78
         """
         BaseConfig.__init__(self)
         kwargs.update({"calibration_data_reader": None})
-        ORTStaticQuantConfig.__init__(self, **kwargs)
+        quantization.StaticQuantConfig.__init__(self, **kwargs)
         self.alpha = alpha
         self.folding = folding
         self.op_types = op_types
@@ -590,14 +1163,14 @@ class SmoothQuantConfig(BaseConfig, ORTStaticQuantConfig):
         self.auto_alpha_args = auto_alpha_args
         self.providers = providers
         self.white_list = white_list
-        self.weight_type = self.weight_type.value if isinstance(self.weight_type, Enum) else self.weight_type
-        self.activation_type = (
-            self.activation_type.value if isinstance(self.activation_type, Enum) else self.activation_type
-        )
-        self.calibrate_method = (
-            self.calibrate_method.value if isinstance(self.calibrate_method, Enum) else self.calibrate_method
-        )
-        self.quant_format = self.quant_format.value if isinstance(self.quant_format, Enum) else self.quant_format
+        self.weight_type = self.weight_type.value if isinstance(
+            self.weight_type, enum.Enum) else self.weight_type
+        self.activation_type = (self.activation_type.value if isinstance(
+            self.activation_type, enum.Enum) else self.activation_type)
+        self.calibrate_method = (self.calibrate_method.value if isinstance(
+            self.calibrate_method, enum.Enum) else self.calibrate_method)
+        self.quant_format = self.quant_format.value if isinstance(
+            self.quant_format, enum.Enum) else self.quant_format
         self._post_init()
 
     @classmethod
@@ -605,7 +1178,8 @@ class SmoothQuantConfig(BaseConfig, ORTStaticQuantConfig):
         supported_configs = []
         smooth_quant_config = SmoothQuantConfig()
         operators = ["Gemm", "Conv", "MatMul", "FusedConv"]
-        supported_configs.append(_OperatorConfig(config=smooth_quant_config, operators=operators))
+        supported_configs.append(
+            _OperatorConfig(config=smooth_quant_config, operators=operators))
         cls.supported_configs = supported_configs
 
     @staticmethod
@@ -616,21 +1190,22 @@ class SmoothQuantConfig(BaseConfig, ORTStaticQuantConfig):
             if node.op_type in white_list:
                 pair = (node.name, node.op_type)
                 filter_result.append(pair)
-        logger.debug(f"Get model info: {filter_result}")
+        utility.logger.debug(f"Get model info: {filter_result}")
         return filter_result
 
     @classmethod
     def get_config_set_for_tuning(
         cls,
-    ) -> Union[None, "SmoothQuantConfig", List["SmoothQuantConfig"]]:  # pragma: no cover
+    ) -> Union[None, "SmoothQuantConfig",
+               List["SmoothQuantConfig"]]:  # pragma: no cover
         return SmoothQuantConfig(alpha=np.arange(0.3, 0.7, 0.05))
 
     def convert_to_ort_config(self):
-        self.activation_type = QuantType(self.activation_type)
-        self.weight_type = QuantType(self.weight_type)
-        self.weight_type = QuantType(self.weight_type)
-        self.calibrate_method = CalibrationMethod(self.calibrate_method)
-        self.quant_format = QuantFormat(self.quant_format)
+        self.activation_type = quantization.QuantType(self.activation_type)
+        self.weight_type = quantization.QuantType(self.weight_type)
+        self.weight_type = quantization.QuantType(self.weight_type)
+        self.calibrate_method = quantization.CalibrationMethod(self.calibrate_method)
+        self.quant_format = quantization.QuantFormat(self.quant_format)
 
 
 def get_default_sq_config() -> SmoothQuantConfig:
@@ -653,23 +1228,30 @@ def get_woq_tuning_config() -> list:
     """
     RTN_G32ASYM = RTNConfig(weight_sym=False)
     GPTQ_G32ASYM = GPTQConfig(weight_sym=False)
-    GPTQ_G32ASYM_DISABLE_LAST_MATMUL = GPTQConfig(weight_sym=False, quant_last_matmul=False)
+    GPTQ_G32ASYM_DISABLE_LAST_MATMUL = GPTQConfig(weight_sym=False,
+                                                  quant_last_matmul=False)
     GPTQ_G128ASYM = GPTQConfig(weight_group_size=128, weight_sym=False)
     AWQ_G32ASYM = AWQConfig(weight_sym=False)
-    return [RTN_G32ASYM, GPTQ_G32ASYM, GPTQ_G32ASYM_DISABLE_LAST_MATMUL, GPTQ_G128ASYM, AWQ_G32ASYM]
+    return [
+        RTN_G32ASYM, GPTQ_G32ASYM, GPTQ_G32ASYM_DISABLE_LAST_MATMUL,
+        GPTQ_G128ASYM, AWQ_G32ASYM
+    ]
 
 
 ##################### INC Algo Configs End ###################################
 
-
 register_supported_configs()
-
 
 ##################### Config for ONNXRuntime-like user-facing API ############
 
 
-class StaticQuantConfig(ORTStaticQuantConfig):
-    def __init__(self, calibration_data_reader: CalibrationDataReader, extra_options=None, *args, **kwargs):
+class StaticQuantConfig(quantization.StaticQuantConfig):
+
+    def __init__(self,
+                 calibration_data_reader: calibrate.CalibrationDataReader,
+                 extra_options=None,
+                 *args,
+                 **kwargs):
         """This is a class for static Quant Configuration.
 
         Inherit from StaticQuantConfig:
@@ -696,13 +1278,16 @@ class StaticQuantConfig(ORTStaticQuantConfig):
                 If enabled, each op will have an individual scale, mainlyfor accuracy.
                 If not enabled,  ops with the same input will share a scale, mainly for performance.
         """
-        super().__init__(calibration_data_reader=calibration_data_reader, extra_options=extra_options, *args, **kwargs)
+        super().__init__(calibration_data_reader=calibration_data_reader,
+                         extra_options=extra_options,
+                         *args,
+                         **kwargs)
 
     def to_dict(self):
         return self.__dict__
 
 
-class DynamicQuantConfig(ORTDynamicQuantConfig):
+class DynamicQuantConfig(quantization.DynamicQuantConfig):
     """This is a class for dynamic Quant Configuration.
 
     Inherit from DynamicQuantConfig:
@@ -713,16 +1298,22 @@ class DynamicQuantConfig(ORTDynamicQuantConfig):
         super().__init__(*args, **kwargs)
 
 
-def generate_inc_sq_config(quant_config: QuantConfig):
+def generate_nc_sq_config(quant_config: quantization.StaticQuantConfig):
     extra_options = quant_config.extra_options
     quant_kwargs = {
-        "alpha": extra_options.get("SmoothQuantAlpha", 0.5),
-        "folding": extra_options.get("SmoothQuantFolding", True),
-        "op_types": extra_options.get("SmoothQuantOpTypes", ["Gemm", "Conv", "MatMul", "FusedConv"]),
-        "calib_iter": extra_options.get("SmoothQuantCalibIter", 100),
-        "scales_per_op": extra_options.get("SmoothQuantScalesPerOp", True),
+        "alpha":
+            extra_options.get("SmoothQuantAlpha", 0.5),
+        "folding":
+            extra_options.get("SmoothQuantFolding", True),
+        "op_types":
+            extra_options.get("SmoothQuantOpTypes",
+                              ["Gemm", "Conv", "MatMul", "FusedConv"]),
+        "calib_iter":
+            extra_options.get("SmoothQuantCalibIter", 100),
+        "scales_per_op":
+            extra_options.get("SmoothQuantScalesPerOp", True),
     }
     quant_config.extra_options["SmoothQuant"] = False
     quant_config_dict = quant_config.to_dict()
-    inc_sq_config = SmoothQuantConfig(**quant_kwargs, **quant_config_dict)
-    return inc_sq_config
+    nc_sq_config = SmoothQuantConfig(**quant_kwargs, **quant_config_dict)
+    return nc_sq_config
