@@ -114,7 +114,7 @@ class TestQuantizationConfig(unittest.TestCase):
         quant_config = global_config + fc_out_config
         # get model and quantize
         fp32_model = self.gptj
-        model_info = config.get_model_info(fp32_model, white_op_type_list=["MatMul"])
+        model_info = utility.get_model_info(fp32_model, white_op_type_list=["MatMul"])
         utility.logger.info(quant_config)
         configs_mapping = quant_config.to_config_mapping(model_info=model_info)
         utility.logger.info(configs_mapping)
@@ -186,7 +186,7 @@ class TestQuantizationConfig(unittest.TestCase):
         quant_config.set_local("/h.4/mlp/fc_out/MatMul", fc_out_config)
         # get model and quantize
         fp32_model = self.gptj
-        model_info = config.get_model_info(fp32_model, white_op_type_list=["MatMul"])
+        model_info = utility.get_model_info(fp32_model, white_op_type_list=["MatMul"])
         utility.logger.info(quant_config)
         configs_mapping = quant_config.to_config_mapping(model_info=model_info)
         utility.logger.info(configs_mapping)

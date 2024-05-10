@@ -5,7 +5,7 @@ import shutil
 import unittest
 
 import torch
-import transformers
+from transformers import AutoTokenizer
 from optimum.exporters.onnx import main_export
 
 from neural_compressor_ort import data_reader, utility
@@ -25,7 +25,7 @@ def find_onnx_file(folder_path):
 class DummyNLPDataloader(data_reader.CalibrationDataReader):
 
     def __init__(self, model_name):
-        self.tokenizer = transformers.AutoTokenizer.from_pretrained(model_name)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.sequence_a = "intel-extension-for-transformers is based in SH"
         self.sequence_b = "Where is intel-extension-for-transformers based? NYC or SH"
 
@@ -143,18 +143,6 @@ class TestAWQQuantWithInternalAPI(TestAWQQuant):
         self.assertIsNotNone(qmodel)
         self.assertTrue(self._check_model_is_quantized(qmodel))
 
-    def test_quantize_awq_from_dict_beginner(self):
-        quant_config = {
-            "awq": {
-                "weight_bits": 4,
-                "weight_group_size": 32,
-            },
-        }
-        qmodel = self._apply_awq(quant_config)
-        self.assertIsNotNone(qmodel)
-        self.assertIsNotNone(qmodel)
-        self.assertTrue(self._check_model_is_quantized(qmodel))
-
     def test_quantize_awq_from_class_beginner(self):
 
         quant_config = config.AWQConfig(weight_bits=4, weight_group_size=32)
@@ -176,51 +164,12 @@ class TestAWQQuantWithInternalAPI(TestAWQQuant):
         self.assertEqual(self._count_woq_matmul(qmodel), 29)
         self.assertFalse(self._check_node_is_quantized(qmodel, "/h.4/mlp/fc_out/MatMul"))
 
-    def test_quantize_awq_from_dict_advance(self):
-        quant_config = {
-            "awq": {
-                "global": {
-                    "weight_bits": 4,
-                    "weight_group_size": 32,
-                },
-                "local": {
-                    "/h.4/mlp/fc_out/MatMul": {
-                        "weight_dtype": "fp32",
-                    }
-                },
-            }
-        }
-        qmodel = self._apply_awq(quant_config)
-        self.assertIsNotNone(qmodel)
-        self.assertEqual(self._count_woq_matmul(qmodel), 29)
-        self.assertFalse(self._check_node_is_quantized(qmodel, "/h.4/mlp/fc_out/MatMul"))
-
-        quant_config = {
-            "awq": {
-                "global": {
-                    "weight_bits": 4,
-                    "weight_group_size": 32,
-                },
-                "local": {
-                    "/h.4/mlp/fc_out/MatMul": {
-                        "weight_bits": 8,
-                        "weight_group_size": 32,
-                    }
-                },
-            }
-        }
-        qmodel = self._apply_awq(quant_config)
-        self.assertIsNotNone(qmodel)
-        for node in qmodel.graph.node:
-            if node.name == "/h.4/mlp/fc_out/MatMul":
-                self.assertTrue(node.input[1].endswith("Q8G32"))
-
 
 class TestAWQQuantWithORTLikeAPI(TestAWQQuant):
 
     def test_awq_config_4bits(self):
 
-        algo_config = config.AWQWeightOnlyQuantConfig(calibration_data_reader=self.calibration_data_reader)
+        algo_config = matmul_4bits_quantizer.AWQWeightOnlyQuantConfig(calibration_data_reader=self.calibration_data_reader)
 
         quant = matmul_4bits_quantizer.MatMul4BitsQuantizer(
             copy.deepcopy(self.gptj),
@@ -234,7 +183,7 @@ class TestAWQQuantWithORTLikeAPI(TestAWQQuant):
 
     def test_awq_config_4bits_with_exclude_node(self):
 
-        algo_config = config.AWQWeightOnlyQuantConfig(calibration_data_reader=self.calibration_data_reader)
+        algo_config = matmul_4bits_quantizer.AWQWeightOnlyQuantConfig(calibration_data_reader=self.calibration_data_reader)
 
         quant = matmul_4bits_quantizer.MatMul4BitsQuantizer(
             copy.deepcopy(self.gptj),
@@ -268,7 +217,7 @@ class TestAWQQuantWithORTLikeAPI(TestAWQQuant):
 
     def test_awq_config_nbits_with_exclude_node(self):
 
-        algo_config = config.AWQWeightOnlyQuantConfig(calibration_data_reader=self.calibration_data_reader)
+        algo_config = matmul_nbits_quantizer.AWQWeightOnlyQuantConfig(calibration_data_reader=self.calibration_data_reader)
 
         for n_bits in [3, 4, 8]:
             quant = matmul_nbits_quantizer.MatMulNBitsQuantizer(

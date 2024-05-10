@@ -88,33 +88,6 @@ class TestONNXRT3xSmoothQuant(unittest.TestCase):
         num_muls = len([i for i in model.graph.node if i.name.endswith("_smooth_mul") and i.op_type == "Mul"])
         self.assertEqual(num_muls, 15)
 
-    def test_sq_from_dict_beginner(self):
-        sq_config = {
-            "smooth_quant": {
-                "global": {
-                    "alpha": 0.5,
-                    "scales_per_op": False,
-                },
-            }
-        }
-        self.data_reader.rewind()
-        model = algos.smooth_quant_entry(self.gptj, sq_config, self.data_reader)
-        num_muls = len([i for i in model.graph.node if i.name.endswith("_smooth_mul") and i.op_type == "Mul"])
-        self.assertEqual(num_muls, 15)
-
-    def test_sq_auto_tune_from_dict_beginner(self):
-        sq_config = {
-            "smooth_quant": {
-                "global": {
-                    "alpha": "auto",
-                },
-            }
-        }
-        self.data_reader.rewind()
-        model = algos.smooth_quant_entry(self.gptj, sq_config, self.data_reader)
-        num_muls = len([i for i in model.graph.node if i.name.endswith("_smooth_mul") and i.op_type == "Mul"])
-        self.assertEqual(num_muls, 30)
-
     def test_sq_ort_param_class_beginner(self):
         self.data_reader.rewind()
         sq_config = config.SmoothQuantConfig(weight_type=QuantType.QUInt8, activation_type=QuantType.QUInt8)

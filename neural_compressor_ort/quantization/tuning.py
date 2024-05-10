@@ -429,6 +429,7 @@ def _quantize(
     utility.logger.info(f"Quantize model with config: \n {quant_config} \n")
 
     # select quantization algo according to config
+    q_model = None
     for algo_name, algo_func in utility.algos_mapping.items():
         if _need_apply(quant_config, algo_name):
             utility.logger.info(f"Start to apply {algo_name} on the model.")

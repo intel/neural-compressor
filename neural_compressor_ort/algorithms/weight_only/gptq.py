@@ -28,6 +28,7 @@ from packaging.version import Version
 from neural_compressor_ort import constants, data_reader, onnx_model, utility
 from neural_compressor_ort.algorithms.weight_only import utility as woq_utility
 from neural_compressor_ort.quantization import config
+from neural_compressor_ort.algorithms.layer_wise import core
 
 
 def _gptq(
@@ -412,9 +413,7 @@ def apply_gptq_on_model(
         if isinstance(op_config, config.GPTQConfig):
             quant_config[op_name_type] = op_config.to_dict()
     if layer_wise:
-        from neural_compressor_ort.algorithms import layer_wise_quant
-
-        quantized_model = layer_wise_quant(
+        quantized_model = core.layer_wise_quant(
             model,
             quant_func=gptq_quantize,
             weight_config=quant_config,

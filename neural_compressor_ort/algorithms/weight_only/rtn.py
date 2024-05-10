@@ -30,6 +30,7 @@ from packaging import version
 from neural_compressor_ort import constants, onnx_model, utility
 from neural_compressor_ort.algorithms.weight_only import utility as woq_utility
 from neural_compressor_ort.quantization import config
+from neural_compressor_ort.algorithms.layer_wise import core
 
 
 def rtn_quantize(
@@ -201,9 +202,7 @@ def apply_rtn_on_model(
             quant_config[op_name_type] = op_config.to_dict()
 
     if layer_wise:
-        from neural_compressor_ort.algorithms import layer_wise_quant
-
-        quantized_model = layer_wise_quant(model, quant_func=rtn_quantize, weight_config=quant_config, **quant_kwargs)
+        quantized_model = core.layer_wise_quant(model, quant_func=rtn_quantize, weight_config=quant_config, **quant_kwargs)
     else:
         quantized_model = rtn_quantize(model, weight_config=quant_config, **quant_kwargs)
 

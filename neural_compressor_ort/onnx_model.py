@@ -23,8 +23,7 @@ import onnx
 from onnxruntime.quantization import onnx_model
 
 from neural_compressor_ort import constants, utility
-
-PretrainedConfig = utility.LazyImport("transformers.PretrainedConfig")
+from transformers import PretrainedConfig
 
 
 class ONNXModel(onnx_model.ONNXModel):

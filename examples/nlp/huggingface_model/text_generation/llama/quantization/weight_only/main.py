@@ -27,7 +27,8 @@ import random
 import numpy as np
 import datasets
 import onnxruntime as ort
-import transformers
+from transformers import LlamaTokenizer
+from transformers import LlamaConfig
 from torch.nn import functional
 from torch.utils import data
 from intel_extension_for_transformers.transformers.llm.evaluation import lm_eval
@@ -110,8 +111,8 @@ parser.add_argument("--intra_op_num_threads", type=int, default=24)
 args = parser.parse_args()
 
 # load model
-tokenizer = transformers.LlamaTokenizer.from_pretrained(args.tokenizer)
-config = transformers.LlamaConfig.from_pretrained(args.model_path)
+tokenizer = LlamaTokenizer.from_pretrained(args.tokenizer)
+config = LlamaConfig.from_pretrained(args.model_path)
 
 
 def tokenize_function(examples):
