@@ -20,18 +20,18 @@
 
 import struct
 import sys
+from importlib import util
 
 import numpy as np
 import onnx
 import onnxruntime as ort
-
-from importlib import util
 from packaging import version
 
 from neural_compressor_ort import constants, utility
-if sys.version_info < (
-        3, 11) and find_spec("onnxruntime_extensions"):  # pragma: no cover
+
+if sys.version_info < (3, 11) and find_spec("onnxruntime_extensions"):  # pragma: no cover
     import onnxruntime_extensions
+
 
 def _get_blob_size(group_size, has_zp):  # pragma: no cover
     """Get blob_size.
@@ -82,8 +82,7 @@ def make_matmul_weight_only_node(
     """
     blob_size = _get_blob_size(group_size, zero_point is not None)
     packed = np.zeros((q_weight.shape[0], blob_size), dtype="uint8")
-    q_weight_name = node.input[1] + "_Q{}G{}".format(str(num_bits),
-                                                     str(group_size))
+    q_weight_name = node.input[1] + "_Q{}G{}".format(str(num_bits), str(group_size))
     input_names = [node.input[0], q_weight_name]
     new_inits = []
     kwargs = {}
@@ -114,23 +113,20 @@ def make_matmul_weight_only_node(
             if num_bits > 4:
                 packed_zp = np.reshape(zero_point, (1, -1)).astype("uint8")
             else:
-                packed_zp = np.full((zero_point.shape[0] + 1) // 2,
-                                    136,
-                                    dtype="uint8")
+                packed_zp = np.full((zero_point.shape[0] + 1) // 2, 136, dtype="uint8")
                 for i in range(zero_point.shape[0] // k_blocks):
                     for j in range(k_blocks):
                         idx = i * k_blocks + j
                         zp = zero_point[idx]
-                        packed_zp[idx // 2] = (((packed_zp[idx // 2] & 0x0F) |
-                                                (zp << 4)) if (idx & 1) else
-                                               ((packed_zp[idx // 2] & 0xF0) |
-                                                zp))
+                        packed_zp[idx // 2] = (
+                            ((packed_zp[idx // 2] & 0x0F) | (zp << 4))
+                            if (idx & 1)
+                            else ((packed_zp[idx // 2] & 0xF0) | zp)
+                        )
 
-            zp_tensor = onnx.helper.make_tensor(name=node.input[1] + "_zp",
-                                                data_type=2,
-                                                dims=packed_zp.shape,
-                                                vals=packed_zp.tobytes(),
-                                                raw=True)
+            zp_tensor = onnx.helper.make_tensor(
+                name=node.input[1] + "_zp", data_type=2, dims=packed_zp.shape, vals=packed_zp.tobytes(), raw=True
+            )
             input_names.append(zp_tensor.name)
             new_inits.append(zp_tensor)
 
@@ -159,16 +155,14 @@ def make_matmul_weight_only_node(
                 packed[i][4] = zero_point[i]
 
             packed[i][offset:] = np.bitwise_or(
-                q_weight[i][:group_size // 2],
-                np.left_shift(q_weight[i][group_size // 2:], num_bits))
+                q_weight[i][: group_size // 2], np.left_shift(q_weight[i][group_size // 2 :], num_bits)
+            )
         packed = packed.reshape(-1)
 
         # build shape tensor
-        shape_tensor = onnx.helper.make_tensor(name=node.input[1] + "_shape",
-                                               data_type=7,
-                                               dims=(2,),
-                                               vals=np.array(weight_shape,
-                                                             dtype="int64"))
+        shape_tensor = onnx.helper.make_tensor(
+            name=node.input[1] + "_shape", data_type=7, dims=(2,), vals=np.array(weight_shape, dtype="int64")
+        )
         new_inits.append(shape_tensor)
         input_names.append(shape_tensor.name)
 
@@ -188,8 +182,7 @@ def make_matmul_weight_only_node(
         op_type,
         inputs=input_names,
         outputs=node.output,
-        name=node.name + "_Q" + str(num_bits) if node.name else "_Q" +
-        str(num_bits),
+        name=node.name + "_Q" + str(num_bits) if node.name else "_Q" + str(num_bits),
         domain="com.microsoft",
         **kwargs,
     )
@@ -210,8 +203,7 @@ def prepare_inputs(model, data_reader, providers):
     """
 
     so = ort.SessionOptions()
-    if sys.version_info < (
-            3, 11) and find_spec("onnxruntime_extensions"):  # pragma: no cover
+    if sys.version_info < (3, 11) and find_spec("onnxruntime_extensions"):  # pragma: no cover
         so.register_custom_ops_library(onnxruntime_extensions.get_library_path())
     if model.is_large_model:
         onnx.save_model(
@@ -283,34 +275,31 @@ def quant_tensor(
         maxq = 2**num_bits - 1
         minq = 0
     elif scheme == "sym":
-        maxq = 2**(num_bits - 1) - 1 if num_bits != 1 else 0
-        minq = -(2**(num_bits - 1)) if num_bits != 1 else -1
+        maxq = 2 ** (num_bits - 1) - 1 if num_bits != 1 else 0
+        minq = -(2 ** (num_bits - 1)) if num_bits != 1 else -1
 
     rmin = np.min(data, axis=1, keepdims=True) * ratio
     rmax = np.max(data, axis=1, keepdims=True) * ratio
     if scheme == "sym":
         max_range = np.maximum(np.abs(rmin), np.abs(rmax))
         scale = np.ones(rmax.shape)
-        scale[max_range > 0] = np.array([
-            float(i) / (maxq - minq)
-            for i in (max_range[max_range > 0] * 2.0).flatten().tolist()
-        ])
-        zero_point = (np.zeros(scale.shape) if dtype == "int" else
-                      np.ones(rmax.shape, dtype="uint8") * (1 <<
-                                                            (num_bits - 1)))
+        scale[max_range > 0] = np.array(
+            [float(i) / (maxq - minq) for i in (max_range[max_range > 0] * 2.0).flatten().tolist()]
+        )
+        zero_point = (
+            np.zeros(scale.shape) if dtype == "int" else np.ones(rmax.shape, dtype="uint8") * (1 << (num_bits - 1))
+        )
     else:
         scale = np.ones(rmax.shape)
-        scale[rmin != rmax] = np.array([
-            float(i) / (maxq - minq)
-            for i in (rmax - rmin)[rmin != rmax].flatten().tolist()
-        ])
-        zero_point = (((np.zeros(scale.shape) - rmin) /
-                       scale).round() if dtype == "int" else np.maximum(
-                           0,
-                           np.minimum(maxq, ((np.zeros(scale.shape) - rmin) /
-                                             scale).round())).astype("uint8"))
-    return np.clip((data / scale + zero_point).round(), minq,
-                   maxq), scale, zero_point
+        scale[rmin != rmax] = np.array(
+            [float(i) / (maxq - minq) for i in (rmax - rmin)[rmin != rmax].flatten().tolist()]
+        )
+        zero_point = (
+            ((np.zeros(scale.shape) - rmin) / scale).round()
+            if dtype == "int"
+            else np.maximum(0, np.minimum(maxq, ((np.zeros(scale.shape) - rmin) / scale).round())).astype("uint8")
+        )
+    return np.clip((data / scale + zero_point).round(), minq, maxq), scale, zero_point
 
 
 def qdq_tensor(
@@ -335,6 +324,5 @@ def qdq_tensor(
         output: quant-dequant weight
     """
     org_shape = data.shape
-    weight, scale, zp = quant_tensor(data, num_bits, group_size, scheme, dtype,
-                                     ratio)
+    weight, scale, zp = quant_tensor(data, num_bits, group_size, scheme, dtype, ratio)
     return np.reshape(scale * (weight - zp), org_shape)

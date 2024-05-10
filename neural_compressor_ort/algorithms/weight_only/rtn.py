@@ -27,9 +27,9 @@ import onnx
 import onnxruntime as ort
 from packaging import version
 
+from neural_compressor_ort import constants, onnx_model, utility
 from neural_compressor_ort.algorithms.weight_only import utility as woq_utility
 from neural_compressor_ort.quantization import config
-from neural_compressor_ort import onnx_model, constants, utility
 
 
 def rtn_quantize(
@@ -75,8 +75,7 @@ def rtn_quantize(
     """
     if not isinstance(model, onnx_model.ONNXModel):
         model = onnx_model.ONNXModel(model)
-    base_dir = os.path.dirname(
-        model.model_path) if model.model_path is not None else ""
+    base_dir = os.path.dirname(model.model_path) if model.model_path is not None else ""
     new_nodes = []
     remove_nodes = []
     total_num = len([i for i in model.nodes() if i.op_type in ["MatMul"]])
@@ -89,26 +88,22 @@ def rtn_quantize(
         # check op_type of node is MatMul
         # check dim 1 of input is weight tensor
         # check weight_type is not "fp32"
-        if (node.op_type in ["MatMul"]  # check op_type of node is MatMul
-                and model.get_initializer(node.input[1]) is not None and
-                weight_config.get((node.name, node.op_type), {}).get(
-                    "weight_dtype", "fp32") != "fp32"):
+        if (
+            node.op_type in ["MatMul"]  # check op_type of node is MatMul
+            and model.get_initializer(node.input[1]) is not None
+            and weight_config.get((node.name, node.op_type), {}).get("weight_dtype", "fp32") != "fp32"
+        ):
             weight_tensor = model.get_initializer(node.input[1])
-            weight = onnx.numpy_helper.to_array(weight_tensor,
-                                                base_dir=base_dir).copy()
+            weight = onnx.numpy_helper.to_array(weight_tensor, base_dir=base_dir).copy()
             if len(weight.shape) != 2:
                 continue
 
             dtype = weight.dtype
             if (node.name, node.op_type) in weight_config:
-                num_bits = weight_config[(node.name,
-                                          node.op_type)].get("weight_bits", 4)
-                group_size = weight_config[(node.name, node.op_type)].get(
-                    "weight_group_size", 32)
-                scheme = "sym" if weight_config[(node.name, node.op_type)].get(
-                    "weight_sym", True) else "asym"
-                accuracy_level = weight_config[(node.name, node.op_type)].get(
-                    "accuracy_level", 0)
+                num_bits = weight_config[(node.name, node.op_type)].get("weight_bits", 4)
+                group_size = weight_config[(node.name, node.op_type)].get("weight_group_size", 32)
+                scheme = "sym" if weight_config[(node.name, node.op_type)].get("weight_sym", True) else "asym"
+                accuracy_level = weight_config[(node.name, node.op_type)].get("accuracy_level", 0)
 
             org_w_shape = weight.shape  # ic, oc
             group_size = group_size if group_size != -1 else org_w_shape[0]
@@ -118,21 +113,21 @@ def rtn_quantize(
 
             weight = woq_utility.pad_tensor(weight, group_size, k_blocks)
 
-            satisfy_MatMulNBits_condition = version.Version(
-                ort.__version__) > constants.ONNXRT1161_VERSION and num_bits == 4
-            satisfy_MatMulFpQ4_condition = (version.Version(
-                ort.__version__) >= constants.ONNXRT116_VERSION and num_bits == 4 and
-                                            group_size == 32)
-            if ("CUDAExecutionProvider" in providers and
-                    satisfy_MatMulNBits_condition) or (
-                        "CUDAExecutionProvider" not in providers and
-                        (satisfy_MatMulFpQ4_condition or
-                         satisfy_MatMulNBits_condition)):  # pragma: no cover
+            satisfy_MatMulNBits_condition = (
+                version.Version(ort.__version__) > constants.ONNXRT1161_VERSION and num_bits == 4
+            )
+            satisfy_MatMulFpQ4_condition = (
+                version.Version(ort.__version__) >= constants.ONNXRT116_VERSION and num_bits == 4 and group_size == 32
+            )
+            if ("CUDAExecutionProvider" in providers and satisfy_MatMulNBits_condition) or (
+                "CUDAExecutionProvider" not in providers
+                and (satisfy_MatMulFpQ4_condition or satisfy_MatMulNBits_condition)
+            ):  # pragma: no cover
                 # MatMulFpQ4 support 4 bits and 32 group_size with ort 1.16.0 and 1.16.1 versions, supported by CPU EP
                 # MatMulNBits supports 4 bits and 2^n group_size with ort > 1.16.1, supported by CPU EP AND CUDA EP
-                q_weight, scale, zp = woq_utility.quant_tensor(weight.T, num_bits,
-                                                   group_size, scheme, "uint",
-                                                   ratios.get(node.input[1], 1))
+                q_weight, scale, zp = woq_utility.quant_tensor(
+                    weight.T, num_bits, group_size, scheme, "uint", ratios.get(node.input[1], 1)
+                )
                 q_matmul_node, new_inits = woq_utility.make_matmul_weight_only_node(
                     node=node,
                     weight_shape=org_w_shape,
@@ -149,14 +144,14 @@ def rtn_quantize(
                 remove_nodes.append(node)
                 new_nodes.append(q_matmul_node)
             else:
-                q_weight = woq_utility.qdq_tensor(weight.T, num_bits, group_size, scheme,
-                                      "int", ratios.get(node.input[1], 1))
+                q_weight = woq_utility.qdq_tensor(
+                    weight.T, num_bits, group_size, scheme, "int", ratios.get(node.input[1], 1)
+                )
                 q_weight = np.reshape(q_weight, (org_w_shape[1], -1))
                 q_weight = np.transpose(q_weight)
-                q_weight = q_weight[:org_w_shape[0], :].astype(dtype)
+                q_weight = q_weight[: org_w_shape[0], :].astype(dtype)
                 q_weight_tensor = onnx.helper.make_tensor(
-                    name=node.input[1] +
-                    "_Q{}G{}".format(str(num_bits), str(group_size)),
+                    name=node.input[1] + "_Q{}G{}".format(str(num_bits), str(group_size)),
                     data_type=utility.dtype_mapping[str(dtype)],
                     dims=weight.shape,
                     vals=q_weight.tobytes(),
@@ -173,8 +168,7 @@ def rtn_quantize(
 
     # reload external data to prevent external data file path errors
     if model.is_large_model:
-        onnx.external_data_helper.load_external_data_for_model(model.model,
-                                     os.path.split(model.model_path)[0])
+        onnx.external_data_helper.load_external_data_for_model(model.model, os.path.split(model.model_path)[0])
 
     if return_modelproto:
         return model.model
@@ -182,8 +176,9 @@ def rtn_quantize(
         return model
 
 
-def apply_rtn_on_model(model: Union[onnx.ModelProto, onnx_model.ONNXModel, pathlib.Path, str],
-                       quant_config: dict) -> onnx.ModelProto:
+def apply_rtn_on_model(
+    model: Union[onnx.ModelProto, onnx_model.ONNXModel, pathlib.Path, str], quant_config: dict
+) -> onnx.ModelProto:
     """Apply RTN on onnx model.
 
     Args:
@@ -198,11 +193,7 @@ def apply_rtn_on_model(model: Union[onnx.ModelProto, onnx_model.ONNXModel, pathl
 
     # set other model params
     quant_kwargs = {}
-    quant_kwargs = {
-        key: quant_config.pop(key)
-        for key in config.RTNConfig.model_params_list
-        if key in quant_config
-    }
+    quant_kwargs = {key: quant_config.pop(key) for key in config.RTNConfig.model_params_list if key in quant_config}
 
     # change op config to dict type
     for op_name_type, op_config in quant_config.items():
@@ -212,14 +203,9 @@ def apply_rtn_on_model(model: Union[onnx.ModelProto, onnx_model.ONNXModel, pathl
     if layer_wise:
         from neural_compressor_ort.algorithms import layer_wise_quant
 
-        quantized_model = layer_wise_quant(model,
-                                           quant_func=rtn_quantize,
-                                           weight_config=quant_config,
-                                           **quant_kwargs)
+        quantized_model = layer_wise_quant(model, quant_func=rtn_quantize, weight_config=quant_config, **quant_kwargs)
     else:
-        quantized_model = rtn_quantize(model,
-                                       weight_config=quant_config,
-                                       **quant_kwargs)
+        quantized_model = rtn_quantize(model, weight_config=quant_config, **quant_kwargs)
 
     if isinstance(quantized_model, onnx_model.ONNXModel):
         quantized_model = quantized_model.model

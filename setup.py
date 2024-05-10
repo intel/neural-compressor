@@ -1,7 +1,8 @@
 import io
 import re
-import setuptools
 import subprocess
+
+import setuptools
 
 
 def fetch_requirements(path):
@@ -11,10 +12,9 @@ def fetch_requirements(path):
 
 def is_commit_on_tag():
     try:
-        result = subprocess.run(["git", "describe", "--exact-match", "--tags"],
-                                capture_output=True,
-                                text=True,
-                                check=True)
+        result = subprocess.run(
+            ["git", "describe", "--exact-match", "--tags"], capture_output=True, text=True, check=True
+        )
         tag_name = result.stdout.strip()
         return tag_name
     except subprocess.CalledProcessError:
@@ -25,10 +25,7 @@ def get_build_version():
     if is_commit_on_tag():
         return __version__
     try:
-        result = subprocess.run(["git", "describe", "--tags"],
-                                capture_output=True,
-                                text=True,
-                                check=True)
+        result = subprocess.run(["git", "describe", "--tags"], capture_output=True, text=True, check=True)
         _, distance, commit = result.stdout.strip().split("-")
         return f"{__version__}.dev{distance}+{commit}"
     except subprocess.CalledProcessError:
@@ -48,8 +45,7 @@ if __name__ == "__main__":
         name="neural_compressor_ort",
         author="Intel AIPT Team",
         version=get_build_version(),
-        author_email=
-        "tai.huang@intel.com, mengni.wang@intel.com, yuwen.zhou@intel.com, suyue.chen@intel.com",
+        author_email="tai.huang@intel.com, mengni.wang@intel.com, yuwen.zhou@intel.com, suyue.chen@intel.com",
         description="Repository of Neural Compressor ORT",
         long_description=io.open("README.md", "r", encoding="utf-8").read(),
         long_description_content_type="text/markdown",

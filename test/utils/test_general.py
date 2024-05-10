@@ -12,8 +12,7 @@ PRIORITY_FAKE_ALGO_1 = 90
 FAKE_CONFIG_NAME_1 = "fake_one"
 DEFAULT_WEIGHT_BITS = [4, 6]
 
-FAKE_MODEL_INFO = [("OP1_NAME", "OP_TYPE1"), ("OP2_NAME", "OP_TYPE1"),
-                   ("OP3_NAME", "OP_TYPE2")]
+FAKE_MODEL_INFO = [("OP1_NAME", "OP_TYPE1"), ("OP2_NAME", "OP_TYPE1"), ("OP3_NAME", "OP_TYPE2")]
 
 
 class FakeModel:
@@ -75,8 +74,7 @@ class FakeAlgoConfig(config.BaseConfig):
         return FAKE_MODEL_INFO
 
     @classmethod
-    def get_config_set_for_tuning(
-            cls) -> Union[None, "FakeAlgoConfig", List["FakeAlgoConfig"]]:
+    def get_config_set_for_tuning(cls) -> Union[None, "FakeAlgoConfig", List["FakeAlgoConfig"]]:
         return FakeAlgoConfig(weight_bits=DEFAULT_WEIGHT_BITS)
 
 
@@ -136,8 +134,7 @@ class FakeAlgoOneConfig(config.BaseConfig):
         return FAKE_MODEL_INFO
 
     @classmethod
-    def get_config_set_for_tuning(
-            cls) -> Union[None, "FakeAlgoOneConfig", List["FakeAlgoOneConfig"]]:
+    def get_config_set_for_tuning(cls) -> Union[None, "FakeAlgoOneConfig", List["FakeAlgoOneConfig"]]:
         return FakeAlgoOneConfig(weight_bits=DEFAULT_WEIGHT_BITS)
 
 
@@ -192,20 +189,16 @@ class TestBaseConfig(unittest.TestCase):
         fake_default_config = get_default_fake_config()
         self.assertEqual(fake_default_config.weight_dtype, "int")
         config_set = get_all_config_set()
-        self.assertEqual(len(config_set),
-                         len(config.config_registry.get_all_config_cls()))
-        self.assertEqual([i for i in config_set if i.name == FAKE_CONFIG_NAME
-                         ][0].weight_bits, DEFAULT_WEIGHT_BITS)
+        self.assertEqual(len(config_set), len(config.config_registry.get_all_config_cls()))
+        self.assertEqual([i for i in config_set if i.name == FAKE_CONFIG_NAME][0].weight_bits, DEFAULT_WEIGHT_BITS)
 
     def test_config_expand_complex_tunable_type(self):
         target_op_type_list_options = [["Conv", "Gemm"], ["Conv", "Matmul"]]
-        configs = FakeAlgoConfig(
-            target_op_type_list=target_op_type_list_options)
+        configs = FakeAlgoConfig(target_op_type_list=target_op_type_list_options)
         configs_list = configs.expand()
         self.assertEqual(len(configs_list), len(target_op_type_list_options))
         for i in range(len(configs_list)):
-            self.assertEqual(configs_list[i].target_op_type_list,
-                             target_op_type_list_options[i])
+            self.assertEqual(configs_list[i].target_op_type_list, target_op_type_list_options[i])
 
     def test_mixed_two_algos(self):
         model = FakeModel()
@@ -228,8 +221,7 @@ class TestConfigSet(unittest.TestCase):
 
     def test_config_set(self) -> None:
         self.assertEqual(len(self.config_set_obj), len(self.config_set))
-        self.assertEqual(self.config_set_obj[0].weight_bits,
-                         self.config_set[0].weight_bits)
+        self.assertEqual(self.config_set_obj[0].weight_bits, self.config_set[0].weight_bits)
 
 
 class TestConfigSampler(unittest.TestCase):
@@ -239,17 +231,13 @@ class TestConfigSampler(unittest.TestCase):
         self.seq_sampler = tuning.SequentialSampler(self.config_set)
 
     def test_config_sampler(self) -> None:
-        self.assertEqual(list(self.seq_sampler),
-                         list(range(len(self.config_set))))
+        self.assertEqual(list(self.seq_sampler), list(range(len(self.config_set))))
 
 
 class TestConfigLoader(unittest.TestCase):
 
     def setUp(self):
-        self.config_set = [
-            FakeAlgoConfig(weight_bits=4),
-            FakeAlgoConfig(weight_bits=8)
-        ]
+        self.config_set = [FakeAlgoConfig(weight_bits=4), FakeAlgoConfig(weight_bits=8)]
         self.loader = tuning.ConfigLoader(self.config_set)
 
     def test_config_loader(self) -> None:

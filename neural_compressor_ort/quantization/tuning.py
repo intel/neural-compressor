@@ -12,17 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-import tempfile
-import pathlib
-import onnx
-
-from neural_compressor_ort import utility
-import enum
-import pydantic
 import copy
+import enum
+import os
+import pathlib
+import tempfile
 import uuid
 from typing import Any, Callable, Dict, Generator, Iterator, List, Optional, Sized, Tuple, Union, _GenericAlias
+
+import onnx
+import pydantic
+
+from neural_compressor_ort import utility
 from neural_compressor_ort.quantization import config
 
 
@@ -93,11 +94,8 @@ class TuningParam:
     def is_tunable(self, value: Any) -> bool:
         # Use `Pydantic` to validate the input_args.
         # TODO: refine the implementation in further.
-        assert isinstance(
-            self.tunable_type, _GenericAlias
-        ), f"Expected a type hint, got {self.tunable_type} instead."
-        DynamicInputArgsModel = TuningParam.create_input_args_model(
-            self.tunable_type)
+        assert isinstance(self.tunable_type, _GenericAlias), f"Expected a type hint, got {self.tunable_type} instead."
+        DynamicInputArgsModel = TuningParam.create_input_args_model(self.tunable_type)
         try:
             new_args = DynamicInputArgsModel(input_args=value)
             return True
@@ -119,8 +117,7 @@ class EvaluationFuncWrapper:
         self.eval_args = eval_args
 
     def evaluate(self, model) -> Union[float, int]:
-        result = self.eval_fn(
-            model, *self.eval_args) if self.eval_args else self.eval_fn(model)
+        result = self.eval_fn(model, *self.eval_args) if self.eval_args else self.eval_fn(model)
         return result
 
 
@@ -149,11 +146,7 @@ class Evaluator:
     EVAL_FN = "eval_fn"
     WEIGHT = "weight"
     FN_NAME = "name"
-    EVAL_FN_TEMPLATE: Dict[str, Any] = {
-        EVAL_FN: None,
-        WEIGHT: 1.0,
-        FN_NAME: None
-    }
+    EVAL_FN_TEMPLATE: Dict[str, Any] = {EVAL_FN: None, WEIGHT: 1.0, FN_NAME: None}
 
     def __init__(self) -> None:
         self.eval_fn_registry: List[Dict[str, Any]] = []
@@ -171,32 +164,26 @@ class Evaluator:
         for eval_pair in self.eval_fn_registry:
             eval_fn = eval_pair[self.EVAL_FN]
             eval_result = eval_fn(model)
-            result = self._update_the_objective_score(eval_pair, eval_result,
-                                                      result)
+            result = self._update_the_objective_score(eval_pair, eval_result, result)
         return result
 
-    def _update_the_objective_score(self, eval_pair, eval_result,
-                                    overall_result) -> float:
+    def _update_the_objective_score(self, eval_pair, eval_result, overall_result) -> float:
         return overall_result + eval_result * eval_pair[self.WEIGHT]
 
     def get_number_of_eval_functions(self) -> int:
         return len(self.eval_fn_registry)
 
     def _set_eval_fn_registry(self, user_eval_fns: List[Dict]) -> None:
-        self.eval_fn_registry = [{
-            self.EVAL_FN:
-                user_eval_fn_pair[self.EVAL_FN],
-            self.WEIGHT:
-                user_eval_fn_pair.get(self.WEIGHT, 1.0),
-            self.FN_NAME:
-                user_eval_fn_pair.get(self.FN_NAME,
-                                      user_eval_fn_pair[self.EVAL_FN].__name__),
-        } for user_eval_fn_pair in user_eval_fns]
+        self.eval_fn_registry = [
+            {
+                self.EVAL_FN: user_eval_fn_pair[self.EVAL_FN],
+                self.WEIGHT: user_eval_fn_pair.get(self.WEIGHT, 1.0),
+                self.FN_NAME: user_eval_fn_pair.get(self.FN_NAME, user_eval_fn_pair[self.EVAL_FN].__name__),
+            }
+            for user_eval_fn_pair in user_eval_fns
+        ]
 
-    def set_eval_fn_registry(
-            self,
-            eval_fns: Optional[Union[Callable, Dict,
-                                     List[Dict]]] = None) -> None:
+    def set_eval_fn_registry(self, eval_fns: Optional[Union[Callable, Dict, List[Dict]]] = None) -> None:
         # About the eval_fns format, refer the class docstring for details.
         if eval_fns is None:
             return
@@ -209,12 +196,9 @@ class Evaluator:
         elif isinstance(eval_fns, Dict):
             eval_fns = [eval_fns]
         elif isinstance(eval_fns, List):
-            assert all(
-                [isinstance(eval_fn_pair, Dict) for eval_fn_pair in eval_fns])
+            assert all([isinstance(eval_fn_pair, Dict) for eval_fn_pair in eval_fns])
         else:
-            raise NotImplementedError(
-                f"The eval_fns should be a dict or a list of dict, but got {type(eval_fns)}."
-            )
+            raise NotImplementedError(f"The eval_fns should be a dict or a list of dict, but got {type(eval_fns)}.")
         self._set_eval_fn_registry(eval_fns)
 
     def self_check(self) -> None:
@@ -233,8 +217,7 @@ class ConfigSet:
         self.config_list = config_list
 
     def __getitem__(self, index) -> config.BaseConfig:
-        assert 0 <= index < len(
-            self.config_list), f"Index {index} out of range."
+        assert 0 <= index < len(self.config_list), f"Index {index} out of range."
         return self.config_list[index]
 
     def __len__(self) -> int:
@@ -247,16 +230,14 @@ class ConfigSet:
         return config_list
 
     @classmethod
-    def _from_list_of_configs(
-            cls, fwk_configs: List[config.BaseConfig]) -> List[config.BaseConfig]:
+    def _from_list_of_configs(cls, fwk_configs: List[config.BaseConfig]) -> List[config.BaseConfig]:
         config_list = []
         for config in fwk_configs:
             config_list += cls._from_single_config(config)
         return config_list
 
     @classmethod
-    def generate_config_list(cls, fwk_configs: Union[config.BaseConfig,
-                                                     List[config.BaseConfig]]):
+    def generate_config_list(cls, fwk_configs: Union[config.BaseConfig, List[config.BaseConfig]]):
         # There are several cases for the input `fwk_configs`:
         # 1. fwk_configs is a single config
         # 2. fwk_configs is a list of configs
@@ -267,14 +248,11 @@ class ConfigSet:
         elif isinstance(fwk_configs, List):
             config_list = cls._from_list_of_configs(fwk_configs)
         else:
-            raise NotImplementedError(
-                f"Unsupported type {type(fwk_configs)} for fwk_configs.")
+            raise NotImplementedError(f"Unsupported type {type(fwk_configs)} for fwk_configs.")
         return config_list
 
     @classmethod
-    def from_fwk_configs(
-            cls, fwk_configs: Union[config.BaseConfig,
-                                    List[config.BaseConfig]]) -> "ConfigSet":
+    def from_fwk_configs(cls, fwk_configs: Union[config.BaseConfig, List[config.BaseConfig]]) -> "ConfigSet":
         """Create a ConfigSet object from a single config or a list of configs.
 
         Args:
@@ -325,9 +303,7 @@ default_sampler = SequentialSampler
 
 class ConfigLoader:
 
-    def __init__(self,
-                 config_set: ConfigSet,
-                 sampler: Sampler = default_sampler) -> None:
+    def __init__(self, config_set: ConfigSet, sampler: Sampler = default_sampler) -> None:
         self.config_set = ConfigSet.from_fwk_configs(config_set)
         self._sampler = sampler(self.config_set)
 
@@ -390,8 +366,7 @@ class _TrialRecord:
         unique_id = str(uuid.uuid4())
         return unique_id
 
-    def __init__(self, trial_index: int, trial_result: Union[int, float],
-                 quant_config: config.BaseConfig):
+    def __init__(self, trial_index: int, trial_result: Union[int, float], quant_config: config.BaseConfig):
         # The unique id to refer to one trial
         self.trial_id = _TrialRecord._generate_unique_id()
         self.trial_index = trial_index
@@ -407,9 +382,9 @@ class TuningMonitor:
         self.tuning_history: List[_TrialRecord] = []
         self.baseline = None
 
-    def add_trial_result(self, trial_index: int, trial_result: Union[int,
-                                                                     float],
-                         quant_config: config.BaseConfig) -> None:
+    def add_trial_result(
+        self, trial_index: int, trial_result: Union[int, float], quant_config: config.BaseConfig
+    ) -> None:
         self.trial_cnt += 1
         trial_record = _TrialRecord(trial_index, trial_result, quant_config)
         self.tuning_history.append(trial_record)
@@ -422,11 +397,11 @@ class TuningMonitor:
         return len(self.tuning_history)
 
     def get_best_quant_config(self) -> config.BaseConfig:
-        assert self.get_number_of_trials(
-        ) > 0, "No trial record in tuning monitor."
+        assert self.get_number_of_trials() > 0, "No trial record in tuning monitor."
         # Put the record with a higher score at the beginning
         sorted_trials_records: List[_TrialRecord] = sorted(
-            self.tuning_history, key=lambda x: x.trial_result, reverse=True)
+            self.tuning_history, key=lambda x: x.trial_result, reverse=True
+        )
         return sorted_trials_records[0].quant_config
 
     def need_stop(self) -> bool:
@@ -439,10 +414,11 @@ class TuningMonitor:
         # reach max trials
         reach_max_trials = self.trial_cnt >= self.tuning_config.max_trials
         # reach accuracy goal
-        meet_accuracy_goal = (False if self.baseline is None else
-                              self.tuning_history[-1].trial_result
-                              >= (self.baseline *
-                                  (1 - self.tuning_config.tolerable_loss)))
+        meet_accuracy_goal = (
+            False
+            if self.baseline is None
+            else self.tuning_history[-1].trial_result >= (self.baseline * (1 - self.tuning_config.tolerable_loss))
+        )
         # [-1] is the last element representing the latest trail record.
         return reach_max_trials or meet_accuracy_goal
 
@@ -486,11 +462,8 @@ class TuningLogger:
         utility.logger.info("Tuning completed.")
 
 
-def init_tuning(
-    tuning_config: TuningConfig
-) -> Tuple[ConfigLoader, TuningLogger, TuningMonitor]:
-    config_loader = ConfigLoader(config_set=tuning_config.config_set,
-                                 sampler=tuning_config.sampler)
+def init_tuning(tuning_config: TuningConfig) -> Tuple[ConfigLoader, TuningLogger, TuningMonitor]:
+    config_loader = ConfigLoader(config_set=tuning_config.config_set, sampler=tuning_config.sampler)
     tuning_logger = TuningLogger()
     tuning_monitor = TuningMonitor(tuning_config)
     return config_loader, tuning_logger, tuning_monitor
@@ -499,9 +472,10 @@ def init_tuning(
 def get_all_config_set() -> Union[config.BaseConfig, List[config.BaseConfig]]:
     return config.get_all_config_set_from_config_registry()
 
+
 def _need_apply(quant_config: config.BaseConfig, algo_name):
-    return quant_config.name == algo_name if hasattr(quant_config,
-                                                     "name") else False
+    return quant_config.name == algo_name if hasattr(quant_config, "name") else False
+
 
 # * only for internal usage now
 @utility.log_quant_execution
@@ -523,11 +497,8 @@ def _quantize(
     """
     registered_configs = config_registry.get_cls_configs()
     if isinstance(quant_config, dict):
-        quant_config = ComposableConfig.from_dict(
-            quant_config, config_registry=registered_configs)
-        utility.logger.info(
-            f"Parsed a config dict to construct the quantization config: {quant_config}."
-        )
+        quant_config = ComposableConfig.from_dict(quant_config, config_registry=registered_configs)
+        utility.logger.info(f"Parsed a config dict to construct the quantization config: {quant_config}.")
     else:
         assert isinstance(
             quant_config, config.BaseConfig
@@ -538,10 +509,9 @@ def _quantize(
     for algo_name, algo_func in utility.algos_mapping.items():
         if _need_apply(quant_config, algo_name):
             utility.logger.info(f"Start to apply {algo_name} on the model.")
-            q_model = algo_func(model_input,
-                                quant_config,
-                                calibration_data_reader=calibration_data_reader)
+            q_model = algo_func(model_input, quant_config, calibration_data_reader=calibration_data_reader)
     return q_model
+
 
 def autotune(
     model_input: Union[pathlib.Path, str],
@@ -568,16 +538,13 @@ def autotune(
     """
     best_quant_model = None
     eval_func_wrapper = EvaluationFuncWrapper(eval_fn, eval_args)
-    config_loader, tuning_logger, tuning_monitor = init_tuning(
-        tuning_config=tune_config)
+    config_loader, tuning_logger, tuning_monitor = init_tuning(tuning_config=tune_config)
     try:
         baseline: float = eval_func_wrapper.evaluate(model_input)
     except Exception as e:
         print(e)
         if "'str' object has no attribute 'SerializeToString'" in str(e):
-            utility.logger.warning(
-                "Please refine your eval_fn to accept model path (str) as input."
-            )
+            utility.logger.warning("Please refine your eval_fn to accept model path (str) as input.")
         exit(0)
     tuning_monitor.set_baseline(baseline)
     tuning_logger.tuning_start()
@@ -587,9 +554,7 @@ def autotune(
         tuning_logger.trial_start(trial_index=trial_index)
         tuning_logger.quantization_start()
         utility.logger.debug("quant config: {}".format(quant_config))
-        q_model = _quantize(model_input,
-                            quant_config=quant_config,
-                            calibration_data_reader=calibration_data_reader)
+        q_model = _quantize(model_input, quant_config=quant_config, calibration_data_reader=calibration_data_reader)
         tuning_logger.quantization_end()
         tuning_logger.evaluation_start()
         with tempfile.TemporaryDirectory(prefix="ort.quant.") as tmp_dir:
@@ -599,15 +564,14 @@ def autotune(
                 pathlib.Path(tmp_dir).joinpath(pathlib.Path(model_input).name).as_posix(),
                 save_as_external_data=True,
                 all_tensors_to_one_file=True,
-                location=pathlib.Path(model_input).with_suffix(
-                    pathlib.Path(model_input).suffix + "_data").name,
+                location=pathlib.Path(model_input).with_suffix(pathlib.Path(model_input).suffix + "_data").name,
                 size_threshold=1024,
                 convert_attribute=False,
             )
             # copy config.json to tmp dir for evaluation, LLMs evaluation may need it
             if isinstance(model_input, str) and os.path.exists(
-                    pathlib.Path(model_input).parent.joinpath(
-                        "config.json").as_posix()):
+                pathlib.Path(model_input).parent.joinpath("config.json").as_posix()
+            ):
                 import shutil
 
                 shutil.copyfile(
@@ -615,18 +579,17 @@ def autotune(
                     pathlib.Path(tmp_dir).joinpath("config.json").as_posix(),
                 )
             eval_result: float = eval_func_wrapper.evaluate(
-                pathlib.Path(tmp_dir).joinpath(pathlib.Path(model_input).name).as_posix())
+                pathlib.Path(tmp_dir).joinpath(pathlib.Path(model_input).name).as_posix()
+            )
         tuning_logger.evaluation_end()
         utility.logger.info("Evaluation result: %.4f", eval_result)
         tuning_monitor.add_trial_result(trial_index, eval_result, quant_config)
         tuning_logger.trial_end(trial_index)
         if tuning_monitor.need_stop():
-            best_quant_config: config.BaseConfig = tuning_monitor.get_best_quant_config(
-            )
+            best_quant_config: config.BaseConfig = tuning_monitor.get_best_quant_config()
             best_quant_model = _quantize(
-                model_input,
-                quant_config=best_quant_config,
-                calibration_data_reader=calibration_data_reader)
+                model_input, quant_config=best_quant_config, calibration_data_reader=calibration_data_reader
+            )
             break
     tuning_logger.tuning_end()
     return best_quant_model

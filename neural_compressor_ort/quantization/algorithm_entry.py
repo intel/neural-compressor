@@ -12,26 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import tempfile
 import pathlib
+import tempfile
 from typing import Union
 
 import onnx
 from onnxruntime import quantization
 
+from neural_compressor_ort import constants, utility
 from neural_compressor_ort.algorithms.smoother import core
-from neural_compressor_ort.quantization import config, calibrate
-from neural_compressor_ort import utility, constants
+from neural_compressor_ort.quantization import calibrate, config
 
 
 ###################### SmoothQuant Entry ##################################
 @utility.register_algo(name=constants.SMOOTH_QUANT)
-def smooth_quant_entry(model: Union[pathlib.Path, str],
-                       quant_config: config.SmoothQuantConfig,
-                       calibration_data_reader: calibrate.CalibrationDataReader,
-                       model_output: Union[pathlib.Path, str] = None,
-                       *args,
-                       **kwargs) -> Union[pathlib.Path, str, onnx.ModelProto]:
+def smooth_quant_entry(
+    model: Union[pathlib.Path, str],
+    quant_config: config.SmoothQuantConfig,
+    calibration_data_reader: calibrate.CalibrationDataReader,
+    model_output: Union[pathlib.Path, str] = None,
+    *args,
+    **kwargs
+) -> Union[pathlib.Path, str, onnx.ModelProto]:
     """Apply smooth quant."""
     assert calibration_data_reader is not None, "Please provide calibration_data_reader"
     assert isinstance(
@@ -62,30 +64,25 @@ def smooth_quant_entry(model: Union[pathlib.Path, str],
         calibration_data_reader.rewind()
 
         # exclude Mul operations which are inserted during smooth operation
-        excluded_nodes = [
-            i.name
-            for i in smoothed_model.graph.node
-            if i.name.endswith("_smooth_mul")
-        ]
+        excluded_nodes = [i.name for i in smoothed_model.graph.node if i.name.endswith("_smooth_mul")]
         quant_config.calibration_data_reader = calibration_data_reader
         quant_config.nodes_to_exclude.extend(excluded_nodes)
         quant_config.convert_to_ort_config()
         quantization.quantize(
             pathlib.Path(tmp_dir).joinpath("smooth.onnx").as_posix(),
-            model_output or
-            pathlib.Path(tmp_dir).joinpath("quant_model.onnx").as_posix(),
+            model_output or pathlib.Path(tmp_dir).joinpath("quant_model.onnx").as_posix(),
             quant_config,
         )
-        model = model_output or onnx.load(
-            pathlib.Path(tmp_dir).joinpath("quant_model.onnx").as_posix())
+        model = model_output or onnx.load(pathlib.Path(tmp_dir).joinpath("quant_model.onnx").as_posix())
 
     return model
 
 
 ###################### RTN Algo Entry ##################################
 @utility.register_algo(name=constants.RTN)
-def rtn_quantize_entry(model: Union[pathlib.Path, str], quant_config: config.RTNConfig, *args,
-                       **kwargs) -> onnx.ModelProto:
+def rtn_quantize_entry(
+    model: Union[pathlib.Path, str], quant_config: config.RTNConfig, *args, **kwargs
+) -> onnx.ModelProto:
     """The main entry to apply rtn quantization."""
     from neural_compressor_ort.algorithms import apply_rtn_on_model
 
@@ -99,9 +96,13 @@ def rtn_quantize_entry(model: Union[pathlib.Path, str], quant_config: config.RTN
 
 ###################### GPTQ Algo Entry ##################################
 @utility.register_algo(name=constants.GPTQ)
-def gptq_quantize_entry(model: Union[pathlib.Path, str], quant_config: config.GPTQConfig,
-                        calibration_data_reader: calibrate.CalibrationDataReader, *args,
-                        **kwargs) -> onnx.ModelProto:
+def gptq_quantize_entry(
+    model: Union[pathlib.Path, str],
+    quant_config: config.GPTQConfig,
+    calibration_data_reader: calibrate.CalibrationDataReader,
+    *args,
+    **kwargs
+) -> onnx.ModelProto:
     """The main entry to apply gptq quantization."""
     assert calibration_data_reader is not None, "Please provide calibration_data_reader"
     assert isinstance(
@@ -123,9 +124,13 @@ def gptq_quantize_entry(model: Union[pathlib.Path, str], quant_config: config.GP
 
 ###################### AWQ Algo Entry ##################################
 @utility.register_algo(name=constants.AWQ)
-def awq_quantize_entry(model: Union[pathlib.Path, str], quant_config: config.AWQConfig,
-                       calibration_data_reader: calibrate.CalibrationDataReader, *args,
-                       **kwargs) -> onnx.ModelProto:
+def awq_quantize_entry(
+    model: Union[pathlib.Path, str],
+    quant_config: config.AWQConfig,
+    calibration_data_reader: calibrate.CalibrationDataReader,
+    *args,
+    **kwargs
+) -> onnx.ModelProto:
     """The main entry to apply awq quantization."""
     assert calibration_data_reader is not None, "Please provide calibration_data_reader"
     assert isinstance(

@@ -13,16 +13,18 @@
 # limitations under the License.
 
 import importlib
+import logging
 import os
+import pathlib
 import subprocess
 import time
-import pathlib
 from typing import Callable, Dict, List, Tuple, Union
-import logging
+
 import cpuinfo
 import numpy as np
 import onnx
 import psutil
+
 from neural_compressor_ort import constants
 
 # Dictionary to store a mapping between algorithm names and corresponding algo implementation(function)
@@ -45,23 +47,22 @@ def _check_value(name, src, supported_type, supported_value=[]):
             if _check_value("datatype", datatype, list, ["fp32", "bf16", "uint8", "int8"]):
                 self._datatype = datatype
     """
-    if isinstance(src, list) and any(
-        [not isinstance(i, supported_type) for i in src]):
+    if isinstance(src, list) and any([not isinstance(i, supported_type) for i in src]):
         assert False, "Type of {} items should be {} but not {}".format(
-            name, str(supported_type), [type(i) for i in src])
+            name, str(supported_type), [type(i) for i in src]
+        )
     elif not isinstance(src, list) and not isinstance(src, supported_type):
-        assert False, "Type of {} should be {} but not {}".format(
-            name, str(supported_type), type(src))
+        assert False, "Type of {} should be {} but not {}".format(name, str(supported_type), type(src))
 
     if len(supported_value) > 0:
         if isinstance(src, str) and src not in supported_value:
-            assert False, "{} is not in supported {}: {}. Skip setting it.".format(
-                src, name, str(supported_value))
-        elif (isinstance(src, list) and
-              all([isinstance(i, str) for i in src]) and
-              any([i not in supported_value for i in src])):
-            assert False, "{} is not in supported {}: {}. Skip setting it.".format(
-                src, name, str(supported_value))
+            assert False, "{} is not in supported {}: {}. Skip setting it.".format(src, name, str(supported_value))
+        elif (
+            isinstance(src, list)
+            and all([isinstance(i, str) for i in src])
+            and any([i not in supported_value for i in src])
+        ):
+            assert False, "{} is not in supported {}: {}. Skip setting it.".format(src, name, str(supported_value))
 
     return True
 
@@ -94,10 +95,7 @@ class Options:
         set_resume_from("workspace_path")
     """
 
-    def __init__(self,
-                 random_seed=1978,
-                 workspace=constants.DEFAULT_WORKSPACE,
-                 resume_from=None):
+    def __init__(self, random_seed=1978, workspace=constants.DEFAULT_WORKSPACE, resume_from=None):
         """Init an Option object."""
         self.random_seed = random_seed
         self.workspace = workspace
@@ -139,14 +137,12 @@ class Options:
 
 options = Options()
 
+
 def _pretty_dict(value, indent=0):
     """Make the logger dict pretty."""
     prefix = "\n" + " " * (indent + 4)
     if isinstance(value, dict):
-        items = [
-            prefix + repr(key) + ": " + _pretty_dict(value[key], indent + 4)
-            for key in value
-        ]
+        items = [prefix + repr(key) + ": " + _pretty_dict(value[key], indent + 4) for key in value]
         return "{%s}" % (",".join(items) + "\n" + " " * indent)
     elif isinstance(value, list):
         items = [prefix + _pretty_dict(item, indent + 4) for item in value]
@@ -177,8 +173,8 @@ class Logger(object):
         self._logger.handlers.clear()
         self._logger.setLevel(LOGLEVEL)
         formatter = logging.Formatter(
-            "%(asctime)s [%(levelname)s][%(filename)s:%(lineno)d] %(message)s",
-            "%Y-%m-%d %H:%M:%S")
+            "%(asctime)s [%(levelname)s][%(filename)s:%(lineno)d] %(message)s", "%Y-%m-%d %H:%M:%S"
+        )
         streamHandler = logging.StreamHandler()
         streamHandler.setFormatter(formatter)
         self._logger.addHandler(streamHandler)
@@ -292,6 +288,7 @@ class TuningLogger:
     def tuning_end(cls) -> None:
         logger.info("Tuning completed.")
 
+
 def singleton(cls):
     """Singleton decorator."""
 
@@ -353,17 +350,12 @@ class CpuInfo(object):
             if max_extension_support >= 7:
                 ecx = cpuid._run_asm(
                     b"\x31\xC9",  # xor ecx, ecx
-                    b"\xB8\x07\x00\x00\x00"
-                    b"\x0f\xa2"
-                    b"\x89\xC8"
-                    b"\xC3",  # mov eax, 7  # cpuid  # mov ax, cx  # ret
+                    b"\xB8\x07\x00\x00\x00" b"\x0f\xa2" b"\x89\xC8" b"\xC3",  # mov eax, 7  # cpuid  # mov ax, cx  # ret
                 )
                 self._vnni = bool(ecx & (1 << 11))
                 eax = cpuid._run_asm(
                     b"\xB9\x01\x00\x00\x00",  # mov ecx, 1
-                    b"\xB8\x07\x00\x00\x00"
-                    b"\x0f\xa2"
-                    b"\xC3",  # mov eax, 7  # cpuid  # ret
+                    b"\xB8\x07\x00\x00\x00" b"\x0f\xa2" b"\xC3",  # mov eax, 7  # cpuid  # ret
                 )
                 self._bf16 = bool(eax & (1 << 5))
         # TODO: The implementation will be refined in the future.
@@ -399,11 +391,11 @@ class CpuInfo(object):
             cmd = "sysctl -n machdep.cpu.core_count"
 
         with subprocess.Popen(
-                args=cmd,
-                shell=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                universal_newlines=False,
+            args=cmd,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            universal_newlines=False,
         ) as proc:
             proc.wait()
             if proc.stdout:
@@ -426,9 +418,9 @@ def dump_elapsed_time(customized_msg=""):
             res = func(*args, **kwargs)
             end = time.time()
             logger.info(
-                "%s elapsed time: %s ms" %
-                (customized_msg if customized_msg else func.__qualname__,
-                 round((end - start) * 1000, 2)))
+                "%s elapsed time: %s ms"
+                % (customized_msg if customized_msg else func.__qualname__, round((end - start) * 1000, 2))
+            )
             return res
 
         return fi
@@ -493,9 +485,7 @@ def find_by_name(name, item_list):
     """Helper function to find item by name in a list."""
     items = []
     for item in item_list:
-        assert hasattr(
-            item, "name"), "{} should have a 'name' attribute defined".format(
-                item)  # pragma: no cover
+        assert hasattr(item, "name"), "{} should have a 'name' attribute defined".format(item)  # pragma: no cover
         if item.name == name:
             items.append(item)
     if len(items) > 0:
@@ -538,8 +528,8 @@ def register_algo(name):
 
 
 def get_model_info(
-        model: Union[onnx.ModelProto, pathlib.Path, str],
-        white_op_type_list: List[Callable]) -> List[Tuple[str, Callable]]:
+    model: Union[onnx.ModelProto, pathlib.Path, str], white_op_type_list: List[Callable]
+) -> List[Tuple[str, Callable]]:
     if not isinstance(model, onnx.ModelProto):
         model = onnx.load(model)
     filter_result = []
@@ -598,12 +588,9 @@ def _quantize_data_with_scale_zero(data, qType, scheme, scale, zero_point):
         # signed byte type
         quantized_data = (data.astype(np.float32) / scale).round().astype("b")
     elif qType == onnx.onnx_pb.TensorProto.UINT8 and scheme == "asym":
-        quantized_data = ((data.astype(np.float32) / scale).round() +
-                          zero_point).astype("B")
+        quantized_data = ((data.astype(np.float32) / scale).round() + zero_point).astype("B")
     else:
-        raise ValueError(
-            "Unexpected combination of data type {} and scheme {}.".format(
-                qType, scheme))
+        raise ValueError("Unexpected combination of data type {} and scheme {}.".format(qType, scheme))
     return quantized_data
 
 
@@ -614,57 +601,46 @@ def _calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme):
             max_range = np.maximum(abs(rmin), abs(rmax))
             scale = np.ones(rmax.shape, dtype="float32")
             scale[max_range > 0] = np.array(
-                [
-                    float(i) / quantize_range
-                    for i in (max_range[max_range > 0] *
-                              2.0).flatten().tolist()
-                ],
+                [float(i) / quantize_range for i in (max_range[max_range > 0] * 2.0).flatten().tolist()],
                 dtype="float32",
             )
         else:
             scale = np.ones(rmax.shape, dtype="float32")
-            scale[rmin != rmax] = np.array([
-                float(i) / quantize_range
-                for i in (rmax - rmin)[rmin != rmax].flatten().tolist()
-            ],
-                                           dtype="float32")
+            scale[rmin != rmax] = np.array(
+                [float(i) / quantize_range for i in (rmax - rmin)[rmin != rmax].flatten().tolist()], dtype="float32"
+            )
 
         if scheme == "sym" and qType == onnx.onnx_pb.TensorProto.INT8:
-            zero_point = np.zeros(scale.shape, dtype="int8") if isinstance(
-                scale, np.ndarray) else 0
+            zero_point = np.zeros(scale.shape, dtype="int8") if isinstance(scale, np.ndarray) else 0
         elif isinstance(scale, np.ndarray) and (scale == 1).all():
-            zero_point = (np.zeros(scale.shape, dtype="int8")
-                          if qType == onnx.onnx_pb.TensorProto.INT8 else
-                          np.zeros(scale.shape, dtype="uint8"))
+            zero_point = (
+                np.zeros(scale.shape, dtype="int8")
+                if qType == onnx.onnx_pb.TensorProto.INT8
+                else np.zeros(scale.shape, dtype="uint8")
+            )
         elif qType == onnx.onnx_pb.TensorProto.UINT8:
-            zero_point = np.maximum(
-                0,
-                np.minimum(255, ((0 - float(rmin)) /
-                                 scale).round()).round()).astype("uint8")
+            zero_point = np.maximum(0, np.minimum(255, ((0 - float(rmin)) / scale).round()).round()).astype("uint8")
         else:
-            zero_point = ((-64 - rmin) /
-                          float(scale) if quantize_range == 128 else
-                          (-127 - rmin) / float(scale)).round()
+            zero_point = (
+                (-64 - rmin) / float(scale) if quantize_range == 128 else (-127 - rmin) / float(scale)
+            ).round()
 
     else:
         if scheme == "sym":
             max_range = max(abs(rmin), abs(rmax))
-            scale = (float(max_range) *
-                     2) / quantize_range if max_range > 0 else 1
+            scale = (float(max_range) * 2) / quantize_range if max_range > 0 else 1
         else:
-            scale = (float(rmax) -
-                     float(rmin)) / quantize_range if rmin != rmax else 1
+            scale = (float(rmax) - float(rmin)) / quantize_range if rmin != rmax else 1
 
-        if scale == 1 or (scheme == "sym" and
-                          qType == onnx.onnx_pb.TensorProto.INT8):
+        if scale == 1 or (scheme == "sym" and qType == onnx.onnx_pb.TensorProto.INT8):
             zero_point = 0
         elif qType == onnx.onnx_pb.TensorProto.UINT8:
             zero_point = round((0 - float(rmin)) / scale)
             zero_point = np.uint8(round(max(0, min(255, zero_point))))
         else:
-            zero_point = (round((-64 - float(rmin)) /
-                                scale) if quantize_range == 128 else round(
-                                    (-127 - float(rmin)) / scale))
+            zero_point = (
+                round((-64 - float(rmin)) / scale) if quantize_range == 128 else round((-127 - float(rmin)) / scale)
+            )
     return scale, zero_point
 
 
@@ -691,17 +667,13 @@ def quantize_data(data, quantize_range, qType, scheme):
     rmin = min(min(data), 0)
     rmax = max(max(data), 0)
 
-    scale, zero_point = _calculate_scale_zp(rmin, rmax, quantize_range, qType,
-                                            scheme)
-    quantized_data = _quantize_data_with_scale_zero(data, qType, scheme, scale,
-                                                    zero_point)
+    scale, zero_point = _calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme)
+    quantized_data = _quantize_data_with_scale_zero(data, qType, scheme, scale, zero_point)
     return rmin, rmax, zero_point, scale, quantized_data
 
 
 def check_model_with_infer_shapes(model):
     """Check if the model has been shape inferred."""
-    
-
     if isinstance(model, (pathlib.Path, str)):
         model = onnx.load(model, load_external_data=False)
     elif isinstance(model, onnx_model.ONNXModel):

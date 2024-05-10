@@ -7,7 +7,9 @@ import numpy as np
 import onnx
 from optimum.exporters.onnx import main_export
 
-from neural_compressor_ort.quantization import config, algorithm_entry as algos
+from neural_compressor_ort.quantization import algorithm_entry as algos
+from neural_compressor_ort.quantization import config
+
 
 def find_onnx_file(folder_path):
     # return first .onnx file path in folder_path
@@ -19,35 +21,25 @@ def find_onnx_file(folder_path):
 
 
 def build_simple_onnx_model():
-    A = onnx.helper.make_tensor_value_info("A", onnx.TensorProto.FLOAT,
-                                           [1, 5, 5])
-    C = onnx.helper.make_tensor_value_info("C", onnx.TensorProto.FLOAT,
-                                           [1, 5, 2])
-    D = onnx.helper.make_tensor_value_info("D", onnx.TensorProto.FLOAT,
-                                           [1, 5, 2])
-    H = onnx.helper.make_tensor_value_info("H", onnx.TensorProto.FLOAT,
-                                           [1, 5, 2])
+    A = onnx.helper.make_tensor_value_info("A", onnx.TensorProto.FLOAT, [1, 5, 5])
+    C = onnx.helper.make_tensor_value_info("C", onnx.TensorProto.FLOAT, [1, 5, 2])
+    D = onnx.helper.make_tensor_value_info("D", onnx.TensorProto.FLOAT, [1, 5, 2])
+    H = onnx.helper.make_tensor_value_info("H", onnx.TensorProto.FLOAT, [1, 5, 2])
 
     e_value = np.random.randint(2, size=(10)).astype(np.float32)
-    B_init = onnx.helper.make_tensor("B", onnx.TensorProto.FLOAT, [5, 2],
-                                     e_value.reshape(10).tolist())
-    E_init = onnx.helper.make_tensor("E", onnx.TensorProto.FLOAT, [1, 5, 2],
-                                     e_value.reshape(10).tolist())
+    B_init = onnx.helper.make_tensor("B", onnx.TensorProto.FLOAT, [5, 2], e_value.reshape(10).tolist())
+    E_init = onnx.helper.make_tensor("E", onnx.TensorProto.FLOAT, [1, 5, 2], e_value.reshape(10).tolist())
 
-    matmul_node = onnx.helper.make_node("MatMul", ["A", "B"], ["C"],
-                                        name="Matmul")
+    matmul_node = onnx.helper.make_node("MatMul", ["A", "B"], ["C"], name="Matmul")
     add = onnx.helper.make_node("Add", ["C", "E"], ["D"], name="add")
 
     f_value = np.random.randint(2, size=(10)).astype(np.float32)
-    F_init = onnx.helper.make_tensor("F", onnx.TensorProto.FLOAT, [1, 5, 2],
-                                     e_value.reshape(10).tolist())
+    F_init = onnx.helper.make_tensor("F", onnx.TensorProto.FLOAT, [1, 5, 2], e_value.reshape(10).tolist())
     add2 = onnx.helper.make_node("Add", ["D", "F"], ["H"], name="add2")
 
-    graph = onnx.helper.make_graph([matmul_node, add, add2], "test_graph_1",
-                                   [A], [H], [B_init, E_init, F_init])
+    graph = onnx.helper.make_graph([matmul_node, add, add2], "test_graph_1", [A], [H], [B_init, E_init, F_init])
     model = onnx.helper.make_model(graph)
-    model = onnx.helper.make_model(
-        graph, **{"opset_imports": [onnx.helper.make_opsetid("", 13)]})
+    model = onnx.helper.make_model(graph, **{"opset_imports": [onnx.helper.make_opsetid("", 13)]})
     return model
 
 
@@ -76,11 +68,10 @@ class TestQuantizationConfig(unittest.TestCase):
 
     def _check_node_is_quantized(self, model, node_name):
         for node in model.graph.node:
-            if (node.name == node_name or
-                    node.name == node_name + "_Q4") and node.op_type in [
-                        "MatMulNBits",
-                        "MatMulFpQ4",
-                    ]:
+            if (node.name == node_name or node.name == node_name + "_Q4") and node.op_type in [
+                "MatMulNBits",
+                "MatMulFpQ4",
+            ]:
                 return True
         return False
 
@@ -88,45 +79,37 @@ class TestQuantizationConfig(unittest.TestCase):
         op_names = [
             i.name
             for i in q_model.graph.node
-            if i.op_type.startswith("MatMul") and
-            i.input[1].endswith("_Q{}G{}".format(bits, group_size))
+            if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q{}G{}".format(bits, group_size))
         ]
         return len(op_names)
 
     def test_config_white_lst(self):
         global_config = config.RTNConfig(weight_bits=4)
         # set operator instance
-        fc_out_config = config.RTNConfig(weight_dtype="fp32",
-                                  white_list=["/h.4/mlp/fc_out/MatMul"])
+        fc_out_config = config.RTNConfig(weight_dtype="fp32", white_list=["/h.4/mlp/fc_out/MatMul"])
         # get model and quantize
         fp32_model = self.gptj
-        qmodel = algos.rtn_quantize_entry(fp32_model,
-                           quant_config=global_config + fc_out_config)
+        qmodel = algos.rtn_quantize_entry(fp32_model, quant_config=global_config + fc_out_config)
         self.assertIsNotNone(qmodel)
         self.assertEqual(self._count_woq_matmul(qmodel), 29)
-        self.assertFalse(
-            self._check_node_is_quantized(qmodel, "/h.4/mlp/fc_out/MatMul"))
+        self.assertFalse(self._check_node_is_quantized(qmodel, "/h.4/mlp/fc_out/MatMul"))
 
     def test_config_white_lst2(self):
         global_config = config.RTNConfig(weight_dtype="fp32")
         # set operator instance
-        fc_out_config = config.RTNConfig(weight_bits=4,
-                                  white_list=["/h.4/mlp/fc_out/MatMul"])
+        fc_out_config = config.RTNConfig(weight_bits=4, white_list=["/h.4/mlp/fc_out/MatMul"])
         # get model and quantize
         fp32_model = self.gptj
-        qmodel = algos.rtn_quantize_entry(fp32_model,
-                           quant_config=global_config + fc_out_config)
+        qmodel = algos.rtn_quantize_entry(fp32_model, quant_config=global_config + fc_out_config)
         self.assertIsNotNone(qmodel)
         self.assertEqual(self._count_woq_matmul(qmodel), 1)
-        self.assertTrue(
-            self._check_node_is_quantized(qmodel, "/h.4/mlp/fc_out/MatMul"))
+        self.assertTrue(self._check_node_is_quantized(qmodel, "/h.4/mlp/fc_out/MatMul"))
 
     def test_config_white_lst3(self):
 
         global_config = config.RTNConfig(weight_bits=4)
         # set operator instance
-        fc_out_config = config.RTNConfig(weight_bits=8,
-                                  white_list=["/h.4/mlp/fc_out/MatMul"])
+        fc_out_config = config.RTNConfig(weight_bits=8, white_list=["/h.4/mlp/fc_out/MatMul"])
         quant_config = global_config + fc_out_config
         # get model and quantize
         fp32_model = self.gptj
@@ -134,10 +117,8 @@ class TestQuantizationConfig(unittest.TestCase):
         utility.logger.info(quant_config)
         configs_mapping = quant_config.to_config_mapping(model_info=model_info)
         utility.logger.info(configs_mapping)
-        self.assertTrue(configs_mapping[("/h.4/mlp/fc_out/MatMul",
-                                         "MatMul")].weight_bits == 8)
-        self.assertTrue(configs_mapping[("/h.4/mlp/fc_in/MatMul",
-                                         "MatMul")].weight_bits == 4)
+        self.assertTrue(configs_mapping[("/h.4/mlp/fc_out/MatMul", "MatMul")].weight_bits == 8)
+        self.assertTrue(configs_mapping[("/h.4/mlp/fc_in/MatMul", "MatMul")].weight_bits == 4)
 
     def test_config_from_dict(self):
         quant_config = {
@@ -195,8 +176,7 @@ class TestQuantizationConfig(unittest.TestCase):
         for op_name, op_config in quant_config2["rtn"]["local"].items():
             for attr, val in op_config.items():
                 self.assertEqual(q3_dict["local"][op_name][attr], val)
-        self.assertNotEqual(q3_dict["global"]["weight_bits"],
-                            quant_config2["rtn"]["global"]["weight_bits"])
+        self.assertNotEqual(q3_dict["global"]["weight_bits"], quant_config2["rtn"]["global"]["weight_bits"])
 
     def test_config_mapping(self):
         quant_config = config.RTNConfig(weight_bits=4)
@@ -209,23 +189,17 @@ class TestQuantizationConfig(unittest.TestCase):
         utility.logger.info(quant_config)
         configs_mapping = quant_config.to_config_mapping(model_info=model_info)
         utility.logger.info(configs_mapping)
-        self.assertTrue(configs_mapping[("/h.4/mlp/fc_out/MatMul",
-                                         "MatMul")].weight_bits == 8)
-        self.assertTrue(configs_mapping[("/h.4/mlp/fc_in/MatMul",
-                                         "MatMul")].weight_bits == 4)
+        self.assertTrue(configs_mapping[("/h.4/mlp/fc_out/MatMul", "MatMul")].weight_bits == 8)
+        self.assertTrue(configs_mapping[("/h.4/mlp/fc_in/MatMul", "MatMul")].weight_bits == 4)
         # test regular matching
         fc_config = config.RTNConfig(weight_bits=3)
         quant_config.set_local("/h.[1-4]/mlp/fc_out/MatMul", fc_config)
         configs_mapping = quant_config.to_config_mapping(model_info=model_info)
         utility.logger.info(configs_mapping)
-        self.assertTrue(configs_mapping[("/h.4/mlp/fc_out/MatMul",
-                                         "MatMul")].weight_bits == 3)
-        self.assertTrue(configs_mapping[("/h.3/mlp/fc_out/MatMul",
-                                         "MatMul")].weight_bits == 3)
-        self.assertTrue(configs_mapping[("/h.2/mlp/fc_out/MatMul",
-                                         "MatMul")].weight_bits == 3)
-        self.assertTrue(configs_mapping[("/h.1/mlp/fc_out/MatMul",
-                                         "MatMul")].weight_bits == 3)
+        self.assertTrue(configs_mapping[("/h.4/mlp/fc_out/MatMul", "MatMul")].weight_bits == 3)
+        self.assertTrue(configs_mapping[("/h.3/mlp/fc_out/MatMul", "MatMul")].weight_bits == 3)
+        self.assertTrue(configs_mapping[("/h.2/mlp/fc_out/MatMul", "MatMul")].weight_bits == 3)
+        self.assertTrue(configs_mapping[("/h.1/mlp/fc_out/MatMul", "MatMul")].weight_bits == 3)
 
     def test_diff_types_configs_addition(self):
         quant_config1 = {

@@ -1,12 +1,15 @@
 import copy
+import itertools
 import os
 import shutil
 import unittest
-import itertools
+
 from optimum.exporters.onnx import main_export
 
 from neural_compressor_ort import utility
-from neural_compressor_ort.quantization import matmul_nbits_quantizer, matmul_4bits_quantizer, config, algorithm_entry as algos
+from neural_compressor_ort.quantization import algorithm_entry as algos
+from neural_compressor_ort.quantization import config, matmul_4bits_quantizer, matmul_nbits_quantizer
+
 
 def find_onnx_file(folder_path):
     # return first .onnx file path in folder_path
@@ -41,11 +44,10 @@ class TestRTNQuant(unittest.TestCase):
 
     def _check_node_is_quantized(self, model, node_name):
         for node in model.graph.node:
-            if (node.name == node_name or
-                    node.name == node_name + "_Q4") and node.op_type in [
-                        "MatMulNBits",
-                        "MatMulFpQ4",
-                    ]:
+            if (node.name == node_name or node.name == node_name + "_Q4") and node.op_type in [
+                "MatMulNBits",
+                "MatMulFpQ4",
+            ]:
                 return True
         return False
 
@@ -53,13 +55,12 @@ class TestRTNQuant(unittest.TestCase):
         op_names = [
             i.name
             for i in q_model.graph.node
-            if i.op_type.startswith("MatMul") and
-            i.input[1].endswith("_Q{}G{}".format(bits, group_size))
+            if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q{}G{}".format(bits, group_size))
         ]
         return len(op_names)
 
     def _apply_rtn(self, quant_config):
-        utility.logger.info(f"Test RTN with config {quant_config}") 
+        utility.logger.info(f"Test RTN with config {quant_config}")
 
         fp32_model = copy.deepcopy(self.gptj)
         qmodel = algos.rtn_quantize_entry(fp32_model, quant_config)
@@ -81,31 +82,24 @@ class TestRTNQuantWithInternalAPI(TestRTNQuant):
             "weight_sym": [True, False],
             "act_dtype": ["fp32"],
         }
-        
 
         keys = config.RTNConfig.params_list
         for value in itertools.product(*rtn_options.values()):
             d = dict(zip(keys, value))
             quant_config = config.RTNConfig(**d)
             qmodel = self._apply_rtn(quant_config)
-            self.assertEqual(
-                self._count_woq_matmul(qmodel,
-                                       bits=value[1],
-                                       group_size=value[2]), 30)
+            self.assertEqual(self._count_woq_matmul(qmodel, bits=value[1], group_size=value[2]), 30)
 
     def test_rtn_config(self):
 
         rtn_config1 = config.RTNConfig(weight_bits=4)
         quant_config_dict = {
-            "rtn": {
-                "weight_bits": 4
-            },
+            "rtn": {"weight_bits": 4},
         }
         rtn_config2 = config.RTNConfig.from_dict(quant_config_dict["rtn"])
         self.assertEqual(rtn_config1.to_dict(), rtn_config2.to_dict())
 
     def test_quantize_rtn_from_dict_default(self):
-
 
         qmodel = self._apply_rtn(quant_config=config.get_default_rtn_config())
         self.assertIsNotNone(qmodel)
@@ -143,8 +137,7 @@ class TestRTNQuantWithInternalAPI(TestRTNQuant):
         qmodel = self._apply_rtn(quant_config)
         self.assertIsNotNone(qmodel)
         self.assertEqual(self._count_woq_matmul(qmodel), 29)
-        self.assertFalse(
-            self._check_node_is_quantized(qmodel, "/h.4/mlp/fc_out/MatMul"))
+        self.assertFalse(self._check_node_is_quantized(qmodel, "/h.4/mlp/fc_out/MatMul"))
 
     def test_quantize_rtn_from_dict_advance(self):
 
@@ -164,8 +157,7 @@ class TestRTNQuantWithInternalAPI(TestRTNQuant):
         qmodel = self._apply_rtn(quant_config)
         self.assertIsNotNone(qmodel)
         self.assertEqual(self._count_woq_matmul(qmodel), 29)
-        self.assertFalse(
-            self._check_node_is_quantized(qmodel, "/h.4/mlp/fc_out/MatMul"))
+        self.assertFalse(self._check_node_is_quantized(qmodel, "/h.4/mlp/fc_out/MatMul"))
 
         quant_config = {
             "rtn": {
@@ -218,9 +210,7 @@ class TestRTNQuantWithORTLikeAPI(TestRTNQuant):
         quant.process()
         self.assertIsNotNone(quant.model)
         self.assertTrue(self._check_model_is_quantized(quant.model))
-        self.assertFalse(
-            self._check_node_is_quantized(quant.model,
-                                          "/h.4/mlp/fc_out/MatMul"))
+        self.assertFalse(self._check_node_is_quantized(quant.model, "/h.4/mlp/fc_out/MatMul"))
 
     def test_rtn_config_nbits(self):
 
@@ -236,9 +226,7 @@ class TestRTNQuantWithORTLikeAPI(TestRTNQuant):
             )
             quant.process()
             self.assertIsNotNone(quant.model)
-            self.assertEqual(
-                self._count_woq_matmul(quant.model, bits=n_bits, group_size=32),
-                30)
+            self.assertEqual(self._count_woq_matmul(quant.model, bits=n_bits, group_size=32), 30)
 
     def test_rtn_config_nbits_with_exclude_node(self):
 
@@ -255,9 +243,7 @@ class TestRTNQuantWithORTLikeAPI(TestRTNQuant):
             )
             quant.process()
             self.assertIsNotNone(quant.model)
-            self.assertEqual(
-                self._count_woq_matmul(quant.model, bits=n_bits, group_size=32),
-                29)
+            self.assertEqual(self._count_woq_matmul(quant.model, bits=n_bits, group_size=32), 29)
 
 
 if __name__ == "__main__":

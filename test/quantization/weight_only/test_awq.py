@@ -1,14 +1,17 @@
 import copy
+import itertools
 import os
 import shutil
 import unittest
 
 import torch
-from optimum.exporters.onnx import main_export
 import transformers
-import itertools
+from optimum.exporters.onnx import main_export
+
 from neural_compressor_ort import utility
-from neural_compressor_ort.quantization import config, algorithm_entry as algos
+from neural_compressor_ort.quantization import algorithm_entry as algos
+from neural_compressor_ort.quantization import config
+
 
 def find_onnx_file(folder_path):
     # return first .onnx file path in folder_path
@@ -27,14 +30,11 @@ class DummyNLPDataloader(quantization.CalibrationDataReader):
         self.sequence_b = "Where is intel-extension-for-transformers based? NYC or SH"
 
         self.encoded_list = []
-        encoded_input = dict(
-            self.tokenizer(self.sequence_a,
-                           self.sequence_b,
-                           return_tensors="pt"))
+        encoded_input = dict(self.tokenizer(self.sequence_a, self.sequence_b, return_tensors="pt"))
         input_shape = encoded_input["input_ids"].shape
-        encoded_input["position_ids"] = (torch.arange(
-            0, input_shape[-1],
-            dtype=torch.long).unsqueeze(0).view(-1, input_shape[-1]))
+        encoded_input["position_ids"] = (
+            torch.arange(0, input_shape[-1], dtype=torch.long).unsqueeze(0).view(-1, input_shape[-1])
+        )
 
         # convert torch tensor to numpy
         for input_name, input_value in encoded_input.items():
@@ -60,8 +60,7 @@ class TestAWQQuant(unittest.TestCase):
             output="gptj",
         )
         self.gptj = find_onnx_file("./gptj")
-        self.calibration_data_reader = DummyNLPDataloader(
-            "hf-internal-testing/tiny-random-gptj")
+        self.calibration_data_reader = DummyNLPDataloader("hf-internal-testing/tiny-random-gptj")
 
     @classmethod
     def tearDownClass(self):
@@ -75,8 +74,7 @@ class TestAWQQuant(unittest.TestCase):
         op_names = [
             i.name
             for i in q_model.graph.node
-            if i.op_type.startswith("MatMul") and
-            i.input[1].endswith("_Q{}G{}".format(bits, group_size))
+            if i.op_type.startswith("MatMul") and i.input[1].endswith("_Q{}G{}".format(bits, group_size))
         ]
         return len(op_names)
 
@@ -86,11 +84,10 @@ class TestAWQQuant(unittest.TestCase):
 
     def _check_node_is_quantized(self, model, node_name):
         for node in model.graph.node:
-            if (node.name == node_name or
-                    node.name == node_name + "_Q4") and node.op_type in [
-                        "MatMulNBits",
-                        "MatMulFpQ4",
-                    ]:
+            if (node.name == node_name or node.name == node_name + "_Q4") and node.op_type in [
+                "MatMulNBits",
+                "MatMulFpQ4",
+            ]:
                 return True
         return False
 
@@ -98,9 +95,9 @@ class TestAWQQuant(unittest.TestCase):
         utility.logger.info(f"Test AWQ with config {quant_config}")
 
         fp32_model = copy.deepcopy(self.gptj)
-        qmodel = algos.awq_quantize_entry(fp32_model,
-                           quant_config,
-                           calibration_data_reader=self.calibration_data_reader)
+        qmodel = algos.awq_quantize_entry(
+            fp32_model, quant_config, calibration_data_reader=self.calibration_data_reader
+        )
         self.assertIsNotNone(qmodel)
         return qmodel
 
@@ -129,19 +126,13 @@ class TestAWQQuantWithInternalAPI(TestAWQQuant):
             print(d)
             quant_config = config.AWQConfig(**d)
             qmodel = self._apply_awq(quant_config)
-            self.assertEqual(
-                self._count_woq_matmul(qmodel,
-                                       bits=value[1],
-                                       group_size=value[2]), 30)
+            self.assertEqual(self._count_woq_matmul(qmodel, bits=value[1], group_size=value[2]), 30)
 
     def test_awq_config(self):
-        
 
         awq_config1 = config.AWQConfig(weight_bits=4)
         quant_config_dict = {
-            "awq": {
-                "weight_bits": 4
-            },
+            "awq": {"weight_bits": 4},
         }
         awq_config2 = config.AWQConfig.from_dict(quant_config_dict["awq"])
         self.assertEqual(awq_config1.to_dict(), awq_config2.to_dict())
@@ -183,8 +174,7 @@ class TestAWQQuantWithInternalAPI(TestAWQQuant):
         qmodel = self._apply_awq(quant_config)
         self.assertIsNotNone(qmodel)
         self.assertEqual(self._count_woq_matmul(qmodel), 29)
-        self.assertFalse(
-            self._check_node_is_quantized(qmodel, "/h.4/mlp/fc_out/MatMul"))
+        self.assertFalse(self._check_node_is_quantized(qmodel, "/h.4/mlp/fc_out/MatMul"))
 
     def test_quantize_awq_from_dict_advance(self):
         quant_config = {
@@ -203,8 +193,7 @@ class TestAWQQuantWithInternalAPI(TestAWQQuant):
         qmodel = self._apply_awq(quant_config)
         self.assertIsNotNone(qmodel)
         self.assertEqual(self._count_woq_matmul(qmodel), 29)
-        self.assertFalse(
-            self._check_node_is_quantized(qmodel, "/h.4/mlp/fc_out/MatMul"))
+        self.assertFalse(self._check_node_is_quantized(qmodel, "/h.4/mlp/fc_out/MatMul"))
 
         quant_config = {
             "awq": {
@@ -231,8 +220,7 @@ class TestAWQQuantWithORTLikeAPI(TestAWQQuant):
 
     def test_awq_config_4bits(self):
 
-        algo_config = quantization.AWQWeightOnlyQuantConfig(
-            calibration_data_reader=self.calibration_data_reader)
+        algo_config = quantization.AWQWeightOnlyQuantConfig(calibration_data_reader=self.calibration_data_reader)
 
         quant = quantization.MatMul4BitsQuantizer(
             copy.deepcopy(self.gptj),
@@ -246,8 +234,7 @@ class TestAWQQuantWithORTLikeAPI(TestAWQQuant):
 
     def test_awq_config_4bits_with_exclude_node(self):
 
-        algo_config = quantization.AWQWeightOnlyQuantConfig(
-            calibration_data_reader=self.calibration_data_reader)
+        algo_config = quantization.AWQWeightOnlyQuantConfig(calibration_data_reader=self.calibration_data_reader)
 
         quant = quantization.MatMul4BitsQuantizer(
             copy.deepcopy(self.gptj),
@@ -259,14 +246,13 @@ class TestAWQQuantWithORTLikeAPI(TestAWQQuant):
         quant.process()
         self.assertIsNotNone(quant.model)
         self.assertTrue(self._check_model_is_quantized(quant.model))
-        self.assertFalse(
-            self._check_node_is_quantized(quant.model,
-                                          "/h.4/mlp/fc_out/MatMul"))
+        self.assertFalse(self._check_node_is_quantized(quant.model, "/h.4/mlp/fc_out/MatMul"))
 
     def test_awq_config_nbits(self):
 
         algo_config = matmul_nbits_quantizer.AWQWeightOnlyQuantConfig(
-            calibration_data_reader=self.calibration_data_reader)
+            calibration_data_reader=self.calibration_data_reader
+        )
 
         for n_bits in [3, 4, 8]:
             quant = quantization.MatMulNBitsQuantizer(
@@ -278,14 +264,11 @@ class TestAWQQuantWithORTLikeAPI(TestAWQQuant):
             )
             quant.process()
             self.assertIsNotNone(quant.model)
-            self.assertEqual(
-                self._count_woq_matmul(quant.model, bits=n_bits, group_size=32),
-                30)
+            self.assertEqual(self._count_woq_matmul(quant.model, bits=n_bits, group_size=32), 30)
 
     def test_awq_config_nbits_with_exclude_node(self):
 
-        algo_config = quantization.AWQWeightOnlyQuantConfig(
-            calibration_data_reader=self.calibration_data_reader)
+        algo_config = quantization.AWQWeightOnlyQuantConfig(calibration_data_reader=self.calibration_data_reader)
 
         for n_bits in [3, 4, 8]:
             quant = quantization.MatMulNBitsQuantizer(
@@ -298,9 +281,7 @@ class TestAWQQuantWithORTLikeAPI(TestAWQQuant):
             )
             quant.process()
             self.assertIsNotNone(quant.model)
-            self.assertEqual(
-                self._count_woq_matmul(quant.model, bits=n_bits, group_size=32),
-                29)
+            self.assertEqual(self._count_woq_matmul(quant.model, bits=n_bits, group_size=32), 29)
 
 
 if __name__ == "__main__":

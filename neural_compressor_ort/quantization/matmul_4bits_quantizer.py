@@ -12,16 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import onnx
-
 from typing import List, Union
+
+import matmul_nbits_quantizer.AWQWeightOnlyQuantConfig as AWQWeightOnlyQuantConfig
+import matmul_nbits_quantizer.GPTQWeightOnlyQuantConfig as GPTQWeightOnlyQuantConfig
+import matmul_nbits_quantizer.MatMulNBitsQuantizer as MatMulNBitsQuantizer
+import matmul_nbits_quantizer.RTNWeightOnlyQuantConfig as RTNWeightOnlyQuantConfig
+import onnx
 from onnxruntime.quantization import matmul_4bits_quantizer
 
 from neural_compressor_ort.quantization import matmul_nbits_quantizer
-import matmul_nbits_quantizer.AWQWeightOnlyQuantConfig as AWQWeightOnlyQuantConfig
-import matmul_nbits_quantizer.GPTQWeightOnlyQuantConfig as GPTQWeightOnlyQuantConfig
-import matmul_nbits_quantizer.RTNWeightOnlyQuantConfig as RTNWeightOnlyQuantConfig
-import matmul_nbits_quantizer.MatMulNBitsQuantizer as MatMulNBitsQuantizer
 
 
 class MatMul4BitsQuantizer(MatMulNBitsQuantizer):

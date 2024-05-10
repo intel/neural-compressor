@@ -22,9 +22,9 @@ import numpy as np
 import onnx
 import onnxruntime as ort
 
+from neural_compressor_ort import utility
 from neural_compressor_ort.algorithms.smoother import calibrator
 from neural_compressor_ort.quantization import calibrate, onnx_model
-from neural_compressor_ort import utility
 
 _dtype_map = {
     np.dtype("float32"): 1,
@@ -49,7 +49,7 @@ def _get_quant_dequant_output(model, input_data, output_data, providers):
     input_data = _quant_dequant_data(input_data, 2, "asym")
     sess = ort.InferenceSession(model.SerializeToString(), providers=providers)
     preds = sess.run(None, {model.graph.input[0].name: input_data})
-    loss = np.sum(np.abs(output_data - preds)**2)
+    loss = np.sum(np.abs(output_data - preds) ** 2)
     return loss
 
 
@@ -64,12 +64,8 @@ def _make_sub_graph(node, inits, input_data, output_data, opset, ir_version):
         opset (object): opset of the model
         ir_version (object): ir_version of the model
     """
-    input = onnx.helper.make_tensor_value_info(node.input[0],
-                                          _dtype_map[input_data.dtype],
-                                          input_data.shape)
-    output = onnx.helper.make_tensor_value_info(node.output[0],
-                                           _dtype_map[output_data.dtype],
-                                           output_data.shape)
+    input = onnx.helper.make_tensor_value_info(node.input[0], _dtype_map[input_data.dtype], input_data.shape)
+    output = onnx.helper.make_tensor_value_info(node.output[0], _dtype_map[output_data.dtype], output_data.shape)
     graph = onnx.helper.make_graph([node], "sub_graph", [input], [output], inits)
     model = onnx.helper.make_model(graph, opset_imports=opset)
     model.ir_version = ir_version
@@ -85,10 +81,9 @@ def _quant_dequant_data(data, qType=3, scheme="sym"):
         scheme (str): sym or asym quantization
     """
     rmin, rmax, zero_point, scale, quantized_data = utility.quantize_data(
-        data.flatten().tolist(), utility.get_qrange_for_qType(qType, False), qType,
-        scheme)
-    return ((quantized_data - zero_point) * scale).astype(data.dtype).reshape(
-        data.shape)
+        data.flatten().tolist(), utility.get_qrange_for_qType(qType, False), qType, scheme
+    )
+    return ((quantized_data - zero_point) * scale).astype(data.dtype).reshape(data.shape)
 
 
 class Smoother:
@@ -109,15 +104,12 @@ class Smoother:
         providers: List[str] = ["CPUExecutionProvider"],
     ):
         """Initialize the attributes of class."""
-        self.model = model if isinstance(model, onnx_model.ONNXModel) else onnx_model.ONNXModel(
-            model, load_external_data=True)
-        self.value_infos = {
-            vi.name: vi for vi in self.model.model.graph.value_info
-        }
-        self.value_infos.update(
-            {ot.name: ot for ot in self.model.model.graph.output})
-        self.value_infos.update(
-            {it.name: it for it in self.model.model.graph.input})
+        self.model = (
+            model if isinstance(model, onnx_model.ONNXModel) else onnx_model.ONNXModel(model, load_external_data=True)
+        )
+        self.value_infos = {vi.name: vi for vi in self.model.model.graph.value_info}
+        self.value_infos.update({ot.name: ot for ot in self.model.model.graph.output})
+        self.value_infos.update({it.name: it for it in self.model.model.graph.input})
         self.dataloader = dataloader
         self.providers = providers
         self.tensor_scales_info = {}
@@ -133,21 +125,17 @@ class Smoother:
         self._build_absorb_function()
 
     def transform(
-            self,
-            alpha: Union[float, str] = 0.5,
-            folding: bool = True,
-            percentile: float = 99.999,
-            op_types: List[str] = ["Gemm", "Conv", "MatMul", "FusedConv"],
-            scales_per_op: bool = True,
-            calib_iter: int = 100,
-            auto_alpha_args: dict = {
-                "alpha_min": 0.3,
-                "alpha_max": 0.7,
-                "alpha_step": 0.05,
-                "attn_method": "min"
-            },
-            *args,
-            **kwargs):
+        self,
+        alpha: Union[float, str] = 0.5,
+        folding: bool = True,
+        percentile: float = 99.999,
+        op_types: List[str] = ["Gemm", "Conv", "MatMul", "FusedConv"],
+        scales_per_op: bool = True,
+        calib_iter: int = 100,
+        auto_alpha_args: dict = {"alpha_min": 0.3, "alpha_max": 0.7, "alpha_step": 0.05, "attn_method": "min"},
+        *args,
+        **kwargs
+    ):
         """The main entry of smooth quant.
 
         Args:
@@ -219,12 +207,15 @@ class Smoother:
         )
 
         self.max_vals_per_channel, self.shape_info, self.tensors_to_node = sq_calibrator.calib_smooth(
-            op_types, percentile)
+            op_types, percentile
+        )
         for node in self.model.nodes():
             for out in node.output:
-                if (out in self.tensors_to_node and
-                        node.op_type in self.could_absorb_optype and
-                        self.model.get_initializer(node.input[1]) is not None):
+                if (
+                    out in self.tensors_to_node
+                    and node.op_type in self.could_absorb_optype
+                    and self.model.get_initializer(node.input[1]) is not None
+                ):
                     self.ops_to_absorb.append(node.name)
 
     def recover(self):
@@ -237,8 +228,7 @@ class Smoother:
                 input = node_info[1][1]
                 weight = onnx.numpy_helper.to_array(
                     self.model.get_initializer(input),
-                    base_dir=os.path.dirname(self.model.model_path)
-                    if self.model.model_path is not None else "",
+                    base_dir=os.path.dirname(self.model.model_path) if self.model.model_path is not None else "",
                 )
                 scale = self.tensor_scales_info[key]
                 new_weight = weight * scale
@@ -272,57 +262,63 @@ class Smoother:
         def norm(node, scale):  # pragma: no cover
             for idx in [1, 2]:
                 tensor = self.model.get_initializer(node.input[idx])
-                new_tensor = (onnx.numpy_helper.to_array(
-                    tensor, os.path.dirname(self.model.model_path)) *
-                              scale if self.model.model_path is not None else
-                              onnx.numpy_helper.to_array(tensor) * scale)
+                new_tensor = (
+                    onnx.numpy_helper.to_array(tensor, os.path.dirname(self.model.model_path)) * scale
+                    if self.model.model_path is not None
+                    else onnx.numpy_helper.to_array(tensor) * scale
+                )
                 self.model.set_initializer(node.input[idx], new_tensor)
                 self.tensor_scales_info[node.input[idx]] = (
-                    1.0 /
-                    scale if node.input[idx] not in self.tensor_scales_info else
-                    self.tensor_scales_info[node.input[idx]] * 1.0 / scale)
+                    1.0 / scale
+                    if node.input[idx] not in self.tensor_scales_info
+                    else self.tensor_scales_info[node.input[idx]] * 1.0 / scale
+                )
             return True
 
         def mul(node, scale):  # pragma: no cover
-            if all(
-                [self.model.get_initializer(inp) is None for inp in node.input
-                ]):
+            if all([self.model.get_initializer(inp) is None for inp in node.input]):
                 return False
             for inp in node.input:
                 if self.model.get_initializer(inp) is not None:
                     key = node.input[0].split("_smooth_output")[0]
                     tensor = self.model.get_initializer(inp)
-                    new_tensor = (onnx.numpy_helper.to_array(
-                        tensor, os.path.dirname(self.model.model_path)) *
-                                  scale if self.model.model_path is not None
-                                  else onnx.numpy_helper.to_array(tensor) * scale)
+                    new_tensor = (
+                        onnx.numpy_helper.to_array(tensor, os.path.dirname(self.model.model_path)) * scale
+                        if self.model.model_path is not None
+                        else onnx.numpy_helper.to_array(tensor) * scale
+                    )
                     self.model.set_initializer(inp, new_tensor)
                     self.tensor_scales_info[key] = (
-                        1.0 /
-                        scale if key not in self.tensor_scales_info else 1.0 /
-                        scale * self.tensor_scales_info[key])
+                        1.0 / scale
+                        if key not in self.tensor_scales_info
+                        else 1.0 / scale * self.tensor_scales_info[key]
+                    )
             return True
 
         def conv(node, scale):  # pragma: no cover
             if len(node.input) > 2:
                 if self.model.get_initializer(node.input[2]) is not None:
                     tensor = self.model.get_initializer(node.input[2])
-                    new_tensor = (onnx.numpy_helper.to_array(
-                        tensor, os.path.dirname(self.model.model_path)) *
-                                  scale if self.model.model_path is not None
-                                  else onnx.numpy_helper.to_array(tensor) * scale)
+                    new_tensor = (
+                        onnx.numpy_helper.to_array(tensor, os.path.dirname(self.model.model_path)) * scale
+                        if self.model.model_path is not None
+                        else onnx.numpy_helper.to_array(tensor) * scale
+                    )
                     self.model.set_initializer(node.input[2], new_tensor)
                     self.tensor_scales_info[node.input[2]] = 1.0 / scale
                 scale = scale.reshape(-1, 1, 1, 1)
                 tensor = self.model.get_initializer(node.input[1])
-                new_tensor = (onnx.numpy_helper.to_array(
-                    tensor, os.path.dirname(self.model.model_path)) *
-                              scale if self.model.model_path is not None else
-                              onnx.numpy_helper.to_array(tensor) * scale)
+                new_tensor = (
+                    onnx.numpy_helper.to_array(tensor, os.path.dirname(self.model.model_path)) * scale
+                    if self.model.model_path is not None
+                    else onnx.numpy_helper.to_array(tensor) * scale
+                )
                 self.model.set_initializer(node.input[1], new_tensor)
                 self.tensor_scales_info[node.input[1]] = (
-                    1.0 / scale if node.input[1] not in self.tensor_scales_info
-                    else self.tensor_scales_info[node.input[1]] * 1.0 / scale)
+                    1.0 / scale
+                    if node.input[1] not in self.tensor_scales_info
+                    else self.tensor_scales_info[node.input[1]] * 1.0 / scale
+                )
             return True
 
         self.could_absorb_optype = {
@@ -345,22 +341,17 @@ class Smoother:
         """
         remove_nodes = []
         for node in self.model.nodes():
-            if node.op_type == "Mul" and node.name.endswith(
-                    "_smooth_mul") and node not in remove_nodes:
+            if node.op_type == "Mul" and node.name.endswith("_smooth_mul") and node not in remove_nodes:
                 parent = self.model.get_parent(node, 0)
                 if parent is None:
                     continue
-                if parent.op_type in self.could_absorb_optype and len(
-                        self.model.get_children(parent)) == 1:
+                if parent.op_type in self.could_absorb_optype and len(self.model.get_children(parent)) == 1:
                     if node.output[0].split("_smooth_output")[0] in scales:
                         if self.could_absorb_optype[parent.op_type](
-                                parent, 1.0 / scales[node.output[0].split(
-                                    "_smooth_output")[0]]):
+                            parent, 1.0 / scales[node.output[0].split("_smooth_output")[0]]
+                        ):
                             remove_nodes.append(node)
-                            children = [
-                                i for i in self.model.nodes()
-                                if node.output[0] in i.input
-                            ]
+                            children = [i for i in self.model.nodes() if node.output[0] in i.input]
                             for child in children:
                                 for idx, inp in enumerate(child.input):
                                     if inp == node.output[0]:
@@ -383,24 +374,17 @@ class Smoother:
             added_tensors = [node.input[0], node.output[0]]
             self.model.add_tensors_to_outputs(added_tensors)
 
-            session = (ort.InferenceSession(self.model.model_path +
-                                            "_augment.onnx",
-                                            providers=self.providers)
-                       if self.model.is_large_model else ort.InferenceSession(
-                           self.model.model.SerializeToString(),
-                           providers=self.providers))
-            base_dir = "" if not self.model.is_large_model else os.path.dirname(
-                self.model.model_path)
-            weight = onnx.numpy_helper.to_array(
-                self.model.get_initializer(node.input[1]), base_dir)
+            session = (
+                ort.InferenceSession(self.model.model_path + "_augment.onnx", providers=self.providers)
+                if self.model.is_large_model
+                else ort.InferenceSession(self.model.model.SerializeToString(), providers=self.providers)
+            )
+            base_dir = "" if not self.model.is_large_model else os.path.dirname(self.model.model_path)
+            weight = onnx.numpy_helper.to_array(self.model.get_initializer(node.input[1]), base_dir)
             weight_q = _quant_dequant_data(weight)
 
             self.model.set_initializer(node.input[1], weight_q)
-            inits = [
-                self.model.get_initializer(i)
-                for i in node.input
-                if self.model.get_initializer(i) is not None
-            ]
+            inits = [self.model.get_initializer(i) for i in node.input if self.model.get_initializer(i) is not None]
 
             model = None
             idx = 1
@@ -421,11 +405,9 @@ class Smoother:
                         self.model.model.opset_import,
                         self.model.model.ir_version,
                     )
-                loss += _get_quant_dequant_output(model, outputs[0] * scale,
-                                                  outputs[1], self.providers)
+                loss += _get_quant_dequant_output(model, outputs[0] * scale, outputs[1], self.providers)
 
-            self.model.remove_tensors_from_outputs(
-                [i for i in added_tensors if i not in orig_outputs])
+            self.model.remove_tensors_from_outputs([i for i in added_tensors if i not in orig_outputs])
             self.model.set_initializer(node.input[1], weight)
         return loss
 
@@ -437,11 +419,9 @@ class Smoother:
             key (str): scale key of this tensor
         """
         if len(self.shape_info[tensor]) == 4:
-            scale = np.reshape(self.tensor_scales_info[key],
-                               (1, self.tensor_scales_info[key].shape[1], 1, 1))
+            scale = np.reshape(self.tensor_scales_info[key], (1, self.tensor_scales_info[key].shape[1], 1, 1))
         else:
-            scale = np.reshape(self.tensor_scales_info[key],
-                               (1, self.tensor_scales_info[key].shape[0]))
+            scale = np.reshape(self.tensor_scales_info[key], (1, self.tensor_scales_info[key].shape[0]))
         return scale
 
     def _auto_tune_alpha(
@@ -486,30 +466,29 @@ class Smoother:
                     scale = self._get_smooth_scales(alpha, [key])
                     self._adjust_weights(scale)
                     input_scale = (
-                        self._reshape_scale_for_input(tensor_name, key) if
-                        not (node.op_type == "Gemm" and utility.is_B_transposed(node))
-                        else self.tensor_scales_info[key])
-                    loss = self._get_output_loss(node_info[0], input_scale,
-                                                 calib_iter)
+                        self._reshape_scale_for_input(tensor_name, key)
+                        if not (node.op_type == "Gemm" and utility.is_B_transposed(node))
+                        else self.tensor_scales_info[key]
+                    )
+                    loss = self._get_output_loss(node_info[0], input_scale, calib_iter)
                     loss_alpha[alpha] = loss
                     if key not in optimal_alphas:  # Update alpha results
                         optimal_alphas[key] = alpha
                     else:
                         optimal_alphas[key] = (
-                            alpha if optimal_alphas[key] in loss_alpha and
-                            loss < loss_alpha[optimal_alphas[key]] else
-                            optimal_alphas[key])
+                            alpha
+                            if optimal_alphas[key] in loss_alpha and loss < loss_alpha[optimal_alphas[key]]
+                            else optimal_alphas[key]
+                        )
                     self.recover()
         utility.logger.info("auto tuning alpha done")
         if self.model.is_large_model:
 
             onnx.external_data_helper.load_external_data_for_model(
-                self.model.model,
-                os.path.split(self.model.model_path)[0])
+                self.model.model, os.path.split(self.model.model_path)[0]
+            )
             os.remove(self.model.model_path + "_augment.onnx")
-            os.remove(
-                os.path.join(os.path.dirname(self.model.model_path),
-                             "weights.pb"))
+            os.remove(os.path.join(os.path.dirname(self.model.model_path), "weights.pb"))
         return optimal_alphas
 
     def _get_smooth_scales(self, alpha, target_list=[]):
@@ -536,17 +515,14 @@ class Smoother:
                         continue
                     weight = onnx.numpy_helper.to_array(
                         self.model.get_initializer(node_info[1][1]),
-                        base_dir=os.path.dirname(self.model.model_path)
-                        if self.model.model_path is not None else "",
+                        base_dir=os.path.dirname(self.model.model_path) if self.model.model_path is not None else "",
                     )
-                    if (len(weight.shape) == 4 and
-                            weight.shape[1] != 1) or (node.op_type == "Gemm" and
-                                                      utility.is_B_transposed(node)):
+                    if (len(weight.shape) == 4 and weight.shape[1] != 1) or (
+                        node.op_type == "Gemm" and utility.is_B_transposed(node)
+                    ):
                         weight = np.moveaxis(weight, 0, 1)
-                    specific_alpha = alpha[node_info[0]] if isinstance(
-                        alpha, dict) else alpha
-                    scales[node_info[0]] = self._get_smooth_scale(
-                        weight, specific_alpha, tensor)
+                    specific_alpha = alpha[node_info[0]] if isinstance(alpha, dict) else alpha
+                    scales[node_info[0]] = self._get_smooth_scale(weight, specific_alpha, tensor)
             else:
                 if len(target_list) > 0 and tensor not in target_list:
                     continue
@@ -555,21 +531,18 @@ class Smoother:
                     node = self.model.get_node_by_weight(node_info[1][1])
                     weight = onnx.numpy_helper.to_array(
                         self.model.get_initializer(node_info[1][1]),
-                        base_dir=os.path.dirname(self.model.model_path)
-                        if self.model.model_path is not None else "",
+                        base_dir=os.path.dirname(self.model.model_path) if self.model.model_path is not None else "",
                     )
-                    if (len(weight.shape) == 4 and
-                            weight.shape[1] != 1) or (node.op_type == "Gemm" and
-                                                      utility.is_B_transposed(node)):
+                    if (len(weight.shape) == 4 and weight.shape[1] != 1) or (
+                        node.op_type == "Gemm" and utility.is_B_transposed(node)
+                    ):
                         weight = np.moveaxis(weight, 0, 1)
                     weight = weight.reshape(weight.shape[0], -1)
                     cur_max = np.amax(weight, axis=-1)
                     weights_in_channel_max.append(cur_max)
                 weights_stack = np.stack(weights_in_channel_max, axis=-1)
-                specific_alpha = alpha[tensor] if isinstance(alpha,
-                                                             dict) else alpha
-                scales[tensor] = self._get_smooth_scale(weights_stack,
-                                                        specific_alpha, tensor)
+                specific_alpha = alpha[tensor] if isinstance(alpha, dict) else alpha
+                scales[tensor] = self._get_smooth_scale(weights_stack, specific_alpha, tensor)
 
         return scales
 
@@ -583,8 +556,7 @@ class Smoother:
         """
         weights = np.abs(weights.reshape(weights.shape[0], -1))
         weights_max = np.amax(weights, axis=-1)
-        input_power = np.power(self.max_vals_per_channel[tensor],
-                               specific_alpha)
+        input_power = np.power(self.max_vals_per_channel[tensor], specific_alpha)
         weight_power = np.power(weights_max, 1 - specific_alpha)
         weight_power = np.clip(weight_power, a_min=1e-5, a_max=None)
         scale = np.clip(input_power / weight_power, a_min=1e-5, a_max=None)
@@ -599,15 +571,14 @@ class Smoother:
             scales (dict): The smooth scales
         """
         for key in scales.keys():
-            input_name = key if not self.scales_per_op else self.model.get_node(
-                key).input[0]
-            weight_name = (self.tensors_to_node[key][0][1][1]
-                           if not self.scales_per_op else
-                           self.model.get_node(key).input[1])
+            input_name = key if not self.scales_per_op else self.model.get_node(key).input[0]
+            weight_name = (
+                self.tensors_to_node[key][0][1][1] if not self.scales_per_op else self.model.get_node(key).input[1]
+            )
             scale_factor = 1.0 / scales[key]
-            if (len(self.shape_info[weight_name]) == 3 or
-                    len(self.shape_info[weight_name])
-                    == 2):  # the last dim is input channel
+            if (
+                len(self.shape_info[weight_name]) == 3 or len(self.shape_info[weight_name]) == 2
+            ):  # the last dim is input channel
                 pass
             elif len(self.shape_info[weight_name]) == 4:
                 scale_factor = np.reshape(scale_factor, (1, -1, 1, 1))
@@ -634,13 +605,10 @@ class Smoother:
                 value_info.name = mul_node.output[0]
                 self.new_added_value_info.append(value_info)
             if self.scales_per_op:
-                self.replace_input.append(
-                    [self.model.get_node(key), input_name, mul_output_name])
+                self.replace_input.append([self.model.get_node(key), input_name, mul_output_name])
             else:
                 for node_info in self.tensors_to_node[key]:
-                    self.replace_input.append([
-                        self.model.get_node(node_info[0]), key, mul_output_name
-                    ])
+                    self.replace_input.append([self.model.get_node(node_info[0]), key, mul_output_name])
 
     def _adjust_weights(self, scales):
         """Adjust the weights with scale.
@@ -648,8 +616,7 @@ class Smoother:
         Args:
             scales (dict): The input scales
         """
-        for idx, (tensor_name,
-                  nodes) in enumerate(self.tensors_to_node.items()):
+        for idx, (tensor_name, nodes) in enumerate(self.tensors_to_node.items()):
             utility.simple_progress_bar(len(self.tensors_to_node), idx + 1)
             for node_info in nodes:
                 key = node_info[0] if self.scales_per_op else tensor_name
@@ -659,20 +626,22 @@ class Smoother:
                 node = self.model.get_node_by_weight(input)
                 weight = onnx.numpy_helper.to_array(
                     self.model.get_initializer(input),
-                    base_dir=os.path.dirname(self.model.model_path)
-                    if self.model.model_path is not None else "",
+                    base_dir=os.path.dirname(self.model.model_path) if self.model.model_path is not None else "",
                 )
                 if len(weight.shape) == 2:
-                    scale = (np.expand_dims(scales[key], axis=0)
-                             if node.op_type == "Gemm" and utility.is_B_transposed(node)
-                             else np.expand_dims(scales[key], axis=-1))
+                    scale = (
+                        np.expand_dims(scales[key], axis=0)
+                        if node.op_type == "Gemm" and utility.is_B_transposed(node)
+                        else np.expand_dims(scales[key], axis=-1)
+                    )
                     new_weight = weight * scale
                 elif len(weight.shape) == 4:  # TODO need to check conv
                     node = self.model.get_node_by_weight(input)
-                    if (weight.shape[1] == 1 and
-                            "group" in [i.name for i in node.attribute] and
-                        [i for i in node.attribute if i.name == "group"
-                        ][0].i > 1):
+                    if (
+                        weight.shape[1] == 1
+                        and "group" in [i.name for i in node.attribute]
+                        and [i for i in node.attribute if i.name == "group"][0].i > 1
+                    ):
                         scale = np.reshape(scales[key], (-1, 1, 1, 1))
                     else:
                         scale = np.reshape(scales[key], (1, -1, 1, 1))

@@ -17,8 +17,10 @@ from typing import Union
 
 import onnx
 from onnxruntime.quantization.quantize import QuantConfig
-from neural_compressor_ort.quantization import config
+
 from neural_compressor_ort.quantization import algorithm_entry as algos
+from neural_compressor_ort.quantization import config
+
 
 # ORT-like user-facing API
 def quantize(
@@ -29,10 +31,9 @@ def quantize(
     if isinstance(quant_config, config.StaticQuantConfig):
         if quant_config.extra_options.get("SmoothQuant", False):
             nc_sq_config = config.generate_nc_sq_config(quant_config)
-            algos.smooth_quant_entry(model_input,
-                               nc_sq_config,
-                               quant_config.calibration_data_reader,
-                               model_output=model_output)
+            algos.smooth_quant_entry(
+                model_input, nc_sq_config, quant_config.calibration_data_reader, model_output=model_output
+            )
         else:
             # call static_quant_entry
             pass
@@ -40,6 +41,4 @@ def quantize(
         # call dynamic_quant_entry
         pass
     else:
-        raise TypeError(
-            "Invalid quantization config type, it must be either StaticQuantConfig or DynamicQuantConfig."
-        )
+        raise TypeError("Invalid quantization config type, it must be either StaticQuantConfig or DynamicQuantConfig.")
