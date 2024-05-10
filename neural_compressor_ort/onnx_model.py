@@ -22,7 +22,6 @@ import collections
 
 from onnxruntime.quantization import onnx_model
 from neural_compressor_ort import utility, constants
-from neural_compressor_ort.utils import MAXIMUM_PROTOBUF
 
 PretrainedConfig = utility.LazyImport("transformers.PretrainedConfig")
 

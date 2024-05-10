@@ -24,6 +24,7 @@ import onnx
 import onnxruntime
 
 from neural_compressor_ort.quantization import calibrate
+from neural_compressor_ort import onnx_model
 
 class Calibrator:
     """Dump information for smooth quant."""
