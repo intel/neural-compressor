@@ -23,7 +23,8 @@ from typing import Any, Callable, Dict, Generator, Iterator, List, Optional, Siz
 import onnx
 import pydantic
 
-from neural_compressor_ort import data_reader, utility
+from neural_compressor_ort import data_reader
+from neural_compressor_ort import utility
 from neural_compressor_ort.quantization import config
 
 
@@ -147,16 +148,16 @@ class ConfigSet:
         return len(self.config_list)
 
     @classmethod
-    def _from_single_config(cls, config: config.BaseConfig) -> List[config.BaseConfig]:
+    def _from_single_config(cls, fwk_config: config.BaseConfig) -> List[config.BaseConfig]:
         config_list = []
-        config_list = config.expand()
+        config_list = fwk_config.expand()
         return config_list
 
     @classmethod
     def _from_list_of_configs(cls, fwk_configs: List[config.BaseConfig]) -> List[config.BaseConfig]:
         config_list = []
-        for config in fwk_configs:
-            config_list += cls._from_single_config(config)
+        for fwk_config in fwk_configs:
+            config_list += cls._from_single_config(fwk_config)
         return config_list
 
     @classmethod
@@ -181,9 +182,9 @@ class ConfigSet:
         Args:
             fwk_configs: A single config or a list of configs.
                 Examples:
-                    1) single config: RTNConfig(weight_group_size=32)
-                    2) single expandable config: RTNConfig(weight_group_size=[32, 64])
-                    3) mixed 1) and 2): [RTNConfig(weight_group_size=32), RTNConfig(weight_group_size=[32, 64])]
+                    1) single config: config.RTNConfig(weight_group_size=32)
+                    2) single expandable config: config.RTNConfig(weight_group_size=[32, 64])
+                    3) mixed 1) and 2): [config.RTNConfig(weight_group_size=32), config.RTNConfig(weight_group_size=[32, 64])]
 
         Returns:
             ConfigSet: A ConfigSet object.
@@ -239,8 +240,8 @@ class TuningConfig:
     """Config for auto tuning pipeline.
 
     Examples:
-        from neural_compressor_ort.torch.quantization import TuningConfig
-        tune_config = TuningConfig(
+        from neural_compressor_ort.quantization import tuning
+        tune_config = tuning.TuningConfig(
             config_set=[config1, config2, ...],
             max_trials=3,
             tolerable_loss=0.01)
@@ -450,8 +451,8 @@ def autotune(
         tune_config (TuningConfig): tuning config.
             TuningConfig is created with algorithm configs, parameters supported tuning are in their params_list.
             Support:
-            Expand parameters to a list of parameters like TuningConfig(config_set=[RTNConfig(weight_bits=[4, 8])])
-            Pass a list of configs like TuningConfig(config_set=[RTNConfig(), GPTQConfig()])
+            Expand parameters to a list of parameters like TuningConfig(config_set=[config.RTNConfig(weight_bits=[4, 8])])
+            Pass a list of configs like TuningConfig(config_set=[config.RTNConfig(), config.GPTQConfig()])
         eval_fn (Callable): evaluate function.
             During evaluation, autotune will only pass model path as the input of function.
         eval_args (Optional[Tuple[Any]]): evaluate arguments.

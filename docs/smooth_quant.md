@@ -344,11 +344,11 @@ The tuning process looks for the optimal `alpha` value from a list of `alpha` va
 Here is an example:
 
 ```python
-from neural_compressor_ort.utils.base_tuning import TuningConfig
-from neural_compressor_ort.quantization import SmoothQuantConfig, autotune
+from neural_compressor_ort.quantization import config
+from neural_compressor_ort.quantization import tuning
 
-config = TuningConfig(config_set=[SmoothQuantConfig(alpha=np.arange(0.1, 0.5, 0.05).tolist())])
-best_model = autotune(
+config = tuning.TuningConfig(config_set=[config.SmoothQuantConfig(alpha=np.arange(0.1, 0.5, 0.05).tolist())])
+best_model = tuning.autotune(
     model_input=model,
     tune_config=config,
     eval_fn=eval_fn,
@@ -360,9 +360,10 @@ In this case, the tuning process searches the optimal `alpha` of each operator b
 Here is an example:
 
 ```python
-from neural_compressor_ort.quantization import StaticQuantConfig, quantize
+from neural_compressor_ort.quantization import config
+from neural_compressor_ort.quantization import quantize
 
-config = StaticQuantConfig(
+config = config.StaticQuantConfig(
     data_reader,
     extra_options={
         "SmoothQuant": True,

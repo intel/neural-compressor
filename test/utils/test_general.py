@@ -1,9 +1,10 @@
-"""Tests for utils components."""
+"""Tests for general components."""
 
 import unittest
 from typing import Any, List, Optional, Tuple, Union
 
 from neural_compressor_ort import constants
+from neural_compressor_ort import utility
 from neural_compressor_ort.quantization import config, tuning
 
 PRIORITY_FAKE_ALGO = 100
@@ -35,7 +36,7 @@ class FakeAlgoConfig(config.BaseConfig):
     params_list = [
         "weight_dtype",
         "weight_bits",
-        tuning.TuningParam("target_op_type_list", tunable_type=List[List[str]]),
+        config.TuningParam("target_op_type_list", tunable_type=List[List[str]]),
     ]
     name = FAKE_CONFIG_NAME
 
@@ -95,7 +96,7 @@ class FakeAlgoOneConfig(config.BaseConfig):
     params_list = [
         "weight_dtype",
         "weight_bits",
-        tuning.TuningParam("target_op_type_list", tunable_type=List[List[str]]),
+        config.TuningParam("target_op_type_list", tunable_type=List[List[str]]),
     ]
     name = FAKE_CONFIG_NAME_1
 

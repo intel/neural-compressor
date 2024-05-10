@@ -137,8 +137,8 @@ class TestQuantizationConfig(unittest.TestCase):
                 },
             }
         }
-        config = config.RTNConfig.from_dict(quant_config["rtn"])
-        self.assertIsNotNone(config.local_config)
+        rtn_cfg = config.RTNConfig.from_dict(quant_config["rtn"])
+        self.assertIsNotNone(rtn_cfg.local_config)
 
     def test_config_to_dict(self):
         quant_config = config.RTNConfig(weight_bits=4)

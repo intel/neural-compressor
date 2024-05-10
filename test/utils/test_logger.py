@@ -1,4 +1,4 @@
-"""Tests for utils components."""
+"""Tests for logger components."""
 
 import unittest
 

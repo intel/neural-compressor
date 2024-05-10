@@ -1,4 +1,4 @@
-"""Tests for utils components."""
+"""Tests for tuning param components."""
 
 import unittest
 from typing import List
