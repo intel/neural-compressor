@@ -102,7 +102,7 @@ class TestAutoRound:
                 "sym": False,
             }
         }
-        quantizer = AutoRoundQuantizer(weight_config=weight_config)
+        quantizer = AutoRoundQuantizer(quant_config=weight_config)
         fp32_model = gpt_j_model
 
         # quantizer execute

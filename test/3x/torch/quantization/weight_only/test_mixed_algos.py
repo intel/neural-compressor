@@ -10,8 +10,11 @@ from neural_compressor.torch.quantization import GPTQConfig, RTNConfig, quantize
 
 
 def run_fn(model):
-    model(torch.tensor([[10, 20, 30]], dtype=torch.long))
-    model(torch.tensor([[40, 50, 60]], dtype=torch.long))
+    # GPTQ uses ValueError to reduce computation when collecting input data of the first block
+    # It's special for UTs, no need to add this wrapper in examples.
+    with pytest.raises(ValueError):
+        model(torch.tensor([[10, 20, 30]], dtype=torch.long))
+        model(torch.tensor([[40, 50, 60]], dtype=torch.long))
 
 
 class TestMixedTwoAlgo:
