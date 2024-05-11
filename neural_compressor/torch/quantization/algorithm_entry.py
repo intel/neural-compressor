@@ -266,6 +266,7 @@ def awq_quantize_entry(
 ) -> torch.nn.Module:
     logger.info("Quantize model with the AWQ algorithm.")
     from neural_compressor.torch.algorithms.weight_only.awq import AWQQuantizer
+    from neural_compressor.torch.algorithms.weight_only.save_load import save
 
     weight_config = {}
     for (op_name, op_type), op_config in configs_mapping.items():
@@ -327,6 +328,8 @@ def awq_quantize_entry(
         del model.quantizer
     else:
         model.quantizer = quantizer
+    model.qconfig = configs_mapping
+    model.save = MethodType(save, model)
     return model
 
 
