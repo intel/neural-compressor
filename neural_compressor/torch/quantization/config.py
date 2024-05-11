@@ -105,7 +105,6 @@ class RTNConfig(BaseConfig):
         group_dim: int = 1,
         use_full_range: bool = False,
         use_mse_search: bool = False,
-        export_compressed_model: bool = False,
         # layer wise
         use_layer_wise: bool = False,
         model_path: str = "",
@@ -128,7 +127,6 @@ class RTNConfig(BaseConfig):
             group_dim (int): Dimension for grouping. Default is 1.
             use_full_range (bool): Enables full range for activations. Default is False.
             use_mse_search (bool): Enables mean squared error (MSE) search. Default is False.
-            export_compressed_model (bool): Enables return model in int format or not. Defaults to False.
             use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
             model_path (str): Model path that is used to load state_dict per layer.
             use_double_quant (bool): Enables double quantization. Default is False.
@@ -145,7 +143,6 @@ class RTNConfig(BaseConfig):
         self.group_dim = group_dim
         self.use_full_range = use_full_range
         self.use_mse_search = use_mse_search
-        self.export_compressed_model = export_compressed_model
         self.use_layer_wise = use_layer_wise
         self.model_path = model_path
         # double quant
@@ -180,7 +177,6 @@ class RTNConfig(BaseConfig):
             use_full_range=[False, True],
             use_mse_search=[False, True],
             use_layer_wise=[False, True],
-            export_compressed_model=[False, True],
             use_double_quant=[False, True],
             double_quant_bits=[4, 1, 2, 3, 5, 6, 7, 8],
             double_quant_dtype=["int"],
