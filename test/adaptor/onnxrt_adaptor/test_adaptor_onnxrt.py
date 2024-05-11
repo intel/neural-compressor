@@ -1489,6 +1489,10 @@ class TestAdaptorONNXRT(unittest.TestCase):
         q_model = quantization.fit(self.matmul_model, config, calib_dataloader=self.matmul_dataloader, eval_func=eval)
         self.assertTrue("QLinearMatMul" in [i.op_type for i in q_model.nodes()])
 
+        q_model = quantization.fit(self.matmul_model, config, calib_dataloader=self.matmul_dataloader)
+        recover_model = recover(self.matmul_model, "nc_workspace/history.snapshot", 0)
+        self.assertTrue(q_model.model == recover_model.model)
+
         config = PostTrainingQuantConfig(approach="dynamic")
         q_model = quantization.fit(self.matmul_model, config, calib_dataloader=self.matmul_dataloader, eval_func=eval)
         self.assertTrue("MatMulInteger" in [i.op_type for i in q_model.nodes()])
