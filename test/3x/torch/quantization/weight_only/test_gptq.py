@@ -80,8 +80,9 @@ class TestGPTQQuant:
         gptq_atol_2 = (gptq_label - self.label).amax()
 
         # compare the results of calling `convert` + `prepare` and calling `quantize`
-        assert gptq_atol_1 == gptq_atol_2, \
-            "The results of calling `convert` + `prepare` and calling `quantize` should be equal."
+        assert (
+            gptq_atol_1 == gptq_atol_2
+        ), "The results of calling `convert` + `prepare` and calling `quantize` should be equal."
 
     @pytest.mark.parametrize(
         "bits, use_sym, group_size",

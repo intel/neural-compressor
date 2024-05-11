@@ -94,10 +94,9 @@ class TestAWQ(unittest.TestCase):
         out2 = qdq_model(example_inputs)
 
         # compare the results of calling `convert` + `prepare` and calling `quantize`
-        assert torch.all(out1[0].eq(out2[0])), \
-            "The results of calling `convert` + `prepare` and calling `quantize` should be equal."
-
-
+        assert torch.all(
+            out1[0].eq(out2[0])
+        ), "The results of calling `convert` + `prepare` and calling `quantize` should be equal."
 
 
 if __name__ == "__main__":

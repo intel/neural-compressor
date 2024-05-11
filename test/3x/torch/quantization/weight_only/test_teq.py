@@ -125,7 +125,9 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
         test_input = torch.ones([1, 512], dtype=torch.long)
 
         # prepare + convert API
-        prepared_model = prepare(copy.deepcopy(self.gptj), quant_config=self.quant_config, example_inputs=example_inputs)
+        prepared_model = prepare(
+            copy.deepcopy(self.gptj), quant_config=self.quant_config, example_inputs=example_inputs
+        )
         train(prepared_model)
         qdq_model = convert(prepared_model)
         self.assertTrue(isinstance(qdq_model, torch.nn.Module))
@@ -139,5 +141,6 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
         out2 = qdq_model(test_input)
 
         # compare the results of calling `convert` + `prepare` and calling `quantize`
-        assert torch.all(out1[0].eq(out2[0])), \
-            "The results of calling `convert` + `prepare` and calling `quantize` should be equal."
+        assert torch.all(
+            out1[0].eq(out2[0])
+        ), "The results of calling `convert` + `prepare` and calling `quantize` should be equal."

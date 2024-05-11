@@ -2,7 +2,6 @@ import copy
 
 import pytest
 import torch
-
 import transformers
 
 from neural_compressor.torch.algorithms.weight_only.autoround import AutoRoundQuantizer, get_autoround_default_run_fn

@@ -256,5 +256,6 @@ class TestRTNQuant:
         output_2 = model(self.example_inputs)[0]
 
         # compare the results of calling `convert` + `prepare` and calling `quantize`
-        assert torch.all(output_1.eq(output_2)), \
-            "The results of calling `convert` + `prepare` and calling `quantize` should be equal."
+        assert torch.all(
+            output_1.eq(output_2)
+        ), "The results of calling `convert` + `prepare` and calling `quantize` should be equal."
