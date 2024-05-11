@@ -142,6 +142,7 @@ def prepare(
     setattr(prepared_model, "example_inputs", example_inputs)
     return prepared_model
 
+
 @log_quant_execution
 def convert(
     model: torch.nn.Module,
