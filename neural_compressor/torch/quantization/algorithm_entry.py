@@ -390,6 +390,7 @@ def autoround_quantize_entry(
     **kwargs,
 ) -> torch.nn.Module:
     from neural_compressor.torch.algorithms.weight_only.autoround import AutoRoundQuantizer
+    from neural_compressor.torch.algorithms.weight_only.save_load import save
 
     logger.info("Quantize model with the AutoRound algorithm.")
     weight_config = {}
@@ -452,7 +453,8 @@ def autoround_quantize_entry(
         del model.quantizer
     else:
         model.quantizer = quantizer
-    logger.info("AutoRound quantization done.")
+    model.qconfig = configs_mapping
+    model.save = MethodType(save, model)
     return model
 
 
