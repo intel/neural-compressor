@@ -26,9 +26,7 @@ from typing import Callable, List, Union
 import onnx
 import onnxruntime as ort
 
-from neural_compressor_ort import data_reader
-from neural_compressor_ort import onnx_model
-from neural_compressor_ort import utility
+from neural_compressor_ort import data_reader, onnx_model, utility
 
 
 def layer_wise_quant(
