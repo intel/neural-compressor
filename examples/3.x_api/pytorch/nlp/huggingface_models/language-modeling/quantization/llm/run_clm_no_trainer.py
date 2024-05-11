@@ -236,7 +236,7 @@ if args.quantize:
 
     # 3.x api
     if args.approach == 'weight_only':
-        from neural_compressor.torch.quantization import RTNConfig, GPTQConfig, prepare, convert
+        from neural_compressor.torch.quantization import RTNConfig, GPTQConfig, prepare, convert, quantize
         from neural_compressor.torch.utils import get_double_quant_config
         weight_sym = True if args.woq_scheme == "sym" else False
         double_quant_config_dict = get_double_quant_config(args.double_quant_type)
@@ -327,7 +327,7 @@ if args.quantize:
             quant_config.set_local("lm_head", GPTQConfig(dtype="fp32"))
             user_model = prepare(model=user_model, quant_config=quant_config)
             run_fn_for_gptq(user_model, dataloader_for_calibration)
-            model = convert(user_model)
+            user_model = convert(user_model)
     else:
         if args.sq:
             from neural_compressor.torch.quantization import SmoothQuantConfig
