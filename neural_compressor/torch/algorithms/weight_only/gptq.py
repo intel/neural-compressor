@@ -1138,7 +1138,7 @@ class GPTQuantizer(INCQuantizer):
         max_seq_length=2048,
         use_max_length=True,
         device=None,
-        export_compressed_model=False,
+        export_compressed_model=True,
         use_layer_wise=False,
         model_path=None,
         *args,

@@ -83,7 +83,6 @@ class RTNConfig(BaseConfig):
         "group_dim",
         "use_full_range",
         "use_mse_search",
-        "export_compressed_model",
         # layer wise params
         "use_layer_wise",
         "model_path",
@@ -238,7 +237,6 @@ class GPTQConfig(BaseConfig):
         "use_sym",
         "group_size",
         "use_mse_search",
-        "export_compressed_model",
         "use_double_quant",
         "double_quant_dtype",
         "double_quant_bits",
@@ -261,7 +259,6 @@ class GPTQConfig(BaseConfig):
         use_sym: bool = True,
         group_size: int = 32,
         use_mse_search: bool = False,
-        export_compressed_model: bool = False,
         # layer wise
         use_layer_wise: bool = False,
         model_path: str = "",
@@ -287,7 +284,6 @@ class GPTQConfig(BaseConfig):
             use_sym (bool): Indicates whether weights are symmetric. Default is True.
             group_size (int): Size of weight groups. Default is 32.
             use_mse_search (bool): Enables mean squared error (MSE) search. Default is False.
-            export_compressed_model (bool): Enables return model in int format or not. Defaults to False.
             use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
             model_path (str): Model path that is used to load state_dict per layer.
             use_double_quant (bool): Enables double quantization. Default is False.
@@ -311,7 +307,6 @@ class GPTQConfig(BaseConfig):
         self.use_sym = use_sym
         self.group_size = group_size
         self.use_mse_search = use_mse_search
-        self.export_compressed_model = export_compressed_model
         # layer wise
         self.use_layer_wise = use_layer_wise
         self.model_path = model_path

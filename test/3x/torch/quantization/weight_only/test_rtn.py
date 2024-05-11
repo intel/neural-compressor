@@ -340,44 +340,6 @@ class TestRTNQuantWithNewAPI:
         model = convert(model)
         # TODO: (Xin) not implemented
 
-    @pytest.mark.parametrize("dtype", ["int4", "nf4", "fp4"])
-    def test_export_compressed_model(self, dtype):
-        if dtype == "int4":
-            # using optimum format as default
-            model = copy.deepcopy(self.tiny_gptj)
-            quant_config = RTNConfig(
-                dtype=dtype,
-            )
-            model = prepare(model, quant_config)
-            model = convert(model)
-            out = model(self.example_inputs)[0]
-            assert isinstance(model.lm_head, WeightOnlyLinear), "Exporting compressed model failed."
-            atol_true = (out - self.q_label).amax()
-            # The small gap is caused by FP16 scale in WeightOnlyLinear.
-            assert (
-                atol_true < 0.0005
-            ), "Exporting compressed model should have the same output as quantized model. Please double check"
-        else:
-            # optimum_format doesn't suit for symmetric nf4 fp4.
-            model = copy.deepcopy(self.tiny_gptj)
-            quant_config = RTNConfig(
-                dtype=dtype,
-            )
-            model = prepare(model, quant_config)
-            model = convert(model)
-            out1 = model(self.example_inputs)[0]
-            model = copy.deepcopy(self.tiny_gptj)
-            quant_config = RTNConfig(
-                dtype=dtype,
-            )
-            model = prepare(model, quant_config)
-            model = convert(model)
-            out2 = model(self.example_inputs)[0]
-            assert isinstance(model.lm_head, WeightOnlyLinear), "Exporting compressed model failed."
-            assert torch.allclose(
-                out1, out2
-            ), "Exporting compressed model should have the same output as quantized model. Please double check"
-
     @pytest.mark.parametrize(
         "dtype",
         ["int4", "nf4", "fp4", "fp4_e2m1_bnb", "fp4_e2m1", "fp8_e5m2", "fp8_e5m2fnuz", "fp8_e4m3fn", "fp8_e4m3fnuz"],

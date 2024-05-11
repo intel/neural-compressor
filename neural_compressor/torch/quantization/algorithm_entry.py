@@ -73,15 +73,15 @@ def rtn_entry(
     else:
         quantizer = RTNQuantizer(quant_config=weight_config)
 
-    q_model = quantizer.execute(model, mode=mode)
+    model = quantizer.execute(model, mode=mode)
 
     if getattr(model, "quantizer", False):
-        del q_model.quantizer
+        del model.quantizer
     else:
-        q_model.quantizer = quantizer
-    q_model.qconfig = configs_mapping
-    q_model.save = MethodType(save, q_model)
-    return q_model
+        model.quantizer = quantizer
+    model.qconfig = configs_mapping
+    model.save = MethodType(save, model)
+    return model
 
 
 ###################### GPTQ Algo Entry ##################################
@@ -96,6 +96,7 @@ def gptq_entry(
 ) -> torch.nn.Module:
     logger.info("Quantize model with the GPTQ algorithm.")
     from neural_compressor.torch.algorithms.weight_only.gptq import GPTQuantizer
+    from neural_compressor.torch.algorithms.weight_only.save_load import save
 
     # rebuild weight_config for gptq_quantize function
     weight_config = {}
@@ -120,7 +121,6 @@ def gptq_entry(
         }
     kwargs.update(
         {
-            "export_compressed_model": quant_config.export_compressed_model,
             "use_layer_wise": quant_config.use_layer_wise,
             "model_path": quant_config.model_path,
         }
@@ -136,6 +136,8 @@ def gptq_entry(
         del model.quantizer
     else:
         model.quantizer = quantizer
+    model.qconfig = configs_mapping
+    model.save = MethodType(save, model)
     return model
 
 

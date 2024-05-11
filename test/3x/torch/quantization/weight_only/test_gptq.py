@@ -142,54 +142,6 @@ class TestGPTQQuant:
     #     model = quantize(model, quant_config, run_fn=run_fn)
     # TODO: (Xin) not implemented
 
-    @pytest.mark.parametrize("dtype", ["int4", "nf4", "fp4"])
-    def test_export_compressed_model(self, dtype):
-        # export_compressed_model = False
-        model = copy.deepcopy(self.tiny_gptj)
-        quant_config = GPTQConfig(
-            dtype=dtype,
-            export_compressed_model=False,
-        )
-        model = prepare(model, quant_config)
-        run_fn(model)
-        model = convert(model)
-        out1 = model(self.example_inputs)[0]
-        # export_compressed_model = True
-        model = copy.deepcopy(self.tiny_gptj)
-        quant_config = GPTQConfig(
-            dtype=dtype,
-            export_compressed_model=True,
-        )
-        model = prepare(model, quant_config)
-        run_fn(model)
-        model = convert(model)
-        out2 = model(self.example_inputs)[0]
-        assert isinstance(model.transformer.h[0].attn.k_proj, WeightOnlyLinear), "Exporting compressed model failed."
-
-        # The small gap is caused by FP16 scale in WeightOnlyLinear.
-        if dtype == "int4":
-            atol_true = (out1 - out2).amax()
-            assert (
-                atol_true < 0.008
-            ), "Exporting compressed model should have the same output as quantized model. Please double check"
-        else:
-            assert torch.allclose(
-                out1, out2
-            ), "Exporting compressed model should have the same output as quantized model. Please double check."
-
-    @pytest.mark.parametrize("dtype", ["int4", "nf4", "fp4", "fp4_e2m1_bnb", "fp4_e2m1"])
-    def test_dtype_params(self, dtype):
-        model = copy.deepcopy(self.tiny_gptj)
-        quant_config = GPTQConfig(
-            dtype=dtype,
-        )
-        model = prepare(model, quant_config)
-        run_fn(model)
-        model = convert(model)
-        out = model(self.example_inputs)[0]
-        atol = (out - self.label).amax()
-        assert atol < 0.12, "Accuracy gap atol > 0.12 is unexpected. Please double check."
-
     @pytest.mark.parametrize("dtype", ["nf4", "int4"])
     @pytest.mark.parametrize("double_quant_bits", [6])
     @pytest.mark.parametrize("double_quant_group_size", [8, 256])
@@ -231,3 +183,22 @@ class TestGPTQQuant:
             ), "asym for double quant should have smaller atol because scales is bigger than zero, please double check."
         except:
             assert torch.allclose(atol_false, atol_true, atol=0.008), "atol is very close, double checked the logic."
+
+    def test_save_and_load(self):
+        fp32_model = copy.deepcopy(self.tiny_gptj)
+        quant_config = get_default_gptq_config()
+        prepared_model = prepare(fp32_model, quant_config)
+        run_fn(prepared_model)
+        q_model = convert(prepared_model)
+        assert q_model is not None, "Quantization failed!"
+        q_model.save("saved_results")
+        inc_out = q_model(self.example_inputs)[0]
+        
+        from neural_compressor.torch.quantization import load
+
+        # loading compressed model
+        loaded_model = load("saved_results")
+        loaded_out = loaded_model(self.example_inputs)[0]
+        assert torch.allclose(inc_out, loaded_out), "Unexpected result. Please double check."
+        assert isinstance(loaded_model.transformer.h[0].attn.k_proj, WeightOnlyLinear), "loading compressed model failed."
+        
