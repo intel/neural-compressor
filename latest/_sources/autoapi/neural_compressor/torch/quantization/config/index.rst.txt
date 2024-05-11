@@ -28,6 +28,7 @@ Functions
    neural_compressor.torch.quantization.config.get_default_rtn_config
    neural_compressor.torch.quantization.config.get_default_gptq_config
    neural_compressor.torch.quantization.config.get_default_hqq_config
+   neural_compressor.torch.quantization.config.get_woq_tuning_config
 
 
 
@@ -77,5 +78,12 @@ Functions
    Generate the default HQQ config.
 
    :returns: the default HQQ config.
+
+
+.. py:function:: get_woq_tuning_config() -> list
+
+   Generate the config set for WOQ tuning.
+
+   :returns: the list of WOQ quant config.
 
 
