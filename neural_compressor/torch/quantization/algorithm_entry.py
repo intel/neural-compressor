@@ -339,6 +339,7 @@ def teq_quantize_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], TEQConfig], mode: Mode, *args, **kwargs
 ) -> torch.nn.Module:
     from neural_compressor.torch.algorithms.weight_only.teq import TEQuantizer
+    from neural_compressor.torch.algorithms.weight_only.save_load import save
 
     logger.info("Quantize model with the TEQ algorithm.")
     weight_config = {}
@@ -361,7 +362,6 @@ def teq_quantize_entry(
                 "use_full_range": quant_config.use_full_range,
                 "use_mse_search": quant_config.use_mse_search,
                 "use_layer_wise": quant_config.use_layer_wise,
-                "export_compressed_model": quant_config.export_compressed_model,
                 "use_double_quant": quant_config.use_double_quant,
                 "double_quant_dtype": quant_config.double_quant_dtype,
                 "double_quant_bits": quant_config.double_quant_bits,
@@ -375,6 +375,8 @@ def teq_quantize_entry(
         quant_config=weight_config, folding=folding, absorb_to_layer=absorb_to_layer, example_inputs=example_inputs
     )
     model = quantizer.execute(model, mode=mode, run_fn=run_fn, example_inputs=example_inputs, inplace=inplace)
+    model.qconfig = configs_mapping
+    model.save = MethodType(save, model)
     return model
 
 
