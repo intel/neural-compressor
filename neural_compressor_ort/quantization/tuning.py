@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import copy
-import enum
 import os
 import pathlib
 import tempfile
@@ -21,7 +20,6 @@ import uuid
 from typing import Any, Callable, Dict, Generator, Iterator, List, Optional, Sized, Tuple, Union, _GenericAlias
 
 import onnx
-import pydantic
 
 from neural_compressor_ort import data_reader, utility
 from neural_compressor_ort.quantization import config

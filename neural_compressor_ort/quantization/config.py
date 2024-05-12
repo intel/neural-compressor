@@ -466,7 +466,7 @@ class BaseConfig(ABC):
                 for op_name_pattern in op_name_config_dict:
                     if isinstance(op_name, str) and re.match(op_name_pattern, op_name):
                         config_mapping[(op_name, op_type)] = op_name_config_dict[op_name_pattern]
-                    elif op_name_pattern == op_name:  # TODO: map ipex opname to stock pt op_name
+                    elif op_name_pattern == op_name:
                         config_mapping[(op_name, op_type)] = op_name_config_dict[op_name_pattern]
         return config_mapping
 
@@ -494,7 +494,7 @@ class ComposableConfig(BaseConfig):
             self.config_list.append(other)
         return self
 
-    def to_dict(self, params_list=[], operator2str=None):
+    def to_dict(self):
         result = {}
         for config in self.config_list:
             result[config.name] = config.to_dict()
