@@ -199,9 +199,12 @@ class BaseConfig(ABC):
     """The base config for all algorithm configs."""
 
     name = constants.BASE_CONFIG
-    params_list = []
+    params_list: List[Union[str, TuningParam]] = []
 
-    def __init__(self, white_list: Optional[List[Union[str, Callable]]] = constants.DEFAULT_WHITE_LIST) -> None:
+    def __init__(
+        self,
+        white_list: Optional[Union[Union[str, Callable], List[Union[str, Callable]]]] = constants.DEFAULT_WHITE_LIST,
+    ) -> None:
         self._global_config: Optional[BaseConfig] = None
         # For PyTorch, operator_type is the collective name for module type and functional operation type,
         # for example, `torch.nn.Linear`, and `torch.nn.functional.linear`.
@@ -314,7 +317,7 @@ class BaseConfig(ABC):
             json.dump(config_dict, file, indent=4)
         utility.logger.info("Dump the config into %s.", filename)
 
-    def to_json_string(self, use_diff: bool = False) -> str:
+    def to_json_string(self, use_diff: bool = False) -> Union[str, Dict]:
         """Serializes this instance to a JSON string.
 
         Args:
@@ -331,7 +334,8 @@ class BaseConfig(ABC):
             config_dict = self.to_dict()
         try:
             return json.dumps(config_dict, indent=2) + "\n"
-        except:
+        except Exception as e:
+            utility.logger.error("Failed to serialize the config to JSON string: %s", e)
             return config_dict
 
     def __repr__(self) -> str:
@@ -450,8 +454,8 @@ class BaseConfig(ABC):
         return op_type_config_dict, op_name_config_dict
 
     def to_config_mapping(
-        self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
-    ) -> OrderedDict[Union[str, Callable], OrderedDict[str, BaseConfig]]:
+        self, config_list: Optional[List[BaseConfig]] = None, model_info: List[Tuple[str, str]] = None
+    ) -> OrderedDict[Tuple[str, str], OrderedDict[str, BaseConfig]]:
         config_mapping = OrderedDict()
         if config_list is None:
             config_list = [self]
@@ -550,7 +554,7 @@ class ComposableConfig(BaseConfig):
 
 
 def get_all_config_set_from_config_registry() -> Union[BaseConfig, List[BaseConfig]]:
-    all_registered_config_cls: List[BaseConfig] = config_registry.get_all_config_cls()
+    all_registered_config_cls: List[Type[BaseConfig]] = config_registry.get_all_config_cls()
     config_set = []
     for config_cls in all_registered_config_cls:
         config_set.append(config_cls.get_config_set_for_tuning())
@@ -578,7 +582,7 @@ class RTNConfig(BaseConfig):
     """Config class for round-to-nearest weight-only quantization."""
 
     supported_configs: List[_OperatorConfig] = []
-    params_list: List[str] = [
+    params_list: List[Union[str, TuningParam]] = [
         "weight_dtype",
         "weight_bits",
         "weight_group_size",
@@ -648,7 +652,7 @@ class RTNConfig(BaseConfig):
         return result
 
     @classmethod
-    def register_supported_configs(cls) -> List[_OperatorConfig]:
+    def register_supported_configs(cls) -> None:
         supported_configs = []
         linear_rtn_config = RTNConfig(
             weight_dtype=["int"],
@@ -722,7 +726,7 @@ class GPTQConfig(BaseConfig):
     """Config class for gptq weight-only quantization."""
 
     supported_configs: List[_OperatorConfig] = []
-    params_list: List[str] = [
+    params_list: List[Union[str, TuningParam]] = [
         "weight_dtype",
         "weight_bits",
         "weight_group_size",
@@ -730,7 +734,7 @@ class GPTQConfig(BaseConfig):
         "act_dtype",
         "accuracy_level",
     ]
-    model_params_list: List[str] = [
+    model_params_list: List[Union[str, TuningParam]] = [
         "percdamp",
         "blocksize",
         "actorder",
@@ -810,7 +814,7 @@ class GPTQConfig(BaseConfig):
         return result
 
     @classmethod
-    def register_supported_configs(cls) -> List[_OperatorConfig]:
+    def register_supported_configs(cls) -> None:
         supported_configs = []
         linear_gptq_config = GPTQConfig(
             weight_dtype=["int"],
