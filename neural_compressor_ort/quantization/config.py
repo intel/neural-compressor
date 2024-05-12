@@ -201,9 +201,7 @@ class BaseConfig(ABC):
     name = constants.BASE_CONFIG
     params_list = []
 
-    def __init__(
-        self, white_list: Optional[List[constants.OP_NAME_OR_MODULE_TYPE]] = constants.DEFAULT_WHITE_LIST
-    ) -> None:
+    def __init__(self, white_list: Optional[List[Union[str, Callable]]] = constants.DEFAULT_WHITE_LIST) -> None:
         self._global_config: Optional[BaseConfig] = None
         # For PyTorch, operator_type is the collective name for module type and functional operation type,
         # for example, `torch.nn.Linear`, and `torch.nn.functional.linear`.
@@ -233,7 +231,7 @@ class BaseConfig(ABC):
         return self._white_list
 
     @white_list.setter
-    def white_list(self, op_name_or_type_list: Optional[List[constants.OP_NAME_OR_MODULE_TYPE]]):
+    def white_list(self, op_name_or_type_list: Optional[List[Union[str, Callable]]]):
         self._white_list = op_name_or_type_list
 
     @property
@@ -607,7 +605,7 @@ class RTNConfig(BaseConfig):
         providers: List[str] = ["CPUExecutionProvider"],
         layer_wise_quant: bool = False,
         quant_last_matmul: bool = True,
-        white_list: List[constants.OP_NAME_OR_MODULE_TYPE] = constants.DEFAULT_WHITE_LIST,
+        white_list: List[Union[str, Callable]] = constants.DEFAULT_WHITE_LIST,
     ):
         """Init RTN weight-only quantization config.
 
@@ -759,7 +757,7 @@ class GPTQConfig(BaseConfig):
         providers: List[str] = ["CPUExecutionProvider"],
         layer_wise_quant: bool = False,
         quant_last_matmul: bool = True,
-        white_list: List[constants.OP_NAME_OR_MODULE_TYPE] = constants.DEFAULT_WHITE_LIST,
+        white_list: List[Union[str, Callable]] = constants.DEFAULT_WHITE_LIST,
     ):
         """Init GPTQ weight-only quantization config.
 
@@ -922,7 +920,7 @@ class AWQConfig(BaseConfig):
         enable_mse_search: bool = True,
         providers: List[str] = ["CPUExecutionProvider"],
         quant_last_matmul: bool = True,
-        white_list: List[constants.OP_NAME_OR_MODULE_TYPE] = constants.DEFAULT_WHITE_LIST,
+        white_list: List[Union[str, Callable]] = constants.DEFAULT_WHITE_LIST,
     ):
         """Init AWQ weight-only quantization config.
 
@@ -1064,7 +1062,7 @@ class SmoothQuantConfig(BaseConfig, quantization.StaticQuantConfig):
         scales_per_op: bool = True,
         auto_alpha_args: dict = {"alpha_min": 0.3, "alpha_max": 0.7, "alpha_step": 0.05, "attn_method": "min"},
         providers: List[str] = ["CPUExecutionProvider"],
-        white_list: List[constants.OP_NAME_OR_MODULE_TYPE] = constants.DEFAULT_WHITE_LIST,
+        white_list: List[Union[str, Callable]] = constants.DEFAULT_WHITE_LIST,
         **kwargs,
     ):
         """Init smooth quant config.

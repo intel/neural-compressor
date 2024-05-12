@@ -1,7 +1,7 @@
 """Tests for general components."""
 
 import unittest
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Callable, List, Optional, Tuple, Union
 
 from neural_compressor_ort import constants, utility
 from neural_compressor_ort.quantization import config, tuning
@@ -44,7 +44,7 @@ class FakeAlgoConfig(config.BaseConfig):
         weight_dtype: str = "int",
         weight_bits: int = 4,
         target_op_type_list: List[str] = ["Conv", "Gemm"],
-        white_list: Optional[List[constants.OP_NAME_OR_MODULE_TYPE]] = constants.DEFAULT_WHITE_LIST,
+        white_list: Optional[List[Union[str, Callable]]] = constants.DEFAULT_WHITE_LIST,
     ):
         """Init fake config.
 
@@ -104,7 +104,7 @@ class FakeAlgoOneConfig(config.BaseConfig):
         weight_dtype: str = "int",
         weight_bits: int = 4,
         target_op_type_list: List[str] = ["Conv", "Gemm"],
-        white_list: Optional[List[constants.OP_NAME_OR_MODULE_TYPE]] = constants.DEFAULT_WHITE_LIST,
+        white_list: Optional[List[Union[str, Callable]]] = constants.DEFAULT_WHITE_LIST,
     ):
         """Init fake config.
 
