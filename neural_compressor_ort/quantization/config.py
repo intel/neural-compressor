@@ -553,7 +553,7 @@ class ComposableConfig(BaseConfig):
         return model_info_dict
 
 
-def get_all_config_set_from_config_registry() -> Union[BaseConfig, List[BaseConfig]]:
+def get_all_config_set_from_config_registry() -> List[BaseConfig]:
     all_registered_config_cls: List[Type[BaseConfig]] = config_registry.get_all_config_cls()
     config_set = []
     for config_cls in all_registered_config_cls:
@@ -563,7 +563,7 @@ def get_all_config_set_from_config_registry() -> Union[BaseConfig, List[BaseConf
 
 def register_supported_configs():
     """Register supported configs."""
-    all_registered_config_cls: List[BaseConfig] = config_registry.get_all_config_cls()
+    all_registered_config_cls: List[Type[BaseConfig]] = config_registry.get_all_config_cls()
     for config_cls in all_registered_config_cls:
         config_cls.register_supported_configs()
 
