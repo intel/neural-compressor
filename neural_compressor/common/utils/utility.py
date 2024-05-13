@@ -22,7 +22,7 @@ import time
 import cpuinfo
 import psutil
 
-from neural_compressor.common.utils import TuningLogger, logger
+from neural_compressor.common.utils import TuningLogger, logger, Mode
 
 __all__ = [
     "set_workspace",
@@ -30,7 +30,7 @@ __all__ = [
     "set_resume_from",
     "set_tensorboard",
     "dump_elapsed_time",
-    "log_quant_execution",
+    "log_process",
     "singleton",
     "LazyImport",
     "CpuInfo",
@@ -206,31 +206,19 @@ def set_tensorboard(tensorboard: bool):
 default_tuning_logger = TuningLogger()
 
 
-def log_quant_execution(mode="quantize"):
-    def log_quant_execution_wrapper(func):
+def log_process(mode=Mode.QUANTIZE):
+    def log_process_wrapper(func):
         def inner_wrapper(*args, **kwargs):
-            start_log, end_log = None, None
-            if mode == "quantize":
-                start_log = default_tuning_logger.quantization_start
-                end_log = default_tuning_logger.quantization_end
-            elif mode == "prepare":
-                start_log = default_tuning_logger.preparation_start
-                end_log = default_tuning_logger.preparation_end
-            elif mode == "convert":
-                start_log = default_tuning_logger.conversion_start
-                end_log = default_tuning_logger.conversion_end
+            start_log = default_tuning_logger.execution_start
+            end_log = default_tuning_logger.execution_end
 
-            if start_log is not None:
-                start_log(stacklevel=4)
+            start_log(mode=mode, stacklevel=4)
 
             # Call the original function
             result = func(*args, **kwargs)
 
-            if end_log is not None:
-                end_log(stacklevel=4)
+            end_log(mode=mode, stacklevel=4)
 
             return result
-
         return inner_wrapper
-
-    return log_quant_execution_wrapper
+    return log_process_wrapper

@@ -18,7 +18,7 @@ from typing import Any, Optional
 
 import torch
 
-from neural_compressor.torch.utils import Mode
+from neural_compressor.common.utils import Mode
 
 
 class Quantizer(ABC):

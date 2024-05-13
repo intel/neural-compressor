@@ -20,6 +20,9 @@
 import logging
 import os
 
+from neural_compressor.common.utils import Mode
+
+
 __all__ = [
     "level",
     "Logger",  # TODO: not expose it
@@ -139,6 +142,15 @@ level = Logger().get_logger().level
 
 logger = Logger
 
+def _get_log_msg(mode):
+    log_msg = None
+    if mode == Mode.QUANTIZE:
+        log_msg = "Quantization"
+    elif mode == Mode.PREPARE:
+        log_msg = "Preparation"
+    elif mode == Mode.CONVERT:
+        log_msg = "Conversion"
+    return log_msg
 
 class TuningLogger:
     """A unified logger for the tuning/quantization process.
@@ -155,28 +167,16 @@ class TuningLogger:
         logger.info("%d-trail started.", trial_index)
 
     @classmethod
-    def quantization_start(cls, stacklevel=2) -> None:
-        logger.info("Quantization started.", stacklevel=stacklevel)
+    def execution_start(cls, mode=Mode.QUANTIZE, stacklevel=2):
+        log_msg = _get_log_msg(mode)
+        assert log_msg is not None, "Please check `mode` in execution_start function of TuningLogger class."
+        logger.info("{} started.".format(log_msg), stacklevel=stacklevel)
 
     @classmethod
-    def quantization_end(cls, stacklevel=2) -> None:
-        logger.info("Quantization end.", stacklevel=stacklevel)
-
-    @classmethod
-    def preparation_start(cls, stacklevel=2) -> None:
-        logger.info("Preparation started.", stacklevel=stacklevel)
-
-    @classmethod
-    def preparation_end(cls, stacklevel=2) -> None:
-        logger.info("Preparation end.", stacklevel=stacklevel)
-
-    @classmethod
-    def conversion_start(cls, stacklevel=2) -> None:
-        logger.info("Conversion started.", stacklevel=stacklevel)
-
-    @classmethod
-    def conversion_end(cls, stacklevel=2) -> None:
-        logger.info("Conversion end.", stacklevel=stacklevel)
+    def execution_end(cls, mode=Mode.QUANTIZE, stacklevel=2):
+        log_msg = _get_log_msg(mode)
+        assert log_msg is not None, "Please check `mode` in execution_end function of TuningLogger class."
+        logger.info("{} end.".format(log_msg), stacklevel=stacklevel)
 
     @classmethod
     def evaluation_start(cls) -> None:
