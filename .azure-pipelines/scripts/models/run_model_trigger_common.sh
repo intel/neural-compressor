@@ -159,6 +159,10 @@ elif [ "${mode}" == "collect_log" ]; then
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
     $BOLD_YELLOW && echo "workspace ${WORK_SOURCE_DIR}/${model_src_dir}" && $RESET
     $BOLD_YELLOW && echo "====== collect logs of model ${model} =======" && $RESET
+    if [ "${framework}" == "pytorch" ] && [ "${fwk_ver}" == "latest" ]; then
+        fwk_ver=$(python -c "import torch; print(torch.__version__)")
+    fi
+
     python -u ${SCRIPTS_PATH}/collect_log_model.py \
         --framework=${framework} \
         --fwk_ver=${fwk_ver} \
