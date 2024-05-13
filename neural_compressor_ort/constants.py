@@ -38,7 +38,6 @@ AWQ = "awq"  # pragma: no cover
 
 DEFAULT_WORKSPACE = "./nc_workspace/{}/".format(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
 
-OP_NAME_OR_MODULE_TYPE = Union[str, Callable]
 
 ONNXRT116_VERSION = version.Version("1.16.0")
 ONNXRT1161_VERSION = version.Version("1.16.1")

@@ -199,10 +199,11 @@ class BaseConfig(ABC):
     """The base config for all algorithm configs."""
 
     name = constants.BASE_CONFIG
-    params_list = []
+    params_list: List[Union[str, TuningParam]] = []
 
     def __init__(
-        self, white_list: Optional[List[constants.OP_NAME_OR_MODULE_TYPE]] = constants.DEFAULT_WHITE_LIST
+        self,
+        white_list: Optional[Union[Union[str, Callable], List[Union[str, Callable]]]] = constants.DEFAULT_WHITE_LIST,
     ) -> None:
         self._global_config: Optional[BaseConfig] = None
         # For PyTorch, operator_type is the collective name for module type and functional operation type,
@@ -233,7 +234,7 @@ class BaseConfig(ABC):
         return self._white_list
 
     @white_list.setter
-    def white_list(self, op_name_or_type_list: Optional[List[constants.OP_NAME_OR_MODULE_TYPE]]):
+    def white_list(self, op_name_or_type_list: Optional[List[Union[str, Callable]]]):
         self._white_list = op_name_or_type_list
 
     @property
@@ -316,7 +317,7 @@ class BaseConfig(ABC):
             json.dump(config_dict, file, indent=4)
         utility.logger.info("Dump the config into %s.", filename)
 
-    def to_json_string(self, use_diff: bool = False) -> str:
+    def to_json_string(self, use_diff: bool = False) -> Union[str, Dict]:
         """Serializes this instance to a JSON string.
 
         Args:
@@ -333,7 +334,8 @@ class BaseConfig(ABC):
             config_dict = self.to_dict()
         try:
             return json.dumps(config_dict, indent=2) + "\n"
-        except:
+        except Exception as e:
+            utility.logger.error("Failed to serialize the config to JSON string: %s", e)
             return config_dict
 
     def __repr__(self) -> str:
@@ -452,8 +454,8 @@ class BaseConfig(ABC):
         return op_type_config_dict, op_name_config_dict
 
     def to_config_mapping(
-        self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
-    ) -> OrderedDict[Union[str, Callable], OrderedDict[str, BaseConfig]]:
+        self, config_list: Optional[List[BaseConfig]] = None, model_info: List[Tuple[str, str]] = None
+    ) -> OrderedDict[Tuple[str, str], OrderedDict[str, BaseConfig]]:
         config_mapping = OrderedDict()
         if config_list is None:
             config_list = [self]
@@ -468,7 +470,7 @@ class BaseConfig(ABC):
                 for op_name_pattern in op_name_config_dict:
                     if isinstance(op_name, str) and re.match(op_name_pattern, op_name):
                         config_mapping[(op_name, op_type)] = op_name_config_dict[op_name_pattern]
-                    elif op_name_pattern == op_name:  # TODO: map ipex opname to stock pt op_name
+                    elif op_name_pattern == op_name:
                         config_mapping[(op_name, op_type)] = op_name_config_dict[op_name_pattern]
         return config_mapping
 
@@ -496,7 +498,7 @@ class ComposableConfig(BaseConfig):
             self.config_list.append(other)
         return self
 
-    def to_dict(self, params_list=[], operator2str=None):
+    def to_dict(self):
         result = {}
         for config in self.config_list:
             result[config.name] = config.to_dict()
@@ -551,8 +553,8 @@ class ComposableConfig(BaseConfig):
         return model_info_dict
 
 
-def get_all_config_set_from_config_registry() -> Union[BaseConfig, List[BaseConfig]]:
-    all_registered_config_cls: List[BaseConfig] = config_registry.get_all_config_cls()
+def get_all_config_set_from_config_registry() -> List[BaseConfig]:
+    all_registered_config_cls: List[Type[BaseConfig]] = config_registry.get_all_config_cls()
     config_set = []
     for config_cls in all_registered_config_cls:
         config_set.append(config_cls.get_config_set_for_tuning())
@@ -561,7 +563,7 @@ def get_all_config_set_from_config_registry() -> Union[BaseConfig, List[BaseConf
 
 def register_supported_configs():
     """Register supported configs."""
-    all_registered_config_cls: List[BaseConfig] = config_registry.get_all_config_cls()
+    all_registered_config_cls: List[Type[BaseConfig]] = config_registry.get_all_config_cls()
     for config_cls in all_registered_config_cls:
         config_cls.register_supported_configs()
 
@@ -580,7 +582,7 @@ class RTNConfig(BaseConfig):
     """Config class for round-to-nearest weight-only quantization."""
 
     supported_configs: List[_OperatorConfig] = []
-    params_list: List[str] = [
+    params_list: List[Union[str, TuningParam]] = [
         "weight_dtype",
         "weight_bits",
         "weight_group_size",
@@ -607,7 +609,7 @@ class RTNConfig(BaseConfig):
         providers: List[str] = ["CPUExecutionProvider"],
         layer_wise_quant: bool = False,
         quant_last_matmul: bool = True,
-        white_list: List[constants.OP_NAME_OR_MODULE_TYPE] = constants.DEFAULT_WHITE_LIST,
+        white_list: List[Union[str, Callable]] = constants.DEFAULT_WHITE_LIST,
     ):
         """Init RTN weight-only quantization config.
 
@@ -650,7 +652,7 @@ class RTNConfig(BaseConfig):
         return result
 
     @classmethod
-    def register_supported_configs(cls) -> List[_OperatorConfig]:
+    def register_supported_configs(cls) -> None:
         supported_configs = []
         linear_rtn_config = RTNConfig(
             weight_dtype=["int"],
@@ -724,7 +726,7 @@ class GPTQConfig(BaseConfig):
     """Config class for gptq weight-only quantization."""
 
     supported_configs: List[_OperatorConfig] = []
-    params_list: List[str] = [
+    params_list: List[Union[str, TuningParam]] = [
         "weight_dtype",
         "weight_bits",
         "weight_group_size",
@@ -732,7 +734,7 @@ class GPTQConfig(BaseConfig):
         "act_dtype",
         "accuracy_level",
     ]
-    model_params_list: List[str] = [
+    model_params_list: List[Union[str, TuningParam]] = [
         "percdamp",
         "blocksize",
         "actorder",
@@ -759,7 +761,7 @@ class GPTQConfig(BaseConfig):
         providers: List[str] = ["CPUExecutionProvider"],
         layer_wise_quant: bool = False,
         quant_last_matmul: bool = True,
-        white_list: List[constants.OP_NAME_OR_MODULE_TYPE] = constants.DEFAULT_WHITE_LIST,
+        white_list: List[Union[str, Callable]] = constants.DEFAULT_WHITE_LIST,
     ):
         """Init GPTQ weight-only quantization config.
 
@@ -812,7 +814,7 @@ class GPTQConfig(BaseConfig):
         return result
 
     @classmethod
-    def register_supported_configs(cls) -> List[_OperatorConfig]:
+    def register_supported_configs(cls) -> None:
         supported_configs = []
         linear_gptq_config = GPTQConfig(
             weight_dtype=["int"],
@@ -922,7 +924,7 @@ class AWQConfig(BaseConfig):
         enable_mse_search: bool = True,
         providers: List[str] = ["CPUExecutionProvider"],
         quant_last_matmul: bool = True,
-        white_list: List[constants.OP_NAME_OR_MODULE_TYPE] = constants.DEFAULT_WHITE_LIST,
+        white_list: List[Union[str, Callable]] = constants.DEFAULT_WHITE_LIST,
     ):
         """Init AWQ weight-only quantization config.
 
@@ -1064,7 +1066,7 @@ class SmoothQuantConfig(BaseConfig, quantization.StaticQuantConfig):
         scales_per_op: bool = True,
         auto_alpha_args: dict = {"alpha_min": 0.3, "alpha_max": 0.7, "alpha_step": 0.05, "attn_method": "min"},
         providers: List[str] = ["CPUExecutionProvider"],
-        white_list: List[constants.OP_NAME_OR_MODULE_TYPE] = constants.DEFAULT_WHITE_LIST,
+        white_list: List[Union[str, Callable]] = constants.DEFAULT_WHITE_LIST,
         **kwargs,
     ):
         """Init smooth quant config.
