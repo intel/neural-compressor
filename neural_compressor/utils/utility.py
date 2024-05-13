@@ -14,13 +14,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Quantization auto-tuning config system.
+"""Utility functions for neural_compressor."""
 
-This file specifies default config options for quantization auto-tuning tool.
-User should not change values in this file. Instead, user should write a config
-file (in yaml) and use cfg_from_file(yaml_file) to load it and override the default
-options.
-"""
+
 import _thread
 import ast
 import importlib
@@ -101,7 +97,7 @@ class LazyImport(object):
         try:
             self.module = importlib.import_module(self.module_name)
             mod = getattr(self.module, name)
-        except:
+        except Exception:
             spec = importlib.util.find_spec(str(self.module_name + "." + name))
             mod = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(mod)
@@ -192,7 +188,6 @@ def compute_sparsity(tensor):
     Return:
         (the original tensor size, number of zero elements, number of non-zero elements)
     """
-    mask = np.ones_like(tensor)
     tensor_size = tensor.size
     dense_mask = tensor != 0
     dense_size = dense_mask.sum()
@@ -375,7 +370,7 @@ def recover(fp32_model, tuning_history_path, num, **kwargs):
     q_config = target_history[num]["q_config"]
     try:
         framework = tuning_history[0]["cfg"]["model"]["framework"]
-    except Exception as e:
+    except Exception:
         framework = tuning_history[0]["cfg"].quantization.framework
 
     if "pytorch" in framework:
