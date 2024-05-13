@@ -41,13 +41,7 @@ from neural_compressor.torch.quantization import (
     StaticQuantConfig,
     TEQConfig,
 )
-from neural_compressor.torch.utils import (
-    get_quantizer,
-    is_ipex_imported,
-    logger,
-    postprocess_model,
-    register_algo,
-)
+from neural_compressor.torch.utils import get_quantizer, is_ipex_imported, logger, postprocess_model, register_algo
 from neural_compressor.torch.utils.constants import PT2E_STATIC_QUANT
 
 

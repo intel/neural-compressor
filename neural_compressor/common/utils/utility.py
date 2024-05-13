@@ -22,7 +22,7 @@ import time
 import cpuinfo
 import psutil
 
-from neural_compressor.common.utils import TuningLogger, logger, Mode
+from neural_compressor.common.utils import Mode, TuningLogger, logger
 
 __all__ = [
     "set_workspace",
@@ -220,5 +220,7 @@ def log_process(mode=Mode.QUANTIZE):
             end_log(mode=mode, stacklevel=4)
 
             return result
+
         return inner_wrapper
+
     return log_process_wrapper

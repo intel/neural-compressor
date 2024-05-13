@@ -18,7 +18,7 @@ from typing import Any, Callable, Dict, Tuple
 import torch
 
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
-from neural_compressor.common.utils import log_process, Mode
+from neural_compressor.common.utils import Mode, log_process
 from neural_compressor.torch.quantization.config import SmoothQuantConfig, StaticQuantConfig
 from neural_compressor.torch.utils import is_ipex_available, logger
 from neural_compressor.torch.utils.utility import WHITE_MODULE_LIST, algos_mapping, get_model_info
