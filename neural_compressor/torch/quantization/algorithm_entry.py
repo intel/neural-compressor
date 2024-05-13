@@ -14,7 +14,7 @@
 
 from copy import deepcopy
 from types import MethodType
-from typing import Any, Callable, Dict, Tuple
+from typing import Callable, Dict, Tuple
 
 import torch
 
@@ -205,10 +205,14 @@ def pt2e_static_quant_entry(model: torch.nn.Module, configs_mapping, mode: Mode,
 @register_algo(name=SMOOTH_QUANT)
 @torch.no_grad()
 def smooth_quant_entry(
-    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], SmoothQuantConfig], *args, **kwargs
+    model: torch.nn.Module,
+    configs_mapping: Dict[Tuple[str, callable], SmoothQuantConfig],
+    mode: Mode = Mode.QUANTIZE,
+    *args,
+    **kwargs,
 ) -> torch.nn.Module:
     logger.info("Quantize model with the smooth quant algorithm.")
-    from neural_compressor.torch.algorithms.smooth_quant import save, smooth_quantize
+    from neural_compressor.torch.algorithms.smooth_quant import SmoothQuantQuantizer, TorchSmoothQuant
 
     # convert the user config into internal format
     quant_config_mapping = {}
@@ -247,17 +251,20 @@ def smooth_quant_entry(
     example_inputs = kwargs.get("example_inputs", None)
     inplace = kwargs.get("inplace", True)
     assert example_inputs is not None, "Please provide example_inputs for smooth quantization."
-    q_model = smooth_quantize(
-        model=model,
-        tune_cfg=quant_config_mapping,
-        run_fn=run_fn,
-        example_inputs=example_inputs,
-        inplace=inplace,
+    recipe_cfgs = quant_config_mapping.get("recipe_cfgs", None)
+    sq = TorchSmoothQuant(model, dataloader=None, example_inputs=example_inputs, q_func=run_fn, record_max_info=True)
+    model = sq.transform(
+        alpha=recipe_cfgs["smooth_quant_args"]["alpha"],
+        folding=recipe_cfgs["smooth_quant_args"]["folding"],
+        auto_alpha_args=recipe_cfgs["smooth_quant_args"]["auto_alpha_args"],
+        scale_sharing=recipe_cfgs["smooth_quant_args"]["scale_sharing"],
     )
-    logger.info("Smooth quantization done.")
-    q_model.ori_save = q_model.save
-    q_model.save = MethodType(save, q_model)
-    return q_model
+
+    quantizer = get_quantizer(model, quantizer_cls=SmoothQuantQuantizer, quant_config=quant_config_mapping, sq_info=sq)
+    model = quantizer.execute(model, mode=mode, run_fn=run_fn, example_inputs=example_inputs, inplace=inplace)
+    postprocess_model(model, mode, quantizer)
+
+    return model
 
 
 ###################### AWQ Algo Entry ##################################

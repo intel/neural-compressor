@@ -21,7 +21,7 @@ from neural_compressor.common.base_config import BaseConfig, ComposableConfig, c
 from neural_compressor.common.utils import log_quant_execution
 from neural_compressor.torch.quantization.config import SmoothQuantConfig, StaticQuantConfig
 from neural_compressor.torch.utils import Mode, is_ipex_available, logger
-from neural_compressor.torch.utils.utility import WHITE_MODULE_LIST, algos_mapping, get_model_info
+from neural_compressor.torch.utils.utility import algos_mapping
 
 FRAMEWORK_NAME = "torch"
 
