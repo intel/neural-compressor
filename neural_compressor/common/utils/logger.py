@@ -22,6 +22,7 @@ import os
 
 from neural_compressor.common.utils import Mode
 
+
 __all__ = [
     "level",
     "Logger",  # TODO: not expose it
@@ -141,17 +142,15 @@ level = Logger().get_logger().level
 
 logger = Logger
 
-
 def _get_log_msg(mode):
     log_msg = None
     if mode == Mode.QUANTIZE:
         log_msg = "Quantization"
-    elif mode == Mode.PREPARE:
+    elif mode == Mode.PREPARE: # pragma: no cover
         log_msg = "Preparation"
-    elif mode == Mode.CONVERT:
+    elif mode == Mode.CONVERT: # pragma: no cover
         log_msg = "Conversion"
     return log_msg
-
 
 class TuningLogger:
     """A unified logger for the tuning/quantization process.
