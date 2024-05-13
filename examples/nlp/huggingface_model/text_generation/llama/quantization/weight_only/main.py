@@ -32,7 +32,7 @@ from transformers import LlamaConfig
 from torch.nn import functional
 from torch.utils import data
 from intel_extension_for_transformers.transformers.llm.evaluation import lm_eval
-from optimum import onnxruntime
+from optimum import onnxruntime as optimum_ort
 from neural_compressor_ort.quantization import matmul_nbits_quantizer
 from neural_compressor_ort.quantization import config
 from neural_compressor_ort.quantization import tuning
@@ -168,7 +168,7 @@ def benchmark(model):
     sess_options = ort.SessionOptions()
     sess_options.intra_op_num_threads = args.intra_op_num_threads
 
-    session = onnxruntime.ORTModelForCausalLM.load_model(  # pylint: disable=E1123
+    session = optimum_ort.ORTModelForCausalLM.load_model(  # pylint: disable=E1123
         os.path.join(model, "model.onnx"),
         session_options=sess_options)
     inputs_names = session.get_inputs()
@@ -179,7 +179,7 @@ def benchmark(model):
     ]
     use_cache = len(key_value_input_names) > 0
 
-    model = onnxruntime.ORTModelForCausalLM(
+    model = optimum_ort.ORTModelForCausalLM(
         session,  # pylint: disable=E1121
         config,
         use_cache=True if use_cache else False,
