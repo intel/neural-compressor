@@ -206,14 +206,29 @@ def set_tensorboard(tensorboard: bool):
 default_tuning_logger = TuningLogger()
 
 
-def log_quant_execution(func):
-    def wrapper(*args, **kwargs):
-        default_tuning_logger.quantization_start(stacklevel=4)
+def log_quant_execution(mode="quantize"):
+    def log_quant_execution_wrapper(func):
+        def inner_wrapper(*args, **kwargs):
+            start_log, end_log = None, None
+            if mode == "quantize":
+                start_log = default_tuning_logger.quantization_start
+                end_log = default_tuning_logger.quantization_end
+            elif mode == "prepare":
+                start_log = default_tuning_logger.preparation_start
+                end_log = default_tuning_logger.preparation_end
+            elif mode == "convert":
+                start_log = default_tuning_logger.conversion_start
+                end_log = default_tuning_logger.conversion_end
 
-        # Call the original function
-        result = func(*args, **kwargs)
+            if start_log is not None:
+                start_log(stacklevel=4)
 
-        default_tuning_logger.quantization_end(stacklevel=4)
-        return result
+            # Call the original function
+            result = func(*args, **kwargs)
 
-    return wrapper
+            if end_log is not None:
+                end_log(stacklevel=4)
+
+            return result
+        return inner_wrapper
+    return log_quant_execution_wrapper

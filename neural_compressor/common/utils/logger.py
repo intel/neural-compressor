@@ -163,6 +163,22 @@ class TuningLogger:
         logger.info("Quantization end.", stacklevel=stacklevel)
 
     @classmethod
+    def preparation_start(cls, stacklevel=2) -> None:
+        logger.info("Preparation started.", stacklevel=stacklevel)
+
+    @classmethod
+    def preparation_end(cls, stacklevel=2) -> None:
+        logger.info("Preparation end.", stacklevel=stacklevel)
+
+    @classmethod
+    def conversion_start(cls, stacklevel=2) -> None:
+        logger.info("Conversion started.", stacklevel=stacklevel)
+
+    @classmethod
+    def conversion_end(cls, stacklevel=2) -> None:
+        logger.info("Conversion end.", stacklevel=stacklevel)
+
+    @classmethod
     def evaluation_start(cls) -> None:
         logger.info("Evaluation started.")
 

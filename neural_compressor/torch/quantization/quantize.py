@@ -30,7 +30,7 @@ def need_apply(configs_mapping: Dict[Tuple[str, callable], BaseConfig], algo_nam
     return any(config.name == algo_name for config in configs_mapping.values())
 
 
-@log_quant_execution
+@log_quant_execution(mode=Mode.QUANTIZE.value)
 def quantize(
     model: torch.nn.Module,
     quant_config: BaseConfig,
@@ -85,7 +85,7 @@ def quantize(
             )
     return q_model
 
-
+@log_quant_execution(mode=Mode.PREPARE.value)
 def prepare(
     model: torch.nn.Module,
     quant_config: BaseConfig,
@@ -142,8 +142,7 @@ def prepare(
     setattr(prepared_model, "example_inputs", example_inputs)
     return prepared_model
 
-
-@log_quant_execution
+@log_quant_execution(mode=Mode.CONVERT.value)
 def convert(
     model: torch.nn.Module,
     quant_config: BaseConfig = None,
