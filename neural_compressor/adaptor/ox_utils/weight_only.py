@@ -484,7 +484,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
                 else:
                     q_weight = qdq_tensor(weight, num_bits, group_size, scheme, "int") / np.expand_dims(scales, axis=-1)
 
-                q_weight = np.reshape(q_weight, (org_w_shape[1], -1))
+                q_weight = np.reshape(q_weight, (org_w_shape[1], -1))[:, : org_w_shape[0]]
 
                 out = np.matmul(inp, q_weight.T)
                 loss += np.mean(np.power((org_out - out), 2))
