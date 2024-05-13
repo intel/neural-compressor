@@ -230,5 +230,7 @@ def log_quant_execution(mode="quantize"):
                 end_log(stacklevel=4)
 
             return result
+
         return inner_wrapper
+
     return log_quant_execution_wrapper

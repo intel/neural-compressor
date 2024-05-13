@@ -85,6 +85,7 @@ def quantize(
             )
     return q_model
 
+
 @log_quant_execution(mode=Mode.PREPARE.value)
 def prepare(
     model: torch.nn.Module,
@@ -141,6 +142,7 @@ def prepare(
     setattr(prepared_model, "quant_config", quant_config)
     setattr(prepared_model, "example_inputs", example_inputs)
     return prepared_model
+
 
 @log_quant_execution(mode=Mode.CONVERT.value)
 def convert(
