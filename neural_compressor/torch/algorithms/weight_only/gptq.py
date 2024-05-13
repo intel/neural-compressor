@@ -34,6 +34,7 @@ from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerat
 from .modules import WeightOnlyLinear
 
 DEBUG = False
+accelerator = auto_detect_accelerator()
 
 
 # ================ device related ===================
@@ -182,7 +183,7 @@ def quantize(x, scale, zero, maxq):
     return scale * (q - zero)
 
 
-class GPTQuantizer(object):
+class RAWGPTQuantizer(object):
     """Main API for GPTQ algorithm.
 
     Please refer to:
@@ -194,7 +195,6 @@ class GPTQuantizer(object):
         self,
         model,
         weight_config={},
-        dataloader=None,
         nsamples=128,
         use_max_length=True,
         max_seq_length=2048,
@@ -202,7 +202,7 @@ class GPTQuantizer(object):
         export_compressed_model=False,
         use_layer_wise=False,
         model_path="",
-        run_fn=None,
+        dataloader=None,
         *args,
         **kwargs,
     ):
@@ -225,7 +225,6 @@ class GPTQuantizer(object):
             export_compressed_model (bool, optional): Choose return fp32 or int32 model. Defaults to False.
             use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
             model_path (str): Model path that is used to load state_dict per layer.
-            run_fn: a function to run model inference for collecting input information.
             device: cpu or cuda
         """
         # model
@@ -270,9 +269,7 @@ class GPTQuantizer(object):
         self.dataloader_original = dataloader
         self.dataloader = []
         self.nsamples = nsamples
-        self.run_fn = run_fn
-        self.run_args = kwargs.get("run_args", None)
-        if run_fn is None:
+        if dataloader is not None:
             self.prepare_dataloader()
 
     def prepare_dataloader(self):
@@ -488,7 +485,7 @@ class GPTQuantizer(object):
             return data[0]
 
     @torch.no_grad()
-    def pre_quantization(self):
+    def prepare_for_calibration(self):
         """Prepare input calibration data and other attributes which are critical for gptq execution."""
         try:
             self.cache_key_arguments = {
@@ -531,32 +528,13 @@ class GPTQuantizer(object):
         # Step2: modify the first transformer block's forward function to obtain inputs for calibration
         if not self.use_layer_wise:
             self.gptq_related_blocks["transformers"][0] = self.gptq_related_blocks["transformers"][0].to(self.device)
-        forward_cache = self.gptq_related_blocks["transformers"][0].forward
+        self.forward_cache = self.gptq_related_blocks["transformers"][0].forward
         self.gptq_related_blocks["transformers"][0].forward = partial(
             forward, self.gptq_related_blocks["transformers"][0]
         )
 
-        # Step3: run forward to obtain calibration datasets
-        logger.info("Collecting calibration inputs...")
-        logger.info("Collecting calibration inputs by running the run_fn provided by user.")
-        if self.run_fn:
-            if self.run_args:
-                self.run_fn(self.model, *self.run_args)
-            else:
-                self.run_fn(self.model)
-        else:
-            for batch in tqdm(self.dataloader):
-                if not self.use_layer_wise:
-                    batch = move_input_to_device(batch, self.device)
-                try:
-                    if isinstance(batch, tuple) or isinstance(batch, list):
-                        self.model(batch[0])
-                    elif isinstance(batch, dict):
-                        self.model(**batch)
-                    else:
-                        self.model(batch)
-                except ValueError:
-                    pass
+    @torch.no_grad()
+    def remove_prepare_for_calibration(self):
         # output inp data shape
         logger.info("All calibration data's shape =>")
         # check all hidden_states shape
@@ -568,7 +546,7 @@ class GPTQuantizer(object):
         logger.info("Done.")
 
         # Step 4: restore original forward function, relocate layers back to cpu.
-        self.gptq_related_blocks["transformers"][0].forward = forward_cache
+        self.gptq_related_blocks["transformers"][0].forward = self.forward_cache
         if not self.use_layer_wise:
             self.gptq_related_blocks["transformers"][0] = self.gptq_related_blocks["transformers"][0].cpu()
             for embedding_name, embedding_layer in self.gptq_related_blocks["embeddings"].items():
@@ -603,7 +581,6 @@ class GPTQuantizer(object):
         # Step1: prepare quantization (calibration datasets)
 
         logger.info("Begin ====>")
-        self.pre_quantization()
         model_path = self.model_path
 
         # Step2: run gptq quantization in a transformer block-wise manner.
@@ -663,6 +640,7 @@ class GPTQuantizer(object):
             for j in range(batch_num):
                 cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                 cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
+                accelerator.mark_step()
                 out = transformer_block(*cache_positional_batch, **cache_keyword_batch)
                 out = self.track_hidden_states(out)
             self.cache_key_arguments["batch_num"] = batch_num
@@ -682,6 +660,9 @@ class GPTQuantizer(object):
                     W = load_value(self.model, full_layer_name + ".weight", model_path)
                 else:
                     W = sub_layers[layer_name].weight.data.clone()
+                accelerator.mark_step()
+                if "hpu" in self.device:
+                    W = W.to("cpu")
                 scale, zp, Q = gptq_for_this_block[layer_name].fasterquant(
                     W,
                     blocksize=weight_config_this_layer["block_size"],
@@ -854,6 +835,8 @@ class GPTQ:
             self.quantizer.find_params(W, weight=True)
 
         H = self.H
+        if "hpu" in self.device:
+            H = H.to("cpu")
         del self.H
         dead = torch.diag(H) == 0
         H[dead, dead] = 1
@@ -958,6 +941,10 @@ class GPTQ:
             zero.append(self.quantizer.zero)
         scale = torch.cat(scale, dim=1)
         zero = torch.cat(zero, dim=1)
+        if "hpu" in self.device:
+            scale = scale.to(self.device)
+            zero = zero.to(self.device)
+            Q = Q.to(self.device)
         return scale, zero, Q
 
     def free(self):
@@ -973,25 +960,25 @@ class GPTQ:
 class Quantizer(nn.Module):
     def __init__(self, shape=1):
         super(Quantizer, self).__init__()
-        self.register_buffer("maxq", torch.tensor(0))
+        self.maxq = 0
         self.register_buffer("scale", torch.zeros(shape))
         self.register_buffer("zero", torch.zeros(shape))
 
     def configure(self, weight_config_this_layer, norm=2.4, grid=100, maxshrink=0.8, trits=False):
         for k, v in weight_config_this_layer.items():
             setattr(self, k, v)
-        self.maxq = torch.tensor(2**self.bits - 1)
+        # self.maxq = torch.tensor(2**self.bits - 1)
+        self.maxq = 2**self.bits - 1
         self.scheme = "sym" if self.sym else "asym"
         self.double_quant_scheme = "sym" if self.double_quant_sym else "asym"
         self.norm = norm
         self.grid = grid
         self.maxshrink = maxshrink
         if trits:
-            self.maxq = torch.tensor(-1)
+            self.maxq = -1
 
     def find_params(self, x, weight=False):
         dev = x.device
-        self.maxq = self.maxq.to(dev)
         # NF4 FP4
         if self.dtype != "int":
             from .utility import quant_tensor
@@ -1131,41 +1118,57 @@ class Quantizer(nn.Module):
         return torch.all(self.scale != 0)
 
 
-def gptq_quantize(
-    model,
-    weight_config={},
-    dataloader=None,
-    nsamples=128,
-    max_seq_length=2048,
-    use_max_length=True,
-    device=None,
-    export_compressed_model=False,
-    use_layer_wise=False,
-    model_path=None,
-    run_fn=None,
-    run_args=None,
-):
-    """Run weight-only quantization with."""
-    # TODO: unify weight_config keys, add docstring, and support default config
-    assert isinstance(model, torch.nn.Module), "only support torch module"
-    if use_layer_wise:
-        assert model_path is not None, "model_path should not be None when use layer wise mode"
-    from .gptq import GPTQuantizer
+from neural_compressor.torch.algorithms import Quantizer as INCQuantizer
 
-    gptq_quantizer = GPTQuantizer(
+
+class GPTQuantizer(INCQuantizer):
+    def __init__(self, quant_config={}):
+        """Init a RTNQuantizer object.
+
+        Args:
+            quant_config (OrderedDict, optional): quantization config for ops. Defaults to {}.
+        """
+        super().__init__(quant_config)
+
+    @torch.no_grad()
+    def prepare(
+        self,
         model,
-        weight_config,
-        dataloader,
-        nsamples,
-        use_max_length,
-        max_seq_length,
-        device,
-        export_compressed_model=export_compressed_model,
-        use_layer_wise=use_layer_wise,
-        model_path=model_path,
-        run_fn=run_fn,
-        run_args=run_args,
-    )
-    fp32_modified_model, gptq_config = gptq_quantizer.execute_quantization()
-    logger.info("GPTQ quantizing done.")
-    return fp32_modified_model, gptq_config
+        nsamples=128,
+        max_seq_length=2048,
+        use_max_length=True,
+        device=None,
+        export_compressed_model=False,
+        use_layer_wise=False,
+        model_path=None,
+        *args,
+        **kwargs,
+    ):
+        """Run weight-only quantization with."""
+        # TODO: unify weight_config keys, add docstring, and support default config
+        assert isinstance(model, torch.nn.Module), "only support torch module"
+        if use_layer_wise:
+            assert model_path is not None, "model_path should not be None when use layer wise mode"
+
+        self.gptq_quantizer = RAWGPTQuantizer(
+            model,
+            weight_config=self.quant_config,
+            nsamples=nsamples,
+            use_max_length=use_max_length,
+            max_seq_length=max_seq_length,
+            device=device,
+            export_compressed_model=export_compressed_model,
+            use_layer_wise=use_layer_wise,
+            model_path=model_path,
+        )
+        self.gptq_quantizer.prepare_for_calibration()
+        return self.gptq_quantizer.model
+
+    @torch.no_grad()
+    def convert(self, model, *args, **kwargs):
+        self.gptq_quantizer.model = model
+        self.gptq_quantizer.remove_prepare_for_calibration()
+        q_model, gptq_config = self.gptq_quantizer.execute_quantization()
+        q_model.gptq_config = gptq_config
+        logger.info("GPTQ quantizing done.")
+        return q_model

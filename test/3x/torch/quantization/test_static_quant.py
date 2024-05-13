@@ -3,7 +3,13 @@ import copy
 import pytest
 import torch
 
-from neural_compressor.torch.quantization import StaticQuantConfig, get_default_static_config, quantize
+from neural_compressor.torch.quantization import (
+    StaticQuantConfig,
+    convert,
+    get_default_static_config,
+    prepare,
+    quantize,
+)
 from neural_compressor.torch.utils import is_ipex_available
 
 if is_ipex_available():
@@ -46,7 +52,28 @@ class TestStaticQuant:
         fp32_model = copy.deepcopy(self.fp32_model)
         quant_config = get_default_static_config()
         example_inputs = self.input
-        q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
+        prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
+        run_fn(prepared_model)
+        q_model = convert(prepared_model)
+        assert q_model is not None, "Quantization failed!"
+
+    @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
+    def test_static_quant_fallback(self):
+        fp32_model = copy.deepcopy(self.fp32_model)
+        quant_config = get_default_static_config()
+        example_inputs = self.input
+        # fallback by op_type
+        quant_config.set_local(torch.nn.modules.linear.Linear, StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
+        prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
+        run_fn(prepared_model)
+        q_model = convert(prepared_model)
+        assert q_model is not None, "Quantization failed!"
+
+        # fallback by op_name
+        quant_config.set_local("fc1", StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
+        prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
+        run_fn(prepared_model)
+        q_model = convert(prepared_model)
         assert q_model is not None, "Quantization failed!"
 
     @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
@@ -63,7 +90,9 @@ class TestStaticQuant:
         fp32_model = copy.deepcopy(self.fp32_model)
         quant_config = StaticQuantConfig(act_sym=act_sym, act_algo=act_algo)
         example_inputs = self.input
-        q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
+        prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
+        run_fn(prepared_model)
+        q_model = convert(prepared_model)
         assert q_model is not None, "Quantization failed!"
 
     @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
@@ -87,7 +116,9 @@ class TestStaticQuant:
         fp32_model.linear.weight = torch.nn.Parameter(torch.tensor([[0.0, 1.0], [1.0, 0.0]]))
         example_inputs = torch.zeros(3, 2)
         quant_config = StaticQuantConfig(act_sym=True, act_algo="kl")
-        q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
+        prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
+        run_fn(prepared_model)
+        q_model = convert(prepared_model)
         output1 = fp32_model(example_inputs)
         output2 = q_model(example_inputs)
         # set a big atol to avoid random issue
@@ -95,7 +126,8 @@ class TestStaticQuant:
 
     @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
     def test_static_quant_save_load(self):
-        from intel_extension_for_pytorch.quantization import convert, prepare
+        from intel_extension_for_pytorch.quantization import convert as ipex_convert
+        from intel_extension_for_pytorch.quantization import prepare as ipex_prepare
 
         example_inputs = torch.zeros(1, 30)
         try:
@@ -108,14 +140,14 @@ class TestStaticQuant:
                 weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_channel_symmetric),
             )
         user_model = copy.deepcopy(self.fp32_model)
-        user_model = prepare(user_model.eval(), qconfig, example_inputs=example_inputs, inplace=True)
+        user_model = ipex_prepare(user_model.eval(), qconfig, example_inputs=example_inputs, inplace=True)
 
         def run_fn(model):
             model(example_inputs)
 
         run_fn(user_model)
         with torch.no_grad():
-            user_model = convert(user_model.eval(), inplace=True).eval()
+            user_model = ipex_convert(user_model.eval(), inplace=True).eval()
             user_model(example_inputs)
             user_model = torch.jit.trace(user_model.eval(), example_inputs, strict=False)
             user_model = torch.jit.freeze(user_model.eval())
@@ -125,7 +157,9 @@ class TestStaticQuant:
 
         fp32_model = copy.deepcopy(self.fp32_model)
         quant_config = get_default_static_config()
-        q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
+        prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
+        run_fn(prepared_model)
+        q_model = convert(prepared_model)
         assert q_model is not None, "Quantization failed!"
         inc_out = q_model(example_inputs)
         # set a big atol to avoid random issue
@@ -137,3 +171,12 @@ class TestStaticQuant:
         # load
         loaded_model = load("saved_results")
         assert isinstance(loaded_model, torch.jit.ScriptModule)
+
+    @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
+    def test_static_quant_with_quantize_API(self):
+        # quantize API
+        fp32_model = copy.deepcopy(self.fp32_model)
+        quant_config = get_default_static_config()
+        example_inputs = self.input
+        q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
+        assert q_model is not None, "Quantization failed!"

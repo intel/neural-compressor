@@ -2,4 +2,7 @@ numpy
 onnx
 onnxruntime
 onnxruntime-extensions
+psutil
+py-cpuinfo
 pydantic
+transformers

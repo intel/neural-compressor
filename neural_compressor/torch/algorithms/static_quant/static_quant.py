@@ -16,6 +16,8 @@
 # limitations under the License.
 
 import json
+from copy import deepcopy
+from types import MethodType
 
 import torch
 
@@ -24,7 +26,12 @@ try:
 except:
     assert False, "Please install IPEX for static quantization."
 
+from collections import OrderedDict
+
 from packaging.version import Version
+
+from neural_compressor.torch.algorithms import Quantizer
+from neural_compressor.torch.utils import logger
 
 from .utility import (
     cfg_to_qconfig,
@@ -38,22 +45,36 @@ from .utility import (
 ipex_ver = get_ipex_version()
 
 
-def static_quantize(model, tune_cfg, run_fn, example_inputs, inplace=True):
-    """Execute the quantize process on the specified model.
+class StaticQuantQuantizer(Quantizer):
+    def __init__(self, quant_config: OrderedDict = {}):
+        """Init a StaticQuantQuantizer object.
 
-    Args:
-        model: a float model to be quantized.
-        tune_cfg: quantization config for ops.
-        run_fn: a calibration function for calibrating the model.
-        example_inputs: used to trace torch model.
-        inplace: whether to carry out model transformations in-place.
+        Args:
+            quant_config (OrderedDict, optional): quantization config for ops. Defaults to {}.
+        """
+        super().__init__(quant_config)
+        self.user_cfg = OrderedDict()
 
-    Returns:
-        A quantized model.
-    """
-    model.eval()
+    def prepare(self, model, example_inputs, inplace=True, *args, **kwargs):
+        """Prepares a given model for quantization.
 
-    if ipex_ver.release >= Version("1.12.0").release:
+        Args:
+            model: A float model to be quantized.
+            example_inputs: Used to trace torch model.
+            inplace: Whether to carry out model transformations in-place. Defaults to True.
+
+        Returns:
+            A prepared model.
+        """
+        assert example_inputs is not None, "Please provide example_inputs for static quantization."
+
+        _, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, _ = get_quantizable_ops_recursively(
+            model, example_inputs
+        )
+        # update json file in ipex_config_path; map ipex op_name to pt op_name
+        self.user_cfg = cfg_to_qconfig(self.quant_config, cfgs, op_infos_from_cfgs, output_tensor_id_op_name)
+        model.eval()
+
         # Check save_qconf_summary part is a workaround for IPEX bug.
         # Sometimes the prepared model from get_op_capablitiy loss this attribute
         if not hasattr(model, "save_qconf_summary") or not hasattr(model, "load_qconf_summary"):
@@ -74,28 +95,34 @@ def static_quantize(model, tune_cfg, run_fn, example_inputs, inplace=True):
                 model = ipex.quantization.prepare(model, static_qconfig, example_inputs=example_inputs, inplace=inplace)
 
         model.load_qconf_summary(qconf_summary=ipex_config_path)
-        run_fn(model)
+        return model
+
+    def convert(self, model, example_inputs, inplace=True, *args, **kwargs):
+        """Converts a prepared model to a quantized model.
+
+        Args:
+            model: The prepared model to be converted.
+            example_inputs: Used to trace torch model.
+            inplace: Whether to carry out model transformations in-place. Defaults to True.
+
+        Returns:
+            A quantized model.
+        """
+        from neural_compressor.torch.algorithms.static_quant import save
+
         model.save_qconf_summary(qconf_summary=ipex_config_path)
         model = _ipex_post_quant_process(model, example_inputs, inplace=inplace)
 
-    else:  # pragma: no cover
-        # for IPEX version < 1.12
-        _, cfgs, default_cfgs, fuse_ops = get_quantizable_ops_recursively(model, example_inputs)
-        qscheme = cfg_to_qconfig(tune_cfg, cfgs, default_cfgs, fuse_ops)
-        ipex_conf = ipex.quantization.QuantConf(
-            configure_file=ipex_config_path, qscheme=qscheme
-        )  # pylint: disable=E1101
-        run_fn(model)
-        ipex_conf.save(ipex_config_path)
-        ipex_conf = ipex.quantization.QuantConf(ipex_config_path)  # pylint: disable=E1101
-        model = ipex.quantization.convert(model, ipex_conf, example_inputs, inplace=True)  # pylint: disable=E1121
+        with open(ipex_config_path, "r") as f:
+            model.tune_cfg = json.load(f)
+        model.ipex_config_path = ipex_config_path
 
-    with open(ipex_config_path, "r") as f:
-        model.tune_cfg = json.load(f)
-    model.ipex_config_path = ipex_config_path
-    if ipex_ver.release >= Version("1.12.0").release:
-        dump_model_op_stats(tune_cfg)
-    return model
+        dump_model_op_stats(self.user_cfg)
+
+        logger.info("Static quantization done.")
+        model.ori_save = model.save
+        model.save = MethodType(save, model)
+        return model
 
 
 def _ipex_post_quant_process(model, example_inputs, inplace=False):

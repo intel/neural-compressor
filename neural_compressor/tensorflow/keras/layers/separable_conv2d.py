@@ -18,7 +18,6 @@
 import json
 
 import tensorflow as tf
-from tensorflow import quantization
 from tensorflow.keras import activations, constraints, initializers, regularizers
 
 from neural_compressor.tensorflow.utils import version1_gte_version2
@@ -59,6 +58,17 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
             depthwise_constraint=None,
             pointwise_constraint=None,
             bias_constraint=None,
+            act_min_value=None,
+            act_max_value=None,
+            weight_min_value=None,
+            weight_max_value=None,
+            granularity="per_tensor",
+            quant_status="calib",
+            quant_mode="SCALED",
+            quant_T="s8",
+            quant_round_mode="HALF_AWAY_FROM_ZERO",
+            quant_narrow_range=False,
+            quant_axis=None,
             **kwargs
         ):
             super().__init__(
@@ -85,25 +95,66 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
                 **kwargs
             )
 
-            self.min_value = json.loads(min_value)
-            self.max_value = json.loads(max_value)
+            T_map = {"s8": tf.qint8, "u8": tf.quint8}
+            self.weight_min_value = weight_min_value
+            self.weight_max_value = weight_max_value
+            self.act_min_value = act_min_value
+            self.act_max_value = act_max_value
+            self.granularity = granularity
+            self.quant_status = quant_status
+            self.quant_mode = quant_mode
+            self.quant_T = T_map[quant_T]
+            self.quant_round_mode = quant_round_mode
+            self.quant_narrow_range = quant_narrow_range
+            self.quant_axis = quant_axis
 
         def call(self, inputs):
-            # (TODO) it's ugly that we can't get the point_wise min/max here
-            depthwise_kernel, _, _ = quantization.quantize(
-                self.depthwise_kernel, self.min_value, self.max_value, tf.qint8, axis=3, mode="SCALED"
-            )
-            depthwise_kernel = quantization.dequantize(
-                depthwise_kernel,
-                self.min_value,
-                self.max_value,
-                axis=3,
-                mode="SCALED",
-            )
+            if self.quant_status == "calib" and not isinstance(inputs, tf.keras.KerasTensor):
+                if self.granularity == "per_tensor":
+                    self.act_min_value = tf.math.reduce_min(inputs)
+                    self.act_max_value = tf.math.reduce_max(inputs)
+                else:
+                    self.act_min_value = tf.math.reduce_min(inputs, axis=1)
+                    self.act_max_value = tf.math.reduce_max(inputs, axis=1)
+                depthwise_kernel = self.depthwise_kernel
+            elif self.quant_status == "quantize":
+                assert (
+                    self.act_min_value is not None
+                ), "Invalid activation min-max values, please check calibration process"
+                inputs, _, _ = tf.quantization.quantize(
+                    inputs,
+                    self.act_min_value,
+                    self.act_max_value,
+                    self.quant_T,
+                    mode=self.quant_mode,
+                    round_mode=self.quant_round_mode,
+                    narrow_range=self.quant_narrow_range,
+                    axis=self.quant_axis,
+                )
+                inputs = tf.quantization.dequantize(
+                    inputs,
+                    self.act_min_value,
+                    self.act_max_value,
+                    mode=self.quant_mode,
+                    narrow_range=self.quant_narrow_range,
+                    axis=self.quant_axis,
+                )
+
+                # (TODO) it's ugly that we can't get the point_wise min/max here
+                depthwise_kernel, _, _ = tf.quantization.quantize(
+                    self.depthwise_kernel, self.weight_min_value, self.weight_max_value, tf.qint8, axis=3, mode="SCALED"
+                )
+                depthwise_kernel = tf.quantization.dequantize(
+                    depthwise_kernel,
+                    self.weight_min_value,
+                    self.weight_max_value,
+                    axis=3,
+                    mode="SCALED",
+                )
 
             outputs = ops.separable_conv(
                 inputs,
-                self.depthwise_kernel,
+                depthwise_kernel,
                 self.pointwise_kernel,
                 strides=self.strides,
                 padding=self.padding,
@@ -122,6 +173,30 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
             if self.activation is not None:
                 return self.activation(outputs)
             return outputs
+
+        @classmethod
+        def from_config(cls, config):
+            return cls(**config)
+
+        def get_config(self):
+            config = super(QSeparableConv2D, self).get_config()
+            config.update(
+                {
+                    "act_min_value": self.act_min_value,
+                    "act_max_value": self.act_max_value,
+                    "weight_min_value": self.weight_min_value,
+                    "weight_max_value": self.weight_max_value,
+                    "granularity": self.granularity,
+                    "quant_status": self.quant_status,
+                    "quant_mode": self.quant_mode,
+                    "quant_T": "s8" if self.quant_T == tf.qint8 else "u8",
+                    "quant_round_mode": self.quant_round_mode,
+                    "quant_narrow_range": self.quant_narrow_range,
+                    "quant_axis": self.quant_axis,
+                }
+            )
+
+            return config
 
 else:
 
@@ -149,6 +224,17 @@ else:
             depthwise_constraint=None,
             pointwise_constraint=None,
             bias_constraint=None,
+            act_min_value=None,
+            act_max_value=None,
+            weight_min_value=None,
+            weight_max_value=None,
+            granularity="per_tensor",
+            quant_status="calib",
+            quant_mode="SCALED",
+            quant_T="s8",
+            quant_round_mode="HALF_AWAY_FROM_ZERO",
+            quant_narrow_range=False,
+            quant_axis=None,
             **kwargs
         ):
             super().__init__(
@@ -174,26 +260,67 @@ else:
                 bias_constraint=constraints.get(bias_constraint),
                 **kwargs
             )
-
-            self.min_value = json.loads(min_value)
-            self.max_value = json.loads(max_value)
+            T_map = {"s8": tf.qint8, "u8": tf.quint8}
+            self.weight_min_value = weight_min_value
+            self.weight_max_value = weight_max_value
+            self.act_min_value = act_min_value
+            self.act_max_value = act_max_value
+            self.granularity = granularity
+            self.quant_status = quant_status
+            self.quant_mode = quant_mode
+            self.quant_T = T_map[quant_T]
+            self.quant_round_mode = quant_round_mode
+            self.quant_narrow_range = quant_narrow_range
+            self.quant_axis = quant_axis
 
         def call(self, inputs):
+            if self.quant_status == "calib":
+                if self.granularity == "per_tensor":
+                    self.act_min_value = tf.math.reduce_min(inputs)
+                    self.act_max_value = tf.math.reduce_max(inputs)
+                else:
+                    self.act_min_value = tf.math.reduce_min(inputs, axis=1)
+                    self.act_max_value = tf.math.reduce_max(inputs, axis=1)
+                depthwise_kernel = self.depthwise_kernel
+            elif self.quant_status == "quantize":
+                assert (
+                    self.act_min_value is not None
+                ), "Invalid activation min-max values, please check calibration process"
+                inputs, _, _ = tf.quantization.quantize(
+                    inputs,
+                    self.act_min_value,
+                    self.act_max_value,
+                    self.quant_T,
+                    mode=self.quant_mode,
+                    round_mode=self.quant_round_mode,
+                    narrow_range=self.quant_narrow_range,
+                    axis=self.quant_axis,
+                )
+                inputs = tf.quantization.dequantize(
+                    inputs,
+                    self.act_min_value,
+                    self.act_max_value,
+                    mode=self.quant_mode,
+                    narrow_range=self.quant_narrow_range,
+                    axis=self.quant_axis,
+                )
+
+                # (TODO) it's ugly that we can't get the point_wise min/max here
+                depthwise_kernel, _, _ = tf.quantization.quantize(
+                    self.depthwise_kernel, self.weight_min_value, self.weight_max_value, tf.qint8, axis=3, mode="SCALED"
+                )
+                depthwise_kernel = tf.quantization.dequantize(
+                    depthwise_kernel,
+                    self.weight_min_value,
+                    self.weight_max_value,
+                    axis=3,
+                    mode="SCALED",
+                )
+
             if self.data_format == "channels_last":
                 strides = (1,) + self.strides + (1,)
             else:
                 strides = (1, 1) + self.strides
-            # (TODO) it's ugly that we can't get the point_wise min/max here
-            depthwise_kernel, _, _ = quantization.quantize(
-                self.depthwise_kernel, self.min_value, self.max_value, tf.qint8, axis=3, mode="SCALED"
-            )
-            depthwise_kernel = quantization.dequantize(
-                depthwise_kernel,
-                self.min_value,
-                self.max_value,
-                axis=3,
-                mode="SCALED",
-            )
 
             outputs = tf.compat.v1.nn.separable_conv2d(
                 inputs,
@@ -216,3 +343,98 @@ else:
         @classmethod
         def from_config(cls, config):
             return cls(**config)
+
+        def get_config(self):
+            config = super(QSeparableConv2D, self).get_config()
+            config.update(
+                {
+                    "act_min_value": self.act_min_value,
+                    "act_max_value": self.act_max_value,
+                    "weight_min_value": self.weight_min_value,
+                    "weight_max_value": self.weight_max_value,
+                    "granularity": self.granularity,
+                    "quant_status": self.quant_status,
+                    "quant_mode": self.quant_mode,
+                    "quant_T": "s8" if self.quant_T == tf.qint8 else "u8",
+                    "quant_round_mode": self.quant_round_mode,
+                    "quant_narrow_range": self.quant_narrow_range,
+                    "quant_axis": self.quant_axis,
+                }
+            )
+
+            return config
+
+
+def initialize_int8_separable_conv2d(fp32_layer, q_config):
+    kwargs = fp32_layer.get_config()
+
+    if "name" in kwargs:
+        del kwargs["name"]
+    if "filters" in kwargs:
+        del kwargs["filters"]
+    if "kernel_size" in kwargs:
+        del kwargs["kernel_size"]
+    if "strides" in kwargs:
+        del kwargs["strides"]
+    if "padding" in kwargs:
+        del kwargs["padding"]
+    if "data_format" in kwargs:
+        del kwargs["data_format"]
+    if "dilation_rate" in kwargs:
+        del kwargs["dilation_rate"]
+    if "depth_multiplier" in kwargs:
+        del kwargs["depth_multiplier"]
+    if "activation" in kwargs:
+        del kwargs["activation"]
+    if "use_bias" in kwargs:
+        del kwargs["use_bias"]
+    if "depthwise_initializer" in kwargs:
+        del kwargs["depthwise_initializer"]
+    if "pointwise_initializer" in kwargs:
+        del kwargs["pointwise_initializer"]
+    if "bias_initializer" in kwargs:
+        del kwargs["bias_initializer"]
+    if "depthwise_regularizer" in kwargs:
+        del kwargs["depthwise_regularizer"]
+    if "pointwise_regularizer" in kwargs:
+        del kwargs["pointwise_regularizer"]
+    if "activity_regularizer" in kwargs:
+        del kwargs["activity_regularizer"]
+    if "bias_regularizer" in kwargs:
+        del kwargs["bias_regularizer"]
+    if "depthwise_constraint" in kwargs:
+        del kwargs["depthwise_constraint"]
+    if "pointwise_constraint" in kwargs:
+        del kwargs["pointwise_constraint"]
+    if "bias_constraint" in kwargs:
+        del kwargs["bias_constraint"]
+    if "min_value" in kwargs:
+        del kwargs["min_value"]
+    if "max_value" in kwargs:
+        del kwargs["max_value"]
+
+    return QSeparableConv2D(
+        name=fp32_layer.name,
+        filters=fp32_layer.filters,
+        kernel_size=fp32_layer.kernel_size,
+        strides=fp32_layer.strides,
+        padding=fp32_layer.padding,
+        data_format=fp32_layer.data_format,
+        dilation_rate=fp32_layer.dilation_rate,
+        depth_multiplier=fp32_layer.depth_multiplier,
+        activation=fp32_layer.activation,
+        use_bias=fp32_layer.use_bias,
+        depthwise_initializer=fp32_layer.depthwise_initializer,
+        pointwise_initializer=fp32_layer.pointwise_initializer,
+        bias_initializer=fp32_layer.bias_initializer,
+        depthwise_regularizer=fp32_layer.depthwise_regularizer,
+        pointwise_regularizer=fp32_layer.pointwise_regularizer,
+        bias_regularizer=fp32_layer.bias_regularizer,
+        activity_regularizer=fp32_layer.activity_regularizer,
+        depthwise_constraint=fp32_layer.depthwise_constraint,
+        pointwise_constraint=fp32_layer.pointwise_constraint,
+        bias_constraint=fp32_layer.bias_constraint,
+        quant_T=q_config["T"],
+        granularity=q_config["granularity"],
+        **kwargs
+    )

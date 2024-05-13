@@ -22,6 +22,15 @@ SPR_BASE_VERSIONS = (
     "2.15.0202341",
 )
 
+TENSORFLOW_DEFAULT_CONFIG = {
+    "device": "cpu",
+    "backend": "default",
+    "approach": "post_training_static_quant",
+    "random_seed": 1978,
+    "format": "default",
+    "use_bf16": True,
+}
+
 DEFAULT_SQ_ALPHA_ARGS = {
     "alpha_min": 0.0,
     "alpha_max": 1.0,
@@ -35,6 +44,7 @@ UNIFY_OP_TYPE_MAPPING = {
     "Conv3D": "conv3d",
     "DepthwiseConv2dNative": "conv2d",
     "FusedBatchNormV3": "batchnorm",
+    "FusedBatchNorm": "batchnorm",
     "_MklFusedInstanceNorm": "instancenorm",
     "MaxPool": "pooling",
     "MaxPool3D": "pooling",

@@ -28,7 +28,7 @@ from neural_compressor.tensorflow.algorithms.smoother.calibration import (
 from neural_compressor.tensorflow.algorithms.smoother.scaler import SmoothQuantScaler, SmoothQuantScalerLLM
 from neural_compressor.tensorflow.quantization.config import SmoothQuantConfig
 from neural_compressor.tensorflow.quantization.utils.graph_util import GraphAnalyzer
-from neural_compressor.tensorflow.utils import SPR_BASE_VERSIONS, BaseModel, TensorflowLLMModel, framework_specific_info
+from neural_compressor.tensorflow.utils import SPR_BASE_VERSIONS, BaseModel, TensorflowLLMModel, TFConfig
 
 
 class SmoothQuant:
@@ -55,8 +55,8 @@ class SmoothQuant:
         self.calib_iteration = calib_iteration
 
         self.new_api = tf.version.VERSION in SPR_BASE_VERSIONS
-        self.device = framework_specific_info["device"]
-        self.itex_mode = framework_specific_info["backend"] == "itex"
+        self.device = TFConfig.global_config["device"]
+        self.itex_mode = TFConfig.global_config["backend"] == "itex"
 
         for _, value in self.config.items():
             single_config = value

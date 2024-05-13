@@ -16,7 +16,9 @@ inc_path=$(python -c 'import neural_compressor; print(neural_compressor.__path__
 cd /neural-compressor/test/3x || exit 1
 rm -rf torch
 rm -rf onnxrt
+rm -rf tensorflow/quantization/ptq/newapi
 mv tensorflow/keras ../3x_keras
+mv tensorflow/quantization/itex ./3x_itex
 
 LOG_DIR=/neural-compressor/log_dir
 mkdir -p ${LOG_DIR}
@@ -27,8 +29,9 @@ pytest --cov="${inc_path}" --cov-append -vs --disable-warnings --html=report_tf.
 
 rm -rf tensorflow/*
 mv ../3x_keras tensorflow/keras
+mv ../3x_itex tensorflow/quantization/itex
 pip install intel-extension-for-tensorflow[cpu]
-pytest --cov="${inc_path}" --cov-append -vs --disable-warnings --html=report_keras.html --self-contained-html ./tensorflow/keras 2>&1 | tee -a ${ut_log_name}
+pytest --cov="${inc_path}" --cov-append -vs --disable-warnings --html=report_keras.html --self-contained-html ./tensorflow 2>&1 | tee -a ${ut_log_name}
 
 mkdir -p report
 mv *.html report

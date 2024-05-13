@@ -1,5 +1,8 @@
-Full Publications/Events (79)
+Full Publications/Events (80)
 ==========
+## 2024 (1)
+* Blog by Intel: [Accelerate Meta* Llama 3 with Intel AI Solutions](https://www.intel.com/content/www/us/en/developer/articles/technical/accelerate-meta-llama3-with-intel-ai-solutions.html) (Apr 2024)
+
 ## 2023 (25)
 * Blog by Intel: [Effective Weight-Only Quantization for Large Language Models with Intel® Neural Compressor](https://community.intel.com/t5/Blogs/Tech-Innovation/Artificial-Intelligence-AI/Effective-Weight-Only-Quantization-for-Large-Language-Models/post/1529552) (Oct 2023)
 * arXiv: [Efficient Post-training Quantization with FP8 Formats](https://arxiv.org/abs/2309.14592) (Sep 2023)
@@ -71,7 +74,7 @@ Full Publications/Events (79)
 * NeurIPS’21: [Prune Once for All: Sparse Pre-Trained Language Models](https://nips.cc/Conferences/2021/Schedule?showEvent=21839) (Nov 2021)
 * Blog by Intel: [Faster, Easier Optimization with Intel® Neural Compressor](https://www.intel.com/content/www/us/en/artificial-intelligence/posts/optimization-with-intel-neural-compressor.html) (Nov 2021)
 * Blog by Intel: [Accelerate Deep Learning with Intel® Extension for TensorFlow*](https://www.intel.com/content/www/us/en/developer/videos/accelerate-deep-learning-with-intel-tensorflow.html#gs.9yrw90) (Oct 2021)
-* ONNX Ecosystem: [Intel® Neural Compressor: A Scalable Quantization Tool for ONNX Models](https://events.linuxfoundation.org/lf-ai-data-day-onnx-community-virtual-meetup-fall/program/schedule) (Oct 2021)
+* Post on Social Media: Intel® Neural Compressor: A Scalable Quantization Tool for ONNX Models post on [YouTube](https://youtu.be/Irk9UIcsCng) and [Twitter](https://twitter.com/onnxai/status/1465376442066227205?s=20) (Oct 2021)
 * Blog by Intel: [A "Double Play" for MLPerf™ Inference Performance Gains with 3rd Generation Intel® Xeon® Scalable Processors](https://www.intel.com/content/www/us/en/artificial-intelligence/posts/intel-mlperf-inference-performance.html) (Sep 2021)
 * Blog by Intel: [Optimize TensorFlow Pre-trained Model for Inference](https://software.intel.com/content/www/us/en/develop/articles/optimize-tensorflow-pre-trained-model-inference.html) (Jun 2021)
 * Blog by Intel: [3D Digital Face Reconstruction Solution enabled by 3rd Gen Intel® Xeon® Scalable Processors](https://www.intel.com/content/www/us/en/artificial-intelligence/posts/tencent-3d-digital-face-reconstruction.html) (Apr 2021)

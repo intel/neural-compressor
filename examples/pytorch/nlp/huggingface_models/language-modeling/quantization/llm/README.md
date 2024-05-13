@@ -128,7 +128,7 @@ python run_clm_no_trainer.py \
 # to validate int8 model generated with `--sq`, please remove "--approach weight_only".
 # to validate the int8 model quantized with ipex, please include "--ipex".
 ```
-### LLAMA2-7b/13b/30b
+### LLAMA2-7b/13b/70b
 >Note: LLAMA requires IPEX requirements >= 2.1 to get better accuracy.
 #### Quantization
 
