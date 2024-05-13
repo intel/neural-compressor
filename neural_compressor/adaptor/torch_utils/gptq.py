@@ -571,7 +571,7 @@ class GPTQuantizer(object):
                 return self.weight_config[layer_name]["lm_head"]
         return False
 
-    def analyze_true_sequential(self, module, inputs = None):
+    def analyze_true_sequential(self, module, inputs=None):
         # to obtain the depth of each linear layers in this block
         # obtain all linear layers' names
         layers = find_layers(module)
@@ -582,7 +582,7 @@ class GPTQuantizer(object):
             qkv_layers = [layers[0]]
             post_qkv_layers = layers[1:]
         else:
-            # case 2: qkv are calculated seperately.
+            # case 2: qkv are calculated separately.
             qkv_layers = layers[0:3]
             post_qkv_layers = layers[3:]
         layers.clear()
@@ -769,7 +769,7 @@ class GPTQuantizer(object):
         # do the post transformer blocks quantization
         do_post_transformer_quant = self.find_lm_head_config()
         if do_post_transformer_quant:
-            logger.info(f"Quantizing post transformer layers")
+            logger.info("Quantizing post transformer layers")
             # the input should be self.cache_key_arguments and self.cache_positional_arguments
             sub_layers = find_layers(self.gptq_related_blocks["transformers_post"]["layer"])
             sub_layers_to_quant = {}
@@ -787,7 +787,8 @@ class GPTQuantizer(object):
 
             def add_batch_post(_name):
                 def tmp(_, inp, out):
-                    gptq_post_block[_name].add_batch(inp[0].data, out.data)  # noqa: F821
+                    gptq_post_block[_name].add_batch(inp[0].data, out.data)
+
                 return tmp
 
             for layer_name in sub_layers:
@@ -808,8 +809,8 @@ class GPTQuantizer(object):
             for layer_name in sub_layers:
                 handles.append(sub_layers[layer_name].register_forward_hook(add_batch_post(layer_name)))
             for j in range(len(self.dataloader)):
-                out = sub_layers[layer_name](self.cache_positional_arguments[0][j]) # perform the inference process
-            
+                out = sub_layers[layer_name](self.cache_positional_arguments[0][j])  # perform the inference process
+
             for h in handles:
                 h.remove()
 
