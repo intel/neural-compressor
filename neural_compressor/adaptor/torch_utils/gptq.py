@@ -817,11 +817,11 @@ class GPTQuantizer(object):
                 else:
                     out = sub_layers[layer_name](self.cache_positional_arguments[0][j])
 
-        # if "hidden_states" in self.cache_key_arguments:
-        #     self.cache_key_arguments["hidden_states"] = outs[:]
-        # else:
-        #     self.cache_positional_arguments[0] = outs[:]
-                  # perform the inference process
+            # if "hidden_states" in self.cache_key_arguments:
+            #     self.cache_key_arguments["hidden_states"] = outs[:]
+            # else:
+            #     self.cache_positional_arguments[0] = outs[:]
+            # perform the inference process
 
             for h in handles:
                 h.remove()

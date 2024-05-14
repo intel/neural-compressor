@@ -19,6 +19,7 @@ try:
 except ImportError:
     auto_round_installed = False
 
+
 class Model(torch.nn.Module):
     def __init__(self):
         super(Model, self).__init__()
@@ -522,11 +523,11 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
             },
             recipes={
                 "gptq_args": {
-                    "percdamp": 0.01, 
-                    "act_order": False, 
-                    "use_max_length": True, 
+                    "percdamp": 0.01,
+                    "act_order": False,
+                    "use_max_length": True,
                     "pad_max_length": 512,
-                    'static_groups': True,
+                    "static_groups": True,
                     "true_sequential": True,
                     "lm_head": True,
                 },
