@@ -187,7 +187,7 @@ class AutoMixedPrecisionTuneStrategy(TuneStrategy):
         )
         op_fallback_acc_impact = OrderedDict()
         for op_index, op_tuning_cfg in enumerate(fallback_sampler):
-            op_tuning_cfg["calib_sampling_size"] = -1
+            op_tuning_cfg["calib_sampling_size"] = -1le_list
             yield op_tuning_cfg
             acc, _ = self.last_tune_result
             op_fallback_acc_impact[fallback_items_name_lst[op_index]] = acc

@@ -308,6 +308,15 @@ class TestAutoTune(unittest.TestCase):
         best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fn=eval_acc_fn)
         self.assertIsNone(best_model)
 
+    @reset_tuning_target
+    def test_autotune_mix_precision(self):
+        def eval_acc_fn(model) -> float:
+            return 1.0
+
+        custom_tune_config = TuningConfig(config_set=[MixPrecisionConfig(fp16_ops=[torch.nn.Linear])], max_trials=2)
+        best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fn=eval_acc_fn)
+        self.assertIsNotNone(best_model)
+
 
 if __name__ == "__main__":
     unittest.main()

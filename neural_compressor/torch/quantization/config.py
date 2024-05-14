@@ -34,6 +34,7 @@ from neural_compressor.common.utils import (
     FP8_QUANT,
     GPTQ,
     HQQ,
+    MIX_PRECISION,
     OP_NAME_OR_MODULE_TYPE,
     RTN,
     SMOOTH_QUANT,
@@ -1115,6 +1116,79 @@ def get_default_fp8_config_set() -> FP8Config:
         the default fp8 config.
     """
     return FP8Config.get_config_set_for_tuning()
+
+
+######################## MixPrecision Config ###############################
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=MIX_PRECISION)
+class MixPrecisionConfig(BaseConfig):
+    """Config class for mix-precision."""
+
+    name = MIX_PRECISION
+    supported_configs: List[OperatorConfig] = []
+    params_list = [
+        "fp16_ops"
+        "device",
+    ]
+
+    def __init__(
+        self,
+        fp16_ops: List = [torch.nn.Linear],
+        device: Union[str, List[str]] = "cpu",
+        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+    ):
+        """Init MixPrecision config.
+
+        Args:
+        """
+        super().__init__(white_list=white_list)
+        self.fp16_ops = fp16_ops
+        self.device = device
+        self._post_init()
+
+    @classmethod
+    def register_supported_configs(cls) -> List[OperatorConfig]:
+        supported_configs = []
+        mix_precision_config = MixPrecisionConfig(
+            fp16_ops=[torch.nn.Linear],
+            device=["cpu", "cuda"],
+        )
+        operators = [torch.nn.Linear]
+        supported_configs.append(OperatorConfig(config=mix_precision_config, operators=operators))
+        cls.supported_configs = supported_configs
+
+    @staticmethod
+    def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+        white_list = (torch.nn.Linear,)
+        filter_result = []
+        for op_name, module in model.named_modules():
+            if isinstance(module, white_list):
+                pair = (op_name, type(module).__name__)
+                filter_result.append(pair)
+        logger.debug(f"Get model info: {filter_result}")
+        return filter_result
+
+    @classmethod
+    def get_config_set_for_tuning(cls) -> Union[None, "MixPrecisionConfig", List["MixPrecisionConfig"]]:
+        # TODO fwk owner needs to update it.
+        return MixPrecisionConfig(fp16_ops=[torch.nn.Linear])
+
+
+def get_default_mix_precision_config() -> MixPrecisionConfig:
+    """Generate the defaul mix-precision config.
+
+    Returns:
+        the default mix-precision config.
+    """
+    return MixPrecisionConfig()
+
+
+def get_default_mix_precision_config_set() -> MixPrecisionConfig:
+    """Generate the default mix-precision config set.
+
+    Returns:
+        the default mix-precision config.
+    """
+    return MixPrecisionConfig.get_config_set_for_tuning()
 
 
 ##################### Algo Configs End ###################################
