@@ -8,8 +8,8 @@ import torch.ao.quantization.quantizer.x86_inductor_quantizer as xiq
 from torch._export import capture_pre_autograd_graph
 from torch.ao.quantization.quantize_pt2e import convert_pt2e, prepare_pt2e
 from torch.ao.quantization.quantizer.x86_inductor_quantizer import X86InductorQuantizer
+from torch.fx import subgraph_rewriter
 from torch.fx.experimental.proxy_tensor import make_fx
-from torch.utils._pytree import _register_pytree_node
 
 torch.manual_seed(0)
 
@@ -83,7 +83,7 @@ def linear_fp16_replace(i, w, bias):
 
 
 linear_replace = torch.fx.symbolic_trace(linear_fp16_replace)
-from torch.fx import subgraph_rewriter
+
 
 linear_replace_pattern_bias = make_fx(linear_fp16_replace, pre_dispatch=True)(
     torch.randn(0, 0), torch.randn(0, 0), torch.randn(0)
@@ -114,6 +114,17 @@ def test_quantizer_on_simple_model():
     # convert
     converted_model = convert_pt2e(prepare_model)
 
+    from neural_compressor.torch.algorithms.pt2e_quant.passes import half_precision_convert
+
+    half_precision_convert(gm=converted_model, target_dtype=torch.float16, node_list=[])
+
+    for node in converted_model.graph.nodes:
+        if meta := getattr(node, "meta"):
+            if quantization_annotation := meta.get("quantization_annotation"):
+                print(f"node: {node} quantization_annotation {quantization_annotation._annotated}")
+            else:
+                print(f"node: {node} !!!!!!!!! no quantization_annotation")
+
     # float 32 result:
     out = model(*example_inputs)
     print(f"int8 + float32: {out}")
@@ -141,8 +152,9 @@ def test_quantizer_on_simple_model():
     # logger.warning("out shape is %s", out.shape)
     print(f"opt_out: {opt_out}")
     diff_opt = (new_out - opt_out).abs().max()
+    print(f"diff_opt: {diff_opt}")
     assert torch.allclose(new_out, opt_out, atol=1e-5)
     assert out is not None
 
 
-test_quantizer_on_simple_model()
+# test_quantizer_on_simple_model()
