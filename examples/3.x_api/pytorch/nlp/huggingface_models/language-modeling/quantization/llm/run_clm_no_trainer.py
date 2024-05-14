@@ -329,6 +329,57 @@ if args.quantize:
             user_model = quantize(
                 model=user_model, quant_config=quant_config, run_fn=run_fn_for_gptq, run_args=(dataloader_for_calibration, )
             )
+    elif args.approach == 'pt2e':
+        from neural_compressor.torch.quantization import (
+            StaticQuantConfig,
+            convert,
+            get_default_static_config,
+            prepare,
+            quantize,
+        )
+        from neural_compressor.torch.export import export
+        from torch.export import Dim
+        from utils import get_example_inputs
+        # set TOKENIZERS_PARALLELISM to false
+        def get_example_inputs(tokenizer):
+            text = "Hello, welcome to LLM world."
+            encoded_input = tokenizer(text, return_tensors="pt")
+
+            example_inputs = encoded_input
+            # print(f"example_inputs: {example_inputs}")
+            input_ids = example_inputs["input_ids"]
+            input_ids_batch = torch.cat((input_ids, input_ids), dim=0)
+            print(f"input_ids_batch shape: {input_ids_batch.shape}")
+            tuple_inputs = (input_ids_batch,)
+            return tuple_inputs
+        # os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+        model_name = "facebook/opt-125m"
+        # model = AutoModelForCausalLM.from_pretrained(model_name)
+        # tokenizer = AutoTokenizer.from_pretrained(model_name)
+        batch = Dim(name="batch_size")
+        seq_len = Dim(name="seq_len")
+        dynamic_shapes = {"input_ids": (batch, seq_len)}
+        example_inputs = get_example_inputs(tokenizer)
+        exported_model = export(user_model, example_inputs=example_inputs, dynamic_shapes=dynamic_shapes)
+
+        quant_config = get_default_static_config()
+        # prepare
+        prepare_model = prepare(exported_model, quant_config)
+
+        # calibrate
+        for i in range(2):
+            prepare_model(*example_inputs)
+        # convert
+        converted_model = convert(prepare_model)
+        # inference
+        from torch._inductor import config
+
+        config.freezing = True
+        opt_model = torch.compile(converted_model)
+        
+        opt_model.config = user_model.config # for lm eval
+        user_model = opt_model
     else:
         if args.sq:
             from neural_compressor.torch.quantization import SmoothQuantConfig, quantize
@@ -391,7 +442,8 @@ if args.quantize:
 
 
 if args.accuracy:
-    user_model.eval()
+    if args.approach != 'pt2e':
+        user_model.eval()
     from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
     eval_args = LMEvalParser(
         model="hf", 
@@ -411,7 +463,8 @@ if args.accuracy:
     print('Batch size = %d' % args.batch_size)
 
 if args.performance:
-    user_model.eval()
+    if args.approach != 'pt2e':
+        user_model.eval()
     from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
     import time
 
