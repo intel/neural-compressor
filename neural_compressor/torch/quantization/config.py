@@ -1147,10 +1147,10 @@ class MixPrecisionConfig(BaseConfig):
         "device",
     ]
     supported_fp16_ops = (
-        torch.nn.Linear, 
-        torch.nn.Conv1d, 
-        torch.nn.Conv2d, 
-        torch.nn.Conv3d, 
+        torch.nn.Linear,
+        torch.nn.Conv1d,
+        torch.nn.Conv2d,
+        torch.nn.Conv3d,
     )
 
     def __init__(
@@ -1197,7 +1197,7 @@ class MixPrecisionConfig(BaseConfig):
 
 
 def get_default_mix_precision_config() -> MixPrecisionConfig:
-    """Generate the defaul mix-precision config.
+    """Generate the default mix-precision config.
 
     Returns:
         the default mix-precision config.

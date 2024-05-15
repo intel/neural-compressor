@@ -24,12 +24,12 @@ from neural_compressor.common.utils import (
     FP8_QUANT,
     GPTQ,
     HQQ,
+    MIX_PRECISION,
     RTN,
     SMOOTH_QUANT,
     STATIC_QUANT,
     TEQ,
     Mode,
-    MIX_PRECISION,
 )
 from neural_compressor.torch.quantization import (
     AutoRoundConfig,
@@ -37,11 +37,11 @@ from neural_compressor.torch.quantization import (
     FP8Config,
     GPTQConfig,
     HQQConfig,
+    MixPrecisionConfig,
     RTNConfig,
     SmoothQuantConfig,
     StaticQuantConfig,
     TEQConfig,
-    MixPrecisionConfig,
 )
 from neural_compressor.torch.utils import get_quantizer, is_ipex_imported, logger, postprocess_model, register_algo
 from neural_compressor.torch.utils.constants import PT2E_STATIC_QUANT
@@ -508,7 +508,7 @@ def mix_precision_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str], MixPrecisionConfig], *args, **kwargs
 ) -> torch.nn.Module:
     # only support fp16 now, more types might be added later
-    from neural_compressor.torch.algorithms.mix_precision import FP16Converter 
+    from neural_compressor.torch.algorithms.mix_precision import FP16Converter
     fp16_converter = FP16Converter(configs_mapping, *args, **kwargs)
-    
+
     return fp16_converter.convert(model)
