@@ -19,27 +19,17 @@ from typing import Any, Callable, Dict, Tuple
 import torch
 
 from neural_compressor.common.utils import (
-    (
     AUTOROUND,
-    
     AWQ,
-    
     FP8_QUANT,
-    
     GPTQ,
-    
     HQQ,
-    
     RTN,
-    
     SMOOTH_QUANT,
-    
     STATIC_QUANT,
-    
     TEQ,
     Mode,
-), 
-    MIX_PRECISION
+    MIX_PRECISION,
 )
 from neural_compressor.torch.quantization import (
     AutoRoundConfig,
