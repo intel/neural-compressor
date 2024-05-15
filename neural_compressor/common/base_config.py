@@ -436,6 +436,13 @@ class BaseConfig(ABC):
     def get_config_set_for_tuning(cls):
         raise NotImplementedError
 
+    def __eq__(self, other: BaseConfig) -> bool:
+        if not isinstance(other, type(self)):
+            return False
+        return self.params_list == other.params_list and all(
+            getattr(self, str(attr)) == getattr(other, str(attr)) for attr in self.params_list
+        )
+
 
 class ComposableConfig(BaseConfig):
     name = COMPOSABLE_CONFIG

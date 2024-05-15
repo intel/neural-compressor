@@ -39,7 +39,7 @@ class PatternPair:
     match_filters: Optional[List[Callable[[matcher_utils.InternalMatch, torch.fx.Graph, torch.fx.Graph], bool]]]
 
 
-# key: func
+# key: torch func
 # value: the tuple of args
 FuncArgsMappingType: TypeAlias = Dict[TorchFuncType, Tuple[torch.Tensor, ...]]
 
@@ -47,8 +47,8 @@ FuncArgsMappingType: TypeAlias = Dict[TorchFuncType, Tuple[torch.Tensor, ...]]
 # Align with https://pytorch.org/docs/stable/amp.html#cpu-ops-that-can-autocast-to-bfloat16
 # TODO: complete the mapping
 FN_ARGS_MAPPING: FuncArgsMappingType = {
-    torch.nn.functional.linear: (torch.randn(0, 0), torch.randn(0, 0)),
-    torch.nn.functional.linear: (torch.randn(0, 0), torch.randn(0, 0), torch.randn(0)),  # linear with bias
+    torch.nn.functional.linear: (torch.randn(0, 0), torch.randn(0, 0)),  # linear w/o bias
+    torch.nn.functional.linear: (torch.randn(0, 0), torch.randn(0, 0), torch.randn(0)),  # linear w/ bias
 }
 # TODO: complete the mapping
 FN_ATEN_OPS_MAPPING = {
@@ -80,13 +80,13 @@ def is_target_node_in_candidate_list(match, original_graph, pattern_graph, node_
 
 
 def pattern_factory(fn: TorchFuncType, fn_arg: Tuple[torch.Tensor, ...], target_dtype: torch.dtype = torch.float16):
+    """Create a search, replace pattern and filter functions for a given torch function and its arguments."""
     assert target_dtype in [
         torch.float16,
         torch.bfloat16,
     ], f"target_dtype should either be `torch.float16` or `torch.bfloat16`, but got {target_dtype}"
 
     def replace_fn_wrapper(fn_args, fn):
-        # TODO: is ok to use the fn directly?
         converted_args = [arg.to(target_dtype) for arg in fn_args]
         target_dtype_out = fn(*converted_args)
         return target_dtype_out.float()
@@ -103,7 +103,7 @@ def pattern_factory(fn: TorchFuncType, fn_arg: Tuple[torch.Tensor, ...], target_
     return pattern_pair
 
 
-def _register_low_precision_search_and_replace_pattern(dtype: torch.dtype) -> None:
+def _register_pattern_pair(dtype: torch.dtype) -> None:
     for fn, fn_args in FN_ARGS_MAPPING.items():
         pattern_pair = pattern_factory(fn, fn_args)
         HALF_PRECISION_PATTERN_REGISTRY[dtype][fn] = pattern_pair
@@ -112,10 +112,10 @@ def _register_low_precision_search_and_replace_pattern(dtype: torch.dtype) -> No
     )
 
 
-_register_low_precision_search_and_replace_pattern(torch.float16)
+_register_pattern_pair(torch.float16)
 
 
-def apply_pattern(gm: torch.fx.GraphModule, pattern_pair: PatternPair, node_list):
+def apply_single_pattern_pair(gm: torch.fx.GraphModule, pattern_pair: PatternPair, node_list):
     match_filters_with_node_list = []
     if pattern_pair.match_filters:
         match_filters_with_node_list = [
@@ -156,10 +156,8 @@ def get_half_precision_node_list(gm, user_specific_node_list: List[str]):
     return half_precision_node_list
 
 
-def half_precision_convert(gm: torch.fx.GraphModule, target_dtype: torch.dtype, node_list: List[str]):
-    """Convert the nodes in `node_list` to `target_dtype`"""
-
-    half_precision_node_list = get_half_precision_node_list(gm, node_list)
+def transformation(gm: torch.fx.GraphModule, node_candidate_list: List[str], target_dtype: torch.dtype = torch.float16):
+    """Convert the nodes in `node_candidate_list` to `target_dtype` if possible."""
     for pattern_pair in HALF_PRECISION_PATTERN_REGISTRY[target_dtype].values():
-        apply_pattern(gm, pattern_pair, half_precision_node_list)
+        apply_single_pattern_pair(gm, pattern_pair, node_candidate_list)
     print(gm.print_readable())

@@ -65,29 +65,27 @@ class TestHQQCPU:
         monkeypatch.setattr(hqq_global_option, "use_half", False)
 
     def test_hqq_quant(self, force_use_cpu, force_not_half):
-        from neural_compressor.torch.quantization import get_default_hqq_config, quantize
+        from neural_compressor.torch.quantization import convert, get_default_hqq_config, prepare, quantize
 
         hqq_global_option.use_half = False
-        model = AutoModelForCausalLM.from_pretrained("facebook/opt-125m")
+        fp32_model = AutoModelForCausalLM.from_pretrained("facebook/opt-125m")
         example_inputs = torch.tensor([[10, 20, 30, 40, 50, 60]], dtype=torch.long, device="cpu")
         # test_default_config
         quant_config = get_default_hqq_config()
-        model = quantize(model, quant_config)
-        q_label = model(example_inputs)[0]
-        print(q_label)
 
-    def test_hqq_quant_with_new_api(self, force_use_cpu, force_not_half):
-        from neural_compressor.torch.quantization import convert, get_default_hqq_config, prepare
-
-        hqq_global_option.use_half = False
-        model = AutoModelForCausalLM.from_pretrained("facebook/opt-125m")
-        example_inputs = torch.tensor([[10, 20, 30, 40, 50, 60]], dtype=torch.long, device="cpu")
-        # test_default_config
-        quant_config = get_default_hqq_config()
-        model = prepare(model, quant_config)
+        # prepare + convert API
+        model = prepare(deepcopy(fp32_model), quant_config)
         model = convert(model)
-        q_label = model(example_inputs)[0]
-        print(q_label)
+        q_label_1 = model(example_inputs)[0]
+
+        # quantize API
+        model = quantize(deepcopy(fp32_model), quant_config)
+        q_label_2 = model(example_inputs)[0]
+
+        # compare the results of calling `convert` + `prepare` and calling `quantize`
+        assert torch.all(
+            q_label_1.eq(q_label_2)
+        ), "The results of calling `convert` + `prepare` and calling `quantize` should be equal."
 
     @pytest.mark.parametrize(
         "nbits, group_size, quant_zero, quant_scale, scale_quant_group_size",
