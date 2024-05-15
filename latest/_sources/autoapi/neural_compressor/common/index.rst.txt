@@ -15,6 +15,7 @@ Classes
 .. autoapisummary::
 
    neural_compressor.common.Logger
+   neural_compressor.common.TuningLogger
 
 
 
@@ -23,6 +24,7 @@ Functions
 
 .. autoapisummary::
 
+   neural_compressor.common.log_process
    neural_compressor.common.set_random_seed
    neural_compressor.common.set_resume_from
    neural_compressor.common.set_workspace
@@ -38,6 +40,8 @@ Attributes
 
    neural_compressor.common.level
    neural_compressor.common.options
+
+
 
 
 

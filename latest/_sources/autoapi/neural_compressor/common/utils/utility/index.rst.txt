@@ -30,7 +30,7 @@ Functions
    neural_compressor.common.utils.utility.set_workspace
    neural_compressor.common.utils.utility.set_resume_from
    neural_compressor.common.utils.utility.set_tensorboard
-   neural_compressor.common.utils.utility.log_quant_execution
+   neural_compressor.common.utils.utility.log_process
 
 
 

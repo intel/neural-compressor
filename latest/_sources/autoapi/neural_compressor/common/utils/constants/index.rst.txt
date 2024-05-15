@@ -6,3 +6,26 @@
 .. py:module:: neural_compressor.common.utils.constants
 
 
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.common.utils.constants.Mode
+
+
+
+
+.. py:class:: Mode
+
+
+
+
+   Generic enumeration.
+
+   Derive from this class to define new enumerations.
+
+
