@@ -108,7 +108,7 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
             }
         }
 
-    def test_teq_prepare_convert(self):
+    def test_teq(self):
         test_input = torch.ones([1, 512], dtype=torch.long)
         model = copy.deepcopy(self.gptj)
         out0 = model(test_input)
