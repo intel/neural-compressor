@@ -67,6 +67,18 @@ def quantize(
     if is_ipex_available and (
         isinstance(quant_config, StaticQuantConfig) or isinstance(quant_config, SmoothQuantConfig)
     ):
+        if isinstance(quant_config, SmoothQuantConfig):
+            from neural_compressor.torch.algorithms.smooth_quant import TorchSmoothQuant
+
+            sq = TorchSmoothQuant(
+                model, dataloader=None, example_inputs=example_inputs, q_func=run_fn, record_max_info=True
+            )
+            model = sq.transform(
+                alpha=quant_config.alpha,
+                folding=quant_config.folding,
+                auto_alpha_args=quant_config.auto_alpha_args,
+                scale_sharing=quant_config.scale_sharing,
+            )
         model_info = quant_config.get_model_info(q_model, example_inputs)
     else:
         model_info = quant_config.get_model_info(model=q_model)
@@ -77,11 +89,11 @@ def quantize(
             logger.info(f"Start to apply {algo_name} on the model.")
             q_model = algo_func(
                 q_model,
-                configs_mapping,
+                mode=Mode.QUANTIZE,
+                configs_mapping=configs_mapping,
                 run_fn=run_fn,
                 run_args=run_args,
                 example_inputs=example_inputs,
-                mode=Mode.QUANTIZE,
             )
     return q_model
 

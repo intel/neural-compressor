@@ -252,6 +252,7 @@ def get_quantizable_ops_recursively(model, example_inputs):  # pragma: no cover
                 activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_affine, dtype=torch.quint8),
                 weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_channel_symmetric),
             )
+
             from torch.ao.quantization import QConfigMapping
 
             static_qconfig = QConfigMapping().set_global(qconfig)

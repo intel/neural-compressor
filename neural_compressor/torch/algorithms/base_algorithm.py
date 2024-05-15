@@ -14,7 +14,7 @@
 
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 import torch
 
@@ -76,7 +76,28 @@ class Quantizer(ABC):
         """
         raise NotImplementedError("{} doesn't implement `convert` function. ".format(self.__class__.__name__))
 
-    def quantize(self, model: torch.nn.Module, *args: Any, **kwargs: Any):
+    @abstractmethod
+    def quantize(
+        self,
+        model: torch.nn.Module,
+        tune_cfg: OrderedDict,
+        run_fn: Callable,
+        example_inputs: Any,
+        inplace=True,
+        *args,
+        **kwargs
+    ):
+        """Quantizes a given float model.
+
+        Args:
+            model (torch.nn.Module): The float model to be quantized.
+
+        Returns:
+            A quantized model.
+        """
+        raise NotImplementedError("{} doesn't implement `quantize` function. ".format(self.__class__.__name__))
+
+    def quantize(self, model: torch.nn.Module, *args: Any, **kwargs: Any):  # noqa: F811
         """Quantizes a given float model.
 
         Args:
@@ -111,5 +132,11 @@ class Quantizer(ABC):
         elif mode == Mode.CONVERT:
             model = self.convert(model, *args, **kwargs)
         elif mode == Mode.QUANTIZE:
-            model = self.quantize(model, *args, **kwargs)
+            try:
+                model = self.quantize(model, *args, **kwargs)
+            except:
+                run_fn = kwargs.get("run_fn", None)
+                example_inputs = kwargs.get("example_inputs", None)
+                inplace = kwargs.get("inplace", True)
+                model = self.quantize(model, self.quant_config, run_fn, example_inputs, inplace)
         return model

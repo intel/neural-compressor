@@ -3,7 +3,7 @@ import copy
 import pytest
 import torch
 
-from neural_compressor.torch.quantization import SmoothQuantConfig, get_default_sq_config, quantize
+from neural_compressor.torch.quantization import SmoothQuantConfig, convert, get_default_sq_config, prepare, quantize
 from neural_compressor.torch.utils import is_ipex_available
 
 if is_ipex_available():
@@ -37,7 +37,9 @@ class TestSmoothQuant:
         fp32_model = copy.deepcopy(model)
         quant_config = get_default_sq_config()
         example_inputs = torch.randn([1, 3])
-        q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
+        prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
+        run_fn(prepared_model)
+        q_model = convert(prepared_model)
         assert q_model is not None, "Quantization failed!"
 
     @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
@@ -52,7 +54,9 @@ class TestSmoothQuant:
         }
         quant_config = SmoothQuantConfig(alpha="auto", auto_alpha_args=auto_alpha_args, folding=False)
         example_inputs = torch.randn([1, 3])
-        q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
+        prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
+        run_fn(prepared_model)
+        q_model = convert(prepared_model)
         assert q_model is not None, "Quantization failed!"
 
     @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
@@ -77,7 +81,9 @@ class TestSmoothQuant:
         def run_fn(model):
             model(example_inputs)
 
-        q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
+        prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
+        run_fn(prepared_model)
+        q_model = convert(prepared_model)
         assert q_model is not None, "Quantization failed!"
         output1 = fp32_model(example_inputs)
         output2 = q_model(example_inputs)
@@ -108,7 +114,9 @@ class TestSmoothQuant:
 
         fp32_model = copy.deepcopy(model)
         quant_config = get_default_sq_config()
-        q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
+        prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
+        run_fn(prepared_model)
+        q_model = convert(prepared_model)
         assert q_model is not None, "Quantization failed!"
         q_model.save("saved_results")
 
@@ -128,7 +136,9 @@ class TestSmoothQuant:
         fp32_model = copy.deepcopy(model)
         quant_config = get_default_sq_config()
         example_inputs = torch.zeros([1, 3])
-        q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
+        prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
+        run_fn(prepared_model)
+        q_model = convert(prepared_model)
         assert q_model is not None, "Quantization failed!"
         q_model.save("saved_results")
         inc_out = q_model(example_inputs)
@@ -146,3 +156,11 @@ class TestSmoothQuant:
         loaded_model = recover_model_from_json(fp32_model, "saved_results/qconfig.json", example_inputs=example_inputs)
         loaded_out = loaded_model(example_inputs)
         assert torch.allclose(inc_out, loaded_out, atol=1e-05), "Unexpected result. Please double check."
+
+    @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
+    def test_smooth_quant_with_quantize_API(self):
+        fp32_model = copy.deepcopy(model)
+        quant_config = get_default_sq_config()
+        example_inputs = torch.randn([1, 3])
+        q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
+        assert q_model is not None, "Quantization failed!"

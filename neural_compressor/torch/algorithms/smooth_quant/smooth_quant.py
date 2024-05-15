@@ -26,7 +26,6 @@ except:
 
 from collections import OrderedDict
 from types import MethodType
-from typing import Callable
 
 from packaging.version import Version
 
@@ -48,18 +47,15 @@ ipex_ver = get_ipex_version()
 
 
 class SmoothQuantQuantizer(Quantizer):
-    def __init__(self, quant_config: OrderedDict = {}, run_fn: Callable = None, sq_info: TorchSmoothQuant = None):
+    def __init__(self, quant_config: OrderedDict = {}, sq_info: TorchSmoothQuant = None):
         """Init a SmoothQuantQuantizer object.
 
         Args:
             quant_config (OrderedDict, optional): quantization config for ops. Defaults to {}.
-            run_fn (Callable, optional): a calibration function for calibrating the model. Defaults to none.
-            sq_info (TorchSmoothQuant, optional): a TorchSmoothQuant containing smooth quant infos. Defaults to none.
+            sq_info (TorchSmoothQuant, optional): a TorchSmoothQuant containing smoothquant infos.
         """
-        super().__init__(quant_config, run_fn, sq_info)
-        self.user_cfg = OrderedDict()
-        self.run_fn = None
-        self.sq_info = None
+        super().__init__(quant_config)
+        self.sq_info = sq_info
 
     def prepare(self, model, example_inputs, inplace=True, *args, **kwargs):
         """Prepares a given model for quantization.
@@ -80,7 +76,7 @@ class SmoothQuantQuantizer(Quantizer):
         )
 
         # check smoothquant folding value
-        recipe_cfgs = self.user_cfg.get("recipe_cfgs", None)
+        recipe_cfgs = self.quant_config.get("recipe_cfgs", None)
         if "smooth_quant_args" in recipe_cfgs and "folding" in recipe_cfgs["smooth_quant_args"]:
             if recipe_cfgs["smooth_quant_args"]["folding"] is None:
                 if ipex_ver.release < Version("2.1").release:  # pragma: no cover
@@ -100,7 +96,7 @@ class SmoothQuantQuantizer(Quantizer):
         # Update model parameter when smoothquant folding = False
         if recipe_cfgs and recipe_cfgs.get("smooth_quant", False) and not folding:
             smoothquant_scale_info = self.sq_info.sq_scale_info
-            sq_minmax_init = True if self.user_cfg.get("act_algo", "kl") == "minmax" else False
+            sq_minmax_init = True if self.quant_config.get("act_algo", "kl") == "minmax" else False
 
             # Check save_qconf_summary part is a workaround for IPEX bug.
             # Sometimes the prepared model from get_op_capablitiy loss this attribute
@@ -136,14 +132,17 @@ class SmoothQuantQuantizer(Quantizer):
             # The load_qconf_summary will overwrite the scales used in model but only work in the first call.
             # Here, we use INC collected scale for Linear and set normal observer instead of SQObserver \
             # to make sure calibration works for other ops, like add, bmm.
-            cfg_to_qconfig(self.user_cfg, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, smooth_quant=True)
+            cfg_to_qconfig(self.quant_config, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, smooth_quant=True)
             update_sq_scale(ipex_config_path, smoothquant_scale_info)
             model.load_qconf_summary(qconf_summary=ipex_config_path)
             return model
 
         # Update model parameter when smoothquant folding = True
         if recipe_cfgs and recipe_cfgs.get("smooth_quant", False) and folding:
-            _apply_pre_optimization(model, self.user_cfg, self.sq_info)
+            _apply_pre_optimization(model, self.quant_config, self.sq_info)
+
+        # Update json file in ipex_config_path
+        cfg_to_qconfig(self.quant_config, cfgs, op_infos_from_cfgs, output_tensor_id_op_name)
         model.eval()
 
         # Check save_qconf_summary part is a workaround for IPEX bug.
@@ -175,7 +174,7 @@ class SmoothQuantQuantizer(Quantizer):
         model = _ipex_post_quant_process(model, example_inputs, inplace=inplace)
 
         # check smoothquant folding value
-        recipe_cfgs = self.user_cfg.get("recipe_cfgs", None)
+        recipe_cfgs = self.quant_config.get("recipe_cfgs", None)
         if "smooth_quant_args" in recipe_cfgs and "folding" in recipe_cfgs["smooth_quant_args"]:
             if recipe_cfgs["smooth_quant_args"]["folding"] is None:
                 if ipex_ver.release < Version("2.1").release:  # pragma: no cover
@@ -201,12 +200,12 @@ class SmoothQuantQuantizer(Quantizer):
             and recipe_cfgs["smooth_quant_args"]["folding"]
             and not inplace
         ):  # pragma: no cover
-            _apply_pre_optimization(model, self.user_cfg, self.sq_info, recover=True)
+            _apply_pre_optimization(model, self.quant_config, self.sq_info, recover=True)
 
         with open(ipex_config_path, "r") as f:
             model.tune_cfg = json.load(f)
         model.ipex_config_path = ipex_config_path
-        dump_model_op_stats(self.user_cfg["op"])
+        dump_model_op_stats(self.quant_config["op"])
 
         from neural_compressor.torch.algorithms.smooth_quant import save
 
@@ -250,6 +249,8 @@ class SmoothQuantQuantizer(Quantizer):
             logger.info("The model is already optimized by SmoothQuant algorithm, skip it.")
             return model
 
+        alpha = recipe_cfgs["smooth_quant_args"]["alpha"]
+
         # Update model parameter when smoothquant folding = False
         if recipe_cfgs and recipe_cfgs.get("smooth_quant", False) and not folding:
             return qdq_quantize(
@@ -258,6 +259,7 @@ class SmoothQuantQuantizer(Quantizer):
                 run_fn,
                 example_inputs,
                 inplace,
+                alpha,
                 cfgs,
                 op_infos_from_cfgs,
                 output_tensor_id_op_name,
@@ -267,6 +269,9 @@ class SmoothQuantQuantizer(Quantizer):
         # Update model parameter when smoothquant folding = True
         if recipe_cfgs and recipe_cfgs.get("smooth_quant", False) and folding:
             _apply_pre_optimization(model, tune_cfg, self.sq_info)
+
+        # Update json file in ipex_config_path
+        cfg_to_qconfig(self.quant_config, cfgs, op_infos_from_cfgs, output_tensor_id_op_name)
         model.eval()
 
         # Check save_qconf_summary part is a workaround for IPEX bug.

@@ -251,16 +251,11 @@ def smooth_quant_entry(
     example_inputs = kwargs.get("example_inputs", None)
     inplace = kwargs.get("inplace", True)
     assert example_inputs is not None, "Please provide example_inputs for smooth quantization."
-    recipe_cfgs = quant_config_mapping.get("recipe_cfgs", None)
-    sq = TorchSmoothQuant(model, dataloader=None, example_inputs=example_inputs, q_func=run_fn, record_max_info=True)
-    model = sq.transform(
-        alpha=recipe_cfgs["smooth_quant_args"]["alpha"],
-        folding=recipe_cfgs["smooth_quant_args"]["folding"],
-        auto_alpha_args=recipe_cfgs["smooth_quant_args"]["auto_alpha_args"],
-        scale_sharing=recipe_cfgs["smooth_quant_args"]["scale_sharing"],
-    )
+    sq_info = TorchSmoothQuant(model, example_inputs=example_inputs, q_func=run_fn, record_max_info=True)
 
-    quantizer = get_quantizer(model, quantizer_cls=SmoothQuantQuantizer, quant_config=quant_config_mapping, sq_info=sq)
+    quantizer = get_quantizer(
+        model, quantizer_cls=SmoothQuantQuantizer, quant_config=quant_config_mapping, sq_info=sq_info
+    )
     model = quantizer.execute(model, mode=mode, run_fn=run_fn, example_inputs=example_inputs, inplace=inplace)
     postprocess_model(model, mode, quantizer)
 
