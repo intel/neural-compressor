@@ -13,22 +13,20 @@
 # limitations under the License.
 """Calibration for smooth quant."""
 
+import importlib.util
+import pathlib
 import sys
 import tempfile
-from importlib.util import find_spec
-from pathlib import Path
 from typing import List
 
 import numpy as np
 import onnx
-import onnx.numpy_helper as numpy_helper
 import onnxruntime
 
-from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
-from neural_compressor_ort.utils import logger
-from neural_compressor_ort.utils.onnx_model import ONNXModel
-
-__all__ = ["Calibrator"]
+from neural_compressor_ort import data_reader
+from neural_compressor_ort import logger
+from neural_compressor_ort import onnx_model
+from neural_compressor_ort import utility
 
 
 class Calibrator:
@@ -36,8 +34,8 @@ class Calibrator:
 
     def __init__(
         self,
-        model: ONNXModel,
-        dataloader: CalibrationDataReader,
+        model: onnx_model.ONNXModel,
+        dataloader: data_reader.CalibrationDataReader,
         iterations: List[int] = [],
         providers: List[str] = ["CPUExecutionProvider"],
         **kwargs,
@@ -45,8 +43,8 @@ class Calibrator:
         """Initialize a Calibrator to dump information.
 
         Args:
-            model (ONNXModel): ONNXModel object.
-            dataloader (CalibrationDataReader): user implemented object to read in and preprocess calibration dataset.
+            model (onnx_model.ONNXModel): onnx_model.ONNXModel object.
+            dataloader (data_reader.CalibrationDataReader): user implemented object to read in and preprocess calibration dataset.
             iterations (List[int], optional): tensor of which iteration will be collected. Defaults to [].
             providers (List[str], optional): execution provider for onnxruntime. Defaults to ["CPUExecutionProvider"].
         """
@@ -79,7 +77,7 @@ class Calibrator:
             # currently only normal conv and depthwise conv are supported
             if group > 1:  # group conv, need to check depthwise or not
                 weight_name = node.input[1]
-                weight_shape = numpy_helper.to_array(
+                weight_shape = onnx.numpy_helper.to_array(
                     self.model_wrapper.initializer()[name_to_indices[weight_name]]
                 ).shape
                 input_channel = weight_shape[1]
@@ -143,7 +141,7 @@ class Calibrator:
 
     def get_intermediate_outputs(self):
         so = onnxruntime.SessionOptions()
-        if sys.version_info < (3, 11) and find_spec("onnxruntime_extensions"):  # pragma: no cover
+        if sys.version_info < (3, 11) and importlib.util.find_spec("onnxruntime_extensions"):  # pragma: no cover
             from onnxruntime_extensions import get_library_path
 
             so.register_custom_ops_library(get_library_path())
@@ -153,17 +151,18 @@ class Calibrator:
             with tempfile.TemporaryDirectory(prefix="ort.calib.") as tmp_dir:
                 onnx.save_model(
                     self.model_wrapper.model,
-                    Path(tmp_dir).joinpath("augment.onnx").as_posix(),
+                    pathlib.Path(tmp_dir).joinpath("augment.onnx").as_posix(),
                     save_as_external_data=True,
                     all_tensors_to_one_file=True,
                     convert_attribute=False,
                 )
                 session = onnxruntime.InferenceSession(
-                    Path(tmp_dir).joinpath("augment.onnx").as_posix(), so, providers=providers
+                    pathlib.Path(tmp_dir).joinpath("augment.onnx").as_posix(), so, providers=providers
                 )
-                from onnx.external_data_helper import load_external_data_for_model
 
-                load_external_data_for_model(self.model_wrapper.model, Path(tmp_dir).as_posix())
+                onnx.external_data_helper.load_external_data_for_model(
+                    self.model_wrapper.model, pathlib.Path(tmp_dir).as_posix()
+                )
         else:
             session = onnxruntime.InferenceSession(
                 self.model_wrapper.model.SerializeToString(), so, providers=providers

@@ -1,75 +1,73 @@
-"""Tests for utils components."""
+"""Tests for utility components."""
 
 import unittest
 
-from neural_compressor_ort.utils import (
-    CpuInfo,
-    LazyImport,
-    options,
-    set_random_seed,
-    set_resume_from,
-    set_workspace,
-    singleton,
-)
+from neural_compressor_ort import utility
 
 
 class TestOptions(unittest.TestCase):
+
     def test_set_random_seed(self):
         seed = 12345
-        set_random_seed(seed)
-        self.assertEqual(options.random_seed, seed)
+        utility.set_random_seed(seed)
+        self.assertEqual(utility.options.random_seed, seed)
 
         # non int type
         seed = "12345"
         with self.assertRaises(AssertionError):
-            set_random_seed(seed)
+            utility.set_random_seed(seed)
 
     def test_set_workspace(self):
         workspace = "/path/to/workspace"
-        set_workspace(workspace)
-        self.assertEqual(options.workspace, workspace)
+        utility.set_workspace(workspace)
+        self.assertEqual(utility.options.workspace, workspace)
 
         # non String type
         workspace = 12345
         with self.assertRaises(AssertionError):
-            set_workspace(workspace)
+            utility.set_workspace(workspace)
 
     def test_set_resume_from(self):
         resume_from = "/path/to/resume"
-        set_resume_from(resume_from)
-        self.assertEqual(options.resume_from, resume_from)
+        utility.set_resume_from(resume_from)
+        self.assertEqual(utility.options.resume_from, resume_from)
 
         # non String type
         resume_from = 12345
         with self.assertRaises(AssertionError):
-            set_resume_from(resume_from)
+            utility.set_resume_from(resume_from)
 
 
 class TestCPUInfo(unittest.TestCase):
+
     def test_cpu_info(self):
-        cpu_info = CpuInfo()
+        cpu_info = utility.CpuInfo()
         assert cpu_info.cores_per_socket > 0, "CPU count should be greater than 0"
         assert isinstance(cpu_info.bf16, bool), "bf16 should be a boolean"
         assert isinstance(cpu_info.vnni, bool), "avx512 should be a boolean"
 
 
 class TestLazyImport(unittest.TestCase):
+
     def test_lazy_import(self):
         # Test import
-        pydantic = LazyImport("pydantic")
+        pydantic = utility.LazyImport("pydantic")
         assert pydantic.__name__ == "pydantic", "pydantic should be imported"
 
     def test_lazy_import_error(self):
         # Test import error
         with self.assertRaises(ImportError):
-            non_existent_module = LazyImport("non_existent_module")
+            non_existent_module = utility.LazyImport("non_existent_module")
             non_existent_module.non_existent_function()
 
 
 class TestSingletonDecorator:
+
     def test_singleton_decorator(self):
-        @singleton
+
+        @utility.singleton
         class TestSingleton:
+
             def __init__(self):
                 self.value = 0
 

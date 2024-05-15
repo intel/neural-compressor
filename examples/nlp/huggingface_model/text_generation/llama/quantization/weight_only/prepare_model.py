@@ -2,27 +2,29 @@ import argparse
 import os
 import subprocess
 import optimum.version
-from packaging.version import Version
-OPTIMUM114_VERSION = Version("1.14.0")
+from packaging import version
+
+OPTIMUM114_VERSION = version.Version("1.14.0")
 
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input_model", type=str, required=False, default="")
     parser.add_argument("--output_model", type=str, required=True)
-    parser.add_argument("--task", 
-                        type=str, 
-                        required=False, 
-                        default="text-generation-with-past", 
-                        choices=["text-generation-with-past", "text-generation"])
+    parser.add_argument(
+        "--task",
+        type=str,
+        required=False,
+        default="text-generation-with-past",
+        choices=["text-generation-with-past", "text-generation"])
     return parser.parse_args()
 
 
 def prepare_model(input_model, output_model, task):
     print("\nexport model...")
-    if Version(optimum.version.__version__) < OPTIMUM114_VERSION:
+    if version.Version(optimum.version.__version__) < OPTIMUM114_VERSION:
         raise ImportError("Please upgrade optimum to >= 1.14.0")
-    
+
     subprocess.run(
         [
             "optimum-cli",

@@ -20,21 +20,18 @@
 
 import struct
 import sys
+from importlib import util
 
 import numpy as np
 import onnx
 import onnxruntime as ort
-from packaging.version import Version
+from packaging import version
 
-from neural_compressor_ort.utils import ONNXRT1161_VERSION, dtype_mapping
+from neural_compressor_ort import constants
+from neural_compressor_ort import utility
 
-__all__ = [
-    "make_matmul_weight_only_node",
-    "prepare_inputs",
-    "pad_tensor",
-    "quant_tensor",
-    "qdq_tensor",
-]
+if sys.version_info < (3, 11) and util.find_spec("onnxruntime_extensions"):  # pragma: no cover
+    import onnxruntime_extensions
 
 
 def _get_blob_size(group_size, has_zp):  # pragma: no cover
@@ -44,7 +41,7 @@ def _get_blob_size(group_size, has_zp):  # pragma: no cover
         group_size (int): how many elements share one scale/zp
         has_zp (bool): whether zero_point is None
     """
-    if Version(ort.__version__) > ONNXRT1161_VERSION:
+    if version.Version(ort.__version__) > constants.ONNXRT1161_VERSION:
         blob_size = group_size // 2
     elif has_zp:
         blob_size = group_size // 2 + 4 + 1
@@ -91,7 +88,7 @@ def make_matmul_weight_only_node(
     new_inits = []
     kwargs = {}
 
-    if Version(ort.__version__) > ONNXRT1161_VERSION:
+    if version.Version(ort.__version__) > constants.ONNXRT1161_VERSION:
         op_type = "MatMulNBits"
 
         # pack quantized weight
@@ -104,7 +101,7 @@ def make_matmul_weight_only_node(
         scale = np.reshape(scale, (-1, k_blocks))
         scale_tensor = onnx.helper.make_tensor(
             name=node.input[1] + "_scale",
-            data_type=dtype_mapping[str(scale.dtype)],
+            data_type=utility.dtype_mapping[str(scale.dtype)],
             dims=scale.shape,
             vals=scale.tobytes(),
             raw=True,
@@ -197,7 +194,7 @@ def prepare_inputs(model, data_reader, providers):
     """Prepare inputs for weight only quantization.
 
     Args:
-        model (ModelProto or ONNXModel): onnx model.
+        model (ModelProto or onnx_model.ONNXModel): onnx model.
         data_reader (CalibrationDataReader): a calibration data reader.
         providers (list): providers to use.
 
@@ -205,13 +202,10 @@ def prepare_inputs(model, data_reader, providers):
         inputs: prepared inputs.
         so: session options
     """
-    from importlib.util import find_spec
 
     so = ort.SessionOptions()
-    if sys.version_info < (3, 11) and find_spec("onnxruntime_extensions"):  # pragma: no cover
-        from onnxruntime_extensions import get_library_path
-
-        so.register_custom_ops_library(get_library_path())
+    if sys.version_info < (3, 11) and util.find_spec("onnxruntime_extensions"):  # pragma: no cover
+        so.register_custom_ops_library(onnxruntime_extensions.get_library_path())
     if model.is_large_model:
         onnx.save_model(
             model.model,

@@ -123,19 +123,20 @@ User could execute:
 This means user could leverage ONNX Neural Compressor to directly generate a fully quantized model without accuracy aware tuning. It's user responsibility to ensure the accuracy of the quantized model meets expectation. ONNX Neural Compressor supports `Post Training Static Quantization` and `Post Training Dynamic Quantization`.
 
 ``` python
-from neural_compressor_ort.quantization import StaticQuantConfig, DynamicQuantConfig, quantize
-from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
+from neural_compressor_ort import config
+from neural_compressor_ort.quantization import quantize
+from neural_compressor_ort.quantization import calibrate
 
 
-class DataReader(CalibrationDataReader):
+class DataReader(calibrate.CalibrationDataReader):
     def get_next(self): ...
 
     def rewind(self): ...
 
 
 calibration_data_reader = DataReader()  # only needed by StaticQuantConfig
-config = StaticQuantConfig(calibration_data_reader)  # or config = DynamicQuantConfig()
-quantize(model, q_model_path, config)
+qconfig = config.StaticQuantConfig(calibration_data_reader)  # or qconfig = DynamicQuantConfig()
+quantize(model, q_model_path, qconfig)
 ```
 
 2. With Accuracy Aware Tuning
@@ -143,8 +144,8 @@ quantize(model, q_model_path, config)
 This means user could leverage the advance feature of ONNX Neural Compressor to tune out a best quantized model which has best accuracy and good performance. User should provide `eval_fn`.
 
 ``` python
-from neural_compressor_ort.base_tuning import Evaluator, TuningConfig
-from neural_compressor_ort.quantization import (
+from neural_compressor_ort.quantization import calibrate
+from neural_compressor_ort.quantization import tuning
     CalibrationDataReader,
     GPTQConfig,
     RTNConfig,
@@ -153,7 +154,7 @@ from neural_compressor_ort.quantization import (
 )
 
 
-class DataReader(CalibrationDataReader):
+class DataReader(calibrate.CalibrationDataReader):
     def get_next(self): ...
 
     def rewind(self): ...
@@ -162,11 +163,11 @@ class DataReader(CalibrationDataReader):
 data_reader = DataReader()
 
 # TuningConfig can accept:
-# 1) a set of candidate configs like TuningConfig(config_set=[RTNConfig(weight_bits=4), GPTQConfig(weight_bits=4)])
-# 2) one config with a set of candidate parameters like TuningConfig(config_set=[GPTQConfig(weight_group_size=[32, 64])])
-# 3) our pre-defined config set like TuningConfig(config_set=get_woq_tuning_config())
-custom_tune_config = TuningConfig(config_set=[RTNConfig(weight_bits=4), GPTQConfig(weight_bits=4)])
-best_model = autotune(
+# 1) a set of candidate configs like tuning.TuningConfig(config_set=[config.RTNConfig(weight_bits=4), config.GPTQConfig(weight_bits=4)])
+# 2) one config with a set of candidate parameters like tuning.TuningConfig(config_set=[config.GPTQConfig(weight_group_size=[32, 64])])
+# 3) our pre-defined config set like tuning.TuningConfig(config_set=config.get_woq_tuning_config())
+custom_tune_config = tuning.TuningConfig(config_set=[config.RTNConfig(weight_bits=4), config.GPTQConfig(weight_bits=4)])
+best_model = tuning.autotune(
     model_input=model,
     tune_config=custom_tune_config,
     eval_fn=eval_fn,
@@ -178,8 +179,8 @@ best_model = autotune(
 ONNX Neural Compressor support specify quantization rules by operator name. Users can use `set_local` API of configs to achieve the above purpose by below code:
 
 ```python
-fp32_config = GPTQConfig(weight_dtype="fp32")
-quant_config = GPTQConfig(
+fp32_config = config.GPTQConfig(weight_dtype="fp32")
+quant_config = config.GPTQConfig(
     weight_bits=4,
     weight_dtype="int",
     weight_sym=False,

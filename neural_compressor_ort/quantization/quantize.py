@@ -12,79 +12,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from pathlib import Path
+import pathlib
 from typing import Union
 
 import onnx
 from onnxruntime.quantization.quantize import QuantConfig
 
-from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
-from neural_compressor_ort.utils import algos_mapping, log_quant_execution, logger
-from neural_compressor_ort.utils.base_config import BaseConfig, ComposableConfig, config_registry
+from neural_compressor_ort import config
+from neural_compressor_ort.quantization import algorithm_entry as algos
 
 
 # ORT-like user-facing API
 def quantize(
-    model_input: Union[str, Path, onnx.ModelProto],
-    model_output: Union[str, Path],
+    model_input: Union[str, pathlib.Path, onnx.ModelProto],
+    model_output: Union[str, pathlib.Path],
     quant_config: QuantConfig,
 ):
-    from neural_compressor_ort.quantization.config import DynamicQuantConfig, StaticQuantConfig
-
-    if isinstance(quant_config, StaticQuantConfig):
+    if isinstance(quant_config, config.StaticQuantConfig):
         if quant_config.extra_options.get("SmoothQuant", False):
-            from neural_compressor_ort.quantization.algorithm_entry import smooth_quant_entry
-            from neural_compressor_ort.quantization.config import generate_inc_sq_config
-
-            inc_sq_config = generate_inc_sq_config(quant_config)
-            smooth_quant_entry(
-                model_input, inc_sq_config, quant_config.calibration_data_reader, model_output=model_output
+            nc_sq_config = config.generate_nc_sq_config(quant_config)
+            algos.smooth_quant_entry(
+                model_input, nc_sq_config, quant_config.calibration_data_reader, model_output=model_output
             )
         else:
             # call static_quant_entry
             pass
-    elif isinstance(quant_config, DynamicQuantConfig):
+    elif isinstance(quant_config, config.DynamicQuantConfig):
         # call dynamic_quant_entry
         pass
     else:
         raise TypeError("Invalid quantization config type, it must be either StaticQuantConfig or DynamicQuantConfig.")
-
-
-def _need_apply(quant_config: BaseConfig, algo_name):
-    return quant_config.name == algo_name if hasattr(quant_config, "name") else False
-
-
-# * only for internal usage now
-@log_quant_execution
-def _quantize(
-    model_input: Union[Path, str],
-    quant_config: BaseConfig,
-    calibration_data_reader: CalibrationDataReader = None,
-) -> onnx.ModelProto:
-    """The main entry to quantize a model.
-
-    Args:
-        model_input (Union[Path, str]): Path or str to the model to quantize.
-        quant_config (BaseConfig): a quantization configuration.
-        calibration_data_reader (CalibrationDataReader, optional): dataloader for calibration.
-            Defaults to None.
-
-    Returns:
-        onnx.ModelProto: The quantized model.
-    """
-    registered_configs = config_registry.get_cls_configs()
-    if isinstance(quant_config, dict):
-        quant_config = ComposableConfig.from_dict(quant_config, config_registry=registered_configs)
-        logger.info(f"Parsed a config dict to construct the quantization config: {quant_config}.")
-    else:
-        assert isinstance(
-            quant_config, BaseConfig
-        ), f"Please pass a dict or config instance as the quantization configuration, but got {type(quant_config)}."
-    logger.info(f"Quantize model with config: \n {quant_config} \n")
-
-    # select quantization algo according to config
-    for algo_name, algo_func in algos_mapping.items():
-        if _need_apply(quant_config, algo_name):
-            logger.info(f"Start to apply {algo_name} on the model.")
-            q_model = algo_func(model_input, quant_config, calibration_data_reader=calibration_data_reader)
-    return q_model

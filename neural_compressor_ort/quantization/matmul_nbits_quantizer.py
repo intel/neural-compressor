@@ -12,36 +12,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List, Union
+from typing import List, Union  # isort: skip
 
 import onnx
-from onnx.onnx_pb import ModelProto
-from onnxruntime.quantization.matmul_4bits_quantizer import GPTQWeightOnlyQuantConfig as ORTGPTQWeightOnlyQuantConfig
-from onnxruntime.quantization.matmul_4bits_quantizer import RTNWeightOnlyQuantConfig as ORTRTNWeightOnlyQuantConfig
-from onnxruntime.quantization.matmul_4bits_quantizer import WeightOnlyQuantConfig
-from packaging import version
+from onnxruntime.quantization import matmul_4bits_quantizer
 
-from neural_compressor_ort.quantization.algorithm_entry import (
-    awq_quantize_entry,
-    gptq_quantize_entry,
-    rtn_quantize_entry,
-)
-from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
-from neural_compressor_ort.utils import logger
-from neural_compressor_ort.utils.base_config import config_registry
-from neural_compressor_ort.utils.onnx_model import ONNXModel
+from neural_compressor_ort import config
+from neural_compressor_ort import data_reader
+from neural_compressor_ort import logger
+from neural_compressor_ort import onnx_model
+from neural_compressor_ort import utility
+from neural_compressor_ort.quantization import algorithm_entry as algos
 
 
-class RTNWeightOnlyQuantConfig(ORTRTNWeightOnlyQuantConfig):
+class RTNWeightOnlyQuantConfig(matmul_4bits_quantizer.RTNWeightOnlyQuantConfig):
+
     def __init__(self, ratios=None, layer_wise_quant=False):
         super().__init__(ratios=ratios)
         self.layer_wise_quant = layer_wise_quant
 
 
-class GPTQWeightOnlyQuantConfig(ORTGPTQWeightOnlyQuantConfig):
+class GPTQWeightOnlyQuantConfig(matmul_4bits_quantizer.GPTQWeightOnlyQuantConfig):
+
     def __init__(
         self,
-        calibration_data_reader: CalibrationDataReader,
+        calibration_data_reader: data_reader.CalibrationDataReader,
         percdamp=0.01,
         blocksize=128,
         actorder=False,
@@ -60,10 +55,11 @@ class GPTQWeightOnlyQuantConfig(ORTGPTQWeightOnlyQuantConfig):
         self.layer_wise_quant = layer_wise_quant
 
 
-class AWQWeightOnlyQuantConfig(WeightOnlyQuantConfig):
+class AWQWeightOnlyQuantConfig(matmul_4bits_quantizer.WeightOnlyQuantConfig):
+
     def __init__(
         self,
-        calibration_data_reader: CalibrationDataReader,
+        calibration_data_reader: data_reader.CalibrationDataReader,
         enable_auto_scale=True,
         enable_mse_search=True,
     ):
@@ -81,14 +77,15 @@ algorithm_config_mapping = {
 
 
 class MatMulNBitsQuantizer:
+
     def __init__(
         self,
-        model: Union[ModelProto, str],
+        model: Union[onnx.ModelProto, str],
         block_size: int = 128,
         is_symmetric: bool = False,
         accuracy_level: int = 0,
         nodes_to_exclude: List[str] = None,
-        algo_config: WeightOnlyQuantConfig = None,
+        algo_config: matmul_4bits_quantizer.WeightOnlyQuantConfig = None,
         n_bits: int = 4,
         providers: List[str] = ["CPUExecutionProvider"],
     ):
@@ -96,7 +93,7 @@ class MatMulNBitsQuantizer:
             nodes_to_exclude = []
         self.model_path = model if isinstance(model, str) else None
         self.model = model
-        self.model = ONNXModel(onnx.load(model)) if isinstance(model, str) else ONNXModel(model)
+        self.model = onnx_model.ONNXModel(onnx.load(model)) if isinstance(model, str) else onnx_model.ONNXModel(model)
         self.block_size = block_size
         self.is_symmetric = is_symmetric
         self.accuracy_level = accuracy_level
@@ -111,8 +108,8 @@ class MatMulNBitsQuantizer:
             "GPTQ",
         ], "Only RTN, GPTQ and AWQ algorithms are supported, but get {} algorithm".format(self.algorithm)
 
-    def _generate_inc_config(self):
-        config_class = config_registry.get_cls_configs()[self.algorithm.lower()]
+    def _generate_nc_config(self):
+        config_class = config.config_registry.get_cls_configs()[self.algorithm.lower()]
 
         quant_kwargs = {
             "weight_bits": self.n_bits,
@@ -145,32 +142,26 @@ class MatMulNBitsQuantizer:
                     "enable_mse_search": self.algo_config.enable_mse_search,
                 }
             )
-        inc_config = config_class(**quant_kwargs)
+        nc_config = config_class(**quant_kwargs)
 
         if len(self.nodes_to_exclude) > 0:
             not_quant_kwargs = {"weight_dtype": "fp32", "white_list": self.nodes_to_exclude}
-            inc_config += config_class(**not_quant_kwargs)
+            nc_config += config_class(**not_quant_kwargs)
 
-        return inc_config
+        return nc_config
 
     def int4_quant_algo(self):
-        config = self._generate_inc_config()
+        qconfig = self._generate_nc_config()
 
         logger.info(f"start to quantize model with {self.algorithm} algorithm...")
         model = self.model_path or self.model
         if self.algorithm == "RTN":
-            self.model = rtn_quantize_entry(model, config)
+            self.model = algos.rtn_quantize_entry(model, qconfig)
         elif self.algorithm == "GPTQ":
-            self.model = gptq_quantize_entry(model, config, self.algo_config.calibration_data_reader)
+            self.model = algos.gptq_quantize_entry(model, qconfig, self.algo_config.calibration_data_reader)
         elif self.algorithm == "AWQ":
-            self.model = awq_quantize_entry(model, config, self.algo_config.calibration_data_reader)
+            self.model = algos.awq_quantize_entry(model, qconfig, self.algo_config.calibration_data_reader)
         logger.info(f"complete quantization of model with {self.algorithm} algorithm.")
 
     def process(self):
-        from neural_compressor_ort.version import __version__
-
-        assert version.parse(__version__) >= version.parse(
-            "2.6"
-        ), "Require neural-compressor >= 2.6 to support weight only quantization!"
-
         self.int4_quant_algo()

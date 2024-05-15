@@ -15,25 +15,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import copy
 import os
-from pathlib import Path
-from typing import List, Union
+import pathlib
 
 import numpy as np
 import onnx
 import onnxruntime as ort
-from packaging.version import Version
+from packaging import version
 
-from neural_compressor_ort.algorithms.weight_only.rtn import rtn_quantize
-from neural_compressor_ort.algorithms.weight_only.utility import pad_tensor, prepare_inputs, qdq_tensor
-from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
-from neural_compressor_ort.quantization.config import AWQConfig
-from neural_compressor_ort.utils import ONNXRT116_VERSION, ONNXRT1161_VERSION, dtype_mapping, logger
-from neural_compressor_ort.utils.onnx_model import ONNXModel
+from neural_compressor_ort import config
+from neural_compressor_ort import constants
+from neural_compressor_ort import data_reader
+from neural_compressor_ort import logger
+from neural_compressor_ort import onnx_model
+from neural_compressor_ort import utility
+from neural_compressor_ort.algorithms.weight_only import rtn
+from neural_compressor_ort.algorithms.weight_only import utility as woq_utility
 
-__all__ = ["apply_awq_on_model", "awq_quantize"]
+from typing import List, Union  # isort: skip
 
 
 def _get_weight_scale(weight, group_size):
@@ -98,18 +98,22 @@ def _apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits,
                 scales = np.clip(np.power(inp_scale, ratio) / np.power(w_scale, (1 - ratio)), 1e-4, None)
                 scales = scales / np.sqrt(np.max(scales) * np.min(scales))
                 weight = weight.T * scales
-                weight = pad_tensor(weight, group_size, (org_w_shape[0] + group_size - 1) // group_size).T
+                weight = woq_utility.pad_tensor(weight, group_size, (org_w_shape[0] + group_size - 1) // group_size).T
 
-                if (Version(ort.__version__) > ONNXRT1161_VERSION and num_bits == 4) or (
-                    Version(ort.__version__) >= ONNXRT116_VERSION and num_bits == 4 and group_size == 32
+                if (version.Version(ort.__version__) > constants.ONNXRT1161_VERSION and num_bits == 4) or (
+                    version.Version(ort.__version__) >= constants.ONNXRT116_VERSION
+                    and num_bits == 4
+                    and group_size == 32
                 ):  # pragma: no cover
                     # MatMulFpQ4 support 4 bits and 32 group_size with ort 1.16.0 and 1.16.1 versions
                     # MatMulNBits supports 4 bits and 2^n group_size with ort > 1.16.1
-                    q_weight = qdq_tensor(weight, num_bits, group_size, scheme, "uint") / np.expand_dims(
+                    q_weight = woq_utility.qdq_tensor(weight, num_bits, group_size, scheme, "uint") / np.expand_dims(
                         scales, axis=-1
                     )
                 else:
-                    q_weight = qdq_tensor(weight, num_bits, group_size, scheme, "int") / np.expand_dims(scales, axis=-1)
+                    q_weight = woq_utility.qdq_tensor(weight, num_bits, group_size, scheme, "int") / np.expand_dims(
+                        scales, axis=-1
+                    )
 
                 q_weight = np.reshape(q_weight, (org_w_shape[1], -1))[:, : org_w_shape[0]]
                 out = np.matmul(inp, q_weight.T)
@@ -135,7 +139,7 @@ def _apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits,
 
             new_tensor = onnx.helper.make_tensor(
                 name=node.input[1] + "_scaled",
-                data_type=dtype_mapping[str(dtype)],
+                data_type=utility.dtype_mapping[str(dtype)],
                 dims=tensor.shape,
                 vals=tensor.tobytes(),
                 raw=True,
@@ -189,7 +193,7 @@ def _apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits,
             # insert mul
             scale_tensor = onnx.helper.make_tensor(
                 name=parent.output[0] + "_weight_only_scale",
-                data_type=dtype_mapping[str(dtype)],
+                data_type=utility.dtype_mapping[str(dtype)],
                 dims=best_scale.shape,
                 vals=(1.0 / best_scale).flatten().tolist(),
             )
@@ -242,7 +246,7 @@ def _apply_awq_clip(model, weight_config, absorb_pairs, output_dicts, num_bits, 
             org_out = np.matmul(inp, org_weight)  # n_token, oc
 
             k_blocks = (org_w_shape[0] - 1) // group_size + 1
-            org_weight = pad_tensor(org_weight, group_size, k_blocks)
+            org_weight = woq_utility.pad_tensor(org_weight, group_size, k_blocks)
 
             org_weight = np.transpose(org_weight)
 
@@ -251,14 +255,20 @@ def _apply_awq_clip(model, weight_config, absorb_pairs, output_dicts, num_bits, 
             for i_s in range(10):
                 ratio = 1 - i_s / 100
                 weight = copy.deepcopy(org_weight)
-                if (Version(ort.__version__) > ONNXRT1161_VERSION and num_bits == 4) or (
-                    Version(ort.__version__) >= ONNXRT116_VERSION and num_bits == 4 and group_size == 32
+                if (version.Version(ort.__version__) > constants.ONNXRT1161_VERSION and num_bits == 4) or (
+                    version.Version(ort.__version__) >= constants.ONNXRT116_VERSION
+                    and num_bits == 4
+                    and group_size == 32
                 ):  # pragma: no cover
                     # MatMulFpQ4 support 4 bits and 32 group_size with ort 1.16.0 and 1.16.1 versions
                     # MatMulNBits supports 4 bits and 2^n group_size with ort > 1.16.1
-                    weight = qdq_tensor(weight, num_bits, group_size, scheme, "uint", ratios.get(node.input[1], 1))
+                    weight = woq_utility.qdq_tensor(
+                        weight, num_bits, group_size, scheme, "uint", ratios.get(node.input[1], 1)
+                    )
                 else:
-                    weight = qdq_tensor(weight, num_bits, group_size, scheme, "int", ratios.get(node.input[1], 1))
+                    weight = woq_utility.qdq_tensor(
+                        weight, num_bits, group_size, scheme, "int", ratios.get(node.input[1], 1)
+                    )
                 weight = np.reshape(weight, (org_w_shape[1], -1))[:, : org_w_shape[0]]
                 cur_out = np.matmul(inp, weight.T)
                 loss = np.mean(np.power((org_out - cur_out), 2))
@@ -271,8 +281,8 @@ def _apply_awq_clip(model, weight_config, absorb_pairs, output_dicts, num_bits, 
 
 
 def awq_quantize(
-    model: Union[onnx.ModelProto, ONNXModel, Path, str],
-    data_reader: CalibrationDataReader,
+    model: Union[onnx.ModelProto, onnx_model.ONNXModel, pathlib.Path, str],
+    data_reader: data_reader.CalibrationDataReader,
     weight_config: dict = {},
     num_bits: int = 4,
     group_size: int = 32,
@@ -285,8 +295,8 @@ def awq_quantize(
     """Quant the model with Activation-aware Weight quantization(AWQ) method.
 
     Args:
-        model (Union[onnx.ModelProto, ONNXModel, Path, str]): onnx model.
-        data_reader (CalibrationDataReader): data_reader for calibration.
+        model (Union[onnx.ModelProto, onnx_model.ONNXModel, pathlib.Path, str]): onnx model.
+        data_reader (data_reader.CalibrationDataReader): data_reader for calibration.
         weight_config (dict, optional): quantization config
             For example,
             weight_config = {
@@ -314,13 +324,13 @@ def awq_quantize(
     Returns:
         onnx.ModelProto: quantized onnx model.
     """
-    if not isinstance(model, ONNXModel):
-        model = ONNXModel(model)
+    if not isinstance(model, onnx_model.ONNXModel):
+        model = onnx_model.ONNXModel(model)
     output_dicts = {}
     full_ratio = {}
 
     if enable_mse_search:
-        inputs, so = prepare_inputs(model, data_reader, providers)
+        inputs, so = woq_utility.prepare_inputs(model, data_reader, providers)
         del data_reader
 
         org_output = copy.deepcopy(model.model.graph.output)
@@ -403,32 +413,32 @@ def awq_quantize(
 
         model.remove_tensors_from_outputs(output_names)
         model.model.graph.output.MergeFrom(org_output)
-    model = rtn_quantize(model, weight_config, num_bits, group_size, scheme, full_ratio, accuracy_level, providers)
+    model = rtn.rtn_quantize(model, weight_config, num_bits, group_size, scheme, full_ratio, accuracy_level, providers)
     return model
 
 
 def apply_awq_on_model(
-    model: Union[onnx.ModelProto, ONNXModel, Path, str],
+    model: Union[onnx.ModelProto, onnx_model.ONNXModel, pathlib.Path, str],
     quant_config: dict,
-    calibration_data_reader: CalibrationDataReader,
+    calibration_data_reader: data_reader.CalibrationDataReader,
 ) -> onnx.ModelProto:
     """Apply Activation-aware Weight quantization(AWQ) on onnx model.
 
     Args:
-        model (Union[onnx.ModelProto, ONNXModel, Path, str]): nnx model.
+        model (Union[onnx.ModelProto, onnx_model.ONNXModel, pathlib.Path, str]): nnx model.
         quant_config (dict): quantization config.
-        calibration_data_reader (CalibrationDataReader): data_reader for calibration.
+        calibration_data_reader (data_reader.CalibrationDataReader): data_reader for calibration.
 
     Returns:
         onnx.ModelProto: quantized onnx model.
     """
     # set model params
     kwargs = {}
-    kwargs = {key: quant_config.pop(key) for key in AWQConfig.model_params_list if key in quant_config}
+    kwargs = {key: quant_config.pop(key) for key in config.AWQConfig.model_params_list if key in quant_config}
 
     # change op config to dict type
     for op_name_type, op_config in quant_config.items():
-        if isinstance(op_config, AWQConfig):
+        if isinstance(op_config, config.AWQConfig):
             quant_config[op_name_type] = op_config.to_dict()
 
     return awq_quantize(model, data_reader=calibration_data_reader, weight_config=quant_config, **kwargs)

@@ -13,45 +13,174 @@
 # limitations under the License.
 
 import importlib
+import logging
 import os
+import pathlib
 import subprocess
 import time
-from pathlib import Path
-from typing import Callable, Dict, List, Tuple, Union
 
 import cpuinfo
 import numpy as np
 import onnx
-import onnxruntime.tools.symbolic_shape_infer as symbolic_shape_infer
 import psutil
-from packaging.version import Version
+from onnxruntime.quantization import onnx_model
 
-from neural_compressor_ort.utils import logger
+from neural_compressor_ort import constants
+from neural_compressor_ort import logger
 
-__all__ = [
-    "set_workspace",
-    "set_random_seed",
-    "set_resume_from",
-    "dump_elapsed_time",
-    "log_quant_execution",
-    "singleton",
-    "LazyImport",
-    "CpuInfo",
-    "algos_mapping",
-    "dtype_mapping",
-    "find_by_name",
-    "simple_progress_bar",
-    "register_algo",
-    "get_model_info",
-    "is_B_transposed",
-    "get_qrange_for_qType",
-    "quantize_data",
-    "check_model_with_infer_shapes",
-]
+from typing import Callable, Dict, List, Tuple, Union  # isort: skip
 
 
 # Dictionary to store a mapping between algorithm names and corresponding algo implementation(function)
 algos_mapping: Dict[str, Callable] = {}
+
+
+#######################################################
+####   Options
+#######################################################
+
+
+def check_value(name, src, supported_type, supported_value=[]):
+    """Check if the given object is the given supported type and in the given supported value.
+
+    Example::
+
+        from neural_compressor_ort import utility
+
+        def datatype(self, datatype):
+            if utility.check_value("datatype", datatype, list, ["fp32", "bf16", "uint8", "int8"]):
+                self._datatype = datatype
+    """
+    if isinstance(src, list) and any([not isinstance(i, supported_type) for i in src]):
+        assert False, "Type of {} items should be {} but not {}".format(
+            name, str(supported_type), [type(i) for i in src]
+        )
+    elif not isinstance(src, list) and not isinstance(src, supported_type):
+        assert False, "Type of {} should be {} but not {}".format(name, str(supported_type), type(src))
+
+    if len(supported_value) > 0:
+        if isinstance(src, str) and src not in supported_value:
+            assert False, "{} is not in supported {}: {}. Skip setting it.".format(src, name, str(supported_value))
+        elif (
+            isinstance(src, list)
+            and all([isinstance(i, str) for i in src])
+            and any([i not in supported_value for i in src])
+        ):
+            assert False, "{} is not in supported {}: {}. Skip setting it.".format(src, name, str(supported_value))
+
+    return True
+
+
+class Options:
+    """Option Class for configs.
+
+    This class is used for configuring global variables. The global variable options is created with this class.
+    If you want to change global variables, you should use functions from neural_compressor_ort.utility.py:
+        set_random_seed(seed: int)
+        set_workspace(workspace: str)
+        set_resume_from(resume_from: str)
+
+    Args:
+        random_seed(int): Random seed used in neural compressor.
+                          Default value is 1978.
+        workspace(str): The directory where intermediate files and tuning history file are stored.
+                        Default value is:
+                            "./nc_workspace/{}/".format(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")).
+        resume_from(str): The directory you want to resume tuning history file from.
+                          The tuning history was automatically saved in the workspace directory
+                               during the last tune process.
+                          Default value is None.
+
+    Example::
+
+        from neural_compressor_ort import set_random_seed
+        from neural_compressor_ort import set_workspace
+        from neural_compressor_ort import set_resume_from
+        set_random_seed(2022)
+        set_workspace("workspace_path")
+        set_resume_from("workspace_path")
+    """
+
+    def __init__(self, random_seed=1978, workspace=constants.DEFAULT_WORKSPACE, resume_from=None):
+        """Init an Option object."""
+        self.random_seed = random_seed
+        self.workspace = workspace
+        self.resume_from = resume_from
+
+    @property
+    def random_seed(self):
+        """Get random seed."""
+        return self._random_seed
+
+    @random_seed.setter
+    def random_seed(self, random_seed):
+        """Set random seed."""
+        if check_value("random_seed", random_seed, int):
+            self._random_seed = random_seed
+
+    @property
+    def workspace(self):
+        """Get workspace."""
+        return self._workspace
+
+    @workspace.setter
+    def workspace(self, workspace):
+        """Set workspace."""
+        if check_value("workspace", workspace, str):
+            self._workspace = workspace
+
+    @property
+    def resume_from(self):
+        """Get resume_from."""
+        return self._resume_from
+
+    @resume_from.setter
+    def resume_from(self, resume_from):
+        """Set resume_from."""
+        if resume_from is None or check_value("resume_from", resume_from, str):
+            self._resume_from = resume_from
+
+
+options = Options()
+
+
+class TuningLogger:
+    """A unified logger for the tuning/quantization process.
+
+    It assists validation teams in retrieving logs.
+    """
+
+    @classmethod
+    def tuning_start(cls) -> None:
+        logger.info("Tuning started.")
+
+    @classmethod
+    def trial_start(cls, trial_index: int = None) -> None:
+        logger.info("%d-trail started.", trial_index)
+
+    @classmethod
+    def quantization_start(cls, stacklevel=2) -> None:
+        logger.info("Quantization started.", stacklevel=stacklevel)
+
+    @classmethod
+    def quantization_end(cls, stacklevel=2) -> None:
+        logger.info("Quantization end.", stacklevel=stacklevel)
+
+    @classmethod
+    def evaluation_start(cls) -> None:
+        logger.info("Evaluation started.")
+
+    @classmethod
+    def evaluation_end(cls) -> None:
+        logger.info("Evaluation end.")
+
+    @classmethod
+    def trial_end(cls, trial_index: int = None) -> None:
+        logger.info("%d-trail end.", trial_index)
+
+    @classmethod
+    def tuning_end(cls) -> None:
+        logger.info("Tuning completed.")
 
 
 def singleton(cls):
@@ -177,6 +306,7 @@ def dump_elapsed_time(customized_msg=""):
     """
 
     def f(func):
+
         def fi(*args, **kwargs):
             start = time.time()
             res = func(*args, **kwargs)
@@ -194,28 +324,20 @@ def dump_elapsed_time(customized_msg=""):
 
 def set_random_seed(seed: int):
     """Set the random seed in config."""
-    from neural_compressor_ort.utils.base_config import options
-
     options.random_seed = seed
 
 
 def set_workspace(workspace: str):
     """Set the workspace in config."""
-    from neural_compressor_ort.utils.base_config import options
-
     options.workspace = workspace
 
 
 def set_resume_from(resume_from: str):
     """Set the resume_from in config."""
-    from neural_compressor_ort.utils.base_config import options
-
     options.resume_from = resume_from
 
 
 def log_quant_execution(func):
-    from neural_compressor_ort.utils import TuningLogger
-
     default_tuning_logger = TuningLogger()
 
     def wrapper(*args, **kwargs):
@@ -281,7 +403,7 @@ def register_algo(name):
 
     Usage example:
         @register_algo(name=example_algo)
-        def example_algo(model: Union[onnx.ModelProto, Path, str],
+        def example_algo(model: Union[onnx.ModelProto, pathlib.Path, str],
                          quant_config: RTNConfig) -> onnx.ModelProto:
             ...
 
@@ -300,7 +422,7 @@ def register_algo(name):
 
 
 def get_model_info(
-    model: Union[onnx.ModelProto, Path, str], white_op_type_list: List[Callable]
+    model: Union[onnx.ModelProto, pathlib.Path, str], white_op_type_list: List[Callable]
 ) -> List[Tuple[str, Callable]]:
     if not isinstance(model, onnx.ModelProto):
         model = onnx.load(model)
@@ -446,11 +568,9 @@ def quantize_data(data, quantize_range, qType, scheme):
 
 def check_model_with_infer_shapes(model):
     """Check if the model has been shape inferred."""
-    from neural_compressor_ort.utils.onnx_model import ONNXModel
-
-    if isinstance(model, (Path, str)):
+    if isinstance(model, (pathlib.Path, str)):
         model = onnx.load(model, load_external_data=False)
-    elif isinstance(model, ONNXModel):
+    elif isinstance(model, onnx_model.ONNXModel):
         model = model.model
     if len(model.graph.value_info) > 0:
         return True

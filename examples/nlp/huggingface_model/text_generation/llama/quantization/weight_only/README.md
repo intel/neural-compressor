@@ -7,12 +7,10 @@ This example confirms llama's weight only accuracy on [lambada](https://huggingf
 
 ## 1. Environment
 ```shell
-pip install neural-compressor
-SKIP_RUNTIME=True pip install -r requirements.txt
+pip install onnx-neural-compressor
+pip install -r requirements.txt
 ```
-> Note: Validated ONNX Runtime [Version](/docs/source/installation_guide.md#validated-software-environment).
-
-> Note: Weight-only quantization in Intel® Neural Compressor is still under development. We encourage you to use the `master` branch to access the latest features.
+> Note: Validated ONNX Runtime [Version](/docs/installation_guide.md#validated-software-environment).
 
 ## 2. Prepare Model
 

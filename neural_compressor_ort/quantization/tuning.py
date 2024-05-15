@@ -12,30 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import copy
+import os
+import pathlib
+import tempfile
 import uuid
-from typing import Any, Callable, Dict, Generator, Iterator, List, Optional, Sized, Tuple, Union
 
-from neural_compressor_ort.utils import logger
-from neural_compressor_ort.utils.base_config import BaseConfig
+import onnx
 
-__all__ = [
-    "Evaluator",
-    "EvaluationFuncWrapper",
-    "TuningConfig",
-    "Sampler",
-    "ConfigLoader",
-    "TuningMonitor",
-    "init_tuning",
-    "Sampler",
-    "SequentialSampler",
-    "default_sampler",
-    "ConfigSet",
-]
+from neural_compressor_ort import config
+from neural_compressor_ort import data_reader
+from neural_compressor_ort import logger
+from neural_compressor_ort import utility
+
+from typing import Any, Callable, Dict, Generator, Iterator, List, Optional, Sized, Tuple, Union  # isort: skip
 
 
 class EvaluationFuncWrapper:
+
     def __init__(self, eval_fn: Callable, eval_args=None):
         """Evaluation function wrapper.
 
@@ -143,10 +137,10 @@ evaluator = Evaluator()
 
 class ConfigSet:
 
-    def __init__(self, config_list: List[BaseConfig]) -> None:
+    def __init__(self, config_list: List[config.BaseConfig]) -> None:
         self.config_list = config_list
 
-    def __getitem__(self, index) -> BaseConfig:
+    def __getitem__(self, index) -> config.BaseConfig:
         assert 0 <= index < len(self.config_list), f"Index {index} out of range."
         return self.config_list[index]
 
@@ -154,26 +148,26 @@ class ConfigSet:
         return len(self.config_list)
 
     @classmethod
-    def _from_single_config(cls, config: BaseConfig) -> List[BaseConfig]:
+    def _from_single_config(cls, fwk_config: config.BaseConfig) -> List[config.BaseConfig]:
         config_list = []
-        config_list = config.expand()
+        config_list = fwk_config.expand()
         return config_list
 
     @classmethod
-    def _from_list_of_configs(cls, fwk_configs: List[BaseConfig]) -> List[BaseConfig]:
+    def _from_list_of_configs(cls, fwk_configs: List[config.BaseConfig]) -> List[config.BaseConfig]:
         config_list = []
-        for config in fwk_configs:
-            config_list += cls._from_single_config(config)
+        for fwk_config in fwk_configs:
+            config_list += cls._from_single_config(fwk_config)
         return config_list
 
     @classmethod
-    def generate_config_list(cls, fwk_configs: Union[BaseConfig, List[BaseConfig]]):
+    def generate_config_list(cls, fwk_configs: Union[config.BaseConfig, List[config.BaseConfig]]):
         # There are several cases for the input `fwk_configs`:
         # 1. fwk_configs is a single config
         # 2. fwk_configs is a list of configs
         # For a single config, we need to check if it can be expanded or not.
         config_list = []
-        if isinstance(fwk_configs, BaseConfig):
+        if isinstance(fwk_configs, config.BaseConfig):
             config_list = cls._from_single_config(fwk_configs)
         elif isinstance(fwk_configs, List):
             config_list = cls._from_list_of_configs(fwk_configs)
@@ -182,15 +176,15 @@ class ConfigSet:
         return config_list
 
     @classmethod
-    def from_fwk_configs(cls, fwk_configs: Union[BaseConfig, List[BaseConfig]]) -> "ConfigSet":
+    def from_fwk_configs(cls, fwk_configs: Union[config.BaseConfig, List[config.BaseConfig]]) -> "ConfigSet":
         """Create a ConfigSet object from a single config or a list of configs.
 
         Args:
             fwk_configs: A single config or a list of configs.
                 Examples:
-                    1) single config: RTNConfig(weight_group_size=32)
-                    2) single expandable config: RTNConfig(weight_group_size=[32, 64])
-                    3) mixed 1) and 2): [RTNConfig(weight_group_size=32), RTNConfig(weight_group_size=[32, 64])]
+                    1) single config: config.RTNConfig(weight_group_size=32)
+                    2) single expandable config: config.RTNConfig(weight_group_size=[32, 64])
+                    3) mixed 1) and 2): [config.RTNConfig(weight_group_size=32), config.RTNConfig(weight_group_size=[32, 64])]
 
         Returns:
             ConfigSet: A ConfigSet object.
@@ -200,10 +194,11 @@ class ConfigSet:
 
 
 class Sampler:
+
     def __init__(self, config_source: Optional[ConfigSet]) -> None:
         pass
 
-    def __iter__(self) -> Iterator[BaseConfig]:
+    def __iter__(self) -> Iterator[config.BaseConfig]:
         """Iterate over indices of config set elements."""
         raise NotImplementedError
 
@@ -231,11 +226,12 @@ default_sampler = SequentialSampler
 
 
 class ConfigLoader:
+
     def __init__(self, config_set: ConfigSet, sampler: Sampler = default_sampler) -> None:
         self.config_set = ConfigSet.from_fwk_configs(config_set)
         self._sampler = sampler(self.config_set)
 
-    def __iter__(self) -> Generator[BaseConfig, Any, None]:
+    def __iter__(self) -> Generator[config.BaseConfig, Any, None]:
         for index in self._sampler:
             yield self.config_set[index]
 
@@ -244,8 +240,8 @@ class TuningConfig:
     """Config for auto tuning pipeline.
 
     Examples:
-        from neural_compressor_ort.torch.quantization import TuningConfig
-        tune_config = TuningConfig(
+        from neural_compressor_ort.quantization import tuning
+        tune_config = tuning.TuningConfig(
             config_set=[config1, config2, ...],
             max_trials=3,
             tolerable_loss=0.01)
@@ -267,7 +263,7 @@ class TuningConfig:
 
     def __init__(
         self,
-        config_set: Union[BaseConfig, List[BaseConfig]] = None,
+        config_set: Union[config.BaseConfig, List[config.BaseConfig]] = None,
         sampler: Sampler = default_sampler,
         tolerable_loss=0.01,
         max_trials=100,
@@ -288,12 +284,13 @@ class TuningConfig:
 
 
 class _TrialRecord:
+
     @staticmethod
     def _generate_unique_id():
         unique_id = str(uuid.uuid4())
         return unique_id
 
-    def __init__(self, trial_index: int, trial_result: Union[int, float], quant_config: BaseConfig):
+    def __init__(self, trial_index: int, trial_result: Union[int, float], quant_config: config.BaseConfig):
         # The unique id to refer to one trial
         self.trial_id = _TrialRecord._generate_unique_id()
         self.trial_index = trial_index
@@ -302,13 +299,16 @@ class _TrialRecord:
 
 
 class TuningMonitor:
+
     def __init__(self, tuning_config: TuningConfig) -> None:
         self.tuning_config = tuning_config
         self.trial_cnt = 0
         self.tuning_history: List[_TrialRecord] = []
         self.baseline = None
 
-    def add_trial_result(self, trial_index: int, trial_result: Union[int, float], quant_config: BaseConfig) -> None:
+    def add_trial_result(
+        self, trial_index: int, trial_result: Union[int, float], quant_config: config.BaseConfig
+    ) -> None:
         self.trial_cnt += 1
         trial_record = _TrialRecord(trial_index, trial_result, quant_config)
         self.tuning_history.append(trial_record)
@@ -320,7 +320,7 @@ class TuningMonitor:
     def get_number_of_trials(self):
         return len(self.tuning_history)
 
-    def get_best_quant_config(self) -> BaseConfig:
+    def get_best_quant_config(self) -> config.BaseConfig:
         assert self.get_number_of_trials() > 0, "No trial record in tuning monitor."
         # Put the record with a higher score at the beginning
         sorted_trials_records: List[_TrialRecord] = sorted(
@@ -391,3 +391,130 @@ def init_tuning(tuning_config: TuningConfig) -> Tuple[ConfigLoader, TuningLogger
     tuning_logger = TuningLogger()
     tuning_monitor = TuningMonitor(tuning_config)
     return config_loader, tuning_logger, tuning_monitor
+
+
+def get_all_config_set() -> Union[config.BaseConfig, List[config.BaseConfig]]:
+    return config.get_all_config_set_from_config_registry()
+
+
+def _need_apply(quant_config: config.BaseConfig, algo_name):
+    return quant_config.name == algo_name if hasattr(quant_config, "name") else False
+
+
+# * only for internal usage now
+@utility.log_quant_execution
+def _quantize(
+    model_input: Union[pathlib.Path, str],
+    quant_config: config.BaseConfig,
+    calibration_data_reader: data_reader.CalibrationDataReader = None,
+) -> onnx.ModelProto:
+    """The main entry to quantize a model.
+
+    Args:
+        model_input (Union[pathlib.Path, str]): Path or str to the model to quantize.
+        quant_config (config.BaseConfig): a quantization configuration.
+        calibration_data_reader (data_reader.CalibrationDataReader, optional): dataloader for calibration.
+            Defaults to None.
+
+    Returns:
+        onnx.ModelProto: The quantized model.
+    """
+    registered_configs = config.config_registry.get_cls_configs()
+    if isinstance(quant_config, dict):
+        quant_config = config.ComposableConfig.from_dict(quant_config, config_registry=registered_configs)
+        logger.info(f"Parsed a config dict to construct the quantization config: {quant_config}.")
+    else:
+        assert isinstance(
+            quant_config, config.BaseConfig
+        ), f"Please pass a dict or config instance as the quantization configuration, but got {type(quant_config)}."
+    logger.info(f"Quantize model with config: \n {quant_config} \n")
+
+    # select quantization algo according to config
+    q_model = None
+    for algo_name, algo_func in utility.algos_mapping.items():
+        if _need_apply(quant_config, algo_name):
+            logger.info(f"Start to apply {algo_name} on the model.")
+            q_model = algo_func(model_input, quant_config, calibration_data_reader=calibration_data_reader)
+    return q_model
+
+
+def autotune(
+    model_input: Union[pathlib.Path, str],
+    tune_config: TuningConfig,
+    eval_fn: Callable,
+    eval_args: Optional[Tuple[Any]] = None,
+    calibration_data_reader: data_reader.CalibrationDataReader = None,
+) -> Union[None, onnx.ModelProto]:
+    """The main entry of auto-tune.
+
+    Args:
+        model_input (Union[pathlib.Path, str]): onnx model path.
+        tune_config (TuningConfig): tuning config.
+            TuningConfig is created with algorithm configs, parameters supported tuning are in their params_list.
+            Support:
+            Expand parameters to a list of parameters like TuningConfig(config_set=[config.RTNConfig(weight_bits=[4, 8])])
+            Pass a list of configs like TuningConfig(config_set=[config.RTNConfig(), config.GPTQConfig()])
+        eval_fn (Callable): evaluate function.
+            During evaluation, autotune will only pass model path as the input of function.
+        eval_args (Optional[Tuple[Any]]): evaluate arguments.
+            Positional arguments for `eval_fn`.
+
+        calibration_data_reader (data_reader.CalibrationDataReader): dataloader for calibration.
+    """
+    best_quant_model = None
+    eval_func_wrapper = EvaluationFuncWrapper(eval_fn, eval_args)
+    config_loader, tuning_logger, tuning_monitor = init_tuning(tuning_config=tune_config)
+    try:
+        baseline: float = eval_func_wrapper.evaluate(model_input)
+    except Exception as e:
+        print(e)
+        if "'str' object has no attribute 'SerializeToString'" in str(e):
+            logger.warning("Please refine your eval_fn to accept model path (str) as input.")
+        exit(0)
+    tuning_monitor.set_baseline(baseline)
+    tuning_logger.tuning_start()
+    for trial_index, quant_config in enumerate(config_loader):
+        if calibration_data_reader is not None:
+            calibration_data_reader.rewind()
+        tuning_logger.trial_start(trial_index=trial_index)
+        tuning_logger.quantization_start()
+        logger.debug("quant config: {}".format(quant_config))
+        q_model = _quantize(model_input, quant_config=quant_config, calibration_data_reader=calibration_data_reader)
+        tuning_logger.quantization_end()
+        tuning_logger.evaluation_start()
+        with tempfile.TemporaryDirectory(prefix="ort.quant.") as tmp_dir:
+            # evaluate API requires str input
+            onnx.save_model(
+                q_model,
+                pathlib.Path(tmp_dir).joinpath(pathlib.Path(model_input).name).as_posix(),
+                save_as_external_data=True,
+                all_tensors_to_one_file=True,
+                location=pathlib.Path(model_input).with_suffix(pathlib.Path(model_input).suffix + "_data").name,
+                size_threshold=1024,
+                convert_attribute=False,
+            )
+            # copy config.json to tmp dir for evaluation, LLMs evaluation may need it
+            if isinstance(model_input, str) and os.path.exists(
+                pathlib.Path(model_input).parent.joinpath("config.json").as_posix()
+            ):
+                import shutil
+
+                shutil.copyfile(
+                    pathlib.Path(model_input).parent.joinpath("config.json").as_posix(),
+                    pathlib.Path(tmp_dir).joinpath("config.json").as_posix(),
+                )
+            eval_result: float = eval_func_wrapper.evaluate(
+                pathlib.Path(tmp_dir).joinpath(pathlib.Path(model_input).name).as_posix()
+            )
+        tuning_logger.evaluation_end()
+        logger.info("Evaluation result: %.4f", eval_result)
+        tuning_monitor.add_trial_result(trial_index, eval_result, quant_config)
+        tuning_logger.trial_end(trial_index)
+        if tuning_monitor.need_stop():
+            best_quant_config: config.BaseConfig = tuning_monitor.get_best_quant_config()
+            best_quant_model = _quantize(
+                model_input, quant_config=best_quant_config, calibration_data_reader=calibration_data_reader
+            )
+            break
+    tuning_logger.tuning_end()
+    return best_quant_model

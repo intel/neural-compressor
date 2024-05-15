@@ -322,9 +322,9 @@ There are two ways to apply smooth quantization: 1) using a fixed `alpha` for th
 To set a fixed alpha for the entire model, users can follow this example:
 
 ```python
-from neural_compressor_ort.quantization import StaticQuantConfig
+from neural_compressor_ort import config quantization
 
-config = StaticQuantConfig(
+qconfig = config.StaticQuantConfig(
     data_reader, extra_options={"SmoothQuant": True, "SmoothQuantAlpha": 0.5, "SmoothQuantFolding": True}
 )
 ```
@@ -344,13 +344,13 @@ The tuning process looks for the optimal `alpha` value from a list of `alpha` va
 Here is an example:
 
 ```python
-from neural_compressor_ort.utils.base_tuning import TuningConfig
-from neural_compressor_ort.quantization import SmoothQuantConfig, autotune
+from neural_compressor_ort import config
+from neural_compressor_ort.quantization import tuning
 
-config = TuningConfig(config_set=[SmoothQuantConfig(alpha=np.arange(0.1, 0.5, 0.05).tolist())])
-best_model = autotune(
+qconfig = tuning.TuningConfig(config_set=[config.SmoothQuantConfig(alpha=np.arange(0.1, 0.5, 0.05).tolist())])
+best_model = tuning.autotune(
     model_input=model,
-    tune_config=config,
+    tune_config=qconfig,
     eval_fn=eval_fn,
     calibration_data_reader=data_reader,
 )
@@ -360,9 +360,10 @@ In this case, the tuning process searches the optimal `alpha` of each operator b
 Here is an example:
 
 ```python
-from neural_compressor_ort.quantization import StaticQuantConfig, quantize
+from neural_compressor_ort import config
+from neural_compressor_ort.quantization import quantize
 
-config = StaticQuantConfig(
+qconfig = config.StaticQuantConfig(
     data_reader,
     extra_options={
         "SmoothQuant": True,
@@ -376,7 +377,7 @@ config = StaticQuantConfig(
         },
     },
 )
-quantize(model, output_model_path, config)
+quantize(model, output_model_path, qconfig)
 ```
 
 ## Reference

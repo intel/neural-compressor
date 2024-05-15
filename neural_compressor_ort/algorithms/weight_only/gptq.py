@@ -15,32 +15,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import copy
 import os
-from pathlib import Path
-from typing import List, Union
+import pathlib
 
 import numpy as np
 import onnx
 import onnxruntime as ort
 from packaging.version import Version
 
-from neural_compressor_ort.algorithms.weight_only.utility import (
-    make_matmul_weight_only_node,
-    pad_tensor,
-    prepare_inputs,
-    quant_tensor,
-)
-from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
-from neural_compressor_ort.quantization.config import GPTQConfig
-from neural_compressor_ort.utils import ONNXRT116_VERSION, ONNXRT1161_VERSION, dtype_mapping, simple_progress_bar
-from neural_compressor_ort.utils.onnx_model import ONNXModel
+from neural_compressor_ort import config
+from neural_compressor_ort import constants
+from neural_compressor_ort import data_reader
+from neural_compressor_ort import onnx_model
+from neural_compressor_ort import utility
+from neural_compressor_ort.algorithms.layer_wise import core
+from neural_compressor_ort.algorithms.weight_only import utility as woq_utility
 
-__all__ = [
-    "apply_gptq_on_model",
-    "gptq_quantize",
-]
+from typing import List, Union  # isort: skip
 
 
 def _gptq(
@@ -187,8 +179,8 @@ def _gptq(
 
 
 def gptq_quantize(
-    model: Union[onnx.ModelProto, ONNXModel, Path, str],
-    data_reader: CalibrationDataReader,
+    model: Union[onnx.ModelProto, onnx_model.ONNXModel, pathlib.Path, str],
+    data_reader: data_reader.CalibrationDataReader,
     weight_config: dict = {},
     num_bits: int = 4,
     group_size: int = 32,
@@ -205,8 +197,8 @@ def gptq_quantize(
     """Quant the model with GPTQ method.
 
     Args:
-        model (Union[onnx.ModelProto, ONNXModel, Path, str]): onnx model.
-        data_reader (CalibrationDataReader): data_reader for calibration.
+        model (Union[onnx.ModelProto, onnx_model.ONNXModel, pathlib.Path, str]): onnx model.
+        data_reader (data_reader.CalibrationDataReader): data_reader for calibration.
         weight_config (dict, optional): quantization config
             For example,
             weight_config = {
@@ -238,11 +230,11 @@ def gptq_quantize(
     Returns:
         onnx.ModelProto: quantized onnx model
     """
-    if not isinstance(model, ONNXModel):
-        model = ONNXModel(model)
+    if not isinstance(model, onnx_model.ONNXModel):
+        model = onnx_model.ONNXModel(model)
     base_dir = os.path.dirname(model.model_path) if model.model_path is not None else ""
 
-    inputs, so = prepare_inputs(model, data_reader, providers)
+    inputs, so = woq_utility.prepare_inputs(model, data_reader, providers)
     del data_reader
     org_output = copy.deepcopy(model.model.graph.output)
     model.remove_tensors_from_outputs([i.name for i in org_output])
@@ -275,7 +267,7 @@ def gptq_quantize(
     )
 
     for idx, input_name in enumerate(output_names):
-        simple_progress_bar(len(output_names), idx + 1)
+        utility.simple_progress_bar(len(output_names), idx + 1)
         node_list = []
         weights = []
 
@@ -340,9 +332,9 @@ def gptq_quantize(
             weight_tensor = model.get_initializer(node.input[1])
             init_share_num = model.get_initializer_share_num(node.input[1])
 
-            satisfy_MatMulNBits_condition = Version(ort.__version__) > ONNXRT1161_VERSION and num_bits == 4
+            satisfy_MatMulNBits_condition = Version(ort.__version__) > constants.ONNXRT1161_VERSION and num_bits == 4
             satisfy_MatMulFpQ4_condition = (
-                Version(ort.__version__) >= ONNXRT116_VERSION and num_bits == 4 and group_size == 32
+                Version(ort.__version__) >= constants.ONNXRT116_VERSION and num_bits == 4 and group_size == 32
             )
             if ("CUDAExecutionProvider" in providers and satisfy_MatMulNBits_condition) or (
                 "CUDAExecutionProvider" not in providers
@@ -352,9 +344,9 @@ def gptq_quantize(
                 # MatMulNBits supports 4 bits and 2^n group_size with ort > 1.16.1, supported by CPU EP AND CUDA EP
                 org_shape = weight.shape
                 k_blocks = (org_shape[0] + group_size - 1) // group_size
-                q_weight = pad_tensor(q_weight, group_size, k_blocks)
-                q_weight, scale, zp = quant_tensor(q_weight.T, num_bits, group_size, scheme, "uint")
-                q_matmul_node, new_inits = make_matmul_weight_only_node(
+                q_weight = woq_utility.pad_tensor(q_weight, group_size, k_blocks)
+                q_weight, scale, zp = woq_utility.quant_tensor(q_weight.T, num_bits, group_size, scheme, "uint")
+                q_matmul_node, new_inits = woq_utility.make_matmul_weight_only_node(
                     node=node,
                     weight_shape=org_shape,
                     num_bits=num_bits,
@@ -372,7 +364,7 @@ def gptq_quantize(
             else:
                 q_weight_tensor = onnx.helper.make_tensor(
                     name=node.input[1] + "_Q{}G{}".format(str(num_bits), str(group_size)),
-                    data_type=dtype_mapping[str(dtype)],
+                    data_type=utility.dtype_mapping[str(dtype)],
                     dims=q_weight.shape,
                     vals=q_weight.astype(dtype).tobytes(),
                     raw=True,
@@ -389,9 +381,8 @@ def gptq_quantize(
 
     # reload external data to prevent external data file path errors
     if model.is_large_model:
-        from onnx.external_data_helper import load_external_data_for_model
 
-        load_external_data_for_model(model.model, os.path.split(model.model_path)[0])
+        onnx.external_data_helper.load_external_data_for_model(model.model, os.path.split(model.model_path)[0])
 
     if return_modelproto:
         return model.model
@@ -400,16 +391,16 @@ def gptq_quantize(
 
 
 def apply_gptq_on_model(
-    model: Union[onnx.ModelProto, ONNXModel, Path, str],
+    model: Union[onnx.ModelProto, onnx_model.ONNXModel, pathlib.Path, str],
     quant_config: dict,
-    calibration_data_reader: CalibrationDataReader,
+    calibration_data_reader: data_reader.CalibrationDataReader,
 ) -> onnx.ModelProto:
     """Apply GPTQ on onnx model.
 
     Args:
-        model (Union[onnx.ModelProto, ONNXModel, Path, str]): onnx model.
+        model (Union[onnx.ModelProto, onnx_model.ONNXModel, pathlib.Path, str]): onnx model.
         quant_config (dict): quantization config.
-        calibration_data_reader (CalibrationDataReader): data_reader for calibration.
+        calibration_data_reader (data_reader.CalibrationDataReader): data_reader for calibration.
 
     Returns:
         onnx.ModelProto: quantized onnx model.
@@ -419,16 +410,14 @@ def apply_gptq_on_model(
 
     # set other model params
     quant_kwargs = {}
-    quant_kwargs = {key: quant_config.pop(key) for key in GPTQConfig.model_params_list if key in quant_config}
+    quant_kwargs = {key: quant_config.pop(key) for key in config.GPTQConfig.model_params_list if key in quant_config}
 
     # change op config to dict type
     for op_name_type, op_config in quant_config.items():
-        if isinstance(op_config, GPTQConfig):
+        if isinstance(op_config, config.GPTQConfig):
             quant_config[op_name_type] = op_config.to_dict()
     if layer_wise:
-        from neural_compressor_ort.algorithms import layer_wise_quant
-
-        quantized_model = layer_wise_quant(
+        quantized_model = core.layer_wise_quant(
             model,
             quant_func=gptq_quantize,
             weight_config=quant_config,
@@ -440,6 +429,6 @@ def apply_gptq_on_model(
             model, data_reader=calibration_data_reader, weight_config=quant_config, **quant_kwargs
         )
 
-    if isinstance(quantized_model, ONNXModel):
+    if isinstance(quantized_model, onnx_model.ONNXModel):
         quantized_model = quantized_model.model
     return quantized_model

@@ -13,19 +13,22 @@
 # limitations under the License.
 """Class for ONNX model."""
 
+import collections
+import copy
 import os
+import pathlib
 import sys
-from pathlib import Path
 
 import onnx
-from onnxruntime.quantization.onnx_model import ONNXModel as ORTONNXModel
+import transformers
+from onnxruntime.quantization import onnx_model
 
-from neural_compressor_ort.utils import logger
+from neural_compressor_ort import constants
+from neural_compressor_ort import logger
+from neural_compressor_ort import utility
 
-__all__ = ["ONNXModel"]
 
-
-class ONNXModel(ORTONNXModel):
+class ONNXModel(onnx_model.ONNXModel):
     """Build ONNX model."""
 
     def __init__(self, model, **kwargs):
@@ -43,15 +46,12 @@ class ONNXModel(ORTONNXModel):
             logger.warning("Model size > 2GB. Please use model path instead of onnx model object to quantize")
 
         if self._is_large_model and isinstance(model, str) and kwargs.get("load_external_data", True):
-            from onnx.external_data_helper import load_external_data_for_model
 
-            load_external_data_for_model(self.model, os.path.dirname(self._model_path))
+            onnx.external_data_helper.load_external_data_for_model(self.model, os.path.dirname(self._model_path))
 
         self._config = None
-        if isinstance(model, str) and os.path.exists(Path(model).parent.joinpath("config.json").as_posix()):
-            from transformers import PretrainedConfig
-
-            self._config = PretrainedConfig.from_pretrained(Path(model).parent.as_posix())
+        if isinstance(model, str) and os.path.exists(pathlib.Path(model).parent.joinpath("config.json").as_posix()):
+            self._config = transformers.PretrainedConfig.from_pretrained(pathlib.Path(model).parent.as_posix())
         self.node_name_counter = {}
         self._output_name_to_node = self.output_name_to_node()
         self._input_name_to_nodes = self.input_name_to_nodes()
@@ -71,8 +71,6 @@ class ONNXModel(ORTONNXModel):
 
     def check_is_large_model(self):
         """Check model > 2GB."""
-        from neural_compressor_ort.utils import MAXIMUM_PROTOBUF
-
         init_size = 0
         for init in self.model.graph.initializer:
             # if initializer has external data location, return True
@@ -89,7 +87,7 @@ class ONNXModel(ORTONNXModel):
                     return
                 else:  # pragma: no cover
                     raise e
-            if init_size > MAXIMUM_PROTOBUF:
+            if init_size > constants.MAXIMUM_PROTOBUF:
                 self._is_large_model = True
                 return
         self._is_large_model = False
@@ -153,9 +151,7 @@ class ONNXModel(ORTONNXModel):
         if os.path.split(root)[0] != "" and not os.path.exists(os.path.split(root)[0]):
             raise ValueError('"root" directory does not exists.')
         if self.is_large_model:  # pragma: no cover
-            from onnx.external_data_helper import load_external_data_for_model
-
-            load_external_data_for_model(self.model, os.path.split(self._model_path)[0])
+            onnx.external_data_helper.load_external_data_for_model(self.model, os.path.split(self._model_path)[0])
             onnx.save_model(
                 self.model,
                 root,
@@ -171,7 +167,7 @@ class ONNXModel(ORTONNXModel):
         if self._config is not None:
             model_type = "" if not hasattr(self._config, "model_type") else getattr(self._config, "model_type")
             setattr(self._config.__class__, "model_type", model_type)
-            output_config_file = Path(root).parent.joinpath("config.json").as_posix()
+            output_config_file = pathlib.Path(root).parent.joinpath("config.json").as_posix()
             self._config.to_json_file(output_config_file, use_diff=False)
 
     def get_initializer_share_num(self, name):
@@ -360,10 +356,6 @@ class ONNXModel(ORTONNXModel):
 
     def topological_sort(self, enable_subgraph=False):
         """Topological sort the model."""
-        import copy
-        from collections import deque
-        from functools import reduce
-
         if not enable_subgraph:
             input_name_to_nodes = {}
             output_name_to_node = {}
@@ -386,8 +378,8 @@ class ONNXModel(ORTONNXModel):
             output_name_to_node = self._output_name_to_node
 
         all_nodes = {}
-        q = deque()
-        wait = deque()
+        q = collections.deque()
+        wait = collections.deque()
         for inp in self.model.graph.input:
             q.extend(input_name_to_nodes[inp.name])
         for n in self.model.graph.node:
@@ -415,18 +407,12 @@ class ONNXModel(ORTONNXModel):
 
     def get_nodes_chain(self, start, stop, result_chain=[]):
         """Get nodes chain with given start node and stop node."""
-        from collections import deque
-
-        from onnx import NodeProto
-
-        from neural_compressor_ort.utils.utility import find_by_name
-
         # process start node list
-        start_node = deque()
+        start_node = collections.deque()
         for node in start:
             if isinstance(node, str):
                 start_node.append(node)
-            elif isinstance(node, NodeProto):
+            elif isinstance(node, onnx.NodeProto):
                 start_node.append(node.name)
             else:
                 assert False, "'get_nodes_chain' function only support list[string]" "or list[NodeProto] params"
@@ -436,7 +422,7 @@ class ONNXModel(ORTONNXModel):
         for node in stop:
             if isinstance(node, str):
                 stop_node.append(node)
-            elif isinstance(node, NodeProto):
+            elif isinstance(node, onnx.NodeProto):
                 stop_node.append(node.name)
             else:
                 assert False, "'get_nodes_chain' function only support list[string]" "or list[NodeProto] params"
@@ -450,7 +436,7 @@ class ONNXModel(ORTONNXModel):
             else:
                 continue
 
-            node = find_by_name(node_name, list(self.model.graph.node))
+            node = utility.find_by_name(node_name, list(self.model.graph.node))
             for parent in self.get_parents(node):
                 start_node.append(parent.name)
 
@@ -642,26 +628,6 @@ class ONNXModel(ORTONNXModel):
                         [attention_matmul_list[index + block_len - 2], attention_matmul_list[index + block_len - 1]]
                     )
         return ffn_matmul
-
-    def export(self, save_path, conf):
-        """Export Qlinear to QDQ model."""
-        from neural_compressor_ort.config import ONNXQlinear2QDQConfig
-        from neural_compressor_ort.experimental.export import onnx_qlinear_to_qdq
-
-        if isinstance(conf, ONNXQlinear2QDQConfig):
-            if len(self._input_name_to_nodes) == 0:
-                self._input_name_to_nodes = self.input_name_to_nodes()
-            add_nodes, remove_nodes, inits = onnx_qlinear_to_qdq(self.model, self._input_name_to_nodes)
-            self.add_nodes(add_nodes)
-            self.remove_nodes(remove_nodes)
-            self.add_initializers(inits)
-            self.update()
-            self.remove_unused_nodes()
-            self.topological_sort()
-            self.save(save_path)
-        else:
-            logger.warning("Unsupported config for export, " "only ONNXQlinear2QDQConfig is supported!")
-            exit(0)
 
     def add_tensors_to_outputs(self, tensor_names):
         """Add the tensors to the model outputs to gets their values.
@@ -995,13 +961,11 @@ class ONNXModel(ORTONNXModel):
         Args:
             data_path (str, optional): the directory of saved initializer. Defaults to None.
         """
-        from onnx.external_data_helper import load_external_data_for_tensor
-
         if data_path is None:
             data_path = os.path.dirname(self._model_path)
         for init in self.model.graph.initializer:
             if init.HasField("data_location") and init.data_location == onnx.TensorProto.EXTERNAL:
-                load_external_data_for_tensor(init, data_path)
+                onnx.external_data_helper.load_external_data_for_tensor(init, data_path)
 
     def write_external_data_to_new_location(self, external_data_location="external.data", overwrite=False):
         """Write external data of merged quantized model to new location to save memory.
@@ -1011,14 +975,12 @@ class ONNXModel(ORTONNXModel):
                                                     Defaults to "external.data".
             overwrite (bool, optional): if True, remove existed externa data. Defaults to False.
         """
-        from onnx.external_data_helper import convert_model_to_external_data, write_external_data_tensors
-
         if overwrite and os.path.exists(os.path.join(os.path.dirname(self._model_path), external_data_location)):
             os.remove(os.path.join(os.path.dirname(self._model_path), external_data_location))
         self.load_model_initializer_by_tensor()
-        convert_model_to_external_data(self.model, location=external_data_location)
+        onnx.external_data_helper.convert_model_to_external_data(self.model, location=external_data_location)
         # TODO : if init is already saved, skip write it
-        write_external_data_tensors(self.model, filepath=os.path.dirname(self._model_path))
+        onnx.external_data_helper.write_external_data_tensors(self.model, filepath=os.path.dirname(self._model_path))
 
     def merge_split_models(self, to_merge_model):
         """Merge two split model into final model."""

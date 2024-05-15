@@ -65,11 +65,12 @@ best_model = quant.model
 ### Static Quantization
 
 ```python
-from neural_compressor_ort.quantization import quantize, StaticQuantConfig
-from neural_compressor_ort.quantization.calibrate import CalibrationDataReader
+from neural_compressor_ort import config
+from neural_compressor_ort.quantization import quantize
+from neural_compressor_ort.quantization import calibrate
 
 
-class DataReader(CalibrationDataReader):
+class DataReader(calibrate.CalibrationDataReader):
     def __init__(self):
         self.encoded_list = []
         # append data into self.encoded_list
@@ -84,8 +85,8 @@ class DataReader(CalibrationDataReader):
 
 
 data_reader = DataReader()
-config = StaticQuantConfig(calibration_data_reader=data_reader)
-quantize(model, output_model_path, config)
+qconfig = config.StaticQuantConfig(calibration_data_reader=data_reader)
+quantize(model, output_model_path, qconfig)
 ```
 
 ## Documentation

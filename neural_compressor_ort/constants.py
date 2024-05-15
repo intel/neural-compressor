@@ -14,8 +14,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Class for All constants."""
 
-# All constants
+import datetime
+
+from packaging import version
 
 # constants for configs
 GLOBAL = "global"
@@ -30,21 +33,13 @@ RTN = "rtn"
 STATIC_QUANT = "static_quant"
 SMOOTH_QUANT = "smooth_quant"
 GPTQ = "gptq"
-AWQ = "awq"  # pragma: no cover
-
-# options
-import datetime
+AWQ = "awq"
 
 DEFAULT_WORKSPACE = "./nc_workspace/{}/".format(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
 
-from typing import Callable, Union
 
-OP_NAME_OR_MODULE_TYPE = Union[str, Callable]
-
-from packaging.version import Version
-
-ONNXRT116_VERSION = Version("1.16.0")
-ONNXRT1161_VERSION = Version("1.16.1")
+ONNXRT116_VERSION = version.Version("1.16.0")
+ONNXRT1161_VERSION = version.Version("1.16.1")
 
 PRIORITY_RTN = 60
 PRIORITY_GPTQ = 70
