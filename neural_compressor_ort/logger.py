@@ -33,7 +33,7 @@ def _pretty_dict(value, indent=0):
 
 
 LOGLEVEL = os.environ.get("LOGLEVEL", "INFO").upper()
-_logger = logging.getLogger("neural_compressor_ort")
+_logger = logging.getLogger("onnx_neural_compressor")
 _logger.handlers.clear()
 _logger.setLevel(LOGLEVEL)
 formatter = logging.Formatter("%(asctime)s [%(levelname)s][%(filename)s:%(lineno)d] %(message)s", "%Y-%m-%d %H:%M:%S")

@@ -18,8 +18,8 @@ from typing import Union
 import onnx
 from onnxruntime.quantization.quantize import QuantConfig
 
-from neural_compressor_ort import config
-from neural_compressor_ort.quantization import algorithm_entry as algos
+from onnx_neural_compressor import config
+from onnx_neural_compressor.quantization import algorithm_entry as algos
 
 
 # ORT-like user-facing API

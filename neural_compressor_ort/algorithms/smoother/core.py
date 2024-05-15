@@ -21,11 +21,11 @@ import numpy as np
 import onnx
 import onnxruntime as ort
 
-from neural_compressor_ort import data_reader
-from neural_compressor_ort import logger
-from neural_compressor_ort import onnx_model
-from neural_compressor_ort import utility
-from neural_compressor_ort.algorithms.smoother import calibrator
+from onnx_neural_compressor import data_reader
+from onnx_neural_compressor import logger
+from onnx_neural_compressor import onnx_model
+from onnx_neural_compressor import utility
+from onnx_neural_compressor.algorithms.smoother import calibrator
 
 from typing import List, Union  # isort: skip
 

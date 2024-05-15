@@ -24,14 +24,14 @@ import onnx
 import onnxruntime as ort
 from packaging import version
 
-from neural_compressor_ort import config
-from neural_compressor_ort import constants
-from neural_compressor_ort import data_reader
-from neural_compressor_ort import logger
-from neural_compressor_ort import onnx_model
-from neural_compressor_ort import utility
-from neural_compressor_ort.algorithms.weight_only import rtn
-from neural_compressor_ort.algorithms.weight_only import utility as woq_utility
+from onnx_neural_compressor import config
+from onnx_neural_compressor import constants
+from onnx_neural_compressor import data_reader
+from onnx_neural_compressor import logger
+from onnx_neural_compressor import onnx_model
+from onnx_neural_compressor import utility
+from onnx_neural_compressor.algorithms.weight_only import rtn
+from onnx_neural_compressor.algorithms.weight_only import utility as woq_utility
 
 from typing import List, Union  # isort: skip
 

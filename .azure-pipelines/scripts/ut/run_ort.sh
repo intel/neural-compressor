@@ -11,7 +11,7 @@ pip install pytest-html
 pip list
 
 export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/coverage.ort
-inc_path=$(python -c 'import neural_compressor_ort; print(neural_compressor_ort.__path__[0])')
+inc_path=$(python -c 'import onnx_neural_compressor; print(onnx_neural_compressor.__path__[0])')
 cd /neural-compressor/test || exit 1
 
 LOG_DIR=/neural-compressor/log_dir

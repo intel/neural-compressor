@@ -2,7 +2,7 @@
 
 import unittest
 
-from neural_compressor_ort import logger
+from onnx_neural_compressor import logger
 
 log_msg_lst = [
     "call logger log function.",

@@ -33,7 +33,7 @@ def get_build_version():
 
 
 try:
-    filepath = "./neural_compressor_ort/version.py"
+    filepath = "./onnx_neural_compressor/version.py"
     with io.open(filepath) as version_file:
         (__version__,) = re.findall('__version__ = "(.*)"', version_file.read())
 except Exception as error:
@@ -42,7 +42,7 @@ except Exception as error:
 if __name__ == "__main__":
 
     setuptools.setup(
-        name="neural_compressor_ort",
+        name="onnx_neural_compressor",
         author="Intel AIPT Team",
         version=get_build_version(),
         author_email="tai.huang@intel.com, mengni.wang@intel.com, yuwen.zhou@intel.com, suyue.chen@intel.com",

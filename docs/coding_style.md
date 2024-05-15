@@ -62,7 +62,7 @@ logger.info("extraneous leading spaces.")
 - Recommend
 
 ```python
-from neural_compressor_ort.utils import logger
+from onnx_neural_compressor.utils import logger
 
 logger.info("Current TensorFlow Version is: %s", tf.__version__)  # Use a pattern-string (with %-placeholders)
 

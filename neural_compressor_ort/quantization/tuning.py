@@ -20,10 +20,10 @@ import uuid
 
 import onnx
 
-from neural_compressor_ort import config
-from neural_compressor_ort import data_reader
-from neural_compressor_ort import logger
-from neural_compressor_ort import utility
+from onnx_neural_compressor import config
+from onnx_neural_compressor import data_reader
+from onnx_neural_compressor import logger
+from onnx_neural_compressor import utility
 
 from typing import Any, Callable, Dict, Generator, Iterator, List, Optional, Sized, Tuple, Union  # isort: skip
 
@@ -240,7 +240,7 @@ class TuningConfig:
     """Config for auto tuning pipeline.
 
     Examples:
-        from neural_compressor_ort.quantization import tuning
+        from onnx_neural_compressor.quantization import tuning
         tune_config = tuning.TuningConfig(
             config_set=[config1, config2, ...],
             max_trials=3,

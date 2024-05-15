@@ -15,4 +15,4 @@
 
 from onnxruntime.quantization.quant_utils import QuantFormat
 from onnxruntime.quantization.quant_utils import QuantType
-from neural_compressor_ort.quantization.quantize import quantize
+from onnx_neural_compressor.quantization.quantize import quantize

@@ -19,15 +19,15 @@ from typing import Union
 import onnx
 from onnxruntime import quantization
 
-from neural_compressor_ort import config
-from neural_compressor_ort import constants
-from neural_compressor_ort import data_reader
-from neural_compressor_ort import logger
-from neural_compressor_ort import utility
-from neural_compressor_ort.algorithms.smoother import core
-from neural_compressor_ort.algorithms.weight_only import awq
-from neural_compressor_ort.algorithms.weight_only import gptq
-from neural_compressor_ort.algorithms.weight_only import rtn
+from onnx_neural_compressor import config
+from onnx_neural_compressor import constants
+from onnx_neural_compressor import data_reader
+from onnx_neural_compressor import logger
+from onnx_neural_compressor import utility
+from onnx_neural_compressor.algorithms.smoother import core
+from onnx_neural_compressor.algorithms.weight_only import awq
+from onnx_neural_compressor.algorithms.weight_only import gptq
+from onnx_neural_compressor.algorithms.weight_only import rtn
 
 
 ###################### SmoothQuant Entry ##################################
@@ -44,7 +44,7 @@ def smooth_quant_entry(
     assert calibration_data_reader is not None, "Please provide calibration_data_reader"
     assert isinstance(
         calibration_data_reader, data_reader.CalibrationDataReader
-    ), "Please follow neural_compressor_ort/data_reader.py to implement calibration_data_reader"
+    ), "Please follow onnx_neural_compressor/data_reader.py to implement calibration_data_reader"
 
     # smooth operation
     calibration_data_reader.rewind()
@@ -111,7 +111,7 @@ def gptq_quantize_entry(
     assert calibration_data_reader is not None, "Please provide calibration_data_reader"
     assert isinstance(
         calibration_data_reader, data_reader.CalibrationDataReader
-    ), "Please follow neural_compressor_ort/data_reader.py to implement calibration_data_reader"
+    ), "Please follow onnx_neural_compressor/data_reader.py to implement calibration_data_reader"
 
     # map config to each op
     model_info = quant_config.get_model_info(model=model)
@@ -137,7 +137,7 @@ def awq_quantize_entry(
     assert calibration_data_reader is not None, "Please provide calibration_data_reader"
     assert isinstance(
         calibration_data_reader, data_reader.CalibrationDataReader
-    ), "Please follow neural_compressor_ort/data_reader.py to implement calibration_data_reader"
+    ), "Please follow onnx_neural_compressor/data_reader.py to implement calibration_data_reader"
 
     # map config to each op
     model_info = quant_config.get_model_info(model=model)

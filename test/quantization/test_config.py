@@ -7,10 +7,10 @@ import numpy as np
 import onnx
 from optimum.exporters.onnx import main_export
 
-from neural_compressor_ort import config
-from neural_compressor_ort import logger
-from neural_compressor_ort import utility
-from neural_compressor_ort.quantization import algorithm_entry as algos
+from onnx_neural_compressor import config
+from onnx_neural_compressor import logger
+from onnx_neural_compressor import utility
+from onnx_neural_compressor.quantization import algorithm_entry as algos
 
 
 def find_onnx_file(folder_path):

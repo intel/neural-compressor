@@ -9,7 +9,7 @@ pr:
       - main
   paths:
     include:
-      - neural_compressor_ort
+      - onnx_neural_compressor
       - test
       - setup.py
       - requirements.txt

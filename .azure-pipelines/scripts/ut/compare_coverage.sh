@@ -6,7 +6,7 @@ coverage_PR_lines_rate=$5
 coverage_base_lines_rate=$6
 coverage_PR_branches_rate=$7
 coverage_base_branches_rate=$8
-module_name="neural_compressor_ort"
+module_name="onnx_neural_compressor"
 [[ ! -f $coverage_pr_log ]] && exit 1
 [[ ! -f $coverage_base_log ]] && exit 1
 file_name="./coverage_compare"

@@ -2,7 +2,7 @@
 
 import unittest
 
-from neural_compressor_ort import utility
+from onnx_neural_compressor import utility
 
 
 class TestOptions(unittest.TestCase):

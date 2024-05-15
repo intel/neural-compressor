@@ -23,9 +23,9 @@ import onnx
 import transformers
 from onnxruntime.quantization import onnx_model
 
-from neural_compressor_ort import constants
-from neural_compressor_ort import logger
-from neural_compressor_ort import utility
+from onnx_neural_compressor import constants
+from onnx_neural_compressor import logger
+from onnx_neural_compressor import utility
 
 
 class ONNXModel(onnx_model.ONNXModel):

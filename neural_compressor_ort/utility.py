@@ -25,8 +25,8 @@ import onnx
 import psutil
 from onnxruntime.quantization import onnx_model
 
-from neural_compressor_ort import constants
-from neural_compressor_ort import logger
+from onnx_neural_compressor import constants
+from onnx_neural_compressor import logger
 
 from typing import Callable, Dict, List, Tuple, Union  # isort: skip
 
@@ -45,7 +45,7 @@ def check_value(name, src, supported_type, supported_value=[]):
 
     Example::
 
-        from neural_compressor_ort import utility
+        from onnx_neural_compressor import utility
 
         def datatype(self, datatype):
             if utility.check_value("datatype", datatype, list, ["fp32", "bf16", "uint8", "int8"]):
@@ -75,7 +75,7 @@ class Options:
     """Option Class for configs.
 
     This class is used for configuring global variables. The global variable options is created with this class.
-    If you want to change global variables, you should use functions from neural_compressor_ort.utility.py:
+    If you want to change global variables, you should use functions from onnx_neural_compressor.utility.py:
         set_random_seed(seed: int)
         set_workspace(workspace: str)
         set_resume_from(resume_from: str)
@@ -93,9 +93,9 @@ class Options:
 
     Example::
 
-        from neural_compressor_ort import set_random_seed
-        from neural_compressor_ort import set_workspace
-        from neural_compressor_ort import set_resume_from
+        from onnx_neural_compressor import set_random_seed
+        from onnx_neural_compressor import set_workspace
+        from onnx_neural_compressor import set_resume_from
         set_random_seed(2022)
         set_workspace("workspace_path")
         set_resume_from("workspace_path")

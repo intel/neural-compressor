@@ -27,8 +27,8 @@ import onnx
 import onnxruntime as ort
 from packaging import version
 
-from neural_compressor_ort import constants
-from neural_compressor_ort import utility
+from onnx_neural_compressor import constants
+from onnx_neural_compressor import utility
 
 if sys.version_info < (3, 11) and util.find_spec("onnxruntime_extensions"):  # pragma: no cover
     import onnxruntime_extensions

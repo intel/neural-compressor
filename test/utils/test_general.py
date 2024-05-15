@@ -2,10 +2,10 @@
 
 import unittest
 
-from neural_compressor_ort import config
-from neural_compressor_ort import constants
-from neural_compressor_ort import logger
-from neural_compressor_ort.quantization import tuning
+from onnx_neural_compressor import config
+from onnx_neural_compressor import constants
+from onnx_neural_compressor import logger
+from onnx_neural_compressor.quantization import tuning
 
 from typing import Any, Callable, List, Optional, Tuple, Union  # isort: skip
 

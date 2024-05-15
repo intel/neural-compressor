@@ -27,9 +27,9 @@ import onnx
 import onnxruntime as ort
 from optimum.exporters.onnx import main_export
 
-from neural_compressor_ort import config
-from neural_compressor_ort import data_reader
-from neural_compressor_ort.quantization import tuning
+from onnx_neural_compressor import config
+from onnx_neural_compressor import data_reader
+from onnx_neural_compressor.quantization import tuning
 
 from typing import Callable, Dict, List, Optional, Union  # isort: skip
 
