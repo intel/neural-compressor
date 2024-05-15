@@ -18,7 +18,18 @@ from typing import Any, Callable, Dict, Tuple
 
 import torch
 
-from neural_compressor.common.utils import AUTOROUND, AWQ, FP8_QUANT, GPTQ, HQQ, RTN, SMOOTH_QUANT, STATIC_QUANT, TEQ
+from neural_compressor.common.utils import (
+    AUTOROUND,
+    AWQ,
+    FP8_QUANT,
+    GPTQ,
+    HQQ,
+    RTN,
+    SMOOTH_QUANT,
+    STATIC_QUANT,
+    TEQ,
+    Mode,
+)
 from neural_compressor.torch.quantization import (
     AutoRoundConfig,
     AWQConfig,
@@ -30,14 +41,7 @@ from neural_compressor.torch.quantization import (
     StaticQuantConfig,
     TEQConfig,
 )
-from neural_compressor.torch.utils import (
-    Mode,
-    get_quantizer,
-    is_ipex_imported,
-    logger,
-    postprocess_model,
-    register_algo,
-)
+from neural_compressor.torch.utils import get_quantizer, is_ipex_imported, logger, postprocess_model, register_algo
 from neural_compressor.torch.utils.constants import PT2E_STATIC_QUANT
 
 

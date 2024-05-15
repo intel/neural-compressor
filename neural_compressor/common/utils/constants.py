@@ -45,3 +45,12 @@ DEFAULT_WORKSPACE = "./nc_workspace/{}/".format(datetime.datetime.now().strftime
 from typing import Callable, Union
 
 OP_NAME_OR_MODULE_TYPE = Union[str, Callable]
+
+# mode name
+from enum import Enum
+
+
+class Mode(Enum):
+    PREPARE = "prepare"
+    CONVERT = "convert"
+    QUANTIZE = "quantize"
