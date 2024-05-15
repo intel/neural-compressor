@@ -26,7 +26,7 @@ from neural_compressor.torch.utils import logger
 class AutoRoundQuantizer(Quantizer):
     def __init__(
         self,
-        weight_config: dict = {},
+        quant_config: dict = None,
         enable_full_range: bool = False,
         batch_size: int = 8,
         amp: bool = True,
@@ -51,8 +51,8 @@ class AutoRoundQuantizer(Quantizer):
         """Init a AutQRoundQuantizer object.
 
         Args:
-        weight_config (dict): Configuration for weight quantization (default is an empty dictionary).
-        weight_config={
+        quant_config (dict): Configuration for weight quantization (default is None).
+        quant_config={
                     'layer1':##layer_name
                     {
                         'data_type': 'int',
@@ -89,9 +89,8 @@ class AutoRoundQuantizer(Quantizer):
         scale_dtype (str): The data type of quantization scale to be used (default is "float32"), different kernels
                             have different choices.
         """
-        super().__init__(weight_config)
+        super().__init__(quant_config)
         self.tokenizer = None
-        self.weight_config = weight_config
         self.enable_full_range = enable_full_range
         self.batch_size = batch_size
         self.amp = amp
@@ -125,7 +124,7 @@ class AutoRoundQuantizer(Quantizer):
         self.rounder = AutoRoundProcessor(
             model=model,
             tokenizer=None,
-            weight_config=self.weight_config,
+            weight_config=self.quant_config or {},
             enable_full_range=self.enable_full_range,
             batch_size=self.batch_size,
             amp=self.amp,

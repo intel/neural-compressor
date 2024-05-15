@@ -308,6 +308,30 @@ class TestAutoTune(unittest.TestCase):
         best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fn=eval_acc_fn)
         self.assertIsNone(best_model)
 
+    def test_woq_tuning(self):
+        from neural_compressor.torch.quantization import autotune, get_woq_tuning_config
+
+        baseline = [1]
+        acc_res_lst = baseline + [0.9, 0.95, 0.95, 0.99, 1.1]
+
+        def eval_acc_fn(model):
+            res = acc_res_lst.pop(0)
+            return res
+
+        custom_tune_config = TuningConfig(config_set=get_woq_tuning_config(), tolerable_loss=-1)
+        example_inputs = torch.ones([1, 32], dtype=torch.long)
+        model = get_gpt_j()
+        dataloader = GPTQLLMDataLoader()
+        best_model = autotune(
+            model=model,
+            tune_config=custom_tune_config,
+            eval_fn=eval_acc_fn,
+            run_fn=run_fn_for_gptq,
+            run_args=(dataloader, True),  # run_args should be a tuple,
+            example_inputs=example_inputs,
+        )
+        self.assertIsNone(best_model)
+
 
 if __name__ == "__main__":
     unittest.main()

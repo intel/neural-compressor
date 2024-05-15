@@ -17,7 +17,9 @@
 # pylint:disable=import-error
 
 from collections import OrderedDict
-from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, NamedTuple, Optional
+from typing import OrderedDict as OrderedDictType
+from typing import Tuple, Union
 
 import torch
 
@@ -40,7 +42,7 @@ from neural_compressor.common.utils import (
     STATIC_QUANT,
     TEQ,
 )
-from neural_compressor.torch.utils import is_hpex_available, logger
+from neural_compressor.torch.utils import is_hpex_available, is_ipex_imported, logger
 from neural_compressor.torch.utils.constants import (
     PRIORITY_AUTOROUND,
     PRIORITY_AWQ,
@@ -57,6 +59,7 @@ __all__ = [
     "get_default_gptq_config",
     "HQQConfig",
     "get_default_hqq_config",
+    "get_woq_tuning_config",
 ]
 
 
@@ -807,18 +810,30 @@ class StaticQuantConfig(BaseConfig):
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
-        # TODO(Yi)
         linear_static_config = StaticQuantConfig()
         operators = [torch.nn.Linear]
         supported_configs.append(OperatorConfig(config=linear_static_config, operators=operators))
         cls.supported_configs = supported_configs
 
     @staticmethod
-    def get_model_info(model: torch.nn.Module, example_inputs) -> List[Tuple[str, Callable]]:
+    def get_model_info_for_ipex(model: torch.nn.Module, example_inputs) -> List[Tuple[str, Callable]]:
         from neural_compressor.torch.algorithms.static_quant import get_quantizable_ops_recursively
 
         _, _, _, _, model_info = get_quantizable_ops_recursively(model, example_inputs=example_inputs)
         return model_info
+
+    @staticmethod
+    def get_model_info(model: torch.nn.Module, example_inputs=None) -> List[Tuple[str, Callable]]:
+        if is_ipex_imported():
+            return StaticQuantConfig.get_model_info_for_ipex(model, example_inputs)
+
+    def to_config_mapping(
+        self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
+    ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
+        if is_ipex_imported():
+            return super().to_config_mapping(config_list, model_info)
+        config_mapping = OrderedDict({self.name: self})
+        return config_mapping
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "StaticQuantConfig", List["StaticQuantConfig"]]:
@@ -831,6 +846,8 @@ def get_default_static_config() -> StaticQuantConfig:
     Returns:
         the default static quant config.
     """
+    if not is_ipex_imported():
+        return StaticQuantConfig(w_granularity="per_tensor")
     return StaticQuantConfig()
 
 
@@ -1113,3 +1130,23 @@ register_supported_configs_for_fwk(fwk_name=FRAMEWORK_NAME)
 def get_all_registered_configs() -> Dict[str, BaseConfig]:
     registered_configs = config_registry.get_all_configs()
     return registered_configs.get(FRAMEWORK_NAME, {})
+
+
+# =============================================================================
+# Tuning Config
+# =============================================================================
+
+
+######################## WOQ Tuning Config ###############################
+def get_woq_tuning_config() -> list:
+    """Generate the config set for WOQ tuning.
+
+    Returns:
+        the list of WOQ quant config.
+    """
+    RTN_G32ASYM = RTNConfig(use_sym=False, group_size=32)
+    GPTQ_G32ASYM = GPTQConfig(use_sym=False, group_size=32)
+    GPTQ_G32ASYM_DISABLE_LAST_LINEAR = GPTQConfig(use_sym=False).set_local("*.lm_head", GPTQConfig(dtype="fp32"))
+    GPTQ_G128ASYM = GPTQConfig(group_size=128, use_sym=False)
+    AWQ_G32ASYM = AWQConfig(use_sym=False, group_size=32)
+    return [RTN_G32ASYM, GPTQ_G32ASYM, GPTQ_G32ASYM_DISABLE_LAST_LINEAR, GPTQ_G128ASYM, AWQ_G32ASYM]
