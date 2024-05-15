@@ -92,7 +92,7 @@ class TestAutoRound:
         assert "transformer.h.0.attn.k_proj" in q_model.autoround_config.keys()
         assert "scale" in q_model.autoround_config["transformer.h.0.attn.k_proj"].keys()
         assert torch.float32 == q_model.autoround_config["transformer.h.0.attn.k_proj"]["scale_dtype"]
-    
+
     def test_autoround_with_quantize_API(self):
         gpt_j_model = copy.deepcopy(self.gptj)
 
@@ -113,7 +113,7 @@ class TestAutoRound:
         )
         out = q_model(self.inp)[0]
         assert torch.allclose(out, self.label, atol=1e-1)
-    
+
        def test_save_and_load(self):
         fp32_model = copy.deepcopy(self.gptj)
         quant_config = get_default_AutoRound_config()
@@ -134,7 +134,7 @@ class TestAutoRound:
         assert q_model is not None, "Quantization failed!"
         q_model.save("saved_results")
         inc_out = q_model(self.inp)[0]
-        
+
         from neural_compressor.torch.quantization import load
 
         # loading compressed model

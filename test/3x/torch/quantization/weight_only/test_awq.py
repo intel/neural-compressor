@@ -1,4 +1,5 @@
 import copy
+
 import pytest
 import torch
 import transformers
@@ -6,8 +7,8 @@ import transformers
 from neural_compressor.common import Logger
 
 logger = Logger().get_logger()
-from neural_compressor.torch.quantization import AWQConfig, convert, get_default_awq_config, prepare, quantize
 from neural_compressor.torch.algorithms.weight_only.modules import WeightOnlyLinear
+from neural_compressor.torch.quantization import AWQConfig, convert, get_default_awq_config, prepare, quantize
 
 
 def get_gpt_j():
@@ -42,10 +43,12 @@ class TestAWQQuant:
     )
     def test_awq(self, bits, use_sym, group_size):
         model = copy.deepcopy(self.tiny_gptj)
+
         @torch.no_grad()
         def calib_func(model):
             for i in range(2):
                 model(self.example_inputs)
+
         quant_config = AWQConfig(bits=8, group_size=-1)
         logger.info(f"Test AWQ with config {quant_config}")
         model = prepare(
@@ -58,9 +61,9 @@ class TestAWQQuant:
         out = qdq_model(self.example_inputs)[0]
 
         # default awq_quantize is 4 bits, 32 group size, use big atol=1e-1
-        if  (bits, use_sym, group_size) == (8, True, -1):
+        if (bits, use_sym, group_size) == (8, True, -1):
             assert torch.allclose(out, self.label, atol=1e-2), "Accuracy gap atol > 0.01 is unexpected."
-        elif  (bits, use_sym, group_size) == (2, True, 8):
+        elif (bits, use_sym, group_size) == (2, True, 8):
             assert torch.allclose(out, self.label, atol=0.5), "Accuracy gap atol > 0.5 is unexpected."
         else:
             assert torch.allclose(out, self.label, atol=1e-1), "Accuracy gap atol > 0.01 is unexpected."
@@ -86,10 +89,10 @@ class TestAWQQuant:
 
         # quantize API
         qdq_model = quantize(
-            model=copy.deepcopy(self.tiny_gptj), 
+            model=copy.deepcopy(self.tiny_gptj),
             quant_config=quant_config,
             example_inputs=self.example_inputs,
-            run_fn=calib_func
+            run_fn=calib_func,
         )
         out2 = qdq_model(self.example_inputs)
 
@@ -97,13 +100,13 @@ class TestAWQQuant:
         assert torch.all(
             out1[0].eq(out2[0])
         ), "The results of calling `convert` + `prepare` and calling `quantize` should be equal."
-    
+
     def test_save_and_load(self):
         @torch.no_grad()
         def calib_func(model):
             for i in range(2):
                 model(self.example_inputs)
-        
+
         fp32_model = copy.deepcopy(self.tiny_gptj)
         quant_config = get_default_awq_config()
 
@@ -118,7 +121,7 @@ class TestAWQQuant:
         assert q_model is not None, "Quantization failed!"
         q_model.save("saved_results")
         inc_out = q_model(self.example_inputs)[0]
-        
+
         from neural_compressor.torch.quantization import load
 
         # loading compressed model

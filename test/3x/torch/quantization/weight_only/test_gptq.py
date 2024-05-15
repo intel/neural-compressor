@@ -199,12 +199,13 @@ class TestGPTQQuant:
         assert q_model is not None, "Quantization failed!"
         q_model.save("saved_results")
         inc_out = q_model(self.example_inputs)[0]
-        
+
         from neural_compressor.torch.quantization import load
 
         # loading compressed model
         loaded_model = load("saved_results")
         loaded_out = loaded_model(self.example_inputs)[0]
         assert torch.allclose(inc_out, loaded_out), "Unexpected result. Please double check."
-        assert isinstance(loaded_model.transformer.h[0].attn.k_proj, WeightOnlyLinear), "loading compressed model failed."
-        
+        assert isinstance(
+            loaded_model.transformer.h[0].attn.k_proj, WeightOnlyLinear
+        ), "loading compressed model failed."

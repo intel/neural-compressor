@@ -347,8 +347,8 @@ def awq_quantize_entry(
 def teq_quantize_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], TEQConfig], mode: Mode, *args, **kwargs
 ) -> torch.nn.Module:
-    from neural_compressor.torch.algorithms.weight_only.teq import TEQuantizer
     from neural_compressor.torch.algorithms.weight_only.save_load import save
+    from neural_compressor.torch.algorithms.weight_only.teq import TEQuantizer
 
     logger.info("Quantize model with the TEQ algorithm.")
     weight_config = {}

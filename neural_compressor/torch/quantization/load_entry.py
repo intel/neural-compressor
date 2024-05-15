@@ -18,12 +18,12 @@ import os
 from neural_compressor.common.utils import FP8_QUANT  # unified namespace
 from neural_compressor.common.utils import load_config_mapping  # unified namespace
 from neural_compressor.torch.quantization.config import (
-    FP8Config,
-    RTNConfig,
-    GPTQConfig,
+    AutoRoundConfig,
     AWQConfig,
+    FP8Config,
+    GPTQConfig,
+    RTNConfig,
     TEQConfig,
-    AutoRoundConfig
 )
 
 config_name_mapping = {
@@ -40,9 +40,10 @@ def load(output_dir="./saved_results", model=None):
     config_mapping = load_config_mapping(qconfig_file_path, ConfigRegistry.get_all_configs()["torch"])
     # select load function
     config_object = config_mapping[next(iter(config_mapping))]
-    
-    if isinstance(config_object, (RTNConfig, GPTQConfig, AWQConfig, TEQConfig, AutoRoundConfig)): # WOQ
+
+    if isinstance(config_object, (RTNConfig, GPTQConfig, AWQConfig, TEQConfig, AutoRoundConfig)):  # WOQ
         from neural_compressor.torch.algorithms.weight_only.save_load import load
+
         return load(output_dir)
     elif " " in per_op_qconfig.keys():  # ipex qconfig format: {' ': {'q_op_infos': {'0': {'op_type': ...
         from neural_compressor.torch.algorithms.static_quant import load

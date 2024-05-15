@@ -33,7 +33,7 @@ class TestRTNQuant:
 
     def teardown_class(self):
         pass
-    
+
     # TODO: (4, True, 32, 0), group_dim=0, format not supported
     @pytest.mark.parametrize(
         "bits, use_sym, group_size, group_dim",
@@ -57,7 +57,7 @@ class TestRTNQuant:
         model = convert(model)
         out = model(self.example_inputs)[0]
         if (bits, use_sym, group_size, group_dim) == (8, True, 128, 1):
-            assert (out != self.label).sum() == out.numel()-1, "WOQ output should be different with raw output"
+            assert (out != self.label).sum() == out.numel() - 1, "WOQ output should be different with raw output"
         else:
             assert (out != self.label).all(), "WOQ output should be different with raw output"
         if (bits, use_sym, group_size, group_dim) == (8, True, 128, 1):
@@ -221,7 +221,7 @@ class TestRTNQuant:
         assert torch.all(
             output_1.eq(output_2)
         ), "The results of calling `convert` + `prepare` and calling `quantize` should be equal."
-    
+
     def test_save_and_load(self):
         fp32_model = copy.deepcopy(self.tiny_gptj)
         quant_config = get_default_rtn_config()
@@ -229,7 +229,7 @@ class TestRTNQuant:
         assert q_model is not None, "Quantization failed!"
         q_model.save("saved_results")
         inc_out = q_model(self.example_inputs)[0]
-        
+
         from neural_compressor.torch.quantization import load
 
         # loading compressed model
