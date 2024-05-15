@@ -330,6 +330,13 @@ if args.quantize:
                 model=user_model, quant_config=quant_config, run_fn=run_fn_for_gptq, run_args=(dataloader_for_calibration, )
             )
     elif args.approach == 'pt2e':
+        """ note: pls set `seq_len = Dim(name="seq_len" , max=10240)` when test /mnt/disk4/modelHub/Mistral-7B-v0.1
+        model: 
+            facebook/opt-125m
+            /mnt/disk4/modelHub/Mistral-7B-v0.1
+        cmd:
+            python run_clm_no_trainer.py     --model /mnt/disk4/modelHub/Mistral-7B-v0.1     --dataset NeelNanda/pile-10k     --accuracy --quantize    --approach pt2e    --tasks "lambada_openai" 2>&1 | tee test.log
+        """
         from neural_compressor.torch.quantization import (
             StaticQuantConfig,
             convert,
@@ -353,10 +360,7 @@ if args.quantize:
             tuple_inputs = (input_ids_batch,)
             return tuple_inputs
         # os.environ["TOKENIZERS_PARALLELISM"] = "false"
-
-        model_name = "facebook/opt-125m"
-        # model = AutoModelForCausalLM.from_pretrained(model_name)
-        # tokenizer = AutoTokenizer.from_pretrained(model_name)
+        # torch._dynamo.config.cache_size_limit = 4 # for out of memory
         batch = Dim(name="batch_size")
         seq_len = Dim(name="seq_len")
         dynamic_shapes = {"input_ids": (batch, seq_len)}
