@@ -509,6 +509,7 @@ def mix_precision_entry(
 ) -> torch.nn.Module:
     # only support fp16 now, more types might be added later
     from neural_compressor.torch.algorithms.mix_precision import FP16Converter
+
     fp16_converter = FP16Converter(configs_mapping, *args, **kwargs)
 
     return fp16_converter.convert(model)
