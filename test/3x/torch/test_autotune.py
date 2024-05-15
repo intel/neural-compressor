@@ -7,7 +7,7 @@ import torch
 import transformers
 
 from neural_compressor.common import logger
-from neural_compressor.torch.quantization import RTNConfig, TuningConfig, autotune, get_all_config_set
+from neural_compressor.torch.quantization import RTNConfig, TuningConfig, MixPrecisionConfig, autotune, get_all_config_set
 from neural_compressor.torch.utils import constants
 
 FAKE_DOUBLE_QUANT_CONFIGS = {
@@ -309,13 +309,49 @@ class TestAutoTune(unittest.TestCase):
         self.assertIsNone(best_model)
 
     @reset_tuning_target
-    def test_autotune_mix_precision(self):
+    def test_autotune_mix_precision_default(self):
+        from neural_compressor.torch.algorithms.mix_precision import FP16ModuleWrapper
+
         def eval_acc_fn(model) -> float:
             return 1.0
 
-        custom_tune_config = TuningConfig(config_set=[MixPrecisionConfig(fp16_ops=[torch.nn.Linear])], max_trials=2)
+        custom_tune_config = TuningConfig(config_set=[MixPrecisionConfig()], max_trials=2)
         best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fn=eval_acc_fn)
+
         self.assertIsNotNone(best_model)
+        self.assertTrue(isinstance(best_model.fc1, FP16ModuleWrapper))
+        self.assertTrue(isinstance(best_model.fc2, FP16ModuleWrapper))
+        self.assertTrue(isinstance(best_model.fc3, FP16ModuleWrapper))
+
+    @reset_tuning_target
+    def test_autotune_mix_precision_set_op_name(self):
+        from neural_compressor.common.base_config import ComposableConfig, config_registry
+        from neural_compressor.torch.algorithms.mix_precision import FP16ModuleWrapper
+
+        def eval_acc_fn(model) -> float:
+            return 1.0
+
+        config = {
+            "mix_precision": {
+                "global": {
+                    "dtype": "fp16",
+                },
+                "local": {
+                    "fc1": {
+                        "dtype": "fp32",
+                    }
+                },
+            }
+        }
+        registered_configs = config_registry.get_cls_configs()
+        config = ComposableConfig.from_dict(config, config_registry=registered_configs["torch"])
+        custom_tune_config = TuningConfig(config_set=[config], max_trials=2)
+        best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fn=eval_acc_fn)
+
+        self.assertIsNotNone(best_model)
+        self.assertTrue(isinstance(best_model.fc1, torch.nn.Linear))
+        self.assertTrue(isinstance(best_model.fc2, FP16ModuleWrapper))
+        self.assertTrue(isinstance(best_model.fc3, FP16ModuleWrapper))
 
 
 if __name__ == "__main__":

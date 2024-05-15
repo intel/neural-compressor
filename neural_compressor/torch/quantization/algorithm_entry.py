@@ -503,15 +503,13 @@ if is_hpex_available():
         return model
 
 
-###################### Habana FP8 Algo Entry ##################################
+###################### FP16 Algo Entry ##################################
 @register_algo(MIX_PRECISION)
 def mix_precision_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str], MixPrecisionConfig], *args, **kwargs
 ) -> torch.nn.Module:
     # only support fp16 now, more types might be added later
-    from neural_compressor.torch.amp.fp16.fp16_convert import FP16Converter 
+    from neural_compressor.torch.algorithms.mix_precision import FP16Converter 
     fp16_converter = FP16Converter(configs_mapping, *args, **kwargs)
-    # model = quantize(model, configs_mapping, *args, **kwargs)
-    # model.qconfig = configs_mapping
-    # model.save = MethodType(save, model)
-    return model
+    
+    return fp16_converter.convert(model)

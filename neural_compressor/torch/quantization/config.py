@@ -1126,14 +1126,20 @@ class MixPrecisionConfig(BaseConfig):
     name = MIX_PRECISION
     supported_configs: List[OperatorConfig] = []
     params_list = [
-        "fp16_ops"
+        "dtype",
         "device",
     ]
+    supported_fp16_ops = (
+        torch.nn.Linear, 
+        torch.nn.Conv1d, 
+        torch.nn.Conv2d, 
+        torch.nn.Conv3d, 
+    )
 
     def __init__(
         self,
-        fp16_ops: List = [torch.nn.Linear],
-        device: Union[str, List[str]] = "cpu",
+        dtype: Union[str, List[str]] = "fp16",
+        device: Union[str, List[str]] = "auto",
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init MixPrecision config.
@@ -1141,7 +1147,7 @@ class MixPrecisionConfig(BaseConfig):
         Args:
         """
         super().__init__(white_list=white_list)
-        self.fp16_ops = fp16_ops
+        self.dtype = dtype
         self.device = device
         self._post_init()
 
@@ -1149,16 +1155,16 @@ class MixPrecisionConfig(BaseConfig):
     def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
         mix_precision_config = MixPrecisionConfig(
-            fp16_ops=[torch.nn.Linear],
+            dtype=["fp16", "fp32"],
             device=["cpu", "cuda"],
         )
-        operators = [torch.nn.Linear]
+        operators = cls.supported_fp16_ops
         supported_configs.append(OperatorConfig(config=mix_precision_config, operators=operators))
         cls.supported_configs = supported_configs
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
-        white_list = (torch.nn.Linear,)
+        white_list = tuple(MixPrecisionConfig.supported_fp16_ops)
         filter_result = []
         for op_name, module in model.named_modules():
             if isinstance(module, white_list):
@@ -1170,7 +1176,7 @@ class MixPrecisionConfig(BaseConfig):
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "MixPrecisionConfig", List["MixPrecisionConfig"]]:
         # TODO fwk owner needs to update it.
-        return MixPrecisionConfig(fp16_ops=[torch.nn.Linear])
+        return MixPrecisionConfig(dtype=["fp16", "fp32"])
 
 
 def get_default_mix_precision_config() -> MixPrecisionConfig:
