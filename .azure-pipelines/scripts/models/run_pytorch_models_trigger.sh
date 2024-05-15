@@ -21,12 +21,6 @@ do
     esac
 done
 
-echo "specify FWs version..."
-source /neural-compressor/.azure-pipelines/scripts/fwk_version.sh 'latest'
-FRAMEWORK="pytorch"
-FRAMEWORK_VERSION=${pytorch_version}
-TORCH_VISION_VERSION=${torchvision_version}
-
 dataset_location=""
 input_model=""
 yaml=""
@@ -70,6 +64,17 @@ elif [ "${model}" == "opt_125m_woq_gptq_int4_dq_ggml" ]; then
     model_src_dir="nlp/huggingface_models/language-modeling/quantization/llm"
     inc_new_api=3x_pt
     tuning_cmd="bash run_quant.sh --topology=opt_125m_woq_gptq_int4_dq_ggml"
+fi
+
+echo "Specify FWs version..."
+
+FRAMEWORK="pytorch"
+source /neural-compressor/.azure-pipelines/scripts/fwk_version.sh 'latest'
+if [[ "${inc_new_api}" == "3x"* ]]; then
+    FRAMEWORK_VERSION="latest"
+else
+    FRAMEWORK_VERSION=${pytorch_version}
+    TORCH_VISION_VERSION=${torchvision_version}
 fi
 
 

@@ -75,10 +75,10 @@ def autotune(
         if calibration_data_reader is not None:
             calibration_data_reader.rewind()
         tuning_logger.trial_start(trial_index=trial_index)
-        tuning_logger.quantization_start()
+        tuning_logger.execution_start()
         logger.debug("quant config: {}".format(quant_config))
         q_model = _quantize(model_input, quant_config=quant_config, calibration_data_reader=calibration_data_reader)
-        tuning_logger.quantization_end()
+        tuning_logger.execution_end()
         tuning_logger.evaluation_start()
         with tempfile.TemporaryDirectory(prefix="ort.quant.") as tmp_dir:
             # evaluate API requires str input
