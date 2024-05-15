@@ -22,7 +22,7 @@ import time
 import cpuinfo
 import psutil
 
-from neural_compressor.common.utils import TuningLogger, logger
+from neural_compressor.common.utils import Mode, TuningLogger, logger
 
 __all__ = [
     "set_workspace",
@@ -30,7 +30,7 @@ __all__ = [
     "set_resume_from",
     "set_tensorboard",
     "dump_elapsed_time",
-    "log_quant_execution",
+    "log_process",
     "singleton",
     "LazyImport",
     "CpuInfo",
@@ -206,14 +206,21 @@ def set_tensorboard(tensorboard: bool):
 default_tuning_logger = TuningLogger()
 
 
-def log_quant_execution(func):
-    def wrapper(*args, **kwargs):
-        default_tuning_logger.quantization_start(stacklevel=4)
+def log_process(mode=Mode.QUANTIZE):
+    def log_process_wrapper(func):
+        def inner_wrapper(*args, **kwargs):
+            start_log = default_tuning_logger.execution_start
+            end_log = default_tuning_logger.execution_end
 
-        # Call the original function
-        result = func(*args, **kwargs)
+            start_log(mode=mode, stacklevel=4)
 
-        default_tuning_logger.quantization_end(stacklevel=4)
-        return result
+            # Call the original function
+            result = func(*args, **kwargs)
 
-    return wrapper
+            end_log(mode=mode, stacklevel=4)
+
+            return result
+
+        return inner_wrapper
+
+    return log_process_wrapper

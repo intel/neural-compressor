@@ -13,7 +13,6 @@
 # limitations under the License.
 
 
-from enum import Enum
 from typing import Callable, Dict, List, Tuple, Union
 
 import torch
@@ -24,6 +23,7 @@ from torch.ao.quantization.quantizer.x86_inductor_quantizer import QuantizationC
 from typing_extensions import TypeAlias
 
 from neural_compressor.common import logger
+from neural_compressor.common.utils import Mode
 
 OP_NAME_AND_TYPE_TUPLE_TYPE: TypeAlias = Tuple[str, Union[torch.nn.Module, Callable]]
 
@@ -129,12 +129,6 @@ def get_double_quant_config(double_quant_type):
         list(DOUBLE_QUANT_CONFIGS.keys())
     )
     return DOUBLE_QUANT_CONFIGS[double_quant_type]
-
-
-class Mode(Enum):
-    PREPARE = "prepare"
-    CONVERT = "convert"
-    QUANTIZE = "quantize"
 
 
 def get_quantizer(model, quantizer_cls, quant_config=None, *args, **kwargs):
