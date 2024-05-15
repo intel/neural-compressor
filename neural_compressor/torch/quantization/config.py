@@ -1173,7 +1173,7 @@ class MixPrecisionConfig(BaseConfig):
         supported_configs = []
         mix_precision_config = MixPrecisionConfig(
             dtype=["fp16", "fp32"],
-            device=["cpu", "cuda"],
+            device=["auto", "cpu", "cuda"],
         )
         operators = cls.supported_fp16_ops
         supported_configs.append(OperatorConfig(config=mix_precision_config, operators=operators))

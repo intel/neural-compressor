@@ -502,7 +502,7 @@ if is_hpex_available():
         return model
 
 
-###################### FP16 Algo Entry ##################################
+###################### Mixed Precision Algo Entry ##################################
 @register_algo(MIX_PRECISION)
 def mix_precision_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str], MixPrecisionConfig], *args, **kwargs
