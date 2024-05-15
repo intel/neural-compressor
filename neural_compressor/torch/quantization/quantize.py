@@ -18,9 +18,9 @@ from typing import Any, Callable, Dict, Tuple
 import torch
 
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
-from neural_compressor.common.utils import log_quant_execution
+from neural_compressor.common.utils import Mode, log_process
 from neural_compressor.torch.quantization.config import SmoothQuantConfig, StaticQuantConfig
-from neural_compressor.torch.utils import Mode, is_ipex_available, logger
+from neural_compressor.torch.utils import is_ipex_available, logger
 from neural_compressor.torch.utils.utility import WHITE_MODULE_LIST, algos_mapping, get_model_info
 
 FRAMEWORK_NAME = "torch"
@@ -30,7 +30,7 @@ def need_apply(configs_mapping: Dict[Tuple[str, callable], BaseConfig], algo_nam
     return any(config.name == algo_name for config in configs_mapping.values())
 
 
-@log_quant_execution
+@log_process(mode=Mode.QUANTIZE)
 def quantize(
     model: torch.nn.Module,
     quant_config: BaseConfig,
@@ -86,6 +86,7 @@ def quantize(
     return q_model
 
 
+@log_process(mode=Mode.PREPARE)
 def prepare(
     model: torch.nn.Module,
     quant_config: BaseConfig,
@@ -143,6 +144,7 @@ def prepare(
     return prepared_model
 
 
+@log_process(mode=Mode.CONVERT)
 def convert(
     model: torch.nn.Module,
     quant_config: BaseConfig = None,
