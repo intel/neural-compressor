@@ -308,6 +308,7 @@ def awq_quantize_entry(
             use_full_range = op_config.use_full_range
 
     run_fn = kwargs.get("run_fn", None)
+    run_args = kwargs.get("run_args", None)
     example_inputs = kwargs.get("example_inputs", None)
     assert example_inputs is not None, "Please provide example_inputs for AWQ quantization."
 
@@ -318,6 +319,7 @@ def awq_quantize_entry(
         bits=-1,  # no quantize for op not in weight_config
         example_inputs=example_inputs,  # must be required
         run_fn=run_fn,
+        run_args=run_args,
         use_auto_scale=use_auto_scale,
         use_mse_search=use_mse_search,
         folding=folding,
