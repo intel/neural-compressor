@@ -53,10 +53,10 @@ def autotune(
     tuning_logger.tuning_start()
     for trial_index, quant_config in enumerate(config_loader):
         tuning_logger.trial_start(trial_index=trial_index)
-        tuning_logger.quantization_start()
+        tuning_logger.execution_start()
         logger.info(quant_config.to_dict())
         q_model = quantize_model(model, quant_config, calib_dataloader, calib_iteration)
-        tuning_logger.quantization_end()
+        tuning_logger.execution_end()
         tuning_logger.evaluation_start()
         eval_result: float = eval_func_wrapper.evaluate(q_model)
         tuning_logger.evaluation_end()

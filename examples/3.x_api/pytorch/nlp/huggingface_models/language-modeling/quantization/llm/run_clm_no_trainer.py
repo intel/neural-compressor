@@ -236,11 +236,11 @@ if args.quantize:
 
     # 3.x api
     if args.approach == 'weight_only':
-        from neural_compressor.torch.quantization import RTNConfig, GPTQConfig, quantize
+        from neural_compressor.torch.quantization import RTNConfig, GPTQConfig, prepare, convert, quantize
         from neural_compressor.torch.utils import get_double_quant_config
         weight_sym = True if args.woq_scheme == "sym" else False
         double_quant_config_dict = get_double_quant_config(args.double_quant_type)
-        
+
         if args.woq_algo == "RTN":
             if args.double_quant_type is not None:
                 double_quant_config_dict.update(
@@ -269,9 +269,8 @@ if args.quantize:
                     double_quant_group_size=args.double_quant_group_size,
                 )
             quant_config.set_local("lm_head", RTNConfig(dtype="fp32"))
-            user_model = quantize(
-                model=user_model, quant_config=quant_config
-            )
+            user_model = prepare(model=user_model, quant_config=quant_config)
+            user_model = convert(model=user_model)
         elif args.woq_algo == "GPTQ":
             from utils import DataloaderPreprocessor
             dataloaderPreprocessor = DataloaderPreprocessor(
@@ -326,12 +325,12 @@ if args.quantize:
                     double_quant_group_size=args.double_quant_group_size,
                 )
             quant_config.set_local("lm_head", GPTQConfig(dtype="fp32"))
-            user_model = quantize(
-                model=user_model, quant_config=quant_config, run_fn=run_fn_for_gptq, run_args=(dataloader_for_calibration, )
-            )
+            user_model = prepare(model=user_model, quant_config=quant_config)
+            run_fn_for_gptq(user_model, dataloader_for_calibration)
+            user_model = convert(user_model)
     else:
         if args.sq:
-            from neural_compressor.torch.quantization import SmoothQuantConfig, quantize
+            from neural_compressor.torch.quantization import SmoothQuantConfig
 
             # alpha can be a float number of a list of float number.
             args.alpha = args.alpha if args.alpha == "auto" else eval(args.alpha)
@@ -339,11 +338,11 @@ if args.quantize:
                 quant_config = SmoothQuantConfig(alpha=args.alpha, folding=False)
             else:
                 quant_config = SmoothQuantConfig(alpha=args.alpha, folding=True)
-            
+
             if re.search("gpt", user_model.config.model_type):
                 quant_config.set_local("add", SmoothQuantConfig(w_dtype="fp32", act_dtype="fp32"))
         else:
-            from neural_compressor.torch.quantization import quantize, get_default_static_config, StaticQuantConfig
+            from neural_compressor.torch.quantization import get_default_static_config, StaticQuantConfig
 
             quant_config =  get_default_static_config()
             if re.search("gpt", user_model.config.model_type):
@@ -364,12 +363,23 @@ if args.quantize:
                 except ValueError:
                     pass
             return
-            
+
         from utils import get_example_inputs
         example_inputs = get_example_inputs(user_model, calib_dataloader)
-        user_model = quantize(
-            model=user_model, quant_config=quant_config, example_inputs=example_inputs, run_fn=run_fn
-        )
+        if args.sq:
+            # currently, smooth quant only support quantize API
+            # TODO: support prepare/convert API for smooth quant
+            from neural_compressor.torch.quantization import quantize
+
+            user_model = quantize(
+                model=user_model, quant_config=quant_config, example_inputs=example_inputs, run_fn=run_fn
+            )
+        else:
+            from neural_compressor.torch.quantization import prepare, convert
+
+            user_model = prepare(model=user_model, quant_config=quant_config, example_inputs=example_inputs)
+            run_fn(user_model)
+            user_model = convert(user_model)
         user_model.save(args.output_dir)
 
 
@@ -394,7 +404,7 @@ if args.accuracy:
     user_model.eval()
     from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
     eval_args = LMEvalParser(
-        model="hf", 
+        model="hf",
         user_model=user_model,
         tokenizer=tokenizer,
         batch_size=args.batch_size,
@@ -417,7 +427,7 @@ if args.performance:
 
     samples = args.iters * args.batch_size
     eval_args = LMEvalParser(
-        model="hf", 
+        model="hf",
         user_model=user_model,
         tokenizer=tokenizer,
         batch_size=args.batch_size,
