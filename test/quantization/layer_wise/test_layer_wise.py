@@ -8,13 +8,12 @@ import onnxruntime as ort
 import onnxruntime.tools.symbolic_shape_infer as symbolic_shape_infer
 import torch
 import transformers
-from optimum.exporters.onnx import main_export
-
 from onnx_neural_compressor import config
 from onnx_neural_compressor import data_reader
 from onnx_neural_compressor import logger
 from onnx_neural_compressor.quantization import algorithm_entry as algos
 from onnx_neural_compressor.quantization import matmul_4bits_quantizer
+from optimum.exporters.onnx import main_export
 
 
 def find_onnx_file(folder_path):

@@ -29,13 +29,12 @@ from abc import abstractmethod
 import numpy as np
 import onnx
 import pydantic
-from onnxruntime import quantization
-from typing_extensions import Self
-
 from onnx_neural_compressor import constants
 from onnx_neural_compressor import data_reader
 from onnx_neural_compressor import logger
 from onnx_neural_compressor import utility
+from onnxruntime import quantization
+from typing_extensions import Self
 
 from collections import OrderedDict  # isort: skip
 from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple, Type, Union, _GenericAlias  # isort: skip

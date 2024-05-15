@@ -19,7 +19,6 @@ import tempfile
 import uuid
 
 import onnx
-
 from onnx_neural_compressor import config
 from onnx_neural_compressor import data_reader
 from onnx_neural_compressor import logger

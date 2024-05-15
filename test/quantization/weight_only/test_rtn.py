@@ -4,13 +4,12 @@ import os
 import shutil
 import unittest
 
-from optimum.exporters.onnx import main_export
-
 from onnx_neural_compressor import config
 from onnx_neural_compressor import logger
 from onnx_neural_compressor.quantization import algorithm_entry as algos
 from onnx_neural_compressor.quantization import matmul_4bits_quantizer
 from onnx_neural_compressor.quantization import matmul_nbits_quantizer
+from optimum.exporters.onnx import main_export
 
 
 def find_onnx_file(folder_path):

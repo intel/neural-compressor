@@ -15,9 +15,8 @@
 from typing import List, Union  # isort: skip
 
 import onnx
-from onnxruntime.quantization import matmul_4bits_quantizer
-
 from onnx_neural_compressor.quantization import matmul_nbits_quantizer
+from onnxruntime.quantization import matmul_4bits_quantizer
 
 RTNWeightOnlyQuantConfig = matmul_nbits_quantizer.RTNWeightOnlyQuantConfig
 AWQWeightOnlyQuantConfig = matmul_nbits_quantizer.AWQWeightOnlyQuantConfig
