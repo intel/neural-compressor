@@ -7,7 +7,13 @@ import torch
 import transformers
 
 from neural_compressor.common import logger
-from neural_compressor.torch.quantization import RTNConfig, TuningConfig, MixPrecisionConfig, autotune, get_all_config_set
+from neural_compressor.torch.quantization import (
+    MixPrecisionConfig,
+    RTNConfig,
+    TuningConfig,
+    autotune,
+    get_all_config_set,
+)
 from neural_compressor.torch.utils import constants
 
 FAKE_DOUBLE_QUANT_CONFIGS = {

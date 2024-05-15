@@ -16,9 +16,9 @@
 # limitations under the License.
 """FP16 Convert for Torch Modules."""
 
-import torch
-
 from typing import Dict, Tuple
+
+import torch
 
 from neural_compressor.common import logger
 from neural_compressor.torch.algorithms.mix_precision.module_wrappers import FP16ModuleWrapper
@@ -26,12 +26,12 @@ from neural_compressor.torch.quantization import MixPrecisionConfig
 from neural_compressor.torch.utils import get_device
 
 
-class FP16Converter():
+class FP16Converter:
     """FP16 Converter Class."""
 
     def __init__(self, configs_mapping: Dict[Tuple[str], MixPrecisionConfig], *args, **kwargs):
         """Initialize the FP16 Converter with config.
- 
+
         Args:
             config (MixPrecisionConfig): config class for mix-precision.
         """

@@ -18,6 +18,7 @@
 
 import torch
 
+
 class FP16ModuleWrapper(torch.nn.Module):
     """FP16Module Wrapper Class."""
 
