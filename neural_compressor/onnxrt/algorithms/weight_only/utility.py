@@ -95,9 +95,8 @@ def make_matmul_weight_only_node(
         op_type = "MatMulNBits"
 
         # pack quantized weight
-        for i in range(q_weight.shape[0]):
-            for k in range(0, group_size, 2):
-                packed[i][k // 2] = q_weight[i][k] | q_weight[i][k + 1] << 4
+        q_weight_pairs = q_weight[:, ::2] | q_weight[:, 1::2] << 4
+        packed[:, :] = q_weight_pairs[:, :blob_size]
         packed = np.reshape(packed, (-1, k_blocks, blob_size))
 
         # build scale tensor
@@ -284,15 +283,22 @@ def quant_tensor(
     elif scheme == "sym":
         maxq = 2 ** (num_bits - 1) - 1 if num_bits != 1 else 0
         minq = -(2 ** (num_bits - 1)) if num_bits != 1 else -1
-
     rmin = np.min(data, axis=1, keepdims=True) * ratio
     rmax = np.max(data, axis=1, keepdims=True) * ratio
     if scheme == "sym":
         max_range = np.maximum(np.abs(rmin), np.abs(rmax))
-        scale = np.ones(rmax.shape)
-        scale[max_range > 0] = np.array(
-            [float(i) / (maxq - minq) for i in (max_range[max_range > 0] * 2.0).flatten().tolist()]
-        )
+
+        scale = np.ones(rmax.shape, dtype=np.float32)
+        max_range_positive = max_range[max_range > 0]
+        scale[max_range > 0] = (max_range_positive * 2.0 / (maxq - minq)).astype(np.float32)
+
+        # TODO: scale is float64
+        # scale1 = np.ones(rmax.shape)
+        # mask = (max_range > 0)
+        # scale1[mask] = np.array(
+        #     [float(i) / (maxq - minq) for i in (max_range[mask] * 2.0).flatten().tolist()]
+        # )
+
         zero_point = (
             np.zeros(scale.shape) if dtype == "int" else np.ones(rmax.shape, dtype="uint8") * (1 << (num_bits - 1))
         )
@@ -306,7 +312,15 @@ def quant_tensor(
             if dtype == "int"
             else np.maximum(0, np.minimum(maxq, ((np.zeros(scale.shape) - rmin) / scale).round())).astype("uint8")
         )
-    return np.clip((data / scale + zero_point).round(), minq, maxq), scale, zero_point
+
+    # TODO: q_weight dtype?
+    q_weight = np.empty_like(data, dtype=np.float32)
+    np.divide(data, scale, out=q_weight)
+    np.add(q_weight, zero_point, out=q_weight)
+    np.round(q_weight, out=q_weight)
+    np.clip(q_weight, minq, maxq, out=q_weight)
+
+    return q_weight, scale, zero_point
 
 
 def qdq_tensor(
