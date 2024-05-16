@@ -90,9 +90,10 @@ def check_cfg_and_qconfig(user_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_
         for i, op_name in enumerate(op):
             for ops, _ in op_infos_from_cfgs.items():
                 if "fqn" in op_infos_from_cfgs[ops].keys() and op_infos_from_cfgs[ops]["fqn"] == op_name:
-                    ori_op = (tuple(ops), unify_op_type_mapping_ipex[op_infos_from_cfgs[ops]["op_type"]])
-                    tmp_user_cfg[((ori_op[0],), ori_op[1])] = user_cfg[op]
-                    break
+                    if op_infos_from_cfgs[ops]["op_type"] in unify_op_type_mapping_ipex:
+                        ori_op = (tuple(ops), unify_op_type_mapping_ipex[op_infos_from_cfgs[ops]["op_type"]])
+                        tmp_user_cfg[((ori_op[0],), ori_op[1])] = user_cfg[op]
+                        break
     user_cfg = tmp_user_cfg
     for op_name in user_cfg:
         inc_op_cfg = user_cfg[op_name]
@@ -291,15 +292,12 @@ def get_quantizable_ops_recursively(model, example_inputs):  # pragma: no cover
                     map_op_name_to_fqn[(tuple(name), ipex_op_type)] = module_fqn
                     if "class" in ipex_op_type:  # "<class 'torch.nn.modules.activation.ReLU'>"
                         op_type = ipex_op_type.split("'")[1]
-                        op_name_info.append((module_fqn, eval(op_type)))
+                        op_name_info.append((module_fqn, eval(op_type).__name__))
                     elif "method" in ipex_op_type:  # "<method 'add' of 'torch._C._TensorBase' objects>"
                         method = ipex_op_type.split("'")[1]
-                        op_type = getattr(
-                            torch._C._TensorBase if ipex_ver.release < Version("2.2") else torch._C.TensorBase, method
-                        )
-                        op_name_info.append((module_fqn, op_type))
-                    else:
-                        op_name_info.append((module_fqn, op_type))
+                        op_name_info.append((module_fqn, method))
+                    elif "Convolution" in ipex_op_type:  # "Convolution_Relu"
+                        op_name_info.append((module_fqn, "Conv2d"))
                 else:
                     re_flag = False
                     for pattern, unify_op_type in unify_op_type_mapping_ipex["re"].items():

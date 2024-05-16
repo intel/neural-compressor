@@ -21,12 +21,13 @@ try:
 except ImportError:
     auto_round_installed = False
 
+
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
 class TestAutoRound:
     def setup_class(self):
         self.gptj = transformers.AutoModelForCausalLM.from_pretrained(
-        "hf-internal-testing/tiny-random-GPTJForCausalLM",
-        torchscript=True,
+            "hf-internal-testing/tiny-random-GPTJForCausalLM",
+            torchscript=True,
         )
         self.inp = torch.ones([1, 10], dtype=torch.long)
         self.tokenizer = transformers.AutoTokenizer.from_pretrained(
