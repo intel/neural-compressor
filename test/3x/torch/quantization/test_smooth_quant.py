@@ -2,6 +2,7 @@ import copy
 
 import pytest
 import torch
+import shutil
 
 from neural_compressor.torch.quantization import SmoothQuantConfig, get_default_sq_config, quantize
 from neural_compressor.torch.utils import is_ipex_available
@@ -32,6 +33,9 @@ def run_fn(model):
 
 
 class TestSmoothQuant:
+    def teardown_class(self):
+        shutil.rmtree("saved_results", ignore_errors=True)
+
     @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
     def test_smooth_quant_default(self):
         fp32_model = copy.deepcopy(model)

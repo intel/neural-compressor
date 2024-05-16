@@ -3,6 +3,7 @@ import copy
 import pytest
 import torch
 import transformers
+import shutil
 
 from neural_compressor.common import Logger
 
@@ -29,7 +30,7 @@ class TestAWQQuant:
         self.label = self.tiny_gptj(self.example_inputs)[0]
 
     def teardown_class(self):
-        pass
+        shutil.rmtree("saved_results", ignore_errors=True)
 
     @pytest.mark.parametrize(
         "bits, use_sym, group_size",

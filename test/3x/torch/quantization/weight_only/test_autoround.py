@@ -3,6 +3,7 @@ import copy
 import pytest
 import torch
 import transformers
+import shutil
 
 from neural_compressor.torch.algorithms.weight_only.autoround import AutoRoundQuantizer, get_autoround_default_run_fn
 from neural_compressor.torch.quantization import (
@@ -35,6 +36,9 @@ class TestAutoRound:
         )
         self.label = self.gptj(self.inp)[0]
 
+    def teardown_class(self):
+        shutil.rmtree("saved_results", ignore_errors=True)
+    
     def setup_method(self, method):
         logger.info(f"Running TestAutoRound test: {method.__name__}")
 

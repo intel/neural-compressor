@@ -3,6 +3,7 @@ import copy
 import pytest
 import torch
 import transformers
+import shutil
 
 from neural_compressor.torch.algorithms.weight_only.modules import WeightOnlyLinear
 from neural_compressor.torch.quantization import (
@@ -32,7 +33,8 @@ class TestRTNQuant:
         self.q_label = model(self.example_inputs)[0]
 
     def teardown_class(self):
-        pass
+        shutil.rmtree("saved_results", ignore_errors=True)
+
 
     # TODO: (4, True, 32, 0), group_dim=0, format not supported
     @pytest.mark.parametrize(

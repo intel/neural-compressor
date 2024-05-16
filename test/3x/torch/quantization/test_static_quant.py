@@ -2,6 +2,7 @@ import copy
 
 import pytest
 import torch
+import shutil
 
 from neural_compressor.torch.quantization import (
     StaticQuantConfig,
@@ -45,7 +46,7 @@ class TestStaticQuant:
         self.input = torch.randn(1, 30)
 
     def teardown_class(self):
-        pass
+        shutil.rmtree("saved_results", ignore_errors=True)
 
     @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
     def test_static_quant_default(self):
