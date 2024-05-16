@@ -1,9 +1,9 @@
 import copy
+import shutil
 import unittest
 
 import torch
 import transformers
-import shutil
 
 from neural_compressor.common import logger
 from neural_compressor.torch.quantization import convert, prepare, quantize
@@ -112,7 +112,6 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
     def tearDownClass(self):
         shutil.rmtree("saved_results", ignore_errors=True)
 
-    
     def test_teq(self):
         test_input = torch.ones([1, 512], dtype=torch.long)
         model = copy.deepcopy(self.gptj)
