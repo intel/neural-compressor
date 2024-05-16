@@ -114,7 +114,7 @@ class TestAutoRound:
         out = q_model(self.inp)[0]
         assert torch.allclose(out, self.label, atol=1e-1)
 
-       def test_save_and_load(self):
+    def test_save_and_load(self):
         fp32_model = copy.deepcopy(self.gptj)
         quant_config = get_default_AutoRound_config()
         logger.info(f"Test AutoRound with config {quant_config}")
