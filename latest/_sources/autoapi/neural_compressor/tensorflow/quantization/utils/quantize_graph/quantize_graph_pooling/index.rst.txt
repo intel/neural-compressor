@@ -22,7 +22,7 @@ Classes
 
 
 
-.. py:class:: FuseNodeStartWithPooling(**kwargs)
+.. py:class:: FuseNodeStartWithPooling
 
 
 

@@ -40,7 +40,7 @@ Classes
    :param batch_size: int. batch size
 
 
-.. py:class:: TensorflowBertDataLoader
+.. py:class:: TensorflowBertDataLoader(dataset, batch_size=1, last_batch='rollover', collate_fn=None, sampler=None, batch_sampler=None, num_workers=0, pin_memory=False, shuffle=False, distributed=False)
 
 
 
@@ -50,7 +50,7 @@ Classes
    this dataloader is designed to satisfy the usage of Bert models.
 
 
-.. py:class:: TensorflowModelZooBertDataLoader
+.. py:class:: TensorflowModelZooBertDataLoader(dataset, batch_size=1, last_batch='rollover', collate_fn=None, sampler=None, batch_sampler=None, num_workers=0, pin_memory=False, shuffle=False, distributed=False)
 
 
 
@@ -60,7 +60,7 @@ Classes
    this dataloader is designed to satisfy the usage of Model Zoo Bert models.
 
 
-.. py:class:: TensorflowDataLoader(dataset, batch_size=1, last_batch='rollover', collate_fn=None, sampler=None, batch_sampler=None, num_workers=0, pin_memory=False, shuffle=False, distributed=False)
+.. py:class:: TensorflowDataLoader
 
 
 
