@@ -14,7 +14,7 @@ from neural_compressor.torch.quantization import (
     quantize,
 )
 
-import transformers
+
 class ModelConv1d(torch.nn.Module):
     def __init__(self):
         super(ModelConv1d, self).__init__()
@@ -27,6 +27,7 @@ class ModelConv1d(torch.nn.Module):
         out = self.fc2(out)
         out = self.fc3(out)
         return out
+
 
 class TestRTNQuant:
     def setup_class(self):
@@ -314,11 +315,20 @@ class TestRTNQuant:
         q_model = quantize(model, quant_config)
         q_out = q_model(input)
 
-        quant_config = RTNConfig(export_compressed_model=True,)
+        quant_config = RTNConfig(
+            export_compressed_model=True,
+        )
 
         model = quantize(model_for_export, quant_config)
         out2 = model(input)
         # The small gap is caused by FP16 scale in WeightOnlyLinear.
+<<<<<<< HEAD
         assert torch.allclose(out2, q_out, atol=5e-4), \
             "Exporting compressed model should have the same output as quantized model. Please double check"
         assert isinstance(model.fc1, WeightOnlyLinear), "Exporting compressed model failed."
+=======
+        assert torch.allclose(
+            out2, q_out, atol=5e-5
+        ), "Exporting compressed model should have the same output as quantized model. Please double check"
+        assert isinstance(model.fc1, WeightOnlyLinear), "Exporting compressed model failed."
+>>>>>>> 7cc088e66d2d69605dd80c6ac5676193fa3306e7
