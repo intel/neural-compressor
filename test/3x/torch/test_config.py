@@ -147,8 +147,8 @@ class TestQuantizationConfig(unittest.TestCase):
         logger.info(quant_config)
         configs_mapping = quant_config.to_config_mapping(model_info=model_info)
         logger.info(configs_mapping)
-        self.assertTrue(configs_mapping[("fc1", torch.nn.Linear)].bits == 6)
-        self.assertTrue(configs_mapping[("fc2", torch.nn.Linear)].bits == 4)
+        self.assertTrue(configs_mapping[("fc1", "Linear")].bits == 6)
+        self.assertTrue(configs_mapping[("fc2", "Linear")].bits == 4)
 
     def test_config_from_dict(self):
         quant_config = {
@@ -253,16 +253,31 @@ class TestQuantizationConfig(unittest.TestCase):
         logger.info(quant_config)
         configs_mapping = quant_config.to_config_mapping(model_info=model_info)
         logger.info(configs_mapping)
-        self.assertTrue(configs_mapping[("fc1", torch.nn.Linear)].bits == 6)
-        self.assertTrue(configs_mapping[("fc2", torch.nn.Linear)].bits == 4)
+        self.assertTrue(configs_mapping[("fc1", "Linear")].bits == 6)
+        self.assertTrue(configs_mapping[("fc2", "Linear")].bits == 4)
         # test regular matching
         fc_config = RTNConfig(bits=5, dtype="int8")
         quant_config.set_local("fc", fc_config)
         configs_mapping = quant_config.to_config_mapping(model_info=model_info)
         logger.info(configs_mapping)
-        self.assertTrue(configs_mapping[("fc1", torch.nn.Linear)].bits == 5)
-        self.assertTrue(configs_mapping[("fc2", torch.nn.Linear)].bits == 5)
-        self.assertTrue(configs_mapping[("fc3", torch.nn.Linear)].bits == 5)
+        self.assertTrue(configs_mapping[("fc1", "Linear")].bits == 5)
+        self.assertTrue(configs_mapping[("fc2", "Linear")].bits == 5)
+        self.assertTrue(configs_mapping[("fc3", "Linear")].bits == 5)
+
+    def test_set_local_op_type(self):
+        quant_config = RTNConfig(bits=4, dtype="nf4")
+        # set all `Linear`
+        fc1_config = RTNConfig(bits=6, dtype="int8")
+        quant_config.set_local(torch.nn.Linear, fc1_config)
+        # get model and quantize
+        fp32_model = build_simple_torch_model()
+        model_info = get_model_info(fp32_model, white_module_list=[torch.nn.Linear])
+        logger.info(quant_config)
+        configs_mapping = quant_config.to_config_mapping(model_info=model_info)
+        logger.info(configs_mapping)
+        self.assertTrue(configs_mapping[("fc1", "Linear")].bits == 6)
+        self.assertTrue(configs_mapping[("fc2", "Linear")].bits == 6)
+        self.assertTrue(configs_mapping[("fc3", "Linear")].bits == 6)
 
     def test_gptq_config(self):
         gptq_config1 = GPTQConfig(bits=8, act_order=True)

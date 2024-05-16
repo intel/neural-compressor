@@ -1,0 +1,4 @@
+auto-round
+torch
+torchvision
+transformers>=4.34.0

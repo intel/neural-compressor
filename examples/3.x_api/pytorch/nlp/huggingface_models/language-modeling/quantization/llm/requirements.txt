@@ -9,5 +9,5 @@ wandb
 einops
 neural-compressor
 intel-extension-for-transformers
-lm-eval
+lm_eval==0.4.2
 peft

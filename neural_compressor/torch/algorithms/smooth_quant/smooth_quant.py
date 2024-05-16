@@ -56,7 +56,7 @@ def smooth_quantize(model, tune_cfg, run_fn, example_inputs, inplace=True):
     """
     assert not ipex_ver.release < Version("2.1").release, "IPEX version >= 2.1 is required for SmoothQuant."
 
-    _, cfgs, op_infos_from_cfgs, output_tensor_id_op_name = get_quantizable_ops_recursively(model, example_inputs)
+    _, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, _ = get_quantizable_ops_recursively(model, example_inputs)
 
     # check smoothquant folding value
     recipe_cfgs = tune_cfg.get("recipe_cfgs", None)
@@ -121,7 +121,7 @@ def smooth_quantize(model, tune_cfg, run_fn, example_inputs, inplace=True):
     with open(ipex_config_path, "r") as f:
         model.tune_cfg = json.load(f)
     model.ipex_config_path = ipex_config_path
-    dump_model_op_stats(tune_cfg)
+    dump_model_op_stats(tune_cfg["op"])
     return model
 
 
@@ -185,7 +185,7 @@ def qdq_quantize(
     with open(ipex_config_path, "r") as f:
         model.tune_cfg = json.load(f)
     model.ipex_config_path = ipex_config_path
-    dump_model_op_stats(tune_cfg)
+    dump_model_op_stats(tune_cfg["op"])
     return model
 
 

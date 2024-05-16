@@ -51,7 +51,7 @@ parser.add_argument("--pad_max_length", default=512, type=int,
 parser.add_argument("--calib_iters", default=512, type=int,
                     help="calibration iters.")
 parser.add_argument("--tasks", default="lambada_openai,hellaswag,winogrande,piqa,wikitext",
-                    type=str, help="tasks list for accuracy validation")
+                    type=str, help="tasks for accuracy validation")
 parser.add_argument("--peft_model_id", type=str, default=None, help="model_name_or_path of peft model")
 # ============SmoothQuant configs==============
 parser.add_argument("--sq", action="store_true")
@@ -236,11 +236,11 @@ if args.quantize:
 
     # 3.x api
     if args.approach == 'weight_only':
-        from neural_compressor.torch.quantization import RTNConfig, GPTQConfig, quantize
+        from neural_compressor.torch.quantization import RTNConfig, GPTQConfig, prepare, convert, quantize
         from neural_compressor.torch.utils import get_double_quant_config
         weight_sym = True if args.woq_scheme == "sym" else False
         double_quant_config_dict = get_double_quant_config(args.double_quant_type)
-        
+
         if args.woq_algo == "RTN":
             if args.double_quant_type is not None:
                 double_quant_config_dict.update(
@@ -269,9 +269,8 @@ if args.quantize:
                     double_quant_group_size=args.double_quant_group_size,
                 )
             quant_config.set_local("lm_head", RTNConfig(dtype="fp32"))
-            user_model = quantize(
-                model=user_model, quant_config=quant_config
-            )
+            user_model = prepare(model=user_model, quant_config=quant_config)
+            user_model = convert(model=user_model)
         elif args.woq_algo == "GPTQ":
             from utils import DataloaderPreprocessor
             dataloaderPreprocessor = DataloaderPreprocessor(
@@ -326,12 +325,12 @@ if args.quantize:
                     double_quant_group_size=args.double_quant_group_size,
                 )
             quant_config.set_local("lm_head", GPTQConfig(dtype="fp32"))
-            user_model = quantize(
-                model=user_model, quant_config=quant_config, run_fn=run_fn_for_gptq, run_args=(dataloader_for_calibration, )
-            )
+            user_model = prepare(model=user_model, quant_config=quant_config)
+            run_fn_for_gptq(user_model, dataloader_for_calibration)
+            user_model = convert(user_model)
     else:
         if args.sq:
-            from neural_compressor.torch.quantization import SmoothQuantConfig, quantize
+            from neural_compressor.torch.quantization import SmoothQuantConfig
 
             # alpha can be a float number of a list of float number.
             args.alpha = args.alpha if args.alpha == "auto" else eval(args.alpha)
@@ -339,15 +338,15 @@ if args.quantize:
                 quant_config = SmoothQuantConfig(alpha=args.alpha, folding=False)
             else:
                 quant_config = SmoothQuantConfig(alpha=args.alpha, folding=True)
-            
+
             if re.search("gpt", user_model.config.model_type):
-                quant_config.set_local("add", SmoothQuantConfig(w_dtype="fp32", act_dtype="fp32"))
+                quant_config.set_local(torch.add, SmoothQuantConfig(w_dtype="fp32", act_dtype="fp32"))
         else:
-            from neural_compressor.torch.quantization import quantize, get_default_static_config, StaticQuantConfig
+            from neural_compressor.torch.quantization import get_default_static_config, StaticQuantConfig
 
             quant_config =  get_default_static_config()
             if re.search("gpt", user_model.config.model_type):
-                quant_config.set_local("add", StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
+                quant_config.set_local(torch.add, StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
 
         from neural_compressor.torch.algorithms.smooth_quant import move_input_to_device
         from tqdm import tqdm
@@ -364,27 +363,41 @@ if args.quantize:
                 except ValueError:
                     pass
             return
-            
+
         from utils import get_example_inputs
         example_inputs = get_example_inputs(user_model, calib_dataloader)
-        user_model = quantize(
-            model=user_model, quant_config=quant_config, example_inputs=example_inputs, run_fn=run_fn
-        )
+        if args.sq:
+            # currently, smooth quant only support quantize API
+            # TODO: support prepare/convert API for smooth quant
+            from neural_compressor.torch.quantization import quantize
+
+            user_model = quantize(
+                model=user_model, quant_config=quant_config, example_inputs=example_inputs, run_fn=run_fn
+            )
+        else:
+            from neural_compressor.torch.quantization import prepare, convert
+
+            user_model = prepare(model=user_model, quant_config=quant_config, example_inputs=example_inputs)
+            run_fn(user_model)
+            user_model = convert(user_model)
         user_model.save(args.output_dir)
 
-if args.int8 or args.int8_bf16_mixed:
-    print("load int8 model")
 
-    from neural_compressor.torch.algorithms.static_quant import load
+# TODO: we need run_benchmark.sh for loading and remove --accuracy in run_quant.sh, currently run_quant.sh will get fp32 result
+# if args.int8 or args.int8_bf16_mixed:
+#     print("load int8 model")
 
-    if args.ipex:
-        user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)))
-    else:
-        # TODO: WOQ save&load
-        print("Int8 model loading does not support WeightOnlyQuant now.")
-        pass
-else:
-    user_model, _ = get_user_model()
+#     # TODO: from neural_compressor.torch.quantization import load
+#     from neural_compressor.torch.algorithms.static_quant import load
+
+#     if args.ipex:
+#         user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)))
+#     else:
+#         # TODO: WOQ save&load
+#         print("Int8 model loading does not support WeightOnlyQuant now.")
+#         pass
+# else:
+        user_model, _ = get_user_model()
 
 
 if args.accuracy:
@@ -392,19 +405,13 @@ if args.accuracy:
     from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
     eval_args = LMEvalParser(
         model="hf",
-        model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
         user_model=user_model,
-        tokenizer = tokenizer,
+        tokenizer=tokenizer,
         batch_size=args.batch_size,
         tasks=args.tasks,
         device="cpu",
     )
     results = evaluate(eval_args)
-
-    dumped = json.dumps(results, indent=2)
-    if args.save_accuracy_path:
-        with open(args.save_accuracy_path, "w") as f:
-            f.write(dumped)
     for task_name in args.tasks.split(","):
         if task_name == "wikitext":
             acc = results["results"][task_name]["word_perplexity,none"]
@@ -415,16 +422,14 @@ if args.accuracy:
 
 if args.performance:
     user_model.eval()
-    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate
+    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
     import time
 
     samples = args.iters * args.batch_size
-    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
     eval_args = LMEvalParser(
         model="hf",
-        model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
         user_model=user_model,
-        tokenizer = tokenizer,
+        tokenizer=tokenizer,
         batch_size=args.batch_size,
         tasks=args.tasks,
         limit=samples,

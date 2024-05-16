@@ -7,7 +7,7 @@ from tensorflow.compat.v1 import graph_util
 
 from neural_compressor.common import set_random_seed
 from neural_compressor.tensorflow import SmoothQuantConfig, StaticQuantConfig, get_default_sq_config, quantize_model
-from neural_compressor.tensorflow.utils import DummyDataset, disable_random
+from neural_compressor.tensorflow.utils import DummyDataset, disable_random, version1_gte_version2
 
 
 def build_conv_graph():
@@ -20,13 +20,21 @@ def build_conv_graph():
         "weight", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
     )
     conv = tf.nn.conv2d(x_pad, conv_weights, strides=[1, 2, 2, 1], padding="VALID")
-    normed = tf.compat.v1.layers.batch_normalization(conv)
+    normed = (
+        tf.keras.layers.BatchNormalization()(conv)
+        if version1_gte_version2(tf.__version__, "2.16.1")
+        else tf.compat.v1.layers.batch_normalization(conv)
+    )
 
     conv_weights2 = tf.compat.v1.get_variable(
         "weight2", [3, 3, 16, 16], initializer=tf.compat.v1.random_normal_initializer()
     )
     conv2 = tf.nn.conv2d(top_relu, conv_weights2, strides=[1, 2, 2, 1], padding="SAME")
-    normed2 = tf.compat.v1.layers.batch_normalization(conv2)
+    normed2 = (
+        tf.keras.layers.BatchNormalization()(conv2)
+        if version1_gte_version2(tf.__version__, "2.16.1")
+        else tf.compat.v1.layers.batch_normalization(conv2)
+    )
     add = tf.raw_ops.Add(x=normed, y=normed2, name="addv2")
 
     relu = tf.nn.relu(add)

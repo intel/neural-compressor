@@ -64,17 +64,28 @@ class TestHQQCUDA:
         hqq_global_option.use_half = True
 
     def test_hqq_quant(self):
-        from neural_compressor.torch.quantization import get_default_hqq_config, quantize
+        from neural_compressor.torch.quantization import convert, get_default_hqq_config, prepare, quantize
 
-        model = AutoModelForCausalLM.from_pretrained("facebook/opt-125m")
+        fp32_model = AutoModelForCausalLM.from_pretrained("facebook/opt-125m")
         example_inputs = torch.tensor(
             [[10, 20, 30, 40, 50, 60]], dtype=torch.long, device=auto_detect_accelerator().current_device()
         )
         # test_default_config
         quant_config = get_default_hqq_config()
-        model = quantize(model, quant_config)
-        q_label = model(example_inputs)[0]
-        print(q_label)
+
+        # prepare + convert API
+        model = prepare(deepcopy(fp32_model), quant_config)
+        model = convert(model)
+        q_label_1 = model(example_inputs)[0]
+
+        # quantize API
+        model = quantize(deepcopy(fp32_model), quant_config)
+        q_label_2 = model(example_inputs)[0]
+
+        # compare the results of calling `convert` + `prepare` and calling `quantize`
+        assert torch.all(
+            q_label_1.eq(q_label_2)
+        ), "The results of calling `convert` + `prepare` and calling `quantize` should be equal."
 
     @pytest.mark.parametrize(
         "nbits, group_size, quant_zero, quant_scale, scale_quant_group_size",
