@@ -1144,9 +1144,8 @@ class MixPrecisionConfig(BaseConfig):
     supported_configs: List[OperatorConfig] = []
     params_list = [
         "dtype",
-        "device",
     ]
-    supported_fp16_ops = (
+    supported_half_precision_ops = (
         torch.nn.Linear,
         torch.nn.Conv1d,
         torch.nn.Conv2d,
@@ -1156,7 +1155,6 @@ class MixPrecisionConfig(BaseConfig):
     def __init__(
         self,
         dtype: Union[str, List[str]] = "fp16",
-        device: Union[str, List[str]] = "auto",
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init MixPrecision config.
@@ -1165,23 +1163,21 @@ class MixPrecisionConfig(BaseConfig):
         """
         super().__init__(white_list=white_list)
         self.dtype = dtype
-        self.device = device
         self._post_init()
 
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
         mix_precision_config = MixPrecisionConfig(
-            dtype=["fp16", "fp32"],
-            device=["auto", "cpu", "cuda"],
+            dtype=["fp16", "bf16", "fp32"],
         )
-        operators = cls.supported_fp16_ops
+        operators = cls.supported_half_precision_ops
         supported_configs.append(OperatorConfig(config=mix_precision_config, operators=operators))
         cls.supported_configs = supported_configs
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
-        white_list = tuple(MixPrecisionConfig.supported_fp16_ops)
+        white_list = tuple(MixPrecisionConfig.supported_half_precision_ops)
         filter_result = []
         for op_name, module in model.named_modules():
             if isinstance(module, white_list):
@@ -1193,7 +1189,7 @@ class MixPrecisionConfig(BaseConfig):
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "MixPrecisionConfig", List["MixPrecisionConfig"]]:
         # TODO fwk owner needs to update it.
-        return MixPrecisionConfig(dtype=["fp16", "fp32"])
+        return MixPrecisionConfig(dtype=["fp16", "bf16", "fp32"])
 
 
 def get_default_mix_precision_config() -> MixPrecisionConfig:

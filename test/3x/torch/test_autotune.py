@@ -340,7 +340,7 @@ class TestAutoTune(unittest.TestCase):
 
     @reset_tuning_target
     def test_autotune_mix_precision_default(self):
-        from neural_compressor.torch.algorithms.mix_precision import FP16ModuleWrapper
+        from neural_compressor.torch.algorithms.mix_precision import HalfPrecisionModuleWrapper
 
         def eval_acc_fn(model) -> float:
             return 1.0
@@ -349,14 +349,14 @@ class TestAutoTune(unittest.TestCase):
         best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fn=eval_acc_fn)
 
         self.assertIsNotNone(best_model)
-        self.assertTrue(isinstance(best_model.fc1, FP16ModuleWrapper))
-        self.assertTrue(isinstance(best_model.fc2, FP16ModuleWrapper))
-        self.assertTrue(isinstance(best_model.fc3, FP16ModuleWrapper))
+        self.assertTrue(isinstance(best_model.fc1, HalfPrecisionModuleWrapper))
+        self.assertTrue(isinstance(best_model.fc2, HalfPrecisionModuleWrapper))
+        self.assertTrue(isinstance(best_model.fc3, HalfPrecisionModuleWrapper))
 
     @reset_tuning_target
     def test_autotune_mix_precision_set_op_name(self):
         from neural_compressor.common.base_config import ComposableConfig, config_registry
-        from neural_compressor.torch.algorithms.mix_precision import FP16ModuleWrapper
+        from neural_compressor.torch.algorithms.mix_precision import HalfPrecisionModuleWrapper
 
         def eval_acc_fn(model) -> float:
             return 1.0
@@ -380,8 +380,8 @@ class TestAutoTune(unittest.TestCase):
 
         self.assertIsNotNone(best_model)
         self.assertTrue(isinstance(best_model.fc1, torch.nn.Linear))
-        self.assertTrue(isinstance(best_model.fc2, FP16ModuleWrapper))
-        self.assertTrue(isinstance(best_model.fc3, FP16ModuleWrapper))
+        self.assertTrue(isinstance(best_model.fc2, HalfPrecisionModuleWrapper))
+        self.assertTrue(isinstance(best_model.fc3, HalfPrecisionModuleWrapper))
 
 
 if __name__ == "__main__":

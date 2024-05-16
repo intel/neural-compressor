@@ -507,9 +507,10 @@ if is_hpex_available():
 def mix_precision_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str], MixPrecisionConfig], *args, **kwargs
 ) -> torch.nn.Module:
-    # only support fp16 now, more types might be added later
-    from neural_compressor.torch.algorithms.mix_precision import FP16Converter
+    # only support fp16 and bf16 now, more types might be added later
+    from neural_compressor.torch.algorithms.mix_precision import HalfPrecisionConverter
 
-    fp16_converter = FP16Converter(configs_mapping, *args, **kwargs)
+    half_precision_converter = HalfPrecisionConverter(configs_mapping, *args, **kwargs)
+    mix_precision_model = half_precision_converter.convert(model)
 
-    return fp16_converter.convert(model)
+    return mix_precision_model

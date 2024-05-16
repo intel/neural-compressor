@@ -19,22 +19,20 @@
 import torch
 
 
-class FP16ModuleWrapper(torch.nn.Module):
-    """FP16Module Wrapper Class."""
+class HalfPrecisionModuleWrapper(torch.nn.Module):
+    """FP16 or BF16 Module Wrapper Class."""
 
-    def __init__(self, module, device):
-        """Init a FP16ModuleWrapper object."""
-        super(FP16ModuleWrapper, self).__init__()
+    def __init__(self, module, device="cpu", dtype=torch.float16):
+        """Init a HalfPrecisionModuleWrapper object."""
+        super(HalfPrecisionModuleWrapper, self).__init__()
         self.add_module("module", module)
-        self.train(module.training)
         self.device = device
-        # WA for TransformerEncoder to access its Linear's weights and bias
-        if isinstance(module, torch.nn.Linear):
-            self.weight = self.module.weight if hasattr(self.module, "weight") else None
-            self.bias = self.module.bias if hasattr(self.module, "bias") else None
+        self.dtype = dtype
+        self.weight = self.module.weight if hasattr(self.module, "weight") else None
+        self.bias = self.module.bias if hasattr(self.module, "bias") else None
 
     def forward(self, X):
         """Convert dtype."""
-        with torch.autocast(device_type=self.device, dtype=torch.float16):
+        with torch.autocast(device_type=self.device, dtype=self.dtype):
             X = self.module(X)
         return X.float()
