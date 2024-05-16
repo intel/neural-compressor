@@ -56,6 +56,21 @@ class TestSmoothQuant:
         assert q_model is not None, "Quantization failed!"
 
     @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
+    def test_smooth_quant_fallback(self):
+        fp32_model = copy.deepcopy(model)
+        quant_config = get_default_sq_config()
+        example_inputs = torch.randn([1, 3])
+        # fallback by op_type
+        quant_config.set_local(torch.nn.Linear, SmoothQuantConfig(w_dtype="fp32", act_dtype="fp32"))
+        q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
+        assert q_model is not None, "Quantization failed!"
+
+        for op, op_info in q_model.tune_cfg[" "]["q_op_infos"].items():
+            if op_info["op_type"] == "<class 'torch.nn.modules.linear.Linear'>":
+                dtype = q_model.tune_cfg[" "]["q_op_infos"][op]["input_tensor_infos"][0]["force_dtype"]
+                assert dtype == "torch.float32", "Failed to fallback linear op, please check!"
+
+    @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
     @pytest.mark.parametrize(
         "act_sym, act_algo, alpha, folding, scale_sharing",
         [
