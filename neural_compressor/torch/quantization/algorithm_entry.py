@@ -198,7 +198,7 @@ def pt2e_dynamic_quant_entry(model: torch.nn.Module, configs_mapping, mode: Mode
     inplace = kwargs.get("inplace", True)
     for _, quant_config in configs_mapping.items():
         if quant_config.name == PT2E_DYNAMIC_QUANT:
-            w8a8_quantizer = W8A8StaticQuantizer(quant_config=quant_config, is_dynamic=True)
+            w8a8_quantizer = W8A8StaticQuantizer(quant_config=quant_config)
             model = w8a8_quantizer.execute(
                 model, mode=mode, run_fn=run_fn, example_inputs=example_inputs, inplace=inplace
             )

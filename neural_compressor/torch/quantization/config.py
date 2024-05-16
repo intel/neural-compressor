@@ -819,6 +819,7 @@ class DynamicQuantConfig(BaseConfig):
         self.act_sym = act_sym
         self.act_granularity = act_granularity
         self.act_algo = act_algo
+        self._is_dynamic = True
         self._post_init()
 
     @classmethod

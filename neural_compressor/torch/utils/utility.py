@@ -172,7 +172,7 @@ def postprocess_model(model, mode, quantizer):
             del model.quantizer
 
 
-def create_quant_spec_from_config(dtype, sym, granularity, algo) -> QuantizationSpec:
+def create_quant_spec_from_config(dtype, sym, granularity, algo, is_dynamic=False) -> QuantizationSpec:
     dtype_mapping: Dict[str, torch.dtype] = {"int8": torch.int8, "uint8": torch.uint8}
     qscheme_mapping = {
         "per_channel": {True: torch.per_channel_symmetric, False: torch.per_tensor_affine},
@@ -187,15 +187,19 @@ def create_quant_spec_from_config(dtype, sym, granularity, algo) -> Quantization
     # qscheme
     qscheme = qscheme_mapping[granularity][sym]
     quantization_spec = QuantizationSpec(
-        dtype=dtype_mapping[dtype], observer_or_fake_quant_ctr=observer_or_fake_quant_ctr, qscheme=qscheme
+        dtype=dtype_mapping[dtype],
+        observer_or_fake_quant_ctr=observer_or_fake_quant_ctr,
+        qscheme=qscheme,
+        is_dynamic=is_dynamic,
     )
     return quantization_spec
 
 
 def _map_inc_config_to_torch_quant_config(inc_config) -> QuantizationConfig:
-    default_quant_config = xiq.get_default_x86_inductor_quantization_config()
+    is_dynamic = hasattr(inc_config, "_is_dynamic", False)
+    default_quant_config = xiq.get_default_x86_inductor_quantization_config(is_dynamic=is_dynamic)
     input_act_quant_spec = create_quant_spec_from_config(
-        inc_config.act_dtype, inc_config.act_sym, inc_config.act_granularity, inc_config.act_algo
+        inc_config.act_dtype, inc_config.act_sym, inc_config.act_granularity, inc_config.act_algo, is_dynamic=is_dynamic
     )
     weight_quant_spec = create_quant_spec_from_config(
         inc_config.w_dtype, inc_config.w_sym, inc_config.w_granularity, inc_config.w_algo

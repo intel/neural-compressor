@@ -29,16 +29,19 @@ from neural_compressor.torch.utils import create_xiq_quantizer_from_pt2e_config
 
 
 class W8A8StaticQuantizer(Quantizer):
+    is_dynamic = False
 
-    def __init__(self, quant_config, is_dynamic=False):
+    def __init__(self, quant_config):
         super().__init__(quant_config)
-        self.is_dynamic = is_dynamic
+        W8A8StaticQuantizer.is_dynamic = getattr(quant_config, "_is_dynamic", False)
 
     @staticmethod
     def update_quantizer_based_on_quant_config(quant_config=None) -> X86InductorQuantizer:
         if not quant_config:
             quantizer = X86InductorQuantizer()
-            quantizer.set_global(xiq.get_default_x86_inductor_quantization_config())
+            quantizer.set_global(
+                xiq.get_default_x86_inductor_quantization_config(is_dynamic=W8A8StaticQuantizer.is_dynamic)
+            )
         else:
             quantizer = create_xiq_quantizer_from_pt2e_config(quant_config)
         return quantizer
