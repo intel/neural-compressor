@@ -37,19 +37,20 @@ def load(output_dir="./saved_results", model=None):
     qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), "qconfig.json")
     with open(qconfig_file_path, "r") as f:
         per_op_qconfig = json.load(f)
-    config_mapping = load_config_mapping(qconfig_file_path, ConfigRegistry.get_all_configs()["torch"])
-    # select load function
-    config_object = config_mapping[next(iter(config_mapping))]
-
-    if isinstance(config_object, (RTNConfig, GPTQConfig, AWQConfig, TEQConfig, AutoRoundConfig)):  # WOQ
-        from neural_compressor.torch.algorithms.weight_only.save_load import load
-
-        return load(output_dir)
-    elif " " in per_op_qconfig.keys():  # ipex qconfig format: {' ': {'q_op_infos': {'0': {'op_type': ...
+   
+    if " " in per_op_qconfig.keys():  # ipex qconfig format: {' ': {'q_op_infos': {'0': {'op_type': ...
         from neural_compressor.torch.algorithms.static_quant import load
 
         return load(output_dir)
     else:  # FP8
+        config_mapping = load_config_mapping(qconfig_file_path, ConfigRegistry.get_all_configs()["torch"])
+        # select load function
+        config_object = config_mapping[next(iter(config_mapping))]
+        if isinstance(config_object, (RTNConfig, GPTQConfig, AWQConfig, TEQConfig, AutoRoundConfig)):  # WOQ
+            from neural_compressor.torch.algorithms.weight_only.save_load import load
+
+            return load(output_dir)
+        
         model.qconfig = config_mapping
         if isinstance(config_object, FP8Config):
             from neural_compressor.torch.algorithms.habana_fp8 import load
