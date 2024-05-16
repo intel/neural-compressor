@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""FP16 Wrapper for Torch Modules."""
+"""Half-precision Wrapper for Torch Modules."""
 
 import torch
 
