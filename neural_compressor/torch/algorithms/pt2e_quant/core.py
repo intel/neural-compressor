@@ -31,7 +31,7 @@ from neural_compressor.torch.utils import create_xiq_quantizer_from_pt2e_config
 class W8A8PT2EQuantizer(Quantizer):
     is_dynamic = False
 
-    def __init__(self, quant_config):
+    def __init__(self, quant_config=None):
         super().__init__(quant_config)
 
     @staticmethod
