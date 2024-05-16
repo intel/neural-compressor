@@ -191,14 +191,15 @@ def static_quant_entry(
 @torch.no_grad()
 def pt2e_dynamic_quant_entry(model: torch.nn.Module, configs_mapping, mode: Mode, *args, **kwargs) -> torch.nn.Module:
     logger.info("Quantize model with the PT2E static quant algorithm.")
-    from neural_compressor.torch.algorithms.pt2e_quant.core import W8A8StaticQuantizer
+    from neural_compressor.torch.algorithms.pt2e_quant.core import W8A8PT2EQuantizer
 
     run_fn = kwargs.get("run_fn", None)
     example_inputs = kwargs.get("example_inputs", None)
     inplace = kwargs.get("inplace", True)
+    W8A8PT2EQuantizer.is_dynamic = True
     for _, quant_config in configs_mapping.items():
         if quant_config.name == PT2E_DYNAMIC_QUANT:
-            w8a8_quantizer = W8A8StaticQuantizer(quant_config=quant_config)
+            w8a8_quantizer = W8A8PT2EQuantizer(quant_config=quant_config)
             model = w8a8_quantizer.execute(
                 model, mode=mode, run_fn=run_fn, example_inputs=example_inputs, inplace=inplace
             )
@@ -210,14 +211,14 @@ def pt2e_dynamic_quant_entry(model: torch.nn.Module, configs_mapping, mode: Mode
 @torch.no_grad()
 def pt2e_static_quant_entry(model: torch.nn.Module, configs_mapping, mode: Mode, *args, **kwargs) -> torch.nn.Module:
     logger.info("Quantize model with the PT2E static quant algorithm.")
-    from neural_compressor.torch.algorithms.pt2e_quant.core import W8A8StaticQuantizer
+    from neural_compressor.torch.algorithms.pt2e_quant.core import W8A8PT2EQuantizer
 
     run_fn = kwargs.get("run_fn", None)
     example_inputs = kwargs.get("example_inputs", None)
     inplace = kwargs.get("inplace", True)
     for _, quant_config in configs_mapping.items():
         if quant_config.name == STATIC_QUANT:
-            w8a8_quantizer = W8A8StaticQuantizer(quant_config=quant_config)
+            w8a8_quantizer = W8A8PT2EQuantizer(quant_config=quant_config)
             model = w8a8_quantizer.execute(
                 model, mode=mode, run_fn=run_fn, example_inputs=example_inputs, inplace=inplace
             )

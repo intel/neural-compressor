@@ -28,22 +28,21 @@ from neural_compressor.torch.algorithms.base_algorithm import Quantizer
 from neural_compressor.torch.utils import create_xiq_quantizer_from_pt2e_config
 
 
-class W8A8StaticQuantizer(Quantizer):
+class W8A8PT2EQuantizer(Quantizer):
     is_dynamic = False
 
     def __init__(self, quant_config):
         super().__init__(quant_config)
-        W8A8StaticQuantizer.is_dynamic = getattr(quant_config, "_is_dynamic", False)
 
     @staticmethod
     def update_quantizer_based_on_quant_config(quant_config=None) -> X86InductorQuantizer:
         if not quant_config:
             quantizer = X86InductorQuantizer()
             quantizer.set_global(
-                xiq.get_default_x86_inductor_quantization_config(is_dynamic=W8A8StaticQuantizer.is_dynamic)
+                xiq.get_default_x86_inductor_quantization_config(is_dynamic=W8A8PT2EQuantizer.is_dynamic)
             )
         else:
-            quantizer = create_xiq_quantizer_from_pt2e_config(quant_config)
+            quantizer = create_xiq_quantizer_from_pt2e_config(quant_config, is_dynamic=W8A8PT2EQuantizer.is_dynamic)
         return quantizer
 
     def prepare(self, model: GraphModule, example_inputs=None, inplace=True, *args, **kwargs) -> GraphModule:

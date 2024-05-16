@@ -801,7 +801,7 @@ class DynamicQuantConfig(BaseConfig):
         self,
         w_dtype: str = "int8",
         w_sym: bool = True,
-        w_granularity: str = "per_channel",
+        w_granularity: str = "per_tensor",
         w_algo: str = "minmax",
         act_dtype: str = "uint8",
         act_sym: bool = False,
@@ -819,7 +819,6 @@ class DynamicQuantConfig(BaseConfig):
         self.act_sym = act_sym
         self.act_granularity = act_granularity
         self.act_algo = act_algo
-        self._is_dynamic = True
         self._post_init()
 
     @classmethod

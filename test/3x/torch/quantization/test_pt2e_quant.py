@@ -8,8 +8,10 @@ import torch
 from neural_compressor.common.utils import logger
 from neural_compressor.torch.export import export
 from neural_compressor.torch.quantization import (
+    DynamicQuantConfig,
     StaticQuantConfig,
     convert,
+    get_default_dynamic_config,
     get_default_static_config,
     prepare,
     quantize,
@@ -78,7 +80,8 @@ class TestPT2EQuantization:
 
     @pytest.mark.skipif(is_ipex_imported(), reason="IPEX is imported")
     @pytest.mark.skipif(get_torch_version() <= TORCH_VERSION_2_2_2, reason="Requires torch>=2.3.0")
-    def test_prepare_and_convert_on_simple_model(self):
+    @pytest.mark.parametrize("is_dynamic", [False, True])
+    def test_prepare_and_convert_on_simple_model(self, is_dynamic):
         model, example_inputs = self.build_simple_torch_model_and_example_inputs()
         quant_config = None
 
@@ -86,7 +89,10 @@ class TestPT2EQuantization:
             for i in range(2):
                 model(*example_inputs)
 
-        quant_config = get_default_static_config()
+        if is_dynamic:
+            quant_config = get_default_dynamic_config()
+        else:
+            quant_config = get_default_static_config()
 
         prepared_model = prepare(model, quant_config=quant_config)
         calib_fn(prepared_model)
