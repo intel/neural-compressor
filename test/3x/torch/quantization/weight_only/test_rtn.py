@@ -324,6 +324,7 @@ class TestRTNQuant:
         model = convert(model)
         out2 = model(input)
         # The small gap is caused by FP16 scale in WeightOnlyLinear.
-        assert torch.allclose(out2, q_out, atol=5e-4), \
-            "Exporting compressed model should have the same output as quantized model. Please double check"
+        assert torch.allclose(
+            out2, q_out, atol=5e-4
+        ), "Exporting compressed model should have the same output as quantized model. Please double check"
         assert isinstance(model.fc1, WeightOnlyLinear), "Exporting compressed model failed."
