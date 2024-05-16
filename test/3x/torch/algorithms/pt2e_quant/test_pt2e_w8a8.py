@@ -5,12 +5,12 @@ import pytest
 import torch
 
 from neural_compressor.common.utils import logger
-from neural_compressor.torch.algorithms.pt2e_quant.core import W8A8StaticQuantizer
+from neural_compressor.torch.algorithms.pt2e_quant.core import W8A8PT2EQuantizer
 from neural_compressor.torch.export import export_model_for_pt2e_quant
 from neural_compressor.torch.utils import TORCH_VERSION_2_2_2, get_torch_version
 
 
-class TestW8A8StaticQuantizer:
+class TestW8A8PT2EQuantizer:
 
     @staticmethod
     def get_toy_model():
@@ -52,7 +52,7 @@ class TestW8A8StaticQuantizer:
     @pytest.mark.skipif(get_torch_version() <= TORCH_VERSION_2_2_2, reason="Requires torch>=2.3.0")
     def test_quantizer_on_simple_model(self):
         model, example_inputs = self.build_simple_torch_model_and_example_inputs()
-        w8a8_static_quantizer = W8A8StaticQuantizer()
+        w8a8_static_quantizer = W8A8PT2EQuantizer()
         # prepare
         prepare_model = w8a8_static_quantizer.prepare(model, example_inputs=example_inputs)
         # calibrate
@@ -81,7 +81,7 @@ class TestW8A8StaticQuantizer:
         model = export_model_for_pt2e_quant(model, example_inputs=example_inputs)
 
         quant_config = None
-        w8a8_static_quantizer = W8A8StaticQuantizer()
+        w8a8_static_quantizer = W8A8PT2EQuantizer()
         # prepare
         prepare_model = w8a8_static_quantizer.prepare(model)
         # calibrate

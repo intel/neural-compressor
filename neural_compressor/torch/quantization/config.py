@@ -17,7 +17,7 @@
 # pylint:disable=import-error
 
 from collections import OrderedDict
-from typing import Any, Callable, Dict, List, NamedTuple, Optional
+from typing import Callable, Dict, List, NamedTuple, Optional
 from typing import OrderedDict as OrderedDictType
 from typing import Tuple, Union
 
@@ -50,6 +50,7 @@ from neural_compressor.torch.utils.constants import (
     PRIORITY_HQQ,
     PRIORITY_RTN,
     PRIORITY_TEQ,
+    PT2E_DYNAMIC_QUANT,
 )
 
 __all__ = [
@@ -776,6 +777,80 @@ def get_default_AutoRound_config() -> AutoRoundConfig:
         the default AUTOROUND config.
     """
     return AutoRoundConfig()
+
+
+######################## Dynamic Quant Config ###############################
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=PT2E_DYNAMIC_QUANT)
+class DynamicQuantConfig(BaseConfig):
+    """Config class for dynamic quantization."""
+
+    name = PT2E_DYNAMIC_QUANT
+    params_list = [
+        "w_dtype",
+        "w_sym",
+        "w_granularity",
+        "w_algo",
+        "act_dtype",
+        "act_sym",
+        "act_granularity",
+        "act_algo",
+    ]
+    supported_configs: List[OperatorConfig] = []
+
+    def __init__(
+        self,
+        w_dtype: str = "int8",
+        w_sym: bool = True,
+        w_granularity: str = "per_tensor",
+        w_algo: str = "minmax",
+        act_dtype: str = "uint8",
+        act_sym: bool = False,
+        act_granularity: str = "per_tensor",
+        act_algo: str = "kl",
+        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+    ):
+        """Init Dynamic Quant Configs."""
+        super().__init__(white_list=white_list)
+        self.w_dtype = w_dtype
+        self.w_sym = w_sym
+        self.w_granularity = w_granularity
+        self.w_algo = w_algo
+        self.act_dtype = act_dtype
+        self.act_sym = act_sym
+        self.act_granularity = act_granularity
+        self.act_algo = act_algo
+        self._post_init()
+
+    @classmethod
+    def register_supported_configs(cls) -> List[OperatorConfig]:
+        supported_configs = []
+        linear_static_config = cls()
+        operators = [torch.nn.Linear]
+        supported_configs.append(OperatorConfig(config=linear_static_config, operators=operators))
+        cls.supported_configs = supported_configs
+
+    @staticmethod
+    def get_model_info(model: torch.nn.Module, example_inputs=None):
+        return None
+
+    def to_config_mapping(
+        self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
+    ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
+        config_mapping = OrderedDict({self.name: self})
+        return config_mapping
+
+    @classmethod
+    def get_config_set_for_tuning(cls) -> Union[None, "DynamicQuantConfig", List["DynamicQuantConfig"]]:
+        return cls(act_sym=[True, False], act_algo=["kl", "minmax"])
+
+
+def get_default_dynamic_config() -> DynamicQuantConfig:
+    """Generate the default dynamic quant config.
+
+    Returns:
+        the default dynamic quant config.
+    """
+    return DynamicQuantConfig()
 
 
 ######################## Static Quant Config ###############################
