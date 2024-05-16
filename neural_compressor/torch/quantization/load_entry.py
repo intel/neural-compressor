@@ -42,7 +42,7 @@ def load(output_dir="./saved_results", model=None):
         from neural_compressor.torch.algorithms.static_quant import load
 
         return load(output_dir)
-    else:  # FP8
+    else:
         config_mapping = load_config_mapping(qconfig_file_path, ConfigRegistry.get_all_configs()["torch"])
         # select load function
         config_object = config_mapping[next(iter(config_mapping))]
@@ -52,7 +52,7 @@ def load(output_dir="./saved_results", model=None):
             return load(output_dir)
 
         model.qconfig = config_mapping
-        if isinstance(config_object, FP8Config):
-            from neural_compressor.torch.algorithms.habana_fp8 import load
+        if isinstance(config_object, FP8Config): # FP8
+            from neural_compressor.torch.algorithms.habana_fp8 import load # pylint: disable=E1121
 
             return load(model, output_dir)
