@@ -14,12 +14,12 @@ Classes
 
 .. autoapisummary::
 
-   neural_compressor.torch.algorithms.pt2e_quant.core.W8A8StaticQuantizer
+   neural_compressor.torch.algorithms.pt2e_quant.core.W8A8PT2EQuantizer
 
 
 
 
-.. py:class:: W8A8StaticQuantizer(quant_config: Optional[Any] = None)
+.. py:class:: W8A8PT2EQuantizer(quant_config=None)
 
 
 
