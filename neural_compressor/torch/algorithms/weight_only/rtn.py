@@ -217,8 +217,8 @@ class RTNQuantizer(Quantizer):
                     **double_quant_config,
                 )
                 if transpose:
-                # for only group_dim is 0 or only `transformers.Conv1D`, 
-                # we need to transpose the quantized tensor and module's weight back
+                    # for only group_dim is 0 or only `transformers.Conv1D`,
+                    # we need to transpose the quantized tensor and module's weight back
                     weight = weight.t_().contiguous()
                     m.weight.t_().contiguous()
                 m.weight.data.copy_(weight)

@@ -14,7 +14,7 @@ from neural_compressor.torch.quantization import (
     quantize,
 )
 
-import transformers
+
 class ModelConv1d(torch.nn.Module):
     def __init__(self):
         super(ModelConv1d, self).__init__()
@@ -27,6 +27,7 @@ class ModelConv1d(torch.nn.Module):
         out = self.fc2(out)
         out = self.fc3(out)
         return out
+
 
 class TestRTNQuant:
     def setup_class(self):
@@ -314,7 +315,9 @@ class TestRTNQuant:
         q_model = quantize(model, quant_config)
         q_out = q_model(input)
 
-        quant_config = RTNConfig(export_compressed_model=True,)
+        quant_config = RTNConfig(
+            export_compressed_model=True,
+        )
 
         model = quantize(model_for_export, quant_config)
         out2 = model(input)

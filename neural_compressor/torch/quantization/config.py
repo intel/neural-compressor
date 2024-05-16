@@ -67,6 +67,7 @@ __all__ = [
 FRAMEWORK_NAME = "torch"
 WOQ_WHITE_LIST = (torch.nn.Linear, transformers.Conv1D)
 
+
 class OperatorConfig(NamedTuple):
     config: BaseConfig
     operators: List[Union[str, Callable]]
