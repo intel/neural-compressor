@@ -55,17 +55,17 @@ class HalfPrecisionConverter:
             logger.info("Convert operators to half-precision")
 
         if next(model.parameters()).is_cuda:
-            self.device = "cuda"  
+            self.device = "cuda"
         elif next(model.parameters()).is_cpu:
             self.device = "cpu"
-            
+
         mix_precision_model = self._wrap_half_precision_model(model)
         mix_precision_model.to(self.device)
 
         return mix_precision_model
 
     def _wrap_half_precision_model(self, model: torch.nn.Module, prefix=""):
-        """wrap and replace half-precision target modules.
+        """Wrap and replace half-precision target modules.
 
         Args:
             model (torch.nn.Module): the input module.
@@ -78,10 +78,9 @@ class HalfPrecisionConverter:
             op_name = prefix + "." + name if prefix != "" else name
             for op_info, config in self.configs_mapping.items():
                 if op_name == op_info[0] and config.dtype in ("fp16", "bf16"):
-                    child = HalfPrecisionModuleWrapper(module=child, 
-                                                       device=self.device, 
-                                                       dtype=self.dtype_mapping[config.dtype]
-                                                       )
+                    child = HalfPrecisionModuleWrapper(
+                        module=child, device=self.device, dtype=self.dtype_mapping[config.dtype]
+                    )
             else:
                 self._wrap_half_precision_model(child, op_name)
                 setattr(model, name, child)
