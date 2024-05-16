@@ -185,6 +185,7 @@ def create_quant_spec_from_config(dtype, sym, granularity, algo, is_dynamic=Fals
         "minmax": MinMaxObserver,
         "kl": HistogramObserver,
     }
+    # Force to use placeholder observer for dynamic quantization
     if is_dynamic:
         algo = "placeholder"
     # algo
