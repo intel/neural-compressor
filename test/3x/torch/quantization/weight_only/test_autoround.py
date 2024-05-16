@@ -3,6 +3,7 @@ import copy
 import pytest
 import torch
 import transformers
+from packaging.version import Version
 
 from neural_compressor.torch.algorithms.weight_only.autoround import AutoRoundQuantizer, get_autoround_default_run_fn
 from neural_compressor.torch.quantization import (
@@ -13,10 +14,10 @@ from neural_compressor.torch.quantization import (
     quantize,
 )
 from neural_compressor.torch.utils import logger
-from packaging.version import Version
 
 try:
     import auto_round
+
     AUTO_ROUND_VERSION_0_11 = Version("0.11")
 
     auto_round_version = auto_round.__version__.split("+")[0]
