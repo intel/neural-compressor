@@ -13,8 +13,7 @@
 # limitations under the License.
 
 from abc import ABC, abstractmethod
-from collections import OrderedDict
-from typing import Any, Callable, Optional
+from typing import Any, Optional
 
 import torch
 
@@ -76,28 +75,7 @@ class Quantizer(ABC):
         """
         raise NotImplementedError("{} doesn't implement `convert` function. ".format(self.__class__.__name__))
 
-    @abstractmethod
-    def quantize(
-        self,
-        model: torch.nn.Module,
-        tune_cfg: OrderedDict,
-        run_fn: Callable,
-        example_inputs: Any,
-        inplace=True,
-        *args,
-        **kwargs
-    ):
-        """Quantizes a given float model.
-
-        Args:
-            model (torch.nn.Module): The float model to be quantized.
-
-        Returns:
-            A quantized model.
-        """
-        raise NotImplementedError("{} doesn't implement `quantize` function. ".format(self.__class__.__name__))
-
-    def quantize(self, model: torch.nn.Module, *args: Any, **kwargs: Any):  # noqa: F811
+    def quantize(self, model: torch.nn.Module, *args: Any, **kwargs: Any):
         """Quantizes a given float model.
 
         Args:

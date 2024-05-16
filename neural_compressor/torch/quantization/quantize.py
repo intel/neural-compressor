@@ -89,11 +89,11 @@ def quantize(
             logger.info(f"Start to apply {algo_name} on the model.")
             q_model = algo_func(
                 q_model,
-                mode=Mode.QUANTIZE,
-                configs_mapping=configs_mapping,
+                configs_mapping,
                 run_fn=run_fn,
                 run_args=run_args,
                 example_inputs=example_inputs,
+                mode=Mode.QUANTIZE,
             )
     return q_model
 

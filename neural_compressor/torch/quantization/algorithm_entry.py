@@ -255,11 +255,9 @@ def smooth_quant_entry(
     example_inputs = kwargs.get("example_inputs", None)
     inplace = kwargs.get("inplace", True)
     assert example_inputs is not None, "Please provide example_inputs for smooth quantization."
-    sq_info = TorchSmoothQuant(model, example_inputs=example_inputs, q_func=run_fn, record_max_info=True)
+    model.sq_info = TorchSmoothQuant(model, example_inputs=example_inputs, q_func=run_fn, record_max_info=True)
 
-    quantizer = get_quantizer(
-        model, quantizer_cls=SmoothQuantQuantizer, quant_config=quant_config_mapping, sq_info=sq_info
-    )
+    quantizer = get_quantizer(model, quantizer_cls=SmoothQuantQuantizer, quant_config=quant_config_mapping)
     model = quantizer.execute(model, mode=mode, run_fn=run_fn, example_inputs=example_inputs, inplace=inplace)
     postprocess_model(model, mode, quantizer)
 

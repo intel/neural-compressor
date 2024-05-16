@@ -27,6 +27,7 @@ except:
 from collections import OrderedDict
 from types import MethodType
 
+from overrides import overrides
 from packaging.version import Version
 
 from neural_compressor.torch.algorithms import Quantizer
@@ -47,15 +48,13 @@ ipex_ver = get_ipex_version()
 
 
 class SmoothQuantQuantizer(Quantizer):
-    def __init__(self, quant_config: OrderedDict = {}, sq_info: TorchSmoothQuant = None):
+    def __init__(self, quant_config: OrderedDict = {}):
         """Init a SmoothQuantQuantizer object.
 
         Args:
             quant_config (OrderedDict, optional): quantization config for ops. Defaults to {}.
-            sq_info (TorchSmoothQuant, optional): a TorchSmoothQuant containing smoothquant infos.
         """
         super().__init__(quant_config)
-        self.sq_info = sq_info
 
     def prepare(self, model, example_inputs, inplace=True, *args, **kwargs):
         """Prepares a given model for quantization.
@@ -92,10 +91,11 @@ class SmoothQuantQuantizer(Quantizer):
             return model
 
         alpha = recipe_cfgs["smooth_quant_args"]["alpha"]
+        sq_info = model.sq_info
 
         # Update model parameter when smoothquant folding = False
         if recipe_cfgs and recipe_cfgs.get("smooth_quant", False) and not folding:
-            smoothquant_scale_info = self.sq_info.sq_scale_info
+            smoothquant_scale_info = sq_info.sq_scale_info
             sq_minmax_init = True if self.quant_config.get("act_algo", "kl") == "minmax" else False
 
             # Check save_qconf_summary part is a workaround for IPEX bug.
@@ -139,7 +139,7 @@ class SmoothQuantQuantizer(Quantizer):
 
         # Update model parameter when smoothquant folding = True
         if recipe_cfgs and recipe_cfgs.get("smooth_quant", False) and folding:
-            _apply_pre_optimization(model, self.quant_config, self.sq_info)
+            _apply_pre_optimization(model, self.quant_config, sq_info)
 
         # Update json file in ipex_config_path
         cfg_to_qconfig(self.quant_config, cfgs, op_infos_from_cfgs, output_tensor_id_op_name)
@@ -170,6 +170,7 @@ class SmoothQuantQuantizer(Quantizer):
         Returns:
             A quantized model.
         """
+        sq_info = model.sq_info
         model.save_qconf_summary(qconf_summary=ipex_config_path)
         model = _ipex_post_quant_process(model, example_inputs, inplace=inplace)
 
@@ -187,7 +188,7 @@ class SmoothQuantQuantizer(Quantizer):
         # folding = False
         if recipe_cfgs and recipe_cfgs.get("smooth_quant", False) and not folding:
             if ipex_ver.release > Version("2.1.0").release:
-                smoothquant_scale_info = self.sq_info.sq_scale_info
+                smoothquant_scale_info = sq_info.sq_scale_info
                 update_sq_scale(ipex_config_path, smoothquant_scale_info)
                 model.load_qconf_summary(qconf_summary=ipex_config_path)
             model.save_qconf_summary(qconf_summary=ipex_config_path)
@@ -200,7 +201,7 @@ class SmoothQuantQuantizer(Quantizer):
             and recipe_cfgs["smooth_quant_args"]["folding"]
             and not inplace
         ):  # pragma: no cover
-            _apply_pre_optimization(model, self.quant_config, self.sq_info, recover=True)
+            _apply_pre_optimization(model, self.quant_config, sq_info, recover=True)
 
         with open(ipex_config_path, "r") as f:
             model.tune_cfg = json.load(f)
@@ -209,11 +210,12 @@ class SmoothQuantQuantizer(Quantizer):
 
         from neural_compressor.torch.algorithms.smooth_quant import save
 
-        logger.info("Static quantization done.")
+        logger.info("Smooth quantization done.")
         model.ori_save = model.save
         model.save = MethodType(save, model)
         return model
 
+    @overrides
     def quantize(self, model, tune_cfg, run_fn, example_inputs, inplace=True, *args, **kwargs):
         """Execute the quantize process on the specified model.
 
@@ -250,6 +252,7 @@ class SmoothQuantQuantizer(Quantizer):
             return model
 
         alpha = recipe_cfgs["smooth_quant_args"]["alpha"]
+        sq_info = model.sq_info
 
         # Update model parameter when smoothquant folding = False
         if recipe_cfgs and recipe_cfgs.get("smooth_quant", False) and not folding:
@@ -263,12 +266,12 @@ class SmoothQuantQuantizer(Quantizer):
                 cfgs,
                 op_infos_from_cfgs,
                 output_tensor_id_op_name,
-                self.sq_info,
+                sq_info,
             )
 
         # Update model parameter when smoothquant folding = True
         if recipe_cfgs and recipe_cfgs.get("smooth_quant", False) and folding:
-            _apply_pre_optimization(model, tune_cfg, self.sq_info)
+            _apply_pre_optimization(model, tune_cfg, sq_info)
 
         # Update json file in ipex_config_path
         cfg_to_qconfig(self.quant_config, cfgs, op_infos_from_cfgs, output_tensor_id_op_name)
@@ -297,7 +300,7 @@ class SmoothQuantQuantizer(Quantizer):
             and recipe_cfgs["smooth_quant_args"]["folding"]
             and not inplace
         ):  # pragma: no cover
-            _apply_pre_optimization(model, tune_cfg, self.sq_info, recover=True)
+            _apply_pre_optimization(model, tune_cfg, sq_info, recover=True)
 
         with open(ipex_config_path, "r") as f:
             model.tune_cfg = json.load(f)
