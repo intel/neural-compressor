@@ -14,13 +14,12 @@
 
 from dataclasses import dataclass
 from functools import partial
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Tuple
 
 import torch
 import torch.ao.quantization.quantizer.x86_inductor_quantizer as xiq
 from torch.fx import subgraph_rewriter
 from torch.fx.experimental.proxy_tensor import make_fx
-from torch.fx.passes.utils import matcher_utils
 from torch.fx.subgraph_rewriter import Match
 from typing_extensions import TypeAlias
 
@@ -29,14 +28,14 @@ from neural_compressor.common import utils
 # =============================================================================
 # Search and replace patterns
 # =============================================================================
-TorchFuncType: TypeAlias = Callable[[torch.Tensor, torch.Tensor, Optional[torch.Tensor]], torch.Tensor]
+TorchFuncType: TypeAlias = Callable[Any, Any]
 
 
 @dataclass
 class PatternPair:
+    fn: TorchFuncType
     search_pattern: torch.fx.GraphModule
     replace_pattern: torch.fx.GraphModule
-    match_filters: Optional[List[Callable[[matcher_utils.InternalMatch, torch.fx.Graph, torch.fx.Graph], bool]]]
 
 
 # key: torch func
@@ -63,20 +62,6 @@ HALF_PRECISION_PATTERN_REGISTRY: Dict[torch.dtype, PatternRegistryType] = {torch
 
 # FP16_PATTERN_REGISTRY: PatternRegistryType = HALF_PRECISION_PATTERN_REGISTRY[torch.float16]
 # BF16_PATTERN_REGISTRY: PatternRegistryType = HALF_PRECISION_PATTERN_REGISTRY[torch.bfloat16]
-# ALL_NODES = "ALL_NODES"
-
-
-def is_target_node_in_candidate_list(match, original_graph, pattern_graph, node_list, target_op):
-    """Filter the node with target operator in match and check if it is in `node_list`."""
-    target_node = None
-    for node in pattern_graph.nodes:
-        if node.target == target_op:
-            target_node = node
-            break
-    if target_node is None:
-        return False
-    matched_node = match.nodes_map[target_node]
-    return matched_node in node_list
 
 
 def pattern_factory(fn: TorchFuncType, fn_arg: Tuple[torch.Tensor, ...], target_dtype: torch.dtype = torch.float16):
@@ -96,9 +81,8 @@ def pattern_factory(fn: TorchFuncType, fn_arg: Tuple[torch.Tensor, ...], target_
     search_pattern_gm = make_fx(fn, pre_dispatch=True)(*fn_arg)
     # TODO: double-check `*fn_args` or `fn_args`
     replace_pattern_gm = make_fx(replace_fn, pre_dispatch=True)(fn_arg)
-    target_op = FN_ATEN_OPS_MAPPING[fn]
-    filter_fn = partial(is_target_node_in_candidate_list, target_op=target_op)
-    pattern_pair = PatternPair(search_pattern_gm, replace_pattern_gm, [filter_fn])
+
+    pattern_pair = PatternPair(fn, search_pattern_gm, replace_pattern_gm)
 
     return pattern_pair
 
@@ -115,17 +99,31 @@ def _register_pattern_pair(dtype: torch.dtype) -> None:
 _register_pattern_pair(torch.float16)
 
 
+def get_filter_fn(node_list, fn):
+    target_op = FN_ATEN_OPS_MAPPING[fn]
+
+    def is_target_node_in_candidate_list(match, original_graph, pattern_graph):
+        """Filter the node with target operator in match and check if it is in `node_list`."""
+        target_node = None
+        for node in pattern_graph.nodes:
+            if node.target == target_op:
+                target_node = node
+                break
+        if target_node is None:
+            return False
+        matched_node = match.nodes_map[target_node]
+        return matched_node in node_list
+
+    return is_target_node_in_candidate_list
+
+
 def apply_single_pattern_pair(gm: torch.fx.GraphModule, pattern_pair: PatternPair, node_list):
-    match_filters_with_node_list = []
-    if pattern_pair.match_filters:
-        match_filters_with_node_list = [
-            partial(filter_fn, node_list=node_list) for filter_fn in pattern_pair.match_filters
-        ]
+    filter_fn = get_filter_fn(node_list, pattern_pair.fn)
     match_and_replacements = subgraph_rewriter.replace_pattern_with_filters(
         gm=gm,
         pattern=pattern_pair.search_pattern,
         replacement=pattern_pair.replace_pattern,
-        match_filters=match_filters_with_node_list,
+        match_filters=[filter_fn],
     )
     utils.logger.info(f"Found {len(match_and_replacements)} matches.")
 
@@ -160,4 +158,5 @@ def transformation(gm: torch.fx.GraphModule, node_candidate_list: List[str], tar
     """Convert the nodes in `node_candidate_list` to `target_dtype` if possible."""
     for pattern_pair in HALF_PRECISION_PATTERN_REGISTRY[target_dtype].values():
         apply_single_pattern_pair(gm, pattern_pair, node_candidate_list)
-    print(gm.print_readable())
+    utils.logger.info("Half precision conversion is done:")
+    gm.print_readable(True)
