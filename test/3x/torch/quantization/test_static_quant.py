@@ -1,8 +1,8 @@
 import copy
+import shutil
 
 import pytest
 import torch
-import shutil
 
 from neural_compressor.torch.quantization import (
     StaticQuantConfig,

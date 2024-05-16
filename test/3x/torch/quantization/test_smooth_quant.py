@@ -1,8 +1,8 @@
 import copy
+import shutil
 
 import pytest
 import torch
-import shutil
 
 from neural_compressor.torch.quantization import SmoothQuantConfig, get_default_sq_config, quantize
 from neural_compressor.torch.utils import is_ipex_available

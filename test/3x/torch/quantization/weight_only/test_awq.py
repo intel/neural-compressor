@@ -1,9 +1,9 @@
 import copy
+import shutil
 
 import pytest
 import torch
 import transformers
-import shutil
 
 from neural_compressor.common import Logger
 

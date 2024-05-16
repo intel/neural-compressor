@@ -1,9 +1,9 @@
 import copy
+import shutil
 
 import pytest
 import torch
 import transformers
-import shutil
 
 from neural_compressor.torch.algorithms.weight_only.modules import WeightOnlyLinear
 from neural_compressor.torch.quantization import (
@@ -40,7 +40,6 @@ class TestGPTQQuant:
 
     def teardown_class(self):
         shutil.rmtree("saved_results", ignore_errors=True)
-
 
     def test_accuracy_improvement(self):
         # test_default_rtn_config
