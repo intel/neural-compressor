@@ -19,6 +19,14 @@ from neural_compressor.torch.quantization import (
 from neural_compressor.torch.utils import TORCH_VERSION_2_2_2, get_torch_version, is_ipex_imported
 
 
+@pytest.fixture
+def force_not_import_ipex(monkeypatch):
+    def _is_ipex_imported():
+        return False
+
+    monkeypatch.setattr("neural_compressor.torch.utils.is_ipex_imported", _is_ipex_imported)
+
+
 class TestPT2EQuantization:
 
     @staticmethod
@@ -58,9 +66,8 @@ class TestPT2EQuantization:
         exported_model = export(model, example_inputs=example_inputs)
         return exported_model, example_inputs
 
-    @pytest.mark.skipif(is_ipex_imported(), reason="IPEX is imported")
     @pytest.mark.skipif(get_torch_version() <= TORCH_VERSION_2_2_2, reason="Requires torch>=2.3.0")
-    def test_quantize_simple_model(self):
+    def test_quantize_simple_model(self, force_not_import_ipex):
         model, example_inputs = self.build_simple_torch_model_and_example_inputs()
         quant_config = None
 
@@ -78,10 +85,9 @@ class TestPT2EQuantization:
         logger.warning("out shape is %s", out.shape)
         assert out is not None
 
-    @pytest.mark.skipif(is_ipex_imported(), reason="IPEX is imported")
     @pytest.mark.skipif(get_torch_version() <= TORCH_VERSION_2_2_2, reason="Requires torch>=2.3.0")
     @pytest.mark.parametrize("is_dynamic", [False, True])
-    def test_prepare_and_convert_on_simple_model(self, is_dynamic):
+    def test_prepare_and_convert_on_simple_model(self, is_dynamic, force_not_import_ipex):
         model, example_inputs = self.build_simple_torch_model_and_example_inputs()
         quant_config = None
 
@@ -107,9 +113,8 @@ class TestPT2EQuantization:
         logger.warning("out shape is %s", out.shape)
         assert out is not None
 
-    @pytest.mark.skipif(is_ipex_imported(), reason="IPEX is imported")
     @pytest.mark.skipif(get_torch_version() <= TORCH_VERSION_2_2_2, reason="Requires torch>=2.3.0")
-    def test_prepare_and_convert_on_llm(self):
+    def test_prepare_and_convert_on_llm(self, force_not_import_ipex):
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
         # set TOKENIZERS_PARALLELISM to false

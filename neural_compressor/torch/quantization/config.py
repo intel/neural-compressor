@@ -779,7 +779,7 @@ def get_default_AutoRound_config() -> AutoRoundConfig:
     return AutoRoundConfig()
 
 
-######################## Static Quant Config ###############################
+######################## Dynamic Quant Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=PT2E_DYNAMIC_QUANT)
 class DynamicQuantConfig(BaseConfig):
     """Config class for dynamic quantization."""
