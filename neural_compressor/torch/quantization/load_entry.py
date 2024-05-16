@@ -53,6 +53,6 @@ def load(output_dir="./saved_results", model=None):
 
         model.qconfig = config_mapping
         if isinstance(config_object, FP8Config):  # FP8
-            from neural_compressor.torch.algorithms.habana_fp8 import load  # pylint: disable=E1121
+            from neural_compressor.torch.algorithms.habana_fp8 import load  
 
-            return load(model, output_dir)
+            return load(model, output_dir) # pylint: disable=E1121
