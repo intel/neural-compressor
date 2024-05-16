@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
+
 import torch
 from packaging.version import Version
 
@@ -63,6 +65,13 @@ def get_torch_version():
         assert False, "Got an unknown version of torch: {}".format(e)
     version = Version(torch_version)
     return version
+
+
+def is_ipex_imported() -> bool:
+    for name, _ in sys.modules.items():
+        if name == "intel_extension_for_pytorch":
+            return True
+    return False
 
 
 def get_device(device_name="auto"):

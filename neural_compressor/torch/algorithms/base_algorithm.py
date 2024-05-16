@@ -18,7 +18,7 @@ from typing import Any, Optional
 
 import torch
 
-from neural_compressor.torch.utils import Mode
+from neural_compressor.common.utils import Mode
 
 
 class Quantizer(ABC):
@@ -99,14 +99,13 @@ class Quantizer(ABC):
 
         return model
 
-    def execute(self, model: torch.nn.Module, mode, *args: Any, **kwargs: Any):  # pragma: no cover
+    def execute(self, model: torch.nn.Module, mode, *args: Any, **kwargs: Any):
         """Execute according to mode.
 
         Args:
             model (torch.nn.Module): The model to be executed.
             mode (Mode): The mode of current phase, including 'prepare', 'convert' and 'quantize'.
         """
-        # TODO: remove '# pragma: no cover' once CI test can cover this function
         if mode == Mode.PREPARE:
             model = self.prepare(model, *args, **kwargs)
         elif mode == Mode.CONVERT:

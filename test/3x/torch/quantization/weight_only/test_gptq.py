@@ -60,23 +60,29 @@ class TestGPTQQuant:
         # 0.05 VS 0.08
         assert gptq_atol < rtn_atol, "GPTQ should have lower atol than RTN, please double check."
 
-    def test_quantize_API(self):
+    def test_gptq_with_quantize_API(self):
         # test_default_gptq_config
         model = copy.deepcopy(self.tiny_gptj)
         quant_config = get_default_gptq_config()
+
+        # prepare + convert API
         model = prepare(model, quant_config)
         run_fn(model)
         model = convert(model)
         gptq_label = model(self.example_inputs)[0]
         gptq_atol_1 = (gptq_label - self.label).amax()
+
         # quantize API
         model = copy.deepcopy(self.tiny_gptj)
         quant_config = get_default_gptq_config()
         model = quantize(model, quant_config, run_fn=run_fn)
         gptq_label = model(self.example_inputs)[0]
         gptq_atol_2 = (gptq_label - self.label).amax()
-        # 0.05 VS 0.08
-        assert gptq_atol_1 == gptq_atol_2, "GPTQ should have lower atol than RTN, please double check."
+
+        # compare the results of calling `convert` + `prepare` and calling `quantize`
+        assert (
+            gptq_atol_1 == gptq_atol_2
+        ), "The results of calling `convert` + `prepare` and calling `quantize` should be equal."
 
     @pytest.mark.parametrize(
         "bits, use_sym, group_size",
@@ -193,12 +199,13 @@ class TestGPTQQuant:
         assert q_model is not None, "Quantization failed!"
         q_model.save("saved_results")
         inc_out = q_model(self.example_inputs)[0]
-        
+
         from neural_compressor.torch.quantization import load
 
         # loading compressed model
         loaded_model = load("saved_results")
         loaded_out = loaded_model(self.example_inputs)[0]
         assert torch.allclose(inc_out, loaded_out), "Unexpected result. Please double check."
-        assert isinstance(loaded_model.transformer.h[0].attn.k_proj, WeightOnlyLinear), "loading compressed model failed."
-        
+        assert isinstance(
+            loaded_model.transformer.h[0].attn.k_proj, WeightOnlyLinear
+        ), "loading compressed model failed."

@@ -5,7 +5,7 @@ import torch
 import transformers
 
 from neural_compressor.common import logger
-from neural_compressor.torch.quantization import TEQConfig, convert, get_default_teq_config, prepare, quantize
+from neural_compressor.torch.quantization import convert, prepare, quantize
 
 
 def generate_random_corpus(nsamples=32):
@@ -81,7 +81,7 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
         )
         self.gptj.seqlen = 512
         self.example_inputs = torch.ones([1, 512], dtype=torch.long)
-        
+
         self.quant_config = {
             "teq": {
                 "global": {
@@ -108,42 +108,27 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
             }
         }
 
-    def test_teq_quantize(self):
+    def test_teq(self):
         test_input = torch.ones([1, 512], dtype=torch.long)
         model = copy.deepcopy(self.gptj)
         out0 = model(test_input)
-        qdq_model = quantize(
-            model=copy.deepcopy(self.gptj), quant_config=self.quant_config, run_fn=train, example_inputs=self.example_inputs
-        )
-        self.assertTrue(isinstance(qdq_model, torch.nn.Module))
-        out2 = qdq_model(test_input)
-        self.assertTrue(torch.allclose(out2[0], out0[0], atol=0.03))
-
-    def test_teq_prepare_convert(self):
-        test_input = torch.ones([1, 512], dtype=torch.long)
-        model = copy.deepcopy(self.gptj)
-        out0 = model(test_input)
-        prepared_model = prepare(
-            model, quant_config=self.quant_config, example_inputs=self.example_inputs
-        )
+        prepared_model = prepare(model, quant_config=self.quant_config, example_inputs=self.example_inputs)
         train(prepared_model)
         qdq_model = convert(prepared_model)
         assert qdq_model is not None, "Quantization failed!"
         self.assertTrue(isinstance(qdq_model, torch.nn.Module))
         out1 = qdq_model(test_input)
         self.assertTrue(torch.allclose(out1[0], out0[0], atol=0.03))
-    
+
     def test_save_and_load(self):
         fp32_model = copy.deepcopy(self.gptj)
-        prepared_model = prepare(
-            fp32_model, quant_config=self.quant_config, example_inputs=self.example_inputs
-        )
+        prepared_model = prepare(fp32_model, quant_config=self.quant_config, example_inputs=self.example_inputs)
         train(prepared_model)
         q_model = convert(prepared_model)
         assert q_model is not None, "Quantization failed!"
         q_model.save("saved_results")
         inc_out = q_model(self.example_inputs)[0]
-        
+
         from neural_compressor.torch.quantization import load
 
         # loading compressed model
@@ -151,3 +136,27 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
         loaded_out = loaded_model(self.example_inputs)[0]
         assert torch.allclose(inc_out, loaded_out), "Unexpected result. Please double check."
 
+    def test_teq_with_quantize_API(self):
+        example_inputs = torch.ones([1, 512], dtype=torch.long)
+        test_input = torch.ones([1, 512], dtype=torch.long)
+
+        # prepare + convert API
+        prepared_model = prepare(
+            copy.deepcopy(self.gptj), quant_config=self.quant_config, example_inputs=example_inputs
+        )
+        train(prepared_model)
+        qdq_model = convert(prepared_model)
+        self.assertTrue(isinstance(qdq_model, torch.nn.Module))
+        out1 = qdq_model(test_input)
+
+        # quantize API
+        qdq_model = quantize(
+            model=copy.deepcopy(self.gptj), quant_config=self.quant_config, run_fn=train, example_inputs=example_inputs
+        )
+        self.assertTrue(isinstance(qdq_model, torch.nn.Module))
+        out2 = qdq_model(test_input)
+
+        # compare the results of calling `convert` + `prepare` and calling `quantize`
+        assert torch.all(
+            out1[0].eq(out2[0])
+        ), "The results of calling `convert` + `prepare` and calling `quantize` should be equal."
