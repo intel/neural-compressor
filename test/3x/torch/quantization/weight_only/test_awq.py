@@ -43,22 +43,30 @@ class TestAWQ(unittest.TestCase):
         out1 = self.gptj(example_inputs)
         quant_config = AWQConfig(bits=8, group_size=-1)
         logger.info(f"Test AWQ with config {quant_config}")
-        qdq_model = quantize(
-            model=self.gptj, quant_config=quant_config, example_inputs=self.lm_input, run_fn=calib_func
+        model = prepare(
+            model=self.gptj,
+            quant_config=quant_config,
+            example_inputs=self.lm_input,
         )
+        calib_func(model)
+        qdq_model = convert(model)
         out2 = qdq_model(example_inputs)
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-2))
 
         # default awq_quantize is 4 bits, 32 group size, use big atol=1e-1
         quant_config = AWQConfig()
         logger.info(f"Test AWQ with config {quant_config}")
-        qdq_model = quantize(
-            model=self.gptj, quant_config=quant_config, example_inputs=self.lm_input, run_fn=calib_func
+        model = prepare(
+            model=self.gptj,
+            quant_config=quant_config,
+            example_inputs=self.lm_input,
         )
+        calib_func(model)
+        qdq_model = convert(model)
         out2 = qdq_model(example_inputs)
         self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-1))
 
-    def test_awq_with_new_api(self):
+    def test_awq_with_quantize_API(self):
         example_inputs = torch.ones([1, 10], dtype=torch.long)
 
         @torch.no_grad()
@@ -66,31 +74,29 @@ class TestAWQ(unittest.TestCase):
             for i in range(2):
                 model(self.lm_input)
 
-        out1 = self.gptj(example_inputs)
-        quant_config = AWQConfig(bits=8, group_size=-1)
+        quant_config = get_default_awq_config()
         logger.info(f"Test AWQ with config {quant_config}")
-        model = prepare(
-            model=self.gptj,
-            quant_config=quant_config,
-            example_inputs=self.lm_input,
-        )
-        calib_func(model)
-        qdq_model = convert(model)
-        out2 = qdq_model(example_inputs)
-        self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-2))
 
-        # default awq_quantize is 4 bits, 32 group size, use big atol=1e-1
-        quant_config = AWQConfig()
-        logger.info(f"Test AWQ with config {quant_config}")
+        # prepare + convert API
         model = prepare(
-            model=self.gptj,
+            model=copy.deepcopy(self.gptj),
             quant_config=quant_config,
             example_inputs=self.lm_input,
         )
         calib_func(model)
         qdq_model = convert(model)
+        out1 = qdq_model(example_inputs)
+
+        # quantize API
+        qdq_model = quantize(
+            model=copy.deepcopy(self.gptj), quant_config=quant_config, example_inputs=self.lm_input, run_fn=calib_func
+        )
         out2 = qdq_model(example_inputs)
-        self.assertTrue(torch.allclose(out1[0], out2[0], atol=1e-1))
+
+        # compare the results of calling `convert` + `prepare` and calling `quantize`
+        assert torch.all(
+            out1[0].eq(out2[0])
+        ), "The results of calling `convert` + `prepare` and calling `quantize` should be equal."
 
 
 if __name__ == "__main__":
