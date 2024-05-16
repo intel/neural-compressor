@@ -7,7 +7,6 @@ import transformers
 from neural_compressor.torch.algorithms.weight_only.modules import WeightOnlyLinear
 from neural_compressor.torch.quantization import GPTQConfig, get_default_gptq_config, get_default_rtn_config, quantize
 
-
 def run_fn(model):
     # GPTQ uses ValueError to reduce computation when collecting input data of the first block
     # It's special for UTs, no need to add this wrapper in examples.
@@ -181,3 +180,20 @@ class TestGPTQQuant:
             ), "asym for double quant should have smaller atol because scales is bigger than zero, please double check."
         except:
             assert torch.allclose(atol_false, atol_true, atol=0.008), "atol is very close, double checked the logic."
+
+    def test_conv1d(self):
+        input = torch.randn(1, 32)
+        from transformers import GPT2Tokenizer, GPT2Model
+        tokenizer = GPT2Tokenizer.from_pretrained('sshleifer/tiny-gpt2')
+        model = GPT2Model.from_pretrained('sshleifer/tiny-gpt2')
+        text = "Replace me by any text you'd like."
+        encoded_input = tokenizer(text, return_tensors='pt')
+        def run_fn_conv1d(model):
+            with pytest.raises(ValueError):
+                for i in range(2):
+                    model(**encoded_input)
+        quant_config = get_default_gptq_config()
+        out1 = model(**encoded_input)[0]
+        q_model = quantize(model, quant_config, run_fn=run_fn_conv1d)
+        out2 = q_model(**encoded_input)[0]
+        assert torch.allclose(out2, out1, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
