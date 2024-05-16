@@ -132,11 +132,11 @@ class Quantizer(ABC):
         elif mode == Mode.CONVERT:
             model = self.convert(model, *args, **kwargs)
         elif mode == Mode.QUANTIZE:
-            try:
-                model = self.quantize(model, *args, **kwargs)
-            except:
+            if "recipe_cfgs" in self.quant_config:  # keep quantize API for smoothquant
                 run_fn = kwargs.get("run_fn", None)
                 example_inputs = kwargs.get("example_inputs", None)
                 inplace = kwargs.get("inplace", True)
                 model = self.quantize(model, self.quant_config, run_fn, example_inputs, inplace)
+            else:
+                model = self.quantize(model, *args, **kwargs)
         return model
