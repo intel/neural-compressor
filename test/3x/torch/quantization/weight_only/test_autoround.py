@@ -13,10 +13,14 @@ from neural_compressor.torch.quantization import (
     quantize,
 )
 from neural_compressor.torch.utils import logger
+from packaging.version import Version
 
 try:
     import auto_round
+    AUTO_ROUND_VERSION_0_11 = Version("0.11")
 
+    auto_round_version = auto_round.__version__.split("+")[0]
+    auto_round_version = Version(auto_round_version)
     auto_round_installed = True
 except ImportError:
     auto_round_installed = False
@@ -132,3 +136,37 @@ class TestAutoRound:
         )
         out2 = q_model(inp)
         assert torch.allclose(out1[0], out2[0], atol=1e-1)
+
+    @pytest.mark.skipif(auto_round_version <= AUTO_ROUND_VERSION_0_11, reason="Requires auto_round>=0.11")
+    def test_conv1d(self):
+        input = torch.randn(1, 32)
+        from transformers import GPT2Model, GPT2Tokenizer
+
+        tokenizer = GPT2Tokenizer.from_pretrained("sshleifer/tiny-gpt2")
+        model = GPT2Model.from_pretrained("sshleifer/tiny-gpt2")
+        text = "Replace me by any text you'd like."
+        encoded_input = tokenizer(text, return_tensors="pt")
+        out1 = model(**encoded_input)[0]
+        run_fn = get_autoround_default_run_fn
+        run_args = (
+            tokenizer,
+            "NeelNanda/pile-10k",
+            20,
+            10,
+        )
+        weight_config = {
+            "*": {
+                "data_type": "int",
+                "bits": 4,
+                "group_size": 32,
+                "sym": False,
+            }
+        }
+        quantizer = AutoRoundQuantizer(quant_config=weight_config)
+
+        # quantizer execute
+        model = quantizer.prepare(model=model)
+        run_fn(model, *run_args)
+        q_model = quantizer.convert(model)
+        out2 = q_model(**encoded_input)[0]
+        assert torch.allclose(out2, out1, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."

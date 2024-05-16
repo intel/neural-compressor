@@ -295,7 +295,8 @@ class TestRTNQuant:
             group_dim=group_dim,
         )
         out1 = model(input)
-        model = quantize(model, quant_config)
+        model = prepare(model, quant_config)
+        model = convert(model)
         out2 = model(input)
         # assert torch.allclose(out2, out1, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
         assert (out2 != out1).all(), "WOQ out2put should be different with raw output"
@@ -319,7 +320,8 @@ class TestRTNQuant:
             export_compressed_model=True,
         )
 
-        model = quantize(model_for_export, quant_config)
+        model = prepare(model, quant_config)
+        model = convert(model)
         out2 = model(input)
         # The small gap is caused by FP16 scale in WeightOnlyLinear.
         assert torch.allclose(out2, q_out, atol=5e-4), \
