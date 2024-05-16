@@ -16,7 +16,7 @@ from neural_compressor.torch.quantization import (
     prepare,
     quantize,
 )
-from neural_compressor.torch.utils import TORCH_VERSION_2_2_2, get_torch_version, is_ipex_imported
+from neural_compressor.torch.utils import TORCH_VERSION_2_2_2, get_torch_version
 
 
 @pytest.fixture
@@ -24,7 +24,9 @@ def force_not_import_ipex(monkeypatch):
     def _is_ipex_imported():
         return False
 
-    monkeypatch.setattr("neural_compressor.torch.utils.is_ipex_imported", _is_ipex_imported)
+    monkeypatch.setattr("neural_compressor.torch.quantization.config.is_ipex_imported", _is_ipex_imported)
+    monkeypatch.setattr("neural_compressor.torch.quantization.algorithm_entry.is_ipex_imported", _is_ipex_imported)
+    monkeypatch.setattr("neural_compressor.torch.export._export.is_ipex_imported", _is_ipex_imported)
 
 
 class TestPT2EQuantization:
