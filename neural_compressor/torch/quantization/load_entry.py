@@ -37,7 +37,7 @@ def load(output_dir="./saved_results", model=None):
     qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), "qconfig.json")
     with open(qconfig_file_path, "r") as f:
         per_op_qconfig = json.load(f)
-   
+
     if " " in per_op_qconfig.keys():  # ipex qconfig format: {' ': {'q_op_infos': {'0': {'op_type': ...
         from neural_compressor.torch.algorithms.static_quant import load
 
@@ -50,7 +50,7 @@ def load(output_dir="./saved_results", model=None):
             from neural_compressor.torch.algorithms.weight_only.save_load import load
 
             return load(output_dir)
-        
+
         model.qconfig = config_mapping
         if isinstance(config_object, FP8Config):
             from neural_compressor.torch.algorithms.habana_fp8 import load
