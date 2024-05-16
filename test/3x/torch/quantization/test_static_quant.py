@@ -63,11 +63,16 @@ class TestStaticQuant:
         quant_config = get_default_static_config()
         example_inputs = self.input
         # fallback by op_type
-        quant_config.set_local(torch.nn.modules.linear.Linear, StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
+        quant_config.set_local(torch.nn.Linear, StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
         prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
         run_fn(prepared_model)
         q_model = convert(prepared_model)
         assert q_model is not None, "Quantization failed!"
+
+        for op, op_info in q_model.tune_cfg[" "]["q_op_infos"].items():
+            if op_info["op_type"] == "<class 'torch.nn.modules.linear.Linear'>":
+                dtype = q_model.tune_cfg[" "]["q_op_infos"][op]["input_tensor_infos"][0]["force_dtype"]
+                assert dtype == "torch.float32", "Failed to fallback linear op, please check!"
 
         # fallback by op_name
         quant_config.set_local("fc1", StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
@@ -75,6 +80,11 @@ class TestStaticQuant:
         run_fn(prepared_model)
         q_model = convert(prepared_model)
         assert q_model is not None, "Quantization failed!"
+
+        for op, op_info in q_model.tune_cfg[" "]["q_op_infos"].items():
+            if op_info["fqn"] == "fc1":
+                dtype = q_model.tune_cfg[" "]["q_op_infos"][op]["input_tensor_infos"][0]["force_dtype"]
+                assert dtype == "torch.float32", "Failed to fallback fc1 layer, please check!"
 
     @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
     @pytest.mark.parametrize(
