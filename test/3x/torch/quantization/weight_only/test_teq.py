@@ -109,6 +109,7 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
             }
         }
 
+    @classmethod
     def tearDownClass(self):
         shutil.rmtree("saved_results", ignore_errors=True)
 
