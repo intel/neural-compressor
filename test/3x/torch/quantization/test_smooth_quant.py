@@ -106,12 +106,10 @@ class TestSmoothQuant:
 
     @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
     def test_sq_ipex_accuracy(self):
-        from intel_extension_for_pytorch.quantization import convert, prepare
-
         example_inputs = torch.zeros([1, 3])
         qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
         user_model = copy.deepcopy(model)
-        user_model = prepare(user_model.eval(), qconfig, example_inputs=example_inputs, inplace=True)
+        user_model = ipex.quantization.prepare(user_model.eval(), qconfig, example_inputs=example_inputs, inplace=True)
 
         def run_fn(model):
             model(example_inputs)
@@ -119,7 +117,7 @@ class TestSmoothQuant:
         run_fn(user_model)
         user_model.save_qconf_summary(qconf_summary="ipex.json")
         with torch.no_grad():
-            user_model = convert(user_model.eval(), inplace=True).eval()
+            user_model = ipex.quantization.convert(user_model.eval(), inplace=True).eval()
             user_model(example_inputs)
             user_model = torch.jit.trace(user_model.eval(), example_inputs, strict=False)
             user_model = torch.jit.freeze(user_model.eval())

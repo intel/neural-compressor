@@ -93,50 +93,6 @@ class SmoothQuantQuantizer(Quantizer):
         alpha = recipe_cfgs["smooth_quant_args"]["alpha"]
         sq_info = model.sq_info
 
-        # Update model parameter when smoothquant folding = False
-        if recipe_cfgs and recipe_cfgs.get("smooth_quant", False) and not folding:
-            smoothquant_scale_info = sq_info.sq_scale_info
-            sq_minmax_init = True if self.quant_config.get("act_algo", "kl") == "minmax" else False
-
-            # Check save_qconf_summary part is a workaround for IPEX bug.
-            # Sometimes the prepared model from get_op_capablitiy loss this attribute
-            if not hasattr(model, "save_qconf_summary") or not hasattr(model, "load_qconf_summary"):  # pragma: no cover
-                from torch.ao.quantization.observer import MinMaxObserver
-
-                if ipex_ver.release >= Version("2.1.1").release:
-                    static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
-                        alpha=alpha, act_observer=MinMaxObserver
-                    )
-                else:
-                    if sq_minmax_init:
-                        static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
-                            alpha=alpha, act_observer=MinMaxObserver()
-                        )
-                        logger.warning(
-                            "The int8 model accuracy will be close to 0 with MinMaxobserver, "
-                            + "the suggested IPEX version is higher or equal than 2.1.100+cpu."
-                        )
-                    else:
-                        static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=alpha)
-                if isinstance(example_inputs, dict):
-                    model = ipex.quantization.prepare(
-                        model, static_qconfig, example_kwarg_inputs=example_inputs, inplace=inplace
-                    )
-                else:
-                    model = ipex.quantization.prepare(
-                        model, static_qconfig, example_inputs=example_inputs, inplace=inplace
-                    )
-
-            # The IPEX SmoothQuant observer can only use save/load_qconf_summary once.
-            # The save_qconf_summary API will freeze the scale used in model and calibration won't work anymore.
-            # The load_qconf_summary will overwrite the scales used in model but only work in the first call.
-            # Here, we use INC collected scale for Linear and set normal observer instead of SQObserver \
-            # to make sure calibration works for other ops, like add, bmm.
-            cfg_to_qconfig(self.quant_config, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, smooth_quant=True)
-            update_sq_scale(ipex_config_path, smoothquant_scale_info)
-            model.load_qconf_summary(qconf_summary=ipex_config_path)
-            return model
-
         # Update model parameter when smoothquant folding = True
         if recipe_cfgs and recipe_cfgs.get("smooth_quant", False) and folding:
             _apply_pre_optimization(model, self.quant_config, sq_info)
@@ -170,10 +126,6 @@ class SmoothQuantQuantizer(Quantizer):
         Returns:
             A quantized model.
         """
-        sq_info = model.sq_info
-        model.save_qconf_summary(qconf_summary=ipex_config_path)
-        model = _ipex_post_quant_process(model, example_inputs, inplace=inplace)
-
         # check smoothquant folding value
         recipe_cfgs = self.quant_config.get("recipe_cfgs", None)
         if "smooth_quant_args" in recipe_cfgs and "folding" in recipe_cfgs["smooth_quant_args"]:
@@ -185,14 +137,17 @@ class SmoothQuantQuantizer(Quantizer):
             else:  # pragma: no cover
                 folding = recipe_cfgs["smooth_quant_args"]["folding"]
 
+        sq_info = model.sq_info
+
         # folding = False
         if recipe_cfgs and recipe_cfgs.get("smooth_quant", False) and not folding:
             if ipex_ver.release > Version("2.1.0").release:
                 smoothquant_scale_info = sq_info.sq_scale_info
                 update_sq_scale(ipex_config_path, smoothquant_scale_info)
                 model.load_qconf_summary(qconf_summary=ipex_config_path)
-            model.save_qconf_summary(qconf_summary=ipex_config_path)
-            model = _ipex_post_quant_process(model, example_inputs, inplace=inplace)
+
+        model.save_qconf_summary(qconf_summary=ipex_config_path)
+        model = _ipex_post_quant_process(model, example_inputs, inplace=inplace)
 
         # Recover model parameter when smoothquant folding = True
         if (
@@ -251,7 +206,6 @@ class SmoothQuantQuantizer(Quantizer):
             logger.info("The model is already optimized by SmoothQuant algorithm, skip it.")
             return model
 
-        alpha = recipe_cfgs["smooth_quant_args"]["alpha"]
         sq_info = model.sq_info
 
         # Update model parameter when smoothquant folding = False
@@ -262,7 +216,6 @@ class SmoothQuantQuantizer(Quantizer):
                 run_fn,
                 example_inputs,
                 inplace,
-                alpha,
                 cfgs,
                 op_infos_from_cfgs,
                 output_tensor_id_op_name,
@@ -310,7 +263,7 @@ class SmoothQuantQuantizer(Quantizer):
 
 
 def qdq_quantize(
-    model, tune_cfg, run_fn, example_inputs, inplace, alpha, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, sq
+    model, tune_cfg, run_fn, example_inputs, inplace, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, sq
 ):
     smoothquant_scale_info = sq.sq_scale_info
     sq_minmax_init = True if tune_cfg.get("act_algo", "kl") == "minmax" else False
@@ -321,20 +274,18 @@ def qdq_quantize(
         from torch.ao.quantization.observer import MinMaxObserver
 
         if ipex_ver.release >= Version("2.1.1").release:
-            static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
-                alpha=alpha, act_observer=MinMaxObserver
-            )
+            static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5, act_observer=MinMaxObserver)
         else:
             if sq_minmax_init:
                 static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
-                    alpha=alpha, act_observer=MinMaxObserver()
+                    alpha=0.5, act_observer=MinMaxObserver()
                 )
                 logger.warning(
                     "The int8 model accuracy will be close to 0 with MinMaxobserver, "
                     + "the suggested IPEX version is higher or equal than 2.1.100+cpu."
                 )
             else:
-                static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=alpha)
+                static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
         if isinstance(example_inputs, dict):
             model = ipex.quantization.prepare(
                 model, static_qconfig, example_kwarg_inputs=example_inputs, inplace=inplace
