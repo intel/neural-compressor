@@ -349,7 +349,9 @@ class TestAutoTune(unittest.TestCase):
             res = acc_res_lst.pop(0)
             return res
 
-        custom_tune_config = TuningConfig(config_set=[MixPrecisionConfig(dtype=["fp16", "bf16", "fp32"])], tolerable_loss=-1)
+        custom_tune_config = TuningConfig(
+            config_set=[MixPrecisionConfig(dtype=["fp16", "bf16", "fp32"])], tolerable_loss=-1
+        )
         best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fn=eval_acc_fn)
 
         self.assertIsNotNone(best_model)
