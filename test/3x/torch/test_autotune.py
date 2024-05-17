@@ -392,8 +392,8 @@ class TestAutoTune(unittest.TestCase):
                     }
                 },
             }
-        }        
-        
+        }
+
         registered_configs = config_registry.get_cls_configs()
         config1 = ComposableConfig.from_dict(config1, config_registry=registered_configs["torch"])
         config2 = ComposableConfig.from_dict(config2, config_registry=registered_configs["torch"])
