@@ -1,5 +1,6 @@
 auto-round
 intel_extension_for_pytorch
+overrides
 peft
 psutil
 py-cpuinfo
