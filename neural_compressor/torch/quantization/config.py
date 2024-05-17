@@ -43,7 +43,7 @@ from neural_compressor.common.utils import (
     STATIC_QUANT,
     TEQ,
 )
-from neural_compressor.torch.utils import is_hpex_available, is_ipex_imported, logger
+from neural_compressor.torch.utils import is_hpex_available, is_ipex_imported, is_transformers_imported, logger
 from neural_compressor.torch.utils.constants import (
     PRIORITY_AUTOROUND,
     PRIORITY_AWQ,
@@ -66,6 +66,12 @@ __all__ = [
 
 
 FRAMEWORK_NAME = "torch"
+if is_transformers_imported():
+    import transformers
+
+    WOQ_WHITE_LIST = (torch.nn.Linear, transformers.Conv1D)
+else:
+    WOQ_WHITE_LIST = (torch.nn.Linear,)
 
 
 class OperatorConfig(NamedTuple):
@@ -193,10 +199,9 @@ class RTNConfig(BaseConfig):
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
-        white_list = (torch.nn.Linear,)
         filter_result = []
         for op_name, module in model.named_modules():
-            if isinstance(module, white_list):
+            if isinstance(module, WOQ_WHITE_LIST):
                 pair = (op_name, type(module).__name__)
                 filter_result.append(pair)
         logger.debug(f"Get model info: {filter_result}")
@@ -339,10 +344,9 @@ class GPTQConfig(BaseConfig):
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
-        white_list = (torch.nn.Linear,)
         filter_result = []
         for op_name, module in model.named_modules():
-            if isinstance(module, white_list):
+            if isinstance(module, WOQ_WHITE_LIST):
                 pair = (op_name, type(module).__name__)
                 filter_result.append(pair)
         logger.debug(f"Get model info: {filter_result}")
@@ -472,10 +476,9 @@ class AWQConfig(BaseConfig):
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
-        white_list = (torch.nn.Linear,)
         filter_result = []
         for op_name, module in model.named_modules():
-            if isinstance(module, white_list):
+            if isinstance(module, WOQ_WHITE_LIST):
                 pair = (op_name, type(module).__name__)
                 filter_result.append(pair)
         logger.debug(f"Get model info: {filter_result}")
@@ -597,10 +600,9 @@ class TEQConfig(BaseConfig):
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
-        white_list = (torch.nn.Linear,)
         filter_result = []
         for op_name, module in model.named_modules():
-            if isinstance(module, white_list):
+            if isinstance(module, WOQ_WHITE_LIST):
                 pair = (op_name, type(module).__name__)
                 filter_result.append(pair)
         logger.debug(f"Get model info: {filter_result}")
@@ -743,10 +745,9 @@ class AutoRoundConfig(BaseConfig):
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
-        white_list = (torch.nn.Linear,)
         filter_result = []
         for op_name, module in model.named_modules():
-            if isinstance(module, white_list):
+            if isinstance(module, WOQ_WHITE_LIST):
                 pair = (op_name, type(module).__name__)
                 filter_result.append(pair)
         logger.debug(f"Get model info: {filter_result}")
@@ -1071,10 +1072,9 @@ class HQQConfig(BaseConfig):
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
-        white_list = (torch.nn.Linear,)
         filter_result = []
         for op_name, module in model.named_modules():
-            if isinstance(module, white_list):
+            if isinstance(module, WOQ_WHITE_LIST):
                 pair = (op_name, type(module).__name__)
                 filter_result.append(pair)
         return filter_result

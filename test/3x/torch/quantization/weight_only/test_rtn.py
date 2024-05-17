@@ -16,6 +16,20 @@ from neural_compressor.torch.quantization import (
 )
 
 
+class ModelConv1d(torch.nn.Module):
+    def __init__(self):
+        super(ModelConv1d, self).__init__()
+        self.fc1 = transformers.Conv1D(50, 32)
+        self.fc2 = torch.nn.Linear(50, 32)
+        self.fc3 = torch.nn.Linear(32, 5)
+
+    def forward(self, x):
+        out = self.fc1(x)
+        out = self.fc2(out)
+        out = self.fc3(out)
+        return out
+
+
 class TestRTNQuant:
     def setup_class(self):
         self.tiny_gptj = transformers.AutoModelForCausalLM.from_pretrained(
@@ -222,6 +236,39 @@ class TestRTNQuant:
         assert torch.all(
             output_1.eq(output_2)
         ), "The results of calling `convert` + `prepare` and calling `quantize` should be equal."
+
+    # TODO: (4, True, 32, 0), group_dim=0, format not supported
+    @pytest.mark.parametrize(
+        "bits, use_sym, group_size, group_dim",
+        [
+            (8, True, 128, 1),
+            (4, True, 128, 1),
+            (4, False, 32, 1),
+            (4, False, -1, 1),
+            (2, True, 8, 1),
+        ],
+    )
+    def test_conv1d(self, bits, use_sym, group_size, group_dim):
+        model = ModelConv1d()
+        input = torch.randn(1, 32)
+        quant_config = RTNConfig(
+            bits=bits,
+            use_sym=use_sym,
+            group_size=group_size,
+            group_dim=group_dim,
+        )
+        out1 = model(input)
+        model = prepare(model, quant_config)
+        model = convert(model)
+        out2 = model(input)
+        # assert torch.allclose(out2, out1, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
+        assert (out2 != out1).all(), "WOQ out2put should be different with raw output"
+        if (bits, use_sym, group_size, group_dim) == (8, True, 128, 1):
+            assert torch.allclose(out2, out1, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
+        if (bits, use_sym, group_size, group_dim) == [(4, True, 128, 0), (4, True, 32, 1)]:
+            assert torch.allclose(out2, out1, atol=0.1), "Accuracy gap atol > 0.1 is unexpected."
+        if (bits, use_sym, group_size, group_dim) == [(4, False, 32, 0), (4, False, -1, 1), (2, True, 8, 1)]:
+            assert torch.allclose(out2, out1, atol=0.5), "Accuracy gap atol > 0.5 is unexpected."
 
     def test_save_and_load(self):
         fp32_model = copy.deepcopy(self.tiny_gptj)

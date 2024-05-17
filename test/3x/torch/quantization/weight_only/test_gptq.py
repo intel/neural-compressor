@@ -192,6 +192,27 @@ class TestGPTQQuant:
         except:
             assert torch.allclose(atol_false, atol_true, atol=0.008), "atol is very close, double checked the logic."
 
+    def test_conv1d(self):
+        from transformers import GPT2Model, GPT2Tokenizer
+
+        tokenizer = GPT2Tokenizer.from_pretrained("sshleifer/tiny-gpt2")
+        model = GPT2Model.from_pretrained("sshleifer/tiny-gpt2")
+        text = "Replace me by any text you'd like."
+        encoded_input = tokenizer(text, return_tensors="pt")
+
+        def run_fn_conv1d(model):
+            with pytest.raises(ValueError):
+                for i in range(2):
+                    model(**encoded_input)
+
+        quant_config = get_default_gptq_config()
+        out1 = model(**encoded_input)[0]
+        model = prepare(model, quant_config)
+        run_fn_conv1d(model)
+        q_model = convert(model)
+        out2 = q_model(**encoded_input)[0]
+        assert torch.allclose(out2, out1, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
+
     def test_save_and_load(self):
         fp32_model = copy.deepcopy(self.tiny_gptj)
         quant_config = get_default_gptq_config()
