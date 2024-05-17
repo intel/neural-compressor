@@ -27,7 +27,7 @@ except:
 from collections import OrderedDict
 from types import MethodType
 
-from overrides import overrides
+from overrides import overrides  # pylint: disable=E0401
 from packaging.version import Version
 
 from neural_compressor.torch.algorithms import Quantizer

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 from abc import ABC, abstractmethod
 from typing import Any, Optional
 
@@ -111,7 +112,7 @@ class Quantizer(ABC):
             model = self.convert(model, *args, **kwargs)
         elif mode == Mode.QUANTIZE:
             if not isinstance(self.quant_config, dict):
-                self.quant_config = self.quant_config.to_dict()
+                self.quant_config = copy.deepcopy(self.quant_config).to_dict()
             if "recipe_cfgs" in self.quant_config:  # keep quantize API for smoothquant
                 run_fn = kwargs.get("run_fn", None)
                 example_inputs = kwargs.get("example_inputs", None)
