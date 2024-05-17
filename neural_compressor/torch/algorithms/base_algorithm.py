@@ -18,7 +18,7 @@ from typing import Any, Optional
 
 import torch
 
-from neural_compressor.torch.utils import Mode
+from neural_compressor.common.utils import Mode
 
 
 class Quantizer(ABC):
@@ -85,29 +85,27 @@ class Quantizer(ABC):
         Returns:
             A quantized model.
         """
-        run_fn = kwargs.get("run_fn", None)
-        run_args = kwargs.get("run_args", None)
-        assert run_fn is not None, (
-            "Can't find run_func. Please provide run_func to quantize API "
-            "or overwrite quantize member function in your Quantizer class."
-        )
-
         model = self.prepare(model, *args, **kwargs)
-        if run_args:
-            run_fn(model, *run_args)
-        else:
-            run_fn(model)
+
+        run_fn = kwargs.get("run_fn", None)
+        if run_fn is not None:
+            run_args = kwargs.get("run_args", None)
+            if run_args:
+                run_fn(model, *run_args)
+            else:
+                run_fn(model)
+
         model = self.convert(model, *args, **kwargs)
+
         return model
 
-    def execute(self, model: torch.nn.Module, mode, *args: Any, **kwargs: Any):  # pragma: no cover
+    def execute(self, model: torch.nn.Module, mode, *args: Any, **kwargs: Any):
         """Execute according to mode.
 
         Args:
             model (torch.nn.Module): The model to be executed.
             mode (Mode): The mode of current phase, including 'prepare', 'convert' and 'quantize'.
         """
-        # TODO: remove '# pragma: no cover' once CI test can cover this function
         if mode == Mode.PREPARE:
             model = self.prepare(model, *args, **kwargs)
         elif mode == Mode.CONVERT:

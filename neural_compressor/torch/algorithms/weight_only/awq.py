@@ -15,9 +15,11 @@
 # Copied from neural_compressor/adaptor/torch_utils/awq.py
 
 import copy
+from collections import OrderedDict
 
 import torch
 
+from neural_compressor.torch.algorithms import Quantizer
 from neural_compressor.torch.utils import get_device, logger
 
 from .modules import MulLinear
@@ -26,13 +28,13 @@ from .utility import (
     get_absorb_layers,
     get_block_prefix,
     get_example_input,
-    get_hidden_states,
     get_module_input_output,
-    model_forward,
+    recover_forward,
+    replace_forward,
     set_module,
 )
 
-__all__ = ["awq_quantize"]
+__all__ = ["AWQQuantizer"]
 
 
 def _get_absorb_per_block(model, example_inputs, folding=False, weight_config={}):
@@ -113,15 +115,15 @@ class ActAwareWeightQuant:
         self,
         model,
         example_inputs=None,
-        calib_func=None,
         dataloader=None,
-        n_samples=128,
         data_type="int",
         bits=4,
         group_size=32,
         scheme="asym",
         use_full_range=False,
         weight_config={},
+        total_block_args=[],
+        total_block_kwargs=[],
     ):
 
         self.example_inputs = example_inputs
@@ -130,11 +132,9 @@ class ActAwareWeightQuant:
             assert dataloader is not None, "datalaoder or example_inputs is required."
             self.example_inputs = get_example_input(dataloader)
         self._move_model_and_data_to_device()
-        # Step 1: get hidden states and kwargs of first block.
-        self.total_block_args, self.total_block_kwargs = get_hidden_states(
-            model, dataloader=dataloader, n_samples=n_samples, calib_func=calib_func
-        )
-        # Step 2: get block list and block prefix, number
+        self.total_block_args = total_block_args
+        self.total_block_kwargs = total_block_kwargs
+        # get block list and block prefix, number
         self.block_prefix, self.block_num = get_block_prefix(model)
         self.block_list = fetch_module(model, self.block_prefix)
         self.data_type = data_type
@@ -429,14 +429,15 @@ class ActAwareWeightQuant:
         """
         # apply quantization and clip
         logger.info("Quantizing the AWQ optimized fp32 model")
-        from .rtn import rtn_quantize
+        from .rtn import RTNQuantizer
 
-        self.model = rtn_quantize(
+        rtn_quantizer = RTNQuantizer(quant_config=self.weight_config)
+
+        self.model = rtn_quantizer.quantize(
             self.model,
-            num_bits=self.bits,
+            bits=self.bits,
             group_size=self.group_size,
             scheme=self.scheme,
-            weight_config=self.weight_config,
             return_int=return_int,
             use_full_range=self.use_full_range,
         )
@@ -492,78 +493,90 @@ class ActAwareWeightQuant:
         return total_out
 
 
-@torch.no_grad()
-def awq_quantize(
-    model,
-    bits=4,
-    group_size=32,
-    scheme="asym",
-    weight_config={},
-    example_inputs=None,
-    dataloader=None,
-    n_samples=128,
-    calib_func=None,
-    use_auto_scale=True,
-    use_mse_search=True,
-    folding=False,
-    return_int=False,
-    use_full_range=False,
-    data_type="int",
-):
-    """Quant the model with Activation-aware Weight quantization(AWQ) method.
+class AWQQuantizer(Quantizer):
+    def __init__(self, quant_config: OrderedDict = {}):
+        """Init an AWQQuantizer object.
 
-    Args:
-        model (torch.nn.Module): torch model.
-        example_inputs: example_inputs.
-        weight_config (dict, optional): contains all info required by AWQ. Defaults to {}.
-            For example,
-                weight_config={
-                    'fc2':
-                        {
-                            # 'absorb_layer': 'fc1',
-                            'bits': 4,
-                            'group_size': 32,
-                            'scheme': 'sym'
-                        }
-                }
-        absorb_dict (dict, optional): contains all absorb info required by AWQ.. Defaults to {}.
-            For example,
-                absorb_dict = {
-                    # 'absorb_layer': absorbed_layer
-                    'fc1': ['fc1', 'fc2', 'fc3']
-                } # in this case, fc2 and fc3 need to share the same scale. fc1 is self absorbed.
-                # self absorb module will replace with MulLinear, which contains torch.mul and module.
-        n_samples: calibration sample number.
-        use_auto_scale (bool, optional): whether enable scale for salient weight. Defaults to True.
-        use_mse_search (bool, optional):  whether enable clip for weight by checking mse. Defaults to True.
-        calib_func: a custom inference function to replace dataloader and iters.
-        n_blocks: split model into block number to avoid OOM.
-        return_int (bool, optional): Choose return fp32 or int32 model.
-                                     Defaults to False.
-        use_full_range (bool, optional): Choose sym range whether use -2**(bits-1).
+        Args:
+            quant_config (OrderedDict, optional): quantization config for ops. Defaults to {}.
+        """
+        super().__init__(quant_config)
 
-    Returns:
-        model: fake quantized model
-    """
+    @torch.no_grad()
+    def prepare(self, model, *args, **kwargs):
+        """Prepare a given model to get hidden states and kwargs of first block.
 
-    assert isinstance(model, torch.nn.Module), "only support torch module"
-    awq = ActAwareWeightQuant(
+        Args:
+            model: A float torch model.
+
+        Returns:
+            A prepared model.
+        """
+        assert isinstance(model, torch.nn.Module), "AWQ algorithm only supports torch module"
+        model = replace_forward(model)
+        return model
+
+    @torch.no_grad()
+    def convert(
+        self,
         model,
-        example_inputs=example_inputs,
-        calib_func=calib_func,
-        dataloader=dataloader,
-        n_samples=n_samples,
-        bits=bits,
-        group_size=group_size,
-        scheme=scheme,
-        use_full_range=use_full_range,
-        weight_config=weight_config,
-        data_type=data_type,
-    )
-    qdq_model = awq.quantize(
-        use_auto_scale=use_auto_scale,
-        use_mse_search=use_mse_search,
-        folding=folding,
-        return_int=return_int,
-    )
-    return qdq_model
+        bits=4,
+        group_size=32,
+        scheme="asym",
+        example_inputs=None,
+        dataloader=None,
+        use_auto_scale=True,
+        use_mse_search=True,
+        folding=False,
+        return_int=False,
+        use_full_range=False,
+        data_type="int",
+        *args,
+        **kwargs,
+    ):
+        """Converts a prepared model to a quantized model.
+
+        Args:
+            model: torch model.
+            bits: num bits. Defaults to 4.
+            group_size: how many elements share one scale/zp. Defaults to 32.
+            scheme: sym or asym. Defaults to "asym".
+            example_inputs: example_inputs. Defaults to None.
+            dataloader: datalaoder or example_inputs is required. Defaults to None.
+            use_auto_scale: whether enable scale for salient weight. Defaults to True.
+            use_mse_search: whether enable clip for weight by checking mse. Defaults to True.
+            folding: False will allow insert mul before linear when the scale cannot be absorbed
+                by last layer, else won't. Defaults to False.
+            return_int: Choose return fp32 or int32 model. Defaults to False.
+            use_full_range: Choose sym range whether use -2**(bits-1). Defaults to False.
+            data_type: data type. Defaults to "int".
+
+        Returns:
+            model: fake quantized model
+        """
+        model = recover_forward(model)
+        total_block_args = getattr(model, "total_block_args", [])
+        total_block_kwargs = getattr(model, "total_block_kwargs", [])
+        delattr(model, "total_block_args")
+        delattr(model, "total_block_kwargs")
+
+        awq = ActAwareWeightQuant(
+            model,
+            example_inputs=example_inputs,
+            dataloader=dataloader,
+            data_type=data_type,
+            bits=bits,
+            group_size=group_size,
+            scheme=scheme,
+            use_full_range=use_full_range,
+            weight_config=self.quant_config,
+            total_block_args=total_block_args,
+            total_block_kwargs=total_block_kwargs,
+        )
+        qdq_model = awq.quantize(
+            use_auto_scale=use_auto_scale,
+            use_mse_search=use_mse_search,
+            folding=folding,
+            return_int=return_int,
+        )
+        return qdq_model
