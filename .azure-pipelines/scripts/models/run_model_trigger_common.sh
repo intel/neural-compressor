@@ -88,6 +88,11 @@ elif [ "${mode}" == "tuning" ]; then
     [[ ${output_model} ]] && tuning_cmd="${tuning_cmd} --output_model=${output_model}"
 
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
+    # for int4 models add "--accuracy" to run tuning after quantize
+    if [[ "${model}" == *"int4"* ]]; then
+        sed -i "s|--quantize|--quantize --accuracy --int8|g" run_quant.sh
+    fi
+
     $BOLD_YELLOW && echo "workspace ${WORK_SOURCE_DIR}/${model_src_dir}" && $RESET
     $BOLD_YELLOW && echo "tuning_cmd is === ${tuning_cmd}" && $RESET
     $BOLD_YELLOW && echo "======== run tuning ========" && $RESET

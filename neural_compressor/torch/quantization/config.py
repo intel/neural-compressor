@@ -87,7 +87,6 @@ class RTNConfig(BaseConfig):
         "group_dim",
         "use_full_range",
         "use_mse_search",
-        "export_compressed_model",
         # layer wise params
         "use_layer_wise",
         "model_path",
@@ -109,7 +108,6 @@ class RTNConfig(BaseConfig):
         group_dim: int = 1,
         use_full_range: bool = False,
         use_mse_search: bool = False,
-        export_compressed_model: bool = False,
         # layer wise
         use_layer_wise: bool = False,
         model_path: str = "",
@@ -132,7 +130,6 @@ class RTNConfig(BaseConfig):
             group_dim (int): Dimension for grouping. Default is 1.
             use_full_range (bool): Enables full range for activations. Default is False.
             use_mse_search (bool): Enables mean squared error (MSE) search. Default is False.
-            export_compressed_model (bool): Enables return model in int format or not. Defaults to False.
             use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
             model_path (str): Model path that is used to load state_dict per layer.
             use_double_quant (bool): Enables double quantization. Default is False.
@@ -149,7 +146,6 @@ class RTNConfig(BaseConfig):
         self.group_dim = group_dim
         self.use_full_range = use_full_range
         self.use_mse_search = use_mse_search
-        self.export_compressed_model = export_compressed_model
         self.use_layer_wise = use_layer_wise
         self.model_path = model_path
         # double quant
@@ -184,7 +180,6 @@ class RTNConfig(BaseConfig):
             use_full_range=[False, True],
             use_mse_search=[False, True],
             use_layer_wise=[False, True],
-            export_compressed_model=[False, True],
             use_double_quant=[False, True],
             double_quant_bits=[4, 1, 2, 3, 5, 6, 7, 8],
             double_quant_dtype=["int"],
@@ -246,7 +241,6 @@ class GPTQConfig(BaseConfig):
         "use_sym",
         "group_size",
         "use_mse_search",
-        "export_compressed_model",
         "use_double_quant",
         "double_quant_dtype",
         "double_quant_bits",
@@ -269,7 +263,6 @@ class GPTQConfig(BaseConfig):
         use_sym: bool = True,
         group_size: int = 32,
         use_mse_search: bool = False,
-        export_compressed_model: bool = False,
         # layer wise
         use_layer_wise: bool = False,
         model_path: str = "",
@@ -295,7 +288,6 @@ class GPTQConfig(BaseConfig):
             use_sym (bool): Indicates whether weights are symmetric. Default is True.
             group_size (int): Size of weight groups. Default is 32.
             use_mse_search (bool): Enables mean squared error (MSE) search. Default is False.
-            export_compressed_model (bool): Enables return model in int format or not. Defaults to False.
             use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
             model_path (str): Model path that is used to load state_dict per layer.
             use_double_quant (bool): Enables double quantization. Default is False.
@@ -319,7 +311,6 @@ class GPTQConfig(BaseConfig):
         self.use_sym = use_sym
         self.group_size = group_size
         self.use_mse_search = use_mse_search
-        self.export_compressed_model = export_compressed_model
         # layer wise
         self.use_layer_wise = use_layer_wise
         self.model_path = model_path
@@ -523,7 +514,6 @@ class TEQConfig(BaseConfig):
         "use_full_range",
         "use_mse_search",
         "use_layer_wise",
-        "export_compressed_model",
         "use_double_quant",
         "double_quant_dtype",
         "double_quant_bits",
@@ -545,7 +535,6 @@ class TEQConfig(BaseConfig):
         use_full_range: bool = False,
         use_mse_search: bool = False,
         use_layer_wise: bool = False,
-        export_compressed_model: bool = False,
         # double quant
         use_double_quant: bool = False,
         double_quant_dtype: str = "int",
@@ -568,7 +557,6 @@ class TEQConfig(BaseConfig):
             use_full_range (bool): Enables full range for activations, default is False.
             use_mse_search (bool): Enables mean squared error (MSE) search, default is False.
             use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
-            export_compressed_model (bool): Enables return model in int format or not. Defaults to False.
             use_double_quant (bool): Enables double quantization, default is False.
             double_quant_dtype (str): Data type for double_quant scale, default is "int".
             double_quant_bits (int): Number of bits used to represent double_quant scale, default is 4.
@@ -587,7 +575,6 @@ class TEQConfig(BaseConfig):
         self.use_full_range = use_full_range
         self.use_mse_search = use_mse_search
         self.use_layer_wise = use_layer_wise
-        self.export_compressed_model = export_compressed_model
         # double quant
         self.use_double_quant = use_double_quant
         self.double_quant_bits = double_quant_bits
