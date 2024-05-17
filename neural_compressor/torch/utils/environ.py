@@ -31,20 +31,20 @@ def is_hpex_available():
     return _hpex_available
 
 
-def is_ipex_available():
-    try:
-        import intel_extension_for_pytorch as ipex
+try:
+    import intel_extension_for_pytorch as ipex
 
-        _ipex_available = True
-    except:
-        _ipex_available = False
+    _ipex_available = True
+except:
+    _ipex_available = False
+
+
+def is_ipex_available():
     return _ipex_available
 
 
 def get_ipex_version():
-    if is_ipex_available():
-        import intel_extension_for_pytorch as ipex
-
+    if _ipex_available:
         try:
             ipex_version = ipex.__version__.split("+")[0]
         except ValueError as e:  # pragma: no cover

@@ -18,7 +18,9 @@
 
 from typing import Any
 
+import torch
 import torch.ao.quantization.quantizer.x86_inductor_quantizer as xiq
+from torch._export import capture_pre_autograd_graph
 from torch.ao.quantization.quantize_pt2e import convert_pt2e, prepare_pt2e
 from torch.ao.quantization.quantizer.x86_inductor_quantizer import X86InductorQuantizer
 from torch.fx.graph_module import GraphModule
@@ -28,21 +30,15 @@ from neural_compressor.torch.algorithms.base_algorithm import Quantizer
 from neural_compressor.torch.utils import create_xiq_quantizer_from_pt2e_config
 
 
-class W8A8PT2EQuantizer(Quantizer):
-    is_dynamic = False
-
-    def __init__(self, quant_config=None):
-        super().__init__(quant_config)
+class W8A8StaticQuantizer(Quantizer):
 
     @staticmethod
     def update_quantizer_based_on_quant_config(quant_config=None) -> X86InductorQuantizer:
         if not quant_config:
             quantizer = X86InductorQuantizer()
-            quantizer.set_global(
-                xiq.get_default_x86_inductor_quantization_config(is_dynamic=W8A8PT2EQuantizer.is_dynamic)
-            )
+            quantizer.set_global(xiq.get_default_x86_inductor_quantization_config())
         else:
-            quantizer = create_xiq_quantizer_from_pt2e_config(quant_config, is_dynamic=W8A8PT2EQuantizer.is_dynamic)
+            quantizer = create_xiq_quantizer_from_pt2e_config(quant_config)
         return quantizer
 
     def prepare(self, model: GraphModule, example_inputs=None, inplace=True, *args, **kwargs) -> GraphModule:
