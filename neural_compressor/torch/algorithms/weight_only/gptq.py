@@ -25,16 +25,16 @@ from functools import partial
 
 import torch
 import torch.nn as nn
-
 from tqdm import tqdm
 
-from neural_compressor.torch.utils import fetch_module, get_device, logger, set_module, is_transformers_imported
+from neural_compressor.torch.utils import fetch_module, get_device, is_transformers_imported, logger, set_module
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
 from .modules import WeightOnlyLinear
 
 if is_transformers_imported():
     import transformers
+
     SUPPORTED_LAYERS = [nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D]
 else:
     SUPPORTED_LAYERS = [nn.Conv2d, nn.Conv1d, nn.Linear]
@@ -162,9 +162,7 @@ def find_layers_name(module, layers=SUPPORTED_LAYERS, name=""):
     return res
 
 
-def log_quantizable_layers_per_transformer(
-    transformer_blocks, layers=SUPPORTED_LAYERS
-):
+def log_quantizable_layers_per_transformer(transformer_blocks, layers=SUPPORTED_LAYERS):
     """Print all layers which will be quantized in GPTQ algorithm."""
     logger.info("* * Layer to be quantized * *")
 
@@ -803,7 +801,9 @@ class GPTQ:
         if len(inp.shape) == 2:
             inp = inp.unsqueeze(0)
         tmp = inp.shape[0]
-        if isinstance(self.layer, nn.Linear) or (is_transformers_imported() and isinstance(self.layer, transformers.Conv1D)):
+        if isinstance(self.layer, nn.Linear) or (
+            is_transformers_imported() and isinstance(self.layer, transformers.Conv1D)
+        ):
             if len(inp.shape) == 3:
                 inp = inp.reshape((-1, inp.shape[-1]))
             inp = inp.t()

@@ -66,9 +66,10 @@ __all__ = [
 FRAMEWORK_NAME = "torch"
 if is_transformers_imported():
     import transformers
+
     WOQ_WHITE_LIST = (torch.nn.Linear, transformers.Conv1D)
 else:
-     WOQ_WHITE_LIST = (torch.nn.Linear, )
+    WOQ_WHITE_LIST = (torch.nn.Linear,)
 
 
 class OperatorConfig(NamedTuple):
