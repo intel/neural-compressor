@@ -232,10 +232,9 @@ def create_xiq_quantizer_from_pt2e_config(config, is_dynamic=False) -> X86Induct
             local_quant_config = None
         else:
             local_quant_config = _map_inc_config_to_torch_quant_config(local_config, is_dynamic)
-        if local_quant_config and isinstance(name, str):
-            raise NotImplementedError("Not support specific quantization config on op level.")
-        elif isinstance(name, torch.nn.Module):
-            quantizer.set_module_type_qconfig(name, local_quant_config)
+        if name in xiq.X86InductorQuantizer.module_function_to_aten_operator_type:
+            aten_name = xiq.X86InductorQuantizer.module_function_to_aten_operator_type[name]
+            quantizer._set_aten_operator_qconfig(aten_name, local_quant_config)
         else:
-            quantizer.set_function_type_qconfig(name, local_quant_config)
+            raise NotImplementedError(f"Not support specific local config with {name}.")
     return quantizer
