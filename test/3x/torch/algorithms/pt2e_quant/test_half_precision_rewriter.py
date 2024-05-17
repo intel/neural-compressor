@@ -35,10 +35,10 @@ class TestHalfPrecisionConverter(torch_test_quant_common.QuantizationTestCase):
         exported_model = export.export_model_for_pt2e_quant(model=model, example_inputs=example_inputs)
         print("Exported model:")
         exported_model.print_readable()
-        unquantized_node_list = half_precision_rewriter.get_unquantized_node_list(exported_model)
+        unquantized_node_set = half_precision_rewriter.get_unquantized_node_set(exported_model)
         print("Before apply half precision rewriter:")
         exported_model.print_readable(True)
-        half_precision_rewriter.transformation(exported_model, unquantized_node_list)
+        half_precision_rewriter.transformation(exported_model, unquantized_node_set)
         print("After apply half precision rewriter:")
         exported_model.print_readable(True)
         expected_node_occurrence = {
