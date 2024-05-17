@@ -356,7 +356,8 @@ def quant_tensor(
         scale_bits = kwargs.get("double_quant_bits", 8)
         scale_scheme = kwargs.get("double_quant_scheme", "asym")
         scale_group_size = kwargs.get("double_quant_group_size", 256)
-        scale_return_int = kwargs.get("double_quant_return_int", return_int)
+        # TODO: kwargs.get("double_quant_return_int", return_int)
+        scale_return_int = kwargs.get("double_quant_return_int", False)
         orig_scale_shape = scale.shape
         scale = scale.reshape(1, -1)
         # pre-process: scale_mean

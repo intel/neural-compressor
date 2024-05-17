@@ -44,7 +44,7 @@ def is_ipex_available():
 
 
 def get_ipex_version():
-    if _ipex_available:
+    if is_ipex_available():
         try:
             ipex_version = ipex.__version__.split("+")[0]
         except ValueError as e:  # pragma: no cover
@@ -70,6 +70,13 @@ def get_torch_version():
 def is_ipex_imported() -> bool:
     for name, _ in sys.modules.items():
         if name == "intel_extension_for_pytorch":
+            return True
+    return False
+
+
+def is_transformers_imported() -> bool:
+    for name, _ in sys.modules.items():
+        if name == "transformers":
             return True
     return False
 

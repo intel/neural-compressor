@@ -4,12 +4,18 @@ set -x
 function main {
 
   init_params "$@"
-  run_tuning
+  run_benchmark
 
 }
 
 # init params
 function init_params {
+  iters=100
+  batch_size=16
+  approach=static
+  tuned_checkpoint=saved_results
+  task=lambada_openai
+  echo ${max_eval_samples}
   for var in "$@"
   do
     case $var in
@@ -22,9 +28,21 @@ function init_params {
       --input_model=*)
           input_model=$(echo $var |cut -f2 -d=)
       ;;
-       --output_model=*)
-           tuned_checkpoint=$(echo $var |cut -f2 -d=)
-       ;;
+      --mode=*)
+          mode=$(echo $var |cut -f2 -d=)
+      ;;
+      --batch_size=*)
+          batch_size=$(echo $var |cut -f2 -d=)
+      ;;
+      --iters=*)
+          iters=$(echo ${var} |cut -f2 -d=)
+      ;;
+      --int8=*)
+          int8=$(echo ${var} |cut -f2 -d=)
+      ;;
+      --config=*)
+          tuned_checkpoint=$(echo $var |cut -f2 -d=)
+      ;;
       *)
           echo "Error: No such parameter: ${var}"
           exit 1
@@ -34,15 +52,26 @@ function init_params {
 
 }
 
-# run_tuning
-function run_tuning {
-    extra_cmd=''
-    batch_size=8
-    approach='static'
-    DATASET_NAME="NeelNanda/pile-10k"
-    tuned_checkpoint="saved_results"
 
-    if [ "${topology}" = "opt_125m_woq_gptq_int4" ]; then
+# run_benchmark
+function run_benchmark {
+    extra_cmd=''
+
+    if [[ ${mode} == "accuracy" ]]; then
+        mode_cmd=" --accuracy "
+    elif [[ ${mode} == "performance" ]]; then
+        mode_cmd=" --performance --iters "${iters}
+    else
+        echo "Error: No such mode: ${mode}"
+        exit 1
+    fi
+
+    if [[ ${int8} == "true" ]]; then
+        extra_cmd=$extra_cmd" --int8"
+    fi
+    echo $extra_cmd
+
+        if [ "${topology}" = "opt_125m_woq_gptq_int4" ]; then
         model_name_or_path="facebook/opt-125m"
         approach="weight_only"
         extra_cmd=$extra_cmd" --woq_algo GPTQ --woq_bits 4 --woq_group_size 128 --woq_scheme asym --woq_use_mse_search --gptq_use_max_length"
@@ -120,13 +149,11 @@ function run_tuning {
 
     python -u run_clm_no_trainer.py \
         --model ${model_name_or_path} \
-        --dataset ${DATASET_NAME} \
-        --quantize \
         --approach ${approach} \
         --output_dir ${tuned_checkpoint} \
-        --tasks "lambada_openai" \
+        --task ${task} \
         --batch_size ${batch_size} \
-        ${extra_cmd}
+        ${extra_cmd} ${mode_cmd}
 }
 
 main "$@"

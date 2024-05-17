@@ -20,13 +20,15 @@ import copy
 from typing import Any
 
 import torch
-import transformers
 
 from neural_compressor.torch.algorithms.base_algorithm import Quantizer
-from neural_compressor.torch.utils import get_device, logger
+from neural_compressor.torch.utils import get_device, is_transformers_imported, logger
 
 from .modules import MulLinear, TEQLinearFakeQuant
 from .utility import get_module, quant_tensor, set_module
+
+if is_transformers_imported():
+    import transformers
 
 __all__ = ["TrainableEquivalentTransformation", "TEQuantizer"]
 
