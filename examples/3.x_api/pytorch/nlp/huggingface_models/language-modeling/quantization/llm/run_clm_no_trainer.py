@@ -11,6 +11,7 @@ from datasets import load_dataset
 import datasets
 from torch.nn.functional import pad
 from torch.utils.data import DataLoader
+from transformers import AutoModelForCausalLM, AutoModel, AutoTokenizer
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -66,7 +67,6 @@ parser.add_argument("--woq_group_dim", type=int, default=1)
 parser.add_argument("--woq_scheme", default="sym")
 parser.add_argument("--woq_use_mse_search", action="store_true")
 parser.add_argument("--woq_use_full_range", action="store_true")
-parser.add_argument("--woq_export_compressed_model", action="store_true")
 # =============GPTQ configs====================
 parser.add_argument("--gptq_actorder", action="store_true",
                     help="Whether to apply the activation order GPTQ heuristic.")
@@ -192,7 +192,6 @@ class Evaluator:
 
 
 def get_user_model():
-    from transformers import AutoModelForCausalLM, AutoModel, AutoTokenizer
     torchscript = False
     if args.sq or args.ipex or args.woq_algo in ['AWQ', 'TEQ']:
         torchscript = True
@@ -248,7 +247,6 @@ if args.quantize:
                         # TODO: add group_dim into double quant config?
                         "use_full_range": args.woq_use_full_range,
                         "use_mse_search": args.woq_use_mse_search,
-                        "export_compressed_model": args.woq_export_compressed_model,
                     }
                 )
                 quant_config = RTNConfig.from_dict(double_quant_config_dict)
@@ -261,7 +259,6 @@ if args.quantize:
                     group_dim=args.woq_group_dim,
                     use_full_range=args.woq_use_full_range,
                     use_mse_search=args.woq_use_mse_search,
-                    export_compressed_model=args.woq_export_compressed_model,
                     use_double_quant=False,
                     double_quant_bits=args.double_quant_bits,
                     double_quant_dtype=args.double_quant_dtype,
@@ -298,7 +295,6 @@ if args.quantize:
                 double_quant_config_dict.update(
                     {
                         "use_mse_search": args.woq_use_mse_search,
-                        "export_compressed_model": args.woq_export_compressed_model,
                         "percdamp": args.gptq_percdamp,
                         "act_order": args.gptq_actorder,
                         "block_size": args.gptq_block_size,
@@ -313,7 +309,6 @@ if args.quantize:
                     use_sym=weight_sym,
                     group_size=args.woq_group_size,
                     use_mse_search=args.woq_use_mse_search,
-                    export_compressed_model=args.woq_export_compressed_model,
                     percdamp=args.gptq_percdamp,
                     act_order=args.gptq_actorder,
                     block_size=args.gptq_block_size,
@@ -380,24 +375,19 @@ if args.quantize:
             user_model = prepare(model=user_model, quant_config=quant_config, example_inputs=example_inputs)
             run_fn(user_model)
             user_model = convert(user_model)
-        user_model.save(args.output_dir)
+    user_model.save(args.output_dir)
 
 
 # TODO: we need run_benchmark.sh for loading and remove --accuracy in run_quant.sh, currently run_quant.sh will get fp32 result
-# if args.int8 or args.int8_bf16_mixed:
-#     print("load int8 model")
 
-#     # TODO: from neural_compressor.torch.quantization import load
-#     from neural_compressor.torch.algorithms.static_quant import load
+if args.int8 or args.int8_bf16_mixed:
+    print("load int8 model")
 
-#     if args.ipex:
-#         user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)))
-#     else:
-#         # TODO: WOQ save&load
-#         print("Int8 model loading does not support WeightOnlyQuant now.")
-#         pass
-# else:
-        user_model, _ = get_user_model()
+    from neural_compressor.torch.quantization import load
+    tokenizer = AutoTokenizer.from_pretrained(args.model)
+    user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)))
+else:
+    user_model, tokenizer = get_user_model()
 
 
 if args.accuracy:

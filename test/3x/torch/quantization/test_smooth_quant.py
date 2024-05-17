@@ -1,4 +1,5 @@
 import copy
+import shutil
 
 import pytest
 import torch
@@ -32,6 +33,9 @@ def run_fn(model):
 
 
 class TestSmoothQuant:
+    def teardown_class(self):
+        shutil.rmtree("saved_results", ignore_errors=True)
+
     @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
     def test_smooth_quant_default(self):
         fp32_model = copy.deepcopy(model)

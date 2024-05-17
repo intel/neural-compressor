@@ -44,7 +44,7 @@ def is_ipex_available():
 
 
 def get_ipex_version():
-    if _ipex_available:
+    if is_ipex_available():
         try:
             ipex_version = ipex.__version__.split("+")[0]
         except ValueError as e:  # pragma: no cover
