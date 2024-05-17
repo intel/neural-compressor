@@ -62,17 +62,17 @@ Functions
              }
 
 
-.. py:function:: find_layers(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D], name='')
+.. py:function:: find_layers(module, layers=SUPPORTED_LAYERS, name='')
 
    Get all layers with target types.
 
 
-.. py:function:: find_layers_name(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D], name='')
+.. py:function:: find_layers_name(module, layers=SUPPORTED_LAYERS, name='')
 
    Get all layers with target types.
 
 
-.. py:function:: log_quantizable_layers_per_transformer(transformer_blocks, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D])
+.. py:function:: log_quantizable_layers_per_transformer(transformer_blocks, layers=SUPPORTED_LAYERS)
 
    Print all layers which will be quantized in GPTQ algorithm.
 
