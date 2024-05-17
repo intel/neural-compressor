@@ -59,7 +59,7 @@ class RTNQuantizer(Quantizer):
         group_size=32,
         group_dim=1,
         quantile=1.0,
-        export_compressed_model=False,
+        export_compressed_model=True,
         use_full_range=False,
         use_mse_search=False,
         *args,
@@ -128,7 +128,6 @@ class RTNQuantizer(Quantizer):
                 use_full_range = weight_config[name]["use_full_range"]
                 use_mse_search = weight_config[name]["use_mse_search"]
                 use_layer_wise = weight_config[name]["use_layer_wise"]
-                export_compressed_model = weight_config[name]["export_compressed_model"]
                 if export_compressed_model:
                     use_optimum_format = kwargs.get("use_optimum_format", True)
                 # double quant config

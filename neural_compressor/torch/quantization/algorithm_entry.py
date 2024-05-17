@@ -57,6 +57,7 @@ def rtn_entry(
 ) -> torch.nn.Module:
     """The main entry to apply rtn quantization."""
     from neural_compressor.torch.algorithms.weight_only.rtn import RTNQuantizer
+    from neural_compressor.torch.algorithms.weight_only.save_load import save
 
     # rebuild weight_config for RTNQuantizer class
     weight_config = {}
@@ -72,7 +73,6 @@ def rtn_entry(
             "use_full_range": quant_config.use_full_range,
             "use_mse_search": quant_config.use_mse_search,
             "use_layer_wise": quant_config.use_layer_wise,
-            "export_compressed_model": quant_config.export_compressed_model,
             "use_double_quant": quant_config.use_double_quant,
             "double_quant_dtype": quant_config.double_quant_dtype,
             "double_quant_bits": quant_config.double_quant_bits,
@@ -82,6 +82,8 @@ def rtn_entry(
 
     quantizer = get_quantizer(model, quantizer_cls=RTNQuantizer, quant_config=weight_config)
     model = quantizer.execute(model, mode=mode)
+    model.qconfig = configs_mapping
+    model.save = MethodType(save, model)
     postprocess_model(model, mode, quantizer)
     return model
 
@@ -98,6 +100,7 @@ def gptq_entry(
 ) -> torch.nn.Module:
     logger.info("Quantize model with the GPTQ algorithm.")
     from neural_compressor.torch.algorithms.weight_only.gptq import GPTQuantizer
+    from neural_compressor.torch.algorithms.weight_only.save_load import save
 
     # rebuild weight_config for gptq_quantize function
     weight_config = {}
@@ -122,7 +125,6 @@ def gptq_entry(
         }
     kwargs.update(
         {
-            "export_compressed_model": quant_config.export_compressed_model,
             "use_layer_wise": quant_config.use_layer_wise,
             "model_path": quant_config.model_path,
         }
@@ -132,6 +134,8 @@ def gptq_entry(
 
     quantizer = get_quantizer(model, quantizer_cls=GPTQuantizer, quant_config=weight_config)
     model = quantizer.execute(model, mode=mode, *args, **kwargs)
+    model.qconfig = configs_mapping
+    model.save = MethodType(save, model)
     postprocess_model(model, mode, quantizer)
 
     return model
@@ -296,6 +300,7 @@ def awq_quantize_entry(
 ) -> torch.nn.Module:
     logger.info("Quantize model with the AWQ algorithm.")
     from neural_compressor.torch.algorithms.weight_only.awq import AWQQuantizer
+    from neural_compressor.torch.algorithms.weight_only.save_load import save
 
     weight_config = {}
     for (op_name, op_type), op_config in configs_mapping.items():
@@ -350,8 +355,10 @@ def awq_quantize_entry(
         return_int=return_int,
         use_full_range=use_full_range,
     )
-    postprocess_model(model, mode, quantizer)
 
+    model.qconfig = configs_mapping
+    model.save = MethodType(save, model)
+    postprocess_model(model, mode, quantizer)
     return model
 
 
@@ -360,6 +367,7 @@ def awq_quantize_entry(
 def teq_quantize_entry(
     model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], TEQConfig], mode: Mode, *args, **kwargs
 ) -> torch.nn.Module:
+    from neural_compressor.torch.algorithms.weight_only.save_load import save
     from neural_compressor.torch.algorithms.weight_only.teq import TEQuantizer
 
     logger.info("Quantize model with the TEQ algorithm.")
@@ -383,7 +391,6 @@ def teq_quantize_entry(
                 "use_full_range": quant_config.use_full_range,
                 "use_mse_search": quant_config.use_mse_search,
                 "use_layer_wise": quant_config.use_layer_wise,
-                "export_compressed_model": quant_config.export_compressed_model,
                 "use_double_quant": quant_config.use_double_quant,
                 "double_quant_dtype": quant_config.double_quant_dtype,
                 "double_quant_bits": quant_config.double_quant_bits,
@@ -403,6 +410,8 @@ def teq_quantize_entry(
         example_inputs=example_inputs,
     )
     model = quantizer.execute(model, mode=mode, run_fn=run_fn, example_inputs=example_inputs, inplace=inplace)
+    model.qconfig = configs_mapping
+    model.save = MethodType(save, model)
     postprocess_model(model, mode, quantizer)
 
     return model
@@ -418,6 +427,7 @@ def autoround_quantize_entry(
     **kwargs,
 ) -> torch.nn.Module:
     from neural_compressor.torch.algorithms.weight_only.autoround import AutoRoundQuantizer
+    from neural_compressor.torch.algorithms.weight_only.save_load import save
 
     logger.info("Quantize model with the AutoRound algorithm.")
     weight_config = {}
@@ -476,9 +486,9 @@ def autoround_quantize_entry(
         scale_dtype=scale_dtype,
     )
     model = quantizer.execute(model=model, mode=mode, *args, **kwargs)
+    model.qconfig = configs_mapping
+    model.save = MethodType(save, model)
     postprocess_model(model, mode, quantizer)
-
-    logger.info("AutoRound quantization done.")
     return model
 
 
