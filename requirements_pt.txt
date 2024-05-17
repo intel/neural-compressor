@@ -1,6 +1,6 @@
 auto-round
 intel_extension_for_pytorch
-peft
+peft==0.10.0
 psutil
 py-cpuinfo
 pydantic
