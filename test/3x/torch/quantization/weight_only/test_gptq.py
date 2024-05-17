@@ -85,22 +85,23 @@ class TestGPTQQuant:
         ), "The results of calling `convert` + `prepare` and calling `quantize` should be equal."
 
     @pytest.mark.parametrize(
-        "bits, use_sym, group_size",
+        "bits, use_sym, group_size, act_order",
         [
-            (8, True, 128),
-            (4, True, 128),
-            (4, False, 32),
-            (4, True, 32),
-            (4, False, -1),
-            (2, True, 8),
+            (8, True, 128, False),
+            (4, True, 128, False),
+            (4, False, 32, False),
+            (4, True, 32, True),
+            (4, False, -1, True),
+            (2, True, 8, True),
         ],
     )
-    def test_int_params(self, bits, use_sym, group_size):
+    def test_int_params(self, bits, use_sym, group_size, act_order):
         model = copy.deepcopy(self.tiny_gptj)
         quant_config = GPTQConfig(
             bits=bits,
             use_sym=use_sym,
             group_size=group_size,
+            act_order=act_order,
         )
         model = prepare(model, quant_config)
         run_fn(model)
@@ -149,12 +150,14 @@ class TestGPTQQuant:
     # TODO: (Xin) not implemented
 
     @pytest.mark.parametrize("dtype", ["int4", "nf4", "fp4"])
-    def test_export_compressed_model(self, dtype):
+    @pytest.mark.parametrize("act_order", [True, False])
+    def test_export_compressed_model(self, dtype, act_order):
         # export_compressed_model = False
         model = copy.deepcopy(self.tiny_gptj)
         quant_config = GPTQConfig(
             dtype=dtype,
             export_compressed_model=False,
+            act_order=act_order,
         )
         model = prepare(model, quant_config)
         run_fn(model)
@@ -165,10 +168,12 @@ class TestGPTQQuant:
         quant_config = GPTQConfig(
             dtype=dtype,
             export_compressed_model=True,
+            act_order=act_order,
         )
         model = prepare(model, quant_config)
         run_fn(model)
         model = convert(model)
+        print(model)
         out2 = model(self.example_inputs)[0]
         assert isinstance(model.transformer.h[0].attn.k_proj, WeightOnlyLinear), "Exporting compressed model failed."
 
@@ -176,7 +181,7 @@ class TestGPTQQuant:
         if dtype == "int4":
             atol_true = (out1 - out2).amax()
             assert (
-                atol_true < 0.008
+                atol_true < 0.03  # act_order=True, atol caused by scale dtype is bigger.
             ), "Exporting compressed model should have the same output as quantized model. Please double check"
         else:
             assert torch.allclose(
