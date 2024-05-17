@@ -269,7 +269,7 @@ class TestRTNQuant:
             assert torch.allclose(out2, out1, atol=0.1), "Accuracy gap atol > 0.1 is unexpected."
         if (bits, use_sym, group_size, group_dim) == [(4, False, 32, 0), (4, False, -1, 1), (2, True, 8, 1)]:
             assert torch.allclose(out2, out1, atol=0.5), "Accuracy gap atol > 0.5 is unexpected."
-    
+
     def test_save_and_load(self):
         fp32_model = copy.deepcopy(self.tiny_gptj)
         quant_config = get_default_rtn_config()

@@ -740,7 +740,6 @@ class RAWGPTQuantizer(object):
                     if is_transformers_imported() and isinstance(sub_layers[layer_name], transformers.Conv1D):
                         Q = Q.t_().contiguous()
                     from .utility import quant_weight_w_scale
-                    
 
                     quant_weight_w_scale(
                         Q,
@@ -763,7 +762,7 @@ class RAWGPTQuantizer(object):
                         int_weight = sub_layers[layer_name].weight.t_().contiguous()
                         scale = scale.t_().contiguous()
                         zp = zp.t_().contiguous() if zp is not None else zp
-                    
+
                     new_module = WeightOnlyLinear(
                         in_features,
                         out_features,

@@ -212,7 +212,7 @@ class TestGPTQQuant:
         q_model = convert(model)
         out2 = q_model(**encoded_input)[0]
         assert torch.allclose(out2, out1, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
-    
+
     def test_save_and_load(self):
         fp32_model = copy.deepcopy(self.tiny_gptj)
         quant_config = get_default_gptq_config()

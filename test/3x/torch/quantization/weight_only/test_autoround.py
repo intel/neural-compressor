@@ -151,7 +151,7 @@ class TestAutoRound:
         loaded_model = load("saved_results")
         loaded_out = loaded_model(self.inp)[0]
         assert torch.allclose(inc_out, loaded_out), "Unexpected result. Please double check."
-        
+
     @pytest.mark.skipif(auto_round_version <= AUTO_ROUND_VERSION_0_11, reason="Requires auto_round>=0.11")
     def test_conv1d(self):
         input = torch.randn(1, 32)
