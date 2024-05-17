@@ -22,13 +22,15 @@
 from collections import OrderedDict
 
 import torch
-import transformers
+
 
 from neural_compressor.torch.algorithms import Quantizer
-from neural_compressor.torch.utils import get_device, logger, set_module
+from neural_compressor.torch.utils import get_device, logger, set_module, is_transformers_imported
 
 from .utility import cast_fp8, quant_tensor, search_clip
 
+if is_transformers_imported():
+    import transformers
 
 class RTNQuantizer(Quantizer):
     def __init__(self, quant_config: OrderedDict = {}):
@@ -95,7 +97,10 @@ class RTNQuantizer(Quantizer):
         model.to(device)
 
         assert isinstance(model, torch.nn.Module), "only support torch module"
-        supported_layers = (torch.nn.Linear, transformers.Conv1D)
+        if is_transformers_imported():
+            supported_layers = (torch.nn.Linear, transformers.Conv1D)
+        else:
+            supported_layers = (torch.nn.Linear, )
         # initialize global configuration
         double_quant_config = {
             "double_quant": kwargs.get("use_double_quant", False),
@@ -156,7 +161,10 @@ class RTNQuantizer(Quantizer):
             logger.debug(f"RTN quantized module:{name, m}")
             logger.debug(log_msg)
             # for only group_dim is 0 or only `transformers.Conv1D`, we need transpose weight.
-            transpose = (group_dim == 0) ^ (isinstance(m, transformers.Conv1D))
+            if is_transformers_imported():
+                transpose = (group_dim == 0) ^ (isinstance(m, transformers.Conv1D))
+            else:
+                transpose = (group_dim == 0) 
             if transpose:
                 weight = m.weight.t_().contiguous()
             else:
@@ -181,7 +189,7 @@ class RTNQuantizer(Quantizer):
                 if isinstance(m, torch.nn.Linear):
                     in_features = m.in_features
                     out_features = m.out_features
-                elif isinstance(m, transformers.Conv1D):
+                elif is_transformers_imported() and isinstance(m, transformers.Conv1D):
                     in_features = m.weight.shape[1]
                     out_features = m.weight.shape[0]
                     int_weight = int_weight.t_().contiguous()

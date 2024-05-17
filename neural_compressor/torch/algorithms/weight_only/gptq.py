@@ -25,14 +25,19 @@ from functools import partial
 
 import torch
 import torch.nn as nn
-import transformers
+
 from tqdm import tqdm
 
-from neural_compressor.torch.utils import fetch_module, get_device, logger, set_module
+from neural_compressor.torch.utils import fetch_module, get_device, logger, set_module, is_transformers_imported
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
 from .modules import WeightOnlyLinear
 
+if is_transformers_imported():
+    import transformers
+    SUPPORTED_LAYERS = [nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D]
+else:
+    SUPPORTED_LAYERS = [nn.Conv2d, nn.Conv1d, nn.Linear]
 DEBUG = False
 accelerator = auto_detect_accelerator()
 
@@ -131,7 +136,7 @@ def trace_gptq_target_blocks(module, module_types=[torch.nn.ModuleList, torch.nn
     return gptq_related_blocks
 
 
-def find_layers(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D], name=""):
+def find_layers(module, layers=SUPPORTED_LAYERS, name=""):
     """Get all layers with target types."""
     if type(module) in layers:
         return {name: module}
@@ -147,7 +152,7 @@ def find_layers(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Co
     return res
 
 
-def find_layers_name(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D], name=""):
+def find_layers_name(module, layers=SUPPORTED_LAYERS, name=""):
     """Get all layers with target types."""
     if type(module) in layers:
         return [name]
@@ -158,7 +163,7 @@ def find_layers_name(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transforme
 
 
 def log_quantizable_layers_per_transformer(
-    transformer_blocks, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D]
+    transformer_blocks, layers=SUPPORTED_LAYERS
 ):
     """Print all layers which will be quantized in GPTQ algorithm."""
     logger.info("* * Layer to be quantized * *")
@@ -782,7 +787,7 @@ class GPTQ:
         # W = layer.weight.data.clone()
         if isinstance(self.layer, nn.Conv2d) or isinstance(self.layer, nn.Conv1d):
             W = W.flatten(1)
-        if isinstance(self.layer, transformers.Conv1D):
+        if is_transformers_imported() and isinstance(self.layer, transformers.Conv1D):
             W = W.t()
         self.rows = W.shape[0]  # output channels
         self.columns = W.shape[1]  # input channels
@@ -798,7 +803,7 @@ class GPTQ:
         if len(inp.shape) == 2:
             inp = inp.unsqueeze(0)
         tmp = inp.shape[0]
-        if isinstance(self.layer, nn.Linear) or isinstance(self.layer, transformers.Conv1D):
+        if isinstance(self.layer, nn.Linear) or (is_transformers_imported() and isinstance(self.layer, transformers.Conv1D)):
             if len(inp.shape) == 3:
                 inp = inp.reshape((-1, inp.shape[-1]))
             inp = inp.t()
@@ -825,7 +830,7 @@ class GPTQ:
         weight_shape, weight_dtype = W.shape, W.data.dtype
         if isinstance(self.layer, nn.Conv2d):
             W = W.flatten(1)
-        if isinstance(self.layer, transformers.Conv1D):
+        if is_transformers_imported() and isinstance(self.layer, transformers.Conv1D):
             W = W.t()
         W = W.float()
 
@@ -929,7 +934,7 @@ class GPTQ:
             invperm = torch.argsort(perm)
             Q = Q[:, invperm]
 
-        if isinstance(self.layer, transformers.Conv1D):
+        if is_transformers_imported() and isinstance(self.layer, transformers.Conv1D):
             Q = Q.t()
         # self.layer.weight.data = Q.reshape(self.layer.weight.shape).to(self.layer.weight.data.dtype)
         Q = Q.reshape(weight_shape).to(weight_dtype)

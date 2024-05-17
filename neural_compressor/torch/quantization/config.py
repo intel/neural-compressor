@@ -22,7 +22,6 @@ from typing import OrderedDict as OrderedDictType
 from typing import Tuple, Union
 
 import torch
-import transformers
 
 from neural_compressor.common.base_config import (
     BaseConfig,
@@ -43,7 +42,7 @@ from neural_compressor.common.utils import (
     STATIC_QUANT,
     TEQ,
 )
-from neural_compressor.torch.utils import is_hpex_available, is_ipex_imported, logger
+from neural_compressor.torch.utils import is_hpex_available, is_ipex_imported, is_transformers_imported, logger
 from neural_compressor.torch.utils.constants import (
     PRIORITY_AUTOROUND,
     PRIORITY_AWQ,
@@ -65,7 +64,11 @@ __all__ = [
 
 
 FRAMEWORK_NAME = "torch"
-WOQ_WHITE_LIST = (torch.nn.Linear, transformers.Conv1D)
+if is_transformers_imported():
+    import transformers
+    WOQ_WHITE_LIST = (torch.nn.Linear, transformers.Conv1D)
+else:
+     WOQ_WHITE_LIST = (torch.nn.Linear, )
 
 
 class OperatorConfig(NamedTuple):
