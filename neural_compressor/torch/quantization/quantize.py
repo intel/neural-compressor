@@ -79,7 +79,11 @@ def quantize(
                 auto_alpha_args=quant_config.auto_alpha_args,
                 scale_sharing=quant_config.scale_sharing,
             )
-        model_info = quant_config.get_model_info(q_model, example_inputs)
+            model_info = quant_config.get_model_info(
+                q_model, quant_config.alpha, quant_config.act_algo, example_inputs, inplace=True
+            )
+        else:
+            model_info = quant_config.get_model_info(q_model, example_inputs)
     else:
         model_info = quant_config.get_model_info(model=q_model)
     configs_mapping = quant_config.to_config_mapping(model_info=model_info)
@@ -134,7 +138,12 @@ def prepare(
     if is_ipex_available and (
         isinstance(quant_config, StaticQuantConfig) or isinstance(quant_config, SmoothQuantConfig)
     ):
-        model_info = quant_config.get_model_info(prepared_model, example_inputs)
+        if isinstance(quant_config, SmoothQuantConfig):
+            model_info = quant_config.get_model_info(
+                prepared_model, quant_config.alpha, quant_config.act_algo, example_inputs, inplace=True
+            )
+        else:
+            model_info = quant_config.get_model_info(prepared_model, example_inputs)
     else:
         model_info = quant_config.get_model_info(model=prepared_model)
     configs_mapping = quant_config.to_config_mapping(model_info=model_info)
@@ -197,7 +206,12 @@ def convert(
     if is_ipex_available and (
         isinstance(quant_config, StaticQuantConfig) or isinstance(quant_config, SmoothQuantConfig)
     ):
-        model_info = quant_config.get_model_info(q_model, example_inputs)
+        if isinstance(quant_config, SmoothQuantConfig):
+            model_info = quant_config.get_model_info(
+                q_model, quant_config.alpha, quant_config.act_algo, example_inputs, inplace=True
+            )
+        else:
+            model_info = quant_config.get_model_info(q_model, example_inputs)
     else:
         model_info = quant_config.get_model_info(model=q_model)
     configs_mapping = quant_config.to_config_mapping(model_info=model_info)

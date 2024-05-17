@@ -70,41 +70,48 @@ class SmoothQuantQuantizer(Quantizer):
         assert example_inputs is not None, "Please provide example_inputs for smooth quantization."
         assert not ipex_ver.release < Version("2.1").release, "IPEX version >= 2.1 is required for SmoothQuant."
 
-        _, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, _ = get_quantizable_ops_recursively(
-            model, example_inputs
-        )
-
-        # check smoothquant folding value
-        recipe_cfgs = self.quant_config.get("recipe_cfgs", None)
-        if "smooth_quant_args" in recipe_cfgs and "folding" in recipe_cfgs["smooth_quant_args"]:
-            if recipe_cfgs["smooth_quant_args"]["folding"] is None:
-                if ipex_ver.release < Version("2.1").release:  # pragma: no cover
-                    folding = True
-                else:
-                    folding = False
-            else:  # pragma: no cover
-                folding = recipe_cfgs["smooth_quant_args"]["folding"]
-
         # Note: we should make sure smoothquant is only executed once with inplacing fp32 model.
         if hasattr(model, "_smoothquant_optimized") and model._smoothquant_optimized:  # pragma: no cover
             logger.info("The model is already optimized by SmoothQuant algorithm, skip it.")
             return model
 
-        alpha = recipe_cfgs["smooth_quant_args"]["alpha"]
-        sq_info = model.sq_info
-
-        # Update model parameter when smoothquant folding = True
-        if recipe_cfgs and recipe_cfgs.get("smooth_quant", False) and folding:
-            _apply_pre_optimization(model, self.quant_config, sq_info)
+        cfgs, op_infos_from_cfgs, output_tensor_id_op_name = (
+            model.cfgs,
+            model.op_infos_from_cfgs,
+            model.output_tensor_id_op_name,
+        )
 
         # Update json file in ipex_config_path
         cfg_to_qconfig(self.quant_config, cfgs, op_infos_from_cfgs, output_tensor_id_op_name)
         model.eval()
 
+        # check smoothquant alpha and act_algo value
+        recipe_cfgs = self.quant_config.get("recipe_cfgs", None)
+        alpha = recipe_cfgs["smooth_quant_args"]["alpha"]
+        for op, _ in self.quant_config["op"].items():
+            act_algo = self.quant_config["op"][op]["activation"]["algorithm"]
+
         # Check save_qconf_summary part is a workaround for IPEX bug.
-        # Sometimes the prepared model from get_op_capablitiy loss this attribute
-        if not hasattr(model, "save_qconf_summary") or not hasattr(model, "load_qconf_summary"):  # pragma: no cover
-            static_qconfig = ipex.quantization.default_static_qconfig_mapping
+        # Sometimes the prepared model from get_op_capablitiy loss this attribute.
+        if not hasattr(model, "save_qconf_summary") or not hasattr(model, "load_qconf_summary"):
+            from torch.ao.quantization.observer import MinMaxObserver
+
+            if ipex_ver.release >= Version("2.1.1").release:
+                static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
+                    alpha=alpha, act_observer=MinMaxObserver
+                )
+            else:  # pragma: no cover
+                if act_algo == "minmax":
+                    static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
+                        alpha=alpha, act_observer=MinMaxObserver()
+                    )
+                    logger.warning(
+                        "The int8 model accuracy will be close to 0 with MinMaxobserver, "
+                        + "the suggested IPEX version is higher or equal than 2.1.100+cpu."
+                    )
+                else:
+                    static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=alpha)
+
             if isinstance(example_inputs, dict):
                 model = ipex.quantization.prepare(
                     model, static_qconfig, example_kwarg_inputs=example_inputs, inplace=inplace
@@ -112,6 +119,7 @@ class SmoothQuantQuantizer(Quantizer):
             else:
                 model = ipex.quantization.prepare(model, static_qconfig, example_inputs=example_inputs, inplace=inplace)
 
+        cfg_to_qconfig(self.quant_config, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, smooth_quant=True)
         model.load_qconf_summary(qconf_summary=ipex_config_path)
         return model
 
@@ -126,37 +134,8 @@ class SmoothQuantQuantizer(Quantizer):
         Returns:
             A quantized model.
         """
-        # check smoothquant folding value
-        recipe_cfgs = self.quant_config.get("recipe_cfgs", None)
-        if "smooth_quant_args" in recipe_cfgs and "folding" in recipe_cfgs["smooth_quant_args"]:
-            if recipe_cfgs["smooth_quant_args"]["folding"] is None:
-                if ipex_ver.release < Version("2.1").release:  # pragma: no cover
-                    folding = True
-                else:
-                    folding = False
-            else:  # pragma: no cover
-                folding = recipe_cfgs["smooth_quant_args"]["folding"]
-
-        sq_info = model.sq_info
-
-        # folding = False
-        if recipe_cfgs and recipe_cfgs.get("smooth_quant", False) and not folding:
-            if ipex_ver.release > Version("2.1.0").release:
-                smoothquant_scale_info = sq_info.sq_scale_info
-                update_sq_scale(ipex_config_path, smoothquant_scale_info)
-                model.load_qconf_summary(qconf_summary=ipex_config_path)
-
         model.save_qconf_summary(qconf_summary=ipex_config_path)
         model = _ipex_post_quant_process(model, example_inputs, inplace=inplace)
-
-        # Recover model parameter when smoothquant folding = True
-        if (
-            recipe_cfgs
-            and recipe_cfgs.get("smooth_quant", False)
-            and recipe_cfgs["smooth_quant_args"]["folding"]
-            and not inplace
-        ):  # pragma: no cover
-            _apply_pre_optimization(model, self.quant_config, sq_info, recover=True)
 
         with open(ipex_config_path, "r") as f:
             model.tune_cfg = json.load(f)
@@ -186,8 +165,10 @@ class SmoothQuantQuantizer(Quantizer):
         """
         assert not ipex_ver.release < Version("2.1").release, "IPEX version >= 2.1 is required for SmoothQuant."
 
-        _, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, _ = get_quantizable_ops_recursively(
-            model, example_inputs
+        cfgs, op_infos_from_cfgs, output_tensor_id_op_name = (
+            model.cfgs,
+            model.op_infos_from_cfgs,
+            model.output_tensor_id_op_name,
         )
 
         # check smoothquant folding value

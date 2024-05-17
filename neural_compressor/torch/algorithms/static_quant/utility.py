@@ -277,7 +277,7 @@ def get_quantizable_ops_recursively(model, example_inputs):  # pragma: no cover
             op_infos_from_cfgs,
             input_tensor_id_op_name,
             output_tensor_id_op_name,
-        ) = paser_cfgs(cfgs)
+        ) = parse_cfgs(cfgs)
         quantizable_op_names = get_quantizable_ops_from_cfgs(ops_name, op_infos_from_cfgs, input_tensor_id_op_name)
         for name in quantizable_op_names:
             # name : list
@@ -426,7 +426,7 @@ def get_element_under_depth(d, ops_lst):
         ops_lst.append(d)
 
 
-def paser_cfgs(cfgs):  # pragma: no cover
+def parse_cfgs(cfgs):  # pragma: no cover
     """Parse configs.
 
     Args:
