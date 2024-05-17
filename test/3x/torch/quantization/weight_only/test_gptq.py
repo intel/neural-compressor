@@ -254,6 +254,8 @@ class TestGPTQQuant:
 
         quant_config = get_default_gptq_config()
         out1 = model(**encoded_input)[0]
-        q_model = quantize(model, quant_config, run_fn=run_fn_conv1d)
+        model = prepare(model, quant_config)
+        run_fn_conv1d(model)
+        q_model = convert(model)
         out2 = q_model(**encoded_input)[0]
         assert torch.allclose(out2, out1, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
