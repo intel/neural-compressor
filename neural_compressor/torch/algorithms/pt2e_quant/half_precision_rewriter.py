@@ -18,6 +18,7 @@ from typing import Any, Callable, Dict, List, Tuple
 
 import torch
 import torch.ao.quantization.quantizer.x86_inductor_quantizer as xiq
+import torch.ao.quantization.quantizer.xnnpack_quantizer as xpq
 from torch.fx import subgraph_rewriter
 from torch.fx.experimental.proxy_tensor import make_fx
 from torch.fx.subgraph_rewriter import Match
@@ -28,7 +29,7 @@ from neural_compressor.common import utils
 # =============================================================================
 # Search and replace patterns
 # =============================================================================
-TorchFuncType: TypeAlias = Callable[Any, Any]
+TorchFuncType: TypeAlias = Callable[..., Any]
 
 
 @dataclass
@@ -131,27 +132,15 @@ def apply_single_pattern_pair(gm: torch.fx.GraphModule, pattern_pair: PatternPai
     return match_list
 
 
-def get_unquantized_node_list(gm: torch.fx.GraphModule):
-    unquantized_node_list = []
+def get_unquantized_node_set(gm: torch.fx.GraphModule):
+    unquantized_node_set = set()
     for node in gm.graph.nodes:
         if meta := getattr(node, "meta"):
             if quantization_annotation := meta.get(xiq.QUANT_ANNOTATION_KEY):
                 if quantization_annotation._annotated:
                     continue
-        unquantized_node_list.append(node)
-    return unquantized_node_list
-
-
-def get_half_precision_node_list(gm, user_specific_node_list: List[str]):
-    """Intersection between `unquantized_node_list` and `user_specific_node_list`"""
-    # TODO: implement it, current return all unquantized_node_list
-    half_precision_node_list = []
-    unquantized_node_list = get_unquantized_node_list(gm)
-    for node in unquantized_node_list:
-        if node.target in SUPPORTED_OPERATORS:
-            half_precision_node_list.append(node)
-    utils.logger.info(f"Found {len(half_precision_node_list)} nodes to convert to half precision.")
-    return half_precision_node_list
+        unquantized_node_set.add(node)
+    return unquantized_node_set
 
 
 def transformation(gm: torch.fx.GraphModule, node_candidate_list: List[str], target_dtype: torch.dtype = torch.float16):
@@ -160,3 +149,44 @@ def transformation(gm: torch.fx.GraphModule, node_candidate_list: List[str], tar
         apply_single_pattern_pair(gm, pattern_pair, node_candidate_list)
     utils.logger.info("Half precision conversion is done:")
     gm.print_readable(True)
+
+
+# =============================================================================
+# Utils to parse the node candidate set for half precision conversion
+# =============================================================================
+
+
+def _parse_node_candidate_set_from_user_config(config, gm):
+    """Parse the node candidate set from user config."""
+    op_type_configs, op_name_configs = config._get_op_name_op_type_config()
+    op_type_filters = []
+    op_name_filters = []
+    for op_type, config in op_type_configs.items():
+        if config.act_dtype == "fp16":
+            filter = xpq._get_module_type_filter(op_type)
+            op_type_filters.append(filter)
+    for op_name, config in op_name_configs.items():
+        if config.act_dtype == "fp16":
+            filter = xpq._get_module_name_filter(op_name)
+            op_name_filters.append(filter)
+    node_set_from_user_config = set()
+    all_filters = op_type_filters + op_name_filters
+    for node in gm.graph.nodes:
+        if any([filter(node) for filter in all_filters]):
+            node_set_from_user_config.add(node)
+    return node_set_from_user_config
+
+
+def get_half_precision_node_set(gm, config):
+    """Intersection between `unquantized_node_set` and `node_set_from_user_config`"""
+    # TODO: implement it, current return all unquantized_node_set
+
+    node_set_from_user_config = _parse_node_candidate_set_from_user_config(config, gm)
+    unquantized_node_set = get_unquantized_node_set(gm)
+    possible_node_set = unquantized_node_set.intersection(node_set_from_user_config)
+    half_precision_node_set = set()
+    for node in possible_node_set:
+        if node.target in SUPPORTED_OPERATORS:
+            half_precision_node_set.add(node)
+    utils.logger.info(f"Found {len(half_precision_node_set)} nodes to convert to half precision.")
+    return half_precision_node_set
