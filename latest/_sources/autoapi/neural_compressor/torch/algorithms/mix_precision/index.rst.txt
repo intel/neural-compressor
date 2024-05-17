@@ -1,0 +1,18 @@
+:orphan:
+
+:py:mod:`neural_compressor.torch.algorithms.mix_precision`
+==========================================================
+
+.. py:module:: neural_compressor.torch.algorithms.mix_precision
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   half_precision_convert/index.rst
+   module_wrappers/index.rst
+
+

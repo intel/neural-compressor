@@ -1,0 +1,30 @@
+:py:mod:`neural_compressor.torch.algorithms.mix_precision.half_precision_convert`
+=================================================================================
+
+.. py:module:: neural_compressor.torch.algorithms.mix_precision.half_precision_convert
+
+.. autoapi-nested-parse::
+
+   Half-precision Convert for Torch Modules.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.mix_precision.half_precision_convert.HalfPrecisionConverter
+
+
+
+
+.. py:class:: HalfPrecisionConverter(configs_mapping: Dict[Tuple[str], object], *args, **kwargs)
+
+
+   Converter Class for FP16 and BF16.
+
+
