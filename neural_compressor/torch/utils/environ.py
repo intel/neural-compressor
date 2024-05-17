@@ -73,6 +73,7 @@ def is_ipex_imported() -> bool:
             return True
     return False
 
+
 def is_transformers_imported() -> bool:
     for name, _ in sys.modules.items():
         if name == "transformers":

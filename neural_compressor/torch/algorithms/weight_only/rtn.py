@@ -23,14 +23,14 @@ from collections import OrderedDict
 
 import torch
 
-
 from neural_compressor.torch.algorithms import Quantizer
-from neural_compressor.torch.utils import get_device, logger, set_module, is_transformers_imported
+from neural_compressor.torch.utils import get_device, is_transformers_imported, logger, set_module
 
 from .utility import cast_fp8, quant_tensor, search_clip
 
 if is_transformers_imported():
     import transformers
+
 
 class RTNQuantizer(Quantizer):
     def __init__(self, quant_config: OrderedDict = {}):
@@ -100,7 +100,7 @@ class RTNQuantizer(Quantizer):
         if is_transformers_imported():
             supported_layers = (torch.nn.Linear, transformers.Conv1D)
         else:
-            supported_layers = (torch.nn.Linear, )
+            supported_layers = (torch.nn.Linear,)
         # initialize global configuration
         double_quant_config = {
             "double_quant": kwargs.get("use_double_quant", False),
@@ -164,7 +164,7 @@ class RTNQuantizer(Quantizer):
             if is_transformers_imported():
                 transpose = (group_dim == 0) ^ (isinstance(m, transformers.Conv1D))
             else:
-                transpose = (group_dim == 0) 
+                transpose = group_dim == 0
             if transpose:
                 weight = m.weight.t_().contiguous()
             else:
