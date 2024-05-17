@@ -190,7 +190,7 @@ class WeightOnlyLinear(torch.nn.Module):
         if g_idx is not None:
             assert hasattr(self, "g_idx"), "g_idx is not set when initializing."
             self.g_idx = g_idx.type(torch.int32).to(self.device)
-            if self.use_optimum_format:
+            if self.use_optimum_format or "int" not in self.dtype:
                 invperm = torch.argsort(self.g_idx)
                 self.g_idx = invperm // self.group_size
                 self.g_idx = self.g_idx.type(torch.int32).to(self.device)
