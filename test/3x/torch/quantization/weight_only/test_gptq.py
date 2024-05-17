@@ -86,22 +86,23 @@ class TestGPTQQuant:
         ), "The results of calling `convert` + `prepare` and calling `quantize` should be equal."
 
     @pytest.mark.parametrize(
-        "bits, use_sym, group_size",
+        "bits, use_sym, group_size, act_order",
         [
-            (8, True, 128),
-            (4, True, 128),
-            (4, False, 32),
-            (4, True, 32),
-            (4, False, -1),
-            (2, True, 8),
+            (8, True, 128, False),
+            (4, True, 128, False),
+            (4, False, 32, False),
+            (4, True, 32, True),
+            (4, False, -1, True),
+            (2, True, 8, True),
         ],
     )
-    def test_int_params(self, bits, use_sym, group_size):
+    def test_int_params(self, bits, use_sym, group_size, act_order):
         model = copy.deepcopy(self.tiny_gptj)
         quant_config = GPTQConfig(
             bits=bits,
             use_sym=use_sym,
             group_size=group_size,
+            act_order=act_order,
         )
         model = prepare(model, quant_config)
         run_fn(model)

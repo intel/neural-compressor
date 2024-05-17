@@ -35,6 +35,8 @@ from neural_compressor.torch.quantization.config import (
     get_default_fp8_config,
     get_default_fp8_config_set,
     get_woq_tuning_config,
+    DynamicQuantConfig,
+    get_default_dynamic_config,
 )
 
 from neural_compressor.torch.quantization.autotune import (
