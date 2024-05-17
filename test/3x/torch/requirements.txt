@@ -1,3 +1,4 @@
+expecttest
 numpy
 prettytable
 psutil
