@@ -343,13 +343,13 @@ class TestAutoTune(unittest.TestCase):
         from neural_compressor.torch.algorithms.mix_precision import HalfPrecisionModuleWrapper
 
         baseline = [1]
-        acc_res_lst = baseline + [0.9, 0.99, 1.1]
+        acc_res_lst = baseline + [0.9, 0.99, 1]
 
         def eval_acc_fn(model):
             res = acc_res_lst.pop(0)
             return res
 
-        custom_tune_config = TuningConfig(config_set=[MixPrecisionConfig(dtype=["fp16", "bf16", "fp32"])], tolerable_loss=-1)
+        custom_tune_config = TuningConfig(config_set=[MixPrecisionConfig(dtype=["fp16", "bf16", "fp32"])], max_trials=3)
         best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fn=eval_acc_fn)
 
         self.assertIsNotNone(best_model)
@@ -372,19 +372,6 @@ class TestAutoTune(unittest.TestCase):
         config1 = {
             "mix_precision": {
                 "global": {
-                    "dtype": "fp16",
-                },
-                "local": {
-                    "fc1": {
-                        "dtype": "fp32",
-                    }
-                },
-            }
-        }
-
-        config2 = {
-            "mix_precision": {
-                "global": {
                     "dtype": "bf16",
                 },
                 "local": {
@@ -394,7 +381,19 @@ class TestAutoTune(unittest.TestCase):
                 },
             }
         }
-
+        config2 = {
+            "mix_precision": {
+                "global": {
+                    "dtype": "fp16",
+                },
+                "local": {
+                    "fc1": {
+                        "dtype": "fp32",
+                    }
+                },
+            }
+        }        
+        
         registered_configs = config_registry.get_cls_configs()
         config1 = ComposableConfig.from_dict(config1, config_registry=registered_configs["torch"])
         config2 = ComposableConfig.from_dict(config2, config_registry=registered_configs["torch"])
