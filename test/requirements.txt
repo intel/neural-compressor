@@ -11,7 +11,7 @@ onnx
 onnxruntime
 onnxruntime-extensions; python_version < '3.11'
 optimum
-peft==0.10.0
+peft
 tensorflow-addons
 tf2onnx
 tf_slim
