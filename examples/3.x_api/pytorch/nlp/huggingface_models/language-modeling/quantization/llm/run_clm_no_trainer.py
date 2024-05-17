@@ -366,7 +366,8 @@ if args.quantize:
         user_model = prepare(model=user_model, quant_config=quant_config, example_inputs=example_inputs)
         run_fn(user_model)
         user_model = convert(user_model)
-        user_model.save(args.output_dir)
+    
+    user_model.save(args.output_dir)
 
 
 # TODO: we need run_benchmark.sh for loading and remove --accuracy in run_quant.sh, currently run_quant.sh will get fp32 result
