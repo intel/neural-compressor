@@ -7,7 +7,13 @@ import torch
 import transformers
 
 from neural_compressor.common import logger
-from neural_compressor.torch.quantization import RTNConfig, TuningConfig, autotune, get_all_config_set
+from neural_compressor.torch.quantization import (
+    MixPrecisionConfig,
+    RTNConfig,
+    TuningConfig,
+    autotune,
+    get_all_config_set,
+)
 from neural_compressor.torch.utils import constants
 
 FAKE_DOUBLE_QUANT_CONFIGS = {
@@ -307,6 +313,98 @@ class TestAutoTune(unittest.TestCase):
         custom_tune_config = TuningConfig(config_set=get_rtn_double_quant_config_set(), tolerable_loss=-1)
         best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fn=eval_acc_fn)
         self.assertIsNone(best_model)
+
+    def test_woq_tuning(self):
+        from neural_compressor.torch.quantization import autotune, get_woq_tuning_config
+
+        baseline = [1]
+        acc_res_lst = baseline + [0.9, 0.95, 0.95, 0.99, 1.1]
+
+        def eval_acc_fn(model):
+            res = acc_res_lst.pop(0)
+            return res
+
+        custom_tune_config = TuningConfig(config_set=get_woq_tuning_config(), tolerable_loss=-1)
+        example_inputs = torch.ones([1, 32], dtype=torch.long)
+        model = get_gpt_j()
+        dataloader = GPTQLLMDataLoader()
+        best_model = autotune(
+            model=model,
+            tune_config=custom_tune_config,
+            eval_fn=eval_acc_fn,
+            run_fn=run_fn_for_gptq,
+            run_args=(dataloader, True),  # run_args should be a tuple,
+            example_inputs=example_inputs,
+        )
+        self.assertIsNone(best_model)
+
+    @reset_tuning_target
+    def test_autotune_mix_precision_default(self):
+        from neural_compressor.torch.algorithms.mix_precision import HalfPrecisionModuleWrapper
+
+        baseline = [1]
+        acc_res_lst = baseline + [0.9, 0.99, 1]
+
+        def eval_acc_fn(model):
+            res = acc_res_lst.pop(0)
+            return res
+
+        custom_tune_config = TuningConfig(config_set=[MixPrecisionConfig(dtype=["fp16", "bf16", "fp32"])], max_trials=3)
+        best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fn=eval_acc_fn)
+
+        self.assertIsNotNone(best_model)
+        self.assertTrue(isinstance(best_model.fc1, HalfPrecisionModuleWrapper))
+        self.assertTrue(isinstance(best_model.fc2, HalfPrecisionModuleWrapper))
+        self.assertTrue(isinstance(best_model.fc3, HalfPrecisionModuleWrapper))
+
+    @reset_tuning_target
+    def test_autotune_mix_precision_set_op_name(self):
+        from neural_compressor.common.base_config import ComposableConfig, config_registry
+        from neural_compressor.torch.algorithms.mix_precision import HalfPrecisionModuleWrapper
+
+        baseline = [1]
+        acc_res_lst = baseline + [0.9, 1.1]
+
+        def eval_acc_fn(model):
+            res = acc_res_lst.pop(0)
+            return res
+
+        config1 = {
+            "mix_precision": {
+                "global": {
+                    "dtype": "bf16",
+                },
+                "local": {
+                    "fc2": {
+                        "dtype": "fp32",
+                    }
+                },
+            }
+        }
+        config2 = {
+            "mix_precision": {
+                "global": {
+                    "dtype": "fp16",
+                },
+                "local": {
+                    "fc1": {
+                        "dtype": "fp32",
+                    }
+                },
+            }
+        }
+
+        registered_configs = config_registry.get_cls_configs()
+        config1 = ComposableConfig.from_dict(config1, config_registry=registered_configs["torch"])
+        config2 = ComposableConfig.from_dict(config2, config_registry=registered_configs["torch"])
+
+        custom_tune_config = TuningConfig(config_set=[config1, config2], max_trials=2)
+        best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fn=eval_acc_fn)
+
+        self.assertIsNotNone(best_model)
+        self.assertTrue(isinstance(best_model.fc1, torch.nn.Linear))
+        self.assertTrue(isinstance(best_model.fc2, HalfPrecisionModuleWrapper))
+        self.assertTrue(isinstance(best_model.fc3, HalfPrecisionModuleWrapper))
 
 
 if __name__ == "__main__":

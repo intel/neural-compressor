@@ -28,8 +28,6 @@ import sys
 
 from x import py
 from x import y as z
-from copy import deepcopy
-from subprocess import Popen, PIPE
 ```
 
 - Not recommend
@@ -37,7 +35,8 @@ from subprocess import Popen, PIPE
 ```python
 from sub_module import *  # May lead to namespace pollution
 import os, sys  # Import on separate lines
-import copy  # May import local copy.py
+from subprocess import Popen  # Use import statements for packages and modules only, `Popen` is a class
+from subprocess import PIPE  # Use import statements for packages and modules only, `Popen` is a constant
 ```
 
 ### Strings
@@ -115,7 +114,7 @@ ComplexTFMap: TypeAlias = Mapping[str, _LossAndGradient]
 def xx_func(cls) -> Dict[str, OrderedDict[str, Dict[str, object]]]: # Can't improve the readability
 ```
 
-- Plugs:
+- VS Code Extensions:
   - [python](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
   - [pylance](https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-pylance)
 
@@ -165,7 +164,7 @@ class OutOfCheeseError(Exception):
 
 > A `TODO` comment begins with the word `TODO:` for facilitate searching.
 
-- Plug:
+- VS Code Extension:
     [Better Comments](https://marketplace.visualstudio.com/items?itemName=aaron-bond.better-comments)
 
 

@@ -17,7 +17,9 @@
 # pylint:disable=import-error
 
 from collections import OrderedDict
-from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import Callable, Dict, List, NamedTuple, Optional
+from typing import OrderedDict as OrderedDictType
+from typing import Tuple, Union
 
 import torch
 
@@ -34,13 +36,14 @@ from neural_compressor.common.utils import (
     FP8_QUANT,
     GPTQ,
     HQQ,
+    MIX_PRECISION,
     OP_NAME_OR_MODULE_TYPE,
     RTN,
     SMOOTH_QUANT,
     STATIC_QUANT,
     TEQ,
 )
-from neural_compressor.torch.utils import is_hpex_available, logger
+from neural_compressor.torch.utils import is_hpex_available, is_ipex_imported, is_transformers_imported, logger
 from neural_compressor.torch.utils.constants import (
     PRIORITY_AUTOROUND,
     PRIORITY_AWQ,
@@ -48,6 +51,7 @@ from neural_compressor.torch.utils.constants import (
     PRIORITY_HQQ,
     PRIORITY_RTN,
     PRIORITY_TEQ,
+    PT2E_DYNAMIC_QUANT,
 )
 
 __all__ = [
@@ -57,10 +61,17 @@ __all__ = [
     "get_default_gptq_config",
     "HQQConfig",
     "get_default_hqq_config",
+    "get_woq_tuning_config",
 ]
 
 
 FRAMEWORK_NAME = "torch"
+if is_transformers_imported():
+    import transformers
+
+    WOQ_WHITE_LIST = (torch.nn.Linear, transformers.Conv1D)
+else:
+    WOQ_WHITE_LIST = (torch.nn.Linear,)
 
 
 class OperatorConfig(NamedTuple):
@@ -83,7 +94,6 @@ class RTNConfig(BaseConfig):
         "group_dim",
         "use_full_range",
         "use_mse_search",
-        "export_compressed_model",
         # layer wise params
         "use_layer_wise",
         "model_path",
@@ -105,7 +115,6 @@ class RTNConfig(BaseConfig):
         group_dim: int = 1,
         use_full_range: bool = False,
         use_mse_search: bool = False,
-        export_compressed_model: bool = False,
         # layer wise
         use_layer_wise: bool = False,
         model_path: str = "",
@@ -128,7 +137,6 @@ class RTNConfig(BaseConfig):
             group_dim (int): Dimension for grouping. Default is 1.
             use_full_range (bool): Enables full range for activations. Default is False.
             use_mse_search (bool): Enables mean squared error (MSE) search. Default is False.
-            export_compressed_model (bool): Enables return model in int format or not. Defaults to False.
             use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
             model_path (str): Model path that is used to load state_dict per layer.
             use_double_quant (bool): Enables double quantization. Default is False.
@@ -145,7 +153,6 @@ class RTNConfig(BaseConfig):
         self.group_dim = group_dim
         self.use_full_range = use_full_range
         self.use_mse_search = use_mse_search
-        self.export_compressed_model = export_compressed_model
         self.use_layer_wise = use_layer_wise
         self.model_path = model_path
         # double quant
@@ -180,7 +187,6 @@ class RTNConfig(BaseConfig):
             use_full_range=[False, True],
             use_mse_search=[False, True],
             use_layer_wise=[False, True],
-            export_compressed_model=[False, True],
             use_double_quant=[False, True],
             double_quant_bits=[4, 1, 2, 3, 5, 6, 7, 8],
             double_quant_dtype=["int"],
@@ -193,10 +199,9 @@ class RTNConfig(BaseConfig):
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
-        white_list = (torch.nn.Linear,)
         filter_result = []
         for op_name, module in model.named_modules():
-            if isinstance(module, white_list):
+            if isinstance(module, WOQ_WHITE_LIST):
                 pair = (op_name, type(module).__name__)
                 filter_result.append(pair)
         logger.debug(f"Get model info: {filter_result}")
@@ -242,7 +247,6 @@ class GPTQConfig(BaseConfig):
         "use_sym",
         "group_size",
         "use_mse_search",
-        "export_compressed_model",
         "use_double_quant",
         "double_quant_dtype",
         "double_quant_bits",
@@ -265,7 +269,6 @@ class GPTQConfig(BaseConfig):
         use_sym: bool = True,
         group_size: int = 32,
         use_mse_search: bool = False,
-        export_compressed_model: bool = False,
         # layer wise
         use_layer_wise: bool = False,
         model_path: str = "",
@@ -291,7 +294,6 @@ class GPTQConfig(BaseConfig):
             use_sym (bool): Indicates whether weights are symmetric. Default is True.
             group_size (int): Size of weight groups. Default is 32.
             use_mse_search (bool): Enables mean squared error (MSE) search. Default is False.
-            export_compressed_model (bool): Enables return model in int format or not. Defaults to False.
             use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
             model_path (str): Model path that is used to load state_dict per layer.
             use_double_quant (bool): Enables double quantization. Default is False.
@@ -315,7 +317,6 @@ class GPTQConfig(BaseConfig):
         self.use_sym = use_sym
         self.group_size = group_size
         self.use_mse_search = use_mse_search
-        self.export_compressed_model = export_compressed_model
         # layer wise
         self.use_layer_wise = use_layer_wise
         self.model_path = model_path
@@ -343,10 +344,9 @@ class GPTQConfig(BaseConfig):
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
-        white_list = (torch.nn.Linear,)
         filter_result = []
         for op_name, module in model.named_modules():
-            if isinstance(module, white_list):
+            if isinstance(module, WOQ_WHITE_LIST):
                 pair = (op_name, type(module).__name__)
                 filter_result.append(pair)
         logger.debug(f"Get model info: {filter_result}")
@@ -476,10 +476,9 @@ class AWQConfig(BaseConfig):
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
-        white_list = (torch.nn.Linear,)
         filter_result = []
         for op_name, module in model.named_modules():
-            if isinstance(module, white_list):
+            if isinstance(module, WOQ_WHITE_LIST):
                 pair = (op_name, type(module).__name__)
                 filter_result.append(pair)
         logger.debug(f"Get model info: {filter_result}")
@@ -519,7 +518,6 @@ class TEQConfig(BaseConfig):
         "use_full_range",
         "use_mse_search",
         "use_layer_wise",
-        "export_compressed_model",
         "use_double_quant",
         "double_quant_dtype",
         "double_quant_bits",
@@ -541,7 +539,6 @@ class TEQConfig(BaseConfig):
         use_full_range: bool = False,
         use_mse_search: bool = False,
         use_layer_wise: bool = False,
-        export_compressed_model: bool = False,
         # double quant
         use_double_quant: bool = False,
         double_quant_dtype: str = "int",
@@ -564,7 +561,6 @@ class TEQConfig(BaseConfig):
             use_full_range (bool): Enables full range for activations, default is False.
             use_mse_search (bool): Enables mean squared error (MSE) search, default is False.
             use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
-            export_compressed_model (bool): Enables return model in int format or not. Defaults to False.
             use_double_quant (bool): Enables double quantization, default is False.
             double_quant_dtype (str): Data type for double_quant scale, default is "int".
             double_quant_bits (int): Number of bits used to represent double_quant scale, default is 4.
@@ -583,7 +579,6 @@ class TEQConfig(BaseConfig):
         self.use_full_range = use_full_range
         self.use_mse_search = use_mse_search
         self.use_layer_wise = use_layer_wise
-        self.export_compressed_model = export_compressed_model
         # double quant
         self.use_double_quant = use_double_quant
         self.double_quant_bits = double_quant_bits
@@ -605,10 +600,9 @@ class TEQConfig(BaseConfig):
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
-        white_list = (torch.nn.Linear,)
         filter_result = []
         for op_name, module in model.named_modules():
-            if isinstance(module, white_list):
+            if isinstance(module, WOQ_WHITE_LIST):
                 pair = (op_name, type(module).__name__)
                 filter_result.append(pair)
         logger.debug(f"Get model info: {filter_result}")
@@ -685,7 +679,7 @@ class AutoRoundConfig(BaseConfig):
         gradient_accumulate_steps: int = 1,
         not_use_best_mse: bool = False,
         dynamic_max_gap: int = -1,
-        scale_dtype: str = "fp16",
+        scale_dtype: str = "fp32",
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init AUTOROUND weight-only quantization config.
@@ -751,10 +745,9 @@ class AutoRoundConfig(BaseConfig):
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
-        white_list = (torch.nn.Linear,)
         filter_result = []
         for op_name, module in model.named_modules():
-            if isinstance(module, white_list):
+            if isinstance(module, WOQ_WHITE_LIST):
                 pair = (op_name, type(module).__name__)
                 filter_result.append(pair)
         logger.debug(f"Get model info: {filter_result}")
@@ -773,6 +766,80 @@ def get_default_AutoRound_config() -> AutoRoundConfig:
         the default AUTOROUND config.
     """
     return AutoRoundConfig()
+
+
+######################## Dynamic Quant Config ###############################
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=PT2E_DYNAMIC_QUANT)
+class DynamicQuantConfig(BaseConfig):
+    """Config class for dynamic quantization."""
+
+    name = PT2E_DYNAMIC_QUANT
+    params_list = [
+        "w_dtype",
+        "w_sym",
+        "w_granularity",
+        "w_algo",
+        "act_dtype",
+        "act_sym",
+        "act_granularity",
+        "act_algo",
+    ]
+    supported_configs: List[OperatorConfig] = []
+
+    def __init__(
+        self,
+        w_dtype: str = "int8",
+        w_sym: bool = True,
+        w_granularity: str = "per_tensor",
+        w_algo: str = "minmax",
+        act_dtype: str = "uint8",
+        act_sym: bool = False,
+        act_granularity: str = "per_tensor",
+        act_algo: str = "kl",
+        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+    ):
+        """Init Dynamic Quant Configs."""
+        super().__init__(white_list=white_list)
+        self.w_dtype = w_dtype
+        self.w_sym = w_sym
+        self.w_granularity = w_granularity
+        self.w_algo = w_algo
+        self.act_dtype = act_dtype
+        self.act_sym = act_sym
+        self.act_granularity = act_granularity
+        self.act_algo = act_algo
+        self._post_init()
+
+    @classmethod
+    def register_supported_configs(cls) -> List[OperatorConfig]:
+        supported_configs = []
+        linear_static_config = cls()
+        operators = [torch.nn.Linear]
+        supported_configs.append(OperatorConfig(config=linear_static_config, operators=operators))
+        cls.supported_configs = supported_configs
+
+    @staticmethod
+    def get_model_info(model: torch.nn.Module, example_inputs=None):
+        return None
+
+    def to_config_mapping(
+        self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
+    ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
+        config_mapping = OrderedDict({self.name: self})
+        return config_mapping
+
+    @classmethod
+    def get_config_set_for_tuning(cls) -> Union[None, "DynamicQuantConfig", List["DynamicQuantConfig"]]:
+        return cls(act_sym=[True, False], act_algo=["kl", "minmax"])
+
+
+def get_default_dynamic_config() -> DynamicQuantConfig:
+    """Generate the default dynamic quant config.
+
+    Returns:
+        the default dynamic quant config.
+    """
+    return DynamicQuantConfig()
 
 
 ######################## Static Quant Config ###############################
@@ -820,18 +887,30 @@ class StaticQuantConfig(BaseConfig):
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
-        # TODO(Yi)
         linear_static_config = StaticQuantConfig()
         operators = [torch.nn.Linear]
         supported_configs.append(OperatorConfig(config=linear_static_config, operators=operators))
         cls.supported_configs = supported_configs
 
     @staticmethod
-    def get_model_info(model: torch.nn.Module, example_inputs) -> List[Tuple[str, Callable]]:
+    def get_model_info_for_ipex(model: torch.nn.Module, example_inputs) -> List[Tuple[str, Callable]]:
         from neural_compressor.torch.algorithms.static_quant import get_quantizable_ops_recursively
 
         _, _, _, _, model_info = get_quantizable_ops_recursively(model, example_inputs=example_inputs)
         return model_info
+
+    @staticmethod
+    def get_model_info(model: torch.nn.Module, example_inputs=None) -> List[Tuple[str, Callable]]:
+        if is_ipex_imported():
+            return StaticQuantConfig.get_model_info_for_ipex(model, example_inputs)
+
+    def to_config_mapping(
+        self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
+    ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
+        if is_ipex_imported():
+            return super().to_config_mapping(config_list, model_info)
+        config_mapping = OrderedDict({self.name: self})
+        return config_mapping
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "StaticQuantConfig", List["StaticQuantConfig"]]:
@@ -844,6 +923,8 @@ def get_default_static_config() -> StaticQuantConfig:
     Returns:
         the default static quant config.
     """
+    if not is_ipex_imported():
+        return StaticQuantConfig(w_granularity="per_tensor")
     return StaticQuantConfig()
 
 
@@ -991,10 +1072,9 @@ class HQQConfig(BaseConfig):
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
-        white_list = (torch.nn.Linear,)
         filter_result = []
         for op_name, module in model.named_modules():
-            if isinstance(module, white_list):
+            if isinstance(module, WOQ_WHITE_LIST):
                 pair = (op_name, type(module).__name__)
                 filter_result.append(pair)
         return filter_result
@@ -1117,6 +1197,81 @@ def get_default_fp8_config_set() -> FP8Config:
     return FP8Config.get_config_set_for_tuning()
 
 
+######################## MixPrecision Config ###############################
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=MIX_PRECISION)
+class MixPrecisionConfig(BaseConfig):
+    """Config class for mix-precision."""
+
+    name = MIX_PRECISION
+    supported_configs: List[OperatorConfig] = []
+    params_list = [
+        "dtype",
+    ]
+    supported_half_precision_ops = (
+        torch.nn.Linear,
+        torch.nn.Conv1d,
+        torch.nn.Conv2d,
+        torch.nn.Conv3d,
+    )
+
+    def __init__(
+        self,
+        dtype: Union[str, List[str]] = "fp16",
+        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+    ):
+        """Init MixPrecision config.
+
+        Args:
+        """
+        super().__init__(white_list=white_list)
+        self.dtype = dtype
+        self._post_init()
+
+    @classmethod
+    def register_supported_configs(cls) -> List[OperatorConfig]:
+        supported_configs = []
+        mix_precision_config = MixPrecisionConfig(
+            dtype=["fp16", "bf16", "fp32"],
+        )
+        operators = cls.supported_half_precision_ops
+        supported_configs.append(OperatorConfig(config=mix_precision_config, operators=operators))
+        cls.supported_configs = supported_configs
+
+    @staticmethod
+    def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+        white_list = tuple(MixPrecisionConfig.supported_half_precision_ops)
+        filter_result = []
+        for op_name, module in model.named_modules():
+            if isinstance(module, white_list):
+                pair = (op_name, type(module).__name__)
+                filter_result.append(pair)
+        logger.debug(f"Get model info: {filter_result}")
+        return filter_result
+
+    @classmethod
+    def get_config_set_for_tuning(cls) -> Union[None, "MixPrecisionConfig", List["MixPrecisionConfig"]]:
+        # TODO fwk owner needs to update it.
+        return MixPrecisionConfig(dtype=["fp16", "bf16", "fp32"])
+
+
+def get_default_mix_precision_config() -> MixPrecisionConfig:
+    """Generate the default mix-precision config.
+
+    Returns:
+        the default mix-precision config.
+    """
+    return MixPrecisionConfig()
+
+
+def get_default_mix_precision_config_set() -> MixPrecisionConfig:
+    """Generate the default mix-precision config set.
+
+    Returns:
+        the default mix-precision config.
+    """
+    return MixPrecisionConfig.get_config_set_for_tuning()
+
+
 ##################### Algo Configs End ###################################
 
 
@@ -1126,3 +1281,23 @@ register_supported_configs_for_fwk(fwk_name=FRAMEWORK_NAME)
 def get_all_registered_configs() -> Dict[str, BaseConfig]:
     registered_configs = config_registry.get_all_configs()
     return registered_configs.get(FRAMEWORK_NAME, {})
+
+
+# =============================================================================
+# Tuning Config
+# =============================================================================
+
+
+######################## WOQ Tuning Config ###############################
+def get_woq_tuning_config() -> list:
+    """Generate the config set for WOQ tuning.
+
+    Returns:
+        the list of WOQ quant config.
+    """
+    RTN_G32ASYM = RTNConfig(use_sym=False, group_size=32)
+    GPTQ_G32ASYM = GPTQConfig(use_sym=False, group_size=32)
+    GPTQ_G32ASYM_DISABLE_LAST_LINEAR = GPTQConfig(use_sym=False).set_local("*.lm_head", GPTQConfig(dtype="fp32"))
+    GPTQ_G128ASYM = GPTQConfig(group_size=128, use_sym=False)
+    AWQ_G32ASYM = AWQConfig(use_sym=False, group_size=32)
+    return [RTN_G32ASYM, GPTQ_G32ASYM, GPTQ_G32ASYM_DISABLE_LAST_LINEAR, GPTQ_G128ASYM, AWQ_G32ASYM]
