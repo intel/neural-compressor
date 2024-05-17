@@ -227,10 +227,15 @@ def create_xiq_quantizer_from_pt2e_config(config, is_dynamic=False) -> X86Induct
     global_config = _map_inc_config_to_torch_quant_config(config, is_dynamic)
     quantizer.set_global(global_config)
     # set local
-    for module_or_func_name, local_config in config.local_config.items():
-        local_quant_config = _map_inc_config_to_torch_quant_config(local_config, is_dynamic)
-        if isinstance(module_or_func_name, torch.nn.Module):
-            quantizer.set_module_type_qconfig(module_or_func_name, local_quant_config)
+    for name, local_config in config.local_config.items():
+        if local_config.act_dtype not in ["int8", "uint8"]:
+            local_quant_config = None
         else:
-            quantizer.set_function_type_qconfig(module_or_func_name, local_quant_config)
+            local_quant_config = _map_inc_config_to_torch_quant_config(local_config, is_dynamic)
+        if local_quant_config and isinstance(name, str):
+            raise NotImplementedError("Not support specific quantization config on op level.")
+        elif isinstance(name, torch.nn.Module):
+            quantizer.set_module_type_qconfig(name, local_quant_config)
+        else:
+            quantizer.set_function_type_qconfig(name, local_quant_config)
     return quantizer

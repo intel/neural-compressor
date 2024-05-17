@@ -161,7 +161,8 @@ def _parse_node_candidate_set_from_user_config(config, gm):
     op_type_configs, op_name_configs = config._get_op_name_op_type_config()
     op_type_filters = []
     op_name_filters = []
-    for op_type, config in op_type_configs.items():
+    for op_type_name, config in op_type_configs.items():
+        op_type = getattr(torch.nn, op_type_name)
         if config.act_dtype == "fp16":
             filter = xpq._get_module_type_filter(op_type)
             op_type_filters.append(filter)
