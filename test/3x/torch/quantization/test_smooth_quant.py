@@ -42,21 +42,26 @@ class TestSmoothQuant:
         q_model = convert(prepared_model)
         assert q_model is not None, "Quantization failed!"
 
+        example_dict = {"x": example_inputs}
+        prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_dict)
+        run_fn(prepared_model)
+        q_model = convert(prepared_model)
+        assert q_model is not None, "Quantization failed!"
+
     @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
     def test_smooth_quant_auto(self):
         fp32_model = copy.deepcopy(model)
-        auto_alpha_args = {
-            "alpha_min": 0.45,
-            "alpha_max": 0.55,
-            "alpha_step": 0.01,
-            "shared_criterion": "mean",
-            "do_blockwise": True,
-        }
-        quant_config = SmoothQuantConfig(alpha="auto", auto_alpha_args=auto_alpha_args, folding=False)
+        quant_config = SmoothQuantConfig(
+            alpha="auto",
+            alpha_min=0.45,
+            alpha_max=0.55,
+            alpha_step=0.01,
+            shared_criterion="mean",
+            do_blockwise=True,
+            folding=False,
+        )
         example_inputs = torch.randn([1, 3])
-        prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
-        run_fn(prepared_model)
-        q_model = convert(prepared_model)
+        q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
         assert q_model is not None, "Quantization failed!"
 
     @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")

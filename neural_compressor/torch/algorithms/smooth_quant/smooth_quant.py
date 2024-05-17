@@ -202,7 +202,7 @@ class SmoothQuantQuantizer(Quantizer):
                 folding = recipe_cfgs["smooth_quant_args"]["folding"]
 
         # Note: we should make sure smoothquant is only executed once with inplacing fp32 model.
-        if hasattr(model, "_smoothquant_optimized") and model._smoothquant_optimized:
+        if hasattr(model, "_smoothquant_optimized") and model._smoothquant_optimized:  # pragma: no cover
             logger.info("The model is already optimized by SmoothQuant algorithm, skip it.")
             return model
 
@@ -275,7 +275,7 @@ def qdq_quantize(
 
         if ipex_ver.release >= Version("2.1.1").release:
             static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5, act_observer=MinMaxObserver)
-        else:
+        else:  # pragma: no cover
             if sq_minmax_init:
                 static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
                     alpha=0.5, act_observer=MinMaxObserver()
@@ -374,7 +374,7 @@ def _ipex_post_quant_process(model, example_inputs, inplace=False):
             else:
                 model = torch.jit.trace(model, example_inputs)
             model = torch.jit.freeze(model.eval())
-        except:
+        except:  # pragma: no covers
             if isinstance(example_inputs, dict):
                 model = torch.jit.trace(model, example_kwarg_inputs=example_inputs, strict=False, check_trace=False)
             else:
