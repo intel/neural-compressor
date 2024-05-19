@@ -74,6 +74,13 @@ def is_ipex_imported() -> bool:
     return False
 
 
+def is_transformers_imported() -> bool:
+    for name, _ in sys.modules.items():
+        if name == "transformers":
+            return True
+    return False
+
+
 def get_device(device_name="auto"):
     from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
