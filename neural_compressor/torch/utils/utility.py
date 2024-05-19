@@ -226,15 +226,5 @@ def create_xiq_quantizer_from_pt2e_config(config, is_dynamic=False) -> X86Induct
     # set global
     global_config = _map_inc_config_to_torch_quant_config(config, is_dynamic)
     quantizer.set_global(global_config)
-    # set local
-    for name, local_config in config.local_config.items():
-        if local_config.act_dtype not in ["int8", "uint8"]:
-            local_quant_config = None
-        else:
-            local_quant_config = _map_inc_config_to_torch_quant_config(local_config, is_dynamic)
-        if name in xiq.X86InductorQuantizer.module_function_to_aten_operator_type:
-            aten_name = xiq.X86InductorQuantizer.module_function_to_aten_operator_type[name]
-            quantizer._set_aten_operator_qconfig(aten_name, local_quant_config)
-        else:
-            raise NotImplementedError(f"Not support specific local config with {name}.")
+    # Skip the local config for now (need torch 2.4)
     return quantizer
