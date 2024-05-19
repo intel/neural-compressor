@@ -1,6 +1,5 @@
 import os
 import re
-import subprocess
 import sys
 from io import open
 
@@ -210,11 +209,10 @@ if __name__ == "__main__":
         description="Repository of Intel® Neural Compressor",
         long_description=open("README.md", "r", encoding="utf-8").read(),
         long_description_content_type="text/markdown",
-        keywords="quantization,auto-tuning,post-training static quantization,"
-        "post-training dynamic quantization,quantization-aware training",
         license="Apache 2.0",
-        url="https://github.com/intel/neural-compressor",
-        packages=include_packages,
+        keywords="quantization",
+        url="",
+        packages=find_packages(include=['neural_compressor', 'neural_compressor.*']),
         include_package_data=True,
         package_data=package_data,
         install_requires=install_requires,
