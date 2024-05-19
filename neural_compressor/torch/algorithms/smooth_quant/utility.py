@@ -40,7 +40,7 @@ version = get_torch_version()
 ipex_ver = get_ipex_version()
 
 
-def get_quantizable_ops_recursively(model, alpha, act_algo, example_inputs, inplace=True):  # pragma: no cover
+def get_quantizable_ops_recursively(model, example_inputs, alpha, act_algo, inplace=True):  # pragma: no cover
     """Get all quantizable ops from model.
 
     Args:
@@ -48,6 +48,7 @@ def get_quantizable_ops_recursively(model, alpha, act_algo, example_inputs, inpl
         example_inputs (dict|list|tuple|torch.Tensor): used to trace torch model.
         alpha (float|str): smoothquant alpha.
         act_algo (str): activation algorithm, minmax or kl.
+        inplace (bool): whether to carry out model transformations in-place. Defaults to True.
 
     Returns:
         quantizable_ops (list): list of tuples of op_name and op_type.

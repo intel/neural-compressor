@@ -46,6 +46,7 @@ class TestSmoothQuant:
         q_model = convert(prepared_model)
         assert q_model is not None, "Quantization failed!"
 
+        fp32_model = copy.deepcopy(model)
         example_dict = {"x": example_inputs}
         prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_dict)
         run_fn(prepared_model)
@@ -59,7 +60,9 @@ class TestSmoothQuant:
         example_inputs = torch.randn([1, 3])
         # fallback by op_type
         quant_config.set_local(torch.nn.Linear, SmoothQuantConfig(w_dtype="fp32", act_dtype="fp32"))
-        q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
+        prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
+        run_fn(prepared_model)
+        q_model = convert(prepared_model)
         assert q_model is not None, "Quantization failed!"
 
         for op, op_info in q_model.tune_cfg[" "]["q_op_infos"].items():
@@ -159,6 +162,7 @@ class TestSmoothQuant:
         assert torch.allclose(inc_out, loaded_out, atol=2e-02), "Unexpected result. Please double check."
 
         # compare saved json file
+        fp32_model = copy.deepcopy(model)
         loaded_model = recover_model_from_json(fp32_model, "saved_results/qconfig.json", example_inputs=example_inputs)
         loaded_out = loaded_model(example_inputs)
         assert torch.allclose(inc_out, loaded_out, atol=1e-05), "Unexpected result. Please double check."
@@ -171,6 +175,24 @@ class TestSmoothQuant:
         q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
         assert q_model is not None, "Quantization failed!"
 
+        fp32_model = copy.deepcopy(model)
         example_dict = {"x": example_inputs}
         q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_dict)
         assert q_model is not None, "Quantization failed!"
+
+    @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
+    def test_smooth_quant_old_new_API(self):
+        fp32_model = copy.deepcopy(model)
+        quant_config = get_default_sq_config()
+        example_inputs = torch.zeros([1, 3])
+        q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
+        assert q_model is not None, "Quantization failed!"
+        old_out = q_model(example_inputs)
+
+        fp32_model = copy.deepcopy(model)
+        prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
+        run_fn(prepared_model)
+        q_model = convert(prepared_model)
+        assert q_model is not None, "Quantization failed!"
+        new_out = q_model(example_inputs)
+        assert torch.allclose(old_out, new_out, atol=2e-02), "Unexpected result. Please double check."

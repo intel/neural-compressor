@@ -1012,14 +1012,11 @@ class SmoothQuantConfig(BaseConfig):
         supported_configs.append(OperatorConfig(config=linear_sq_config, operators=operators))
         cls.supported_configs = supported_configs
 
-    @staticmethod
-    def get_model_info(
-        model: torch.nn.Module, alpha, act_algo, example_inputs, inplace=True
-    ) -> List[Tuple[str, Callable]]:
+    def get_model_info(self, model: torch.nn.Module, example_inputs) -> List[Tuple[str, Callable]]:
         from neural_compressor.torch.algorithms.smooth_quant import get_quantizable_ops_recursively
 
         model_info, cfgs, op_infos_from_cfgs, output_tensor_id_op_name = get_quantizable_ops_recursively(
-            model, alpha, act_algo, example_inputs=example_inputs, inplace=inplace
+            model, example_inputs, alpha=self.alpha, act_algo=self.act_algo, inplace=True
         )
         model.cfgs, model.op_infos_from_cfgs, model.output_tensor_id_op_name = (
             cfgs,
