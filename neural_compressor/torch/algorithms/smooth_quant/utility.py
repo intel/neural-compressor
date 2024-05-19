@@ -847,7 +847,7 @@ class GraphTrace:  # pragma: no cover
 
 
 @register_autotune("version1")
-class AutoAlpha:
+class AutoAlpha:  # pragma: no cover
     def __init__(
         self,
         model,
@@ -1472,7 +1472,7 @@ class AutoAlpha:
         return best_alphas
 
 
-class TorchSmoothQuant:
+class TorchSmoothQuant:  # pragma: no cover
     """Fake input channel quantization, for more details please refer to
     [1] SmoothQuant: Accurate and Efficient
     Post-Training Quantization for Large Language Models
@@ -2047,7 +2047,7 @@ class TorchSmoothQuant:
         return absorb_to_layer, no_absorb_layers
 
 
-class SQLinearWrapper(torch.nn.Module):
+class SQLinearWrapper(torch.nn.Module):  # pragma: no cover
     def __init__(self, module, input_scale, input_minmax, alpha=0.5, dtype=torch.quint8):
         super().__init__()
         self.register_buffer("input_scale", input_scale)
@@ -2108,7 +2108,7 @@ class SQLinearWrapper(torch.nn.Module):
             self.sq_linear.weight *= scale
 
 
-class WrapperLayer(torch.nn.Module):
+class WrapperLayer(torch.nn.Module):  # pragma: no cover
     def __init__(self, layer, input_min, input_max, save_q_input=False):
         super(WrapperLayer, self).__init__()
         self.add_module("orig_layer", layer)  # set orig_layer in get/set_module

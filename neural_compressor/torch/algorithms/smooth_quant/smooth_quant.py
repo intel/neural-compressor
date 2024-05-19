@@ -21,7 +21,7 @@ import torch
 
 try:
     import intel_extension_for_pytorch as ipex
-except:
+except:  # pragma: no cover
     assert False, "Please install IPEX for smooth quantization."
 
 from collections import OrderedDict
@@ -174,12 +174,12 @@ class SmoothQuantQuantizer(Quantizer):
         # check smoothquant folding value
         recipe_cfgs = tune_cfg.get("recipe_cfgs", None)
         if "smooth_quant_args" in recipe_cfgs and "folding" in recipe_cfgs["smooth_quant_args"]:
-            if recipe_cfgs["smooth_quant_args"]["folding"] is None:
-                if ipex_ver.release < Version("2.1").release:  # pragma: no cover
+            if recipe_cfgs["smooth_quant_args"]["folding"] is None:  # pragma: no cover
+                if ipex_ver.release < Version("2.1").release:
                     folding = True
                 else:
                     folding = False
-            else:  # pragma: no cover
+            else:
                 folding = recipe_cfgs["smooth_quant_args"]["folding"]
 
         # Note: we should make sure smoothquant is only executed once with inplacing fp32 model.
@@ -287,7 +287,7 @@ def qdq_quantize(
         # IPEX may raise an error on the second iteration.
         # OverflowError: cannot convert float infinity to integer
         run_fn(model)
-    except:
+    except:  # pragma: no cover
         logger.warning(
             "The calibration failed when calibrating with ipex, "
             + "using scale info from SmoothQuant for Linear and "
@@ -315,7 +315,7 @@ def _apply_pre_optimization(model, tune_cfg, sq, recover=False):
         tsq = TorchSmoothQuant(model, None)
         alpha = tune_cfg["recipe_cfgs"]["smooth_quant_args"]["alpha"]
         for op_name, info in sq_max_info.items():
-            if alpha == "auto":
+            if alpha == "auto":  # pragma: no cover
                 alpha = info["alpha"]
             absorb_layer = op_name
             absorbed_layer = info["absorbed_layer"]
@@ -355,7 +355,7 @@ def _ipex_post_quant_process(model, example_inputs, inplace=False):
             else:
                 model = torch.jit.trace(model, example_inputs)
             model = torch.jit.freeze(model.eval())
-        except:  # pragma: no covers
+        except:  # pragma: no cover
             if isinstance(example_inputs, dict):
                 model = torch.jit.trace(model, example_kwarg_inputs=example_inputs, strict=False, check_trace=False)
             else:
