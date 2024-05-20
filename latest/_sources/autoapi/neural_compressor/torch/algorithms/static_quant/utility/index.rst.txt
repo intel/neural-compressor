@@ -32,7 +32,7 @@ Functions
    neural_compressor.torch.algorithms.static_quant.utility.get_depth
    neural_compressor.torch.algorithms.static_quant.utility.get_dict_at_depth
    neural_compressor.torch.algorithms.static_quant.utility.get_element_under_depth
-   neural_compressor.torch.algorithms.static_quant.utility.paser_cfgs
+   neural_compressor.torch.algorithms.static_quant.utility.parse_cfgs
    neural_compressor.torch.algorithms.static_quant.utility.get_quantizable_ops_from_cfgs
 
 
@@ -110,7 +110,7 @@ Functions
    Get all values in a nested dict.
 
 
-.. py:function:: paser_cfgs(cfgs)
+.. py:function:: parse_cfgs(cfgs)
 
    Parse configs.
 
