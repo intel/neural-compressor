@@ -27,7 +27,6 @@ except:  # pragma: no cover
 from collections import OrderedDict
 from types import MethodType
 
-from overrides import overrides  # pylint: disable=E0401
 from packaging.version import Version
 
 from neural_compressor.torch.algorithms import Quantizer
@@ -149,7 +148,6 @@ class SmoothQuantQuantizer(Quantizer):
         model.save = MethodType(save, model)
         return model
 
-    @overrides
     def quantize(self, model, tune_cfg, run_fn, example_inputs, inplace=True, *args, **kwargs):
         """Execute the quantize process on the specified model.
 
