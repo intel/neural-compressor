@@ -4940,7 +4940,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         amp = self.recipes["autoround_args"].get("amp", True)
         device = self.recipes["autoround_args"].get("device", None)
         bits = self.recipes["autoround_args"].get("bits", 4)
-        group_size= self.recipes["autoround_args"].get("group_size", 128)
+        group_size = self.recipes["autoround_args"].get("group_size", 128)
         sym = self.recipes["autoround_args"].get("scheme", "asym") == "sym"
 
         if dataloader is not None:
