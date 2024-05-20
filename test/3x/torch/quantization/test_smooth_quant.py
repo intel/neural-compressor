@@ -189,7 +189,8 @@ class TestSmoothQuant:
             model(example_inputs)
 
         # 2.x API
-        from neural_compressor import PostTrainingQuantConfig, quantization
+        from neural_compressor import quantization
+        from neural_compressor.config import PostTrainingQuantConfig
 
         quant_config = PostTrainingQuantConfig(
             backend="ipex",
