@@ -16,6 +16,7 @@ from neural_compressor.torch.quantization import (
 )
 from neural_compressor.torch.utils import is_cuda_available
 
+
 class ModelConv1d(torch.nn.Module):
     def __init__(self):
         super(ModelConv1d, self).__init__()
@@ -285,7 +286,7 @@ class TestRTNQuant:
         loaded_out = loaded_model(self.example_inputs)[0]
         assert torch.allclose(inc_out, loaded_out), "Unexpected result. Please double check."
         assert isinstance(loaded_model.lm_head, WeightOnlyLinear), "loading compressed model failed."
-        
+
     @pytest.mark.skipif(not is_cuda_available(), reason="no cuda available")
     def test_fp16_param(self):
         # test_default_rtn_config
