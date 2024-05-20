@@ -1,0 +1,57 @@
+:orphan:
+
+:py:mod:`neural_compressor.torch.algorithms.mx_quant.utils`
+===========================================================
+
+.. py:module:: neural_compressor.torch.algorithms.mx_quant.utils
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.mx_quant.utils.ElemFormat
+   neural_compressor.torch.algorithms.mx_quant.utils.RoundingMode
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.mx_quant.utils.quantize_elemwise_op
+
+
+
+.. py:class:: ElemFormat
+
+
+
+
+   Generic enumeration.
+
+   Derive from this class to define new enumerations.
+
+
+.. py:class:: RoundingMode
+
+
+
+
+   Enum where members are also (and must be) ints
+
+
+.. py:function:: quantize_elemwise_op(A, mx_specs)
+
+   A function used for element-wise quantization with mx_specs
+   :param A          {PyTorch tensor} -- a tensor that needs to be quantized:
+   :param mx_specs {dictionary}     -- dictionary to specify mx_specs:
+
+   :returns: quantized value {PyTorch tensor} -- a tensor that has been quantized
+
+
