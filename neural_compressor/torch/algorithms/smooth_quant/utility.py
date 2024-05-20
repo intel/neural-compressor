@@ -28,14 +28,135 @@ from neural_compressor.torch.algorithms.static_quant import (
     TransformerBasedModelBlockPatternDetector,
     dump_model_op_stats,
     generate_activation_observer,
-    get_quantizable_ops_recursively,
+    get_quantizable_ops_from_cfgs,
     ipex_config_path,
+    parse_cfgs,
     simple_inference,
+    unify_op_type_mapping_ipex,
 )
 from neural_compressor.torch.utils import get_ipex_version, get_torch_version, logger
 
 version = get_torch_version()
 ipex_ver = get_ipex_version()
+
+
+def get_quantizable_ops_recursively(model, example_inputs, alpha, act_algo, inplace=True):  # pragma: no cover
+    """Get all quantizable ops from model.
+
+    Args:
+        model (object): input model
+        example_inputs (dict|list|tuple|torch.Tensor): used to trace torch model.
+        alpha (float|str): smoothquant alpha.
+        act_algo (str): activation algorithm, minmax or kl.
+        inplace (bool): whether to carry out model transformations in-place. Defaults to True.
+
+    Returns:
+        quantizable_ops (list): list of tuples of op_name and op_type.
+        cfgs (dict): dict of configuration
+    """
+    quantizable_ops = []
+    # group ops by position for transform-based model
+    detector = TransformerBasedModelBlockPatternDetector(model)
+    detect_result = detector.detect_block()
+    attention_block = detect_result.get("attention_blocks", None)
+    ffn_blocks = detect_result.get("ffn_blocks", None)
+    logger.info(f"Attention Blocks: {len(attention_block)}")
+    logger.info(f"FFN Blocks: {len(ffn_blocks)}")
+    if not os.path.exists(ipex_config_path):
+        assert isinstance(model, torch.nn.Module), "The model passed in is not the instance of torch.nn.Module"
+
+    if hasattr(model, "save_qconf_summary"):
+        os.makedirs(os.path.dirname(ipex_config_path), exist_ok=True)
+        model.save_qconf_summary(qconf_summary=ipex_config_path)
+    else:  # pragma: no cover
+        model.eval()
+
+        # create a quantization config file for intel pytorch extension model
+        os.makedirs(os.path.dirname(ipex_config_path), exist_ok=True)
+        assert example_inputs is not None, "IPEX need q_dataloader or example_inputs to prepare the model"
+
+        from torch.ao.quantization import MinMaxObserver
+
+        if ipex_ver.release >= Version("2.1.1").release:
+            static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
+                alpha=alpha, act_observer=MinMaxObserver
+            )
+        else:  # pragma: no cover
+            if act_algo == "minmax":
+                static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
+                    alpha=alpha, act_observer=MinMaxObserver()
+                )
+                logger.warning(
+                    "The int8 model accuracy will be close to 0 with MinMaxobserver, "
+                    + "the suggested IPEX version is higher or equal than 2.1.100+cpu."
+                )
+            else:
+                static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=alpha)
+
+        if isinstance(example_inputs, dict):
+            model = ipex.quantization.prepare(
+                model, static_qconfig, example_kwarg_inputs=example_inputs, inplace=inplace
+            )
+        else:
+            model = ipex.quantization.prepare(model, static_qconfig, example_inputs=example_inputs, inplace=inplace)
+
+        simple_inference(model, example_inputs, iterations=1)
+        model.save_qconf_summary(qconf_summary=ipex_config_path)
+
+    map_op_name_to_fqn = {}
+    with open(ipex_config_path, "r") as f:
+        cfgs = json.load(f)
+        (
+            ops_name,
+            op_infos_from_cfgs,
+            input_tensor_id_op_name,
+            output_tensor_id_op_name,
+        ) = parse_cfgs(cfgs)
+        quantizable_op_names = get_quantizable_ops_from_cfgs(ops_name, op_infos_from_cfgs, input_tensor_id_op_name)
+        for name in quantizable_op_names:
+            # name : list
+            if len(name) == 1:
+                module_key = name[0][0]
+                op_cfg_id = name[0][2]
+                ipex_op_type = cfgs[module_key]["q_op_infos"][op_cfg_id]["op_type"]
+                module_fqn = cfgs[module_key]["q_op_infos"][op_cfg_id].get("fqn", None)
+
+                if ipex_op_type in unify_op_type_mapping_ipex:
+                    quantizable_ops.append((tuple(name), unify_op_type_mapping_ipex[ipex_op_type]))
+                    map_op_name_to_fqn[(tuple(name), ipex_op_type)] = module_fqn
+                else:
+                    re_flag = False
+                    for pattern, unify_op_type in unify_op_type_mapping_ipex["re"].items():
+                        if re.match(pattern, ipex_op_type):
+                            re_flag = True
+                            quantizable_ops.append((tuple(name), unify_op_type))
+                            map_op_name_to_fqn[(tuple(name), unify_op_type)] = module_fqn
+                            break
+                    if not re_flag:
+                        quantizable_ops.append((tuple(name), ipex_op_type))
+                        map_op_name_to_fqn[(tuple(name), ipex_op_type)] = module_fqn
+            else:  # pragma: no cover
+                op_type = ""
+                for op_name in name:
+                    module_key = op_name[0]
+                    op_cfg_id = op_name[2]
+                    single_op_type = cfgs[module_key]["q_op_infos"][op_cfg_id]["op_type"]
+                    if single_op_type in unify_op_type_mapping_ipex:
+                        single_op_type = unify_op_type_mapping_ipex[single_op_type]
+                    op_type += "&" + single_op_type if op_type else single_op_type
+                quantizable_ops.append((tuple(name), op_type))
+                _module_key = name[0][0]
+                _op_cfg_id = name[0][2]
+                module_fqn = cfgs[_module_key]["q_op_infos"][_op_cfg_id]["fqn"]
+                map_op_name_to_fqn[(tuple(name), op_type)] = module_fqn
+
+    logger.debug("Map op name to fqn: ")
+    logger.debug(map_op_name_to_fqn)
+    logger.info("Attention Blocks : ")
+    logger.info(attention_block)
+    logger.info("FFN Blocks : ")
+    logger.info(ffn_blocks)
+    return quantizable_ops, cfgs, op_infos_from_cfgs, output_tensor_id_op_name
 
 
 def check_cfg_and_qconfig(
@@ -539,8 +660,6 @@ class Calibration:  # pragma: no cover
 
 
 class GraphTrace:  # pragma: no cover
-    """"""
-
     def __init__(self):
         self.supported_torch_module_to_aten = {
             "Linear": "aten::linear",
@@ -729,7 +848,7 @@ class GraphTrace:  # pragma: no cover
 
 
 @register_autotune("version1")
-class AutoAlpha:
+class AutoAlpha:  # pragma: no cover
     def __init__(
         self,
         model,
@@ -1354,7 +1473,7 @@ class AutoAlpha:
         return best_alphas
 
 
-class TorchSmoothQuant:
+class TorchSmoothQuant:  # pragma: no cover
     """Fake input channel quantization, for more details please refer to
     [1] SmoothQuant: Accurate and Efficient
     Post-Training Quantization for Large Language Models
@@ -1929,7 +2048,7 @@ class TorchSmoothQuant:
         return absorb_to_layer, no_absorb_layers
 
 
-class SQLinearWrapper(torch.nn.Module):
+class SQLinearWrapper(torch.nn.Module):  # pragma: no cover
     def __init__(self, module, input_scale, input_minmax, alpha=0.5, dtype=torch.quint8):
         super().__init__()
         self.register_buffer("input_scale", input_scale)
@@ -1990,7 +2109,7 @@ class SQLinearWrapper(torch.nn.Module):
             self.sq_linear.weight *= scale
 
 
-class WrapperLayer(torch.nn.Module):
+class WrapperLayer(torch.nn.Module):  # pragma: no cover
     def __init__(self, layer, input_min, input_max, save_q_input=False):
         super(WrapperLayer, self).__init__()
         self.add_module("orig_layer", layer)  # set orig_layer in get/set_module

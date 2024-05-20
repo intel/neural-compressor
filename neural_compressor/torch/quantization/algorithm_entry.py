@@ -235,10 +235,14 @@ def pt2e_static_quant_entry(model: torch.nn.Module, configs_mapping, mode: Mode,
 @register_algo(name=SMOOTH_QUANT)
 @torch.no_grad()
 def smooth_quant_entry(
-    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], SmoothQuantConfig], *args, **kwargs
+    model: torch.nn.Module,
+    configs_mapping: Dict[Tuple[str, callable], SmoothQuantConfig],
+    mode: Mode = Mode.QUANTIZE,
+    *args,
+    **kwargs,
 ) -> torch.nn.Module:
     logger.info("Quantize model with the smooth quant algorithm.")
-    from neural_compressor.torch.algorithms.smooth_quant import save, smooth_quantize
+    from neural_compressor.torch.algorithms.smooth_quant import SmoothQuantQuantizer, TorchSmoothQuant
 
     # convert the user config into internal format
     quant_config_mapping = {}
@@ -277,17 +281,12 @@ def smooth_quant_entry(
     example_inputs = kwargs.get("example_inputs", None)
     inplace = kwargs.get("inplace", True)
     assert example_inputs is not None, "Please provide example_inputs for smooth quantization."
-    q_model = smooth_quantize(
-        model=model,
-        tune_cfg=quant_config_mapping,
-        run_fn=run_fn,
-        example_inputs=example_inputs,
-        inplace=inplace,
-    )
-    logger.info("Smooth quantization done.")
-    q_model.ori_save = q_model.save
-    q_model.save = MethodType(save, q_model)
-    return q_model
+
+    quantizer = get_quantizer(model, quantizer_cls=SmoothQuantQuantizer, quant_config=quant_config_mapping)
+    model = quantizer.execute(model, mode=mode, run_fn=run_fn, example_inputs=example_inputs, inplace=inplace)
+    postprocess_model(model, mode, quantizer)
+
+    return model
 
 
 ###################### AWQ Algo Entry ##################################
