@@ -1,0 +1,38 @@
+:orphan:
+
+:py:mod:`neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter`
+===============================================================================
+
+.. py:module:: neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter.pattern_factory
+   neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter.transformation
+   neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter.get_half_precision_node_set
+
+
+
+.. py:function:: pattern_factory(fn: TorchFuncType, fn_arg: Tuple[torch.Tensor, Ellipsis], target_dtype: torch.dtype = torch.float16)
+
+   Create a search, replace pattern and filter functions for a given torch function and its arguments.
+
+
+.. py:function:: transformation(gm: torch.fx.GraphModule, node_candidate_list: List[str], target_dtype: torch.dtype = torch.float16)
+
+   Convert the nodes in `node_candidate_list` to `target_dtype` if possible.
+
+
+.. py:function:: get_half_precision_node_set(gm, config)
+
+   Intersection between `unquantized_node_set` and `node_set_from_user_config`
+
+

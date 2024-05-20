@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter &mdash; Intel® Neural Compressor 2.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/graphviz.css" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/custom.css" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../_sources/autoapi/neural_compressor/torch/algorithms/pt2e_quant/half_precision_rewriter/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter">
+<span id="neural-compressor-torch-algorithms-pt2e-quant-half-precision-rewriter"></span><h1><a class="reference internal" href="#module-neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter" title="neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter</span></code></a><a class="headerlink" href="#module-neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter" title="Permalink to this heading"></a></h1>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter.pattern_factory" title="neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter.pattern_factory"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pattern_factory</span></code></a>(fn, fn_arg[, target_dtype])</p></td>
+<td><p>Create a search, replace pattern and filter functions for a given torch function and its arguments.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter.transformation" title="neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter.transformation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transformation</span></code></a>(gm, node_candidate_list[, target_dtype])</p></td>
+<td><p>Convert the nodes in <cite>node_candidate_list</cite> to <cite>target_dtype</cite> if possible.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter.get_half_precision_node_set" title="neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter.get_half_precision_node_set"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_half_precision_node_set</span></code></a>(gm, config)</p></td>
+<td><p>Intersection between <cite>unquantized_node_set</cite> and <cite>node_set_from_user_config</cite></p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter.pattern_factory">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter.</span></span><span class="sig-name descname"><span class="pre">pattern_factory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">TorchFuncType</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fn_arg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Ellipsis</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.dtype</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">torch.float16</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/pt2e_quant/half_precision_rewriter.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter.pattern_factory" title="Permalink to this definition"></a></dt>
+<dd><p>Create a search, replace pattern and filter functions for a given torch function and its arguments.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter.transformation">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter.</span></span><span class="sig-name descname"><span class="pre">transformation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.fx.GraphModule</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_candidate_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.dtype</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">torch.float16</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/pt2e_quant/half_precision_rewriter.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter.transformation" title="Permalink to this definition"></a></dt>
+<dd><p>Convert the nodes in <cite>node_candidate_list</cite> to <cite>target_dtype</cite> if possible.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter.get_half_precision_node_set">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter.</span></span><span class="sig-name descname"><span class="pre">get_half_precision_node_set</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/pt2e_quant/half_precision_rewriter.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter.get_half_precision_node_set" title="Permalink to this definition"></a></dt>
+<dd><p>Intersection between <cite>unquantized_node_set</cite> and <cite>node_set_from_user_config</cite></p>
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fc37828e3b0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
