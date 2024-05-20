@@ -64,73 +64,28 @@ class TestHQQCUDA:
         hqq_global_option.use_half = True
 
     def test_hqq_quant(self):
-        from neural_compressor.torch.quantization import get_default_hqq_config, quantize
+        from neural_compressor.torch.quantization import convert, get_default_hqq_config, prepare, quantize
 
-        model = AutoModelForCausalLM.from_pretrained("facebook/opt-125m")
+        fp32_model = AutoModelForCausalLM.from_pretrained("facebook/opt-125m")
         example_inputs = torch.tensor(
             [[10, 20, 30, 40, 50, 60]], dtype=torch.long, device=auto_detect_accelerator().current_device()
         )
         # test_default_config
         quant_config = get_default_hqq_config()
-        model = quantize(model, quant_config)
-        q_label = model(example_inputs)[0]
-        print(q_label)
 
-    def test_hqq_quant_with_new_api(self):
-        from neural_compressor.torch.quantization import convert, get_default_hqq_config, prepare
-
-        model = AutoModelForCausalLM.from_pretrained("facebook/opt-125m")
-        example_inputs = torch.tensor(
-            [[10, 20, 30, 40, 50, 60]], dtype=torch.long, device=auto_detect_accelerator().current_device()
-        )
-        # test_default_config
-        quant_config = get_default_hqq_config()
-        model = prepare(model, quant_config)
+        # prepare + convert API
+        model = prepare(deepcopy(fp32_model), quant_config)
         model = convert(model)
-        q_label = model(example_inputs)[0]
-        print(q_label)
+        q_label_1 = model(example_inputs)[0]
 
-    @pytest.mark.parametrize(
-        "nbits, group_size, quant_zero, quant_scale, scale_quant_group_size",
-        [
-            (4, 64, True, False, 128),
-            (4, 64, False, False, 128),
-            (4, 64, True, True, 128),
-            (4, 64, False, True, 128),
-            (8, 64, True, False, 128),
-            (8, 64, False, False, 128),
-            (8, 64, True, True, 128),
-            (8, 64, False, True, 128),
-            (4, 64, True, False, 64),
-            (4, 64, False, False, 64),
-            (4, 64, True, True, 64),
-            (4, 64, False, True, 64),
-        ],
-    )
-    def test_hqq_module_cuda(
-        self,
-        nbits,
-        group_size,
-        quant_zero,
-        quant_scale,
-        scale_quant_group_size,
-    ):
-        _common_cuda_test(
-            nbits=nbits,
-            group_size=group_size,
-            quant_zero=quant_zero,
-            quant_scale=quant_scale,
-            scale_quant_group_size=scale_quant_group_size,
-        )
+        # quantize API
+        model = quantize(deepcopy(fp32_model), quant_config)
+        q_label_2 = model(example_inputs)[0]
 
-
-@pytest.mark.skipif(not torch.cuda.is_available(), reason="test requires a GPU")
-class TestHQQCUDAWithNewAPI:
-    @classmethod
-    def setup_class(cls):
-        torch.manual_seed(0)
-        torch.cuda.manual_seed(0)
-        hqq_global_option.use_half = True
+        # compare the results of calling `convert` + `prepare` and calling `quantize`
+        assert torch.all(
+            q_label_1.eq(q_label_2)
+        ), "The results of calling `convert` + `prepare` and calling `quantize` should be equal."
 
     @pytest.mark.parametrize(
         "nbits, group_size, quant_zero, quant_scale, scale_quant_group_size",

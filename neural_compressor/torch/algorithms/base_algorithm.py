@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 from abc import ABC, abstractmethod
-from collections import OrderedDict
 from typing import Any, Optional
 
 import torch
 
-from neural_compressor.torch.utils import Mode
+from neural_compressor.common.utils import Mode
 
 
 class Quantizer(ABC):
@@ -99,18 +99,27 @@ class Quantizer(ABC):
 
         return model
 
-    def execute(self, model: torch.nn.Module, mode, *args: Any, **kwargs: Any):  # pragma: no cover
+    def execute(self, model: torch.nn.Module, mode, *args: Any, **kwargs: Any):
         """Execute according to mode.
 
         Args:
             model (torch.nn.Module): The model to be executed.
             mode (Mode): The mode of current phase, including 'prepare', 'convert' and 'quantize'.
         """
-        # TODO: remove '# pragma: no cover' once CI test can cover this function
         if mode == Mode.PREPARE:
             model = self.prepare(model, *args, **kwargs)
         elif mode == Mode.CONVERT:
             model = self.convert(model, *args, **kwargs)
         elif mode == Mode.QUANTIZE:
-            model = self.quantize(model, *args, **kwargs)
+            if not isinstance(self.quant_config, dict):
+                user_cfg = copy.deepcopy(self.quant_config).to_dict()
+            else:
+                user_cfg = copy.deepcopy(self.quant_config)
+            if "recipe_cfgs" in user_cfg:  # keep quantize API for smoothquant
+                run_fn = kwargs.get("run_fn", None)
+                example_inputs = kwargs.get("example_inputs", None)
+                inplace = kwargs.get("inplace", True)
+                model = self.quantize(model, self.quant_config, run_fn, example_inputs, inplace)
+            else:
+                model = self.quantize(model, *args, **kwargs)
         return model

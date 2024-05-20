@@ -18,7 +18,7 @@ import tensorflow as tf
 
 from neural_compressor.common import logger
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
-from neural_compressor.common.utils import STATIC_QUANT, log_quant_execution
+from neural_compressor.common.utils import STATIC_QUANT, log_process
 from neural_compressor.tensorflow.utils import BaseModel, KerasModel, Model, algos_mapping
 
 
@@ -26,7 +26,7 @@ def need_apply(configs_mapping: Dict[Tuple[str, callable], BaseConfig], algo_nam
     return any(config.name == algo_name for config in configs_mapping.values())
 
 
-@log_quant_execution
+@log_process()
 def quantize_model(
     model: Union[str, tf.keras.Model, BaseModel],
     quant_config: Union[BaseConfig, list],
