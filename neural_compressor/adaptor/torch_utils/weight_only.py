@@ -20,12 +20,11 @@
 
 import math
 from copy import deepcopy
-from typing import OrderedDict
+from typing import Optional, OrderedDict, Union
 
 from ...utils import logger
 from ...utils.utility import LazyImport
 from .util import set_module
-from typing import Optional, Union
 
 tqdm = LazyImport("tqdm")
 torch = LazyImport("torch")

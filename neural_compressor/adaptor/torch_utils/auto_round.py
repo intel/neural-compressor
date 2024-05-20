@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 def get_dataloader(tokenizer, seqlen, dataset_name="NeelNanda/pile-10k", seed=42, bs=8, n_samples=512):
     """Generate a DataLoader for calibration using specified parameters.
 
@@ -30,6 +31,7 @@ def get_dataloader(tokenizer, seqlen, dataset_name="NeelNanda/pile-10k", seed=42
         DataLoader: The DataLoader for the calibrated dataset.
     """
     from auto_round.calib_dataset import get_dataloader
+
     dataloader = get_dataloader(
         tokenizer, seqlen, dataset_name="NeelNanda/pile-10k", seed=seed, bs=bs, n_samples=n_samples
     )

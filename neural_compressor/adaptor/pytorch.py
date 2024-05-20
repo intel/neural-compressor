@@ -4916,7 +4916,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             weight_config[op_name]["sym"] = config["weight"]["scheme"] == "sym"
 
         # auto round recipes
-        
+
         enable_full_range = self.recipes["autoround_args"].get("enable_full_range", False)
         batch_size = self.recipes["autoround_args"].get("batch_size", 8)
         lr_scheduler = self.recipes["autoround_args"].get("lr_scheduler", None)
