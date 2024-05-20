@@ -163,7 +163,6 @@ class TestGPTQQuant:
         model = convert(model)
         out = model(self.example_inputs)[0]
         atol_true = (out - self.label).amax()
-        import pdb; pdb.set_trace()
         # compare atol, this case is an ideal case.
         assert (
             atol_false > atol_true
