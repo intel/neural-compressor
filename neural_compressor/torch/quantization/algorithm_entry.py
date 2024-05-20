@@ -24,8 +24,8 @@ from neural_compressor.common.utils import (
     FP8_QUANT,
     GPTQ,
     HQQ,
-    MX_QUANT,
     MIX_PRECISION,
+    MX_QUANT,
     RTN,
     SMOOTH_QUANT,
     STATIC_QUANT,
@@ -38,8 +38,8 @@ from neural_compressor.torch.quantization import (
     FP8Config,
     GPTQConfig,
     HQQConfig,
-    MXQuantConfig,
     MixPrecisionConfig,
+    MXQuantConfig,
     RTNConfig,
     SmoothQuantConfig,
     StaticQuantConfig,
@@ -545,7 +545,7 @@ def mx_quant_entry(
     model = mx_quantize(model, config=configs_mapping)
     return model
 
-  
+
 ###################### Mixed Precision Algo Entry ##################################
 @register_algo(MIX_PRECISION)
 def mix_precision_entry(
