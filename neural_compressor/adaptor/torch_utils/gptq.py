@@ -561,13 +561,13 @@ class GPTQuantizer(object):
 
     def find_true_sequential_config(self):
         for layer_name in self.weight_config:
-            if self.weight_config[layer_name]["true_sequential"] is not None:
+            if self.weight_config[layer_name].get("true_sequential", None) is not None:
                 return self.weight_config[layer_name]["true_sequential"]
         return False
 
     def find_lm_head_config(self):
         for layer_name in self.weight_config:
-            if self.weight_config[layer_name]["lm_head"] is not None:
+            if self.weight_config[layer_name].get("lm_head", None) is not None:
                 return self.weight_config[layer_name]["lm_head"]
         return False
 
@@ -602,16 +602,8 @@ class GPTQuantizer(object):
         # Step2: run gptq quantization in a transformer block-wise manner.
         gptq_config = {}
 
-        # an example of llama-2's true_sequential process.
-        # self.true_sequential =  [
-        #     ['self_attn.k_proj', 'self_attn.v_proj', 'self_attn.q_proj'],
-        #     ['self_attn.o_proj'],
-        #     ['mlp.up_proj', 'mlp.gate_proj'],
-        #     ['mlp.down_proj']
-        # ]
         self.true_sequential = self.find_true_sequential_config()
         # automatically get true_sequential
-        # import pdb;pdb.set_trace()
         true_sequential_map = self.analyze_true_sequential(self.gptq_related_blocks["transformers"][0])
         logger.info(f"Sequential Name: {true_sequential_map}")
         tblock_length = len(self.gptq_related_blocks["transformers"])
@@ -764,7 +756,6 @@ class GPTQuantizer(object):
             del gptq_for_this_block
             torch.cuda.empty_cache()
             # iteratively replace the input with output, thus layerwise quantization can continue.
-            # import pdb;pdb.set_trace()
             self.update_blockwise_hidden_states(outs)
             logger.info("------------------------------")
 
@@ -810,7 +801,6 @@ class GPTQuantizer(object):
             handles = []  # register handles which add inputs and outputs to gptq object
             for layer_name in sub_layers:
                 handles.append(sub_layers[layer_name].register_forward_hook(add_batch_post(layer_name)))
-            # import pdb;pdb.set_trace()
             for j in range(len(self.dataloader)):
                 if "hidden_states" in self.cache_key_arguments:
                     out = sub_layers[layer_name](self.cache_key_arguments["hidden_states"][j])
