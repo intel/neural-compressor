@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 import pytest
 import torch
+import torch.testing._internal.common_quantization as torch_test_quant_common
 
 from neural_compressor.common.utils import logger
 from neural_compressor.torch.export import export
@@ -17,6 +18,8 @@ from neural_compressor.torch.quantization import (
     quantize,
 )
 from neural_compressor.torch.utils import TORCH_VERSION_2_2_2, get_torch_version
+
+torch.manual_seed(0)
 
 
 @pytest.fixture
@@ -50,6 +53,32 @@ class TestPT2EQuantization:
         return bar, example_inputs
 
     @staticmethod
+    def build_model_include_conv_and_linear():
+        class Model(torch.nn.Module):
+            def __init__(self):
+                super(Model, self).__init__()
+                self.conv1 = torch.nn.Conv2d(3, 6, 5)
+                self.pool = torch.nn.MaxPool2d(2, 2)
+                self.conv2 = torch.nn.Conv2d(6, 16, 5)
+                self.fc1 = torch.nn.Linear(16 * 5 * 5, 120)
+                self.fc2 = torch.nn.Linear(120, 84)
+
+            def forward(self, x):
+                x = self.conv1(x)
+                x = self.pool(torch.nn.functional.relu(x))
+                x = self.conv2(x)
+                x = self.pool(torch.nn.functional.relu(x))
+                x = x.view(-1, 16 * 5 * 5)
+                x = torch.nn.functional.relu(self.fc1(x))
+                x = torch.nn.functional.relu(self.fc2(x))
+
+                return x
+
+        model = Model()
+        example_inputs = (torch.randn(1, 3, 32, 32),)
+        return model, example_inputs
+
+    @staticmethod
     def build_simple_torch_model_and_example_inputs():
         class SimpleModel(torch.nn.Module):
             def __init__(self):
@@ -71,10 +100,11 @@ class TestPT2EQuantization:
     @pytest.mark.skipif(get_torch_version() <= TORCH_VERSION_2_2_2, reason="Requires torch>=2.3.0")
     def test_quantize_simple_model(self, force_not_import_ipex):
         model, example_inputs = self.build_simple_torch_model_and_example_inputs()
+        float_model_output = model(*example_inputs)
         quant_config = None
 
         def calib_fn(model):
-            for i in range(2):
+            for i in range(4):
                 model(*example_inputs)
 
         quant_config = get_default_static_config()
@@ -82,6 +112,8 @@ class TestPT2EQuantization:
         from torch._inductor import config
 
         config.freezing = True
+        q_model_out = q_model(*example_inputs)
+        assert torch.allclose(float_model_output, q_model_out, atol=1e-2), "Quantization failed!"
         opt_model = torch.compile(q_model)
         out = opt_model(*example_inputs)
         logger.warning("out shape is %s", out.shape)
@@ -119,10 +151,6 @@ class TestPT2EQuantization:
     def test_prepare_and_convert_on_llm(self, force_not_import_ipex):
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
-        # set TOKENIZERS_PARALLELISM to false
-
-        os.environ["TOKENIZERS_PARALLELISM"] = "false"
-
         model_name = "facebook/opt-125m"
         model = AutoModelForCausalLM.from_pretrained(model_name)
         tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -145,3 +173,62 @@ class TestPT2EQuantization:
         opt_model = torch.compile(converted_model)
         out = opt_model(*example_inputs)
         assert out.logits is not None
+
+    @staticmethod
+    def get_node_in_graph(graph_module):
+        # Copied from torch.testing._internal.common_quantization
+        nodes_in_graph = {}
+        node_list = []
+        modules = dict(graph_module.named_modules(remove_duplicate=False))
+        for node in graph_module.graph.nodes:
+            n = None
+            if node.op == "call_function" or node.op == "call_method":
+                n = torch_test_quant_common.NodeSpec(node.op, node.target)
+            elif node.op == "call_module":
+                n = torch_test_quant_common.NodeSpec(node.op, type(modules[node.target]))
+
+            if n is not None:
+                node_list.append(n)
+                if n in nodes_in_graph:
+                    nodes_in_graph[n] += 1
+                else:
+                    nodes_in_graph[n] = 1
+        return
+
+    @pytest.mark.skipif(get_torch_version() <= TORCH_VERSION_2_2_2, reason="Requires torch>=2.3.0")
+    def test_mixed_fp16_and_int8(self, force_not_import_ipex):
+        model, example_inputs = self.build_model_include_conv_and_linear()
+        model = export(model, example_inputs=example_inputs)
+
+        quant_config = get_default_static_config()
+        quant_config.set_local(torch.nn.Linear, StaticQuantConfig(w_dtype="fp16", act_dtype="fp16"))
+        # prepare
+        prepare_model = prepare(model, quant_config)
+        # calibrate
+        for i in range(2):
+            prepare_model(*example_inputs)
+        # convert
+        converted_model = convert(prepare_model)
+
+        # check the half node
+        expected_node_occurrence = {
+            # 4 `aten.to` for each `aten.linear`
+            torch.ops.aten.to.dtype: 8,
+            torch.ops.aten.linear.default: 2,
+        }
+        expected_node_occurrence = {
+            torch_test_quant_common.NodeSpec.call_function(k): v for k, v in expected_node_occurrence.items()
+        }
+        node_in_graph = self.get_node_in_graph(converted_model)
+        for node, cnt in expected_node_occurrence.items():
+            assert (
+                expected_node_occurrence.get(node, 0) == cnt
+            ), f"Node {node} should occur {cnt} times, but {node_in_graph[node]}"
+
+        # inference
+        from torch._inductor import config
+
+        config.freezing = True
+        opt_model = torch.compile(converted_model)
+        out = opt_model(*example_inputs)
+        assert out is not None
