@@ -183,16 +183,31 @@ class TestSmoothQuant:
     @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
     def test_smooth_quant_old_new_API(self):
         fp32_model = copy.deepcopy(model)
-        quant_config = get_default_sq_config()
         example_inputs = torch.zeros([1, 3])
-        q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
+
+        def run_fn(model):
+            model(example_inputs)
+
+        # 2.x API
+        from neural_compressor import PostTrainingQuantConfig, quantization
+
+        quant_config = PostTrainingQuantConfig(
+            backend="ipex",
+            example_inputs=example_inputs,
+            recipes={"smooth_quant": True, "smooth_quant_args": {"alpha": 0.5, "folding": False}},
+        )
+        q_model = quantization.fit(
+            fp32_model,
+            quant_config,
+            calib_func=run_fn,
+        )
         assert q_model is not None, "Quantization failed!"
         old_out = q_model(example_inputs)
 
+        # 3.x API
         fp32_model = copy.deepcopy(model)
-        prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
-        run_fn(prepared_model)
-        q_model = convert(prepared_model)
-        assert q_model is not None, "Quantization failed!"
+        quant_config = get_default_sq_config()
+        q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
         new_out = q_model(example_inputs)
+
         assert torch.allclose(old_out, new_out, atol=2e-02), "Unexpected result. Please double check."
