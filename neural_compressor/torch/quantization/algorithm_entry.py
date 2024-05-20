@@ -25,6 +25,7 @@ from neural_compressor.common.utils import (
     GPTQ,
     HQQ,
     MIX_PRECISION,
+    MX_QUANT,
     RTN,
     SMOOTH_QUANT,
     STATIC_QUANT,
@@ -38,6 +39,7 @@ from neural_compressor.torch.quantization import (
     GPTQConfig,
     HQQConfig,
     MixPrecisionConfig,
+    MXQuantConfig,
     RTNConfig,
     SmoothQuantConfig,
     StaticQuantConfig,
@@ -529,6 +531,27 @@ if is_hpex_available():
         model.qconfig = configs_mapping
         model.save = MethodType(save, model)
         return model
+
+
+###################### MX Quant Algo Entry ##################################
+@register_algo(name=MX_QUANT)
+@torch.no_grad()
+def mx_quant_entry(
+    model: torch.nn.Module,
+    configs_mapping: Dict[Tuple[str, callable], MXQuantConfig],
+    mode: Mode = Mode.QUANTIZE,
+    *args,
+    **kwargs,
+) -> torch.nn.Module:
+    logger.info("Quantize model with the mx quant algorithm.")
+    from neural_compressor.torch.algorithms.mx_quant.mx import MXQuantizer
+
+    quantizer = get_quantizer(model, quantizer_cls=MXQuantizer, quant_config=configs_mapping)
+    model = quantizer.execute(model, mode=mode)
+    model.qconfig = configs_mapping
+    postprocess_model(model, mode, quantizer)
+
+    return model
 
 
 ###################### Mixed Precision Algo Entry ##################################
