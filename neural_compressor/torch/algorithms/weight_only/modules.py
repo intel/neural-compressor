@@ -190,11 +190,11 @@ class WeightOnlyLinear(torch.nn.Module):
         if g_idx is not None:
             assert hasattr(self, "g_idx"), "g_idx is not set when initializing."
             self.g_idx = g_idx.type(torch.int32).to(self.device)
-            if self.use_optimum_format:
+            if self.use_optimum_format or "int" not in self.dtype:
                 invperm = torch.argsort(self.g_idx)
                 self.g_idx = invperm // self.group_size
                 self.g_idx = self.g_idx.type(torch.int32).to(self.device)
-        assert scale.shape == self.scales.shape, "Scale shape is mismatched."
+        assert scale.shape == self.scales.shape, f"{scale.shape} != {self.scales.shape} Scale shape is mismatched."
         self.scales = scale.type(self.float_type).to(self.device)
         if not self.use_optimum_format and self.compression_dim == 0:
             int_weight = int_weight.t_().contiguous()

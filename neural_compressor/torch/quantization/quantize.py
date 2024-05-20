@@ -18,9 +18,9 @@ from typing import Any, Callable, Dict, Tuple
 import torch
 
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
-from neural_compressor.common.utils import log_quant_execution
+from neural_compressor.common.utils import Mode, log_process
 from neural_compressor.torch.quantization.config import SmoothQuantConfig, StaticQuantConfig
-from neural_compressor.torch.utils import Mode, is_ipex_available, logger
+from neural_compressor.torch.utils import is_ipex_available, logger
 from neural_compressor.torch.utils.utility import WHITE_MODULE_LIST, algos_mapping, get_model_info
 
 FRAMEWORK_NAME = "torch"
@@ -30,7 +30,7 @@ def need_apply(configs_mapping: Dict[Tuple[str, callable], BaseConfig], algo_nam
     return any(config.name == algo_name for config in configs_mapping.values())
 
 
-@log_quant_execution
+@log_process(mode=Mode.QUANTIZE)
 def quantize(
     model: torch.nn.Module,
     quant_config: BaseConfig,
@@ -67,6 +67,20 @@ def quantize(
     if is_ipex_available and (
         isinstance(quant_config, StaticQuantConfig) or isinstance(quant_config, SmoothQuantConfig)
     ):
+        if isinstance(quant_config, SmoothQuantConfig):
+            from neural_compressor.torch.algorithms.smooth_quant import TorchSmoothQuant
+
+            sq = TorchSmoothQuant(
+                model, dataloader=None, example_inputs=example_inputs, q_func=run_fn, record_max_info=True
+            )
+            model.sq_info = sq
+            model = sq.transform(
+                alpha=quant_config.alpha,
+                folding=quant_config.folding,
+                auto_alpha_args=quant_config.auto_alpha_args,
+                scale_sharing=quant_config.scale_sharing,
+            )
+
         model_info = quant_config.get_model_info(q_model, example_inputs)
     else:
         model_info = quant_config.get_model_info(model=q_model)
@@ -86,6 +100,7 @@ def quantize(
     return q_model
 
 
+@log_process(mode=Mode.PREPARE)
 def prepare(
     model: torch.nn.Module,
     quant_config: BaseConfig,
@@ -143,6 +158,7 @@ def prepare(
     return prepared_model
 
 
+@log_process(mode=Mode.CONVERT)
 def convert(
     model: torch.nn.Module,
     quant_config: BaseConfig = None,

@@ -1,4 +1,5 @@
 numpy
+peft==0.10.0
 prettytable
 psutil
 pytest
