@@ -31,9 +31,8 @@ parser.add_argument("--batch_size", default=1, type=int,
                     help="For accuracy measurement only.")
 parser.add_argument("--save_accuracy_path", default=None,
                     help="Save accuracy results path.")
-parser.add_argument("--tasks", nargs='+', default=["lambada_openai",
-    "hellaswag","winogrande","piqa","wikitext"],
-    type=str, help="tasks list for accuracy validation")
+parser.add_argument("--tasks", type=str, default="lambada_openai",
+                    help="tasks list for accuracy validation")
 parser.add_argument("--peft_model_id", type=str, default=None, help="model_name_or_path of peft model")
 
 args = parser.parse_args()
@@ -63,14 +62,16 @@ if args.quantize:
 
 if args.accuracy:
     user_model.eval()
-    from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate
-    results = evaluate(
-        model="hf-causal",
-        model_args='pretrained='+args.model+',tokenizer='+args.model+',dtype=float32' + ',trust_remote_code=' + str(args.trust_remote_code),
+    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
+    args = LMEvalParser(
+        model="hf",
         user_model=user_model,
+        tokenizer=tokenizer,
         batch_size=args.batch_size,
         tasks=args.tasks,
+        device="cpu",
     )
+    results = evaluate(args)
     dumped = json.dumps(results, indent=2)
     if args.save_accuracy_path:
         with open(args.save_accuracy_path, "w") as f:
@@ -90,8 +91,8 @@ if args.performance:
     samples = args.iters * args.batch_size
     start = time.time()
     results = evaluate(
-        model="hf-causal",
-        model_args='pretrained='+args.model+',tokenizer='+args.model+',dtype=float32' + ',trust_remote_code=' + str(args.trust_remote_code),
+        model="hf",
+        tokenizer=tokenizer,
         user_model=user_model,
         batch_size=args.batch_size,
         tasks=args.tasks,
