@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 from abc import ABC, abstractmethod
-from collections import OrderedDict
 from typing import Any, Optional
 
 import torch
@@ -111,5 +111,15 @@ class Quantizer(ABC):
         elif mode == Mode.CONVERT:
             model = self.convert(model, *args, **kwargs)
         elif mode == Mode.QUANTIZE:
-            model = self.quantize(model, *args, **kwargs)
+            if not isinstance(self.quant_config, dict):
+                user_cfg = copy.deepcopy(self.quant_config).to_dict()
+            else:
+                user_cfg = copy.deepcopy(self.quant_config)
+            if "recipe_cfgs" in user_cfg:  # keep quantize API for smoothquant
+                run_fn = kwargs.get("run_fn", None)
+                example_inputs = kwargs.get("example_inputs", None)
+                inplace = kwargs.get("inplace", True)
+                model = self.quantize(model, self.quant_config, run_fn, example_inputs, inplace)
+            else:
+                model = self.quantize(model, *args, **kwargs)
         return model

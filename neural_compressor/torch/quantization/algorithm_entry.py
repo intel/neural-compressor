@@ -25,6 +25,7 @@ from neural_compressor.common.utils import (
     GPTQ,
     HQQ,
     MIX_PRECISION,
+    MX_QUANT,
     RTN,
     SMOOTH_QUANT,
     STATIC_QUANT,
@@ -38,6 +39,7 @@ from neural_compressor.torch.quantization import (
     GPTQConfig,
     HQQConfig,
     MixPrecisionConfig,
+    MXQuantConfig,
     RTNConfig,
     SmoothQuantConfig,
     StaticQuantConfig,
@@ -235,10 +237,14 @@ def pt2e_static_quant_entry(model: torch.nn.Module, configs_mapping, mode: Mode,
 @register_algo(name=SMOOTH_QUANT)
 @torch.no_grad()
 def smooth_quant_entry(
-    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], SmoothQuantConfig], *args, **kwargs
+    model: torch.nn.Module,
+    configs_mapping: Dict[Tuple[str, callable], SmoothQuantConfig],
+    mode: Mode = Mode.QUANTIZE,
+    *args,
+    **kwargs,
 ) -> torch.nn.Module:
     logger.info("Quantize model with the smooth quant algorithm.")
-    from neural_compressor.torch.algorithms.smooth_quant import save, smooth_quantize
+    from neural_compressor.torch.algorithms.smooth_quant import SmoothQuantQuantizer, TorchSmoothQuant
 
     # convert the user config into internal format
     quant_config_mapping = {}
@@ -277,17 +283,12 @@ def smooth_quant_entry(
     example_inputs = kwargs.get("example_inputs", None)
     inplace = kwargs.get("inplace", True)
     assert example_inputs is not None, "Please provide example_inputs for smooth quantization."
-    q_model = smooth_quantize(
-        model=model,
-        tune_cfg=quant_config_mapping,
-        run_fn=run_fn,
-        example_inputs=example_inputs,
-        inplace=inplace,
-    )
-    logger.info("Smooth quantization done.")
-    q_model.ori_save = q_model.save
-    q_model.save = MethodType(save, q_model)
-    return q_model
+
+    quantizer = get_quantizer(model, quantizer_cls=SmoothQuantQuantizer, quant_config=quant_config_mapping)
+    model = quantizer.execute(model, mode=mode, run_fn=run_fn, example_inputs=example_inputs, inplace=inplace)
+    postprocess_model(model, mode, quantizer)
+
+    return model
 
 
 ###################### AWQ Algo Entry ##################################
@@ -530,6 +531,27 @@ if is_hpex_available():
         model.qconfig = configs_mapping
         model.save = MethodType(save, model)
         return model
+
+
+###################### MX Quant Algo Entry ##################################
+@register_algo(name=MX_QUANT)
+@torch.no_grad()
+def mx_quant_entry(
+    model: torch.nn.Module,
+    configs_mapping: Dict[Tuple[str, callable], MXQuantConfig],
+    mode: Mode = Mode.QUANTIZE,
+    *args,
+    **kwargs,
+) -> torch.nn.Module:
+    logger.info("Quantize model with the mx quant algorithm.")
+    from neural_compressor.torch.algorithms.mx_quant.mx import MXQuantizer
+
+    quantizer = get_quantizer(model, quantizer_cls=MXQuantizer, quant_config=configs_mapping)
+    model = quantizer.execute(model, mode=mode)
+    model.qconfig = configs_mapping
+    postprocess_model(model, mode, quantizer)
+
+    return model
 
 
 ###################### Mixed Precision Algo Entry ##################################
