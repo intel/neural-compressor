@@ -124,9 +124,9 @@ def trace_gptq_target_blocks(module, module_types=[torch.nn.ModuleList, torch.nn
                 gptq_related_blocks["transformers"] = m
                 find_transformers = True
                 # return gptq_related_blocks
-            elif is_leaf(m) and find_transformers == False:
+            elif is_leaf(m) and not find_transformers:
                 gptq_related_blocks["embeddings"][n] = m
-            elif n.find(gptq_related_blocks["transformers_name"]) == -1 and find_transformers == True:
+            elif n.find(gptq_related_blocks["transformers_name"]) == -1 and find_transformers:
                 # no longer belong to transformers
                 gptq_related_blocks["transformers_post"]["name"] = n
                 gptq_related_blocks["transformers_post"]["layer"] = m
