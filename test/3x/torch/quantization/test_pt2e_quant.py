@@ -19,6 +19,8 @@ from neural_compressor.torch.quantization import (
 )
 from neural_compressor.torch.utils import TORCH_VERSION_2_2_2, get_torch_version
 
+torch.manual_seed(0)
+
 
 @pytest.fixture
 def force_not_import_ipex(monkeypatch):
@@ -98,10 +100,11 @@ class TestPT2EQuantization:
     @pytest.mark.skipif(get_torch_version() <= TORCH_VERSION_2_2_2, reason="Requires torch>=2.3.0")
     def test_quantize_simple_model(self, force_not_import_ipex):
         model, example_inputs = self.build_simple_torch_model_and_example_inputs()
+        float_model_output = model(*example_inputs)
         quant_config = None
 
         def calib_fn(model):
-            for i in range(2):
+            for i in range(4):
                 model(*example_inputs)
 
         quant_config = get_default_static_config()
@@ -109,6 +112,8 @@ class TestPT2EQuantization:
         from torch._inductor import config
 
         config.freezing = True
+        q_model_out = q_model(*example_inputs)
+        assert torch.allclose(float_model_output, q_model_out, atol=1e-2), "Quantization failed!"
         opt_model = torch.compile(q_model)
         out = opt_model(*example_inputs)
         logger.warning("out shape is %s", out.shape)
