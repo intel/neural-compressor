@@ -13,5 +13,3 @@
 # limitations under the License.
 
 # pylint:disable=import-error
-
-from .mx import mx_quantize

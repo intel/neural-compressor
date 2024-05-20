@@ -537,12 +537,20 @@ if is_hpex_available():
 @register_algo(name=MX_QUANT)
 @torch.no_grad()
 def mx_quant_entry(
-    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], MXQuantConfig], *args, **kwargs
+    model: torch.nn.Module,
+    configs_mapping: Dict[Tuple[str, callable], MXQuantConfig],
+    mode: Mode = Mode.QUANTIZE,
+    *args,
+    **kwargs,
 ) -> torch.nn.Module:
     logger.info("Quantize model with the mx quant algorithm.")
-    from neural_compressor.torch.algorithms.mx_quant import mx_quantize
+    from neural_compressor.torch.algorithms.mx_quant.mx import MXQuantizer
 
-    model = mx_quantize(model, config=configs_mapping)
+    quantizer = get_quantizer(model, quantizer_cls=MXQuantizer, quant_config=configs_mapping)
+    model = quantizer.execute(model, mode=mode)
+    model.qconfig = configs_mapping
+    postprocess_model(model, mode, quantizer)
+
     return model
 
 

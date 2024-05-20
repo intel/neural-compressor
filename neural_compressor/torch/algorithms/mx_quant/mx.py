@@ -18,9 +18,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+from collections import OrderedDict
 import torch
 from torch.nn import functional as F
 
+from neural_compressor.torch.algorithms import Quantizer
 from neural_compressor.torch.utils import logger, set_module
 
 from .utils import quantize_elemwise_op, quantize_mx_op
@@ -91,56 +94,67 @@ class MXLinear(torch.nn.Linear):
         return output
 
 
-def mx_quantize(
-    model,
-    config={},
-    **kwargs,
-):
-    """Quant the model with round to nearst method.
+class MXQuantizer(Quantizer):
+    def __init__(self, quant_config: OrderedDict = {}):
+        """Init a MXQuantizer object.
 
-    Args:
-        model: torch module
-        config (dict, optional): specific layer wise configurations. Defaults to {}.
-            For example,
-                config={
-                    'fc2':
-                        {
-                            'bits': 4,
-                            'group_size': 32,
-                            'scheme': 'sym'
-                            'gptq_perm': [1, 1, ...] # for gptq perm
-                        }
-                }
+        Args:
+            quant_config (OrderedDict, optional): quantization config for ops. Defaults to {}.
+        """
+        super().__init__(quant_config)
 
-    Returns:
-        model: fake quantized torch module
-    """
-    assert isinstance(model, torch.nn.Module), "only support torch module"
-    supported_layers = ["Linear"]
-    for name, m in model.named_modules():
-        if type(m).__name__ not in supported_layers:
-            continue
-        if (name, type(m).__name__) not in config:  # pragma: no cover
-            continue
-        logger.debug(f"MX quantized module:{name, m}")
-        log_msg = (
-            f"MX quantization config: w_dtype={config[(name, type(m).__name__)].w_dtype}, "
-            + "config[(name, type(m).__name__)].act_dtype, "
-            + f"out_dtype={config[(name, type(m).__name__)].out_dtype}"
-        )
-        logger.debug(log_msg)
-        tmp_stat = m.state_dict()
-        new_module = MXLinear(
-            m.in_features,
-            m.out_features,
-            bias=m.bias is not None,
-            mx_specs=config[(name, type(m).__name__)],
-            name=name,
-        )
-        new_module.load_state_dict(tmp_stat)
-        new_module.apply_mx_specs()
-        if name == "":
-            return new_module
-        else:
-            set_module(model, name, new_module)
-    return model
+    @torch.no_grad()
+    def prepare(self, model, *args, **kwargs):
+        """Prepares a given model for quantization.
+
+        Will return model directly in MX quant algorithm.
+
+        Args:
+            model (torch.nn.Module): The model to be prepared.
+        """
+        return model
+
+    @torch.no_grad()
+    def convert(
+        self,
+        model,
+        **kwargs,
+    ):
+        """Quant the model with mx data type.
+
+        Args:
+            model: torch module
+
+        Returns:
+            model: fake quantized torch module
+        """
+        assert isinstance(model, torch.nn.Module), "only support torch module"
+        supported_layers = ["Linear"]
+        config = self.quant_config
+        for name, m in model.named_modules():
+            if type(m).__name__ not in supported_layers:
+                continue
+            if (name, type(m).__name__) not in config:  # pragma: no cover
+                continue
+            logger.debug(f"MX quantized module:{name, m}")
+            log_msg = (
+                f"MX quantization config: w_dtype={config[(name, type(m).__name__)].w_dtype}, "
+                + "config[(name, type(m).__name__)].act_dtype, "
+                + f"out_dtype={config[(name, type(m).__name__)].out_dtype}"
+            )
+            logger.debug(log_msg)
+            tmp_stat = m.state_dict()
+            new_module = MXLinear(
+                m.in_features,
+                m.out_features,
+                bias=m.bias is not None,
+                mx_specs=config[(name, type(m).__name__)],
+                name=name,
+            )
+            new_module.load_state_dict(tmp_stat)
+            new_module.apply_mx_specs()
+            if name == "":
+                return new_module
+            else:
+                set_module(model, name, new_module)
+        return model
