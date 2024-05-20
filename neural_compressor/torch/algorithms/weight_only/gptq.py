@@ -25,14 +25,19 @@ from functools import partial
 
 import torch
 import torch.nn as nn
-import transformers
 from tqdm import tqdm
 
-from neural_compressor.torch.utils import fetch_module, get_device, logger, set_module
+from neural_compressor.torch.utils import fetch_module, get_device, is_transformers_imported, logger, set_module
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
 from .modules import WeightOnlyLinear
 
+if is_transformers_imported():
+    import transformers
+
+    SUPPORTED_LAYERS = [nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D]
+else:
+    SUPPORTED_LAYERS = [nn.Conv2d, nn.Conv1d, nn.Linear]
 DEBUG = False
 accelerator = auto_detect_accelerator()
 
@@ -131,7 +136,7 @@ def trace_gptq_target_blocks(module, module_types=[torch.nn.ModuleList, torch.nn
     return gptq_related_blocks
 
 
-def find_layers(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D], name=""):
+def find_layers(module, layers=SUPPORTED_LAYERS, name=""):
     """Get all layers with target types."""
     if type(module) in layers:
         return {name: module}
@@ -147,7 +152,7 @@ def find_layers(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Co
     return res
 
 
-def find_layers_name(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D], name=""):
+def find_layers_name(module, layers=SUPPORTED_LAYERS, name=""):
     """Get all layers with target types."""
     if type(module) in layers:
         return [name]
@@ -157,9 +162,7 @@ def find_layers_name(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transforme
     return res
 
 
-def log_quantizable_layers_per_transformer(
-    transformer_blocks, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D]
-):
+def log_quantizable_layers_per_transformer(transformer_blocks, layers=SUPPORTED_LAYERS):
     """Print all layers which will be quantized in GPTQ algorithm."""
     logger.info("* * Layer to be quantized * *")
 
@@ -734,6 +737,8 @@ class RAWGPTQuantizer(object):
                     Q = sub_layers[layer_name].weight.data
                     if weight_config_this_layer["act_order"]:
                         Q.copy_(Q[:, gptq_perm])
+                    if is_transformers_imported() and isinstance(sub_layers[layer_name], transformers.Conv1D):
+                        Q = Q.t_().contiguous()
                     from .utility import quant_weight_w_scale
 
                     quant_weight_w_scale(
@@ -743,15 +748,24 @@ class RAWGPTQuantizer(object):
                         weight_config_this_layer["group_size"],
                         dtype=weight_config_this_layer["dtype"],
                     )
-                    # import pdb;pdb.set_trace()
                     if weight_config_this_layer["act_order"]:
                         invperm = torch.argsort(gptq_perm)
                         Q.copy_(Q[:, invperm])
                     int_weight = Q.type(torch.int32)  # copy_ is not workable for different types.
                     # replace module
+                    if isinstance(sub_layers[layer_name], torch.nn.Linear):
+                        in_features = sub_layers[layer_name].in_features
+                        out_features = sub_layers[layer_name].out_features
+                    elif is_transformers_imported() and isinstance(sub_layers[layer_name], transformers.Conv1D):
+                        in_features = sub_layers[layer_name].weight.shape[0]
+                        out_features = sub_layers[layer_name].weight.shape[1]
+                        int_weight = sub_layers[layer_name].weight.t_().contiguous()
+                        scale = scale.t_().contiguous()
+                        zp = zp.t_().contiguous() if zp is not None else zp
+
                     new_module = WeightOnlyLinear(
-                        sub_layers[layer_name].in_features,
-                        sub_layers[layer_name].out_features,
+                        in_features,
+                        out_features,
                         dtype=weight_config_this_layer["dtype"],
                         bits=weight_config_this_layer["bits"],
                         group_size=weight_config_this_layer["group_size"],
@@ -790,7 +804,7 @@ class GPTQ:
         # W = layer.weight.data.clone()
         if isinstance(self.layer, nn.Conv2d) or isinstance(self.layer, nn.Conv1d):
             W = W.flatten(1)
-        if isinstance(self.layer, transformers.Conv1D):
+        if is_transformers_imported() and isinstance(self.layer, transformers.Conv1D):
             W = W.t()
         self.rows = W.shape[0]  # output channels
         self.columns = W.shape[1]  # input channels
@@ -806,7 +820,9 @@ class GPTQ:
         if len(inp.shape) == 2:
             inp = inp.unsqueeze(0)
         tmp = inp.shape[0]
-        if isinstance(self.layer, nn.Linear) or isinstance(self.layer, transformers.Conv1D):
+        if isinstance(self.layer, nn.Linear) or (
+            is_transformers_imported() and isinstance(self.layer, transformers.Conv1D)
+        ):
             if len(inp.shape) == 3:
                 inp = inp.reshape((-1, inp.shape[-1]))
             inp = inp.t()
@@ -833,7 +849,7 @@ class GPTQ:
         weight_shape, weight_dtype = W.shape, W.data.dtype
         if isinstance(self.layer, nn.Conv2d):
             W = W.flatten(1)
-        if isinstance(self.layer, transformers.Conv1D):
+        if is_transformers_imported() and isinstance(self.layer, transformers.Conv1D):
             W = W.t()
         W = W.float()
 
@@ -937,7 +953,7 @@ class GPTQ:
             invperm = torch.argsort(perm)
             Q = Q[:, invperm]
 
-        if isinstance(self.layer, transformers.Conv1D):
+        if is_transformers_imported() and isinstance(self.layer, transformers.Conv1D):
             Q = Q.t()
         # self.layer.weight.data = Q.reshape(self.layer.weight.shape).to(self.layer.weight.data.dtype)
         Q = Q.reshape(weight_shape).to(weight_dtype)
@@ -1146,7 +1162,7 @@ class GPTQuantizer(INCQuantizer):
         max_seq_length=2048,
         use_max_length=True,
         device=None,
-        export_compressed_model=False,
+        export_compressed_model=True,
         use_layer_wise=False,
         model_path=None,
         *args,
