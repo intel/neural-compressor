@@ -2,6 +2,6 @@ transformers
 torch
 sentencepiece
 neural-compressor
-intel-extension-for-transformers
-git+https://github.com/EleutherAI/lm-evaluation-harness.git@cc9778fbe4fa1a709be2abed9deb6180fd40e7e2
+intel-extension-for-transformers >= 1.4.1
+lm-eval==0.4.2
 peft
