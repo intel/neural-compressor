@@ -104,7 +104,7 @@ The AI Kit is distributed through many common channels, including from Intel's w
 
 ### Validated Software Environment
 
-* OS version: CentOS 8.4, Ubuntu 22.04, MacOS Ventura 13.5
+* OS version: CentOS 8.4, Ubuntu 22.04, MacOS Ventura 13.5, Windows 11
 * Python version: 3.8, 3.9, 3.10, 3.11
 
 <table class="docutils">
@@ -117,7 +117,6 @@ The AI Kit is distributed through many common channels, including from Intel's w
     <th>PyTorch</th>
     <th>Intel®<br>Extension for<br>PyTorch*</th>
     <th>ONNX<br>Runtime</th>
-    <th>MXNet</th>
   </tr>
 </thead>
 <tbody>
@@ -125,23 +124,20 @@ The AI Kit is distributed through many common channels, including from Intel's w
     <th>Version</th>
     <td class="tg-7zrl"> <a href=https://github.com/tensorflow/tensorflow/tree/v2.15.0>2.15.0</a><br>
     <a href=https://github.com/tensorflow/tensorflow/tree/v2.14.1>2.14.1</a><br>
-    <a href=https://github.com/tensorflow/tensorflow/tree/v2.13.0>2.13.0</a><br></td>
+    <a href=https://github.com/tensorflow/tensorflow/tree/v2.13.1>2.13.1</a><br></td>
     <td class="tg-7zrl"> <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.14.0>2.14.0</a><br>
-    <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.13.0>2.13.0</a><br>
-    <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.12.0>2.12.0</a><br></td>
+    <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.13.0>2.13.0</a><br></td>
     <td class="tg-7zrl"> <a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v2.14.0.1>2.14.0.1</a><br>
-    <a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v2.13.0.0>2.13.0.0</a><br>
-    <a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v1.2.0>1.2.0</a><br></td>
-    <td class="tg-7zrl"><a href=https://github.com/pytorch/pytorch/tree/v2.1.0>2.1.0+cpu</a><br>
-    <a href=https://github.com/pytorch/pytorch/tree/v2.0.1>2.0.1+cpu</a><br>
-    <a href=https://github.com/pytorch/pytorch/tree/v1.13.1>1.13.1+cpu</a><br></td>
-    <td class="tg-7zrl"><a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.1.0%2Bcpu>2.1.0+cpu</a><br>
-    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.0.100%2Bcpu>2.0.1+cpu</a><br>
-    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v1.13.100%2Bcpu>1.13.1+cpu</a><br></td>
-    <td class="tg-7zrl"><a href=https://github.com/microsoft/onnxruntime/tree/v1.16.3>1.16.3</a><br>
-    <a href=https://github.com/microsoft/onnxruntime/tree/v1.15.1>1.15.1</a><br>    
-    <a href=https://github.com/microsoft/onnxruntime/tree/v1.14.1>1.14.1</a><br></td>
-    <td class="tg-7zrl"><a href=https://github.com/apache/incubator-mxnet/tree/1.9.1>1.9.1</a><br></td>
+    <a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v2.13.0.0>2.13.0.0</a><br></td>
+    <td class="tg-7zrl"><a href=https://github.com/pytorch/pytorch/tree/v2.2.1>2.2.1</a><br>
+    <a href=https://github.com/pytorch/pytorch/tree/v2.1.0>2.1.0</a><br>
+    <a href=https://github.com/pytorch/pytorch/tree/v2.0.1>2.0.1</a><br></td>
+    <td class="tg-7zrl"><a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.2.0%2Bcpu>2.2.0</a><br>
+    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.1.100%2Bcpu>2.1.100</a><br>
+    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.0.100%2Bcpu>2.0.100</a><br></td>
+    <td class="tg-7zrl"><a href=https://github.com/microsoft/onnxruntime/tree/v1.17.1>1.17.1</a><br>
+    <a href=https://github.com/microsoft/onnxruntime/tree/v1.16.3>1.16.3</a><br>    
+    <a href=https://github.com/microsoft/onnxruntime/tree/v1.15.1>1.15.1</a><br></td>
   </tr>
 </tbody>
 </table>

@@ -756,7 +756,6 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
             tokenizer, seqlen=10, seed=42, train_bs=8, dataset_split="train", dataset_name="NeelNanda/pile-10k"
         )
         fp32_model = copy.deepcopy(self.gptj)
-
         conf = PostTrainingQuantConfig(
             approach="weight_only",
             op_type_dict={
@@ -781,6 +780,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                     "seq_len": 10,
                     "iters": 10,
                     "scale_dtype": "fp32",
+                    "amp": False,
                 },
             },
         )

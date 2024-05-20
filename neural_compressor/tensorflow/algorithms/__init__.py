@@ -14,4 +14,4 @@
 
 
 from neural_compressor.tensorflow.algorithms.smoother import SmoothQuant
-from neural_compressor.tensorflow.algorithms.static_quant import KerasAdaptor, TensorFlowAdaptor
+from neural_compressor.tensorflow.algorithms.static_quant import KerasAdaptor, TensorFlowAdaptor, Tensorflow_ITEXAdaptor

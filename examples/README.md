@@ -10,7 +10,8 @@ Intel® Neural Compressor validated examples with multiple compression technique
 * [Quick Get Started Notebook of Intel® Neural Compressor for Pytorch](/examples/notebook/pytorch/Quick_Started_Notebook_of_INC_for_Pytorch.ipynb)
 
 # Helloworld Examples
-
+* [torch_llm](/examples/helloworld/torch_llm): apply the weight-only quantization to LLMs.
+* [torch_non_llm](/examples/helloworld/torch_non_llm): apply the static quantization to non-LLMs.
 * [tf_example1](/examples/helloworld/tf_example1): quantize with built-in dataloader and metric.
 * [tf_example2](/examples/helloworld/tf_example2): quantize keras model with customized metric and dataloader.
 * [tf_example3](/examples/helloworld/tf_example3): convert model with mix precision.
@@ -357,40 +358,10 @@ Intel® Neural Compressor validated examples with multiple compression technique
 </thead>
 <tbody>
   <tr>
-    <td>ResNet50 V1</td>
-    <td>Image Recognition</td>
-    <td>TF2ONNX</td>
-    <td><a href="./tensorflow/image_recognition/tensorflow_models/resnet50_v1/export">int8 fp32</a></td>
-  </tr>
-  <tr>
     <td>ResNet50 V1.5</td>
     <td>Image Recognition</td>
     <td>TF2ONNX</td>
     <td><a href="./tensorflow/image_recognition/tensorflow_models/resnet50_v1_5/export">int8 fp32</a></td>
-  </tr>
-  <tr>
-    <td>MobileNet V2</td>
-    <td>Image Recognition</td>
-    <td>TF2ONNX</td>
-    <td><a href="./tensorflow/image_recognition/tensorflow_models/mobilenet_v2/export">int8 fp32</a></td>
-  </tr>
-  <tr>
-    <td>VGG16</td>
-    <td>Image Recognition</td>
-    <td>TF2ONNX</td>
-    <td><a href="./tensorflow/image_recognition/tensorflow_models/vgg16/export">int8 fp32</a></td>
-  </tr>
-  <tr>
-    <td>Faster R-CNN ResNet50</td>
-    <td>Object Detection</td>
-    <td>TF2ONNX</td>
-    <td><a href="./tensorflow/object_detection/tensorflow_models/faster_rcnn_resnet50/export">int8 fp32</a></td>
-  </tr>
-  <tr>
-    <td>SSD MobileNet V1</td>
-    <td>Object Detection</td>
-    <td>TF2ONNX</td>
-    <td><a href="./tensorflow/object_detection/tensorflow_models/ssd_mobilenet_v1/export">int8 fp32</a></td>
   </tr>
 </tbody>
 </table>

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from neural_compressor.torch.quantization.quantize import quantize
+from neural_compressor.torch.quantization.quantize import quantize, prepare, convert
 from neural_compressor.torch.quantization.config import (
     RTNConfig,
     get_default_rtn_config,
@@ -34,6 +34,12 @@ from neural_compressor.torch.quantization.config import (
     FP8Config,
     get_default_fp8_config,
     get_default_fp8_config_set,
+    MixPrecisionConfig,
+    get_default_mix_precision_config,
+    get_default_mix_precision_config_set,
+    get_woq_tuning_config,
+    DynamicQuantConfig,
+    get_default_dynamic_config,
 )
 
 from neural_compressor.torch.quantization.autotune import (

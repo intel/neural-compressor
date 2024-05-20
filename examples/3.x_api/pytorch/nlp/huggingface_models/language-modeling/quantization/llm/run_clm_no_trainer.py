@@ -11,6 +11,7 @@ from datasets import load_dataset
 import datasets
 from torch.nn.functional import pad
 from torch.utils.data import DataLoader
+from transformers import AutoModelForCausalLM, AutoModel, AutoTokenizer
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -50,9 +51,8 @@ parser.add_argument("--pad_max_length", default=512, type=int,
                     help="Pad input ids to max length.")
 parser.add_argument("--calib_iters", default=512, type=int,
                     help="calibration iters.")
-parser.add_argument("--tasks", nargs='+', default=["lambada_openai",
-                                                   "hellaswag", "winogrande", "piqa", "wikitext"],
-                    type=str, help="tasks list for accuracy validation")
+parser.add_argument("--tasks", default="lambada_openai,hellaswag,winogrande,piqa,wikitext",
+                    type=str, help="tasks for accuracy validation")
 parser.add_argument("--peft_model_id", type=str, default=None, help="model_name_or_path of peft model")
 # ============SmoothQuant configs==============
 parser.add_argument("--sq", action="store_true")
@@ -67,7 +67,6 @@ parser.add_argument("--woq_group_dim", type=int, default=1)
 parser.add_argument("--woq_scheme", default="sym")
 parser.add_argument("--woq_use_mse_search", action="store_true")
 parser.add_argument("--woq_use_full_range", action="store_true")
-parser.add_argument("--woq_export_compressed_model", action="store_true")
 # =============GPTQ configs====================
 parser.add_argument("--gptq_actorder", action="store_true",
                     help="Whether to apply the activation order GPTQ heuristic.")
@@ -193,7 +192,6 @@ class Evaluator:
 
 
 def get_user_model():
-    from transformers import AutoModelForCausalLM, AutoModel, AutoTokenizer
     torchscript = False
     if args.sq or args.ipex or args.woq_algo in ['AWQ', 'TEQ']:
         torchscript = True
@@ -237,11 +235,11 @@ if args.quantize:
 
     # 3.x api
     if args.approach == 'weight_only':
-        from neural_compressor.torch.quantization import RTNConfig, GPTQConfig, quantize
+        from neural_compressor.torch.quantization import RTNConfig, GPTQConfig, prepare, convert, quantize
         from neural_compressor.torch.utils import get_double_quant_config
         weight_sym = True if args.woq_scheme == "sym" else False
         double_quant_config_dict = get_double_quant_config(args.double_quant_type)
-        
+
         if args.woq_algo == "RTN":
             if args.double_quant_type is not None:
                 double_quant_config_dict.update(
@@ -249,7 +247,6 @@ if args.quantize:
                         # TODO: add group_dim into double quant config?
                         "use_full_range": args.woq_use_full_range,
                         "use_mse_search": args.woq_use_mse_search,
-                        "export_compressed_model": args.woq_export_compressed_model,
                     }
                 )
                 quant_config = RTNConfig.from_dict(double_quant_config_dict)
@@ -262,7 +259,6 @@ if args.quantize:
                     group_dim=args.woq_group_dim,
                     use_full_range=args.woq_use_full_range,
                     use_mse_search=args.woq_use_mse_search,
-                    export_compressed_model=args.woq_export_compressed_model,
                     use_double_quant=False,
                     double_quant_bits=args.double_quant_bits,
                     double_quant_dtype=args.double_quant_dtype,
@@ -270,9 +266,8 @@ if args.quantize:
                     double_quant_group_size=args.double_quant_group_size,
                 )
             quant_config.set_local("lm_head", RTNConfig(dtype="fp32"))
-            user_model = quantize(
-                model=user_model, quant_config=quant_config
-            )
+            user_model = prepare(model=user_model, quant_config=quant_config)
+            user_model = convert(model=user_model)
         elif args.woq_algo == "GPTQ":
             from utils import DataloaderPreprocessor
             dataloaderPreprocessor = DataloaderPreprocessor(
@@ -300,7 +295,6 @@ if args.quantize:
                 double_quant_config_dict.update(
                     {
                         "use_mse_search": args.woq_use_mse_search,
-                        "export_compressed_model": args.woq_export_compressed_model,
                         "percdamp": args.gptq_percdamp,
                         "act_order": args.gptq_actorder,
                         "block_size": args.gptq_block_size,
@@ -315,7 +309,6 @@ if args.quantize:
                     use_sym=weight_sym,
                     group_size=args.woq_group_size,
                     use_mse_search=args.woq_use_mse_search,
-                    export_compressed_model=args.woq_export_compressed_model,
                     percdamp=args.gptq_percdamp,
                     act_order=args.gptq_actorder,
                     block_size=args.gptq_block_size,
@@ -327,58 +320,119 @@ if args.quantize:
                     double_quant_group_size=args.double_quant_group_size,
                 )
             quant_config.set_local("lm_head", GPTQConfig(dtype="fp32"))
-            user_model = quantize(
-                model=user_model, quant_config=quant_config, run_fn=run_fn_for_gptq, run_args=(dataloader_for_calibration, )
-            )
+            user_model = prepare(model=user_model, quant_config=quant_config)
+            run_fn_for_gptq(user_model, dataloader_for_calibration)
+            user_model = convert(user_model)
     else:
-        # TODO: smooth quant
-        print("Only support WeightOnlyQuant now")
-        pass
+        if args.sq:
+            from neural_compressor.torch.quantization import SmoothQuantConfig
+
+            # alpha can be a float number of a list of float number.
+            args.alpha = args.alpha if args.alpha == "auto" else eval(args.alpha)
+            if re.search("falcon", user_model.config.model_type):
+                quant_config = SmoothQuantConfig(alpha=args.alpha, folding=False)
+            else:
+                quant_config = SmoothQuantConfig(alpha=args.alpha, folding=True)
+
+            if re.search("gpt", user_model.config.model_type):
+                quant_config.set_local(torch.add, SmoothQuantConfig(w_dtype="fp32", act_dtype="fp32"))
+        else:
+            from neural_compressor.torch.quantization import get_default_static_config, StaticQuantConfig
+
+            quant_config =  get_default_static_config()
+            if re.search("gpt", user_model.config.model_type):
+                quant_config.set_local(torch.add, StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
+
+        from neural_compressor.torch.algorithms.smooth_quant import move_input_to_device
+        from tqdm import tqdm
+        def run_fn(model):
+            for batch in tqdm(calib_dataloader):
+                batch = move_input_to_device(batch, device=None)
+                try:
+                    if isinstance(batch, tuple) or isinstance(batch, list):
+                        model(batch[0])
+                    elif isinstance(batch, dict):
+                        model(**batch)
+                    else:
+                        model(batch)
+                except ValueError:
+                    pass
+            return
+
+        from utils import get_example_inputs
+        example_inputs = get_example_inputs(user_model, calib_dataloader)
+        if args.sq:
+            # currently, smooth quant only support quantize API
+            # TODO: support prepare/convert API for smooth quant
+            from neural_compressor.torch.quantization import quantize
+
+            user_model = quantize(
+                model=user_model, quant_config=quant_config, example_inputs=example_inputs, run_fn=run_fn
+            )
+        else:
+            from neural_compressor.torch.quantization import prepare, convert
+
+            user_model = prepare(model=user_model, quant_config=quant_config, example_inputs=example_inputs)
+            run_fn(user_model)
+            user_model = convert(user_model)
+    user_model.save(args.output_dir)
+
+
+# TODO: we need run_benchmark.sh for loading and remove --accuracy in run_quant.sh, currently run_quant.sh will get fp32 result
+
+if args.int8 or args.int8_bf16_mixed:
+    print("load int8 model")
+
+    from neural_compressor.torch.quantization import load
+    tokenizer = AutoTokenizer.from_pretrained(args.model)
+    user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)))
+else:
+    user_model, tokenizer = get_user_model()
+
 
 if args.accuracy:
     user_model.eval()
-    from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate
-
-    results = evaluate(
-        model="hf-causal",
-        model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
+    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
+    eval_args = LMEvalParser(
+        model="hf",
         user_model=user_model,
+        tokenizer=tokenizer,
         batch_size=args.batch_size,
         tasks=args.tasks,
+        device="cpu",
     )
-    dumped = json.dumps(results, indent=2)
-    if args.save_accuracy_path:
-        with open(args.save_accuracy_path, "w") as f:
-            f.write(dumped)
-    for task_name in args.tasks:
+    results = evaluate(eval_args)
+    for task_name in args.tasks.split(","):
         if task_name == "wikitext":
-            acc = results["results"][task_name]["word_perplexity"]
+            acc = results["results"][task_name]["word_perplexity,none"]
         else:
-            acc = results["results"][task_name]["acc"]
+            acc = results["results"][task_name]["acc,none"]
     print("Accuracy: %.5f" % acc)
     print('Batch size = %d' % args.batch_size)
 
 if args.performance:
     user_model.eval()
-    from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate
+    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
     import time
 
     samples = args.iters * args.batch_size
-    start = time.time()
-    results = evaluate(
-        model="hf-causal",
-        model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
+    eval_args = LMEvalParser(
+        model="hf",
         user_model=user_model,
+        tokenizer=tokenizer,
         batch_size=args.batch_size,
         tasks=args.tasks,
         limit=samples,
+        device="cpu",
     )
+    start = time.time()
+    results = evaluate(eval_args)
     end = time.time()
-    for task_name in args.tasks:
+    for task_name in args.tasks.split(","):
         if task_name == "wikitext":
-            acc = results["results"][task_name]["word_perplexity"]
+            acc = results["results"][task_name]["word_perplexity,none"]
         else:
-            acc = results["results"][task_name]["acc"]
+            acc = results["results"][task_name]["acc,none"]
     print("Accuracy: %.5f" % acc)
     print('Throughput: %.3f samples/sec' % (samples / (end - start)))
     print('Latency: %.3f ms' % ((end - start) * 1000 / samples))

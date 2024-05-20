@@ -93,7 +93,7 @@ def quantize_4bit(tensor, quantile=1.0, data_type="nf4", return_int=False):
             q_tensor += torch.where((mid_data[i - 1] < tensor) & (tensor <= mid_data[i]), data, 0)
     tensor.copy_(q_tensor)
     if return_int:
-        return tensor.type(torch.int8), scale.type(torch.float), None
+        return tensor, scale, None
     return tensor.mul_(scale)
 
 
@@ -128,7 +128,7 @@ def qdq_weight_asym(weight, num_bits=4, quantile=1.0, return_int=False):
     weight.add_(zp)
     weight.clamp_(0, maxq)
     if return_int:
-        return weight.type(torch.uint8), scale.type(torch.float), zp.type(torch.uint8)
+        return weight, scale, zp
     weight.sub_(zp)
     return weight.mul_(scale)
 
@@ -176,7 +176,7 @@ def qdq_weight_sym(weight, num_bits=4, quantile=1.0, return_int=False, full_rang
     weight.round_()
     weight.clamp_(minq, maxq)
     if return_int:
-        return weight.type(torch.int8), scale.type(torch.float), None
+        return weight, scale, None
     return weight.mul_(scale)
 
 
@@ -238,6 +238,7 @@ def quant_weight(
 
     orig_shape = weight.shape
     if weight.shape[1] % group_size == 0:
+        orig_weight = weight
         weight = weight.reshape(-1, group_size)
         if return_int:
             weight, scale, zp = qdq_weight_actor(
@@ -250,17 +251,21 @@ def quant_weight(
                 data_type=data_type,
             )
             weight = weight.reshape(orig_shape)
+            orig_weight.copy_(weight)
             scale = scale.reshape(orig_shape[0], -1)
             if zp is not None:
                 zp = zp.reshape(orig_shape[0], -1)
-            return weight, scale, zp
+            return orig_weight, scale, zp
         else:
             qdq_weight_actor(
                 weight, num_bits, scheme=scheme, data_type=data_type, quantile=quantile, full_range=full_range
             )
-            return weight.reshape(orig_shape)
+            weight = weight.reshape(orig_shape)
+            orig_weight.copy_(weight)
+            return orig_weight
     else:
         split_index = weight.shape[1] // group_size * group_size
+        orig_weight = weight
         weight1 = weight[:, :split_index]
         weight1 = weight1.reshape(-1, group_size)
         if return_int:
@@ -277,7 +282,7 @@ def quant_weight(
             if zp1 is not None:
                 zp1 = zp1.reshape(orig_shape[0], -1)
         else:
-            weight1 = qdq_weight_actor(
+            qdq_weight_actor(
                 weight1, num_bits, scheme=scheme, quantile=quantile, data_type=data_type, full_range=full_range
             )
         weight1 = weight1.reshape(orig_shape[0], split_index)
@@ -292,19 +297,19 @@ def quant_weight(
                 return_int=True,
                 full_range=full_range,
             )
-            weight.copy_(torch.cat([weight1, weight2], dim=1))
+            orig_weight.copy_(torch.cat([weight1, weight2], dim=1))
             scale = torch.cat([scale1, scale2], dim=1)
             if zp2 is not None:
                 zp = torch.cat([zp1, zp2], dim=1)
             else:
                 zp = None
-            return weight, scale, zp
+            return orig_weight, scale, zp
         else:
             weight2 = qdq_weight_actor(
                 weight2, num_bits, scheme=scheme, data_type=data_type, quantile=quantile, full_range=full_range
             )
-            weight.copy_(torch.cat([weight1, weight2], dim=1))
-            return weight
+            orig_weight.copy_(torch.cat([weight1, weight2], dim=1))
+            return orig_weight
 
 
 def search_clip(m, num_bits=4, group_size=32, scheme="asym", data_type="int", enable_full_range=False):
@@ -398,7 +403,7 @@ def rtn_quantize(
         model: fake quantized torch module
     """
     assert isinstance(model, torch.nn.Module), "only support torch module"
-    supported_layers = ["Linear"]
+    supported_layers = (torch.nn.Linear,)
     if return_int:
         compression_dtype = kwargs.get("compression_dtype", torch.int32)
         compression_dim = kwargs.get("compression_dim", 1)
@@ -407,7 +412,7 @@ def rtn_quantize(
         use_optimum_format = kwargs.get("use_optimum_format", True)
     with torch.no_grad():
         for name, m in model.named_modules():
-            if m.__class__.__name__ not in supported_layers:
+            if not isinstance(m, supported_layers):
                 continue
             orig_dtype = next(m.parameters()).dtype
             if orig_dtype != torch.float:

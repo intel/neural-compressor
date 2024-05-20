@@ -231,13 +231,29 @@ default_sampler = SequentialSampler
 
 
 class ConfigLoader:
-    def __init__(self, config_set: ConfigSet, sampler: Sampler = default_sampler) -> None:
+    def __init__(
+        self, config_set: ConfigSet, sampler: Sampler = default_sampler, skip_verified_config: bool = True
+    ) -> None:
         self.config_set = ConfigSet.from_fwk_configs(config_set)
         self._sampler = sampler(self.config_set)
+        self.skip_verified_config = skip_verified_config
+        self.verify_config_list = list()
+
+    def is_verified_config(self, config):
+        for verified_config in self.verify_config_list:
+            if config == verified_config:
+                return True
+        return False
 
     def __iter__(self) -> Generator[BaseConfig, Any, None]:
         for index in self._sampler:
-            yield self.config_set[index]
+            new_config = self.config_set[index]
+            if self.skip_verified_config and self.is_verified_config(new_config):
+                logger.warning("Skip the verified config:")
+                logger.warning(new_config.to_dict())
+                continue
+            self.verify_config_list.append(new_config)
+            yield new_config
 
 
 class TuningConfig:

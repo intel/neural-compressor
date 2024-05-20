@@ -516,8 +516,8 @@ function generate_html_footer {
 
     cat >> ${output_dir}/report.html << eof
             <tr>
-                <td colspan="22"><font color="#d6776f">Note: </font>All data tested on Azure Cloud.</td>
-                <td colspan="3" class="col-cell col-cell1 col-cellf"></td>
+                <td colspan="17"><font color="#d6776f">Note: </font>All data tested on Azure Cloud.</td>
+                <td colspan="2" class="col-cell col-cell1 col-cellf"></td>
             </tr>
         </table>
     </div>

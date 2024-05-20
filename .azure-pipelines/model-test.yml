@@ -42,7 +42,7 @@ parameters:
   - name: MXNet_Model
     displayName: Run MXNet models?
     type: boolean
-    default: true
+    default: false
 
   - name: TensorFlowModelList
     type: object
@@ -132,7 +132,7 @@ stages:
     displayName: Generate Report
     pool:
       vmImage: "ubuntu-latest"
-    dependsOn: [TensorFlowModels, PyTorchModels, MXNetModels, ONNXModels]
+    dependsOn: [TensorFlowModels, PyTorchModels, ONNXModels]
     jobs:
       - job: GenerateReport
         steps:

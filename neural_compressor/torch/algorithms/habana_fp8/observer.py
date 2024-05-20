@@ -12,40 +12,186 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# pylint:disable=import-error
+
+import os
 from typing import Tuple
 
+import habana_frameworks.torch.core as htcore
 import torch
 from torch.ao.quantization.observer import *
 
-from .modules import E4M3_AMAX, E5M2_AMAX
+E4M3_AMAX = torch.tensor(240, dtype=torch.float).to("cpu")
+E5M2_AMAX = torch.tensor(57344, dtype=torch.float).to("cpu")
+USE_HW_SCALE = bool(os.getenv("USE_HW_SCALE", False))
+USE_POW2_SCALE = bool(os.getenv("USE_POW2_SCALE", False))
+observer_mapping = {}
 
 
-class FP8HistogramObserver(HistogramObserver):
+def observer_registry(name):
+    def new_observer(observer_cls):
+        global observer_mapping
+        observer_mapping[name] = observer_cls
+        return observer_cls
+
+    return new_observer
+
+
+def _map_gaudi_scale(scale):
+    if USE_HW_SCALE:
+        scale_list = torch.tensor([16, 1, 1 / 16, 1 / 256])
+        return torch.clip(
+            2 ** (torch.ceil(torch.log2(scale) / 4) * 4),
+            torch.tensor(scale_list[-1], dtype=scale.dtype, device=scale.device),
+            torch.tensor(scale_list[0], dtype=scale.dtype, device=scale.device),
+        )
+    elif USE_POW2_SCALE:
+        return 2 ** torch.ceil(torch.log2(scale))
+    else:
+        return scale
+
+
+def calculate_qparams(min_val, max_val, dtype):
+    amax = torch.max(torch.abs(min_val), torch.abs(max_val))
+    dtype_amax = E4M3_AMAX if dtype == torch.float8_e4m3fn else E5M2_AMAX
+    scale = amax / dtype_amax
+    scale = scale.reshape(-1)
+    return _map_gaudi_scale(scale)
+
+
+@observer_registry(name="minmax")
+class FP8MinMaxObserver(ObserverBase):
     def __init__(
         self,
-        bins: int = 2048,
-        upsample_rate: int = 128,
-        dtype: torch.dtype = torch.quint8,
-        qscheme=torch.per_tensor_affine,
-        reduce_range=False,
-        quant_min=None,
-        quant_max=None,
-        factory_kwargs=None,
-        eps=torch.finfo(torch.float32).eps,
-        format="E4M3",
+        dtype: torch.dtype = torch.float8_e4m3fn,
     ) -> None:
         # bins: The number of bins used for histogram calculation.
-        super(FP8HistogramObserver, self).__init__(
-            bins=bins,
-            upsample_rate=upsample_rate,
-            dtype=dtype,
-            qscheme=qscheme,
-            reduce_range=reduce_range,
-            quant_min=quant_min,
-            quant_max=quant_max,
-            factory_kwargs=factory_kwargs,
-            eps=eps,
-        )
+        super().__init__(dtype=dtype)
+        assert isinstance(dtype, torch.dtype), "Please make sure the dtype of observer is torch.dtype."
+        factory_kwargs = {"device": "cpu", "dtype": torch.float32}
+        self.register_buffer("min_val", torch.tensor(float("inf"), **factory_kwargs))
+        self.register_buffer("max_val", torch.tensor(float("-inf"), **factory_kwargs))
+
+    def forward(self, x_orig):
+        r"""Records the running minimum and maximum of ``x``."""
+        if x_orig.numel() == 0:
+            return x_orig
+        x = x_orig.detach()
+        x = x.to(self.min_val.dtype)
+        min_val_cur, max_val_cur = torch.aminmax(x)
+        min_val = torch.min(min_val_cur, self.min_val)
+        max_val = torch.max(max_val_cur, self.max_val)
+        self.min_val.copy_(min_val)
+        self.max_val.copy_(max_val)
+        return x_orig
+
+    def calculate_qparams(self):
+        r"""Calculates the quantization parameters."""
+        scale = calculate_qparams(self.min_val, self.max_val, self.dtype)
+        return scale
+
+    def extra_repr(self):
+        return f"min_val={self.min_val}, max_val={self.max_val}"
+
+    def reset_min_max_vals(self):
+        """Resets the min/max values."""
+        self.min_val.copy_(torch.tensor(float("inf")))
+        self.max_val.copy_(torch.tensor(float("-inf")))
+
+
+@observer_registry(name="minmax_per_channel")
+class FP8PerChannelMinMaxObserver(ObserverBase):
+    def __init__(
+        self,
+        dtype: torch.dtype = torch.float8_e4m3fn,
+        ch_axis=0,  # weight_shape = (out_features, in_features)
+    ) -> None:
+        # bins: The number of bins used for histogram calculation.
+        super().__init__(dtype=dtype)
+        assert isinstance(dtype, torch.dtype), "Please make sure the dtype of observer is torch.dtype."
+        self.ch_axis = ch_axis
+        factory_kwargs = {"device": "cpu", "dtype": torch.float32}
+        self.register_buffer("min_val", torch.tensor([], **factory_kwargs))
+        self.register_buffer("max_val", torch.tensor([], **factory_kwargs))
+
+    def forward(self, x_orig):
+        if x_orig.numel() == 0:
+            return x_orig
+        x = x_orig.detach()
+        min_val = self.min_val
+        max_val = self.max_val
+        x_dim = x.size()
+
+        new_axis_list = [i for i in range(len(x_dim))]
+        new_axis_list[self.ch_axis] = 0
+        new_axis_list[0] = self.ch_axis
+        y = x.permute(new_axis_list)
+        # Need to match dtype of min/max because the updates to buffers
+        # are done in place and types need to match for comparisons
+        y = y.to(self.min_val.dtype)
+        y = torch.flatten(y, start_dim=1)
+        if min_val.numel() == 0 or max_val.numel() == 0:
+            min_val, max_val = torch.aminmax(y, dim=1)
+        else:
+            min_val_cur, max_val_cur = torch.aminmax(y, dim=1)
+            min_val = torch.min(min_val_cur, min_val)
+            max_val = torch.max(max_val_cur, max_val)
+        self.min_val.resize_(min_val.shape)
+        self.max_val.resize_(max_val.shape)
+        self.min_val.copy_(min_val)
+        self.max_val.copy_(max_val)
+        return x_orig
+
+    def calculate_qparams(self):
+        r"""Calculates the quantization parameters."""
+        scale = calculate_qparams(self.min_val, self.max_val, self.dtype)
+        return scale
+
+    def extra_repr(self):
+        return f"min_val={self.min_val}, max_val={self.max_val}"
+
+    def reset_min_max_vals(self):
+        """Resets the min/max values."""
+        self.min_val.copy_(torch.tensor(float("inf")))
+        self.max_val.copy_(torch.tensor(float("-inf")))
+
+
+@observer_registry(name="kl")
+class FP8HistogramObserver(ObserverBase):
+    def __init__(
+        self,
+        dtype: torch.dtype = torch.float8_e4m3fn,
+        bins: int = 2048,
+        upsample_rate: int = 128,
+        qscheme=torch.per_tensor_affine,
+        eps=torch.finfo(torch.float32).eps,
+    ) -> None:
+        # bins: The number of bins used for histogram calculation.
+        super().__init__(dtype=dtype)
+        assert isinstance(dtype, torch.dtype), "Please make sure the dtype of observer is torch.dtype."
+        self.bins = bins
+        factory_kwargs = {"device": "cpu", "dtype": torch.float32}
+        self.register_buffer("histogram", torch.zeros(self.bins, **factory_kwargs))
+        self.register_buffer("min_val", torch.tensor(float("inf"), **factory_kwargs))
+        self.register_buffer("max_val", torch.tensor(float("-inf"), **factory_kwargs))
+        self.dst_nbins = 2 ** torch.finfo(self.dtype).bits
+        self.upsample_rate = upsample_rate
+
+    def calculate_qparams(self, **kwargs):
+        new_min, new_max = self._non_linear_param_search()
+        scale = calculate_qparams(new_min, new_max, self.dtype)
+        return scale
+
+    def _get_norm(self, delta_begin: torch.Tensor, delta_end: torch.Tensor, density: torch.Tensor) -> torch.Tensor:
+        r"""Compute the norm of the values uniformaly distributed between
+        delta_begin and delta_end.
+        Currently only L2 norm is supported.
+
+        norm = density * (integral_{begin, end} x^2)
+             = density * (end^3 - begin^3) / 3
+        """
+        norm = (delta_end * delta_end * delta_end - delta_begin * delta_begin * delta_begin) / 3
+        return density * norm
 
     def _get_dst_bin(self, src_bin_begin, src_bin_end, dst_bin_max):
         # get dst bin value
@@ -53,10 +199,10 @@ class FP8HistogramObserver(HistogramObserver):
         scale = FP8_amax / dst_bin_max
         if torch.isinf(torch.tensor(scale)):
             scale = torch.tensor(3.4e38)
-        tmp = torch.ops.hpu.cast_to_fp8_v2(src_bin_begin, scale, False, False, self.dtype)[0]
-        dst_bin_begin = torch.ops.hpu.cast_from_fp8(tmp, None, torch.float32)
-        tmp = torch.ops.hpu.cast_to_fp8_v2(src_bin_end, scale, False, False, self.dtype)[0]
-        dst_bin_end = torch.ops.hpu.cast_from_fp8(tmp, None, torch.float32)
+        tmp = torch.ops.hpu.cast_to_fp8_v2(src_bin_begin.to("hpu"), scale.to("hpu"), False, False, self.dtype)[0]
+        dst_bin_begin = torch.ops.hpu.cast_from_fp8(tmp, None, torch.float32).to("cpu")
+        tmp = torch.ops.hpu.cast_to_fp8_v2(src_bin_end.to("hpu"), scale.to("hpu"), False, False, self.dtype)[0]
+        dst_bin_end = torch.ops.hpu.cast_from_fp8(tmp, None, torch.float32).to("cpu")
         # get bin width of dst bin value, dst_bin_begin must contain 0 and the max qvalue.
         dst_bin = list(set(dst_bin_begin.detach().cpu().numpy()))
         dst_bin.sort()
@@ -181,6 +327,62 @@ class FP8HistogramObserver(HistogramObserver):
         new_max = self.min_val + bin_width * (end_bin + 1)
         return new_min, new_max
 
+    def _adjust_min_max(
+        self, combined_min: torch.Tensor, combined_max: torch.Tensor, upsample_rate: int
+    ) -> Tuple[torch.Tensor, torch.Tensor, int, int]:
+        # We ensure that:
+        # (combined_max - combined_min)/(downsample_rate*Nbins) = (max - min)/(upsample_rate*Nbins)
+        # This allows us to have a common grid of resolution s, where we can align
+        # the input histogram
+        # start_idx maps min_val to the histogram bin index.
+
+        # Compute the width of histogram bins is a straightforward solution, where
+        # hist_bin_width = (self.max_val - self.min_val) / (self.bins * upsample_rate)
+        # Underflow happens if the numerator is close to the smallest positive subnormal number of FP32
+        # Therefore, we avoid such division operation.
+        downsample_rate = int(
+            torch.ceil((combined_max - combined_min) * upsample_rate / (self.max_val - self.min_val)).item()
+        )
+        e = downsample_rate * (self.max_val - self.min_val) / upsample_rate - (combined_max - combined_min)
+        start_idx = int(
+            torch.round(
+                (self.min_val - combined_min) * self.bins * upsample_rate / (self.max_val - self.min_val)
+            ).item()
+        )
+        combined_max = combined_max + e
+        combined_min = combined_min
+        return combined_min, combined_max, downsample_rate, start_idx
+
+    def _combine_histograms(
+        self,
+        orig_hist: torch.Tensor,
+        new_hist: torch.Tensor,
+        upsample_rate: int,
+        downsample_rate: int,
+        start_idx: int,
+        Nbins: int,
+    ) -> torch.Tensor:
+        # First up-sample the histogram with new data by a factor of L
+        # This creates an approximate probability density that's piecewise constant
+        upsampled_histogram = new_hist.repeat_interleave(upsample_rate)
+        # Now insert the upsampled histogram into the output
+        # histogram, which is initialized with zeros.
+        # The offset at which the histogram is introduced is determined
+        # by the start index as the output histogram can cover a wider range
+        histogram_with_output_range = torch.zeros((Nbins * downsample_rate), device=orig_hist.device)
+        histogram_with_output_range[start_idx : Nbins * upsample_rate + start_idx] = upsampled_histogram
+        # Compute integral histogram, double precision is needed to ensure
+        # that there are no overflows
+        integral_histogram = torch.cumsum(histogram_with_output_range, 0, dtype=torch.double)[
+            downsample_rate - 1 :: downsample_rate
+        ]
+        # Finally perform interpolation
+        shifted_integral_histogram = torch.zeros((Nbins), device=orig_hist.device)
+        shifted_integral_histogram[1:Nbins] = integral_histogram[0:-1]
+        interpolated_histogram = (integral_histogram - shifted_integral_histogram) / upsample_rate
+        orig_hist = orig_hist + interpolated_histogram.to(torch.float)
+        return orig_hist
+
     def forward(self, x_orig: torch.Tensor) -> torch.Tensor:
         if x_orig.numel() == 0:
             return x_orig
@@ -233,3 +435,6 @@ class FP8HistogramObserver(HistogramObserver):
             self.max_val.detach_().resize_(combined_max.shape)
             self.max_val.copy_(combined_max)
         return x_orig
+
+    def extra_repr(self):
+        return f"min_val={self.min_val}, max_val={self.max_val}"

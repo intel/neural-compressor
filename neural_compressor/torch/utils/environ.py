@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
+
 import torch
 from packaging.version import Version
 
@@ -50,7 +52,7 @@ def is_ipex_available():
 
 
 def get_ipex_version():
-    if _ipex_available:
+    if is_ipex_available():
         try:
             ipex_version = ipex.__version__.split("+")[0]
         except ValueError as e:  # pragma: no cover
@@ -59,6 +61,9 @@ def get_ipex_version():
         return version
     else:
         return None
+
+
+TORCH_VERSION_2_2_2 = Version("2.2.2")
 
 
 def get_torch_version():
@@ -70,9 +75,23 @@ def get_torch_version():
     return version
 
 
+def is_ipex_imported() -> bool:
+    for name, _ in sys.modules.items():
+        if name == "intel_extension_for_pytorch":
+            return True
+    return False
+
+
+def is_transformers_imported() -> bool:
+    for name, _ in sys.modules.items():
+        if name == "transformers":
+            return True
+    return False
+
+
 def get_device(device_name="auto"):
     from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
     runtime_accelerator = auto_detect_accelerator(device_name)
-    device = runtime_accelerator.name()
+    device = runtime_accelerator.current_device_name()
     return device

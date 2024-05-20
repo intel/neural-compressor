@@ -1,3 +1,100 @@
+import os
+import re
+import torch
+from transformers import AutoModelForCausalLM, AutoConfig, AutoTokenizer
+
+
+world_size = int(os.getenv('WORLD_SIZE', '1'))
+local_rank = int(os.getenv('LOCAL_RANK', '-1'))
+
+
+def init_model(args):
+    import deepspeed
+    model_dtype = torch.float32
+    if re.search("llama", args.model.lower()) or re.search("bloom", args.model.lower()):
+        if world_size > 1:
+            config = AutoConfig.from_pretrained(args.model)
+            model_dtype = torch.bfloat16 # RuntimeErrorCastToFp8V2 input must be of float or bfloat16 dtype
+            deepspeed.init_distributed(dist_backend="hccl")
+            with deepspeed.OnDevice(dtype=model_dtype, device="meta"):
+                user_model = AutoModelForCausalLM.from_config(config, torch_dtype=model_dtype)
+            import tempfile
+            checkpoints_json = tempfile.NamedTemporaryFile(suffix=".json", mode="+w")
+            from optimum.habana.checkpoint_utils import write_checkpoints_json # in optimum-habana
+            write_checkpoints_json(
+                args.model,
+                local_rank,
+                checkpoints_json,
+                token=None,
+            )
+        else:
+            user_model = AutoModelForCausalLM.from_pretrained(
+                args.model,
+                device_map='hpu',
+                torch_dtype=model_dtype,
+            )
+    elif re.search("chatglm", args.model.lower()):
+        from models.modeling_chatglm import ChatGLMForConditionalGeneration
+        user_model = ChatGLMForConditionalGeneration.from_pretrained(
+            args.model,
+            revision=args.revision,
+            device_map='hpu',
+            torch_dtype=model_dtype,
+        )
+        # print(user_model.transformer.output_layer.weight.dtype) # always fp16
+        user_model.float() # static fp8 need float32 for graph compiler
+    else:
+        user_model = AutoModelForCausalLM.from_pretrained(
+            args.model,
+            trust_remote_code=args.trust_remote_code,
+            revision=args.revision,
+            device_map='hpu',
+            torch_dtype=model_dtype,
+        )
+    # load weight for multi-cards
+    if world_size > 1:
+        if re.search("llama", args.model.lower()) or re.search("bloom", args.model.lower()):
+            ds_inference_kwargs = {"dtype": model_dtype}
+            ds_inference_kwargs["tensor_parallel"] = {"tp_size": world_size}
+            ds_inference_kwargs["enable_cuda_graph"] = False
+            from transformers.models.llama.modeling_llama import LlamaDecoderLayer
+            ds_inference_kwargs["injection_policy"] = {LlamaDecoderLayer: ("self_attn.o_proj", "mlp.down_proj")}
+            ds_inference_kwargs["checkpoint"] = checkpoints_json.name
+            ds_model = deepspeed.init_inference(user_model, **ds_inference_kwargs)
+        else:
+            ds_model = deepspeed.init_inference(user_model,
+                                            mp_size=world_size,
+                                            replace_with_kernel_inject=False)
+        user_model = ds_model.module
+    return user_model
+
+
+def init_empty_model(model_name):
+    from accelerate import init_empty_weights
+    model_dtype = torch.float32
+    config = AutoConfig.from_pretrained(model_name)
+    with init_empty_weights():
+        model = AutoModelForCausalLM.from_config(config, torch_dtype=model_dtype)
+    return model
+
+
+def init_tokenizer(args):
+    # tokenizer
+    if re.search("baichuan", args.model.lower()):
+        from models.tokenization_baichuan import BaichuanTokenizer
+        tokenizer = BaichuanTokenizer.from_pretrained(
+            args.model,
+            trust_remote_code=args.trust_remote_code
+        )
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(
+            args.model,
+            trust_remote_code=args.trust_remote_code
+        )
+    tokenizer.pad_token = tokenizer.eos_token
+    return tokenizer
+
+
 def show_msg():
     import numpy as np
     import glob
@@ -144,7 +241,7 @@ def eval_func(user_model, tokenizer, args):
     if local_rank in [-1, 0]:
         dumped = json.dumps(results, indent=2)
         accu_dict = {}
-        case_name =  args.approach + "-" + args.precision
+        case_name = str(args.approach) + "-" + args.precision
         for task_name in args.tasks:
             if task_name == "wikitext":
                 print("Accuracy for %s is: %s" % (task_name, results["results"][task_name]["word_perplexity"]), flush=True)
@@ -152,6 +249,7 @@ def eval_func(user_model, tokenizer, args):
             else:
                 print("Accuracy for %s is: %s" % (task_name, results["results"][task_name]["acc"]), flush=True)
                 accu_dict[task_name] = [args.model, case_name, results["results"][task_name]["acc"]]
+        accu_dict["duration"] = [args.model, case_name, results["duration"]]
         if args.dump_to_excel:
             save_to_excel(accu_dict)
     return results["results"][task_name]["acc"]

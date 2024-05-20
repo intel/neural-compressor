@@ -48,9 +48,20 @@ do
     esac
 done
 
+function check_results() {
+    local control_phrase=$1
+    if [ $(grep "${control_phrase}" ${log_dir}/${model}/${framework}-${model}-tune.log | wc -l) == 0 ];then
+        $BOLD_RED && echo "====== Quantization FAILED!! ======" && $RESET; exit 1
+    fi
+}
+
 log_dir="/neural-compressor/.azure-pipelines/scripts/models"
-WORK_SOURCE_DIR="/neural-compressor/examples/${framework}"
 SCRIPTS_PATH="/neural-compressor/.azure-pipelines/scripts/models"
+if [[ "${inc_new_api}" == "3x"* ]]; then
+    WORK_SOURCE_DIR="/neural-compressor/examples/3.x_api/${framework}"
+else
+    WORK_SOURCE_DIR="/neural-compressor/examples/${framework}"
+fi
 $BOLD_YELLOW && echo "processing ${framework}-${fwk_ver}-${model}" && $RESET
 
 if [ "${mode}" == "env_setup" ]; then
@@ -77,6 +88,11 @@ elif [ "${mode}" == "tuning" ]; then
     [[ ${output_model} ]] && tuning_cmd="${tuning_cmd} --output_model=${output_model}"
 
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
+    # for int4 models add "--accuracy" to run tuning after quantize
+    if [[ "${model}" == *"int4"* ]]; then
+        sed -i "s|--quantize|--quantize --accuracy --int8|g" run_quant.sh
+    fi
+
     $BOLD_YELLOW && echo "workspace ${WORK_SOURCE_DIR}/${model_src_dir}" && $RESET
     $BOLD_YELLOW && echo "tuning_cmd is === ${tuning_cmd}" && $RESET
     $BOLD_YELLOW && echo "======== run tuning ========" && $RESET
@@ -85,14 +101,21 @@ elif [ "${mode}" == "tuning" ]; then
         --strategy=${strategy} \
         2>&1 | tee -a ${log_dir}/${model}/${framework}-${model}-tune.log
     $BOLD_YELLOW && echo "====== check tuning status. ======" && $RESET
-    control_phrase="model which meet accuracy goal."
-    if [ $(grep "${control_phrase}" ${log_dir}/${model}/${framework}-${model}-tune.log | wc -l) == 0 ];then
-        $BOLD_RED && echo "====== tuning FAILED!! ======" && $RESET; exit 1
+    if [[ "${inc_new_api}" == "3x"* ]]; then
+        control_phrase_1="Preparation end."
+        check_results $control_phrase_1
+        control_phrase_2="Conversion end."
+        check_results $control_phrase_2
+    else
+        control_phrase="model which meet accuracy goal."
+        check_results $control_phrase
+        if [ $(grep "${control_phrase}" ${log_dir}/${model}/${framework}-${model}-tune.log | grep "Not found" | wc -l) == 1 ];then
+            $BOLD_RED && echo "====== Quantization FAILED!! ======" && $RESET; exit 1
+        fi
     fi
-    if [ $(grep "${control_phrase}" ${log_dir}/${model}/${framework}-${model}-tune.log | grep "Not found" | wc -l) == 1 ];then
-        $BOLD_RED && echo "====== tuning FAILED!! ======" && $RESET; exit 1
-    fi
-    $BOLD_GREEN && echo "====== tuning SUCCEED!! ======" && $RESET
+
+
+    $BOLD_GREEN && echo "====== Quantization SUCCEED!! ======" && $RESET
 elif [ "${mode}" == "fp32_benchmark" ]; then
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
     $BOLD_YELLOW && echo "workspace ${WORK_SOURCE_DIR}/${model_src_dir}" && $RESET
@@ -141,6 +164,10 @@ elif [ "${mode}" == "collect_log" ]; then
     cd ${WORK_SOURCE_DIR}/${model_src_dir}
     $BOLD_YELLOW && echo "workspace ${WORK_SOURCE_DIR}/${model_src_dir}" && $RESET
     $BOLD_YELLOW && echo "====== collect logs of model ${model} =======" && $RESET
+    if [ "${framework}" == "pytorch" ] && [ "${fwk_ver}" == "latest" ]; then
+        fwk_ver=$(python -c "import torch; print(torch.__version__)")
+    fi
+
     python -u ${SCRIPTS_PATH}/collect_log_model.py \
         --framework=${framework} \
         --fwk_ver=${fwk_ver} \
@@ -148,6 +175,7 @@ elif [ "${mode}" == "collect_log" ]; then
         --logs_dir="${log_dir}/${model}" \
         --output_dir="${log_dir}/${model}" \
         --build_id=${BUILD_BUILDID} \
-        --stage=${mode}
+        --stage=${mode} \
+        --inc_new_api="${inc_new_api}"
     $BOLD_YELLOW && echo "====== Finish collect logs =======" && $RESET
 fi

@@ -28,13 +28,13 @@ __all__ = [
     "INT_MAPPING",
     "NF4",
     "NF4_BIT",
-    "calibration",
     "fetch_module",
     "forward_wrapper",
     "get_absorb_layers",
     "get_block_prefix",
     "get_example_input",
-    "get_hidden_states",
+    "replace_forward",
+    "recover_forward",
     "get_module",
     "get_module_input_output",
     "get_parent",
@@ -80,6 +80,12 @@ FP4_E2M1_BIT = [-1, -2, -3, -4, -5, -6, -7, 0, 1, 2, 3, 4, 5, 6, 7]
 
 FLOAT_MAPPING = {"nf4": NF4, "fp4": FP4_BNB, "fp4_e2m1_bnb": FP4_BNB, "fp4_e2m1": FP4_E2M1}
 INT_MAPPING = {"nf4": NF4_BIT, "fp4": FP4_BNB_BIT, "fp4_e2m1_bnb": FP4_BNB_BIT, "fp4_e2m1": FP4_E2M1_BIT}
+FP8_MAPPING = {
+    "fp8_e5m2": torch.float8_e5m2,
+    "fp8_e5m2fnuz": torch.float8_e5m2fnuz,
+    "fp8_e4m3fn": torch.float8_e4m3fn,
+    "fp8_e4m3fnuz": torch.float8_e4m3fnuz,
+}
 
 
 def quantize_4bit(tensor, quantile=1.0, dtype="nf4", return_int=False, **kwargs):
@@ -130,6 +136,17 @@ def quantize_4bit(tensor, quantile=1.0, dtype="nf4", return_int=False, **kwargs)
         org_tensor.copy_(tensor.type(org_tensor.dtype))
         return org_tensor
     return tensor
+
+
+def cast_fp8(tensor, dtype="fp8_e4m3fn", use_qdq=True):
+    torch_dtype = FP8_MAPPING[dtype]
+    if not use_qdq:  # pragma: no cover
+        return tensor.to(torch_dtype)
+    else:
+        orig_dtype = tensor.dtype
+        fp8_tensor = tensor.to(torch_dtype)
+        tensor.copy_(fp8_tensor.to(orig_dtype))
+        return tensor
 
 
 def qdq_weight_asym(weight, bits=4, quantile=1.0, return_int=False, **kwargs):
@@ -299,8 +316,10 @@ def quant_tensor(
         group_size = weight.shape[1]
     # case 2, reshape based on group size
     orig_shape = weight.shape
+    orig_weight = weight
     if weight.shape[1] % group_size == 0:
         weight = weight.reshape(-1, group_size)
+        # return weight for unpacking scale and zp
         weight = qdq_weight_actor(
             weight,
             bits,
@@ -314,12 +333,15 @@ def quant_tensor(
         if return_int or quant_scale:
             weight, scale, zp = weight
             weight = weight.reshape(orig_shape)
+            orig_weight.copy_(weight)
             scale = scale.reshape(orig_shape[0], -1)
             if zp is not None:
                 zp = zp.reshape(orig_shape[0], -1)
-            q_state = weight, scale, zp
+            q_state = orig_weight, scale, zp
         else:
-            return weight.reshape(orig_shape)
+            weight = weight.reshape(orig_shape)
+            orig_weight.copy_(weight)
+            return orig_weight
     else:
         # case 3, process left part split by group size
         split_index = weight.shape[1] // group_size * group_size
@@ -354,20 +376,21 @@ def quant_tensor(
         )
         if return_int or quant_scale:
             weight2, scale2, zp2 = weight2
-            weight.copy_(torch.cat([weight1, weight2], dim=1))
+            orig_weight.copy_(torch.cat([weight1, weight2], dim=1))
             scale = torch.cat([scale1, scale2], dim=1)
             zp = None if zp2 is None else torch.cat([zp1, zp2], dim=1)
             q_state = (weight, scale, zp)
         else:
-            weight.copy_(torch.cat([weight1, weight2], dim=1))
-            return weight
+            orig_weight.copy_(torch.cat([weight1, weight2], dim=1))
+            return orig_weight
     if quant_scale:
         weight, scale, zp = q_state
         scale_dtype = kwargs.get("double_quant_dtype", "int")
         scale_bits = kwargs.get("double_quant_bits", 8)
         scale_scheme = kwargs.get("double_quant_scheme", "asym")
         scale_group_size = kwargs.get("double_quant_group_size", 256)
-        scale_return_int = kwargs.get("double_quant_return_int", return_int)
+        # TODO: kwargs.get("double_quant_return_int", return_int)
+        scale_return_int = kwargs.get("double_quant_return_int", False)
         orig_scale_shape = scale.shape
         scale = scale.reshape(1, -1)
         # pre-process: scale_mean
@@ -376,7 +399,7 @@ def quant_tensor(
             scale.sub_(scale_mean)
             scale_scheme = "sym"
         # process: scale
-        scale = quant_tensor(
+        quant_tensor(
             scale,
             dtype=scale_dtype,
             bits=scale_bits,
@@ -408,7 +431,7 @@ def quant_tensor(
                 weight1 = weight1.mul_(scale[:, :-1].reshape(-1, 1))
                 weight1 = weight1.reshape(orig_shape[0], -1)
                 weight2 = weight2.mul_(scale[:, -1].reshape(-1, 1))
-                weight.copy_(torch.cat([weight1, weight2], dim=1))
+                orig_weight.copy_(torch.cat([weight1, weight2], dim=1))
             else:
                 if zp is not None:
                     weight = weight.reshape(-1, group_size) - zp.reshape(-1, 1)
@@ -416,7 +439,8 @@ def quant_tensor(
                     weight = weight.reshape(-1, group_size)
                 weight = weight.mul_(scale.reshape(-1, 1))
                 weight = weight.reshape(orig_shape[0], -1)
-            return weight
+                orig_weight.copy_(weight)
+            return orig_weight
     else:
         return q_state
 
@@ -936,40 +960,36 @@ def get_example_input(dataloader, i=1):
     return example_inp
 
 
-# copy from neural_compressor/adaptor/torch_utils/util.py
-def get_hidden_states(model, dataloader=None, n_samples=128, calib_func=None):
-    """Get the input args and kwargs of first block.
+def replace_forward(model):
+    """Replace forward to get the input args and kwargs of first block for AWQ algorithm.
 
     Args:
-        model (torch.nn.Module): input model
-        dataloader (dataloader, optional): input dataloader. Defaults to None.
-        n_samples (int, optional): number samples from dataloader. Defaults to 128.
-        calib_func (func, optional): a calib func to replace dataloader. Defaults to None.
+        model (torch.nn.Module): input model.
 
     Raises:
-        ValueError: to avoid inference of rest parts in model
+        ValueError: to avoid inference of rest parts in model.
 
     Returns:
-        total_block_args(list): a list of input args of each batch
-        total_block_kwargs(list):  a list of input kwargs of each batch
+        torch.nn.Module: model with replaced forward.
     """
     # Step 1: replace block_forward to collect block inputs and avoid entire inference
-    total_block_args = []
-    total_block_kwargs = []
+    setattr(model, "total_block_args", [])
+    setattr(model, "total_block_kwargs", [])
 
     def forward(layer, *args, **kwargs):
         # update total_hidden_states, total_block_kwargs, per batch
-        total_block_args.append(list(args))
-        total_block_kwargs.append(kwargs)
+        model.total_block_args.append(list(args))
+        model.total_block_kwargs.append(kwargs)
         raise ValueError
 
     block_prefix, block_num = get_block_prefix(model)
     block_list = fetch_module(model, block_prefix)
     first_block = block_list[0]
-    block_forward_cache = first_block.forward
+    first_block.forward_orig = first_block.forward
     first_block.forward = partial(forward, first_block)
 
     # Step 2: replace model_forward to avoid ValueError
+    model.forward_orig = model.forward
     model_forward_cache = model.forward
 
     def model_forward(model, *args, **kwargs):
@@ -980,44 +1000,25 @@ def get_hidden_states(model, dataloader=None, n_samples=128, calib_func=None):
             pass
 
     model.forward = partial(model_forward, model)
-
-    # Step 3: execute calibration
-    calibration(model, dataloader=dataloader, n_samples=n_samples, calib_func=calib_func)
-    logger.info("The hidden_states collection is done.")
-
-    # Step 4: recover model and block forward
-    model.forward = model_forward_cache
-    first_block.forward = block_forward_cache
-    return total_block_args, total_block_kwargs
+    return model
 
 
-# copy from neural_compressor/adaptor/torch_utils/util.py
-def calibration(model, dataloader=None, n_samples=128, calib_func=None):
-    """Calibration with dataloader or calib_func.
+def recover_forward(model):
+    """Recover model and block forward for AWQ algorithm.
 
     Args:
-        model (torch.nn.Module): input model
-        dataloader: dataloader. Defaults to None.
-        n_samples (int, optional): n_samples. Defaults to 128.
-        calib_func: calib_func. Defaults to None.
-    """
-    # calibration with dataloader or calib_func
-    if calib_func is not None:
-        calib_func(model)
-    else:
-        # from .smooth_quant import model_forward, move into this file
+        model (torch.nn.Module): input model.
 
-        batch_size = dataloader.batch_size
-        iters = int(math.ceil(n_samples / batch_size))
-        if n_samples % batch_size != 0:
-            logger.info(
-                "calibration samples increase from {} to {} due to batch_size is {}".format(
-                    n_samples,
-                    iters * batch_size,
-                    batch_size,
-                )
-            )
-        model_forward(model, dataloader, iters, next(model.parameters()).device)
+    Returns:
+        torch.nn.Module: model with recovered forward.
+    """
+    model.forward = model.forward_orig
+
+    block_prefix, _ = get_block_prefix(model)
+    block_list = fetch_module(model, block_prefix)
+    first_block = block_list[0]
+    first_block.forward = first_block.forward_orig
+    return model
 
 
 # copy from neural_compressor/adaptor/torch_utils/util.py

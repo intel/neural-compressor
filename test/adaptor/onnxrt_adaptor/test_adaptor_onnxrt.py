@@ -14,13 +14,14 @@ from onnx import onnx_pb as onnx_proto
 from packaging.version import Version
 from transformers import AutoConfig, AutoModelForSequenceClassification, AutoTokenizer
 
-from neural_compressor import PostTrainingQuantConfig, quantization
+from neural_compressor import PostTrainingQuantConfig, quantization, set_workspace
 from neural_compressor.adaptor import FRAMEWORKS
 from neural_compressor.adaptor.pytorch import get_torch_version
 from neural_compressor.conf.config import conf
 from neural_compressor.data import DATALOADERS, DataLoader, Datasets
 from neural_compressor.experimental import Benchmark, Quantization, common
 from neural_compressor.model import Model
+from neural_compressor.utils.utility import recover
 
 
 def build_static_yaml():
@@ -898,6 +899,7 @@ class TestAdaptorONNXRT(unittest.TestCase):
         self.albert_model = onnx.load(self.albert_export_path)
         self.gather_matmul_model = build_matmul_gather_model()
         build_benchmark()
+        set_workspace("nc_workspace")
 
     @classmethod
     def tearDownClass(self):
@@ -1390,8 +1392,6 @@ class TestAdaptorONNXRT(unittest.TestCase):
             self.assertNotEqual(q_model, None)
 
             # check recover model function
-            from neural_compressor.utils.utility import recover
-
             model = recover(self.mb_v2_model, "./nc_workspace/recover/history.snapshot", 0)
             self.assertTrue(model.model == q_model.model)
 
@@ -1489,6 +1489,10 @@ class TestAdaptorONNXRT(unittest.TestCase):
         q_model = quantization.fit(self.matmul_model, config, calib_dataloader=self.matmul_dataloader, eval_func=eval)
         self.assertTrue("QLinearMatMul" in [i.op_type for i in q_model.nodes()])
 
+        q_model = quantization.fit(self.matmul_model, config, calib_dataloader=self.matmul_dataloader)
+        recover_model = recover(self.matmul_model, "nc_workspace/history.snapshot", 0)
+        self.assertTrue(q_model.model == recover_model.model)
+
         config = PostTrainingQuantConfig(approach="dynamic")
         q_model = quantization.fit(self.matmul_model, config, calib_dataloader=self.matmul_dataloader, eval_func=eval)
         self.assertTrue("MatMulInteger" in [i.op_type for i in q_model.nodes()])
@@ -1535,6 +1539,8 @@ class TestAdaptorONNXRT(unittest.TestCase):
         )
         q_model = quantization.fit(self.conv_model, config, calib_dataloader=self.cv_dataloader)
         self.assertEqual(len([i for i in q_model.nodes() if i.op_type == "Mul"]), 2)
+        with self.assertRaises(SystemExit):
+            recover_model = recover(self.conv_model, "nc_workspace/history.snapshot", 0)
 
     def test_smooth_quant_args(self):
         from neural_compressor.model.onnx_model import ONNXModel

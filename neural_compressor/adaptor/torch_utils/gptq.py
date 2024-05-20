@@ -248,7 +248,7 @@ class GPTQuantizer(object):
 
         # dataloader
         self.use_max_length = use_max_length
-        self.pad_max_length = pad_max_length
+        self.pad_max_length = pad_max_length or 2048
         self.dataloader_original = dataloader
         self.dataloader = []
         self.nsamples = nsamples
