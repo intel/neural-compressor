@@ -164,10 +164,8 @@ class TestGPTQQuant:
         out = model(self.example_inputs)[0]
         atol_true = (out - self.label).amax()
         # compare atol, this case is an ideal case.
-        assert (
-            atol_false > atol_true
-        ), "act_order=True doesn't help accuracy, maybe is reasonable, please double check."
-   
+        assert atol_false > atol_true, "act_order=True doesn't help accuracy, maybe is reasonable, please double check."
+
     # def test_layer_wise(self):
     #     model = copy.deepcopy(self.tiny_gptj)
     #     quant_config = GPTQConfig(
