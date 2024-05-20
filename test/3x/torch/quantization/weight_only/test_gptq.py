@@ -142,7 +142,34 @@ class TestGPTQQuant:
             atol_false > atol_true
         ), "use_mse_search=True doesn't help accuracy, maybe is reasonable, please double check."
 
-    # def test_layer_wise(self):
+    def test_act_order(self):
+        # act_order=False
+        model = copy.deepcopy(self.tiny_gptj)
+        quant_config = GPTQConfig(
+            act_order=False,
+        )
+        model = prepare(model, quant_config)
+        run_fn(model)
+        model = convert(model)
+        out = model(self.example_inputs)[0]
+        atol_false = (out - self.label).amax()
+        # act_order=True
+        model = copy.deepcopy(self.tiny_gptj)
+        quant_config = GPTQConfig(
+            act_order=True,
+        )
+        model = prepare(model, quant_config)
+        run_fn(model)
+        model = convert(model)
+        out = model(self.example_inputs)[0]
+        atol_true = (out - self.label).amax()
+        import pdb; pdb.set_trace()
+        # compare atol, this case is an ideal case.
+        assert (
+            atol_false > atol_true
+        ), "act_order=True doesn't help accuracy, maybe is reasonable, please double check."
+   
+     # def test_layer_wise(self):
     #     model = copy.deepcopy(self.tiny_gptj)
     #     quant_config = GPTQConfig(
     #         use_layer_wise=True,
