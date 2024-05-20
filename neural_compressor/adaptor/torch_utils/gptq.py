@@ -603,6 +603,7 @@ class GPTQuantizer(object):
         gptq_config = {}
 
         self.true_sequential = self.find_true_sequential_config()
+        import pdb;pdb.set_trace()
         # automatically get true_sequential
         true_sequential_map = self.analyze_true_sequential(self.gptq_related_blocks["transformers"][0])
         logger.info(f"Sequential Name: {true_sequential_map}")
@@ -618,7 +619,7 @@ class GPTQuantizer(object):
             sub_layers = find_layers(transformer_block)
             sub_layers_to_quant = {}
             # add true sequential options
-            if self.true_sequential is not None:
+            if self.true_sequential is not None and self.true_sequential:
                 sequentials = true_sequential_map
             else:
                 sequentials = [list(sub_layers.keys())]
