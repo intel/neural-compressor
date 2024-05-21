@@ -327,8 +327,6 @@ if args.quantize:
                 acc = evaluator.evaluate(model)
                 return acc
 
-    user_model.to(DEV)
-
     q_model = quantization.fit(
         user_model,
         conf,
@@ -363,7 +361,6 @@ if args.accuracy:
             tokenizer=tokenizer,
             tasks=args.tasks,
             batch_size=args.batch_size,
-            device=DEV.type
         )
         for task_name in args.tasks:
             if task_name == "truthfulqa_mc":
@@ -371,7 +368,6 @@ if args.accuracy:
             else:
                 acc = results["results"][task_name]["acc"]
     else:
-
         from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
         eval_args = LMEvalParser(
             model="hf", 
