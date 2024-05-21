@@ -1,0 +1,7 @@
+transformers
+torch
+sentencepiece
+neural-compressor
+intel-extension-for-transformers >= 1.4.1
+lm-eval==0.4.2
+peft

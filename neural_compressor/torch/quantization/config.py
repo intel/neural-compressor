@@ -37,6 +37,7 @@ from neural_compressor.common.utils import (
     GPTQ,
     HQQ,
     MIX_PRECISION,
+    MX_QUANT,
     OP_NAME_OR_MODULE_TYPE,
     RTN,
     SMOOTH_QUANT,
@@ -768,6 +769,119 @@ def get_default_AutoRound_config() -> AutoRoundConfig:
     return AutoRoundConfig()
 
 
+######################## MX Config ###############################
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=MX_QUANT)
+class MXQuantConfig(BaseConfig):
+    """Config class for MX quantization."""
+
+    supported_configs: List[OperatorConfig] = []
+    params_list = [
+        "w_dtype",
+        "act_dtype",
+        "out_dtype",
+        "blocksize",
+        "round_method",
+        "weight_only",
+    ]
+    name = MX_QUANT
+
+    def __init__(
+        self,
+        w_dtype: str = "int8",
+        act_dtype: str = "int8",
+        out_dtype: str = "bfloat16",
+        blocksize: int = 32,
+        round_method: str = "nearest",
+        weight_only: bool = False,
+        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+    ):
+        """Init MX quantization config.
+
+        Args:
+            w_dtype (str): Data type for weights, default is "int8".
+            act_dtype (str): Data type for activations, default is "int8".
+            out_dtype (str): Data type for outputs, default is "bfloat16".
+            blocksize (int): Granularity to share the scale, default is 32.
+            round_method (str): Round method, default is "nearest".
+            weight_only (bool): Whether implement weight_only, default is False.
+        """
+        super().__init__(white_list=white_list)
+        self.w_dtype = w_dtype
+        self.act_dtype = act_dtype
+        self.out_dtype = out_dtype
+        self.blocksize = blocksize
+        self.round_method = round_method
+        self.weight_only = weight_only
+        self._post_init()
+
+    @classmethod
+    def register_supported_configs(cls) -> List[OperatorConfig]:
+        supported_configs = []
+        linear_mx_config = MXQuantConfig(
+            w_dtype=[
+                "int8",
+                "int4",
+                "int2",
+                "fp8_e5m2",
+                "fp8_e4m3",
+                "fp6_e3m2",
+                "fp6_e2m3",
+                "fp4",
+                "float16",
+                "bfloat16",
+                "float32",
+            ],
+            act_dtype=[
+                "int8",
+                "int4",
+                "int2",
+                "fp8_e5m2",
+                "fp8_e4m3",
+                "fp6_e3m2",
+                "fp6_e2m3",
+                "fp4",
+                "float16",
+                "bfloat16",
+                "float32",
+            ],
+            out_dtype=["bfloat16", "float16", "float32"],
+            blocksize=[2, 4, 8, 16, 32, 64, 128, 256, 512],
+            round_method=["nearest", "dither", "floor", "even"],
+            weight_only=[True, False],
+        )
+        operators = [torch.nn.Linear, torch.nn.functional.linear]
+        supported_configs.append(OperatorConfig(config=linear_mx_config, operators=operators))
+        cls.supported_configs = supported_configs
+
+    @staticmethod
+    def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+        white_list = (
+            torch.nn.Linear,
+            torch.nn.functional.linear,
+        )
+
+        filter_result = []
+        for op_name, module in model.named_modules():
+            if module.__class__ in white_list:
+                pair = (op_name, type(module).__name__)
+                filter_result.append(pair)
+        logger.debug(f"Get model info: {filter_result}")
+        return filter_result
+
+    @classmethod
+    def get_config_set_for_tuning(cls) -> Union[None, "MXQuantConfig", List["MXQuantConfig"]]:
+        return MXQuantConfig(weight_only=[False, True])
+
+
+def get_default_mx_config() -> MXQuantConfig:
+    """Generate the default mx config.
+
+    Returns:
+        the default rtn config.
+    """
+    return MXQuantConfig()
+
+
 ######################## Dynamic Quant Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=PT2E_DYNAMIC_QUANT)
 class DynamicQuantConfig(BaseConfig):
@@ -1012,11 +1126,17 @@ class SmoothQuantConfig(BaseConfig):
         supported_configs.append(OperatorConfig(config=linear_sq_config, operators=operators))
         cls.supported_configs = supported_configs
 
-    @staticmethod
-    def get_model_info(model: torch.nn.Module, example_inputs) -> List[Tuple[str, Callable]]:
+    def get_model_info(self, model: torch.nn.Module, example_inputs) -> List[Tuple[str, Callable]]:
         from neural_compressor.torch.algorithms.smooth_quant import get_quantizable_ops_recursively
 
-        model_info, _, _, _, _ = get_quantizable_ops_recursively(model, example_inputs=example_inputs)
+        model_info, cfgs, op_infos_from_cfgs, output_tensor_id_op_name = get_quantizable_ops_recursively(
+            model, example_inputs, alpha=self.alpha, act_algo=self.act_algo, inplace=True
+        )
+        model.cfgs, model.op_infos_from_cfgs, model.output_tensor_id_op_name = (
+            cfgs,
+            op_infos_from_cfgs,
+            output_tensor_id_op_name,
+        )
         return model_info
 
     @classmethod

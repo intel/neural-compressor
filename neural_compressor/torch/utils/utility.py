@@ -226,11 +226,5 @@ def create_xiq_quantizer_from_pt2e_config(config, is_dynamic=False) -> X86Induct
     # set global
     global_config = _map_inc_config_to_torch_quant_config(config, is_dynamic)
     quantizer.set_global(global_config)
-    # set local
-    for module_or_func_name, local_config in config.local_config.items():
-        local_quant_config = _map_inc_config_to_torch_quant_config(local_config, is_dynamic)
-        if isinstance(module_or_func_name, torch.nn.Module):
-            quantizer.set_module_type_qconfig(module_or_func_name, local_quant_config)
-        else:
-            quantizer.set_function_type_qconfig(module_or_func_name, local_quant_config)
+    # Skip the local config for now (need torch 2.4)
     return quantizer

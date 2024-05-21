@@ -25,6 +25,7 @@ from torch.fx.graph_module import GraphModule
 
 from neural_compressor.common.utils import logger
 from neural_compressor.torch.algorithms.base_algorithm import Quantizer
+from neural_compressor.torch.algorithms.pt2e_quant import half_precision_rewriter as hp_rewriter
 from neural_compressor.torch.utils import create_xiq_quantizer_from_pt2e_config
 
 
@@ -61,4 +62,11 @@ class W8A8PT2EQuantizer(Quantizer):
         fold_quantize = kwargs.get("fold_quantize", False)
         converted_model = convert_pt2e(model, fold_quantize=fold_quantize)
         logger.warning("Converted the model in qdq mode, please compile it to accelerate inference.")
+        if self.quant_config:
+            self.half_precision_transformation(converted_model, self.quant_config)
         return converted_model
+
+    def half_precision_transformation(self, model, config):
+        half_precision_node_set = hp_rewriter.get_half_precision_node_set(model, config)
+        logger.info("Try to convert %d nodes to half precision.", len(half_precision_node_set))
+        hp_rewriter.transformation(model, half_precision_node_set)

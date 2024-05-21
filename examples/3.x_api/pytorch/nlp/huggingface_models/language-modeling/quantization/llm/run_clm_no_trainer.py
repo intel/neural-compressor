@@ -361,20 +361,12 @@ if args.quantize:
 
         from utils import get_example_inputs
         example_inputs = get_example_inputs(user_model, calib_dataloader)
-        if args.sq:
-            # currently, smooth quant only support quantize API
-            # TODO: support prepare/convert API for smooth quant
-            from neural_compressor.torch.quantization import quantize
 
-            user_model = quantize(
-                model=user_model, quant_config=quant_config, example_inputs=example_inputs, run_fn=run_fn
-            )
-        else:
-            from neural_compressor.torch.quantization import prepare, convert
-
-            user_model = prepare(model=user_model, quant_config=quant_config, example_inputs=example_inputs)
-            run_fn(user_model)
-            user_model = convert(user_model)
+        from neural_compressor.torch.quantization import prepare, convert
+        user_model = prepare(model=user_model, quant_config=quant_config, example_inputs=example_inputs)
+        run_fn(user_model)
+        user_model = convert(user_model)
+    
     user_model.save(args.output_dir)
 
 
