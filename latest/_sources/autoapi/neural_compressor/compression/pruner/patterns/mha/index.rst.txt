@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.compression.pruner.patterns.mha`
-===========================================================
+neural_compressor.compression.pruner.patterns.mha
+=================================================
 
 .. py:module:: neural_compressor.compression.pruner.patterns.mha
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.compression.pruner.patterns.mha.PatternMHA
 
 
-
+Module Contents
+---------------
 
 .. py:class:: PatternMHA(config, modules=None)
-
 
 
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.torch_utils.layer_wise_quant.utils`
-======================================================================
+neural_compressor.adaptor.torch_utils.layer_wise_quant.utils
+============================================================
 
 .. py:module:: neural_compressor.adaptor.torch_utils.layer_wise_quant.utils
 
@@ -9,12 +9,8 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -30,6 +26,8 @@ Functions
    neural_compressor.adaptor.torch_utils.layer_wise_quant.utils.load_tensor
 
 
+Module Contents
+---------------
 
 .. py:function:: get_module(model, key)
 

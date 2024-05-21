@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.strategy.mse`
-=====================================================
+neural_compressor.experimental.strategy.mse
+===========================================
 
 .. py:module:: neural_compressor.experimental.strategy.mse
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.experimental.strategy.mse.MSETuneStrategy
 
 
-
+Module Contents
+---------------
 
 .. py:class:: MSETuneStrategy(model, conf, q_dataloader, q_func=None, eval_dataloader=None, eval_func=None, dicts=None, q_hooks=None)
-
 
 
 

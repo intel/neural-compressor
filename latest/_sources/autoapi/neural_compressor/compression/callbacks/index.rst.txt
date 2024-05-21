@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.compression.callbacks`
-=================================================
+neural_compressor.compression.callbacks
+=======================================
 
 .. py:module:: neural_compressor.compression.callbacks
 
@@ -12,11 +12,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -26,10 +23,10 @@ Classes
    neural_compressor.compression.callbacks.DistillationCallbacks
 
 
-
+Module Contents
+---------------
 
 .. py:class:: BaseCallbacks(conf=None, model=None)
-
 
 
 
@@ -45,7 +42,6 @@ Classes
 
 
 
-
    This is the class for callbacks of quantization aware training.
 
    This design is mainly for Quantization-Aware Training.
@@ -56,14 +52,12 @@ Classes
 
 
 
-
    This is the class for callbacks of pruning object.
 
    In this class will apply all hooks for Pruning.
 
 
 .. py:class:: DistillationCallbacks(conf=None, model=None)
-
 
 
 

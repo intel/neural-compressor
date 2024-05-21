@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.tf_utils.transform_graph.bias_correction`
-============================================================================
+neural_compressor.adaptor.tf_utils.transform_graph.bias_correction
+==================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.transform_graph.bias_correction
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.adaptor.tf_utils.transform_graph.bias_correction.BiasCorrection
 
 
-
+Module Contents
+---------------
 
 .. py:class:: BiasCorrection(input_graph, fp32_graph, method='weight_empirical', new_api=False)
-
 
 
 

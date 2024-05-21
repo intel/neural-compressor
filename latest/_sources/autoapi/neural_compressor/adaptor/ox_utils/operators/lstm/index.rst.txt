@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.ox_utils.operators.lstm`
-===========================================================
+neural_compressor.adaptor.ox_utils.operators.lstm
+=================================================
 
 .. py:module:: neural_compressor.adaptor.ox_utils.operators.lstm
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.adaptor.ox_utils.operators.lstm.LSTMOperator
 
 
-
+Module Contents
+---------------
 
 .. py:class:: LSTMOperator(onnx_quantizer, onnx_node)
-
 
 
 

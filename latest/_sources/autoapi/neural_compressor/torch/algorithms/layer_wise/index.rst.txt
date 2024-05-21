@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.torch.algorithms.layer_wise`
-=======================================================
+neural_compressor.torch.algorithms.layer_wise
+=============================================
 
 .. py:module:: neural_compressor.torch.algorithms.layer_wise
 
@@ -11,12 +11,12 @@
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   load/index.rst
-   modified_pickle/index.rst
-   utils/index.rst
+   /autoapi/neural_compressor/torch/algorithms/layer_wise/load/index
+   /autoapi/neural_compressor/torch/algorithms/layer_wise/modified_pickle/index
+   /autoapi/neural_compressor/torch/algorithms/layer_wise/utils/index
 
 

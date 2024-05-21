@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.ox_utils.util`
-=================================================
+neural_compressor.adaptor.ox_utils.util
+=======================================
 
 .. py:module:: neural_compressor.adaptor.ox_utils.util
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -26,9 +23,8 @@ Classes
    neural_compressor.adaptor.ox_utils.util.QuantFormat
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -58,6 +54,8 @@ Functions
    neural_compressor.adaptor.ox_utils.util.infer_shapes
 
 
+Module Contents
+---------------
 
 .. py:function:: get_node_original_name(node) -> str
 
@@ -75,7 +73,6 @@ Functions
 
 
 .. py:class:: QuantType
-
 
 
 
@@ -202,24 +199,20 @@ Functions
 
 .. py:class:: ValueInfo(tensor_name, dtype, new_dtype)
 
-
    Represents a casted tensor info.
 
 
 .. py:class:: QuantizedValue(name, new_quantized_name, scale_name, zero_point_name, quantized_value_type, axis=None, qType=QuantType.QUInt8)
-
 
    Represents a linearly quantized value (input/output/initializer).
 
 
 .. py:class:: QuantizedInitializer(name, initializer, rmins, rmaxs, zero_points, scales, data=[], quantized_data=[], axis=None, qType=QuantType.QUInt8)
 
-
    Represents a linearly quantized weight input from ONNX operators.
 
 
 .. py:class:: QuantizationMode
-
 
 
 
@@ -230,12 +223,10 @@ Functions
 
 
 
-
    Represent QuantizedValueType value.
 
 
 .. py:class:: QuantFormat
-
 
 
 

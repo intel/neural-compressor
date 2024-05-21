@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.tensorflow`
-==============================================
+neural_compressor.adaptor.tensorflow
+====================================
 
 .. py:module:: neural_compressor.adaptor.tensorflow
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -22,10 +19,10 @@ Classes
    neural_compressor.adaptor.tensorflow.TensorflowQuery
 
 
-
+Module Contents
+---------------
 
 .. py:class:: TensorFlowAdaptor(framework_specific_info)
-
 
 
 
@@ -36,12 +33,10 @@ Classes
 
 
 
-
    Tensorflow ITEX Adaptor Class.
 
 
 .. py:class:: TensorflowQuery(local_config_file=None, performance_only=False, itex_mode=False, quant_mode='static')
-
 
 
 

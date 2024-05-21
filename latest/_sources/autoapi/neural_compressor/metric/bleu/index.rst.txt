@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.metric.bleu`
-=======================================
+neural_compressor.metric.bleu
+=============================
 
 .. py:module:: neural_compressor.metric.bleu
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,18 +18,18 @@ Classes
    neural_compressor.metric.bleu.BLEU
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
    neural_compressor.metric.bleu.bleu_tokenize
 
 
+Module Contents
+---------------
 
 .. py:class:: UnicodeRegex
-
 
 
 
@@ -67,7 +64,6 @@ Functions
 
 
 .. py:class:: BLEU
-
 
 
 

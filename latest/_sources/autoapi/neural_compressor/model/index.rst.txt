@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.model`
-=================================
+neural_compressor.model
+=======================
 
 .. py:module:: neural_compressor.model
 
@@ -11,42 +11,17 @@
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   base_model/index.rst
-   keras_model/index.rst
-   model/index.rst
-   mxnet_model/index.rst
-   nets_factory/index.rst
-   onnx_model/index.rst
-   tensorflow_model/index.rst
-   torch_model/index.rst
-
-
-Package Contents
-----------------
-
-Classes
-~~~~~~~
-
-.. autoapisummary::
-
-   neural_compressor.model.Model
-   neural_compressor.model.BaseModel
-
-
-
-
-Attributes
-~~~~~~~~~~
-
-.. autoapisummary::
-
-   neural_compressor.model.MODELS
-
-
-
+   /autoapi/neural_compressor/model/base_model/index
+   /autoapi/neural_compressor/model/keras_model/index
+   /autoapi/neural_compressor/model/model/index
+   /autoapi/neural_compressor/model/mxnet_model/index
+   /autoapi/neural_compressor/model/nets_factory/index
+   /autoapi/neural_compressor/model/onnx_model/index
+   /autoapi/neural_compressor/model/tensorflow_model/index
+   /autoapi/neural_compressor/model/torch_model/index
 
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.tensorflow.quantization.utils.graph_rewriter.qdq.merge_duplicated_qdq`
-=================================================================================================
+neural_compressor.tensorflow.quantization.utils.graph_rewriter.qdq.merge_duplicated_qdq
+=======================================================================================
 
 .. py:module:: neural_compressor.tensorflow.quantization.utils.graph_rewriter.qdq.merge_duplicated_qdq
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.tensorflow.quantization.utils.graph_rewriter.qdq.merge_duplicated_qdq.MergeDuplicatedQDQOptimizer
 
 
-
+Module Contents
+---------------
 
 .. py:class:: MergeDuplicatedQDQOptimizer(model)
-
 
 
 

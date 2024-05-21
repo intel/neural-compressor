@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.algorithm.algorithm`
-===============================================
+neural_compressor.algorithm.algorithm
+=====================================
 
 .. py:module:: neural_compressor.algorithm.algorithm
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -22,15 +19,16 @@ Classes
    neural_compressor.algorithm.algorithm.Algorithm
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
    neural_compressor.algorithm.algorithm.algorithm_registry
 
 
+Module Contents
+---------------
 
 .. py:function:: algorithm_registry(algorithm_type, location)
 
@@ -51,7 +49,6 @@ Functions
 
 
 
-
    Build a dict for registered algorithms.
 
 
@@ -59,12 +56,10 @@ Functions
 
 
 
-
    Control the Algorithm in different phase.
 
 
 .. py:class:: Algorithm
-
 
 
 

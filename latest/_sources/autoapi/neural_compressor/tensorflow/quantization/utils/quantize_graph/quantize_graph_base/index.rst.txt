@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.tensorflow.quantization.utils.quantize_graph.quantize_graph_base`
-============================================================================================
+neural_compressor.tensorflow.quantization.utils.quantize_graph.quantize_graph_base
+==================================================================================
 
 .. py:module:: neural_compressor.tensorflow.quantization.utils.quantize_graph.quantize_graph_base
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,16 +18,15 @@ Classes
    neural_compressor.tensorflow.quantization.utils.quantize_graph.quantize_graph_base.QuantizeNodeBase
 
 
-
+Module Contents
+---------------
 
 .. py:class:: QuantizeGraphBase(output_node_names)
-
 
    This is the base class for quantize graph.
 
 
 .. py:class:: QuantizeNodeBase(**kwargs)
-
 
    This is the base class for nodes fusion.
 

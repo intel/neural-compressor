@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.ox_utils.operators.reduce`
-=============================================================
+neural_compressor.adaptor.ox_utils.operators.reduce
+===================================================
 
 .. py:module:: neural_compressor.adaptor.ox_utils.operators.reduce
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,10 +18,10 @@ Classes
    neural_compressor.adaptor.ox_utils.operators.reduce.ReduceMinMaxOperator
 
 
-
+Module Contents
+---------------
 
 .. py:class:: ReduceOperator(onnx_quantizer, onnx_node)
-
 
 
 
@@ -32,7 +29,6 @@ Classes
 
 
 .. py:class:: ReduceMinMaxOperator(onnx_quantizer, onnx_node)
-
 
 
 

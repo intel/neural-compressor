@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.strategy.strategy`
-==========================================================
+neural_compressor.experimental.strategy.strategy
+================================================
 
 .. py:module:: neural_compressor.experimental.strategy.strategy
 
@@ -9,26 +9,24 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.experimental.strategy.strategy.TuneStrategy
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
    neural_compressor.experimental.strategy.strategy.strategy_registry
 
 
+Module Contents
+---------------
 
 .. py:function:: strategy_registry(cls)
 
@@ -42,7 +40,6 @@ Functions
 
 
 .. py:class:: TuneStrategy(model, conf, q_dataloader=None, q_func=None, eval_dataloader=None, eval_func=None, resume=None, q_hooks=None)
-
 
 
 

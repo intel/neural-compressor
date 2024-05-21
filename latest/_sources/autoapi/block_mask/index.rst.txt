@@ -1,5 +1,5 @@
-:py:mod:`block_mask`
-====================
+block_mask
+==========
 
 .. py:module:: block_mask
 

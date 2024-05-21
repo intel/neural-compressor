@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.ox_utils.operators.resize`
-=============================================================
+neural_compressor.adaptor.ox_utils.operators.resize
+===================================================
 
 .. py:module:: neural_compressor.adaptor.ox_utils.operators.resize
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,10 +18,10 @@ Classes
    neural_compressor.adaptor.ox_utils.operators.resize.QResizeOperator
 
 
-
+Module Contents
+---------------
 
 .. py:class:: ResizeOperator(onnx_quantizer, onnx_node)
-
 
 
 
@@ -32,7 +29,6 @@ Classes
 
 
 .. py:class:: QResizeOperator(onnx_node, children, initializers)
-
 
 
 

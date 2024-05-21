@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.strategy.exhaustive`
-============================================================
+neural_compressor.experimental.strategy.exhaustive
+==================================================
 
 .. py:module:: neural_compressor.experimental.strategy.exhaustive
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.experimental.strategy.exhaustive.ExhaustiveTuneStrategy
 
 
-
+Module Contents
+---------------
 
 .. py:class:: ExhaustiveTuneStrategy
-
 
 
 

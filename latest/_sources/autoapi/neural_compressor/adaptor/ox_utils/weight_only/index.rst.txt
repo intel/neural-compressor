@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.ox_utils.weight_only`
-========================================================
+neural_compressor.adaptor.ox_utils.weight_only
+==============================================
 
 .. py:module:: neural_compressor.adaptor.ox_utils.weight_only
 
@@ -9,12 +9,8 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -33,6 +29,8 @@ Functions
    neural_compressor.adaptor.ox_utils.weight_only.gptq_quantize
 
 
+Module Contents
+---------------
 
 .. py:function:: get_blob_size(group_size, has_zp)
 

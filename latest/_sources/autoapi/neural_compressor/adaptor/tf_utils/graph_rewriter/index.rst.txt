@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter`
-===========================================================
+neural_compressor.adaptor.tf_utils.graph_rewriter
+=================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter
 
@@ -11,23 +11,23 @@
 
 Subpackages
 -----------
-.. toctree::
-   :titlesonly:
-   :maxdepth: 3
 
-   bf16/index.rst
-   generic/index.rst
-   int8/index.rst
-   onnx/index.rst
-   qdq/index.rst
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/bf16/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/int8/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/onnx/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/qdq/index
 
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   graph_base/index.rst
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/graph_base/index
 
 

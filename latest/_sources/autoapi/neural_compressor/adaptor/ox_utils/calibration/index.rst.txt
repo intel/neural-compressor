@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.ox_utils.calibration`
-========================================================
+neural_compressor.adaptor.ox_utils.calibration
+==============================================
 
 .. py:module:: neural_compressor.adaptor.ox_utils.calibration
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.adaptor.ox_utils.calibration.ONNXRTAugment
 
 
-
+Module Contents
+---------------
 
 .. py:class:: ONNXRTAugment(model_wrapper, dataloader, dump_op_types, black_nodes=[], white_nodes=[], iterations=[], backend='CPUExecutionProvider', reduce_range=False, **kwargs)
-
 
    Augment input model to dump tensor or for calibration.
 

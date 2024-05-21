@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.metric.coco_label_map`
-=================================================
+neural_compressor.metric.coco_label_map
+=======================================
 
 .. py:module:: neural_compressor.metric.coco_label_map
 

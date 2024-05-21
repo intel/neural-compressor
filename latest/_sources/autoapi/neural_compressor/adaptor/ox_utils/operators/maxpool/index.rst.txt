@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.ox_utils.operators.maxpool`
-==============================================================
+neural_compressor.adaptor.ox_utils.operators.maxpool
+====================================================
 
 .. py:module:: neural_compressor.adaptor.ox_utils.operators.maxpool
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,10 +18,10 @@ Classes
    neural_compressor.adaptor.ox_utils.operators.maxpool.QMaxPoolOperator
 
 
-
+Module Contents
+---------------
 
 .. py:class:: MaxPoolOperator(onnx_quantizer, onnx_node)
-
 
 
 
@@ -32,7 +29,6 @@ Classes
 
 
 .. py:class:: QMaxPoolOperator(onnx_node, children, initializers)
-
 
 
 

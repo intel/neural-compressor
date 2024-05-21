@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.pruning_recipes`
-========================================================
+neural_compressor.experimental.pruning_recipes
+==============================================
 
 .. py:module:: neural_compressor.experimental.pruning_recipes
 
@@ -11,33 +11,10 @@
 
 Subpackages
 -----------
+
 .. toctree::
-   :titlesonly:
-   :maxdepth: 3
+   :maxdepth: 1
 
-   patterns/index.rst
-
-
-Package Contents
-----------------
-
-Classes
-~~~~~~~
-
-.. autoapisummary::
-
-   neural_compressor.experimental.pruning_recipes.PATTERNS
-
-
-
-
-Attributes
-~~~~~~~~~~
-
-.. autoapisummary::
-
-   neural_compressor.experimental.pruning_recipes.patterns
-
-
+   /autoapi/neural_compressor/experimental/pruning_recipes/patterns/index
 
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.compression.pruner.tf_criteria`
-==========================================================
+neural_compressor.compression.pruner.tf_criteria
+================================================
 
 .. py:module:: neural_compressor.compression.pruner.tf_criteria
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,9 +18,8 @@ Classes
    neural_compressor.compression.pruner.tf_criteria.MagnitudeCriterion
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -31,6 +27,8 @@ Functions
    neural_compressor.compression.pruner.tf_criteria.get_tf_criterion
 
 
+Module Contents
+---------------
 
 .. py:function:: register_criterion(name)
 
@@ -44,7 +42,6 @@ Functions
 
 .. py:class:: PruningCriterion(modules, config)
 
-
    Pruning base criterion.
 
    :param config: A config dict object that includes information about pruner and pruning criterion.
@@ -56,7 +53,6 @@ Functions
 
 
 .. py:class:: MagnitudeCriterion(modules, config)
-
 
 
 

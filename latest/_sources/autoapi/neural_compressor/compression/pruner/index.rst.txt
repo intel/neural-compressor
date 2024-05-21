@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.compression.pruner`
-==============================================
+neural_compressor.compression.pruner
+====================================
 
 .. py:module:: neural_compressor.compression.pruner
 
@@ -11,36 +11,32 @@
 
 Subpackages
 -----------
-.. toctree::
-   :titlesonly:
-   :maxdepth: 3
 
-   model_slim/index.rst
-   patterns/index.rst
-   pruners/index.rst
-   wanda/index.rst
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/compression/pruner/model_slim/index
+   /autoapi/neural_compressor/compression/pruner/patterns/index
+   /autoapi/neural_compressor/compression/pruner/pruners/index
+   /autoapi/neural_compressor/compression/pruner/wanda/index
 
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   criteria/index.rst
-   pruning/index.rst
-   regs/index.rst
-   schedulers/index.rst
-   tf_criteria/index.rst
-   utils/index.rst
-
-
-Package Contents
-----------------
+   /autoapi/neural_compressor/compression/pruner/criteria/index
+   /autoapi/neural_compressor/compression/pruner/pruning/index
+   /autoapi/neural_compressor/compression/pruner/regs/index
+   /autoapi/neural_compressor/compression/pruner/schedulers/index
+   /autoapi/neural_compressor/compression/pruner/tf_criteria/index
+   /autoapi/neural_compressor/compression/pruner/utils/index
 
 
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -48,6 +44,8 @@ Functions
    neural_compressor.compression.pruner.prepare_pruning
 
 
+Package Contents
+----------------
 
 .. py:function:: save(obj: object, f, pickle_module=None, pickle_protocol=None, _use_new_zipfile_serialization=None)
 

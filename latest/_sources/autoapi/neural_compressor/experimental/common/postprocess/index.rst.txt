@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.common.postprocess`
-===========================================================
+neural_compressor.experimental.common.postprocess
+=================================================
 
 .. py:module:: neural_compressor.experimental.common.postprocess
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.experimental.common.postprocess.Postprocess
 
 
-
+Module Contents
+---------------
 
 .. py:class:: Postprocess(postprocess_cls, name='user_postprocess', **kwargs)
-
 
 
 

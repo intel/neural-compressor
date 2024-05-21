@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.tensorflow.algorithms.smoother.calibration`
-======================================================================
+neural_compressor.tensorflow.algorithms.smoother.calibration
+============================================================
 
 .. py:module:: neural_compressor.tensorflow.algorithms.smoother.calibration
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,10 +18,10 @@ Classes
    neural_compressor.tensorflow.algorithms.smoother.calibration.SmoothQuantCalibrationLLM
 
 
-
+Module Contents
+---------------
 
 .. py:class:: SmoothQuantCalibration(model, dataloader, iterations, op_types, percentile)
-
 
    A class for performing smooth quantization calibration on a Tensorflow model.
 
@@ -41,7 +38,6 @@ Classes
 
 
 .. py:class:: SmoothQuantCalibrationLLM(model_path, dataloader, iterations, op_types, percentile, temp_path, weight_name_mapping)
-
 
 
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.compression.pruner.criteria`
-=======================================================
+neural_compressor.compression.pruner.criteria
+=============================================
 
 .. py:module:: neural_compressor.compression.pruner.criteria
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -26,9 +23,8 @@ Classes
    neural_compressor.compression.pruner.criteria.RetrainFreeCriterion
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -36,6 +32,8 @@ Functions
    neural_compressor.compression.pruner.criteria.get_criterion
 
 
+Module Contents
+---------------
 
 .. py:function:: register_criterion(name)
 
@@ -49,7 +47,6 @@ Functions
 
 .. py:class:: PruningCriterion(modules, config, pattern)
 
-
    Pruning base criterion.
 
    :param config: A config dict object that includes information about pruner and pruning criterion.
@@ -61,7 +58,6 @@ Functions
 
 
 .. py:class:: MagnitudeCriterion(modules, config, pattern)
-
 
 
 
@@ -82,7 +78,6 @@ Functions
 
 
 
-
    Pruning criterion.
 
    The gradient criterion_class is derived from PruningCriterion.
@@ -97,7 +92,6 @@ Functions
 
 
 .. py:class:: SnipCriterion(modules, config, pattern)
-
 
 
 
@@ -120,7 +114,6 @@ Functions
 
 
 
-
    Pruning criterion.
 
    The snip_momentum criterion_class is derived from PruningCriterion.
@@ -140,7 +133,6 @@ Functions
 
 
 
-
    Pruning criterion.
 
    The block_mask criterion_class is derived from PruningCriterion.
@@ -157,7 +149,6 @@ Functions
 
 
 .. py:class:: RetrainFreeCriterion(modules, config, pattern, masks)
-
 
 
 

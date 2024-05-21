@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.ox_utils.operators.argmax`
-=============================================================
+neural_compressor.adaptor.ox_utils.operators.argmax
+===================================================
 
 .. py:module:: neural_compressor.adaptor.ox_utils.operators.argmax
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,10 +18,10 @@ Classes
    neural_compressor.adaptor.ox_utils.operators.argmax.QArgMaxOperator
 
 
-
+Module Contents
+---------------
 
 .. py:class:: ArgMaxOperator(onnx_quantizer, onnx_node)
-
 
 
 
@@ -32,7 +29,6 @@ Classes
 
 
 .. py:class:: QArgMaxOperator(onnx_node, children, initializers)
-
 
 
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.torch_utils.symbolic_trace`
-==============================================================
+neural_compressor.adaptor.torch_utils.symbolic_trace
+====================================================
 
 .. py:module:: neural_compressor.adaptor.torch_utils.symbolic_trace
 
@@ -9,12 +9,8 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -22,6 +18,8 @@ Functions
    neural_compressor.adaptor.torch_utils.symbolic_trace.symbolic_trace
 
 
+Module Contents
+---------------
 
 .. py:function:: trace_and_fuse_sub_graph(model, prefix, is_qat)
 

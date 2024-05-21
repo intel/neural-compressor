@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.ox_utils.operators.ops`
-==========================================================
+neural_compressor.adaptor.ox_utils.operators.ops
+================================================
 
 .. py:module:: neural_compressor.adaptor.ox_utils.operators.ops
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,9 +18,8 @@ Classes
    neural_compressor.adaptor.ox_utils.operators.ops.QOperator
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -31,6 +27,8 @@ Functions
    neural_compressor.adaptor.ox_utils.operators.ops.qop_registry
 
 
+Module Contents
+---------------
 
 .. py:function:: op_registry(op_types)
 
@@ -46,12 +44,10 @@ Functions
 
 
 
-
    Base Operator.
 
 
 .. py:class:: QOperator(onnx_node, children, initializers)
-
 
 
 

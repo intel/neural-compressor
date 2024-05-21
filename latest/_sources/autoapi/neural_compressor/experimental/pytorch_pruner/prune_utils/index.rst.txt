@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.pytorch_pruner.prune_utils`
-===================================================================
+neural_compressor.experimental.pytorch_pruner.prune_utils
+=========================================================
 
 .. py:module:: neural_compressor.experimental.pytorch_pruner.prune_utils
 
@@ -9,12 +9,8 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -26,6 +22,8 @@ Functions
    neural_compressor.experimental.pytorch_pruner.prune_utils.parse_not_to_prune
 
 
+Module Contents
+---------------
 
 .. py:function:: check_config(prune_config)
 

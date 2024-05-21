@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.compression.pruner.wanda.utils`
-==========================================================
+neural_compressor.compression.pruner.wanda.utils
+================================================
 
 .. py:module:: neural_compressor.compression.pruner.wanda.utils
 
@@ -9,18 +9,16 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
    neural_compressor.compression.pruner.wanda.utils.find_layers
 
 
+Module Contents
+---------------
 
 .. py:function:: find_layers(module, op_types=['Linear', 'Conv1D'], name='')
 

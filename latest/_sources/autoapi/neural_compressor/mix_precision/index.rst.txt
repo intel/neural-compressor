@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.mix_precision`
-=========================================
+neural_compressor.mix_precision
+===============================
 
 .. py:module:: neural_compressor.mix_precision
 
@@ -9,18 +9,16 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
    neural_compressor.mix_precision.fit
 
 
+Module Contents
+---------------
 
 .. py:function:: fit(model, conf, eval_func=None, eval_dataloader=None, eval_metric=None, **kwargs)
 

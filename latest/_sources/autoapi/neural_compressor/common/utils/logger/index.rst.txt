@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.common.utils.logger`
-===============================================
+neural_compressor.common.utils.logger
+=====================================
 
 .. py:module:: neural_compressor.common.utils.logger
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,29 +18,17 @@ Classes
    neural_compressor.common.utils.logger.TuningLogger
 
 
-
-
-Attributes
-~~~~~~~~~~
-
-.. autoapisummary::
-
-   neural_compressor.common.utils.logger.level
-   neural_compressor.common.utils.logger.logger
-
+Module Contents
+---------------
 
 .. py:class:: Logger
-
 
 
 
    Logger class.
 
 
-
-
 .. py:class:: TuningLogger
-
 
    A unified logger for the tuning/quantization process.
 

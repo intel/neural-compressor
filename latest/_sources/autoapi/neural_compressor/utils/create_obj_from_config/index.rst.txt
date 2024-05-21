@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.utils.create_obj_from_config`
-========================================================
+neural_compressor.utils.create_obj_from_config
+==============================================
 
 .. py:module:: neural_compressor.utils.create_obj_from_config
 
@@ -9,12 +9,8 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -29,6 +25,8 @@ Functions
    neural_compressor.utils.create_obj_from_config.create_train_func
 
 
+Module Contents
+---------------
 
 .. py:function:: get_func_from_config(func_dict, cfg, compose=True)
 

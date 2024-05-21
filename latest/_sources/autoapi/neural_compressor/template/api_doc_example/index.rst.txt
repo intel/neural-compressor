@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.template.api_doc_example`
-====================================================
+neural_compressor.template.api_doc_example
+==========================================
 
 .. py:module:: neural_compressor.template.api_doc_example
 
@@ -39,20 +39,24 @@
 
 
 
-Module Contents
----------------
+Attributes
+----------
+
+.. autoapisummary::
+
+   neural_compressor.template.api_doc_example.module_debug_level1
+
 
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.template.api_doc_example.ExampleClass
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -62,17 +66,12 @@ Functions
    neural_compressor.template.api_doc_example.generator1
 
 
-
-Attributes
-~~~~~~~~~~
-
-.. autoapisummary::
-
-   neural_compressor.template.api_doc_example.module_debug_level1
-
+Module Contents
+---------------
 
 .. py:data:: module_debug_level1
    :value: 1
+
 
    Module debug level document.
 
@@ -173,7 +172,6 @@ Attributes
 
 .. py:class:: ExampleClass(param1, param2, param3)
 
-
    Example for Class.
 
    If the class has public attributes, they may be documented here
@@ -191,7 +189,10 @@ Attributes
 
       :type: :obj:`int`, optional
 
+
    .. py:attribute:: attr5
+      :value: None
+
 
       Docstring *after* attribute, with type specified.
 

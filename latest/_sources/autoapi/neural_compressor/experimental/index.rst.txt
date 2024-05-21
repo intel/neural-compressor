@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental`
-========================================
+neural_compressor.experimental
+==============================
 
 .. py:module:: neural_compressor.experimental
 
@@ -11,77 +11,38 @@
 
 Subpackages
 -----------
-.. toctree::
-   :titlesonly:
-   :maxdepth: 3
 
-   common/index.rst
-   compression/index.rst
-   contrib/index.rst
-   data/index.rst
-   export/index.rst
-   metric/index.rst
-   nas/index.rst
-   pruner_legacy/index.rst
-   pruning_recipes/index.rst
-   pytorch_pruner/index.rst
-   strategy/index.rst
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/experimental/common/index
+   /autoapi/neural_compressor/experimental/compression/index
+   /autoapi/neural_compressor/experimental/contrib/index
+   /autoapi/neural_compressor/experimental/data/index
+   /autoapi/neural_compressor/experimental/export/index
+   /autoapi/neural_compressor/experimental/metric/index
+   /autoapi/neural_compressor/experimental/nas/index
+   /autoapi/neural_compressor/experimental/pruner_legacy/index
+   /autoapi/neural_compressor/experimental/pruning_recipes/index
+   /autoapi/neural_compressor/experimental/pytorch_pruner/index
+   /autoapi/neural_compressor/experimental/strategy/index
 
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   benchmark/index.rst
-   component/index.rst
-   distillation/index.rst
-   graph_optimization/index.rst
-   mixed_precision/index.rst
-   model_conversion/index.rst
-   pruning/index.rst
-   pruning_v2/index.rst
-   quantization/index.rst
-   scheduler/index.rst
-
-
-Package Contents
-----------------
-
-Classes
-~~~~~~~
-
-.. autoapisummary::
-
-   neural_compressor.experimental.Component
-   neural_compressor.experimental.Quantization
-   neural_compressor.experimental.Pruning
-   neural_compressor.experimental.Benchmark
-   neural_compressor.experimental.Graph_Optimization
-   neural_compressor.experimental.MixedPrecision
-   neural_compressor.experimental.ModelConversion
-   neural_compressor.experimental.Distillation
-   neural_compressor.experimental.NAS
-
-
-
-
-Attributes
-~~~~~~~~~~
-
-.. autoapisummary::
-
-   neural_compressor.experimental.GraphOptimization
-
-
-
-
-
-
-
-
-
-
+   /autoapi/neural_compressor/experimental/benchmark/index
+   /autoapi/neural_compressor/experimental/component/index
+   /autoapi/neural_compressor/experimental/distillation/index
+   /autoapi/neural_compressor/experimental/graph_optimization/index
+   /autoapi/neural_compressor/experimental/mixed_precision/index
+   /autoapi/neural_compressor/experimental/model_conversion/index
+   /autoapi/neural_compressor/experimental/pruning/index
+   /autoapi/neural_compressor/experimental/pruning_v2/index
+   /autoapi/neural_compressor/experimental/quantization/index
+   /autoapi/neural_compressor/experimental/scheduler/index
 
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.utils.logger`
-========================================
+neural_compressor.utils.logger
+==============================
 
 .. py:module:: neural_compressor.utils.logger
 
@@ -9,20 +9,16 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.utils.logger.Logger
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -35,9 +31,10 @@ Functions
    neural_compressor.utils.logger.warning
 
 
+Module Contents
+---------------
 
 .. py:class:: Logger
-
 
 
 

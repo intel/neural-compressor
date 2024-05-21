@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.generic.dummy_biasadd`
-=================================================================================
+neural_compressor.adaptor.tf_utils.graph_rewriter.generic.dummy_biasadd
+=======================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.dummy_biasadd
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.adaptor.tf_utils.graph_rewriter.generic.dummy_biasadd.InjectDummyBiasAddOptimizer
 
 
-
+Module Contents
+---------------
 
 .. py:class:: InjectDummyBiasAddOptimizer(model, outputs)
-
 
 
 

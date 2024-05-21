@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.strategy.utils.tuning_space`
-=======================================================
+neural_compressor.strategy.utils.tuning_space
+=============================================
 
 .. py:module:: neural_compressor.strategy.utils.tuning_space
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,9 +18,8 @@ Classes
    neural_compressor.strategy.utils.tuning_space.TuningSpace
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -33,15 +29,15 @@ Functions
    neural_compressor.strategy.utils.tuning_space.initial_tuning_cfg_with_quant_mode
 
 
+Module Contents
+---------------
 
 .. py:class:: TuningItem(name, options=[], item_type=None)
-
 
    Not displayed in API Docs.
 
 
 .. py:class:: TuningSpace(capability, conf, framework=None)
-
 
    Not displayed in API Docs.
 

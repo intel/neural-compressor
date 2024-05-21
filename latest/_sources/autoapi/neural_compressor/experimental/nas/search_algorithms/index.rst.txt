@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.nas.search_algorithms`
-==============================================================
+neural_compressor.experimental.nas.search_algorithms
+====================================================
 
 .. py:module:: neural_compressor.experimental.nas.search_algorithms
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -23,10 +20,10 @@ Classes
    neural_compressor.experimental.nas.search_algorithms.BayesianOptimizationSearcher
 
 
-
+Module Contents
+---------------
 
 .. py:class:: Searcher(search_space)
-
 
 
 
@@ -37,7 +34,6 @@ Classes
 
 
 .. py:class:: GridSearcher(search_space)
-
 
 
 
@@ -53,7 +49,6 @@ Classes
 
 
 
-
    Random search.
 
    Search the whole search space randomly.
@@ -63,7 +58,6 @@ Classes
 
 
 .. py:class:: BayesianOptimizationSearcher(search_space, seed=42)
-
 
 
 

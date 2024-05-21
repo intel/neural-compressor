@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.algorithm.weight_correction`
-=======================================================
+neural_compressor.algorithm.weight_correction
+=============================================
 
 .. py:module:: neural_compressor.algorithm.weight_correction
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.algorithm.weight_correction.WeightCorrection
 
 
-
+Module Contents
+---------------
 
 .. py:class:: WeightCorrection(eps=1e-05, channel_axis=1)
-
 
 
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.mxnet_utils.util`
-====================================================
+neural_compressor.adaptor.mxnet_utils.util
+==========================================
 
 .. py:module:: neural_compressor.adaptor.mxnet_utils.util
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -27,9 +24,8 @@ Classes
    neural_compressor.adaptor.mxnet_utils.util.CalibData
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -57,9 +53,10 @@ Functions
    neural_compressor.adaptor.mxnet_utils.util.amp_convert
 
 
+Module Contents
+---------------
 
 .. py:class:: OpType
-
 
 
 
@@ -347,18 +344,15 @@ Functions
 
 .. py:class:: DataLoaderWrap(dataloader, input_desc)
 
-
    DataLoader Wrap.
 
 
 .. py:class:: DataIterLoader(data_iter)
 
-
    DataIterLoader.
 
 
 .. py:class:: CollectorBase
-
 
    Collector Base class.
 
@@ -367,12 +361,10 @@ Functions
 
 
 
-
    Collect the calibration thresholds depending on the algorithm set.
 
 
 .. py:class:: TensorCollector(include_nodes, qtensor_to_tensor, tensor_to_node)
-
 
 
 
@@ -385,12 +377,10 @@ Functions
 
 
 
-
    Name collector.
 
 
 .. py:class:: CalibData(cache_kl={}, cache_minmax={}, tensors_kl=[], tensors_minmax=[])
-
 
    Calibration data class.
 

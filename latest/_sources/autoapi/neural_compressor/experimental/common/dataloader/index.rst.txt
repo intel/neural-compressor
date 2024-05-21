@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.common.dataloader`
-==========================================================
+neural_compressor.experimental.common.dataloader
+================================================
 
 .. py:module:: neural_compressor.experimental.common.dataloader
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.experimental.common.dataloader.DataLoader
 
 
-
+Module Contents
+---------------
 
 .. py:class:: DataLoader(dataset, batch_size=1, collate_fn=None, last_batch='rollover', sampler=None, batch_sampler=None, num_workers=0, pin_memory=False, shuffle=False, distributed=False)
-
 
 
 

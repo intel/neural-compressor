@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.compression.pruner.pruners`
-======================================================
+neural_compressor.compression.pruner.pruners
+============================================
 
 .. py:module:: neural_compressor.compression.pruner.pruners
 
@@ -11,25 +11,21 @@
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   base/index.rst
-   basic/index.rst
-   block_mask/index.rst
-   mha/index.rst
-   pattern_lock/index.rst
-   progressive/index.rst
-   retrain_free/index.rst
-
-
-Package Contents
-----------------
+   /autoapi/neural_compressor/compression/pruner/pruners/base/index
+   /autoapi/neural_compressor/compression/pruner/pruners/basic/index
+   /autoapi/neural_compressor/compression/pruner/pruners/block_mask/index
+   /autoapi/neural_compressor/compression/pruner/pruners/mha/index
+   /autoapi/neural_compressor/compression/pruner/pruners/pattern_lock/index
+   /autoapi/neural_compressor/compression/pruner/pruners/progressive/index
+   /autoapi/neural_compressor/compression/pruner/pruners/retrain_free/index
 
 
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -37,6 +33,8 @@ Functions
    neural_compressor.compression.pruner.pruners.get_pruner
 
 
+Package Contents
+----------------
 
 .. py:function:: parse_valid_pruner_types()
 

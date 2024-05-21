@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.compression.pruner.pruners.block_mask`
-=================================================================
+neural_compressor.compression.pruner.pruners.block_mask
+=======================================================
 
 .. py:module:: neural_compressor.compression.pruner.pruners.block_mask
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.compression.pruner.pruners.block_mask.PytorchBlockMaskPruner
 
 
-
+Module Contents
+---------------
 
 .. py:class:: PytorchBlockMaskPruner(config, modules)
-
 
 
 

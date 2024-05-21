@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.pruner_legacy.group_lasso`
-==================================================================
+neural_compressor.experimental.pruner_legacy.group_lasso
+========================================================
 
 .. py:module:: neural_compressor.experimental.pruner_legacy.group_lasso
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.experimental.pruner_legacy.group_lasso.GroupLassoPruner
 
 
-
+Module Contents
+---------------
 
 .. py:class:: GroupLassoPruner(model, local_config, global_config)
-
 
 
 

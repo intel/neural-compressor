@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.strategy.utils`
-==========================================
+neural_compressor.strategy.utils
+================================
 
 .. py:module:: neural_compressor.strategy.utils
 
@@ -11,14 +11,14 @@
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   constant/index.rst
-   tuning_sampler/index.rst
-   tuning_space/index.rst
-   tuning_structs/index.rst
-   utility/index.rst
+   /autoapi/neural_compressor/strategy/utils/constant/index
+   /autoapi/neural_compressor/strategy/utils/tuning_sampler/index
+   /autoapi/neural_compressor/strategy/utils/tuning_space/index
+   /autoapi/neural_compressor/strategy/utils/tuning_structs/index
+   /autoapi/neural_compressor/strategy/utils/utility/index
 
 

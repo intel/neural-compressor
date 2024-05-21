@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.compression.pruner.pruners.pattern_lock`
-===================================================================
+neural_compressor.compression.pruner.pruners.pattern_lock
+=========================================================
 
 .. py:module:: neural_compressor.compression.pruner.pruners.pattern_lock
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.compression.pruner.pruners.pattern_lock.PytorchPatternLockPruner
 
 
-
+Module Contents
+---------------
 
 .. py:class:: PytorchPatternLockPruner(config, modules)
-
 
 
 

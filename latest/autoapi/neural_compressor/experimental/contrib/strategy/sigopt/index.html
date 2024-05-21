@@ -78,7 +78,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.contrib.strategy.sigopt</span></code></li>
+      <li class="breadcrumb-item active">neural_compressor.experimental.contrib.strategy.sigopt</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../../../../../../_sources/autoapi/neural_compressor/experimental/contrib/strategy/sigopt/index.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -89,12 +89,10 @@
            <div itemprop="articleBody">
              
   <section id="module-neural_compressor.experimental.contrib.strategy.sigopt">
-<span id="neural-compressor-experimental-contrib-strategy-sigopt"></span><h1><a class="reference internal" href="#module-neural_compressor.experimental.contrib.strategy.sigopt" title="neural_compressor.experimental.contrib.strategy.sigopt"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.experimental.contrib.strategy.sigopt</span></code></a><a class="headerlink" href="#module-neural_compressor.experimental.contrib.strategy.sigopt" title="Permalink to this heading"></a></h1>
+<span id="neural-compressor-experimental-contrib-strategy-sigopt"></span><h1>neural_compressor.experimental.contrib.strategy.sigopt<a class="headerlink" href="#module-neural_compressor.experimental.contrib.strategy.sigopt" title="Permalink to this heading"></a></h1>
 <p>The SigOpt Tuning Strategy provides support for the quantization process.</p>
-<section id="module-contents">
-<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
 <section id="classes">
-<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
+<h2>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.contrib.strategy.sigopt.SigOptTuneStrategy" title="neural_compressor.experimental.contrib.strategy.sigopt.SigOptTuneStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SigOptTuneStrategy</span></code></a></p></td>
@@ -102,6 +100,9 @@
 </tr>
 </tbody>
 </table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.experimental.contrib.strategy.sigopt.SigOptTuneStrategy">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.contrib.strategy.sigopt.</span></span><span class="sig-name descname"><span class="pre">SigOptTuneStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dicts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_hooks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/experimental/contrib/strategy/sigopt.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.contrib.strategy.sigopt.SigOptTuneStrategy" title="Permalink to this definition"></a></dt>
@@ -110,7 +111,7 @@
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<em>object</em>) – The FP32 model specified for low precision tuning.</p></li>
-<li><p><strong>conf</strong> (<a class="reference internal" href="../../../../conf/config/index.html#neural_compressor.conf.config.Conf" title="neural_compressor.conf.config.Conf"><em>Conf</em></a>) – The Conf class instance initialized from user yaml
+<li><p><strong>conf</strong> (<em>Conf</em>) – The Conf class instance initialized from user yaml
 config file.</p></li>
 <li><p><strong>q_dataloader</strong> (<em>generator</em>) – Data loader for calibration, mandatory for
 post-training quantization.
@@ -155,7 +156,6 @@ Defaults to None.</p></li>
 
 </section>
 </section>
-</section>
 
 
            </div>
@@ -171,7 +171,7 @@ Defaults to None.</p></li>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fc37585d810> 
+   <jinja2.runtime.BlockReference object at 0x7fa9b2452ef0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

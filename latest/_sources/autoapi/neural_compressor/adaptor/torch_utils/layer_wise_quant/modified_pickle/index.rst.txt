@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.torch_utils.layer_wise_quant.modified_pickle`
-================================================================================
+neural_compressor.adaptor.torch_utils.layer_wise_quant.modified_pickle
+======================================================================
 
 .. py:module:: neural_compressor.adaptor.torch_utils.layer_wise_quant.modified_pickle
 
@@ -30,11 +30,20 @@
 
 
 
+Exceptions
+----------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.torch_utils.layer_wise_quant.modified_pickle.PickleError
+   neural_compressor.adaptor.torch_utils.layer_wise_quant.modified_pickle.PicklingError
+   neural_compressor.adaptor.torch_utils.layer_wise_quant.modified_pickle.UnpicklingError
+
+
 Module Contents
 ---------------
 
 .. py:exception:: PickleError
-
 
 
 
@@ -45,13 +54,11 @@ Module Contents
 
 
 
-
    This exception is raised when an unpicklable object is passed to the
    dump() method.
 
 
 .. py:exception:: UnpicklingError
-
 
 
 

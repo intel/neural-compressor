@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.export`
-===============================================
+neural_compressor.experimental.export
+=====================================
 
 .. py:module:: neural_compressor.experimental.export
 
@@ -11,12 +11,12 @@
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   qlinear2qdq/index.rst
-   tf2onnx/index.rst
-   torch2onnx/index.rst
+   /autoapi/neural_compressor/experimental/export/qlinear2qdq/index
+   /autoapi/neural_compressor/experimental/export/tf2onnx/index
+   /autoapi/neural_compressor/experimental/export/torch2onnx/index
 
 

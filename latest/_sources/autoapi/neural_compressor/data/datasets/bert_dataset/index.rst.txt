@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.data.datasets.bert_dataset`
-======================================================
+neural_compressor.data.datasets.bert_dataset
+============================================
 
 .. py:module:: neural_compressor.data.datasets.bert_dataset
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -25,9 +22,8 @@ Classes
    neural_compressor.data.datasets.bert_dataset.TensorflowModelZooBertDataset
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -35,9 +31,10 @@ Functions
    neural_compressor.data.datasets.bert_dataset.convert_examples_to_features
 
 
+Module Contents
+---------------
 
 .. py:class:: PytorchBertDataset(dataset, task, model_type='bert', transform=None, filter=None)
-
 
 
 
@@ -76,7 +73,6 @@ Functions
 
 
 .. py:class:: ONNXRTBertDataset(data_dir, model_name_or_path, max_seq_length=128, do_lower_case=True, task='mrpc', model_type='bert', dynamic_length=False, evaluate=True, transform=None, filter=None)
-
 
 
 
@@ -122,7 +118,6 @@ Functions
 
 .. py:class:: InputFeatures
 
-
    Single set of features of data.
 
    Property names are the same names as the corresponding inputs to a model.
@@ -142,7 +137,6 @@ Functions
 
 
 
-
    Tensorflow dataset used for model Bert.
 
    This dataset supports tfrecord data, please refer to Guide to create tfrecord file first.
@@ -158,14 +152,12 @@ Functions
 
 .. py:class:: ParseDecodeBert
 
-
    Helper function for TensorflowModelZooBertDataset.
 
    Parse the features from sample.
 
 
 .. py:class:: TensorflowModelZooBertDataset(root, label_file, task='squad', model_type='bert', transform=None, filter=None, num_cores=28)
-
 
 
 

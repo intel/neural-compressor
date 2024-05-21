@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.strategy.random`
-===========================================
+neural_compressor.strategy.random
+=================================
 
 .. py:module:: neural_compressor.strategy.random
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.strategy.random.RandomTuneStrategy
 
 
-
+Module Contents
+---------------
 
 .. py:class:: RandomTuneStrategy
-
 
 
 

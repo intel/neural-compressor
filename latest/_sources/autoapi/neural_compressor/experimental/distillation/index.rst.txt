@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.distillation`
-=====================================================
+neural_compressor.experimental.distillation
+===========================================
 
 .. py:module:: neural_compressor.experimental.distillation
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.experimental.distillation.Distillation
 
 
-
+Module Contents
+---------------
 
 .. py:class:: Distillation(conf_fname_or_obj=None)
-
 
 
 

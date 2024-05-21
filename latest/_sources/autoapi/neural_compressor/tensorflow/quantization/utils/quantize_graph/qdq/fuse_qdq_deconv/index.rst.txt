@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.tensorflow.quantization.utils.quantize_graph.qdq.fuse_qdq_deconv`
-============================================================================================
+neural_compressor.tensorflow.quantization.utils.quantize_graph.qdq.fuse_qdq_deconv
+==================================================================================
 
 .. py:module:: neural_compressor.tensorflow.quantization.utils.quantize_graph.qdq.fuse_qdq_deconv
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.tensorflow.quantization.utils.quantize_graph.qdq.fuse_qdq_deconv.FuseNodeStartWithDeconv2d
 
 
-
+Module Contents
+---------------
 
 .. py:class:: FuseNodeStartWithDeconv2d(**kwargs)
-
 
 
 

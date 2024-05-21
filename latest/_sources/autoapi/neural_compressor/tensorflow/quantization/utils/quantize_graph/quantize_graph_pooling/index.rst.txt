@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.tensorflow.quantization.utils.quantize_graph.quantize_graph_pooling`
-===============================================================================================
+neural_compressor.tensorflow.quantization.utils.quantize_graph.quantize_graph_pooling
+=====================================================================================
 
 .. py:module:: neural_compressor.tensorflow.quantization.utils.quantize_graph.quantize_graph_pooling
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.tensorflow.quantization.utils.quantize_graph.quantize_graph_pooling.FuseNodeStartWithPooling
 
 
-
+Module Contents
+---------------
 
 .. py:class:: FuseNodeStartWithPooling
-
 
 
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.tensorflow.quantization.utils.utility`
-=================================================================
+neural_compressor.tensorflow.quantization.utils.utility
+=======================================================
 
 .. py:module:: neural_compressor.tensorflow.quantization.utils.utility
 
@@ -9,12 +9,8 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -42,6 +38,8 @@ Functions
    neural_compressor.tensorflow.quantization.utils.utility.reconstruct_saved_model
 
 
+Module Contents
+---------------
 
 .. py:function:: read_graph(in_graph, in_graph_is_binary=True)
 

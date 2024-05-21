@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.compression`
-====================================================
+neural_compressor.experimental.compression
+==========================================
 
 .. py:module:: neural_compressor.experimental.compression
 

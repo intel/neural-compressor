@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.pruning_recipes.patterns.tile_pattern`
-==============================================================================
+neural_compressor.experimental.pruning_recipes.patterns.tile_pattern
+====================================================================
 
 .. py:module:: neural_compressor.experimental.pruning_recipes.patterns.tile_pattern
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -25,10 +22,10 @@ Classes
    neural_compressor.experimental.pruning_recipes.patterns.tile_pattern.TilePattern_1x2
 
 
-
+Module Contents
+---------------
 
 .. py:class:: TilePatternBase(mask_shape)
-
 
 
 
@@ -39,12 +36,10 @@ Classes
 
 
 
-
    1x1 tile pattern (unstructured).
 
 
 .. py:class:: TilePattern_2x2
-
 
 
 
@@ -55,7 +50,6 @@ Classes
 
 
 
-
    1x16 tile pattern (unstructured).
 
 
@@ -63,12 +57,10 @@ Classes
 
 
 
-
    4x1 tile pattern (unstructured).
 
 
 .. py:class:: TilePattern_1x2
-
 
 
 

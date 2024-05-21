@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.data.dataloaders.dataloader`
-=======================================================
+neural_compressor.data.dataloaders.dataloader
+=============================================
 
 .. py:module:: neural_compressor.data.dataloaders.dataloader
 
@@ -9,29 +9,26 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.data.dataloaders.dataloader.DataLoader
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
    neural_compressor.data.dataloaders.dataloader.check_dataloader
 
 
+Module Contents
+---------------
 
 .. py:class:: DataLoader
-
 
 
 

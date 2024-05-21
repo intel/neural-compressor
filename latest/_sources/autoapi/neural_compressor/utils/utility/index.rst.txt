@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.utils.utility`
-=========================================
+neural_compressor.utils.utility
+===============================
 
 .. py:module:: neural_compressor.utils.utility
 
@@ -14,11 +14,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -32,9 +29,8 @@ Classes
    neural_compressor.utils.utility.OpEntry
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -81,6 +77,8 @@ Functions
    neural_compressor.utils.utility.check_key_exist
 
 
+Module Contents
+---------------
 
 .. py:function:: version1_lt_version2(version1, version2)
 
@@ -108,7 +106,6 @@ Functions
 
 
 .. py:class:: LazyImport(module_name)
-
 
 
 
@@ -152,7 +149,6 @@ Functions
 
 
 .. py:class:: CpuInfo
-
 
 
 
@@ -217,14 +213,12 @@ Functions
 
 
 
-
    Not displayed in API Docs.
 
    Capture the output to file.
 
 
 .. py:class:: Statistics(data, header, field_names, output_handle=logger.info)
-
 
    The statistics printer.
 
@@ -233,12 +227,10 @@ Functions
 
 
 
-
    Mode: Quantization, Benchmark or Pruning.
 
 
 .. py:class:: GLOBAL_STATE
-
 
    Access the global model.
 
@@ -296,7 +288,6 @@ Functions
 
 
 .. py:class:: DotDict(value=None)
-
 
 
 
@@ -406,7 +397,6 @@ Functions
 
 
 .. py:class:: OpEntry(op_name: str, mse: float, activation_min: float, activation_max: float)
-
 
    OP entry class.
 

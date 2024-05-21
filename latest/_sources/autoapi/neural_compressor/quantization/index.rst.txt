@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.quantization`
-========================================
+neural_compressor.quantization
+==============================
 
 .. py:module:: neural_compressor.quantization
 
@@ -9,18 +9,16 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
    neural_compressor.quantization.fit
 
 
+Module Contents
+---------------
 
 .. py:function:: fit(model, conf, calib_dataloader=None, calib_func=None, eval_func=None, eval_dataloader=None, eval_metric=None, **kwargs)
 

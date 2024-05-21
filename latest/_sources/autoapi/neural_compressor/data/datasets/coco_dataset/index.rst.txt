@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.data.datasets.coco_dataset`
-======================================================
+neural_compressor.data.datasets.coco_dataset
+============================================
 
 .. py:module:: neural_compressor.data.datasets.coco_dataset
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -23,10 +20,10 @@ Classes
    neural_compressor.data.datasets.coco_dataset.COCONpy
 
 
-
+Module Contents
+---------------
 
 .. py:class:: ParseDecodeCoco
-
 
    Helper function for TensorflowModelZooBertDataset.
 
@@ -34,7 +31,6 @@ Classes
 
 
 .. py:class:: COCORecordDataset
-
 
 
 
@@ -51,7 +47,6 @@ Classes
 
 
 .. py:class:: COCORaw(root, img_dir='val2017', anno_dir='annotations/instances_val2017.json', transform=None, filter=filter)
-
 
 
 
@@ -74,7 +69,6 @@ Classes
 
 
 .. py:class:: COCONpy(root, npy_dir='val2017', anno_dir='annotations/instances_val2017.json', transform=None, filter=None)
-
 
 
 

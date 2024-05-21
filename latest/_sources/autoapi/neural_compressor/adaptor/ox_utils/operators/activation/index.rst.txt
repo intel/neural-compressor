@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.ox_utils.operators.activation`
-=================================================================
+neural_compressor.adaptor.ox_utils.operators.activation
+=======================================================
 
 .. py:module:: neural_compressor.adaptor.ox_utils.operators.activation
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -23,10 +20,10 @@ Classes
    neural_compressor.adaptor.ox_utils.operators.activation.Float16ActivationOperator
 
 
-
+Module Contents
+---------------
 
 .. py:class:: ActivationOperator(onnx_quantizer, onnx_node)
-
 
 
 
@@ -37,7 +34,6 @@ Classes
 
 
 
-
    Removable activation operator.
 
 
@@ -45,12 +41,10 @@ Classes
 
 
 
-
    INT8 activation operator in QOperator format.
 
 
 .. py:class:: Float16ActivationOperator(onnx_quantizer, onnx_node)
-
 
 
 

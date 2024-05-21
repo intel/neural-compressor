@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.tf_utils.util`
-=================================================
+neural_compressor.adaptor.tf_utils.util
+=======================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.util
 
@@ -9,12 +9,8 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -49,6 +45,8 @@ Functions
    neural_compressor.adaptor.tf_utils.util.reconstruct_saved_model
 
 
+Module Contents
+---------------
 
 .. py:function:: version1_lt_version2(version1, version2)
 

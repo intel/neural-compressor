@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.torch_utils`
-===============================================
+neural_compressor.adaptor.torch_utils
+=====================================
 
 .. py:module:: neural_compressor.adaptor.torch_utils
 
@@ -11,24 +11,24 @@
 
 Subpackages
 -----------
-.. toctree::
-   :titlesonly:
-   :maxdepth: 3
 
-   layer_wise_quant/index.rst
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/adaptor/torch_utils/layer_wise_quant/index
 
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   bf16_convert/index.rst
-   hawq_metric/index.rst
-   model_wrapper/index.rst
-   pattern_detector/index.rst
-   symbolic_trace/index.rst
-   util/index.rst
+   /autoapi/neural_compressor/adaptor/torch_utils/bf16_convert/index
+   /autoapi/neural_compressor/adaptor/torch_utils/hawq_metric/index
+   /autoapi/neural_compressor/adaptor/torch_utils/model_wrapper/index
+   /autoapi/neural_compressor/adaptor/torch_utils/pattern_detector/index
+   /autoapi/neural_compressor/adaptor/torch_utils/symbolic_trace/index
+   /autoapi/neural_compressor/adaptor/torch_utils/util/index
 
 

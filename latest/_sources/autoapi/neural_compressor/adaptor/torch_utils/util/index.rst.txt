@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.torch_utils.util`
-====================================================
+neural_compressor.adaptor.torch_utils.util
+==========================================
 
 .. py:module:: neural_compressor.adaptor.torch_utils.util
 
@@ -9,12 +9,8 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -53,6 +49,8 @@ Functions
    neural_compressor.adaptor.torch_utils.util.get_hidden_states
 
 
+Module Contents
+---------------
 
 .. py:function:: move_input_device(input, device='cpu')
 

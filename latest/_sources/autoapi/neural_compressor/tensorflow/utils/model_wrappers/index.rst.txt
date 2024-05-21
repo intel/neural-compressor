@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.tensorflow.utils.model_wrappers`
-===========================================================
+neural_compressor.tensorflow.utils.model_wrappers
+=================================================
 
 .. py:module:: neural_compressor.tensorflow.utils.model_wrappers
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -27,9 +24,8 @@ Classes
    neural_compressor.tensorflow.utils.model_wrappers.TensorflowModel
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -48,6 +44,8 @@ Functions
    neural_compressor.tensorflow.utils.model_wrappers.saved_model_session
 
 
+Module Contents
+---------------
 
 .. py:function:: get_model_type(model)
 
@@ -261,12 +259,10 @@ Functions
 
 .. py:class:: BaseModel(model, **kwargs)
 
-
    Base class of all neural_compressor.model, will play graph role.
 
 
 .. py:class:: TensorflowBaseModel(model, **kwargs)
-
 
 
 
@@ -277,12 +273,10 @@ Functions
 
 
 
-
    Build Tensorflow saved model.
 
 
 .. py:class:: TensorflowLLMModel(model, **kwargs)
-
 
 
 
@@ -293,12 +287,10 @@ Functions
 
 
 
-
    Build Tensorflow QAT model.
 
 
 .. py:class:: TensorflowCheckpointModel(model, **kwargs)
-
 
 
 
@@ -309,12 +301,10 @@ Functions
 
 
 
-
    Build Keras model.
 
 
 .. py:class:: TensorflowModel
-
 
 
 

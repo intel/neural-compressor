@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.nas`
-============================================
+neural_compressor.experimental.nas
+==================================
 
 .. py:module:: neural_compressor.experimental.nas
 
@@ -11,14 +11,14 @@
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   basic_nas/index.rst
-   dynas/index.rst
-   nas/index.rst
-   nas_utils/index.rst
-   search_algorithms/index.rst
+   /autoapi/neural_compressor/experimental/nas/basic_nas/index
+   /autoapi/neural_compressor/experimental/nas/dynas/index
+   /autoapi/neural_compressor/experimental/nas/nas/index
+   /autoapi/neural_compressor/experimental/nas/nas_utils/index
+   /autoapi/neural_compressor/experimental/nas/search_algorithms/index
 
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.metric.f1`
-=====================================
+neural_compressor.metric.f1
+===========================
 
 .. py:module:: neural_compressor.metric.f1
 
@@ -11,12 +11,8 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -26,6 +22,8 @@ Functions
    neural_compressor.metric.f1.evaluate
 
 
+Module Contents
+---------------
 
 .. py:function:: normalize_answer(text: str) -> str
 

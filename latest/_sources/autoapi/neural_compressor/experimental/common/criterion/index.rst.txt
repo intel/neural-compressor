@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.common.criterion`
-=========================================================
+neural_compressor.experimental.common.criterion
+===============================================
 
 .. py:module:: neural_compressor.experimental.common.criterion
 
@@ -14,11 +14,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -36,18 +33,18 @@ Classes
    neural_compressor.experimental.common.criterion.SelfKnowledgeDistillationLoss
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
    neural_compressor.experimental.common.criterion.criterion_registry
 
 
+Module Contents
+---------------
 
 .. py:class:: TensorflowCriterions
-
 
 
 
@@ -58,12 +55,10 @@ Functions
 
 
 
-
    Record criterions in PyTorchCriterions class.
 
 
 .. py:class:: Criterions(framework)
-
 
 
 
@@ -87,12 +82,10 @@ Functions
 
 
 
-
    Knowledge Distillation Framework.
 
 
 .. py:class:: KnowledgeDistillationLoss(temperature=1.0, loss_types=['CE', 'CE'], loss_weights=[0.5, 0.5], student_model=None, teacher_model=None)
-
 
 
 
@@ -103,12 +96,10 @@ Functions
 
 
 
-
    The PyTorchKnowledgeDistillationLoss class inherits from KnowledgeDistillationLoss.
 
 
 .. py:class:: PyTorchKnowledgeDistillationLossWrapper(param_dict)
-
 
 
 
@@ -119,12 +110,10 @@ Functions
 
 
 
-
    TensorflowKnowledgeDistillationLossExternal inherits from KnowledgeDistillationLoss.
 
 
 .. py:class:: IntermediateLayersKnowledgeDistillationLoss(layer_mappings=[], loss_types=None, loss_weights=None, add_origin_loss=False, student_model=None, teacher_model=None)
-
 
 
 
@@ -135,7 +124,6 @@ Functions
 
 
 
-
    PyTorch Intermediate Layers Knowledge Distillation Loss.
 
 
@@ -143,12 +131,10 @@ Functions
 
 
 
-
    PyTorch Intermediate Layers Knowledge Distillation Loss Wrapper.
 
 
 .. py:class:: SelfKnowledgeDistillationLoss(layer_mappings=[], loss_types=None, loss_weights=None, temperature=1.0, add_origin_loss=False, student_model=None, teacher_model=None)
-
 
 
 

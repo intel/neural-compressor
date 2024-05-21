@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.profiling.profiler.onnxrt_profiler.utils`
-====================================================================
+neural_compressor.profiling.profiler.onnxrt_profiler.utils
+==========================================================
 
 .. py:module:: neural_compressor.profiling.profiler.onnxrt_profiler.utils
 
@@ -9,18 +9,16 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
    neural_compressor.profiling.profiler.onnxrt_profiler.utils.create_onnx_config
 
 
+Module Contents
+---------------
 
 .. py:function:: create_onnx_config(ort: Any, intra_num_of_threads: int, inter_num_of_threads: int) -> Any
 

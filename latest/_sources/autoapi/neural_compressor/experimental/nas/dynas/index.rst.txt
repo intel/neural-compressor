@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.nas.dynas`
-==================================================
+neural_compressor.experimental.nas.dynas
+========================================
 
 .. py:module:: neural_compressor.experimental.nas.dynas
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.experimental.nas.dynas.DyNAS
 
 
-
+Module Contents
+---------------
 
 .. py:class:: DyNAS(conf_fname_or_obj)
-
 
 
 

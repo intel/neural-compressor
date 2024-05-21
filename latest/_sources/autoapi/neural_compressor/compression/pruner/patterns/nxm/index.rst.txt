@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.compression.pruner.patterns.nxm`
-===========================================================
+neural_compressor.compression.pruner.patterns.nxm
+=================================================
 
 .. py:module:: neural_compressor.compression.pruner.patterns.nxm
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,10 +18,10 @@ Classes
    neural_compressor.compression.pruner.patterns.nxm.KerasPatternNxM
 
 
-
+Module Contents
+---------------
 
 .. py:class:: PytorchPatternNxM(config, modules)
-
 
 
 
@@ -45,7 +42,6 @@ Classes
 
 
 .. py:class:: KerasPatternNxM(config, modules)
-
 
 
 

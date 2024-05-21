@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.config`
-==================================
+neural_compressor.config
+========================
 
 .. py:module:: neural_compressor.config
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -43,10 +40,10 @@ Classes
    neural_compressor.config.PyTorch
 
 
-
+Module Contents
+---------------
 
 .. py:class:: DotDict(value=None)
-
 
 
 
@@ -57,7 +54,6 @@ Classes
 
 
 .. py:class:: Options(random_seed=1978, workspace=default_workspace, resume_from=None, tensorboard=False)
-
 
    Option Class for configs.
 
@@ -96,7 +92,6 @@ Classes
 
 
 .. py:class:: BenchmarkConfig(inputs=[], outputs=[], backend='default', device='cpu', warmup=5, iteration=-1, model_name='', cores_per_instance=None, num_of_instance=1, inter_num_of_threads=None, intra_num_of_threads=None, diagnosis=False, ni_workload_name='profiling')
-
 
    Config Class for Benchmark.
 
@@ -138,7 +133,6 @@ Classes
 
 .. py:class:: AccuracyCriterion(higher_is_better=True, criterion='relative', tolerable_loss=0.01)
 
-
    Class of Accuracy Criterion.
 
    :param higher_is_better: This flag indicates whether the metric higher is the better.
@@ -163,7 +157,6 @@ Classes
 
 .. py:class:: TuningCriterion(strategy='basic', strategy_kwargs=None, timeout=0, max_trials=100, objective='performance')
 
-
    Class for Tuning Criterion.
 
    :param strategy: Strategy name used in tuning. Please refer to docs/source/tuning_strategies.md.
@@ -186,7 +179,6 @@ Classes
 
 
 .. py:class:: PostTrainingQuantConfig(device='cpu', backend='default', domain='auto', recipes={}, quant_format='default', inputs=[], outputs=[], approach='static', calibration_sampling_size=[100], op_type_dict=None, op_name_dict=None, reduce_range=None, example_inputs=None, excluded_precisions=[], quant_level='auto', accuracy_criterion=accuracy_criterion, tuning_criterion=tuning_criterion, diagnosis=False, ni_workload_name='quantization')
-
 
 
 
@@ -294,7 +286,6 @@ Classes
 
 
 
-
    Config Class for Quantization Aware Training.
 
    :param device: Support "cpu", "gpu", "npu" and "xpu".
@@ -360,7 +351,6 @@ Classes
 
 
 .. py:class:: WeightPruningConfig(pruning_configs=[{}], target_sparsity=0.9, pruning_type='snip_momentum', pattern='4x1', op_names=[], excluded_op_names=[], backend=None, start_step=0, end_step=0, pruning_scope='global', pruning_frequency=1, min_sparsity_ratio_per_op=0.0, max_sparsity_ratio_per_op=0.98, sparsity_decay_type='exp', pruning_op_types=['Conv', 'Linear'], low_memory_usage=False, **kwargs)
-
 
    Config Class for Pruning. Define a single or a sequence of pruning configs.
 
@@ -445,7 +435,6 @@ Classes
 
 .. py:class:: HPOConfig(search_space, searcher='xgb', higher_is_better=True, loss_type='reg', min_train_samples=10, seed=42)
 
-
    Config class for hyperparameter optimization.
 
    :param search_space: A dictionary for defining the search space.
@@ -461,7 +450,6 @@ Classes
 
 
 .. py:class:: KnowledgeDistillationLossConfig(temperature=1.0, loss_types=['CE', 'CE'], loss_weights=[0.5, 0.5])
-
 
    Config Class for Knowledge Distillation Loss.
 
@@ -493,7 +481,6 @@ Classes
 
 
 .. py:class:: IntermediateLayersKnowledgeDistillationLossConfig(layer_mappings=[], loss_types=[], loss_weights=[], add_origin_loss=False)
-
 
    Config Class for Intermediate Layers Knowledge Distillation Loss.
 
@@ -548,7 +535,6 @@ Classes
 
 .. py:class:: SelfKnowledgeDistillationLossConfig(layer_mappings=[], temperature=1.0, loss_types=[], loss_weights=[], add_origin_loss=False)
 
-
    Config Class for Self Knowledge Distillation Loss.
 
    :param layer_mappings: layers of distillation. Format like
@@ -596,7 +582,6 @@ Classes
 
 .. py:class:: DistillationConfig(teacher_model=None, criterion=criterion, optimizer={'SGD': {'learning_rate': 0.0001}})
 
-
    Config of distillation.
 
    :param teacher_model: Teacher model for distillation. Defaults to None.
@@ -623,7 +608,6 @@ Classes
 
 
 .. py:class:: MixedPrecisionConfig(device='cpu', backend='default', precisions='bf16', model_name='', inputs=[], outputs=[], quant_level='auto', tuning_criterion=tuning_criterion, accuracy_criterion=accuracy_criterion, excluded_precisions=[], op_name_dict={}, op_type_dict={}, example_inputs=None)
-
 
 
 
@@ -697,7 +681,6 @@ Classes
 
 .. py:class:: ExportConfig(dtype='int8', opset_version=14, quant_format='QDQ', example_inputs=None, input_names=None, output_names=None, dynamic_axes=None)
 
-
    Common Base Config for Export.
 
    :param dtype: The data type of the exported model, select from ["fp32", "int8"].
@@ -720,12 +703,10 @@ Classes
 
 .. py:class:: ONNXQlinear2QDQConfig
 
-
    Config Class for ONNXQlinear2QDQ.
 
 
 .. py:class:: Torch2ONNXConfig(dtype='int8', opset_version=14, quant_format='QDQ', example_inputs=None, input_names=None, output_names=None, dynamic_axes=None, **kwargs)
-
 
 
 
@@ -773,7 +754,6 @@ Classes
 
 
 
-
    Config Class for TF2ONNX.
 
    :param dtype: The data type of export target model. Supports "fp32" and "int8".
@@ -805,18 +785,15 @@ Classes
 
 .. py:class:: NASConfig(approach=None, search_space=None, search_algorithm=None, metrics=[], higher_is_better=[], max_trials=3, seed=42, dynas=None)
 
-
    Config class for NAS approaches.
 
 
 .. py:class:: MXNet(precisions=None)
 
-
    Base config class for MXNet.
 
 
 .. py:class:: ONNX(graph_optimization_level=None, precisions=None)
-
 
 
 
@@ -827,7 +804,6 @@ Classes
 
 
 
-
    Config class for TensorFlow.
 
 
@@ -835,12 +811,10 @@ Classes
 
 
 
-
    Config class for Keras.
 
 
 .. py:class:: PyTorch(precisions=None)
-
 
 
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.ox_utils.operators.unary_op`
-===============================================================
+neural_compressor.adaptor.ox_utils.operators.unary_op
+=====================================================
 
 .. py:module:: neural_compressor.adaptor.ox_utils.operators.unary_op
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,10 +18,10 @@ Classes
    neural_compressor.adaptor.ox_utils.operators.unary_op.UnaryDirect8BitOperator
 
 
-
+Module Contents
+---------------
 
 .. py:class:: UnaryOperator(onnx_quantizer, onnx_node)
-
 
 
 
@@ -32,7 +29,6 @@ Classes
 
 
 .. py:class:: UnaryDirect8BitOperator(onnx_quantizer, onnx_node)
-
 
 
 

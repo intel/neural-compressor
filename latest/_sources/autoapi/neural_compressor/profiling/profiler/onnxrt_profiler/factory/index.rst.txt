@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.profiling.profiler.onnxrt_profiler.factory`
-======================================================================
+neural_compressor.profiling.profiler.onnxrt_profiler.factory
+============================================================
 
 .. py:module:: neural_compressor.profiling.profiler.onnxrt_profiler.factory
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.profiling.profiler.onnxrt_profiler.factory.ProfilerFactory
 
 
-
+Module Contents
+---------------
 
 .. py:class:: ProfilerFactory
-
 
    Profiler factory.
 

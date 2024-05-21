@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.compression.pruner.pruners.retrain_free`
-===================================================================
+neural_compressor.compression.pruner.pruners.retrain_free
+=========================================================
 
 .. py:module:: neural_compressor.compression.pruner.pruners.retrain_free
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.compression.pruner.pruners.retrain_free.PytorchRetrainFreePruner
 
 
-
+Module Contents
+---------------
 
 .. py:class:: PytorchRetrainFreePruner(config, modules)
-
 
 
 

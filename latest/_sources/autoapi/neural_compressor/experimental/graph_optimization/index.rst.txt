@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.graph_optimization`
-===========================================================
+neural_compressor.experimental.graph_optimization
+=================================================
 
 .. py:module:: neural_compressor.experimental.graph_optimization
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.experimental.graph_optimization.Graph_Optimization
 
 
-
+Module Contents
+---------------
 
 .. py:class:: Graph_Optimization(conf_fname_or_obj=None)
-
 
    Graph_Optimization class.
 

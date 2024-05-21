@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.algorithm`
-=====================================
+neural_compressor.algorithm
+===========================
 
 .. py:module:: neural_compressor.algorithm
 
@@ -11,40 +11,13 @@
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   algorithm/index.rst
-   fast_bias_correction/index.rst
-   smooth_quant/index.rst
-   weight_correction/index.rst
-
-
-Package Contents
-----------------
-
-Classes
-~~~~~~~
-
-.. autoapisummary::
-
-   neural_compressor.algorithm.ALGORITHMS
-   neural_compressor.algorithm.Algorithm
-   neural_compressor.algorithm.AlgorithmScheduler
-
-
-
-Functions
-~~~~~~~~~
-
-.. autoapisummary::
-
-   neural_compressor.algorithm.algorithm_registry
-
-
-
-
-
+   /autoapi/neural_compressor/algorithm/algorithm/index
+   /autoapi/neural_compressor/algorithm/fast_bias_correction/index
+   /autoapi/neural_compressor/algorithm/smooth_quant/index
+   /autoapi/neural_compressor/algorithm/weight_correction/index
 
 

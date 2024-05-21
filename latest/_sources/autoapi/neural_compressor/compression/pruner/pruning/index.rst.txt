@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.compression.pruner.pruning`
-======================================================
+neural_compressor.compression.pruner.pruning
+============================================
 
 .. py:module:: neural_compressor.compression.pruner.pruning
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -23,15 +20,16 @@ Classes
    neural_compressor.compression.pruner.pruning.RetrainFreePruning
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
    neural_compressor.compression.pruner.pruning.register_pruning
 
 
+Module Contents
+---------------
 
 .. py:function:: register_pruning(name)
 
@@ -49,7 +47,6 @@ Functions
 
 
 .. py:class:: BasePruning(config, model, opt=None)
-
 
    Pruning.
 
@@ -76,7 +73,6 @@ Functions
 
 
 .. py:class:: BasicPruning(config, model, opt=None)
-
 
 
 
@@ -108,7 +104,6 @@ Functions
 
 
 
-
    SparseGPT Pruning
    The SparseGPT pruning_class is derived from BasePruning.
 
@@ -119,7 +114,6 @@ Functions
 
 
 .. py:class:: RetrainFreePruning(config, model, dataloader=None, loss_func=None, framework='pytorch')
-
 
 
 

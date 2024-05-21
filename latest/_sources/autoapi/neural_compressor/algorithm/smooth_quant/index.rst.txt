@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.algorithm.smooth_quant`
-==================================================
+neural_compressor.algorithm.smooth_quant
+========================================
 
 .. py:module:: neural_compressor.algorithm.smooth_quant
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.algorithm.smooth_quant.SmoothQuant
 
 
-
+Module Contents
+---------------
 
 .. py:class:: SmoothQuant(alpha=0.5)
-
 
 
 

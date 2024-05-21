@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_layers.quantize_layer_bn`
-=================================================================================================
+neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_layers.quantize_layer_bn
+=======================================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_layers.quantize_layer_bn
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_layers.quantize_layer_bn.QuantizeLayerBatchNormalization
 
 
-
+Module Contents
+---------------
 
 .. py:class:: QuantizeLayerBatchNormalization
-
 
 
 

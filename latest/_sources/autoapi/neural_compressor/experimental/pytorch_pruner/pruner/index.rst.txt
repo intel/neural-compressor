@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.pytorch_pruner.pruner`
-==============================================================
+neural_compressor.experimental.pytorch_pruner.pruner
+====================================================
 
 .. py:module:: neural_compressor.experimental.pytorch_pruner.pruner
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -24,9 +21,8 @@ Classes
    neural_compressor.experimental.pytorch_pruner.pruner.PatternLockPruner
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -34,6 +30,8 @@ Functions
    neural_compressor.experimental.pytorch_pruner.pruner.get_pruner
 
 
+Module Contents
+---------------
 
 .. py:function:: register_pruners(name)
 
@@ -65,7 +63,6 @@ Functions
 
 
 .. py:class:: Pruner(modules, config)
-
 
    Pruning Pruner.
 
@@ -135,7 +132,6 @@ Functions
 
 
 
-
    Pruning Pruner.
 
    A Pruner class derived from Pruner. In this pruner, the scores are calculated based on weights.
@@ -149,7 +145,6 @@ Functions
 
 
 .. py:class:: SnipPruner(modules, config)
-
 
 
 
@@ -171,7 +166,6 @@ Functions
 
 
 
-
    Pruning Pruner.
 
    A Pruner class derived from Pruner. In this pruner, the scores are calculated based on SNIP.
@@ -186,7 +180,6 @@ Functions
 
 
 .. py:class:: PatternLockPruner(modules, config)
-
 
 
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.data.datasets.dataset`
-==============================================================
+neural_compressor.experimental.data.datasets.dataset
+====================================================
 
 .. py:module:: neural_compressor.experimental.data.datasets.dataset
 
@@ -9,11 +9,16 @@
 
 
 
-Module Contents
----------------
+Attributes
+----------
+
+.. autoapisummary::
+
+   neural_compressor.experimental.data.datasets.dataset.framework_datasets
+
 
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -51,9 +56,8 @@ Classes
    neural_compressor.experimental.data.datasets.dataset.TensorflowVOCRecord
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -64,17 +68,10 @@ Functions
    neural_compressor.experimental.data.datasets.dataset.calculate_md5
 
 
-
-Attributes
-~~~~~~~~~~
-
-.. autoapisummary::
-
-   neural_compressor.experimental.data.datasets.dataset.framework_datasets
-
+Module Contents
+---------------
 
 .. py:class:: TensorflowDatasets
-
 
 
 
@@ -85,12 +82,10 @@ Attributes
 
 
 
-
    The base class of PyTorch datasets class.
 
 
 .. py:class:: MXNetDatasets
-
 
 
 
@@ -101,12 +96,10 @@ Attributes
 
 
 
-
    The base class of ONNXRT QLinear datasets class.
 
 
 .. py:class:: ONNXRTITDatasets
-
 
 
 
@@ -115,14 +108,12 @@ Attributes
 
 .. py:class:: PytorchMxnetWrapDataset(datafunc)
 
-
    The base class for PyTorch and MXNet frameworks.
 
    :param datafunc: The datasets class of PyTorch or MXNet.
 
 
 .. py:class:: PytorchMxnetWrapFunction(dataset, transform, filter, *args, **kwargs)
-
 
    The Helper class for PytorchMxnetWrapDataset.
 
@@ -147,7 +138,6 @@ Attributes
    model specific dataset.
 
 .. py:class:: Datasets(framework)
-
 
 
 
@@ -180,7 +170,6 @@ Attributes
 
 
 
-
    The base class of dataset.
 
    Subclass datasets should overwrite two methods:
@@ -188,7 +177,6 @@ Attributes
 
 
 .. py:class:: IterableDataset
-
 
 
 
@@ -231,7 +219,6 @@ Attributes
 
 
 
-
    The CIFAR10 and CIFAR100 database.
 
    For CIFAR10: If download is True, it will download dataset to root/ and extract it
@@ -263,12 +250,10 @@ Attributes
 
 
 
-
    The PyTorch datasets for CIFAR10.
 
 
 .. py:class:: MXNetCIFAR10(root, train=False, transform=None, filter=None, download=True)
-
 
 
 
@@ -279,12 +264,10 @@ Attributes
 
 
 
-
    The Tensorflow datasets for CIFAR10.
 
 
 .. py:class:: CIFAR100(root, train=False, transform=None, filter=None, download=True)
-
 
 
 
@@ -315,12 +298,10 @@ Attributes
 
 
 
-
    The PyTorch datasets for CIFAR100.
 
 
 .. py:class:: MXNetCIFAR100(root, train=False, transform=None, filter=None, download=True)
-
 
 
 
@@ -331,12 +312,10 @@ Attributes
 
 
 
-
    The Tensorflow datasets for CIFAR100.
 
 
 .. py:class:: MNIST(root, train=False, transform=None, filter=None, download=True)
-
 
 
 
@@ -369,12 +348,10 @@ Attributes
 
 
 
-
    The PyTorch datasets for MNIST.
 
 
 .. py:class:: MXNetMNIST(root, train=False, transform=None, filter=None, download=True)
-
 
 
 
@@ -385,12 +362,10 @@ Attributes
 
 
 
-
    The Tensorflow datasets for MNIST.
 
 
 .. py:class:: FashionMNIST(root, train=False, transform=None, filter=None, download=True)
-
 
 
 
@@ -421,12 +396,10 @@ Attributes
 
 
 
-
    The PyTorch datasets for FashionMNIST.
 
 
 .. py:class:: MXNetFashionMNIST(root, train=False, transform=None, filter=None, download=True)
-
 
 
 
@@ -437,12 +410,10 @@ Attributes
 
 
 
-
    The Tensorflow Dataset for FashionMNIST.
 
 
 .. py:class:: ImageFolder(root, transform=None, filter=None)
-
 
 
 
@@ -471,7 +442,6 @@ Attributes
 
 
 
-
    The MXNet Dataset for image folder.
 
    Expects the data folder to contain subfolders representing the classes to which
@@ -494,7 +464,6 @@ Attributes
 
 
 .. py:class:: TensorflowImageFolder(root, transform=None, filter=None)
-
 
 
 
@@ -523,7 +492,6 @@ Attributes
 
 
 
-
    The Tensorflow TFRecord Dataset.
 
    Root is a full path to tfrecord file, which contains the file name.
@@ -535,7 +503,6 @@ Attributes
 
 
 .. py:class:: TensorflowImageRecord
-
 
 
 
@@ -555,7 +522,6 @@ Attributes
 
 
 .. py:class:: TensorflowVOCRecord
-
 
 
 

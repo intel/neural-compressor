@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.ox_utils`
-============================================
+neural_compressor.adaptor.ox_utils
+==================================
 
 .. py:module:: neural_compressor.adaptor.ox_utils
 
@@ -11,24 +11,24 @@
 
 Subpackages
 -----------
-.. toctree::
-   :titlesonly:
-   :maxdepth: 3
 
-   operators/index.rst
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/adaptor/ox_utils/operators/index
 
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   calibration/index.rst
-   calibrator/index.rst
-   quantizer/index.rst
-   smooth_quant/index.rst
-   util/index.rst
-   weight_only/index.rst
+   /autoapi/neural_compressor/adaptor/ox_utils/calibration/index
+   /autoapi/neural_compressor/adaptor/ox_utils/calibrator/index
+   /autoapi/neural_compressor/adaptor/ox_utils/quantizer/index
+   /autoapi/neural_compressor/adaptor/ox_utils/smooth_quant/index
+   /autoapi/neural_compressor/adaptor/ox_utils/util/index
+   /autoapi/neural_compressor/adaptor/ox_utils/weight_only/index
 
 

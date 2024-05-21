@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.compression.pruner.pruners.basic`
-============================================================
+neural_compressor.compression.pruner.pruners.basic
+==================================================
 
 .. py:module:: neural_compressor.compression.pruner.pruners.basic
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,10 +18,10 @@ Classes
    neural_compressor.compression.pruner.pruners.basic.KerasBasicPruner
 
 
-
+Module Contents
+---------------
 
 .. py:class:: PytorchBasicPruner(config, modules)
-
 
 
 
@@ -55,7 +52,6 @@ Classes
 
 
 .. py:class:: KerasBasicPruner
-
 
 
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.torch_utils.bf16_convert`
-============================================================
+neural_compressor.adaptor.torch_utils.bf16_convert
+==================================================
 
 .. py:module:: neural_compressor.adaptor.torch_utils.bf16_convert
 
@@ -9,20 +9,16 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.adaptor.torch_utils.bf16_convert.BF16ModuleWrapper
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -30,9 +26,10 @@ Functions
    neural_compressor.adaptor.torch_utils.bf16_convert.bf16_symbolic_trace
 
 
+Module Contents
+---------------
 
 .. py:class:: BF16ModuleWrapper(module)
-
 
 
 

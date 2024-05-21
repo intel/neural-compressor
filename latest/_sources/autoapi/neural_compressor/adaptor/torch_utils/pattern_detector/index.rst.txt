@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.torch_utils.pattern_detector`
-================================================================
+neural_compressor.adaptor.torch_utils.pattern_detector
+======================================================
 
 .. py:module:: neural_compressor.adaptor.torch_utils.pattern_detector
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.adaptor.torch_utils.pattern_detector.TransformerBasedModelBlockPatternDetector
 
 
-
+Module Contents
+---------------
 
 .. py:class:: TransformerBasedModelBlockPatternDetector(model: torch, pattern_lst: List[List[Union[str, int]]] = BLOCK_PATTERNS)
-
 
    Detect the attention block and FFN block in transformer-based model.
 

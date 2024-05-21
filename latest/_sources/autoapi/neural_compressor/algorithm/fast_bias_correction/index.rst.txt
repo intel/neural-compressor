@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.algorithm.fast_bias_correction`
-==========================================================
+neural_compressor.algorithm.fast_bias_correction
+================================================
 
 .. py:module:: neural_compressor.algorithm.fast_bias_correction
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.algorithm.fast_bias_correction.FastBiasCorrection
 
 
-
+Module Contents
+---------------
 
 .. py:class:: FastBiasCorrection(threshold=2.0, channel_axis=1)
-
 
 
 

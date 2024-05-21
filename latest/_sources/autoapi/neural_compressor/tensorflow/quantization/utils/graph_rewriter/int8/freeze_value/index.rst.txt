@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.freeze_value`
-==========================================================================================
+neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.freeze_value
+================================================================================
 
 .. py:module:: neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.freeze_value
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.freeze_value.FreezeValueTransformer
 
 
-
+Module Contents
+---------------
 
 .. py:class:: FreezeValueTransformer(model, max_min_data, postfix, tensor_data=None, th=1, device='gpu', itex_mode=False)
-
 
 
 

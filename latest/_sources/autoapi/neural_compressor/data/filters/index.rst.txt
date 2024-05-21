@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.data.filters`
-========================================
+neural_compressor.data.filters
+==============================
 
 .. py:module:: neural_compressor.data.filters
 
@@ -11,38 +11,11 @@
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   coco_filter/index.rst
-   filter/index.rst
-
-
-Package Contents
-----------------
-
-Classes
-~~~~~~~
-
-.. autoapisummary::
-
-   neural_compressor.data.filters.LabelBalanceCOCORecordFilter
-   neural_compressor.data.filters.FILTERS
-   neural_compressor.data.filters.Filter
-
-
-
-Functions
-~~~~~~~~~
-
-.. autoapisummary::
-
-   neural_compressor.data.filters.filter_registry
-
-
-
-
-
+   /autoapi/neural_compressor/data/filters/coco_filter/index
+   /autoapi/neural_compressor/data/filters/filter/index
 
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_gelu`
-=============================================================================
+neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_gelu
+===================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_gelu
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_gelu.FuseGeluOptimizer
 
 
-
+Module Contents
+---------------
 
 .. py:class:: FuseGeluOptimizer(model)
-
 
 
 

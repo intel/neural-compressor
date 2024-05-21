@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.ox_utils.operators.direct_q8`
-================================================================
+neural_compressor.adaptor.ox_utils.operators.direct_q8
+======================================================
 
 .. py:module:: neural_compressor.adaptor.ox_utils.operators.direct_q8
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,10 +18,10 @@ Classes
    neural_compressor.adaptor.ox_utils.operators.direct_q8.QDirectOperator
 
 
-
+Module Contents
+---------------
 
 .. py:class:: Direct8BitOperator(onnx_quantizer, onnx_node)
-
 
 
 
@@ -32,7 +29,6 @@ Classes
 
 
 .. py:class:: QDirectOperator(onnx_node, children, initializers)
-
 
 
 

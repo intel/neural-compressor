@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.tf_utils.graph_util`
-=======================================================
+neural_compressor.adaptor.tf_utils.graph_util
+=============================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.graph_util
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,10 +18,10 @@ Classes
    neural_compressor.adaptor.tf_utils.graph_util.GraphRewriterHelper
 
 
-
+Module Contents
+---------------
 
 .. py:class:: GraphAnalyzer(extend_engine=None)
-
 
    Tensorflow Graph Analyzer class which implemented under singleton mode.
 
@@ -34,7 +31,6 @@ Classes
 
 
 .. py:class:: GraphRewriterHelper
-
 
    Encapsulates the graph operation into one class.
 

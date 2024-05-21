@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.pruner_legacy.magnitude`
-================================================================
+neural_compressor.experimental.pruner_legacy.magnitude
+======================================================
 
 .. py:module:: neural_compressor.experimental.pruner_legacy.magnitude
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.experimental.pruner_legacy.magnitude.BasicMagnitudePruner
 
 
-
+Module Contents
+---------------
 
 .. py:class:: BasicMagnitudePruner(model, local_config, global_config)
-
 
 
 

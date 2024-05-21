@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.conf.pythonic_config`
-================================================
+neural_compressor.conf.pythonic_config
+======================================
 
 .. py:module:: neural_compressor.conf.pythonic_config
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -26,10 +23,10 @@ Classes
    neural_compressor.conf.pythonic_config.DistillationConfig
 
 
-
+Module Contents
+---------------
 
 .. py:class:: Options(random_seed=1978, workspace=default_workspace, resume_from=None, tensorboard=False)
-
 
    Option Class for configs.
 
@@ -69,7 +66,6 @@ Classes
 
 .. py:class:: AccuracyCriterion(higher_is_better=True, criterion='relative', tolerable_loss=0.01)
 
-
    Class of Accuracy Criterion.
 
    :param higher_is_better: This flag indicates whether the metric higher is the better.
@@ -93,7 +89,6 @@ Classes
 
 
 .. py:class:: BenchmarkConfig(inputs=[], outputs=[], backend='default', device='cpu', warmup=5, iteration=-1, model=None, model_name='', cores_per_instance=None, num_of_instance=None, inter_num_of_threads=None, intra_num_of_threads=None, diagnosis=False)
-
 
    Config Class for Benchmark.
 
@@ -131,7 +126,6 @@ Classes
 
 
 .. py:class:: QuantizationConfig(inputs=[], outputs=[], backend='default', device='cpu', approach='post_training_static_quant', calibration_sampling_size=[100], op_type_dict=None, op_name_dict=None, strategy='basic', strategy_kwargs=None, objective='performance', timeout=0, max_trials=100, performance_only=False, reduce_range=None, use_bf16=True, quant_level='auto', accuracy_criterion=accuracy_criterion, diagnosis=False)
-
 
 
 
@@ -207,7 +201,6 @@ Classes
 
 
 .. py:class:: WeightPruningConfig(pruning_configs=[{}], target_sparsity=0.9, pruning_type='snip_momentum', pattern='4x1', op_names=[], excluded_op_names=[], start_step=0, end_step=0, pruning_scope='global', pruning_frequency=1, min_sparsity_ratio_per_op=0.0, max_sparsity_ratio_per_op=0.98, sparsity_decay_type='exp', pruning_op_types=['Conv', 'Linear'], **kwargs)
-
 
    Config Class for Pruning. Define a single or a sequence of pruning configs.
 
@@ -292,7 +285,6 @@ Classes
 
 .. py:class:: KnowledgeDistillationLossConfig(temperature=1.0, loss_types=['CE', 'CE'], loss_weights=[0.5, 0.5])
 
-
    Config Class for Knowledge Distillation Loss.
 
    :param temperature: Hyperparameters that control the entropy
@@ -323,7 +315,6 @@ Classes
 
 
 .. py:class:: DistillationConfig(teacher_model=None, criterion=criterion, optimizer={'SGD': {'learning_rate': 0.0001}})
-
 
    Config of distillation.
 

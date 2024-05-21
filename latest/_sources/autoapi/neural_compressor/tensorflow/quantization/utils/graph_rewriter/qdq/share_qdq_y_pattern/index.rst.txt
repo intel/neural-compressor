@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.tensorflow.quantization.utils.graph_rewriter.qdq.share_qdq_y_pattern`
-================================================================================================
+neural_compressor.tensorflow.quantization.utils.graph_rewriter.qdq.share_qdq_y_pattern
+======================================================================================
 
 .. py:module:: neural_compressor.tensorflow.quantization.utils.graph_rewriter.qdq.share_qdq_y_pattern
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.tensorflow.quantization.utils.graph_rewriter.qdq.share_qdq_y_pattern.ShareQDQForItexYPatternOptimizer
 
 
-
+Module Contents
+---------------
 
 .. py:class:: ShareQDQForItexYPatternOptimizer(model)
-
 
 
 

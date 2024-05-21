@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.profiling.profiler.tensorflow_profiler.utils`
-========================================================================
+neural_compressor.profiling.profiler.tensorflow_profiler.utils
+==============================================================
 
 .. py:module:: neural_compressor.profiling.profiler.tensorflow_profiler.utils
 
@@ -9,12 +9,8 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -23,6 +19,8 @@ Functions
    neural_compressor.profiling.profiler.tensorflow_profiler.utils.set_eager_execution
 
 
+Module Contents
+---------------
 
 .. py:function:: delete_assign(graph_def: Any) -> Any
 

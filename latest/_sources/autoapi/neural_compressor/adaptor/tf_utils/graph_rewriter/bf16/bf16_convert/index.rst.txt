@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.bf16.bf16_convert`
-=============================================================================
+neural_compressor.adaptor.tf_utils.graph_rewriter.bf16.bf16_convert
+===================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.bf16.bf16_convert
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.adaptor.tf_utils.graph_rewriter.bf16.bf16_convert.BF16Convert
 
 
-
+Module Contents
+---------------
 
 .. py:class:: BF16Convert(model, fp32_ops=[], bf16_ops=[])
-
 
 
 

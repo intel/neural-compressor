@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.pruning_recipes.patterns.pattern`
-=========================================================================
+neural_compressor.experimental.pruning_recipes.patterns.pattern
+===============================================================
 
 .. py:module:: neural_compressor.experimental.pruning_recipes.patterns.pattern
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,15 +18,16 @@ Classes
    neural_compressor.experimental.pruning_recipes.patterns.pattern.PatternBase
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
    neural_compressor.experimental.pruning_recipes.patterns.pattern.pattern_registry
 
 
+Module Contents
+---------------
 
 .. py:function:: pattern_registry(pattern_type)
 
@@ -48,7 +46,6 @@ Functions
 
 
 
-
    Class that contain all registered pattern types.
 
    .. attribute:: patterns
@@ -57,7 +54,6 @@ Functions
 
 
 .. py:class:: PatternBase(mask_shape, is_contiguous=True)
-
 
    Base class of pruning pattern.
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.utils.collect_layer_histogram`
-=========================================================
+neural_compressor.utils.collect_layer_histogram
+===============================================
 
 .. py:module:: neural_compressor.utils.collect_layer_histogram
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.utils.collect_layer_histogram.LayerHistogramCollector
 
 
-
+Module Contents
+---------------
 
 .. py:class:: LayerHistogramCollector(num_bins=8001, layer_tensor=None, include_layer=None, logger=None)
-
 
 
 

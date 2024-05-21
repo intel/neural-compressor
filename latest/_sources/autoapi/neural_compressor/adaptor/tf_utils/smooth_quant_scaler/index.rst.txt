@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.tf_utils.smooth_quant_scaler`
-================================================================
+neural_compressor.adaptor.tf_utils.smooth_quant_scaler
+======================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.smooth_quant_scaler
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,10 +18,10 @@ Classes
    neural_compressor.adaptor.tf_utils.smooth_quant_scaler.SmoothQuantScalerLLM
 
 
-
+Module Contents
+---------------
 
 .. py:class:: SmoothQuantScaler(model, dataloader, alpha, scales_per_op)
-
 
    A class for scaling model weights using Smooth Quantization method.
 
@@ -36,7 +33,6 @@ Classes
 
 
 .. py:class:: SmoothQuantScalerLLM(graph_def, alpha, scales_per_op, op_types)
-
 
 
 

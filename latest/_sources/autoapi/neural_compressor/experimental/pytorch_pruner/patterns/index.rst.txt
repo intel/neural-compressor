@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.pytorch_pruner.patterns`
-================================================================
+neural_compressor.experimental.pytorch_pruner.patterns
+======================================================
 
 .. py:module:: neural_compressor.experimental.pytorch_pruner.patterns
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -22,9 +19,8 @@ Classes
    neural_compressor.experimental.pytorch_pruner.patterns.PatternNInM
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -32,6 +28,8 @@ Functions
    neural_compressor.experimental.pytorch_pruner.patterns.get_pattern
 
 
+Module Contents
+---------------
 
 .. py:function:: register_pattern(name)
 
@@ -63,7 +61,6 @@ Functions
 
 .. py:class:: Pattern(config)
 
-
    Pruning Pattern.
 
    Every Pruner object will contain a Pattern object.
@@ -86,7 +83,6 @@ Functions
 
 
 
-
    Pruning Pattern.
 
    A Pattern class derived from Pattern. In this pattern, the weights in a NxM block will be pruned or kept
@@ -102,7 +98,6 @@ Functions
 
 
 .. py:class:: PatternNInM(config)
-
 
 
 

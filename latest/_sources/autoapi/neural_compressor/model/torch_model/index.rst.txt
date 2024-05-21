@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.model.torch_model`
-=============================================
+neural_compressor.model.torch_model
+===================================
 
 .. py:module:: neural_compressor.model.torch_model
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -23,10 +20,10 @@ Classes
    neural_compressor.model.torch_model.IPEXModel
 
 
-
+Module Contents
+---------------
 
 .. py:class:: PyTorchBaseModel(model, **kwargs)
-
 
 
 
@@ -37,7 +34,6 @@ Classes
 
 
 
-
    Build PyTorchModel object.
 
 
@@ -45,12 +41,10 @@ Classes
 
 
 
-
    Build PyTorchFXModel object.
 
 
 .. py:class:: IPEXModel(model, **kwargs)
-
 
 
 

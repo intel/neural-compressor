@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.model.tensorflow_model`
-==================================================
+neural_compressor.model.tensorflow_model
+========================================
 
 .. py:module:: neural_compressor.model.tensorflow_model
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -25,9 +22,8 @@ Classes
    neural_compressor.model.tensorflow_model.TensorflowModel
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -46,6 +42,8 @@ Functions
    neural_compressor.model.tensorflow_model.saved_model_session
 
 
+Module Contents
+---------------
 
 .. py:function:: get_model_type(model)
 
@@ -259,12 +257,10 @@ Functions
 
 
 
-
    Build Tensorflow Base Model.
 
 
 .. py:class:: TensorflowSavedModelModel(model, **kwargs)
-
 
 
 
@@ -275,12 +271,10 @@ Functions
 
 
 
-
    The class Tensorflow saved model whose GraphDef exceeding maximum protobuf size of 2GB.
 
 
 .. py:class:: TensorflowQATModel(model='', **kwargs)
-
 
 
 
@@ -291,12 +285,10 @@ Functions
 
 
 
-
    Build Tensorflow checkpoint model.
 
 
 .. py:class:: TensorflowModel
-
 
 
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.strategy.conservative`
-=================================================
+neural_compressor.strategy.conservative
+=======================================
 
 .. py:module:: neural_compressor.strategy.conservative
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.strategy.conservative.ConservativeTuneStrategy
 
 
-
+Module Contents
+---------------
 
 .. py:class:: ConservativeTuneStrategy(model, conf, q_dataloader=None, q_func=None, eval_func=None, eval_dataloader=None, eval_metric=None, resume=None, q_hooks=None)
-
 
 
 

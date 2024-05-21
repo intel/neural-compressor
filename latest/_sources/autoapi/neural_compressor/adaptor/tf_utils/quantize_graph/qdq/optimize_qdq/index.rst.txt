@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.qdq.optimize_qdq`
-============================================================================
+neural_compressor.adaptor.tf_utils.quantize_graph.qdq.optimize_qdq
+==================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qdq.optimize_qdq
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.adaptor.tf_utils.quantize_graph.qdq.optimize_qdq.OptimizeQDQGraph
 
 
-
+Module Contents
+---------------
 
 .. py:class:: OptimizeQDQGraph(input_graph, input_node_names, output_node_names, op_wise_config, op_wise_sequences, device, fake_quant=False, new_api=False, performance_only=False, itex_mode=False)
-
 
 
 

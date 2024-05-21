@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.profiling.parser.factory`
-====================================================
+neural_compressor.profiling.parser.factory
+==========================================
 
 .. py:module:: neural_compressor.profiling.parser.factory
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.profiling.parser.factory.ParserFactory
 
 
-
+Module Contents
+---------------
 
 .. py:class:: ParserFactory
-
 
    Parser factory.
 

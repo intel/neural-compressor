@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.fuse_conv_redundant_dequantize`
-============================================================================================================
+neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.fuse_conv_redundant_dequantize
+==================================================================================================
 
 .. py:module:: neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.fuse_conv_redundant_dequantize
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.fuse_conv_redundant_dequantize.FuseConvRedundantDequantizeTransformer
 
 
-
+Module Contents
+---------------
 
 .. py:class:: FuseConvRedundantDequantizeTransformer(model, device='cpu')
-
 
 
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fuse_conv_with_math`
-====================================================================================================
+neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fuse_conv_with_math
+==========================================================================================
 
 .. py:module:: neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fuse_conv_with_math
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fuse_conv_with_math.FuseConvWithMathOptimizer
 
 
-
+Module Contents
+---------------
 
 .. py:class:: FuseConvWithMathOptimizer(model)
-
 
 
 

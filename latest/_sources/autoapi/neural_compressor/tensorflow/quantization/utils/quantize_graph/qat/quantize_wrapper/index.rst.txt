@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.tensorflow.quantization.utils.quantize_graph.qat.quantize_wrapper`
-=============================================================================================
+neural_compressor.tensorflow.quantization.utils.quantize_graph.qat.quantize_wrapper
+===================================================================================
 
 .. py:module:: neural_compressor.tensorflow.quantization.utils.quantize_graph.qat.quantize_wrapper
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,10 +18,10 @@ Classes
    neural_compressor.tensorflow.quantization.utils.quantize_graph.qat.quantize_wrapper.QuantizeWrapper
 
 
-
+Module Contents
+---------------
 
 .. py:class:: QuantizeWrapperBase(layer, **kwargs)
-
 
 
 
@@ -32,7 +29,6 @@ Classes
 
 
 .. py:class:: QuantizeWrapper(layer, **kwargs)
-
 
 
 

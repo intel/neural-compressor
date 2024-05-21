@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.strategy.utils.utility`
-==================================================
+neural_compressor.strategy.utils.utility
+========================================
 
 .. py:module:: neural_compressor.strategy.utils.utility
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -23,9 +20,8 @@ Classes
    neural_compressor.strategy.utils.utility.ClassRegister
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -36,9 +32,10 @@ Functions
    neural_compressor.strategy.utils.utility.build_slave_faker_model
 
 
+Module Contents
+---------------
 
 .. py:class:: QuantType
-
 
 
 
@@ -46,7 +43,6 @@ Functions
 
 
 .. py:class:: QuantOptions(quant_type=1)
-
 
    Option Class for Quantization.
 
@@ -72,7 +68,6 @@ Functions
 
 
 .. py:class:: OrderedDefaultDict
-
 
 
 
@@ -109,7 +104,6 @@ Functions
 
 
 .. py:class:: ClassRegister
-
 
    Class register.
 

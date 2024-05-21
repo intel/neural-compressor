@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.strategy.bayesian`
-=============================================
+neural_compressor.strategy.bayesian
+===================================
 
 .. py:module:: neural_compressor.strategy.bayesian
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -22,18 +19,18 @@ Classes
    neural_compressor.strategy.bayesian.BayesianOptimization
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
    neural_compressor.strategy.bayesian.acq_max
 
 
+Module Contents
+---------------
 
 .. py:class:: BayesianTuneStrategy(model, conf, q_dataloader=None, q_func=None, eval_func=None, eval_dataloader=None, eval_metric=None, resume=None, q_hooks=None)
-
 
 
 
@@ -60,14 +57,12 @@ Functions
 
 
 
-
    Holds the param-space coordinates (X) and target values (Y).
 
    Allows for constant-time appends while ensuring no duplicates are added.
 
 
 .. py:class:: BayesianOptimization(pbounds, random_seed=9527, verbose=2)
-
 
    The class for bayesian optimization.
 

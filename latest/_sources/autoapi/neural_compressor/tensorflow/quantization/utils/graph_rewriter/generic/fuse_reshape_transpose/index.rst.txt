@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fuse_reshape_transpose`
-=======================================================================================================
+neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fuse_reshape_transpose
+=============================================================================================
 
 .. py:module:: neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fuse_reshape_transpose
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fuse_reshape_transpose.FuseTransposeReshapeOptimizer
 
 
-
+Module Contents
+---------------
 
 .. py:class:: FuseTransposeReshapeOptimizer(model)
-
 
 
 

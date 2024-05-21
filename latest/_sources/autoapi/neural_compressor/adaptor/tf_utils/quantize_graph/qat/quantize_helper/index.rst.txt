@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_helper`
-===============================================================================
+neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_helper
+=====================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_helper
 
@@ -9,12 +9,8 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -22,6 +18,8 @@ Functions
    neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_helper.qat_clone_function
 
 
+Module Contents
+---------------
 
 .. py:function:: init_quantize_config(model, quantize_recipe=None)
 

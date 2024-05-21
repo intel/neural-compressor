@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.compression.pruner.model_slim.auto_slim`
-===================================================================
+neural_compressor.compression.pruner.model_slim.auto_slim
+=========================================================
 
 .. py:module:: neural_compressor.compression.pruner.model_slim.auto_slim
 
@@ -9,12 +9,8 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -26,6 +22,8 @@ Functions
    neural_compressor.compression.pruner.model_slim.auto_slim.generate_mha_pruning_config
 
 
+Module Contents
+---------------
 
 .. py:function:: model_slim(model, dataloader=None, round_multiplier=32)
 

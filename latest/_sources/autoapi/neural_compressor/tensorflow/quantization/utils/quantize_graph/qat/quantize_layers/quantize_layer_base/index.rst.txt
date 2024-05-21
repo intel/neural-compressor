@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.tensorflow.quantization.utils.quantize_graph.qat.quantize_layers.quantize_layer_base`
-================================================================================================================
+neural_compressor.tensorflow.quantization.utils.quantize_graph.qat.quantize_layers.quantize_layer_base
+======================================================================================================
 
 .. py:module:: neural_compressor.tensorflow.quantization.utils.quantize_graph.qat.quantize_layers.quantize_layer_base
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.tensorflow.quantization.utils.quantize_graph.qat.quantize_layers.quantize_layer_base.QuantizeLayerBase
 
 
-
+Module Contents
+---------------
 
 .. py:class:: QuantizeLayerBase
-
 
    QuantizeLayer Base Class.
 

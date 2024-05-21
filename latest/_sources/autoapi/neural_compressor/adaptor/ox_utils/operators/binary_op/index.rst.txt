@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.ox_utils.operators.binary_op`
-================================================================
+neural_compressor.adaptor.ox_utils.operators.binary_op
+======================================================
 
 .. py:module:: neural_compressor.adaptor.ox_utils.operators.binary_op
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -23,10 +20,10 @@ Classes
    neural_compressor.adaptor.ox_utils.operators.binary_op.Float16BinaryOperator
 
 
-
+Module Contents
+---------------
 
 .. py:class:: BinaryOperator(onnx_quantizer, onnx_node)
-
 
 
 
@@ -37,7 +34,6 @@ Classes
 
 
 
-
    Binary operator.
 
 
@@ -45,12 +41,10 @@ Classes
 
 
 
-
    QBinary Operator.
 
 
 .. py:class:: Float16BinaryOperator(onnx_quantizer, onnx_node)
-
 
 
 

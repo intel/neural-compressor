@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.data.dataloaders.sampler`
-=================================================================
+neural_compressor.experimental.data.dataloaders.sampler
+=======================================================
 
 .. py:module:: neural_compressor.experimental.data.dataloaders.sampler
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -23,10 +20,10 @@ Classes
    neural_compressor.experimental.data.dataloaders.sampler.BatchSampler
 
 
-
+Module Contents
+---------------
 
 .. py:class:: Sampler(data_source)
-
 
 
 
@@ -43,7 +40,6 @@ Classes
 
 
 
-
    Internally samples elements.
 
    Used for datasets retrieved element by iterator. Yield None to act as a placeholder for each iteration.
@@ -53,12 +49,10 @@ Classes
 
 
 
-
    Sequentially samples elements, used for datasets retrieved element by index.
 
 
 .. py:class:: BatchSampler(sampler, batch_size, drop_last=True)
-
 
 
 

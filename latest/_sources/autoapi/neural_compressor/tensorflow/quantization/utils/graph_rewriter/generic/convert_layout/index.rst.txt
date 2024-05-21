@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.convert_layout`
-===============================================================================================
+neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.convert_layout
+=====================================================================================
 
 .. py:module:: neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.convert_layout
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.convert_layout.ConvertLayoutOptimizer
 
 
-
+Module Contents
+---------------
 
 .. py:class:: ConvertLayoutOptimizer(model, outputs)
-
 
 
 

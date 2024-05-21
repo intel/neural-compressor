@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.ox_utils.smooth_quant`
-=========================================================
+neural_compressor.adaptor.ox_utils.smooth_quant
+===============================================
 
 .. py:module:: neural_compressor.adaptor.ox_utils.smooth_quant
 
@@ -9,20 +9,16 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.adaptor.ox_utils.smooth_quant.ORTSmoothQuant
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -31,6 +27,8 @@ Functions
    neural_compressor.adaptor.ox_utils.smooth_quant.quant_dequant_data
 
 
+Module Contents
+---------------
 
 .. py:function:: get_quant_dequant_output(model, input_data, output_data, reduce_range, backend)
 
@@ -83,7 +81,6 @@ Functions
 
 
 .. py:class:: ORTSmoothQuant(model, dataloader, reduce_range=False, backend='CPUExecutionProvider')
-
 
    Fake input channel quantization.
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.compression.pruner.model_slim.pattern_analyzer`
-==========================================================================
+neural_compressor.compression.pruner.model_slim.pattern_analyzer
+================================================================
 
 .. py:module:: neural_compressor.compression.pruner.model_slim.pattern_analyzer
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -25,9 +22,8 @@ Classes
    neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcherTF
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -36,6 +32,8 @@ Functions
    neural_compressor.compression.pruner.model_slim.pattern_analyzer.print_iterables
 
 
+Module Contents
+---------------
 
 .. py:function:: get_attributes(module, attrs: str)
 
@@ -61,7 +59,6 @@ Functions
 
 
 .. py:class:: RecipeSearcher(model, recipe: dict)
-
 
 
 
@@ -102,7 +99,6 @@ Functions
 
 
 
-
    Static graph searcher class which searches patterns with PyTorch static graph and its input/output information.
 
    By converting a PyTorch Model into a static version using torch.jit.trace()/script(),
@@ -139,7 +135,6 @@ Functions
 
 
 .. py:class:: Linear2LinearSearcher(model, dataloader=None, placeholder_shape=None, placeholder_dtype=None)
-
 
 
 
@@ -188,7 +183,6 @@ Functions
 
 
 
-
    Static graph searcher for multi-head attention modules.
 
    Use the static graph to detect some special pattern in a module, there is no need for user to define layer name.
@@ -218,7 +212,6 @@ Functions
 
 
 
-
    Static graph searcher for multi-head attention modules.
 
    Use the static graph to detect final classifier head in a module, there is no need for user to define layer name.
@@ -245,7 +238,6 @@ Functions
 
 
 .. py:class:: ClassifierHeadSearcherTF(model)
-
 
 
 

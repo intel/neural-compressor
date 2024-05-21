@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.profiling.profiler.profiler`
-=======================================================
+neural_compressor.profiling.profiler.profiler
+=============================================
 
 .. py:module:: neural_compressor.profiling.profiler.profiler
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.profiling.profiler.profiler.Profiler
 
 
-
+Module Contents
+---------------
 
 .. py:class:: Profiler(input_graph: str)
-
 
    Profiler class.
 

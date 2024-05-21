@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.metric`
-===============================================
+neural_compressor.experimental.metric
+=====================================
 
 .. py:module:: neural_compressor.experimental.metric
 
@@ -11,41 +11,16 @@
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   bleu/index.rst
-   bleu_util/index.rst
-   coco_label_map/index.rst
-   coco_tools/index.rst
-   evaluate_squad/index.rst
-   f1/index.rst
-   metric/index.rst
-
-
-Package Contents
-----------------
-
-Classes
-~~~~~~~
-
-.. autoapisummary::
-
-   neural_compressor.experimental.metric.METRICS
-   neural_compressor.experimental.metric.BaseMetric
-
-
-
-Functions
-~~~~~~~~~
-
-.. autoapisummary::
-
-   neural_compressor.experimental.metric.metric_registry
-
-
-
-
+   /autoapi/neural_compressor/experimental/metric/bleu/index
+   /autoapi/neural_compressor/experimental/metric/bleu_util/index
+   /autoapi/neural_compressor/experimental/metric/coco_label_map/index
+   /autoapi/neural_compressor/experimental/metric/coco_tools/index
+   /autoapi/neural_compressor/experimental/metric/evaluate_squad/index
+   /autoapi/neural_compressor/experimental/metric/f1/index
+   /autoapi/neural_compressor/experimental/metric/metric/index
 
 

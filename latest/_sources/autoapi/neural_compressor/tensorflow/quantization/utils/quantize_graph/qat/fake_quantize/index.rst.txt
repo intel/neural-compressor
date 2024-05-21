@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.tensorflow.quantization.utils.quantize_graph.qat.fake_quantize`
-==========================================================================================
+neural_compressor.tensorflow.quantization.utils.quantize_graph.qat.fake_quantize
+================================================================================
 
 .. py:module:: neural_compressor.tensorflow.quantization.utils.quantize_graph.qat.fake_quantize
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,10 +18,10 @@ Classes
    neural_compressor.tensorflow.quantization.utils.quantize_graph.qat.fake_quantize.FakeQuantize
 
 
-
+Module Contents
+---------------
 
 .. py:class:: FakeQuantizeBase
-
 
 
 
@@ -32,7 +29,6 @@ Classes
 
 
 .. py:class:: FakeQuantize(per_channel=False, num_bits=8, channel_axis=-1, symmetric=True, narrow_range=True)
-
 
 
 

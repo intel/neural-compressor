@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.data.datasets.dummy_dataset`
-====================================================================
+neural_compressor.experimental.data.datasets.dummy_dataset
+==========================================================
 
 .. py:module:: neural_compressor.experimental.data.datasets.dummy_dataset
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.experimental.data.datasets.dummy_dataset.DummyDataset
 
 
-
+Module Contents
+---------------
 
 .. py:class:: DummyDataset(shape, low=-128.0, high=127.0, dtype='float32', label=True, transform=None, filter=None)
-
 
 
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.utils`
-=================================
+neural_compressor.utils
+=======================
 
 .. py:module:: neural_compressor.utils
 
@@ -11,66 +11,20 @@
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   collect_layer_histogram/index.rst
-   constant/index.rst
-   create_obj_from_config/index.rst
-   kl_divergence/index.rst
-   load_huggingface/index.rst
-   logger/index.rst
-   neural_insights_utils/index.rst
-   options/index.rst
-   pytorch/index.rst
-   utility/index.rst
-   weights_details/index.rst
-
-
-Package Contents
-----------------
-
-Classes
-~~~~~~~
-
-.. autoapisummary::
-
-   neural_compressor.utils.LayerHistogramCollector
-
-
-
-Functions
-~~~~~~~~~
-
-.. autoapisummary::
-
-   neural_compressor.utils.log
-   neural_compressor.utils.info
-   neural_compressor.utils.debug
-   neural_compressor.utils.warn
-   neural_compressor.utils.warning
-   neural_compressor.utils.error
-   neural_compressor.utils.fatal
-   neural_compressor.utils.alias_param
-
-
-
-Attributes
-~~~~~~~~~~
-
-.. autoapisummary::
-
-   neural_compressor.utils.OPTIONS
-
-
-
-
-
-
-
-
-
-
+   /autoapi/neural_compressor/utils/collect_layer_histogram/index
+   /autoapi/neural_compressor/utils/constant/index
+   /autoapi/neural_compressor/utils/create_obj_from_config/index
+   /autoapi/neural_compressor/utils/kl_divergence/index
+   /autoapi/neural_compressor/utils/load_huggingface/index
+   /autoapi/neural_compressor/utils/logger/index
+   /autoapi/neural_compressor/utils/neural_insights_utils/index
+   /autoapi/neural_compressor/utils/options/index
+   /autoapi/neural_compressor/utils/pytorch/index
+   /autoapi/neural_compressor/utils/utility/index
+   /autoapi/neural_compressor/utils/weights_details/index
 
 

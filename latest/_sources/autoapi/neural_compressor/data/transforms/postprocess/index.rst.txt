@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.data.transforms.postprocess`
-=======================================================
+neural_compressor.data.transforms.postprocess
+=============================================
 
 .. py:module:: neural_compressor.data.transforms.postprocess
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.data.transforms.postprocess.Postprocess
 
 
-
+Module Contents
+---------------
 
 .. py:class:: Postprocess(postprocess_cls, name='user_postprocess', **kwargs)
-
 
 
 

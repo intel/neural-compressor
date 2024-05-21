@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.pruner_legacy.pruner`
-=============================================================
+neural_compressor.experimental.pruner_legacy.pruner
+===================================================
 
 .. py:module:: neural_compressor.experimental.pruner_legacy.pruner
 
@@ -9,26 +9,24 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.experimental.pruner_legacy.pruner.Pruner
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
    neural_compressor.experimental.pruner_legacy.pruner.pruner_registry
 
 
+Module Contents
+---------------
 
 .. py:function:: pruner_registry(cls)
 
@@ -42,7 +40,6 @@ Functions
 
 
 .. py:class:: Pruner(model, local_config, global_config)
-
 
    The base clase of Pruner.
 

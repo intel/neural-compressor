@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.data.datasets`
-======================================================
+neural_compressor.experimental.data.datasets
+============================================
 
 .. py:module:: neural_compressor.experimental.data.datasets
 
@@ -11,43 +11,16 @@
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   bert_dataset/index.rst
-   coco_dataset/index.rst
-   dataset/index.rst
-   dummy_dataset/index.rst
-   dummy_dataset_v2/index.rst
-   imagenet_dataset/index.rst
-   style_transfer_dataset/index.rst
-
-
-Package Contents
-----------------
-
-Classes
-~~~~~~~
-
-.. autoapisummary::
-
-   neural_compressor.experimental.data.datasets.Datasets
-   neural_compressor.experimental.data.datasets.Dataset
-   neural_compressor.experimental.data.datasets.IterableDataset
-
-
-
-Functions
-~~~~~~~~~
-
-.. autoapisummary::
-
-   neural_compressor.experimental.data.datasets.dataset_registry
-
-
-
-
-
+   /autoapi/neural_compressor/experimental/data/datasets/bert_dataset/index
+   /autoapi/neural_compressor/experimental/data/datasets/coco_dataset/index
+   /autoapi/neural_compressor/experimental/data/datasets/dataset/index
+   /autoapi/neural_compressor/experimental/data/datasets/dummy_dataset/index
+   /autoapi/neural_compressor/experimental/data/datasets/dummy_dataset_v2/index
+   /autoapi/neural_compressor/experimental/data/datasets/imagenet_dataset/index
+   /autoapi/neural_compressor/experimental/data/datasets/style_transfer_dataset/index
 
 

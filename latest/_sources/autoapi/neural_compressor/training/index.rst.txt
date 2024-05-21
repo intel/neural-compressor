@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.training`
-====================================
+neural_compressor.training
+==========================
 
 .. py:module:: neural_compressor.training
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,9 +18,8 @@ Classes
    neural_compressor.training.CallBacks
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -31,9 +27,10 @@ Functions
    neural_compressor.training.prepare_compression
 
 
+Module Contents
+---------------
 
 .. py:class:: CompressionManager(model: Callable, confs: Union[Callable, List], **kwargs)
-
 
    CompressionManager is used in train loop for what user want to deal with additional.
 
@@ -181,7 +178,6 @@ Functions
 
 
 .. py:class:: CallBacks(callbacks_list)
-
 
    Define the basic command for the training loop.
 

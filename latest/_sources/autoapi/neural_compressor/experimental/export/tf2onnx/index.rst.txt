@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.export.tf2onnx`
-=======================================================
+neural_compressor.experimental.export.tf2onnx
+=============================================
 
 .. py:module:: neural_compressor.experimental.export.tf2onnx
 
@@ -9,12 +9,8 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -22,6 +18,8 @@ Functions
    neural_compressor.experimental.export.tf2onnx.tf_to_int8_onnx
 
 
+Module Contents
+---------------
 
 .. py:function:: tf_to_fp32_onnx(graph_def, save_path, opset_version=14, input_names=None, output_names=None, inputs_as_nchw=None)
 

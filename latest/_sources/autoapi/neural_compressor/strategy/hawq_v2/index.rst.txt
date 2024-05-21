@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.strategy.hawq_v2`
-============================================
+neural_compressor.strategy.hawq_v2
+==================================
 
 .. py:module:: neural_compressor.strategy.hawq_v2
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.strategy.hawq_v2.HAWQ_V2TuneStrategy
 
 
-
+Module Contents
+---------------
 
 .. py:class:: HAWQ_V2TuneStrategy
-
 
 
 

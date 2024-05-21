@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.convert_nan_to_random`
-======================================================================================================
+neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.convert_nan_to_random
+============================================================================================
 
 .. py:module:: neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.convert_nan_to_random
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.convert_nan_to_random.ConvertNanToRandom
 
 
-
+Module Contents
+---------------
 
 .. py:class:: ConvertNanToRandom(model)
-
 
 
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.common.optimizer`
-=========================================================
+neural_compressor.experimental.common.optimizer
+===============================================
 
 .. py:module:: neural_compressor.experimental.common.optimizer
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -25,18 +22,18 @@ Classes
    neural_compressor.experimental.common.optimizer.PyTorchSGD
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
    neural_compressor.experimental.common.optimizer.optimizer_registry
 
 
+Module Contents
+---------------
 
 .. py:class:: TensorflowOptimizers
-
 
 
 
@@ -47,12 +44,10 @@ Functions
 
 
 
-
    Class to get all registered PyTorch Optimizers once only.
 
 
 .. py:class:: Optimizers(framework)
-
 
 
 
@@ -78,7 +73,6 @@ Functions
 
 
 
-
    TensorFlow keras SGD optimizer.
 
    :param param_dict: The dict of parameters setting by user for SGD optimizer
@@ -89,7 +83,6 @@ Functions
 
 
 
-
    tensorflow_addons AdamW optimizer.
 
    :param param_dict: The dict of parameters setting by user for AdamW optimizer
@@ -97,7 +90,6 @@ Functions
 
 
 .. py:class:: PyTorchSGD(param_dict)
-
 
 
 

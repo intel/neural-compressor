@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.torch.algorithms.layer_wise.load`
-============================================================
+neural_compressor.torch.algorithms.layer_wise.load
+==================================================
 
 .. py:module:: neural_compressor.torch.algorithms.layer_wise.load
 
@@ -9,18 +9,16 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
    neural_compressor.torch.algorithms.layer_wise.load.load
 
 
+Module Contents
+---------------
 
 .. py:function:: load(f: FILE_LIKE, tensor_name: str = None, prefix: str = None, map_location: MAP_LOCATION = None, pickle_module: Any = None, *, weights_only: bool = False, **pickle_load_args: Any) -> Any
 

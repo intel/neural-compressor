@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.strategy.utils.utility`
-===============================================================
+neural_compressor.experimental.strategy.utils.utility
+=====================================================
 
 .. py:module:: neural_compressor.experimental.strategy.utils.utility
 
@@ -9,20 +9,16 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.experimental.strategy.utils.utility.OrderedDefaultDict
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -31,9 +27,10 @@ Functions
    neural_compressor.experimental.strategy.utils.utility.get_adaptor_name
 
 
+Module Contents
+---------------
 
 .. py:class:: OrderedDefaultDict
-
 
 
 

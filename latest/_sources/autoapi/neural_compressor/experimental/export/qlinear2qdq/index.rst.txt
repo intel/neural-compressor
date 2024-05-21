@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.export.qlinear2qdq`
-===========================================================
+neural_compressor.experimental.export.qlinear2qdq
+=================================================
 
 .. py:module:: neural_compressor.experimental.export.qlinear2qdq
 
@@ -9,12 +9,8 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -22,6 +18,8 @@ Functions
    neural_compressor.experimental.export.qlinear2qdq.onnx_qlinear_to_qdq
 
 
+Module Contents
+---------------
 
 .. py:function:: check_model(model)
 

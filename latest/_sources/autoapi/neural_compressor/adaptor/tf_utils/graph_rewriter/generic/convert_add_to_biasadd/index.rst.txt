@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_add_to_biasadd`
-==========================================================================================
+neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_add_to_biasadd
+================================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_add_to_biasadd
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_add_to_biasadd.ConvertAddToBiasAddOptimizer
 
 
-
+Module Contents
+---------------
 
 .. py:class:: ConvertAddToBiasAddOptimizer(model)
-
 
 
 

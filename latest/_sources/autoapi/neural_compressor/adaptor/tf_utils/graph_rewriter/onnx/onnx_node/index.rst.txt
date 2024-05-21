@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node`
-==========================================================================
+neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node
+================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_node.OnnxNode
 
 
-
+Module Contents
+---------------
 
 .. py:class:: OnnxNode(node, graph, skip_conversion=False)
-
 
    A ONNX Node Wrapper used for graph manipulations.
 

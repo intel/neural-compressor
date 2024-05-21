@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.convert_leakyrelu`
-==================================================================================================
+neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.convert_leakyrelu
+========================================================================================
 
 .. py:module:: neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.convert_leakyrelu
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.convert_leakyrelu.ConvertLeakyReluOptimizer
 
 
-
+Module Contents
+---------------
 
 .. py:class:: ConvertLeakyReluOptimizer(model)
-
 
 
 

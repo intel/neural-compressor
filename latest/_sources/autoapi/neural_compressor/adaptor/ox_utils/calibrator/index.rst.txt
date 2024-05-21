@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.ox_utils.calibrator`
-=======================================================
+neural_compressor.adaptor.ox_utils.calibrator
+=============================================
 
 .. py:module:: neural_compressor.adaptor.ox_utils.calibrator
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -24,9 +21,8 @@ Classes
    neural_compressor.adaptor.ox_utils.calibrator.HistogramCollector
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -34,6 +30,8 @@ Functions
    neural_compressor.adaptor.ox_utils.calibrator.smooth_distribution
 
 
+Module Contents
+---------------
 
 .. py:function:: calib_registry(calib_method)
 
@@ -42,7 +40,6 @@ Functions
 
 .. py:class:: CalibratorBase
 
-
    Base calibrator class.
 
 
@@ -50,12 +47,10 @@ Functions
 
 
 
-
    MinMax calibrator class.
 
 
 .. py:class:: PercentileCalibrator(num_bins=2048, percentile=99.999)
-
 
 
 
@@ -72,7 +67,6 @@ Functions
 
 
 
-
    KL calibrator class.
 
    :param num_bins: number of bins to create a new histogram
@@ -83,7 +77,6 @@ Functions
 
 
 .. py:class:: HistogramCollector(num_bins=2048)
-
 
    Histogram collctor class.
 

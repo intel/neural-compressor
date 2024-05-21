@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.scheduler`
-==================================================
+neural_compressor.experimental.scheduler
+========================================
 
 .. py:module:: neural_compressor.experimental.scheduler
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.experimental.scheduler.Scheduler
 
 
-
+Module Contents
+---------------
 
 .. py:class:: Scheduler
-
 
 
 

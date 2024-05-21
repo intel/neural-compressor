@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.compression.pruner.patterns.ninm`
-============================================================
+neural_compressor.compression.pruner.patterns.ninm
+==================================================
 
 .. py:module:: neural_compressor.compression.pruner.patterns.ninm
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.compression.pruner.patterns.ninm.PytorchPatternNInM
 
 
-
+Module Contents
+---------------
 
 .. py:class:: PytorchPatternNInM(config, modules)
-
 
 
 

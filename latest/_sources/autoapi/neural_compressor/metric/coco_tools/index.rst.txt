@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.metric.coco_tools`
-=============================================
+neural_compressor.metric.coco_tools
+===================================
 
 .. py:module:: neural_compressor.metric.coco_tools
 
@@ -33,11 +33,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -45,9 +42,8 @@ Classes
    neural_compressor.metric.coco_tools.COCOEvalWrapper
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -56,9 +52,10 @@ Functions
    neural_compressor.metric.coco_tools.ExportSingleImageDetectionMasksToCoco
 
 
+Module Contents
+---------------
 
 .. py:class:: COCOWrapper(dataset: Dict[str, Any], detection_type: str = 'bbox')
-
 
 
 
@@ -75,7 +72,6 @@ Functions
 
 
 .. py:class:: COCOEvalWrapper(groundtruth: pycocotools.coco.COCO = None, detections: pycocotools.coco.COCO = None, agnostic_mode=False, iou_type: str = 'bbox', iou_thrs: Union[str, float] = None, map_points=None)
-
 
 
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.data.dataloaders.tensorflow_dataloader`
-==================================================================
+neural_compressor.data.dataloaders.tensorflow_dataloader
+========================================================
 
 .. py:module:: neural_compressor.data.dataloaders.tensorflow_dataloader
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -23,10 +20,10 @@ Classes
    neural_compressor.data.dataloaders.tensorflow_dataloader.TensorflowDataLoader
 
 
-
+Module Contents
+---------------
 
 .. py:class:: TFDataDataLoader(dataset, batch_size=1, last_batch='rollover')
-
 
 
 
@@ -44,7 +41,6 @@ Classes
 
 
 
-
    Subclass of DefaultDataLoader.
 
    this dataloader is designed to satisfy the usage of Bert models.
@@ -54,14 +50,12 @@ Classes
 
 
 
-
    Subclass of DefaultDataLoader.
 
    this dataloader is designed to satisfy the usage of Model Zoo Bert models.
 
 
 .. py:class:: TensorflowDataLoader
-
 
 
 

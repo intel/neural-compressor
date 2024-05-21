@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.data.dataloaders.onnxrt_dataloader`
-==============================================================
+neural_compressor.data.dataloaders.onnxrt_dataloader
+====================================================
 
 .. py:module:: neural_compressor.data.dataloaders.onnxrt_dataloader
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,10 +18,10 @@ Classes
    neural_compressor.data.dataloaders.onnxrt_dataloader.ONNXRTDataLoader
 
 
-
+Module Contents
+---------------
 
 .. py:class:: ONNXRTBertDataLoader(dataset, batch_size=1, last_batch='rollover', collate_fn=None, sampler=None, batch_sampler=None, num_workers=0, pin_memory=False, shuffle=False, distributed=False)
-
 
 
 
@@ -32,7 +29,6 @@ Classes
 
 
 .. py:class:: ONNXRTDataLoader(dataset, batch_size=1, last_batch='rollover', collate_fn=None, sampler=None, batch_sampler=None, num_workers=0, pin_memory=False, shuffle=False, distributed=False)
-
 
 
 

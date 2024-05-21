@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.ox_utils.operators.conv`
-===========================================================
+neural_compressor.adaptor.ox_utils.operators.conv
+=================================================
 
 .. py:module:: neural_compressor.adaptor.ox_utils.operators.conv
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,10 +18,10 @@ Classes
    neural_compressor.adaptor.ox_utils.operators.conv.QConvOperator
 
 
-
+Module Contents
+---------------
 
 .. py:class:: ConvOperator(onnx_quantizer, onnx_node)
-
 
 
 
@@ -32,7 +29,6 @@ Classes
 
 
 .. py:class:: QConvOperator(onnx_node, children, initializers)
-
 
 
 

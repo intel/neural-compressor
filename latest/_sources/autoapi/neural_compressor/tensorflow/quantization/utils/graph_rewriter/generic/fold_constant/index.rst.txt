@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fold_constant`
-==============================================================================================
+neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fold_constant
+====================================================================================
 
 .. py:module:: neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fold_constant
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fold_constant.GraphFoldConstantOptimizer
 
 
-
+Module Contents
+---------------
 
 .. py:class:: GraphFoldConstantOptimizer(model=None)
-
 
 
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.tensorflow.utils.nets_factory`
-=========================================================
+neural_compressor.tensorflow.utils.nets_factory
+===============================================
 
 .. py:module:: neural_compressor.tensorflow.utils.nets_factory
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.tensorflow.utils.nets_factory.TFSlimNetsFactory
 
 
-
+Module Contents
+---------------
 
 .. py:class:: TFSlimNetsFactory
-
 
 
 

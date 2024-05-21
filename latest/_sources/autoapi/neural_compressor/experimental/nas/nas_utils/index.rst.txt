@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.nas.nas_utils`
-======================================================
+neural_compressor.experimental.nas.nas_utils
+============================================
 
 .. py:module:: neural_compressor.experimental.nas.nas_utils
 
@@ -9,12 +9,8 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -23,6 +19,8 @@ Functions
    neural_compressor.experimental.nas.nas_utils.find_pareto_front
 
 
+Module Contents
+---------------
 
 .. py:function:: nas_registry(nas_method)
 

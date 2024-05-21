@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.compression.distillation`
-====================================================
+neural_compressor.compression.distillation
+==========================================
 
 .. py:module:: neural_compressor.compression.distillation
 
@@ -11,12 +11,12 @@
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   criterions/index.rst
-   optimizers/index.rst
-   utility/index.rst
+   /autoapi/neural_compressor/compression/distillation/criterions/index
+   /autoapi/neural_compressor/compression/distillation/optimizers/index
+   /autoapi/neural_compressor/compression/distillation/utility/index
 
 

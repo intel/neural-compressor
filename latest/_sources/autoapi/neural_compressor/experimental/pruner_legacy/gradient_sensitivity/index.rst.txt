@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.pruner_legacy.gradient_sensitivity`
-===========================================================================
+neural_compressor.experimental.pruner_legacy.gradient_sensitivity
+=================================================================
 
 .. py:module:: neural_compressor.experimental.pruner_legacy.gradient_sensitivity
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.experimental.pruner_legacy.gradient_sensitivity.GradientSensitivityPruner
 
 
-
+Module Contents
+---------------
 
 .. py:class:: GradientSensitivityPruner(model, local_config, global_config)
-
 
 
 

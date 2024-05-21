@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.compression.distillation.utility`
-============================================================
+neural_compressor.compression.distillation.utility
+==================================================
 
 .. py:module:: neural_compressor.compression.distillation.utility
 
@@ -9,12 +9,8 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -22,6 +18,8 @@ Functions
    neural_compressor.compression.distillation.utility.get_activation
 
 
+Module Contents
+---------------
 
 .. py:function:: record_output(output, name, output_process, student=False)
 

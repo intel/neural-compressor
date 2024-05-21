@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.data.datasets.imagenet_dataset`
-==========================================================
+neural_compressor.data.datasets.imagenet_dataset
+================================================
 
 .. py:module:: neural_compressor.data.datasets.imagenet_dataset
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -25,10 +22,10 @@ Classes
    neural_compressor.data.datasets.imagenet_dataset.ONNXRTImagenetDataset
 
 
-
+Module Contents
+---------------
 
 .. py:class:: ImagenetRaw(data_path, image_list, transform=None, filter=None)
-
 
 
 
@@ -47,12 +44,10 @@ Classes
 
 
 
-
    Dataset for ImageNet data generation on pytorch backend.
 
 
 .. py:class:: MXNetImagenetRaw(data_path, image_list, transform=None, filter=None)
-
 
 
 
@@ -63,7 +58,6 @@ Classes
 
 
 
-
    Dataset for ImageNet data generation on tensorflow/inteltensorflow/tensorflow_itex backend.
 
 
@@ -71,12 +65,10 @@ Classes
 
 
 
-
    Configuration for Imagenet dataset.
 
 
 .. py:class:: ONNXRTImagenetDataset(root, subset='val', num_cores=28, transform=None, filter=None)
-
 
 
 

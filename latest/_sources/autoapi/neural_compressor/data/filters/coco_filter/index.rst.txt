@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.data.filters.coco_filter`
-====================================================
+neural_compressor.data.filters.coco_filter
+==========================================
 
 .. py:module:: neural_compressor.data.filters.coco_filter
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,10 +18,10 @@ Classes
    neural_compressor.data.filters.coco_filter.LabelBalanceCOCORawFilter
 
 
-
+Module Contents
+---------------
 
 .. py:class:: LabelBalanceCOCORecordFilter(size=1)
-
 
 
 
@@ -32,7 +29,6 @@ Classes
 
 
 .. py:class:: LabelBalanceCOCORawFilter(size=1)
-
 
 
 

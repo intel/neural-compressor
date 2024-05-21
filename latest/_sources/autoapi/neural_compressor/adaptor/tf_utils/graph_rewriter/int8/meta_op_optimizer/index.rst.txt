@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.int8.meta_op_optimizer`
-==================================================================================
+neural_compressor.adaptor.tf_utils.graph_rewriter.int8.meta_op_optimizer
+========================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.int8.meta_op_optimizer
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.adaptor.tf_utils.graph_rewriter.int8.meta_op_optimizer.MetaInfoChangingMemOpOptimizer
 
 
-
+Module Contents
+---------------
 
 .. py:class:: MetaInfoChangingMemOpOptimizer(model)
-
 
 
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.compression.pruner.model_slim`
-=========================================================
+neural_compressor.compression.pruner.model_slim
+===============================================
 
 .. py:module:: neural_compressor.compression.pruner.model_slim
 
@@ -11,12 +11,12 @@
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   auto_slim/index.rst
-   pattern_analyzer/index.rst
-   weight_slim/index.rst
+   /autoapi/neural_compressor/compression/pruner/model_slim/auto_slim/index
+   /autoapi/neural_compressor/compression/pruner/model_slim/pattern_analyzer/index
+   /autoapi/neural_compressor/compression/pruner/model_slim/weight_slim/index
 
 

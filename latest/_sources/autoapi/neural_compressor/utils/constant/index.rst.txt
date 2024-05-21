@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.utils.constant`
-==========================================
+neural_compressor.utils.constant
+================================
 
 .. py:module:: neural_compressor.utils.constant
 

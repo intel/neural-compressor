@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.data.transforms`
-========================================================
+neural_compressor.experimental.data.transforms
+==============================================
 
 .. py:module:: neural_compressor.experimental.data.transforms
 
@@ -11,37 +11,12 @@
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   imagenet_transform/index.rst
-   tokenization/index.rst
-   transform/index.rst
-
-
-Package Contents
-----------------
-
-Classes
-~~~~~~~
-
-.. autoapisummary::
-
-   neural_compressor.experimental.data.transforms.TRANSFORMS
-   neural_compressor.experimental.data.transforms.BaseTransform
-
-
-
-Functions
-~~~~~~~~~
-
-.. autoapisummary::
-
-   neural_compressor.experimental.data.transforms.transform_registry
-
-
-
-
+   /autoapi/neural_compressor/experimental/data/transforms/imagenet_transform/index
+   /autoapi/neural_compressor/experimental/data/transforms/tokenization/index
+   /autoapi/neural_compressor/experimental/data/transforms/transform/index
 
 

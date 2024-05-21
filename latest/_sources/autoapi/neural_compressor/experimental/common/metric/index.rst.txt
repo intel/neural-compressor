@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.common.metric`
-======================================================
+neural_compressor.experimental.common.metric
+============================================
 
 .. py:module:: neural_compressor.experimental.common.metric
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.experimental.common.metric.Metric
 
 
-
+Module Contents
+---------------
 
 .. py:class:: Metric(metric_cls, name='user_metric', **kwargs)
-
 
 
 

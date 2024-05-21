@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.contrib.strategy`
-============================================
+neural_compressor.contrib.strategy
+==================================
 
 .. py:module:: neural_compressor.contrib.strategy
 
@@ -11,11 +11,11 @@
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   sigopt/index.rst
-   tpe/index.rst
+   /autoapi/neural_compressor/contrib/strategy/sigopt/index
+   /autoapi/neural_compressor/contrib/strategy/tpe/index
 
 

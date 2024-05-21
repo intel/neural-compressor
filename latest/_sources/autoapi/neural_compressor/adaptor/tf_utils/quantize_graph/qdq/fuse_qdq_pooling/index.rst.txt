@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_pooling`
-================================================================================
+neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_pooling
+======================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_pooling
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_pooling.FuseNodeStartWithPooling
 
 
-
+Module Contents
+---------------
 
 .. py:class:: FuseNodeStartWithPooling(**kwargs)
-
 
 
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.compression.pruner.wanda`
-====================================================
+neural_compressor.compression.pruner.wanda
+==========================================
 
 .. py:module:: neural_compressor.compression.pruner.wanda
 
@@ -11,10 +11,10 @@
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   utils/index.rst
+   /autoapi/neural_compressor/compression/pruner/wanda/utils/index
 
 

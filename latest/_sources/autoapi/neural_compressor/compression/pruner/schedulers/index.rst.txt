@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.compression.pruner.schedulers`
-=========================================================
+neural_compressor.compression.pruner.schedulers
+===============================================
 
 .. py:module:: neural_compressor.compression.pruner.schedulers
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -22,9 +19,8 @@ Classes
    neural_compressor.compression.pruner.schedulers.IterativeScheduler
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -32,6 +28,8 @@ Functions
    neural_compressor.compression.pruner.schedulers.get_scheduler
 
 
+Module Contents
+---------------
 
 .. py:function:: register_scheduler(name)
 
@@ -61,7 +59,6 @@ Functions
 
 .. py:class:: PruningScheduler(config)
 
-
    Pruning Scheduler.
 
    The class which defines a sparsity changing process during pruning.
@@ -80,7 +77,6 @@ Functions
 
 
 
-
    Pruning Scheduler.
 
    A Scheduler class derived from Scheduler.
@@ -94,7 +90,6 @@ Functions
 
 
 .. py:class:: IterativeScheduler(config)
-
 
 
 

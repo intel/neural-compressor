@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.strategy`
-====================================
+neural_compressor.strategy
+==========================
 
 .. py:module:: neural_compressor.strategy
 
@@ -11,33 +11,29 @@
 
 Subpackages
 -----------
-.. toctree::
-   :titlesonly:
-   :maxdepth: 3
 
-   utils/index.rst
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/strategy/utils/index
 
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   auto/index.rst
-   auto_mixed_precision/index.rst
-   basic/index.rst
-   bayesian/index.rst
-   conservative/index.rst
-   exhaustive/index.rst
-   hawq_v2/index.rst
-   mse/index.rst
-   mse_v2/index.rst
-   random/index.rst
-   strategy/index.rst
-
-
-Package Contents
-----------------
+   /autoapi/neural_compressor/strategy/auto/index
+   /autoapi/neural_compressor/strategy/auto_mixed_precision/index
+   /autoapi/neural_compressor/strategy/basic/index
+   /autoapi/neural_compressor/strategy/bayesian/index
+   /autoapi/neural_compressor/strategy/conservative/index
+   /autoapi/neural_compressor/strategy/exhaustive/index
+   /autoapi/neural_compressor/strategy/hawq_v2/index
+   /autoapi/neural_compressor/strategy/mse/index
+   /autoapi/neural_compressor/strategy/mse_v2/index
+   /autoapi/neural_compressor/strategy/random/index
+   /autoapi/neural_compressor/strategy/strategy/index
 
 

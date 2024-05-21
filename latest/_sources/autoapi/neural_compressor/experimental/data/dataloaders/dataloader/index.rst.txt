@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.data.dataloaders.dataloader`
-====================================================================
+neural_compressor.experimental.data.dataloaders.dataloader
+==========================================================
 
 .. py:module:: neural_compressor.experimental.data.dataloaders.dataloader
 

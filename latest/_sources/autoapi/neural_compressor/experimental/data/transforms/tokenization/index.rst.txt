@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.data.transforms.tokenization`
-=====================================================================
+neural_compressor.experimental.data.transforms.tokenization
+===========================================================
 
 .. py:module:: neural_compressor.experimental.data.transforms.tokenization
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -22,9 +19,8 @@ Classes
    neural_compressor.experimental.data.transforms.tokenization.WordpieceTokenizer
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -34,6 +30,8 @@ Functions
    neural_compressor.experimental.data.transforms.tokenization.whitespace_tokenize
 
 
+Module Contents
+---------------
 
 .. py:function:: convert_to_unicode(text)
 
@@ -59,7 +57,6 @@ Functions
 
 
 
-
    Run end-to-end tokenziation.
 
 
@@ -67,12 +64,10 @@ Functions
 
 
 
-
    Run basic tokenization (punctuation splitting, lower casing, etc.).
 
 
 .. py:class:: WordpieceTokenizer(vocab, unk_token='[UNK]', max_input_chars_per_word=200)
-
 
 
 

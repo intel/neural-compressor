@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.utils.neural_insights_utils`
-=======================================================
+neural_compressor.utils.neural_insights_utils
+=============================================
 
 .. py:module:: neural_compressor.utils.neural_insights_utils
 
@@ -9,12 +9,8 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -24,6 +20,8 @@ Functions
    neural_compressor.utils.neural_insights_utils.get_model_path
 
 
+Module Contents
+---------------
 
 .. py:function:: register_neural_insights_workload(workload_location: str, model: Any, workload_mode: str, workload_name: str) -> Optional[str]
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.compression.pruner.utils`
-====================================================
+neural_compressor.compression.pruner.utils
+==========================================
 
 .. py:module:: neural_compressor.compression.pruner.utils
 
@@ -9,12 +9,8 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -37,6 +33,8 @@ Functions
    neural_compressor.compression.pruner.utils.collect_layer_inputs
 
 
+Module Contents
+---------------
 
 .. py:function:: get_sparsity_ratio(pruners, model)
 

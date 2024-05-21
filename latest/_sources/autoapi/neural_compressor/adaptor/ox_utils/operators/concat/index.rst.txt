@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.ox_utils.operators.concat`
-=============================================================
+neural_compressor.adaptor.ox_utils.operators.concat
+===================================================
 
 .. py:module:: neural_compressor.adaptor.ox_utils.operators.concat
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,10 +18,10 @@ Classes
    neural_compressor.adaptor.ox_utils.operators.concat.QConcatOperator
 
 
-
+Module Contents
+---------------
 
 .. py:class:: ConcatOperator(onnx_quantizer, onnx_node)
-
 
 
 
@@ -32,7 +29,6 @@ Classes
 
 
 .. py:class:: QConcatOperator(onnx_node, children, initializers)
-
 
 
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.compression.hpo`
-===========================================
+neural_compressor.compression.hpo
+=================================
 
 .. py:module:: neural_compressor.compression.hpo
 
@@ -11,10 +11,10 @@
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   sa_optimizer/index.rst
+   /autoapi/neural_compressor/compression/hpo/sa_optimizer/index
 
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.tf_utils.transform_graph.rerange_quantized_concat`
-=====================================================================================
+neural_compressor.adaptor.tf_utils.transform_graph.rerange_quantized_concat
+===========================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.transform_graph.rerange_quantized_concat
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.adaptor.tf_utils.transform_graph.rerange_quantized_concat.RerangeQuantizedConcat
 
 
-
+Module Contents
+---------------
 
 .. py:class:: RerangeQuantizedConcat(input_pb, device, performance_only=False)
-
 
 
 

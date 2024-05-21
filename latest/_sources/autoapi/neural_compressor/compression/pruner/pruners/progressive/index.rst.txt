@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.compression.pruner.pruners.progressive`
-==================================================================
+neural_compressor.compression.pruner.pruners.progressive
+========================================================
 
 .. py:module:: neural_compressor.compression.pruner.pruners.progressive
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.compression.pruner.pruners.progressive.PytorchProgressivePruner
 
 
-
+Module Contents
+---------------
 
 .. py:class:: PytorchProgressivePruner(config, modules)
-
 
 
 

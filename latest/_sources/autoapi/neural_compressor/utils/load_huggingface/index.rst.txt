@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.utils.load_huggingface`
-==================================================
+neural_compressor.utils.load_huggingface
+========================================
 
 .. py:module:: neural_compressor.utils.load_huggingface
 
@@ -9,20 +9,16 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.utils.load_huggingface.OptimizedModel
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -30,9 +26,10 @@ Functions
    neural_compressor.utils.load_huggingface.export_compressed_model
 
 
+Module Contents
+---------------
 
 .. py:class:: OptimizedModel(*args, **kwargs)
-
 
    The class provides a method from_pretrained to access Huggingface models.
 

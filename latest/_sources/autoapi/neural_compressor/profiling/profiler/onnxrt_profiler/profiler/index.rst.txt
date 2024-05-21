@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.profiling.profiler.onnxrt_profiler.profiler`
-=======================================================================
+neural_compressor.profiling.profiler.onnxrt_profiler.profiler
+=============================================================
 
 .. py:module:: neural_compressor.profiling.profiler.onnxrt_profiler.profiler
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.profiling.profiler.onnxrt_profiler.profiler.Profiler
 
 
-
+Module Contents
+---------------
 
 .. py:class:: Profiler(model: neural_compressor.model.onnx_model.ONNXModel, dataloader: neural_compressor.data.dataloaders.onnxrt_dataloader.ONNXRTDataLoader, log_file: Optional[str] = None)
-
 
 
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.post_quantized_op_cse`
-===================================================================================================
+neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.post_quantized_op_cse
+=========================================================================================
 
 .. py:module:: neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.post_quantized_op_cse
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.post_quantized_op_cse.PostCseOptimizer
 
 
-
+Module Contents
+---------------
 
 .. py:class:: PostCseOptimizer(model)
-
 
 
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.pytorch_pruner.pruning`
-===============================================================
+neural_compressor.experimental.pytorch_pruner.pruning
+=====================================================
 
 .. py:module:: neural_compressor.experimental.pytorch_pruner.pruning
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.experimental.pytorch_pruner.pruning.Pruning
 
 
-
+Module Contents
+---------------
 
 .. py:class:: Pruning(config)
-
 
    Pruning.
 

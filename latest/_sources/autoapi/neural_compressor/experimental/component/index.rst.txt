@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.component`
-==================================================
+neural_compressor.experimental.component
+========================================
 
 .. py:module:: neural_compressor.experimental.component
 
@@ -11,21 +11,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.experimental.component.Component
 
 
-
+Module Contents
+---------------
 
 .. py:class:: Component(conf_fname_or_obj=None, combination=None)
-
 
 
 

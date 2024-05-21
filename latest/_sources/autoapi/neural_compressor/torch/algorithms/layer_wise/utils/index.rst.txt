@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.torch.algorithms.layer_wise.utils`
-=============================================================
+neural_compressor.torch.algorithms.layer_wise.utils
+===================================================
 
 .. py:module:: neural_compressor.torch.algorithms.layer_wise.utils
 
@@ -9,12 +9,8 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -30,6 +26,8 @@ Functions
    neural_compressor.torch.algorithms.layer_wise.utils.load_tensor
 
 
+Module Contents
+---------------
 
 .. py:function:: get_module(model, key)
 

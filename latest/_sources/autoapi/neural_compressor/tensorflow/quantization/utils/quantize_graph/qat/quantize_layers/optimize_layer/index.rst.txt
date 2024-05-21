@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.tensorflow.quantization.utils.quantize_graph.qat.quantize_layers.optimize_layer`
-===========================================================================================================
+neural_compressor.tensorflow.quantization.utils.quantize_graph.qat.quantize_layers.optimize_layer
+=================================================================================================
 
 .. py:module:: neural_compressor.tensorflow.quantization.utils.quantize_graph.qat.quantize_layers.optimize_layer
 
@@ -9,18 +9,16 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
    neural_compressor.tensorflow.quantization.utils.quantize_graph.qat.quantize_layers.optimize_layer.config_quantizable_layers
 
 
+Module Contents
+---------------
 
 .. py:function:: config_quantizable_layers(model)
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.compression.pruner.pruners.base`
-===========================================================
+neural_compressor.compression.pruner.pruners.base
+=================================================
 
 .. py:module:: neural_compressor.compression.pruner.pruners.base
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -22,15 +19,16 @@ Classes
    neural_compressor.compression.pruner.pruners.base.KerasBasePruner
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
    neural_compressor.compression.pruner.pruners.base.register_pruner
 
 
+Module Contents
+---------------
 
 .. py:function:: register_pruner(name)
 
@@ -48,7 +46,6 @@ Functions
 
 
 .. py:class:: BasePruner(config, modules, framework='pytorch')
-
 
    Pruning Pruner.
 
@@ -116,7 +113,6 @@ Functions
 
 
 
-
    Pruning Pruner.
 
    The class which executes pruning process.
@@ -180,7 +176,6 @@ Functions
 
 
 .. py:class:: KerasBasePruner(config, modules)
-
 
 
 

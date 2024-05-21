@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.contrib`
-================================================
+neural_compressor.experimental.contrib
+======================================
 
 .. py:module:: neural_compressor.experimental.contrib
 
@@ -11,10 +11,10 @@
 
 Subpackages
 -----------
-.. toctree::
-   :titlesonly:
-   :maxdepth: 3
 
-   strategy/index.rst
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/experimental/contrib/strategy/index
 
 

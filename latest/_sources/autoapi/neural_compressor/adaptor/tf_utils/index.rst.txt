@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.tf_utils`
-============================================
+neural_compressor.adaptor.tf_utils
+==================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils
 
@@ -11,28 +11,28 @@
 
 Subpackages
 -----------
-.. toctree::
-   :titlesonly:
-   :maxdepth: 3
 
-   graph_rewriter/index.rst
-   quantize_graph/index.rst
-   transform_graph/index.rst
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/index
+   /autoapi/neural_compressor/adaptor/tf_utils/quantize_graph/index
+   /autoapi/neural_compressor/adaptor/tf_utils/transform_graph/index
 
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   graph_converter/index.rst
-   graph_converter_without_calib/index.rst
-   graph_util/index.rst
-   quantize_graph_common/index.rst
-   smooth_quant_calibration/index.rst
-   smooth_quant_scaler/index.rst
-   tf2onnx_converter/index.rst
-   util/index.rst
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_converter/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_converter_without_calib/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_util/index
+   /autoapi/neural_compressor/adaptor/tf_utils/quantize_graph_common/index
+   /autoapi/neural_compressor/adaptor/tf_utils/smooth_quant_calibration/index
+   /autoapi/neural_compressor/adaptor/tf_utils/smooth_quant_scaler/index
+   /autoapi/neural_compressor/adaptor/tf_utils/tf2onnx_converter/index
+   /autoapi/neural_compressor/adaptor/tf_utils/util/index
 
 

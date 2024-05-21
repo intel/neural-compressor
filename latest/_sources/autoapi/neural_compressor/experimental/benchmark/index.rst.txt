@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.benchmark`
-==================================================
+neural_compressor.experimental.benchmark
+========================================
 
 .. py:module:: neural_compressor.experimental.benchmark
 
@@ -9,20 +9,16 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.experimental.benchmark.Benchmark
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -36,6 +32,8 @@ Functions
    neural_compressor.experimental.benchmark.get_bounded_threads
 
 
+Module Contents
+---------------
 
 .. py:function:: set_env_var(env_var, value, overwrite_existing=False)
 
@@ -84,7 +82,6 @@ Functions
 
 
 .. py:class:: Benchmark(conf_fname_or_obj=None)
-
 
 
 

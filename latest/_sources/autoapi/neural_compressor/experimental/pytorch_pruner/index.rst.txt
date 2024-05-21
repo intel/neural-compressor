@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.pytorch_pruner`
-=======================================================
+neural_compressor.experimental.pytorch_pruner
+=============================================
 
 .. py:module:: neural_compressor.experimental.pytorch_pruner
 
@@ -11,15 +11,15 @@
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   logger/index.rst
-   patterns/index.rst
-   prune_utils/index.rst
-   pruner/index.rst
-   pruning/index.rst
-   scheduler/index.rst
+   /autoapi/neural_compressor/experimental/pytorch_pruner/logger/index
+   /autoapi/neural_compressor/experimental/pytorch_pruner/patterns/index
+   /autoapi/neural_compressor/experimental/pytorch_pruner/prune_utils/index
+   /autoapi/neural_compressor/experimental/pytorch_pruner/pruner/index
+   /autoapi/neural_compressor/experimental/pytorch_pruner/pruning/index
+   /autoapi/neural_compressor/experimental/pytorch_pruner/scheduler/index
 
 

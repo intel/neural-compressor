@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.model.keras_model`
-=============================================
+neural_compressor.model.keras_model
+===================================
 
 .. py:module:: neural_compressor.model.keras_model
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.model.keras_model.KerasModel
 
 
-
+Module Contents
+---------------
 
 .. py:class:: KerasModel(model, **kwargs)
-
 
 
 

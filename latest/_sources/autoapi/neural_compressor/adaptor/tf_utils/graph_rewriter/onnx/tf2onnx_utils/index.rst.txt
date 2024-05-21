@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils`
-==============================================================================
+neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils
+====================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils
 
@@ -9,20 +9,16 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils.SeqType
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -52,6 +48,8 @@ Functions
    neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.tf2onnx_utils.compute_const_folding_using_tf
 
 
+Module Contents
+---------------
 
 .. py:function:: set_name(name)
 
@@ -133,7 +131,6 @@ Functions
 
 
 .. py:class:: SeqType(tensor_dtype)
-
 
    Wrap around TensorProto.* to signify a tensor sequence of a given type.
 

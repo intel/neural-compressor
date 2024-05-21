@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.metric.evaluate_squad`
-==============================================================
+neural_compressor.experimental.metric.evaluate_squad
+====================================================
 
 .. py:module:: neural_compressor.experimental.metric.evaluate_squad
 
@@ -11,12 +11,8 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -26,6 +22,8 @@ Functions
    neural_compressor.experimental.metric.evaluate_squad.evaluate
 
 
+Module Contents
+---------------
 
 .. py:function:: f1_score(prediction, ground_truth)
 

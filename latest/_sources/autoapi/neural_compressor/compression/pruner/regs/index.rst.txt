@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.compression.pruner.regs`
-===================================================
+neural_compressor.compression.pruner.regs
+=========================================
 
 .. py:module:: neural_compressor.compression.pruner.regs
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,9 +18,8 @@ Classes
    neural_compressor.compression.pruner.regs.GroupLasso
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -32,6 +28,8 @@ Functions
    neural_compressor.compression.pruner.regs.get_reg
 
 
+Module Contents
+---------------
 
 .. py:function:: register_reg(name)
 
@@ -61,7 +59,6 @@ Functions
 
 .. py:class:: BaseReg(config: dict, modules: dict, pattern: neural_compressor.compression.pruner.patterns.base.PytorchBasePattern)
 
-
    Regularizer.
 
    The class that performs regularization.
@@ -72,7 +69,6 @@ Functions
 
 
 .. py:class:: GroupLasso(config: dict, modules: dict, pattern: neural_compressor.compression.pruner.patterns.base.PytorchBasePattern, coeff)
-
 
 
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.quantization`
-=====================================================
+neural_compressor.experimental.quantization
+===========================================
 
 .. py:module:: neural_compressor.experimental.quantization
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.experimental.quantization.Quantization
 
 
-
+Module Contents
+---------------
 
 .. py:class:: Quantization(conf_fname_or_obj=None)
-
 
 
 

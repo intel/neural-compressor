@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.compression.pruner.pruners.mha`
-==========================================================
+neural_compressor.compression.pruner.pruners.mha
+================================================
 
 .. py:module:: neural_compressor.compression.pruner.pruners.mha
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.compression.pruner.pruners.mha.PythonMultiheadAttentionPruner
 
 
-
+Module Contents
+---------------
 
 .. py:class:: PythonMultiheadAttentionPruner(config, mha_modules)
-
 
 
 

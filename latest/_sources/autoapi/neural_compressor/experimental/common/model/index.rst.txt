@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.common.model`
-=====================================================
+neural_compressor.experimental.common.model
+===========================================
 
 .. py:module:: neural_compressor.experimental.common.model
 
@@ -9,29 +9,26 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.experimental.common.model.Model
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
    neural_compressor.experimental.common.model.set_backend
 
 
+Module Contents
+---------------
 
 .. py:class:: Model
-
 
 
 

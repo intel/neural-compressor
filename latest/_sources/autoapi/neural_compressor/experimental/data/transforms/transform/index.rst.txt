@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.data.transforms.transform`
-==================================================================
+neural_compressor.experimental.data.transforms.transform
+========================================================
 
 .. py:module:: neural_compressor.experimental.data.transforms.transform
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -84,9 +81,8 @@ Classes
    neural_compressor.experimental.data.transforms.transform.ParseDecodeVocTransform
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -97,9 +93,10 @@ Functions
    neural_compressor.experimental.data.transforms.transform.convert_examples_to_features
 
 
+Module Contents
+---------------
 
 .. py:class:: Transforms(process, concat_general=True)
-
 
 
 
@@ -113,12 +110,10 @@ Functions
 
 
 
-
    Tensorflow Transforms subclass.
 
 
 .. py:class:: MXNetTransforms(process, concat_general=True)
-
 
 
 
@@ -129,12 +124,10 @@ Functions
 
 
 
-
    Pytorch Transforms subclass.
 
 
 .. py:class:: ONNXRTQLTransforms(process, concat_general=True)
-
 
 
 
@@ -145,12 +138,10 @@ Functions
 
 
 
-
    Onnxrt_integerops Transforms subclass.
 
 
 .. py:class:: TRANSFORMS(framework, process)
-
 
 
 
@@ -181,12 +172,10 @@ Functions
 
 
 
-
    The base class for transform.
 
 
 .. py:class:: TensorflowWrapFunction(transform_func)
-
 
 
 
@@ -197,7 +186,6 @@ Functions
 
 
 
-
    Tensorflow transform class, the subclass of BaseTransform.
 
 
@@ -205,12 +193,10 @@ Functions
 
 
 
-
    Pytorch and MXNet wrapper function class.
 
 
 .. py:class:: PytorchMxnetTransform(transform_func)
-
 
 
 
@@ -226,7 +212,6 @@ Functions
 
 
 
-
    Composes several transforms together.
 
    :param transform_list: list of transforms to compose
@@ -237,7 +222,6 @@ Functions
 
 
 .. py:class:: CropToBoundingBox(offset_height, offset_width, target_height, target_width)
-
 
 
 
@@ -259,7 +243,6 @@ Functions
 
 
 
-
    Crops an image to a specified bounding box.
 
    :param offset_height: Vertical coordinate of the top-left corner of the result in the input
@@ -275,7 +258,6 @@ Functions
 
 
 .. py:class:: ONNXRTCropToBoundingBox(offset_height, offset_width, target_height, target_width)
-
 
 
 
@@ -297,7 +279,6 @@ Functions
 
 
 
-
    Crops an image to a specified bounding box.
 
    :param offset_height: Vertical coordinate of the top-left corner of the result in the input
@@ -313,7 +294,6 @@ Functions
 
 
 .. py:class:: ResizeWithRatio(min_dim=800, max_dim=1365, padding=False, constant_value=0)
-
 
 
 
@@ -336,7 +316,6 @@ Functions
 
 
 
-
    Resize image with aspect ratio and pad it to max shape(optional).
 
    If the image is padded, the label will be processed at the same time.
@@ -356,7 +335,6 @@ Functions
 
 
 
-
    Transpose image according to perm.
 
    :param perm: A permutation of the dimensions of input image
@@ -366,7 +344,6 @@ Functions
 
 
 .. py:class:: TensorflowTranspose(perm)
-
 
 
 
@@ -382,7 +359,6 @@ Functions
 
 
 
-
    Transpose image according to perm.
 
    :param perm: A permutation of the dimensions of input image
@@ -392,7 +368,6 @@ Functions
 
 
 .. py:class:: PyTorchTranspose(perm)
-
 
 
 
@@ -408,14 +383,12 @@ Functions
 
 
 
-
    Vertically flip the given image randomly.
 
    :returns: tuple of processed image and label
 
 
 .. py:class:: TensorflowRandomVerticalFlip
-
 
 
 
@@ -428,14 +401,12 @@ Functions
 
 
 
-
    Horizontally flip the given image randomly.
 
    :returns: tuple of processed image and label
 
 
 .. py:class:: TensorflowRandomHorizontalFlip
-
 
 
 
@@ -448,14 +419,12 @@ Functions
 
 
 
-
    Convert PIL Image or NDArray to numpy array.
 
    :returns: tuple of processed image and label
 
 
 .. py:class:: CastTFTransform(dtype='float32')
-
 
 
 
@@ -471,7 +440,6 @@ Functions
 
 
 
-
    Convert image to given dtype.
 
    :param dtype: A dtype to convert image to
@@ -481,7 +449,6 @@ Functions
 
 
 .. py:class:: CastPyTorchTransform(dtype='float32')
-
 
 
 
@@ -497,7 +464,6 @@ Functions
 
 
 
-
    Crops the given image at the center to the given size.
 
    :param size: Size of the result
@@ -507,7 +473,6 @@ Functions
 
 
 .. py:class:: PaddedCenterCropTransform(size, crop_padding=0)
-
 
 
 
@@ -522,7 +487,6 @@ Functions
 
 
 .. py:class:: ResizeTFTransform(size, interpolation='bilinear')
-
 
 
 
@@ -541,7 +505,6 @@ Functions
 
 
 
-
    Resize the input image to the given size.
 
    :param size: Size of the result
@@ -557,7 +520,6 @@ Functions
 
 
 
-
    Crop the image at a random location to the given size.
 
    :param size: Size of the result
@@ -567,7 +529,6 @@ Functions
 
 
 .. py:class:: RandomResizedCropPytorchTransform(size, scale=(0.08, 1.0), ratio=(3.0 / 4.0, 4.0 / 3.0), interpolation='bilinear')
-
 
 
 
@@ -589,7 +550,6 @@ Functions
 
 
 
-
    Crop the given image to random size and aspect ratio.
 
    :param size: Size of the result
@@ -605,7 +565,6 @@ Functions
 
 
 .. py:class:: RandomResizedCropTFTransform(size, scale=(0.08, 1.0), ratio=(3.0 / 4.0, 4.0 / 3.0), interpolation='bilinear')
-
 
 
 
@@ -627,7 +586,6 @@ Functions
 
 
 
-
    Normalize a image with mean and standard deviation.
 
    :param mean: means for each channel, if len(mean)=1, mean will be broadcasted to each channel,
@@ -644,14 +602,12 @@ Functions
 
 
 
-
    Scale the values of image to [0,1].
 
    :returns: tuple of processed image and label
 
 
 .. py:class:: RescaleTFTransform
-
 
 
 
@@ -664,14 +620,12 @@ Functions
 
 
 
-
    Scale the values of image to [0,1].
 
    :returns: tuple of processed image and label
 
 
 .. py:class:: AlignImageChannelTransform(dim=3)
-
 
 
 
@@ -686,7 +640,6 @@ Functions
 
 
 
-
    Align image channel, now just support [H,W,4]->[H,W,3] and [H,W,3]->[H,W].
 
    Input image must be PIL Image.
@@ -698,14 +651,12 @@ Functions
 
 
 
-
    Convert np.array to NDArray.
 
    :returns: tuple of processed image and label
 
 
 .. py:class:: ResizeMXNetTransform(size, interpolation='bilinear')
-
 
 
 
@@ -724,7 +675,6 @@ Functions
 
 
 
-
    Resize the input image to the given size.
 
    :param size: Size of the result
@@ -739,7 +689,6 @@ Functions
 
 
 .. py:class:: CropResizeTFTransform(x, y, width, height, size, interpolation='bilinear')
-
 
 
 
@@ -766,7 +715,6 @@ Functions
 
 
 
-
    Crop the input image with given location and resize it.
 
    :param x: Left boundary of the cropping area
@@ -787,7 +735,6 @@ Functions
 
 
 .. py:class:: MXNetCropResizeTransform(x, y, width, height, size, interpolation='bilinear')
-
 
 
 
@@ -814,7 +761,6 @@ Functions
 
 
 
-
    Crop the input image with given location and resize it.
 
    :param x: Left boundary of the cropping area
@@ -838,7 +784,6 @@ Functions
 
 
 
-
    Crops the given image at the center to the given size.
 
    :param size: Size of the result
@@ -848,7 +793,6 @@ Functions
 
 
 .. py:class:: MXNetNormalizeTransform(mean=[0.0], std=[1.0])
-
 
 
 
@@ -868,7 +812,6 @@ Functions
 
 
 
-
    Normalize a image with mean and standard deviation.
 
    :param mean: means for each channel, if len(mean)=1, mean will be broadcasted to each channel,
@@ -882,7 +825,6 @@ Functions
 
 
 .. py:class:: NormalizeTransform(mean=[0.0], std=[1.0])
-
 
 
 
@@ -902,7 +844,6 @@ Functions
 
 
 
-
    Crop the image at a random location to the given size.
 
    :param size: Size of the result
@@ -912,7 +853,6 @@ Functions
 
 
 .. py:class:: RandomResizedCropTransform(size, scale=(0.08, 1.0), ratio=(3.0 / 4.0, 4.0 / 3.0), interpolation='bilinear')
-
 
 
 
@@ -939,14 +879,12 @@ Functions
 
 
 
-
    A single training/test example for simple sequence classification.
 
    For examples without an answer, the start and end position are -1.
 
 
 .. py:class:: InputFeatures(unique_id, example_index, doc_span_index, tokens, token_to_orig_map, token_is_max_context, input_ids, input_mask, segment_ids, start_position=None, end_position=None, is_impossible=None)
-
 
 
 
@@ -967,12 +905,10 @@ Functions
 
 
 
-
    Postprocess the predictions, collect data.
 
 
 .. py:class:: TFSquadV1PostTransform(label_file, vocab_file, n_best_size=20, max_seq_length=384, max_query_length=64, max_answer_length=30, do_lower_case=True, doc_stride=128)
-
 
 
 
@@ -1007,12 +943,10 @@ Functions
 
 
 
-
    Postprocess the predictions of model zoo, collect data.
 
 
 .. py:class:: TFSquadV1ModelZooPostTransform(label_file, vocab_file, n_best_size=20, max_seq_length=384, max_query_length=64, max_answer_length=30, do_lower_case=True, doc_stride=128)
-
 
 
 
@@ -1022,7 +956,6 @@ Functions
 
 
 .. py:class:: ParseDecodeVocTransform
-
 
 
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.metric.bleu_util`
-=========================================================
+neural_compressor.experimental.metric.bleu_util
+===============================================
 
 .. py:module:: neural_compressor.experimental.metric.bleu_util
 
@@ -12,18 +12,16 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
    neural_compressor.experimental.metric.bleu_util.compute_bleu
 
 
+Module Contents
+---------------
 
 .. py:function:: compute_bleu(reference_corpus: Union[Sequence[str], Sequence[Sequence[str]]], translation_corpus: Sequence[str], max_order: int = 4, use_bp: bool = True) -> float
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.ox_utils.operators.split`
-============================================================
+neural_compressor.adaptor.ox_utils.operators.split
+==================================================
 
 .. py:module:: neural_compressor.adaptor.ox_utils.operators.split
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,10 +18,10 @@ Classes
    neural_compressor.adaptor.ox_utils.operators.split.QSplitOperator
 
 
-
+Module Contents
+---------------
 
 .. py:class:: SplitOperator(onnx_quantizer, onnx_node)
-
 
 
 
@@ -32,7 +29,6 @@ Classes
 
 
 .. py:class:: QSplitOperator(onnx_node, children, initializers)
-
 
 
 

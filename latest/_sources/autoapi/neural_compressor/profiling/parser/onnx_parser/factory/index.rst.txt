@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.profiling.parser.onnx_parser.factory`
-================================================================
+neural_compressor.profiling.parser.onnx_parser.factory
+======================================================
 
 .. py:module:: neural_compressor.profiling.parser.onnx_parser.factory
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.profiling.parser.onnx_parser.factory.OnnxrtParserFactory
 
 
-
+Module Contents
+---------------
 
 .. py:class:: OnnxrtParserFactory
-
 
    Parser factory.
 

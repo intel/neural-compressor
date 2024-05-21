@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.data.dataloaders.fetcher`
-=================================================================
+neural_compressor.experimental.data.dataloaders.fetcher
+=======================================================
 
 .. py:module:: neural_compressor.experimental.data.dataloaders.fetcher
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -22,10 +19,10 @@ Classes
    neural_compressor.experimental.data.dataloaders.fetcher.IndexFetcher
 
 
-
+Module Contents
+---------------
 
 .. py:class:: Fetcher(dataset, collate_fn, drop_last)
-
 
 
 
@@ -36,12 +33,10 @@ Classes
 
 
 
-
    Iterate to get next batch-size samples as a batch.
 
 
 .. py:class:: IndexFetcher(dataset, collate_fn, drop_last, distributed)
-
 
 
 

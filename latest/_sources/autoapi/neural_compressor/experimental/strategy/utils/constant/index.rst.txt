@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.strategy.utils.constant`
-================================================================
+neural_compressor.experimental.strategy.utils.constant
+======================================================
 
 .. py:module:: neural_compressor.experimental.strategy.utils.constant
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.strategy.basic`
-==========================================
+neural_compressor.strategy.basic
+================================
 
 .. py:module:: neural_compressor.strategy.basic
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.strategy.basic.BasicTuneStrategy
 
 
-
+Module Contents
+---------------
 
 .. py:class:: BasicTuneStrategy
-
 
 
 

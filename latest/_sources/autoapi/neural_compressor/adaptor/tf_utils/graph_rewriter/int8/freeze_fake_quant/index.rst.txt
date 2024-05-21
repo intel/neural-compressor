@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.tf_utils.graph_rewriter.int8.freeze_fake_quant`
-==================================================================================
+neural_compressor.adaptor.tf_utils.graph_rewriter.int8.freeze_fake_quant
+========================================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.int8.freeze_fake_quant
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.adaptor.tf_utils.graph_rewriter.int8.freeze_fake_quant.FreezeFakeQuantOpOptimizer
 
 
-
+Module Contents
+---------------
 
 .. py:class:: FreezeFakeQuantOpOptimizer(model)
-
 
 
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.mxnet_utils`
-===============================================
+neural_compressor.adaptor.mxnet_utils
+=====================================
 
 .. py:module:: neural_compressor.adaptor.mxnet_utils
 
@@ -11,10 +11,10 @@
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   util/index.rst
+   /autoapi/neural_compressor/adaptor/mxnet_utils/util/index
 
 

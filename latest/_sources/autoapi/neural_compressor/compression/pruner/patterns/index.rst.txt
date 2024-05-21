@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.compression.pruner.patterns`
-=======================================================
+neural_compressor.compression.pruner.patterns
+=============================================
 
 .. py:module:: neural_compressor.compression.pruner.patterns
 
@@ -11,28 +11,26 @@
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   base/index.rst
-   mha/index.rst
-   ninm/index.rst
-   nxm/index.rst
-
-
-Package Contents
-----------------
+   /autoapi/neural_compressor/compression/pruner/patterns/base/index
+   /autoapi/neural_compressor/compression/pruner/patterns/mha/index
+   /autoapi/neural_compressor/compression/pruner/patterns/ninm/index
+   /autoapi/neural_compressor/compression/pruner/patterns/nxm/index
 
 
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
    neural_compressor.compression.pruner.patterns.get_pattern
 
 
+Package Contents
+----------------
 
 .. py:function:: get_pattern(config, modules, framework='pytorch')
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.torch_utils.hawq_metric`
-===========================================================
+neural_compressor.adaptor.torch_utils.hawq_metric
+=================================================
 
 .. py:module:: neural_compressor.adaptor.torch_utils.hawq_metric
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,9 +18,8 @@ Classes
    neural_compressor.adaptor.torch_utils.hawq_metric.HessianTrace
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -31,15 +27,15 @@ Functions
    neural_compressor.adaptor.torch_utils.hawq_metric.hawq_top
 
 
+Module Contents
+---------------
 
 .. py:class:: Node_collector(m)
-
 
    Define Collector based on hook, which is used to record the intermediate result.
 
 
 .. py:class:: HessianTrace(model, dataloader, q_model, criterion=None)
-
 
    HessianTrace Class.
 

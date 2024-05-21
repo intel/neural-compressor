@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.model_conversion`
-=========================================================
+neural_compressor.experimental.model_conversion
+===============================================
 
 .. py:module:: neural_compressor.experimental.model_conversion
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.experimental.model_conversion.ModelConversion
 
 
-
+Module Contents
+---------------
 
 .. py:class:: ModelConversion(conf_fname_or_obj=None)
-
 
    ModelConversion class is used to convert one model format to another.
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.pruner_legacy`
-======================================================
+neural_compressor.experimental.pruner_legacy
+============================================
 
 .. py:module:: neural_compressor.experimental.pruner_legacy
 
@@ -11,18 +11,14 @@
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   gradient_sensitivity/index.rst
-   group_lasso/index.rst
-   magnitude/index.rst
-   pattern_lock/index.rst
-   pruner/index.rst
-
-
-Package Contents
-----------------
+   /autoapi/neural_compressor/experimental/pruner_legacy/gradient_sensitivity/index
+   /autoapi/neural_compressor/experimental/pruner_legacy/group_lasso/index
+   /autoapi/neural_compressor/experimental/pruner_legacy/magnitude/index
+   /autoapi/neural_compressor/experimental/pruner_legacy/pattern_lock/index
+   /autoapi/neural_compressor/experimental/pruner_legacy/pruner/index
 
 

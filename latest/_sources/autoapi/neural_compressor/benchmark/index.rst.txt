@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.benchmark`
-=====================================
+neural_compressor.benchmark
+===========================
 
 .. py:module:: neural_compressor.benchmark
 
@@ -9,12 +9,8 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -36,6 +32,8 @@ Functions
    neural_compressor.benchmark.fit
 
 
+Module Contents
+---------------
 
 .. py:function:: set_env_var(env_var, value, overwrite_existing=False)
 

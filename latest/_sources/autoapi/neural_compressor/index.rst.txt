@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor`
-===========================
+neural_compressor
+=================
 
 .. py:module:: neural_compressor
 
@@ -11,33 +11,33 @@
 
 Subpackages
 -----------
-.. toctree::
-   :titlesonly:
-   :maxdepth: 3
 
-   algorithm/index.rst
-   contrib/index.rst
-   data/index.rst
-   experimental/index.rst
-   metric/index.rst
-   model/index.rst
-   profiling/index.rst
-   strategy/index.rst
-   utils/index.rst
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/algorithm/index
+   /autoapi/neural_compressor/contrib/index
+   /autoapi/neural_compressor/data/index
+   /autoapi/neural_compressor/experimental/index
+   /autoapi/neural_compressor/metric/index
+   /autoapi/neural_compressor/model/index
+   /autoapi/neural_compressor/profiling/index
+   /autoapi/neural_compressor/strategy/index
+   /autoapi/neural_compressor/utils/index
 
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   benchmark/index.rst
-   config/index.rst
-   mix_precision/index.rst
-   objective/index.rst
-   quantization/index.rst
-   training/index.rst
-   version/index.rst
+   /autoapi/neural_compressor/benchmark/index
+   /autoapi/neural_compressor/config/index
+   /autoapi/neural_compressor/mix_precision/index
+   /autoapi/neural_compressor/objective/index
+   /autoapi/neural_compressor/quantization/index
+   /autoapi/neural_compressor/training/index
+   /autoapi/neural_compressor/version/index
 
 

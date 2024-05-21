@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.torch_utils.layer_wise_quant`
-================================================================
+neural_compressor.adaptor.torch_utils.layer_wise_quant
+======================================================
 
 .. py:module:: neural_compressor.adaptor.torch_utils.layer_wise_quant
 
@@ -11,13 +11,13 @@
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   modified_pickle/index.rst
-   quantize/index.rst
-   torch_load/index.rst
-   utils/index.rst
+   /autoapi/neural_compressor/adaptor/torch_utils/layer_wise_quant/modified_pickle/index
+   /autoapi/neural_compressor/adaptor/torch_utils/layer_wise_quant/quantize/index
+   /autoapi/neural_compressor/adaptor/torch_utils/layer_wise_quant/torch_load/index
+   /autoapi/neural_compressor/adaptor/torch_utils/layer_wise_quant/utils/index
 
 

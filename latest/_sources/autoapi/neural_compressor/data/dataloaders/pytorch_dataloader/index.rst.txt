@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.data.dataloaders.pytorch_dataloader`
-===============================================================
+neural_compressor.data.dataloaders.pytorch_dataloader
+=====================================================
 
 .. py:module:: neural_compressor.data.dataloaders.pytorch_dataloader
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.data.dataloaders.pytorch_dataloader.PyTorchDataLoader
 
 
-
+Module Contents
+---------------
 
 .. py:class:: PyTorchDataLoader(dataset, batch_size=1, last_batch='rollover', collate_fn=None, sampler=None, batch_sampler=None, num_workers=0, pin_memory=False, shuffle=False, distributed=False)
-
 
 
 

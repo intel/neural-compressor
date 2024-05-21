@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.nas.nas`
-================================================
+neural_compressor.experimental.nas.nas
+======================================
 
 .. py:module:: neural_compressor.experimental.nas.nas
 
@@ -12,11 +12,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -24,10 +21,10 @@ Classes
    neural_compressor.experimental.nas.nas.NASBase
 
 
-
+Module Contents
+---------------
 
 .. py:class:: NAS
-
 
 
 
@@ -40,7 +37,6 @@ Classes
 
 
 .. py:class:: NASBase(search_space=None, model_builder=None)
-
 
 
 

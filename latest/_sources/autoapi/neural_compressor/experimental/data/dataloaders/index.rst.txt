@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.data.dataloaders`
-=========================================================
+neural_compressor.experimental.data.dataloaders
+===============================================
 
 .. py:module:: neural_compressor.experimental.data.dataloaders
 
@@ -11,22 +11,18 @@
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   base_dataloader/index.rst
-   dataloader/index.rst
-   default_dataloader/index.rst
-   fetcher/index.rst
-   mxnet_dataloader/index.rst
-   onnxrt_dataloader/index.rst
-   pytorch_dataloader/index.rst
-   sampler/index.rst
-   tensorflow_dataloader/index.rst
-
-
-Package Contents
-----------------
+   /autoapi/neural_compressor/experimental/data/dataloaders/base_dataloader/index
+   /autoapi/neural_compressor/experimental/data/dataloaders/dataloader/index
+   /autoapi/neural_compressor/experimental/data/dataloaders/default_dataloader/index
+   /autoapi/neural_compressor/experimental/data/dataloaders/fetcher/index
+   /autoapi/neural_compressor/experimental/data/dataloaders/mxnet_dataloader/index
+   /autoapi/neural_compressor/experimental/data/dataloaders/onnxrt_dataloader/index
+   /autoapi/neural_compressor/experimental/data/dataloaders/pytorch_dataloader/index
+   /autoapi/neural_compressor/experimental/data/dataloaders/sampler/index
+   /autoapi/neural_compressor/experimental/data/dataloaders/tensorflow_dataloader/index
 
 

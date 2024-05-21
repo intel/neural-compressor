@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.strategy.auto`
-=========================================
+neural_compressor.strategy.auto
+===============================
 
 .. py:module:: neural_compressor.strategy.auto
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.strategy.auto.AutoTuneStrategy
 
 
-
+Module Contents
+---------------
 
 .. py:class:: AutoTuneStrategy(model, conf, q_dataloader=None, q_func=None, eval_func=None, eval_dataloader=None, eval_metric=None, resume=None, q_hooks=None)
-
 
 
 

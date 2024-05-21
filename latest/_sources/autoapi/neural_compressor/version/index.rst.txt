@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.version`
-===================================
+neural_compressor.version
+=========================
 
 .. py:module:: neural_compressor.version
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.strategy.utils.tuning_sampler`
-======================================================================
+neural_compressor.experimental.strategy.utils.tuning_sampler
+============================================================
 
 .. py:module:: neural_compressor.experimental.strategy.utils.tuning_sampler
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -27,22 +24,20 @@ Classes
    neural_compressor.experimental.strategy.utils.tuning_sampler.SmoothQuantSampler
 
 
-
+Module Contents
+---------------
 
 .. py:class:: TuningSamplerRegistry
-
 
    Class decorator used to register all TuningSampler subclasses.
 
 
 .. py:class:: TuningOrder
 
-
    Not displayed in API Docs.
 
 
 .. py:class:: TuningSampler(tuning_space: neural_compressor.experimental.strategy.utils.tuning_space.TuningSpace, tuning_order_lst: List[TuningOrder], initial_op_tuning_cfg: Dict, kwargs: Dict = {})
-
 
    Not displayed in API Docs.
 
@@ -53,12 +48,10 @@ Classes
 
 
 
-
    Not displayed in API Docs.
 
 
 .. py:class:: OpTypeWiseTuningSampler(tuning_space: neural_compressor.experimental.strategy.utils.tuning_space.TuningSpace, tuning_items_priority: List[str], tuning_order_lst: List[TuningOrder], op_dtype_dict: Dict[tuple, str], initial_op_tuning_cfg: Dict[tuple, neural_compressor.experimental.strategy.utils.tuning_structs.OpTuningConfig])
-
 
 
 
@@ -69,7 +62,6 @@ Classes
 
 
 
-
    Not displayed in API Docs.
 
 
@@ -77,12 +69,10 @@ Classes
 
 
 
-
    Not displayed in API Docs.
 
 
 .. py:class:: SmoothQuantSampler(tuning_space: neural_compressor.experimental.strategy.utils.tuning_space.TuningSpace, tuning_order_lst: List[TuningOrder], initial_op_tuning_cfg: Dict, kwargs: Dict = {})
-
 
 
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.onnxrt.algorithms.smoother.core`
-===========================================================
+neural_compressor.onnxrt.algorithms.smoother.core
+=================================================
 
 .. py:module:: neural_compressor.onnxrt.algorithms.smoother.core
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.onnxrt.algorithms.smoother.core.Smoother
 
 
-
+Module Contents
+---------------
 
 .. py:class:: Smoother(model: Union[onnx.ModelProto, neural_compressor.onnxrt.utils.onnx_model.ONNXModel, pathlib.Path, str], dataloader: neural_compressor.onnxrt.quantization.calibrate.CalibrationDataReader, providers: List[str] = ['CPUExecutionProvider'])
-
 
    Fake input channel quantization.
 

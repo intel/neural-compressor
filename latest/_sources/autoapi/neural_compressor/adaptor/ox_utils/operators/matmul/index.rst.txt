@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.ox_utils.operators.matmul`
-=============================================================
+neural_compressor.adaptor.ox_utils.operators.matmul
+===================================================
 
 .. py:module:: neural_compressor.adaptor.ox_utils.operators.matmul
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -22,10 +19,10 @@ Classes
    neural_compressor.adaptor.ox_utils.operators.matmul.FusedMatMulOperator
 
 
-
+Module Contents
+---------------
 
 .. py:class:: MatMulOperator(onnx_quantizer, onnx_node)
-
 
 
 
@@ -36,12 +33,10 @@ Classes
 
 
 
-
    QLinearMatMul Operator.
 
 
 .. py:class:: FusedMatMulOperator(onnx_quantizer, onnx_node)
-
 
 
 

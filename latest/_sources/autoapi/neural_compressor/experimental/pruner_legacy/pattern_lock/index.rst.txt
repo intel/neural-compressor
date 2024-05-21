@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.pruner_legacy.pattern_lock`
-===================================================================
+neural_compressor.experimental.pruner_legacy.pattern_lock
+=========================================================
 
 .. py:module:: neural_compressor.experimental.pruner_legacy.pattern_lock
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.experimental.pruner_legacy.pattern_lock.PatternLockPruner
 
 
-
+Module Contents
+---------------
 
 .. py:class:: PatternLockPruner(model, local_config, global_config)
-
 
 
 

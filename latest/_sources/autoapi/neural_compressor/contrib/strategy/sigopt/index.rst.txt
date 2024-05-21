@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.contrib.strategy.sigopt`
-===================================================
+neural_compressor.contrib.strategy.sigopt
+=========================================
 
 .. py:module:: neural_compressor.contrib.strategy.sigopt
 
@@ -9,21 +9,18 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.contrib.strategy.sigopt.SigOptTuneStrategy
 
 
-
+Module Contents
+---------------
 
 .. py:class:: SigOptTuneStrategy(model, conf, q_dataloader=None, q_func=None, eval_func=None, eval_dataloader=None, eval_metric=None, resume=None, q_hooks=None)
-
 
 
 

@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.adaptor.tf_utils.quantize_graph.qdq`
-===============================================================
+neural_compressor.adaptor.tf_utils.quantize_graph.qdq
+=====================================================
 
 .. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qdq
 
@@ -11,17 +11,17 @@
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   fuse_qdq_bn/index.rst
-   fuse_qdq_concatv2/index.rst
-   fuse_qdq_conv/index.rst
-   fuse_qdq_deconv/index.rst
-   fuse_qdq_in/index.rst
-   fuse_qdq_matmul/index.rst
-   fuse_qdq_pooling/index.rst
-   optimize_qdq/index.rst
+   /autoapi/neural_compressor/adaptor/tf_utils/quantize_graph/qdq/fuse_qdq_bn/index
+   /autoapi/neural_compressor/adaptor/tf_utils/quantize_graph/qdq/fuse_qdq_concatv2/index
+   /autoapi/neural_compressor/adaptor/tf_utils/quantize_graph/qdq/fuse_qdq_conv/index
+   /autoapi/neural_compressor/adaptor/tf_utils/quantize_graph/qdq/fuse_qdq_deconv/index
+   /autoapi/neural_compressor/adaptor/tf_utils/quantize_graph/qdq/fuse_qdq_in/index
+   /autoapi/neural_compressor/adaptor/tf_utils/quantize_graph/qdq/fuse_qdq_matmul/index
+   /autoapi/neural_compressor/adaptor/tf_utils/quantize_graph/qdq/fuse_qdq_pooling/index
+   /autoapi/neural_compressor/adaptor/tf_utils/quantize_graph/qdq/optimize_qdq/index
 
 

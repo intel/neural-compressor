@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.pruning_v2`
-===================================================
+neural_compressor.experimental.pruning_v2
+=========================================
 
 .. py:module:: neural_compressor.experimental.pruning_v2
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -21,10 +18,10 @@ Classes
    neural_compressor.experimental.pruning_v2.TfPruningCallback
 
 
-
+Module Contents
+---------------
 
 .. py:class:: Pruning(conf_fname_or_obj=None)
-
 
 
 
@@ -50,7 +47,6 @@ Classes
 
 
 .. py:class:: TfPruningCallback(nc_model, input_model, hooks)
-
 
 
 

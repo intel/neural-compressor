@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.experimental.export.torch2onnx`
-==========================================================
+neural_compressor.experimental.export.torch2onnx
+================================================
 
 .. py:module:: neural_compressor.experimental.export.torch2onnx
 
@@ -9,12 +9,8 @@
 
 
 
-Module Contents
----------------
-
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -26,6 +22,8 @@ Functions
    neural_compressor.experimental.export.torch2onnx.torch_to_int8_onnx
 
 
+Module Contents
+---------------
 
 .. py:function:: get_node_mapping(fp32_model, fp32_onnx_path)
 

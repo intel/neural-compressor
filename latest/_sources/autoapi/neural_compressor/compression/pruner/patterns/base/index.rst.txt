@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.compression.pruner.patterns.base`
-============================================================
+neural_compressor.compression.pruner.patterns.base
+==================================================
 
 .. py:module:: neural_compressor.compression.pruner.patterns.base
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -22,15 +19,16 @@ Classes
    neural_compressor.compression.pruner.patterns.base.KerasBasePattern
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
    neural_compressor.compression.pruner.patterns.base.register_pattern
 
 
+Module Contents
+---------------
 
 .. py:function:: register_pattern(name)
 
@@ -46,7 +44,6 @@ Functions
 
 
 .. py:class:: BasePattern(config, modules)
-
 
    Pruning Pattern.
 
@@ -99,7 +96,6 @@ Functions
 
 
 
-
    Pruning Pattern.
 
    It defines the basic pruning unit and how this unit will be pruned during pruning, e.g. 4x1, 2:4.
@@ -148,7 +144,6 @@ Functions
 
 
 .. py:class:: KerasBasePattern(config, modules)
-
 
 
 

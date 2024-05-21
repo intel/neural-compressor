@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.torch.algorithms.weight_only.modules`
-================================================================
+neural_compressor.torch.algorithms.weight_only.modules
+======================================================
 
 .. py:module:: neural_compressor.torch.algorithms.weight_only.modules
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -22,10 +19,10 @@ Classes
    neural_compressor.torch.algorithms.weight_only.modules.MulLinear
 
 
-
+Module Contents
+---------------
 
 .. py:class:: FakeAffineTensorQuantFunction
-
 
 
 
@@ -36,12 +33,10 @@ Classes
 
 
 
-
    Wrapper quantization linear.
 
 
 .. py:class:: MulLinear(module, input_scale=None)
-
 
 
 

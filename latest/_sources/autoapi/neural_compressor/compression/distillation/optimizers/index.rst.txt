@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.compression.distillation.optimizers`
-===============================================================
+neural_compressor.compression.distillation.optimizers
+=====================================================
 
 .. py:module:: neural_compressor.compression.distillation.optimizers
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -26,18 +23,18 @@ Classes
    neural_compressor.compression.distillation.optimizers.PyTorchSGD
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
    neural_compressor.compression.distillation.optimizers.optimizer_registry
 
 
+Module Contents
+---------------
 
 .. py:class:: TensorflowOptimizers
-
 
 
 
@@ -48,12 +45,10 @@ Functions
 
 
 
-
    Class to get all registered PyTorch Optimizers once only.
 
 
 .. py:class:: Optimizers(framework)
-
 
 
 
@@ -79,7 +74,6 @@ Functions
 
 
 
-
    TensorFlow keras SGD optimizer.
 
    :param param_dict: The dict of parameters setting by user for SGD optimizer
@@ -87,7 +81,6 @@ Functions
 
 
 .. py:class:: TensorFlowAdamW(param_dict)
-
 
 
 
@@ -101,7 +94,6 @@ Functions
 
 
 
-
    Tensorflow Adam optimizer.
 
    :param param_dict: The dict of parameters setting by user for Adam optimizer
@@ -109,7 +101,6 @@ Functions
 
 
 .. py:class:: PyTorchSGD(param_dict)
-
 
 
 

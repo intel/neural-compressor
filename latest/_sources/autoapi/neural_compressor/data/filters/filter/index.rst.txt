@@ -1,5 +1,5 @@
-:py:mod:`neural_compressor.data.filters.filter`
-===============================================
+neural_compressor.data.filters.filter
+=====================================
 
 .. py:module:: neural_compressor.data.filters.filter
 
@@ -9,11 +9,8 @@
 
 
 
-Module Contents
----------------
-
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -26,18 +23,18 @@ Classes
    neural_compressor.data.filters.filter.Filter
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
    neural_compressor.data.filters.filter.filter_registry
 
 
+Module Contents
+---------------
 
 .. py:class:: TensorflowFilters
-
 
 
 
@@ -48,12 +45,10 @@ Functions
 
 
 
-
    The base filter class for ONNXRT framework QLinear mode.
 
 
 .. py:class:: ONNXRTITFilters
-
 
 
 
@@ -64,7 +59,6 @@ Functions
 
 
 
-
    The base filter class for PyTorch framework.
 
 
@@ -72,12 +66,10 @@ Functions
 
 
 
-
    The base filter class for MXNet framework.
 
 
 .. py:class:: FILTERS(framework)
-
 
 
 
@@ -106,7 +98,6 @@ Functions
 
 
 .. py:class:: Filter
-
 
 
 
