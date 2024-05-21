@@ -61,12 +61,20 @@ class ONNXModel(ORTONNXModel):
         self._get_graph_info()
         self._q_config = None
 
-        # remove nodes which are not follwed by other nodes
-        unvalid_node = [i for i in self.model.graph.node if all(out not in self._input_name_to_nodes and not self.is_graph_output(out) for out in i.output)]
+        # remove nodes which are not followed by other nodes
+        unvalid_node = [
+            i
+            for i in self.model.graph.node
+            if all(out not in self._input_name_to_nodes and not self.is_graph_output(out) for out in i.output)
+        ]
         while len(unvalid_node) > 0:
             self.remove_nodes(unvalid_node)
             self._input_name_to_nodes = self.input_name_to_nodes()
-            unvalid_node = [i for i in self.model.graph.node if all([out not in self._input_name_to_nodes and not self.is_graph_output(out) for out in i.output])]
+            unvalid_node = [
+                i
+                for i in self.model.graph.node
+                if all([out not in self._input_name_to_nodes and not self.is_graph_output(out) for out in i.output])
+            ]
         self.topological_sort()
 
     @property
