@@ -50,6 +50,7 @@ class TestAutoRound:
     def test_autoround(self):
         gpt_j_model = copy.deepcopy(self.gptj)
         quant_config = AutoRoundConfig(n_samples=20, seqlen=10, iters=10, scale_dtype="fp32")
+        quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
         logger.info(f"Test AutoRound with config {quant_config}")
 
         run_fn = get_autoround_default_run_fn
@@ -71,42 +72,12 @@ class TestAutoRound:
         assert "scale" in q_model.autoround_config["transformer.h.0.attn.k_proj"].keys()
         assert torch.float32 == q_model.autoround_config["transformer.h.0.attn.k_proj"]["scale_dtype"]
 
-    def test_quantizer(self):
-        gpt_j_model = copy.deepcopy(self.gptj)
-
-        run_fn = get_autoround_default_run_fn
-        run_args = (
-            self.tokenizer,
-            "NeelNanda/pile-10k",
-            20,
-            10,
-        )
-        weight_config = {
-            "*": {
-                "data_type": "int",
-                "bits": 4,
-                "group_size": 32,
-                "sym": False,
-            }
-        }
-        quantizer = AutoRoundQuantizer(quant_config=weight_config)
-        fp32_model = gpt_j_model
-
-        # quantizer execute
-        model = quantizer.prepare(model=fp32_model)
-        run_fn(model, *run_args)
-        q_model = quantizer.convert(model)
-
-        out = q_model(self.inp)[0]
-        assert torch.allclose(self.label, out, atol=1e-1)
-        assert "transformer.h.0.attn.k_proj" in q_model.autoround_config.keys()
-        assert "scale" in q_model.autoround_config["transformer.h.0.attn.k_proj"].keys()
-        assert torch.float32 == q_model.autoround_config["transformer.h.0.attn.k_proj"]["scale_dtype"]
-
     def test_autoround_with_quantize_API(self):
         gpt_j_model = copy.deepcopy(self.gptj)
 
         quant_config = get_default_AutoRound_config()
+        quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
+        
         logger.info(f"Test AutoRound with config {quant_config}")
 
         # quantize API
@@ -127,6 +98,7 @@ class TestAutoRound:
     def test_save_and_load(self):
         fp32_model = copy.deepcopy(self.gptj)
         quant_config = get_default_AutoRound_config()
+        quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
         logger.info(f"Test AutoRound with config {quant_config}")
 
         run_fn = get_autoround_default_run_fn
@@ -152,7 +124,6 @@ class TestAutoRound:
         loaded_out = loaded_model(self.inp)[0]
         assert torch.allclose(inc_out, loaded_out), "Unexpected result. Please double check."
 
-    @pytest.mark.skipif(auto_round_version <= AUTO_ROUND_VERSION_0_11, reason="Requires auto_round>=0.11")
     def test_conv1d(self):
         input = torch.randn(1, 32)
         from transformers import GPT2Model, GPT2Tokenizer
@@ -169,19 +140,9 @@ class TestAutoRound:
             20,
             10,
         )
-        weight_config = {
-            "*": {
-                "data_type": "int",
-                "bits": 4,
-                "group_size": 32,
-                "sym": False,
-            }
-        }
-        quantizer = AutoRoundQuantizer(quant_config=weight_config)
-
-        # quantizer execute
-        model = quantizer.prepare(model=model)
+        quant_config = get_default_AutoRound_config()
+        model = prepare(model=model, quant_config=quant_config)
         run_fn(model, *run_args)
-        q_model = quantizer.convert(model)
+        q_model = convert(model)
         out2 = q_model(**encoded_input)[0]
         assert torch.allclose(out2, out1, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
