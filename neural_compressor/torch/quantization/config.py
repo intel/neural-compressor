@@ -18,6 +18,8 @@
 """Intel Neural Compressor Pytorch quantization config API."""
 
 
+import json
+import importlib
 from collections import OrderedDict
 from typing import Callable, Dict, List, NamedTuple, Optional
 from typing import OrderedDict as OrderedDictType
@@ -1606,81 +1608,142 @@ def get_default_hqq_config() -> HQQConfig:
     return HQQConfig()
 
 
-######################## FP8 Config ###############################
+######################## FP8 Quant Config ###############################
+# refer to habana_quantization_toolkit/_core/common.py
+FP8_WHITE_LIST = (
+        "Matmul", "Linear", "FalconLinear", "KVCache", "Conv2d",
+        "LoRACompatibleLinear", "LoRACompatibleConv", "Softmax", "ModuleFusedSDPA")
+if importlib.util.find_spec("deepspeed"):
+    FP8_WHITE_LIST.append(
+        "LinearLayer", "LinearAllreduce","ScopedLinearAllReduce", "LmHeadLinearAllreduce")
+
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=FP8_QUANT)
 class FP8Config(TorchBaseConfig):
     """Config class for FP8 quantization."""
 
     name = FP8_QUANT
-    supported_configs: List[OperatorConfig] = []
+
+    # tunable params
     params_list = [
-        "w_dtype",
-        "w_observer",
-        "act_dtype",
-        "act_observer",
-        "approach",
-        "device",
+        "fp8_config",
+        "scale_method",
+        "observer",
+        "measure_exclude",
     ]
 
     def __init__(
         self,
-        w_dtype: str = "fp8_e4m3",
-        w_observer: Union[str, List[str]] = "minmax_per_channel",
-        act_dtype: str = "fp8_e4m3",
-        act_observer: Union[str, List[str]] = "minmax",
-        approach: Union[str, List[str]] = "static",
-        device: Union[str, List[str]] = "hpu",
-        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+        dump_stats_path: str = "./hqt_output/measure",
+        fp8_config: str = "E4M3",
+        hp_dtype: torch.dtype = torch.bfloat16,
+        blocklist: dict = {'names': [], 'types': ()},
+        allowlist: dict = {'names': [], 'types': FP8_WHITE_LIST},
+        mode: str = "AUTO",
+        scale_method: str = "maxabs_hw",
+        scale_params: dict = {},
+        observer: str = "maxabs",
+        mod_dict: dict = {},
+        measure_exclude: str = "OUTPUT",
+        **kwargs,
     ):
-        """Init FP8 config.
+        """Init FP8 config."""
+        super().__init__()
+        self.dump_stats_path =dump_stats_path
+        self.fp8_config = fp8_config
+        self.hp_dtype = hp_dtype
+        self.blocklist = blocklist
+        self.allowlist = allowlist
+        self.mode = mode
+        self.scale_method = scale_method
+        self.scale_params = scale_params
+        self.observer = observer
+        self.mod_dict = mod_dict
+        self._json_file = None
 
-        Args:
-        """
-        super().__init__(white_list=white_list)
-        self.w_dtype = w_dtype
-        self.w_observer = w_observer
-        self.act_dtype = act_dtype
-        self.act_observer = act_observer
-        self.approach = approach
-        self.device = device
-        self._post_init()
+    @property
+    def measure(self):
+        return self.mode == "MEASURE"
+
+    @property
+    def quantize(self):
+        return self.mode == "QUANTIZE"
+
+    @property
+    def json_file(self):
+        if self._json_file is None:
+            import tempfile
+            from pathlib import Path
+
+            json_file_tmp = tempfile.NamedTemporaryFile(suffix=".json")
+            self.to_json_file(json_file_tmp.name)
+            self.json_file(json_file_tmp.name)
+        return self._json_file
+
+    @json_file.setter
+    def json_file(self, json_file):
+        self._json_file = json_file
 
     @classmethod
-    def register_supported_configs(cls) -> List[OperatorConfig]:
-        supported_configs = []
-        fp8_config = FP8Config(
-            w_dtype=["fp8_e5m2", "fp8_e4m3"],
-            w_observer=["minmax", "minmax_per_channel"],
-            act_dtype=["fp8_e5m2", "fp8_e4m3"],
-            act_observer=["minmax", "kl"],
-            approach=["static", "dynamic"],
-            device=["hpu"],
-        )
-        if is_hpex_available():
-            from neural_compressor.torch.algorithms.habana_fp8 import white_list
+    def from_json_file(cls, filename):
+        with open(filename, "r", encoding="utf-8") as file:
+            config_dict = json.load(file)
+        config = cls.from_dict(config_dict)
+        config.json_file = filename
+        return config
 
-            operators = white_list
-        else:
-            operators = ()
-        supported_configs.append(OperatorConfig(config=fp8_config, operators=operators))
+    @classmethod
+    def get_config_set_for_tuning(cls) -> Union[None, "FP8Config", List["FP8Config"]]:
+        # just a simple example here
+        # usually write parameter combinations that are more suitable to tune based on experience.
+        return FP8Config(
+            fp8_config=["E4M3", "E5M2"],
+            scale_method=["without_scale", "maxabs_hw"],
+            measure_exclude=["NONE", "OUTPUT"])
+
+    @classmethod
+    def register_supported_configs(cls):
+        """Add all supported configs."""
+        supported_configs = []
+        linear_rtn_config = FP8Config(
+            mode=["AUTO", "MEASURE", "QUANTIZE"],
+            fp8_config=["E4M3", "E5M2"],
+            scale_method=["without_scale", "unit_scale", "max", "maxabs_hw",
+                "maxabs_pow2", "maxabs_hw_opt_weight", "maxabs_pow2_opt_weight",
+                "smoothquant_weights_output_channel_maxabs_pow2",
+                "weaksmoothquant_weights_output_channel_maxabs_pow2",
+                "act_maxabs_hw_weights_pcs_maxabs_pow2",
+                "act_maxabs_hw_weights_pcs_opt_pow2",
+                "act_maxabs_pow2_weights_pcs_maxabs_pow2",
+                "act_maxabs_pow2_weights_pcs_opt_pow2",
+                "smoothquant_opt"],
+            observer=["shape", "maxabs", "maxabs_per_channel", "save"],
+            measure_exclude=["NONE", "OUTPUT", "INPUT", "ALL"],
+        )
+        operators = list(FP8_WHITE_LIST)
+        supported_configs.append(OperatorConfig(config=linear_rtn_config, operators=operators))
         cls.supported_configs = supported_configs
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
-        from neural_compressor.torch.algorithms.habana_fp8 import white_list
-
         filter_result = []
         for op_name, module in model.named_modules():
-            if isinstance(module, white_list):
-                pair = (op_name, type(module).__name__)
+            if module.__class__.__name__ in FP8_WHITE_LIST or \
+            module.__class__.__name__.split("Patched")[-1] in FP8_WHITE_LIST:
+                pair = (op_name, module.__class__.__name__)
                 filter_result.append(pair)
         logger.debug(f"Get model info: {filter_result}")
         return filter_result
 
-    @classmethod
-    def get_config_set_for_tuning(cls) -> Union[None, "FP8Config", List["FP8Config"]]:
-        # TODO fwk owner needs to update it.
-        return FP8Config(act_observer=["minmax", "kl"])
+    def to_config_mapping(
+        self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
+    ):
+        config_mapping = OrderedDict()
+        if config_list is None:
+            config_list = [self]
+        for config in config_list:
+            for op_name, op_type in model_info:
+                config_mapping[(op_name, op_type)] = self
+        return config_mapping
 
 
 def get_default_fp8_config() -> FP8Config:
