@@ -361,6 +361,7 @@ if args.accuracy:
             tokenizer=tokenizer,
             tasks=args.tasks,
             batch_size=args.batch_size,
+            args=args,
         )
         for task_name in args.tasks:
             if task_name == "truthfulqa_mc":
