@@ -61,7 +61,6 @@ def load(output_dir="./saved_results", model=None):
             return load(output_dir)
 
         model.qconfig = config_mapping
-        if isinstance(config_object, FP8Config):  # FP8
-            from neural_compressor.torch.algorithms.habana_fp8 import load
-
-            return load(model, output_dir)  # pylint: disable=E1121
+        if isinstance(config_object, FP8Config):
+            # TODO: support loading FP8 model
+            raise NotImplementedError("`load` function for FP8 model is not supported yet.")

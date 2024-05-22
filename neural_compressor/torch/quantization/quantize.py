@@ -19,7 +19,7 @@ import torch
 
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
 from neural_compressor.common.utils import Mode, log_process
-from neural_compressor.torch.quantization.config import SmoothQuantConfig, StaticQuantConfig
+from neural_compressor.torch.quantization.config import SmoothQuantConfig, StaticQuantConfig, FP8Config
 from neural_compressor.torch.utils import is_ipex_available, logger
 from neural_compressor.torch.utils.utility import WHITE_MODULE_LIST, algos_mapping, get_model_info
 
@@ -60,8 +60,8 @@ def quantize(
         assert isinstance(
             quant_config, BaseConfig
         ), f"Please pass a dict or config instance as the quantization configuration, but got {type(quant_config)}."
-    logger.info("Quantize model with config:")
-    logger.info(quant_config.to_dict())
+    logger.debug("Quantize model with config:")
+    logger.debug(quant_config.to_dict())
     # select quantization algo according to config
 
     if is_ipex_available and (
@@ -129,8 +129,8 @@ def prepare(
         assert isinstance(
             quant_config, BaseConfig
         ), f"Please pass a dict or config instance as the quantization configuration, but got {type(quant_config)}."
-    logger.info("Prepare model with config:")
-    logger.info(quant_config.to_dict())
+    logger.debug("Prepare model with config:")
+    logger.debug(quant_config.to_dict())
 
     # select quantization algo according to config
     if is_ipex_available and (
@@ -176,8 +176,9 @@ def convert(
     """
     q_model = model if inplace else copy.deepcopy(model)
 
-    # TODO: Optimize the check for prepared flag after adding HQT FP8 Quant
-    assert getattr(model, "prepared", False), "Please run prepare function before convert."
+    assert (
+        getattr(model, "prepared", False) or quant_config is not None
+    ), "Please pass quant_config to convert function."
 
     if getattr(model, "prepared", False):
         if quant_config is None:
@@ -192,8 +193,8 @@ def convert(
         assert isinstance(
             quant_config, BaseConfig
         ), f"Please pass a dict or config instance as the quantization configuration, but got {type(quant_config)}."
-    logger.info("Convert model with config:")
-    logger.info(quant_config.to_dict())
+    logger.debug("Convert model with config:")
+    logger.debug(quant_config.to_dict())
 
     # select quantization algo according to config
     if is_ipex_available and (
@@ -216,3 +217,12 @@ def convert(
                 mode=Mode.CONVERT,
             )
     return q_model
+
+
+def finalize_calibration(model):
+    if hasattr(model, "quant_config") and isinstance(model.quant_config, FP8Config): # FP8
+        from neural_compressor.torch.algorithms.fp8_quant import save_calib_result
+
+        save_calib_result(model)
+    else:
+        raise NotImplementedError("`finalize_calibration` only supports FP8 measurement now.")
