@@ -12,22 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import time
-import torch
 import json
-
+import time
 from typing import Union
 
+import torch
 from auto_round import AutoRound  # pylint: disable=E0401
 from auto_round.calib_dataset import get_dataloader  # pylint: disable=E0401
-from auto_round.utils import get_block_names, get_module, quant_weight_w_scale, set_module # pylint: disable=E0401
-from auto_round.export.export_to_itrex.model_wrapper import WeightOnlyLinear # pylint: disable=E0401
+from auto_round.export.export_to_itrex.model_wrapper import WeightOnlyLinear  # pylint: disable=E0401
+from auto_round.utils import get_block_names, get_module, quant_weight_w_scale, set_module  # pylint: disable=E0401
 
 from neural_compressor.torch.algorithms import Quantizer
-from neural_compressor.torch.utils import logger, is_transformers_imported
+from neural_compressor.torch.utils import is_transformers_imported, logger
 
 if is_transformers_imported():
     import transformers
+
 
 def pack_model(
     model,
@@ -115,7 +115,7 @@ def pack_model(
         elif is_transformers_imported() and isinstance(m, transformers.Conv1D):
             in_features = m.weight.shape[0]
             out_features = m.weight.shape[1]
-        
+
         new_module = WeightOnlyLinear(
             in_features,
             out_features,
@@ -133,7 +133,6 @@ def pack_model(
         new_module.pack(int_weight, scale, zp, m.bias)
         set_module(compressed_model, k, new_module)
     return compressed_model
-
 
 
 class AutoRoundQuantizer(Quantizer):
@@ -294,7 +293,6 @@ def get_autoround_default_run_fn(
         n_samples (int): The number of samples to use for calibration.
     """
 
-
     if isinstance(dataset, str):
         dataset = dataset.replace(" ", "")  ##remove all whitespaces
         dataloader = get_dataloader(
@@ -376,7 +374,7 @@ class AutoRoundProcessor(AutoRound):
         # try_cache_inter_data_gpucpu
         # ([block_names[0]], self.n_samples, layer_names=layer_names)
         # self, block_names, n_samples, layer_names=[], last_cache_name=None
-        last_cache_name=None
+        last_cache_name = None
         cache_block_names = [self.block_names[0]]
         try:
             self.model = self.model.to(self.device)
@@ -400,7 +398,7 @@ class AutoRoundProcessor(AutoRound):
             self._replace_forward()
             self.prepared_gpu = True
             # self.calib(self.n_samples, calib_bs)
-            
+
         except:
             logger.info("switch to cpu to cache inputs")
             self.model = self.model.to("cpu")
@@ -424,8 +422,6 @@ class AutoRoundProcessor(AutoRound):
             self._replace_forward()
             cache_block_names
             # self.calib(n_samples, calib_bs)
-            
-            
 
     def convert(self):
         """Converts a prepared model to a quantized model."""
@@ -437,9 +433,9 @@ class AutoRoundProcessor(AutoRound):
             self.model = self.model.to(self.tmp_dtype)
         if self.prepared_gpu is True:
             self.model = self.model.to("cpu")
-        
+
         all_inputs = res
-        
+
         del self.inputs
         inputs = all_inputs[self.block_names[0]]
 
