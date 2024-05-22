@@ -340,12 +340,13 @@ if args.int8 or args.int8_bf16_mixed:
 
     if args.ipex:
         user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)))
+        tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=args.trust_remote_code)
     else:
-        user_model, _ = get_user_model()
+        user_model, tokenizer = get_user_model()
         kwargs = {'weight_only': True} if args.approach == 'weight_only' else {}
         user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)), user_model, **kwargs)
 else:
-    user_model, _ = get_user_model()
+    user_model, tokenizer = get_user_model()
 
 if args.accuracy:
     user_model.eval()
