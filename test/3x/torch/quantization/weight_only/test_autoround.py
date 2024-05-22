@@ -19,6 +19,7 @@ from neural_compressor.torch.utils import logger
 try:
     import auto_round
     from auto_round.export.export_to_itrex.model_wrapper import WeightOnlyLinear
+
     auto_round_installed = True
 except ImportError:
     auto_round_installed = False
@@ -67,16 +68,14 @@ class TestAutoRound:
         assert "transformer.h.0.attn.k_proj" in q_model.autoround_config.keys()
         assert "scale" in q_model.autoround_config["transformer.h.0.attn.k_proj"].keys()
         assert torch.float32 == q_model.autoround_config["transformer.h.0.attn.k_proj"]["scale_dtype"]
-        assert isinstance(
-            q_model.transformer.h[0].attn.k_proj, WeightOnlyLinear
-        ), "packing model failed."
+        assert isinstance(q_model.transformer.h[0].attn.k_proj, WeightOnlyLinear), "packing model failed."
 
     def test_autoround_with_quantize_API(self):
         gpt_j_model = copy.deepcopy(self.gptj)
 
         quant_config = get_default_AutoRound_config()
         quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
-        
+
         logger.info(f"Test AutoRound with config {quant_config}")
 
         # quantize API
@@ -93,9 +92,7 @@ class TestAutoRound:
         )
         out = q_model(self.inp)[0]
         assert torch.allclose(out, self.label, atol=1e-1)
-        assert isinstance(
-            q_model.transformer.h[0].attn.k_proj, WeightOnlyLinear
-        ), "packing model failed."
+        assert isinstance(q_model.transformer.h[0].attn.k_proj, WeightOnlyLinear), "packing model failed."
 
     def test_save_and_load(self):
         fp32_model = copy.deepcopy(self.gptj)
@@ -152,7 +149,4 @@ class TestAutoRound:
         out2 = q_model(**encoded_input)[0]
         # import pdb; pdb.set_trace()
         assert torch.allclose(out2, out1, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
-        assert isinstance(
-            q_model.h[0].attn.c_attn, WeightOnlyLinear
-        ), "loading compressed model failed."
-        
+        assert isinstance(q_model.h[0].attn.c_attn, WeightOnlyLinear), "loading compressed model failed."
