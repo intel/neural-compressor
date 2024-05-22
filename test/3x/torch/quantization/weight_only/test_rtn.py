@@ -14,6 +14,10 @@ from neural_compressor.torch.quantization import (
     prepare,
     quantize,
 )
+from neural_compressor.torch.utils import get_accelerator
+
+accelerator = get_accelerator()
+device = accelerator.current_device_name()
 
 
 class ModelConv1d(torch.nn.Module):
@@ -34,8 +38,9 @@ class TestRTNQuant:
     def setup_class(self):
         self.tiny_gptj = transformers.AutoModelForCausalLM.from_pretrained(
             "hf-internal-testing/tiny-random-GPTJForCausalLM",
+            device_map=device,
         )
-        self.example_inputs = torch.tensor([[10, 20, 30, 40, 50, 60]], dtype=torch.long)
+        self.example_inputs = torch.tensor([[10, 20, 30, 40, 50, 60]], dtype=torch.long).to(device)
         # record label for comparison
         self.label = self.tiny_gptj(self.example_inputs)[0]
         # test_default_config
@@ -149,6 +154,8 @@ class TestRTNQuant:
         ["int4", "nf4", "fp4", "fp4_e2m1_bnb", "fp4_e2m1", "fp8_e5m2", "fp8_e5m2fnuz", "fp8_e4m3fn", "fp8_e4m3fnuz"],
     )
     def test_dtype_params(self, dtype):
+        if dtype in ["fp8_e5m2", "fp8_e5m2fnuz", "fp8_e4m3fn", "fp8_e4m3fnuz"] and not hasattr(torch, dtype):
+            return  # for low torch version
         model = copy.deepcopy(self.tiny_gptj)
         quant_config = RTNConfig(
             dtype=dtype,

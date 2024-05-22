@@ -16,7 +16,7 @@ import math
 
 import torch
 
-from neural_compressor.torch.utils import logger
+from neural_compressor.torch.utils import device_synchronize, logger
 
 __all__ = [
     "FLOAT_MAPPING",
@@ -205,12 +205,12 @@ def qdq_weight_sym(weight, bits=4, quantile=1.0, return_int=False, full_range=Fa
     wmax = torch.max(torch.abs(max_val), torch.abs(min_val))
     wmax = wmax * quantile
     tmp = wmax == 0
-    wmax[tmp] = +1
+    wmax[tmp] = torch.tensor(1, dtype=wmax.dtype, device=wmax.device)
     if full_range:
         # use -8, 8 to make sure amax is not changed after fake quant
         scale = wmax / (-minq)
-        tmp = scale * flip_flag.int()
-        scale -= 2 * tmp  # set negative scale with flip_flag
+        # set negative scale with flip_flag
+        scale = torch.where(flip_flag, -scale, scale)
     else:
         scale = wmax / maxq
     scale.unsqueeze_(dim=-1)
@@ -248,6 +248,7 @@ def qdq_weight_actor(weight, bits, scheme, quantile=1.0, dtype="int", return_int
         return qdq_weight_asym(weight, bits, quantile, return_int, **kwargs)
 
 
+@device_synchronize
 def quant_tensor(
     weight,
     bits=4,
@@ -444,7 +445,7 @@ def search_clip(m, bits=4, group_size=32, scheme="asym", dtype="int", enable_ful
             full_range=enable_full_range,
             quantile=ratio,
         )
-        loss = (org_weight - m.weight.data).float().pow(2).mean().item()
+        loss = (org_weight - m.weight.data).float().pow(2).mean()
         m.weight.data.copy_(org_weight)
         history.append(loss)
         is_best = loss < best_error
