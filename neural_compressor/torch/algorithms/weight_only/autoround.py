@@ -389,7 +389,7 @@ class AutoRoundProcessor(AutoRound):
             self.tmp_dtype = None
             ## have bug if block name is not the first block
             if (len(cache_block_names) > 1 or len(self.layer_names) > 0) and self.low_gpu_mem_usage:
-                tmp_dtype = self.model.dtype
+                self.tmp_dtype = self.model.dtype
                 self.model = self.model.to(torch.bfloat16) if self.amp else self.model.to(torch.float32)
 
             self.last_cache_name = last_cache_name
