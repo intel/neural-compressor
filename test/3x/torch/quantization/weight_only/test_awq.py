@@ -10,12 +10,16 @@ from neural_compressor.common import Logger
 logger = Logger().get_logger()
 from neural_compressor.torch.algorithms.weight_only.modules import WeightOnlyLinear
 from neural_compressor.torch.quantization import AWQConfig, convert, get_default_awq_config, prepare, quantize
+from neural_compressor.torch.utils import accelerator
+
+device = accelerator.current_device_name()
 
 
 def get_gpt_j():
     tiny_gptj = transformers.AutoModelForCausalLM.from_pretrained(
         "hf-internal-testing/tiny-random-GPTJForCausalLM",
         torchscript=True,
+        device_map=device,
     )
     return tiny_gptj
 
@@ -25,8 +29,9 @@ class TestAWQQuant:
     def setup_class(self):
         self.tiny_gptj = transformers.AutoModelForCausalLM.from_pretrained(
             "hf-internal-testing/tiny-random-GPTJForCausalLM",
+            device_map=device,
         )
-        self.example_inputs = torch.ones([1, 10], dtype=torch.long)
+        self.example_inputs = torch.ones([1, 10], dtype=torch.long).to(device)
         self.label = self.tiny_gptj(self.example_inputs)[0]
 
     def teardown_class(self):

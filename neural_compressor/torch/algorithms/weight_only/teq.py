@@ -22,7 +22,7 @@ from typing import Any
 import torch
 
 from neural_compressor.torch.algorithms.base_algorithm import Quantizer
-from neural_compressor.torch.utils import get_device, is_transformers_imported, logger
+from neural_compressor.torch.utils import get_accelerator, is_transformers_imported, logger
 
 from .modules import MulLinear, TEQLinearFakeQuant
 from .utility import get_module, quant_tensor, set_module
@@ -63,7 +63,7 @@ class TrainableEquivalentTransformation:
     def _get_device(self):
         """Get the model device
         :return:Model device."""
-        device = get_device()
+        device = get_accelerator().current_device_name()
         return device
 
     def _get_dtype(self):

@@ -82,24 +82,18 @@ def is_transformers_imported() -> bool:
 
 
 def get_accelerator(device_name="auto"):
-    from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
-
-    runtime_accelerator = auto_detect_accelerator(device_name)
-    return runtime_accelerator
-
-
-# direct user access, used by @device_synchronize, can be changed by set_accelerator
-accelerator = get_accelerator()
-
-
-def set_global_accelerator(device_name="auto"):
-    global accelerator
+    global accelerator  # update the global accelerator when calling this func
     from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
     accelerator = auto_detect_accelerator(device_name)
     return accelerator
 
 
+# for direct user access, used by @device_synchronize, can be changed by set_accelerator
+accelerator = get_accelerator()
+
+
+# for habana ease-of-use
 def device_synchronize(raw_func):
     from functools import wraps
 
@@ -111,11 +105,3 @@ def device_synchronize(raw_func):
         return output
 
     return new_func
-
-
-def get_device(device_name="auto"):
-    from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
-
-    runtime_accelerator = auto_detect_accelerator(device_name)
-    device = runtime_accelerator.current_device_name()
-    return device

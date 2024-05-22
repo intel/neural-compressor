@@ -24,7 +24,7 @@ from collections import OrderedDict
 import torch
 
 from neural_compressor.torch.algorithms import Quantizer
-from neural_compressor.torch.utils import get_device, is_transformers_imported, logger, set_module
+from neural_compressor.torch.utils import get_accelerator, is_transformers_imported, logger, set_module
 
 from .utility import cast_fp8, quant_tensor, search_clip
 
@@ -90,7 +90,7 @@ class RTNQuantizer(Quantizer):
             model: fake quantized torch module
         """
         weight_config = self.quant_config
-        device = get_device(kwargs.pop("device", "auto"))
+        device = get_accelerator(kwargs.pop("device", "auto")).current_device_name()
 
         # Put model on device explicitly
         # TODO: refine it later, Put module on device one by one instead of the whole model

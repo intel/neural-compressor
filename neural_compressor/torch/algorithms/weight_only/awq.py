@@ -20,7 +20,7 @@ from collections import OrderedDict
 import torch
 
 from neural_compressor.torch.algorithms import Quantizer
-from neural_compressor.torch.utils import get_device, logger
+from neural_compressor.torch.utils import get_accelerator, logger
 
 from .modules import MulLinear
 from .utility import (
@@ -124,6 +124,7 @@ class ActAwareWeightQuant:
         weight_config={},
         total_block_args=[],
         total_block_kwargs=[],
+        device="auto",
     ):
 
         self.example_inputs = example_inputs
@@ -143,10 +144,11 @@ class ActAwareWeightQuant:
         self.scheme = scheme
         self.use_full_range = use_full_range
         self.weight_config = weight_config
+        self.device = device
 
     def _move_model_and_data_to_device(self):
         # Put the model and example_inputs into target device
-        device = get_device()
+        device = get_accelerator(self.device).current_device_name()
         self.model.to(device)
         self.example_inputs = self.example_inputs.to(device)
 
