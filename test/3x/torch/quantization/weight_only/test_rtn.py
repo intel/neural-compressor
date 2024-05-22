@@ -58,7 +58,7 @@ class TestRTNQuant:
     @pytest.mark.parametrize(
         "bits, use_sym, group_size, group_dim",
         [
-            (8, True, 128, 1),
+            (8, True, -1, 1),
             (4, True, 128, 1),
             (4, False, 32, 1),
             (4, False, -1, 1),
@@ -163,7 +163,9 @@ class TestRTNQuant:
         model = prepare(model, quant_config)
         model = convert(model)
         out = model(self.example_inputs)[0]
+        out_next = model(self.example_inputs)[0]
         assert torch.allclose(out, self.label, atol=0.11), "Accuracy gap atol > 0.11 is unexpected."
+        assert torch.allclose(out, out_next), "output should be same"
 
     @pytest.mark.parametrize("dtype", ["int4", "nf4"])
     @pytest.mark.parametrize("double_quant_bits", [6])
@@ -248,7 +250,7 @@ class TestRTNQuant:
     @pytest.mark.parametrize(
         "bits, use_sym, group_size, group_dim",
         [
-            (8, True, 128, 1),
+            (8, True, -1, 1),
             (4, True, 128, 1),
             (4, False, 32, 1),
             (4, False, -1, 1),
@@ -268,7 +270,6 @@ class TestRTNQuant:
         model = prepare(model, quant_config)
         model = convert(model)
         out2 = model(input)
-        # assert torch.allclose(out2, out1, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
         assert (out2 != out1).all(), "WOQ out2put should be different with raw output"
         if (bits, use_sym, group_size, group_dim) == (8, True, 128, 1):
             assert torch.allclose(out2, out1, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."

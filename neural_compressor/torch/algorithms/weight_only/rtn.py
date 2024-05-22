@@ -165,7 +165,7 @@ class RTNQuantizer(Quantizer):
             else:
                 transpose = group_dim == 0
             if transpose:
-                weight = m.weight.detach().t_().contiguous()
+                weight = m.weight.detach().T.contiguous()
             else:
                 weight = m.weight.detach()
             if use_mse_search:
@@ -189,8 +189,8 @@ class RTNQuantizer(Quantizer):
                     in_features = m.in_features
                     out_features = m.out_features
                 elif is_transformers_imported() and isinstance(m, transformers.Conv1D):
-                    in_features = m.weight.shape[1]
-                    out_features = m.weight.shape[0]
+                    in_features = m.weight.shape[0]
+                    out_features = m.weight.shape[1]
                     int_weight = int_weight.t_().contiguous()
                     scale = scale.t_().contiguous()
                     zp = zp.t_().contiguous() if zp is not None else zp
@@ -227,6 +227,5 @@ class RTNQuantizer(Quantizer):
                     # for only group_dim is 0 or only `transformers.Conv1D`,
                     # we need to transpose the quantized tensor and module's weight back
                     weight = weight.t_().contiguous()
-                    m.weight.t_().contiguous()
                 m.weight.data.copy_(weight)
         return model

@@ -16,7 +16,7 @@ import math
 
 import torch
 
-from neural_compressor.torch.utils import device_synchronize, logger
+from neural_compressor.torch.utils import accelerator, device_synchronize, logger
 
 __all__ = [
     "FLOAT_MAPPING",
@@ -344,10 +344,12 @@ def quant_tensor(
         )
         if return_int or quant_scale:
             weight2, scale2, zp2 = weight2
-            orig_weight.copy_(torch.cat([weight1, weight2], dim=1))
+            weight = torch.cat([weight1, weight2], dim=1)
             scale = torch.cat([scale1, scale2], dim=1)
             zp = None if zp2 is None else torch.cat([zp1, zp2], dim=1)
-            q_state = (weight, scale, zp)
+            accelerator.synchronize()
+            orig_weight.copy_(weight)
+            return orig_weight, scale, zp
         else:
             orig_weight.copy_(torch.cat([weight1, weight2], dim=1))
             return orig_weight
