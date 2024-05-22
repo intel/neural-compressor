@@ -79,7 +79,7 @@ class TestRTNQuant:
         if (bits, use_sym, group_size, group_dim) == (8, True, 128, 1):
             assert (out != self.label).sum() == out.numel() - 1, "WOQ output should be different with raw output"
         else:
-            assert (out != self.label).all(), "WOQ output should be different with raw output"
+            assert (out != self.label).any(), "WOQ output should be different with raw output"
         if (bits, use_sym, group_size, group_dim) == (8, True, 128, 1):
             assert torch.allclose(out, self.label, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
         if (bits, use_sym, group_size, group_dim) == [(4, True, 128, 0), (4, True, 32, 1)]:

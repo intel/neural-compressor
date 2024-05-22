@@ -165,9 +165,9 @@ class RTNQuantizer(Quantizer):
             else:
                 transpose = group_dim == 0
             if transpose:
-                weight = m.weight.t_().contiguous()
+                weight = m.weight.detach().t_().contiguous()
             else:
-                weight = m.weight
+                weight = m.weight.detach()
             if use_mse_search:
                 quantile = search_clip(m, bits, group_size, scheme, dtype, use_full_range)
             if export_compressed_model:
