@@ -63,7 +63,7 @@ class TestAutoRound:
 
         # prepare + convert API
         model = prepare(model=fp32_model, quant_config=quant_config)
-        
+
         run_fn(model, *run_args)
         q_model = convert(model)
         out = q_model(self.inp)[0]

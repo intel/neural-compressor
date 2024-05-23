@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 import json
 import time
-import copy
 from typing import Union
 
 import torch
@@ -135,6 +135,7 @@ def pack_model(
         set_module(compressed_model, k, new_module)
     return compressed_model
 
+
 class InputCaptureModule(torch.nn.Module):
 
     def __init__(self, model) -> None:
@@ -153,6 +154,7 @@ class InputCaptureModule(torch.nn.Module):
         else:
             logger.error("Handle cases where input data is neither a Tensor nor a dict")
         return self.orig_model.forward(*args, **kwargs)
+
 
 class AutoRoundQuantizer(Quantizer):
     def __init__(
@@ -280,7 +282,7 @@ class AutoRoundQuantizer(Quantizer):
             data_type=self.data_type,
             scale_dtype=self.scale_dtype,
         )
-        
+
         self.rounder.prepare()
         prepare_model = InputCaptureModule(model)
         return prepare_model
@@ -379,7 +381,7 @@ def get_autoround_default_run_fn(
 
 
 class AutoRoundProcessor(AutoRound):
-    
+
     @torch.no_grad()
     def cache_inter_data(self, block_names, n_samples, layer_names=[], last_cache_name=None):
         """Save the inputs of block_name for calibration. For layers, we cache both of inputs and output.
@@ -426,8 +428,7 @@ class AutoRoundProcessor(AutoRound):
             self.model = self.model.to(tmp_dtype)
 
         return res
-    
-    
+
     @torch.no_grad()
     def prepare(self):
         """Prepares a given model for quantization."""
@@ -507,7 +508,6 @@ class AutoRoundProcessor(AutoRound):
             self.model = self.model.to("cpu")
 
         all_inputs = res
-        
 
         del self.inputs
         inputs = all_inputs[self.block_names[0]]
