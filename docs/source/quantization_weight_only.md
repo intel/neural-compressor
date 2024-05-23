@@ -87,6 +87,8 @@ Notes:
 |  use_max_length  | False | Whether to align all calibration data to fixed length, which equals to pad_max_length. |
 |  block_size  | 128 | Execute GPTQ quantization per block, block shape = [$C_{out}$, block_size] |
 |  static_groups  | False | Whether to calculate group wise quantization parameters in advance. This option mitigate actorder's extra computational requirements |
+|  true_sequential  | False | Whether to quantize layers within a transformer block in their original order. This can lead to higher accuracy but slower overall quantization process. |
+|  lm_head  | False | Whether to quantize the lm_head (linear layer related to prediction in the end of the language models). |
 
 **Note:** Neural compressor provides `Unsigned integer for asymmetric quantization` and `Signed integer for symmetric quantization`. Please follow the below section to compress the low bit data type for saving.
 
