@@ -78,6 +78,9 @@ def get_quantizable_ops_recursively(model, example_inputs, alpha, act_algo, inpl
 
         from torch.ao.quantization import MinMaxObserver
 
+        if alpha == "auto":  # for quantize API
+            alpha = 0.5
+
         if ipex_ver.release >= Version("2.1.1").release:
             static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
                 alpha=alpha, act_observer=MinMaxObserver
@@ -399,7 +402,7 @@ def get_block_prefix(model):
     return block_prefix, block_num
 
 
-def get_hidden_states(model, calib_func=None):
+def get_hidden_states(model, calib_sample_num, calib_func=None):
     """Get the input args and kwargs of first block.
 
     Args:
@@ -416,11 +419,16 @@ def get_hidden_states(model, calib_func=None):
     # Step 1: replace block_forward to collect block inputs and avoid entire inference
     total_block_args = []
     total_block_kwargs = []
+    iters = 0
 
     def forward(layer, *args, **kwargs):
+        nonlocal iters
+        if iters >= calib_sample_num:
+            raise ValueError
         # update total_hidden_states, total_block_kwargs, per batch
         total_block_args.append(list(args))
         total_block_kwargs.append(kwargs)
+        iters += 1
         raise ValueError
 
     block_prefix, block_num = get_block_prefix(model)
@@ -465,6 +473,9 @@ def forward_wrapper(model, input, device=torch.device("cpu")):  # pragma: no cov
             output = model(*input)
         except:
             output = model(input)
+    elif isinstance(input, zip):
+        for args, kwargs in input:
+            output = model(*args, **kwargs)
     else:
         output = model(input)
     return output
@@ -1268,7 +1279,7 @@ class AutoAlpha:  # pragma: no cover
                 raise NotImplementedError
         return best_alpha
 
-    def _get_one_batch_auto_loss(self, input, alpha_space, orig_best_alpha, input_maxes, calib_func):
+    def _get_one_batch_auto_loss(self, alpha_space, orig_best_alpha, input_maxes, calib_func, calib_sample_num):
         """Calculate the losses for all alpha values given an input.
 
         :return: A dict of op-wise loss values with respect to alpha values.
@@ -1276,7 +1287,11 @@ class AutoAlpha:  # pragma: no cover
         self._change_qdq_for_auto(enable=False)
         module_names = self._get_sq_layer_names()
 
-        forward_wrapper(self.model, input, self.device)  ##disable quant and get fp32 output
+        # get input args and kwargs for the first block, then do forward
+        total_block_args, total_block_kwargs = get_hidden_states(self.model, calib_sample_num, calib_func)
+        forward_wrapper(
+            self.model, zip(total_block_args, total_block_kwargs), self.device
+        )  ##disable quant and get fp32 output
 
         fp32_output = {}
         for name in module_names:
@@ -1284,11 +1299,14 @@ class AutoAlpha:  # pragma: no cover
             fp32_output[name] = module.output
             module.output = None
 
+        # update scales
         self._change_qdq_for_auto(enable=True)
         absorb_input_scales, weight_scales = self._cal_scales(self.absorb_to_layer, input_maxes, orig_best_alpha)
         self._update_scales_for_auto(absorb_input_scales, weight_scales)
 
-        forward_wrapper(self.model, input, self.device)  ##save quant_input
+        # get input args and kwargs for the first block, then do forward
+        total_block_args, total_block_kwargs = get_hidden_states(self.model, calib_sample_num, calib_func)
+        forward_wrapper(self.model, zip(total_block_args, total_block_kwargs), self.device)  ##save quant_input
 
         for mod_name in module_names:  # save fp32 values
             mod = get_module(self.model, mod_name)
@@ -1322,7 +1340,9 @@ class AutoAlpha:  # pragma: no cover
 
         return loss_alphas
 
-    def _get_one_batch_auto_loss_blockwise(self, input, alpha_space, orig_best_alpha, input_maxes, calib_func):
+    def _get_one_batch_auto_loss_blockwise(
+        self, input, alpha_space, orig_best_alpha, input_maxes, calib_func, calib_sample_num
+    ):
         """Calculate the losses for all alpha values given an input in blockwise tuning mode.
 
         :return: A dict of blockwise-wise loss values with respect to alpha values.
@@ -1334,7 +1354,11 @@ class AutoAlpha:  # pragma: no cover
             block_modules[key] = get_module(self.model, key)
         self._add_blockwise_observer(block_modules)
 
-        forward_wrapper(self.model, input, self.device)  ##disable quant and get fp32 output
+        # get input args and kwargs for the first block, then do forward
+        total_block_args, total_block_kwargs = get_hidden_states(self.model, calib_sample_num, calib_func)
+        forward_wrapper(
+            self.model, zip(total_block_args, total_block_kwargs), self.device
+        )  ##disable quant and get fp32 output
 
         fp32_output = {}
         for block_name in self.block_names:
@@ -1346,7 +1370,7 @@ class AutoAlpha:  # pragma: no cover
         self._update_scales_for_auto(absorb_input_scales, weight_scales)
 
         # get input args and kwargs for the first block.
-        total_block_args, total_block_kwargs = get_hidden_states(self.model, calib_func)
+        total_block_args, total_block_kwargs = get_hidden_states(self.model, calib_sample_num, calib_func)
 
         loss_alphas = {}
         # process block by block
@@ -1481,8 +1505,6 @@ class AutoAlpha:  # pragma: no cover
             self._qdq_model_unwrapper_for_auto()
             return best_alphas
 
-        input = self.example_inputs
-
         for i in tqdm(range(self.calib_sample_num), desc="auto tune alpha"):
             loss_alphas = {}
             best_alphas_per_module = best_alphas
@@ -1493,7 +1515,7 @@ class AutoAlpha:  # pragma: no cover
                         best_alphas_per_module[layer_name] = best_alphas_per_module[key]
 
             loss_tmp = self._get_one_batch_auto_loss(
-                input, self.alpha_space, best_alphas_per_module, self.input_maxes_abs, self.q_func
+                self.alpha_space, best_alphas_per_module, self.input_maxes_abs, self.q_func, self.calib_sample_num
             )
             if loss_alphas == {}:
                 loss_alphas = loss_tmp
@@ -1563,7 +1585,12 @@ class AutoAlpha:  # pragma: no cover
                         best_alphas_per_module[layer_name] = best_alphas_per_module[key]
 
             loss_tmp = self._get_one_batch_auto_loss_blockwise(
-                input, self.alpha_space, best_alphas_per_module, self.input_maxes_abs, self.q_func
+                input,
+                self.alpha_space,
+                best_alphas_per_module,
+                self.input_maxes_abs,
+                self.q_func,
+                self.calib_sample_num,
             )
             if loss_alphas == {}:
                 for block_name in self.block_names:
