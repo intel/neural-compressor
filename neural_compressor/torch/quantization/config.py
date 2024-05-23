@@ -971,6 +971,7 @@ class StaticQuantConfig(BaseConfig):
         "act_sym",
         "act_granularity",
         "act_algo",
+        "excluded_precisions",
     ]
     supported_configs: List[OperatorConfig] = []
 
@@ -984,6 +985,7 @@ class StaticQuantConfig(BaseConfig):
         act_sym: bool = False,
         act_granularity: str = "per_tensor",
         act_algo: str = "kl",
+        excluded_precisions: list = [],
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init Static Quant Configs."""
@@ -996,6 +998,7 @@ class StaticQuantConfig(BaseConfig):
         self.act_sym = act_sym
         self.act_granularity = act_granularity
         self.act_algo = act_algo
+        self.excluded_precisions = excluded_precisions
         self._post_init()
 
     @classmethod
@@ -1057,6 +1060,7 @@ class SmoothQuantConfig(BaseConfig):
         "act_sym",
         "act_granularity",
         "act_algo",
+        "excluded_precisions",
         "alpha",
         "folding",
         "scale_sharing",
@@ -1074,6 +1078,7 @@ class SmoothQuantConfig(BaseConfig):
         act_sym: bool = False,
         act_granularity: str = "per_tensor",
         act_algo: str = "kl",
+        excluded_precisions: list = [],
         alpha: float = 0.5,
         folding: bool = False,
         # below for autotune
@@ -1097,6 +1102,7 @@ class SmoothQuantConfig(BaseConfig):
         self.act_sym = act_sym
         self.act_granularity = act_granularity
         self.act_algo = act_algo
+        self.excluded_precisions = excluded_precisions
         self.alpha = alpha
         self.folding = folding
         # below for autotune
