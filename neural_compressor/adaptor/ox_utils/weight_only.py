@@ -125,8 +125,8 @@ def make_matmul_weight_only_node(
                 even_idx = idx[::2]
                 odd_idx = idx[1::2]
                 # vectorized operation for even and odd indices
-                packed_zp[even_idx // 2] = ((packed_zp[even_idx // 2] & 0xF0) | zero_point[even_idx].ravel())
-                packed_zp[odd_idx // 2] = ((packed_zp[odd_idx // 2] & 0x0F) | (zero_point[odd_idx].ravel() << 4))
+                packed_zp[even_idx // 2] = (packed_zp[even_idx // 2] & 0xF0) | zero_point[even_idx].ravel()
+                packed_zp[odd_idx // 2] = (packed_zp[odd_idx // 2] & 0x0F) | (zero_point[odd_idx].ravel() << 4)
 
             zp_tensor = onnx.helper.make_tensor(
                 name=node.input[1] + "_zp", data_type=2, dims=packed_zp.shape, vals=packed_zp.tobytes(), raw=True
@@ -222,7 +222,7 @@ def quant_tensor(data, num_bits=4, group_size=32, scheme="asym", dtype="int", ra
     if scheme == "sym":
         max_range = np.maximum(np.abs(rmin), np.abs(rmax))
         scale = np.ones(rmax.shape)
-        mask = (max_range > 0)
+        mask = max_range > 0
         scale[mask] = (max_range[mask] * 2.0).astype(np.float64) / (maxq - minq)
         zero_point = (
             np.zeros(scale.shape) if dtype == "int" else np.ones(rmax.shape, dtype="uint8") * (1 << (num_bits - 1))
