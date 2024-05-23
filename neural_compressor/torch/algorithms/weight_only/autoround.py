@@ -14,6 +14,7 @@
 
 import json
 import time
+import copy
 from typing import Union
 
 import torch
@@ -134,6 +135,24 @@ def pack_model(
         set_module(compressed_model, k, new_module)
     return compressed_model
 
+class InputCaptureModule(torch.nn.Module):
+
+    def __init__(self, model) -> None:
+        super().__init__()
+        self.data_pairs = []
+        self.device = "cpu"
+        self.orig_model = model
+
+    def forward(self, *args, **kwargs):
+        if kwargs and len(args) == 0:
+            # Handle cases where input data is a dict
+            self.data_pairs.append(kwargs)
+        elif args and len(args) == 1:
+            # Handle cases where input data is a Tensor
+            self.data_pairs.append(args[0])
+        else:
+            logger.error("Handle cases where input data is neither a Tensor nor a dict")
+        return self.orig_model.forward(*args, **kwargs)
 
 class AutoRoundQuantizer(Quantizer):
     def __init__(
@@ -261,13 +280,17 @@ class AutoRoundQuantizer(Quantizer):
             data_type=self.data_type,
             scale_dtype=self.scale_dtype,
         )
+        
         self.rounder.prepare()
-        return model
+        prepare_model = InputCaptureModule(model)
+        return prepare_model
 
     def convert(self, model: torch.nn.Module, *args, **kwargs):
+        self.rounder.model_input = model.data_pairs
+        model = model.orig_model
         model, weight_config = self.rounder.convert()
         model.autoround_config = weight_config
-        model = pack_model(model, weight_config, inplace=True)
+        model = pack_model(model, weight_config, device=self.device, inplace=True)
         return model
 
 
@@ -356,6 +379,55 @@ def get_autoround_default_run_fn(
 
 
 class AutoRoundProcessor(AutoRound):
+    
+    @torch.no_grad()
+    def cache_inter_data(self, block_names, n_samples, layer_names=[], last_cache_name=None):
+        """Save the inputs of block_name for calibration. For layers, we cache both of inputs and output.
+
+        This method temporarily replaces the forward method of the model to capture
+        the inputs passing through the specified block. It then calibrates the model
+        using a specified number of samples. Finally, it restores the original forward
+        method and returns the inputs for the specified block.
+        Args:
+            block_names (list): The names of the blocks for which inputs are to be saved.
+            layer_names (list):The names of the layers for which inputs are to be saved.
+            n_samples (int): The number of samples to use for calibration.
+            last_cache_name (str, optional): The name of the last layer to be cached,
+                                       we could break the forward in this layer to save time
+
+        Returns:
+            dict: A dictionary containing the inputs for the specified block.
+        """
+        self.inputs = {}
+        self.to_cached_layers = block_names + layer_names
+        tmp_dtype = None
+        ## have bug if block name is not the first block
+        if (len(block_names) > 1 or len(layer_names) > 0) and self.low_gpu_mem_usage:
+            tmp_dtype = self.model.dtype
+            self.model = self.model.to(torch.bfloat16) if self.amp else self.model.to(torch.float32)
+
+        self.last_cache_name = last_cache_name
+        if last_cache_name is None and len(block_names) + len(layer_names) == 1:
+            self.last_cache_name = block_names[0] if len(block_names) == 1 else layer_names[0]
+        calib_bs = self.train_bs
+        self.hook_handles = []
+        self._replace_forward()
+        for data in self.model_input:
+            if isinstance(data, torch.Tensor):
+                self.model(data)
+            else:
+                self.model(**data)
+        self._recover_forward()
+        res = self.inputs
+        del self.model_input
+        del self.last_cache_name
+        del self.to_cached_layers
+        if tmp_dtype is not None:
+            self.model = self.model.to(tmp_dtype)
+
+        return res
+    
+    
     @torch.no_grad()
     def prepare(self):
         """Prepares a given model for quantization."""
@@ -411,7 +483,7 @@ class AutoRoundProcessor(AutoRound):
             self.tmp_dtype = None
             ## have bug if block name is not the first block
             if (len(cache_block_names) > 1 or len(self.layer_names) > 0) and self.low_gpu_mem_usage:
-                tmp_dtype = self.model.dtype
+                self.tmp_dtype = self.model.dtype
                 self.model = self.model.to(torch.bfloat16) if self.amp else self.model.to(torch.float32)
 
             self.last_cache_name = last_cache_name
@@ -435,6 +507,7 @@ class AutoRoundProcessor(AutoRound):
             self.model = self.model.to("cpu")
 
         all_inputs = res
+        
 
         del self.inputs
         inputs = all_inputs[self.block_names[0]]
