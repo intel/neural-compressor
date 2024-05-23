@@ -178,9 +178,6 @@ class TestSmoothQuant:
         fp32_model = copy.deepcopy(model)
         example_dict = {"x": example_inputs}
         q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_dict)
-        import pdb
-
-        pdb.set_trace()
         assert q_model is not None, "Quantization failed!"
 
     @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")

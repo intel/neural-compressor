@@ -1268,7 +1268,7 @@ class AutoAlpha:  # pragma: no cover
                 raise NotImplementedError
         return best_alpha
 
-    def _get_one_batch_auto_loss(self, alpha_space, input, orig_best_alpha, input_maxes, calib_func):
+    def _get_one_batch_auto_loss(self, input, alpha_space, orig_best_alpha, input_maxes, calib_func):
         """Calculate the losses for all alpha values given an input.
 
         :return: A dict of op-wise loss values with respect to alpha values.
@@ -1322,7 +1322,7 @@ class AutoAlpha:  # pragma: no cover
 
         return loss_alphas
 
-    def _get_one_batch_auto_loss_blockwise(self, alpha_space, input, orig_best_alpha, input_maxes, calib_func):
+    def _get_one_batch_auto_loss_blockwise(self, input, alpha_space, orig_best_alpha, input_maxes, calib_func):
         """Calculate the losses for all alpha values given an input in blockwise tuning mode.
 
         :return: A dict of blockwise-wise loss values with respect to alpha values.
@@ -1493,7 +1493,7 @@ class AutoAlpha:  # pragma: no cover
                         best_alphas_per_module[layer_name] = best_alphas_per_module[key]
 
             loss_tmp = self._get_one_batch_auto_loss(
-                self.alpha_space, input, best_alphas_per_module, self.input_maxes_abs, self.q_func
+                input, self.alpha_space, best_alphas_per_module, self.input_maxes_abs, self.q_func
             )
             if loss_alphas == {}:
                 loss_alphas = loss_tmp
@@ -1563,7 +1563,7 @@ class AutoAlpha:  # pragma: no cover
                         best_alphas_per_module[layer_name] = best_alphas_per_module[key]
 
             loss_tmp = self._get_one_batch_auto_loss_blockwise(
-                self.alpha_space, input, best_alphas_per_module, self.input_maxes_abs, self.q_func
+                input, self.alpha_space, best_alphas_per_module, self.input_maxes_abs, self.q_func
             )
             if loss_alphas == {}:
                 for block_name in self.block_names:
