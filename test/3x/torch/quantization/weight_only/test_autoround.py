@@ -152,6 +152,5 @@ class TestAutoRound:
         run_fn(model, *run_args)
         q_model = convert(model)
         out2 = q_model(**encoded_input)[0]
-        # import pdb; pdb.set_trace()
         assert torch.allclose(out2, out1, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
         assert isinstance(q_model.h[0].attn.c_attn, WeightOnlyLinear), "loading compressed model failed."

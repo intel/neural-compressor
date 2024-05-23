@@ -24,7 +24,7 @@ from auto_round.export.export_to_itrex.model_wrapper import WeightOnlyLinear  # 
 from auto_round.utils import get_block_names, get_module, quant_weight_w_scale, set_module  # pylint: disable=E0401
 
 from neural_compressor.torch.algorithms import Quantizer
-from neural_compressor.torch.utils import is_transformers_imported, logger
+from neural_compressor.torch.utils import is_transformers_imported, logger, get_device
 
 if is_transformers_imported():
     import transformers
@@ -227,7 +227,7 @@ class AutoRoundQuantizer(Quantizer):
         self.enable_full_range = enable_full_range
         self.batch_size = batch_size
         self.amp = amp
-        self.device = device
+        self.device = get_device(kwargs.pop("device", "auto"))
         self.lr_scheduler = lr_scheduler
         self.enable_quanted_input = enable_quanted_input
         self.enable_minmax_tuning = enable_minmax_tuning
@@ -290,7 +290,12 @@ class AutoRoundQuantizer(Quantizer):
         model = model.orig_model
         model, weight_config = self.rounder.convert()
         model.autoround_config = weight_config
-        model = pack_model(model, weight_config, device=self.device, inplace=True)
+        if self.device == "xpu":
+            model = pack_model(model, weight_config, device=self.device, inplace=True, 
+                compression_dtype=torch.int8, compression_dim=0, use_optimum_format=False,
+            )
+        else:
+            model = pack_model(model, weight_config, device=self.device, inplace=True)
         return model
 
 
