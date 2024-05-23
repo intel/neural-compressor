@@ -178,4 +178,46 @@ class TestSmoothQuant:
         fp32_model = copy.deepcopy(model)
         example_dict = {"x": example_inputs}
         q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_dict)
+        import pdb
+
+        pdb.set_trace()
+        assert q_model is not None, "Quantization failed!"
+
+    @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
+    def test_smooth_quant_auto(self):
+        import transformers
+
+        model = transformers.AutoModelForCausalLM.from_pretrained(
+            "hf-internal-testing/tiny-random-GPTJForCausalLM",
+            torchscript=True,
+        )
+        example_inputs = torch.ones([1, 10], dtype=torch.long)
+
+        def run_fn(model):
+            model(example_inputs)
+
+        # block-wise
+        quant_config = SmoothQuantConfig(
+            alpha="auto",
+            alpha_min=0.45,
+            alpha_max=0.55,
+            alpha_step=0.01,
+            shared_criterion="mean",
+            do_blockwise=True,
+            folding=False,
+        )
+        q_model = quantize(model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
+        assert q_model is not None, "Quantization failed!"
+
+        # layer-wise
+        quant_config = SmoothQuantConfig(
+            alpha="auto",
+            alpha_min=0.45,
+            alpha_max=0.55,
+            alpha_step=0.01,
+            shared_criterion="max",
+            do_blockwise=False,
+            folding=False,
+        )
+        q_model = quantize(model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
         assert q_model is not None, "Quantization failed!"

@@ -17,12 +17,13 @@ import json
 import os
 import re
 from collections import UserDict
+from functools import partial
 
 import intel_extension_for_pytorch as ipex
 import numpy
 import torch
-import tqdm
 from packaging.version import Version
+from tqdm import tqdm
 
 from neural_compressor.torch.algorithms.static_quant import (
     TransformerBasedModelBlockPatternDetector,
@@ -34,7 +35,7 @@ from neural_compressor.torch.algorithms.static_quant import (
     simple_inference,
     unify_op_type_mapping_ipex,
 )
-from neural_compressor.torch.utils import get_ipex_version, get_torch_version, logger
+from neural_compressor.torch.utils import fetch_module, get_ipex_version, get_torch_version, logger
 
 version = get_torch_version()
 ipex_ver = get_ipex_version()
@@ -375,6 +376,81 @@ def move_input_to_device(input, device=torch.device("cpu")):  # pragma: no cover
     return input
 
 
+def get_block_prefix(model):
+    """Get prefix and number of blocks.
+
+    Args:
+        model (torch.nn.Module): input model
+
+    Returns:
+        block_prefix(str): block_list name in model
+        block_num(int): number of block in block_list
+    """
+    module_types = [torch.nn.ModuleList]
+    block_prefix = ""
+    block_num = 0
+    for n, m in model.named_modules():
+        if type(m) in module_types:
+            block_prefix = n
+            block_num = len(m)
+            logger.debug(f"block_prefix: {block_prefix}, block_num: {block_num} ")
+            break
+    assert block_num > 0, "block num shouldn't be zero!"
+    return block_prefix, block_num
+
+
+def get_hidden_states(model, calib_func=None):
+    """Get the input args and kwargs of first block.
+
+    Args:
+        model (torch.nn.Module): input model
+        calib_func (Callable): a calib func to replace dataloader
+
+    Raises:
+        ValueError: to avoid inference of rest parts in model
+
+    Returns:
+        total_block_args(list): a list of input args of each batch
+        total_block_kwargs(list):  a list of input kwargs of each batch
+    """
+    # Step 1: replace block_forward to collect block inputs and avoid entire inference
+    total_block_args = []
+    total_block_kwargs = []
+
+    def forward(layer, *args, **kwargs):
+        # update total_hidden_states, total_block_kwargs, per batch
+        total_block_args.append(list(args))
+        total_block_kwargs.append(kwargs)
+        raise ValueError
+
+    block_prefix, block_num = get_block_prefix(model)
+    block_list = fetch_module(model, block_prefix)
+    first_block = block_list[0]
+    block_forward_cache = first_block.forward
+    first_block.forward = partial(forward, first_block)
+
+    # Step 2: replace model_forward to avoid ValueError
+    model_forward_cache = model.forward
+
+    def model_forward(model, *args, **kwargs):
+        nonlocal model_forward_cache
+        try:
+            model_forward_cache(*args, **kwargs)
+        except ValueError:
+            pass
+
+    model.forward = partial(model_forward, model)
+
+    # Step 3: execute calibration
+    calib_func(model)
+    logger.info("The hidden_states collection is done.")
+
+    # Step 4: recover model and block forward
+    model.forward = model_forward_cache
+    first_block.forward = block_forward_cache
+    return total_block_args, total_block_kwargs
+
+
 def forward_wrapper(model, input, device=torch.device("cpu")):  # pragma: no cover
     try:
         model = model.to(device)
@@ -409,6 +485,48 @@ def model_forward(model, dataloader, iters, device):  # pragma: no cover
             cnt += 1
             if iters != -1 and cnt >= iters:
                 break
+
+
+def update_block_input(total_block_args, total_block_kwargs, input_list):
+    """Update block input for next block inference.
+
+    Args:
+        total_block_args(list): a list of input args of each batch
+        total_block_kwargs(list):  a list of input kwargs of each batch
+        input_list (list): a list of previous block outputs to serve as input to the next block
+
+    Returns:
+        total_block_args(list): a list of input args of each batch
+        total_block_kwargs(list):  a list of input kwargs of each batch
+    """
+    for i, inp in enumerate(input_list):
+        if len(total_block_args[i]) > 0:
+            total_block_args[i][0] = inp
+        elif "hidden_states" in total_block_kwargs[i]:
+            total_block_kwargs[i]["hidden_states"] = inp
+        else:  # pragma: no cover
+            assert False, "cannot find hidden_states position for next block"
+    return total_block_args, total_block_kwargs
+
+
+def block_inference(model, total_block_args, total_block_kwargs):
+    """Collect output of block.
+
+    Args:
+        model (torch.nn.Module): input model
+        total_block_args(list): a list of input args of each batch
+        total_block_kwargs(list):  a list of input kwargs of each batch
+
+    Returns:
+        output(list): a list of block output
+    """
+    total_out = []
+    for args, kwargs in zip(total_block_args, total_block_kwargs):
+        out = model(*args, **kwargs)
+        if isinstance(out, tuple):  # pragma: no cover
+            out = out[0]
+        total_out.append(out)
+    return total_out
 
 
 def cal_scale(input_max_abs, weights, alpha, weight_max_lb=1e-5):  # pragma: no cover
@@ -1150,13 +1268,14 @@ class AutoAlpha:  # pragma: no cover
                 raise NotImplementedError
         return best_alpha
 
-    def _get_one_batch_auto_loss(self, input, alpha_space, orig_best_alpha, input_maxes):
+    def _get_one_batch_auto_loss(self, alpha_space, input, orig_best_alpha, input_maxes, calib_func):
         """Calculate the losses for all alpha values given an input.
 
         :return: A dict of op-wise loss values with respect to alpha values.
         """
         self._change_qdq_for_auto(enable=False)
         module_names = self._get_sq_layer_names()
+
         forward_wrapper(self.model, input, self.device)  ##disable quant and get fp32 output
 
         fp32_output = {}
@@ -1164,10 +1283,13 @@ class AutoAlpha:  # pragma: no cover
             module = get_module(self.model, name)
             fp32_output[name] = module.output
             module.output = None
+
         self._change_qdq_for_auto(enable=True)
         absorb_input_scales, weight_scales = self._cal_scales(self.absorb_to_layer, input_maxes, orig_best_alpha)
         self._update_scales_for_auto(absorb_input_scales, weight_scales)
+
         forward_wrapper(self.model, input, self.device)  ##save quant_input
+
         for mod_name in module_names:  # save fp32 values
             mod = get_module(self.model, mod_name)
             if mod_name in self.fp32_output_val:
@@ -1185,8 +1307,7 @@ class AutoAlpha:  # pragma: no cover
                 cur_alpha = orig_best_alpha[name]
             key_name = str(cur_alpha)
             loss_alphas[name] = {key_name: loss}
-        # for name in module_names:
-        #     loss_alphas[name]={}
+
         for alpha in alpha_space:
             absorb_input_scales, weight_scales = self._cal_scales(self.absorb_to_layer, input_maxes, alpha)
             self._update_scales_for_auto(absorb_input_scales, weight_scales)
@@ -1198,15 +1319,15 @@ class AutoAlpha:  # pragma: no cover
                 output = module.q_dq_forward(module.q_input, module.input_scale, module.weight_scale)
                 loss = self._get_auto_loss(fp32_output[name], output)
                 loss_alphas[name][str(alpha)] = loss
+
         return loss_alphas
 
-    def _get_one_batch_auto_loss_blockwise(self, input, alpha_space, orig_best_alpha, input_maxes):
+    def _get_one_batch_auto_loss_blockwise(self, alpha_space, input, orig_best_alpha, input_maxes, calib_func):
         """Calculate the losses for all alpha values given an input in blockwise tuning mode.
 
         :return: A dict of blockwise-wise loss values with respect to alpha values.
         """
         self._change_qdq_for_auto(enable=False)
-        module_names = self._get_sq_layer_names()
 
         block_modules = {}
         for key in self.block_names:
@@ -1218,30 +1339,37 @@ class AutoAlpha:  # pragma: no cover
         fp32_output = {}
         for block_name in self.block_names:
             fp32_output[block_name] = self.block_outputs[block_name]
+
+        # update scales
         self._change_qdq_for_auto(enable=True)
         absorb_input_scales, weight_scales = self._cal_scales(self.absorb_to_layer, input_maxes, orig_best_alpha)
         self._update_scales_for_auto(absorb_input_scales, weight_scales)
-        forward_wrapper(self.model, input, self.device)  ##save quant_input
-        for mod_name in module_names:  # save fp32 values
-            mod = get_module(self.model, mod_name)
-            if mod_name in self.fp32_output_val:
-                self.fp32_output_val[mod_name].append(torch.norm(mod.output))
-            else:
-                self.fp32_output_val[mod_name] = [torch.norm(mod.output)]
-            del mod
+
+        # get input args and kwargs for the first block.
+        total_block_args, total_block_kwargs = get_hidden_states(self.model, calib_func)
 
         loss_alphas = {}
+        # process block by block
+        for block_name, block_module in block_modules.items():
+            logger.info(f"Processing block: {block_name}")
+            # skip empty block
+            if not dict(block_module.named_modules()):
+                logger.info("No need to process this block.")
+                continue
 
-        for block_name in self.block_names:
-            block = get_module(self.model, block_name)
-            loss = self._get_auto_loss(fp32_output[block_name], self.block_outputs[block_name])
+            # record output of the current block
+            out_list = block_inference(block_module, total_block_args, total_block_kwargs)
+            # compute loss w/ fp32_output and record to alpha loss
+            loss = self._get_auto_loss(fp32_output[block_name], out_list)
             cur_alpha = orig_best_alpha
             if isinstance(orig_best_alpha, dict):
                 cur_alpha = orig_best_alpha[self.block_to_module[block_name][0]]
             key_name = str(cur_alpha)
             loss_alphas[block_name] = {key_name: loss}
-        # for name in module_names:
-        #     loss_alphas[name]={}
+
+            # update input args and kwargs for the next block
+            total_block_args, total_block_kwargs = update_block_input(total_block_args, total_block_kwargs, out_list)
+
         for alpha in alpha_space:
             absorb_input_scales, weight_scales = self._cal_scales(self.absorb_to_layer, input_maxes, alpha)
             self._update_scales_for_auto(absorb_input_scales, weight_scales)
@@ -1274,6 +1402,7 @@ class AutoAlpha:  # pragma: no cover
                 loss = self._get_auto_loss(fp32_output[block_name], output)
                 loss_alphas[block_name][str(alpha)] = loss
                 del block_copy  # release memory
+
         return loss_alphas
 
     def opwise_rank(self, loss_alphas, best_alphas):
@@ -1347,15 +1476,14 @@ class AutoAlpha:  # pragma: no cover
         self.fp32_output_val = {}
         best_alphas = self.init_alpha
 
-        if not self.dataloader:
-            logger.info(f"Auto-tuning failed due to no dataloader, using {best_alphas} instead.")
+        if not self.dataloader and not self.q_func:
+            logger.info(f"Auto-tuning failed due to no calibration function, using {best_alphas} instead.")
             self._qdq_model_unwrapper_for_auto()
             return best_alphas
-        bar = tqdm(self.dataloader, total=self.calib_sample_num, desc="auto tune alpha")  # pylint: disable=E1102
-        for input in bar:
-            if isinstance(input, tuple) or isinstance(input, list):
-                if len(input) == 2:
-                    input, _ = input  # Extract input when both input and label are yielded by dataloader.
+
+        input = self.example_inputs
+
+        for i in tqdm(range(self.calib_sample_num), desc="auto tune alpha"):
             loss_alphas = {}
             best_alphas_per_module = best_alphas
             if isinstance(best_alphas, dict):
@@ -1363,8 +1491,9 @@ class AutoAlpha:  # pragma: no cover
                     layer_names = self.absorb_to_layer[key]
                     for layer_name in layer_names:
                         best_alphas_per_module[layer_name] = best_alphas_per_module[key]
+
             loss_tmp = self._get_one_batch_auto_loss(
-                input, self.alpha_space, best_alphas_per_module, self.input_maxes_abs
+                self.alpha_space, input, best_alphas_per_module, self.input_maxes_abs, self.q_func
             )
             if loss_alphas == {}:
                 loss_alphas = loss_tmp
@@ -1373,8 +1502,9 @@ class AutoAlpha:  # pragma: no cover
                     cur_loss = loss_alphas[key]
                     for alpha_key in cur_loss.keys():
                         cur_loss[alpha_key] += loss_tmp[key][alpha_key]
-            total_cnt += self.dataloader.batch_size
-            tmp_cnt += self.dataloader.batch_size
+
+            total_cnt += 1
+            tmp_cnt += 1
             if tmp_cnt // multiply_factor >= 1:
                 alpha_update_iter += 1
                 tmp_cnt = 0
@@ -1416,14 +1546,14 @@ class AutoAlpha:  # pragma: no cover
         self.fp32_output_val = {}
         best_alphas = self.init_alpha
 
-        if not self.dataloader:
-            logger.info(f"Auto-tuning failed due to no dataloader, using {best_alphas} instead.")
+        if not self.dataloader and not self.q_func:
+            logger.info(f"Auto-tuning failed due to no calibration function, using {best_alphas} instead.")
             self._qdq_model_unwrapper_for_auto()
             return best_alphas
-        bar = tqdm(self.dataloader, total=self.calib_sample_num, desc="auto tune alpha")  # pylint: disable=E1102
-        for input in bar:
-            if isinstance(input, tuple):  # Extract input when both input and label are yielded by dataloader.
-                input = input[0]
+
+        input = self.example_inputs
+
+        for i in tqdm(range(self.calib_sample_num), desc="auto tune alpha"):
             loss_alphas = {}
             best_alphas_per_module = best_alphas
             if isinstance(best_alphas, dict):
@@ -1431,8 +1561,9 @@ class AutoAlpha:  # pragma: no cover
                     layer_names = self.absorb_to_layer[key]
                     for layer_name in layer_names:
                         best_alphas_per_module[layer_name] = best_alphas_per_module[key]
+
             loss_tmp = self._get_one_batch_auto_loss_blockwise(
-                input, self.alpha_space, best_alphas_per_module, self.input_maxes_abs
+                self.alpha_space, input, best_alphas_per_module, self.input_maxes_abs, self.q_func
             )
             if loss_alphas == {}:
                 for block_name in self.block_names:
@@ -1445,8 +1576,8 @@ class AutoAlpha:  # pragma: no cover
                         for alpha_key in cur_loss.keys():
                             cur_loss[alpha_key] += loss_tmp[block_name][alpha_key]
 
-            total_cnt += self.dataloader.batch_size
-            tmp_cnt += self.dataloader.batch_size
+            total_cnt += 1
+            tmp_cnt += 1
             if tmp_cnt // multiply_factor >= 1:
                 alpha_update_iter += 1
                 tmp_cnt = 0
