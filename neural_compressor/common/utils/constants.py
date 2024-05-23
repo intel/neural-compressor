@@ -36,6 +36,7 @@ HQQ = "hqq"
 TEQ = "teq"
 AUTOROUND = "autoround"
 FP8_QUANT = "fp8_quant"
+MX_QUANT = "mx_quant"
 MIX_PRECISION = "mix_precision"
 
 # options

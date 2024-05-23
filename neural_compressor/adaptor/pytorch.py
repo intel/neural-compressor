@@ -4916,12 +4916,12 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             weight_config[op_name]["sym"] = config["weight"]["scheme"] == "sym"
 
         # auto round recipes
+
         enable_full_range = self.recipes["autoround_args"].get("enable_full_range", False)
         batch_size = self.recipes["autoround_args"].get("batch_size", 8)
         lr_scheduler = self.recipes["autoround_args"].get("lr_scheduler", None)
-        dataset_name = self.recipes["autoround_args"].get("dataset_name", "NeelNanda/pile-10k")
-        dataset_split = self.recipes["autoround_args"].get("dataset_split", "train")
-        use_quant_input = self.recipes["autoround_args"].get("use_quant_input", True)
+        dataset = self.recipes["autoround_args"].get("dataset", "NeelNanda/pile-10k")
+        enable_quanted_input = self.recipes["autoround_args"].get("enable_quanted_input", True)
         enable_minmax_tuning = self.recipes["autoround_args"].get("enable_minmax_tuning", True)
         lr = self.recipes["autoround_args"].get("lr", None)
         minmax_lr = self.recipes["autoround_args"].get("minmax_lr", None)
@@ -4938,22 +4938,26 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         data_type = self.recipes["autoround_args"].get("data_type", "int")  ##only support data_type
         scale_dtype = self.recipes["autoround_args"].get("scale_dtype", "fp16")
         amp = self.recipes["autoround_args"].get("amp", True)
+        device = self.recipes["autoround_args"].get("device", None)
+        bits = self.recipes["autoround_args"].get("bits", 4)
+        group_size = self.recipes["autoround_args"].get("group_size", 128)
+        sym = self.recipes["autoround_args"].get("scheme", "asym") == "sym"
 
+        if dataloader is not None:
+            dataset = dataloader
         model, autoround_config = autoround_quantize(
             model=model,
-            tokenizer=None,
-            bits=4,
-            group_size=128,
-            sym=False,
+            bits=bits,
+            group_size=group_size,
+            sym=sym,
             weight_config=weight_config,
             enable_full_range=enable_full_range,
             batch_size=batch_size,
             amp=amp,
+            device=device,
             lr_scheduler=lr_scheduler,
-            dataloader=dataloader,
-            dataset_name=dataset_name,
-            dataset_split=dataset_split,
-            use_quant_input=use_quant_input,
+            dataset=dataset,
+            enable_quanted_input=enable_quanted_input,
             enable_minmax_tuning=enable_minmax_tuning,
             lr=lr,
             minmax_lr=minmax_lr,

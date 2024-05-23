@@ -34,6 +34,8 @@ from neural_compressor.torch.quantization.config import (
     FP8Config,
     get_default_fp8_config,
     get_default_fp8_config_set,
+    MXQuantConfig,
+    get_default_mx_config,
     MixPrecisionConfig,
     get_default_mix_precision_config,
     get_default_mix_precision_config_set,

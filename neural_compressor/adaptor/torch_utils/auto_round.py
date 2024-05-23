@@ -12,14 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from auto_round.calib_dataset import CALIB_DATASETS  # pylint: disable=E0401
 
+def get_dataloader(tokenizer, seqlen, dataset_name="NeelNanda/pile-10k", seed=42, bs=8, n_samples=512):
+    """Generate a DataLoader for calibration using specified parameters.
 
-def get_dataloader(
-    tokenizer, seqlen=2048, seed=42, train_bs=8, dataset_split="train", dataset_name="NeelNanda/pile-10k"
-):
-    get_dataloader = CALIB_DATASETS.get(dataset_name, CALIB_DATASETS["NeelNanda/pile-10k"])
+    Args:
+        tokenizer (Tokenizer): The tokenizer to use for tokenization.
+        seqlen (int): The exact sequence length. samples < seqlen will be dropped,
+                      samples longer than seqlen will be truncated
+        dataset_name (str, optional): The name of the dataset or datasets separated by commas.
+                                     Defaults to "NeelNanda/pile-10k".
+        split (str, optional): The data split to use. Defaults to None.
+        seed (int, optional): The random seed for reproducibility. Defaults to 42.
+        bs (int, optional): The batch size. Defaults to 4.
+        n_samples (int, optional): The total number of samples to include. Defaults to 512.
+
+    Returns:
+        DataLoader: The DataLoader for the calibrated dataset.
+    """
+    from auto_round.calib_dataset import get_dataloader  # pylint: disable=E0401
+
     dataloader = get_dataloader(
-        tokenizer, seqlen=seqlen, seed=seed, bs=train_bs, split=dataset_split, dataset_name=dataset_name
+        tokenizer, seqlen, dataset_name="NeelNanda/pile-10k", seed=seed, bs=bs, n_samples=n_samples
     )
     return dataloader

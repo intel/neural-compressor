@@ -839,6 +839,22 @@ class ONNXModel(ORTONNXModel):
         # split model 1: ... -> node_1 -> split_node
         # split model 2: node_2 -> ...
 
+        # remove nodes which are not followed by other nodes
+        unvalid_nodes = [
+            i
+            for i in self.model.graph.node
+            if all(out not in self._input_name_to_nodes and not self.is_graph_output(out) for out in i.output)
+        ]
+        while len(unvalid_nodes) > 0:
+            self.remove_nodes(unvalid_nodes)
+            self._input_name_to_nodes = self.input_name_to_nodes()
+            unvalid_nodes = [
+                i
+                for i in self.model.graph.node
+                if all([out not in self._input_name_to_nodes and not self.is_graph_output(out) for out in i.output])
+            ]
+        self.topological_sort()
+
         split_model_part_1 = onnx.ModelProto()
         split_model_part_1.CopyFrom(self.model)
         split_model_part_1.graph.ClearField("node")
@@ -868,15 +884,15 @@ class ONNXModel(ORTONNXModel):
         split_tensor_type, split_tensor_shape = self._get_output_type_shape_by_tensor_name(split_tensor_name)
         split_tensor = onnx.helper.make_tensor_value_info(split_tensor_name, split_tensor_type, split_tensor_shape)
 
+        split_model_part_1.graph.output.append(split_tensor)
+        split_model_part_2.graph.input.append(split_tensor)
+
         split_model_part_1 = ONNXModel(split_model_part_1, ignore_warning=True)
         split_model_part_2 = ONNXModel(split_model_part_2, ignore_warning=True)
 
         # remove unused input & output
         split_model_part_1._remove_unused_input_output()
         split_model_part_2._remove_unused_input_output()
-
-        split_model_part_1.model.graph.output.append(split_tensor)
-        split_model_part_2.model.graph.input.append(split_tensor)
 
         insert_output_for_model_1 = []
         insert_input_for_model_2 = []
