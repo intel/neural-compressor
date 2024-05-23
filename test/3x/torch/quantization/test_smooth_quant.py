@@ -179,3 +179,20 @@ class TestSmoothQuant:
         example_dict = {"x": example_inputs}
         q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_dict)
         assert q_model is not None, "Quantization failed!"
+
+    @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
+    def test_smooth_quant_mixed_precision(self):
+        fp32_model = copy.deepcopy(model)
+        quant_config = get_default_sq_config()  # do mixed_precison by default.
+        example_inputs = torch.randn([1, 3])
+
+        # prepare/convert API
+        prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
+        run_fn(prepared_model)
+        q_model = convert(prepared_model)
+        assert q_model is not None, "Quantization failed!"
+
+        # quantize API
+        quant_config.excluded_precisions = ["bf16"]
+        q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
+        assert q_model is not None, "Quantization failed!"
