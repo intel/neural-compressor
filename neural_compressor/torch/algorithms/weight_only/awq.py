@@ -132,6 +132,7 @@ class ActAwareWeightQuant:
         if example_inputs is None:
             assert dataloader is not None, "datalaoder or example_inputs is required."
             self.example_inputs = get_example_input(dataloader)
+        self.device = device
         self._move_model_and_data_to_device()
         self.total_block_args = total_block_args
         self.total_block_kwargs = total_block_kwargs
@@ -144,7 +145,6 @@ class ActAwareWeightQuant:
         self.scheme = scheme
         self.use_full_range = use_full_range
         self.weight_config = weight_config
-        self.device = device
 
     def _move_model_and_data_to_device(self):
         # Put the model and example_inputs into target device
