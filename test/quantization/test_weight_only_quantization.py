@@ -154,6 +154,7 @@ class TestGPTQWeightOnlyQuant(unittest.TestCase):
                 "sym": True,
                 "percdamp": 0.01,
                 "perchannel": False,
+                "lm_head": True,
             },
             "transformer.h.1.attn.k_proj": {
                 "wbits": 3,
