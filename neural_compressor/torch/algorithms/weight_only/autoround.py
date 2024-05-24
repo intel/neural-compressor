@@ -28,7 +28,7 @@ class Dataloader:
     def __init__(self, args, kwargs) -> None:
         self.args = args
         self.kwargs = kwargs
-    
+
     def __iter__(self):
         for arg, kwarg in zip(self.args, self.kwargs):
             if not arg:
@@ -38,6 +38,7 @@ class Dataloader:
             else:
                 yield arg, kwarg
 
+
 class InputCaptureModule(torch.nn.Module):
 
     def __init__(self, model) -> None:
@@ -46,7 +47,6 @@ class InputCaptureModule(torch.nn.Module):
         self.kwargs_list = []
         self.device = "cpu"
         self.orig_model = model
-        
 
     def forward(self, *args, **kwargs):
         self.args_list.append(args)
@@ -191,6 +191,7 @@ class AutoRoundQuantizer(Quantizer):
         model = pack_model(model, weight_config, device=self.device, inplace=True)
         return model
 
+
 def get_dataloader(tokenizer, seqlen, dataset_name="NeelNanda/pile-10k", seed=42, bs=8, n_samples=512):
     """Generate a DataLoader for calibration using specified parameters.
 
@@ -214,4 +215,3 @@ def get_dataloader(tokenizer, seqlen, dataset_name="NeelNanda/pile-10k", seed=42
         tokenizer, seqlen, dataset_name="NeelNanda/pile-10k", seed=seed, bs=bs, n_samples=n_samples
     )
     return dataloader
-        
