@@ -23,35 +23,7 @@ from auto_round.export.export_to_itrex.export import pack_model  # pylint: disab
 
 from neural_compressor.torch.algorithms import Quantizer
 from neural_compressor.torch.utils import get_accelerator, logger
-
-class Dataloader:
-    def __init__(self, args, kwargs) -> None:
-        self.args = args
-        self.kwargs = kwargs
-
-    def __iter__(self):
-        for arg, kwarg in zip(self.args, self.kwargs):
-            if not arg:
-                yield kwarg
-            elif not kwarg:
-                yield arg
-            else:
-                yield arg, kwarg
-
-
-class InputCaptureModule(torch.nn.Module):
-
-    def __init__(self, model) -> None:
-        super().__init__()
-        self.args_list = []
-        self.kwargs_list = []
-        self.device = "cpu"
-        self.orig_model = model
-
-    def forward(self, *args, **kwargs):
-        self.args_list.append(args)
-        self.kwargs_list.append(kwargs)
-
+from .utility import CapturedDataloader, InputCaptureModule
 
 class AutoRoundQuantizer(Quantizer):
     def __init__(
@@ -157,7 +129,7 @@ class AutoRoundQuantizer(Quantizer):
         return prepare_model
 
     def convert(self, model: torch.nn.Module, *args, **kwargs):
-        dataloader = Dataloader(model.args_list, model.kwargs_list)
+        dataloader = InputCaptureModule(model.args_list, model.kwargs_list)
         model = model.orig_model
         rounder = AutoRound(
             model=model,
