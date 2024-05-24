@@ -129,7 +129,7 @@ class AutoRoundQuantizer(Quantizer):
         return prepare_model
 
     def convert(self, model: torch.nn.Module, *args, **kwargs):
-        dataloader = InputCaptureModule(model.args_list, model.kwargs_list)
+        dataloader = CapturedDataloader(model.args_list, model.kwargs_list)
         model = model.orig_model
         rounder = AutoRound(
             model=model,
