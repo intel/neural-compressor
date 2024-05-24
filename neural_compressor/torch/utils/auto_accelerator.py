@@ -29,8 +29,7 @@ from typing import Any, Callable, List
 
 import torch
 
-from neural_compressor.common.utils import LazyImport
-from neural_compressor.torch.utils import logger
+from neural_compressor.common.utils import LazyImport, logger
 
 htcore = LazyImport("habana_frameworks.torch.core")
 

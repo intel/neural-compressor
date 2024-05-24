@@ -24,7 +24,7 @@ from collections import OrderedDict
 import torch
 
 from neural_compressor.torch.algorithms import Quantizer
-from neural_compressor.torch.utils import get_device, is_transformers_imported, logger, set_module
+from neural_compressor.torch.utils import get_accelerator, is_transformers_imported, logger, set_module
 
 from .utility import cast_fp8, quant_tensor, search_clip
 
@@ -90,7 +90,7 @@ class RTNQuantizer(Quantizer):
             model: fake quantized torch module
         """
         weight_config = self.quant_config
-        device = get_device(kwargs.pop("device", "auto"))
+        device = get_accelerator(kwargs.pop("device", "auto")).current_device_name()
 
         # Put model on device explicitly
         # TODO: refine it later, Put module on device one by one instead of the whole model
@@ -165,9 +165,9 @@ class RTNQuantizer(Quantizer):
             else:
                 transpose = group_dim == 0
             if transpose:
-                weight = m.weight.t_().contiguous()
+                weight = m.weight.detach().T.contiguous()
             else:
-                weight = m.weight
+                weight = m.weight.detach()
             if use_mse_search:
                 quantile = search_clip(m, bits, group_size, scheme, dtype, use_full_range)
             if export_compressed_model:
@@ -189,8 +189,8 @@ class RTNQuantizer(Quantizer):
                     in_features = m.in_features
                     out_features = m.out_features
                 elif is_transformers_imported() and isinstance(m, transformers.Conv1D):
-                    in_features = m.weight.shape[1]
-                    out_features = m.weight.shape[0]
+                    in_features = m.weight.shape[0]
+                    out_features = m.weight.shape[1]
                     int_weight = int_weight.t_().contiguous()
                     scale = scale.t_().contiguous()
                     zp = zp.t_().contiguous() if zp is not None else zp
@@ -227,6 +227,5 @@ class RTNQuantizer(Quantizer):
                     # for only group_dim is 0 or only `transformers.Conv1D`,
                     # we need to transpose the quantized tensor and module's weight back
                     weight = weight.t_().contiguous()
-                    m.weight.t_().contiguous()
                 m.weight.data.copy_(weight)
         return model

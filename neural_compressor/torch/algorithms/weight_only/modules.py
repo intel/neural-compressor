@@ -23,7 +23,7 @@ import torch
 from torch.autograd import Function
 from torch.nn import functional as F
 
-from neural_compressor.torch.utils import logger
+from neural_compressor.torch.utils import accelerator, logger
 
 from .utility import quant_tensor
 
@@ -174,9 +174,9 @@ class WeightOnlyLinear(torch.nn.Module):
 
     def pack(self, int_weight, scale, zp, bias, g_idx=None):
         if self.use_optimum_format:
-            self.scales = self.scales.t_().contiguous()
-            self.qweight = self.qweight.t_().contiguous()
-            self.qzeros = self.qzeros.t_().contiguous()
+            self.scales = self.scales.T.contiguous()
+            self.qweight = self.qweight.T.contiguous()
+            self.qzeros = self.qzeros.T.contiguous()
         int_weight = int_weight.to(self.device)
         if self.use_optimum_format and zp is None:
             # to avoid overflow
@@ -197,84 +197,50 @@ class WeightOnlyLinear(torch.nn.Module):
         assert scale.shape == self.scales.shape, f"{scale.shape} != {self.scales.shape} Scale shape is mismatched."
         self.scales = scale.type(self.float_type).to(self.device)
         if not self.use_optimum_format and self.compression_dim == 0:
-            int_weight = int_weight.t_().contiguous()
-            self.qweight = self.qweight.t_().contiguous()
+            int_weight = int_weight.T.contiguous()
+            self.qweight = self.qweight.T.contiguous()
         origin_shape = int_weight.shape
         target_shape = self.qweight.shape
         assert origin_shape[0] == target_shape[0], "output channels mismatch, please check."
-        mask = torch.tensor(2**self.bits - 1, dtype=self.compression_dtype).to(self.device)
 
         # pack weight
-        for j in range(target_shape[1]):
-            start = self.n_pack * j
-            end = self.n_pack * (j + 1)
-            tmp = int_weight[:, start:end].type(self.compression_dtype)
-            for e in range(tmp.shape[1]):
-                tmp[:, e] &= mask
-                tmp[:, e] = tmp[:, e] << (self.bits * e)
-                self.qweight[:, j] |= tmp[:, e]
+        self.qweight.copy_(self.pack_tensor(int_weight))
         if not self.use_optimum_format and self.compression_dim == 0:
-            self.qweight = self.qweight.t_().contiguous()
+            self.qweight = self.qweight.T.contiguous()
 
         if zp is not None:
             zp = zp.to(self.device)
             if self.use_optimum_format:
                 zp -= 1
             if self.use_optimum_format or self.compression_dim == 0:
-                zp = zp.t_().contiguous()
-                self.qzeros = self.qzeros.t_().contiguous()
+                zp = zp.T.contiguous()
+                self.qzeros = self.qzeros.T.contiguous()
             assert hasattr(self, "qzeros"), "zp is not set when initializing."
-            target_shape = self.qzeros.shape
-            for j in range(target_shape[1]):
-                start = self.n_pack * j
-                end = self.n_pack * (j + 1)
-                tmp = zp[:, start:end].type(self.compression_dtype)
-                for e in range(tmp.shape[1]):
-                    tmp[:, e] &= mask
-                    tmp[:, e] = tmp[:, e] << (self.bits * e)
-                    self.qzeros[:, j] |= tmp[:, e]
+            self.qzeros.copy_(self.pack_tensor(zp))
             if self.use_optimum_format or self.compression_dim == 0:
-                self.qzeros = self.qzeros.t_().contiguous()
+                self.qzeros = self.qzeros.T.contiguous()
         if self.use_optimum_format:
-            self.scales = self.scales.t_().contiguous()
-            self.qweight = self.qweight.t_().contiguous()
-            self.qzeros = self.qzeros.t_().contiguous()
+            self.scales = self.scales.T.contiguous()
+            self.qweight = self.qweight.T.contiguous()
+            self.qzeros = self.qzeros.T.contiguous()
 
     def recover(self):
         logger.debug(f"Recovering {self} weight")
-        scales = self.scales.t_().contiguous() if self.use_optimum_format else self.scales
-        qweight = self.qweight.t_().contiguous() if self.use_optimum_format else self.qweight
+        scales = self.scales.T.contiguous() if self.use_optimum_format else self.scales
+        qweight = self.qweight.T.contiguous() if self.use_optimum_format else self.qweight
 
         device = scales.device
         fp32_weight = torch.zeros(self.out_features, self.in_features, dtype=self.float_type).to(device)
         if self.g_idx is None:
             # used for recovering fp32_weight
             self.g_idx = torch.tensor([i // self.group_size for i in range(self.in_features)], dtype=torch.int32)
-        mask = torch.tensor(2**self.bits - 1, dtype=self.compression_dtype).to(device)
-        if hasattr(self, "qzeros"):
-            weight_dtype = torch.uint8
-        else:
-            weight_dtype = torch.int8
         # unpack weight
-        weight = torch.zeros(self.out_features, self.in_features, dtype=weight_dtype).to(device)
         if not self.use_optimum_format and self.compression_dim == 0:
-            weight = weight.t_().contiguous()
-            qweight = qweight.t_().contiguous()
-        origin_shape = weight.shape
-        target_shape = qweight.shape
-        for j in range(target_shape[1]):
-            for e in range(self.n_pack):
-                index = j * self.n_pack + e
-                if index >= origin_shape[1]:
-                    continue
-                tmp = qweight[:, j]
-                tmp = tmp << (self.compress_bits - self.bits * (e + 1))
-                tmp = tmp >> self.compress_bits - self.bits
-                if weight_dtype == torch.uint8:
-                    tmp &= mask  # remove sign bit
-                weight[:, index] = tmp.type(weight_dtype)
+            qweight = qweight.T.contiguous()
+        weight = self.unpack_tensor(qweight)
         if not self.use_optimum_format and self.compression_dim == 0:
-            weight = weight.t_().contiguous()
+            weight = weight.T.contiguous()
+        weight = weight[: self.out_features, : self.in_features]  # avoid oversize
         if "int" not in self.dtype:
             new_weight = torch.zeros(self.out_features, self.in_features).to(device)
             for k, v in self.int2float_mapping.items():
@@ -282,38 +248,59 @@ class WeightOnlyLinear(torch.nn.Module):
             weight = new_weight
         # unpack zero_point
         if hasattr(self, "qzeros"):
-            zp_dtype = self.compression_dtype  # to avoid overflow when weight-zp
-            zp = torch.zeros(scales.shape, dtype=zp_dtype).to(device)
-            qzeros = self.qzeros.t_().contiguous() if self.use_optimum_format else self.qzeros
+            qzeros = self.qzeros.T.contiguous() if self.use_optimum_format else self.qzeros
             if self.use_optimum_format or self.compression_dim == 0:
-                zp = zp.t_().contiguous()
-                qzeros = qzeros.t_().contiguous()
-            origin_shape = zp.shape
-            target_shape = qzeros.shape
-            for j in range(target_shape[1]):
-                for e in range(self.n_pack):
-                    index = j * self.n_pack + e
-                    if index >= origin_shape[1]:
-                        continue
-                    tmp = qzeros[:, j]
-                    tmp = tmp << (self.compress_bits - self.bits * (e + 1))
-                    tmp = tmp >> self.compress_bits - self.bits
-                    tmp &= mask
-                    zp[:, index] = tmp.type(zp_dtype)
+                qzeros = qzeros.T.contiguous()
+            zp = self.unpack_tensor(qzeros)
             if self.use_optimum_format or self.compression_dim == 0:
-                zp = zp.t_().contiguous()
+                zp = zp.T.contiguous()
+            zp = zp[: scales.shape[0], : scales.shape[1]]  # avoid oversize
             if self.use_optimum_format:
                 # zp -= 1 may cause zp == -1, after recover it becomes 2**self.bits - 1
                 zp += 1
                 zp = torch.where(zp > (2**self.bits - 1), 0, zp)
             # recover fp32 weight with int_weight, scale, and zero_point
             for idx in range(self.in_features):
-                fp32_weight[:, idx] = (weight[:, idx] - zp[:, self.g_idx[idx]]) * scales[:, self.g_idx[idx]]
+                fp32_weight[:, idx] = (torch.subtract(weight[:, idx], zp[:, self.g_idx[idx]]).to(torch.int8)) * scales[
+                    :, self.g_idx[idx]
+                ]
         else:
             # recover fp32 weight with int_weight, scale
             for idx in range(self.in_features):
                 fp32_weight[:, idx] = weight[:, idx] * scales[:, self.g_idx[idx]]
         return fp32_weight
+
+    def pack_tensor(self, raw_tensor):
+        target_len = math.ceil(raw_tensor.shape[1] / self.n_pack)
+        packed_tensor = torch.zeros(raw_tensor.shape[0], target_len, dtype=self.compression_dtype).to(self.device)
+        mask = torch.tensor(2**self.bits - 1, dtype=self.compression_dtype).to(self.device)
+        for j in range(packed_tensor.shape[1]):
+            start = self.n_pack * j
+            end = self.n_pack * (j + 1)
+            tmp = raw_tensor[:, start:end].type(self.compression_dtype)
+            tmp &= mask
+            for e in range(tmp.shape[1]):
+                tmp[:, e] = tmp[:, e] << (self.bits * e)
+                packed_tensor[:, j] |= tmp[:, e]
+                accelerator.synchronize()
+        return packed_tensor
+
+    def unpack_tensor(self, packed_tensor):
+        target_dtype = torch.int8 if not hasattr(self, "qzeros") or "int" not in self.dtype else torch.uint8
+        target_len = packed_tensor.shape[1] * self.n_pack
+        unpacked_tensor = torch.zeros(packed_tensor.shape[0], target_len, dtype=self.compression_dtype).to(self.device)
+        mask = torch.tensor(2**self.bits - 1, dtype=self.compression_dtype).to(self.device)
+        for j in range(packed_tensor.shape[1]):
+            for e in range(self.n_pack):
+                index = j * self.n_pack + e
+                tmp = packed_tensor[:, j]
+                tmp = tmp << (self.compress_bits - self.bits * (e + 1))
+                tmp = tmp >> self.compress_bits - self.bits
+                if target_dtype == torch.uint8:
+                    tmp &= mask  # remove sign bit
+                unpacked_tensor[:, index].copy_(tmp.type(target_dtype))
+                accelerator.synchronize()
+        return unpacked_tensor
 
     def forward(self, input):
         if not hasattr(self, "weight"):
