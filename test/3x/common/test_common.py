@@ -34,13 +34,14 @@ torch_included_folder:
     │   ├── torch
 """
 
+import copy
 import unittest
 
 from neural_compressor.common import Logger
 
 logger = Logger().get_logger()
 
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Callable, List, Optional, Tuple, Union
 
 from neural_compressor.common.base_config import (
     BaseConfig,
@@ -49,7 +50,15 @@ from neural_compressor.common.base_config import (
     register_config,
     register_supported_configs_for_fwk,
 )
-from neural_compressor.common.base_tuning import ConfigLoader, ConfigSet, Evaluator, SequentialSampler
+from neural_compressor.common.base_tuning import (
+    ConfigLoader,
+    ConfigSet,
+    EvaluationFuncWrapper,
+    Evaluator,
+    SequentialSampler,
+    TuningConfig,
+    init_tuning,
+)
 from neural_compressor.common.tuning_param import TuningParam
 from neural_compressor.common.utils import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE
 
@@ -343,6 +352,71 @@ class TestConfigLoader(unittest.TestCase):
         for i, config in enumerate(config_loader):
             config_count += 1
         self.assertEqual(config_count, 2)
+
+
+class TestEvaluationFuncWrapper(unittest.TestCase):
+    def test_evaluate(self):
+        # Define a sample evaluation function
+        def eval_fn(model):
+            return model * 2
+
+        # Create an instance of EvaluationFuncWrapper
+        wrapper = EvaluationFuncWrapper(eval_fn)
+
+        # Test the evaluate method
+        result = wrapper.evaluate(5)
+        self.assertEqual(result, 10)
+
+
+class TestAutoTune(unittest.TestCase):
+    def test_autotune(self):
+        class AutoTuner:
+
+            @staticmethod
+            def _quantize(model, quant_config, *args, **kwargs):
+                return model
+
+            def run(
+                self, model: FakeModel, tune_config: TuningConfig, eval_fn: Callable, eval_args=None, *args, **kwargs
+            ) -> Optional[FakeModel]:
+                """The main entry of auto-tune."""
+                best_quant_model = None
+                eval_func_wrapper = EvaluationFuncWrapper(eval_fn, eval_args)
+                config_loader, tuning_logger, tuning_monitor = init_tuning(tuning_config=tune_config)
+                baseline: float = eval_func_wrapper.evaluate(model)
+                tuning_monitor.set_baseline(baseline)
+                tuning_logger.tuning_start()
+                for trial_index, quant_config in enumerate(config_loader):
+                    tuning_logger.trial_start(trial_index=trial_index)
+                    tuning_logger.execution_start()
+                    logger.info(quant_config.to_dict())
+                    q_model = self._quantize(copy.deepcopy(model), quant_config, *args, **kwargs)
+                    tuning_logger.execution_end()
+                    tuning_logger.evaluation_start()
+                    eval_result: float = eval_func_wrapper.evaluate(q_model)
+                    tuning_logger.evaluation_end()
+                    tuning_monitor.add_trial_result(trial_index, eval_result, quant_config)
+                    tuning_logger.trial_end(trial_index)
+                    if tuning_monitor.need_stop():
+                        logger.info("Stopped tuning.")
+                        del q_model  # maybe gc.collect() is needed for memory release
+                        best_quant_config: BaseConfig = tuning_monitor.get_best_quant_config()
+                        q_model = self._quantize(copy.deepcopy(model), best_quant_config, *args, **kwargs)
+                        best_quant_model = q_model  # quantize model inplace
+                        break
+                tuning_logger.tuning_end()
+                return best_quant_model
+
+        config_set = [FakeAlgoConfig(weight_bits=4), FakeAlgoConfig(weight_bits=8)]
+        tuning_config = TuningConfig(config_set=config_set)
+        tunner = AutoTuner()
+        model = FakeModel()
+
+        def fake_eval_fn(model):
+            return 1.0
+
+        q_model = tunner.run(model=model, tune_config=tuning_config, eval_fn=fake_eval_fn)
+        self.assertIsNotNone(q_model)
 
 
 if __name__ == "__main__":
