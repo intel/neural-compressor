@@ -6,7 +6,7 @@ import torch
 import transformers
 from packaging.version import Version
 
-from neural_compressor.torch.algorithms.weight_only.autoround import get_autoround_default_run_fn
+from neural_compressor.torch.algorithms.weight_only.autoround import get_dataloader
 from neural_compressor.torch.quantization import (
     AutoRoundConfig,
     convert,
@@ -16,6 +16,7 @@ from neural_compressor.torch.quantization import (
 )
 from neural_compressor.torch.utils import logger
 
+
 try:
     import auto_round
     from auto_round.export.export_to_itrex.model_wrapper import WeightOnlyLinear
@@ -24,6 +25,14 @@ try:
 except ImportError:
     auto_round_installed = False
 
+def run_fn(model, dataloader):
+    for data in dataloader:
+        if isinstance(data, tuple) or isinstance(data, list):
+            model(*data)
+        elif isinstance(data, dict):
+            model(**data)
+        else:
+            model(data)
 
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
 class TestAutoRound:
@@ -33,9 +42,10 @@ class TestAutoRound:
             torchscript=True,
         )
         self.inp = torch.ones([1, 10], dtype=torch.long)
-        self.tokenizer = transformers.AutoTokenizer.from_pretrained(
+        tokenizer = transformers.AutoTokenizer.from_pretrained(
             "hf-internal-testing/tiny-random-GPTJForCausalLM", trust_remote_code=True
         )
+        self.dataloader = get_dataloader(tokenizer, 32, dataset_name="NeelNanda/pile-10k", seed=42, bs=8, n_samples=10)
         self.label = self.gptj(self.inp)[0]
 
     def teardown_class(self):
@@ -52,18 +62,10 @@ class TestAutoRound:
             quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
         logger.info(f"Test AutoRound with config {quant_config}")
 
-        run_fn = get_autoround_default_run_fn
-        run_args = (
-            self.tokenizer,
-            "NeelNanda/pile-10k",
-            32,
-            10,
-        )
-
         # prepare + convert API
         model = prepare(model=fp32_model, quant_config=quant_config)
 
-        run_fn(model, *run_args)
+        run_fn(model, self.dataloader)
         q_model = convert(model)
         out = q_model(self.inp)[0]
         assert torch.allclose(out, self.label, atol=1e-1)
@@ -86,13 +88,8 @@ class TestAutoRound:
         q_model = quantize(
             model=gpt_j_model,
             quant_config=quant_config,
-            run_fn=get_autoround_default_run_fn,
-            run_args=(
-                self.tokenizer,
-                "NeelNanda/pile-10k",
-                32,
-                10,
-            ),
+            run_fn=run_fn,
+            run_args=(self.dataloader, ),
         )
         out = q_model(self.inp)[0]
         assert torch.allclose(out, self.label, atol=1e-1)
@@ -104,16 +101,9 @@ class TestAutoRound:
         # quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
         logger.info(f"Test AutoRound with config {quant_config}")
 
-        run_fn = get_autoround_default_run_fn
-        run_args = (
-            self.tokenizer,
-            "NeelNanda/pile-10k",
-            32,
-            10,
-        )
         # quantizer execute
         model = prepare(model=fp32_model, quant_config=quant_config)
-        run_fn(model, *run_args)
+        run_fn(model, self.dataloader)
         q_model = convert(model)
 
         assert q_model is not None, "Quantization failed!"
@@ -139,16 +129,9 @@ class TestAutoRound:
         text = "Replace me by any text you'd like."
         encoded_input = tokenizer(text, return_tensors="pt")
         out1 = model(**encoded_input)[0]
-        run_fn = get_autoround_default_run_fn
-        run_args = (
-            tokenizer,
-            "NeelNanda/pile-10k",
-            32,
-            10,
-        )
         quant_config = AutoRoundConfig(n_samples=32, seqlen=10, iters=10, scale_dtype="fp32")
         model = prepare(model=model, quant_config=quant_config)
-        run_fn(model, *run_args)
+        run_fn(model, self.dataloader)
         q_model = convert(model)
         out2 = q_model(**encoded_input)[0]
         assert torch.allclose(out2, out1, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."

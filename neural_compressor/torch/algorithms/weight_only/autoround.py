@@ -25,6 +25,7 @@ from auto_round.utils import get_module, quant_weight_w_scale, set_module  # pyl
 
 from neural_compressor.torch.algorithms import Quantizer
 from neural_compressor.torch.utils import get_accelerator, is_transformers_imported, logger
+from .utility import simple_inference
 
 if is_transformers_imported():
     import transformers
@@ -121,21 +122,33 @@ def pack_model(
         set_module(compressed_model, k, new_module)
     return compressed_model
 
+class Dataloader:
+    def __init__(self, args, kwargs) -> None:
+        self.args = args
+        self.kwargs = kwargs
+    
+    def __iter__(self):
+        for arg, kwarg in zip(self.args, self.kwargs):
+            if not arg:
+                yield kwarg
+            elif not kwarg:
+                yield arg
+            else:
+                yield arg, kwarg
 
 class InputCaptureModule(torch.nn.Module):
 
     def __init__(self, model) -> None:
         super().__init__()
-        self.data_pairs = []
+        self.args_list = []
+        self.kwargs_list = []
         self.device = "cpu"
         self.orig_model = model
+        
 
     def forward(self, *args, **kwargs):
-        if args:
-            for arg in args:
-                self.data_pairs.append(arg)
-        if kwargs:
-            self.data_pairs.append(kwargs)
+        self.args_list.append(args)
+        self.kwargs_list.append(kwargs)
 
 
 class AutoRoundQuantizer(Quantizer):
@@ -242,7 +255,7 @@ class AutoRoundQuantizer(Quantizer):
         return prepare_model
 
     def convert(self, model: torch.nn.Module, *args, **kwargs):
-        dataloader = torch.utils.data.DataLoader(model.data_pairs)
+        dataloader = Dataloader(model.args_list, model.kwargs_list)
         model = model.orig_model
         rounder = AutoRound(
             model=model,
@@ -276,86 +289,27 @@ class AutoRoundQuantizer(Quantizer):
         model = pack_model(model, weight_config, device=self.device, inplace=True)
         return model
 
-
-@torch.no_grad()
-def get_autoround_default_run_fn(
-    model,
-    tokenizer,
-    dataset="NeelNanda/pile-10k",
-    n_samples=512,
-    seqlen=2048,
-    seed=42,
-    bs=8,
-):
-    """Perform calibration for quantization.
-
-    This method calibrates the model for quantization by processing a specified
-    number of samples from the calibration dataset. It ensures that the data is
-    properly formatted and feeds it to the model. If the number of samples processed
-    is less than the specified number, it logs a warning. If no samples are processed,
-    it logs an error and exits.
+def get_dataloader(tokenizer, seqlen, dataset_name="NeelNanda/pile-10k", seed=42, bs=8, n_samples=512):
+    """Generate a DataLoader for calibration using specified parameters.
 
     Args:
-        n_samples (int): The number of samples to use for calibration.
+        tokenizer (Tokenizer): The tokenizer to use for tokenization.
+        seqlen (int): The exact sequence length. samples < seqlen will be dropped,
+                      samples longer than seqlen will be truncated
+        dataset_name (str, optional): The name of the dataset or datasets separated by commas.
+                                     Defaults to "NeelNanda/pile-10k".
+        split (str, optional): The data split to use. Defaults to None.
+        seed (int, optional): The random seed for reproducibility. Defaults to 42.
+        bs (int, optional): The batch size. Defaults to 4.
+        n_samples (int, optional): The total number of samples to include. Defaults to 512.
+
+    Returns:
+        DataLoader: The DataLoader for the calibrated dataset.
     """
+    from auto_round.calib_dataset import get_dataloader  # pylint: disable=E0401
 
-    if isinstance(dataset, str):
-        dataset = dataset.replace(" ", "")  ##remove all whitespaces
-        dataloader = get_dataloader(
-            tokenizer,
-            seqlen,
-            dataset,
-            seed,
-            bs,
-            n_samples,
-        )
-    else:
-        dataloader = dataset
-    total_cnt = 0
-    for data in dataloader:
-        if data is None:
-            continue
-        if isinstance(data, torch.Tensor):
-            input_ids = data.to(model.device)
-            data_new = input_ids
-
-        elif isinstance(data, str):
-            if tokenizer is None:
-                logger.error("please provide tokenizer for string input")
-                exit()
-            data = tokenizer(data, truncation=True, max_length=seqlen, return_tensors="pt").data
-            data_new = {}
-            for key in data.keys():
-                data_new[key] = data[key].to(model.device)
-            input_ids = data_new["input_ids"]
-        else:
-            data_new = {}
-            for key in data.keys():
-                data_new[key] = data[key].to(model.device)
-            input_ids = data_new["input_ids"]
-        if input_ids.shape[-1] < seqlen:
-            continue
-
-        try:
-            if isinstance(data_new, torch.Tensor):
-                model(data_new)
-            else:
-                model(**data_new)
-        except NotImplementedError:
-            pass
-        except Exception as error:
-            logger.error(error)
-        total_cnt += input_ids.shape[0]
-        if total_cnt >= n_samples:
-            break
-    if total_cnt == 0:
-        logger.error(
-            f"no data has been cached, please provide more data with sequence length >={seqlen} in the "
-            f"dataset or decease the sequence length"
-        )
-        exit()
-    elif total_cnt < n_samples:
-        logger.warning(
-            f"Insufficient number of samples collected may affect the quantification. "
-            f"Valid samples size:{total_cnt}, Target sample size:{n_samples}"
-        )
+    dataloader = get_dataloader(
+        tokenizer, seqlen, dataset_name="NeelNanda/pile-10k", seed=seed, bs=bs, n_samples=n_samples
+    )
+    return dataloader
+        
