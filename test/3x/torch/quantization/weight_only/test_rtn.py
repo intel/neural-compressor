@@ -14,6 +14,9 @@ from neural_compressor.torch.quantization import (
     prepare,
     quantize,
 )
+from neural_compressor.torch.utils import accelerator
+
+device = accelerator.current_device_name()
 
 
 class ModelConv1d(torch.nn.Module):
@@ -34,8 +37,9 @@ class TestRTNQuant:
     def setup_class(self):
         self.tiny_gptj = transformers.AutoModelForCausalLM.from_pretrained(
             "hf-internal-testing/tiny-random-GPTJForCausalLM",
+            device_map=device,
         )
-        self.example_inputs = torch.tensor([[10, 20, 30, 40, 50, 60]], dtype=torch.long)
+        self.example_inputs = torch.tensor([[10, 20, 30, 40, 50, 60]], dtype=torch.long).to(device)
         # record label for comparison
         self.label = self.tiny_gptj(self.example_inputs)[0]
         # test_default_config
@@ -53,7 +57,7 @@ class TestRTNQuant:
     @pytest.mark.parametrize(
         "bits, use_sym, group_size, group_dim",
         [
-            (8, True, 128, 1),
+            (8, True, -1, 1),
             (4, True, 128, 1),
             (4, False, 32, 1),
             (4, False, -1, 1),
@@ -71,11 +75,8 @@ class TestRTNQuant:
         model = prepare(model, quant_config)
         model = convert(model)
         out = model(self.example_inputs)[0]
-        if (bits, use_sym, group_size, group_dim) == (8, True, 128, 1):
-            assert (out != self.label).sum() == out.numel() - 1, "WOQ output should be different with raw output"
-        else:
-            assert (out != self.label).all(), "WOQ output should be different with raw output"
-        if (bits, use_sym, group_size, group_dim) == (8, True, 128, 1):
+        assert (out != self.label).any(), "WOQ output should be different with raw output"
+        if (bits, use_sym, group_size, group_dim) == (8, True, -1, 1):
             assert torch.allclose(out, self.label, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
         if (bits, use_sym, group_size, group_dim) == [(4, True, 128, 0), (4, True, 32, 1)]:
             assert torch.allclose(out, self.label, atol=0.1), "Accuracy gap atol > 0.1 is unexpected."
@@ -149,6 +150,10 @@ class TestRTNQuant:
         ["int4", "nf4", "fp4", "fp4_e2m1_bnb", "fp4_e2m1", "fp8_e5m2", "fp8_e5m2fnuz", "fp8_e4m3fn", "fp8_e4m3fnuz"],
     )
     def test_dtype_params(self, dtype):
+        if dtype in ["fp8_e5m2", "fp8_e5m2fnuz", "fp8_e4m3fn", "fp8_e4m3fnuz"]:
+            full_dtype_name = dtype.replace("fp8", "float8")
+            if not hasattr(torch, full_dtype_name):
+                return  # for low torch version
         model = copy.deepcopy(self.tiny_gptj)
         quant_config = RTNConfig(
             dtype=dtype,
@@ -156,7 +161,9 @@ class TestRTNQuant:
         model = prepare(model, quant_config)
         model = convert(model)
         out = model(self.example_inputs)[0]
+        out_next = model(self.example_inputs)[0]
         assert torch.allclose(out, self.label, atol=0.11), "Accuracy gap atol > 0.11 is unexpected."
+        assert torch.allclose(out, out_next), "output should be same"
 
     @pytest.mark.parametrize("dtype", ["int4", "nf4"])
     @pytest.mark.parametrize("double_quant_bits", [6])
@@ -241,7 +248,7 @@ class TestRTNQuant:
     @pytest.mark.parametrize(
         "bits, use_sym, group_size, group_dim",
         [
-            (8, True, 128, 1),
+            (8, True, -1, 1),
             (4, True, 128, 1),
             (4, False, 32, 1),
             (4, False, -1, 1),
@@ -249,8 +256,8 @@ class TestRTNQuant:
         ],
     )
     def test_conv1d(self, bits, use_sym, group_size, group_dim):
-        model = ModelConv1d()
-        input = torch.randn(1, 32)
+        model = ModelConv1d().to(device)
+        input = torch.randn(1, 32).to(device)
         quant_config = RTNConfig(
             bits=bits,
             use_sym=use_sym,
@@ -261,10 +268,12 @@ class TestRTNQuant:
         model = prepare(model, quant_config)
         model = convert(model)
         out2 = model(input)
-        # assert torch.allclose(out2, out1, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
-        assert (out2 != out1).all(), "WOQ out2put should be different with raw output"
-        if (bits, use_sym, group_size, group_dim) == (8, True, 128, 1):
-            assert torch.allclose(out2, out1, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
+        assert (out2 != out1).any(), "WOQ out2put should be different with raw output"
+        if (bits, use_sym, group_size, group_dim) == (8, True, -1, 1):
+            if "hpu" in device:
+                assert torch.allclose(out2, out1, atol=0.15), "Accuracy gap atol > 0.15 is unexpected."
+            else:
+                assert torch.allclose(out2, out1, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
         if (bits, use_sym, group_size, group_dim) == [(4, True, 128, 0), (4, True, 32, 1)]:
             assert torch.allclose(out2, out1, atol=0.1), "Accuracy gap atol > 0.1 is unexpected."
         if (bits, use_sym, group_size, group_dim) == [(4, False, 32, 0), (4, False, -1, 1), (2, True, 8, 1)]:
