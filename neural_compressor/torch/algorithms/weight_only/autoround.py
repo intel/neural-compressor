@@ -60,12 +60,6 @@ def pack_model(
             5. zeros is always needed even for sym.
         inplace (bool, optional): Compress the model in place, or copy the model and compress it.
 
-    xpu args:
-        compression_dtype=torch.int8,
-        compression_dim=0,
-        use_optimum_format=False,
-        scale_dtype=convert_dtype_str2torch(config.scale_dtype),
-        device="xpu",
     """
     if inplace:
         compressed_model = model
@@ -92,18 +86,10 @@ def pack_model(
         if not isinstance(scale, torch.Tensor):
             scale = torch.tensor(scale, dtype=convert_dtype)
             zp = torch.tensor(zp, dtype=torch.int32)
-            if device == "xpu":
-                scale = torch.tensor(v["scale"], dtype=torch.float32)
-                zp = None if sym else torch.tensor(v["zp"], dtype=torch.int32)
         else:
             if not inplace:
                 scale = scale.clone()
                 zp = zp.clone()
-            if device == "xpu":
-                # Please note that for XPU, the scale data type is forcibly set to fp32
-                scale = scale.to(dtype=torch.float32)
-                zp = None if sym else zp.to(dtype=torch.int32)
-            else:
                 scale = scale.to(dtype=convert_dtype)
                 zp = zp.to(dtype=torch.int32)
         if is_transformers_imported() and isinstance(m, transformers.Conv1D):
@@ -126,10 +112,10 @@ def pack_model(
             scale_dtype=scale_dtype,
             zp=zp is not None,
             bias=m.bias is not None,
-            device="cuda" if device == "xpu" else device,
+            device=device,
             compression_dtype=compression_dtype,
             compression_dim=compression_dim,
-            use_optimum_format=use_optimum_format,  # xpu is False
+            use_optimum_format=use_optimum_format,
         )
         new_module.pack(int_weight, scale, zp, m.bias)
         set_module(compressed_model, k, new_module)
@@ -287,18 +273,7 @@ class AutoRoundQuantizer(Quantizer):
         )
         model, weight_config = rounder.quantize()
         model.autoround_config = weight_config
-        if self.device == "xpu":
-            model = pack_model(
-                model,
-                weight_config,
-                device=self.device,
-                inplace=True,
-                compression_dtype=torch.int8,
-                compression_dim=0,
-                use_optimum_format=False,
-            )
-        else:
-            model = pack_model(model, weight_config, device=self.device, inplace=True)
+        model = pack_model(model, weight_config, device=self.device, inplace=True)
         return model
 
 

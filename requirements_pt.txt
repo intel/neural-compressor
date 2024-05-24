@@ -1,4 +1,4 @@
-auto-round
+git+https://github.com/intel/auto-round.git@ecca5349981044e1278773a251b3fc5c0a11fe7b
 intel_extension_for_pytorch
 peft==0.10.0
 psutil
