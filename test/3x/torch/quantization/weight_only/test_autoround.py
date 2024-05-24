@@ -46,8 +46,8 @@ class TestAutoRound:
 
     @pytest.mark.parametrize("quant_lm_head", [True, False])
     def test_autoround(self, quant_lm_head):
-        gpt_j_model = copy.deepcopy(self.gptj)
-        quant_config = AutoRoundConfig(n_samples=20, seqlen=10, iters=10, scale_dtype="fp32")
+        fp32_model = copy.deepcopy(self.gptj)
+        quant_config = AutoRoundConfig(n_samples=32, seqlen=10, iters=10, scale_dtype="fp32")
         if quant_lm_head is False:
             quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
         logger.info(f"Test AutoRound with config {quant_config}")
@@ -56,10 +56,9 @@ class TestAutoRound:
         run_args = (
             self.tokenizer,
             "NeelNanda/pile-10k",
-            20,
+            32,
             10,
         )
-        fp32_model = gpt_j_model
 
         # prepare + convert API
         model = prepare(model=fp32_model, quant_config=quant_config)
@@ -78,7 +77,7 @@ class TestAutoRound:
     def test_autoround_with_quantize_API(self):
         gpt_j_model = copy.deepcopy(self.gptj)
 
-        quant_config = get_default_AutoRound_config()
+        quant_config = AutoRoundConfig(n_samples=32, seqlen=10, iters=10, scale_dtype="fp32")
         quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
 
         logger.info(f"Test AutoRound with config {quant_config}")
@@ -91,7 +90,7 @@ class TestAutoRound:
             run_args=(
                 self.tokenizer,
                 "NeelNanda/pile-10k",
-                20,
+                32,
                 10,
             ),
         )
@@ -101,7 +100,7 @@ class TestAutoRound:
 
     def test_save_and_load(self):
         fp32_model = copy.deepcopy(self.gptj)
-        quant_config = get_default_AutoRound_config()
+        quant_config = AutoRoundConfig(n_samples=32, seqlen=10, iters=10, scale_dtype="fp32")
         # quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
         logger.info(f"Test AutoRound with config {quant_config}")
 
@@ -109,7 +108,7 @@ class TestAutoRound:
         run_args = (
             self.tokenizer,
             "NeelNanda/pile-10k",
-            20,
+            32,
             10,
         )
         # quantizer execute
@@ -144,10 +143,10 @@ class TestAutoRound:
         run_args = (
             tokenizer,
             "NeelNanda/pile-10k",
-            20,
+            32,
             10,
         )
-        quant_config = get_default_AutoRound_config()
+        quant_config = AutoRoundConfig(n_samples=32, seqlen=10, iters=10, scale_dtype="fp32")
         model = prepare(model=model, quant_config=quant_config)
         run_fn(model, *run_args)
         q_model = convert(model)
