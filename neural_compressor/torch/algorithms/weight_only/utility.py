@@ -1073,6 +1073,7 @@ def get_module_input_output(
         h.remove()
     return total_values
 
+
 def simple_inference(model, example_inputs, iterations=1):
     """The function is used for ipex warm-up inference."""
     for _ in range(iterations):

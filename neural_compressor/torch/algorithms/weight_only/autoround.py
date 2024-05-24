@@ -59,7 +59,6 @@ def pack_model(
             4. parameter name changed, such as 'packed_weight' -> 'qweight'.
             5. zeros is always needed even for sym.
         inplace (bool, optional): Compress the model in place, or copy the model and compress it.
-
     """
     if inplace:
         compressed_model = model
