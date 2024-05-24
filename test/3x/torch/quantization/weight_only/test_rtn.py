@@ -150,8 +150,10 @@ class TestRTNQuant:
         ["int4", "nf4", "fp4", "fp4_e2m1_bnb", "fp4_e2m1", "fp8_e5m2", "fp8_e5m2fnuz", "fp8_e4m3fn", "fp8_e4m3fnuz"],
     )
     def test_dtype_params(self, dtype):
-        if dtype in ["fp8_e5m2", "fp8_e5m2fnuz", "fp8_e4m3fn", "fp8_e4m3fnuz"] and not hasattr(torch, dtype):
-            return  # for low torch version
+        if dtype in ["fp8_e5m2", "fp8_e5m2fnuz", "fp8_e4m3fn", "fp8_e4m3fnuz"]:
+            full_dtype_name = dtype.replace("fp8", "float8")
+            if not hasattr(torch, full_dtype_name):
+                return  # for low torch version
         model = copy.deepcopy(self.tiny_gptj)
         quant_config = RTNConfig(
             dtype=dtype,
