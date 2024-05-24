@@ -143,7 +143,7 @@ def _ipex_post_quant_process(model, example_inputs, use_bf16, inplace=False):
     Returns:
         A converted jit model.
     """
-    if use_bf16 and (CpuInfo().bf16 or os.getenv("FORCE_BF16") == "1"): # pragma: no cover
+    if use_bf16 and (CpuInfo().bf16 or os.getenv("FORCE_BF16") == "1"):  # pragma: no cover
         with torch.no_grad():
             with torch.cpu.amp.autocast():
                 model = ipex.quantization.convert(model, inplace=inplace)
@@ -161,7 +161,7 @@ def _ipex_post_quant_process(model, example_inputs, use_bf16, inplace=False):
                     else:
                         model = torch.jit.trace(model, example_inputs, strict=False)
                     model = torch.jit.freeze(model.eval())
-    else: # pragma: no cover
+    else:  # pragma: no cover
         model = ipex.quantization.convert(model, inplace=inplace)
         with torch.no_grad():
             try:
