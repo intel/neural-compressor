@@ -102,6 +102,7 @@ class TestHQQCPU:
             (4, 64, False, False, 64),
             (4, 64, True, True, 64),
             (4, 64, False, True, 64),
+            (4, -1, False, True, 64),
         ],
     )
     def test_hqq_module_cpu(

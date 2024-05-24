@@ -79,7 +79,7 @@ class HQQTensorHandle:
     def _quantize(cls, tensor, tensor_quant_config: QTensorConfig = None):
         nbits = tensor_quant_config.nbits
         channel_wise = tensor_quant_config.channel_wise
-        group_size = tensor_quant_config.group_size
+        group_size = tensor_quant_config.group_size if tensor_quant_config.group_size != -1 else None
         optimize = tensor_quant_config.optimize
         round_zero = tensor_quant_config.round_zero
         axis = 0  # *Note did not exposed to the user

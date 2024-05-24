@@ -471,7 +471,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
                 scales = np.clip(np.power(inp_scale, ratio) / np.power(w_scale, (1 - ratio)), 1e-4, None)
                 scales = scales / np.sqrt(np.max(scales) * np.min(scales))
                 weight = weight.T * scales
-                weight = pad_tensor(weight, group_size, (org_w_shape[0] + group_size - 1) // group_size).T
+                weight = pad_tensor(weight.T, group_size, (org_w_shape[0] + group_size - 1) // group_size)
 
                 if (Version(ort.__version__) > ONNXRT1161_VERSION and num_bits == 4) or (
                     Version(ort.__version__) >= ONNXRT116_VERSION and num_bits == 4 and group_size == 32
@@ -485,6 +485,7 @@ def apply_awq_scale(model, weight_config, absorb_pairs, output_dicts, num_bits, 
                     q_weight = qdq_tensor(weight, num_bits, group_size, scheme, "int") / np.expand_dims(scales, axis=-1)
 
                 q_weight = np.reshape(q_weight, (org_w_shape[1], -1))[:, : org_w_shape[0]]
+
                 out = np.matmul(inp, q_weight.T)
                 loss += np.mean(np.power((org_out - out), 2))
 

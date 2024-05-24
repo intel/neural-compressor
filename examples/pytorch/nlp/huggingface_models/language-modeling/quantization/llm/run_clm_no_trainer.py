@@ -77,6 +77,8 @@ parser.add_argument('--gptq_pad_max_length', type=int, default=2048, help='Calib
                                                                            this should align with your model config, \
                                                                            and your dataset builder args: args.pad_max_length')
 parser.add_argument('--gptq_static_groups', action='store_true', help='Use determined group to do quantization')
+parser.add_argument('--gptq_true_sequential', action='store_true', help="Whether to run in true_sequential model.")
+parser.add_argument('--gptq_lm_head', action='store_true', help="Whether to use GPTQ to quantize the output layer of the LLMs.")
 # ==============code generation args===========
 parser.add_argument("--code_generation", action="store_true")
 parser.add_argument("--n_samples", default=200, type=int)
@@ -278,7 +280,8 @@ if args.quantize:
             'use_max_length': args.gptq_use_max_length,
             'pad_max_length': args.gptq_pad_max_length,
             'static_groups': args.gptq_static_groups,
-            "enable_mse_search": args.woq_enable_mse_search,
+            "true_sequential": args.gptq_true_sequential,
+            "lm_head": args.gptq_lm_head,
         }
         # GPTQ: use assistive functions to modify calib_dataloader and calib_func
         # TEQ: set calib_func=None, use default training func as calib_func
@@ -340,12 +343,13 @@ if args.int8 or args.int8_bf16_mixed:
 
     if args.ipex:
         user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)))
+        tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=args.trust_remote_code)
     else:
-        user_model, _ = get_user_model()
+        user_model, tokenizer = get_user_model()
         kwargs = {'weight_only': True} if args.approach == 'weight_only' else {}
         user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)), user_model, **kwargs)
 else:
-    user_model, _ = get_user_model()
+    user_model, tokenizer = get_user_model()
 
 if args.accuracy:
     user_model.eval()

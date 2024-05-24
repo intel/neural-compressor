@@ -22,7 +22,7 @@ import torch
 
 from neural_compressor.common import logger
 from neural_compressor.torch.algorithms.mix_precision.module_wrappers import HalfPrecisionModuleWrapper
-from neural_compressor.torch.utils import get_device
+from neural_compressor.torch.utils import get_accelerator
 
 
 class HalfPrecisionConverter:
@@ -40,7 +40,7 @@ class HalfPrecisionConverter:
             configs_mapping (Dict): config class for mix-precision.
         """
         self.configs_mapping = configs_mapping
-        self.device = get_device()
+        self.device = get_accelerator().current_device_name()
 
     def convert(self, model: torch.nn.Module):
         """Convert to FP16 or BF16 model.

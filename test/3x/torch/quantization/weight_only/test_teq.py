@@ -7,13 +7,16 @@ import transformers
 
 from neural_compressor.common import logger
 from neural_compressor.torch.quantization import convert, prepare, quantize
+from neural_compressor.torch.utils import accelerator
+
+device = accelerator.current_device_name()
 
 
 def generate_random_corpus(nsamples=32):
     meta_data = []
     for _ in range(nsamples):
-        inp = torch.ones([1, 512], dtype=torch.long)
-        tar = torch.ones([1, 512], dtype=torch.long)
+        inp = torch.ones([1, 512], dtype=torch.long).to(device)
+        tar = torch.ones([1, 512], dtype=torch.long).to(device)
         meta_data.append((inp, tar))
     return meta_data
 
@@ -30,7 +33,7 @@ def train(
     lr_scheduler_type="linear",
 ):
     """Train function."""
-    trained_alphas_list = [torch.ones([128], requires_grad=True)]
+    trained_alphas_list = [torch.ones([128], requires_grad=True).to(device)]
     optimizer = torch.optim.Adam(trained_alphas_list, lr=lr, weight_decay=weight_decay, betas=betas)
 
     lr_scheduler = transformers.get_scheduler(  # pylint: disable=E1111
@@ -79,9 +82,10 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
         self.gptj = transformers.AutoModelForCausalLM.from_pretrained(
             "hf-internal-testing/tiny-random-GPTJForCausalLM",
             torchscript=True,
+            device_map=device,
         )
         self.gptj.seqlen = 512
-        self.example_inputs = torch.ones([1, 512], dtype=torch.long)
+        self.example_inputs = torch.ones([1, 512], dtype=torch.long).to(device)
 
         self.quant_config = {
             "teq": {
