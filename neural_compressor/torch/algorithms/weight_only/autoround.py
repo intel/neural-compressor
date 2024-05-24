@@ -24,7 +24,7 @@ from auto_round.export.export_to_itrex.model_wrapper import WeightOnlyLinear  # 
 from auto_round.utils import get_module, quant_weight_w_scale, set_module  # pylint: disable=E0401
 
 from neural_compressor.torch.algorithms import Quantizer
-from neural_compressor.torch.utils import get_device, is_transformers_imported, logger
+from neural_compressor.torch.utils import get_accelerator, is_transformers_imported, logger
 
 if is_transformers_imported():
     import transformers
@@ -225,7 +225,7 @@ class AutoRoundQuantizer(Quantizer):
         self.enable_full_range = enable_full_range
         self.batch_size = batch_size
         self.amp = amp
-        self.device = get_device(kwargs.pop("device", "auto"))
+        self.device = get_accelerator(kwargs.pop("device", "auto")).current_device_name()
         self.lr_scheduler = lr_scheduler
         self.enable_quanted_input = enable_quanted_input
         self.enable_minmax_tuning = enable_minmax_tuning
