@@ -375,7 +375,7 @@ def get_autoround_default_run_fn(
             break
     if total_cnt == 0:
         logger.error(
-            f"no data has been cached, please provide more data with sequence length >={self.seqlen} in the "
+            f"no data has been cached, please provide more data with sequence length >={seqlen} in the "
             f"dataset or decease the sequence length"
         )
         exit()
