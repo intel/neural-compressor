@@ -144,13 +144,14 @@ class InputCaptureModule(torch.nn.Module):
         self.device = "cpu"
         self.orig_model = model
 
-    
     def forward(self, *args, **kwargs):
         if args:
             for arg in args:
                 self.data_pairs.append(arg)
         if kwargs:
             self.data_pairs.append(kwargs)
+
+
 class AutoRoundQuantizer(Quantizer):
     def __init__(
         self,
@@ -383,4 +384,3 @@ def get_autoround_default_run_fn(
             f"Insufficient number of samples collected may affect the quantification. "
             f"Valid samples size:{total_cnt}, Target sample size:{n_samples}"
         )
-
