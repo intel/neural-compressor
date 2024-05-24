@@ -19,107 +19,10 @@ from typing import Union
 
 import torch
 from auto_round import AutoRound  # pylint: disable=E0401
-from auto_round.calib_dataset import get_dataloader  # pylint: disable=E0401
-from auto_round.export.export_to_itrex.model_wrapper import WeightOnlyLinear  # pylint: disable=E0401
-from auto_round.utils import get_module, quant_weight_w_scale, set_module  # pylint: disable=E0401
+from auto_round.export.export_to_itrex.export import pack_model  # pylint: disable=E0401
 
 from neural_compressor.torch.algorithms import Quantizer
-from neural_compressor.torch.utils import get_accelerator, is_transformers_imported, logger
-from .utility import simple_inference
-
-if is_transformers_imported():
-    import transformers
-
-
-def pack_model(
-    model,
-    weight_config: Union[str, dict],
-    enable_full_range=False,
-    compression_dtype=torch.int32,
-    compression_dim=1,
-    device="cpu",
-    use_optimum_format=True,
-    inplace=False,
-    **kwargs,
-):
-    """Convert Linear to WeightOnlyLinear for low memory inference.
-
-    Args:
-        weight_config (str|dict): qconfig dict or Path of qconfig.json.
-        enable_full_range (bool, optional): Whether to leverage the full compression range
-                                            under symmetric quantization. Defaults to False.
-        compression_dtype (torch.Tensor, optional): The target dtype after comoression.
-                                                    Defaults to torch.int32.
-        compression_dim (int, optional): Select from [0, 1], 0 is output channel,
-                                            1 is input channel. Defaults to 1.
-        device (str, optional): choose device for compression. Defaults to cpu.
-        use_optimum_format (bool, optional): use the popular huggingface compression format.
-            1: compression_dim: weight = 1, zeros = 0 and both are transposed.
-            2: zeros -= 1 before compression. Why we need it?
-            3: g_idx: use same number for one group instead of recording the channel order.
-            4. parameter name changed, such as 'packed_weight' -> 'qweight'.
-            5. zeros is always needed even for sym.
-        inplace (bool, optional): Compress the model in place, or copy the model and compress it.
-    """
-    if inplace:
-        compressed_model = model
-    else:
-        compressed_model = copy.deepcopy(model)
-    if isinstance(weight_config, str):
-        with open(weight_config, "r") as f:
-            q_config = json.load(f)
-    else:
-        q_config = weight_config
-    for k, v in q_config.items():
-        logger.info(f"Packing {k}")
-        if "float" in v["data_type"]:
-            continue
-        dtype = v["data_type"]
-        num_bits = v["bits"]
-        group_size = v["group_size"]
-        sym = v["sym"]
-        scale_dtype = v["scale_dtype"]
-        m = get_module(compressed_model, k)
-        fp_weight = m.weight.data
-        scale, zp = v["scale"], v["zp"]
-        convert_dtype = scale_dtype
-        if not isinstance(scale, torch.Tensor):
-            scale = torch.tensor(scale, dtype=convert_dtype)
-            zp = torch.tensor(zp, dtype=torch.int32)
-        else:
-            if not inplace:
-                scale = scale.clone()
-                zp = zp.clone()
-                scale = scale.to(dtype=convert_dtype)
-                zp = zp.to(dtype=torch.int32)
-        if is_transformers_imported() and isinstance(m, transformers.Conv1D):
-            fp_weight = fp_weight.t_().contiguous()
-        int_weight = quant_weight_w_scale(fp_weight, scale, zp, group_size, fp_weight.device)
-        int_weight = int_weight.type(torch.int32)
-        if isinstance(m, torch.nn.Linear):
-            in_features = m.in_features
-            out_features = m.out_features
-        elif is_transformers_imported() and isinstance(m, transformers.Conv1D):
-            in_features = m.weight.shape[0]
-            out_features = m.weight.shape[1]
-
-        new_module = WeightOnlyLinear(
-            in_features,
-            out_features,
-            num_bits,
-            group_size,
-            dtype=dtype,
-            scale_dtype=scale_dtype,
-            zp=zp is not None,
-            bias=m.bias is not None,
-            device=device,
-            compression_dtype=compression_dtype,
-            compression_dim=compression_dim,
-            use_optimum_format=use_optimum_format,
-        )
-        new_module.pack(int_weight, scale, zp, m.bias)
-        set_module(compressed_model, k, new_module)
-    return compressed_model
+from neural_compressor.torch.utils import get_accelerator, logger
 
 class Dataloader:
     def __init__(self, args, kwargs) -> None:
