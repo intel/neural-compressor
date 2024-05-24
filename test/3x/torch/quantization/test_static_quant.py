@@ -191,3 +191,14 @@ class TestStaticQuant:
         example_inputs = self.input
         q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
         assert q_model is not None, "Quantization failed!"
+
+    @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
+    def test_static_quant_mixed_precision(self):
+        fp32_model = copy.deepcopy(self.fp32_model)
+        quant_config = get_default_static_config()
+        quant_config.excluded_precisions = ["bf16"]
+        example_inputs = self.input
+        prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
+        run_fn(prepared_model)
+        q_model = convert(prepared_model)
+        assert q_model is not None, "Quantization failed!"

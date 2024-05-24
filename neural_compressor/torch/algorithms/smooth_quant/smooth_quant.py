@@ -16,6 +16,7 @@
 # limitations under the License.
 
 import json
+import os
 
 import torch
 
@@ -32,6 +33,7 @@ from packaging.version import Version
 from neural_compressor.torch.algorithms import Quantizer
 
 from .utility import (
+    CpuInfo,
     TorchSmoothQuant,
     cfg_to_qconfig,
     dump_model_op_stats,
@@ -84,6 +86,8 @@ class SmoothQuantQuantizer(Quantizer):
         cfg_to_qconfig(self.quant_config, cfgs, op_infos_from_cfgs, output_tensor_id_op_name)
         model.eval()
 
+        use_bf16 = self.quant_config.get("use_bf16", None)
+
         # check smoothquant alpha and act_algo value
         recipe_cfgs = self.quant_config.get("recipe_cfgs", None)
         alpha = recipe_cfgs["smooth_quant_args"]["alpha"]
@@ -133,8 +137,10 @@ class SmoothQuantQuantizer(Quantizer):
         Returns:
             A quantized model.
         """
+        use_bf16 = self.quant_config.get("use_bf16", None)
+
         model.save_qconf_summary(qconf_summary=ipex_config_path)
-        model = _ipex_post_quant_process(model, example_inputs, inplace=inplace)
+        model = _ipex_post_quant_process(model, example_inputs, use_bf16, inplace=inplace)
 
         with open(ipex_config_path, "r") as f:
             model.tune_cfg = json.load(f)
@@ -168,6 +174,8 @@ class SmoothQuantQuantizer(Quantizer):
             model.op_infos_from_cfgs,
             model.output_tensor_id_op_name,
         )
+
+        use_bf16 = tune_cfg.get("use_bf16", None)
 
         # check smoothquant folding value
         recipe_cfgs = tune_cfg.get("recipe_cfgs", None)
@@ -223,7 +231,7 @@ class SmoothQuantQuantizer(Quantizer):
         model.load_qconf_summary(qconf_summary=ipex_config_path)
         run_fn(model)
         model.save_qconf_summary(qconf_summary=ipex_config_path)
-        model = _ipex_post_quant_process(model, example_inputs, inplace=inplace)
+        model = _ipex_post_quant_process(model, example_inputs, use_bf16, inplace=inplace)
 
         # Recover model parameter when smoothquant folding = True
         if (
@@ -246,6 +254,8 @@ def qdq_quantize(
 ):
     smoothquant_scale_info = sq.sq_scale_info
     sq_minmax_init = True if tune_cfg.get("act_algo", "kl") == "minmax" else False
+
+    use_bf16 = tune_cfg.get("use_bf16", None)
 
     # Check save_qconf_summary part is a workaround for IPEX bug.
     # Sometimes the prepared model from get_op_capablitiy loss this attribute
@@ -296,7 +306,7 @@ def qdq_quantize(
         update_sq_scale(ipex_config_path, smoothquant_scale_info)
         model.load_qconf_summary(qconf_summary=ipex_config_path)
     model.save_qconf_summary(qconf_summary=ipex_config_path)
-    model = _ipex_post_quant_process(model, example_inputs, inplace=inplace)
+    model = _ipex_post_quant_process(model, example_inputs, use_bf16, inplace=inplace)
 
     with open(ipex_config_path, "r") as f:
         model.tune_cfg = json.load(f)
@@ -334,33 +344,53 @@ def _apply_pre_optimization(model, tune_cfg, sq, recover=False):
             logger.debug(f"Current smoothquant scale of {op_name} is {scale}, alpha is {alpha}")
 
 
-def _ipex_post_quant_process(model, example_inputs, inplace=False):
+def _ipex_post_quant_process(model, example_inputs, use_bf16, inplace=False):
     """Convert to a jit model.
 
     Args:
         model: a prepared model.
         example_inputs: used to trace torch model.
+        use_bf16: whether to use bf16 for mixed precision.
         inplace: whether to carry out model transformations in-place.
 
     Returns:
         A converted jit model.
     """
-    model = ipex.quantization.convert(model, inplace=inplace)
-    with torch.no_grad():
-        try:
-            if isinstance(example_inputs, dict):
-                model = torch.jit.trace(model, example_kwarg_inputs=example_inputs)
-            else:
-                model = torch.jit.trace(model, example_inputs)
-            model = torch.jit.freeze(model.eval())
-        except:  # pragma: no cover
-            if isinstance(example_inputs, dict):
-                model = torch.jit.trace(model, example_kwarg_inputs=example_inputs, strict=False, check_trace=False)
-            else:
-                model = torch.jit.trace(model, example_inputs, strict=False)
-            model = torch.jit.freeze(model.eval())
-    # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
-    # At the 2nd run, the llga pass will be triggered and the model is turned into
-    # an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
-    simple_inference(model, example_inputs, iterations=2)
-    return model
+    if use_bf16 and (CpuInfo().bf16 or os.getenv("FORCE_BF16") == "1"):  # pragma: no cover
+        with torch.no_grad():
+            with torch.cpu.amp.autocast():
+                model = ipex.quantization.convert(model, inplace=inplace)
+                try:
+                    if isinstance(example_inputs, dict):
+                        model = torch.jit.trace(model, example_kwarg_inputs=example_inputs)
+                    else:
+                        model = torch.jit.trace(model, example_inputs)
+                    model = torch.jit.freeze(model.eval())
+                except:
+                    if isinstance(example_inputs, dict):
+                        model = torch.jit.trace(
+                            model, example_kwarg_inputs=example_inputs, strict=False, check_trace=False
+                        )
+                    else:
+                        model = torch.jit.trace(model, example_inputs, strict=False)
+                    model = torch.jit.freeze(model.eval())
+    else:
+        model = ipex.quantization.convert(model, inplace=inplace)
+        with torch.no_grad():
+            try:
+                if isinstance(example_inputs, dict):
+                    model = torch.jit.trace(model, example_kwarg_inputs=example_inputs)
+                else:
+                    model = torch.jit.trace(model, example_inputs)
+                model = torch.jit.freeze(model.eval())
+            except:  # pragma: no cover
+                if isinstance(example_inputs, dict):
+                    model = torch.jit.trace(model, example_kwarg_inputs=example_inputs, strict=False, check_trace=False)
+                else:
+                    model = torch.jit.trace(model, example_inputs, strict=False)
+                model = torch.jit.freeze(model.eval())
+        # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
+        # At the 2nd run, the llga pass will be triggered and the model is turned into
+        # an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
+        simple_inference(model, example_inputs, iterations=2)
+        return model

@@ -181,6 +181,7 @@ def static_quant_entry(
                 "algorithm": cfg.act_algo,
             },
         }
+        quant_config_mapping["use_bf16"] = "bf16" not in cfg.excluded_precisions
 
     run_fn = kwargs.get("run_fn", None)
     example_inputs = kwargs.get("example_inputs", None)
@@ -278,6 +279,7 @@ def smooth_quant_entry(
             "last_conv_or_matmul_quantization": True,
             "pre_post_process_quantization": True,
         }
+        quant_config_mapping["use_bf16"] = "bf16" not in cfg.excluded_precisions
 
     run_fn = kwargs.get("run_fn", None)
     example_inputs = kwargs.get("example_inputs", None)
