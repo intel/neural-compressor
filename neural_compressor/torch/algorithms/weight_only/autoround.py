@@ -21,7 +21,7 @@ import torch
 from auto_round import AutoRound  # pylint: disable=E0401
 from auto_round.calib_dataset import get_dataloader  # pylint: disable=E0401
 from auto_round.export.export_to_itrex.model_wrapper import WeightOnlyLinear  # pylint: disable=E0401
-from auto_round.utils import get_block_names, get_module, quant_weight_w_scale, set_module  # pylint: disable=E0401
+from auto_round.utils import get_module, quant_weight_w_scale, set_module  # pylint: disable=E0401
 
 from neural_compressor.torch.algorithms import Quantizer
 from neural_compressor.torch.utils import get_device, is_transformers_imported, logger
