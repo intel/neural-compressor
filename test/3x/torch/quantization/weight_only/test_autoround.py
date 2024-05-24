@@ -16,7 +16,6 @@ from neural_compressor.torch.quantization import (
 )
 from neural_compressor.torch.utils import logger
 
-
 try:
     import auto_round
     from auto_round.export.export_to_itrex.model_wrapper import WeightOnlyLinear
@@ -24,6 +23,7 @@ try:
     auto_round_installed = True
 except ImportError:
     auto_round_installed = False
+
 
 def run_fn(model, dataloader):
     for data in dataloader:
@@ -33,6 +33,7 @@ def run_fn(model, dataloader):
             model(**data)
         else:
             model(data)
+
 
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
 class TestAutoRound:
@@ -89,7 +90,7 @@ class TestAutoRound:
             model=gpt_j_model,
             quant_config=quant_config,
             run_fn=run_fn,
-            run_args=(self.dataloader, ),
+            run_args=(self.dataloader,),
         )
         out = q_model(self.inp)[0]
         assert torch.allclose(out, self.label, atol=1e-1)
