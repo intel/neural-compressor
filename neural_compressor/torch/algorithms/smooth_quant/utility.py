@@ -25,6 +25,7 @@ import tqdm
 from packaging.version import Version
 
 from neural_compressor.torch.algorithms.static_quant import (
+    CpuInfo,
     TransformerBasedModelBlockPatternDetector,
     dump_model_op_stats,
     generate_activation_observer,

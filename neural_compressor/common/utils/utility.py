@@ -34,6 +34,7 @@ __all__ = [
     "singleton",
     "LazyImport",
     "CpuInfo",
+    "default_tuning_logger",
 ]
 
 

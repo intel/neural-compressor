@@ -27,7 +27,7 @@ import torch
 import torch.nn as nn
 from tqdm import tqdm
 
-from neural_compressor.torch.utils import fetch_module, get_device, is_transformers_imported, logger, set_module
+from neural_compressor.torch.utils import get_accelerator, is_transformers_imported, logger, set_module
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
 from .modules import WeightOnlyLinear
@@ -258,7 +258,7 @@ class RAWGPTQuantizer(object):
         self.check_layer_config()
 
         # device
-        self.device = get_device(kwargs.pop("device", "auto"))
+        self.device = get_accelerator(kwargs.pop("device", "auto")).current_device_name()
         self.model.to(self.device)
         self.is_ready = False
 

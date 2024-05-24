@@ -7,12 +7,18 @@ These tests aim to assess the fundamental functionalities of common utils and en
 All tests will be included for each framework CI.
 """
 
+import time
 import unittest
+from unittest.mock import MagicMock, patch
 
 from neural_compressor.common import options
 from neural_compressor.common.utils import (
     CpuInfo,
     LazyImport,
+    Mode,
+    default_tuning_logger,
+    dump_elapsed_time,
+    log_process,
     set_random_seed,
     set_resume_from,
     set_tensorboard,
@@ -82,6 +88,69 @@ class TestLazyImport(unittest.TestCase):
         with self.assertRaises(ImportError):
             non_existent_module = LazyImport("non_existent_module")
             non_existent_module.non_existent_function()
+
+    def test_lazy_import_access_attr(self):
+        module_name = "neural_compressor.common.utils.utility"
+        lazy_import = LazyImport(module_name)
+        self.assertIsNone(lazy_import.module)
+
+        with patch("importlib.import_module") as mock_import_module:
+            module = MagicMock()
+            mock_import_module.return_value = module
+
+            # Test accessing attributes
+            attribute = lazy_import.attribute_name
+            self.assertEqual(attribute, module.attribute_name)
+            mock_import_module.assert_called_once_with(module_name)
+
+            # Test calling functions
+            function = lazy_import.function_name()
+            self.assertEqual(function, module.function_name())
+            mock_import_module.assert_called_with(module_name)
+
+        self.assertIsNotNone(lazy_import.module)
+
+
+class TestUtils(unittest.TestCase):
+    def test_dump_elapsed_time(self):
+        @dump_elapsed_time("test function")
+        def test_function():
+            time.sleep(1)
+            return True
+
+        with patch("neural_compressor.common.utils.utility.logger") as mock_logger:
+            test_function()
+            mock_logger.info.assert_called()
+            # Extract the actual log message
+            log_message = mock_logger.info.call_args[0][0]
+            # Check that the log message contains the expected parts
+            self.assertIn("test function elapsed time:", log_message)
+
+
+class TestLogProcess(unittest.TestCase):
+    def test_log_process_wrapper(self):
+        @log_process(mode=Mode.QUANTIZE)
+        def test_function():
+            return True
+
+        with patch.object(default_tuning_logger, "execution_start") as mock_start_log, patch.object(
+            default_tuning_logger, "execution_end"
+        ) as mock_end_log:
+            test_function()
+            mock_start_log.assert_called_with(mode=Mode.QUANTIZE, stacklevel=4)
+            mock_end_log.assert_called_with(mode=Mode.QUANTIZE, stacklevel=4)
+
+    def test_inner_wrapper(self):
+        def test_function():
+            return True
+
+        with patch.object(default_tuning_logger, "execution_start") as mock_start_log, patch.object(
+            default_tuning_logger, "execution_end"
+        ) as mock_end_log:
+            inner_wrapper = log_process(mode=Mode.QUANTIZE)(test_function)
+            inner_wrapper()
+            mock_start_log.assert_called_with(mode=Mode.QUANTIZE, stacklevel=4)
+            mock_end_log.assert_called_with(mode=Mode.QUANTIZE, stacklevel=4)
 
 
 class TestSingletonDecorator:
