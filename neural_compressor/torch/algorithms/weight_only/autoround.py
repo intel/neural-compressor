@@ -24,6 +24,7 @@ from auto_round.export.export_to_itrex.export import pack_model  # pylint: disab
 from neural_compressor.torch.algorithms import Quantizer
 from neural_compressor.torch.utils import get_accelerator, logger
 
+
 class Dataloader:
     def __init__(self, args, kwargs) -> None:
         self.args = args
