@@ -6,7 +6,6 @@ import torch
 import transformers
 from packaging.version import Version
 
-from neural_compressor.torch.algorithms.weight_only.autoround import get_dataloader
 from neural_compressor.torch.quantization import (
     AutoRoundConfig,
     convert,
@@ -15,6 +14,8 @@ from neural_compressor.torch.quantization import (
     quantize,
 )
 from neural_compressor.torch.utils import logger
+torch.backends.__allow_nonbracketed_mutation_flag = True
+from neural_compressor.torch.algorithms.weight_only.autoround import get_dataloader
 
 try:
     import auto_round
