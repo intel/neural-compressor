@@ -107,7 +107,7 @@ best_model = autotune(
     tune_config=custom_tune_config,
     eval_fn=eval_acc_fn,
     calib_dataloader=calib_dataloader,
-    )
+)
 ```
 
 ### Support Matrix

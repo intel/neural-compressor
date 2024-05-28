@@ -94,7 +94,7 @@ This means user could leverage Intel(R) Neural Compressor to directly generate a
 # main.py
 
 # Original code
-model = tf.keras.applications.resnet50.ResNet50(weights='imagenet')
+model = tf.keras.applications.resnet50.ResNet50(weights="imagenet")
 val_dataset = ...
 val_dataloader = MyDataloader(dataset=val_dataset)
 
@@ -118,13 +118,16 @@ This means user could leverage the advance feature of Intel(R) Neural Compressor
 # main.py
 
 # Original code
-model = tf.keras.applications.resnet50.ResNet50(weights='imagenet')
+model = tf.keras.applications.resnet50.ResNet50(weights="imagenet")
 val_dataset = ...
 val_dataloader = MyDataloader(dataset=val_dataset)
+
 
 def eval_acc_fn(model) -> float:
     ...
     return acc
+
+
 # Quantization code
 from neural_compressor.common.base_tuning import TuningConfig
 from neural_compressor.tensorflow import autotune
@@ -152,23 +155,23 @@ Intel(R) Neural Compressor support specify quantization rules by operator name o
 1. Example of setting `local` from a dict
 ```python
 quant_config = {
-            "static_quant": {
-                "global": {
-                    "weight_dtype": "int8",
-                    "weight_sym": True,
-                    "weight_granularity": "per_tensor",
-                    "act_dtype": "int8",
-                    "act_sym": True,
-                    "act_granularity": "per_tensor",
-                },
-                "local": {
-                    "conv1": {
-                        "weight_dtype": "fp32",
-                        "act_dtype": "fp32",
-                    }
-                },
+    "static_quant": {
+        "global": {
+            "weight_dtype": "int8",
+            "weight_sym": True,
+            "weight_granularity": "per_tensor",
+            "act_dtype": "int8",
+            "act_sym": True,
+            "act_granularity": "per_tensor",
+        },
+        "local": {
+            "conv1": {
+                "weight_dtype": "fp32",
+                "act_dtype": "fp32",
             }
-        }
+        },
+    }
+}
 config = StaticQuantConfig.from_dict(quant_config)
 ```
 2. Example of using `set_local`

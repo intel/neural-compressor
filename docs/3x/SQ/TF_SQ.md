@@ -119,11 +119,7 @@ To set a fixed alpha for the entire model, users can follow this example:
 from neural_compressor.tensorflow import SmoothQuantConfig, StaticQuantConfig
 
 quant_config = [SmoothQuantConfig(alpha=0.5), StaticQuantConfig()]
-q_model = quantize_model(
-    output_graph_def, 
-    [sq_config, static_config], 
-    calib_dataloader
-)
+q_model = quantize_model(output_graph_def, [sq_config, static_config], calib_dataloader)
 ```
 The `SmoothQuantConfig` should be combined with `StaticQuantConfig` in a list because we still need to insert QDQ and apply pattern fusion after the smoothing process.
 
@@ -136,9 +132,7 @@ Here is an example:
 ```python
 from neural_compressor.tensorflow import StaticQuantConfig, SmoothQuantConfig
 
-custom_tune_config = TuningConfig(
-    config_set=[SmoothQuantConfig(alpha=[0.5, 0.6, 0.7]), StaticQuantConfig()]
-)
+custom_tune_config = TuningConfig(config_set=[SmoothQuantConfig(alpha=[0.5, 0.6, 0.7]), StaticQuantConfig()])
 best_model = autotune(
     model="fp32_model",
     tune_config=custom_tune_config,
