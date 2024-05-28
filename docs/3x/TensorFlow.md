@@ -8,7 +8,7 @@ TensorFlow
       - [Quantization Scheme](#quantization-scheme)
       - [Quantization Approaches](#quantization-approaches)
         - [Post Training Static Quantization](#post-training-static-quantization)
-        - [Post Training Static Quantization](#post-training-static-quantization-1)
+        - [Smooth Quantization](#smooth-quantization)
       - [Backend and Device](#backend-and-device)
   - [Examples](#examples)
 
@@ -167,11 +167,13 @@ The supported Quantization methods for TensorFlow and Keras are listed below:
 ##### Post Training Static Quantization
 
 The min/max range in weights and activations are collected offline on a so-called `calibration` dataset. This dataset should be able to represent the data distribution of those unseen inference dataset. The `calibration` process runs on the original fp32 model and dumps out all the tensor distributions for `Scale` and `ZeroPoint` calculations. Usually preparing 100 samples are enough for calibration.
+
 Refer to the [PTQ Guide](./Quant/TF_Quant.md) for detailed information.
 
 ##### Smooth Quantization
 
 Smooth Quantization (SQ) is an advanced quantization technique designed to optimize model performance while maintaining high accuracy. Unlike traditional quantization methods that can lead to significant accuracy loss, SQ focuses on a more refined approach by taking a balance between the scale of activations and weights. 
+
 Refer to the [SQ Guide](./SQ/TF_SQ.md) for detailed information.
 
 #### Backend and Device
