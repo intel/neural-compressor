@@ -1258,8 +1258,7 @@ class AutoAlpha:  # pragma: no cover
         """
         self._change_qdq_for_auto(enable=False)
         module_names = self._get_sq_layer_names()
-
-        forward_wrapper(self.model, input, self.device)  ##save quant_input
+        forward_wrapper(self.model, input, self.device)  ##disable quant and get fp32 output
 
         fp32_output = {}
         for name in module_names:
