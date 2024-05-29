@@ -204,7 +204,6 @@ class TestSmoothQuant:
         q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
         assert q_model is not None, "Quantization failed!"
 
-
     @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
     def test_smooth_quant_auto(self):
         import transformers
