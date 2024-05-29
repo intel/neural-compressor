@@ -24,9 +24,12 @@ from collections import OrderedDict
 import torch
 
 from neural_compressor.torch.algorithms import Quantizer
-from neural_compressor.torch.utils import get_device, logger, set_module
+from neural_compressor.torch.utils import get_accelerator, is_transformers_imported, logger, set_module
 
 from .utility import cast_fp8, quant_tensor, search_clip
+
+if is_transformers_imported():
+    import transformers
 
 
 class RTNQuantizer(Quantizer):
@@ -59,7 +62,7 @@ class RTNQuantizer(Quantizer):
         group_size=32,
         group_dim=1,
         quantile=1.0,
-        export_compressed_model=False,
+        export_compressed_model=True,
         use_full_range=False,
         use_mse_search=False,
         *args,
@@ -87,14 +90,17 @@ class RTNQuantizer(Quantizer):
             model: fake quantized torch module
         """
         weight_config = self.quant_config
-        device = get_device(kwargs.pop("device", "auto"))
+        device = get_accelerator(kwargs.pop("device", "auto")).current_device_name()
 
         # Put model on device explicitly
         # TODO: refine it later, Put module on device one by one instead of the whole model
         model.to(device)
 
         assert isinstance(model, torch.nn.Module), "only support torch module"
-        supported_layers = (torch.nn.Linear,)
+        if is_transformers_imported():
+            supported_layers = (torch.nn.Linear, transformers.Conv1D)
+        else:
+            supported_layers = (torch.nn.Linear,)
         # initialize global configuration
         double_quant_config = {
             "double_quant": kwargs.get("use_double_quant", False),
@@ -128,7 +134,6 @@ class RTNQuantizer(Quantizer):
                 use_full_range = weight_config[name]["use_full_range"]
                 use_mse_search = weight_config[name]["use_mse_search"]
                 use_layer_wise = weight_config[name]["use_layer_wise"]
-                export_compressed_model = weight_config[name]["export_compressed_model"]
                 if export_compressed_model:
                     use_optimum_format = kwargs.get("use_optimum_format", True)
                 # double quant config
@@ -154,10 +159,15 @@ class RTNQuantizer(Quantizer):
                 continue
             logger.debug(f"RTN quantized module:{name, m}")
             logger.debug(log_msg)
-            if group_dim == 0:
-                weight = m.weight.t_().contiguous()
+            # for only group_dim is 0 or only `transformers.Conv1D`, we need transpose weight.
+            if is_transformers_imported():
+                transpose = (group_dim == 0) ^ (isinstance(m, transformers.Conv1D))
             else:
-                weight = m.weight
+                transpose = group_dim == 0
+            if transpose:
+                weight = m.weight.detach().T.contiguous()
+            else:
+                weight = m.weight.detach()
             if use_mse_search:
                 quantile = search_clip(m, bits, group_size, scheme, dtype, use_full_range)
             if export_compressed_model:
@@ -172,14 +182,23 @@ class RTNQuantizer(Quantizer):
                     full_range=use_full_range,
                     **double_quant_config,
                 )
-                int_weight = int_weight.t_().contiguous() if group_dim == 0 else int_weight
-                scale = scale.t_().contiguous() if group_dim == 0 else scale
-                zp = zp.t_().contiguous() if group_dim == 0 and zp is not None else zp
+                int_weight = int_weight.t_().contiguous() if transpose else int_weight
+                scale = scale.t_().contiguous() if transpose else scale
+                zp = zp.t_().contiguous() if transpose and zp is not None else zp
+                if isinstance(m, torch.nn.Linear):
+                    in_features = m.in_features
+                    out_features = m.out_features
+                elif is_transformers_imported() and isinstance(m, transformers.Conv1D):
+                    in_features = m.weight.shape[0]
+                    out_features = m.weight.shape[1]
+                    int_weight = int_weight.t_().contiguous()
+                    scale = scale.t_().contiguous()
+                    zp = zp.t_().contiguous() if zp is not None else zp
                 from .modules import WeightOnlyLinear
 
                 new_module = WeightOnlyLinear(
-                    m.in_features,
-                    m.out_features,
+                    in_features,
+                    out_features,
                     dtype=dtype,
                     bits=bits,
                     group_size=group_size,
@@ -204,9 +223,9 @@ class RTNQuantizer(Quantizer):
                     full_range=use_full_range,
                     **double_quant_config,
                 )
-                if group_dim == 0:
-                    # for group_dim is 0, we need to transpose the quantized tensor and module's weight back
+                if transpose:
+                    # for only group_dim is 0 or only `transformers.Conv1D`,
+                    # we need to transpose the quantized tensor and module's weight back
                     weight = weight.t_().contiguous()
-                    m.weight.t_().contiguous()
                 m.weight.data.copy_(weight)
         return model

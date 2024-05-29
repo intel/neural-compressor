@@ -1,4 +1,5 @@
 import copy
+import shutil
 import unittest
 
 import torch
@@ -6,13 +7,16 @@ import transformers
 
 from neural_compressor.common import logger
 from neural_compressor.torch.quantization import convert, prepare, quantize
+from neural_compressor.torch.utils import accelerator
+
+device = accelerator.current_device_name()
 
 
 def generate_random_corpus(nsamples=32):
     meta_data = []
     for _ in range(nsamples):
-        inp = torch.ones([1, 512], dtype=torch.long)
-        tar = torch.ones([1, 512], dtype=torch.long)
+        inp = torch.ones([1, 512], dtype=torch.long).to(device)
+        tar = torch.ones([1, 512], dtype=torch.long).to(device)
         meta_data.append((inp, tar))
     return meta_data
 
@@ -29,7 +33,7 @@ def train(
     lr_scheduler_type="linear",
 ):
     """Train function."""
-    trained_alphas_list = [torch.ones([128], requires_grad=True)]
+    trained_alphas_list = [torch.ones([128], requires_grad=True).to(device)]
     optimizer = torch.optim.Adam(trained_alphas_list, lr=lr, weight_decay=weight_decay, betas=betas)
 
     lr_scheduler = transformers.get_scheduler(  # pylint: disable=E1111
@@ -78,8 +82,11 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
         self.gptj = transformers.AutoModelForCausalLM.from_pretrained(
             "hf-internal-testing/tiny-random-GPTJForCausalLM",
             torchscript=True,
+            device_map=device,
         )
         self.gptj.seqlen = 512
+        self.example_inputs = torch.ones([1, 512], dtype=torch.long).to(device)
+
         self.quant_config = {
             "teq": {
                 "global": {
@@ -106,19 +113,37 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
             }
         }
 
+    @classmethod
+    def tearDownClass(self):
+        shutil.rmtree("saved_results", ignore_errors=True)
+
     def test_teq(self):
-        example_inputs = torch.ones([1, 512], dtype=torch.long)
         test_input = torch.ones([1, 512], dtype=torch.long)
         model = copy.deepcopy(self.gptj)
         out0 = model(test_input)
-
-        prepared_model = prepare(model, quant_config=self.quant_config, example_inputs=example_inputs)
+        prepared_model = prepare(model, quant_config=self.quant_config, example_inputs=self.example_inputs)
         train(prepared_model)
         qdq_model = convert(prepared_model)
         assert qdq_model is not None, "Quantization failed!"
         self.assertTrue(isinstance(qdq_model, torch.nn.Module))
         out1 = qdq_model(test_input)
         self.assertTrue(torch.allclose(out1[0], out0[0], atol=0.03))
+
+    def test_save_and_load(self):
+        fp32_model = copy.deepcopy(self.gptj)
+        prepared_model = prepare(fp32_model, quant_config=self.quant_config, example_inputs=self.example_inputs)
+        train(prepared_model)
+        q_model = convert(prepared_model)
+        assert q_model is not None, "Quantization failed!"
+        q_model.save("saved_results")
+        inc_out = q_model(self.example_inputs)[0]
+
+        from neural_compressor.torch.quantization import load
+
+        # loading compressed model
+        loaded_model = load("saved_results")
+        loaded_out = loaded_model(self.example_inputs)[0]
+        assert torch.allclose(inc_out, loaded_out), "Unexpected result. Please double check."
 
     def test_teq_with_quantize_API(self):
         example_inputs = torch.ones([1, 512], dtype=torch.long)

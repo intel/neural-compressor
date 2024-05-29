@@ -31,20 +31,20 @@ def is_hpex_available():
     return _hpex_available
 
 
-def is_ipex_available():
-    try:
-        import intel_extension_for_pytorch as ipex
+try:
+    import intel_extension_for_pytorch as ipex
 
-        _ipex_available = True
-    except:
-        _ipex_available = False
+    _ipex_available = True
+except:
+    _ipex_available = False
+
+
+def is_ipex_available():
     return _ipex_available
 
 
 def get_ipex_version():
     if is_ipex_available():
-        import intel_extension_for_pytorch as ipex
-
         try:
             ipex_version = ipex.__version__.split("+")[0]
         except ValueError as e:  # pragma: no cover
@@ -74,9 +74,34 @@ def is_ipex_imported() -> bool:
     return False
 
 
-def get_device(device_name="auto"):
+def is_transformers_imported() -> bool:
+    for name, _ in sys.modules.items():
+        if name == "transformers":
+            return True
+    return False
+
+
+def get_accelerator(device_name="auto"):
+    global accelerator  # update the global accelerator when calling this func
     from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
-    runtime_accelerator = auto_detect_accelerator(device_name)
-    device = runtime_accelerator.current_device_name()
-    return device
+    accelerator = auto_detect_accelerator(device_name)
+    return accelerator
+
+
+# for direct user access, used by @device_synchronize, can be changed by set_accelerator
+accelerator = get_accelerator()
+
+
+# for habana ease-of-use
+def device_synchronize(raw_func):
+    from functools import wraps
+
+    @wraps(raw_func)
+    def new_func(*args, **kwargs):
+        accelerator.synchronize()
+        output = raw_func(*args, **kwargs)
+        accelerator.synchronize()
+        return output
+
+    return new_func

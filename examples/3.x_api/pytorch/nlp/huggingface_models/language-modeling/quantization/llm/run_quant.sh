@@ -122,7 +122,6 @@ function run_tuning {
         --model ${model_name_or_path} \
         --dataset ${DATASET_NAME} \
         --quantize \
-        --accuracy \
         --approach ${approach} \
         --output_dir ${tuned_checkpoint} \
         --tasks "lambada_openai" \

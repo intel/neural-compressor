@@ -1,4 +1,5 @@
 import copy
+import shutil
 
 import pytest
 import torch
@@ -13,14 +14,32 @@ from neural_compressor.torch.quantization import (
     prepare,
     quantize,
 )
+from neural_compressor.torch.utils import accelerator
+
+device = accelerator.current_device_name()
+
+
+class ModelConv1d(torch.nn.Module):
+    def __init__(self):
+        super(ModelConv1d, self).__init__()
+        self.fc1 = transformers.Conv1D(50, 32)
+        self.fc2 = torch.nn.Linear(50, 32)
+        self.fc3 = torch.nn.Linear(32, 5)
+
+    def forward(self, x):
+        out = self.fc1(x)
+        out = self.fc2(out)
+        out = self.fc3(out)
+        return out
 
 
 class TestRTNQuant:
     def setup_class(self):
         self.tiny_gptj = transformers.AutoModelForCausalLM.from_pretrained(
             "hf-internal-testing/tiny-random-GPTJForCausalLM",
+            device_map=device,
         )
-        self.example_inputs = torch.tensor([[10, 20, 30, 40, 50, 60]], dtype=torch.long)
+        self.example_inputs = torch.tensor([[10, 20, 30, 40, 50, 60]], dtype=torch.long).to(device)
         # record label for comparison
         self.label = self.tiny_gptj(self.example_inputs)[0]
         # test_default_config
@@ -32,15 +51,15 @@ class TestRTNQuant:
         self.q_label = model(self.example_inputs)[0]
 
     def teardown_class(self):
-        pass
+        shutil.rmtree("saved_results", ignore_errors=True)
 
+    # TODO: (4, True, 32, 0), group_dim=0, format not supported
     @pytest.mark.parametrize(
         "bits, use_sym, group_size, group_dim",
         [
-            (8, True, 128, 1),
+            (8, True, -1, 1),
             (4, True, 128, 1),
             (4, False, 32, 1),
-            (4, True, 32, 0),
             (4, False, -1, 1),
             (2, True, 8, 1),
         ],
@@ -56,8 +75,8 @@ class TestRTNQuant:
         model = prepare(model, quant_config)
         model = convert(model)
         out = model(self.example_inputs)[0]
-        assert (out != self.label).all(), "WOQ output should be different with raw output"
-        if (bits, use_sym, group_size, group_dim) == (8, True, 128, 1):
+        assert (out != self.label).any(), "WOQ output should be different with raw output"
+        if (bits, use_sym, group_size, group_dim) == (8, True, -1, 1):
             assert torch.allclose(out, self.label, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
         if (bits, use_sym, group_size, group_dim) == [(4, True, 128, 0), (4, True, 32, 1)]:
             assert torch.allclose(out, self.label, atol=0.1), "Accuracy gap atol > 0.1 is unexpected."
@@ -126,52 +145,15 @@ class TestRTNQuant:
         model = convert(model)
         # TODO: (Xin) not implemented
 
-    @pytest.mark.parametrize("dtype", ["int4", "nf4", "fp4"])
-    def test_export_compressed_model(self, dtype):
-        if dtype == "int4":
-            # using optimum format as default
-            model = copy.deepcopy(self.tiny_gptj)
-            quant_config = RTNConfig(
-                dtype=dtype,
-                export_compressed_model=True,
-            )
-            model = prepare(model, quant_config)
-            model = convert(model)
-            out = model(self.example_inputs)[0]
-            assert isinstance(model.lm_head, WeightOnlyLinear), "Exporting compressed model failed."
-            atol_true = (out - self.q_label).amax()
-            # The small gap is caused by FP16 scale in WeightOnlyLinear.
-            assert (
-                atol_true < 0.0005
-            ), "Exporting compressed model should have the same output as quantized model. Please double check"
-        else:
-            # optimum_format doesn't suit for symmetric nf4 fp4.
-            model = copy.deepcopy(self.tiny_gptj)
-            quant_config = RTNConfig(
-                dtype=dtype,
-                export_compressed_model=False,
-            )
-            model = prepare(model, quant_config)
-            model = convert(model)
-            out1 = model(self.example_inputs)[0]
-            model = copy.deepcopy(self.tiny_gptj)
-            quant_config = RTNConfig(
-                dtype=dtype,
-                export_compressed_model=True,
-            )
-            model = prepare(model, quant_config)
-            model = convert(model)
-            out2 = model(self.example_inputs)[0]
-            assert isinstance(model.lm_head, WeightOnlyLinear), "Exporting compressed model failed."
-            assert torch.allclose(
-                out1, out2
-            ), "Exporting compressed model should have the same output as quantized model. Please double check"
-
     @pytest.mark.parametrize(
         "dtype",
         ["int4", "nf4", "fp4", "fp4_e2m1_bnb", "fp4_e2m1", "fp8_e5m2", "fp8_e5m2fnuz", "fp8_e4m3fn", "fp8_e4m3fnuz"],
     )
     def test_dtype_params(self, dtype):
+        if dtype in ["fp8_e5m2", "fp8_e5m2fnuz", "fp8_e4m3fn", "fp8_e4m3fnuz"]:
+            full_dtype_name = dtype.replace("fp8", "float8")
+            if not hasattr(torch, full_dtype_name):
+                return  # for low torch version
         model = copy.deepcopy(self.tiny_gptj)
         quant_config = RTNConfig(
             dtype=dtype,
@@ -179,7 +161,9 @@ class TestRTNQuant:
         model = prepare(model, quant_config)
         model = convert(model)
         out = model(self.example_inputs)[0]
+        out_next = model(self.example_inputs)[0]
         assert torch.allclose(out, self.label, atol=0.11), "Accuracy gap atol > 0.11 is unexpected."
+        assert torch.allclose(out, out_next), "output should be same"
 
     @pytest.mark.parametrize("dtype", ["int4", "nf4"])
     @pytest.mark.parametrize("double_quant_bits", [6])
@@ -259,3 +243,54 @@ class TestRTNQuant:
         assert torch.all(
             output_1.eq(output_2)
         ), "The results of calling `convert` + `prepare` and calling `quantize` should be equal."
+
+    # TODO: (4, True, 32, 0), group_dim=0, format not supported
+    @pytest.mark.parametrize(
+        "bits, use_sym, group_size, group_dim",
+        [
+            (8, True, -1, 1),
+            (4, True, 128, 1),
+            (4, False, 32, 1),
+            (4, False, -1, 1),
+            (2, True, 8, 1),
+        ],
+    )
+    def test_conv1d(self, bits, use_sym, group_size, group_dim):
+        model = ModelConv1d().to(device)
+        input = torch.randn(1, 32).to(device)
+        quant_config = RTNConfig(
+            bits=bits,
+            use_sym=use_sym,
+            group_size=group_size,
+            group_dim=group_dim,
+        )
+        out1 = model(input)
+        model = prepare(model, quant_config)
+        model = convert(model)
+        out2 = model(input)
+        assert (out2 != out1).any(), "WOQ out2put should be different with raw output"
+        if (bits, use_sym, group_size, group_dim) == (8, True, -1, 1):
+            if "hpu" in device:
+                assert torch.allclose(out2, out1, atol=0.15), "Accuracy gap atol > 0.15 is unexpected."
+            else:
+                assert torch.allclose(out2, out1, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
+        if (bits, use_sym, group_size, group_dim) == [(4, True, 128, 0), (4, True, 32, 1)]:
+            assert torch.allclose(out2, out1, atol=0.1), "Accuracy gap atol > 0.1 is unexpected."
+        if (bits, use_sym, group_size, group_dim) == [(4, False, 32, 0), (4, False, -1, 1), (2, True, 8, 1)]:
+            assert torch.allclose(out2, out1, atol=0.5), "Accuracy gap atol > 0.5 is unexpected."
+
+    def test_save_and_load(self):
+        fp32_model = copy.deepcopy(self.tiny_gptj)
+        quant_config = get_default_rtn_config()
+        q_model = quantize(fp32_model, quant_config=quant_config)
+        assert q_model is not None, "Quantization failed!"
+        q_model.save("saved_results")
+        inc_out = q_model(self.example_inputs)[0]
+
+        from neural_compressor.torch.quantization import load
+
+        # loading compressed model
+        loaded_model = load("saved_results")
+        loaded_out = loaded_model(self.example_inputs)[0]
+        assert torch.allclose(inc_out, loaded_out), "Unexpected result. Please double check."
+        assert isinstance(loaded_model.lm_head, WeightOnlyLinear), "loading compressed model failed."

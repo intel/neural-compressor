@@ -26,7 +26,6 @@ from datasets import load_dataset
 import onnxruntime as ort
 from torch.nn.functional import pad
 from torch.utils.data import DataLoader
-from intel_extension_for_transformers.llm.evaluation.lm_eval import evaluate
 from optimum.onnxruntime import ORTModelForCausalLM
 from transformers import LlamaConfig, LlamaTokenizer
 
@@ -198,28 +197,33 @@ def replace_architectures(json_path):
         json.dump(data, file, indent=4)
 
 def eval_func(model):
+    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
+
     model_dir = model
     if isinstance(model, str) and model.endswith(".onnx"):
         model_dir = os.path.dirname(model)
 
     replace_architectures(os.path.join(model_dir, "config.json"))
 
-    results = evaluate(
-        model="hf-causal",
-        model_args="pretrained=" + model_dir + ",tokenizer="+ args.tokenizer,
+    eval_args = LMEvalParser(
+        model="hf",
+        model_args="pretrained=" + model_dir + ",tokenizer=" + args.tokenizer + ",model_format=onnx",
         batch_size=args.batch_size,
-        tasks=args.tasks,
-        model_format="onnx",
+        tasks=','.join(args.tasks),
+        device="cpu",
     )
+    results = evaluate(eval_args)
 
     eval_acc = 0
     for task_name in args.tasks:
         if task_name == "wikitext":
-            print("Accuracy for %s is: %s" % (task_name, results["results"][task_name]["word_perplexity"]))
-            eval_acc += results["results"][task_name]["word_perplexity"]
+            print("Accuracy for %s is: %s" %
+                  (task_name, results["results"][task_name]["word_perplexity,none"]))
+            eval_acc += results["results"][task_name]["word_perplexity,none"]
         else:
-            print("Accuracy for %s is: %s" % (task_name, results["results"][task_name]["acc"]))
-            eval_acc += results["results"][task_name]["acc"]
+            print("Accuracy for %s is: %s" %
+                  (task_name, results["results"][task_name]["acc,none"]))
+            eval_acc += results["results"][task_name]["acc,none"]
 
     if len(args.tasks) != 0:
         eval_acc /= len(args.tasks)

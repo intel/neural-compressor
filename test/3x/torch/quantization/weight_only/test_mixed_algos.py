@@ -5,16 +5,18 @@ import pytest
 import torch
 import transformers
 
-from neural_compressor.common import logger
 from neural_compressor.torch.quantization import GPTQConfig, RTNConfig, quantize
+from neural_compressor.torch.utils import accelerator, logger
+
+device = accelerator.current_device_name()
 
 
 def run_fn(model):
     # GPTQ uses ValueError to reduce computation when collecting input data of the first block
     # It's special for UTs, no need to add this wrapper in examples.
     with pytest.raises(ValueError):
-        model(torch.tensor([[10, 20, 30]], dtype=torch.long))
-        model(torch.tensor([[40, 50, 60]], dtype=torch.long))
+        model(torch.tensor([[10, 20, 30]], dtype=torch.long).to(device))
+        model(torch.tensor([[40, 50, 60]], dtype=torch.long).to(device))
 
 
 class TestMixedTwoAlgo:
@@ -27,8 +29,9 @@ class TestMixedTwoAlgo:
 
             self.tiny_gptj = transformers.AutoModelForCausalLM.from_pretrained(
                 "hf-internal-testing/tiny-random-GPTJForCausalLM",
+                device_map=device,
             )
-            self.example_inputs = torch.tensor([[10, 20, 30, 40, 50, 60]], dtype=torch.long)
+            self.example_inputs = torch.tensor([[10, 20, 30, 40, 50, 60]], dtype=torch.long).to(device)
             # record label for comparison
             out_original_model = self.tiny_gptj(self.example_inputs)[0]
             model = copy.deepcopy(self.tiny_gptj)

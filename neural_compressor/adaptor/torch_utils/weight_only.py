@@ -20,7 +20,7 @@
 
 import math
 from copy import deepcopy
-from typing import OrderedDict
+from typing import Optional, OrderedDict, Union
 
 from ...utils import logger
 from ...utils.utility import LazyImport
@@ -679,7 +679,7 @@ def quant_weight_w_scale(weight, scale, zp, group_size=-1):
 
 def autoround_quantize(
     model,
-    tokenizer,
+    tokenizer=None,
     bits: int = 4,
     group_size: int = 128,
     sym: bool = False,
@@ -689,10 +689,8 @@ def autoround_quantize(
     amp: bool = True,
     device=None,
     lr_scheduler=None,
-    dataloader=None,  ## to support later
-    dataset_name: str = "NeelNanda/pile-10k",
-    dataset_split: str = "train",
-    use_quant_input: bool = True,
+    dataset: Union[str, list, tuple, torch.utils.data.DataLoader] = "NeelNanda/pile-10k",
+    enable_quanted_input: bool = True,
     enable_minmax_tuning: bool = True,
     lr: float = None,
     minmax_lr: float = None,
@@ -706,52 +704,52 @@ def autoround_quantize(
     gradient_accumulate_steps: int = 1,
     not_use_best_mse: bool = False,
     dynamic_max_gap: int = -1,
-    data_type: str = "int",  ##only support data_type
-    scale_dtype="fp16",
+    data_type: str = "int",  ##only support int for now
+    scale_dtype: str = "fp16",
     **kwargs,
 ):
     """Run autoround weight-only quantization.
     Args:
-    model: The PyTorch model to be quantized.
-    tokenizer: Tokenizer for processing input data. Temporarily set as a mandatory parameter.
-    bits (int): Number of bits for quantization (default is 4).
-    group_size (int): Size of the quantization group (default is 128).
-    sym (bool): Whether the symmetric quantization is to be used.
-    weight_config (dict): Configuration for weight quantization (default is an empty dictionary).
-    weight_config={
-                'layer1':##layer_name
-                {
-                    'data_type': 'int',
-                    'bits': 4,
-                    'group_size': 32,
-                    'scheme': "asym", ## or sym
-                }
-                ...
-            }
-    enable_full_range (bool): Whether to enable full range quantization (default is False).
-    bs (int): Batch size for training (default is 8).
-    amp (bool): Whether to use automatic mixed precision (default is True). Automatically detect and set.
-    device: The device to be used for tuning (default is None). Automatically detect and set.
-    lr_scheduler: The learning rate scheduler to be used.
-    dataloader: The dataloader for input data (to be supported in future).
-    dataset_name (str): The default dataset name (default is "NeelNanda/pile-10k").
-    dataset_split (str): The split of the dataset to be used (default is "train").
-    use_quant_input (bool): Whether to use quantized input data (default is True).
-    enable_minmax_tuning (bool): Whether to enable min-max tuning (default is True).
-    lr (float): The learning rate (default is 0.005).
-    minmax_lr (float): The learning rate for min-max tuning (default is None).
-    low_gpu_mem_usage (bool): Whether to use low GPU memory (default is True).
-    iters (int): Number of iterations (default is 200).
-    seqlen (int): Length of the sequence.
-    n_samples (int): Number of samples (default is 512).
-    sampler (str): The sampling method (default is "rand").
-    seed (int): The random seed (default is 42).
-    n_blocks (int): Number of blocks (default is 1).
-    gradient_accumulate_steps (int): Number of gradient accumulation steps (default is 1).
-    not_use_best_mse (bool): Whether to use mean squared error (default is False).
-    dynamic_max_gap (int): The dynamic maximum gap (default is -1).
-    data_type (str): The data type to be used (default is "int").
-    **kwargs: Additional keyword arguments.
+        model: The PyTorch model to be quantized.
+        tokenizer: An optional tokenizer for processing input data. If none is provided, a dataloader must be supplied.
+        bits (int): Number of bits for quantization (default is 4).
+        group_size (int): Size of the quantization group (default is 128).
+        sym (bool): Whether symmetric quantization is to be used (default is False).
+        weight_config (dict): Configuration for weight quantization (default is an empty dictionary).
+        weight_config={
+                   'layer1':##layer_name
+                   {
+                       'data_type': 'int',
+                       'bits': 4,
+                       'group_size': 32,
+                       'sym': False
+                   }
+                   ...
+               }
+        enable_full_range (bool): Whether to enable full range quantization (default is False).
+        batch_size (int): Batch size for training (default is 8).
+        amp (bool): Whether to use automatic mixed precision (default is True).
+        device: The device to be used for tuning (default is "auto").
+        lr_scheduler: The learning rate scheduler to be used.
+        dataset (str): The default dataset name (default is "NeelNanda/pile-10k").
+        enable_quanted_input (bool): Whether to use the output of the previous quantized block as
+                                the input for the current block (default is True).
+        enable_minmax_tuning (bool): Whether to enable weight min-max tuning (default is True).
+        lr (float): The learning rate (default is None, will be set to 1.0/iters).
+        minmax_lr (float): The learning rate for min-max tuning (default is None, it will be set to lr automatically).
+        low_gpu_mem_usage (bool): Whether to use low GPU memory (default is True).
+        iters (int): Number of iterations (default is 200).
+        seqlen (int): Data length of the sequence for tuning (default is 2048).
+        n_samples (int): Number of samples (default is 512).
+        sampler (str): The sampling method (default is "rand").
+        seed (int): The random seed (default is 42).
+        n_blocks (int): Number of blocks (default is 1).
+        gradient_accumulate_steps (int): Number of gradient accumulation steps (default is 1).
+        not_use_best_mse (bool): Whether to use mean squared error (default is False).
+        dynamic_max_gap (int): The dynamic maximum gap (default is -1).
+        data_type (str): The data type to be used (default is "int").
+        scale_dtype (str): The data type of quantization scale to be used (default is "float32"), different kernels
+                           have different choices.
 
     Returns:
         The quantized model.
@@ -770,10 +768,8 @@ def autoround_quantize(
         amp=amp,
         device=device,
         lr_scheduler=lr_scheduler,
-        dataloader=dataloader,  ## to support later
-        dataset_name=dataset_name,
-        dataset_split=dataset_split,
-        use_quant_input=use_quant_input,
+        dataset=dataset,
+        enable_quanted_input=enable_quanted_input,
         enable_minmax_tuning=enable_minmax_tuning,
         lr=lr,
         minmax_lr=minmax_lr,
