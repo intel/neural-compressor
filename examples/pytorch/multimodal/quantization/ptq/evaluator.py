@@ -19,7 +19,6 @@ from transformers import AutoProcessor, LlavaForConditionalGeneration
 
 class CustomDataset(Dataset):
     def __init__(self, questions, image_folder, tokenizer, image_processor, model_config, conv_mode):
-        import pdb;pdb.set_trace()
         self.questions = questions
         self.image_folder = image_folder
         self.tokenizer = tokenizer
@@ -28,9 +27,7 @@ class CustomDataset(Dataset):
         self.conv_mode = conv_mode
 
     def __getitem__(self, index):
-        # import pdb;pdb.set_trace()
         line = self.questions[index]
-        # import pdb;pdb.set_trace()
         image_file = line["image"]
         qs = line["text"]
         if self.model_config.mm_use_im_start_end:
@@ -112,13 +109,11 @@ class TextVQAEvaluator(object):
         return data_loader
     
     def run_inference(self, model_name_or_path, answer_file, temperature = 0):
-        # import pdb;pdb.set_trace()
         self.prepare_model(model_name_or_path)
         data_loader = self.prepare_data()
         self.answer_file = answer_file
         ans_file = open(self.answer_file, "w")
         # run inference
-        # import pdb;pdb.set_trace()
         for (input_ids, image_tensor, image_sizes), line in tqdm(zip(data_loader, self.questions), total=len(self.questions)):
             idx = line["question_id"]
             cur_prompt = line["text"]

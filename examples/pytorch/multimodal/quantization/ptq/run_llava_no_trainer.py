@@ -193,10 +193,5 @@ def main():
         eval_func = eval_func
     )
 
-    print("Done")
-    print("Done")
-
-    # evaluation process
-
 if __name__ == "__main__":
     main()
