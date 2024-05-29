@@ -504,6 +504,7 @@ def gptq_quantize(
     device=None,
     layer_wise=False,
     model_path=None,
+    multimodal = False
 ):
     """Run weight-only quantization with."""
     # TODO: unify weight_config keys, add docstring, and support default config
@@ -513,7 +514,8 @@ def gptq_quantize(
     from .gptq import GPTQuantizer
 
     gptq_quantizer = GPTQuantizer(
-        model, weight_config, dataloader, nsamples, use_max_length, pad_max_length, device, layer_wise=layer_wise
+        model, weight_config, dataloader, nsamples, use_max_length, pad_max_length, device,
+        layer_wise=layer_wise, multimodal_mode = multimodal
     )
     fp32_modified_model, gptq_config = gptq_quantizer.execute_quantization(model_path=model_path)
     logger.info("GPTQ quantizing done.")

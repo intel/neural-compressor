@@ -107,6 +107,7 @@ def get_user_argument():
                                                                             and your dataset builder args: args.pad_max_length')
     parser.add_argument('--gptq_static_groups', action='store_true', help='Use determined group to do quantization')
     parser.add_argument('--gptq_true_sequential', action='store_true', help="Whether to run in true_sequential model.")
+    parser.add_argument('--gptq_multimodal', action='store_true', help='quantize a multimodal model')
     parser.add_argument('--gptq_lm_head', action='store_true', help="Whether to use GPTQ to quantize the output layer of the LLMs.")
     # ==============code generation args===========
     args = parser.parse_args()
@@ -130,23 +131,6 @@ def main():
     cur_times = 0
     model.float()
     model.eval()
-    DEV = model.device
-    for input_ids, image_tensors, image_sizes in dataloader:
-        input_ids = input_ids.to(DEV)
-        image_tensors = image_tensors.to(DEV)
-        print(f"Test the inference process {cur_times}")
-        inputs = {
-            "input_ids": input_ids,
-            "images": image_tensors,
-            "image_sizes": image_sizes
-        }
-        out = model(
-            **inputs
-        )
-        cur_times += 1
-        if cur_times >= times:
-            break
-        torch.cuda.empty_cache()
 
     if args.quantize:
         from neural_compressor import PostTrainingQuantConfig, quantization
@@ -187,6 +171,7 @@ def main():
             'static_groups': args.gptq_static_groups,
             "true_sequential": args.gptq_true_sequential,
             "lm_head": args.gptq_lm_head,
+            "multimodal": args.gptq_multimodal,
         }
         # GPTQ: use assistive functions to modify calib_dataloader and calib_func
         # TEQ: set calib_func=None, use default training func as calib_func

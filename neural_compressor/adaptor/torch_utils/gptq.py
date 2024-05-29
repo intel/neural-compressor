@@ -77,8 +77,7 @@ def is_leaf(module):
         children_cnt += 1
     return True if children_cnt == 0 else False
 
-
-def trace_gptq_target_blocks(module, module_types=[torch.nn.ModuleList, torch.nn.Sequential]):
+def trace_gptq_target_blocks(module, module_types=[torch.nn.ModuleList, torch.nn.Sequential], multimodal_mode = False):
     """Search transformer stacked structures, which is critical in LLMs and GPTQ execution.
 
     Args:
@@ -128,7 +127,8 @@ def trace_gptq_target_blocks(module, module_types=[torch.nn.ModuleList, torch.nn
                 gptq_related_blocks["transformers_name"] = n
                 gptq_related_blocks["transformers"] = m
                 find_transformers = True
-                # return gptq_related_blocks
+                if multimodal_mode:
+                    return gptq_related_blocks
             elif is_leaf(m) and not find_transformers:
                 gptq_related_blocks["embeddings"][n] = m
             elif n.find(gptq_related_blocks["transformers_name"]) == -1 and find_transformers:
@@ -139,6 +139,11 @@ def trace_gptq_target_blocks(module, module_types=[torch.nn.ModuleList, torch.nn
                 continue
     return gptq_related_blocks
 
+
+def find_formal_transformers(inputs: dict):
+    """
+    To find the transformer block that to be quantized
+    """
 
 def find_layers(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D], name=""):
     """Get all layers with target types."""
@@ -211,6 +216,7 @@ class GPTQuantizer(object):
         pad_max_length=2048,
         device=None,
         layer_wise=False,
+        multimodal_mode = False,
     ):
         """
         Args:
@@ -231,9 +237,10 @@ class GPTQuantizer(object):
             device: cpu or cuda
         """
         # model
+        self.multimodal_mode = multimodal_mode
         self.model = model
         # self.use_cache = self.model.config.use_cache
-        self.gptq_related_blocks = trace_gptq_target_blocks(self.model)  # get the transformer block list above
+        self.gptq_related_blocks = trace_gptq_target_blocks(self.model, multimodal_mode = self.multimodal_mode)  # get the transformer block list above
         self.dtype = next(iter(self.model.parameters())).dtype
         log_quantizable_layers_per_transformer(self.gptq_related_blocks)
 
@@ -510,15 +517,14 @@ class GPTQuantizer(object):
             forward, self.gptq_related_blocks["transformers"][0]
         )
 
-        multimodal_mode = True  # use parameter mode to update this code
         # Step3: run forward to obtain calibration datasets
         logger.info("Collecting calibration inputs...")
         for batch in tqdm(self.dataloader):
             if not self.layer_wise:
-                batch = move_input_to_device(batch, self.device, multimodal_mode)
+                batch = move_input_to_device(batch, self.device, self.multimodal_mode)
             try:
                 if isinstance(batch, tuple) or isinstance(batch, list):
-                    if not multimodal_mode:
+                    if not self.multimodal_mode:
                         self.model(batch[0])
                     else:
                         self.model(*batch)
