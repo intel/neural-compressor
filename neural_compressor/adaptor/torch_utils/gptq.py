@@ -77,7 +77,8 @@ def is_leaf(module):
         children_cnt += 1
     return True if children_cnt == 0 else False
 
-def trace_gptq_target_blocks(module, module_types=[torch.nn.ModuleList, torch.nn.Sequential], multimodal_mode = False):
+
+def trace_gptq_target_blocks(module, module_types=[torch.nn.ModuleList, torch.nn.Sequential], multimodal_mode=False):
     """Search transformer stacked structures, which is critical in LLMs and GPTQ execution.
 
     Args:
@@ -141,9 +142,8 @@ def trace_gptq_target_blocks(module, module_types=[torch.nn.ModuleList, torch.nn
 
 
 def find_formal_transformers(inputs: dict):
-    """
-    To find the transformer block that to be quantized
-    """
+    """To find the transformer block that to be quantized."""
+
 
 def find_layers(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D], name=""):
     """Get all layers with target types."""
@@ -216,7 +216,7 @@ class GPTQuantizer(object):
         pad_max_length=2048,
         device=None,
         layer_wise=False,
-        multimodal_mode = False,
+        multimodal_mode=False,
     ):
         """
         Args:
@@ -240,7 +240,9 @@ class GPTQuantizer(object):
         self.multimodal_mode = multimodal_mode
         self.model = model
         # self.use_cache = self.model.config.use_cache
-        self.gptq_related_blocks = trace_gptq_target_blocks(self.model, multimodal_mode = self.multimodal_mode)  # get the transformer block list above
+        self.gptq_related_blocks = trace_gptq_target_blocks(
+            self.model, multimodal_mode=self.multimodal_mode
+        )  # get the transformer block list above
         self.dtype = next(iter(self.model.parameters())).dtype
         log_quantizable_layers_per_transformer(self.gptq_related_blocks)
 
