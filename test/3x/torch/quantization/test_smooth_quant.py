@@ -213,7 +213,7 @@ class TestSmoothQuant:
             for i in range(10):
                 example_inputs = torch.randn([1, 3])
                 model(example_inputs)
-        
+
         # block-wise
         quant_config = SmoothQuantConfig(
             alpha="auto",
@@ -226,7 +226,7 @@ class TestSmoothQuant:
         )
         q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
         assert q_model is not None, "Quantization failed!"
-        
+
         # layer-wise
         quant_config = SmoothQuantConfig(
             alpha="auto",
