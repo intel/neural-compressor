@@ -1,6 +1,7 @@
+import copy
+
 import pytest
 import torch
-import copy
 
 
 class Model(torch.nn.Module):
