@@ -17,13 +17,12 @@ import json
 import os
 import re
 from collections import UserDict
-from functools import partial
 
 import intel_extension_for_pytorch as ipex
 import numpy
 import torch
+import tqdm
 from packaging.version import Version
-from tqdm import tqdm
 
 from neural_compressor.torch.algorithms.static_quant import (
     CpuInfo,
@@ -36,7 +35,7 @@ from neural_compressor.torch.algorithms.static_quant import (
     simple_inference,
     unify_op_type_mapping_ipex,
 )
-from neural_compressor.torch.utils import fetch_module, get_ipex_version, get_torch_version, logger
+from neural_compressor.torch.utils import get_ipex_version, get_torch_version, logger
 
 version = get_torch_version()
 ipex_ver = get_ipex_version()
@@ -78,6 +77,9 @@ def get_quantizable_ops_recursively(model, example_inputs, alpha, act_algo, inpl
         assert example_inputs is not None, "IPEX need q_dataloader or example_inputs to prepare the model"
 
         from torch.ao.quantization import MinMaxObserver
+
+        if alpha == "auto":  # for quantize API
+            alpha = 0.5
 
         if ipex_ver.release >= Version("2.1.1").release:
             static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
@@ -416,68 +418,12 @@ def model_forward(model, dataloader, iters, device):  # pragma: no cover
                 break
 
 
-def get_block_prefix(model):
-    """Get prefix and number of blocks.
-
-    Args:
-        model (torch.nn.Module): input model
-    Returns:
-        block_prefix(str): block_list name in model
-        block_num(int): number of block in block_list
-    """
-    module_types = [torch.nn.ModuleList]
-    block_prefix = ""
-    block_num = 0
-    for n, m in model.named_modules():
-        if type(m) in module_types:
-            block_prefix = n
-            block_num = len(m)
-            logger.debug(f"block_prefix: {block_prefix}, block_num: {block_num} ")
-            break
-    assert block_num > 0, "block num shouldn't be zero!"
-    return block_prefix, block_num
-
-
-def get_hidden_states(captured_model, calib_func=None):
-    """Get the input args and kwargs of first block, generate dataloader.
-
-    Args:
-        captured_model (InputCaptureModule): a model wrapper to capture block input
-        calib_func (Callable): a calib func to replace dataloader
-    Raises:
-        ValueError: to avoid inference of rest parts in model
-    Returns:
-        dataloader (CapturedDataloader): dataloader containing block input
-    """
-    # Step 1: replace first block forward to collect inputs and avoid entire inference
-    model = captured_model.orig_model
-    block_prefix, _ = get_block_prefix(model)
-    block_list = fetch_module(model, block_prefix)
-    first_block = block_list[0]
-    block_forward_cache = first_block.forward
-    first_block.forward = partial(captured_model.forward, first_block)
-
-    # Step 2: replace model_forward to avoid ValueError
-    model_forward_cache = model.forward
-
-    def model_forward(model, *args, **kwargs):
-        nonlocal model_forward_cache
-        try:
-            model_forward_cache(*args, **kwargs)
-        except ValueError:
-            pass
-
-    model.forward = partial(model_forward, model)
-
-    # Step 3: execute calibration
-    calib_func(model)
-    logger.info("The hidden_states collection is done.")
+def build_captured_dataloader(model, run_fn):
+    captured_model = InputCaptureModule(model)
+    run_fn(captured_model)
     dataloader = CapturedDataloader(captured_model.args_list, captured_model.kwargs_list)
-
-    # Step 4: recover model and block forward
-    model.forward = model_forward_cache
-    first_block.forward = block_forward_cache
-    return dataloader
+    model = captured_model.orig_model
+    return model, dataloader
 
 
 def cal_scale(input_max_abs, weights, alpha, weight_max_lb=1e-5):  # pragma: no cover
@@ -660,20 +606,15 @@ class CapturedDataloader:
 
 
 class InputCaptureModule(torch.nn.Module):
-    def __init__(self, model, calib_num=32) -> None:
+    def __init__(self, model) -> None:
         super().__init__()
         self.args_list = []
         self.kwargs_list = []
         self.orig_model = model
-        self.calib_num = calib_num
-        self.iters = 0
 
     def forward(self, *args, **kwargs):
-        if self.iters >= self.calib_num:
-            raise ValueError
         self.args_list.append(args)
         self.kwargs_list.append(kwargs)
-        raise ValueError
 
 
 class Calibration:  # pragma: no cover
@@ -1450,50 +1391,48 @@ class AutoAlpha:  # pragma: no cover
 
         if not self.dataloader:
             logger.info("No dataloader, performing auto-tuning with calibration function instead.")
+            self.model, self.dataloader = build_captured_dataloader(self.model, self.q_func)
 
-        captured_model = InputCaptureModule(self.model, self.calib_sample_num)
-        for i in tqdm(range(self.calib_sample_num), desc="auto tune alpha"):
-            self.dataloader = get_hidden_states(captured_model, self.q_func)
+        bar = tqdm(self.dataloader, total=self.calib_sample_num, desc="auto tune alpha")  # pylint: disable=E1102
+        for input in bar:
+            if isinstance(input, tuple) or isinstance(input, list):
+                if len(input) == 2:
+                    input, _ = input  # Extract input when both input and label are yielded by dataloader.
 
-            for input in self.dataloader:
-                if isinstance(input, tuple) or isinstance(input, list):
-                    if len(input) == 2:
-                        input, _ = input  # Extract input when both input and label are yielded by dataloader.
+            loss_alphas = {}
+            best_alphas_per_module = best_alphas
+            if isinstance(best_alphas, dict):
+                for key in self.absorb_to_layer.keys():
+                    layer_names = self.absorb_to_layer[key]
+                    for layer_name in layer_names:
+                        best_alphas_per_module[layer_name] = best_alphas_per_module[key]
+            loss_tmp = self._get_one_batch_auto_loss(
+                input, self.alpha_space, best_alphas_per_module, self.input_maxes_abs
+            )
+            if loss_alphas == {}:
+                loss_alphas = loss_tmp
+            else:
+                for key in loss_alphas.keys():
+                    cur_loss = loss_alphas[key]
+                    for alpha_key in cur_loss.keys():
+                        cur_loss[alpha_key] += loss_tmp[key][alpha_key]
 
-                loss_alphas = {}
-                best_alphas_per_module = best_alphas
-                if isinstance(best_alphas, dict):
-                    for key in self.absorb_to_layer.keys():
-                        layer_names = self.absorb_to_layer[key]
-                        for layer_name in layer_names:
-                            best_alphas_per_module[layer_name] = best_alphas_per_module[key]
-                loss_tmp = self._get_one_batch_auto_loss(
-                    input, self.alpha_space, best_alphas_per_module, self.input_maxes_abs
+            total_cnt += 1
+            tmp_cnt += 1
+            if tmp_cnt // multiply_factor >= 1:
+                alpha_update_iter += 1
+                tmp_cnt = 0
+                best_alphas = self._get_best_alpha(self.absorb_to_layer, loss_alphas, self.shared_criterion)
+                for key in best_alphas.keys():
+                    logger.info(f"Auto alpha update iter: {alpha_update_iter}, {key}: {best_alphas[key]}")
+                absorb_input_scales, weight_scales = self._cal_scales(
+                    self.absorb_to_layer, self.input_maxes_abs, best_alphas
                 )
-                if loss_alphas == {}:
-                    loss_alphas = loss_tmp
-                else:
-                    for key in loss_alphas.keys():
-                        cur_loss = loss_alphas[key]
-                        for alpha_key in cur_loss.keys():
-                            cur_loss[alpha_key] += loss_tmp[key][alpha_key]
-
-                total_cnt += 1
-                tmp_cnt += 1
-                if tmp_cnt // multiply_factor >= 1:
-                    alpha_update_iter += 1
-                    tmp_cnt = 0
-                    best_alphas = self._get_best_alpha(self.absorb_to_layer, loss_alphas, self.shared_criterion)
-                    for key in best_alphas.keys():
-                        logger.info(f"Auto alpha update iter: {alpha_update_iter}, {key}: {best_alphas[key]}")
-                    absorb_input_scales, weight_scales = self._cal_scales(
-                        self.absorb_to_layer, self.input_maxes_abs, best_alphas
-                    )
-                    self._update_scales_for_auto(absorb_input_scales, weight_scales)
-                    # does not need to reset the weight_scale_dict, because use the weight of ori_layer, no change
-                    # self.weight_scale_dict = {}
-                if total_cnt >= self.calib_sample_num:
-                    break
+                self._update_scales_for_auto(absorb_input_scales, weight_scales)
+                # does not need to reset the weight_scale_dict, because use the weight of ori_layer, no change
+                # self.weight_scale_dict = {}
+            if total_cnt >= self.calib_sample_num:
+                break
 
         best_alphas = self._get_best_alpha(self.absorb_to_layer, loss_alphas, self.shared_criterion)
         for key in best_alphas.keys():
@@ -1523,51 +1462,50 @@ class AutoAlpha:  # pragma: no cover
 
         if not self.dataloader:
             logger.info("No dataloader, performing auto-tuning with calibration function instead.")
+            self.model, self.dataloader = build_captured_dataloader(self.model, self.q_func)
 
-        captured_model = InputCaptureModule(self.model, self.calib_sample_num)
-        for i in tqdm(range(self.calib_sample_num), desc="auto tune alpha"):
-            self.dataloader = get_hidden_states(captured_model, self.q_func)
-            for input in self.dataloader:
-                if isinstance(input, tuple):  # Extract input when both input and label are yielded by dataloader.
-                    input = input[0]
+        bar = tqdm(self.dataloader, total=self.calib_sample_num, desc="auto tune alpha")  # pylint: disable=E1102
+        for input in bar:
+            if isinstance(input, tuple):  # Extract input when both input and label are yielded by dataloader.
+                input = input[0]
 
-                loss_alphas = {}
-                best_alphas_per_module = best_alphas
-                if isinstance(best_alphas, dict):
-                    for key in self.absorb_to_layer.keys():
-                        layer_names = self.absorb_to_layer[key]
-                        for layer_name in layer_names:
-                            best_alphas_per_module[layer_name] = best_alphas_per_module[key]
-                loss_tmp = self._get_one_batch_auto_loss_blockwise(
-                    input, self.alpha_space, best_alphas_per_module, self.input_maxes_abs
+            loss_alphas = {}
+            best_alphas_per_module = best_alphas
+            if isinstance(best_alphas, dict):
+                for key in self.absorb_to_layer.keys():
+                    layer_names = self.absorb_to_layer[key]
+                    for layer_name in layer_names:
+                        best_alphas_per_module[layer_name] = best_alphas_per_module[key]
+            loss_tmp = self._get_one_batch_auto_loss_blockwise(
+                input, self.alpha_space, best_alphas_per_module, self.input_maxes_abs
+            )
+            if loss_alphas == {}:
+                for block_name in self.block_names:
+                    for key in self.block_to_module[block_name]:
+                        loss_alphas[key] = loss_tmp[block_name]
+            else:
+                for block_name in self.block_names:
+                    for key in self.block_to_module[block_name]:
+                        cur_loss = loss_alphas[key]
+                        for alpha_key in cur_loss.keys():
+                            cur_loss[alpha_key] += loss_tmp[block_name][alpha_key]
+
+            total_cnt += 1
+            tmp_cnt += 1
+            if tmp_cnt // multiply_factor >= 1:
+                alpha_update_iter += 1
+                tmp_cnt = 0
+                best_alphas = self._get_best_alpha(self.absorb_to_layer, loss_alphas, self.shared_criterion)
+                for key in best_alphas.keys():
+                    logger.info(f"Auto alpha update iter: {alpha_update_iter}, {key}: {best_alphas[key]}")
+                absorb_input_scales, weight_scales = self._cal_scales(
+                    self.absorb_to_layer, self.input_maxes_abs, best_alphas
                 )
-                if loss_alphas == {}:
-                    for block_name in self.block_names:
-                        for key in self.block_to_module[block_name]:
-                            loss_alphas[key] = loss_tmp[block_name]
-                else:
-                    for block_name in self.block_names:
-                        for key in self.block_to_module[block_name]:
-                            cur_loss = loss_alphas[key]
-                            for alpha_key in cur_loss.keys():
-                                cur_loss[alpha_key] += loss_tmp[block_name][alpha_key]
-
-                total_cnt += 1
-                tmp_cnt += 1
-                if tmp_cnt // multiply_factor >= 1:
-                    alpha_update_iter += 1
-                    tmp_cnt = 0
-                    best_alphas = self._get_best_alpha(self.absorb_to_layer, loss_alphas, self.shared_criterion)
-                    for key in best_alphas.keys():
-                        logger.info(f"Auto alpha update iter: {alpha_update_iter}, {key}: {best_alphas[key]}")
-                    absorb_input_scales, weight_scales = self._cal_scales(
-                        self.absorb_to_layer, self.input_maxes_abs, best_alphas
-                    )
-                    self._update_scales_for_auto(absorb_input_scales, weight_scales)
-                    # does not need to reset the weight_scale_dict, because use the weight of ori_layer, no change
-                    # self.weight_scale_dict = {}
-                if total_cnt >= self.calib_sample_num:
-                    break
+                self._update_scales_for_auto(absorb_input_scales, weight_scales)
+                # does not need to reset the weight_scale_dict, because use the weight of ori_layer, no change
+                # self.weight_scale_dict = {}
+            if total_cnt >= self.calib_sample_num:
+                break
 
         best_alphas = self._get_best_alpha(self.absorb_to_layer, loss_alphas, self.shared_criterion)
         for key in best_alphas.keys():
