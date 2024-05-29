@@ -32,20 +32,17 @@ class CustomDataset(Dataset):
         self.args = args
 
     def __getitem__(self, index):
-        # import pdb;pdb.set_trace()
         sources = self.list_data_dict[index]
 
         # image
         image_file = os.path.basename(sources["image"])
         image = Image.open(os.path.join(self.image_folder, image_file)).convert('RGB')
         image = self.image_processor.preprocess(image, return_tensors='pt')['pixel_values'][0]
-        # import pdb;pdb.set_trace()
         sources = preprocess_multimodal(
             copy.deepcopy([sources["conversations"]]), # a list
             self.args,
         )
 
-        # import pdb;pdb.set_trace()
         data_dict = preprocess(
             sources,
             self.tokenizer,
@@ -125,19 +122,15 @@ def main():
     model_name = get_model_name_from_path(model_path)
     tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, args.model_base, model_name)
 
-    # import pdb;pdb.set_trace()
     questions = json.load(open(args.question_file, "r"))
-    # import pdb;pdb.set_trace()
     dataset = CustomDataset(questions, args.image_folder, tokenizer, image_processor, args)
     dataloader = create_data_loader(dataset)
 
-    # import pdb;pdb.set_trace()
     times = 5
     cur_times = 0
     model.float()
     model.eval()
     DEV = model.device
-    # import pdb;pdb.set_trace()
     for input_ids, image_tensors, image_sizes in dataloader:
         input_ids = input_ids.to(DEV)
         image_tensors = image_tensors.to(DEV)
@@ -207,7 +200,6 @@ def main():
             recipes=recipes,
         )
     
-    # import pdb;pdb.set_trace()
     q_model = quantization.fit(
         model, 
         conf,

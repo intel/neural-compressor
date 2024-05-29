@@ -497,7 +497,6 @@ class GPTQuantizer(object):
                 self.cache_positional_arguments[idx].append(item)
             raise ValueError
 
-        # import pdb;pdb.set_trace()
         # Step1: fetch the embeddings and other layers before the transformer stack.
         if not self.layer_wise:
             for embedding_name, embedding_layer in self.gptq_related_blocks["embeddings"].items():
@@ -511,7 +510,6 @@ class GPTQuantizer(object):
             forward, self.gptq_related_blocks["transformers"][0]
         )
 
-        # import pdb;pdb.set_trace()
         multimodal_mode = True  # use parameter mode to update this code
         # Step3: run forward to obtain calibration datasets
         logger.info("Collecting calibration inputs...")
@@ -607,13 +605,10 @@ class GPTQuantizer(object):
         """Run quantization."""
         # Step1: prepare quantization (calibration datasets)
 
-        # import pdb;pdb.set_trace()
-
         logger.info("Begin ====>")
         self.pre_quantization()
 
         # Step2: run gptq quantization in a transformer block-wise manner.
-        # import pdb;pdb.set_trace()
         gptq_config = {}
 
         self.true_sequential = self.find_true_sequential_config()
