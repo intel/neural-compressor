@@ -34,7 +34,7 @@ DEBUG = False
 
 
 # ================ device related ===================
-def move_input_to_device(input, device=torch.device("cpu"), multimodal_mode = False):
+def move_input_to_device(input, device=torch.device("cpu"), multimodal_mode=False):
     if isinstance(input, dict) or isinstance(input, UserDict):
         for inp in input.keys():
             input[inp] = input[inp].to(device) if isinstance(input[inp], torch.Tensor) else input[inp]
@@ -53,17 +53,14 @@ def move_input_to_device(input, device=torch.device("cpu"), multimodal_mode = Fa
                     input_res.append(inp.to(device) if isinstance(inp, torch.Tensor) else inp)
                 prev_size = torch.tensor(inp).size()
             input = input_res
-        else: # pragma: no cover
+        else:  # pragma: no cover
             # multimodal model inputs
-            input_res = {
-                "input_ids": input[0].to(device),
-                "images": input[1].to(device),
-                "image_sizes": input[2]
-            }
+            input_res = {"input_ids": input[0].to(device), "images": input[1].to(device), "image_sizes": input[2]}
             input = input_res
     else:
         input = input.to(device)  # pylint: disable=no-member
     return input
+
 
 # ==============model structure related==============
 def is_leaf(module):
@@ -500,7 +497,7 @@ class GPTQuantizer(object):
         )
 
         # import pdb;pdb.set_trace()
-        multimodal_mode = True # use parameter mode to update this code
+        multimodal_mode = True  # use parameter mode to update this code
         # Step3: run forward to obtain calibration datasets
         logger.info("Collecting calibration inputs...")
         for batch in tqdm(self.dataloader):
