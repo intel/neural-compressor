@@ -34,28 +34,36 @@ DEBUG = False
 
 
 # ================ device related ===================
-def move_input_to_device(input, device=torch.device("cpu")):
+def move_input_to_device(input, device=torch.device("cpu"), multimodal_mode = False):
     if isinstance(input, dict) or isinstance(input, UserDict):
         for inp in input.keys():
             input[inp] = input[inp].to(device) if isinstance(input[inp], torch.Tensor) else input[inp]
     elif isinstance(input, list) or isinstance(input, tuple):
-        input_res, prev_size = [], None
-        for inp in input:
-            if prev_size:
-                if isinstance(inp, torch.Tensor):
-                    if inp.size() == prev_size:
-                        input_res.append(inp.to(device))
+        if not multimodal_mode:
+            input_res, prev_size = [], None
+            for inp in input:
+                if prev_size:
+                    if isinstance(inp, torch.Tensor):
+                        if inp.size() == prev_size:
+                            input_res.append(inp.to(device))
+                    else:
+                        if torch.tensor(inp).size == prev_size:
+                            input_res.append(inp)
                 else:
-                    if torch.tensor(inp).size == prev_size:
-                        input_res.append(inp)
-            else:
-                input_res.append(inp.to(device) if isinstance(inp, torch.Tensor) else inp)
-            prev_size = torch.tensor(inp).size()
-        input = input_res
+                    input_res.append(inp.to(device) if isinstance(inp, torch.Tensor) else inp)
+                prev_size = torch.tensor(inp).size()
+            input = input_res
+        else: # pragma: no cover
+            # multimodal model inputs
+            input_res = {
+                "input_ids": input[0].to(device),
+                "images": input[1].to(device),
+                "image_sizes": input[2]
+            }
+            input = input_res
     else:
         input = input.to(device)  # pylint: disable=no-member
     return input
-
 
 # ==============model structure related==============
 def is_leaf(module):
@@ -477,6 +485,7 @@ class GPTQuantizer(object):
                 self.cache_positional_arguments[idx].append(item)
             raise ValueError
 
+        # import pdb;pdb.set_trace()
         # Step1: fetch the embeddings and other layers before the transformer stack.
         if not self.layer_wise:
             for embedding_name, embedding_layer in self.gptq_related_blocks["embeddings"].items():
@@ -490,14 +499,19 @@ class GPTQuantizer(object):
             forward, self.gptq_related_blocks["transformers"][0]
         )
 
+        # import pdb;pdb.set_trace()
+        multimodal_mode = True # use parameter mode to update this code
         # Step3: run forward to obtain calibration datasets
         logger.info("Collecting calibration inputs...")
         for batch in tqdm(self.dataloader):
             if not self.layer_wise:
-                batch = move_input_to_device(batch, self.device)
+                batch = move_input_to_device(batch, self.device, multimodal_mode)
             try:
                 if isinstance(batch, tuple) or isinstance(batch, list):
-                    self.model(batch[0])
+                    if not multimodal_mode:
+                        self.model(batch[0])
+                    else:
+                        self.model(*batch)
                 elif isinstance(batch, dict):
                     self.model(**batch)
                 else:
@@ -549,10 +563,13 @@ class GPTQuantizer(object):
         """Run quantization."""
         # Step1: prepare quantization (calibration datasets)
 
+        # import pdb;pdb.set_trace()
+
         logger.info("Begin ====>")
         self.pre_quantization()
 
         # Step2: run gptq quantization in a transformer block-wise manner.
+        # import pdb;pdb.set_trace()
         gptq_config = {}
         tblock_length = len(self.gptq_related_blocks["transformers"])
         for block_idx in range(tblock_length):

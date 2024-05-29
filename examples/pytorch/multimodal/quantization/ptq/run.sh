@@ -1,23 +1,9 @@
+export CUDA_VISIBLE_DEVICES=3
+export http_proxy=http://child-jf.intel.com:912
+export https_proxy=http://child-jf.intel.com:912
+
 /home/cyy/anaconda3/envs/cyy_llava/bin/python examples/pytorch/multimodal/quantization/ptq/run_llava_no_trainer.py \
-    --model_name_or_path liuhaotian/llava-v1.5-13b \
-    --question-file examples/pytorch/multimodal/quantization/ptq/eval/textvqa/llava_textvqa_val_v051_ocr.jsonl \
-    --image-folder examples/pytorch/multimodal/quantization/ptq/eval/textvqa/train_images \
-    --answers-file examples/pytorch/multimodal/quantization/ptq/eval/textvqa/llava-1.5-7b-hf.jsonl \
-    --result-file examples/pytorch/multimodal/quantization/ptq/eval/textvqa/llava-1.5-7b-hf.jsonl \
-    --annotation-file examples/pytorch/multimodal/quantization/ptq/eval/textvqa/TextVQA_0.5.1_val.json \
-    --quantize \
-    --approach weight_only \
-    --woq_algo GPTQ \
-    --woq_bits 4 \
-    --woq_scheme asym \
-    --woq_group_size 32 \
-    --gptq_pad_max_length 2048 \
-    --gptq_use_max_length \
-    --gptq_actorder \
-    --gptq_static_groups \
-    --gptq_nsamples 512 \
-    --gptq_true_sequential \
-    --gptq_lm_head \
-    --temperature 0 \
-    --conv-mode vicuna_v1
+    --model_name_or_path liuhaotian/llava-v1.5-7b \
+    --image-folder /dataset/coco/images/train2017/ \
+    --question-file /data4/cyy/gptq_inc/llava/LLaVA-Instruct-150K/llava_v1_5_mix665k.json
     
