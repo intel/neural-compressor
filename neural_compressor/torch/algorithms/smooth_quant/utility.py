@@ -21,8 +21,8 @@ from collections import UserDict
 import intel_extension_for_pytorch as ipex
 import numpy
 import torch
-import tqdm
 from packaging.version import Version
+from tqdm import tqdm
 
 from neural_compressor.torch.algorithms.static_quant import (
     CpuInfo,
@@ -418,7 +418,37 @@ def model_forward(model, dataloader, iters, device):  # pragma: no cover
                 break
 
 
-def build_captured_dataloader(model, run_fn):
+def build_captured_dataloader(model, run_fn, calib_num=None):
+    class CapturedDataloader:
+        def __init__(self, args_list, kwargs_list) -> None:
+            self.args_list = args_list
+            self.kwargs_list = kwargs_list
+
+        def __iter__(self):
+            for args, kwargs in zip(self.args_list, self.kwargs_list):
+                if not args:
+                    yield kwargs
+                elif not kwargs:
+                    yield args
+                else:
+                    yield args, kwargs
+
+    class InputCaptureModule(torch.nn.Module):
+        def __init__(self, model) -> None:
+            super().__init__()
+            self.args_list = []
+            self.kwargs_list = []
+            self.orig_model = model
+            self.iters = 0
+            self.calib_num = calib_num
+
+        def forward(self, *args, **kwargs):
+            if self.iters >= self.calib_num:
+                raise ValueError
+            self.args_list.append(args)
+            self.kwargs_list.append(kwargs)
+            self.iters += 1
+
     captured_model = InputCaptureModule(model)
     run_fn(captured_model)
     dataloader = CapturedDataloader(captured_model.args_list, captured_model.kwargs_list)
@@ -588,33 +618,6 @@ def register_autotune(name):  # pragma: no cover
         return auto_tune
 
     return register
-
-
-class CapturedDataloader:
-    def __init__(self, args_list, kwargs_list) -> None:
-        self.args_list = args_list
-        self.kwargs_list = kwargs_list
-
-    def __iter__(self):
-        for args, kwargs in zip(self.args_list, self.kwargs_list):
-            if not args:
-                yield kwargs
-            elif not kwargs:
-                yield args
-            else:
-                yield args, kwargs
-
-
-class InputCaptureModule(torch.nn.Module):
-    def __init__(self, model) -> None:
-        super().__init__()
-        self.args_list = []
-        self.kwargs_list = []
-        self.orig_model = model
-
-    def forward(self, *args, **kwargs):
-        self.args_list.append(args)
-        self.kwargs_list.append(kwargs)
 
 
 class Calibration:  # pragma: no cover
@@ -1391,7 +1394,7 @@ class AutoAlpha:  # pragma: no cover
 
         if not self.dataloader:
             logger.info("No dataloader, performing auto-tuning with calibration function instead.")
-            self.model, self.dataloader = build_captured_dataloader(self.model, self.q_func)
+            self.model, self.dataloader = build_captured_dataloader(self.model, self.q_func, self.calib_sample_num)
 
         bar = tqdm(self.dataloader, total=self.calib_sample_num, desc="auto tune alpha")  # pylint: disable=E1102
         for input in bar:
@@ -1462,7 +1465,7 @@ class AutoAlpha:  # pragma: no cover
 
         if not self.dataloader:
             logger.info("No dataloader, performing auto-tuning with calibration function instead.")
-            self.model, self.dataloader = build_captured_dataloader(self.model, self.q_func)
+            self.model, self.dataloader = build_captured_dataloader(self.model, self.q_func, self.calib_sample_num)
 
         bar = tqdm(self.dataloader, total=self.calib_sample_num, desc="auto tune alpha")  # pylint: disable=E1102
         for input in bar:
