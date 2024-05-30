@@ -11,7 +11,7 @@ from datasets import load_dataset
 import datasets
 from torch.nn.functional import pad
 from torch.utils.data import DataLoader
-from transformers import AutoModelForCausalLM, AutoModel, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoConfig, AutoTokenizer
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -377,7 +377,9 @@ if args.int8 or args.int8_bf16_mixed:
 
     from neural_compressor.torch.quantization import load
     tokenizer = AutoTokenizer.from_pretrained(args.model)
+    config = AutoConfig.from_pretrained(args.model)
     user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)))
+    setattr(user_model, "config", config)
 else:
     user_model, tokenizer = get_user_model()
 

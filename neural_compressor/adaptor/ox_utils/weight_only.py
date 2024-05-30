@@ -97,9 +97,8 @@ def make_matmul_weight_only_node(
         op_type = "MatMulNBits"
 
         # pack quantized weight
-        for i in range(q_weight.shape[0]):
-            for k in range(0, group_size, 2):
-                packed[i][k // 2] = q_weight[i][k] | q_weight[i][k + 1] << 4
+        q_weight_pairs = q_weight[:, ::2] | q_weight[:, 1::2] << 4
+        packed[:, :] = q_weight_pairs[:, :blob_size]
         packed = np.reshape(packed, (-1, k_blocks, blob_size))
 
         # build scale tensor
@@ -120,15 +119,14 @@ def make_matmul_weight_only_node(
                 packed_zp = np.reshape(zero_point, (1, -1)).astype("uint8")
             else:
                 packed_zp = np.full((zero_point.shape[0] + 1) // 2, 136, dtype="uint8")
-                for i in range(zero_point.shape[0] // k_blocks):
-                    for j in range(k_blocks):
-                        idx = i * k_blocks + j
-                        zp = zero_point[idx]
-                        packed_zp[idx // 2] = (
-                            ((packed_zp[idx // 2] & 0x0F) | (zp << 4))
-                            if (idx & 1)
-                            else ((packed_zp[idx // 2] & 0xF0) | zp)
-                        )
+                # create an index array
+                idx = np.arange(zero_point.shape[0] // k_blocks * k_blocks).reshape(-1)
+                # separate odd and even indices
+                even_idx = idx[::2]
+                odd_idx = idx[1::2]
+                # vectorized operation for even and odd indices
+                packed_zp[even_idx // 2] = (packed_zp[even_idx // 2] & 0xF0) | zero_point[even_idx].ravel()
+                packed_zp[odd_idx // 2] = (packed_zp[odd_idx // 2] & 0x0F) | (zero_point[odd_idx].ravel() << 4)
 
             zp_tensor = onnx.helper.make_tensor(
                 name=node.input[1] + "_zp", data_type=2, dims=packed_zp.shape, vals=packed_zp.tobytes(), raw=True
@@ -224,9 +222,8 @@ def quant_tensor(data, num_bits=4, group_size=32, scheme="asym", dtype="int", ra
     if scheme == "sym":
         max_range = np.maximum(np.abs(rmin), np.abs(rmax))
         scale = np.ones(rmax.shape)
-        scale[max_range > 0] = np.array(
-            [float(i) / (maxq - minq) for i in (max_range[max_range > 0] * 2.0).flatten().tolist()]
-        )
+        mask = max_range > 0
+        scale[mask] = (max_range[mask] * 2.0).astype(np.float64) / (maxq - minq)
         zero_point = (
             np.zeros(scale.shape) if dtype == "int" else np.ones(rmax.shape, dtype="uint8") * (1 << (num_bits - 1))
         )
@@ -240,7 +237,14 @@ def quant_tensor(data, num_bits=4, group_size=32, scheme="asym", dtype="int", ra
             if dtype == "int"
             else np.maximum(0, np.minimum(maxq, ((np.zeros(scale.shape) - rmin) / scale).round())).astype("uint8")
         )
-    return np.clip((data / scale + zero_point).round(), minq, maxq), scale, zero_point
+
+    q_weight = np.empty_like(data, dtype=scale.dtype)
+    np.divide(data, scale, out=q_weight)
+    np.add(q_weight, zero_point, out=q_weight)
+    np.round(q_weight, out=q_weight)
+    np.clip(q_weight, minq, maxq, out=q_weight)
+
+    return q_weight, scale, zero_point
 
 
 def qdq_tensor(data, num_bits=4, group_size=32, scheme="asym", dtype="int", ratio=1.0):
@@ -756,6 +760,7 @@ def awq_quantize(
         model.remove_tensors_from_outputs([i.name for i in org_output])
 
         output_names = []
+
         for node in model.nodes():
             if (
                 node.op_type in ["MatMul"]
@@ -927,8 +932,8 @@ def gptq(
         perm = np.argsort(np.diag(H))[::-1]
         W = W[perm, :]
         H = H[perm, :][:, perm]
-    Losses = np.zeros(W.shape)
-    Q = np.zeros(W.shape)
+    Losses = np.zeros_like(W)
+    Q = np.zeros_like(W)
     damp = percdamp * np.mean(np.diag(H))
     diag = np.arange(shape[0])
     H[diag, diag] += damp  # add a average value of
@@ -939,9 +944,9 @@ def gptq(
         count = i2 - i1
 
         W1 = copy.deepcopy(W[i1:i2, :])
-        Q1 = np.zeros(W1.shape)
-        Err1 = np.zeros(W1.shape)
-        Losses1 = np.zeros(W1.shape)
+        Q1 = np.zeros_like(W1)
+        Err1 = np.zeros_like(W1)
+        Losses1 = np.zeros_like(W1)
         Hinv1 = Hinv[i1:i2, i1:i2]
 
         for i in range(count):  # within a block, channel wise
@@ -952,7 +957,7 @@ def gptq(
                 if (i1 + i) % group_size == 0:
                     scale, zp = find_params(W[(i1 + i) : (i1 + i + group_size), :])
 
-            q = (scale * (np.clip(np.round(np.expand_dims(w, axis=1) / scale) + zp, 0, maxq) - zp)).flatten()
+            q = (scale * (np.clip(np.round(w[:, np.newaxis] / scale) + zp, 0, maxq) - zp)).flatten()
             Q1[i, :] = q
             Losses1[i, :] = (w - q) ** 2 / d**2
 

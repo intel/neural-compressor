@@ -71,10 +71,10 @@ def quantize(
             from neural_compressor.torch.algorithms.smooth_quant import TorchSmoothQuant
 
             sq = TorchSmoothQuant(
-                model, dataloader=None, example_inputs=example_inputs, q_func=run_fn, record_max_info=True
+                q_model, dataloader=None, example_inputs=example_inputs, q_func=run_fn, record_max_info=True
             )
-            model.sq_info = sq
-            model = sq.transform(
+            q_model.sq_info = sq
+            q_model = sq.transform(
                 alpha=quant_config.alpha,
                 folding=quant_config.folding,
                 auto_alpha_args=quant_config.auto_alpha_args,
