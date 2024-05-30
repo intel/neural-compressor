@@ -26,10 +26,12 @@ class Model(torch.nn.Module):
 
 
 model = Model()
+example_inputs = torch.rand([1, 3])
 
 
 def run_fn(model):
-    model(torch.randn([1, 3]))
+    for i in range(10):
+        model(example_inputs)
 
 
 class TestSmoothQuant:
@@ -40,7 +42,6 @@ class TestSmoothQuant:
     def test_smooth_quant_default(self):
         fp32_model = copy.deepcopy(model)
         quant_config = get_default_sq_config()
-        example_inputs = torch.randn([1, 3])
         prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
         run_fn(prepared_model)
         q_model = convert(prepared_model)
@@ -57,7 +58,6 @@ class TestSmoothQuant:
     def test_smooth_quant_fallback(self):
         fp32_model = copy.deepcopy(model)
         quant_config = get_default_sq_config()
-        example_inputs = torch.randn([1, 3])
         # fallback by op_type
         quant_config.set_local(torch.nn.Linear, SmoothQuantConfig(w_dtype="fp32", act_dtype="fp32"))
         prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
@@ -87,10 +87,6 @@ class TestSmoothQuant:
         quant_config = SmoothQuantConfig(
             act_sym=act_sym, act_algo=act_algo, alpha=alpha, folding=folding, scale_sharing=scale_sharing
         )
-        example_inputs = torch.zeros([1, 3])
-
-        def run_fn(model):
-            model(example_inputs)
 
         prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
         run_fn(prepared_model)
@@ -102,7 +98,6 @@ class TestSmoothQuant:
 
     @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
     def test_sq_ipex_accuracy(self):
-        example_inputs = torch.zeros([1, 3])
         qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=0.5)
         user_model = copy.deepcopy(model)
         user_model = ipex.quantization.prepare(user_model.eval(), qconfig, example_inputs=example_inputs, inplace=True)
@@ -144,7 +139,6 @@ class TestSmoothQuant:
     def test_sq_save_load(self):
         fp32_model = copy.deepcopy(model)
         quant_config = get_default_sq_config()
-        example_inputs = torch.zeros([1, 3])
         prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
         run_fn(prepared_model)
         q_model = convert(prepared_model)
@@ -171,7 +165,6 @@ class TestSmoothQuant:
     def test_smooth_quant_with_quantize_API(self):
         fp32_model = copy.deepcopy(model)
         quant_config = get_default_sq_config()
-        example_inputs = torch.randn([1, 3])
         q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
         assert q_model is not None, "Quantization failed!"
 
@@ -184,7 +177,6 @@ class TestSmoothQuant:
     def test_smooth_quant_mixed_precision(self):
         fp32_model = copy.deepcopy(model)
         quant_config = get_default_sq_config()  # do mixed_precison by default.
-        example_inputs = torch.randn([1, 3])
 
         # prepare/convert API
         prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
@@ -203,3 +195,43 @@ class TestSmoothQuant:
         quant_config.folding = True
         q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
         assert q_model is not None, "Quantization failed!"
+
+    @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
+    def test_smooth_quant_auto(self):
+        fp32_model = copy.deepcopy(model)
+        example_inputs = torch.rand([1, 3])
+
+        def run_fn(model):
+            for i in range(100):
+                model(example_inputs)
+
+        # block-wise
+        quant_config = SmoothQuantConfig(
+            alpha="auto",
+            alpha_min=0.45,
+            alpha_max=0.55,
+            alpha_step=0.01,
+            shared_criterion="mean",
+            do_blockwise=True,
+            folding=False,
+        )
+        q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
+        assert q_model is not None, "Quantization failed!"
+        output1 = fp32_model(example_inputs)
+        output2 = q_model(example_inputs)
+        assert torch.allclose(output1, output2, atol=2e-2), "Accuracy gap atol > 0.02 is unexpected. Please check."
+
+        # layer-wise
+        quant_config = SmoothQuantConfig(
+            alpha="auto",
+            alpha_min=0.45,
+            alpha_max=0.55,
+            alpha_step=0.01,
+            shared_criterion="max",
+            do_blockwise=False,
+            folding=False,
+        )
+        q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
+        assert q_model is not None, "Quantization failed!"
+        output2 = q_model(example_inputs)
+        assert torch.allclose(output1, output2, atol=2e-2), "Accuracy gap atol > 0.02 is unexpected. Please check."
