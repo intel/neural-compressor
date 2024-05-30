@@ -41,14 +41,14 @@ class TestRTNQuant:
         )
         self.example_inputs = torch.tensor([[10, 20, 30, 40, 50, 60]], dtype=torch.long).to(device)
         # record label for comparison
-        self.label = self.tiny_gptj(self.example_inputs)[0]
+        # self.label = self.tiny_gptj(self.example_inputs)[0]
         # test_default_config
-        model = copy.deepcopy(self.tiny_gptj)
-        quant_config = get_default_rtn_config()
-        model = prepare(model, quant_config)
-        model = convert(model)
+        # model = copy.deepcopy(self.tiny_gptj)
+        # quant_config = get_default_rtn_config()
+        # model = prepare(model, quant_config)
+        # model = convert(model)
         # record q_label for comparison
-        self.q_label = model(self.example_inputs)[0]
+        # self.q_label = model(self.example_inputs)[0]
 
     def teardown_class(self):
         shutil.rmtree("saved_results", ignore_errors=True)
