@@ -16,7 +16,7 @@ import time
 
 import torch
 from auto_round import AutoRound  # pylint: disable=E0401
-from auto_round.calib_dataset import get_dataloader  # pylint: disable=E0401
+from auto_round.calib_dataset import CALIB_DATASETS  # pylint: disable=E0401
 from auto_round.utils import get_block_names  # pylint: disable=E0401
 
 from neural_compressor.torch.algorithms import Quantizer
@@ -26,13 +26,13 @@ from neural_compressor.torch.utils import logger
 class AutoRoundQuantizer(Quantizer):
     def __init__(
         self,
-        quant_config: dict = {},
+        quant_config: dict = None,
         enable_full_range: bool = False,
         batch_size: int = 8,
         amp: bool = True,
         device=None,
         lr_scheduler=None,
-        enable_quanted_input: bool = True,
+        use_quant_input: bool = True,
         enable_minmax_tuning: bool = True,
         lr: float = None,
         minmax_lr: float = None,
@@ -46,9 +46,7 @@ class AutoRoundQuantizer(Quantizer):
         gradient_accumulate_steps: int = 1,
         not_use_best_mse: bool = False,
         dynamic_max_gap: int = -1,
-        data_type: str = "int",
-        scale_dtype: str = "fp16",
-        **kwargs,
+        scale_dtype="fp32",
     ):
         """Init a AutQRoundQuantizer object.
 
@@ -88,7 +86,7 @@ class AutoRoundQuantizer(Quantizer):
         gradient_accumulate_steps (int): Number of gradient accumulation steps (default is 1).
         not_use_best_mse (bool): Whether to use mean squared error (default is False).
         dynamic_max_gap (int): The dynamic maximum gap (default is -1).
-        scale_dtype (str): The data type of quantization scale to be used (default is "float16"), different kernels
+        scale_dtype (str): The data type of quantization scale to be used (default is "float32"), different kernels
                             have different choices.
         """
         super().__init__(quant_config)
@@ -98,7 +96,7 @@ class AutoRoundQuantizer(Quantizer):
         self.amp = amp
         self.device = device
         self.lr_scheduler = lr_scheduler
-        self.enable_quanted_input = enable_quanted_input
+        self.use_quant_input = use_quant_input
         self.enable_minmax_tuning = enable_minmax_tuning
         self.lr = lr
         self.minmax_lr = minmax_lr
@@ -112,7 +110,7 @@ class AutoRoundQuantizer(Quantizer):
         self.gradient_accumulate_steps = gradient_accumulate_steps
         self.not_use_best_mse = not_use_best_mse
         self.dynamic_max_gap = dynamic_max_gap
-        self.data_type = data_type
+        self.data_type = "int"
         self.scale_dtype = scale_dtype
 
     def prepare(self, model: torch.nn.Module, *args, **kwargs):
@@ -132,7 +130,7 @@ class AutoRoundQuantizer(Quantizer):
             amp=self.amp,
             device=self.device,
             lr_scheduler=self.lr_scheduler,
-            enable_quanted_input=self.enable_quanted_input,
+            use_quant_input=self.use_quant_input,
             enable_minmax_tuning=self.enable_minmax_tuning,
             lr=self.lr,
             minmax_lr=self.minmax_lr,
@@ -162,11 +160,13 @@ class AutoRoundQuantizer(Quantizer):
 def get_autoround_default_run_fn(
     model,
     tokenizer,
-    dataset="NeelNanda/pile-10k",
+    dataset_name="NeelNanda/pile-10k",
     n_samples=512,
     seqlen=2048,
     seed=42,
     bs=8,
+    dataset_split: str = "train",
+    dataloader=None,
 ):
     """Perform calibration for quantization.
 
@@ -179,52 +179,40 @@ def get_autoround_default_run_fn(
     Args:
         n_samples (int): The number of samples to use for calibration.
     """
-
-
-    if isinstance(dataset, str):
-        dataset = dataset.replace(" ", "")  ##remove all whitespaces
+    if dataloader is None:
+        get_dataloader = CALIB_DATASETS.get(dataset_name, CALIB_DATASETS["NeelNanda/pile-10k"])
         dataloader = get_dataloader(
             tokenizer,
             seqlen,
-            dataset,
-            seed,
-            bs,
-            n_samples,
+            seed=seed,
+            bs=bs,
+            split=dataset_split,
+            dataset_name=dataset_name,
         )
-    else:
-        dataloader = dataset
     total_cnt = 0
     for data in dataloader:
         if data is None:
             continue
         if isinstance(data, torch.Tensor):
-            input_ids = data.to(model.device)
-            data_new = input_ids
-
-        elif isinstance(data, str):
-            if tokenizer is None:
-                logger.error("please provide tokenizer for string input")
-                exit()
-            data = tokenizer(data, truncation=True, max_length=seqlen, return_tensors="pt").data
-            data_new = {}
-            for key in data.keys():
-                data_new[key] = data[key].to(model.device)
-            input_ids = data_new["input_ids"]
+            data_new = data.to(model.device)
+            input_ids = data_new
         else:
             data_new = {}
             for key in data.keys():
                 data_new[key] = data[key].to(model.device)
             input_ids = data_new["input_ids"]
-        if input_ids.shape[-1] < seqlen:
-            continue
-
+        # if input_ids.shape[-1] < seqlen:
+        #     continue
+        if total_cnt + input_ids.shape[0] > n_samples:
+            input_ids = input_ids[: n_samples - total_cnt, ...]
         try:
             if isinstance(data_new, torch.Tensor):
                 model(data_new)
-            else:
+            elif isinstance(data_new, dict):
                 model(**data_new)
-        except NotImplementedError:
-            pass
+            else:
+                # Handle cases where data_new is neither a Tensor nor a dict
+                raise NotImplementedError(f"Handling not implemented for data type {type(data)}")
         except Exception as error:
             logger.error(error)
         total_cnt += input_ids.shape[0]
@@ -232,131 +220,87 @@ def get_autoround_default_run_fn(
             break
     if total_cnt == 0:
         logger.error(
-            f"no data has been cached, please provide more data with sequence length >={self.seqlen} in the "
-            f"dataset or decease the sequence length"
+            "no data has been cached, please provide more data with sequence length >= {} in the ".format(seqlen)
+            + "dataloader or decease the sequence length."
         )
         exit()
     elif total_cnt < n_samples:
         logger.warning(
-            f"Insufficient number of samples collected may affect the quantification. "
-            f"Valid samples size:{total_cnt}, Target sample size:{n_samples}"
+            "Insufficient number of samples collected may affect the quantification. "
+            "Effective samples size: {}, Target sample size: {}".format(total_cnt, n_samples)
         )
 
 
 class AutoRoundProcessor(AutoRound):
-    @torch.no_grad()
+
     def prepare(self):
         """Prepares a given model for quantization."""
+        # logger.info("cache block input")
+        self.start_time = time.time()
         self.block_names = get_block_names(self.model)
         if len(self.block_names) == 0:
             logger.warning("could not find blocks, exit with original model")
-            return self.model, self.weight_config
-
+            return
         if self.amp:
             self.model = self.model.to(self.amp_dtype)
-
-        self.layer_names = self.get_quantized_layer_names_outside_blocks()
-        self.start_time = time.time()
-        # all_inputs = self.try_cache_inter_data_gpucpu([block_names[0]], self.n_samples, layer_names=layer_names)
-
-        # try_cache_inter_data_gpucpu
-        # ([block_names[0]], self.n_samples, layer_names=layer_names)
-        # self, block_names, n_samples, layer_names=[], last_cache_name=None
-        last_cache_name=None
-        cache_block_names = [self.block_names[0]]
-        try:
+        if not self.low_gpu_mem_usage:
             self.model = self.model.to(self.device)
-            # all_inputs = self.cache_inter_data(
-            #     block_names[0], self.n_samples, layer_names=layer_names, last_cache_name=last_cache_name
-            # )
-            # cache_inter_data cache_inter_data(self, block_names, n_samples, layer_names=[], last_cache_name=None):
-            self.inputs = {}
-            self.to_cached_layers = cache_block_names + self.layer_names
-            self.tmp_dtype = None
-            ## have bug if block name is not the first block
-            if (len(cache_block_names) > 1 or len(self.layer_names) > 0) and self.low_gpu_mem_usage:
-                tmp_dtype = self.model.dtype
-                self.model = self.model.to(torch.bfloat16) if self.amp else self.model.to(torch.float32)
+        # inputs = self.cache_block_input(block_names[0], self.n_samples)
 
-            self.last_cache_name = last_cache_name
-            if last_cache_name is None and len(cache_block_names) + len(self.layer_names) == 1:
-                self.last_cache_name = cache_block_names[0] if len(cache_block_names) == 1 else self.layer_names[0]
-            # calib_bs = self.train_bs
-            self.hook_handles = []
-            self._replace_forward()
-            self.prepared_gpu = True
-            # self.calib(self.n_samples, calib_bs)
-            
-        except:
-            logger.info("switch to cpu to cache inputs")
-            self.model = self.model.to("cpu")
-            torch.cuda.empty_cache()
-            # all_inputs = self.cache_inter_data(
-            #     self.block_names[0], self.n_samples, layer_names=self.layer_names, last_cache_name=last_cache_name
-            # )
-            self.inputs = {}
-            self.to_cached_layers = cache_block_names + self.layer_names
-            self.tmp_dtype = None
-            ## have bug if block name is not the first block
-            if (len(cache_block_names) > 1 or len(self.layer_names) > 0) and self.low_gpu_mem_usage:
-                tmp_dtype = self.model.dtype
-                self.model = self.model.to(torch.bfloat16) if self.amp else self.model.to(torch.float32)
-
-            self.last_cache_name = last_cache_name
-            if last_cache_name is None and len(cache_block_names) + len(self.layer_names) == 1:
-                self.last_cache_name = cache_block_names[0] if len(cache_block_names) == 1 else self.layer_names[0]
-            # calib_bs = self.train_bs
-            self.hook_handles = []
-            self._replace_forward()
-            cache_block_names
-            # self.calib(n_samples, calib_bs)
-            
-            
+        # cache block input
+        self.inputs = {}
+        self.tmp_block_name = self.block_names[0]
+        self._replace_forward()
 
     def convert(self):
         """Converts a prepared model to a quantized model."""
         self._recover_forward()
-        res = self.inputs
-        del self.last_cache_name
-        del self.to_cached_layers
-        if self.tmp_dtype is not None:
-            self.model = self.model.to(self.tmp_dtype)
-        if self.prepared_gpu is True:
-            self.model = self.model.to("cpu")
-        
-        all_inputs = res
-        
-        del self.inputs
-        inputs = all_inputs[self.block_names[0]]
+        inputs = self.inputs[self.tmp_block_name]
+        del self.tmp_block_name
 
-        all_inputs.pop(self.block_names[0])
-        self.inputs = None
         del self.inputs
         if "input_ids" in inputs.keys():
-            total_samples = len(inputs["input_ids"])
+            dim = int((hasattr(self.model, "config") and "chatglm" in self.model.config.model_type))
+            total_samples = inputs["input_ids"].shape[dim]
             self.n_samples = total_samples
             if total_samples < self.train_bs:
                 self.train_bs = total_samples
                 logger.warning(f"force the train batch size to {total_samples} ")
-
         self.model = self.model.to("cpu")
         torch.cuda.empty_cache()
-        self.quant_blocks(
+        self.qdq_weight_round(
             self.model,
             inputs,
             self.block_names,
             n_blocks=self.n_blocks,
             device=self.device,
         )
-
-        self.quant_layers(self.layer_names, all_inputs)
-
-        self.dump_data_to_weight_config()
+        for n, m in self.model.named_modules():
+            if n in self.weight_config.keys():
+                if hasattr(m, "scale"):
+                    self.weight_config[n]["scale"] = m.scale
+                    self.weight_config[n]["zp"] = m.zp
+                    if self.group_size <= 0:
+                        self.weight_config[n]["g_idx"] = torch.tensor(
+                            [0 for i in range(m.weight.shape[1])], dtype=torch.int32, device="cpu"
+                        )
+                    else:
+                        self.weight_config[n]["g_idx"] = torch.tensor(
+                            [i // self.group_size for i in range(m.weight.shape[1])], dtype=torch.int32, device="cpu"
+                        )
+                    delattr(m, "scale")
+                    delattr(m, "zp")
+                else:
+                    self.weight_config[n]["data_type"] = "float"
+                    if self.amp_dtype == torch.bfloat16:
+                        self.weight_config[n]["data_type"] = "bfloat"
+                    self.weight_config[n]["bits"] = 16
+                    self.weight_config[n]["group_size"] = None
+                    self.weight_config[n]["sym"] = None
 
         end_time = time.time()
         cost_time = end_time - self.start_time
         logger.info(f"quantization tuning time {cost_time}")
-
         ## dump a summary
         quantized_layers = []
         unquantized_layers = []
@@ -371,8 +315,11 @@ class AutoRoundProcessor(AutoRound):
         )
         if len(unquantized_layers) > 0:
             summary_info += f",  {unquantized_layers} have not been quantized"
+
         logger.info(summary_info)
+        if len(unquantized_layers) > 0:
+            logger.info(f"Summary: {unquantized_layers} have not been quantized")
 
         self.quantized = True
-        ##self.model = self.model.to(self.model_orig_dtype)##keep it as amp dtype
+        self.model = self.model.to(self.model_orig_dtype)
         return self.model, self.weight_config
