@@ -18,6 +18,7 @@
 # Note: Do not import this file unless you have already imported torch,
 # since the model classes inherit torch.nn.Module.
 import math
+
 import numpy as np
 import torch
 from torch.autograd import Function
@@ -269,7 +270,7 @@ class WeightOnlyLinear(torch.nn.Module):
             for idx in range(self.in_features):
                 fp32_weight[:, idx] = weight[:, idx] * scales[:, self.g_idx[idx]]
         return fp32_weight
-    
+
     def pack_tensor(self, raw_tensor):
         raw_array = raw_tensor.cpu().numpy()
         target_len = np.ceil(raw_array.shape[1] / self.n_pack).astype(int)
