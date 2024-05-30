@@ -66,7 +66,7 @@ class WeightOnlyLinear(torch.nn.Module):
         self.use_optimum_format = use_optimum_format
         self.dtype = dtype
         if self.dtype != "int" and "int" in self.dtype:  # for nf4, fp4
-            bits = self.dtype.lstrip("int")
+            bits = int(self.dtype.lstrip("int"))
             self.dtype = "int"
         if "int" not in self.dtype:  # for nf4, fp4
             from neural_compressor.torch.algorithms.weight_only.utility import FLOAT_MAPPING, INT_MAPPING
