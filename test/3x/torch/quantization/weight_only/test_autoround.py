@@ -26,6 +26,7 @@ try:
 except ImportError:
     auto_round_installed = False
 
+
 @torch.no_grad()
 def run_fn(model, dataloader):
     for data in dataloader:
