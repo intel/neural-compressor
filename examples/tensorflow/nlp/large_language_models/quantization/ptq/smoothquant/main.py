@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import os.path
+import os
 import transformers
 import tensorflow as tf
 from tqdm import tqdm
@@ -186,9 +186,9 @@ def eval_func(model):
 
 from neural_compressor import PostTrainingQuantConfig
 from neural_compressor.config import AccuracyCriterion
-
 from neural_compressor import quantization
 
+os.environ["TF_USE_LEGACY_KERAS"]="False"
 recipes = {}
 if args.sq:
     recipes = {"smooth_quant": True, "smooth_quant_args": {'alpha': args.alpha}}
