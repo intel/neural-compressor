@@ -1098,5 +1098,6 @@ class InputCaptureModule(torch.nn.Module):
         self.orig_model = model
 
     def forward(self, *args, **kwargs):
-        self.args_list.append(args)
-        self.kwargs_list.append(kwargs)
+        with torch.no_grad():
+            self.args_list.append(args)
+            self.kwargs_list.append(kwargs)
