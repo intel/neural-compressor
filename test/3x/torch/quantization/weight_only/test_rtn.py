@@ -294,3 +294,9 @@ class TestRTNQuant:
         loaded_out = loaded_model(self.example_inputs)[0]
         assert torch.allclose(inc_out, loaded_out), "Unexpected result. Please double check."
         assert isinstance(loaded_model.lm_head, WeightOnlyLinear), "loading compressed model failed."
+
+    def test_pack(self):
+        fp32_model = copy.deepcopy(self.tiny_gptj)
+        quant_config = get_default_rtn_config()
+        q_model = quantize(fp32_model, quant_config=quant_config)
+        assert q_model is not None, "Quantization failed!"

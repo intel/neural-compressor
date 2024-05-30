@@ -207,7 +207,11 @@ class RTNQuantizer(Quantizer):
                     use_optimum_format=use_optimum_format,
                     device=device,
                 )
+                import time
+                start = time.time()
                 new_module.pack(int_weight, scale, zp, m.bias)
+                pack_time = time.time() - start
+                logger.info(f"{m} time of pack: {pack_time}")
                 if name == "":
                     return new_module
                 else:
