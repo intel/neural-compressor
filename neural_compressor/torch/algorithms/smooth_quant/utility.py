@@ -443,11 +443,10 @@ def build_captured_dataloader(model, run_fn, calib_num=None):
             self.calib_num = calib_num
 
         def forward(self, *args, **kwargs):
-            if self.iters >= self.calib_num:
-                raise ValueError
-            self.args_list.append(args)
-            self.kwargs_list.append(kwargs)
-            self.iters += 1
+            if self.iters < self.calib_num:
+                self.args_list.append(args)
+                self.kwargs_list.append(kwargs)
+                self.iters += 1
 
     captured_model = InputCaptureModule(model)
     run_fn(captured_model)
