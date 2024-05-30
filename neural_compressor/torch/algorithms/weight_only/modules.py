@@ -204,11 +204,7 @@ class WeightOnlyLinear(torch.nn.Module):
         assert origin_shape[0] == target_shape[0], "output channels mismatch, please check."
 
         # pack weight
-        import time
-        start = time.time()
         self.qweight.copy_(self.pack_tensor(int_weight))
-        pack_time = time.time() - start
-        logger.info(f"**pack_tensor**: {pack_time}")
         if not self.use_optimum_format and self.compression_dim == 0:
             self.qweight = self.qweight.T.contiguous()
 

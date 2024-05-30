@@ -111,10 +111,6 @@ class RTNQuantizer(Quantizer):
         }
         if export_compressed_model:
             use_optimum_format = kwargs.get("use_optimum_format", True)
-        import threadpoolctl as tctl
-        import time
-        pack_total_time = 0
-        q_start = time.time()
         for name, m in model.named_modules():
             if not isinstance(m, supported_layers):
                 continue
@@ -211,11 +207,7 @@ class RTNQuantizer(Quantizer):
                     use_optimum_format=use_optimum_format,
                     device=device,
                 )
-                start = time.time()
                 new_module.pack(int_weight, scale, zp, m.bias)
-                pack_time = time.time() - start
-                pack_total_time += pack_time
-                logger.info(f"{m} time of pack: {pack_time}")
                 if name == "":
                     return new_module
                 else:
@@ -236,6 +228,4 @@ class RTNQuantizer(Quantizer):
                     # we need to transpose the quantized tensor and module's weight back
                     weight = weight.t_().contiguous()
                 m.weight.data.copy_(weight)
-        q_time = time.time() - q_start
-        logger.info(f"time of pack: {q_time}, {pack_total_time}")
         return model
