@@ -11,7 +11,7 @@ PyTorch Weight Only Quantization
     - [TEQ](#teq)
     - [HQQ](#hqq)
   - [Specify Quantization Rules](#specify-quantization-rules)
-  - [Save and Load](#save-and-load)
+  - [Saving and Loading](#saving-and-loading)
 - [Examples](#examples)
 
 
@@ -126,7 +126,7 @@ lm_head_config = RTNConfig(dtype="fp32")
 quant_config.set_local("lm_head", lm_head_config)
 ```
 
-### Save and Load
+### Saving and Loading
 The saved_results folder contains two files: quantized_model.pt and qconfig.json, and the generated q_model is a quantized model.
 ```python
 # Quantization code
