@@ -143,7 +143,7 @@ model.save("saved_results")
 from neural_compressor.torch.quantization import load
 
 orig_model = YOURMODEL()
-loaded_model = load("saved_model", model=orig_model)  # Please note that the model parameter passes the original model.
+loaded_model = load("saved_results", model=orig_model)  # Please note that the model parameter passes the original model.
 ```
 
 
