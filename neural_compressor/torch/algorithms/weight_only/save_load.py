@@ -144,6 +144,7 @@ def _load_hf_woq_model(pretrained_model_name_or_path, *model_args, **kwargs):
     # below codes are refer to load_low_bit function in
     # https://github.com/intel/intel-extension-for-transformers/blob/v1.4.2/intel_extension_for_transformers/transformers/modeling/modeling_auto.py#L1464
     import copy
+
     from accelerate.big_modeling import init_empty_weights
     from transformers import AutoConfig, AutoModelForCausalLM
     from transformers.configuration_utils import PretrainedConfig
