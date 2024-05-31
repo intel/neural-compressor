@@ -2,13 +2,13 @@ Torch
 =================================================
 
 1. [Introduction](#introduction)
-2. [Torch API](#torch-api)
+2. [Torch-like APIs](#torch-like-apis)
 3. [Support matrix](#supported-matrix)
-4. [Common Problem](#common-problem)
+4. [Common Problems](#common-problems)
 
 ## Introduction
 
-`neural_compressor.torch` provides a Torch-like API and integrates various model compression methods. Supports a comprehensive range of models, including but not limited to CV models, NLP models, and large language models. A variety of quantization methods are available, including classic INT8 quantization, SmoothQuant, and the popular weight-only quantization. Neural compressor also provides the latest research in simulation work, such as FP8 emulation quantization, MX data type emulation quantization.
+`neural_compressor.torch` provides a Torch-like API and integrates various model compression methods fine-grained to the torch.nn.Module. Supports a comprehensive range of models, including but not limited to CV models, NLP models, and large language models. A variety of quantization methods are available, including classic INT8 quantization, SmoothQuant, and the popular weight-only quantization. Neural compressor also provides the latest research in simulation work, such as FP8 emulation quantization, MX data type emulation quantization.
 
 In terms of ease of use, neural compressor is committed to providing an easy-to-use user interface and easy to extend the structure design, on the one hand, reuse the PyTorch prepare, convert API, on the other hand, through the Quantizer base class for prepare and convert customization to provide a convenient.
 
@@ -16,7 +16,7 @@ For more details, please refer to [link](https://github.com/intel/neural-compres
 
 So far, `neural_compressor.torch` still relies on the backend to generate the quantized model and run it on the corresponding backend, but in the future, neural_compressor is committed to provide generalized device-agnostic Q-DQ model, so as to realize one-time quantization and arbitrary deployment.
 
-## Torch APIs
+## Torch-like APIs
 
 Currently, we provide below three user scenarios, through `prepare`&`convert`, `autotune` and `load` APIs.
 
@@ -133,37 +133,37 @@ def load(output_dir="./saved_results", model=None):
     <td class="tg-9wq8">Round to Nearest (RTN)<br></td>
     <td class="tg-9wq8">PyTorch eager mode</td>
     <td class="tg-9wq8">&#10004</td>
-    <td class="tg-9wq8"><a href="PT_WeightOnlyQuant.md">link</a></td>
+    <td class="tg-9wq8"><a href="PT_WeightOnlyQuant.md#rtn">link</a></td>
   </tr>
   <tr>
     <td class="tg-9wq8"><a href=https://arxiv.org/abs/2210.17323>GPTQ</a><br></td>
     <td class="tg-9wq8">PyTorch eager mode</td>
     <td class="tg-9wq8">&#10004</td>
-    <td class="tg-9wq8"><a href="link">link</a></td>
+    <td class="tg-9wq8"><a href="PT_WeightOnlyQuant.md#gptq">link</a></td>
   </tr>
   <tr>
     <td class="tg-9wq8"><a href=https://arxiv.org/abs/2306.00978>AWQ</a></td>
     <td class="tg-9wq8">PyTorch eager mode</td>
     <td class="tg-9wq8">&#10004</td>
-    <td class="tg-9wq8"><a href="PT_WeightOnlyQuant.md">link</a></td>
+    <td class="tg-9wq8"><a href="PT_WeightOnlyQuant.md#awq">link</a></td>
   </tr>
   <tr>
     <td class="tg-9wq8"><a href=https://arxiv.org/abs/2309.05516>AutoRound</a></td>
     <td class="tg-9wq8">PyTorch eager mode</td>
     <td class="tg-9wq8">&#10004</td>
-    <td class="tg-9wq8"><a href="PT_WeightOnlyQuant.md">link</a></td>
+    <td class="tg-9wq8"><a href="PT_WeightOnlyQuant.md#autoround">link</a></td>
   </tr>
   <tr>
     <td class="tg-9wq8"><a href=https://arxiv.org/abs/2310.10944>TEQ</a></td>
     <td class="tg-9wq8">PyTorch eager mode</td>
     <td class="tg-9wq8">&#10004</td>
-    <td class="tg-9wq8"><a href="PT_WeightOnlyQuant.md">link</a></td>
+    <td class="tg-9wq8"><a href="PT_WeightOnlyQuant.md#teq">link</a></td>
   </tr>
   <tr>
     <td class="tg-9wq8"><a href=https://mobiusml.github.io/hqq_blog>HQQ</a></td>
     <td class="tg-9wq8">PyTorch eager mode</td>
     <td class="tg-9wq8">&#10004</td>
-    <td class="tg-9wq8"><a href="PT_WeightOnlyQuant.md">link</a></td>
+    <td class="tg-9wq8"><a href="PT_WeightOnlyQuant.md#hqq">link</a></td>
   </tr>
   <tr>
     <td class="tg-9wq8">Smooth Quantization</td>
@@ -200,7 +200,7 @@ def load(output_dir="./saved_results", model=None):
   </tr>
 </tbody></table>
 
-## Common Problem
+## Common Problems
 
 1. How to choose backend between `intel-extension-for-pytorch` and `PyTorchDynamo`?
     > Neural Compressor provides automatic logic to detect which backend should be used.
