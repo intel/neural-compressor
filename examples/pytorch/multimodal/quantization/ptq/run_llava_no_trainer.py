@@ -70,6 +70,99 @@ def create_data_loader(dataset, batch_size=1):
     data_loader = DataLoader(dataset, batch_size=batch_size, num_workers=0, shuffle=False, collate_fn=collate_fn)
     return data_loader
 
+#================ evaluation related =====================
+def eval_model(args):
+    # Model
+    # import pdb;pdb.set_trace()
+    disable_torch_init()
+    model_path = os.path.expanduser(args.model_name_or_path)
+    model_name = get_model_name_from_path(model_path)
+    tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, args.model_base, model_name)
+
+    # import pdb;pdb.set_trace()
+    questions = [json.loads(q) for q in open(os.path.expanduser(args.question_file), "r")]
+    questions = get_chunk(questions, args.num_chunks, args.chunk_idx)
+    answers_file = os.path.expanduser(args.answers_file)
+    os.makedirs(os.path.dirname(answers_file), exist_ok=True)
+    ans_file = open(answers_file, "w")
+
+    if 'plain' in model_name and 'finetune' not in model_name.lower() and 'mmtag' not in args.conv_mode:
+        args.conv_mode = args.conv_mode + '_mmtag'
+        print(f'It seems that this is a plain model, but it is not using a mmtag prompt, auto switching to {args.conv_mode}.')
+
+    data_loader = create_data_loader(questions, args.image_folder, tokenizer, image_processor, model.config, args.conv_mode)
+
+    # import pdb;pdb.set_trace()
+
+    for (input_ids, image_tensor, image_sizes), line in tqdm(zip(data_loader, questions), total=len(questions)):
+        idx = line["question_id"]
+        cur_prompt = line["text"]
+
+        input_ids = input_ids.to(device='cuda', non_blocking=True)
+
+        with torch.inference_mode():
+            output_ids = model.generate(
+                input_ids,
+                images=image_tensor.to(dtype=torch.float16, device='cuda', non_blocking=True),
+                image_sizes=image_sizes,
+                do_sample=True if args.temperature > 0 else False,
+                temperature=args.temperature,
+                top_p=args.top_p,
+                num_beams=args.num_beams,
+                max_new_tokens=args.max_new_tokens,
+                use_cache=True)
+
+        outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
+
+        ans_id = shortuuid.uuid()
+        ans_file.write(json.dumps({"question_id": idx,
+                                   "prompt": cur_prompt,
+                                   "text": outputs,
+                                   "answer_id": ans_id,
+                                   "model_id": model_name,
+                                   "metadata": {}}) + "\n")
+        # ans_file.flush()
+    ans_file.close()
+
+# results
+def prompt_processor(prompt):
+    if prompt.startswith('OCR tokens: '):
+        pattern = r"Question: (.*?) Short answer:"
+        match = re.search(pattern, prompt, re.DOTALL)
+        question = match.group(1)
+    elif 'Reference OCR token: ' in prompt and len(prompt.split('\n')) == 3:
+        if prompt.startswith('Reference OCR token:'):
+            question = prompt.split('\n')[1]
+        else:
+            question = prompt.split('\n')[0]
+    elif len(prompt.split('\n')) == 2:
+        question = prompt.split('\n')[0]
+    else:
+        assert False
+
+    return question.lower()
+
+
+def eval_single(annotation_file, result_file):
+    experiment_name = os.path.splitext(os.path.basename(result_file))[0]
+    print(experiment_name)
+    annotations = json.load(open(annotation_file))['data']
+    annotations = {(annotation['image_id'], annotation['question'].lower()): annotation for annotation in annotations}
+    results = [json.loads(line) for line in open(result_file)]
+
+    pred_list = []
+    for result in results:
+        annotation = annotations[(result['question_id'], prompt_processor(result['prompt']))]
+        pred_list.append({
+            "pred_answer": result['text'],
+            "gt_answers": annotation['answers'],
+        })
+
+    evaluator = TextVQAAccuracyEvaluator()
+    print('Samples: {}\nAccuracy: {:.2f}%\n'.format(len(pred_list), 100. * evaluator.eval_pred_list(pred_list)))
+
+#=====================
+
 def get_user_argument():
     parser = argparse.ArgumentParser()
     # ================= Model ===================== 
@@ -109,6 +202,11 @@ def get_user_argument():
     parser.add_argument('--gptq_true_sequential', action='store_true', help="Whether to run in true_sequential model.")
     parser.add_argument('--gptq_multimodal', action='store_true', help='quantize a multimodal model')
     parser.add_argument('--gptq_lm_head', action='store_true', help="Whether to use GPTQ to quantize the output layer of the LLMs.")
+    
+    # evaluate related
+    parser.add_argument('--annotation-file', type=str)
+    parser.add_argument('--result-file', type=str)
+    parser.add_argument('--result-dir', type=str)
     # ==============code generation args===========
     args = parser.parse_args()
     return args
