@@ -271,7 +271,41 @@ class WeightOnlyLinear(torch.nn.Module):
                 fp32_weight[:, idx] = weight[:, idx] * scales[:, self.g_idx[idx]]
         return fp32_weight
 
+    def pack_tensor_on_cuda(self, raw_tensor):
+        target_len = math.ceil(raw_tensor.shape[1] / self.n_pack)
+        packed_tensor = torch.zeros(raw_tensor.shape[0], target_len, dtype=self.compression_dtype).to(self.device)
+        mask = torch.tensor(2**self.bits - 1, dtype=self.compression_dtype).to(self.device)
+        for j in range(packed_tensor.shape[1]):
+            start = self.n_pack * j
+            end = self.n_pack * (j + 1)
+            tmp = raw_tensor[:, start:end].type(self.compression_dtype)
+            tmp &= mask
+            for e in range(tmp.shape[1]):
+                tmp[:, e] = tmp[:, e] << (self.bits * e)
+                packed_tensor[:, j] |= tmp[:, e]
+                accelerator.synchronize()
+        return packed_tensor
+
+    def unpack_tensor_on_cuda(self, packed_tensor):
+        target_dtype = torch.int8 if not hasattr(self, "qzeros") or "int" not in self.dtype else torch.uint8
+        target_len = packed_tensor.shape[1] * self.n_pack
+        unpacked_tensor = torch.zeros(packed_tensor.shape[0], target_len, dtype=self.compression_dtype).to(self.device)
+        mask = torch.tensor(2**self.bits - 1, dtype=self.compression_dtype).to(self.device)
+        for j in range(packed_tensor.shape[1]):
+            for e in range(self.n_pack):
+                index = j * self.n_pack + e
+                tmp = packed_tensor[:, j]
+                tmp = tmp << (self.compress_bits - self.bits * (e + 1))
+                tmp = tmp >> self.compress_bits - self.bits
+                if target_dtype == torch.uint8:
+                    tmp &= mask  # remove sign bit
+                unpacked_tensor[:, index].copy_(tmp.type(target_dtype))
+                accelerator.synchronize()
+        return unpacked_tensor
+
     def pack_tensor(self, raw_tensor):
+        if "cuda" in str(raw_tensor.device):
+            return self.packed_tensor_on_cuda(raw_tensor)
         raw_array = raw_tensor.cpu().numpy()
         target_len = np.ceil(raw_array.shape[1] / self.n_pack).astype(int)
         torch.int32
@@ -291,6 +325,8 @@ class WeightOnlyLinear(torch.nn.Module):
         return packed_tensor
 
     def unpack_tensor(self, packed_tensor):
+        if "cuda" in str(packed_tensor.device):
+            return self.unpack_tensor_on_cuda(packed_tensor)
         packed_array = packed_tensor.cpu().numpy()
         target_dtype = np.int8 if not hasattr(self, "qzeros") or "int" not in self.dtype else np.uint8
         target_len = packed_array.shape[1] * self.n_pack
