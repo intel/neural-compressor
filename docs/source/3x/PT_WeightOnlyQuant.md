@@ -130,11 +130,10 @@ quant_config.set_local("lm_head", lm_head_config)
 The saved_results folder contains two files: quantized_model.pt and qconfig.json, and the generated model is a quantized model.
 ```python
 # Quantization code
-from neural_compressor.torch.quantization import prepare, convert, AutoRoundConfig
+from neural_compressor.torch.quantization import prepare, convert, RTNConfig
 
-quant_config = AutoRoundConfig()
+quant_config = RTNConfig()
 model = prepare(model, quant_config)
-run_fn(model)  # calibration
 model = convert(model)
 
 # save
