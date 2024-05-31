@@ -127,7 +127,7 @@ quant_config.set_local("lm_head", lm_head_config)
 ```
 
 ### Saving and Loading
-The saved_results folder contains two files: quantized_model.pt and qconfig.json, and the generated q_model is a quantized model.
+The saved_results folder contains two files: quantized_model.pt and qconfig.json, and the generated model is a quantized model.
 ```python
 # Quantization code
 from neural_compressor.torch.quantization import prepare, convert, AutoRoundConfig
