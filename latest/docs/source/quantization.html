@@ -262,8 +262,8 @@
 </section>
 </section>
 </section>
-<section id="with-or-without-accuracy-aware-tuning">
-<h2>With or Without Accuracy Aware Tuning<a class="headerlink" href="#with-or-without-accuracy-aware-tuning" title="Permalink to this heading"></a></h2>
+<section id="accuracy-aware-tuning">
+<h2>Accuracy Aware Tuning<a class="headerlink" href="#accuracy-aware-tuning" title="Permalink to this heading"></a></h2>
 <p>Accuracy aware tuning is one of unique features provided by Intel(R) Neural Compressor, compared with other 3rd party model compression tools. This feature can be used to solve accuracy loss pain points brought by applying low precision quantization and other lossy optimization methods.</p>
 <p>This tuning algorithm creates a tuning space by querying framework quantization capability and model structure, selects the ops to be quantized by the tuning strategy, generates quantized graph, and evaluates the accuracy of this quantized graph. The optimal model will be yielded if the pre-defined accuracy goal is met.</p>
 <p>Neural compressor also support to quantize all quantizable ops without accuracy tuning, user can decide whether to tune the model accuracy or not. Please refer to “Get Start” below.</p>
@@ -772,7 +772,7 @@ If user wants to quantize an onnx model with npu, please refer to this <a class=
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f3e291d85e0> 
+   <jinja2.runtime.BlockReference object at 0x7ff2c4db00d0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
