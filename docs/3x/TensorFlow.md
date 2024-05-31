@@ -4,10 +4,10 @@ TensorFlow
 
 1. [Introduction](#introduction)
 2. [API for TensorFlow](#api-for-tensorflow)
-3. [Support Matrix](#support-matrix)
-    3.1 [Quantization Scheme](#quantization-scheme)
-    3.2 [Quantization Approaches](#quantization-approaches)
-    3.3[Backend and Device](#backend-and-device)
+3. [Support Matrix](#support-matrix)  
+   3.1 [Quantization Scheme](#quantization-scheme)
+   3.2 [Quantization Approaches](#quantization-approaches)
+   3.3 [Backend and Device](#backend-and-device)
 
 ## Introduction
 
