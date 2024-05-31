@@ -98,7 +98,7 @@ Accuracy aware tuning is one of unique features provided by Intel(R) Neural Comp
 
 This tuning algorithm creates a tuning space by querying framework quantization capability and model structure, selects the ops to be quantized by the tuning strategy, generates quantized graph, and evaluates the accuracy of this quantized graph. The optimal model will be yielded if the pre-defined accuracy goal is met. The `autotune` serves as a main interface of this algorithm.
 
-Neural compressor also support to quantize all quantizable ops without accuracy tuning, using `quantize_model` interace to achieve that. 
+Neural compressor also support to quantize all quantizable ops without accuracy tuning, using `quantize_model` interface to achieve that. 
 
 ### Working Flow
 

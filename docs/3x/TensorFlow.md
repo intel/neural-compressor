@@ -2,15 +2,12 @@ TensorFlow
 ===============
 
 
-- [TensorFlow](#tensorflow)
-  - [Introduction](#introduction)
-  - [API for TensorFlow](#api-for-tensorflow)
-    - [Support Matrix](#support-matrix)
-      - [Quantization Scheme](#quantization-scheme)
-      - [Quantization Approaches](#quantization-approaches)
-        - [Post Training Static Quantization](#post-training-static-quantization)
-        - [Smooth Quantization](#smooth-quantization)
-      - [Backend and Device](#backend-and-device)
+1. [Introduction](#introduction)
+2. [API for TensorFlow](#api-for-tensorflow)
+3. [Support Matrix](#support-matrix)
+    3.1 [Quantization Scheme](#quantization-scheme)
+    3.2 [Quantization Approaches](#quantization-approaches)
+    3.3[Backend and Device](#backend-and-device)
 
 ## Introduction
 
@@ -207,3 +204,4 @@ Intel(R) Neural Compressor supports TF GPU with [ITEX-XPU](https://github.com/in
 </table>
 <br>
 <br>
+
