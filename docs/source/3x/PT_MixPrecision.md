@@ -97,4 +97,3 @@ best_model = autotune(model=build_torch_model(), tune_config=custom_tune_config,
 ## Examples
 
 Example will be added later.
-
