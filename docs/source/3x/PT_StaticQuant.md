@@ -13,7 +13,7 @@ PyTorch Static Quantization
 Quantization has three different approaches:
 1) post training dynamic quantization
 2) post training static quantization
-3) quantization aware training.
+3) quantization aware training
 
 The first two approaches belong to optimization on inference. The last belongs to optimization during training.
 
@@ -47,7 +47,7 @@ q_model = convert(prepared_model)
 ```
 
 #### Specify Quantization Rules
-Intel(R) Neural Compressor support specify quantization rules by operator name or operator type. Users can set `op_name_dict` and `op_type_dict` in config class to achieve the above purpose.
+Intel(R) Neural Compressor support specify quantization rules by operator name or operator type. Users can use `set_local` to fallback either `op_name` or `op_type` in `StaticQuantConfig` to achieve the above purpose.
 
 1. Example of `op_name_dict`
 Here we don't quantize the layer named `fc1`.
