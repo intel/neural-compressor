@@ -2,10 +2,9 @@ Microscaling Quantization
 ===============
 
 1. [Introduction](#introduction)
-2. [Supported Framework Model Matrix](#supported-framework-model-matrix)
-3. [Get Started with Microscaling Quantization API](#get-start-with-microscaling-quantization-api)
-4. [Examples](#examples)
-5. [Reference](#reference)
+2. [Get Started with Microscaling Quantization API](#get-start-with-microscaling-quantization-api)
+3. [Examples](#examples)
+4. [Reference](#reference)
 
 ## Introduction
 
@@ -80,29 +79,6 @@ The memory and computational limits of LLMs are more severe than other general n
 |  Granularity  |  per-block (default blocksize is 32)   |  per-channel or per-tensor  | per-tensor  |
 
 The exponent (exp) is equal to torch.floor(torch.log2(amax)), MAX is the representation range of the data type, amax is the max absolute value of per-block tensor, and rmin is the minimum value of the per-block tensor.
-
-
-## Supported Framework Model Matrix
-
-
-<table>
-  <tr>
-    <th>Framework</th>
-    <th>Status</th>
-  </tr>
-  <tr>
-    <td>PyTorch</td>
-    <td>&#10004;</td>
-  </tr>
-  <tr>
-    <td>ONNX Runtime</td>
-    <td>&#10005;</td>
-  </tr>
-  <tr>
-    <td>TensorFlow</td>
-    <td>&#10005;</td>
-  </tr>
-</table>
 
 
 ## Get Started with Microscaling Quantization API
