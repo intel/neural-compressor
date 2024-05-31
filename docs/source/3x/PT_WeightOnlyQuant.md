@@ -43,7 +43,7 @@ from neural_compressor.torch.quantization import prepare, convert, GPTQConfig
 
 quant_config = GPTQConfig()
 model = prepare(model, quant_config)
-run_fn(model) # calibration
+run_fn(model)  # calibration
 model = convert(model)
 ```
 
@@ -55,7 +55,7 @@ from neural_compressor.torch.quantization import prepare, convert, AutoRoundConf
 
 quant_config = AutoRoundConfig()
 model = prepare(model, quant_config)
-run_fn(model) # calibration
+run_fn(model)  # calibration
 model = convert(model)
 ```
 
@@ -67,7 +67,7 @@ from neural_compressor.torch.quantization import prepare, convert, AWQConfig
 
 quant_config = AWQConfig()
 model = prepare(model, quant_config, example_inputs=example_inputs)
-run_fn(model) # calibration
+run_fn(model)  # calibration
 model = convert(model)
 ```
 
@@ -79,7 +79,7 @@ from neural_compressor.torch.quantization import prepare, convert, TEQConfig
 
 quant_config = TEQConfig()
 model = prepare(model, quant_config, example_inputs=example_inputs)
-train_fn(model) # calibration
+train_fn(model)  # calibration
 model = convert(model)
 ```
 
@@ -91,7 +91,7 @@ from neural_compressor.torch.quantization import prepare, convert, HQQConfig
 
 quant_config = HQQConfig()
 model = prepare(model, quant_config)
-run_fn(model) # calibration
+run_fn(model)  # calibration
 model = convert(model)
 ```
 ### Specify Quantization Rules
@@ -130,7 +130,7 @@ from neural_compressor.torch.quantization import prepare, convert, AutoRoundConf
 
 quant_config = AutoRoundConfig()
 model = prepare(model, quant_config)
-run_fn(model) # calibration
+run_fn(model)  # calibration
 model = convert(model)
 
 # save
@@ -138,8 +138,9 @@ model.save("saved_results")
 
 # load
 from neural_compressor.torch.quantization import load
+
 orig_model = YOURMODEL()
-loaded_model = load("saved_model", model=orig_model) # Please note that the model parameter passes the original model.
+loaded_model = load("saved_model", model=orig_model)  # Please note that the model parameter passes the original model.
 ```
 
 
