@@ -1,9 +1,9 @@
 # Smooth Quant
 
 1. [Introduction](#introduction)
-2. [Usage](#usage)
-   2.1 [Using a Fixed alpha](#using-a-fixed-alpha)
-   2.2 [Determining the alpha through auto-tuning](#determining-the-alpha-through-auto-tuning)
+2. [Usage](#usage)   
+   2.1 [Using a Fixed alpha](#using-a-fixed-alpha)   
+   2.2 [Determining the alpha through auto-tuning](#determining-the-alpha-through-auto-tuning)   
 3. [Examples](#examples)
 
 
