@@ -1,10 +1,8 @@
 import torch
-from transformers import AutoTokenizer
 
 from neural_compressor.torch.utils import accelerator
 
 device = accelerator.current_device_name()
-
 
 class TestHFModelLoad:
     def setup_class(self):
