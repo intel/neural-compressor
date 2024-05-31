@@ -204,4 +204,3 @@ Intel(R) Neural Compressor supports TF GPU with [ITEX-XPU](https://github.com/in
 </table>
 <br>
 <br>
-
