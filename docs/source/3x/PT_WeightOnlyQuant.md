@@ -4,14 +4,15 @@ PyTorch Weight Only Quantization
 
 1. [Introduction](#introduction)
 2. [Usage](#usage)  
-    2.1 [RTN](#RTN)   
-    2.2 [GPTQ](#GPTQ)   
-    2.3 [AutoRound](#AutoRound)   
-    2.4 [AWQ](#AWQ)     
-    2.5 [TEQ](#TEQ)     
-    2.6 [HQQ](#HQQ)     
-    2.7 [Specify Quantization Rules](#specify-quantization-rules)   
-    2.8 [Save&Load](save-and-load)
+    2.1 [Get Started](#get-started)     
+        2.1.1 [RTN](#RTN)     
+        2.1.2 [GPTQ](#GPTQ)     
+        2.1.3 [AutoRound](#AutoRound)     
+        2.1.4 [AWQ](#AWQ)     
+        2.1.4 [TEQ](#TEQ)     
+        2.1.6 [HQQ](#HQQ)     
+    2.2 [Specify Quantization Rules](#specify-quantization-rules)   
+    2.3 [Save & Load](save-and-load)
 3. [Examples](#examples) 
 
 ## Introduction
@@ -23,8 +24,11 @@ For detailed information on quantization fundamentals, please refer to the Quant
 
 ## Usage
 
+### Get Started
 
-### RTN
+The INC 3x New API supports quantizing PyTorch models using prepare and convert for WeightOnlyQuant quantization.
+
+#### RTN
 
 ``` python
 # Quantization code
@@ -35,7 +39,7 @@ model = prepare(model, quant_config)
 model = convert(model)
 ```
 
-### GPTQ
+#### GPTQ
 
 ``` python
 # Quantization code
@@ -47,7 +51,7 @@ run_fn(model)  # calibration
 model = convert(model)
 ```
 
-### AutoRound
+#### AutoRound
 
 ``` python
 # Quantization code
@@ -59,7 +63,7 @@ run_fn(model)  # calibration
 model = convert(model)
 ```
 
-### AWQ
+#### AWQ
 
 ``` python
 # Quantization code
@@ -71,7 +75,7 @@ run_fn(model)  # calibration
 model = convert(model)
 ```
 
-### TEQ
+#### TEQ
 
 ``` python
 # Quantization code
@@ -83,7 +87,7 @@ train_fn(model)  # calibration
 model = convert(model)
 ```
 
-### HQQ
+#### HQQ
 
 ``` python
 # Quantization code
