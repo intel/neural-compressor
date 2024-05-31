@@ -21,7 +21,7 @@ The INC 3x New API provides support for quantizing PyTorch models using WeightOn
 For detailed information on quantization fundamentals, please refer to the Quantization document [Quantization](../quantization.md)..
 
 
-## Get Started
+## Usage
 
 
 ### RTN
