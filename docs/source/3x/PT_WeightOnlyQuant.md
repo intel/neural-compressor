@@ -16,7 +16,7 @@ PyTorch Weight Only Quantization
 
 ## Introduction
 
-The INC 3x New API provides support for quantizing PyTorch models using WeightOnlyQuant, with or without accuracy-aware tuning.
+The INC 3x New API provides support for quantizing PyTorch models using WeightOnlyQuant.
 
 For detailed information on quantization fundamentals, please refer to the Quantization document.
 
