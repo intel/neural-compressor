@@ -2,18 +2,20 @@
 PyTorch Weight Only Quantization
 ===============
 
-1. [Introduction](#introduction)
-2. [Usage](#usage)  
-    2.1 [Get Started](#get-started)     
-        2.1.1 [RTN](#RTN)     
-        2.1.2 [GPTQ](#GPTQ)     
-        2.1.3 [AutoRound](#AutoRound)     
-        2.1.4 [AWQ](#AWQ)     
-        2.1.4 [TEQ](#TEQ)     
-        2.1.6 [HQQ](#HQQ)     
-    2.2 [Specify Quantization Rules](#specify-quantization-rules)   
-    2.3 [Save & Load](save-and-load)
-3. [Examples](#examples) 
+- [PyTorch Weight Only Quantization](#pytorch-weight-only-quantization)
+  - [Introduction](#introduction)
+  - [Usage](#usage)
+    - [Get Started](#get-started)
+      - [RTN](#rtn)
+      - [GPTQ](#gptq)
+      - [AutoRound](#autoround)
+      - [AWQ](#awq)
+      - [TEQ](#teq)
+      - [HQQ](#hqq)
+    - [Specify Quantization Rules](#specify-quantization-rules)
+    - [Save and Load](#save-and-load)
+  - [Examples](#examples)
+
 
 ## Introduction
 
