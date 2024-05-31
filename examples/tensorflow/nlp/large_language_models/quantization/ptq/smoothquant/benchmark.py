@@ -167,18 +167,9 @@ if args.int8:
 else:
     print("benchmaking fp32 model")
     model = transformers.TFAutoModelForCausalLM.from_pretrained(model_name)
-    # fp32_folder = model_name.split('/')[-1] + "_fp32"
-    # model.save(fp32_folder)
-    # model = tf.keras.models.load_model(fp32_folder)
     from neural_compressor.experimental import common
-    def keras2SavedModel(model):
-        model = common.Model(model)
-        return model.model
-    model = keras2SavedModel(model) # tensorflow.python.trackable.autotrackable.AutoTrackable object
 
-# TODO current neural_compressor.benchmark does not support AutoTrackable model, we will write our own
-# from neural_compressor.benchmark import fit
-# from neural_compressor.config import BenchmarkConfig
-# conf = BenchmarkConfig(cores_per_instance=28, num_of_instance=1)
-# fit(model, conf, b_func=evaluator.evaluate_tf_v1)
+    os.environ["TF_USE_LEGACY_KERAS"]="False"
+    model = common.Model(model).model # tensorflow.python.trackable.autotrackable.AutoTrackable object
+
 evaluator.evaluate_tf_v1(model)

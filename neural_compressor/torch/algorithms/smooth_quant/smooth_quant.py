@@ -389,8 +389,9 @@ def _ipex_post_quant_process(model, example_inputs, use_bf16, inplace=False):
                 else:
                     model = torch.jit.trace(model, example_inputs, strict=False)
                 model = torch.jit.freeze(model.eval())
-        # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
-        # At the 2nd run, the llga pass will be triggered and the model is turned into
-        # an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
-        simple_inference(model, example_inputs, iterations=2)
-        return model
+
+    # After freezing, run 1 time to warm up the profiling graph executor to insert prim::profile
+    # At the 2nd run, the llga pass will be triggered and the model is turned into
+    # an int8 model: prim::profile will be removed and will have LlgaFusionGroup in the graph
+    simple_inference(model, example_inputs, iterations=2)
+    return model
