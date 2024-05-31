@@ -51,12 +51,14 @@ def load(model_name_or_path, model=None, format="default", *hf_model_args, **hf_
         return model
     elif format == "default":
         qmodel_weight_file_path = os.path.join(os.path.abspath(os.path.expanduser(model_name_or_path)), WEIGHT_NAME)
-        assert os.path.exists(qmodel_weight_file_path), \
-            "Cannot load model weight from path {}".format(qmodel_weight_file_path)
+        assert os.path.exists(qmodel_weight_file_path), "Cannot load model weight from path {}".format(
+            qmodel_weight_file_path
+        )
 
         qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(model_name_or_path)), QCONFIG_NAME)
-        assert os.path.exists(qconfig_file_path), \
-            "Cannot load model quantization config from path {}".format(qconfig_file_path)
+        assert os.path.exists(qconfig_file_path), "Cannot load model quantization config from path {}".format(
+            qconfig_file_path
+        )
 
         assert model is not None, "Can't get origin model. Please pass `model` to load function."
 
@@ -69,8 +71,9 @@ def load(model_name_or_path, model=None, format="default", *hf_model_args, **hf_
 
 def _build_woq_model(model, quantization_config, loaded_state_dict_keys):
     """Build weight-only quantization model."""
-    from .modules import WeightOnlyLinear, MulLinear
     from neural_compressor.torch.utils import set_module
+
+    from .modules import MulLinear, WeightOnlyLinear
 
     for name, module in model.named_modules():
         # get quantization config of module
@@ -82,8 +85,10 @@ def _build_woq_model(model, quantization_config, loaded_state_dict_keys):
         if isinstance(module, torch.nn.Linear):
             # module without qweight means it is not quantized, then skip it
             loaded_state_dict_keys_set = set(loaded_state_dict_keys)
-            if name + ".qweight" not in loaded_state_dict_keys_set and \
-                name + ".linear.qweight" not in loaded_state_dict_keys_set:
+            if (
+                name + ".qweight" not in loaded_state_dict_keys_set
+                and name + ".linear.qweight" not in loaded_state_dict_keys_set
+            ):
                 continue
 
             # insert MulLinear module
@@ -110,11 +115,12 @@ def _build_woq_model(model, quantization_config, loaded_state_dict_keys):
 
     return model
 
+
 def _load_inc_woq_model(qmodel_weight_file_path, qconfig_file_path, origin_model):
     qweights = torch.load(qmodel_weight_file_path)
 
     quantization_config = {}
-    with open(qconfig_file_path, 'r') as file:
+    with open(qconfig_file_path, "r") as file:
         quantization_config = json.load(file)
 
     model = _build_woq_model(origin_model, quantization_config, qweights.keys())
@@ -122,36 +128,29 @@ def _load_inc_woq_model(qmodel_weight_file_path, qconfig_file_path, origin_model
     model.eval()
     return model
 
+
 def _load_hf_woq_model(pretrained_model_name_or_path, *model_args, **kwargs):
     import copy
+
     from accelerate.big_modeling import init_empty_weights
     from transformers import AutoConfig, AutoModelForCausalLM
-    from transformers.models.auto.auto_factory import _get_model_class
     from transformers.configuration_utils import PretrainedConfig
-    from transformers.modeling_utils import (
-        load_state_dict,
-        _add_variant,
-        get_checkpoint_shard_files,
-        no_init_weights,
-    )
-    from transformers.dynamic_module_utils import (
-        resolve_trust_remote_code,
-        get_class_from_dynamic_module,
-    )
+    from transformers.dynamic_module_utils import get_class_from_dynamic_module, resolve_trust_remote_code
+    from transformers.modeling_utils import _add_variant, get_checkpoint_shard_files, load_state_dict, no_init_weights
+    from transformers.models.auto.auto_factory import _get_model_class
     from transformers.utils import (
+        SAFE_WEIGHTS_INDEX_NAME,
+        SAFE_WEIGHTS_NAME,
         WEIGHTS_INDEX_NAME,
         WEIGHTS_NAME,
-        SAFE_WEIGHTS_NAME,
-        SAFE_WEIGHTS_INDEX_NAME,
-        is_remote_url,
-        download_url,
-        is_safetensors_available,
-        cached_file,
-        has_file,
-        extract_commit_hash,
         ContextManagers,
+        cached_file,
+        download_url,
+        extract_commit_hash,
+        has_file,
+        is_remote_url,
+        is_safetensors_available,
     )
-
 
     # Autofactory
     kwargs_orig = copy.deepcopy(kwargs)
@@ -188,9 +187,7 @@ def _load_hf_woq_model(pretrained_model_name_or_path, *model_args, **kwargs):
             "Please use `token` instead."
         )
         if token is not None:
-            raise ValueError(
-                "`token` and `use_auth_token` are both specified. Please set only the argument `token`."
-            )
+            raise ValueError("`token` and `use_auth_token` are both specified. Please set only the argument `token`.")
         token = use_auth_token
 
     user_agent = {
@@ -226,9 +223,7 @@ def _load_hf_woq_model(pretrained_model_name_or_path, *model_args, **kwargs):
         else:
             commit_hash = getattr(config, "_commit_hash", None)
 
-    has_remote_code = (
-        hasattr(config, "auto_map") and AutoModelForCausalLM.__name__ in config.auto_map
-    )
+    has_remote_code = hasattr(config, "auto_map") and AutoModelForCausalLM.__name__ in config.auto_map
 
     has_local_code = type(config) in AutoModelForCausalLM._model_mapping.keys()
     trust_remote_code = resolve_trust_remote_code(
@@ -240,9 +235,7 @@ def _load_hf_woq_model(pretrained_model_name_or_path, *model_args, **kwargs):
 
     if has_remote_code and trust_remote_code:
         class_ref = config.auto_map[AutoModelForCausalLM.__name__]
-        model_class = get_class_from_dynamic_module(
-            class_ref, pretrained_model_name_or_path, **kwargs_orig
-        )
+        model_class = get_class_from_dynamic_module(class_ref, pretrained_model_name_or_path, **kwargs_orig)
         if os.path.isdir(pretrained_model_name_or_path):
             model_class.register_for_auto_class(AutoModelForCausalLM.__name__)
         else:
@@ -389,9 +382,7 @@ def _load_hf_woq_model(pretrained_model_name_or_path, *model_args, **kwargs):
                         "proxies": proxies,
                         "token": token,
                     }
-                    if variant is not None and has_file(
-                        pretrained_model_name_or_path, WEIGHTS_NAME, **has_file_kwargs
-                    ):
+                    if variant is not None and has_file(pretrained_model_name_or_path, WEIGHTS_NAME, **has_file_kwargs):
                         raise EnvironmentError(
                             f"{pretrained_model_name_or_path} does not appear to have a file named"
                             f" {_add_variant(WEIGHTS_NAME, variant)} but there is a file without the variant"
@@ -419,9 +410,7 @@ def _load_hf_woq_model(pretrained_model_name_or_path, *model_args, **kwargs):
             logger.info(f"loading weights file {archive_file}")
             resolved_archive_file = archive_file
         else:
-            logger.info(
-                f"loading weights file {filename} from cache at {resolved_archive_file}"
-            )
+            logger.info(f"loading weights file {filename} from cache at {resolved_archive_file}")
     else:
         resolved_archive_file = None
 
@@ -451,11 +440,7 @@ def _load_hf_woq_model(pretrained_model_name_or_path, *model_args, **kwargs):
     if torch_dtype is not None:
         if isinstance(torch_dtype, str):
             if torch_dtype == "auto":
-                if (
-                    hasattr(config, "torch_dtype")
-                    and config.torch_dtype is not None
-                    and config.torch_dtype != "auto"
-                ):
+                if hasattr(config, "torch_dtype") and config.torch_dtype is not None and config.torch_dtype != "auto":
                     torch_dtype = config.torch_dtype
                 else:
                     if is_sharded and "dtype" in sharded_metadata:
@@ -463,9 +448,7 @@ def _load_hf_woq_model(pretrained_model_name_or_path, *model_args, **kwargs):
                     else:
                         torch_dtype = torch.float32
             else:
-                assert (
-                    False
-                ), f'`torch_dtype` can be either `torch.dtype` or `"auto"`, but received {torch_dtype}'
+                assert False, f'`torch_dtype` can be either `torch.dtype` or `"auto"`, but received {torch_dtype}'
 
         dtype_orig = model_class._set_default_torch_dtype(torch_dtype)
 

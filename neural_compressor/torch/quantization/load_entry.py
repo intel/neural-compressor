@@ -47,9 +47,9 @@ def load(model_name_or_path="./saved_results", model=None, format="default", *hf
     """
     if format == "default":
         from neural_compressor.common.base_config import ConfigRegistry
+        from neural_compressor.torch.algorithms.habana_fp8 import load as habana_fp8_load
         from neural_compressor.torch.algorithms.static_quant import load as static_quant_load
         from neural_compressor.torch.algorithms.weight_only.save_load import load as woq_load
-        from neural_compressor.torch.algorithms.habana_fp8 import load as habana_fp8_load
 
         qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(model_name_or_path)), "qconfig.json")
         with open(qconfig_file_path, "r") as f:
