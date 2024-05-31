@@ -5,8 +5,8 @@ Quantization
    1.1 [Quantization Introduction](#quantization-introduction)   
    1.2 [Quantization Fundamentals](#quantization-fundamentals)   
    1.3 [Accuracy Aware Tuning](#accuracy-aware-tuning)   
-1. [Smooth Quant](#smooth-quant)   
-2. [WOQ](#woq)   
+2. [Smooth Quant](#smooth-quant)   
+3. [WOQ](#woq)   
 
 ## Quantization Introduction
 
