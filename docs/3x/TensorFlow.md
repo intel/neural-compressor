@@ -2,12 +2,15 @@ TensorFlow
 ===============
 
 
-1. [Introduction](#introduction)
-2. [API for TensorFlow](#api-for-tensorflow)
-3. [Support Matrix](#support-matrix)
-    3.1 [Quantization Scheme](#quantization-scheme)
-    3.2 [Quantization Approaches](#quantization-approaches)
-    3.3 [Backend and Device](#backend-and-device)
+- [TensorFlow](#tensorflow)
+  - [Introduction](#introduction)
+  - [API for TensorFlow](#api-for-tensorflow)
+    - [Support Matrix](#support-matrix)
+      - [Quantization Scheme](#quantization-scheme)
+      - [Quantization Approaches](#quantization-approaches)
+        - [Post Training Static Quantization](#post-training-static-quantization)
+        - [Smooth Quantization](#smooth-quantization)
+      - [Backend and Device](#backend-and-device)
 
 ## Introduction
 
@@ -165,13 +168,13 @@ The supported Quantization methods for TensorFlow and Keras are listed below:
 
 The min/max range in weights and activations are collected offline on a so-called `calibration` dataset. This dataset should be able to represent the data distribution of those unseen inference dataset. The `calibration` process runs on the original fp32 model and dumps out all the tensor distributions for `Scale` and `ZeroPoint` calculations. Usually preparing 100 samples are enough for calibration.
 
-Refer to the [PTQ Guide](./Quant/TF_Quant.md) for detailed information.
+Refer to the [PTQ Guide](./TF_Quant.md) for detailed information.
 
 ##### Smooth Quantization
 
 Smooth Quantization (SQ) is an advanced quantization technique designed to optimize model performance while maintaining high accuracy. Unlike traditional quantization methods that can lead to significant accuracy loss, SQ focuses on a more refined approach by taking a balance between the scale of activations and weights. 
 
-Refer to the [SQ Guide](./SQ/TF_SQ.md) for detailed information.
+Refer to the [SQ Guide](./TF_SQ.md) for detailed information.
 
 #### Backend and Device
 Intel(R) Neural Compressor supports TF GPU with [ITEX-XPU](https://github.com/intel/intel-extension-for-tensorflow). We will automatically run model on GPU by checking if it has been installed.
