@@ -103,9 +103,9 @@ def _build_woq_model(model, quantization_config, loaded_state_dict_keys):
             new_module = WeightOnlyLinear(
                 module.in_features,
                 module.out_features,
+                dtype=module_quantization_config.get("dtype", "int"),
                 bits=module_quantization_config.get("bits", 4),
                 group_size=module_quantization_config.get("group_size", 32),
-                dtype="int",
                 zp=zp,
                 bias=module.bias is not None,
                 g_idx=g_idx,
