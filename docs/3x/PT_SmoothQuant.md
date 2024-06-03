@@ -32,6 +32,8 @@ q_model = convert(prepared_model)
 
 `alpha`: a smooth factor to calculate the conversion per-channel scale and balance the quantization difficulty of activation and weight. Float value, default is 0.5.
 
+> **Note:** Alpha="auto" and alpha auto-tuning was supported in old API, please stay tuned for the new API's support for auto alpha.
+
 ### Specify Quantization Rules
 Intel(R) Neural Compressor support specify quantization rules by operator type for Smooth Quantization. Users can use `set_local` to fallback op type in `SmoothQuantConfig` to achieve the above purpose.
 
@@ -82,9 +84,6 @@ A list of models that achieved a <1% accuracy drop is shown below.
 | LLaMa-13b | 0.7627 | 0.7590 | alpha=0.7, Ipex 2.1 |
 | LLaMa-30b | 0.7759 | 0.7840 | alpha=0.7, Ipex 2.1 |
 | LLaMa-65b | 0.7908 | 0.7957 | alpha=0.9, Ipex 2.1 |
-| LLaMa-2-7b-hf* | 0.7392 | 0.7335  | alpha=Auto, Ipex 2.1 |
-| LLaMa-2-7b-Chat* | 0.7058 | 0.6994 | alpha=Auto, Ipex 2.1 |
-| LLaMa-2-13b-hf* | 0.7677 | 0.7615  | alpha=Auto, Ipex 2.1 |
 | EleutherAI/gpt-j-6B* | 0.6831 | 0.6821 | alpha=1.0, Ipex 2.1 |
 | MBZUAI/LaMini-GPT-124m | 0.3804 | 0.3887 | alpha=0.5, Ipex 2.1 |
 | MBZUAI/LaMini-GPT-774m | 0.5048 | 0.5057 | alpha=0.5, Ipex 2.1 |
@@ -100,12 +99,7 @@ A list of models that achieved a <1% accuracy drop is shown below.
 | databricks/dolly-v2-3b* | 0.6297 | 0.6247 | alpha=0.5, Ipex 2.1 |
 | tiiuae/falcon-7b-instruct | 0.6437 | 0.6392 | alpha=0.7, Pytorch |
 
-The results listed below are achieved using IPEX optimize_transformers in model initialization for better performance. Please refer to the step-by-step [instruction](../../examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm/ipex/README.md) for details.
-| Model/Last token accuracy |  FP32 Accuracy   | INT8 (w/ SmoothQuant) | Notes |
-|:----------:|:------:|:------:|-----------------------------------|
-| LLaMa-2-7b-hf* | 0.7392 | 0.7332  | alpha=Auto, Ipex 2.1 |
-| LLaMa-2-13b-hf* | 0.7677 | 0.7632  | alpha=Auto, Ipex 2.1 |
-
+Please refer to the step-by-step [instruction](../../examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm/ipex/README.md) for details.
 
 Please note that for models with asterisk(*), we have set all add ops to FP32 during quantization step to achieve desirable results.
 
@@ -114,8 +108,5 @@ Please note that for models with asterisk(*), we have set all add ops to FP32 du
 
 | Framework | Alpha        | Folding    |
 |:---------:|--------------|------------|
-| PyTorch   | [0-1] / 'auto' | False      |
-| IPEX      | [0-1] / 'auto' | True / False(Version>2.1) |
-| ONNX      | [0-1]        | True       |
-| Tensorflow| [0-1]        | False      |
-| ITEX      | [0-1]        | False      |
+| PyTorch   | [0-1] | False      |
+| IPEX      | [0-1] | True / False(Version>2.1) |

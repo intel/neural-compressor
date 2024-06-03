@@ -5,7 +5,7 @@ PyTorch Weight Only Quantization
 - [Supported Matrix](#supported-matrix)
 - [Usage](#usage)
   - [Get Started](#get-started)
-    - [Commom arguments](#commom-arguments)
+    - [Common arguments](#commom-arguments)
     - [RTN](#rtn)
     - [GPTQ](#gptq)
     - [AutoRound](#autoround)
@@ -57,7 +57,7 @@ Theoretically, round-to-nearest (RTN) is the most straightforward way to quantiz
 
 The INC 3x New API supports quantizing PyTorch models using prepare and convert [APIs](./PyTorch.md#quantization-apis) for WeightOnlyQuant quantization.
 
-#### Commom arguments
+#### Common arguments
 | Config | Capability |
 |---|---|
 | dtype (str)| ['int', 'nf4', 'fp4'] |
