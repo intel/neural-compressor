@@ -130,7 +130,7 @@ class ActAwareWeightQuant:
         self.example_inputs = example_inputs
         self.model = model
         if example_inputs is None:
-            assert dataloader is not None, "datalaoder or example_inputs is required."
+            assert dataloader is not None, "dataloader or example_inputs is required."
             self.example_inputs = get_example_input(dataloader)
         self.device = device
         self._move_model_and_data_to_device()
