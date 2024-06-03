@@ -1,6 +1,7 @@
+import pytest
 import torch
 
-from neural_compressor.torch.utils import logger
+from neural_compressor.torch.utils.utility import get_double_quant_config_dict
 
 
 def get_gpt_j():
@@ -43,28 +44,28 @@ class TestTorchUtils:
     def teardown_class(self):
         pass
 
-    def test_fetch_module(self):
-        result = fetch_module(self.model, "transformer.h.2.mlp.fc_in")
-        self.assertIsInstance(result, torch.nn.Linear)
-
-    def test_set_module(self):
-        module_name = "transformer.h.2.mlp.fc_in"
-        mew_value = torch.nn.Linear(32, 128, bias=False)
-        set_module(self.model, module_name, mew_value)
+    @pytest.mark.parametrize(
+        "module_name",
+        [
+            "transformer.h.2.mlp.fc_in",
+            "transformer.nonexistent_attr",
+        ],
+    )
+    def test_fetch_set_module(self, module_name):
+        # fetch
         result = fetch_module(self.model, module_name)
-        self.assertFalse(result.bias)
-
-    def test_set_module_nonexistent_attribute(self):
-        new_value = torch.nn.Parameter(torch.Tensor([3.0]))
-        attr_name = "transformer.nonexistent_attr"
-        set_module(self.model, attr_name, new_value)
-        result = fetch_module(self.model, attr_name)
-        self.assertTrue(torch.equal(result, torch.Tensor([3.0])))
-
-    def test_fetch_module_nonexistent_attribute(self):
-        attr_name = "transformer.nonexistent_attr"
-        result = fetch_module(self.model, attr_name)
-        self.assertIsNone(result)
+        if "nonexistent_attr" in module_name:
+            self.assertIsNone(result)
+        else:
+            self.assertIsInstance(result, torch.nn.Linear)
+        # set
+        new_value = torch.nn.Linear(32, 128, bias=False)
+        set_module(self.model, module_name, new_value)
+        result = fetch_module(self.model, module_name)
+        if "nonexistent_attr" in module_name:
+            self.assertTrue(torch.equal(result, torch.Tensor([3.0])))
+        else:
+            self.assertFalse(result.bias)
 
     def test_get_model_info(self):
         from neural_compressor.torch.utils.utility import get_model_info
@@ -72,3 +73,8 @@ class TestTorchUtils:
         white_module_list = [torch.nn.Linear]
         model_info = get_model_info(build_simple_torch_model(), white_module_list)
         self.assertEqual(len(model_info), 4)
+
+    @pytest.mark.parametrize("double_quant_type", ["BNB_NF4", "GGML_TYPE_Q4_K"])
+    def test_double_quant_config_dict(self, double_quant_type):
+        config_dict = get_double_quant_config_dict(double_quant_type)
+        assert isinstance(config_dict, dict), "The returned object should be a dict."
