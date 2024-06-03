@@ -64,9 +64,9 @@ At an equivalent accuracy level, the MX data type demonstrates the ability to oc
 
 Neural Compressor seamlessly applies the MX data type to post-training quantization, offering meticulously crafted recipes to empower users to quantize LLMs without sacrificing accuracy. The workflow is shown as below.
 
-<a target="_blank" href="../imgs/mx_workflow.png" text-align:left>
+<a target="_blank" href="../source/imgs/mx_workflow.png" text-align:left>
     <left> 
-        <img src="../imgs/mx_workflow.png" alt="Workflow of MX Quant (source [3])" height=120> 
+        <img src="../source/imgs/mx_workflow.png" alt="Workflow of MX Quant (source [3])" height=120> 
     </left>
 </a>
 
@@ -91,7 +91,7 @@ from neural_compressor.torch.quantization import MXQuantConfig, quantize
 quant_config = MXQuantConfig(w_dtype=args.w_dtype, act_dtype=args.act_dtype, weight_only=args.woq)
 user_model = quantize(model=user_model, quant_config=quant_config)
 ```
-  
+
 ## Examples
 
 - PyTorch [huggingface models](/examples/3.x_api/pytorch/nlp/huggingface_models/language-modeling/quantization/mx)
