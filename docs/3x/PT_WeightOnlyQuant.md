@@ -5,7 +5,7 @@ PyTorch Weight Only Quantization
 - [Supported Matrix](#supported-matrix)
 - [Usage](#usage)
   - [Get Started](#get-started)
-    - [Common arguments](#commom-arguments)
+    - [Common arguments](#common-arguments)
     - [RTN](#rtn)
     - [GPTQ](#gptq)
     - [AutoRound](#autoround)
@@ -85,7 +85,7 @@ Notes:
 |               use_layer_wise (bool) |  Enables quantize model per layer                       |  False |
 |               model_path (str)      |  Model path that is used to load   state_dict per layer |                    |
 
-> **Note:** `model_path` is only used when use_layer_wise=True.
+> **Notes:** `model_path` is only used when use_layer_wise=True. `layer-wise` is stay-tuned.
 ``` python
 # Quantization code
 from neural_compressor.torch.quantization import prepare, convert, RTNConfig
@@ -106,7 +106,7 @@ model = convert(model)
 |               percdamp (float)        |  Percentage of Hessian's diagonal   values' average, which will be added to Hessian's diagonal to increase   numerical stability           |  0.01.  |
 |               block_size (int)        |  Execute GPTQ quantization per   block, block shape = [C_out, block_size]                                                                  |  128     |
 |               static_groups (bool)    |  Whether to calculate group wise   quantization parameters in advance. This option mitigate actorder's extra   computational requirements. |  False.  |
-> **Note:** `model_path` is only used when use_layer_wise=True.
+> **Note:** `model_path` is only used when use_layer_wise=True. `layer-wise` is stay-tuned.
 ``` python
 # Quantization code
 from neural_compressor.torch.quantization import prepare, convert, GPTQConfig
@@ -158,6 +158,7 @@ model = convert(model)
 |               use_auto_scale (bool)          |  Enables best scales search based   on activation distribution                    |  True    |
 |               use_auto_clip (bool)           |   Enables clip range search                                                       |  True    |
 |               folding(bool)                  |  Allow insert mul before linear   when the scale cannot be absorbed by last layer |   False. |
+> **Notes:** `layer-wise` is stay-tuned.
 ``` python
 # Quantization code
 from neural_compressor.torch.quantization import prepare, convert, AWQConfig
@@ -177,6 +178,7 @@ model = convert(model)
 |               use_layer_wise (bool)   |  Enables quantize model per layer                                                 |  False |
 |               use_double_quant (bool) |  Enables double quantization                                                      |  False |
 |               folding(bool)           |  Allow insert mul before linear   when the scale cannot be absorbed by last layer |  False |
+> **Notes:** `layer-wise` is stay-tuned.
 ``` python
 # Quantization code
 from neural_compressor.torch.quantization import prepare, convert, TEQConfig
