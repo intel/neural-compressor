@@ -1072,3 +1072,32 @@ def get_module_input_output(
     for h in hook_list:
         h.remove()
     return total_values
+
+
+class CapturedDataloader:
+    def __init__(self, args_list, kwargs_list) -> None:
+        self.args_list = args_list
+        self.kwargs_list = kwargs_list
+
+    def __iter__(self):
+        for args, kwargs in zip(self.args_list, self.kwargs_list):
+            if not args:
+                yield kwargs
+            elif not kwargs:
+                yield args
+            else:
+                yield args, kwargs
+
+
+class InputCaptureModule(torch.nn.Module):
+
+    def __init__(self, model) -> None:
+        super().__init__()
+        self.args_list = []
+        self.kwargs_list = []
+        self.orig_model = model
+
+    def forward(self, *args, **kwargs):
+        with torch.no_grad():
+            self.args_list.append(args)
+            self.kwargs_list.append(kwargs)

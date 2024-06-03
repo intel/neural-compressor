@@ -10,16 +10,7 @@ PyTorch Static Quantization
 
 ## Introduction
 
-Quantization has three different approaches:
-1) post training dynamic quantization
-2) post training static quantization
-3) quantization aware training
-
-The first two approaches belong to optimization on inference. The last belongs to optimization during training.
-
 Post-Training Quantization (PTQ) is a technique used to convert a pre-trained floating-point model to a quantized model. This approach does not require model retraining. Instead, it uses calibration data to determine the optimal quantization parameters. Static quantization involves calibrating both weights and activations during the quantization process.
-
-Compared with `post training dynamic quantization`, the min/max range in weights and activations of `post training static quantization` are collected offline on calibration dataset. This dataset should be able to represent the data distribution of those unseen inference dataset. The `calibration` process runs on the original fp32 model and dumps out all the tensor distributions for `Scale` and `ZeroPoint` calculations. Usually preparing 100 samples are enough for calibration.
 
 ## Get Started
 
@@ -62,7 +53,7 @@ q_model = convert(prepared_model)
 Here we don't quantize `Linear` layers.
 ```python
 # fallback by op_type
-quant_config.set_local(torch.nn.Linear, StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
+quant_config.set_local("Linear", StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
 prepared_model = prepare(model, quant_config=quant_config, example_inputs=example_inputs)
 run_fn(prepared_model)
 q_model = convert(prepared_model)

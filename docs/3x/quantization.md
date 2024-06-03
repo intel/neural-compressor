@@ -1,4 +1,4 @@
-Quantization Knowledge
+Quantization
 ==========================================
 1. Introduction
 
