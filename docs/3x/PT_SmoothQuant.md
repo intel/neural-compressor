@@ -18,8 +18,10 @@ To set a fixed alpha for the entire model, users can follow this example:
 ```python
 from neural_compressor.torch.quantization import SmoothQuantConfig, convert, prepare
 
+
 def run_fn(model):
     model(example_inputs)
+
 
 quant_config = SmoothQuantConfig(alpha=0.5)
 prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
@@ -36,7 +38,7 @@ Intel(R) Neural Compressor support specify quantization rules by operator type f
 Here we don't quantize `Linear` layers.
 ```python
 # fallback by op_type
-quant_config.set_local('Linear', SmoothQuantConfig(w_dtype="fp32", act_dtype="fp32"))
+quant_config.set_local("Linear", SmoothQuantConfig(w_dtype="fp32", act_dtype="fp32"))
 prepared_model = prepare(model, quant_config=quant_config, example_inputs=example_inputs)
 run_fn(prepared_model)
 q_model = convert(prepared_model)

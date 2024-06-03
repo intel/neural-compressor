@@ -53,7 +53,7 @@ q_model = convert(prepared_model)
 Here we don't quantize `Linear` layers.
 ```python
 # fallback by op_type
-quant_config.set_local('Linear', StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
+quant_config.set_local("Linear", StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
 prepared_model = prepare(model, quant_config=quant_config, example_inputs=example_inputs)
 run_fn(prepared_model)
 q_model = convert(prepared_model)
