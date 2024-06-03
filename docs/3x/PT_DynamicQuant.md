@@ -3,7 +3,7 @@ Dynamic Quantization
 
 1. [Introduction](#introduction)
 2. [Getting Started with Dynamic Quantization](#Getting-Started-with-Dynamic-Quantization)
-4. [Examples](#examples)
+3. [Examples](#examples)
 
 
 ## Introduction
