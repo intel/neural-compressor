@@ -43,13 +43,13 @@ Theoretically, round-to-nearest (RTN) is the most straightforward way to quantiz
 
 > **GPTQ:** A new one-shot weight quantization method based on approximate second-order information, that is both highly-accurate and highly efficient[4]. The weights of each column are updated based on the fixed-scale pseudo-quantization error and the inverse of the Hessian matrix calculated from the activations. The updated columns sharing the same scale may generate a new max/min value, so the scale needs to be saved for restoration.
 
-> **AutoRound:** AutoRound is an advanced weight-only quantization algorithm for low-bits LLM inference. It's tailored for a wide range of models and consistently delivers noticeable improvements, often significantly outperforming SignRound[6] with the cost of more tuning time for quantization.
+> **AutoRound:** AutoRound is an advanced weight-only quantization algorithm for low-bits LLM inference. It's tailored for a wide range of models and consistently delivers noticeable improvements, often significantly outperforming SignRound[5] with the cost of more tuning time for quantization.
 
 > **AWQ:** Proved that protecting only 1% of salient weights can greatly reduce quantization error. the salient weight channels are selected by observing the distribution of activation and weight per channel. The salient weights are also quantized after multiplying a big scale factor before quantization for preserving.
 
 > **TEQ:** A trainable equivalent transformation that preserves the FP32 precision in weight-only quantization. It is inspired by AWQ while providing a new solution to search for the optimal per-channel scaling factor between activations and weights.
 
-> **HQQ:** The HQQ[7] method focuses specifically on minimizing errors in the weights rather than the layer activation. Additionally, by incorporating a sparsity-promoting loss, such as the $l_{p<1}$-norm, we effectively model outliers through a hyper-Laplacian distribution. This distribution more accurately captures the heavy-tailed nature of outlier errors compared to the squared error, resulting in a more nuanced representation of error distribution.
+> **HQQ:** The HQQ[6] method focuses specifically on minimizing errors in the weights rather than the layer activation. Additionally, by incorporating a sparsity-promoting loss, such as the $l_{p<1}$-norm, we effectively model outliers through a hyper-Laplacian distribution. This distribution more accurately captures the heavy-tailed nature of outlier errors compared to the squared error, resulting in a more nuanced representation of error distribution.
 
 ## Usage
 
@@ -64,21 +64,28 @@ The INC 3x New API supports quantizing PyTorch models using prepare and convert 
 | bits (int)| [1, ..., 8] |
 | group_size (int)| [-1, 1, ..., $C_{in}$] |
 | use_sym (bool)| [True, False] |
+|               use_double_quant (bool)       |  [True, False]                           | 
+|               double_quant_dtype (str)      |  ['int']                      | 
+|               double_quant_bits (int)       |  [1, ..., bits] |
+|               double_quant_use_sym (bool)   |  [True, False] |
+|               double_quant_group_size (int) |  [-1, 1, ..., $C_{in}$]                           |
 
 Notes:
 - *group_size = -1* refers to **per output channel quantization**. Taking a linear layer (input channel = $C_{in}$, output channel = $C_{out}$) for instance, when *group size = -1*, quantization will calculate total $C_{out}$ quantization parameters. Otherwise, when *group_size = gs* quantization parameters are calculate with every $gs$ elements along with the input channel, leading to total $C_{out} \times (C_{in} / gs)$ quantization parameters.
-- 4-bit NormalFloat(NF4) is proposed in QLoRA[5]. 'fp4' includes [fp4_e2m1](../../neural_compressor/adaptor/torch_utils/weight_only.py#L37) and [fp4_e2m1_bnb](https://github.com/TimDettmers/bitsandbytes/blob/18e827d666fa2b70a12d539ccedc17aa51b2c97c/bitsandbytes/functional.py#L735). By default, fp4 refers to fp4_e2m1_bnb.
+- 4-bit NormalFloat(NF4) is proposed in QLoRA[7]. 'fp4' includes [fp4_e2m1](../../neural_compressor/adaptor/torch_utils/weight_only.py#L37) and [fp4_e2m1_bnb](https://github.com/TimDettmers/bitsandbytes/blob/18e827d666fa2b70a12d539ccedc17aa51b2c97c/bitsandbytes/functional.py#L735). By default, fp4 refers to fp4_e2m1_bnb.
+-  Only RTN and GPTQ support double quant.
 
 
 #### RTN
 |  rtn_args  | comments |                                 default value                            |
 |----------|-------------|-------------------------------------------------------------------|
-|               group_dim (int)       |  Dimension for grouping                                 |  Default is 1      |
-|               use_full_range (bool) |  Enables full range for activations                     |  Default is False  |
-|               use_mse_search (bool) |  Enables mean squared error (MSE)   search              |  Default is False  |
-|               use_layer_wise (bool) |  Enables quantize model per layer                       |  Defaults to False |
+|               group_dim (int)       |  Dimension for grouping                                 |  1      |
+|               use_full_range (bool) |  Enables full range for activations                     |  False  |
+|               use_mse_search (bool) |  Enables mean squared error (MSE)   search              |  False  |
+|               use_layer_wise (bool) |  Enables quantize model per layer                       |  False |
 |               model_path (str)      |  Model path that is used to load   state_dict per layer |                    |
 
+> **Note:** `model_path` is only used when use_layer_wise=True.
 ``` python
 # Quantization code
 from neural_compressor.torch.quantization import prepare, convert, RTNConfig
@@ -91,15 +98,15 @@ model = convert(model)
 #### GPTQ
 |  gptq_args  | comments |      default value                                                       |
 |----------|-------------|-------------------------------------------------------------------|
-|               use_mse_search (bool)   |  Enables mean squared error (MSE) search                                                                                                   |  Default is False 
-|               use_layer_wise (bool)   |  Enables quantize model per layer                                                                                                          |  Defaults to False |
+|               use_mse_search (bool)   |  Enables mean squared error (MSE) search                                                                                                   |  False 
+|               use_layer_wise (bool)   |  Enables quantize model per layer                                                                                                          |  False |
 |               model_path (str)        |  Model path that is used to load   state_dict per layer                                                                                    |                    |
-|               use_double_quant (bool) |  Enables double quantization                                                                                                               |  Default is False  |
-|               act_order (bool)        |  Whether to sort Hessian's diagonal   values to rearrange channel-wise quantization order                                                  |  Default is False  |
-|               percdamp (float)        |  Percentage of Hessian's diagonal   values' average, which will be added to Hessian's diagonal to increase   numerical stability           |  Default is 0.01.  |
-|               block_size (int)        |  Execute GPTQ quantization per   block, block shape = [C_out, block_size]                                                                  |  Default is 128     |
-|               static_groups (bool)    |  Whether to calculate group wise   quantization parameters in advance. This option mitigate actorder's extra   computational requirements. |  Default is False.  |
-
+|               use_double_quant (bool) |  Enables double quantization                                                                                                               |  False  |
+|               act_order (bool)        |  Whether to sort Hessian's diagonal   values to rearrange channel-wise quantization order                                                  |  False  |
+|               percdamp (float)        |  Percentage of Hessian's diagonal   values' average, which will be added to Hessian's diagonal to increase   numerical stability           |  0.01.  |
+|               block_size (int)        |  Execute GPTQ quantization per   block, block shape = [C_out, block_size]                                                                  |  128     |
+|               static_groups (bool)    |  Whether to calculate group wise   quantization parameters in advance. This option mitigate actorder's extra   computational requirements. |  False.  |
+> **Note:** `model_path` is only used when use_layer_wise=True.
 ``` python
 # Quantization code
 from neural_compressor.torch.quantization import prepare, convert, GPTQConfig
@@ -113,24 +120,24 @@ model = convert(model)
 #### AutoRound
 |  autoround_args  | comments |      default value                                                       |
 |----------|-------------|-------------------------------------------------------------------|
-|             enable_full_range (bool)        |  Whether to enable full range   quantization                                               | Default is False     
-|             batch_size (int)                |  Batch size for training                                                                   | Default is 8         |
+|             enable_full_range (bool)        |  Whether to enable full range   quantization                                               | False     
+|             batch_size (int)                |  Batch size for training                                                                   | 8         |
 |             lr_scheduler                    |  The learning rate scheduler to be   used                                                  |     None                 |
-|             enable_quanted_input (bool)     |  Whether to use quantized input   data                                                     | Default is True      |
-|             enable_minmax_tuning (bool)     |  Whether to enable min-max   tuning                                                        | Default is True      |
-|             lr (float)                      |  The learning rate                                                                         | Default is 0         |
-|             minmax_lr (float)               |  The learning rate for min-max   tuning                                                    | Default is None      |
-|             low_gpu_mem_usage (bool)        |  Whether to use low GPU memory                                                             | Default is True      |
-|             iters (int)                     |  Number of iterations                                                                      | Default is 200       |
-|             seqlen (int)                    |  Length of the sequence                                                                    | Default is 2048      |
-|             n_samples (int)                 |  Number of samples                                                                         | Default is 512       |
-|             sampler (str)                   |  The sampling method                                                                       | Default is "rand"    |
-|             seed (int)                      |  The random seed                                                                           | Default is 42        |
-|             n_blocks (int)                  |  Number of blocks                                                                          | Default is 1         |
-|             gradient_accumulate_steps (int) |  Number of gradient accumulation   steps                                                   | Default is 1         |
-|             not_use_best_mse (bool)         |  Whether to use mean squared   error                                                       | Default is False     |
-|             dynamic_max_gap (int)           |  The dynamic maximum gap                                                                   | Default is -1        |
-|             scale_dtype (str)               | The data type of quantization scale to be used, different kernels have   different choices | Default is "float16" |
+|             enable_quanted_input (bool)     |  Whether to use quantized input   data                                                     | True      |
+|             enable_minmax_tuning (bool)     |  Whether to enable min-max   tuning                                                        | True      |
+|             lr (float)                      |  The learning rate                                                                         | 0         |
+|             minmax_lr (float)               |  The learning rate for min-max   tuning                                                    | None      |
+|             low_gpu_mem_usage (bool)        |  Whether to use low GPU memory                                                             | True      |
+|             iters (int)                     |  Number of iterations                                                                      | 200       |
+|             seqlen (int)                    |  Length of the sequence                                                                    | 2048      |
+|             n_samples (int)                 |  Number of samples                                                                         | 512       |
+|             sampler (str)                   |  The sampling method                                                                       | "rand"    |
+|             seed (int)                      |  The random seed                                                                           | 42        |
+|             n_blocks (int)                  |  Number of blocks                                                                          | 1         |
+|             gradient_accumulate_steps (int) |  Number of gradient accumulation   steps                                                   | 1         |
+|             not_use_best_mse (bool)         |  Whether to use mean squared   error                                                       | False     |
+|             dynamic_max_gap (int)           |  The dynamic maximum gap                                                                   | -1        |
+|             scale_dtype (str)               | The data type of quantization scale to be used, different kernels have   different choices | "float16" |
 ``` python
 # Quantization code
 from neural_compressor.torch.quantization import prepare, convert, AutoRoundConfig
@@ -144,13 +151,13 @@ model = convert(model)
 #### AWQ
 |  awq_args  | comments |      default value                                                       |
 |----------|-------------|-------------------------------------------------------------------|
-|               group_dim (int)                |  Dimension for grouping                                                           |  default is 1       |
-|               use_full_range (bool)          |  Enables full range for activations                                               |  default is False   |
-|               use_mse_search (bool)          |  Enables mean squared error (MSE)   search                                        |  default is False   |
-|               use_layer_wise (bool)          |  Enables quantize model per layer                                                 |  default is False   |
-|               use_auto_scale (bool)          |  Enables best scales search based   on activation distribution                    |  default is True    |
-|               use_auto_clip (bool)           |   Enables clip range search                                                       |  default is True    |
-|               folding(bool)                  |  Allow insert mul before linear   when the scale cannot be absorbed by last layer |   default is False. |
+|               group_dim (int)                |  Dimension for grouping                                                           |  1       |
+|               use_full_range (bool)          |  Enables full range for activations                                               |  False   |
+|               use_mse_search (bool)          |  Enables mean squared error (MSE)   search                                        |  False   |
+|               use_layer_wise (bool)          |  Enables quantize model per layer                                                 |  False   |
+|               use_auto_scale (bool)          |  Enables best scales search based   on activation distribution                    |  True    |
+|               use_auto_clip (bool)           |   Enables clip range search                                                       |  True    |
+|               folding(bool)                  |  Allow insert mul before linear   when the scale cannot be absorbed by last layer |   False. |
 ``` python
 # Quantization code
 from neural_compressor.torch.quantization import prepare, convert, AWQConfig
@@ -164,12 +171,12 @@ model = convert(model)
 #### TEQ
 |  teq_args  | comments |      default value                                                       |
 |----------|-------------|-------------------------------------------------------------------|
-|               group_dim (int)         |  Dimension for grouping                                                           |  default is 1     |
-|               use_full_range (bool)   |  Enables full range for activations                                               |  default is False |
-|               use_mse_search (bool)   |  Enables mean squared error (MSE)   search                                        |  default is False |
-|               use_layer_wise (bool)   |  Enables quantize model per layer                                                 |  default is False |
-|               use_double_quant (bool) |  Enables double quantization                                                      |  default is False |
-|               folding(bool)           |  Allow insert mul before linear   when the scale cannot be absorbed by last layer |  default is False |
+|               group_dim (int)         |  Dimension for grouping                                                           |  1     |
+|               use_full_range (bool)   |  Enables full range for activations                                               |  False |
+|               use_mse_search (bool)   |  Enables mean squared error (MSE)   search                                        |  False |
+|               use_layer_wise (bool)   |  Enables quantize model per layer                                                 |  False |
+|               use_double_quant (bool) |  Enables double quantization                                                      |  False |
+|               folding(bool)           |  Allow insert mul before linear   when the scale cannot be absorbed by last layer |  False |
 ``` python
 # Quantization code
 from neural_compressor.torch.quantization import prepare, convert, TEQConfig
@@ -183,10 +190,10 @@ model = convert(model)
 #### HQQ
 |  hqq_args  | comments |      default value                                                       |
 |----------|-------------|-------------------------------------------------------------------|
-|           quant_zero (bool)            | Whether to quantize zero point         | Default is True  |
-|         quant_scale:   (bool)          | Whether to quantize scale: point       | Default is False |
-|           scale_quant_group_size (int) | The group size for quantizing scale    | Default is 128   |
-|         skip_lm_head   (bool)          | Whether to skip for quantizing lm_head | Default is True  |
+|           quant_zero (bool)            | Whether to quantize zero point         | True  |
+|         quant_scale:   (bool)          | Whether to quantize scale: point       | False |
+|           scale_quant_group_size (int) | The group size for quantizing scale    | 128   |
+|         skip_lm_head   (bool)          | Whether to skip for quantizing lm_head | True  |
 ``` python
 # Quantization code
 from neural_compressor.torch.quantization import prepare, convert, HQQConfig
@@ -261,8 +268,8 @@ Users can also refer to [examples](https://github.com/intel/neural-compressor/bl
 
 [4]. Frantar, Elias, et al. "Gptq: Accurate post-training quantization for generative pre-trained transformers." arXiv preprint arXiv:2210.17323 (2022).
 
-[5]. Dettmers, Tim, et al. "Qlora: Efficient finetuning of quantized llms." arXiv preprint arXiv:2305.14314 (2023).
+[5]. Cheng, Wenhua, et al. "Optimize Weight Rounding via Signed Gradient Descent for the Quantization of LLMs" arXiv preprint arXiv:2309.05516 (2023).
 
-[6]. Cheng, Wenhua, et al. "Optimize Weight Rounding via Signed Gradient Descent for the Quantization of LLMs" arXiv preprint arXiv:2309.05516 (2023).
+[6]. Badri, Hicham and Shaji, Appu. "Half-Quadratic Quantization of Large Machine Learning Models." [Online] Available: https://mobiusml.github.io/hqq_blog/ (2023).
 
-[7]. Badri, Hicham and Shaji, Appu. "Half-Quadratic Quantization of Large Machine Learning Models." [Online] Available: https://mobiusml.github.io/hqq_blog/ (2023).
+[7]. Dettmers, Tim, et al. "Qlora: Efficient finetuning of quantized llms." arXiv preprint arXiv:2305.14314 (2023).
