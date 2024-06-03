@@ -18,7 +18,7 @@
 # Note: Do not import this file unless you have already imported torch,
 # since the model classes inherit torch.nn.Module.
 import math
-
+import numpy as np
 import torch
 from packaging.version import Version
 from torch.autograd import Function
@@ -325,6 +325,68 @@ class WeightOnlyLinear(torch.nn.Module):
         else:
             self.g_idx = None
 
+    def pack_tensor_with_numpy(self, raw_tensor):
+        raw_array = raw_tensor.cpu().numpy()
+        target_len = np.ceil(raw_array.shape[1] / self.n_pack).astype(int)
+        torch.int32
+        target_dtype = torch.tensor(0, dtype=self.compression_dtype).numpy().dtype
+        packed_array = np.zeros((raw_array.shape[0], target_len), dtype=target_dtype)
+        mask = np.uint8(2**self.bits - 1)
+        for j in range(packed_array.shape[1]):
+            start = self.n_pack * j
+            end = self.n_pack * (j + 1)
+            tmp = raw_array[:, start:end].astype(target_dtype)
+            tmp &= mask
+            for e in range(tmp.shape[1]):
+                tmp[:, e] = np.left_shift(tmp[:, e], self.bits * e)
+                packed_array[:, j] |= tmp[:, e]
+        packed_tensor = torch.from_numpy(packed_array).to(device=raw_tensor.device)
+        return packed_tensor
+
+    def unpack_tensor_with_numpy(self, packed_tensor):
+        packed_array = packed_tensor.cpu().numpy()
+        target_dtype = np.int8 if not hasattr(self, "qzeros") or "int" not in self.dtype else np.uint8
+        target_len = packed_array.shape[1] * self.n_pack
+        unpacked_array = np.zeros((packed_array.shape[0], target_len), dtype=target_dtype)
+        mask = np.uint8(2**self.bits - 1)
+        for j in range(packed_array.shape[1]):
+            for e in range(self.n_pack):
+                index = j * self.n_pack + e
+                tmp = packed_array[:, j]
+                tmp = np.left_shift(tmp, self.compress_bits - self.bits * (e + 1))
+                tmp = np.right_shift(tmp, self.compress_bits - self.bits)
+                if target_dtype == np.uint8:
+                    tmp &= mask
+                unpacked_array[:, index] = tmp.astype(target_dtype)
+        unpacked_tensor = torch.from_numpy(unpacked_array).to(device=packed_tensor.device)
+        return unpacked_tensor
+
+    def pack_tensor_with_torch(self, raw_tensor):
+        target_len = math.ceil(raw_tensor.shape[1] / self.n_pack)
+        packed_tensor = torch.zeros(raw_tensor.shape[0], target_len, dtype=self.compression_dtype).to(self.device)
+        mask = torch.tensor(2**self.bits - 1, dtype=self.compression_dtype).to(self.device)
+        for j in range(packed_tensor.shape[1]):
+            start = self.n_pack * j
+            end = self.n_pack * (j + 1)
+            tmp = raw_tensor[:, start:end].type(self.compression_dtype)
+            tmp &= mask
+            for e in range(tmp.shape[1]):
+                tmp[:, e] = tmp[:, e] << (self.bits * e)
+                packed_tensor[:, j] |= tmp[:, e]
+        return packed_tensor
+
+    def pack_tensor(self, raw_tensor):
+        if "cuda" in self.device:
+            return self.pack_tensor_with_torch(raw_tensor)
+        else:
+            return self.pack_tensor_with_numpy(raw_tensor)
+
+    def unpack_tensor(self, packed_tensor):
+        if "cuda" in self.device:
+            return self.unpack_tensor_with_torch(packed_tensor)
+        else:
+            return self.unpack_tensor_with_numpy(packed_tensor)
+
     def pack(self, int_weight, scale, zp, bias, g_idx=None):
         if self.use_optimum_format:
             self.scales = self.scales.t_().contiguous()
@@ -358,6 +420,16 @@ class WeightOnlyLinear(torch.nn.Module):
         mask = torch.tensor(2**self.bits - 1, dtype=self.compression_dtype).to(self.device)
 
         # pack weight
+        import time
+        start = time.time()
+        self.qweight.copy_(self.pack_tensor(int_weight))
+        end = time.time() - start
+        logger.info(f"{origin_shape}, {end}")
+        
+        
+        if not self.use_optimum_format and self.compression_dim == 0:
+            self.qweight = self.qweight.T.contiguous()
+        
         for j in range(target_shape[1]):
             start = self.n_pack * j
             end = self.n_pack * (j + 1)
@@ -377,15 +449,7 @@ class WeightOnlyLinear(torch.nn.Module):
                 zp = zp.t_().contiguous()
                 self.qzeros = self.qzeros.t_().contiguous()
             assert hasattr(self, "qzeros"), "zp is not set when initializing."
-            target_shape = self.qzeros.shape
-            for j in range(target_shape[1]):
-                start = self.n_pack * j
-                end = self.n_pack * (j + 1)
-                tmp = zp[:, start:end].type(self.compression_dtype)
-                for e in range(tmp.shape[1]):
-                    tmp[:, e] &= mask
-                    tmp[:, e] = tmp[:, e] << (self.bits * e)
-                    self.qzeros[:, j] |= tmp[:, e]
+            self.qzeros.copy_(self.pack_tensor(zp))
             if self.use_optimum_format or self.compression_dim == 0:
                 self.qzeros = self.qzeros.t_().contiguous()
         if self.use_optimum_format:
