@@ -120,7 +120,7 @@ def get_model_info(model: torch.nn.Module, white_module_list: List[Callable]) ->
     return filter_result
 
 
-def get_double_quant_config(double_quant_type):
+def get_double_quant_config_dict(double_quant_type):
     from neural_compressor.torch.utils.constants import DOUBLE_QUANT_CONFIGS
 
     if double_quant_type is None:

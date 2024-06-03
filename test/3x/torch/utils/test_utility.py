@@ -1,5 +1,3 @@
-import unittest
-
 import torch
 
 from neural_compressor.torch.utils import logger
@@ -38,18 +36,12 @@ def build_simple_torch_model():
 from neural_compressor.torch.utils.utility import fetch_module, set_module
 
 
-class TestTorchUtils(unittest.TestCase):
-    @classmethod
-    def setUpClass(self):
+class TestTorchUtils:
+    def setup_class(self):
         self.model = get_gpt_j()
 
-    @classmethod
-    def tearDownClass(self):
+    def teardown_class(self):
         pass
-
-    def setUp(self):
-        # print the test name
-        logger.info(f"Running TestTorchUtils test: {self.id()}")
 
     def test_fetch_module(self):
         result = fetch_module(self.model, "transformer.h.2.mlp.fc_in")
@@ -80,7 +72,3 @@ class TestTorchUtils(unittest.TestCase):
         white_module_list = [torch.nn.Linear]
         model_info = get_model_info(build_simple_torch_model(), white_module_list)
         self.assertEqual(len(model_info), 4)
-
-
-if __name__ == "__main__":
-    unittest.main()
