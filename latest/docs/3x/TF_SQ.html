@@ -90,11 +90,20 @@
              
   <section id="smooth-quant">
 <h1>Smooth Quant<a class="headerlink" href="#smooth-quant" title="Permalink to this heading"></a></h1>
-<ol class="simple">
+<ul class="simple">
+<li><p><a class="reference external" href="#smooth-quant">Smooth Quant</a></p>
+<ul>
 <li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
-<li><p><a class="reference external" href="#usage">Usage</a><br />2.1 <a class="reference external" href="#using-a-fixed-alpha">Using a Fixed alpha</a><br />2.2 <a class="reference external" href="#determining-the-alpha-through-auto-tuning">Determining the alpha through auto-tuning</a></p></li>
+<li><p><a class="reference external" href="#usage">Usage</a></p>
+<ul>
+<li><p><a class="reference external" href="#using-a-fixed-alpha">Using a Fixed <code class="docutils literal notranslate"><span class="pre">alpha</span></code></a></p></li>
+<li><p><a class="reference external" href="#determining-the-alpha-through-auto-tuning">Determining the <code class="docutils literal notranslate"><span class="pre">alpha</span></code> through auto-tuning</a></p></li>
+</ul>
+</li>
 <li><p><a class="reference external" href="#examples">Examples</a></p></li>
-</ol>
+</ul>
+</li>
+</ul>
 <section id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
 <p>Quantization is a common compression operation to reduce memory and accelerate inference by converting the floating point matrix to an integer matrix. For large language models (LLMs) with gigantic parameters, the systematic outliers make quantification of activations difficult.  <a class="reference external" href="https://arxiv.org/abs/2211.10438">SmoothQuant</a>, a training free post-training quantization (PTQ) solution, offline migrates this difficulty from activations to weights with a mathematically equivalent transformation.</p>
@@ -136,7 +145,7 @@
 </section>
 <section id="examples">
 <h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
-<p>Users can also refer to <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/examples/3.x_api/tensorflow/nlp/large_language_models%5Cquantization%5Cptq%5Csmoothquant">examples</a> on how to apply smooth quant to a TensorFlow model with INC 3x API.</p>
+<p>Users can also refer to <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/examples/3.x_api/tensorflow/nlp/large_language_models%5Cquantization%5Cptq%5Csmoothquant">examples</a> on how to apply smooth quant to a TensorFlow model with <code class="docutils literal notranslate"><span class="pre">neural_compressor.tensorflow</span></code>.</p>
 </section>
 </section>
 
@@ -154,7 +163,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f170c48f310> 
+   <jinja2.runtime.BlockReference object at 0x7f8867009c60> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

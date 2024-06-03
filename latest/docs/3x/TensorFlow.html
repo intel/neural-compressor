@@ -97,10 +97,8 @@
 </ol>
 <section id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
-<div align="center">
-  <img src="https://www.tensorflow.org/images/tf_logo_horizontal.png">
-</div><p><a class="reference external" href="https://www.tensorflow.org/">TensorFlow</a> is an end-to-end open source platform for machine learning. It has a comprehensive, flexible ecosystem of <a class="reference external" href="https://www.tensorflow.org/resources/tools">tools</a>, <a class="reference external" href="https://www.tensorflow.org/resources/libraries-extensions">libraries</a>, and <a class="reference external" href="https://www.tensorflow.org/community">community</a> resources that lets researchers push the state-of-the-art in ML and developers easily build and deploy ML-powered applications. It provides stable <a class="reference external" href="https://www.tensorflow.org/api_docs/python">Python</a> and <a class="reference external" href="https://www.tensorflow.org/api_docs/cc">C++</a> APIs, as well as a non-guaranteed backward compatible API for <a class="reference external" href="https://www.tensorflow.org/api_docs">other languages</a>.</p>
-<p>Keras is a multi-backend deep learning framework , supporting JAX, TensorFlow, and PyTorch. It serves as a dependency of TensorFlow, providing high-level API. Effortlessly build and train models for computer vision, natural language processing, audio processing, timeseries forecasting, recommender systems, etc.</p>
+<p><code class="docutils literal notranslate"><span class="pre">neural_compressor.tensorflow</span></code> provides a integrated API for applying quantization on various TensorFlow model format, such as <code class="docutils literal notranslate"><span class="pre">pb</span></code>, <code class="docutils literal notranslate"><span class="pre">saved_model</span></code> and <code class="docutils literal notranslate"><span class="pre">keras</span></code>. The comprehensive range of supported models includes but not limited to CV models, NLP models, and large language models.</p>
+<p>In terms of ease of use, neural compressor is committed to providing flexible and scalable user interfaces. While <code class="docutils literal notranslate"><span class="pre">quantize_model</span></code> is designed to provide a fast and straightforward quantization experience, the <code class="docutils literal notranslate"><span class="pre">autotune</span></code> offers an advanced option of reducing accuracy loss during quantization.</p>
 </section>
 <section id="api-for-tensorflow">
 <h2>API for TensorFlow<a class="headerlink" href="#api-for-tensorflow" title="Permalink to this heading"></a></h2>
@@ -300,7 +298,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f170c5c2a70> 
+   <jinja2.runtime.BlockReference object at 0x7f8865716320> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

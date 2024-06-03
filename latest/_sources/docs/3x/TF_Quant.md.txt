@@ -11,7 +11,7 @@ TensorFlow Quantization
 
 ## Introduction
 
-The INC 3x New API supports quantizing both TensorFlow and Keras model with or without accuracy aware tuning.
+`neural_compressor.tensorflow` supports quantizing both TensorFlow and Keras model with or without accuracy aware tuning.
 
 For the detailed quantization fundamentals, please refer to the document for [Quantization](../quantization.html).
 
@@ -120,4 +120,4 @@ quant_config.set_local("conv1", conv2d_config)
 
 ## Examples
 
-Users can also refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/3.x_api/tensorflow) on how to quantize a TensorFlow model with INC 3x API.
+Users can also refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/3.x_api/tensorflow) on how to quantize a TensorFlow model with `neural_compressor.tensorflow`.

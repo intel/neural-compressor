@@ -11,14 +11,9 @@ TensorFlow
 
 ## Introduction
 
-<div align="center">
-  <img src="https://www.tensorflow.org/images/tf_logo_horizontal.png">
-</div>
+`neural_compressor.tensorflow` provides a integrated API for applying quantization on various TensorFlow model format, such as `pb`, `saved_model` and `keras`. The comprehensive range of supported models includes but not limited to CV models, NLP models, and large language models. 
 
-[TensorFlow](https://www.tensorflow.org/) is an end-to-end open source platform for machine learning. It has a comprehensive, flexible ecosystem of [tools](https://www.tensorflow.org/resources/tools), [libraries](https://www.tensorflow.org/resources/libraries-extensions), and [community](https://www.tensorflow.org/community) resources that lets researchers push the state-of-the-art in ML and developers easily build and deploy ML-powered applications. It provides stable [Python](https://www.tensorflow.org/api_docs/python) and [C++](https://www.tensorflow.org/api_docs/cc) APIs, as well as a non-guaranteed backward compatible API for [other languages](https://www.tensorflow.org/api_docs).
-
-Keras is a multi-backend deep learning framework , supporting JAX, TensorFlow, and PyTorch. It serves as a dependency of TensorFlow, providing high-level API. Effortlessly build and train models for computer vision, natural language processing, audio processing, timeseries forecasting, recommender systems, etc.
-
+In terms of ease of use, neural compressor is committed to providing flexible and scalable user interfaces. While `quantize_model` is designed to provide a fast and straightforward quantization experience, the `autotune` offers an advanced option of reducing accuracy loss during quantization.
 
 
 ## API for TensorFlow
