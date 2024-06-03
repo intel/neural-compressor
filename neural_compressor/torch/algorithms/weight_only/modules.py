@@ -302,8 +302,8 @@ class WeightOnlyLinear(torch.nn.Module):
                 unpacked_tensor[:, index].copy_(tmp.type(target_dtype))
                 accelerator.synchronize()
         return unpacked_tensor
-    
-    def pack_tensor_with_numpy(self, raw_tensor):    
+
+    def pack_tensor_with_numpy(self, raw_tensor):
         raw_array = raw_tensor.cpu().numpy()
         target_len = np.ceil(raw_array.shape[1] / self.n_pack).astype(int)
         torch.int32
