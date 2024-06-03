@@ -31,6 +31,20 @@ def is_hpex_available():
     return _hpex_available
 
 
+def is_ipex_imported() -> bool:
+    for name, _ in sys.modules.items():
+        if name == "intel_extension_for_pytorch":
+            return True
+    return False
+
+
+def is_transformers_imported() -> bool:
+    for name, _ in sys.modules.items():
+        if name == "transformers":
+            return True
+    return False
+
+
 try:
     import intel_extension_for_pytorch as ipex
 
@@ -65,20 +79,6 @@ def get_torch_version():
         assert False, "Got an unknown version of torch: {}".format(e)
     version = Version(torch_version)
     return version
-
-
-def is_ipex_imported() -> bool:
-    for name, _ in sys.modules.items():
-        if name == "intel_extension_for_pytorch":
-            return True
-    return False
-
-
-def is_transformers_imported() -> bool:
-    for name, _ in sys.modules.items():
-        if name == "transformers":
-            return True
-    return False
 
 
 def get_accelerator(device_name="auto"):

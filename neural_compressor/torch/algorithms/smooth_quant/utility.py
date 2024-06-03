@@ -21,8 +21,8 @@ from collections import UserDict
 import intel_extension_for_pytorch as ipex
 import numpy
 import torch
-import tqdm
 from packaging.version import Version
+from tqdm import tqdm
 
 from neural_compressor.torch.algorithms.static_quant import (
     CpuInfo,
@@ -77,6 +77,9 @@ def get_quantizable_ops_recursively(model, example_inputs, alpha, act_algo, inpl
         assert example_inputs is not None, "IPEX need q_dataloader or example_inputs to prepare the model"
 
         from torch.ao.quantization import MinMaxObserver
+
+        if alpha == "auto":  # for quantize API
+            alpha = 0.5
 
         if ipex_ver.release >= Version("2.1.1").release:
             static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
@@ -390,6 +393,9 @@ def forward_wrapper(model, input, device=torch.device("cpu")):  # pragma: no cov
             output = model(*input)
         except:
             output = model(input)
+    elif isinstance(input, zip):
+        for args, kwargs in input:
+            output = model(*args, **kwargs)
     else:
         output = model(input)
     return output
@@ -410,6 +416,43 @@ def model_forward(model, dataloader, iters, device):  # pragma: no cover
             cnt += 1
             if iters != -1 and cnt >= iters:
                 break
+
+
+def build_captured_dataloader(model, run_fn, calib_num=None):
+    class CapturedDataloader:
+        def __init__(self, args_list, kwargs_list) -> None:
+            self.args_list = args_list
+            self.kwargs_list = kwargs_list
+
+        def __iter__(self):
+            for args, kwargs in zip(self.args_list, self.kwargs_list):
+                if not args:
+                    yield kwargs
+                elif not kwargs:
+                    yield args
+                else:
+                    yield args, kwargs
+
+    class InputCaptureModule(torch.nn.Module):
+        def __init__(self, model) -> None:
+            super().__init__()
+            self.args_list = []
+            self.kwargs_list = []
+            self.orig_model = model
+            self.iters = 0
+            self.calib_num = calib_num
+
+        def forward(self, *args, **kwargs):
+            if self.iters < self.calib_num:
+                self.args_list.append(args)
+                self.kwargs_list.append(kwargs)
+                self.iters += 1
+
+    captured_model = InputCaptureModule(model)
+    run_fn(captured_model)
+    dataloader = CapturedDataloader(captured_model.args_list, captured_model.kwargs_list)
+    model = captured_model.orig_model
+    return model, dataloader
 
 
 def cal_scale(input_max_abs, weights, alpha, weight_max_lb=1e-5):  # pragma: no cover
@@ -1349,14 +1392,15 @@ class AutoAlpha:  # pragma: no cover
         best_alphas = self.init_alpha
 
         if not self.dataloader:
-            logger.info(f"Auto-tuning failed due to no dataloader, using {best_alphas} instead.")
-            self._qdq_model_unwrapper_for_auto()
-            return best_alphas
+            logger.info("No dataloader, performing auto-tuning with calibration function instead.")
+            self.model, self.dataloader = build_captured_dataloader(self.model, self.q_func, self.calib_sample_num)
+
         bar = tqdm(self.dataloader, total=self.calib_sample_num, desc="auto tune alpha")  # pylint: disable=E1102
         for input in bar:
             if isinstance(input, tuple) or isinstance(input, list):
                 if len(input) == 2:
                     input, _ = input  # Extract input when both input and label are yielded by dataloader.
+
             loss_alphas = {}
             best_alphas_per_module = best_alphas
             if isinstance(best_alphas, dict):
@@ -1374,8 +1418,9 @@ class AutoAlpha:  # pragma: no cover
                     cur_loss = loss_alphas[key]
                     for alpha_key in cur_loss.keys():
                         cur_loss[alpha_key] += loss_tmp[key][alpha_key]
-            total_cnt += self.dataloader.batch_size
-            tmp_cnt += self.dataloader.batch_size
+
+            total_cnt += 1
+            tmp_cnt += 1
             if tmp_cnt // multiply_factor >= 1:
                 alpha_update_iter += 1
                 tmp_cnt = 0
@@ -1418,13 +1463,14 @@ class AutoAlpha:  # pragma: no cover
         best_alphas = self.init_alpha
 
         if not self.dataloader:
-            logger.info(f"Auto-tuning failed due to no dataloader, using {best_alphas} instead.")
-            self._qdq_model_unwrapper_for_auto()
-            return best_alphas
+            logger.info("No dataloader, performing auto-tuning with calibration function instead.")
+            self.model, self.dataloader = build_captured_dataloader(self.model, self.q_func, self.calib_sample_num)
+
         bar = tqdm(self.dataloader, total=self.calib_sample_num, desc="auto tune alpha")  # pylint: disable=E1102
         for input in bar:
             if isinstance(input, tuple):  # Extract input when both input and label are yielded by dataloader.
                 input = input[0]
+
             loss_alphas = {}
             best_alphas_per_module = best_alphas
             if isinstance(best_alphas, dict):
@@ -1446,8 +1492,8 @@ class AutoAlpha:  # pragma: no cover
                         for alpha_key in cur_loss.keys():
                             cur_loss[alpha_key] += loss_tmp[block_name][alpha_key]
 
-            total_cnt += self.dataloader.batch_size
-            tmp_cnt += self.dataloader.batch_size
+            total_cnt += 1
+            tmp_cnt += 1
             if tmp_cnt // multiply_factor >= 1:
                 alpha_update_iter += 1
                 tmp_cnt = 0
