@@ -14,7 +14,7 @@ In terms of ease of use, neural compressor is committed to providing an easy-to-
 
 For more details, please refer to [link](https://github.com/intel/neural-compressor/discussions/1527) in Neural Compressor discussion space.
 
-So far, `neural_compressor.torch` still relies on the backend to generate the quantized model and run it on the corresponding backend, but in the future, neural_compressor is committed to provide generalized device-agnostic Q-DQ model, so as to realize one-time quantization and arbitrary deployment.
+So far, `neural_compressor.torch` still relies on the backend to generate the quantized model and run it on the corresponding backend, but in the future, neural_compressor is planned to provide generalized device-agnostic Q-DQ model, so as to achieve one-time quantization and arbitrary deployment.
 
 ## Torch-like APIs
 
