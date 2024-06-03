@@ -96,6 +96,17 @@ def autotune(
 
 ### Load API
 
+`neural_compressor.torch` links the save function to the quantized model. If `model.save` already exists, Neural Compressor renames the previous function to `model.orig_save`.
+
+```python
+def save(self, output_dir="./saved_results"):
+"""
+    Args:
+        self (torch.nn.Module): the quantized model.
+        output_dir (str, optional): path to save the quantized model 
+"""
+```
+
 ```python
 def load(output_dir="./saved_results", model=None):
     """The main entry of load for all algorithms.
