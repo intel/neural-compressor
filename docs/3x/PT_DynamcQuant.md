@@ -7,7 +7,7 @@ Dynamic Quantization
 
 
 ## Introduction
-Quantization is the process of converting floating point weights and activations to lower bitwidth tensors by multiplying the floating point values by a scale factor and rounding the results to whole numbers. Dynamic quantization determines the scale factor for activations dynamically based on the data range observed at runtime. We support W8A8 (quantizing weights and activations into 8 bits) dynamic quantization by leveraging torch's [`X86InductorQuantizer`](https://pytorch.org/tutorials/prototype/pt2e_quant_x86_inductor.html?highlight=x86inductorquantizer)..
+Quantization is the process of converting floating point weights and activations to lower bitwidth tensors by multiplying the floating point values by a scale factor and rounding the results to whole numbers. Dynamic quantization determines the scale factor for activations dynamically based on the data range observed at runtime. We support W8A8 (quantizing weights and activations into 8 bits) dynamic quantization by leveraging torch's [`X86InductorQuantizer`](https://pytorch.org/tutorials/prototype/pt2e_quant_x86_inductor.html?highlight=x86inductorquantizer).
 
 
 ## Getting Started with Dynamic Quantization
