@@ -80,7 +80,7 @@ def _build_woq_model(model, quantization_config, loaded_state_dict_keys):
         module_name_type = str((name, type(module).__name__))
         module_quantization_config = quantization_config
         if module_name_type in quantization_config:
-            module_quantization_config = quantization_config[module_name_type]
+            module_quantization_config = [config for config in quantization_config[module_name_type].values()][0]
 
         if isinstance(module, torch.nn.Linear):
             # module without qweight means it is not quantized, then skip it
@@ -98,8 +98,8 @@ def _build_woq_model(model, quantization_config, loaded_state_dict_keys):
                 name += ".linear"
 
             # replace `torch.nn.Linear` with `WeightOnlyLinear`
-            zp = True if name + ".qzeros" in loaded_state_dict_keys else False
-            g_idx = True if name + ".g_idx" in loaded_state_dict_keys else False
+            zp = True if name + ".qzeros" in loaded_state_dict_keys_set else False
+            g_idx = True if name + ".g_idx" in loaded_state_dict_keys_set else False
             new_module = WeightOnlyLinear(
                 module.in_features,
                 module.out_features,
