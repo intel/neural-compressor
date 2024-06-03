@@ -35,7 +35,7 @@ parameters:
 stages:
   - stage: PyTorchModels
     displayName: Run PyTorch Model
-    pool: MODEL_PERF_TEST
+    pool: ICX-16C
     dependsOn: []
     condition: and(succeeded(), eq('${{ parameters.PyTorch_Model_3X }}', 'true'))
     jobs:
