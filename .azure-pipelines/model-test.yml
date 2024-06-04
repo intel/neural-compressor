@@ -13,6 +13,7 @@ pr:
       - requirements.txt
       - .azure-pipelines/scripts/models
       - examples/tensorflow/oob_models/quantization/ptq
+      - .azure-pipelines/model-test.yml
     exclude:
       - test
       - neural_compressor/common

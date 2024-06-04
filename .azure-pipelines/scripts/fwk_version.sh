@@ -4,7 +4,7 @@ echo "export FWs version..."
 test_mode=$1
 
 if [ "$test_mode" == "coverage" ] || [ "$test_mode" == "latest" ]; then
-    export tensorflow_version='2.16.0-official'
+    export tensorflow_version='2.16.1-official'
     export pytorch_version='2.3.0+cpu'
     export torchvision_version='0.18.0+cpu'
     export ipex_version='2.3.0+cpu'

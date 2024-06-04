@@ -14,6 +14,7 @@ pr:
       - setup.py
       - requirements_pt.txt
       - .azure-pipelines/scripts/models
+      - .azure-pipelines/model-test-3x.yml
 
 variables:
   OUT_SCRIPT_PATH: $(Build.SourcesDirectory)/.azure-pipelines/scripts/models
