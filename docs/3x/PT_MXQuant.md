@@ -86,10 +86,10 @@ The exponent (exp) is equal to torch.floor(torch.log2(amax)), MAX is the represe
 To get a model quantized with Microscaling Data Types, users can use the Microscaling Quantization API as follows.
 
 ```python
-from neural_compressor.torch.quantization import MXQuantConfig, quantize
-
+from neural_compressor.torch.quantization import MXQuantConfig, prepare, convert
 quant_config = MXQuantConfig(w_dtype=args.w_dtype, act_dtype=args.act_dtype, weight_only=args.woq)
-user_model = quantize(model=user_model, quant_config=quant_config)
+user_model = prepare(model=user_model, quant_config=quant_config)
+user_model = convert(model=user_model)
 ```
 
 ## Examples
