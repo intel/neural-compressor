@@ -29,8 +29,9 @@ class TestHPUAccelerator:
         assert accelerator.synchronize() is None
         assert accelerator.empty_cache() is None
 
-    @pytest.mark.skipif(torch.hpu.device_count() < 2, reason="Only one HPU is available")
     def test_get_device(self):
+        if torch.hpu.device_count() < 2:
+            return
         accelerator = auto_detect_accelerator()
         assert accelerator.set_device(1) is None
         assert accelerator.current_device_name() == "hpu:1"
@@ -62,8 +63,9 @@ class TestXPUAccelerator:
         assert accelerator.synchronize() is None
         assert accelerator.empty_cache() is None
 
-    @pytest.mark.skipif(torch.xpu.device_count() < 2, reason="Only one GPU is available")
     def test_get_device(self):
+        if torch.xpu.device_count() < 2:
+            return
         accelerator = auto_detect_accelerator()
         assert accelerator.set_device(1) is None
         assert accelerator.current_device_name() == "xpu:1"

@@ -42,7 +42,7 @@ def is_package_available(package_name):
 
 
 ## check hpex
-if is_package_available("habana_frameworks.torch.hpex"):
+if is_package_available("habana_frameworks"):
     _hpex_available = True
 else:
     _hpex_available = False
