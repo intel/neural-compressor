@@ -16,8 +16,6 @@ Intel® Neural Compressor aims to help users quickly deploy low-precision models
 
 The autotune module construct the tuning space according to the pre-defined tuning set or users' tuning set. It iterate the tuning space and apply the configuration on given float model then record and compare its evaluation result with the baseline. The tuning process stops when meeting the exit policy. 
 
-<!-- The following figure provides a high level overview of the tuning process. -->
-
 
 ## Working with Autotune
 
@@ -54,7 +52,7 @@ The example below demonstrates how to autotune a PyTorch model on four `RTNConfi
 from neural_compressor.torch.quantization import RTNConfig, TuningConfig, autotune
 
 
-def eval_acc(model) -> float:
+def eval_fn(model) -> float:
     return ...
 
 
@@ -63,7 +61,7 @@ tune_config = TuningConfig(
     tolerable_loss=0.2,
     max_trials=10,
 )
-q_model = autotune(model, tune_config=tune_config, eval_fn=eval_acc)
+q_model = autotune(model, tune_config=tune_config, eval_fn=eval_fn)
 ```
 
 ### Working with Tensorflow Model
@@ -82,7 +80,7 @@ custom_tune_config = TuningConfig(
 )
 
 
-def eval_acc(model) -> float:
+def eval_fn(model) -> float:
     return ...
 
 
