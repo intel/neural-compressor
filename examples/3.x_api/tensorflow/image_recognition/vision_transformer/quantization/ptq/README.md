@@ -43,7 +43,7 @@ wget https://storage.googleapis.com/intel-optimized-tensorflow/models/2_11_0/HF-
   We also prepared related scripts in ` examples/tensorflow/image_recognition/tensorflow_models/imagenet_prepare` directory. To download the raw images, the user must create an account with image-net.org. If you have downloaded the raw data and preprocessed the validation data by moving the images into the appropriate sub-directory based on the label (synset) of the image. we can use below command ro convert it to tf records format.
 
   ```shell
-  cd examples/tensorflow/image_recognition/tensorflow_models/
+  cd examples/3.x_api/tensorflow/image_recognition/tensorflow_models/
   # convert validation subset
   bash prepare_dataset.sh --output_dir=./vision_transformer/quantization/ptq/data --raw_dir=/PATH/TO/img_raw/val/ --subset=validation
   # convert train subset
@@ -56,18 +56,6 @@ wget https://storage.googleapis.com/intel-optimized-tensorflow/models/2_11_0/HF-
 > where 'n01440764' is the unique synset label associated with these images.
 
 # Run
-
-## Quantization Config
-
-The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
-
-```
-config = PostTrainingQuantConfig(
-    device="gpu",
-    backend="itex",
-    ...
-    )
-```
 
 ## 1. Quantization
 

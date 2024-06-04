@@ -1,7 +1,7 @@
 #
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2023 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ arg_parser.add_argument('--iters', type=int, default=100, dest='iters', help='in
 arg_parser.add_argument('--int8', dest='int8', action='store_true', help='whether to use int8 model for benchmark')
 args = arg_parser.parse_args()
 
-def evaluate(model, eval_dataloader, postprocess=None):
+def evaluate(model, eval_dataloader, preprocess=None):
     """Custom evaluate function to estimate the accuracy of the model.
 
     Args:
@@ -85,7 +85,7 @@ def evaluate(model, eval_dataloader, postprocess=None):
         latency_list = []
         for idx, (inputs, labels) in enumerate(dataloader):
             # shift the label and rescale the inputs
-            inputs, labels = postprocess((inputs, labels))
+            inputs, labels = preprocess((inputs, labels))
             # dataloader should keep the order and len of inputs same with input_tensor
             inputs = np.array([inputs])
             feed_dict = dict(zip(input_tensor, inputs))
@@ -173,9 +173,9 @@ class eval_classifier_optimized_graph:
                 graph_def = sm.meta_graphs[0].graph_def
                 input_graph = graph_def
 
-            postprocess = ShiftRescale()
             def eval(model):
-                return evaluate(model, dataloader, postprocess)
+                preprocess = ShiftRescale()
+                return evaluate(model, dataloader, preprocess)
 
             if args.mode == 'performance':
                 eval(input_graph)
