@@ -328,7 +328,6 @@ class WeightOnlyLinear(torch.nn.Module):
     def pack_tensor_with_numpy(self, raw_tensor):
         raw_array = raw_tensor.cpu().numpy()
         target_len = np.ceil(raw_array.shape[1] / self.n_pack).astype(int)
-        torch.int32
         target_dtype = torch.tensor(0, dtype=self.compression_dtype).numpy().dtype
         packed_array = np.zeros((raw_array.shape[0], target_len), dtype=target_dtype)
         mask = np.uint8(2**self.bits - 1)
@@ -375,6 +374,23 @@ class WeightOnlyLinear(torch.nn.Module):
                 packed_tensor[:, j] |= tmp[:, e]
         return packed_tensor
 
+    def unpack_tensor_with_torch(self, packed_tensor):
+        target_dtype = torch.int8 if not hasattr(self, "qzeros") or "int" not in self.dtype else torch.uint8
+        target_len = packed_tensor.shape[1] * self.n_pack
+        unpacked_tensor = torch.zeros(packed_tensor.shape[0], target_len, dtype=target_dtype).to(self.device)
+        mask = torch.tensor(2**self.bits - 1, dtype=self.compression_dtype).to(self.device)
+        for j in range(packed_tensor.shape[1]):
+            for e in range(self.n_pack):
+                index = j * self.n_pack + e
+                tmp = packed_tensor[:, j]
+                tmp = tmp << (self.compress_bits - self.bits * (e + 1))
+                tmp = tmp >> self.compress_bits - self.bits
+                if target_dtype == torch.uint8:
+                    tmp &= mask  # remove sign bit
+                unpacked_tensor[:, index].copy_(tmp.type(target_dtype))
+        logger.info(f"*****{unpacked_tensor}")
+        return unpacked_tensor
+
     def pack_tensor(self, raw_tensor):
         if "cuda" in self.device:
             return self.pack_tensor_with_torch(raw_tensor)
@@ -389,9 +405,9 @@ class WeightOnlyLinear(torch.nn.Module):
 
     def pack(self, int_weight, scale, zp, bias, g_idx=None):
         if self.use_optimum_format:
-            self.scales = self.scales.t_().contiguous()
-            self.qweight = self.qweight.t_().contiguous()
-            self.qzeros = self.qzeros.t_().contiguous()
+            self.scales = self.scales.T.contiguous()
+            self.qweight = self.qweight.T.contiguous()
+            self.qzeros = self.qzeros.T.contiguous()
         int_weight = int_weight.to(self.device)
         if self.use_optimum_format and zp is None:
             # to avoid overflow
@@ -412,8 +428,8 @@ class WeightOnlyLinear(torch.nn.Module):
         assert scale.shape == self.scales.shape, "Scale shape is mismatched."
         self.scales = scale.type(self.float_type).to(self.device)
         if not self.use_optimum_format and self.compression_dim == 0:
-            int_weight = int_weight.t_().contiguous()
-            self.qweight = self.qweight.t_().contiguous()
+            int_weight = int_weight.T.contiguous()
+            self.qweight = self.qweight.T.contiguous()
         origin_shape = int_weight.shape
         target_shape = self.qweight.shape
         assert origin_shape[0] == target_shape[0], "output channels mismatch, please check."
@@ -421,28 +437,28 @@ class WeightOnlyLinear(torch.nn.Module):
         # pack weight
         self.qweight.copy_(self.pack_tensor(int_weight))
         if not self.use_optimum_format and self.compression_dim == 0:
-            self.qweight = self.qweight.t_().contiguous()
+            self.qweight = self.qweight.T.contiguous()
 
         if zp is not None:
             zp = zp.to(self.device)
             if self.use_optimum_format:
                 zp -= 1
             if self.use_optimum_format or self.compression_dim == 0:
-                zp = zp.t_().contiguous()
-                self.qzeros = self.qzeros.t_().contiguous()
+                zp = zp.T.contiguous()
+                self.qzeros = self.qzeros.T.contiguous()
             assert hasattr(self, "qzeros"), "zp is not set when initializing."
             self.qzeros.copy_(self.pack_tensor(zp))
             if self.use_optimum_format or self.compression_dim == 0:
-                self.qzeros = self.qzeros.t_().contiguous()
+                self.qzeros = self.qzeros.T.contiguous()
         if self.use_optimum_format:
-            self.scales = self.scales.t_().contiguous()
-            self.qweight = self.qweight.t_().contiguous()
-            self.qzeros = self.qzeros.t_().contiguous()
+            self.scales = self.scales.T.contiguous()
+            self.qweight = self.qweight.T.contiguous()
+            self.qzeros = self.qzeros.T.contiguous()
 
     def recover(self):
         logger.debug(f"Recovering {self} weight")
-        scales = self.scales.t_().contiguous() if self.use_optimum_format else self.scales
-        qweight = self.qweight.t_().contiguous() if self.use_optimum_format else self.qweight
+        scales = self.scales.T.contiguous() if self.use_optimum_format else self.scales
+        qweight = self.qweight.T.contiguous() if self.use_optimum_format else self.qweight
 
         device = scales.device
         fp32_weight = torch.zeros(self.out_features, self.in_features, dtype=self.float_type).to(device)
@@ -451,10 +467,10 @@ class WeightOnlyLinear(torch.nn.Module):
             self.g_idx = torch.tensor([i // self.groupsize for i in range(self.in_features)], dtype=torch.int32)
         # unpack weight
         if not self.use_optimum_format and self.compression_dim == 0:
-            qweight = qweight.t_().contiguous()
+            qweight = qweight.T.contiguous()
         weight = self.unpack_tensor(qweight)
         if not self.use_optimum_format and self.compression_dim == 0:
-            weight = weight.t_().contiguous()
+            weight = weight.T.contiguous()
         weight = weight[: self.out_features, : self.in_features]  # avoid oversize
         if "int" not in self.dtype:
             new_weight = torch.zeros(self.out_features, self.in_features).to(device)
@@ -463,12 +479,12 @@ class WeightOnlyLinear(torch.nn.Module):
             weight = new_weight
         # unpack zero_point
         if hasattr(self, "qzeros"):
-            qzeros = self.qzeros.t_().contiguous() if self.use_optimum_format else self.qzeros
+            qzeros = self.qzeros.T.contiguous() if self.use_optimum_format else self.qzeros
             if self.use_optimum_format or self.compression_dim == 0:
-                qzeros = qzeros.t_().contiguous()
+                qzeros = qzeros.T.contiguous()
             zp = self.unpack_tensor(qzeros)
             if self.use_optimum_format or self.compression_dim == 0:
-                zp = zp.t_().contiguous()
+                zp = zp.T.contiguous()
             zp = zp[: scales.shape[0], : scales.shape[1]]  # avoid oversize
             if self.use_optimum_format:
                 # zp -= 1 may cause zp == -1, after recover it becomes 2**self.bits - 1
@@ -476,7 +492,9 @@ class WeightOnlyLinear(torch.nn.Module):
                 zp = torch.where(zp > (2**self.bits - 1), 0, zp)
             # recover fp32 weight with int_weight, scale, and zero_point
             for idx in range(self.in_features):
-                fp32_weight[:, idx] = (weight[:, idx] - zp[:, self.g_idx[idx]]) * scales[:, self.g_idx[idx]]
+                fp32_weight[:, idx] = (torch.subtract(weight[:, idx], zp[:, self.g_idx[idx]]).to(torch.int8)) * scales[
+                    :, self.g_idx[idx]
+                ]
         else:
             # recover fp32 weight with int_weight, scale
             for idx in range(self.in_features):
