@@ -64,7 +64,6 @@ def create_data_loader(dataset, batch_size=1):
     data_loader = DataLoader(dataset, batch_size=batch_size, num_workers=0, shuffle=False, collate_fn=collate_fn)
     return data_loader
 
-
 #=====================
 
 def get_user_argument():
@@ -129,12 +128,11 @@ def main():
     questions = json.load(open(args.question_file, "r"))
     dataset = CustomDataset(questions, args.image_folder, tokenizer, image_processor, args)
     dataloader = create_data_loader(dataset)
-    # import pdb;pdb.set_trace()
-    # model.float()
-    # model.eval()
 
-    if False:
-    # if args.quantize:
+    # Step 3: do quantization
+    model.float()
+    model.eval()
+    if args.quantize:
         from neural_compressor import PostTrainingQuantConfig, quantization
         recipes = {}
         eval_func = None
@@ -196,9 +194,12 @@ def main():
         )
 
     # evaluation
+    # use fp16 precision to run evaluation, aligning with official evaluation process 
+    quantized_model = q_model.model.half()
+    quantized_model = quantized_model.to("cuda:0")
     from mm_evaluation import TextVQAEvaluator
     evaluator = TextVQAEvaluator(
-        model,
+        quantized_model,
         tokenizer,
         image_processor,
         args.eval_image_folder,
