@@ -22,7 +22,7 @@ import time
 import numpy as np
 import tensorflow as tf
 
-from data_process import SquadF1, ModelZooBertDataset, TFSquadV1ModelZooPostTransform
+from data_process import SquadF1, ModelZooBertDataset, TFSquadV1ModelZooPostTransform, ModelZooBertDataLoader
 
 flags = tf.compat.v1.flags
 FLAGS = flags.FLAGS
@@ -101,8 +101,6 @@ def evaluate(model, dataloader, metric, postprocess):
     return acc
 
 def main(_):
-    from neural_compressor.tensorflow.utils import BaseDataLoader
-
     tf.compat.v1.disable_eager_execution()
     tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.INFO)
 
@@ -111,7 +109,7 @@ def main(_):
     vocab_path = os.path.join(FLAGS.dataset_location, 'vocab.txt')
 
     dataset = ModelZooBertDataset(root=data_path, label_file=label_path)
-    dataloader = BaseDataLoader(dataset=dataset, batch_size=FLAGS.batch_size)
+    dataloader = ModelZooBertDataLoader(dataset=dataset, batch_size=FLAGS.batch_size)
     
     def eval(model):
         metric = SquadF1()
@@ -137,7 +135,7 @@ def main(_):
         q_model.save(FLAGS.output_model)
 
         dataset = ModelZooBertDataset(root=data_path, label_file=label_path)
-        dataloader = BaseDataLoader(dataset=dataset, batch_size=FLAGS.batch_size)
+        dataloader = ModelZooBertDataLoader(dataset=dataset, batch_size=FLAGS.batch_size)
 
 if __name__ == "__main__":
     tf.compat.v1.app.run()

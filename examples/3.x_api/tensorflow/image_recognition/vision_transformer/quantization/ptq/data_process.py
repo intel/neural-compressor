@@ -23,7 +23,7 @@ import tensorflow as tf
 
 from abc import abstractmethod
 from neural_compressor.common import logger
-from neural_compressor.tensorflow.utils.data import default_collate, BaseDataLoader
+from neural_compressor.tensorflow.utils.data import default_collate
 
 class ParseDecodeImagenet:
     """Parse features in Example proto.
@@ -449,7 +449,7 @@ class TopKMetric(BaseMetric):
         return preds, labels
     
 
-class TFDataLoader(BaseDataLoader):  # pragma: no cover
+class TFDataLoader(object):  # pragma: no cover
     """Tensorflow dataloader class.
 
     In tensorflow1.x dataloader is coupled with the graph, but it also support feed_dict
@@ -492,13 +492,10 @@ class TFDataLoader(BaseDataLoader):  # pragma: no cover
         batch_sampler=None,
         num_workers=None,
         pin_memory=None,
-        shuffle=False,
         distributed=False,
     ):
         """Yield data."""
         drop_last = False if last_batch == "rollover" else True
-        if shuffle:
-            logging.warning("Shuffle is not supported yet in TFDataLoader, " "ignoring shuffle keyword.")
 
         def check_dynamic_shape(element_spec):
             if isinstance(element_spec, collections.abc.Sequence):

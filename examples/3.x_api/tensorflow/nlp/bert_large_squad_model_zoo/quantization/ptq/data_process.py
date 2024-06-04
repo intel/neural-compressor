@@ -21,11 +21,12 @@ import sys
 import string
 import collections
 
-from abc import abstractmethod
 import numpy as np
 import tensorflow as tf
 
+from abc import abstractmethod
 from collections import Counter
+from neural_compressor.tensorflow.utils.data import default_collate, BaseDataLoader, BatchSampler, IterableFetcher
 
 def metric_max_over_ground_truths(metric_fn, prediction, ground_truths):
     """Calculate the max metric for each ground truth.
@@ -293,6 +294,133 @@ class ParseDecodeBert:
         return (input_ids, input_mask, segment_ids)
 
 
+class TFDataLoader(object):  # pragma: no cover
+    """Tensorflow dataloader class.
+
+    In tensorflow1.x dataloader is coupled with the graph, but it also support feed_dict
+    method to do session run, this dataloader is designed to satisfy the usage of feed dict
+    in tf1.x. Although it's a general dataloader and can be used in MXNet and PyTorch.
+
+    Args:
+        dataset: obj. wrapper of needed data.
+        batch_size: int. batch size
+    """
+
+    def __init__(self, dataset, batch_size=1, last_batch="rollover"):
+        """Initialize `TFDataDataLoader` class."""
+        self.dataset = dataset
+        self.last_batch = last_batch
+        self.batch_size = batch_size
+        dataset = dataset.batch(batch_size)
+
+    def batch(self, batch_size, last_batch="rollover"):
+        """Dataset return data per batch."""
+        drop_last = False if last_batch == "rollover" else True
+        self.batch_size = batch_size
+        self.dataset = self.dataset.batch(batch_size, drop_last)
+
+    def __iter__(self):
+        """Iterate dataloader."""
+        return self._generate_dataloader(
+            self.dataset,
+            batch_size=self.batch_size,
+            last_batch=self.last_batch,
+        )
+
+    def _generate_dataloader(
+        self,
+        dataset,
+        batch_size=1,
+        last_batch="rollover",
+        collate_fn=None,
+        sampler=None,
+        batch_sampler=None,
+        num_workers=None,
+        pin_memory=None,
+        distributed=False,
+    ):
+        """Yield data."""
+        drop_last = False if last_batch == "rollover" else True
+
+        def check_dynamic_shape(element_spec):
+            if isinstance(element_spec, collections.abc.Sequence):
+                return any([check_dynamic_shape(ele) for ele in element_spec])
+            elif isinstance(element_spec, tf.TensorSpec):
+                return True if element_spec.shape.num_elements() is None else False
+            else:
+                raise ValueError("unrecognized element spec...")
+
+        def squeeze_output(output):
+            if isinstance(output, collections.abc.Sequence):
+                return [squeeze_output(ele) for ele in output]
+            elif isinstance(output, np.ndarray):
+                return np.squeeze(output, axis=0)
+            else:
+                raise ValueError("not supported output format....")
+
+        if tf.executing_eagerly():
+            index = 0
+            outputs = []
+            for iter_tensors in dataset:
+                samples = []
+                iter_inputs, iter_labels = iter_tensors[0], iter_tensors[1]
+                if isinstance(iter_inputs, tf.Tensor):
+                    samples.append(iter_inputs.numpy())
+                else:
+                    samples.append(tuple(iter_input.numpy() for iter_input in iter_inputs))
+                if isinstance(iter_labels, tf.Tensor):
+                    samples.append(iter_labels.numpy())
+                else:
+                    samples.append([np.array(l) for l in iter_labels])
+                index += 1
+                outputs.append(samples)
+                if index == batch_size:
+                    outputs = default_collate(outputs)
+                    yield outputs
+                    outputs = []
+                    index = 0
+            if len(outputs) > 0:
+                outputs = default_collate(outputs)
+                yield outputs
+        else:
+            try_single_batch = check_dynamic_shape(dataset.element_spec)
+            dataset = dataset.batch(1 if try_single_batch else batch_size, drop_last)
+            ds_iterator = tf.compat.v1.data.make_one_shot_iterator(dataset)
+            iter_tensors = ds_iterator.get_next()
+            data_config = tf.compat.v1.ConfigProto()
+            data_config.use_per_session_threads = 1
+            data_config.intra_op_parallelism_threads = 1
+            data_config.inter_op_parallelism_threads = 16
+            data_sess = tf.compat.v1.Session(config=data_config)
+            # pylint: disable=no-name-in-module
+            from tensorflow.python.framework.errors_impl import OutOfRangeError
+
+            while True:
+                if not try_single_batch:
+                    try:
+                        outputs = data_sess.run(iter_tensors)
+                        yield outputs
+                    except OutOfRangeError:
+                        data_sess.close()
+                        return
+                else:
+                    try:
+                        outputs = []
+                        for i in range(0, batch_size):
+                            outputs.append(squeeze_output(data_sess.run(iter_tensors)))
+                        outputs = default_collate(outputs)
+                        yield outputs
+                    except OutOfRangeError:
+                        if len(outputs) == 0:
+                            data_sess.close()
+                            return
+                        else:
+                            outputs = default_collate(outputs)
+                            yield outputs
+                            data_sess.close()
+                            return
+
+
 class ModelZooBertDataset(object):
     """Tensorflow dataset for three-input Bert in tf record format.
 
@@ -348,9 +476,7 @@ class ModelZooBertDataset(object):
         if filter is not None:
             ds = ds.filter(filter)
         ds = ds.prefetch(buffer_size=1000)
-        from neural_compressor.tensorflow.utils import BaseDataLoader
-
-        ds = BaseDataLoader(ds)
+        ds = TFDataLoader(ds)
         self.root = []
         for inputs in ds:
             self.root.append(inputs)
@@ -767,3 +893,44 @@ class TFSquadV1ModelZooPostTransform(TFSquadV1PostTransform):
         """Collect data and get postprocess results."""
         sample = self.collect_data(sample)
         return self.get_postprocess_result(sample)
+
+
+class ModelZooBertDataLoader(BaseDataLoader):  # pragma: no cover
+    """This dataloader is designed to satisfy the usage of Model Zoo Bert models."""
+
+    def _generate_dataloader(
+        self,
+        dataset,
+        batch_size,
+        last_batch,
+        collate_fn,
+        sampler,
+        batch_sampler,
+        num_workers,
+        pin_memory,
+        shuffle,
+        distributed,
+    ):
+        def bert_collate_fn(batch):
+            input_ids = []
+            input_mask = []
+            segment_ids = []
+            for elem in batch:
+                input_ids.append(elem[0][0][0])
+                input_mask.append(elem[0][1][0])
+                segment_ids.append(elem[0][2][0])
+            inputs = [input_ids, input_mask, segment_ids]
+            return inputs, batch[0][1]
+
+        drop_last = False if last_batch == "rollover" else True
+        sampler = self._generate_sampler(dataset, distributed)
+        self.batch_sampler = BatchSampler(sampler, batch_size, drop_last)
+        self.fetcher = IterableFetcher(dataset, bert_collate_fn, drop_last, distributed)
+
+        inputs = []
+        for batched_indices in self.batch_sampler:
+            try:
+                data = self.fetcher(batched_indices)
+                yield data
+            except StopIteration:
+                return

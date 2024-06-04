@@ -74,7 +74,7 @@ bash prepare_dataset.sh --output_dir=./data
 ### Convert the dataset to TF Record format
 After the dataset is downloaded by either of ways above, the dataset should be converted to files of TF Record format.
 ```shell
-python create_tf_record.py --vocab_file=data/vocab.txt --predict_file=data/dev-v1.1.json --output_file=./eval.tf_record
+python create_tf_record.py --vocab_file=data/vocab.txt --predict_file=data/dev-v1.1.json --output_file=./data/eval.tf_record
 ```
 
 # Run Command
