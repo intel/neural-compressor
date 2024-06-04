@@ -421,7 +421,7 @@ class WeightOnlyLinear(torch.nn.Module):
         # pack weight
         self.qweight.copy_(self.pack_tensor(int_weight))
         if not self.use_optimum_format and self.compression_dim == 0:
-            self.qweight = self.qweight.T.contiguous()
+            self.qweight = self.qweight.t_().contiguous()
 
         if zp is not None:
             zp = zp.to(self.device)
