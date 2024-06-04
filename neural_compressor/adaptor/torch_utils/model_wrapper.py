@@ -417,29 +417,11 @@ class WeightOnlyLinear(torch.nn.Module):
         origin_shape = int_weight.shape
         target_shape = self.qweight.shape
         assert origin_shape[0] == target_shape[0], "output channels mismatch, please check."
-        mask = torch.tensor(2**self.bits - 1, dtype=self.compression_dtype).to(self.device)
 
         # pack weight
-        import time
-        start = time.time()
         self.qweight.copy_(self.pack_tensor(int_weight))
-        end = time.time() - start
-        logger.info(f"{origin_shape}, {end}")
-        
-        
         if not self.use_optimum_format and self.compression_dim == 0:
             self.qweight = self.qweight.T.contiguous()
-        
-        for j in range(target_shape[1]):
-            start = self.n_pack * j
-            end = self.n_pack * (j + 1)
-            tmp = int_weight[:, start:end].type(self.compression_dtype)
-            for e in range(tmp.shape[1]):
-                tmp[:, e] &= mask
-                tmp[:, e] = tmp[:, e] << (self.bits * e)
-                self.qweight[:, j] |= tmp[:, e]
-        if not self.use_optimum_format and self.compression_dim == 0:
-            self.qweight = self.qweight.t_().contiguous()
 
         if zp is not None:
             zp = zp.to(self.device)
@@ -467,31 +449,13 @@ class WeightOnlyLinear(torch.nn.Module):
         if self.g_idx is None:
             # used for recovering fp32_weight
             self.g_idx = torch.tensor([i // self.groupsize for i in range(self.in_features)], dtype=torch.int32)
-        mask = torch.tensor(2**self.bits - 1, dtype=self.compression_dtype).to(device)
-        if hasattr(self, "qzeros"):
-            weight_dtype = torch.uint8
-        else:
-            weight_dtype = torch.int8
         # unpack weight
-        weight = torch.zeros(self.out_features, self.in_features, dtype=weight_dtype).to(device)
         if not self.use_optimum_format and self.compression_dim == 0:
-            weight = weight.t_().contiguous()
             qweight = qweight.t_().contiguous()
-        origin_shape = weight.shape
-        target_shape = qweight.shape
-        for j in range(target_shape[1]):
-            for e in range(self.n_pack):
-                index = j * self.n_pack + e
-                if index >= origin_shape[1]:
-                    continue
-                tmp = qweight[:, j]
-                tmp = tmp << (self.compress_bits - self.bits * (e + 1))
-                tmp = tmp >> self.compress_bits - self.bits
-                if weight_dtype == torch.uint8:
-                    tmp &= mask  # remove sign bit
-                weight[:, index] = tmp.type(weight_dtype)
+        weight = self.unpack_tensor(qweight)
         if not self.use_optimum_format and self.compression_dim == 0:
             weight = weight.t_().contiguous()
+        weight = weight[: self.out_features, : self.in_features]  # avoid oversize
         if "int" not in self.dtype:
             new_weight = torch.zeros(self.out_features, self.in_features).to(device)
             for k, v in self.int2float_mapping.items():
@@ -499,26 +463,13 @@ class WeightOnlyLinear(torch.nn.Module):
             weight = new_weight
         # unpack zero_point
         if hasattr(self, "qzeros"):
-            zp_dtype = self.compression_dtype  # to avoid overflow when weight-zp
-            zp = torch.zeros(scales.shape, dtype=zp_dtype).to(device)
             qzeros = self.qzeros.t_().contiguous() if self.use_optimum_format else self.qzeros
             if self.use_optimum_format or self.compression_dim == 0:
-                zp = zp.t_().contiguous()
                 qzeros = qzeros.t_().contiguous()
-            origin_shape = zp.shape
-            target_shape = qzeros.shape
-            for j in range(target_shape[1]):
-                for e in range(self.n_pack):
-                    index = j * self.n_pack + e
-                    if index >= origin_shape[1]:
-                        continue
-                    tmp = qzeros[:, j]
-                    tmp = tmp << (self.compress_bits - self.bits * (e + 1))
-                    tmp = tmp >> self.compress_bits - self.bits
-                    tmp &= mask
-                    zp[:, index] = tmp.type(zp_dtype)
+            zp = self.unpack_tensor(qzeros)
             if self.use_optimum_format or self.compression_dim == 0:
                 zp = zp.t_().contiguous()
+            zp = zp[: scales.shape[0], : scales.shape[1]]  # avoid oversize
             if self.use_optimum_format:
                 # zp -= 1 may cause zp == -1, after recover it becomes 2**self.bits - 1
                 zp += 1
