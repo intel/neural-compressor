@@ -32,6 +32,15 @@ config_name_mapping = {
 
 
 def load(output_dir="./saved_results", model=None):
+    """The main entry of load for all algorithms.
+
+    Args:
+        output_dir (str, optional): path to quantized model folder. Defaults to "./saved_results".
+        model (torch.nn.Module, optional): original model, suggest to use empty tensor.
+
+    Returns:
+        The quantized model
+    """
     from neural_compressor.common.base_config import ConfigRegistry
 
     qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), "qconfig.json")

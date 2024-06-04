@@ -14,6 +14,7 @@
 
 from neural_compressor.tensorflow.utils import register_algo, Model
 from neural_compressor.tensorflow.quantization import (
+    autotune,
     quantize_model,
     StaticQuantConfig,
     SmoothQuantConfig,
