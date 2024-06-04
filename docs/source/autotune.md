@@ -14,7 +14,7 @@ Intel® Neural Compressor aims to help users quickly deploy low-precision models
 
 ## How it Works
 
-The autotune module construct the tuning space according to the pre-defined tuning set or users' tuning set. It iterate the tuning space and apply the configuration on given float model then record and compare its evaluation result with the baseline. The tuning process stops when meeting the exit policy. 
+The autotune module constructs the tuning space according to the pre-defined tuning set or users' tuning set. It iterates the tuning space and applies the configuration on given float model then records and compares its evaluation result with the baseline. The tuning process stops when meeting the exit policy. 
 
 
 ## Working with Autotune
