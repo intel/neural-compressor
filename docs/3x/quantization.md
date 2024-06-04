@@ -376,7 +376,7 @@ Besides, as mentioned in many papers[1][2], activation quantization is the main 
 
 Theoretically, round-to-nearest (RTN) is the most straightforward way to quantize weight using scale maps. However, when the number of bits is small (e.g. 3), the MSE loss is larger than expected. A group size is introduced to reduce elements using the same scale to improve accuracy.
 
-There are many excellent works for weight only quantization to improve its accuracy performance, such as AWQ[3], GPTQ[4]. Neural compressor integrates these popular algorithms in time to help customers leverage them and deploy them to their own tasks.
+There are many excellent works for weight only quantization to improve its accuracy performance, such as AWQ[3], GPTQ[4], AutoRound[8]. Neural compressor integrates these popular algorithms in time to help customers leverage them and deploy them to their own tasks.
 
 
 ## Quantization Aware Training
@@ -412,6 +412,8 @@ User could refer to below chart to understand the whole tuning flow.
 
 [5]. Dettmers, Tim, et al. "Qlora: Efficient finetuning of quantized llms." arXiv preprint arXiv:2305.14314 (2023).
 
-[6]: Yvinec, Edouard, et al. "SPIQ: Data-Free Per-Channel Static Input Quantization." Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision. 2023.
+[6]. Yvinec, Edouard, et al. "SPIQ: Data-Free Per-Channel Static Input Quantization." Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision. 2023.
 
-[7]: Wei, Xiuying, et al. "Outlier suppression: Pushing the limit of low-bit transformer language models." arXiv preprint arXiv:2209.13325 (2022).
+[7]. Wei, Xiuying, et al. "Outlier suppression: Pushing the limit of low-bit transformer language models." arXiv preprint arXiv:2209.13325 (2022).
+
+[8]. Cheng, Wenhua, et al. "Optimize weight rounding via signed gradient descent for the quantization of llms." arXiv preprint arXiv:2309.05516 (2023).

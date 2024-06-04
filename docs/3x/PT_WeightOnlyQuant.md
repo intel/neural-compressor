@@ -55,7 +55,7 @@ Theoretically, round-to-nearest (RTN) is the most straightforward way to quantiz
 
 ### Get Started
 
-The INC 3x New API supports quantizing PyTorch models using prepare and convert [APIs](./PyTorch.md#quantization-apis) for WeightOnlyQuant quantization.
+WeightOnlyQuant quantization for PyTorch is using prepare and convert [APIs](./PyTorch.md#quantization-apis).
 
 #### Common arguments
 | Config | Capability |
