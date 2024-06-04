@@ -32,6 +32,7 @@ IPEX leverages just-in-time (JIT) compilation techniques for optimizing the mode
 
 #### Usage Sample with IPEX
 ```python
+import intel_extension_for_pytorch as ipex
 from neural_compressor.torch.quantization import StaticQuantConfig, convert, prepare
 
 quant_config = StaticQuantConfig(act_sym=True, act_algo="minmax")
@@ -39,6 +40,9 @@ prepared_model = prepare(model, quant_config=quant_config, example_inputs=exampl
 run_fn(prepared_model)
 q_model = convert(prepared_model)
 ```
+
+> [!IMPORTANT]  
+> To use static quantization with the IPEX backend, please explicitly import IPEX at the beginning of your program.
 
 #### Specify Quantization Rules
 Intel(R) Neural Compressor support specify quantization rules by operator name or operator type. Users can use `set_local` to fallback either `op_name` or `op_type` in `StaticQuantConfig` to achieve the above purpose.
