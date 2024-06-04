@@ -55,24 +55,23 @@ class TestTorchUtils:
         # fetch
         result = fetch_module(self.model, module_name)
         if "nonexistent_attr" in module_name:
-            self.assertIsNone(result)
+            assert result is None, "result should be None"
         else:
-            self.assertIsInstance(result, torch.nn.Linear)
+            assert isinstance(result, torch.nn.Linear), "fetched module should be Linear"
+            assert result.bias is not None, "The bias of fetched module should not be None."
         # set
         new_value = torch.nn.Linear(32, 128, bias=False)
         set_module(self.model, module_name, new_value)
         result = fetch_module(self.model, module_name)
-        if "nonexistent_attr" in module_name:
-            self.assertTrue(torch.equal(result, torch.Tensor([3.0])))
-        else:
-            self.assertFalse(result.bias)
+        print(result)
+        assert result.bias is None, "The bias of new module should be None."
 
     def test_get_model_info(self):
         from neural_compressor.torch.utils.utility import get_model_info
 
         white_module_list = [torch.nn.Linear]
         model_info = get_model_info(build_simple_torch_model(), white_module_list)
-        self.assertEqual(len(model_info), 4)
+        assert len(model_info) == 4, "The length of model_info should be 4."
 
     @pytest.mark.parametrize("double_quant_type", ["BNB_NF4", "GGML_TYPE_Q4_K"])
     def test_double_quant_config_dict(self, double_quant_type):
