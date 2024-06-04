@@ -317,7 +317,7 @@ Though per-channel quantization could bring lower quantization error, we could n
 The image on the left presents a normal linear forward  with 1x2 input $x$ and 2x2 weight $w$. The results $y$ could be easily obtained by simple mathematics. In the middle image, we apply per-tensor quantization for activations and per-channel quantization for weights; the results after quantization that are denoted by $y_1$ and $y_2$, could be easily dequantized to the float results $y_{fp1}$ and $y_{fp2}$ by per channel scale $1.0/s_1s_x$ and $1.0/s_2s_x$. However, after applying per-channel quantization for activation (right image), we could not dequantize the  $y_1$ and  $y_2$ to float results.
 
 <div align="center">
-    <img src="../imgs/sq_pc.png"/>
+    <img src="./imgs/sq_pc.png"/>
 </div>
 
 
@@ -333,7 +333,7 @@ To reduce the quantization loss of activations, lots of methods have been propos
 So **the first question is how to migrate the difficulty from activation to weights?** The solution is straightforward, that is to convert the network to an output equivalent network that is presented in the image below and apply quantization to this equivalent network. The intuition is that each channel of activation could be scaled to make it more quantization-friendly, similar to a fake per-channel activation quantization.
 
 <div align="center">
-    <img src="../imgs/sq_convert.png"/>
+    <img src="./imgs/sq_convert.png"/>
 </div>
 
 
@@ -356,7 +356,7 @@ j is the index of the input channels.
 
 
 <div align="center">
-    <img src="../imgs/smoothquant.png" height="250"/>
+    <img src="./imgs/smoothquant.png" height="250"/>
 </div>
 
 
