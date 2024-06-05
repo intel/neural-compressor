@@ -9,9 +9,9 @@ from neural_compressor.common import Logger
 
 logger = Logger().get_logger()
 from neural_compressor.torch.algorithms.weight_only.modules import WeightOnlyLinear
+from neural_compressor.torch.algorithms.weight_only.utility import GraphTrace
 from neural_compressor.torch.quantization import AWQConfig, convert, get_default_awq_config, prepare, quantize
 from neural_compressor.torch.utils import accelerator
-from neural_compressor.torch.algorithms.weight_only.utility import GraphTrace
 
 device = accelerator.current_device_name()
 

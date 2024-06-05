@@ -902,9 +902,11 @@ def get_block_prefix(model):
     assert block_num > 0, "block num shouldn't be zero!"
     return block_prefix, block_num
 
+
 # copy from neural_compressor/adaptor/torch_utils/util.py
 def get_example_input(dataloader, i=1):
     """Get the example input.
+
     Args:
         dataloader (object): calibration dataset.
     Returns:
@@ -925,6 +927,7 @@ def get_example_input(dataloader, i=1):
             else:
                 iter += 1
     return example_inp
+
 
 def replace_forward(model):
     """Replace forward to get the input args and kwargs of first block for AWQ algorithm.

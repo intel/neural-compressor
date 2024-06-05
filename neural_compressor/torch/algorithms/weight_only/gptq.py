@@ -41,6 +41,7 @@ else:
 DEBUG = False
 accelerator = auto_detect_accelerator()
 
+
 # ==============model structure related==============
 def is_leaf(module):
     """Judge whether a module has no child-modules.
@@ -235,14 +236,14 @@ class RAWGPTQuantizer(object):
         self.dataloader_original = dataloader
         self.dataloader = []
         self.nsamples = nsamples
-        
+
     def get_full_layer_name(self, sub_layer_name, block_idx):
         transformer_name = self.gptq_related_blocks["transformers_name"]
         return ".".join([transformer_name, str(block_idx), sub_layer_name])
 
     def check_layer_config(self):
         """Copy arguments from weight_config to built-in attributes."""
-        
+
         for layer_name, config in self.weight_config.items():
             self.weight_config[layer_name]["dtype"] = config.get("dtype", self.dtype_default)
             self.weight_config[layer_name]["bits"] = config.get("bits", self.bits_default)
@@ -251,9 +252,7 @@ class RAWGPTQuantizer(object):
             self.weight_config[layer_name]["percdamp"] = config.get("percdamp", self.percdamp_default)
             self.weight_config[layer_name]["sym"] = config.get("sym", self.sym_default)
             self.weight_config[layer_name]["act_order"] = config.get("act_order", self.act_order_default)
-            self.weight_config[layer_name]["static_groups"] = config.get(
-                "static_groups", self.static_groups_default
-            )
+            self.weight_config[layer_name]["static_groups"] = config.get("static_groups", self.static_groups_default)
             self.weight_config[layer_name]["perchannel"] = config.get("perchannel", self.perchannel_default)
             self.weight_config[layer_name]["mse"] = config.get("mse", self.mse_default)
             self.weight_config[layer_name]["use_double_quant"] = config.get(
@@ -271,10 +270,7 @@ class RAWGPTQuantizer(object):
             self.weight_config[layer_name]["double_quant_sym"] = config.get(
                 "double_quant_sym", self.double_quant_sym_default
             )
-            if (
-                self.weight_config[layer_name]["dtype"] != "int"
-                and "int" in self.weight_config[layer_name]["dtype"]
-            ):
+            if self.weight_config[layer_name]["dtype"] != "int" and "int" in self.weight_config[layer_name]["dtype"]:
                 self.weight_config[layer_name]["bits"] = int(self.weight_config[layer_name]["dtype"].lstrip("int"))
                 self.weight_config[layer_name]["dtype"] = "int"
 
