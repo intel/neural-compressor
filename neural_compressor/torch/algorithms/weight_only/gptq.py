@@ -168,7 +168,6 @@ class RAWGPTQuantizer(object):
         use_max_length=True,
         max_seq_length=2048,
         device=None,
-        export_compressed_model=False,
         use_layer_wise=False,
         model_path="",
         dataloader=None,
@@ -191,7 +190,6 @@ class RAWGPTQuantizer(object):
                 ...
             }
             dataloader: an iterable containing calibration datasets, contains (inputs, targets)
-            export_compressed_model (bool, optional): Choose return fp32 or int32 model. Defaults to False.
             use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
             model_path (str): Model path that is used to load state_dict per layer.
             device: cpu or cuda
@@ -228,7 +226,6 @@ class RAWGPTQuantizer(object):
         self.model.to(self.device)
         self.is_ready = False
 
-        self.export_compressed_model = export_compressed_model
         self.use_layer_wise = use_layer_wise
         self.model_path = model_path
 
@@ -539,60 +536,59 @@ class RAWGPTQuantizer(object):
             else:
                 self.gptq_related_blocks["transformers"][block_idx] = transformer_block.cpu()
             # Step 2.6: export to compressed model
-            if self.export_compressed_model:
-                for layer_name in sub_layers:
-                    weight_config_this_layer = self.get_layer_config(self.get_full_layer_name(layer_name, block_idx))
-                    gptq_scale = gptq_config[self.get_full_layer_name(layer_name, block_idx)]["scale"]
-                    if not weight_config_this_layer["sym"]:
-                        gptq_zp = gptq_config[self.get_full_layer_name(layer_name, block_idx)]["zero"]
-                    else:
-                        gptq_zp = None
-                    if weight_config_this_layer["act_order"]:  # save perm for restoring the weights
-                        gptq_perm = gptq_config[self.get_full_layer_name(layer_name, block_idx)]["perm"]
-                    else:
-                        gptq_perm = None
-                    Q = sub_layers[layer_name].weight.data
-                    if weight_config_this_layer["act_order"]:
-                        Q.copy_(Q[:, gptq_perm])
-                    if is_transformers_imported() and isinstance(sub_layers[layer_name], transformers.Conv1D):
-                        Q = Q.t_().contiguous()
-                    from .utility import quant_weight_w_scale
+            for layer_name in sub_layers:
+                weight_config_this_layer = self.get_layer_config(self.get_full_layer_name(layer_name, block_idx))
+                gptq_scale = gptq_config[self.get_full_layer_name(layer_name, block_idx)]["scale"]
+                if not weight_config_this_layer["sym"]:
+                    gptq_zp = gptq_config[self.get_full_layer_name(layer_name, block_idx)]["zero"]
+                else:
+                    gptq_zp = None
+                if weight_config_this_layer["act_order"]:  # save perm for restoring the weights
+                    gptq_perm = gptq_config[self.get_full_layer_name(layer_name, block_idx)]["perm"]
+                else:
+                    gptq_perm = None
+                Q = sub_layers[layer_name].weight.data
+                if weight_config_this_layer["act_order"]:
+                    Q.copy_(Q[:, gptq_perm])
+                if is_transformers_imported() and isinstance(sub_layers[layer_name], transformers.Conv1D):
+                    Q = Q.t_().contiguous()
+                from .utility import quant_weight_w_scale
 
-                    quant_weight_w_scale(
-                        Q,
-                        gptq_scale,
-                        gptq_zp,
-                        weight_config_this_layer["group_size"],
-                        dtype=weight_config_this_layer["dtype"],
-                    )
-                    if weight_config_this_layer["act_order"]:
-                        invperm = torch.argsort(gptq_perm)
-                        Q.copy_(Q[:, invperm])
-                    int_weight = Q.type(torch.int32)  # copy_ is not workable for different types.
-                    # replace module
-                    if isinstance(sub_layers[layer_name], torch.nn.Linear):
-                        in_features = sub_layers[layer_name].in_features
-                        out_features = sub_layers[layer_name].out_features
-                    elif is_transformers_imported() and isinstance(sub_layers[layer_name], transformers.Conv1D):
-                        in_features = sub_layers[layer_name].weight.shape[0]
-                        out_features = sub_layers[layer_name].weight.shape[1]
-                        int_weight = sub_layers[layer_name].weight.t_().contiguous()
-                        scale = scale.t_().contiguous()
-                        zp = zp.t_().contiguous() if zp is not None else zp
+                quant_weight_w_scale(
+                    Q,
+                    gptq_scale,
+                    gptq_zp,
+                    weight_config_this_layer["group_size"],
+                    dtype=weight_config_this_layer["dtype"],
+                )
+                if weight_config_this_layer["act_order"]:
+                    invperm = torch.argsort(gptq_perm)
+                    Q.copy_(Q[:, invperm])
+                int_weight = Q.type(torch.int32)  # copy_ is not workable for different types.
+                # replace module
+                if isinstance(sub_layers[layer_name], torch.nn.Linear):
+                    in_features = sub_layers[layer_name].in_features
+                    out_features = sub_layers[layer_name].out_features
+                elif is_transformers_imported() and isinstance(sub_layers[layer_name], transformers.Conv1D):
+                    in_features = sub_layers[layer_name].weight.shape[0]
+                    out_features = sub_layers[layer_name].weight.shape[1]
+                    int_weight = sub_layers[layer_name].weight.t_().contiguous()
+                    scale = scale.t_().contiguous()
+                    zp = zp.t_().contiguous() if zp is not None else zp
 
-                    new_module = WeightOnlyLinear(
-                        in_features,
-                        out_features,
-                        dtype=weight_config_this_layer["dtype"],
-                        bits=weight_config_this_layer["bits"],
-                        group_size=weight_config_this_layer["group_size"],
-                        zp=gptq_zp is not None,
-                        bias=sub_layers[layer_name].bias is not None,
-                        g_idx=gptq_perm is not None,
-                        device=self.device,
-                    )
-                    new_module.pack(int_weight, gptq_scale, gptq_zp, sub_layers[layer_name].bias, gptq_perm)
-                    set_module(transformer_block, layer_name, new_module)
+                new_module = WeightOnlyLinear(
+                    in_features,
+                    out_features,
+                    dtype=weight_config_this_layer["dtype"],
+                    bits=weight_config_this_layer["bits"],
+                    group_size=weight_config_this_layer["group_size"],
+                    zp=gptq_zp is not None,
+                    bias=sub_layers[layer_name].bias is not None,
+                    g_idx=gptq_perm is not None,
+                    device=self.device,
+                )
+                new_module.pack(int_weight, gptq_scale, gptq_zp, sub_layers[layer_name].bias, gptq_perm)
+                set_module(transformer_block, layer_name, new_module)
             del gptq_for_this_block
             torch.cuda.empty_cache()
             # iteratively replace the input with output, thus layerwise quantization can continue.
@@ -979,7 +975,6 @@ class GPTQuantizer(INCQuantizer):
         max_seq_length=2048,
         use_max_length=True,
         device=None,
-        export_compressed_model=True,
         use_layer_wise=False,
         model_path=None,
         *args,
@@ -998,7 +993,6 @@ class GPTQuantizer(INCQuantizer):
             use_max_length=use_max_length,
             max_seq_length=max_seq_length,
             device=device,
-            export_compressed_model=export_compressed_model,
             use_layer_wise=use_layer_wise,
             model_path=model_path,
         )
