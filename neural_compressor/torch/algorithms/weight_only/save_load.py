@@ -16,11 +16,12 @@
 
 import json
 import os
+import re
 
 import torch
 
 from neural_compressor.common.utils import load_config_mapping, save_config_mapping
-from neural_compressor.torch.utils import QCONFIG_NAME, WEIGHT_NAME, logger
+from neural_compressor.torch.utils import QCONFIG_NAME, WEIGHT_NAME, logger, LoadFormat
 
 
 def save(model, output_dir="./saved_results"):
@@ -44,12 +45,12 @@ def save(model, output_dir="./saved_results"):
     logger.info("Save configuration of quantized model to {}.".format(qconfig_file_path))
 
 
-def load(model_name_or_path, model=None, format="default", *hf_model_args, **hf_model_kwargs):
-    if format == "huggingface":
+def load(model_name_or_path, model=None, format=LoadFormat.DEFAULT, *hf_model_args, **hf_model_kwargs):
+    if format == LoadFormat.HUGGINGFACE:
         model = _load_hf_woq_model(model_name_or_path, *hf_model_args, **hf_model_kwargs)
         logger.info("Quantized huggingface model loading successful.")
         return model
-    elif format == "default":
+    elif format == LoadFormat.DEFAULT:
         qmodel_weight_file_path = os.path.join(os.path.abspath(os.path.expanduser(model_name_or_path)), WEIGHT_NAME)
         assert os.path.exists(qmodel_weight_file_path), "Cannot load model weight from path {}".format(
             qmodel_weight_file_path
@@ -72,15 +73,19 @@ def load(model_name_or_path, model=None, format="default", *hf_model_args, **hf_
 def _build_woq_model(model, quantization_config, loaded_state_dict_keys):
     """Build weight-only quantization model."""
     from neural_compressor.torch.utils import set_module
-
-    from .modules import MulLinear, WeightOnlyLinear
+    from .modules import MulLinear
 
     for name, module in model.named_modules():
+        _is_autoround = False
         # get quantization config of module
-        module_name_type = str((name, type(module).__name__))
         module_quantization_config = quantization_config
-        if module_name_type in quantization_config:
-            module_quantization_config = [config for config in quantization_config[module_name_type].values()][0]
+        # pattern will map (module_name, moduele_type)
+        pattern = fr"(\(.*{re.escape(name)}.*{re.escape(type(module).__name__)}.*\))"
+        for q_config_key, q_config_value in quantization_config.items():
+            if re.search(pattern, q_config_key):
+                if isinstance(q_config_value, dict) and [algo for algo in q_config_value.keys()][0] == "autoround":
+                    _is_autoround = True
+                module_quantization_config = [config for config in q_config_value.values()][0]
 
         if isinstance(module, torch.nn.Linear):
             # module without qweight means it is not quantized, then skip it
@@ -100,16 +105,31 @@ def _build_woq_model(model, quantization_config, loaded_state_dict_keys):
             # replace `torch.nn.Linear` with `WeightOnlyLinear`
             zp = True if name + ".qzeros" in loaded_state_dict_keys_set else False
             g_idx = True if name + ".g_idx" in loaded_state_dict_keys_set else False
-            new_module = WeightOnlyLinear(
+
+            kwargs = {}
+            if _is_autoround:
+                from auto_round.export.export_to_itrex.model_wrapper import (
+                    WeightOnlyLinear as AutoRoundWeightOnlyLinear
+                )
+                from .utility import convert_dtype_str2torch
+                WeightOnlyLinearClass = AutoRoundWeightOnlyLinear
+                kwargs["groupsize"] = module_quantization_config.get("group_size", 32)
+                kwargs["scale_dtype"] = convert_dtype_str2torch(module_quantization_config.get("scale_dtype", "fp16"))
+            else:
+                from .modules import WeightOnlyLinear as INCWeightOnlyLinear
+                WeightOnlyLinearClass = INCWeightOnlyLinear
+                kwargs["group_size"] = module_quantization_config.get("group_size", 32)
+                kwargs["g_idx"] = g_idx
+
+            new_module = WeightOnlyLinearClass(
                 module.in_features,
                 module.out_features,
                 dtype=module_quantization_config.get("dtype", "int"),
                 bits=module_quantization_config.get("bits", 4),
-                group_size=module_quantization_config.get("group_size", 32),
                 zp=zp,
                 bias=module.bias is not None,
-                g_idx=g_idx,
                 use_optimum_format=True,
+                **kwargs,
             )
             set_module(model, name, new_module)
 
@@ -133,13 +153,9 @@ def _load_hf_woq_model(pretrained_model_name_or_path, *model_args, **kwargs):
     # check required package
     try:
         import transformers
-    except ImportError:
-        logger.error("`transformers` package is required for loading hugginface weight-only quantization model.")
-
-    try:
         import accelerate
-    except ImportError:
-        logger.error("`accelerate` package is required for loading hugginface weight-only quantization model.")
+    except ImportError as e:
+        raise e
 
     # below codes are refer to load_low_bit function in
     # https://github.com/intel/intel-extension-for-transformers/blob/v1.4.2/intel_extension_for_transformers/transformers/modeling/modeling_auto.py#L1464

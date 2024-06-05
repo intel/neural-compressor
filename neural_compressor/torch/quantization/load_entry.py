@@ -25,6 +25,7 @@ from neural_compressor.torch.quantization.config import (
     RTNConfig,
     TEQConfig,
 )
+from neural_compressor.torch.utils import LoadFormat
 
 config_name_mapping = {
     FP8_QUANT: FP8Config,
@@ -45,7 +46,7 @@ def load(model_name_or_path="./saved_results", model=None, format="default", *hf
     Returns:
         torch.nn.Module: quantized model
     """
-    if format == "default":
+    if format == LoadFormat.DEFAULT.value:
         from neural_compressor.common.base_config import ConfigRegistry
 
         qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(model_name_or_path)), "qconfig.json")
@@ -64,17 +65,17 @@ def load(model_name_or_path="./saved_results", model=None, format="default", *hf
             if isinstance(config_object, (RTNConfig, GPTQConfig, AWQConfig, TEQConfig, AutoRoundConfig)):  # WOQ
                 from neural_compressor.torch.algorithms.weight_only.save_load import load
 
-                return load(model_name_or_path, model=model, format=format)
+                return load(model_name_or_path, model=model, format=LoadFormat.DEFAULT)
 
             model.qconfig = config_mapping
             if isinstance(config_object, FP8Config):  # FP8
                 from neural_compressor.torch.algorithms.habana_fp8 import load
 
                 return load(model, model_name_or_path)
-    elif format == "huggingface":
+    elif format == LoadFormat.HUGGINGFACE.value:
         # now only support load huggingface WOQ causal language model
         from neural_compressor.torch.algorithms.weight_only.save_load import load
 
-        return load(model_name_or_path, format=format, *hf_model_args, **hf_model_kwargs)
+        return load(model_name_or_path, format=LoadFormat.HUGGINGFACE, *hf_model_args, **hf_model_kwargs)
     else:
         raise ValueError("`format` in load function can only be 'huggingface' or 'default', but get {}".format(format))
