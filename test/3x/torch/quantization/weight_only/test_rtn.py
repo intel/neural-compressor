@@ -4,7 +4,6 @@ import shutil
 import pytest
 import torch
 import transformers
-
 from neural_compressor.torch.algorithms.weight_only.modules import WeightOnlyLinear
 from neural_compressor.torch.quantization import (
     RTNConfig,
@@ -31,7 +30,6 @@ class ModelConv1d(torch.nn.Module):
         out = self.fc2(out)
         out = self.fc3(out)
         return out
-
 
 class TestRTNQuant:
     def setup_class(self):
@@ -294,3 +292,16 @@ class TestRTNQuant:
         loaded_out = loaded_model(self.example_inputs)[0]
         assert torch.allclose(inc_out, loaded_out), "Unexpected result. Please double check."
         assert isinstance(loaded_model.lm_head, WeightOnlyLinear), "loading compressed model failed."
+        
+    def test_no_transformers(self, monkeypatch):        
+        def mock_is_transformers_imported():
+            return False
+        
+        monkeypatch.setattr("neural_compressor.torch.algorithms.weight_only.rtn.is_transformers_imported", 
+                            mock_is_transformers_imported)
+        model = copy.deepcopy(self.tiny_gptj)
+        quant_config = get_default_rtn_config()
+        model = prepare(model, quant_config)
+        model = convert(model)
+        out = model(self.example_inputs)[0]
+        assert torch.allclose(out, self.label, atol=1e-1), "Accuracy gap atol > 0.1 is unexpected."
