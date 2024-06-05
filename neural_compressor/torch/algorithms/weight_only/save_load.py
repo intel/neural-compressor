@@ -158,7 +158,7 @@ def _load_hf_woq_model(pretrained_model_name_or_path, *model_args, **kwargs):
     try:
         import accelerate
         import transformers
-    except ImportError as e: # pragma: no cover
+    except ImportError as e:  # pragma: no cover
         raise e
 
     # below codes are refer to load_low_bit function in
@@ -214,7 +214,7 @@ def _load_hf_woq_model(pretrained_model_name_or_path, *model_args, **kwargs):
     if use_safetensors is None and not is_safetensors_available():
         use_safetensors = False
 
-    if use_auth_token is not None: # pragma: no cover
+    if use_auth_token is not None:  # pragma: no cover
         logger.warn(
             "The `use_auth_token` argument is deprecated and will be removed in v5 of Transformers. "
             "Please use `token` instead."
@@ -228,14 +228,14 @@ def _load_hf_woq_model(pretrained_model_name_or_path, *model_args, **kwargs):
         "framework": "pytorch",
         "from_auto_class": from_auto_class,
     }
-    if from_pipeline is not None: # pragma: no cover
+    if from_pipeline is not None:  # pragma: no cover
         user_agent["using_pipeline"] = from_pipeline
 
-    if kwarg_attn_imp is not None and config._attn_implementation != kwarg_attn_imp: # pragma: no cover
+    if kwarg_attn_imp is not None and config._attn_implementation != kwarg_attn_imp:  # pragma: no cover
         config._attn_implementation = kwarg_attn_imp
 
     if commit_hash is None:
-        if not isinstance(config, PretrainedConfig): # pragma: no cover
+        if not isinstance(config, PretrainedConfig):  # pragma: no cover
             # We make a call to the config file first (which may be absent)
             # to get the commit hash as soon as possible.
             resolved_config_file = cached_file(
@@ -266,7 +266,7 @@ def _load_hf_woq_model(pretrained_model_name_or_path, *model_args, **kwargs):
         has_remote_code,
     )
 
-    if has_remote_code and trust_remote_code: # pragma: no cover
+    if has_remote_code and trust_remote_code:  # pragma: no cover
         class_ref = config.auto_map[AutoModelForCausalLM.__name__]
         model_class = get_class_from_dynamic_module(class_ref, pretrained_model_name_or_path, **kwargs_orig)
         if os.path.isdir(pretrained_model_name_or_path):
@@ -285,7 +285,7 @@ def _load_hf_woq_model(pretrained_model_name_or_path, *model_args, **kwargs):
     is_sharded = False
     sharded_metadata = None
 
-    if pretrained_model_name_or_path is not None: # pragma: no cover
+    if pretrained_model_name_or_path is not None:  # pragma: no cover
         pretrained_model_name_or_path = str(pretrained_model_name_or_path)
         is_local = os.path.isdir(pretrained_model_name_or_path)
         if is_local:
@@ -444,10 +444,10 @@ def _load_hf_woq_model(pretrained_model_name_or_path, *model_args, **kwargs):
             resolved_archive_file = archive_file
         else:
             logger.info(f"loading weights file {filename} from cache at {resolved_archive_file}")
-    else: # pragma: no cover
+    else:  # pragma: no cover
         resolved_archive_file = None
 
-    if is_sharded: # pragma: no cover
+    if is_sharded:  # pragma: no cover
         # rsolved_archive_file becomes a list of files that point to the different checkpoint shards in this case.
         resolved_archive_file, sharded_metadata = get_checkpoint_shard_files(
             pretrained_model_name_or_path,
@@ -475,17 +475,17 @@ def _load_hf_woq_model(pretrained_model_name_or_path, *model_args, **kwargs):
             if torch_dtype == "auto":
                 if hasattr(config, "torch_dtype") and config.torch_dtype is not None and config.torch_dtype != "auto":
                     torch_dtype = config.torch_dtype
-                else: # pragma: no cover
+                else:  # pragma: no cover
                     if is_sharded and "dtype" in sharded_metadata:
                         torch_dtype = sharded_metadata["dtype"]
                     else:
                         torch_dtype = torch.float32
-            else: # pragma: no cover
+            else:  # pragma: no cover
                 assert False, f'`torch_dtype` can be either `torch.dtype` or `"auto"`, but received {torch_dtype}'
 
         dtype_orig = model_class._set_default_torch_dtype(torch_dtype)
 
-    if is_sharded: # pragma: no cover
+    if is_sharded:  # pragma: no cover
         loaded_state_dict_keys = sharded_metadata["all_checkpoint_keys"]
     else:
         # Time to load the checkpoint

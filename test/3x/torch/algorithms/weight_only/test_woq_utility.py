@@ -12,6 +12,7 @@ def test_quant_tensor_id(shape):
     id2 = id(output)
     assert id1 == id2, "quant_tensor function is an in-place operator"
 
+
 def test_convert_dtype_str2torch():
     from neural_compressor.torch.algorithms.weight_only.utility import convert_dtype_str2torch
 
