@@ -911,6 +911,7 @@ def get_example_input(dataloader, i=1):
         example_inp (object).
     """
     iter = 0
+    example_inp = None
     try:
         for example_inp, label in dataloader:
             if iter == i:

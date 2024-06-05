@@ -6,6 +6,7 @@ from neural_compressor.torch.algorithms.weight_only.utility import (
     forward_wrapper,
     model_forward,
     get_example_input,
+    CapturedDataloader
 )
 
 
@@ -137,6 +138,11 @@ class TestUtility:
         assert torch.all(example_inp_multiple_batches == torch.tensor([7, 8, 9]))
         example_inp_multiple_batches = get_example_input(dataloader_multiple_batches, i=0)
         assert torch.all(example_inp_multiple_batches == torch.tensor([1, 2, 3]))
+        
+        # test empty dataloader
+        dataloader_multiple_batches = dataloader_multiple_batches = MockDataLoader([])
+        example_inp_multiple_batches = get_example_input(dataloader_multiple_batches, i=1)
+        assert example_inp_multiple_batches is None
 
         # Test case 2: When the dataloader contains a single input
         dataloader_single_batch = MockDataLoader([
@@ -147,3 +153,34 @@ class TestUtility:
         assert torch.all(example_inp_single_batch == torch.tensor([1, 2, 3, 4]))
         example_inp_single_batch = get_example_input(dataloader_single_batch, i=1)
         assert torch.all(example_inp_single_batch == torch.tensor([5, 6, 7, 8]))
+        
+    def test_captured_dataloader_iteration(self):
+        """
+        Test the iteration behavior of CapturedDataloader.
+        """
+        # Test case when args is empty
+        args_list = [(), (), ()]
+        kwargs_list = [{'a': 1}, {'b': 2}, {'c': 3}]
+        dataloader = CapturedDataloader(args_list, kwargs_list)
+
+        result = list(dataloader)
+
+        assert result == [{'a': 1}, {'b': 2}, {'c': 3}]
+
+        # Test case when kwargs is empty
+        args_list = [(1,), (2,), (3,)]
+        kwargs_list = [{}, {}, {}]
+        dataloader = CapturedDataloader(args_list, kwargs_list)
+
+        result = list(dataloader)
+
+        assert result == [(1,), (2,), (3,)]
+
+        # Test case when both args and kwargs are present
+        args_list = [(1,), (2,), (3,)]
+        kwargs_list = [{'a': 1}, {'b': 2}, {'c': 3}]
+        dataloader = CapturedDataloader(args_list, kwargs_list)
+
+        expected_result = [((1,), {'a': 1}), ((2,), {'b': 2}), ((3,), {'c': 3})]
+        result = list(dataloader)
+        assert result == expected_result
