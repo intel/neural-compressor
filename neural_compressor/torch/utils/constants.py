@@ -58,6 +58,7 @@ PT2E_DYNAMIC_QUANT = "pt2e_dynamic_quant"
 # load format name
 from enum import Enum
 
+
 class LoadFormat(Enum):
     DEFAULT = "default"
     HUGGINGFACE = "huggingface"

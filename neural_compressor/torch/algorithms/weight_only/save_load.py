@@ -21,7 +21,7 @@ import re
 import torch
 
 from neural_compressor.common.utils import load_config_mapping, save_config_mapping
-from neural_compressor.torch.utils import QCONFIG_NAME, WEIGHT_NAME, logger, LoadFormat
+from neural_compressor.torch.utils import QCONFIG_NAME, WEIGHT_NAME, LoadFormat, logger
 
 
 def save(model, output_dir="./saved_results"):
@@ -73,6 +73,7 @@ def load(model_name_or_path, model=None, format=LoadFormat.DEFAULT, *hf_model_ar
 def _build_woq_model(model, quantization_config, loaded_state_dict_keys):
     """Build weight-only quantization model."""
     from neural_compressor.torch.utils import set_module
+
     from .modules import MulLinear
 
     for name, module in model.named_modules():
@@ -80,7 +81,7 @@ def _build_woq_model(model, quantization_config, loaded_state_dict_keys):
         # get quantization config of module
         module_quantization_config = quantization_config
         # pattern will map (module_name, moduele_type)
-        pattern = fr"(\(.*{re.escape(name)}.*{re.escape(type(module).__name__)}.*\))"
+        pattern = rf"(\(.*{re.escape(name)}.*{re.escape(type(module).__name__)}.*\))"
         for q_config_key, q_config_value in quantization_config.items():
             if re.search(pattern, q_config_key):
                 if isinstance(q_config_value, dict) and [algo for algo in q_config_value.keys()][0] == "autoround":
@@ -109,14 +110,17 @@ def _build_woq_model(model, quantization_config, loaded_state_dict_keys):
             kwargs = {}
             if _is_autoround:
                 from auto_round.export.export_to_itrex.model_wrapper import (
-                    WeightOnlyLinear as AutoRoundWeightOnlyLinear
+                    WeightOnlyLinear as AutoRoundWeightOnlyLinear,
                 )
+
                 from .utility import convert_dtype_str2torch
+
                 WeightOnlyLinearClass = AutoRoundWeightOnlyLinear
                 kwargs["groupsize"] = module_quantization_config.get("group_size", 32)
                 kwargs["scale_dtype"] = convert_dtype_str2torch(module_quantization_config.get("scale_dtype", "fp16"))
             else:
                 from .modules import WeightOnlyLinear as INCWeightOnlyLinear
+
                 WeightOnlyLinearClass = INCWeightOnlyLinear
                 kwargs["group_size"] = module_quantization_config.get("group_size", 32)
                 kwargs["g_idx"] = g_idx
@@ -152,8 +156,8 @@ def _load_inc_woq_model(qmodel_weight_file_path, qconfig_file_path, origin_model
 def _load_hf_woq_model(pretrained_model_name_or_path, *model_args, **kwargs):
     # check required package
     try:
-        import transformers
         import accelerate
+        import transformers
     except ImportError as e:
         raise e
 
