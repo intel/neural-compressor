@@ -61,7 +61,7 @@ stages:
           - script: |
               echo ${BUILD_SOURCESDIRECTORY}
               rm -fr ${BUILD_SOURCESDIRECTORY} || sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
-              echo y | docker system prune
+              echo y | docker system prune --all
             displayName: "Clean workspace"
           - checkout: self
             clean: true
