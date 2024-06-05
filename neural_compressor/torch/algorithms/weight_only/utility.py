@@ -32,7 +32,6 @@ __all__ = [
     "forward_wrapper",
     "get_absorb_layers",
     "get_block_prefix",
-    "get_example_input",
     "replace_forward",
     "recover_forward",
     "get_module",
@@ -902,32 +901,6 @@ def get_block_prefix(model):
             break
     assert block_num > 0, "block num shouldn't be zero!"
     return block_prefix, block_num
-
-
-# copy from neural_compressor/adaptor/torch_utils/util.py
-def get_example_input(dataloader, i=1):
-    """Get the example input.
-
-    Args:
-        dataloader (object): calibration dataset.
-
-    Returns:
-        example_inp (object).
-    """
-    iter = 0
-    try:
-        for example_inp, label in dataloader:
-            if iter == i:
-                break
-            else:
-                iter += 1
-    except:
-        for example_inp in dataloader:
-            if iter == i:
-                break
-            else:
-                iter += 1
-    return example_inp
 
 
 def replace_forward(model):

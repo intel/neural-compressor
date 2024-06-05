@@ -152,15 +152,6 @@ def log_quantizable_layers_per_transformer(transformer_blocks, layers=SUPPORTED_
             logger.info(name)
 
 
-# ===============quantization related============================
-def quantize(x, scale, zero, maxq):
-    """Do quantization."""
-    if maxq < 0:
-        return (x > scale / 2).float() * scale + (x < zero / 2).float() * zero
-    q = torch.clamp(torch.round(x / scale) + zero, 0, maxq)
-    return scale * (q - zero)
-
-
 class RAWGPTQuantizer(object):
     """Main API for GPTQ algorithm.
 
