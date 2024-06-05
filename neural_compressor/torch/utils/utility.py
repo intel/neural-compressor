@@ -22,8 +22,7 @@ from torch.ao.quantization.quantizer import QuantizationSpec
 from torch.ao.quantization.quantizer.x86_inductor_quantizer import QuantizationConfig, X86InductorQuantizer
 from typing_extensions import TypeAlias
 
-from neural_compressor.common import logger
-from neural_compressor.common.utils import LazyImport, Mode
+from neural_compressor.common.utils import LazyImport, Mode, logger
 
 OP_NAME_AND_TYPE_TUPLE_TYPE: TypeAlias = Tuple[str, Union[torch.nn.Module, Callable]]
 
