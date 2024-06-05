@@ -38,8 +38,8 @@ def load(model_name_or_path="./saved_results", model=None, format="default", *hf
     Args:
         model_name_or_path (str, optional): local path where quantized weights or model are saved
             or huggingface model id. Defaults to "./saved_results".
-        model (torch.nn.Module, optional): original model. Require to pass when loading INC WOQ quantized model
-            or loading FP8 model. Defaults to None.
+        model (torch.nn.Module, optional): original model, suggest to use empty tensor.
+            Require to pass when loading INC WOQ quantized model or loading FP8 model. Defaults to None.
         format (str, optional): 'defult' for loading INC quantized model.
             'huggingface' now only for loading huggingface WOQ causal language model. Defaults to "default".
 

@@ -1,10 +1,11 @@
 # Smooth Quant
 
-1. [Introduction](#introduction)
-2. [Usage](#usage)   
-   2.1 [Using a Fixed alpha](#using-a-fixed-alpha)   
-   2.2 [Determining the alpha through auto-tuning](#determining-the-alpha-through-auto-tuning)   
-3. [Examples](#examples)
+- [Smooth Quant](#smooth-quant)
+  - [Introduction](#introduction)
+  - [Usage](#usage)
+    - [Using a Fixed `alpha`](#using-a-fixed-alpha)
+    - [Determining the `alpha` through auto-tuning](#determining-the-alpha-through-auto-tuning)
+  - [Examples](#examples)
 
 
 ## Introduction
@@ -49,4 +50,4 @@ best_model = autotune(
 
 ## Examples
 
-Users can also refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/3.x_api/tensorflow/nlp/large_language_models\quantization\ptq\smoothquant) on how to apply smooth quant to a TensorFlow model with INC 3x API.
+Users can also refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/3.x_api/tensorflow/nlp/large_language_models\quantization\ptq\smoothquant) on how to apply smooth quant to a TensorFlow model with `neural_compressor.tensorflow`.

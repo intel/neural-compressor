@@ -114,8 +114,8 @@ def prepare(
     Args:
         model (torch.nn.Module): origin model
         quant_config (BaseConfig): path to quantization config
-        inplace (bool): It will change the given model in-place if True.
-        example_inputs: used to trace torch model.
+        inplace (bool, optional): It will change the given model in-place if True.
+        example_inputs (tensor/tuple/dict, optional): used to trace torch model.
 
     Returns:
         prepared and calibrated module.
