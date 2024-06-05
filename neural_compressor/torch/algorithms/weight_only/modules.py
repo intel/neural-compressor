@@ -289,7 +289,7 @@ class WeightOnlyLinear(torch.nn.Module):
     def unpack_tensor_with_torch(self, packed_tensor):
         target_dtype = torch.int8 if not hasattr(self, "qzeros") or "int" not in self.dtype else torch.uint8
         target_len = packed_tensor.shape[1] * self.n_pack
-        unpacked_tensor = torch.zeros(packed_tensor.shape[0], target_len, dtype=self.compression_dtype).to(self.device)
+        unpacked_tensor = torch.zeros(packed_tensor.shape[0], target_len, dtype=target_dtype).to(self.device)
         mask = torch.tensor(2**self.bits - 1, dtype=self.compression_dtype).to(self.device)
         for j in range(packed_tensor.shape[1]):
             for e in range(self.n_pack):
