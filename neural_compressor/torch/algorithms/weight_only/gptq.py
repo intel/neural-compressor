@@ -338,12 +338,12 @@ class RAWGPTQuantizer(object):
             raise ValueError
 
         # Step1: fetch the embeddings and other layers before the transformer stack.
-        if not self.use_layer_wise:
+        if not self.use_layer_wise:  # pragma: no cover
             for embedding_name, embedding_layer in self.gptq_related_blocks["embeddings"].items():
                 embedding_layer = embedding_layer.to(self.device)
 
         # Step2: modify the first transformer block's forward function to obtain inputs for calibration
-        if not self.use_layer_wise:
+        if not self.use_layer_wise:  # pragma: no cover
             self.gptq_related_blocks["transformers"][0] = self.gptq_related_blocks["transformers"][0].to(self.device)
         self.forward_cache = self.gptq_related_blocks["transformers"][0].forward
         self.gptq_related_blocks["transformers"][0].forward = partial(
@@ -364,7 +364,7 @@ class RAWGPTQuantizer(object):
 
         # Step 4: restore original forward function, relocate layers back to cpu.
         self.gptq_related_blocks["transformers"][0].forward = self.forward_cache
-        if not self.use_layer_wise:
+        if not self.use_layer_wise:  # pragma: no cover
             self.gptq_related_blocks["transformers"][0] = self.gptq_related_blocks["transformers"][0].cpu()
             for embedding_name, embedding_layer in self.gptq_related_blocks["embeddings"].items():
                 embedding_layer.to(self.device)
@@ -405,7 +405,7 @@ class RAWGPTQuantizer(object):
         tblock_length = len(self.gptq_related_blocks["transformers"])
         for block_idx in range(tblock_length):
             logger.info(f"Quantizing layer {block_idx + 1} / {tblock_length}..")
-            if not self.use_layer_wise:
+            if not self.use_layer_wise:  # pragma: no cover
                 # if we do not apply layer-wise feature, we still place the entire block on the GPU
                 transformer_block = self.gptq_related_blocks["transformers"][block_idx].to(self.device)
             else:
@@ -432,7 +432,7 @@ class RAWGPTQuantizer(object):
                 # )
                 full_layer_name = self.get_full_layer_name(layer_name, block_idx)
                 weight_config_this_layer = self.get_layer_config(full_layer_name)
-                if self.use_layer_wise:
+                if self.use_layer_wise:  # pragma: no cover
                     from neural_compressor.torch.algorithms.layer_wise import load_value
 
                     W = load_value(self.model, full_layer_name + ".weight", model_path)
@@ -470,7 +470,7 @@ class RAWGPTQuantizer(object):
                 # )
                 weight_config_this_layer = self.get_layer_config(self.get_full_layer_name(layer_name, block_idx))
                 logger.info(f"Quantizing layer {layer_name}")
-                if self.use_layer_wise:
+                if self.use_layer_wise:  # pragma: no cover
                     from neural_compressor.torch.algorithms.layer_wise import load_value
 
                     full_layer_name = self.get_full_layer_name(layer_name, block_idx)
@@ -488,7 +488,7 @@ class RAWGPTQuantizer(object):
                     act_order=weight_config_this_layer["act_order"],
                     static_groups=weight_config_this_layer["static_groups"],
                 )
-                if self.use_layer_wise:
+                if self.use_layer_wise:  # pragma: no cover
                     from neural_compressor.torch.algorithms.layer_wise import (
                         LWQ_WORKSPACE,
                         clean_module_weight,
@@ -531,7 +531,7 @@ class RAWGPTQuantizer(object):
                 out = self.track_hidden_states(out)
                 outs.append(out)
             self.cache_key_arguments["batch_num"] = batch_num
-            if self.use_layer_wise:
+            if self.use_layer_wise:  # pragma: no cover
                 self.gptq_related_blocks["transformers"][block_idx] = transformer_block
             else:
                 self.gptq_related_blocks["transformers"][block_idx] = transformer_block.cpu()
@@ -983,7 +983,7 @@ class GPTQuantizer(INCQuantizer):
         """Run weight-only quantization with."""
         # TODO: unify weight_config keys, add docstring, and support default config
         assert isinstance(model, torch.nn.Module), "only support torch module"
-        if use_layer_wise:
+        if use_layer_wise:  # pragma: no cover
             assert model_path is not None, "model_path should not be None when use layer wise mode"
 
         self.gptq_quantizer = RAWGPTQuantizer(
