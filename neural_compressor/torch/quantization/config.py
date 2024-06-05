@@ -666,7 +666,7 @@ class AutoRoundConfig(BaseConfig):
         enable_full_range: bool = False,
         batch_size: int = 8,
         lr_scheduler=None,
-        use_quant_input: bool = True,
+        enable_quanted_input: bool = True,
         enable_minmax_tuning: bool = True,
         lr: float = None,
         minmax_lr: float = None,
@@ -680,7 +680,7 @@ class AutoRoundConfig(BaseConfig):
         gradient_accumulate_steps: int = 1,
         not_use_best_mse: bool = False,
         dynamic_max_gap: int = -1,
-        scale_dtype: str = "fp32",
+        scale_dtype: str = "fp16",
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init AUTOROUND weight-only quantization config.
@@ -693,7 +693,7 @@ class AutoRoundConfig(BaseConfig):
             enable_full_range (bool): Whether to enable full range quantization (default is False).
             batch_size (int): Batch size for training (default is 8).
             lr_scheduler: The learning rate scheduler to be used.
-            use_quant_input (bool): Whether to use quantized input data (default is True).
+            enable_quanted_input (bool): Whether to use quantized input data (default is True).
             enable_minmax_tuning (bool): Whether to enable min-max tuning (default is True).
             lr (float): The learning rate (default is 0.005).
             minmax_lr (float): The learning rate for min-max tuning (default is None).
@@ -707,7 +707,7 @@ class AutoRoundConfig(BaseConfig):
             gradient_accumulate_steps (int): Number of gradient accumulation steps (default is 1).
             not_use_best_mse (bool): Whether to use mean squared error (default is False).
             dynamic_max_gap (int): The dynamic maximum gap (default is -1).
-            scale_dtype (str): The data type of quantization scale to be used (default is "float32"), different kernels
+            scale_dtype (str): The data type of quantization scale to be used (default is "float16"), different kernels
                         have different choices.
         """
         super().__init__(white_list=white_list)
@@ -718,7 +718,7 @@ class AutoRoundConfig(BaseConfig):
         self.enable_full_range = enable_full_range
         self.batch_size = batch_size
         self.lr_scheduler = lr_scheduler
-        self.use_quant_input = use_quant_input
+        self.enable_quanted_input = enable_quanted_input
         self.enable_minmax_tuning = enable_minmax_tuning
         self.lr = lr
         self.minmax_lr = minmax_lr
