@@ -245,60 +245,41 @@ class RAWGPTQuantizer(object):
 
     def check_layer_config(self):
         """Copy arguments from weight_config to built-in attributes."""
-        if not self.weight_config:
-            for name, module in self.model.named_modules():
-                self.weight_config[name] = {
-                    "dtype": self.dtype_default,
-                    "bits": self.bits_default,
-                    "sym": self.sym_default,
-                    "group_size": self.group_size_default,
-                    "mse": self.mse_default,
-                    "perchannel": self.perchannel_default,
-                    "act_order": self.act_order_default,
-                    "percdamp": self.percdamp_default,
-                    "block_size": self.block_size_default,
-                    "static_groups": self.static_groups_default,
-                    "use_double_quant": self.use_double_quant_default,
-                    "double_quant_dtype": self.double_quant_dtype_default,
-                    "double_quant_bits": self.double_quant_bits_default,
-                    "double_quant_sym": self.double_quant_sym_default,
-                    "double_quant_group_size": self.double_quant_group_size_default,
-                }
-        else:
-            for layer_name, config in self.weight_config.items():
-                self.weight_config[layer_name]["dtype"] = config.get("dtype", self.dtype_default)
-                self.weight_config[layer_name]["bits"] = config.get("bits", self.bits_default)
-                self.weight_config[layer_name]["group_size"] = config.get("group_size", self.group_size_default)
-                self.weight_config[layer_name]["block_size"] = config.get("block_size", self.group_size_default)
-                self.weight_config[layer_name]["percdamp"] = config.get("percdamp", self.percdamp_default)
-                self.weight_config[layer_name]["sym"] = config.get("sym", self.sym_default)
-                self.weight_config[layer_name]["act_order"] = config.get("act_order", self.act_order_default)
-                self.weight_config[layer_name]["static_groups"] = config.get(
-                    "static_groups", self.static_groups_default
-                )
-                self.weight_config[layer_name]["perchannel"] = config.get("perchannel", self.perchannel_default)
-                self.weight_config[layer_name]["mse"] = config.get("mse", self.mse_default)
-                self.weight_config[layer_name]["use_double_quant"] = config.get(
-                    "use_double_quant", self.use_double_quant_default
-                )
-                self.weight_config[layer_name]["double_quant_dtype"] = config.get(
-                    "double_quant_dtype", self.double_quant_dtype_default
-                )  # only support int
-                self.weight_config[layer_name]["double_quant_bits"] = config.get(
-                    "double_quant_bits", self.double_quant_bits_default
-                )
-                self.weight_config[layer_name]["double_quant_group_size"] = config.get(
-                    "double_quant_group_size", self.double_quant_group_size_default
-                )
-                self.weight_config[layer_name]["double_quant_sym"] = config.get(
-                    "double_quant_sym", self.double_quant_sym_default
-                )
-                if (
-                    self.weight_config[layer_name]["dtype"] != "int"
-                    and "int" in self.weight_config[layer_name]["dtype"]
-                ):
-                    self.weight_config[layer_name]["bits"] = int(self.weight_config[layer_name]["dtype"].lstrip("int"))
-                    self.weight_config[layer_name]["dtype"] = "int"
+        
+        for layer_name, config in self.weight_config.items():
+            self.weight_config[layer_name]["dtype"] = config.get("dtype", self.dtype_default)
+            self.weight_config[layer_name]["bits"] = config.get("bits", self.bits_default)
+            self.weight_config[layer_name]["group_size"] = config.get("group_size", self.group_size_default)
+            self.weight_config[layer_name]["block_size"] = config.get("block_size", self.group_size_default)
+            self.weight_config[layer_name]["percdamp"] = config.get("percdamp", self.percdamp_default)
+            self.weight_config[layer_name]["sym"] = config.get("sym", self.sym_default)
+            self.weight_config[layer_name]["act_order"] = config.get("act_order", self.act_order_default)
+            self.weight_config[layer_name]["static_groups"] = config.get(
+                "static_groups", self.static_groups_default
+            )
+            self.weight_config[layer_name]["perchannel"] = config.get("perchannel", self.perchannel_default)
+            self.weight_config[layer_name]["mse"] = config.get("mse", self.mse_default)
+            self.weight_config[layer_name]["use_double_quant"] = config.get(
+                "use_double_quant", self.use_double_quant_default
+            )
+            self.weight_config[layer_name]["double_quant_dtype"] = config.get(
+                "double_quant_dtype", self.double_quant_dtype_default
+            )  # only support int
+            self.weight_config[layer_name]["double_quant_bits"] = config.get(
+                "double_quant_bits", self.double_quant_bits_default
+            )
+            self.weight_config[layer_name]["double_quant_group_size"] = config.get(
+                "double_quant_group_size", self.double_quant_group_size_default
+            )
+            self.weight_config[layer_name]["double_quant_sym"] = config.get(
+                "double_quant_sym", self.double_quant_sym_default
+            )
+            if (
+                self.weight_config[layer_name]["dtype"] != "int"
+                and "int" in self.weight_config[layer_name]["dtype"]
+            ):
+                self.weight_config[layer_name]["bits"] = int(self.weight_config[layer_name]["dtype"].lstrip("int"))
+                self.weight_config[layer_name]["dtype"] = "int"
 
     def get_layer_config(self, layer_name):
         """Obtain config for one layer, since GPTQ supports layer-wise config."""
