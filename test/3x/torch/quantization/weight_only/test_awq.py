@@ -11,6 +11,7 @@ logger = Logger().get_logger()
 from neural_compressor.torch.algorithms.weight_only.modules import WeightOnlyLinear
 from neural_compressor.torch.quantization import AWQConfig, convert, get_default_awq_config, prepare, quantize
 from neural_compressor.torch.utils import accelerator
+from neural_compressor.torch.algorithms.weight_only.utility import GraphTrace
 
 device = accelerator.current_device_name()
 
@@ -136,3 +137,16 @@ class TestAWQQuant:
         loaded_out = loaded_model(self.example_inputs)[0]
         assert torch.allclose(inc_out, loaded_out), "Unexpected result. Please double check."
         assert isinstance(loaded_model.lm_head, WeightOnlyLinear), "loading compressed model failed."
+
+    # def test_trace(self):
+    #     op_types = ["Linear"]
+    #     tg = GraphTrace()
+    #     model = copy.deepcopy(self.tiny_gptj)
+    #     # absorb_to_layer={'absorb_layer': absorbed_layer}
+    #     example_inputs = torch.randn([1, 32])
+    #     lm_input = torch.ones([1, 10], dtype=torch.long)
+    #     absorb_to_layer, no_absorb_layers = tg.get_absorb_to_layer(model, example_inputs, op_types)
+    #     assert len(no_absorb_layers) == 1
+    #     model = copy.deepcopy(self.tiny_gptj)
+    #     absorb_to_layer, no_absorb_layers = tg.get_absorb_to_layer(model, lm_input, op_types)
+    #     assert len(no_absorb_layers) == 11
