@@ -1,3 +1,4 @@
 tensorflow
+tf_keras
 datasets
 transformers

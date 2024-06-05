@@ -28,10 +28,7 @@ sys.path.insert(0, './')
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--sq', action='store_true', default=False, help="whether to use smooth quant")
-# parser.add_argument('--calib_num', type=int, default=100, help="calibration num for sq")
 parser.add_argument('--model_name_or_path', type=str, default="facebook/opt-125m")
-# TODO auto tuning not supported currently for TF backend
-# parser.add_argument('--alpha', default=0.5, help="Set alpha=auto to use alpha tuning.")
 parser.add_argument('--alpha', type=float, default=0.5, help="alpha value for smoothing.")
 parser.add_argument('--log_frequency', type=int, default=100)
 parser.add_argument('--batch_size', type=int, default=16)
@@ -71,9 +68,12 @@ class Evaluator:
         return tf.constant(1 - (input_ids==1).numpy().astype(int))
     
     def evaluate_tf_v1(self, model):
-        # return 0.99 # TODO debug remove
         total, hit = 0, 0
         index = 1
+        from neural_compressor.tensorflow.utils import BaseModel
+
+        if isinstance(model, BaseModel):
+            model = model.model
         infer = model.signatures["serving_default"]
         for input_ids, label, label_indices in tqdm(self.dataloader):
             attention_mask = self.get_attention_mask(input_ids)
@@ -127,13 +127,9 @@ class CustomDataloader:
     def __iter__(self):
         if self.for_calib:
             labels = None
-            # label_indices = None
             for idx, record in enumerate(self.dataset):
                 input_id, label, label_index = self.pad_input(record)
                 attention_mask = self.get_attention_mask(input_id)
-                # compose attention_mask and input_id together
-                # during the calibration, it requires to yield a <attention_mask, input_id>
-                # cur_input = tf.constant(np.append(attention_mask, input_id.numpy(), axis=0))
                 cur_input = {"input_ids": input_id.numpy(), "attention_mask": attention_mask}
                 assert self.batch_size == 1
                 yield (cur_input, label)
@@ -176,7 +172,6 @@ eval_dataset = load_dataset('lambada', split='validation')
 evaluator = Evaluator(eval_dataset, tokenizer, 'cpu')
 
 calib_dataset = load_dataset('lambada', split='train')
-# calib_dataset = eval_dataset  # TODO for debug
 calib_dataset = calib_dataset.shuffle(seed=42)
 calib_dataloader = CustomDataloader(calib_dataset, tokenizer, device='cpu', batch_size=1, for_calib=True)
 
@@ -190,8 +185,6 @@ from neural_compressor.tensorflow.quantization import TuningConfig
 ptq_config = None
 quant_config = []
 
-os.environ["TF_USE_LEGACY_KERAS"]="False"
-
 if args.sq:
     quant_config.append(SmoothQuantConfig(alpha=args.alpha))
 if args.kl:
@@ -203,7 +196,7 @@ if not ptq_config:
     ptq_config = StaticQuantConfig(act_dtype=["fp32", "int8"], weight_dtype=["fp32", "int8"])
 
 quant_config.append(ptq_config)
-tune_config = TuningConfig(config_set=quant_config, max_trials=100)
+tune_config = TuningConfig(config_set=quant_config, max_trials=3)
 q_model = autotune(model, 
                     tune_config, 
                     eval_fn=eval_func,

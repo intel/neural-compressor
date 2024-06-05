@@ -64,7 +64,6 @@ class Evaluator:
         return tf.constant(1 - (input_ids==1).numpy().astype(int))
     
     def evaluate_tf_v1(self, model):
-        # return 0.99 # TODO debug remove
         total, hit = 0, 0
         index = 1
         infer = model.signatures["serving_default"]
@@ -184,9 +183,8 @@ if args.int8:
 else:
     print("benchmaking fp32 model")
     model = transformers.TFAutoModelForCausalLM.from_pretrained(model_name)
-    from neural_compressor.experimental import common
+    from neural_compressor.tensorflow import Model
 
-    os.environ["TF_USE_LEGACY_KERAS"]="False"
-    model = common.Model(model).model # tensorflow.python.trackable.autotrackable.AutoTrackable object
+    model = Model(model).model # tensorflow.python.trackable.autotrackable.AutoTrackable object
 
 evaluator.evaluate_tf_v1(model)
