@@ -37,7 +37,9 @@ def is_transformers_imported() -> bool:
 
 ################ Check available sys.module to decide behavior #################
 def is_package_available(package_name):
-    package_spec = importlib.util.find_spec(package_name)
+    from importlib.util import find_spec
+
+    package_spec = find_spec(package_name)
     return package_spec is not None
 
 
