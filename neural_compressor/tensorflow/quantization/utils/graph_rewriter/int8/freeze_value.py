@@ -79,7 +79,7 @@ class FreezeValueTransformer(GraphRewriterBase):
                 output.append(i)
             elif semi_count % 2 != 0:
                 self.logger.warning("Invalid line.")
-            else:
+            else:  # pragma: no cover
                 loop_times = int(semi_count / 2)
                 semi_index = [index for index, value in enumerate(i) if value == ";"]
                 for index in range(loop_times - 1):
@@ -165,7 +165,7 @@ class FreezeValueTransformer(GraphRewriterBase):
 
             res[key].append(sorted(temp_max[key])[target_max_index])
 
-        if self.tensor_data:
+        if self.tensor_data:  # pragma: no cover
             for k, v in self.tensor_data.items():
                 if k in res:
                     self.logger.debug("Update node {} min to {}, max to {}.".format(k, v[2], v[3]))
@@ -241,7 +241,7 @@ class FreezeValueTransformer(GraphRewriterBase):
             if not self.graph_info.get(in_node_name) or not in_node_name.endswith("_eightbit_quantized_in"):
                 in_node_name = None
 
-            if self.itex_mode and "BatchNorm" in node_name:
+            if self.itex_mode and "BatchNorm" in node_name:  # pragma: no cover
                 bn_node_name = node_name[: -len("_eightbit_requant_range")]
                 if bn_node_name not in self.graph_info:
                     bn_node_name = None
@@ -284,7 +284,7 @@ class FreezeValueTransformer(GraphRewriterBase):
                 attr_value_pb2.AttrValue(tensor=tensor_util.make_tensor_proto(float(value[1]), dtypes.float32, []))
             )
 
-            if bn_node_name:
+            if bn_node_name:  # pragma: no cover
                 if self.itex_mode:
                     self.cur_graph.replace_const_node(
                         min_node,

@@ -147,8 +147,6 @@ class TestModelWrappers(unittest.TestCase):
         "Only supports tf previous to the version 2.16.1",
     )
     def test_estimator(self):
-        from neural_compressor.tensorflow.quantization.utils.utility import get_estimator_graph
-
         model_fn = build_estimator()
         input_fn = build_input_fn()
         estimator = tf.estimator.Estimator(model_fn, model_dir=None, config=None, params=None, warm_start_from=None)
@@ -205,7 +203,7 @@ class TestModelWrappers(unittest.TestCase):
         self.assertGreaterEqual(len(model.input_node_names), 1)
         self.assertEqual(model.model_path, "./slim_ckpt/inception_v1.ckpt")
         # test net factory
-        from neural_compressor.tensorflow.utils.nets_factory import TFSlimNetsFactory
+        from neural_compressor.tensorflow.utils.utility import TFSlimNetsFactory
 
         factory = TFSlimNetsFactory()
         from tf_slim.nets import inception

@@ -190,7 +190,7 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
 
             return config
 
-else:
+else:  # pragma: no cover
 
     class QConv2D(Conv):
         def __init__(

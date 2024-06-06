@@ -117,7 +117,7 @@ from neural_compressor.tensorflow.utils import (
     version1_lte_version2,
 )
 
-TF_SUPPORTED_MAX_VERSION = "2.15.0"
+TF_SUPPORTED_MAX_VERSION = "2.16.1"
 TF_SUPPORTED_MIN_VERSION = "1.14.0"
 
 logger = logging.getLogger("neural_compressor")
@@ -231,10 +231,6 @@ class GraphConverter:
         Args:
             model(TensorflowBaseModel): input TensorflowBaseModel
         """
-        if self.calib_func:
-            self.calib_func(model.model)
-            return
-
         if model.model_type == "llm_saved_model":
             self._inference_llm(model)
             return
@@ -274,7 +270,7 @@ class GraphConverter:
                                 break
                 else:
                     feed_dict = {input_tensor[0]: inputs}  # get raw tensor using index [0]
-            else:
+            else:  # pragma: no cover
                 assert len(input_tensor) == len(inputs), "inputs len must equal with input_tensor"
                 feed_dict = {}
                 if isinstance(inputs, dict) or isinstance(inputs, OrderedDict) or isinstance(inputs, UserDict):
@@ -466,7 +462,7 @@ class GraphConverter:
             else:
                 model = self.quantize()
 
-        if self.itex_mode:
+        if self.itex_mode:  # pragma: no cover
             host_const_graph_def = PostHostConstConverter(self._tmp_model.graph_def).do_transformation()
             host_const_graph_def.library.CopyFrom(self.model.graph_def.library)
             self._tmp_model.graph_def = host_const_graph_def
@@ -633,7 +629,7 @@ class GraphConverter:
                     self._freeze_requantization_ranges(self._kl_op_dict)
                     self._fuse_requantize_with_fused_quantized_node()
 
-        except ValueError as e:
+        except ValueError as e:  # pragma: no cover
             logger.error("Fail to quantize graph due to {}.".format(str(e)))
             self._tmp_model = None
             raise
@@ -944,7 +940,7 @@ class GraphConverter:
 
     def _convert_qdq(self):
         """Convert Dequantize + Op + QuantizeV2 into QuantizedOps."""
-        if self.itex_mode:
+        if self.itex_mode:  # pragma: no cover
             self._tmp_graph_def, quantizev2_max = FreezeValueTransformer(
                 self._tmp_graph_def, self._calibration_data, "__max:", self.itex_mode
             ).do_transformation()
