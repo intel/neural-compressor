@@ -95,7 +95,7 @@ user_model = convert(model=user_model)
 
 ## Examples
 
-- PyTorch [huggingface models](/examples/3.x_api/pytorch/nlp/huggingface_models/language-modeling/quantization/mx)
+- PyTorch [huggingface models](/examples/3.x_api/pytorch/nlp/huggingface_models/language-modeling/quantization/mx_quant)
 
 
 ## Reference
