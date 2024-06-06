@@ -371,7 +371,7 @@ def _get_graph_from_saved_model_v2(saved_model_dir, input_tensor_names, output_t
     return load_saved_model(saved_model_dir, saved_model_tags, input_tensor_names, output_tensor_names)
 
 
-def _get_graph_from_original_keras_v2(model):# pragma: no cover
+def _get_graph_from_original_keras_v2(model):  # pragma: no cover
     """The version 2 function that get graph from the original keras model.
 
     Args:
@@ -424,7 +424,7 @@ def _get_graph_from_original_keras_v2(model):# pragma: no cover
     return graph_def, input_names, output_names
 
 
-def _check_keras_format(model, saved_model_dir):# pragma: no cover
+def _check_keras_format(model, saved_model_dir):  # pragma: no cover
     """Decide which method will be used to get graph from the saved_model .
 
     Args:
@@ -504,7 +504,7 @@ def _get_graph_from_saved_model_v1(model):
     return graph_def, inputs, outputs
 
 
-def try_loading_keras(model, input_tensor_names, output_tensor_names):# pragma: no cover
+def try_loading_keras(model, input_tensor_names, output_tensor_names):  # pragma: no cover
     """Try different ways of loading keras models.
 
     Args:
@@ -682,7 +682,7 @@ def checkpoint_session(model, input_tensor_names, output_tensor_names, **kwargs)
     return sess, input_tensor_names, output_tensor_names
 
 
-def estimator_session(model, input_tensor_names, output_tensor_names, **kwargs):# pragma: no cover
+def estimator_session(model, input_tensor_names, output_tensor_names, **kwargs):  # pragma: no cover
     """Build session with estimator model.
 
     Args:
