@@ -170,14 +170,23 @@ class QDense(Dense):
 def initialize_int8_dense(fp32_layer, q_config):
     kwargs = fp32_layer.get_config()
 
-    param_list = ["name", "units", "activation", "use_bias", "kernel_initializer", 
-                  "bias_initializer", "kernel_regularizer", "activity_regularizer", 
-                  "bias_regularizer", "kernel_constraint", "bias_constraint"
-                ]
+    param_list = [
+        "name",
+        "units",
+        "activation",
+        "use_bias",
+        "kernel_initializer",
+        "bias_initializer",
+        "kernel_regularizer",
+        "activity_regularizer",
+        "bias_regularizer",
+        "kernel_constraint",
+        "bias_constraint",
+    ]
     for p in param_list:  # pragma: no cover
         if p in kwargs:
             del kwargs[p]
-            
+
     q_layer = QDense(
         name=fp32_layer.name,
         units=fp32_layer.units,

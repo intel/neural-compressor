@@ -372,12 +372,24 @@ def initialize_int8_depthwise_conv2d(fp32_layer, q_config):
     kwargs = fp32_layer.get_config()
     q_name = fp32_layer.name
 
-    param_list = ["name", "kernel_size", "strides", "padding", "depth_multiplier",
-                  "data_format", "dilation_rate", "activation",
-                  "use_bias", "depthwise_initializer", "bias_initializer",
-                  "depthwise_regularizer", "activity_regularizer", "bias_regularizer",
-                  "depthwise_constraint", "bias_constraint"
-                ]
+    param_list = [
+        "name",
+        "kernel_size",
+        "strides",
+        "padding",
+        "depth_multiplier",
+        "data_format",
+        "dilation_rate",
+        "activation",
+        "use_bias",
+        "depthwise_initializer",
+        "bias_initializer",
+        "depthwise_regularizer",
+        "activity_regularizer",
+        "bias_regularizer",
+        "depthwise_constraint",
+        "bias_constraint",
+    ]
     for p in param_list:  # pragma: no cover
         if p in kwargs:
             del kwargs[p]

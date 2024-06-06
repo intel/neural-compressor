@@ -354,12 +354,25 @@ else:
 def initialize_int8_conv2d(fp32_layer, q_config):
     kwargs = fp32_layer.get_config()
 
-    param_list = ["name", "filters", "kernel_size", "strides", "padding",
-                  "data_format", "dilation_rate", "groups", "activation",
-                  "use_bias", "kernel_initializer", "bias_initializer",
-                  "kernel_regularizer", "activity_regularizer", "bias_regularizer",
-                  "kernel_constraint", "bias_constraint"
-                ]
+    param_list = [
+        "name",
+        "filters",
+        "kernel_size",
+        "strides",
+        "padding",
+        "data_format",
+        "dilation_rate",
+        "groups",
+        "activation",
+        "use_bias",
+        "kernel_initializer",
+        "bias_initializer",
+        "kernel_regularizer",
+        "activity_regularizer",
+        "bias_regularizer",
+        "kernel_constraint",
+        "bias_constraint",
+    ]
     for p in param_list:  # pragma: no cover
         if p in kwargs:
             del kwargs[p]

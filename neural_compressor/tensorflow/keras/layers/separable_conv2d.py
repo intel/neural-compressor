@@ -364,13 +364,28 @@ else:
 def initialize_int8_separable_conv2d(fp32_layer, q_config):
     kwargs = fp32_layer.get_config()
 
-    param_list = ["name", "filters", "kernel_size", "strides", "padding",
-                  "data_format", "dilation_rate", "depth_multiplier", "activation",
-                  "use_bias", "depthwise_initializer", "bias_initializer", "pointwise_initializer",
-                  "depthwise_regularizer", "activity_regularizer", "bias_regularizer",
-                  "pointwise_regularizer", "depthwise_constraint", "bias_constraint",
-                  "pointwise_constraint",
-                ]
+    param_list = [
+        "name",
+        "filters",
+        "kernel_size",
+        "strides",
+        "padding",
+        "data_format",
+        "dilation_rate",
+        "depth_multiplier",
+        "activation",
+        "use_bias",
+        "depthwise_initializer",
+        "bias_initializer",
+        "pointwise_initializer",
+        "depthwise_regularizer",
+        "activity_regularizer",
+        "bias_regularizer",
+        "pointwise_regularizer",
+        "depthwise_constraint",
+        "bias_constraint",
+        "pointwise_constraint",
+    ]
     for p in param_list:  # pragma: no cover
         if p in kwargs:
             del kwargs[p]
