@@ -13,6 +13,6 @@ class TestHFModelLoad:
     def test_load_hf_woq_model(self):
         from neural_compressor.torch.quantization import load
 
-        qmodel = load(self.model_name, format="huggingface")
+        qmodel = load(model=self.model_name, format="huggingface")
         output = qmodel(self.example_inputs)[0]
         assert len(output) > 0, "Not loading the model correctly"

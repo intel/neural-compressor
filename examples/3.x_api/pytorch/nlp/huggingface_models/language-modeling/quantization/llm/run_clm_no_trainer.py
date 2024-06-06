@@ -379,7 +379,7 @@ if args.int8 or args.int8_bf16_mixed:
     user_model, _ = get_user_model()
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     config = AutoConfig.from_pretrained(args.model)
-    user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)), model=user_model)
+    user_model = load(model=user_model, checkpoint_dir=os.path.abspath(os.path.expanduser(args.output_dir)))
     setattr(user_model, "config", config)
 else:
     user_model, tokenizer = get_user_model()

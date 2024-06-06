@@ -32,16 +32,22 @@ config_name_mapping = {
 }
 
 
-def load(model_name_or_path="./saved_results", model=None, format="default", *hf_model_args, **hf_model_kwargs):
+def load(model=None, checkpoint_dir="./saved_results", format="default", *hf_model_args, **hf_model_kwargs):
     """Load quantized model.
 
+    1. Load INC quantized model in local.
+    2. Load HuggingFace quantized model, including GPTQ/AWQ models and upstreamed INC quantized models in HF model hub.
+
     Args:
-        model_name_or_path (str, optional): local path where quantized weights or model are saved
-            or huggingface model id. Defaults to "./saved_results".
-        model (torch.nn.Module, optional): original model, suggest to use empty tensor.
-            Require to pass when loading INC WOQ quantized model or loading FP8 model. Defaults to None.
+        model (Union[torch.nn.Module], str): torch model or hugginface model_name_or_path.
+            if 'format' is set to 'huggingface', it means the huggingface model_name_or_path.
+            if 'format' is set to 'default', it means the fp32 model and the 'checkpoint_dir'
+            parameter should not be None. it coworks with 'checkpoint_dir' parameter to load INC
+            quantized model in local.
+        checkpoint_dir (str, optional): local path where quantized weights or model are saved.
+            Only needed if 'format' is set to 'default'.
         format (str, optional): 'defult' for loading INC quantized model.
-            'huggingface' now only for loading huggingface WOQ causal language model. Defaults to "default".
+            'huggingface' for loading huggingface WOQ causal language model. Defaults to "default".
 
     Returns:
         torch.nn.Module: quantized model
@@ -49,14 +55,14 @@ def load(model_name_or_path="./saved_results", model=None, format="default", *hf
     if format == LoadFormat.DEFAULT.value:
         from neural_compressor.common.base_config import ConfigRegistry
 
-        qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(model_name_or_path)), "qconfig.json")
+        qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(checkpoint_dir)), "qconfig.json")
         with open(qconfig_file_path, "r") as f:
             per_op_qconfig = json.load(f)
 
         if " " in per_op_qconfig.keys():  # ipex qconfig format: {' ': {'q_op_infos': {'0': {'op_type': ...
             from neural_compressor.torch.algorithms.static_quant import load
 
-            return load(model_name_or_path)
+            return load(checkpoint_dir)
         else:
             config_mapping = load_config_mapping(qconfig_file_path, ConfigRegistry.get_all_configs()["torch"])
             # select load function
@@ -65,17 +71,17 @@ def load(model_name_or_path="./saved_results", model=None, format="default", *hf
             if isinstance(config_object, (RTNConfig, GPTQConfig, AWQConfig, TEQConfig, AutoRoundConfig)):  # WOQ
                 from neural_compressor.torch.algorithms.weight_only.save_load import load
 
-                return load(model_name_or_path, model=model, format=LoadFormat.DEFAULT)
+                return load(model=model, checkpoint_dir=checkpoint_dir, format=LoadFormat.DEFAULT)
 
             model.qconfig = config_mapping
             if isinstance(config_object, FP8Config):  # FP8
                 from neural_compressor.torch.algorithms.habana_fp8 import load
 
-                return load(model, model_name_or_path)
+                return load(model, checkpoint_dir)
     elif format == LoadFormat.HUGGINGFACE.value:
         # now only support load huggingface WOQ causal language model
         from neural_compressor.torch.algorithms.weight_only.save_load import load
 
-        return load(model_name_or_path, format=LoadFormat.HUGGINGFACE, *hf_model_args, **hf_model_kwargs)
+        return load(model=model, format=LoadFormat.HUGGINGFACE, *hf_model_args, **hf_model_kwargs)
     else:
         raise ValueError("`format` in load function can only be 'huggingface' or 'default', but get {}".format(format))

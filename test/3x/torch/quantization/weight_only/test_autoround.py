@@ -117,7 +117,7 @@ class TestAutoRound:
         from neural_compressor.torch.quantization import load
 
         # loading compressed model
-        loaded_model = load("saved_results", model=copy.deepcopy(self.gptj))
+        loaded_model = load(model=copy.deepcopy(self.gptj), checkpoint_dir="saved_results")
         loaded_out = loaded_model(self.inp)[0]
         assert torch.allclose(inc_out, loaded_out), "Unexpected result. Please double check."
         assert isinstance(

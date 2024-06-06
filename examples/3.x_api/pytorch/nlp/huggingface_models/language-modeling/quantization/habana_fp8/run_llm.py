@@ -63,7 +63,7 @@ parser.add_argument("--pad_max_length", default=512, type=int,
 parser.add_argument("--calib_iters", default=100, type=int,
                     help="calibration iters.")
 parser.add_argument("--tasks", nargs='+', default=["lambada_openai"], \
-                    type=str, choices=["hellaswag", "lambada_openai", "piqa", "winogrande", "copa", 
+                    type=str, choices=["hellaswag", "lambada_openai", "piqa", "winogrande", "copa",
                                        "rte", "openbookqa", "lambada_standard", "wikitext"],
                     help="tasks list for accuracy validation")
 parser.add_argument("--limit", default=None, type=int,
@@ -117,10 +117,10 @@ if args.approach in ["dynamic", "static"] and not args.load:
         for examples in calib_dataset:
             calib_data.append(
                 tokenizer(
-                    examples["text"], 
-                    return_tensors="pt", 
-                    max_length=64, 
-                    padding="max_length", 
+                    examples["text"],
+                    return_tensors="pt",
+                    max_length=64,
+                    padding="max_length",
                     truncation=True
                 )
             )
@@ -143,7 +143,7 @@ if args.approach in ["dynamic", "static"] and not args.load:
 
 if args.load:
     from neural_compressor.torch.quantization import load
-    user_model = load("saved_results", user_model)
+    user_model = load(model=user_model, checkpoint_dir="saved_results")
 
 
 if args.approach in ["dynamic", "static"] or args.load:
@@ -154,7 +154,7 @@ if args.approach in ["dynamic", "static"] or args.load:
 
 
 
-# If torch.matmul and torch.bmm are not replaced by INC module, 
+# If torch.matmul and torch.bmm are not replaced by INC module,
 # Below codes can make torch.matmul and torch.bmm run on fp8 by injection.
 if not args.skip_fp8_mm and args.precision in ['fp8_e4m3', 'fp8_e5m2']:
     def replace_torch_mm_bmm():
