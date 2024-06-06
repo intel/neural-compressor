@@ -3,6 +3,7 @@ import torch
 
 from neural_compressor.torch.algorithms.mx_quant import utils
 
+
 def test_mx_quant_utility():
     tensor = torch.rand((1, 30))
     assert torch.equal(tensor, utils.quantize_mx_op(tensor, None, "nearest", 32))

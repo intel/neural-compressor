@@ -3,7 +3,8 @@ import copy
 import pytest
 import torch
 
-from neural_compressor.torch.quantization import MXQuantConfig, prepare, convert, get_default_mx_config
+from neural_compressor.torch.quantization import MXQuantConfig, convert, get_default_mx_config, prepare
+
 
 def build_simple_torch_model():
     class Model(torch.nn.Module):
