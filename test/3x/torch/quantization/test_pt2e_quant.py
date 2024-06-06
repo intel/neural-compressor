@@ -29,7 +29,7 @@ def force_not_import_ipex(monkeypatch):
 
     monkeypatch.setattr("neural_compressor.torch.quantization.config.is_ipex_imported", _is_ipex_imported)
     monkeypatch.setattr("neural_compressor.torch.quantization.algorithm_entry.is_ipex_imported", _is_ipex_imported)
-    monkeypatch.setattr("neural_compressor.torch.export._export.is_ipex_imported", _is_ipex_imported)
+    monkeypatch.setattr("neural_compressor.torch.export.pt2e_export.is_ipex_imported", _is_ipex_imported)
 
 
 class TestPT2EQuantization:
