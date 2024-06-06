@@ -92,7 +92,7 @@ def build_model2():
         [
             keras.layers.InputLayer(input_shape=(28, 28)),
             keras.layers.Reshape(target_shape=(28, 28, 1)),
-            keras.layers.SeparableConv2D(3, 4, 3, 2, activation="relu"),
+            keras.layers.SeparableConv2D(3, 3, activation="relu"),
             keras.layers.MaxPooling2D(pool_size=(2, 2)),
             keras.layers.Flatten(),
             keras.layers.Dense(10, name="dense"),
