@@ -36,7 +36,7 @@ module.exports = {
 	fs: 'empty',
 	net:'empty',
 	tls:'empty',
-}
+},
     curly: ['error', 'all'],
     eqeqeq: 'error',
     'prefer-arrow-callback': 'error'
