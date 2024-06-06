@@ -47,7 +47,7 @@ def build_model1():
         [
             keras.layers.InputLayer(input_shape=(28, 28)),
             keras.layers.Reshape(target_shape=(28, 28, 1)),
-            keras.layers.DepthwiseConv2D(3, 3, activation='relu', name="conv2d"),
+            keras.layers.DepthwiseConv2D(3, 3, activation="relu", name="conv2d"),
             keras.layers.MaxPooling2D(pool_size=(2, 2)),
             keras.layers.Flatten(),
             keras.layers.Dense(10, name="dense"),
@@ -73,6 +73,7 @@ def build_model1():
     else:
         model.save("baseline_model1")
 
+
 def build_model2():
     # Load MNIST dataset
     mnist = keras.datasets.mnist
@@ -91,7 +92,7 @@ def build_model2():
         [
             keras.layers.InputLayer(input_shape=(28, 28)),
             keras.layers.Reshape(target_shape=(28, 28, 1)),
-            keras.layers.SeparableConv2D(3, 4, 3, 2, activation='relu'),
+            keras.layers.SeparableConv2D(3, 4, 3, 2, activation="relu"),
             keras.layers.MaxPooling2D(pool_size=(2, 2)),
             keras.layers.Flatten(),
             keras.layers.Dense(10, name="dense"),
@@ -206,7 +207,6 @@ class TestTF3xNewApi(unittest.TestCase):
             if layer.name == "conv2d":
                 self.assertEqual(layer.__class__.__name__, "QSeparableConv2D")
                 break
-
 
 
 if __name__ == "__main__":
