@@ -1179,6 +1179,7 @@ class HQQConfig(BaseConfig):
 
     def __init__(
         self,
+        dtype: str = "int",
         bits: int = 4,
         group_size: int = 64,
         quant_zero: bool = True,
@@ -1188,6 +1189,7 @@ class HQQConfig(BaseConfig):
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         super().__init__(white_list=white_list)
+        self.dtype = dtype
         self.bits = bits
         self.group_size = group_size
         self.quant_zero = quant_zero

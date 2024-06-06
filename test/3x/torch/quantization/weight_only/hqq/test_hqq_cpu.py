@@ -87,6 +87,25 @@ class TestHQQCPU:
             q_label_1.eq(q_label_2)
         ), "The results of calling `convert` + `prepare` and calling `quantize` should be equal."
 
+    def test_hqq_fallback(self, force_use_cpu, force_not_half):
+        from neural_compressor.torch.quantization import HQQConfig, convert, prepare
+
+        class ToyModel(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.fc1 = torch.nn.Linear(128, 1024)
+                self.fc2 = torch.nn.Linear(1024, 512)
+
+            def forward(self, x):
+                x = self.fc1(x)
+                x = self.fc2(x)
+                return x
+
+        quant_config = HQQConfig().set_local("fc1", HQQConfig(dtype="fp32"))
+        qmodel = convert(prepare(model=ToyModel(), quant_config=quant_config))
+        assert type(qmodel.fc1).__name__ == torch.nn.Linear.__name__, f"Expect fallback fc1, but get {type(qmodel.fc1)}"
+        assert type(qmodel.fc2).__name__ != torch.nn.Linear.__name__, f"Expect quantize fc2, but get {type(qmodel.fc2)}"
+
     @pytest.mark.parametrize(
         "nbits, group_size, quant_zero, quant_scale, scale_quant_group_size",
         [
