@@ -49,11 +49,13 @@ def load(model, checkpoint_dir=None, format=LoadFormat.DEFAULT, *hf_model_args, 
     """Load quantized weight-only quantization model.
 
     1. Load INC weight-only quantized model in local.
-    2. Load HuggingFace weight-only quantized model, including GPTQ/AWQ models and upstreamed INC quantized models in HF model hub.
+    2. Load HuggingFace weight-only quantized model,
+       including GPTQ/AWQ models and upstreamed INC quantized models in HF model hub.
 
     Args:
         model (Union[torch.nn.Module], str): torch model or hugginface model id.
-            if 'format' is set to 'huggingface', it means the model_name_or_path of huggingface weight-only quantized model .
+            if 'format' is set to 'huggingface', it means the model_name_or_path of
+            huggingface weight-only quantized model.
             if 'format' is set to 'default', it means the fp32 model and the 'checkpoint_dir'
             parameter should not be None. it coworks with 'checkpoint_dir' parameter to load INC
             weight-only quantized model in local.
