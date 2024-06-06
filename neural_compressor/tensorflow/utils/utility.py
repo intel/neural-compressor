@@ -333,6 +333,7 @@ class CaptureOutputToFile(object):
         os.close(self.orig_stream_dup)
         self.tmp_file.close()
 
+
 @singleton
 class TFSlimNetsFactory(object):  # pragma: no cover
     """TF-Slim nets factory."""
