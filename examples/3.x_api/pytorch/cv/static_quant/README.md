@@ -1,4 +1,4 @@
-# ImageNet training in PyTorch
+# ImageNet Quantization
 
 This implements quantization of popular model architectures, such as ResNet, AlexNet, and VGG on the ImageNet dataset.
 
