@@ -729,6 +729,11 @@ class GraphTrace:
         if orig_device != "cpu" and orig_device != "meta":  # pragma: no cover
             model = model.to("cpu")
             dummy_input = move_input_to_device(dummy_input, "cpu")
+        reset_model_config_return_dict = False
+        if getattr(getattr(model, "config", None), "return_dict", False):
+            # set return_dict=False to help transformers model jit.trace success, orig_return_dict is True here
+            reset_model_config_return_dict = True
+            model.config.return_dict = False
         if isinstance(dummy_input, dict) or isinstance(dummy_input, UserDict):
             try:
                 # pylint: disable=E1123, E1120
@@ -750,6 +755,9 @@ class GraphTrace:
                 except Exception as e:
                     logger.warning(e)
                     logger.warning("Jit trace in GraphTrace failed, absorb layer detection is skipped")
+        if reset_model_config_return_dict:
+            # recover return_dict original value for transformers model
+            model.config.return_dict = True
         model = model.to(orig_device)
         return traced_model
 
