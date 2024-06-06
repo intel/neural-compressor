@@ -30,7 +30,7 @@ elif version1_gte_version2(tf.__version__, "2.13.0"):
 else:
     from keras.layers.convolutional.base_conv import Conv  # pylint: disable=E0401
 
-if version1_gte_version2(tf.__version__, "2.16.1"):
+if version1_gte_version2(tf.__version__, "2.16.1"):  # pragma: no cover
 
     class QConv2D(BaseConv):
         def __init__(
@@ -190,7 +190,7 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
 
             return config
 
-else:  # pragma: no cover
+else:
 
     class QConv2D(Conv):
         def __init__(

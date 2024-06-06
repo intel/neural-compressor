@@ -34,12 +34,10 @@ else:
 
 if version1_gte_version2(tf.__version__, "2.16.1"):
 
-    class QDepthwiseConv2D(BaseDepthwiseConv):
+    class QDepthwiseConv2D(BaseDepthwiseConv):  # pragma: no cover
         def __init__(
             self,
             kernel_size,
-            min_value,
-            max_value,
             strides=(1, 1),
             padding="valid",
             depth_multiplier=1,
@@ -189,14 +187,12 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
 
             return config
 
-else:  # pragma: no cover
+else:
 
     class QDepthwiseConv2D(DepthwiseConv):
         def __init__(
             self,
             kernel_size,
-            min_value,
-            max_value,
             strides=(1, 1),
             padding="valid",
             depth_multiplier=1,

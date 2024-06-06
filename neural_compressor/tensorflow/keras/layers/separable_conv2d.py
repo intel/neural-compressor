@@ -32,15 +32,13 @@ else:
     from keras.layers.convolutional.base_separable_conv import SeparableConv  # pylint: disable=E0401
     from keras.utils import conv_utils  # pylint: disable=E0401
 
-if version1_gte_version2(tf.__version__, "2.16.1"):
+if version1_gte_version2(tf.__version__, "2.16.1"):  # pragma: no cover
 
     class QSeparableConv2D(BaseSeparableConv):
         def __init__(
             self,
             filters,
             kernel_size,
-            min_value,
-            max_value,
             strides=(1, 1),
             padding="valid",
             data_format=None,
@@ -198,15 +196,13 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
 
             return config
 
-else:  # pragma: no cover
+else:
 
     class QSeparableConv2D(SeparableConv):
         def __init__(
             self,
             filters,
             kernel_size,
-            min_value,
-            max_value,
             strides=(1, 1),
             padding="valid",
             data_format=None,
