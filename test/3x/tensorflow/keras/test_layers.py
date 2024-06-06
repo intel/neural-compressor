@@ -91,7 +91,7 @@ def build_model2():
         [
             keras.layers.InputLayer(input_shape=(28, 28)),
             keras.layers.Reshape(target_shape=(28, 28, 1)),
-            keras.layers.DepthwiseConv2D(3, 3, activation='relu', name="conv2d")(x)
+            keras.layers.SeparableConv2D(3, 4, 3, 2, activation='relu'),
             keras.layers.MaxPooling2D(pool_size=(2, 2)),
             keras.layers.Flatten(),
             keras.layers.Dense(10, name="dense"),
@@ -113,9 +113,9 @@ def build_model2():
 
     print("Baseline test accuracy:", baseline_model_accuracy)
     if version1_gte_version2(tf.__version__, "2.16.1"):
-        model.save("baseline_model.keras")
+        model.save("baseline_model2.keras")
     else:
-        model.save("baseline_model")
+        model.save("baseline_model2")
 
 
 class Dataset(object):
@@ -157,18 +157,24 @@ class MyDataloader:
 class TestTF3xNewApi(unittest.TestCase):
     @classmethod
     def setUpClass(self):
-        build_model()
+        build_model1()
+        build_model2()
         os.environ["ITEX_ONEDNN_GRAPH"] = "1"
-        self.fp32_model_path = (
-            "baseline_model.keras" if version1_gte_version2(tf.__version__, "2.16.1") else "baseline_model"
+        self.fp32_model_path1 = (
+            "baseline_model1.keras" if version1_gte_version2(tf.__version__, "2.16.1") else "baseline_model1"
+        )
+        self.fp32_model_path2 = (
+            "baseline_model2.keras" if version1_gte_version2(tf.__version__, "2.16.1") else "baseline_model2"
         )
 
     @classmethod
     def tearDownClass(self):
-        if self.fp32_model_path.endswith(".keras"):
-            os.remove(self.fp32_model_path)
+        if self.fp32_model_path1.endswith(".keras"):
+            os.remove(self.fp32_model_path1)
+            os.remove(self.fp32_model_path2)
         else:
-            shutil.rmtree(self.fp32_model_path, ignore_errors=True)
+            shutil.rmtree(self.fp32_model_path1, ignore_errors=True)
+            shutil.rmtree(self.fp32_model_path2, ignore_errors=True)
         os.environ["ITEX_ONEDNN_GRAPH"] = "0"
 
     def test_depthwise_conv2d(self):
@@ -177,13 +183,28 @@ class TestTF3xNewApi(unittest.TestCase):
         from neural_compressor.tensorflow.keras import get_default_static_quant_config
 
         calib_dataloader = MyDataloader(dataset=Dataset())
-        fp32_model = keras.models.load_model(self.fp32_model_path)
+        fp32_model = keras.models.load_model(self.fp32_model_path1)
         qmodel = quantize_model(fp32_model, get_default_static_quant_config(), calib_dataloader)
         self.assertIsNotNone(qmodel)
 
         for layer in qmodel.layers:
             if layer.name == "conv2d":
                 self.assertEqual(layer.__class__.__name__, "QDepthwiseConv2D")
+                break
+
+    def test_seprable_conv2d(self):
+        logger.info("test_static_quant_from_dict_default")
+        from neural_compressor.tensorflow import quantize_model
+        from neural_compressor.tensorflow.keras import get_default_static_quant_config
+
+        calib_dataloader = MyDataloader(dataset=Dataset())
+        fp32_model = keras.models.load_model(self.fp32_model_path2)
+        qmodel = quantize_model(fp32_model, get_default_static_quant_config(), calib_dataloader)
+        self.assertIsNotNone(qmodel)
+
+        for layer in qmodel.layers:
+            if layer.name == "conv2d":
+                self.assertEqual(layer.__class__.__name__, "QSeparableConv2D")
                 break
 
 
