@@ -302,7 +302,11 @@ async def read_logs(task_id: str):
     """
     if not is_valid_uuid(task_id):
         raise HTTPException(status_code=422, detail="Invalid task id")
-    log_path = "{}/task_{}.txt".format(get_task_log_workspace(config.workspace), task_id)
+    log_path = os.path.normpath(os.path.join(get_task_log_workspace(config.workspace), "task_{}.txt".format(task_id)))
+    
+    if not log_path.startswith(os.path.normpath(config.workspace)):
+        return {"error": "Logfile not found."}
+    
     if not os.path.exists(log_path):
         return {"error": "Logfile not found."}
 

@@ -295,7 +295,7 @@ def check_log_exists(task_id: str, task_log_path):
         return False
     log_path = os.path.normpath(os.path.join(task_log_path, "task_{}.txt".format(task_id)))
 
-    if not log_path.startswith(task_log_path):
+    if not log_path.startswith(os.path.normpath(task_log_path)):
         return False
     if os.path.exists(log_path):
         return True
