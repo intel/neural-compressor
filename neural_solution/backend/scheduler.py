@@ -38,8 +38,9 @@ from neural_solution.utils import logger
 from neural_solution.utils.utility import get_task_log_workspace, get_task_workspace
 
 # TODO update it according to the platform
-cmd = "echo $(conda info --base)/etc/profile.d/conda.sh"
-CONDA_SOURCE_PATH = subprocess.getoutput(cmd)
+cmd = ["echo", f"{subprocess.getoutput('conda info --base')}/etc/profile.d/conda.sh"]
+process = subprocess.run(cmd, capture_output=True, text=True)
+CONDA_SOURCE_PATH = process.stdout.strip()
 
 
 class Scheduler:
