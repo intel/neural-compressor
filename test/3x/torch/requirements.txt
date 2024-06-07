@@ -1,3 +1,4 @@
+auto_round
 expecttest
 numpy
 peft==0.10.0
