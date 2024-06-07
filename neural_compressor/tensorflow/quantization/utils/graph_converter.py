@@ -260,7 +260,9 @@ class GraphConverter:
         for idx, (inputs, labels) in enumerate(self.data_loader):
             if len(input_tensor) == 1:
                 feed_dict = {}
-                if isinstance(inputs, dict) or isinstance(inputs, OrderedDict) or isinstance(inputs, UserDict):  # pragma: no cover
+                if (
+                    isinstance(inputs, dict) or isinstance(inputs, OrderedDict) or isinstance(inputs, UserDict)
+                ):  # pragma: no cover
                     for name in inputs:
                         for tensor in input_tensor:
                             pos = tensor.name.rfind(":")
@@ -520,7 +522,9 @@ class GraphConverter:
         for i in target_conv_op:
             if specified_op_list and i not in specified_op_list:
                 continue
-            if node_name_mapping[i + "_eightbit_quantized_conv"].op == "QuantizedConv2DWithBiasSumAndRelu":  # pragma: no cover
+            if (
+                node_name_mapping[i + "_eightbit_quantized_conv"].op == "QuantizedConv2DWithBiasSumAndRelu"
+            ):  # pragma: no cover
                 start_index = sorted_node_names.index(i)
                 for index, value in enumerate(sorted_node_names[start_index:]):
                     if (
