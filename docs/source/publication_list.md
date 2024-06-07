@@ -1,6 +1,7 @@
 Full Publications/Events (80)
 ==========
-## 2024 (1)
+## 2024 (2)
+* Blog by Intel: [Optimization of Intel AI Solutions for Alibaba Cloud’s Qwen2 Large Language Models](https://www.intel.com/content/www/us/en/developer/articles/technical/intel-ai-solutions-accelerate-alibaba-qwen2-llms.html)
 * Blog by Intel: [Accelerate Meta* Llama 3 with Intel AI Solutions](https://www.intel.com/content/www/us/en/developer/articles/technical/accelerate-meta-llama3-with-intel-ai-solutions.html) (Apr 2024)
 
 ## 2023 (25)

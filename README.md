@@ -195,6 +195,7 @@ quantized_model = fit(model=float_model, conf=static_quant_conf, calib_dataloade
 > Further documentations can be found at [User Guide](https://github.com/intel/neural-compressor/blob/master/docs/source/user_guide.md).
 
 ## Selected Publications/Events
+* Blog by Intel: [Optimization of Intel AI Solutions for Alibaba Cloud’s Qwen2 Large Language Models](https://www.intel.com/content/www/us/en/developer/articles/technical/intel-ai-solutions-accelerate-alibaba-qwen2-llms.html)
 * Blog by Intel: [Accelerate Meta* Llama 3 with Intel AI Solutions](https://www.intel.com/content/www/us/en/developer/articles/technical/accelerate-meta-llama3-with-intel-ai-solutions.html)
 * Blog by Intel: [Effective Weight-Only Quantization for Large Language Models with Intel® Neural Compressor](https://community.intel.com/t5/Blogs/Tech-Innovation/Artificial-Intelligence-AI/Effective-Weight-Only-Quantization-for-Large-Language-Models/post/1529552) (Oct 2023)
 * EMNLP'2023 (Under Review): [TEQ: Trainable Equivalent Transformation for Quantization of LLMs](https://openreview.net/forum?id=iaI8xEINAf&referrer=%5BAuthor%20Console%5D) (Sep 2023)
