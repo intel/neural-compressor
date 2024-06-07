@@ -268,12 +268,12 @@ def get_baseline_during_tuning(task_id: str, task_log_path):
     logger.info("FP32 baseline: {}".format(results))
     return results if results else "Getting FP32 baseline..."
 
+
 def is_valid_uuid(uuid_string):
     # Validate UUID format using regular expression
-    uuid_regex = re.compile(
-        r'(?i)^[0-9a-f]{8}[0-9a-f]{4}[1-5][0-9a-f]{3}[89ab][0-9a-f]{3}[0-9a-f]{12}$'
-    )
+    uuid_regex = re.compile(r"(?i)^[0-9a-f]{8}[0-9a-f]{4}[1-5][0-9a-f]{3}[89ab][0-9a-f]{3}[0-9a-f]{12}$")
     return bool(uuid_regex.match(uuid_string))
+
 
 def check_log_exists(task_id: str, task_log_path):
     """Check whether the log file exists.
