@@ -58,6 +58,13 @@ class TestStaticQuant:
         q_model = convert(prepared_model)
         assert q_model is not None, "Quantization failed!"
 
+        fp32_model = copy.deepcopy(self.fp32_model)
+        example_dict = {"x": example_inputs}
+        prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_dict)
+        run_fn(prepared_model)
+        q_model = convert(prepared_model)
+        assert q_model is not None, "Quantization failed!"
+
     @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
     def test_static_quant_fallback(self):
         fp32_model = copy.deepcopy(self.fp32_model)
@@ -177,7 +184,7 @@ class TestStaticQuant:
         assert torch.allclose(inc_out, ipex_out, atol=2e-02), "Unexpected result. Please double check."
         q_model.save("saved_results")
 
-        from neural_compressor.torch.algorithms.static_quant import load
+        from neural_compressor.torch.quantization import load
 
         # load
         loaded_model = load("saved_results")
@@ -198,6 +205,13 @@ class TestStaticQuant:
         example_inputs = self.input
         quant_config = get_default_static_config()
         prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
+        run_fn(prepared_model)
+        q_model = convert(prepared_model)
+        assert q_model is not None, "Quantization failed!"
+
+        fp32_model = copy.deepcopy(self.fp32_model)
+        example_dict = {"x": example_inputs}
+        prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_dict)
         run_fn(prepared_model)
         q_model = convert(prepared_model)
         assert q_model is not None, "Quantization failed!"
