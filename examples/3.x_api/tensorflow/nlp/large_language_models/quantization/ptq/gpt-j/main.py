@@ -276,6 +276,10 @@ def evaluate(model, tf_eval_dataset=mydata):
     iteration = run_args.iteration
     correct = 0
     latency_list = []
+    from neural_compressor.tensorflow.utils import BaseModel
+
+    if isinstance(model, BaseModel):
+        model = model.model
     infer = model.signatures["serving_default"]
     for idx, data in enumerate(tf_eval_dataset):
         input_ids = tf.convert_to_tensor([data[:-1]], dtype=tf.int32)
@@ -325,8 +329,8 @@ def main():
             from neural_compressor.tensorflow.utils import BaseDataLoader
 
             calib_dataloader = MyDataloader(mydata, batch_size=run_args.batch_size)  
-            quant_config = [SmoothQuantConfig(alpha=0.52705), StaticQuantConfig(act_dtype=["fp32", "int8"], weight_dtype=["fp32", "int8"])]
-            tune_config = TuningConfig(config_set=quant_config, max_trials=100)
+            quant_config = [SmoothQuantConfig(alpha=0.52705), StaticQuantConfig(act_dtype="int8", weight_dtype="int8")]
+            tune_config = TuningConfig(config_set=quant_config, max_trials=1)
             model.weight_name_mapping = weight_name_mapping
             q_model = autotune(model, 
                                tune_config, 

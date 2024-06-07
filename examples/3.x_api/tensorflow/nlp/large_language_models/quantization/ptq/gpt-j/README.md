@@ -11,7 +11,7 @@ This document is used to list steps of reproducing TensorFlow Intel® Neural Com
 ```shell
 # Install Intel® Neural Compressor
 pip install neural-compressor
-pip install -r requirements
+pip install -r requirements.txt
 ```
 
 ## 2. Prepare Pretrained model
@@ -119,8 +119,8 @@ Please use the recipe to set smooth quantization.
     from neural_compressor.tensorflow.utils import BaseDataLoader
 
     calib_dataloader = MyDataloader(mydata, batch_size=run_args.batch_size)  
-    quant_config = [SmoothQuantConfig(alpha=0.52705), StaticQuantConfig(act_dtype=["fp32", "int8"], weight_dtype=["fp32", "int8"])]
-    tune_config = TuningConfig(config_set=quant_config, max_trials=100)
+    quant_config = [SmoothQuantConfig(alpha=0.52705), StaticQuantConfig(act_dtype="int8", weight_dtype="int8")]
+    tune_config = TuningConfig(config_set=quant_config, max_trials=1)
     model.weight_name_mapping = weight_name_mapping
     q_model = autotune(model, 
                         tune_config, 
