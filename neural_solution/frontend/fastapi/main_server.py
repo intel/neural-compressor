@@ -411,7 +411,10 @@ async def websocket_endpoint(websocket: WebSocket, task_id: str):
     await websocket.accept()
 
     # send the log that has been written
-    log_path = "{}/task_{}.txt".format(get_task_log_workspace(config.workspace), task_id)
+    log_path = os.path.normpath(os.path.join(get_task_log_workspace(config.workspace), "task_{}.txt".format(task_id)))
+
+    if not log_path.startswith(os.path.normpath(config.workspace)):
+        return {"error": "Logfile not found."}
     last_position = 0
     previous_log = []
     if os.path.exists(log_path):
@@ -464,6 +467,9 @@ async def download_file(task_id: str):
     path = res[2]
     zip_filename = "quantized_model.zip"
     zip_filepath = os.path.abspath(os.path.join(get_task_workspace(config.workspace), task_id, zip_filename))
+
+    if not zip_filepath.startswith(os.path.normpath(os.path.abspath(get_task_workspace(config.workspace)))):
+        raise HTTPException(status_code=422, detail="Invalid File")
     # create zipfile and add file
     with zipfile.ZipFile(zip_filepath, "w", zipfile.ZIP_DEFLATED) as zip_file:
         for root, dirs, files in os.walk(path):

@@ -230,6 +230,10 @@ def get_res_during_tuning(task_id: str, task_log_path):
     """
     results = {}
     log_path = "{}/task_{}.txt".format(task_log_path, task_id)
+    log_path = os.path.normpath(os.path.join(task_log_path, "task_{}.txt".format(task_id)))
+
+    if not log_path.startswith(os.path.normpath(task_log_path)):
+        return {"error": "Logfile not found."}
     for line in reversed(open(log_path).readlines()):
         res_pattern = r"Tune (\d+) result is: "
         res_pattern = r"Tune (\d+) result is:\s.*?\(int8\|fp32\):\s+(\d+\.\d+).*?\(int8\|fp32\):\s+(\d+\.\d+).*?"
@@ -256,6 +260,10 @@ def get_baseline_during_tuning(task_id: str, task_log_path):
     """
     results = {}
     log_path = "{}/task_{}.txt".format(task_log_path, task_id)
+    log_path = os.path.normpath(os.path.join(task_log_path, "task_{}.txt".format(task_id)))
+
+    if not log_path.startswith(os.path.normpath(task_log_path)):
+        return {"error": "Logfile not found."}
     for line in reversed(open(log_path).readlines()):
         res_pattern = "FP32 baseline is:\s+.*?(\d+\.\d+).*?(\d+\.\d+).*?"
         res_matches = re.findall(res_pattern, line)
