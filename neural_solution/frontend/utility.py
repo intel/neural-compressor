@@ -276,11 +276,9 @@ def is_valid_uuid(uuid_string):
         uuid_string (str): task id.
 
     Returns:
-        bool: task id is valid or unvalid.
+        bool: task id is valid or invalid.
     """
-    uuid_regex = re.compile(
-        r'(?i)^[0-9a-f]{8}[0-9a-f]{4}[1-5][0-9a-f]{3}[89ab][0-9a-f]{3}[0-9a-f]{12}$'
-    )
+    uuid_regex = re.compile(r"(?i)^[0-9a-f]{8}[0-9a-f]{4}[1-5][0-9a-f]{3}[89ab][0-9a-f]{3}[0-9a-f]{12}$")
     return bool(uuid_regex.match(uuid_string))
 
 
