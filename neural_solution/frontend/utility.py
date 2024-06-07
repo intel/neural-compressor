@@ -269,7 +269,13 @@ def get_baseline_during_tuning(task_id: str, task_log_path):
     return results if results else "Getting FP32 baseline..."
 
 def is_valid_uuid(uuid_string):
-    # Validate UUID format using regular expression
+    """Validate UUID format using regular expression
+    Args:
+        uuid_string (str): task id.
+
+    Returns:
+        bool: task id is valid or unvalid.
+    """
     uuid_regex = re.compile(
         r'(?i)^[0-9a-f]{8}[0-9a-f]{4}[1-5][0-9a-f]{3}[89ab][0-9a-f]{3}[0-9a-f]{12}$'
     )

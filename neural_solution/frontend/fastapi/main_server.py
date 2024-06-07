@@ -39,6 +39,7 @@ from neural_solution.frontend.utility import (
     is_valid_task,
     list_to_string,
     serialize,
+    is_valid_uuid,
 )
 from neural_solution.utils.utility import get_db_path, get_task_log_workspace, get_task_workspace
 
@@ -210,6 +211,8 @@ def get_task_by_id(task_id: str):
     Returns:
         json: task status, result, quantized model path
     """
+    if not is_valid_uuid(task_id):
+        raise HTTPException(status_code=422, detail="Invalid task id")
     res = None
     db_path = get_db_path(config.workspace)
     if os.path.isfile(db_path):
@@ -251,6 +254,8 @@ def get_task_status_by_id(request: Request, task_id: str):
     Returns:
         json: task status and information
     """
+    if not is_valid_uuid(task_id):
+        raise HTTPException(status_code=422, detail="Invalid task id")
     status = "unknown"
     tuning_info = {}
     optimization_result = {}
@@ -295,6 +300,8 @@ async def read_logs(task_id: str):
     Yields:
         str: log lines
     """
+    if not is_valid_uuid(task_id):
+        raise HTTPException(status_code=422, detail="Invalid task id")
     log_path = "{}/task_{}.txt".format(get_task_log_workspace(config.workspace), task_id)
     if not os.path.exists(log_path):
         return {"error": "Logfile not found."}
@@ -393,6 +400,8 @@ async def websocket_endpoint(websocket: WebSocket, task_id: str):
     Raises:
         HTTPException: exception
     """
+    if not is_valid_uuid(task_id):
+        raise HTTPException(status_code=422, detail="Invalid task id")
     if not check_log_exists(task_id=task_id, task_log_path=get_task_log_workspace(config.workspace)):
         raise HTTPException(status_code=404, detail="Task not found")
     await websocket.accept()
@@ -434,6 +443,8 @@ async def download_file(task_id: str):
     Returns:
         FileResponse: quantized model of zip file format
     """
+    if not is_valid_uuid(task_id):
+        raise HTTPException(status_code=422, detail="Invalid task id")
     db_path = get_db_path(config.workspace)
     if os.path.isfile(db_path):
         conn = sqlite3.connect(db_path)
