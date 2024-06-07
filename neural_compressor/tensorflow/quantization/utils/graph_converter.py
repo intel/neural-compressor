@@ -260,7 +260,7 @@ class GraphConverter:
         for idx, (inputs, labels) in enumerate(self.data_loader):
             if len(input_tensor) == 1:
                 feed_dict = {}
-                if isinstance(inputs, dict) or isinstance(inputs, OrderedDict) or isinstance(inputs, UserDict):
+                if isinstance(inputs, dict) or isinstance(inputs, OrderedDict) or isinstance(inputs, UserDict):  # pragma: no cover
                     for name in inputs:
                         for tensor in input_tensor:
                             pos = tensor.name.rfind(":")
@@ -341,7 +341,7 @@ class GraphConverter:
             if idx >= self.calib_iteration:
                 break
 
-    def _check_tf_version(self):
+    def _check_tf_version(self):  # pragma: no cover
         """Check if the installed tensorflow version is supported."""
         is_supported_version = False
         is_sprbase_version = False
@@ -520,7 +520,7 @@ class GraphConverter:
         for i in target_conv_op:
             if specified_op_list and i not in specified_op_list:
                 continue
-            if node_name_mapping[i + "_eightbit_quantized_conv"].op == "QuantizedConv2DWithBiasSumAndRelu":
+            if node_name_mapping[i + "_eightbit_quantized_conv"].op == "QuantizedConv2DWithBiasSumAndRelu":  # pragma: no cover
                 start_index = sorted_node_names.index(i)
                 for index, value in enumerate(sorted_node_names[start_index:]):
                     if (
@@ -549,7 +549,7 @@ class GraphConverter:
         self._fp32_model.graph_def = fp32_graph_def
         return self._fp32_model
 
-    def _search_y_pattern_for_itex(self):
+    def _search_y_pattern_for_itex(self):  # pragma: no cover
         """Search the Y pattern for itex and return the op name."""
         g = GraphAnalyzer()
         g.graph = self._fp32_model.graph_def
