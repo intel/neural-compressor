@@ -192,7 +192,8 @@ async def submit_task(task: Task):
             msg = "Task Submitted fail! Make sure Neural Solution runner is running!"
             status = "failed"
         except Exception as e:
-            msg = "Task Submitted fail! {}".format(e)
+            msg = "Task Submitted fail!"
+            print(e)
             status = "failed"
         conn.close()
     else:
