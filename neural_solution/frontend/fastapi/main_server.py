@@ -172,7 +172,6 @@ async def submit_task(task: Task):
             "VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')"
         )
 
-
         task_params = (
             task_id,
             task.script_url,
