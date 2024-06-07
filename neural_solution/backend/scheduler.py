@@ -101,7 +101,7 @@ class Scheduler:
                 conda_bash_cmd = f"source {CONDA_SOURCE_PATH}"
                 activate_cmd = f"conda activate {env_name}"
                 list_packages_cmd = "conda list"
-                cmd = ['bash', '-c', f"{conda_bash_cmd} && {activate_cmd} && {list_packages_cmd}"]
+                cmd = ["bash", "-c", f"{conda_bash_cmd} && {activate_cmd} && {list_packages_cmd}"]
                 process = subprocess.run(cmd, capture_output=True, text=True)
                 output = process.stdout.strip()
                 # Parse the output to get a list of installed package names
