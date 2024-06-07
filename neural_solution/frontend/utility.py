@@ -270,7 +270,8 @@ def get_baseline_during_tuning(task_id: str, task_log_path):
 
 
 def is_valid_uuid(uuid_string):
-    """Validate UUID format using regular expression
+    """Validate UUID format using regular expression.
+    
     Args:
         uuid_string (str): task id.
 
@@ -292,9 +293,9 @@ def check_log_exists(task_id: str, task_log_path):
     Returns:
         bool: Does the log file exist.
     """
-    log_path = "{}/task_{}.txt".format(task_log_path, task_id)
     if not is_valid_uuid(task_id):
         return False
+    log_path = "{}/task_{}.txt".format(task_log_path, task_id)
     if os.path.exists(log_path):
         return True
     else:
