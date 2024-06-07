@@ -27,7 +27,6 @@ from .utility import (
     fetch_module,
     get_absorb_layers,
     get_block_prefix,
-    get_example_input,
     get_module_input_output,
     recover_forward,
     replace_forward,
@@ -115,7 +114,6 @@ class ActAwareWeightQuant:
         self,
         model,
         example_inputs=None,
-        dataloader=None,
         data_type="int",
         bits=4,
         group_size=32,
@@ -129,9 +127,6 @@ class ActAwareWeightQuant:
 
         self.example_inputs = example_inputs
         self.model = model
-        if example_inputs is None:
-            assert dataloader is not None, "dataloader or example_inputs is required."
-            self.example_inputs = get_example_input(dataloader)
         self.device = device
         self._move_model_and_data_to_device()
         self.total_block_args = total_block_args
@@ -526,7 +521,6 @@ class AWQQuantizer(Quantizer):
         group_size=32,
         scheme="asym",
         example_inputs=None,
-        dataloader=None,
         use_auto_scale=True,
         use_mse_search=True,
         folding=False,
@@ -544,7 +538,6 @@ class AWQQuantizer(Quantizer):
             group_size: how many elements share one scale/zp. Defaults to 32.
             scheme: sym or asym. Defaults to "asym".
             example_inputs: example_inputs. Defaults to None.
-            dataloader: datalaoder or example_inputs is required. Defaults to None.
             use_auto_scale: whether enable scale for salient weight. Defaults to True.
             use_mse_search: whether enable clip for weight by checking mse. Defaults to True.
             folding: False will allow insert mul before linear when the scale cannot be absorbed
@@ -565,7 +558,6 @@ class AWQQuantizer(Quantizer):
         awq = ActAwareWeightQuant(
             model,
             example_inputs=example_inputs,
-            dataloader=dataloader,
             data_type=data_type,
             bits=bits,
             group_size=group_size,
