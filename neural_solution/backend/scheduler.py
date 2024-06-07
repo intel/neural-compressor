@@ -99,7 +99,7 @@ class Scheduler:
             # Only check the conda environments that start with the specified prefix
             if env_name.startswith(env_prefix):
                 cmd = [f"source {CONDA_SOURCE_PATH} && conda activate {env_name} && conda list"]
-                process = subprocess.run(cmd, capture_output=True, text=True, shell=True) # nosec
+                process = subprocess.run(cmd, capture_output=True, text=True, shell=True)  # nosec
                 output = process.stdout.strip()
 
                 # Parse the output to get a list of installed package names
