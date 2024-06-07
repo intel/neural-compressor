@@ -51,8 +51,21 @@ def autotune(
     run_fn=None,
     run_args=None,
     example_inputs=None,
-) -> Optional[torch.nn.Module]:
-    """The main entry of auto-tune."""
+):
+    """The main entry of auto-tune.
+
+    Args:
+        model (torch.nn.Module): _description_
+        tune_config (TuningConfig): _description_
+        eval_fn (Callable): for evaluation of quantized models.
+        eval_args (tuple, optional): arguments used by eval_fn. Defaults to None.
+        run_fn (Callable, optional): for calibration to quantize model. Defaults to None.
+        run_args (tuple, optional): arguments used by run_fn. Defaults to None.
+        example_inputs (tensor/tuple/dict, optional): used to trace torch model. Defaults to None.
+
+    Returns:
+        The quantized model.
+    """
     best_quant_model = None
     eval_func_wrapper = EvaluationFuncWrapper(eval_fn, eval_args)
     config_loader, tuning_logger, tuning_monitor = init_tuning(tuning_config=tune_config)

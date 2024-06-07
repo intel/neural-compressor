@@ -109,7 +109,7 @@ def gptq_entry(
     # rebuild weight_config for gptq_quantize function
     weight_config = {}
     for (op_name, op_type), quant_config in configs_mapping.items():
-        if quant_config.name != GPTQ:
+        if quant_config.name != GPTQ or quant_config.dtype == "fp32":
             continue
         weight_config[op_name] = {
             "dtype": quant_config.dtype,

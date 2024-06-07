@@ -25,7 +25,7 @@ from packaging.version import Version
 try:
     import intel_extension_for_pytorch as ipex
     import prettytable as pt
-except:
+except:  # pragma: no cover
     pass
 
 from neural_compressor.common.utils import DEFAULT_WORKSPACE, CpuInfo
