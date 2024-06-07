@@ -167,18 +167,23 @@ async def submit_task(task: Task):
         cursor = conn.cursor()
         task_id = str(uuid.uuid4()).replace("-", "")
         sql = (
-            r"insert into task(id, script_url, optimized, arguments, approach, requirements, workers, status)"
-            + r" values ('{}', '{}', {}, '{}', '{}', '{}', {}, 'pending')".format(
-                task_id,
-                task.script_url,
-                task.optimized,
-                list_to_string(task.arguments),
-                task.approach,
-                list_to_string(task.requirements),
-                task.workers,
-            )
+            "INSERT INTO task "
+            "(id, script_url, optimized, arguments, approach, requirements, workers, status) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')"
         )
-        cursor.execute(sql)
+
+
+        task_params = (
+            task_id,
+            task.script_url,
+            task.optimized,
+            list_to_string(task.arguments),
+            task.approach,
+            list_to_string(task.requirements),
+            task.workers,
+        )
+
+        conn.execute(sql, task_params)
         conn.commit()
         try:
             task_submitter.submit_task(task_id)
