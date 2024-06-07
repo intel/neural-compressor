@@ -89,17 +89,18 @@ class Scheduler:
         if requirement == [""]:
             return env_prefix
         # Construct the command to list all the conda environments
-        cmd = "conda env list"
-        output = subprocess.getoutput(cmd)
+        cmd = ["conda", "env", "list"]
+        process = subprocess.run(cmd, capture_output=True, text=True)
+        output = process.stdout.strip()
         # Parse the output to get a list of conda environment names
         env_list = [line.strip().split()[0] for line in output.splitlines()[2:]]
         conda_env = None
         for env_name in env_list:
             # Only check the conda environments that start with the specified prefix
             if env_name.startswith(env_prefix):
-                conda_bash_cmd = f"source {CONDA_SOURCE_PATH}"
-                cmd = f"{conda_bash_cmd} && conda activate {env_name} && conda list"
-                output = subprocess.getoutput(cmd)
+                cmd = ["/bin/bash", "-c", f"source {CONDA_SOURCE_PATH} && conda activate {env_name} && conda list"]
+                process = subprocess.run(cmd, capture_output=True, text=True)
+                output = process.stdout.strip()
                 # Parse the output to get a list of installed package names
                 installed_packages = [line.split()[0] for line in output.splitlines()[2:]]
                 installed_packages_version = [
