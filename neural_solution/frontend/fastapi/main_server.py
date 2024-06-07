@@ -97,7 +97,8 @@ def ping():
             msg = "Ping fail! Make sure Neural Solution runner is running!"
             break
         except Exception as e:
-            msg = "Ping fail! {}".format(e)
+            print(e)
+            msg = "Ping fail!"
             break
         sock.close()
     return {"status": "Healthy", "msg": msg} if count == 2 else {"status": "Failed", "msg": msg}
