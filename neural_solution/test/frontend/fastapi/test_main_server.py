@@ -225,11 +225,11 @@ class TestMain(unittest.TestCase):
         self.assertIn("pending", response.text)
 
         response = client.get("/task/status/error_id")
-        assert response.status_code == 200
-        self.assertIn("Please check url", response.text)
+        assert response.status_code == 422
+        self.assertIn("Invalid task id", response.text)
 
     def test_read_logs(self):
-        task_id = "12345"
+        task_id = "65f87f89fd674724930ef659cbe86e08"
         log_path = f"{TASK_LOG_path}/task_{task_id}.txt"
         with open(log_path, "w") as f:
             f.write(f"I am {task_id}.")
