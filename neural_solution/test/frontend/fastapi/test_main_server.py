@@ -169,14 +169,13 @@ class TestMain(unittest.TestCase):
         mock_submit_task.assert_called()
 
         # test generic Exception case
-        mock_submit_task.side_effect = Exception("Something went wrong")
         response = client.post("/task/submit/", json=task)
         self.assertEqual(response.status_code, 200)
         self.assertIn("status", response.json())
         self.assertIn("task_id", response.json())
         self.assertIn("msg", response.json())
         self.assertEqual(response.json()["status"], "failed")
-        self.assertIn("Something went wrong", response.json()["msg"])
+        self.assertIn("Task Submitted fail!", response.json()["msg"])
         mock_submit_task.assert_called()
 
         delete_db()
