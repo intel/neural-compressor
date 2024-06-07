@@ -271,7 +271,7 @@ def get_baseline_during_tuning(task_id: str, task_log_path):
 
 def is_valid_uuid(uuid_string):
     """Validate UUID format using regular expression.
-    
+
     Args:
         uuid_string (str): task id.
 
