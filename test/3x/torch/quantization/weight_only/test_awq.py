@@ -8,7 +8,7 @@ import transformers
 from neural_compressor.common import Logger
 
 logger = Logger().get_logger()
-from neural_compressor.torch.algorithms.weight_only.modules import WeightOnlyLinear
+from neural_compressor.torch.algorithms.weight_only.modules import MulLinear, WeightOnlyLinear
 from neural_compressor.torch.quantization import AWQConfig, convert, get_default_awq_config, prepare, quantize
 from neural_compressor.torch.utils import accelerator
 
@@ -30,6 +30,7 @@ class TestAWQQuant:
         self.tiny_gptj = transformers.AutoModelForCausalLM.from_pretrained(
             "hf-internal-testing/tiny-random-GPTJForCausalLM",
             device_map=device,
+            torchscript=True,
         )
         self.example_inputs = torch.ones([1, 10], dtype=torch.long).to(device)
         self.label = self.tiny_gptj(self.example_inputs)[0]
@@ -68,6 +69,7 @@ class TestAWQQuant:
 
         # default awq_quantize is 4 bits, 32 group size, use big atol=1e-1
         if (bits, use_sym, group_size) == (8, True, -1):
+            assert not isinstance(qdq_model.transformer.h[0].attn.k_proj, MulLinear), "mul in k_proj should be folded."
             assert torch.allclose(out, self.label, atol=1e-2), "Accuracy gap atol > 0.01 is unexpected."
         elif (bits, use_sym, group_size) == (2, True, 8):
             assert torch.allclose(out, self.label, atol=0.5), "Accuracy gap atol > 0.5 is unexpected."

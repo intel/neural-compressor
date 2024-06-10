@@ -49,7 +49,7 @@ ipex_ver = get_ipex_version()
 
 
 class SmoothQuantQuantizer(Quantizer):
-    def __init__(self, quant_config: OrderedDict = {}):
+    def __init__(self, quant_config: OrderedDict = {}):  # pragma: no cover
         """Init a SmoothQuantQuantizer object.
 
         Args:
@@ -86,8 +86,6 @@ class SmoothQuantQuantizer(Quantizer):
         cfg_to_qconfig(self.quant_config, cfgs, op_infos_from_cfgs, output_tensor_id_op_name)
         model.eval()
 
-        use_bf16 = self.quant_config.get("use_bf16", None)
-
         # check smoothquant alpha and act_algo value
         recipe_cfgs = self.quant_config.get("recipe_cfgs", None)
         alpha = recipe_cfgs["smooth_quant_args"]["alpha"]
@@ -96,7 +94,7 @@ class SmoothQuantQuantizer(Quantizer):
 
         # Check save_qconf_summary part is a workaround for IPEX bug.
         # Sometimes the prepared model from get_op_capablitiy loss this attribute.
-        if not hasattr(model, "save_qconf_summary") or not hasattr(model, "load_qconf_summary"):
+        if not hasattr(model, "save_qconf_summary") or not hasattr(model, "load_qconf_summary"):  # pragma: no cover
             from torch.ao.quantization.observer import MinMaxObserver
 
             if ipex_ver.release >= Version("2.1.1").release:
@@ -228,7 +226,6 @@ class SmoothQuantQuantizer(Quantizer):
             else:
                 model = ipex.quantization.prepare(model, static_qconfig, example_inputs=example_inputs, inplace=inplace)
 
-        model.load_qconf_summary(qconf_summary=ipex_config_path)
         run_fn(model)
         model.save_qconf_summary(qconf_summary=ipex_config_path)
         model = _ipex_post_quant_process(model, example_inputs, use_bf16, inplace=inplace)
@@ -246,6 +243,12 @@ class SmoothQuantQuantizer(Quantizer):
             model.tune_cfg = json.load(f)
         model.ipex_config_path = ipex_config_path
         dump_model_op_stats(tune_cfg["op"])
+
+        from neural_compressor.torch.algorithms.smooth_quant import save
+
+        logger.info("Smooth quantization done.")
+        model.ori_save = model.save
+        model.save = MethodType(save, model)
         return model
 
 
@@ -302,16 +305,22 @@ def qdq_quantize(
             + "one iter calibration for other ops."
         )
 
+    model.save_qconf_summary(qconf_summary=ipex_config_path)
     if ipex_ver.release > Version("2.1.0").release:
         update_sq_scale(ipex_config_path, smoothquant_scale_info)
         model.load_qconf_summary(qconf_summary=ipex_config_path)
-    model.save_qconf_summary(qconf_summary=ipex_config_path)
     model = _ipex_post_quant_process(model, example_inputs, use_bf16, inplace=inplace)
 
     with open(ipex_config_path, "r") as f:
         model.tune_cfg = json.load(f)
     model.ipex_config_path = ipex_config_path
     dump_model_op_stats(tune_cfg["op"])
+
+    from neural_compressor.torch.algorithms.smooth_quant import save
+
+    logger.info("Smooth quantization done.")
+    model.ori_save = model.save
+    model.save = MethodType(save, model)
     return model
 
 
