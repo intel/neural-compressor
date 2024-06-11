@@ -251,8 +251,8 @@ from neural_compressor.torch.quantization import load
 
 orig_model = YOURMODEL()
 loaded_model = load(
-    model=orig_model, checkpoint_dir="saved_results"
-)  # Please note that the model parameter passes the original model.
+    "saved_results", original_model=orig_model
+)  # Please note that the original_model parameter passes the original model.
 ```
 
 
