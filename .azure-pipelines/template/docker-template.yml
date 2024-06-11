@@ -33,7 +33,7 @@ steps:
   - ${{ if eq(parameters.dockerConfigName, 'commonDockerConfig') }}:
       - script: |
           rm -fr ${BUILD_SOURCESDIRECTORY} || sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
-          echo y | docker system prune
+          echo y | docker system prune --all
         displayName: "Clean workspace"
 
       - checkout: self
@@ -45,7 +45,7 @@ steps:
           rm -fr ${BUILD_SOURCESDIRECTORY} || sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
           mkdir ${BUILD_SOURCESDIRECTORY}
           chmod 777 ${BUILD_SOURCESDIRECTORY}
-          echo y | docker system prune
+          echo y | docker system prune --all
         displayName: "Clean workspace"
 
       - checkout: none
