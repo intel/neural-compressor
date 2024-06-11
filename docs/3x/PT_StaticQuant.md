@@ -68,7 +68,7 @@ q_model = convert(prepared_model)
 
 #### Model Examples
 
-Users could refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/3.x_api/pytorch/nlp/huggingface_models/language-modeling/quantization/llm) on how to quantize a new model.
+Users could refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/3.x_api/pytorch/nlp/huggingface_models/language-modeling/quantization/static_quant) on how to quantize a new model.
 
 
 ### Static Quantization with PT2E Backend

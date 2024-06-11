@@ -46,7 +46,7 @@ run_fn(prepared_model)
 q_model = convert(prepared_model)
 ```
 
-To get more information, please refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/3.x_api/pytorch/nlp/huggingface_models/language-modeling/quantization/llm).
+To get more information, please refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/3.x_api/pytorch/nlp/huggingface_models/language-modeling/quantization/smooth_quant).
 
 
 ## Validated Models
