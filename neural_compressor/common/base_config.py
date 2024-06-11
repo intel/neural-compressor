@@ -377,6 +377,7 @@ class BaseConfig(ABC):
         if len(tuning_param_list) == 0:
             config_list = [config]
         else:
+            tuning_param_list = list(filter(lambda x: len(x.options) > 0, tuning_param_list))
             tuning_param_name_lst = [tuning_param.name for tuning_param in tuning_param_list]
             for params_values in product(*[tuning_param.options for tuning_param in tuning_param_list]):
                 tuning_param_pair = dict(zip(tuning_param_name_lst, params_values))
