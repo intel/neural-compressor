@@ -17,7 +17,7 @@ import torch
 
 try:
     import intel_extension_for_pytorch as ipex
-except:
+except:  # pragma: no cover
     assert False, "Please install IPEX for smooth quantization."
 
 from neural_compressor.torch.algorithms.static_quant import load, save

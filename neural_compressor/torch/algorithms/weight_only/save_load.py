@@ -25,8 +25,7 @@ from neural_compressor.torch.utils import QCONFIG_NAME, WEIGHT_NAME, LoadFormat,
 
 
 def save(model, output_dir="./saved_results"):
-    if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
+    os.makedirs(output_dir, exist_ok=True)
     qmodel_weight_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), WEIGHT_NAME)
     qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), QCONFIG_NAME)
     # saving process
