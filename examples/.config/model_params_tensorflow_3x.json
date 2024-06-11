@@ -4,7 +4,7 @@
       "model_src_dir": "nlp/bert_large_squad_model_zoo/quantization/ptq",
       "dataset_location": "/tf_dataset/tensorflow/bert/data",
       "input_model": "/tf_dataset/tensorflow/bert/fp32_bert_squad.pb",
-      "main_script": "tune_squad.py",
+      "main_script": "main.py",
       "batch_size": 64,
       "fp32_model_url": "https://storage.googleapis.com/intel-optimized-tensorflow/models/v2_7_0/fp32_bert_squad.pb"
     },
