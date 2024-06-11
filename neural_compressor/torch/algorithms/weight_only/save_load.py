@@ -45,7 +45,7 @@ def save(model, output_dir="./saved_results"):
     logger.info("Save configuration of quantized model to {}.".format(qconfig_file_path))
 
 
-def load(model, checkpoint_dir=None, format=LoadFormat.DEFAULT, *hf_model_args, **hf_model_kwargs):
+def load(model_name_or_path, original_model=None, format=LoadFormat.DEFAULT, device='cpu', *model_args, **kwargs):
     """Load quantized weight-only quantization model.
 
     1. Load INC weight-only quantized model in local.
@@ -53,38 +53,42 @@ def load(model, checkpoint_dir=None, format=LoadFormat.DEFAULT, *hf_model_args, 
        including GPTQ/AWQ models and upstreamed INC quantized models in HF model hub.
 
     Args:
-        model (Union[torch.nn.Module], str): torch model or hugginface model id.
-            if 'format' is set to 'huggingface', it means the model_name_or_path of
-            huggingface weight-only quantized model.
-            if 'format' is set to 'default', it means the fp32 model and the 'checkpoint_dir'
-            parameter should not be None. it coworks with 'checkpoint_dir' parameter to load INC
+        model_name_or_path (str):  torch checkpoint directory or hugginface model_name_or_path.
+            If 'format' is set to 'huggingface', it means the huggingface model_name_or_path.
+            If 'format' is set to 'default', it means the 'checkpoint_dir'.
+            Parameter should not be None. it coworks with 'original_model' parameter to load INC
             weight-only quantized model in local.
-        checkpoint_dir (str, optional): local path where quantized weights are saved.
-            Only needed if 'format' is set to 'default'.
+        original_model (torch.nn.module, optional): original model before quantization.
+            Needed if 'format' is set to 'default' and not TorchScript model.Defaults to None.
         format (str, optional): 'defult' for loading INC weight-only quantized model.
             'huggingface' for loading huggingface WOQ causal language model. Defaults to "default".
-
+        model_args (sequence of positional arguments, optional):
+            all remaining positional arguments for loading huggingface models.
+            will be passed to the huggingface model's `__init__` method.
+        kwargs (remaining dictionary of keyword arguments, optional):
+            remaining dictionary of keyword arguments for loading huggingface models.
+            will be passed to the huggingface model's `__init__` method, such as 'trust_remote_code', 'revision'.
     Returns:
         torch.nn.Module: quantized model
     """
     if format == LoadFormat.HUGGINGFACE:
-        model = _load_hf_woq_model(model, *hf_model_args, **hf_model_kwargs)
+        model = _load_hf_woq_model(model_name_or_path, *model_args, **kwargs)
         logger.info("Quantized huggingface model loading successful.")
         return model
     elif format == LoadFormat.DEFAULT:
-        qmodel_weight_file_path = os.path.join(os.path.abspath(os.path.expanduser(checkpoint_dir)), WEIGHT_NAME)
+        qmodel_weight_file_path = os.path.join(os.path.abspath(os.path.expanduser(model_name_or_path)), WEIGHT_NAME)
         assert os.path.exists(qmodel_weight_file_path), "Cannot load model weight from path {}".format(
             qmodel_weight_file_path
         )
 
-        qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(checkpoint_dir)), QCONFIG_NAME)
+        qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(model_name_or_path)), QCONFIG_NAME)
         assert os.path.exists(qconfig_file_path), "Cannot load model quantization config from path {}".format(
             qconfig_file_path
         )
 
-        assert model is not None, "Can't get origin model. Please pass `model` to load function."
+        assert original_model is not None, "Can't get original model. Please pass `original_model` to load function."
 
-        model = _load_inc_woq_model(qmodel_weight_file_path, qconfig_file_path, model)
+        model = _load_inc_woq_model(qmodel_weight_file_path, qconfig_file_path, original_model)
         logger.info("Quantized model loading successful.")
         return model
     else:

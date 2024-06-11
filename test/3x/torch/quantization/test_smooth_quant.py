@@ -150,7 +150,7 @@ class TestSmoothQuant:
         from neural_compressor.torch.quantization import load
 
         # load using saved model
-        loaded_model = load(checkpoint_dir="saved_results")
+        loaded_model = load("saved_results")
         loaded_out = loaded_model(example_inputs)
         # set a big atol to avoid random issue
         assert torch.allclose(inc_out, loaded_out, atol=2e-02), "Unexpected result. Please double check."
