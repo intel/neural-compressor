@@ -243,65 +243,6 @@ class TrainableEquivalentTransformation:
             if isinstance(m, TEQLinearFakeQuant):
                 set_module(self.model, n, m.orig_layer)
 
-    def train(
-        self,
-        dataloader,
-        train_steps=1000,
-        lr=1e-3,
-        warmup_ratio=0.05,
-        gradient_accumulation_steps=1,
-        logging_steps=10,
-        betas=[0.9, 0.9],
-        weight_decay=0,
-        lr_scheduler_type="linear",
-    ):
-        """Train function."""
-        trained_alphas_list = []
-        for item in self.trained_alphas.items():
-            trained_alphas_list.append(item[1])
-        optimizer = torch.optim.Adam(trained_alphas_list, lr=lr, weight_decay=weight_decay, betas=betas)
-
-        lr_scheduler = transformers.get_scheduler(  # pylint: disable=E1111
-            name=lr_scheduler_type,
-            optimizer=optimizer,
-            num_warmup_steps=int(train_steps * warmup_ratio) // gradient_accumulation_steps,
-            num_training_steps=train_steps // gradient_accumulation_steps,
-        )
-
-        logger.info("start training")
-        self.model.train()
-        global_steps = 0
-
-        while global_steps <= train_steps:
-            for inputs in dataloader:
-                if isinstance(inputs, torch.Tensor):
-                    input_id = inputs
-                elif isinstance(inputs, dict):
-                    input_id = inputs["input_ids"]
-                else:
-                    input_id = inputs[0]
-
-                input_id = input_id.to(self.device)
-                output = self.model(input_id, labels=input_id)
-                loss = output[0] / gradient_accumulation_steps
-                loss.backward()
-                global_steps += 1
-
-                if global_steps % logging_steps == 0:
-                    logger.info("steps: {}, loss: {}".format(global_steps, loss.detach().cpu().item()))
-
-                if global_steps % gradient_accumulation_steps == 0:
-                    optimizer.step()
-                    optimizer.zero_grad()
-                    lr_scheduler.step()
-
-                if global_steps >= train_steps:  # pragma: no cover
-                    break
-
-        logger.info("finish training")
-        self.model.eval()
-        return None
-
     @torch.no_grad()
     def quantize(self):
         """quantization."""
