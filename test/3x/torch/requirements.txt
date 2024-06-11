@@ -6,3 +6,4 @@ prettytable
 psutil
 pytest
 transformers
+intel_extension_for_pytorch
