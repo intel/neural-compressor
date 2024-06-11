@@ -14,6 +14,7 @@ pr:
       - setup.py
       - requirements_pt.txt
       - .azure-pipelines/scripts/models
+      - .azure-pipelines/model-test-3x.yml
 
 variables:
   OUT_SCRIPT_PATH: $(Build.SourcesDirectory)/.azure-pipelines/scripts/models
@@ -35,7 +36,7 @@ parameters:
 stages:
   - stage: PyTorchModels
     displayName: Run PyTorch Model
-    pool: MODEL_PERF_TEST
+    pool: ICX-16C
     dependsOn: []
     condition: and(succeeded(), eq('${{ parameters.PyTorch_Model_3X }}', 'true'))
     jobs:
@@ -60,7 +61,7 @@ stages:
           - script: |
               echo ${BUILD_SOURCESDIRECTORY}
               rm -fr ${BUILD_SOURCESDIRECTORY} || sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
-              echo y | docker system prune
+              echo y | docker system prune --all
             displayName: "Clean workspace"
           - checkout: self
             clean: true
