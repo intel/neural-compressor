@@ -62,9 +62,6 @@ class MXLinear(torch.nn.Linear):
                 axes=[-1],
             )
 
-    def append_name(self, postfix):
-        self.name += postfix
-
     def forward(self, input):
         if self.mx_none:
             return super().forward(input)
