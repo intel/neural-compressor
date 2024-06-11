@@ -32,11 +32,28 @@ config_name_mapping = {
 }
 
 
-def load(model_name_or_path, original_model=None, format="default", device="cpu", *model_args, **kwargs):
+def load(model_name_or_path, original_model=None, format='default', device='cpu', *model_args, **kwargs):
     """Load quantized model.
 
     1. Load INC quantized model in local.
     2. Load HuggingFace quantized model, including GPTQ/AWQ models and upstreamed INC quantized models in HF model hub.
+
+    case 1: WOQ
+        # huggingface model
+        from neural_compressor.torch.quantization import load
+        load(model_name_or_path=model_name_or_path)
+
+        # local model
+        from neural_compressor.torch.quantization import load
+        load(model_name_or_path="saved_results", original_model=fp32_model)
+
+    case 2: INT8/FP8
+        from neural_compressor.torch.quantization import load
+        load(model_name_or_path='saved_result', original_model=fp32_model)
+
+    case 3: TorchScript (IPEX)
+        from neural_compressor.torch.quantization import load
+        load(model_name_or_path='saved_result')
 
     Args:
         model_name_or_path (str):  torch checkpoint directory or hugginface model_name_or_path.
@@ -80,7 +97,7 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
 
                 return load(model_name_or_path, original_model, format=LoadFormat.DEFAULT)
 
-            model.qconfig = config_mapping
+            original_model.qconfig = config_mapping
             if isinstance(config_object, FP8Config):  # FP8
                 from neural_compressor.torch.algorithms.habana_fp8 import load
 
