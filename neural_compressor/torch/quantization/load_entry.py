@@ -32,7 +32,7 @@ config_name_mapping = {
 }
 
 
-def load(model_name_or_path, original_model=None, format='default', device='cpu', *model_args, **kwargs):
+def load(model_name_or_path, original_model=None, format="default", device="cpu", *model_args, **kwargs):
     """Load quantized model.
 
     1. Load INC quantized model in local.

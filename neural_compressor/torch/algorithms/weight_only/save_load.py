@@ -44,7 +44,7 @@ def save(model, output_dir="./saved_results"):
     logger.info("Save configuration of quantized model to {}.".format(qconfig_file_path))
 
 
-def load(model_name_or_path, original_model=None, format=LoadFormat.DEFAULT, device='cpu', *model_args, **kwargs):
+def load(model_name_or_path, original_model=None, format=LoadFormat.DEFAULT, device="cpu", *model_args, **kwargs):
     """Load quantized weight-only quantization model.
 
     1. Load INC weight-only quantized model in local.
