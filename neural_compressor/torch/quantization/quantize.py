@@ -97,6 +97,7 @@ def quantize(
                 example_inputs=example_inputs,
                 mode=Mode.QUANTIZE,
             )
+    setattr(q_model, "is_quantized", True)
     return q_model
 
 
@@ -152,7 +153,7 @@ def prepare(
                 example_inputs=example_inputs,
                 mode=Mode.PREPARE,
             )
-            setattr(prepared_model, "prepared", True)
+            setattr(prepared_model, "is_prepared", True)
     setattr(prepared_model, "quant_config", quant_config)
     setattr(prepared_model, "example_inputs", example_inputs)
     return prepared_model
@@ -215,4 +216,5 @@ def convert(
                 example_inputs=example_inputs,
                 mode=Mode.CONVERT,
             )
+    setattr(q_model, "is_quantized", True)
     return q_model

@@ -57,38 +57,34 @@ This is a tutorial of how to enable DLRM model with Intel® Neural Compressor.
 We need update dlrm_s_pytorch.py like below
 
 ```python
-class DLRM_DataLoader(object):
-    def __init__(self, loader=None):
-        self.loader = loader
-        self.batch_size = loader.dataset.batch_size
-    def __iter__(self):
-        for X_test, lS_o_test, lS_i_test, T in self.loader:
-            yield (X_test, lS_o_test, lS_i_test), T
-```
+# evaluation
+def eval_func(model):
+	args.int8 = model.is_quantized
+	with torch.no_grad():
+		return inference(
+			args,
+			model,
+			best_acc_test,
+			best_auc_test,
+			test_ld,
+			trace=args.int8
+		)
 
-```python
-	def eval_func(model):
-		args.int8 = False if model.ipex_config_path is None else True
-		args.int8_configure = "" \
-			if model.ipex_config_path is None else model.ipex_config_path
-		with torch.no_grad():
-			return inference(
-				args,
-				model,
-				best_acc_test,
-				best_auc_test,
-				test_ld,
-				trace=args.int8
-			)
+# calibration
+def calib_fn(model):
+	calib_number = 0
+	for X_test, lS_o_test, lS_i_test, T in train_ld:
+		if calib_number < 102400:
+			model(X_test, lS_o_test, lS_i_test)
+			calib_number += 1
 
-	eval_dataloader = DLRM_DataLoader(train_ld)
-	from neural_compressor import PostTrainingQuantConfig, quantization
-	conf = PostTrainingQuantConfig(backend="ipex")
-	q_model = quantization.fit(
-						dlrm,
-						conf=conf,
-						eval_func=eval_func,
-						calib_dataloader=eval_dataloader
-						)
-	q_model.save("saved_results")
+from neural_compressor.torch.quantization import SmoothQuantConfig, autotune, TuningConfig
+tune_config = TuningConfig(config_set=SmoothQuantConfig.get_config_set_for_tuning())
+dlrm = autotune(
+	dlrm, 
+	tune_config=tune_config,
+	eval_fn=eval_func,
+	run_fn=calib_fn,
+)
+dlrm.save("saved_results")
 ```

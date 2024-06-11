@@ -819,10 +819,9 @@ def run():
     print("time/loss/accuracy (if enabled):")
 
     if args.tune:
+        # evaluation
         def eval_func(model):
-            args.int8 = False if model.ipex_config_path is None else True
-            args.int8_configure = "" \
-                if model.ipex_config_path is None else model.ipex_config_path
+            args.int8 = getattr(model, "is_quantized", False)
             with torch.no_grad():
                 return inference(
                     args,
