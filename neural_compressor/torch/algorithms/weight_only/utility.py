@@ -32,7 +32,6 @@ __all__ = [
     "forward_wrapper",
     "get_absorb_layers",
     "get_block_prefix",
-    "get_example_input",
     "replace_forward",
     "recover_forward",
     "get_module",
@@ -918,11 +917,11 @@ def get_example_input(dataloader, i=1):
 
     Args:
         dataloader (object): calibration dataset.
-
     Returns:
         example_inp (object).
     """
     iter = 0
+    example_inp = None
     try:
         for example_inp, label in dataloader:
             if iter == i:

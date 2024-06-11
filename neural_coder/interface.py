@@ -508,7 +508,7 @@ def enable(
 
     ### Benchmark
     if run_bench:
-        if "github.com" in code and ".py" in code:
+        if "github" in code and ".com" in code and ".py" in code:
             code = globals.list_code_path[0]
             entry_code = globals.list_code_path[0]
 

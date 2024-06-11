@@ -25,7 +25,7 @@ from packaging.version import Version
 try:
     import intel_extension_for_pytorch as ipex
     import prettytable as pt
-except:
+except:  # pragma: no cover
     pass
 
 from neural_compressor.common.utils import DEFAULT_WORKSPACE, CpuInfo
@@ -158,36 +158,73 @@ def check_cfg_and_qconfig(user_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_
 
 
 def generate_activation_observer(scheme, algorithm, smooth_quant=False, smooth_quant_enable=False):  # pragma: no cover
-    """This is a helper method to generate a dict containing activation observer info.
+    """This is a helper method to generate an activation observer.
 
     Args:
         scheme (str): Quantization scheme to be used.
         algorithm (str): What algorithm for computing the quantization parameters based on.
 
     Returns:
-        A dict containing observer info.zs
+        An observer.
     """
-    from intel_extension_for_pytorch.quantization._smooth_quant import SmoothQuantActivationObserver
-    from intel_extension_for_pytorch.quantization._utils import _get_observer_setting
-    from torch.quantization import HistogramObserver, MinMaxObserver
-
-    kl_activation_observer = _get_observer_setting(HistogramObserver(reduce_range=False))
-    minmax_activation_observer = _get_observer_setting(
-        MinMaxObserver(qscheme=torch.per_tensor_affine, dtype=torch.quint8)
-    )
-    smoothquant_kl_activation_observer = _get_observer_setting(
-        SmoothQuantActivationObserver(
-            reduce_range=False,
-            smooth_quant_enabled=smooth_quant_enable,
-        )
-    )
-    smoothquant_minmax_activation_observer = _get_observer_setting(
-        SmoothQuantActivationObserver(
-            reduce_range=False,
-            smooth_quant_enabled=smooth_quant_enable,
-        )
-    )
-
+    kl_activation_observer = {
+        "name": "HistogramObserver",
+        "bins": 2048,
+        "upsample_rate": 128,
+        "dtype": "torch.quint8",
+        "qscheme": "torch.per_tensor_affine",
+        "reduce_range": False,
+        "quant_min": 0,
+        "quant_max": 255,
+    }
+    minmax_activation_observer = {
+        "name": "MinMaxObserver",
+        "dtype": "torch.quint8",
+        "qscheme": "torch.per_tensor_affine",
+        "reduce_range": False,
+        "quant_min": 0,
+        "quant_max": 255,
+    }
+    smoothquant_kl_activation_observer = {
+        "name": "SmoothQuantActivationObserver",
+        "smooth_quant_enabled": smooth_quant_enable,
+        "dtype": "torch.quint8",
+        "qscheme": "torch.per_tensor_affine",
+        "reduce_range": False,
+        "quant_min": 0,
+        "quant_max": 255,
+        "alpha": 0.5,
+        "act_observer": kl_activation_observer,
+        "act_ic_observer": {
+            "name": "PerChannelMinMaxObserver",
+            "ch_axis": -1,
+            "dtype": "torch.quint8",
+            "qscheme": "torch.per_channel_affine",
+            "reduce_range": False,
+            "quant_min": 0,
+            "quant_max": 255,
+        },
+    }
+    smoothquant_minmax_activation_observer = {
+        "name": "SmoothQuantActivationObserver",
+        "smooth_quant_enabled": smooth_quant_enable,
+        "dtype": "torch.quint8",
+        "qscheme": "torch.per_tensor_affine",
+        "reduce_range": False,
+        "quant_min": 0,
+        "quant_max": 255,
+        "alpha": 0.5,
+        "act_observer": minmax_activation_observer,
+        "act_ic_observer": {
+            "name": "PerChannelMinMaxObserver",
+            "ch_axis": -1,
+            "dtype": "torch.quint8",
+            "qscheme": "torch.per_channel_affine",
+            "reduce_range": False,
+            "quant_min": 0,
+            "quant_max": 255,
+        },
+    }
     REDUCE_RANGE = False if CpuInfo().vnni else True
     if REDUCE_RANGE:
         minmax_activation_observer["reduce_range"] = REDUCE_RANGE

@@ -116,7 +116,7 @@ class GPTQLLMDataLoaderDict(GPTQLLMDataLoader):
 
 from tqdm import tqdm
 
-from neural_compressor.torch.algorithms.weight_only.gptq import move_input_to_device
+from neural_compressor.torch.algorithms.weight_only.utility import move_input_to_device
 
 
 def run_fn_for_gptq(model, dataloader_for_calibration, calibration_mode=False):

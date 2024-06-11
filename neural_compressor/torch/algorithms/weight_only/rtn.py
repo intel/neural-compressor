@@ -62,7 +62,6 @@ class RTNQuantizer(Quantizer):
         group_size=32,
         group_dim=1,
         quantile=1.0,
-        export_compressed_model=True,
         use_full_range=False,
         use_mse_search=False,
         *args,
@@ -79,8 +78,6 @@ class RTNQuantizer(Quantizer):
             group_dim (int, optional):  0 means splitting output channel,
                                         1 means splitting input channel. Defaults to 1.
             quantile (float, optional): percentile of clip. Defaults to 1.0.
-            export_compressed_model (bool, optional): Choose return fp32 or int32 model.
-                                        Defaults to False.
             use_full_range (bool, optional): Choose sym range whether use -2**(bits-1).
                                         Defaults to False.
             use_mse_search (bool, optional):  Whether search clip range.
@@ -109,8 +106,7 @@ class RTNQuantizer(Quantizer):
             "double_quant_scheme": kwargs.get("double_quant_scheme", "sym"),
             "double_quant_group_size": kwargs.get("double_quant_group_size", 256),
         }
-        if export_compressed_model:
-            use_optimum_format = kwargs.get("use_optimum_format", True)
+        use_optimum_format = kwargs.get("use_optimum_format", True)
         for name, m in model.named_modules():
             if not isinstance(m, supported_layers):
                 continue
@@ -134,8 +130,7 @@ class RTNQuantizer(Quantizer):
                 use_full_range = weight_config[name]["use_full_range"]
                 use_mse_search = weight_config[name]["use_mse_search"]
                 use_layer_wise = weight_config[name]["use_layer_wise"]
-                if export_compressed_model:
-                    use_optimum_format = kwargs.get("use_optimum_format", True)
+                use_optimum_format = kwargs.get("use_optimum_format", True)
                 # double quant config
                 double_quant_config = {
                     "double_quant": weight_config[name]["use_double_quant"],
@@ -170,62 +165,45 @@ class RTNQuantizer(Quantizer):
                 weight = m.weight.detach()
             if use_mse_search:
                 quantile = search_clip(m, bits, group_size, scheme, dtype, use_full_range)
-            if export_compressed_model:
-                int_weight, scale, zp = quant_tensor(
-                    weight,
-                    dtype=dtype,
-                    bits=bits,
-                    group_size=group_size,
-                    scheme=scheme,
-                    quantile=quantile,
-                    return_int=True,
-                    full_range=use_full_range,
-                    **double_quant_config,
-                )
-                int_weight = int_weight.t_().contiguous() if transpose else int_weight
-                scale = scale.t_().contiguous() if transpose else scale
-                zp = zp.t_().contiguous() if transpose and zp is not None else zp
-                if isinstance(m, torch.nn.Linear):
-                    in_features = m.in_features
-                    out_features = m.out_features
-                elif is_transformers_imported() and isinstance(m, transformers.Conv1D):
-                    in_features = m.weight.shape[0]
-                    out_features = m.weight.shape[1]
-                    int_weight = int_weight.t_().contiguous()
-                    scale = scale.t_().contiguous()
-                    zp = zp.t_().contiguous() if zp is not None else zp
-                from .modules import WeightOnlyLinear
+            int_weight, scale, zp = quant_tensor(
+                weight,
+                dtype=dtype,
+                bits=bits,
+                group_size=group_size,
+                scheme=scheme,
+                quantile=quantile,
+                return_int=True,
+                full_range=use_full_range,
+                **double_quant_config,
+            )
+            int_weight = int_weight.t_().contiguous() if transpose else int_weight
+            scale = scale.t_().contiguous() if transpose else scale
+            zp = zp.t_().contiguous() if transpose and zp is not None else zp
+            if isinstance(m, torch.nn.Linear):
+                in_features = m.in_features
+                out_features = m.out_features
+            elif is_transformers_imported() and isinstance(m, transformers.Conv1D):
+                in_features = m.weight.shape[0]
+                out_features = m.weight.shape[1]
+                int_weight = int_weight.t_().contiguous()
+                scale = scale.t_().contiguous()
+                zp = zp.t_().contiguous() if zp is not None else zp
+            from .modules import WeightOnlyLinear
 
-                new_module = WeightOnlyLinear(
-                    in_features,
-                    out_features,
-                    dtype=dtype,
-                    bits=bits,
-                    group_size=group_size,
-                    zp=zp is not None,
-                    bias=m.bias is not None,
-                    use_optimum_format=use_optimum_format,
-                    device=device,
-                )
-                new_module.pack(int_weight, scale, zp, m.bias)
-                if name == "":
-                    return new_module
-                else:
-                    set_module(model, name, new_module)
+            new_module = WeightOnlyLinear(
+                in_features,
+                out_features,
+                dtype=dtype,
+                bits=bits,
+                group_size=group_size,
+                zp=zp is not None,
+                bias=m.bias is not None,
+                use_optimum_format=use_optimum_format,
+                device=device,
+            )
+            new_module.pack(int_weight, scale, zp, m.bias)
+            if name == "":
+                return new_module
             else:
-                weight = quant_tensor(
-                    weight,
-                    dtype=dtype,
-                    bits=bits,
-                    group_size=group_size,
-                    scheme=scheme,
-                    quantile=quantile,
-                    full_range=use_full_range,
-                    **double_quant_config,
-                )
-                if transpose:
-                    # for only group_dim is 0 or only `transformers.Conv1D`,
-                    # we need to transpose the quantized tensor and module's weight back
-                    weight = weight.t_().contiguous()
-                m.weight.data.copy_(weight)
+                set_module(model, name, new_module)
         return model
