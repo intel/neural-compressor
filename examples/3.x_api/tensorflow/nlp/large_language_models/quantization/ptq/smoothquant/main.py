@@ -165,16 +165,14 @@ model_name = args.model_name_or_path
 
 tokenizer = transformers.AutoTokenizer.from_pretrained(model_name)
 model = transformers.TFAutoModelForCausalLM.from_pretrained(model_name)
+
 eval_dataset = load_dataset('lambada', split='validation')
-
-# model.eval()
-
 evaluator = Evaluator(eval_dataset, tokenizer, 'cpu')
 
 calib_dataset = load_dataset('lambada', split='train')
 calib_dataset = calib_dataset.shuffle(seed=42)
 calib_dataloader = CustomDataloader(calib_dataset, tokenizer, device='cpu', batch_size=1, for_calib=True)
-
+os.environ["TF_USE_LEGACY_KERAS"]="True"
 def eval_func(model):
     acc = evaluator.evaluate_tf_v1(model)
     return acc

@@ -32,6 +32,7 @@ from data_process import (
     ResizeCropImagenet, 
     TransposeLastChannel, 
     ShiftRescale,
+    TFDataLoader,
 )
 
 
@@ -124,7 +125,6 @@ class eval_classifier_optimized_graph:
 
         if args.tune:
             from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
-            from neural_compressor.tensorflow.utils import BaseDataLoader
 
             dataset = ImageRecordDataset(
                 root=args.dataset_location, 
@@ -134,13 +134,13 @@ class eval_classifier_optimized_graph:
                     ]
                 )
             )
-            calib_dataloader = BaseDataLoader(dataset=dataset, batch_size=10)
+            calib_dataloader = TFDataLoader(dataset=dataset, batch_size=10)
 
             quant_config = StaticQuantConfig()
             matmul_config = StaticQuantConfig(weight_dtype="fp32", act_dtype="fp32")
             conv_config = StaticQuantConfig(weight_dtype="fp32", act_dtype="fp32")
             quant_config.set_local("StatefulPartitionedCall/vit/encoder/layer_._9/output/dense/Tensordot/MatMul", matmul_config)
-            quant_config.set_local("conv2d", conv_config)
+            quant_config.set_local("Conv2D", conv_config)
 
             sm = saved_model_pb2.SavedModel()
             with tf.io.gfile.GFile(args.input_graph, "rb") as f:
@@ -152,8 +152,6 @@ class eval_classifier_optimized_graph:
             q_model.save(args.output_graph)
 
         if args.benchmark:
-            from neural_compressor.tensorflow.utils import BaseDataLoader
-
             dataset = ImageRecordDataset(
                 root=args.dataset_location, 
                 transform=ComposeTransform(transform_list= [
@@ -162,7 +160,7 @@ class eval_classifier_optimized_graph:
                     ]
                 )
             )
-            dataloader = BaseDataLoader(dataset=dataset, batch_size=args.batch_size)
+            dataloader = TFDataLoader(dataset=dataset, batch_size=args.batch_size)
 
             if args.int8 or args.input_graph.endswith("-tune.pb"):
                 input_graph = args.input_graph
