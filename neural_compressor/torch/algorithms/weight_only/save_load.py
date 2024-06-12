@@ -14,10 +14,11 @@
 
 # pylint:disable=import-error
 
+import copy
 import json
 import os
 import re
-import copy
+
 import torch
 
 from neural_compressor.common.utils import load_config_mapping, save_config_mapping
@@ -89,25 +90,25 @@ class WOQModelLoader:
             logger.info("Quantized huggingface model loading successful.")
         elif self.format == LoadFormat.DEFAULT:
             qmodel_weight_file_path = os.path.join(
-                os.path.abspath(os.path.expanduser(self.model_name_or_path)), WEIGHT_NAME)
+                os.path.abspath(os.path.expanduser(self.model_name_or_path)), WEIGHT_NAME
+            )
             assert os.path.exists(qmodel_weight_file_path), "Cannot load model weight from path {}".format(
                 qmodel_weight_file_path
             )
 
-            qconfig_file_path = os.path.join(
-                os.path.abspath(os.path.expanduser(self.model_name_or_path)), QCONFIG_NAME)
+            qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(self.model_name_or_path)), QCONFIG_NAME)
             assert os.path.exists(qconfig_file_path), "Cannot load model quantization config from path {}".format(
                 qconfig_file_path
             )
 
-            assert self.original_model is not None, \
-                "Can't get original model. Please pass `original_model` to load function."
+            assert (
+                self.original_model is not None
+            ), "Can't get original model. Please pass `original_model` to load function."
 
             model = self.load_inc_format_woq_model(qmodel_weight_file_path, qconfig_file_path)
             logger.info("Quantized model loading successful.")
         else:
-            raise ValueError(
-                f"`format` in load function can only be 'huggingface' or 'default', but get {self.format}")
+            raise ValueError(f"`format` in load function can only be 'huggingface' or 'default', but get {self.format}")
 
         return model
 
@@ -135,7 +136,7 @@ class WOQModelLoader:
         self.loaded_state_dict_keys = self._get_loaded_state_dict_keys(config)
 
         # initiate the huggingface model
-        self.original_model  = self._init_hf_model(model_class, config)
+        self.original_model = self._init_hf_model(model_class, config)
 
         # build weight-only quantization model with WeightOnlyLinear module
         model = self._build_woq_model()
@@ -192,7 +193,9 @@ class WOQModelLoader:
 
                     WeightOnlyLinearClass = AutoRoundWeightOnlyLinear
                     kwargs["groupsize"] = module_quantization_config.get("group_size", 32)
-                    kwargs["scale_dtype"] = convert_dtype_str2torch(module_quantization_config.get("scale_dtype", "fp16"))
+                    kwargs["scale_dtype"] = convert_dtype_str2torch(
+                        module_quantization_config.get("scale_dtype", "fp16")
+                    )
                 else:
                     from .modules import WeightOnlyLinear as INCWeightOnlyLinear
 
@@ -301,7 +304,9 @@ class WOQModelLoader:
                 "Please use `token` instead."
             )
             if token is not None:
-                raise ValueError("`token` and `use_auth_token` are both specified. Please set only the argument `token`.")
+                raise ValueError(
+                    "`token` and `use_auth_token` are both specified. Please set only the argument `token`."
+                )
             token = use_auth_token
 
         user_agent = {
@@ -446,9 +451,7 @@ class WOQModelLoader:
                         else:
                             # This repo has no safetensors file of any kind, we switch to PyTorch.
                             filename = _add_variant(WEIGHTS_NAME, variant)
-                            resolved_archive_file = cached_file(
-                                self.model_name_or_path, filename, **cached_file_kwargs
-                            )
+                            resolved_archive_file = cached_file(self.model_name_or_path, filename, **cached_file_kwargs)
                     if resolved_archive_file is None and filename == _add_variant(WEIGHTS_NAME, variant):
                         # Maybe the checkpoint is sharded, we try to grab the index name in this case.
                         resolved_archive_file = cached_file(
@@ -554,7 +557,11 @@ class WOQModelLoader:
         if torch_dtype is not None:
             if isinstance(torch_dtype, str):
                 if torch_dtype == "auto":
-                    if hasattr(config, "torch_dtype") and config.torch_dtype is not None and config.torch_dtype != "auto":
+                    if (
+                        hasattr(config, "torch_dtype")
+                        and config.torch_dtype is not None
+                        and config.torch_dtype != "auto"
+                    ):
                         torch_dtype = config.torch_dtype
                     else:  # pragma: no cover
                         if is_sharded and "dtype" in sharded_metadata:
