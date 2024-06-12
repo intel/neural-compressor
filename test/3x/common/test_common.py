@@ -277,6 +277,11 @@ class TestBaseConfig(unittest.TestCase):
         for i in range(len(configs_list)):
             self.assertEqual(configs_list[i].target_op_type_list, target_op_type_list_options[i])
 
+    def test_config_expand_with_empty_options(self):
+        configs = FakeAlgoConfig(weight_dtype=["int", "float32"], weight_bits=[])
+        configs_list = configs.expand()
+        self.assertEqual(len(configs_list), 2)
+
     def test_mixed_two_algos(self):
         model = FakeModel()
         OP1_NAME = "OP1_NAME"

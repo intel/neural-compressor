@@ -236,9 +236,10 @@ if args.quantize:
     # 3.x api
     if args.approach == 'weight_only':
         from neural_compressor.torch.quantization import RTNConfig, GPTQConfig, prepare, convert, quantize
-        from neural_compressor.torch.utils import get_double_quant_config
+        from neural_compressor.torch.utils import get_double_quant_config_dict
         weight_sym = True if args.woq_scheme == "sym" else False
-        double_quant_config_dict = get_double_quant_config(args.double_quant_type)
+        if args.double_quant_type is not None:
+            double_quant_config_dict = get_double_quant_config_dict(args.double_quant_type)
 
         if args.woq_algo == "RTN":
             if args.double_quant_type is not None:
@@ -276,7 +277,7 @@ if args.quantize:
                 max_seq_length=args.gptq_max_seq_length,
             )
             dataloader_for_calibration = dataloaderPreprocessor.get_prepared_dataloader()
-            from neural_compressor.torch.algorithms.weight_only.gptq import move_input_to_device
+            from neural_compressor.torch.algorithms.weight_only.utility import move_input_to_device
             from tqdm import tqdm
             def run_fn_for_gptq(model, dataloader_for_calibration, *args):
                 for batch in tqdm(dataloader_for_calibration):

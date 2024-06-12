@@ -1,5 +1,4 @@
-auto-round
-intel_extension_for_pytorch
+numpy
 peft==0.10.0
 psutil
 py-cpuinfo

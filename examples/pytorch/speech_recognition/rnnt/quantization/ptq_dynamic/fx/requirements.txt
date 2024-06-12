@@ -4,7 +4,7 @@ absl-py
 toml
 text-unidecode
 inflect
-librosa==0.8.1
+librosa
 torch <= 1.13.1
 tqdm
-numpy <= 1.22.4
+numpy <= 1.24.4

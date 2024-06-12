@@ -3,7 +3,7 @@ import copy
 import pytest
 import torch
 
-from neural_compressor.torch.quantization import MXQuantConfig, get_default_mx_config, quantize
+from neural_compressor.torch.quantization import MXQuantConfig, convert, get_default_mx_config, prepare
 
 
 def build_simple_torch_model():
@@ -40,20 +40,35 @@ class TestMXQuant:
     def test_mx_quant_default(self):
         fp32_model = copy.deepcopy(self.fp32_model)
         quant_config = get_default_mx_config()
-        q_model = quantize(fp32_model, quant_config=quant_config)
+        fp32_model = prepare(model=fp32_model, quant_config=quant_config)
+        q_model = convert(model=fp32_model)
         assert q_model is not None, "Quantization failed!"
 
     @pytest.mark.parametrize(
-        "w_dtype, weight_only",
+        "w_dtype, weight_only, round_method, out_dtype",
         [
-            ("fp4", True),
-            ("fp8_e5m2", False),
+            ("fp4", True, "dither", "float32"),
+            ("fp8_e5m2", False, "floor", "bfloat16"),
+            ("int8", False, "even", "float16"),
+            ("int4", False, "nearest", "float32"),
+            ("int2", False, "dither", "bfloat16"),
+            ("fp8_e4m3", False, "floor", "float16"),
+            ("fp6_e3m2", False, "even", "float32"),
+            ("fp6_e2m3", False, "nearest", "bfloat16"),
+            ("float16", False, "dither", "float16"),
+            ("bfloat16", False, "floor", "float32"),
         ],
     )
-    def test_mx_quant_params(self, w_dtype, weight_only):
+    def test_mx_quant_params(self, w_dtype, weight_only, round_method, out_dtype):
         fp32_model = copy.deepcopy(self.fp32_model)
-        quant_config = MXQuantConfig(w_dtype=w_dtype, weight_only=weight_only)
-        q_model = quantize(fp32_model, quant_config=quant_config)
+        quant_config = MXQuantConfig(
+            w_dtype=w_dtype,
+            weight_only=weight_only,
+            round_method=round_method,
+            out_dtype=out_dtype,
+        )
+        fp32_model = prepare(model=fp32_model, quant_config=quant_config)
+        q_model = convert(model=fp32_model)
         assert q_model is not None, "Quantization failed!"
 
     def test_mx_quant_accuracy(self):
@@ -72,8 +87,10 @@ class TestMXQuant:
         fp32_model = copy.deepcopy(model)
         fp32_model.linear.weight = torch.nn.Parameter(torch.tensor([[0.0, 1.0], [1.0, 0.0]]))
         example_inputs = torch.zeros(3, 2)
+
         quant_config = MXQuantConfig()
-        q_model = quantize(fp32_model, quant_config=quant_config)
+        fp32_model = prepare(model=fp32_model, quant_config=quant_config)
+        q_model = convert(model=fp32_model)
         output1 = fp32_model(example_inputs)
         output2 = q_model(example_inputs)
         # set a big atol to avoid random issue
