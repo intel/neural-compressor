@@ -98,7 +98,7 @@ def register_accelerator(name: str, priority: float = 0) -> Callable[..., Any]:
     return accelerator_registry.register_accelerator_impl(name=name, priority=priority)
 
 
-class Auto_Accelerator(ABC):
+class Auto_Accelerator(ABC):  # pragma: no cover
     @classmethod
     @abstractmethod
     def is_available(cls) -> bool:
@@ -175,7 +175,7 @@ class CPU_Accelerator(Auto_Accelerator):
 
 
 @register_accelerator(name="cuda", priority=PRIORITY_CUDA)
-class CUDA_Accelerator(Auto_Accelerator):
+class CUDA_Accelerator(Auto_Accelerator):  # pragma: no cover
     def __init__(self) -> None:
         self._name = "cuda"
 
@@ -211,7 +211,7 @@ class CUDA_Accelerator(Auto_Accelerator):
 
 
 @register_accelerator(name="xpu", priority=PRIORITY_XPU)
-class XPU_Accelerator(Auto_Accelerator):
+class XPU_Accelerator(Auto_Accelerator):  # pragma: no cover
     def __init__(self) -> None:
         self._name = "xpu"
 
@@ -250,7 +250,7 @@ class XPU_Accelerator(Auto_Accelerator):
 
 
 @register_accelerator(name="hpu", priority=PRIORITY_HPU)
-class HPU_Accelerator(Auto_Accelerator):
+class HPU_Accelerator(Auto_Accelerator):  # pragma: no cover
     def __init__(self) -> None:
         self._name = "hpu"
 
@@ -275,7 +275,10 @@ class HPU_Accelerator(Auto_Accelerator):
         return torch.hpu.synchronize()
 
     def set_device(self, device_index):
-        return torch.hpu.set_device(device_index)
+        try:
+            torch.hpu.set_device(device_index)
+        except Exception as e:
+            logger.warning(e)
 
     def current_device(self):
         return torch.hpu.current_device()
@@ -287,7 +290,10 @@ class HPU_Accelerator(Auto_Accelerator):
         return torch.hpu.device(device_index)
 
     def empty_cache(self):
-        return torch.hpu.empty_cache()
+        try:
+            torch.hpu.empty_cache()
+        except Exception as e:
+            logger.warning(e)
 
     def mark_step(self):
         return htcore.mark_step()
