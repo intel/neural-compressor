@@ -68,7 +68,7 @@ def load(model_name_or_path, original_model=None, format=LoadFormat.DEFAULT, dev
     Returns:
         torch.nn.Module: quantized model
     """
-    model_loader = WOQModelLoader(model_name_or_path, original_model, format, device="cpu", **kwargs)
+    model_loader = WOQModelLoader(model_name_or_path, original_model, format, device, **kwargs)
     model = model_loader.load_woq_model()
     return model
 
@@ -87,26 +87,34 @@ class WOQModelLoader:
     def load_woq_model(self):
         if self.format == LoadFormat.HUGGINGFACE:
             model = self.load_hf_format_woq_model()
-            logger.info("Quantized huggingface model loading successful.")
+            logger.info("Loading HuggingFace weight-only quantization model successfully.")
         elif self.format == LoadFormat.DEFAULT:
             qmodel_weight_file_path = os.path.join(
                 os.path.abspath(os.path.expanduser(self.model_name_or_path)), WEIGHT_NAME
             )
-            assert os.path.exists(qmodel_weight_file_path), "Cannot load model weight from path {}".format(
-                qmodel_weight_file_path
-            )
+            assert os.path.exists(qmodel_weight_file_path), \
+                "Cannot load model weight from path {}. " \
+                "Please make sure '{}' file is saved in your '{}' directory ".format(
+                    qmodel_weight_file_path,
+                    WEIGHT_NAME,
+                    self.model_name_or_path
+                    )
 
             qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(self.model_name_or_path)), QCONFIG_NAME)
-            assert os.path.exists(qconfig_file_path), "Cannot load model quantization config from path {}".format(
-                qconfig_file_path
-            )
+            assert os.path.exists(qconfig_file_path), \
+                "Cannot load model quantization config from path {}. " \
+                "Please make sure '{}' file is saved in your '{}' directory".format(
+                    qconfig_file_path,
+                    QCONFIG_NAME,
+                    self.model_name_or_path
+                )
 
             assert (
                 self.original_model is not None
             ), "Can't get original model. Please pass `original_model` to load function."
 
             model = self.load_inc_format_woq_model(qmodel_weight_file_path, qconfig_file_path)
-            logger.info("Quantized model loading successful.")
+            logger.info("Loading weight-only quantization model successfully.")
         else:
             raise ValueError(f"`format` in load function can only be 'huggingface' or 'default', but get {self.format}")
 
@@ -126,7 +134,6 @@ class WOQModelLoader:
 
     def load_hf_format_woq_model(self):
         # check required package
-        self._check_required_packages()
 
         # get model_class and config
         model_class, config = self._get_model_class_and_config()
@@ -216,13 +223,6 @@ class WOQModelLoader:
                 set_module(self.original_model, name, new_module)
         woq_model = self.original_model
         return woq_model
-
-    def _check_required_packages(self):
-        try:
-            import accelerate
-            import transformers
-        except ImportError as e:  # pragma: no cover
-            raise e
 
     def _get_model_class_and_config(self):
         from transformers import AutoConfig, AutoModelForCausalLM
