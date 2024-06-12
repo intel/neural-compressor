@@ -35,6 +35,7 @@ pytest --cov="${inc_path}" --cov-append -vs --disable-warnings --html=report_ker
 
 # test for tensorflow new api ut
 pip uninstall intel-extension-for-tensorflow -y
+pip uninstall intel-extension-for-tensorflow-lib -y
 pip uninstall tensorflow -y
 pip install /tf_dataset/tf_binary/230928/tensorflow*.whl
 pip install cmake
@@ -42,6 +43,7 @@ pip install protobuf==3.20.3
 pip install horovod==0.27.0
 pip list
 rm -rf tensorflow/*
+mkdir -p tensorflow/quantization/ptq
 mv ../3x_newapi tensorflow/quantization/ptq/newapi
 pytest --cov="${inc_path}" --cov-append -vs --disable-warnings --html=report_new_tf_quant_one_case.html --self-contained-html ./tensorflow/quantization/ptq/newapi/test_big_saved_model.py 2>&1 | tee -a ${ut_log_name}
 rm -rf tensorflow/quantization/ptq/newapi/test_big_saved_model.py
