@@ -1,6 +1,8 @@
-Full Publications/Events (80)
+Full Publications/Events (82)
 ==========
-## 2024 (1)
+## 2024 (3)
+* Blog by Intel: [Neural Compressor: Boosting AI Model Efficiency](https://community.intel.com/t5/Blogs/Tech-Innovation/Artificial-Intelligence-AI/Neural-Compressor-Boosting-AI-Model-Efficiency/post/1604740) (June 2024) 
+* Blog by Intel: [Optimization of Intel AI Solutions for Alibaba Cloud’s Qwen2 Large Language Models](https://www.intel.com/content/www/us/en/developer/articles/technical/intel-ai-solutions-accelerate-alibaba-qwen2-llms.html) (June 2024)
 * Blog by Intel: [Accelerate Meta* Llama 3 with Intel AI Solutions](https://www.intel.com/content/www/us/en/developer/articles/technical/accelerate-meta-llama3-with-intel-ai-solutions.html) (Apr 2024)
 
 ## 2023 (25)

@@ -1,5 +1,5 @@
 neural-compressor
-numpy<=1.23.5
+numpy
 nibabel==5.0.0
 SimpleITK==2.2.1
 batchgenerators==0.21.0

@@ -13,24 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import importlib
 import sys
 
 import torch
 from packaging.version import Version
 
-# pylint:disable=import-error
-try:
-    import habana_frameworks.torch.hpex
 
-    _hpex_available = True
-except:
-    _hpex_available = False
-
-
-def is_hpex_available():
-    return _hpex_available
-
-
+################ Check imported sys.module first to decide behavior #################
 def is_ipex_imported() -> bool:
     for name, _ in sys.modules.items():
         if name == "intel_extension_for_pytorch":
@@ -45,11 +35,29 @@ def is_transformers_imported() -> bool:
     return False
 
 
-try:
-    import intel_extension_for_pytorch as ipex
+################ Check available sys.module to decide behavior #################
+def is_package_available(package_name):
+    from importlib.util import find_spec
 
+    package_spec = find_spec(package_name)
+    return package_spec is not None
+
+
+## check hpex
+if is_package_available("habana_frameworks"):
+    _hpex_available = True
+else:
+    _hpex_available = False
+
+
+def is_hpex_available():
+    return _hpex_available
+
+
+## check ipex
+if is_package_available("intel_extension_for_pytorch"):
     _ipex_available = True
-except:
+else:
     _ipex_available = False
 
 
@@ -60,6 +68,8 @@ def is_ipex_available():
 def get_ipex_version():
     if is_ipex_available():
         try:
+            import intel_extension_for_pytorch as ipex
+
             ipex_version = ipex.__version__.split("+")[0]
         except ValueError as e:  # pragma: no cover
             assert False, "Got an unknown version of intel_extension_for_pytorch: {}".format(e)

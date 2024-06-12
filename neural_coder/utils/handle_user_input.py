@@ -52,11 +52,11 @@ def get_user_code_path(user_input: str) -> List:
     global user_input_type
     if type(user_input) == list:
         user_input_type = "a list of files"
-    elif "github.com" in user_input and ".py" in user_input:
+    elif "github" in user_input and ".com" in user_input and ".py" in user_input:
         user_input_type = "url_py"
     elif ".py" in user_input:
         user_input_type = "file"
-    elif "github.com" in user_input:
+    elif "github" in user_input and ".com" in user_input:
         user_input_type = "url_repo"
     else:
         user_input_type = "folder"
