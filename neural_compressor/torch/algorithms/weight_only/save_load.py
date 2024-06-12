@@ -92,22 +92,20 @@ class WOQModelLoader:
             qmodel_weight_file_path = os.path.join(
                 os.path.abspath(os.path.expanduser(self.model_name_or_path)), WEIGHT_NAME
             )
-            assert os.path.exists(qmodel_weight_file_path), \
-                "Cannot load model weight from path {}. " \
+            assert os.path.exists(qmodel_weight_file_path), (
+                "Cannot load model weight from path {}. "
                 "Please make sure '{}' file is saved in your '{}' directory ".format(
-                    qmodel_weight_file_path,
-                    WEIGHT_NAME,
-                    self.model_name_or_path
-                    )
+                    qmodel_weight_file_path, WEIGHT_NAME, self.model_name_or_path
+                )
+            )
 
             qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(self.model_name_or_path)), QCONFIG_NAME)
-            assert os.path.exists(qconfig_file_path), \
-                "Cannot load model quantization config from path {}. " \
+            assert os.path.exists(qconfig_file_path), (
+                "Cannot load model quantization config from path {}. "
                 "Please make sure '{}' file is saved in your '{}' directory".format(
-                    qconfig_file_path,
-                    QCONFIG_NAME,
-                    self.model_name_or_path
+                    qconfig_file_path, QCONFIG_NAME, self.model_name_or_path
                 )
+            )
 
             assert (
                 self.original_model is not None
@@ -135,6 +133,7 @@ class WOQModelLoader:
     def load_hf_format_woq_model(self):
         # check required package
         from neural_compressor.torch.utils import is_package_available
+
         if not is_package_available("transformers"):
             raise ImportError("Loading huggingface model requires transformers: `pip install transformers`")
         if not is_package_available("accelerate"):
