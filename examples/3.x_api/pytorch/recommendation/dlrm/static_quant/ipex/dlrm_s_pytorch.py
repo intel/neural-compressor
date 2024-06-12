@@ -840,14 +840,18 @@ def run():
                     model(X_test, lS_o_test, lS_i_test)
                     calib_number += 1
 
+        X_test, lS_o_test, lS_i_test, T = next(iter(train_ld))
+        example_inputs = (X_test, lS_o_test, lS_i_test)
         assert args.inference_only, "Please set inference_only in arguments"
-        from neural_compressor.torch.quantization import SmoothQuantConfig, autotune, TuningConfig
-        tune_config = TuningConfig(config_set=SmoothQuantConfig.get_config_set_for_tuning())
+        from neural_compressor.torch.quantization import StaticQuantConfig, autotune, TuningConfig
+        tune_config = TuningConfig(config_set=[StaticQuantConfig.get_config_set_for_tuning()])
+
         dlrm = autotune(
             dlrm, 
             tune_config=tune_config,
             eval_fn=eval_func,
             run_fn=calib_fn,
+            example_inputs=example_inputs,
         )
         dlrm.save(args.save_model)
         exit(0)
