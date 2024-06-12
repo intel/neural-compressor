@@ -134,6 +134,11 @@ class WOQModelLoader:
 
     def load_hf_format_woq_model(self):
         # check required package
+        from neural_compressor.torch.utils import is_package_available
+        if not is_package_available("transformers"):
+            raise ImportError("Loading huggingface model requires transformers: `pip install transformers`")
+        if not is_package_available("accelerate"):
+            raise ImportError("Loading huggingface model requires accelerate: `pip install accelerate`")
 
         # get model_class and config
         model_class, config = self._get_model_class_and_config()
