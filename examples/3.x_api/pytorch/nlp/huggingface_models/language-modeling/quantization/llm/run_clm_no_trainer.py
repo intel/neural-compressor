@@ -236,9 +236,10 @@ if args.quantize:
     # 3.x api
     if args.approach == 'weight_only':
         from neural_compressor.torch.quantization import RTNConfig, GPTQConfig, prepare, convert, quantize
-        from neural_compressor.torch.utils import get_double_quant_config
+        from neural_compressor.torch.utils import get_double_quant_config_dict
         weight_sym = True if args.woq_scheme == "sym" else False
-        double_quant_config_dict = get_double_quant_config(args.double_quant_type)
+        if args.double_quant_type is not None:
+            double_quant_config_dict = get_double_quant_config_dict(args.double_quant_type)
 
         if args.woq_algo == "RTN":
             if args.double_quant_type is not None:

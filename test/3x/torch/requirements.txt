@@ -1,4 +1,6 @@
+auto_round
 expecttest
+intel_extension_for_pytorch
 numpy
 peft==0.10.0
 prettytable
