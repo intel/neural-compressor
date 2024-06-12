@@ -149,5 +149,8 @@ class HQQuantizer(Quantizer):
             if quant_config.skip_lm_head and "lm_head" in op_name:
                 logger.warning("Skip quantizing %s due to `skip_lm_head` is True.", op_name)
                 continue
+            if quant_config is not None and quant_config.dtype == "fp32":
+                logger.warning("Fallback %s.", op_name)
+                continue
             qconfig_mapping[op_name] = self._convert_hqq_module_config(quant_config)
         return qconfig_mapping

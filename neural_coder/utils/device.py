@@ -55,7 +55,7 @@ def check_has(s):
 
 def detect_code_device_compatibility(code_path):
     # handle github py url
-    if "github.com" in code_path and ".py" in code_path:
+    if "github" in code_path and ".com" in code_path and ".py" in code_path:
         import requests
 
         code_path = code_path.replace("github.com", "raw.githubusercontent.com").replace("/blob", "")
