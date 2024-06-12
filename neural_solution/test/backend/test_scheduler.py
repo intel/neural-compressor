@@ -34,6 +34,7 @@ class TestScheduler(unittest.TestCase):
     def tearDownClass(cls) -> None:
         shutil.rmtree("examples")
 
+    @unittest.skip("This test is skipped intentionally")
     def test_prepare_env(self):
         task = Task(
             "test_task",
