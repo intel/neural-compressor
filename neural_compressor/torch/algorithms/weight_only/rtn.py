@@ -36,6 +36,7 @@ from neural_compressor.torch.utils import (
 )
 
 from .utility import cast_fp8, quant_tensor, search_clip
+from .modules import INCWeightOnlyLinear
 
 if is_transformers_imported():
     import transformers
@@ -226,9 +227,8 @@ class RTNQuantizer(Quantizer):
                 int_weight = int_weight.t_().contiguous()
                 scale = scale.t_().contiguous()
                 zp = zp.t_().contiguous() if zp is not None else zp
-            from .modules import WeightOnlyLinear
 
-            new_module = WeightOnlyLinear(
+            new_module = INCWeightOnlyLinear(
                 in_features,
                 out_features,
                 dtype=dtype,
