@@ -250,7 +250,8 @@
 <h4>AutoRound<a class="headerlink" href="#autoround" title="Permalink to this heading"></a></h4>
 <p>|  autoround_args  | comments |      default value                                                       |
 |———-|————-|——————————————————————-|
-|             enable_full_range (bool)        |  Whether to enable full range   quantization                                               | False<br />|             batch_size (int)                |  Batch size for training                                                                   | 8         |
+|             enable_full_range (bool)        |  Whether to enable full range   quantization                                               | False
+|             batch_size (int)                |  Batch size for training                                                                   | 8         |
 |             lr_scheduler                    |  The learning rate scheduler to be   used                                                  |     None                 |
 |             enable_quanted_input (bool)     |  Whether to use quantized input   data                                                     | True      |
 |             enable_minmax_tuning (bool)     |  Whether to enable min-max   tuning                                                        | True      |
@@ -393,8 +394,8 @@
 
 <span class="n">orig_model</span> <span class="o">=</span> <span class="n">YOURMODEL</span><span class="p">()</span>
 <span class="n">loaded_model</span> <span class="o">=</span> <span class="n">load</span><span class="p">(</span>
-    <span class="s2">&quot;saved_results&quot;</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">orig_model</span>
-<span class="p">)</span>  <span class="c1"># Please note that the model parameter passes the original model.</span>
+    <span class="s2">&quot;saved_results&quot;</span><span class="p">,</span> <span class="n">original_model</span><span class="o">=</span><span class="n">orig_model</span>
+<span class="p">)</span>  <span class="c1"># Please note that the original_model parameter passes the original model.</span>
 </pre></div>
 </div>
 </section>
@@ -429,7 +430,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f3a9c1144f0> 
+   <jinja2.runtime.BlockReference object at 0x7f9eab66da20> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

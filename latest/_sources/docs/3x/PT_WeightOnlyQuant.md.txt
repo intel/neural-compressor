@@ -31,13 +31,13 @@ Theoretically, round-to-nearest (RTN) is the most straightforward way to quantiz
 
 ## Supported Matrix
 
-| Algorithms/Backend |   PyTorch eager mode  |  
+| Algorithms/Backend |   PyTorch eager mode  |
 |--------------|----------|
 |       RTN      |  &#10004;  |
 |       GPTQ     |  &#10004;  |
 |       AutoRound|  &#10004;  |
 |       AWQ      |  &#10004;  |
-|       TEQ      |  &#10004;  | 
+|       TEQ      |  &#10004;  |
 |       HQQ      |  &#10004;  |
 > **RTN:** A quantification method that we can think of very intuitively. It does not require additional datasets and is a very fast quantization method. Generally speaking, RTN will convert the weight into a uniformly distributed integer data type, but some algorithms, such as Qlora, propose a non-uniform NF4 data type and prove its theoretical optimality.
 
@@ -64,8 +64,8 @@ WeightOnlyQuant quantization for PyTorch is using prepare and convert [APIs](./P
 | bits (int)| [1, ..., 8] |
 | group_size (int)| [-1, 1, ..., $C_{in}$] |
 | use_sym (bool)| [True, False] |
-|               use_double_quant (bool)       |  [True, False]                           | 
-|               double_quant_dtype (str)      |  ['int']                      | 
+|               use_double_quant (bool)       |  [True, False]                           |
+|               double_quant_dtype (str)      |  ['int']                      |
 |               double_quant_bits (int)       |  [1, ..., bits] |
 |               double_quant_use_sym (bool)   |  [True, False] |
 |               double_quant_group_size (int) |  [-1, 1, ..., $C_{in}$]                           |
@@ -98,7 +98,7 @@ model = convert(model)
 #### GPTQ
 |  gptq_args  | comments |      default value                                                       |
 |----------|-------------|-------------------------------------------------------------------|
-|               use_mse_search (bool)   |  Enables mean squared error (MSE) search                                                                                                   |  False 
+|               use_mse_search (bool)   |  Enables mean squared error (MSE) search                                                                                                   |  False
 |               use_layer_wise (bool)   |  Enables quantize model per layer                                                                                                          |  False |
 |               model_path (str)        |  Model path that is used to load   state_dict per layer                                                                                    |                    |
 |               use_double_quant (bool) |  Enables double quantization                                                                                                               |  False  |
@@ -120,7 +120,7 @@ model = convert(model)
 #### AutoRound
 |  autoround_args  | comments |      default value                                                       |
 |----------|-------------|-------------------------------------------------------------------|
-|             enable_full_range (bool)        |  Whether to enable full range   quantization                                               | False     
+|             enable_full_range (bool)        |  Whether to enable full range   quantization                                               | False
 |             batch_size (int)                |  Batch size for training                                                                   | 8         |
 |             lr_scheduler                    |  The learning rate scheduler to be   used                                                  |     None                 |
 |             enable_quanted_input (bool)     |  Whether to use quantized input   data                                                     | True      |
@@ -251,8 +251,8 @@ from neural_compressor.torch.quantization import load
 
 orig_model = YOURMODEL()
 loaded_model = load(
-    "saved_results", model=orig_model
-)  # Please note that the model parameter passes the original model.
+    "saved_results", original_model=orig_model
+)  # Please note that the original_model parameter passes the original model.
 ```
 
 
