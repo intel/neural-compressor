@@ -275,7 +275,10 @@ class HPU_Accelerator(Auto_Accelerator):
         return torch.hpu.synchronize()
 
     def set_device(self, device_index):
-        return torch.hpu.set_device(device_index)
+        try:
+            torch.hpu.set_device(device_index)
+        except Exception as e:
+            logger.warning(e)
 
     def current_device(self):
         return torch.hpu.current_device()
@@ -287,7 +290,10 @@ class HPU_Accelerator(Auto_Accelerator):
         return torch.hpu.device(device_index)
 
     def empty_cache(self):
-        return torch.hpu.empty_cache()
+        try:
+            torch.hpu.empty_cache()
+        except Exception as e:
+            logger.warning(e)
 
     def mark_step(self):
         return htcore.mark_step()

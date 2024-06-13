@@ -25,42 +25,85 @@ from neural_compressor.torch.quantization.config import (
     RTNConfig,
     TEQConfig,
 )
+from neural_compressor.torch.utils import LoadFormat
 
 config_name_mapping = {
     FP8_QUANT: FP8Config,
 }
 
 
-def load(output_dir="./saved_results", model=None):
-    """The main entry of load for all algorithms.
+def load(model_name_or_path, original_model=None, format="default", device="cpu", **kwargs):
+    """Load quantized model.
+
+    1. Load INC quantized model in local.
+        case 1: WOQ
+            from neural_compressor.torch.quantization import load
+            load(model_name_or_path="saved_results", original_model=fp32_model)
+
+        case 2: INT8/FP8
+            from neural_compressor.torch.quantization import load
+            load(model_name_or_path='saved_result', original_model=fp32_model)
+
+        case 3: TorchScript (IPEX)
+            from neural_compressor.torch.quantization import load
+            load(model_name_or_path='saved_result')
+
+    2. Load HuggingFace quantized model, including GPTQ models and upstreamed INC quantized models in HF model hub.
+        case 1: WOQ
+            from neural_compressor.torch.quantization import load
+            load(model_name_or_path=model_name_or_path, format="huggingface")
+
 
     Args:
-        output_dir (str, optional): path to quantized model folder. Defaults to "./saved_results".
-        model (torch.nn.Module, optional): original model, suggest to use empty tensor.
-
+        model_name_or_path (str):  torch checkpoint directory or hugginface model_name_or_path.
+            If 'format' is set to 'huggingface', it means the huggingface model_name_or_path.
+            If 'format' is set to 'default', it means the 'checkpoint_dir'.
+            Parameter should not be None. it coworks with 'original_model' parameter to load INC
+            quantized model in local.
+        original_model (torch.nn.module or TorchScript model with IPEX or fx graph with pt2e, optional):
+            original model before quantization. Needed if 'format' is set to 'default' and not TorchScript model.
+            Defaults to None.
+        format (str, optional): 'defult' for loading INC quantized model.
+            'huggingface' for loading huggingface WOQ causal language model. Defaults to "default".
+        device (str, optional): 'cpu', 'hpu'. specify the device the model will be loaded to.
+            currently only used for weight-only quantization.
+        kwargs (remaining dictionary of keyword arguments, optional):
+            remaining dictionary of keyword arguments for loading huggingface models.
+            Will be passed to the huggingface model's `__init__` method, such as 'trust_remote_code', 'revision'.
     Returns:
         The quantized model
     """
-    from neural_compressor.common.base_config import ConfigRegistry
+    if format == LoadFormat.DEFAULT.value:
+        from neural_compressor.common.base_config import ConfigRegistry
 
-    qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), "qconfig.json")
-    with open(qconfig_file_path, "r") as f:
-        per_op_qconfig = json.load(f)
+        qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(model_name_or_path)), "qconfig.json")
+        with open(qconfig_file_path, "r") as f:
+            per_op_qconfig = json.load(f)
 
-    if " " in per_op_qconfig.keys():  # ipex qconfig format: {' ': {'q_op_infos': {'0': {'op_type': ...
-        from neural_compressor.torch.algorithms.static_quant import load
+        if " " in per_op_qconfig.keys():  # ipex qconfig format: {' ': {'q_op_infos': {'0': {'op_type': ...
+            from neural_compressor.torch.algorithms import static_quant
 
-        return load(output_dir)
+            return static_quant.load(model_name_or_path)
+        else:
+            config_mapping = load_config_mapping(qconfig_file_path, ConfigRegistry.get_all_configs()["torch"])
+            # select load function
+            config_object = config_mapping[next(iter(config_mapping))]
+
+            if isinstance(config_object, (RTNConfig, GPTQConfig, AWQConfig, TEQConfig, AutoRoundConfig)):  # WOQ
+                from neural_compressor.torch.algorithms import weight_only
+
+                qmodel = weight_only.load(model_name_or_path, original_model, format=LoadFormat.DEFAULT, device=device)
+                return qmodel.to(device)
+
+            original_model.qconfig = config_mapping
+            if isinstance(config_object, FP8Config):
+                # TODO: support loading FP8 model
+                raise NotImplementedError("`load` function for FP8 model is not supported yet.")
+    elif format == LoadFormat.HUGGINGFACE.value:
+        # now only support load huggingface WOQ causal language model
+        from neural_compressor.torch.algorithms import weight_only
+
+        qmodel = weight_only.load(model_name_or_path, format=LoadFormat.HUGGINGFACE, device=device, **kwargs)
+        return qmodel.to(device)
     else:
-        config_mapping = load_config_mapping(qconfig_file_path, ConfigRegistry.get_all_configs()["torch"])
-        # select load function
-        config_object = config_mapping[next(iter(config_mapping))]
-        if isinstance(config_object, (RTNConfig, GPTQConfig, AWQConfig, TEQConfig, AutoRoundConfig)):  # WOQ
-            from neural_compressor.torch.algorithms.weight_only.save_load import load
-
-            return load(output_dir)
-
-        model.qconfig = config_mapping
-        if isinstance(config_object, FP8Config):
-            # TODO: support loading FP8 model
-            raise NotImplementedError("`load` function for FP8 model is not supported yet.")
+        raise ValueError("`format` in load function can only be 'huggingface' or 'default', but get {}".format(format))

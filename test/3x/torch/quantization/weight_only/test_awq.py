@@ -8,7 +8,7 @@ import transformers
 from neural_compressor.common import Logger
 
 logger = Logger().get_logger()
-from neural_compressor.torch.algorithms.weight_only.modules import MulLinear, WeightOnlyLinear
+from neural_compressor.torch.algorithms.weight_only.modules import MulLinear
 from neural_compressor.torch.quantization import AWQConfig, convert, get_default_awq_config, prepare, quantize
 from neural_compressor.torch.utils import accelerator
 
@@ -22,6 +22,14 @@ def get_gpt_j():
         device_map=device,
     )
     return tiny_gptj
+
+
+def get_woq_linear_num(model, woq_module_type_name):
+    woq_linear_num = 0
+    for _, module in model.named_modules():
+        if module.__class__.__name__ == woq_module_type_name:
+            woq_linear_num += 1
+    return woq_linear_num
 
 
 class TestAWQQuant:
@@ -110,6 +118,8 @@ class TestAWQQuant:
         ), "The results of calling `convert` + `prepare` and calling `quantize` should be equal."
 
     def test_save_and_load(self):
+        from neural_compressor.torch.quantization import load
+
         @torch.no_grad()
         def calib_func(model):
             for i in range(2):
@@ -130,10 +140,11 @@ class TestAWQQuant:
         q_model.save("saved_results")
         inc_out = q_model(self.example_inputs)[0]
 
-        from neural_compressor.torch.quantization import load
-
-        # loading compressed model
-        loaded_model = load("saved_results")
-        loaded_out = loaded_model(self.example_inputs)[0]
-        assert torch.allclose(inc_out, loaded_out), "Unexpected result. Please double check."
-        assert isinstance(loaded_model.lm_head, WeightOnlyLinear), "loading compressed model failed."
+        # loading compressed model (format=default, device="cpu")
+        # linear -> INCWeightOnlyLinear
+        loaded_model = load("saved_results", copy.deepcopy(self.tiny_gptj))
+        output = loaded_model(self.example_inputs)[0]
+        assert torch.allclose(inc_out, output), "Unexpected result. Please double check."
+        assert (
+            get_woq_linear_num(loaded_model, "INCWeightOnlyLinear") == 31
+        ), "Incorrect number of INCWeightOnlyLinear modules"
