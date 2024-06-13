@@ -167,7 +167,7 @@ if args.quantize:
     quant_config =  get_default_static_config()
     quant_config.excluded_precisions = [] if args.int8_bf16_mixed else ["bf16"]
     if re.search("gpt", user_model.config.model_type):
-        quant_config.set_local(torch.add, StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
+        quant_config.set_local("add", StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
 
     from neural_compressor.torch.algorithms.smooth_quant import move_input_to_device
     from tqdm import tqdm
