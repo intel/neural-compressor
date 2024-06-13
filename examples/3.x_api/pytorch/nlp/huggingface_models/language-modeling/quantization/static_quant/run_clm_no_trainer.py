@@ -174,15 +174,12 @@ if args.quantize:
     def run_fn(model):
         for batch in tqdm(calib_dataloader):
             batch = move_input_to_device(batch, device=None)
-            try:
-                if isinstance(batch, tuple) or isinstance(batch, list):
-                    model(batch[0])
-                elif isinstance(batch, dict):
-                    model(**batch)
-                else:
-                    model(batch)
-            except ValueError:
-                pass
+            if isinstance(batch, tuple) or isinstance(batch, list):
+                model(batch[0])
+            elif isinstance(batch, dict):
+                model(**batch)
+            else:
+                model(batch)
         return
 
     from utils import get_example_inputs
