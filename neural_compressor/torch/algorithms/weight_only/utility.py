@@ -1108,3 +1108,29 @@ class InputCaptureModule(torch.nn.Module):
         with torch.no_grad():
             self.args_list.append(args)
             self.kwargs_list.append(kwargs)
+
+
+def convert_dtype_str2torch(str_dtype):
+    """Converts a string dtype to its corresponding PyTorch dtype.
+
+    Args:
+        str_dtype (str): The string representation of the dtype.
+
+    Returns:
+        torch.dtype: The PyTorch dtype.
+
+    Raises:
+        AssertionError: If the input str_dtype is unsupported.
+    """
+    if isinstance(str_dtype, torch.dtype) or str_dtype is None:
+        return str_dtype
+    if str_dtype == "int8":
+        return torch.int8
+    elif str_dtype == "fp32" or str_dtype == "float32" or str_dtype == "auto":
+        return torch.float
+    elif str_dtype == "fp16" or str_dtype == "float16":
+        return torch.float16
+    elif str_dtype == "bf16" or str_dtype == "bfloat16":
+        return torch.bfloat16
+    else:
+        assert False, "Unsupported str dtype {} to torch dtype".format(str_dtype)

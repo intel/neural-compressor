@@ -254,7 +254,7 @@ class TestGPTQQuant:
         from neural_compressor.torch.quantization import load
 
         # loading compressed model
-        loaded_model = load("saved_results")
+        loaded_model = load("saved_results", copy.deepcopy(self.tiny_gptj))
         loaded_out = loaded_model(self.example_inputs)[0]
         assert torch.allclose(inc_out, loaded_out), "Unexpected result. Please double check."
         assert isinstance(

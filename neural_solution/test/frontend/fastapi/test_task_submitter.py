@@ -35,10 +35,10 @@ class TestTaskSubmitter(unittest.TestCase):
     @patch("socket.socket")
     def test_submit_task(self, mock_socket):
         task_submitter = TaskSubmitter()
-        task_id = "1234"
+        task_id = "65f87f89fd674724930ef659cbe86e08"
         task_submitter.submit_task(task_id)
         mock_socket.return_value.connect.assert_called_once_with(("localhost", 2222))
-        mock_socket.return_value.send.assert_called_once_with(b'{"task_id": "1234"}')
+        mock_socket.return_value.send.assert_called_once_with(b'{"task_id": "65f87f89fd674724930ef659cbe86e08"}')
         mock_socket.return_value.close.assert_called_once()
 
 

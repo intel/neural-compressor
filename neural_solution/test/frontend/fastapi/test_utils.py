@@ -98,7 +98,7 @@ class TestMyModule(unittest.TestCase):
         os.remove(log_path)
 
     def test_check_log_exists(self):
-        task_id = "12345"
+        task_id = "65f87f89fd674724930ef659cbe86e08"
         log_path = f"{TASK_LOG_path}/task_{task_id}.txt"
         with patch("os.path.exists") as mock_exists:
             mock_exists.return_value = True
