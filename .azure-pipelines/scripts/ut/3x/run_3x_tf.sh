@@ -45,10 +45,8 @@ pip list
 rm -rf tensorflow/*
 mkdir -p tensorflow/quantization/ptq
 mv ../3x_newapi tensorflow/quantization/ptq/newapi
-pytest --cov="${inc_path}" --cov-append -sv --disable-warnings --html=report_new_tf_quant_one_case.html --self-contained-html ./tensorflow/quantization/ptq/newapi/test_big_saved_model.py 2>&1 | tee -a ${ut_log_name}
-rm -rf tensorflow/quantization/ptq/newapi/test_big_saved_model.py
-pytest --cov="${inc_path}" --cov-append -sv --disable-warnings --html=report_new_tf_quant.html --self-contained-html ./tensorflow/quantization/ptq/newapi 2>&1 | tee -a ${ut_log_name}
-
+find . -name "test*.py" | sed "s,\.\/,python -m pytest --cov=${inc_path} --cov-append -vs --disable-warnings ,g" > run.sh
+bash run.sh 2>&1 | tee -a ${ut_log_name}
 
 mkdir -p report
 mv *.html report
