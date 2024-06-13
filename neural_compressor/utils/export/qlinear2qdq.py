@@ -14,11 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-# pragma: no cover
-"""Helper functions to export onnx model from QLinearops to QDQ."""
-from deprecated import deprecated
-
+"""Helper functions to export onnx model from QLinear ops to QDQ."""
 from neural_compressor.adaptor.ox_utils.util import find_by_name
 from neural_compressor.utils import logger
 from neural_compressor.utils.utility import LazyImport
@@ -26,7 +22,6 @@ from neural_compressor.utils.utility import LazyImport
 numpy_helper = LazyImport("onnx.numpy_helper")
 
 
-@deprecated(version="2.0")
 def check_model(model):
     """Check optype for input model.
 
@@ -55,7 +50,6 @@ def check_model(model):
         return False
 
 
-@deprecated(version="2.0")
 def onnx_qlinear_to_qdq(
     model,
     input_name_to_nodes,

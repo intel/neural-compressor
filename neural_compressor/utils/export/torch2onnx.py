@@ -14,14 +14,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-# pragma: no cover
 """Helper functions to export model from PyTorch/TensorFlow to ONNX."""
 
 import os
 from collections import UserDict
-
-from deprecated import deprecated
 
 from neural_compressor.adaptor.torch_utils.util import input2tuple
 from neural_compressor.utils import logger
@@ -33,7 +29,6 @@ ort = LazyImport("onnxruntime")
 ortq = LazyImport("onnxruntime.quantization")
 
 
-@deprecated(version="2.0")
 def _prepare_inputs(pt_model, input_names, example_inputs):
     """Prepare input_names and example_inputs."""
     if isinstance(example_inputs, dict) or isinstance(example_inputs, UserDict):
@@ -60,7 +55,6 @@ def _prepare_inputs(pt_model, input_names, example_inputs):
     return input_names, example_inputs
 
 
-@deprecated(version="2.0")
 def get_node_mapping(
     fp32_model,
     fp32_onnx_path,
@@ -115,7 +109,6 @@ def get_node_mapping(
     return module_node_mapping
 
 
-@deprecated(version="2.0")
 def get_quantizable_onnx_ops(int8_model, module_node_mapping):
     """Get quantizable onnx ops.
 
@@ -141,7 +134,6 @@ def get_quantizable_onnx_ops(int8_model, module_node_mapping):
     return quantize_nodes
 
 
-@deprecated(version="2.0")
 def dynamic_quant_export(
     pt_fp32_model,
     pt_int8_model,
@@ -216,7 +208,6 @@ def dynamic_quant_export(
     os.remove(fp32_onnx_path)
 
 
-@deprecated(version="2.0")
 def static_quant_export(
     pt_int8_model,
     save_path,
@@ -295,7 +286,6 @@ def static_quant_export(
         ort.InferenceSession(save_path, sess_options)
 
 
-@deprecated(version="2.0")
 def torch_to_fp32_onnx(
     pt_fp32_model,
     save_path,
@@ -349,7 +339,6 @@ def torch_to_fp32_onnx(
         logger.info("*" * len(info))
 
 
-@deprecated(version="2.0")
 def torch_to_int8_onnx(
     pt_fp32_model,
     pt_int8_model,

@@ -1009,7 +1009,7 @@ class TensorflowBaseModel(BaseModel):
                     + "we reset opset_version={} here".format(conf.opset_version)
                 )
 
-            from neural_compressor.experimental.export import tf_to_fp32_onnx, tf_to_int8_onnx
+            from neural_compressor.utils.export import tf_to_fp32_onnx, tf_to_int8_onnx
 
             inputs_as_nchw = conf.kwargs.get("inputs_as_nchw", None)
             if conf.dtype == "int8":
