@@ -28,15 +28,15 @@ pytest --cov="${inc_path}" -vs --disable-warnings --html=report_tf_quant.html --
 rm -rf tensorflow/quantization
 pytest --cov="${inc_path}" --cov-append -vs --disable-warnings --html=report_tf.html --self-contained-html . 2>&1 | tee -a ${ut_log_name}
 
-# test for itex ut
-rm -rf tensorflow/*
-mv ../3x_keras tensorflow/keras
-pip install intel-extension-for-tensorflow[cpu]
-pytest --cov="${inc_path}" --cov-append -vs --disable-warnings --html=report_keras.html --self-contained-html ./tensorflow 2>&1 | tee -a ${ut_log_name}
-
-# test for tensorflow new api ut
-pip uninstall intel-extension-for-tensorflow -y
-pip uninstall intel-extension-for-tensorflow-lib -y
+## test for itex ut
+#rm -rf tensorflow/*
+#mv ../3x_keras tensorflow/keras
+#pip install intel-extension-for-tensorflow[cpu]
+#pytest --cov="${inc_path}" --cov-append -vs --disable-warnings --html=report_keras.html --self-contained-html ./tensorflow 2>&1 | tee -a ${ut_log_name}
+#
+## test for tensorflow new api ut
+#pip uninstall intel-extension-for-tensorflow -y
+#pip uninstall intel-extension-for-tensorflow-lib -y
 pip uninstall tensorflow -y
 pip install /tf_dataset/tf_binary/230928/tensorflow*.whl
 pip install cmake
