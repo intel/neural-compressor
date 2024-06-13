@@ -121,7 +121,6 @@ class SmoothQuantQuantizer(Quantizer):
             else:
                 model = ipex.quantization.prepare(model, static_qconfig, example_inputs=example_inputs, inplace=inplace)
 
-        cfg_to_qconfig(self.quant_config, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, smooth_quant=True)
         model.load_qconf_summary(qconf_summary=ipex_config_path)
         return model
 
