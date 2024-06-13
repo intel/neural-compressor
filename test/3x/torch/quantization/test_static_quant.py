@@ -22,13 +22,18 @@ def build_simple_torch_model():
         def __init__(self):
             super(Model, self).__init__()
             self.fc1 = torch.nn.Linear(30, 50)
-            self.fc2 = torch.nn.Linear(50, 30)
-            self.fc3 = torch.nn.Linear(30, 5)
+            self.fc2 = torch.nn.Linear(50, 50)
+            self.fc3 = torch.nn.Linear(50, 30)
+            self.fc4 = torch.nn.Linear(30, 5)
+            self.relu = torch.nn.ReLU()
 
         def forward(self, x):
             out = self.fc1(x)
             out = self.fc2(out)
+            out = self.relu(out)
             out = self.fc3(out)
+            out = out + x
+            out = self.fc4(out)
             return out
 
     model = Model()
@@ -52,6 +57,7 @@ class TestStaticQuant:
     def test_static_quant_default(self):
         fp32_model = copy.deepcopy(self.fp32_model)
         quant_config = get_default_static_config()
+        quant_config.excluded_precisions = ["bf16"]
         example_inputs = self.input
         prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
         run_fn(prepared_model)
@@ -69,6 +75,7 @@ class TestStaticQuant:
     def test_static_quant_fallback(self):
         fp32_model = copy.deepcopy(self.fp32_model)
         quant_config = get_default_static_config()
+        quant_config.excluded_precisions = ["bf16"]
         example_inputs = self.input
         # fallback by op_type
         quant_config.set_local(torch.nn.Linear, StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
@@ -78,21 +85,23 @@ class TestStaticQuant:
         assert q_model is not None, "Quantization failed!"
 
         for op, op_info in q_model.tune_cfg[" "]["q_op_infos"].items():
-            if op_info["op_type"] == "<class 'torch.nn.modules.linear.Linear'>":
+            if op_info["op_type"] == "Linear":
                 dtype = q_model.tune_cfg[" "]["q_op_infos"][op]["input_tensor_infos"][0]["force_dtype"]
                 assert dtype == "torch.float32", "Failed to fallback linear op, please check!"
 
         # fallback by op_name
-        quant_config.set_local("fc1", StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
+        quant_config = get_default_static_config()
+        quant_config.excluded_precisions = ["bf16"]
+        quant_config.set_local("fc2", StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
         prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
         run_fn(prepared_model)
         q_model = convert(prepared_model)
         assert q_model is not None, "Quantization failed!"
 
         for op, op_info in q_model.tune_cfg[" "]["q_op_infos"].items():
-            if op_info["fqn"] == "fc1":
+            if op_info["fqn"] == "fc2":
                 dtype = q_model.tune_cfg[" "]["q_op_infos"][op]["input_tensor_infos"][0]["force_dtype"]
-                assert dtype == "torch.float32", "Failed to fallback fc1 layer, please check!"
+                assert dtype == "torch.float32", "Failed to fallback fc2 layer, please check!"
 
     @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
     @pytest.mark.parametrize(
@@ -106,7 +115,7 @@ class TestStaticQuant:
     )
     def test_static_quant_params(self, act_sym, act_algo):
         fp32_model = copy.deepcopy(self.fp32_model)
-        quant_config = StaticQuantConfig(act_sym=act_sym, act_algo=act_algo)
+        quant_config = StaticQuantConfig(act_sym=act_sym, act_algo=act_algo, excluded_precisions=["bf16"])
         example_inputs = self.input
         prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
         run_fn(prepared_model)
@@ -133,7 +142,7 @@ class TestStaticQuant:
         fp32_model = copy.deepcopy(model)
         fp32_model.linear.weight = torch.nn.Parameter(torch.tensor([[0.0, 1.0], [1.0, 0.0]]))
         example_inputs = torch.zeros(3, 2)
-        quant_config = StaticQuantConfig(act_sym=True, act_algo="kl")
+        quant_config = StaticQuantConfig(act_sym=True, act_algo="kl", excluded_precisions=["bf16"])
         prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
         run_fn(prepared_model)
         q_model = convert(prepared_model)
@@ -175,6 +184,7 @@ class TestStaticQuant:
 
         fp32_model = copy.deepcopy(self.fp32_model)
         quant_config = get_default_static_config()
+        quant_config.excluded_precisions = ["bf16"]
         prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
         run_fn(prepared_model)
         q_model = convert(prepared_model)
@@ -195,6 +205,7 @@ class TestStaticQuant:
         # quantize API
         fp32_model = copy.deepcopy(self.fp32_model)
         quant_config = get_default_static_config()
+        quant_config.excluded_precisions = ["bf16"]
         example_inputs = self.input
         q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
         assert q_model is not None, "Quantization failed!"
