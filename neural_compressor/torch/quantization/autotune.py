@@ -73,6 +73,7 @@ def autotune(
     tuning_monitor.set_baseline(baseline)
     tuning_logger.tuning_start()
     for trial_index, quant_config in enumerate(config_loader):
+        trial_index = trial_index + 1  # make sure trail starts from 1.
         tuning_logger.trial_start(trial_index=trial_index)
         tuning_logger.execution_start()
         logger.info(quant_config.to_dict())
@@ -93,17 +94,19 @@ def autotune(
         tuning_logger.trial_end(trial_index)
         if tuning_monitor.need_stop():
             logger.info("Stopped tuning.")
-            del q_model  # maybe gc.collect() is needed for memory release
-            best_quant_config: BaseConfig = tuning_monitor.get_best_quant_config()
-            # !!! Make sure to use deepcopy only when inplace is set to `True`.
-            q_model = quantize(
-                deepcopy(model),
-                quant_config=best_quant_config,
-                run_fn=run_fn,
-                run_args=run_args,
-                inplace=True,
-                example_inputs=example_inputs,
-            )
+            if trial_index != 1:  # recover the best q_model from previous results.
+                logger.info("Reconvering the best quantized model...")
+                del q_model  # maybe gc.collect() is needed for memory release
+                best_quant_config: BaseConfig = tuning_monitor.get_best_quant_config()
+                # !!! Make sure to use deepcopy only when inplace is set to `True`.
+                q_model = quantize(
+                    deepcopy(model),
+                    quant_config=best_quant_config,
+                    run_fn=run_fn,
+                    run_args=run_args,
+                    inplace=True,
+                    example_inputs=example_inputs,
+                )
             best_quant_model = q_model  # quantize model inplace
             break
     tuning_logger.tuning_end()

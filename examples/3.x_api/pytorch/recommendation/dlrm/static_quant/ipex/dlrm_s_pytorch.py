@@ -836,9 +836,11 @@ def run():
         def calib_fn(model):
             calib_number = 0
             for X_test, lS_o_test, lS_i_test, T in train_ld:
-                if calib_number < 102400:
+                if calib_number < 100:
                     model(X_test, lS_o_test, lS_i_test)
                     calib_number += 1
+                else:
+                    break
 
         X_test, lS_o_test, lS_i_test, T = next(iter(train_ld))
         example_inputs = (X_test, lS_o_test, lS_i_test)
