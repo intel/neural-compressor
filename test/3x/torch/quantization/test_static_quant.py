@@ -57,7 +57,6 @@ class TestStaticQuant:
     def test_static_quant_default(self):
         fp32_model = copy.deepcopy(self.fp32_model)
         quant_config = get_default_static_config()
-        quant_config.excluded_precisions = ["bf16"]
         example_inputs = self.input
         prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
         run_fn(prepared_model)
@@ -75,7 +74,6 @@ class TestStaticQuant:
     def test_static_quant_fallback(self):
         fp32_model = copy.deepcopy(self.fp32_model)
         quant_config = get_default_static_config()
-        quant_config.excluded_precisions = ["bf16"]
         example_inputs = self.input
         # fallback by op_type
         quant_config.set_local(torch.nn.Linear, StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
@@ -91,7 +89,6 @@ class TestStaticQuant:
 
         # fallback by op_name
         quant_config = get_default_static_config()
-        quant_config.excluded_precisions = ["bf16"]
         quant_config.set_local("fc2", StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
         prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
         run_fn(prepared_model)
@@ -184,7 +181,6 @@ class TestStaticQuant:
 
         fp32_model = copy.deepcopy(self.fp32_model)
         quant_config = get_default_static_config()
-        quant_config.excluded_precisions = ["bf16"]
         prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
         run_fn(prepared_model)
         q_model = convert(prepared_model)
@@ -205,7 +201,6 @@ class TestStaticQuant:
         # quantize API
         fp32_model = copy.deepcopy(self.fp32_model)
         quant_config = get_default_static_config()
-        quant_config.excluded_precisions = ["bf16"]
         example_inputs = self.input
         q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
         assert q_model is not None, "Quantization failed!"
