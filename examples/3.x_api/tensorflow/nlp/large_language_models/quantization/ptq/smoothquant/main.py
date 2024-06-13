@@ -36,61 +36,6 @@ parser.add_argument('--kl', action='store_true', default=False, help="whether to
 parser.add_argument('--fallback_add', action='store_true', default=False, help="Whether to add fp32 fallback option" )
 args = parser.parse_args()
 
-class Evaluator:
-    def __init__(self, dataset, tokenizer, device, batch_size=args.batch_size):
-        self.dataset = dataset
-        self.tokenizer = tokenizer
-        self.device = device
-        self.dataloader = CustomDataloader(dataset, tokenizer, batch_size, device)
-
-    def evaluate(self, model):
-        # model.eval()
-        # The task is to predict the last word of the input.
-        total, hit = 0, 0
-        index = 1
-        for input_ids, label, label_indices in tqdm(self.dataloader):
-            # TFCausalLMOutputWithPast len: 2
-            # first element shape (16, 196, 50272)
-            # second element shape (16, 12, 196, 64)
-            outputs = model(input_ids)
-            last_token_logits = outputs[0].numpy()[np.arange(len(label_indices)), label_indices, :]
-            pred = last_token_logits.argmax(axis=-1)
-            total += label.shape[0]
-            hit += (pred == label.numpy()).sum().item()
-            if index % args.log_frequency == 0:
-                print(hit / total, flush=True)
-            index += 1
-        acc = hit / total
-        print(acc, flush=True)
-        return acc
-    
-    def get_attention_mask(self, input_ids):
-        return tf.constant(1 - (input_ids==1).numpy().astype(int))
-    
-    def evaluate_tf_v1(self, model):
-        total, hit = 0, 0
-        index = 1
-        from neural_compressor.tensorflow.utils import BaseModel
-
-        if isinstance(model, BaseModel):
-            model = model.model
-        infer = model.signatures["serving_default"]
-        for input_ids, label, label_indices in tqdm(self.dataloader):
-            attention_mask = self.get_attention_mask(input_ids)
-            input_ids = tf.constant(input_ids.numpy(), dtype=infer.inputs[0].dtype)
-            attention_mask = tf.constant(attention_mask.numpy(), dtype=infer.inputs[0].dtype)
-            results = infer(input_ids=input_ids, attention_mask=attention_mask) # len: 25 Identity: [16, 196, 50272], Identity_1: [16, 12, 196, 64]
-            last_token_logits = results['Identity'].numpy()[np.arange(len(label_indices)), label_indices, :]
-            pred = last_token_logits.argmax(axis=-1)
-            total += label.shape[0]
-            hit += (pred == label.numpy()).sum().item()
-            if index % args.log_frequency == 0:
-                print(hit / total, flush=True)
-            index += 1
-        acc = hit / total
-        print(acc, flush=True)
-        return acc
-
 class CustomDataloader:
     # for_calib=True in quantization, only input_id is needed, =False in evaluation need label
     def __init__(self, dataset, tokenizer, batch_size=1, device='cpu', for_calib=False):
@@ -166,19 +111,11 @@ model_name = args.model_name_or_path
 tokenizer = transformers.AutoTokenizer.from_pretrained(model_name)
 model = transformers.TFAutoModelForCausalLM.from_pretrained(model_name)
 
-eval_dataset = load_dataset('lambada', split='validation')
-evaluator = Evaluator(eval_dataset, tokenizer, 'cpu')
-
-calib_dataset = load_dataset('lambada', split='train')
+calib_dataset = load_dataset('lambada', split='validation')
 calib_dataset = calib_dataset.shuffle(seed=42)
 calib_dataloader = CustomDataloader(calib_dataset, tokenizer, device='cpu', batch_size=1, for_calib=True)
-os.environ["TF_USE_LEGACY_KERAS"]="True"
-def eval_func(model):
-    acc = evaluator.evaluate_tf_v1(model)
-    return acc
 
-from neural_compressor.tensorflow import StaticQuantConfig, SmoothQuantConfig, autotune
-from neural_compressor.tensorflow.quantization import TuningConfig
+from neural_compressor.tensorflow import StaticQuantConfig, SmoothQuantConfig, quantize_model
 
 ptq_config = None
 quant_config = []
@@ -186,19 +123,18 @@ quant_config = []
 if args.sq:
     quant_config.append(SmoothQuantConfig(alpha=args.alpha))
 if args.kl:
-    ptq_config = StaticQuantConfig(act_dtype=["fp32", "int8"], weight_dtype=["fp32", "int8"], act_algorithm="kl")
+    ptq_config = StaticQuantConfig(act_dtype="int8", weight_dtype="int8", act_algorithm="kl")
 if args.fallback_add:
-    ptq_config = StaticQuantConfig(act_dtype=["fp32", "int8"], weight_dtype=["fp32", "int8"])
-    ptq_config.set_local("add", StaticQuantConfig(act_dtype="fp32", weight_dtype="fp32"))
-if not ptq_config:
-    ptq_config = StaticQuantConfig(act_dtype=["fp32", "int8"], weight_dtype=["fp32", "int8"])
+    ptq_config = StaticQuantConfig(act_dtype="int8", weight_dtype="int8")
+    ptq_config.set_local("Add", StaticQuantConfig(act_dtype="fp32", weight_dtype="fp32"))
 
+if not ptq_config:
+    ptq_config = StaticQuantConfig(act_dtype="int8", weight_dtype="int8")
 quant_config.append(ptq_config)
-tune_config = TuningConfig(config_set=quant_config, max_trials=3)
-q_model = autotune(model, 
-                    tune_config, 
-                    eval_fn=eval_func,
-                    calib_dataloader=calib_dataloader)
+
+q_model = quantize_model(model, 
+                         quant_config, 
+                         calib_dataloader=calib_dataloader)
 
 save_model_name = model_name.split("/")[-1]
 q_model.save(f"{save_model_name}_int8")
