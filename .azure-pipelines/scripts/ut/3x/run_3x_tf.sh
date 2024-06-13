@@ -28,6 +28,7 @@ pytest --cov="${inc_path}" -vs --disable-warnings --html=report_tf_quant.html --
 rm -rf tensorflow/quantization
 pytest --cov="${inc_path}" --cov-append -vs --disable-warnings --html=report_tf.html --self-contained-html . 2>&1 | tee -a ${ut_log_name}
 
+# test for itex ut
 rm -rf tensorflow/*
 mv ../3x_keras tensorflow/keras
 pip install intel-extension-for-tensorflow[cpu]
@@ -46,6 +47,7 @@ rm -rf tensorflow/*
 mkdir -p tensorflow/quantization/ptq
 mv ../3x_newapi tensorflow/quantization/ptq/newapi
 find . -name "test*.py" | sed "s,\.\/,python -m pytest --cov=${inc_path} --cov-append -vs --disable-warnings ,g" > run.sh
+cat run.sh
 bash run.sh 2>&1 | tee -a ${ut_log_name}
 
 mkdir -p report
