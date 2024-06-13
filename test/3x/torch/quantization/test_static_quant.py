@@ -112,7 +112,7 @@ class TestStaticQuant:
     )
     def test_static_quant_params(self, act_sym, act_algo):
         fp32_model = copy.deepcopy(self.fp32_model)
-        quant_config = StaticQuantConfig(act_sym=act_sym, act_algo=act_algo, excluded_precisions=["bf16"])
+        quant_config = StaticQuantConfig(act_sym=act_sym, act_algo=act_algo)
         example_inputs = self.input
         prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
         run_fn(prepared_model)
@@ -139,7 +139,7 @@ class TestStaticQuant:
         fp32_model = copy.deepcopy(model)
         fp32_model.linear.weight = torch.nn.Parameter(torch.tensor([[0.0, 1.0], [1.0, 0.0]]))
         example_inputs = torch.zeros(3, 2)
-        quant_config = StaticQuantConfig(act_sym=True, act_algo="kl", excluded_precisions=["bf16"])
+        quant_config = StaticQuantConfig(act_sym=True, act_algo="kl")
         prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
         run_fn(prepared_model)
         q_model = convert(prepared_model)
