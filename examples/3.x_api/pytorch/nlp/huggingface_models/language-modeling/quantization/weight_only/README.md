@@ -21,27 +21,14 @@ Here is how to run the scripts:
 ### GPT-J-6b
 
 #### Quantization
-```bash
-# "--sq" is used to enable smooth quant
-python run_clm_no_trainer.py \
-    --model EleutherAI/gpt-j-6B \
-    --quantize \
-    --sq \
-    --alpha 1.0 \
-    --ipex \
-    --output_dir "saved_results"
-```
-**Notes**: Smooth quantization here is based on torch.jit. Without past key value in example_inputs, the quantized model cannot be used for text-generation.
 
 ```bash
-# "--approach weight_only" is used to enable weight only quantization.
 # "--woq_algo GPTQ" is used to enable GPTQ algorithms
 # "--double_quant_type BNB_NF4" is used to enable double quant algorithms
 python run_clm_no_trainer.py \
     --model EleutherAI/gpt-j-6B \
     --dataset NeelNanda/pile-10k \
     --quantize \
-    --approach weight_only \
     --woq_algo GPTQ \
     --woq_bits 4 \
     --woq_scheme asym \
@@ -57,7 +44,6 @@ python run_clm_no_trainer.py \
     --model EleutherAI/gpt-j-6B \
     --dataset NeelNanda/pile-10k \
     --quantize \
-    --approach weight_only \
     --woq_algo RTN \
     --woq_bits 4 \
     --woq_scheme asym \
@@ -74,23 +60,12 @@ python run_clm_no_trainer.py \
 #### Quantization
 
 ```bash
-# "--sq" is used to enable smooth quant
-python run_clm_no_trainer.py \
-    --model facebook/opt-125m \
-    --quantize \
-    --sq \
-    --alpha 0.5 \
-    --ipex \
-    --output_dir "saved_results"
-
-# "--approach weight_only" is used to enable weight only quantization.
 # "--woq_algo GPTQ" is used to enable GPTQ algorithms
 # "--double_quant_type BNB_NF4" is used to enable double quant algorithms
 python run_clm_no_trainer.py \
     --model facebook/opt-125m \
     --dataset NeelNanda/pile-10k \
     --quantize \
-    --approach weight_only \
     --woq_algo GPTQ \
     --woq_bits 4 \
     --woq_scheme asym \
@@ -106,7 +81,6 @@ python run_clm_no_trainer.py \
     --model facebook/opt-125m \
     --dataset NeelNanda/pile-10k \
     --quantize \
-    --approach weight_only \
     --woq_algo RTN \
     --woq_bits 4 \
     --woq_scheme asym \
@@ -121,23 +95,12 @@ python run_clm_no_trainer.py \
 #### Quantization
 
 ```bash
-# "--sq" is used to enable smooth quant
-python run_clm_no_trainer.py \
-    --model meta-llama/Llama-2-7b-hf \
-    --quantize \
-    --sq \
-    --alpha 0.8 \
-    --ipex \
-    --output_dir "saved_results"
-
-# "--approach weight_only" is used to enable weight only quantization.
 # "--double_quant_type BNB_NF4" is used to enable double quant algorithms
 # "--woq_algo GPTQ" is used to enable GPTQ algorithms
 python run_clm_no_trainer.py \
     --model meta-llama/Llama-2-7b-hf \
     --dataset NeelNanda/pile-10k \
     --quantize \
-    --approach weight_only \
     --woq_algo GPTQ \
     --woq_bits 4 \
     --woq_scheme asym \
@@ -153,7 +116,6 @@ python run_clm_no_trainer.py \
     --model meta-llama/Llama-2-7b-hf \
     --dataset NeelNanda/pile-10k \
     --quantize \
-    --approach weight_only \
     --woq_algo RTN \
     --woq_bits 4 \
     --woq_scheme asym \
