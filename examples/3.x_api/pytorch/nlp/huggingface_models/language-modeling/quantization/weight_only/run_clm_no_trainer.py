@@ -36,7 +36,6 @@ parser.add_argument(
     type=int, default=42, help='Seed for sampling the calibration data.'
 )
 parser.add_argument("--int8", action="store_true")
-parser.add_argument("--ipex", action="store_true", help="Use intel extension for pytorch.")
 parser.add_argument("--accuracy", action="store_true")
 parser.add_argument("--performance", action="store_true")
 parser.add_argument("--iters", default=100, type=int,
@@ -104,8 +103,6 @@ parser.add_argument("--double_quant_group_size",
 # =======================================
 
 args = parser.parse_args()
-if args.ipex:
-    import intel_extension_for_pytorch as ipex
 calib_size = 1
 
 
@@ -188,7 +185,7 @@ class Evaluator:
 
 def get_user_model():
     torchscript = False
-    if args.sq or args.ipex or args.woq_algo in ['AWQ', 'TEQ']:
+    if  args.woq_algo in ['AWQ', 'TEQ']:
         torchscript = True
     user_model = AutoModelForCausalLM.from_pretrained(
         args.model,
