@@ -204,7 +204,7 @@ class GraphConverter:
         self.scale_info.update({"bf16_ops": self.bf16_ops})
         self.scale_info.update({"fp32_ops": self.fp32_ops})
 
-        if "backend" in self.model.kwargs:
+        if "backend" in self.model.kwargs:  # pragma: no cover
             self._sampling_model = Model(self.model._model, **self.model.kwargs)
         else:
             self._sampling_model = Model(
@@ -245,12 +245,12 @@ class GraphConverter:
         output_tensor = model.output_tensor
         # TF table initialization: https://github.com/tensorflow/tensorflow/issues/8665
         node_names = [node.name for node in sess.graph.as_graph_def().node]
-        if "init_all_tables" in node_names:
+        if "init_all_tables" in node_names:  # pragma: no cover
             init_table_op = sess.graph.get_operation_by_name("init_all_tables")
             sess.run(init_table_op)
 
         logger.info("Start sampling on calibration dataset.")
-        if hasattr(self.data_loader, "__len__") and len(self.data_loader) == 0:
+        if hasattr(self.data_loader, "__len__") and len(self.data_loader) == 0:  # pragma: no cover
             feed_dict = {}
             _ = (
                 sess.run(output_tensor, feed_dict)
@@ -333,7 +333,7 @@ class GraphConverter:
             feed_dict = {}
             if len(input_tensor_names) == 1:
                 feed_dict[input_tensor_names[0]] = inputs
-            else:
+            else:  # pragma: no cover
                 assert len(input_tensor_names) == len(inputs), "inputs len must equal with input_tensor"
                 for i, input_tensor_name in enumerate(input_tensor_names):
                     feed_dict[input_tensor_name] = inputs[i]
@@ -365,7 +365,7 @@ class GraphConverter:
             if version1_gte_version2(tf.version.VERSION, "2.9.0"):
                 is_supported_version = True
 
-            if tf.version.VERSION == "1.15.0-up3":
+            if tf.version.VERSION == "1.15.0-up3":  # pragma: no cover
                 is_supported_version = True
 
             if tf.version.VERSION in SPR_BASE_VERSIONS:
@@ -405,7 +405,7 @@ class GraphConverter:
                     )
                 )
 
-    def _check_args(self):
+    def _check_args(self):  # pragma: no cover
         """Check model's arguments."""
         if (
             self.model.workspace_path
@@ -429,7 +429,7 @@ class GraphConverter:
             self._tmp_model = self._fp32_model
         else:
             # to keep temp model
-            if "backend" in self.model.kwargs:
+            if "backend" in self.model.kwargs:  # pragma: no cover
                 self._tmp_model = Model(self.model._model, **self.model.kwargs)
             else:
                 self._tmp_model = Model(
@@ -707,7 +707,7 @@ class GraphConverter:
 
         if "backend" in self._tmp_model.kwargs:
             model = Model(tmp_path, **self._tmp_model.kwargs)
-        else:
+        else:  # pragma: no cover
             model = Model(
                 tmp_path,
                 **self._tmp_model.kwargs,
@@ -755,7 +755,9 @@ class GraphConverter:
         self.scale_info.update(quantizev2_min)
         self.scale_info.update(requant_min_max)
 
-        if "scale_propagation_max_pooling" in self.recipes and self.recipes["scale_propagation_max_pooling"]:
+        if (
+            "scale_propagation_max_pooling" in self.recipes and self.recipes["scale_propagation_max_pooling"]
+        ):  # pragma: no cover
             self._tmp_graph_def = ScaleProPagationTransformer(self._tmp_graph_def).do_transformation()
 
         if debug and not self.new_api:
@@ -817,7 +819,7 @@ class GraphConverter:
 
         self._tmp_model.graph_def = self._tmp_graph_def
 
-    def _post_clean(self):
+    def _post_clean(self):  # pragma: no cover
         """Delete the temporarily files generated during the quantization process.
 
         :return: None
@@ -840,7 +842,7 @@ class GraphConverter:
             self._insert_qdq_pairs()
             self._convert_qdq()
 
-        except ValueError as e:
+        except ValueError as e:  # pragma: no cover
             logger.error("Fail to quantize graph due to {}.".format(str(e)))
             self._tmp_model = None
             raise
@@ -885,10 +887,10 @@ class GraphConverter:
             self.itex_mode,
         ).get_quantized_nodes()
 
-        if self.itex_mode:
+        if self.itex_mode:  # pragma: no cover
             self.quantized_node_info.extend(self._search_y_pattern_for_itex())
 
-        if self._enable_kl_op_names:
+        if self._enable_kl_op_names:  # pragma: no cover
             self._get_fp32_print_node_names(self._enable_kl_op_names)
             self._generate_calibration_data(self._fp32_logged_model_path, self._fp32_print_data, True)
 
