@@ -79,6 +79,8 @@ parser.add_argument('--multiprocessing-distributed', action='store_true',
 parser.add_argument('--dummy', action='store_true', help="use fake data to benchmark")
 parser.add_argument('-q', '--quantize', dest='quantize', action='store_true',
                     help='quantize model')
+parser.add_argument("--calib_iters", default=2, type=int,
+                    help="For calibration only.")
 
 best_acc1 = 0
 
@@ -286,7 +288,8 @@ def main_worker(gpu, ngpus_per_node, args):
         
         prepared_model = prepare(exported_model, quant_config=quant_config)
         # Calibrate
-        prepared_model(*example_inputs)
+        for i in range(args.calib_iters):
+            prepared_model(*example_inputs)
         q_model = convert(prepared_model)
         # Compile the quantized model and replace the Q/DQ pattern with Q-operator
         from torch._inductor import config

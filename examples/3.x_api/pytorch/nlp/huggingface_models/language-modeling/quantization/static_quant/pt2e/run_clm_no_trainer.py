@@ -1,7 +1,4 @@
 import argparse
-import sys
-
-sys.path.append('./')
 import time
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -24,6 +21,8 @@ parser.add_argument("--approach", type=str, default='static',
 parser.add_argument("--int8", action="store_true")
 parser.add_argument("--accuracy", action="store_true")
 parser.add_argument("--performance", action="store_true")
+parser.add_argument("--calib_iters", default=2, type=int,
+                    help="For calibration only.")
 parser.add_argument("--iters", default=100, type=int,
                     help="For accuracy measurement only.")
 parser.add_argument("--batch_size", default=1, type=int,
@@ -87,7 +86,7 @@ if args.quantize:
     prepare_model = prepare(exported_model, quant_config)
 
     # calibrate
-    for i in range(2):
+    for i in range(args.calib_iters):
         prepare_model(*example_inputs)
     # convert
     converted_model = convert(prepare_model)
