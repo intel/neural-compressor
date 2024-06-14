@@ -53,9 +53,6 @@ parser.add_argument("--calib_iters", default=512, type=int,
 parser.add_argument("--tasks", default="lambada_openai,hellaswag,winogrande,piqa,wikitext",
                     type=str, help="tasks for accuracy validation")
 parser.add_argument("--peft_model_id", type=str, default=None, help="model_name_or_path of peft model")
-# ============SmoothQuant configs==============
-parser.add_argument("--sq", action="store_true")
-parser.add_argument("--alpha", default="auto", help="Smooth quant parameter.")
 
 args = parser.parse_args()
 if args.ipex:
@@ -166,13 +163,12 @@ if args.quantize:
         collate_fn=calib_evaluator.collate_batch,
     )
 
-    from neural_compressor.torch.quantization import SmoothQuantConfig
-    args.alpha = eval(args.alpha)
-    excluded_precisions = [] if args.int8_bf16_mixed else ["bf16"]
-    quant_config = SmoothQuantConfig(alpha=args.alpha, folding=False, excluded_precisions=excluded_precisions)
-
+    
+    from neural_compressor.torch.quantization import get_default_static_config, StaticQuantConfig
+    quant_config =  get_default_static_config()
+    quant_config.excluded_precisions = [] if args.int8_bf16_mixed else ["bf16"]
     if re.search("gpt", user_model.config.model_type):
-        quant_config.set_local(torch.add, SmoothQuantConfig(w_dtype="fp32", act_dtype="fp32"))
+        quant_config.set_local("add", StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
 
     from neural_compressor.torch.algorithms.smooth_quant import move_input_to_device
     from tqdm import tqdm
@@ -200,7 +196,6 @@ if args.quantize:
     run_fn(user_model)
     user_model = convert(user_model)
     user_model.save(args.output_dir)
-
 
 if args.load:
     # TODO: we need run_benchmark.sh for loading and remove --accuracy in run_quant.sh, currently run_quant.sh will get fp32 result
