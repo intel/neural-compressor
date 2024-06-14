@@ -65,19 +65,16 @@ if args.quantize:
         )
     from neural_compressor.torch.export import export
     from torch.export import Dim
-    # set TOKENIZERS_PARALLELISM to false
     def get_example_inputs(tokenizer):
         text = "Hello, welcome to LLM world."
         encoded_input = tokenizer(text, return_tensors="pt")
 
         example_inputs = encoded_input
-        # print(f"example_inputs: {example_inputs}")
         input_ids = example_inputs["input_ids"]
         input_ids_batch = torch.cat((input_ids, input_ids), dim=0)
         print(f"input_ids_batch shape: {input_ids_batch.shape}")
         tuple_inputs = (input_ids_batch,)
         return tuple_inputs
-    # os.environ["TOKENIZERS_PARALLELISM"] = "false"
     # torch._dynamo.config.cache_size_limit = 4 # set limitation if out of memory
     batch = Dim(name="batch_size")
     seq_len = Dim(name="seq_len")
@@ -105,7 +102,6 @@ if args.quantize:
 
 
 if args.accuracy:
-    # user_model.eval()
     from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
     eval_args = LMEvalParser(
         model="hf",
