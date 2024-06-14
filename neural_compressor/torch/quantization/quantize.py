@@ -178,12 +178,12 @@ def convert(
     q_model = model if inplace else copy.deepcopy(model)
 
     # TODO: Optimize the check for prepared flag after adding HQT FP8 Quant
-    assert getattr(model, "prepared", False), "Please run prepare function before convert."
+    assert getattr(model, "is_prepared", False), "Please run prepare function before convert."
 
-    if getattr(model, "prepared", False):
+    if getattr(model, "is_prepared", False):
         if quant_config is None:
             quant_config = model.quant_config
-    example_inputs = model.example_inputs if getattr(model, "prepared", False) else None
+    example_inputs = model.example_inputs if getattr(model, "is_prepared", False) else None
 
     registered_configs = config_registry.get_cls_configs()
     if isinstance(quant_config, dict):
