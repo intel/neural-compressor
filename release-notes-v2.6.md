@@ -9,11 +9,11 @@ Intel® Neural Compressor v2.6 Release
 - Validated Configurations
 
 **Highlights**
- - Integrated recent [AutoRound](https://github.com/intel/auto-round/releases/tag/v0.2) with lm-head quantization support and memory usage optimization
+ - Integrated recent [AutoRound](https://github.com/intel/auto-round/releases/tag/v0.2) with lm-head quantization support and calibration process optimizations
  - Migrated ONNX model quantization capability into ONNX project [Neural Compressor](https://github.com/onnx/neural-compressor)  
 
 **Features**
- - [Quantization] Integrate recent [AutoRound](https://github.com/intel/auto-round/releases/tag/v0.2) with lm-head quantization support and memory usage optimizations ([4728fd](https://github.com/intel/neural-compressor/commit/4728fdccbbc3d9d8a213a1234aed7921596ddd51))
+ - [Quantization] Integrate recent [AutoRound](https://github.com/intel/auto-round/releases/tag/v0.2) with lm-head quantization support and calibration process optimizations ([4728fd](https://github.com/intel/neural-compressor/commit/4728fdccbbc3d9d8a213a1234aed7921596ddd51))
  - [Quantization] Support true sequential options in GPTQ ([92c942](https://github.com/intel/neural-compressor/commit/92c9423ccc09e4ea4a26cbf925b9202d888c6564))
 
 **Improvement**
