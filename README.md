@@ -178,17 +178,6 @@ quantized_model = fit(model=float_model, conf=static_quant_conf, calib_dataloade
           <td colspan="2" align="center"><a href="./docs/source/quantization_layer_wise.md">Layer-Wise Quantization </td>
       </tr>
   </tbody>
-  <thead>
-      <tr>
-        <th colspan="8">Innovations for Productivity</th>
-      </tr>
-  </thead>
-  <tbody>
-      <tr>
-          <td colspan="4" align="center"><a href="./neural_insights/README.md">Neural Insights</a></td>
-          <td colspan="4" align="center"><a href="./neural_solution/README.md">Neural Solution</a></td>
-      </tr>
-  </tbody>
 </table>
 
 > **Note**: 
