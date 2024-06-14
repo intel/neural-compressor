@@ -53,7 +53,7 @@ def save(model, output_dir="./saved_results"):
         stat_dict[k] = v.to("cpu")
     torch.save(stat_dict, qmodel_file_path)
 
-    logger.info("Save quantized model to {}.".format(qmodel_file_path))
+    logger.info("Save state_dict of quantized model to {}.".format(qmodel_file_path))
     logger.info("Save configuration of quantized model to {}.".format(qconfig_file_path))
 
 
