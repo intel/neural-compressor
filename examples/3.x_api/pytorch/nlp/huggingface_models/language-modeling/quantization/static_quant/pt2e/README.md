@@ -2,7 +2,7 @@ Step-by-Step
 ============
 This document describes the step-by-step instructions to run large language models (LLMs) on 4th Gen Intel® Xeon® Scalable Processor (codenamed Sapphire Rapids) with PyTorch 2 Export Quantization.
 
-The script `run_clm_no_trainer.py` supports `OPT` quantization and validates last word prediction accuracy with [lm_eval](https://github.com/EleutherAI/lm-evaluation-harness.git) now, and we are adding more models.
+Currently, users can use `run_clm_no_trainer.py` to quantize the `OPT` series models and validate the last word prediction accuracy with [lm_eval](https://github.com/EleutherAI/lm-evaluation-harness.git). We will add more models in the near future.
 
 # Prerequisite
 ## 1. Create Environment
