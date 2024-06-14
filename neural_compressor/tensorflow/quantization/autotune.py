@@ -23,7 +23,7 @@ from neural_compressor.common.base_tuning import EvaluationFuncWrapper, TuningCo
 from neural_compressor.common.utils import dump_elapsed_time
 from neural_compressor.tensorflow.quantization import quantize_model
 from neural_compressor.tensorflow.quantization.config import FRAMEWORK_NAME, StaticQuantConfig
-from neural_compressor.tensorflow.utils import BaseModel, constants
+from neural_compressor.tensorflow.utils import BaseModel, Model, constants
 
 __all__ = [
     "autotune",
@@ -45,6 +45,7 @@ def autotune(
     calib_iteration: int = 100,
 ) -> Optional[BaseModel]:
     """The main entry of auto-tune."""
+    model = Model(model)
     best_quant_model = None
     eval_func_wrapper = EvaluationFuncWrapper(eval_fn, eval_args)
     config_loader, tuning_logger, tuning_monitor = init_tuning(tuning_config=tune_config)
