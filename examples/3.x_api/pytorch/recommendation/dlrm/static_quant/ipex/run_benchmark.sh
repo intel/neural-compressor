@@ -63,7 +63,7 @@ function run_tuning {
     ARGS=""
     if [[ ${int8} == "true" ]]; then
         echo "running int8 path"
-        ARGS="$ARGS --int8 --int8-configure=${tuned_checkpoint}/best_configure.json"
+        ARGS="$ARGS --int8"
     else
         echo "running fp32 path"
     fi
