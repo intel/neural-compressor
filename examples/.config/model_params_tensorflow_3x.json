@@ -1,0 +1,48 @@
+{
+  "tensorflow": {
+    "bert_large_squad_model_zoo": {
+      "model_src_dir": "nlp/bert_large_squad_model_zoo/quantization/ptq",
+      "dataset_location": "/tf_dataset/tensorflow/bert/data",
+      "input_model": "/tf_dataset/tensorflow/bert/fp32_bert_squad.pb",
+      "main_script": "main.py",
+      "batch_size": 64,
+      "fp32_model_url": "https://storage.googleapis.com/intel-optimized-tensorflow/models/v2_7_0/fp32_bert_squad.pb"
+    },
+    "opt_125m_sq": {
+      "model_src_dir": "nlp/large_language_models/quantization/ptq/smoothquant",
+      "dataset_location": "",
+      "input_model": "facebook/opt-125m",
+      "main_script": "main.py",
+      "batch_size": 16
+    },
+    "gpt2_medium_sq": {
+      "model_src_dir": "nlp/large_language_models/quantization/ptq/smoothquant",
+      "dataset_location": "",
+      "input_model": "gpt2-medium",
+      "main_script": "main.py",
+      "batch_size": 16
+    },
+    "gpt-j-6B": {
+      "model_src_dir": "nlp/large_language_models/quantization/ptq/gpt-j",
+      "dataset_location": "",
+      "input_model": "/tf_dataset2/models/tensorflow/gpt-j-6B",
+      "main_script": "main.py",
+      "batch_size": 1
+    },
+    "ViT": {
+      "model_src_dir": "image_recognition/vision_transformer/quantization/ptq",
+      "dataset_location": "/tf_dataset/dataset/imagenet",
+      "input_model": "/tf_dataset/tensorflow/vit/HF-ViT-Base16-Img224-frozen.pb",
+      "main_script": "main.py",
+      "batch_size": 32
+    },
+    "GraphSage": {
+      "model_src_dir": "graph_networks/graphsage/quantization/ptq",
+      "dataset_location": "/tf_dataset/dataset/ppi",
+      "input_model": "/tf_dataset/tensorflow/graphsage/graphsage_frozen_model.pb",
+      "main_script": "main.py",
+      "batch_size": 1000
+    }
+  }
+}
+

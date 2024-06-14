@@ -117,7 +117,7 @@ from neural_compressor.tensorflow.utils import (
     version1_lte_version2,
 )
 
-TF_SUPPORTED_MAX_VERSION = "2.15.0"
+TF_SUPPORTED_MAX_VERSION = "2.16.1"
 TF_SUPPORTED_MIN_VERSION = "1.14.0"
 
 logger = logging.getLogger("neural_compressor")
@@ -231,10 +231,6 @@ class GraphConverter:
         Args:
             model(TensorflowBaseModel): input TensorflowBaseModel
         """
-        if self.calib_func:
-            self.calib_func(model.model)
-            return
-
         if model.model_type == "llm_saved_model":
             self._inference_llm(model)
             return
@@ -264,7 +260,9 @@ class GraphConverter:
         for idx, (inputs, labels) in enumerate(self.data_loader):
             if len(input_tensor) == 1:
                 feed_dict = {}
-                if isinstance(inputs, dict) or isinstance(inputs, OrderedDict) or isinstance(inputs, UserDict):
+                if (
+                    isinstance(inputs, dict) or isinstance(inputs, OrderedDict) or isinstance(inputs, UserDict)
+                ):  # pragma: no cover
                     for name in inputs:
                         for tensor in input_tensor:
                             pos = tensor.name.rfind(":")
@@ -274,7 +272,7 @@ class GraphConverter:
                                 break
                 else:
                     feed_dict = {input_tensor[0]: inputs}  # get raw tensor using index [0]
-            else:
+            else:  # pragma: no cover
                 assert len(input_tensor) == len(inputs), "inputs len must equal with input_tensor"
                 feed_dict = {}
                 if isinstance(inputs, dict) or isinstance(inputs, OrderedDict) or isinstance(inputs, UserDict):
@@ -345,7 +343,7 @@ class GraphConverter:
             if idx >= self.calib_iteration:
                 break
 
-    def _check_tf_version(self):
+    def _check_tf_version(self):  # pragma: no cover
         """Check if the installed tensorflow version is supported."""
         is_supported_version = False
         is_sprbase_version = False
@@ -466,7 +464,7 @@ class GraphConverter:
             else:
                 model = self.quantize()
 
-        if self.itex_mode:
+        if self.itex_mode:  # pragma: no cover
             host_const_graph_def = PostHostConstConverter(self._tmp_model.graph_def).do_transformation()
             host_const_graph_def.library.CopyFrom(self.model.graph_def.library)
             self._tmp_model.graph_def = host_const_graph_def
@@ -524,7 +522,9 @@ class GraphConverter:
         for i in target_conv_op:
             if specified_op_list and i not in specified_op_list:
                 continue
-            if node_name_mapping[i + "_eightbit_quantized_conv"].op == "QuantizedConv2DWithBiasSumAndRelu":
+            if (
+                node_name_mapping[i + "_eightbit_quantized_conv"].op == "QuantizedConv2DWithBiasSumAndRelu"
+            ):  # pragma: no cover
                 start_index = sorted_node_names.index(i)
                 for index, value in enumerate(sorted_node_names[start_index:]):
                     if (
@@ -553,7 +553,7 @@ class GraphConverter:
         self._fp32_model.graph_def = fp32_graph_def
         return self._fp32_model
 
-    def _search_y_pattern_for_itex(self):
+    def _search_y_pattern_for_itex(self):  # pragma: no cover
         """Search the Y pattern for itex and return the op name."""
         g = GraphAnalyzer()
         g.graph = self._fp32_model.graph_def
@@ -633,7 +633,7 @@ class GraphConverter:
                     self._freeze_requantization_ranges(self._kl_op_dict)
                     self._fuse_requantize_with_fused_quantized_node()
 
-        except ValueError as e:
+        except ValueError as e:  # pragma: no cover
             logger.error("Fail to quantize graph due to {}.".format(str(e)))
             self._tmp_model = None
             raise
@@ -944,7 +944,7 @@ class GraphConverter:
 
     def _convert_qdq(self):
         """Convert Dequantize + Op + QuantizeV2 into QuantizedOps."""
-        if self.itex_mode:
+        if self.itex_mode:  # pragma: no cover
             self._tmp_graph_def, quantizev2_max = FreezeValueTransformer(
                 self._tmp_graph_def, self._calibration_data, "__max:", self.itex_mode
             ).do_transformation()

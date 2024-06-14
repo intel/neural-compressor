@@ -32,7 +32,6 @@ __all__ = [
     "forward_wrapper",
     "get_absorb_layers",
     "get_block_prefix",
-    "get_example_input",
     "replace_forward",
     "recover_forward",
     "get_module",
@@ -729,6 +728,11 @@ class GraphTrace:
         if orig_device != "cpu" and orig_device != "meta":  # pragma: no cover
             model = model.to("cpu")
             dummy_input = move_input_to_device(dummy_input, "cpu")
+        reset_model_config_return_dict = False
+        if getattr(getattr(model, "config", None), "return_dict", False):
+            # set return_dict=False to help transformers model jit.trace success, orig_return_dict is True here
+            reset_model_config_return_dict = True
+            model.config.return_dict = False
         if isinstance(dummy_input, dict) or isinstance(dummy_input, UserDict):
             try:
                 # pylint: disable=E1123, E1120
@@ -750,6 +754,9 @@ class GraphTrace:
                 except Exception as e:
                     logger.warning(e)
                     logger.warning("Jit trace in GraphTrace failed, absorb layer detection is skipped")
+        if reset_model_config_return_dict:
+            # recover return_dict original value for transformers model
+            model.config.return_dict = True
         model = model.to(orig_device)
         return traced_model
 
@@ -910,11 +917,11 @@ def get_example_input(dataloader, i=1):
 
     Args:
         dataloader (object): calibration dataset.
-
     Returns:
         example_inp (object).
     """
     iter = 0
+    example_inp = None
     try:
         for example_inp, label in dataloader:
             if iter == i:
@@ -1101,3 +1108,29 @@ class InputCaptureModule(torch.nn.Module):
         with torch.no_grad():
             self.args_list.append(args)
             self.kwargs_list.append(kwargs)
+
+
+def convert_dtype_str2torch(str_dtype):
+    """Converts a string dtype to its corresponding PyTorch dtype.
+
+    Args:
+        str_dtype (str): The string representation of the dtype.
+
+    Returns:
+        torch.dtype: The PyTorch dtype.
+
+    Raises:
+        AssertionError: If the input str_dtype is unsupported.
+    """
+    if isinstance(str_dtype, torch.dtype) or str_dtype is None:
+        return str_dtype
+    if str_dtype == "int8":
+        return torch.int8
+    elif str_dtype == "fp32" or str_dtype == "float32" or str_dtype == "auto":
+        return torch.float
+    elif str_dtype == "fp16" or str_dtype == "float16":
+        return torch.float16
+    elif str_dtype == "bf16" or str_dtype == "bfloat16":
+        return torch.bfloat16
+    else:
+        assert False, "Unsupported str dtype {} to torch dtype".format(str_dtype)
