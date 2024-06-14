@@ -26,8 +26,8 @@ from tqdm import tqdm
 
 from neural_compressor.torch.algorithms.static_quant import (
     CpuInfo,
+    Statistics,
     TransformerBasedModelBlockPatternDetector,
-    dump_model_op_stats,
     generate_activation_observer,
     get_quantizable_ops_from_cfgs,
     ipex_config_path,
@@ -249,6 +249,59 @@ def cfg_to_qconfig(
     with open(ipex_config_path, "w") as write_f:
         json.dump(cfgs, write_f, indent=4)
     return None
+
+
+def dump_model_op_stats(user_cfg):
+    """This is a function to dump quantizable ops of model to user.
+
+    Args:
+        user_cfg (dict): quantization config
+    Returns:
+        None
+    """
+    res = dict()
+    for k, v in user_cfg.items():
+        op_type_list = k[-1].split("><")
+        op_type = ""
+        for op in op_type_list:
+            if "class" in op:
+                op_type = (
+                    op[op.rfind(".") + 1 : op.rfind("'")]
+                    if op_type == ""
+                    else op_type + "&" + op[op.rfind(".") + 1 : op.rfind("'")]
+                )
+            elif "method" in op:
+                start = op.find("'") + 1
+                if start > 1:
+                    op_type = (
+                        op[start : op.find("'", start)]
+                        if op_type == ""
+                        else op_type + "&" + op[start : op.find("'", start)]
+                    )
+                else:
+                    start = op.find("method") + 7
+                    op_type = (
+                        op[start : op.find(" ", start)]
+                        if op_type == ""
+                        else op_type + "&" + op[start : op.find(" ", start)]
+                    )
+            else:
+                op_type = op if op_type == "" else op_type + "&" + op
+        if op_type not in res.keys():
+            res[op_type] = {"INT8": 0, "BF16": 0, "FP32": 0}
+        if v["weight"]["dtype"] == "int8":
+            res[op_type]["INT8"] += 1
+        elif v["weight"]["dtype"] == "fp32":
+            res[op_type]["FP32"] += 1
+
+    output_data = [
+        [op_type, sum(res[op_type].values()), res[op_type]["INT8"], res[op_type]["BF16"], res[op_type]["FP32"]]
+        for op_type in res.keys()
+    ]
+
+    Statistics(
+        output_data, header="Mixed Precision Statistics", field_names=["Op Type", "Total", "INT8", "BF16", "FP32"]
+    ).print_stat()
 
 
 def get_parent(node, all_parents=False):  # pragma: no cover

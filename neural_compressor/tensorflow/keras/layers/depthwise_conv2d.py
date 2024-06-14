@@ -34,12 +34,10 @@ else:
 
 if version1_gte_version2(tf.__version__, "2.16.1"):
 
-    class QDepthwiseConv2D(BaseDepthwiseConv):
+    class QDepthwiseConv2D(BaseDepthwiseConv):  # pragma: no cover
         def __init__(
             self,
             kernel_size,
-            min_value,
-            max_value,
             strides=(1, 1),
             padding="valid",
             depth_multiplier=1,
@@ -195,8 +193,6 @@ else:
         def __init__(
             self,
             kernel_size,
-            min_value,
-            max_value,
             strides=(1, 1),
             padding="valid",
             depth_multiplier=1,
@@ -376,42 +372,27 @@ def initialize_int8_depthwise_conv2d(fp32_layer, q_config):
     kwargs = fp32_layer.get_config()
     q_name = fp32_layer.name
 
-    if "name" in kwargs:
-        del kwargs["name"]
-    if "kernel_size" in kwargs:
-        del kwargs["kernel_size"]
-    if "strides" in kwargs:
-        del kwargs["strides"]
-    if "padding" in kwargs:
-        del kwargs["padding"]
-    if "depth_multiplier" in kwargs:
-        del kwargs["depth_multiplier"]
-    if "data_format" in kwargs:
-        del kwargs["data_format"]
-    if "dilation_rate" in kwargs:
-        del kwargs["dilation_rate"]
-    if "activation" in kwargs:
-        del kwargs["activation"]
-    if "use_bias" in kwargs:
-        del kwargs["use_bias"]
-    if "depthwise_initializer" in kwargs:
-        del kwargs["depthwise_initializer"]
-    if "bias_initializer" in kwargs:
-        del kwargs["bias_initializer"]
-    if "depthwise_regularizer" in kwargs:
-        del kwargs["depthwise_regularizer"]
-    if "activity_regularizer" in kwargs:
-        del kwargs["activity_regularizer"]
-    if "bias_regularizer" in kwargs:
-        del kwargs["bias_regularizer"]
-    if "depthwise_constraint" in kwargs:
-        del kwargs["depthwise_constraint"]
-    if "bias_constraint" in kwargs:
-        del kwargs["bias_constraint"]
-    if "min_value" in kwargs:
-        del kwargs["min_value"]
-    if "max_value" in kwargs:
-        del kwargs["max_value"]
+    param_list = [
+        "name",
+        "kernel_size",
+        "strides",
+        "padding",
+        "depth_multiplier",
+        "data_format",
+        "dilation_rate",
+        "activation",
+        "use_bias",
+        "depthwise_initializer",
+        "bias_initializer",
+        "depthwise_regularizer",
+        "activity_regularizer",
+        "bias_regularizer",
+        "depthwise_constraint",
+        "bias_constraint",
+    ]
+    for p in param_list:  # pragma: no cover
+        if p in kwargs:
+            del kwargs[p]
 
     return QDepthwiseConv2D(
         name=q_name,

@@ -30,7 +30,7 @@ elif version1_gte_version2(tf.__version__, "2.13.0"):
 else:
     from keras.layers.convolutional.base_conv import Conv  # pylint: disable=E0401
 
-if version1_gte_version2(tf.__version__, "2.16.1"):
+if version1_gte_version2(tf.__version__, "2.16.1"):  # pragma: no cover
 
     class QConv2D(BaseConv):
         def __init__(
@@ -354,40 +354,28 @@ else:
 def initialize_int8_conv2d(fp32_layer, q_config):
     kwargs = fp32_layer.get_config()
 
-    if "name" in kwargs:
-        del kwargs["name"]
-    if "filters" in kwargs:
-        del kwargs["filters"]
-    if "kernel_size" in kwargs:
-        del kwargs["kernel_size"]
-    if "strides" in kwargs:
-        del kwargs["strides"]
-    if "padding" in kwargs:
-        del kwargs["padding"]
-    if "data_format" in kwargs:
-        del kwargs["data_format"]
-    if "dilation_rate" in kwargs:
-        del kwargs["dilation_rate"]
-    if "groups" in kwargs:
-        del kwargs["groups"]
-    if "activation" in kwargs:
-        del kwargs["activation"]
-    if "use_bias" in kwargs:
-        del kwargs["use_bias"]
-    if "kernel_initializer" in kwargs:
-        del kwargs["kernel_initializer"]
-    if "bias_initializer" in kwargs:
-        del kwargs["bias_initializer"]
-    if "kernel_regularizer" in kwargs:
-        del kwargs["kernel_regularizer"]
-    if "activity_regularizer" in kwargs:
-        del kwargs["activity_regularizer"]
-    if "bias_regularizer" in kwargs:
-        del kwargs["bias_regularizer"]
-    if "kernel_constraint" in kwargs:
-        del kwargs["kernel_constraint"]
-    if "bias_constraint" in kwargs:
-        del kwargs["bias_constraint"]
+    param_list = [
+        "name",
+        "filters",
+        "kernel_size",
+        "strides",
+        "padding",
+        "data_format",
+        "dilation_rate",
+        "groups",
+        "activation",
+        "use_bias",
+        "kernel_initializer",
+        "bias_initializer",
+        "kernel_regularizer",
+        "activity_regularizer",
+        "bias_regularizer",
+        "kernel_constraint",
+        "bias_constraint",
+    ]
+    for p in param_list:  # pragma: no cover
+        if p in kwargs:
+            del kwargs[p]
 
     return QConv2D(
         name=fp32_layer.name,

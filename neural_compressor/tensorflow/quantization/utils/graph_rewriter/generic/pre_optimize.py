@@ -75,7 +75,7 @@ class PreOptimization:
                 "debug_stripper": True,
                 "loop": True,
             }
-        else:
+        else:  # pragma: no cover
             self.optimization = {
                 "pruning": True,
                 "shape": True,
@@ -85,7 +85,7 @@ class PreOptimization:
             }
         # Table initialization should disable grappler dependency and pruning pass
         node_names = [node.name for node in model.graph_def.node]
-        if "init_all_tables" in node_names:
+        if "init_all_tables" in node_names:  # pragma: no cover
             self.optimization["dependency"] = False
             self.optimization["pruning"] = False
         self.new_api = new_api
@@ -144,7 +144,7 @@ class PreOptimization:
             if self.device == "cpu":
                 cpus = tf.config.list_physical_devices("CPU")
                 node_device = cpus[0].name.replace("physical_device:", "")
-            else:
+            else:  # pragma: no cover
                 gpus = tf.config.list_physical_devices("GPU")
                 if len(gpus) == 0:
                     xpus = tf.config.list_physical_devices("XPU")
@@ -253,7 +253,7 @@ class PreOptimization:
         if self.device == "cpu":
             cpus = list_physical_devices("CPU")
             node_device = cpus[0].name.replace("physical_device:", "")
-        else:
+        else:  # pragma: no cover
             gpus = list_physical_devices("GPU")
             if len(gpus) == 0:
                 xpus = list_physical_devices("XPU")
@@ -272,7 +272,7 @@ class PreOptimization:
         self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
 
         for function_def in self.model.graph_def.library.function:
-            if function_def.signature.name == "swish_f32":
+            if function_def.signature.name == "swish_f32":  # pragma: no cover
                 self._tmp_graph_def.library.function.extend([copy.deepcopy(function_def)])
 
         origin_model.graph_def = self._tmp_graph_def

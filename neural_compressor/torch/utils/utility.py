@@ -18,8 +18,7 @@ from typing import Callable, Dict, List, Tuple, Union
 import torch
 from typing_extensions import TypeAlias
 
-from neural_compressor.common import logger
-from neural_compressor.common.utils import Mode
+from neural_compressor.common.utils import LazyImport, Mode, logger
 
 OP_NAME_AND_TYPE_TUPLE_TYPE: TypeAlias = Tuple[str, Union[torch.nn.Module, Callable]]
 

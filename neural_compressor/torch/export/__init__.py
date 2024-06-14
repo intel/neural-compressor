@@ -12,4 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from neural_compressor.torch.export._export import export_model_for_pt2e_quant, export
+from neural_compressor.torch.export.pt2e_export import export_model_for_pt2e_quant, export
