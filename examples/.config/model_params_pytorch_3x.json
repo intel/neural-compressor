@@ -48,6 +48,20 @@
         "input_model": "/mnt/local_disk3/dataset/dlrm/dlrm/dlrm_weight/tb00_40M.pt",
         "main_script": "dlrm_s_pytorch.py",
         "batch_size": 16384
+      },
+      "resnet18_pt2e_static":{
+        "model_src_dir": "cv/static_quant",
+        "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
+        "input_model": "",
+        "main_script": "main.py",
+        "batch_size": 1
+      },
+      "opt_125m_pt2e_static":{
+        "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/static_quant/pt2e",
+        "dataset_location": "",
+        "input_model": "",
+        "main_script": "run_clm_no_trainer.py",
+        "batch_size": 1
       }
     }
 }
