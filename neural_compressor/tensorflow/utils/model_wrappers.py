@@ -86,7 +86,7 @@ def get_model_type(model):
             return "keras"
         else:  # pragma: no cover
             # otherwise, the backend will fallback to tensorflow_itex
-            return "AutoTrackable"
+            return "saved_model"
     if isinstance(model, tf.Graph):
         return "graph"
     elif isinstance(model, tf.compat.v1.GraphDef):

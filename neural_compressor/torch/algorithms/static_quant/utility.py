@@ -164,7 +164,9 @@ def check_cfg_and_qconfig(user_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_
     return cfgs, ori_user_cfg
 
 
-def generate_activation_observer(scheme, algorithm, smooth_quant=False, smooth_quant_enable=False):  # pragma: no cover
+def generate_activation_observer(
+    scheme, algorithm, smooth_quant=False, smooth_quant_enable=False, alpha=0.5
+):  # pragma: no cover
     """This is a helper method to generate an activation observer.
 
     Args:
@@ -200,7 +202,7 @@ def generate_activation_observer(scheme, algorithm, smooth_quant=False, smooth_q
         "reduce_range": False,
         "quant_min": 0,
         "quant_max": 255,
-        "alpha": 0.5,
+        "alpha": 0.5 if alpha == "auto" else alpha,
         "act_observer": kl_activation_observer,
         "act_ic_observer": {
             "name": "PerChannelMinMaxObserver",
@@ -220,7 +222,7 @@ def generate_activation_observer(scheme, algorithm, smooth_quant=False, smooth_q
         "reduce_range": False,
         "quant_min": 0,
         "quant_max": 255,
-        "alpha": 0.5,
+        "alpha": 0.5 if alpha == "auto" else alpha,
         "act_observer": minmax_activation_observer,
         "act_ic_observer": {
             "name": "PerChannelMinMaxObserver",
