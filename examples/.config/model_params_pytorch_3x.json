@@ -50,7 +50,7 @@
         "batch_size": 1
       },
       "opt_125m_pt2e_static":{
-        "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/static_pt2e",
+        "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/static_quant/pt2e",
         "dataset_location": "",
         "input_model": "",
         "main_script": "run_clm_no_trainer.py",
