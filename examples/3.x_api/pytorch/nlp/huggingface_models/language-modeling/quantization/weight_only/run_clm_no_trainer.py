@@ -194,8 +194,7 @@ def get_user_model():
         revision=args.revision,
     )
     tokenizer = AutoTokenizer.from_pretrained(args.model)
-    if args.approach == 'weight_only':
-        user_model = user_model.float()
+    user_model = user_model.float()
 
     # Set model's seq_len when GPTQ calibration is enabled.
     if args.woq_algo == 'GPTQ':
