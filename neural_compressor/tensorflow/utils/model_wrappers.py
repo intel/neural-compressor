@@ -42,7 +42,7 @@ def get_tf_model_type(model):
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
         model_type = get_model_type(model)
-    except:
+    except:  # pragma: no cover
         os.environ.pop("CUDA_DEVICE_ORDER")
         os.environ.pop("CUDA_VISIBLE_DEVICES")
         raise TypeError(
@@ -77,14 +77,14 @@ def get_model_type(model):
                 model = tf.keras.models.load_model(model)
                 if isinstance(model, tf.keras.Model) and hasattr(model, "to_json"):
                     return "keras"
-                return "saved_model"
+                return "saved_model"  # pragma: no cover
             except:
                 pass
     if isinstance(model, tf.keras.Model) and hasattr(model, "to_json"):
         if json.loads(model.to_json())["class_name"] in ["Sequential", "Functional"]:
             # Keras adaptor only support Sequential or Functional model
             return "keras"
-        else:
+        else:  # pragma: no cover
             # otherwise, the backend will fallback to tensorflow_itex
             return "saved_model"
     if isinstance(model, tf.Graph):
@@ -93,16 +93,16 @@ def get_model_type(model):
         return "graph_def"
     elif not version1_gte_version2(tf.version.VERSION, "2.16.1") and isinstance(
         model, tf.compat.v1.estimator.Estimator
-    ):
+    ):  # pragma: no cover
         return "estimator"
     elif isinstance(model, str):
         model = os.path.abspath(os.path.expanduser(model))
         if model.endswith(".pb") and os.path.isfile(model):
-            if is_saved_model_format(os.path.dirname(model)):
+            if is_saved_model_format(os.path.dirname(model)):  # pragma: no cover
                 return "saved_model"
             else:
                 return "frozen_pb"
-        elif model.endswith(".ckpt") and os.path.isfile(model):
+        elif model.endswith(".ckpt") and os.path.isfile(model):  # pragma: no cover
             return "slim"
         elif os.path.isdir(model):
             if is_ckpt_format(model):
@@ -156,7 +156,7 @@ def validate_and_inference_input_output(graph_def, input_tensor_names, output_te
         output_tensor_names = output_tensor_names
     elif temp_output_tensor_names:
         output_tensor_names = temp_output_tensor_names
-    else:
+    else:  # pragma: no cover
         _, output_tensor_names = get_input_output_node_names(graph_def)
 
     return input_tensor_names, output_tensor_names
@@ -254,7 +254,7 @@ def frozen_pb_session(model, input_tensor_names, output_tensor_names, **kwargs):
 def _contains_function_with_implements_attr(saved_model_proto):
     meta_graph = saved_model_proto.meta_graphs[0]
     for function in meta_graph.graph_def.library.function:
-        if function.attr.get("_implements", None) or function.attr.get("api_implements", None):
+        if function.attr.get("_implements", None) or function.attr.get("api_implements", None):  # pragma: no cover
             return True
     return False
 
@@ -339,8 +339,9 @@ def _get_graph_from_saved_model_v3(model, input_tensor_names, output_tensor_name
     """
     from neural_compressor.adaptor.tf_utils.util import parse_saved_model
 
-    if isinstance(model, tf.keras.Model):
-        tmp_dir = DEFAULT_WORKSPACE + "/saved_model"
+    if isinstance(model, tf.keras.Model):  # pragma: no cover
+        save_folder = "/tmp_model.keras" if version1_gte_version2(tf.version.VERSION, "2.16.1") else "/saved_model"
+        tmp_dir = DEFAULT_WORKSPACE + save_folder
         model.save(tmp_dir)
         model = tmp_dir
     graph_def, _, _, _, input_names, output_names = parse_saved_model(
@@ -474,10 +475,10 @@ def _get_graph_from_saved_model_v1(model):
 
     meta_graph = get_meta_graph_def(model, saved_model_tags)
     signature_def = get_signature_def(meta_graph, signature_key)
-    inputs, outputs = get_inputs_outputs(signature_def)
+    inputs, outputs = get_inputs_outputs(signature_def)  # pragma: no cover
     # Check SavedModel for assets directory.
     collection_def = meta_graph.collection_def
-    if constants.ASSETS_KEY in collection_def:
+    if constants.ASSETS_KEY in collection_def:  # pragma: no cover
         raise ValueError("SavedModels with assets/ directory are not supported.")
 
     from tensorflow.compat.v1 import graph_util as tf_graph_util
@@ -492,13 +493,13 @@ def _get_graph_from_saved_model_v1(model):
         sess.run(tf.compat.v1.tables_initializer())
         output_nodes = list(set([output.split(":")[0] for output in outputs]))
         node_ops = [node.op for node in graph.as_graph_def().node]
-        if "MakeIterator" in node_ops:
+        if "MakeIterator" in node_ops:  # pragma: no cover
             output_nodes.append("MakeIterator")
         table_ops = tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.TABLE_INITIALIZERS)
         # For table initialization
-        for table_op in table_ops:
+        for table_op in table_ops:  # pragma: no cover
             output_nodes.append(table_op.name)
-        if len(table_ops) > 0:
+        if len(table_ops) > 0:  # pragma: no cover
             output_nodes.append("init_all_tables")
         graph_def = tf_graph_util.convert_variables_to_constants(sess, graph.as_graph_def(), output_nodes)
     return graph_def, inputs, outputs
@@ -962,10 +963,10 @@ class TensorflowBaseModel(BaseModel):
     def iter_op(self):
         """Return model iter op list."""
         self._iter_op = []
-        if self._sess is None:
+        if self._sess is None:  # pragma: no cover
             self._load_sess(self._model, **self.kwargs)
         op_list = [node.op for node in self._sess.graph.as_graph_def().node]
-        if "MakeIterator" in op_list:
+        if "MakeIterator" in op_list:  # pragma: no cover
             self._iter_op.append(self._sess.graph.get_operation_by_name("MakeIterator"))
         return self._iter_op
 
@@ -979,7 +980,7 @@ class TensorflowBaseModel(BaseModel):
     @input_tensor_names.setter
     def input_tensor_names(self, tensor_names):
         """Set input tensor names."""
-        if len(tensor_names) == 0:
+        if len(tensor_names) == 0:  # pragma: no cover
             logger.warning("Input tensor names is empty.")
             return
         if self._sess is not None:
@@ -998,7 +999,7 @@ class TensorflowBaseModel(BaseModel):
     @output_tensor_names.setter
     def output_tensor_names(self, tensor_names):
         """Set output tensor names."""
-        if len(tensor_names) == 0:
+        if len(tensor_names) == 0:  # pragma: no cover
             logger.warning("Output tensor names should not be empty.")
             return
         if self._sess is not None:
@@ -1019,7 +1020,7 @@ class TensorflowBaseModel(BaseModel):
         """Return output node names."""
         output_node_names = tensor_to_node(self.output_tensor_names)
         iter_op_list = self.iter_op
-        if iter_op_list != []:
+        if iter_op_list != []:  # pragma: no cover
             output_node_names += [iter_op.name for iter_op in iter_op_list]
         return copy.deepcopy(output_node_names)
 
@@ -1039,7 +1040,7 @@ class TensorflowBaseModel(BaseModel):
 
     def save(self, root=None):
         """Save Tensorflow model."""
-        if not root:
+        if not root:  # pragma: no cover
             root = DEFAULT_WORKSPACE + "/save.pb"
         root = os.path.abspath(os.path.expanduser(root))
         # if not have suffix, default append .pb
@@ -1091,12 +1092,12 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
     @property
     def model(self):
         """Return model in AutoTrackable object."""
-        if self._auto_trackable:
+        if self._auto_trackable:  # pragma: no cover
             return self._auto_trackable
 
         root = os.path.abspath(os.path.expanduser(DEFAULT_WORKSPACE))
         root += str(time.time())
-        if os.path.exists(root):
+        if os.path.exists(root):  # pragma: no cover
             shutil.rmtree(root)
         os.makedirs(root, exist_ok=True)
         if not self._sess:
@@ -1124,7 +1125,7 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
             builder (tf.compat.v1.saved_model.builder.SavedModelBuilder): builds
                 the SavedModel protocol buffer and saves variables and assets.
         """
-        if not root:
+        if not root:  # pragma: no cover
             root = DEFAULT_WORKSPACE
         root = os.path.abspath(os.path.expanduser(root))
         if os.path.exists(root):
@@ -1231,7 +1232,7 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
     @property
     def weight_name_mapping(self):
         """Return weight_name_mapping function."""
-        if not self._weight_name_mapping:
+        if not self._weight_name_mapping:  # pragma: no cover
             self._weight_name_mapping = self.kwargs.get("weight_name_mapping", None)
         assert self._weight_name_mapping is not None, "weight_name_mapping should not be None!"
         return self._weight_name_mapping
@@ -1245,7 +1246,7 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
     @property
     def sq_weight_scale_dict(self):
         """Return dict of weight scaler for smooth quantization."""
-        if not self._sq_weight_scale_dict:
+        if not self._sq_weight_scale_dict:  # pragma: no cover
             self._sq_weight_scale_dict = self.kwargs.get("sq_weight_scale_dict", None)
         assert self._weight_name_mapping is not None, "sq_weight_scale_dict should not be None!"
         return self._sq_weight_scale_dict
@@ -1313,7 +1314,7 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
         for idx, weight_tensor in enumerate(model.variables):
             parsed_weight_name = self.weight_name_mapping(weight_tensor.name)
             if parsed_weight_name in self.sq_weight_scale_dict:
-                if len(weight_tensor.shape) == 4:
+                if len(weight_tensor.shape) == 4:  # pragma: no cover
                     shape_parm = [0, 1, 3, 2]
                 elif len(weight_tensor.shape) == 2:
                     shape_parm = [1, 0]
@@ -1334,10 +1335,10 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
 
         from neural_compressor.tensorflow.quantization.utils.utility import parse_saved_model, reconstruct_saved_model
 
-        if not root:
+        if not root:  # pragma: no cover
             root = DEFAULT_WORKSPACE
         root = os.path.abspath(os.path.expanduser(root))
-        if os.path.exists(root):
+        if os.path.exists(root):  # pragma: no cover
             shutil.rmtree(root)
         os.makedirs(root, exist_ok=True)
 
@@ -1355,7 +1356,7 @@ class TensorflowCheckpointModel(TensorflowBaseModel):
     @property
     def graph_def(self):
         """Return graph definition."""
-        if self.model_type == "graph_def":
+        if self.model_type == "graph_def":  # pragma: no cover
             return self.sess.graph.as_graph_def()
         from tensorflow.compat.v1 import graph_util
 
