@@ -308,45 +308,6 @@ def strip_unused_nodes(graph_def, input_node_names, output_node_names):
     return tf.compat.v1.graph_util.extract_sub_graph(cur_graph.dump_graph(), output_node_names)
 
 
-def get_estimator_graph(estimator, input_fn):
-    """Get the graph of the estimator.
-
-    Args:
-        estimator: tf estimator model
-        input_fn: input function
-
-    Returns:
-        graph
-    """
-    with tf.Graph().as_default() as g:
-        features, input_hooks = estimator._get_features_from_input_fn(input_fn, tf.estimator.ModeKeys.PREDICT)
-        estimator_spec = estimator._call_model_fn(features, None, tf.estimator.ModeKeys.PREDICT, estimator.config)
-
-        outputs = (
-            [tensor.name for tensor in estimator_spec.predictions.values()]
-            if isinstance(estimator_spec.predictions, dict)
-            else [estimator_spec.predictions.name]
-        )
-        logger.info("Estimator output tensor names is {}.".format(outputs))
-        with tf.compat.v1.Session(graph=g) as sess:
-            sess.run(tf.compat.v1.global_variables_initializer())
-            # Freezing a graph requires output_node_names, which can be found in
-            # estimator_spec.predictions that contains prediction tensors as a
-            # dictionary
-            # When a model uses Iterator, we need to have 'MakeIterator' (default
-            # name used by TF) in the output_node_names as well.
-            output_nodes = list(set([output.split(":")[0] for output in outputs]))
-            if "MakeIterator" in [node.op for node in g.as_graph_def().node]:
-                output_nodes.append("MakeIterator")
-
-            graph_def = tf.compat.v1.graph_util.convert_variables_to_constants(sess, g.as_graph_def(), output_nodes)
-
-        graph = tf.Graph()
-        with graph.as_default():
-            tf.import_graph_def(graph_def, name="")
-        return graph
-
-
 def strip_equivalent_nodes(graph_def, output_node_names):
     """Strip nodes with the same input and attr."""
     stripped_graph = GraphAnalyzer()
@@ -445,50 +406,6 @@ def get_model_input_shape(model):
     return 1
 
 
-def get_tensor_val_from_graph_node(graph_node_name_mapping, node_name):
-    """Get the tensor value for given node name.
-
-    Args:
-        graph_node_name_mapping: key: node name, val: node
-        node_name: query node
-
-    Returns:
-        tensor_val: numpy array
-    """
-    from tensorflow.python.framework import tensor_util
-
-    node = graph_node_name_mapping[node_name]
-    node_tensor = node.attr["value"].tensor
-    tensor_val = tensor_util.MakeNdarray(node_tensor)
-    return tensor_val
-
-
-def int8_node_name_reverse(node):
-    """Reverse int8 node name."""
-    int8_postfix = "_eightbit"
-    node_name = node.name
-    if "Quantized" in node.op:
-        index_postfix = node_name.find(int8_postfix)
-        if index_postfix != -1:
-            node_name = node_name[:index_postfix]
-    return node_name
-
-
-def _parse_config(q_config, cfg, op_list):
-    """Parse q_config and get dequantize min max value."""
-    activation_min_max = {}
-    if "__requant_min_max" in q_config:
-        for node_name, val in q_config["__requant_min_max"].items():
-            node_name = node_name.split("_eightbit_requant_range")[0]
-            if node_name in op_list:
-                activation_min_max[node_name] = {"min": val[0], "max": val[1]}
-    updated_cfg = {"op": {}}
-    for op_name_and_type in cfg["op"].keys():
-        if op_name_and_type[0] in op_list:
-            updated_cfg["op"][op_name_and_type] = cfg["op"][op_name_and_type]
-    return activation_min_max, updated_cfg
-
-
 def generate_feed_dict(input_tensor, inputs):
     """Generate feed dict helper function."""
     if len(input_tensor) == 1:
@@ -543,51 +460,6 @@ def generate_feed_dict(input_tensor, inputs):
                         feed_dict.update({dis_tensor: dis_input})
                         break
     return feed_dict
-
-
-def get_weight_from_input_tensor(model, input_tensor_names, op_types):
-    """Extracts weight tensors and their associated nodes from a smooth quant node's input tensor.
-
-    Args:
-        model: A TensorFlow model containing a `graph_def` attribute.
-        input_tensor_names: A list of input tensor names to search for weight tensors.
-        op_types: A list of operation types to search for when looking for weight tensors.
-
-    Returns:
-        A tuple of two dictionaries:
-        - sq_weight_tensors: A dictionary mapping each input tensor name
-            to a dict of its associated weight tensors with weight name.
-        - sq_weights_nodes: A dictionary mapping each input tensor name
-            to a dict of its associated weight nodes with weight name.
-    """
-    g_analyzer = GraphAnalyzer()
-    g_analyzer.graph = model.graph_def
-    graph_info = g_analyzer.parse_graph()
-
-    sq_weight_tensors = {}
-    sq_weights_nodes = {}
-
-    from tensorflow.python.framework import tensor_util
-
-    for name in input_tensor_names:
-        # Use dict rather than list to fix the QKV/VQK misorder issue
-        curr_weight_tensors = {}
-        curr_weights_nodes = {}
-        next_node_names = graph_info[name].outputs
-        for node_name in next_node_names:
-            curr_node = graph_info[node_name].node
-            if curr_node.op not in op_types:
-                continue
-            if len(curr_node.input) >= 2:
-                weight_name = curr_node.input[1]
-                weight_node = graph_info[weight_name].node
-                weight_tensor = tensor_util.MakeNdarray(weight_node.attr["value"].tensor)
-                curr_weight_tensors[weight_name] = weight_tensor
-                curr_weights_nodes[weight_name] = weight_node
-        # {input node -> {xxx_q_proj_matmul: value1, xxx_v_proj_matmul: value2, ...}, ...}
-        sq_weight_tensors[name] = curr_weight_tensors
-        sq_weights_nodes[name] = curr_weights_nodes
-    return sq_weight_tensors, sq_weights_nodes
 
 
 def apply_inlining(func):

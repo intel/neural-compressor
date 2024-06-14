@@ -90,46 +90,13 @@ class KerasAdaptor:
             os.mkdir(DEFAULT_WORKSPACE)
         self.tmp_dir = (DEFAULT_WORKSPACE + "tmp_model.keras") if self.keras3 else (DEFAULT_WORKSPACE + "tmp_model")
 
-    def _check_itex(self):
-        """Check if the Intel® Extension for TensorFlow has been installed."""
-        try:
-            import intel_extension_for_tensorflow
-        except:
-            raise ImportError(
-                "The Intel® Extension for TensorFlow is not installed. "
-                "Please install it to run models on ITEX backend"
-            )
-
-    def convert_bf16(self):
-        """Execute the BF16 conversion."""
-        tf.keras.mixed_precision.set_global_policy("mixed_bfloat16")
-        model = self.pre_optimized_model
-
-        for layer in model.layers:
-            if layer.name in self.bf16_ops:
-                layer.dtype = "mixed_bfloat16"
-
-        model.save(self.tmp_dir)
-        converted_model = tf.keras.models.load_model(self.tmp_dir)
-        tf.keras.mixed_precision.set_global_policy("float32")
-
-        return converted_model
-
-    # (TODO) choose the properly quantize mode
-    def _check_quantize_mode(self, model):
-        """Check what quantize mode to use."""
-        for layer in model.layers:
-            if "ReLU" in layer.__class__.__name__:
-                return "MIN_FIRST"
-        return "SCALED"
-
     def _set_weights(self, qmodel, layer_weights):
         """Set fp32 weights to qmodel."""
         for qlayer in qmodel.layers:
             if qlayer.get_weights():
                 if qlayer.name in layer_weights:
                     qlayer.set_weights(layer_weights[qlayer.name])
-                else:
+                else:  # pragma: no cover
                     hit_layer = False
                     for sub_layer in qlayer.submodules:
                         if sub_layer.name in layer_weights:
@@ -164,7 +131,7 @@ class KerasAdaptor:
                         self.conv_format[layer.name] = "u8"
                         break
 
-    def _fuse_bn_keras3(self, fuse_conv_bn, fp32_layers):
+    def _fuse_bn_keras3(self, fuse_conv_bn, fp32_layers):  # pragma: no cover
         fuse_layers = []
         fused_bn_name = ""
         for idx, layer in enumerate(fp32_layers):
@@ -211,7 +178,7 @@ class KerasAdaptor:
 
         return fuse_layers
 
-    def _fuse_bn_keras2(self, fuse_conv_bn, fp32_layers):
+    def _fuse_bn_keras2(self, fuse_conv_bn, fp32_layers):  # pragma: no cover
         fuse_layers = []
         for idx, layer in enumerate(fp32_layers):
             if hasattr(layer, "_inbound_nodes"):
@@ -272,7 +239,7 @@ class KerasAdaptor:
 
         return fuse_layers
 
-    def _fuse_bn(self, model):
+    def _fuse_bn(self, model):  # pragma: no cover
         """Fusing Batch Normalization."""
         model.save(self.tmp_dir)
         fuse_bn_model = tf.keras.models.load_model(self.tmp_dir)
@@ -361,14 +328,6 @@ class KerasAdaptor:
         converter = KerasConfigConverter(quant_config, iteration)
         tune_cfg = converter.parse_to_tune_cfg()
         self.tuning_cfg_to_fw(tune_cfg)
-
-        # just convert the input model to mixed_bfloat16
-        if self.bf16_ops and not self.quantize_config["op_wise_config"]:
-            converted_model = self.convert_bf16()
-            return converted_model
-
-        # if self.backend == "itex":
-        #     self._check_itex()
 
         logger.debug("Dump quantization configurations:")
         logger.debug(self.quantize_config)
@@ -469,59 +428,6 @@ class KerasAdaptor:
 
         return quantized_model
 
-    @dump_elapsed_time(customized_msg="Model inference")
-    def evaluate(
-        self,
-        model,
-        dataloader,
-        postprocess=None,
-        metrics=None,
-        measurer=None,
-        iteration=-1,
-        fp32_baseline=False,
-    ):
-        """The function is used to run evaluation on validation dataset.
-
-        Args:
-            model (object): The model to do calibration.
-            dataloader (generator): generate the data and labels.
-            postprocess (object, optional): process the result from the model
-            metric (object, optional): Depends on model category. Defaults to None.
-            measurer (object, optional): for precise benchmark measurement.
-            iteration(int, optional): control steps of mini-batch
-            fp32_baseline (boolean, optional): only for compare_label=False pipeline
-        """
-        # use keras object
-        keras_model = model.model
-        logger.info("Start to evaluate the Keras model.")
-        results = []
-        for idx, (inputs, labels) in enumerate(dataloader):
-            # use predict on batch
-            if measurer is not None:
-                measurer.start()
-                predictions = keras_model.predict_on_batch(inputs)
-                measurer.end()
-            else:
-                predictions = keras_model.predict_on_batch(inputs)
-
-            if self.fp32_preds_as_label:
-                self.fp32_results.append(predictions) if fp32_baseline else results.append(predictions)
-
-            if postprocess is not None:
-                predictions, labels = postprocess((predictions, labels))
-            if metrics:
-                for metric in metrics:
-                    if not hasattr(metric, "compare_label") or (
-                        hasattr(metric, "compare_label") and metric.compare_label
-                    ):
-                        metric.update(predictions, labels)
-            if idx + 1 == iteration:
-                break
-
-        acc = 0 if metrics is None else [metric.result() for metric in metrics]
-
-        return acc if not isinstance(acc, list) or len(acc) > 1 else acc[0]
-
     def query_fw_capability(self, model):
         """The function is used to return framework tuning capability.
 
@@ -621,7 +527,7 @@ class KerasAdaptor:
         for each_op_info in tuning_cfg["op"]:
             op_name = each_op_info[0]
 
-            if tuning_cfg["op"][each_op_info]["activation"]["dtype"] == "bf16":
+            if tuning_cfg["op"][each_op_info]["activation"]["dtype"] == "bf16":  # pragma: no cover
                 if each_op_info[1] in bf16_type:
                     bf16_ops.append(op_name)
                 continue
@@ -692,31 +598,6 @@ class KerasQuery:
                 default_config = sub_data
 
         return default_config
-
-    def get_version(self):
-        """Get the current backend version information.
-
-        Returns:
-            [string]: version string.
-        """
-        return self.cur_config["version"]["name"]
-
-    def get_precisions(self):
-        """Get supported precisions for current backend.
-
-        Returns:
-            [string list]: the precisions' name.
-        """
-        return self.cur_config["precisions"]["names"]
-
-    def get_op_types(self):
-        """Get the supported op types by all precisions.
-
-        Returns:
-            [dictionary list]: A list composed of dictionary which key is precision
-            and value is the op types.
-        """
-        return self.cur_config["ops"]
 
     def get_quantization_capability(self):
         """Get the supported op types' quantization capability.
@@ -846,7 +727,7 @@ class KerasSurgery:
 
         try:
             model_input = self.model.input
-        except ValueError:
+        except ValueError:  # pragma: no cover
             model_input = self.model.inputs[0]
 
         return input_layer_dict, model_input

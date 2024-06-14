@@ -215,16 +215,16 @@ class QMaxPool2D(MaxPooling2D):
 def initialize_int8_avgpool(fp32_layer, q_config):
     kwargs = fp32_layer.get_config()
 
-    if "name" in kwargs:
-        del kwargs["name"]
-    if "pool_size" in kwargs:
-        del kwargs["pool_size"]
-    if "strides" in kwargs:
-        del kwargs["strides"]
-    if "padding" in kwargs:
-        del kwargs["padding"]
-    if "data_format" in kwargs:
-        del kwargs["data_format"]
+    param_list = [
+        "name",
+        "pool_size",
+        "strides",
+        "padding",
+        "data_format",
+    ]
+    for p in param_list:  # pragma: no cover
+        if p in kwargs:
+            del kwargs[p]
 
     q_layer = QAvgPool2D(
         name=fp32_layer.name,
@@ -243,16 +243,16 @@ def initialize_int8_avgpool(fp32_layer, q_config):
 def initialize_int8_maxpool(fp32_layer, q_config):
     kwargs = fp32_layer.get_config()
 
-    if "name" in kwargs:
-        del kwargs["name"]
-    if "pool_size" in kwargs:
-        del kwargs["pool_size"]
-    if "strides" in kwargs:
-        del kwargs["strides"]
-    if "padding" in kwargs:
-        del kwargs["padding"]
-    if "data_format" in kwargs:
-        del kwargs["data_format"]
+    param_list = [
+        "name",
+        "pool_size",
+        "strides",
+        "padding",
+        "data_format",
+    ]
+    for p in param_list:  # pragma: no cover
+        if p in kwargs:
+            del kwargs[p]
 
     q_layer = QMaxPool2D(
         name=fp32_layer.name,

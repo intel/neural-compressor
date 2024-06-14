@@ -16,20 +16,36 @@ inc_path=$(python -c 'import neural_compressor; print(neural_compressor.__path__
 cd /neural-compressor/test/3x || exit 1
 rm -rf torch
 rm -rf onnxrt
-rm -rf tensorflow/quantization/ptq/newapi
 mv tensorflow/keras ../3x_keras
-mv tensorflow/quantization/itex ./3x_itex
+mv tensorflow/quantization/ptq/newapi ../3x_newapi
 
 LOG_DIR=/neural-compressor/log_dir
 mkdir -p ${LOG_DIR}
 ut_log_name=${LOG_DIR}/ut_3x_tf.log
+
+# test for tensorflow ut
 pytest --cov="${inc_path}" -vs --disable-warnings --html=report_tf_quant.html --self-contained-html ./tensorflow/quantization 2>&1 | tee -a ${ut_log_name}
 rm -rf tensorflow/quantization
 pytest --cov="${inc_path}" --cov-append -vs --disable-warnings --html=report_tf.html --self-contained-html . 2>&1 | tee -a ${ut_log_name}
 
+# test for tensorflow new api ut
+pip uninstall tensorflow -y
+pip install /tf_dataset/tf_binary/230928/tensorflow*.whl
+pip install cmake
+pip install protobuf==3.20.3
+pip install horovod==0.27.0
+pip list
+rm -rf tensorflow/*
+mkdir -p tensorflow/quantization/ptq
+mv ../3x_newapi tensorflow/quantization/ptq/newapi
+find . -name "test*.py" | sed "s,\.\/,python -m pytest --cov=${inc_path} --cov-append -vs --disable-warnings ,g" > run.sh
+cat run.sh
+bash run.sh 2>&1 | tee -a ${ut_log_name}
+
+# test for itex ut
 rm -rf tensorflow/*
 mv ../3x_keras tensorflow/keras
-mv ../3x_itex tensorflow/quantization/itex
+pip uninstall tensorflow -y
 pip install intel-extension-for-tensorflow[cpu]
 pytest --cov="${inc_path}" --cov-append -vs --disable-warnings --html=report_keras.html --self-contained-html ./tensorflow 2>&1 | tee -a ${ut_log_name}
 
