@@ -755,7 +755,9 @@ class GraphConverter:
         self.scale_info.update(quantizev2_min)
         self.scale_info.update(requant_min_max)
 
-        if "scale_propagation_max_pooling" in self.recipes and self.recipes["scale_propagation_max_pooling"]:  # pragma: no cover
+        if (
+            "scale_propagation_max_pooling" in self.recipes and self.recipes["scale_propagation_max_pooling"]
+        ):  # pragma: no cover
             self._tmp_graph_def = ScaleProPagationTransformer(self._tmp_graph_def).do_transformation()
 
         if debug and not self.new_api:
