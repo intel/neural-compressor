@@ -1,7 +1,7 @@
 #
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2023 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import os
+import os.path
 import transformers
 import tensorflow as tf
 from tqdm import tqdm
@@ -23,20 +23,15 @@ import sys
 import argparse
 from datasets import load_dataset
 import numpy as np
+import time
 
 sys.path.insert(0, './')
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--sq', action='store_true', default=False, help="whether to use smooth quant")
-# parser.add_argument('--calib_num', type=int, default=100, help="calibration num for sq")
-parser.add_argument('--model_name_or_path', type=str, default="facebook/opt-125m")
-# TODO auto tuning not supported currently for TF backend
-# parser.add_argument('--alpha', default=0.5, help="Set alpha=auto to use alpha tuning.")
-parser.add_argument('--alpha', type=float, default=0.5, help="alpha value for smoothing.")
-parser.add_argument('--log_frequency', type=int, default=100)
+parser.add_argument('--int8', action='store_true', help="eval fp32 model or int8 model")
+parser.add_argument('--model_name_or_path', type=str, default='facebook/opt-125m')
 parser.add_argument('--batch_size', type=int, default=16)
-parser.add_argument('--kl', action='store_true', default=False, help="whether to use kl divergence for calibration")
-parser.add_argument('--fallback_add', action='store_true', default=False, help="Whether to add fp32 fallback option" )
+parser.add_argument('--warmup', type=int, default=10)
 args = parser.parse_args()
 
 class Evaluator:
@@ -44,7 +39,7 @@ class Evaluator:
         self.dataset = dataset
         self.tokenizer = tokenizer
         self.device = device
-        self.dataloader = CustomDataloader(dataset, tokenizer, batch_size, device)
+        self.dataloader = INCDataloader(dataset, tokenizer, batch_size, device)
 
     def evaluate(self, model):
         # model.eval()
@@ -60,8 +55,6 @@ class Evaluator:
             pred = last_token_logits.argmax(axis=-1)
             total += label.shape[0]
             hit += (pred == label.numpy()).sum().item()
-            if index % args.log_frequency == 0:
-                print(hit / total, flush=True)
             index += 1
         acc = hit / total
         print(acc, flush=True)
@@ -71,27 +64,33 @@ class Evaluator:
         return tf.constant(1 - (input_ids==1).numpy().astype(int))
     
     def evaluate_tf_v1(self, model):
-        # return 0.99 # TODO debug remove
         total, hit = 0, 0
         index = 1
         infer = model.signatures["serving_default"]
+        overall_infer_duration = 0
         for input_ids, label, label_indices in tqdm(self.dataloader):
             attention_mask = self.get_attention_mask(input_ids)
             input_ids = tf.constant(input_ids.numpy(), dtype=infer.inputs[0].dtype)
             attention_mask = tf.constant(attention_mask.numpy(), dtype=infer.inputs[0].dtype)
+            start = time.time()
             results = infer(input_ids=input_ids, attention_mask=attention_mask) # len: 25 Identity: [16, 196, 50272], Identity_1: [16, 12, 196, 64]
+            batch_infer_time = time.time() - start
+            if index > args.warmup:
+                overall_infer_duration += batch_infer_time
             last_token_logits = results['Identity'].numpy()[np.arange(len(label_indices)), label_indices, :]
             pred = last_token_logits.argmax(axis=-1)
             total += label.shape[0]
             hit += (pred == label.numpy()).sum().item()
-            if index % args.log_frequency == 0:
-                print(hit / total, flush=True)
             index += 1
         acc = hit / total
-        print(acc, flush=True)
-        return acc
+        print("\nEvaluation result: ")
+        print(f"Batch size = {args.batch_size}")
+        print(f"Accuracy: {acc}")
+        print(
+            f"Throughput: {(len(self.dataloader) - args.warmup * args.batch_size) / overall_infer_duration} samples/sec"
+        )
 
-class CustomDataloader:
+class INCDataloader:
     # for_calib=True in quantization, only input_id is needed, =False in evaluation need label
     def __init__(self, dataset, tokenizer, batch_size=1, device='cpu', for_calib=False):
         self.dataset = dataset
@@ -119,7 +118,7 @@ class CustomDataloader:
         label = input_id[-1]
         pad_len = self.pad_len - input_id.numpy().shape[0]
         label_index = -2 - pad_len  # last logit index
-        input_id = tf.pad(input_id, tf.constant([[0,pad_len]]), constant_values=1)  # TODO need to check why pad with 1
+        input_id = tf.pad(input_id, tf.constant([[0,pad_len]]), constant_values=1)
         input_id = tf.expand_dims(input_id, axis=0)
         label = tf.expand_dims(label, axis=0)
         return (input_id, label, label_index)
@@ -164,47 +163,28 @@ class CustomDataloader:
     def __len__(self):
         return self.length
 
+from datasets import load_dataset
 
 model_name = args.model_name_or_path
-
-tokenizer = transformers.AutoTokenizer.from_pretrained(model_name)
-model = transformers.TFAutoModelForCausalLM.from_pretrained(model_name)
+tokenizer = transformers.AutoTokenizer.from_pretrained(
+    model_name,
+)
 eval_dataset = load_dataset('lambada', split='validation')
-
-# model.eval()
 
 evaluator = Evaluator(eval_dataset, tokenizer, 'cpu')
 
-calib_dataset = load_dataset('lambada', split='train')
-# calib_dataset = eval_dataset  # TODO for debug
-calib_dataset = calib_dataset.shuffle(seed=42)
-calib_dataloader = CustomDataloader(calib_dataset, tokenizer, device='cpu', batch_size=1, for_calib=True)
+if args.int8:
+    print("benchmarking int8 model")
+    int8_folder = model_name.split('/')[-1] + "_int8"
+    if not os.path.exists(int8_folder):
+        print(f"could not find int8 folder {int8_folder} ")
+        exit()
+    model = tf.saved_model.load(int8_folder)    # tensorflow.python.trackable.autotrackable.AutoTrackable object
+else:
+    print("benchmaking fp32 model")
+    model = transformers.TFAutoModelForCausalLM.from_pretrained(model_name)
+    from neural_compressor.tensorflow import Model
 
-def eval_func(model):
-    acc = evaluator.evaluate_tf_v1(model)
-    return acc
+    model = Model(model).model # tensorflow.python.trackable.autotrackable.AutoTrackable object
 
-from neural_compressor import PostTrainingQuantConfig
-from neural_compressor.config import AccuracyCriterion
-from neural_compressor import quantization
-
-recipes = {}
-if args.sq:
-    recipes = {"smooth_quant": True, "smooth_quant_args": {'alpha': args.alpha}}
-op_type_dict = {}
-if args.kl:
-    op_type_dict = {'linear': {'activation': {'algorithm': ['kl']}}}
-if args.fallback_add:
-    op_type_dict["add"] = {"weight": {"dtype": ["fp32"]}, "activation": {"dtype": ["fp32"]}}
-conf = PostTrainingQuantConfig(quant_level=1, excluded_precisions=["bf16"],##use basic tuning
-                                recipes=recipes,
-                                op_type_dict=op_type_dict, accuracy_criterion=AccuracyCriterion(
-tolerable_loss=0.011,      # TODO remove for debug
-))
-
-q_model = quantization.fit(model,
-                            conf,
-                            calib_dataloader=calib_dataloader,
-                            eval_func=eval_func)
-save_model_name = model_name.split("/")[-1]
-q_model.save(f"{save_model_name}_int8")
+evaluator.evaluate_tf_v1(model)
