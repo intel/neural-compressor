@@ -1,6 +1,6 @@
 # ImageNet Quantization
 
-This implements quantization of popular model architectures, such as ResNet, AlexNet, and VGG on the ImageNet dataset.
+This implements quantization of popular model architectures, such as ResNet on the ImageNet dataset.
 
 ## Requirements
 
