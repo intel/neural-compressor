@@ -35,10 +35,7 @@ parser.add_argument(
     '--seed',
     type=int, default=42, help='Seed for sampling the calibration data.'
 )
-parser.add_argument("--approach", type=str, default='static',
-                    help="Select from ['dynamic', 'static', 'weight-only']")
 parser.add_argument("--int8", action="store_true")
-parser.add_argument("--ipex", action="store_true", help="Use intel extension for pytorch.")
 parser.add_argument("--accuracy", action="store_true")
 parser.add_argument("--performance", action="store_true")
 parser.add_argument("--iters", default=100, type=int,
@@ -54,9 +51,6 @@ parser.add_argument("--calib_iters", default=512, type=int,
 parser.add_argument("--tasks", default="lambada_openai,hellaswag,winogrande,piqa,wikitext",
                     type=str, help="tasks for accuracy validation")
 parser.add_argument("--peft_model_id", type=str, default=None, help="model_name_or_path of peft model")
-# ============SmoothQuant configs==============
-parser.add_argument("--sq", action="store_true")
-parser.add_argument("--alpha", default="auto", help="Smooth quant parameter.")
 # ============WeightOnly configs===============
 parser.add_argument("--woq_algo", default="RTN", choices=['RTN', 'AWQ', 'TEQ', 'GPTQ'],
                     help="Weight-only parameter.")
@@ -109,8 +103,6 @@ parser.add_argument("--double_quant_group_size",
 # =======================================
 
 args = parser.parse_args()
-if args.ipex:
-    import intel_extension_for_pytorch as ipex
 calib_size = 1
 
 
@@ -193,7 +185,7 @@ class Evaluator:
 
 def get_user_model():
     torchscript = False
-    if args.sq or args.ipex or args.woq_algo in ['AWQ', 'TEQ']:
+    if  args.woq_algo in ['AWQ', 'TEQ']:
         torchscript = True
     user_model = AutoModelForCausalLM.from_pretrained(
         args.model,
@@ -202,8 +194,7 @@ def get_user_model():
         revision=args.revision,
     )
     tokenizer = AutoTokenizer.from_pretrained(args.model)
-    if args.approach == 'weight_only':
-        user_model = user_model.float()
+    user_model = user_model.float()
 
     # Set model's seq_len when GPTQ calibration is enabled.
     if args.woq_algo == 'GPTQ':
@@ -234,120 +225,52 @@ if args.quantize:
     )
 
     # 3.x api
-    if args.approach == 'weight_only':
-        from neural_compressor.torch.quantization import RTNConfig, GPTQConfig, prepare, convert, quantize
-        from neural_compressor.torch.utils import get_double_quant_config_dict
-        weight_sym = True if args.woq_scheme == "sym" else False
+    from neural_compressor.torch.quantization import RTNConfig, GPTQConfig, prepare, convert, quantize
+    from neural_compressor.torch.utils import get_double_quant_config_dict
+    weight_sym = True if args.woq_scheme == "sym" else False
+    if args.double_quant_type is not None:
+        double_quant_config_dict = get_double_quant_config_dict(args.double_quant_type)
+
+    if args.woq_algo == "RTN":
         if args.double_quant_type is not None:
-            double_quant_config_dict = get_double_quant_config_dict(args.double_quant_type)
-
-        if args.woq_algo == "RTN":
-            if args.double_quant_type is not None:
-                double_quant_config_dict.update(
-                    {
-                        # TODO: add group_dim into double quant config?
-                        "use_full_range": args.woq_use_full_range,
-                        "use_mse_search": args.woq_use_mse_search,
-                    }
-                )
-                quant_config = RTNConfig.from_dict(double_quant_config_dict)
-            else:
-                quant_config = RTNConfig(
-                    dtype=args.woq_dtype,
-                    bits=args.woq_bits,
-                    use_sym=weight_sym,
-                    group_size=args.woq_group_size,
-                    group_dim=args.woq_group_dim,
-                    use_full_range=args.woq_use_full_range,
-                    use_mse_search=args.woq_use_mse_search,
-                    use_double_quant=False,
-                    double_quant_bits=args.double_quant_bits,
-                    double_quant_dtype=args.double_quant_dtype,
-                    double_quant_use_sym=args.double_quant_use_sym,
-                    double_quant_group_size=args.double_quant_group_size,
-                )
-            quant_config.set_local("lm_head", RTNConfig(dtype="fp32"))
-            user_model = prepare(model=user_model, quant_config=quant_config)
-            user_model = convert(model=user_model)
-        elif args.woq_algo == "GPTQ":
-            from utils import DataloaderPreprocessor
-            dataloaderPreprocessor = DataloaderPreprocessor(
-                dataloader_original=calib_dataloader,
-                use_max_length=args.gptq_use_max_length,
-                max_seq_length=args.gptq_max_seq_length,
+            double_quant_config_dict.update(
+                {
+                    # TODO: add group_dim into double quant config?
+                    "use_full_range": args.woq_use_full_range,
+                    "use_mse_search": args.woq_use_mse_search,
+                }
             )
-            dataloader_for_calibration = dataloaderPreprocessor.get_prepared_dataloader()
-            from neural_compressor.torch.algorithms.weight_only.utility import move_input_to_device
-            from tqdm import tqdm
-            def run_fn_for_gptq(model, dataloader_for_calibration, *args):
-                for batch in tqdm(dataloader_for_calibration):
-                    batch = move_input_to_device(batch, device=None)
-                    try:
-                        if isinstance(batch, tuple) or isinstance(batch, list):
-                            model(batch[0])
-                        elif isinstance(batch, dict):
-                            model(**batch)
-                        else:
-                            model(batch)
-                    except ValueError:
-                        pass
-                return
-            if args.double_quant_type is not None:
-                double_quant_config_dict.update(
-                    {
-                        "use_mse_search": args.woq_use_mse_search,
-                        "percdamp": args.gptq_percdamp,
-                        "act_order": args.gptq_actorder,
-                        "block_size": args.gptq_block_size,
-                        "static_groups": args.gptq_static_groups,
-                    }
-                )
-                quant_config = GPTQConfig.from_dict(double_quant_config_dict)
-            else:
-                quant_config = GPTQConfig(
-                    dtype=args.woq_dtype,
-                    bits=args.woq_bits,
-                    use_sym=weight_sym,
-                    group_size=args.woq_group_size,
-                    use_mse_search=args.woq_use_mse_search,
-                    percdamp=args.gptq_percdamp,
-                    act_order=args.gptq_actorder,
-                    block_size=args.gptq_block_size,
-                    static_groups=args.gptq_static_groups,
-                    use_double_quant=False,
-                    double_quant_bits=args.double_quant_bits,
-                    double_quant_dtype=args.double_quant_dtype,
-                    double_quant_use_sym=args.double_quant_use_sym,
-                    double_quant_group_size=args.double_quant_group_size,
-                )
-            quant_config.set_local("lm_head", GPTQConfig(dtype="fp32"))
-            user_model = prepare(model=user_model, quant_config=quant_config)
-            run_fn_for_gptq(user_model, dataloader_for_calibration)
-            user_model = convert(user_model)
-    else:
-        if args.sq:
-            from neural_compressor.torch.quantization import SmoothQuantConfig
-
-            # alpha can be a float number of a list of float number.
-            args.alpha = args.alpha if args.alpha == "auto" else eval(args.alpha)
-            if re.search("falcon", user_model.config.model_type):
-                quant_config = SmoothQuantConfig(alpha=args.alpha, folding=False)
-            else:
-                quant_config = SmoothQuantConfig(alpha=args.alpha, folding=True)
-
-            if re.search("gpt", user_model.config.model_type):
-                quant_config.set_local(torch.add, SmoothQuantConfig(w_dtype="fp32", act_dtype="fp32"))
+            quant_config = RTNConfig.from_dict(double_quant_config_dict)
         else:
-            from neural_compressor.torch.quantization import get_default_static_config, StaticQuantConfig
-
-            quant_config =  get_default_static_config()
-            if re.search("gpt", user_model.config.model_type):
-                quant_config.set_local(torch.add, StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
-
-        from neural_compressor.torch.algorithms.smooth_quant import move_input_to_device
+            quant_config = RTNConfig(
+                dtype=args.woq_dtype,
+                bits=args.woq_bits,
+                use_sym=weight_sym,
+                group_size=args.woq_group_size,
+                group_dim=args.woq_group_dim,
+                use_full_range=args.woq_use_full_range,
+                use_mse_search=args.woq_use_mse_search,
+                use_double_quant=False,
+                double_quant_bits=args.double_quant_bits,
+                double_quant_dtype=args.double_quant_dtype,
+                double_quant_use_sym=args.double_quant_use_sym,
+                double_quant_group_size=args.double_quant_group_size,
+            )
+        quant_config.set_local("lm_head", RTNConfig(dtype="fp32"))
+        user_model = prepare(model=user_model, quant_config=quant_config)
+        user_model = convert(model=user_model)
+    elif args.woq_algo == "GPTQ":
+        from utils import DataloaderPreprocessor
+        dataloaderPreprocessor = DataloaderPreprocessor(
+            dataloader_original=calib_dataloader,
+            use_max_length=args.gptq_use_max_length,
+            max_seq_length=args.gptq_max_seq_length,
+        )
+        dataloader_for_calibration = dataloaderPreprocessor.get_prepared_dataloader()
+        from neural_compressor.torch.algorithms.weight_only.utility import move_input_to_device
         from tqdm import tqdm
-        def run_fn(model):
-            for batch in tqdm(calib_dataloader):
+        def run_fn_for_gptq(model, dataloader_for_calibration, *args):
+            for batch in tqdm(dataloader_for_calibration):
                 batch = move_input_to_device(batch, device=None)
                 try:
                     if isinstance(batch, tuple) or isinstance(batch, list):
@@ -359,13 +282,37 @@ if args.quantize:
                 except ValueError:
                     pass
             return
-
-        from utils import get_example_inputs
-        example_inputs = get_example_inputs(user_model, calib_dataloader)
-
-        from neural_compressor.torch.quantization import prepare, convert
-        user_model = prepare(model=user_model, quant_config=quant_config, example_inputs=example_inputs)
-        run_fn(user_model)
+        if args.double_quant_type is not None:
+            double_quant_config_dict.update(
+                {
+                    "use_mse_search": args.woq_use_mse_search,
+                    "percdamp": args.gptq_percdamp,
+                    "act_order": args.gptq_actorder,
+                    "block_size": args.gptq_block_size,
+                    "static_groups": args.gptq_static_groups,
+                }
+            )
+            quant_config = GPTQConfig.from_dict(double_quant_config_dict)
+        else:
+            quant_config = GPTQConfig(
+                dtype=args.woq_dtype,
+                bits=args.woq_bits,
+                use_sym=weight_sym,
+                group_size=args.woq_group_size,
+                use_mse_search=args.woq_use_mse_search,
+                percdamp=args.gptq_percdamp,
+                act_order=args.gptq_actorder,
+                block_size=args.gptq_block_size,
+                static_groups=args.gptq_static_groups,
+                use_double_quant=False,
+                double_quant_bits=args.double_quant_bits,
+                double_quant_dtype=args.double_quant_dtype,
+                double_quant_use_sym=args.double_quant_use_sym,
+                double_quant_group_size=args.double_quant_group_size,
+            )
+        quant_config.set_local("lm_head", GPTQConfig(dtype="fp32"))
+        user_model = prepare(model=user_model, quant_config=quant_config)
+        run_fn_for_gptq(user_model, dataloader_for_calibration)
         user_model = convert(user_model)
 
     user_model.save(args.output_dir)

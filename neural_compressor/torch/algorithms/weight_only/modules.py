@@ -303,7 +303,6 @@ class WeightOnlyLinear(torch.nn.Module):
     def pack_tensor_with_numpy(self, raw_tensor):
         raw_array = raw_tensor.cpu().numpy()
         target_len = np.ceil(raw_array.shape[1] / self.n_pack).astype(int)
-        torch.int32
         target_dtype = torch.tensor(0, dtype=self.compression_dtype).numpy().dtype
         packed_array = np.zeros((raw_array.shape[0], target_len), dtype=target_dtype)
         mask = np.uint8(2**self.bits - 1)
