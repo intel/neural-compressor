@@ -188,7 +188,6 @@ from neural_compressor import PostTrainingQuantConfig
 from neural_compressor.config import AccuracyCriterion
 from neural_compressor import quantization
 
-os.environ["TF_USE_LEGACY_KERAS"]="False"
 recipes = {}
 if args.sq:
     recipes = {"smooth_quant": True, "smooth_quant_args": {'alpha': args.alpha}}

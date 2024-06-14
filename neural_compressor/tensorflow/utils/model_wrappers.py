@@ -86,7 +86,7 @@ def get_model_type(model):
             return "keras"
         else:
             # otherwise, the backend will fallback to tensorflow_itex
-            return "AutoTrackable"
+            return "saved_model"
     if isinstance(model, tf.Graph):
         return "graph"
     elif isinstance(model, tf.compat.v1.GraphDef):
@@ -371,7 +371,7 @@ def _get_graph_from_saved_model_v2(saved_model_dir, input_tensor_names, output_t
     return load_saved_model(saved_model_dir, saved_model_tags, input_tensor_names, output_tensor_names)
 
 
-def _get_graph_from_original_keras_v2(model):
+def _get_graph_from_original_keras_v2(model):  # pragma: no cover
     """The version 2 function that get graph from the original keras model.
 
     Args:
@@ -424,7 +424,7 @@ def _get_graph_from_original_keras_v2(model):
     return graph_def, input_names, output_names
 
 
-def _check_keras_format(model, saved_model_dir):
+def _check_keras_format(model, saved_model_dir):  # pragma: no cover
     """Decide which method will be used to get graph from the saved_model .
 
     Args:
@@ -504,7 +504,7 @@ def _get_graph_from_saved_model_v1(model):
     return graph_def, inputs, outputs
 
 
-def try_loading_keras(model, input_tensor_names, output_tensor_names):
+def try_loading_keras(model, input_tensor_names, output_tensor_names):  # pragma: no cover
     """Try different ways of loading keras models.
 
     Args:
@@ -590,7 +590,7 @@ def slim_session(model, input_tensor_names, output_tensor_names, **kwargs):  # p
         output_tensor_names (list of string): validated output_tensor_names.
     """
     assert version1_lt_version2(tf.version.VERSION, "2.0.0"), "slim model only used in tensorflow 1.x"
-    from neural_compressor.tensorflow.utils.nets_factory import TFSlimNetsFactory
+    from neural_compressor.tensorflow.utils.utility import TFSlimNetsFactory
 
     factory = TFSlimNetsFactory()
     assert "name" in kwargs, "model name should be set in slim checkpoint...."
@@ -682,7 +682,7 @@ def checkpoint_session(model, input_tensor_names, output_tensor_names, **kwargs)
     return sess, input_tensor_names, output_tensor_names
 
 
-def estimator_session(model, input_tensor_names, output_tensor_names, **kwargs):
+def estimator_session(model, input_tensor_names, output_tensor_names, **kwargs):  # pragma: no cover
     """Build session with estimator model.
 
     Args:
@@ -1113,68 +1113,6 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
         """Set model in AutoTrackable object."""
         self._auto_trackable = input_model
 
-    def compute_sparsity(self, tensor):
-        """Compute the sparsity.
-
-        Args:
-            tensor: Tensorflow tensor
-
-        Return:
-            (the original tensor size, number of zero elements, number of non-zero elements)
-        """
-        mask = np.ones_like(tensor)
-        tensor_size = tensor.size
-        dense_mask = tensor != 0
-        dense_size = dense_mask.sum()
-        return tensor_size, tensor_size - dense_size, dense_size
-
-    def report_sparsity(self):
-        """Get sparsity of the model.
-
-        Returns:
-            df (DataFrame): DataFrame of sparsity of each weight.
-            total_sparsity (float): total sparsity of model.
-        """
-        import numpy as np
-        import pandas as pd
-        import tensorflow as tf
-
-        df = pd.DataFrame(columns=["Name", "Shape", "NNZ (dense)", "NNZ (sparse)", "Sparsity(%)"])
-        pd.set_option("display.precision", 2)
-        param_dims = [2, 4]
-        params_size = 0
-        sparse_params_size = 0
-        for index, layer in enumerate(tf.keras.models.load_model(self._model).layers):
-            if not len(layer.weights):
-                continue
-            # Extract just the actual parameter's name, which in this context we treat
-            # as its "type"
-            weights = layer.get_weights()[0]
-            if weights.ndim in param_dims:
-                param_size, sparse_param_size, dense_param_size = self.compute_sparsity(weights)
-                density = dense_param_size / param_size
-                params_size += param_size
-                sparse_params_size += sparse_param_size
-                df.loc[len(df.index)] = [
-                    index,
-                    list(weights.shape),
-                    dense_param_size,
-                    sparse_param_size,
-                    (1 - density) * 100,
-                ]
-
-        total_sparsity = sparse_params_size / params_size * 100
-
-        df.loc[len(df.index)] = [
-            "Total sparsity:",
-            "-",
-            params_size,
-            sparse_params_size,
-            total_sparsity,
-        ]
-
-        return df, total_sparsity
-
     def build_saved_model(self, root=None):
         """Build Tensorflow saved model.
 
@@ -1411,67 +1349,6 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
         shutil.rmtree(self.model_path, ignore_errors=True)
 
 
-class TensorflowQATModel(TensorflowSavedModelModel):
-    """Build Tensorflow QAT model."""
-
-    def __init__(self, model="", **kwargs):
-        """Initialize a Tensorflow QAT model.
-
-        Args:
-            model (string or  tf.keras.Model object): model path or model object.
-        """
-        assert isinstance(model, tf.keras.Model) or isinstance(
-            model, str
-        ), "The TensorflowQATModel should be initialized either by a string or a tf.keras.Model."
-        super(TensorflowQATModel, self).__init__(model)
-        self.keras_model = None
-        self.model_type = "keras"
-
-    @property
-    def model(self):
-        """Return model itself."""
-        if self.keras_model is None:
-            if isinstance(self._model, tf.keras.Model):
-                self.keras_model = self._model
-            else:
-                self.keras_model = tf.keras.models.load_model(self._model)
-
-        return self.keras_model
-
-    @model.setter
-    def model(self, q_model):
-        """Set model itself."""
-        self.keras_model = q_model
-
-    @property
-    def frozen_graph_def(self):
-        """Get frozen graph_def."""
-        graph_def = tf.compat.v1.graph_util.convert_variables_to_constants(
-            self.sess, self.sess.graph_def, self.output_node_names
-        )
-        return graph_def
-
-    def save(self, root=None):
-        """Save Tensorflow QAT model."""
-        if not root:
-            root = DEFAULT_WORKSPACE + "/saved_model"
-        root = os.path.abspath(os.path.expanduser(root))
-        os.makedirs(os.path.dirname(root), exist_ok=True)
-        if root.endswith(".pb"):
-            saved_format = "pb file"
-            graph_def = self.frozen_graph_def
-            f = tf.io.gfile.GFile(root, "wb")
-            f.write(graph_def.SerializeToString())
-        else:
-            q_aware_model = self.keras_model
-            q_aware_model.save(root)
-            saved_format = "saved_model"
-            if root.endswith(".h5"):
-                saved_format = "h5 file"
-        logger.info("Save quantized model to {}.".format(saved_format))
-        return root
-
-
 class TensorflowCheckpointModel(TensorflowBaseModel):
     """Build Tensorflow checkpoint model."""
 
@@ -1552,93 +1429,6 @@ class KerasModel(BaseModel):
         """Save Keras model."""
         self._model_object.save(root)
 
-    @abstractmethod
-    def _export(
-        self,
-        save_path: str,
-        conf,
-    ):
-        pass
-
-    @abstractmethod
-    def framework(self):
-        """Return framework."""
-        return "keras"
-
-    def get_all_weight_names(self):
-        """Get weight names of model.
-
-        Returns:
-            list: weight names list.
-        """
-        names = []
-        for index, layer in enumerate(self.model.layers):
-            if len(layer.weights):
-                names.append(index)
-        return names
-
-    def compute_sparsity(self, tensor):
-        """Compute the sparsity.
-
-        Args:
-            tensor: Tensorflow tensor
-
-        Return:
-            (the original tensor size, number of zero elements, number of non-zero elements)
-        """
-        mask = np.ones_like(tensor)
-        tensor_size = tensor.size
-        dense_mask = tensor != 0
-        dense_size = dense_mask.sum()
-        return tensor_size, tensor_size - dense_size, dense_size
-
-    def report_sparsity(self):
-        """Get sparsity of the model.
-
-        Returns:
-            df (DataFrame): DataFrame of sparsity of each weight.
-            total_sparsity (float): total sparsity of model.
-        """
-        import numpy as np
-        import pandas as pd
-        import tensorflow as tf
-
-        df = pd.DataFrame(columns=["Name", "Shape", "NNZ (dense)", "NNZ (sparse)", "Sparsity(%)"])
-        pd.set_option("display.precision", 2)
-        param_dims = [2, 4]
-        params_size = 0
-        sparse_params_size = 0
-        for index, layer in enumerate(self.model.layers):
-            if not len(layer.weights):
-                continue
-            # Extract just the actual parameter's name, which in this context we treat
-            # as its "type"
-            weights = layer.get_weights()[0]
-            if weights.ndim in param_dims:
-                param_size, sparse_param_size, dense_param_size = self.compute_sparsity(weights)
-                density = dense_param_size / param_size
-                params_size += param_size
-                sparse_params_size += sparse_param_size
-                df.loc[len(df.index)] = [
-                    index,
-                    list(weights.shape),
-                    dense_param_size,
-                    sparse_param_size,
-                    (1 - density) * 100,
-                ]
-
-        total_sparsity = sparse_params_size / params_size * 100
-
-        df.loc[len(df.index)] = [
-            "Total sparsity:",
-            "-",
-            params_size,
-            sparse_params_size,
-            total_sparsity,
-        ]
-
-        return df, total_sparsity
-
     @property
     def input_node_names(self):
         """Return input node names."""
@@ -1673,7 +1463,6 @@ TENSORFLOW_MODELS = {
     "AutoTrackable": TensorflowSavedModelModel,
     "llm_saved_model": TensorflowLLMModel,
     "keras": KerasModel,
-    "keras_qat": TensorflowQATModel,
 }
 
 

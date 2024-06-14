@@ -43,7 +43,7 @@ class TensorflowGlobalConfig:
 TFConfig = TensorflowGlobalConfig()
 
 
-class Model(object):
+class Model(object):  # pragma: no cover
     """A wrapper to construct a Neural Compressor TF Model."""
 
     def __new__(cls, root, **kwargs):
