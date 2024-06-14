@@ -41,10 +41,6 @@ The following prerequisites and requirements must be satisfied for a successful 
   # [Experimental] install stable basic + TensorFlow framework extension API from pypi 
   pip install neural-compressor[tf]
   ```
-    ```Shell
-  # [Experimental] install stable basic + ONNXRT framework extension API from pypi 
-  pip install neural-compressor[ort]
-  ```
 
 - Install from test Pypi
   ```Shell
@@ -65,7 +61,6 @@ The following prerequisites and requirements must be satisfied for a successful 
   python setup.py install
   [optional] pip install requirements_pt.txt # for PyTorch framework extension API
   [optional] pip install requirements_tf.txt # for TensorFlow framework extension API
-  [optional] pip install requirements_ort.txt # for ONNXRT framework extension API
   ```
 
 ### Install from AI Kit
