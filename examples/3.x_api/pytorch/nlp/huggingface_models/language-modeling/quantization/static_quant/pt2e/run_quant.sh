@@ -40,7 +40,7 @@ function run_tuning {
     if [ "${topology}" = "opt_125m_pt2e_static" ]; then
         model_name_or_path="facebook/opt-125m"
     fi
-    python run_clm_no_trainer.py --model ${model_name_or_path} --quantize --accuracy
+    python run_clm_no_trainer.py --model ${model_name_or_path} --quantize --accuracy --tasks "lambada_openai"
 }
 
 main "$@"
