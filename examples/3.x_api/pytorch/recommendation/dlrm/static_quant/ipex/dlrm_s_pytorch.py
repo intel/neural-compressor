@@ -409,8 +409,8 @@ def trace_model(args, dlrm, test_ld, inplace=True):
         elif args.int8 and not args.tune:
             if args.num_cpu_cores != 0:
                 torch.set_num_threads(args.num_cpu_cores)
-            from neural_compressor.utils.pytorch import load
-            dlrm = load(args.save_model, dlrm, dataloader=DLRM_DataLoader(test_ld))
+            from neural_compressor.torch.quantization import load
+            dlrm = load(args.save_model)
         elif args.int8 and args.tune:
             dlrm = dlrm
         else:
@@ -675,7 +675,6 @@ def run():
     parser.add_argument("--ipex-merged-emb", action="store_true", default=False)
     parser.add_argument("--num-warmup-iters", type=int, default=1000)
     parser.add_argument("--int8", action="store_true", default=False)
-    parser.add_argument("--int8-configure", type=str, default="./int8_configure.json")
     parser.add_argument("--dist-backend", type=str, default="ccl")
     parser.add_argument("--tune", action="store_true", default=False)
     parser.add_argument("--benchmark", action="store_true", default=False)
