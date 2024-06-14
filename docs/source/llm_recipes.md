@@ -45,7 +45,6 @@ This document aims to publish the specific recipes we achieved for the popular L
   <tr>
     <th rowspan="3">Model</th>
     <th colspan="9">lambada_openai</th>
-    <th></th>
   </tr>
   <tr>
     <th>FP32</th>
@@ -53,7 +52,6 @@ This document aims to publish the specific recipes we achieved for the popular L
     <th colspan="2">WOQ INT8</th>
     <th colspan="2">WOQ INT4 GPTQ</th>
     <th colspan="2">WOQ INT4 AutoRound</th>
-    <th></th>
   </tr>
   <tr>
     <th>ACC</th>
@@ -65,7 +63,6 @@ This document aims to publish the specific recipes we achieved for the popular L
     <th>Ratio</th>
     <th>ACC</th>
     <th>Ratio</th>
-    <th></th>
   </tr></thead>
 <tbody>
   <tr>
@@ -79,7 +76,6 @@ This document aims to publish the specific recipes we achieved for the popular L
     <td>1.0081</td>
     <td>66.93%</td>
     <td>0.9905</td>
-    <td></td>
   </tr>
   <tr>
     <td>baichuan-inc/Baichuan2-13B-Chat</td>
@@ -92,7 +88,6 @@ This document aims to publish the specific recipes we achieved for the popular L
     <td>0.9902</td>
     <td>N/A</td>
     <td>N/A</td>
-    <td></td>
   </tr>
   <tr>
     <td>baichuan-inc/Baichuan2-7B-Chat</td>
@@ -105,7 +100,6 @@ This document aims to publish the specific recipes we achieved for the popular L
     <td>1.0034</td>
     <td>N/A</td>
     <td>N/A</td>
-    <td></td>
   </tr>
   <tr>
     <td>bigscience/bloom-1b7</td>
@@ -118,7 +112,6 @@ This document aims to publish the specific recipes we achieved for the popular L
     <td>1.0121</td>
     <td>N/A</td>
     <td>N/A</td>
-    <td></td>
   </tr>
   <tr>
     <td>databricks/dolly-v2-12b</td>
@@ -131,7 +124,6 @@ This document aims to publish the specific recipes we achieved for the popular L
     <td>N/A</td>
     <td>N/A</td>
     <td>N/A</td>
-    <td></td>
   </tr>
   <tr>
     <td>EleutherAI/gpt-j-6b</td>
@@ -144,7 +136,6 @@ This document aims to publish the specific recipes we achieved for the popular L
     <td>1.0006</td>
     <td>68.02%</td>
     <td>0.9958</td>
-    <td></td>
   </tr>
   <tr>
     <td>EleutherAI/gpt-neox-20b</td>
@@ -157,7 +148,6 @@ This document aims to publish the specific recipes we achieved for the popular L
     <td>0.9918</td>
     <td>N/A</td>
     <td>N/A</td>
-    <td></td>
   </tr>
   <tr>
     <td>facebook/opt-1.3b</td>
@@ -170,7 +160,6 @@ This document aims to publish the specific recipes we achieved for the popular L
     <td>1.0064</td>
     <td>N/A</td>
     <td>N/A</td>
-    <td></td>
   </tr>
   <tr>
     <td>facebook/opt-30b</td>
@@ -183,7 +172,6 @@ This document aims to publish the specific recipes we achieved for the popular L
     <td>1.0014</td>
     <td>71.80%</td>
     <td>1.0043</td>
-    <td></td>
   </tr>
   <tr>
     <td>meta-llama/Llama-2-13b-hf</td>
@@ -196,7 +184,6 @@ This document aims to publish the specific recipes we achieved for the popular L
     <td>1.0116</td>
     <td>76.60%</td>
     <td>0.9978</td>
-    <td></td>
   </tr>
   <tr>
     <td>meta-llama/Llama-2-70b-hf</td>
@@ -209,7 +196,6 @@ This document aims to publish the specific recipes we achieved for the popular L
     <td>1.0057</td>
     <td>79.68%</td>
     <td>1.0005</td>
-    <td></td>
   </tr>
   <tr>
     <td>meta-llama/Llama-2-7b-hf</td>
@@ -222,7 +208,6 @@ This document aims to publish the specific recipes we achieved for the popular L
     <td>0.9989</td>
     <td>N/A</td>
     <td>N/A</td>
-    <td></td>
   </tr>
   <tr>
     <td>mistralai/Mistral-7B-v0.1</td>
@@ -235,7 +220,6 @@ This document aims to publish the specific recipes we achieved for the popular L
     <td>1.0046</td>
     <td>75.74%</td>
     <td>0.9979</td>
-    <td></td>
   </tr>
   <tr>
     <td>THUDM/chatglm2-6b</td>
@@ -248,7 +232,6 @@ This document aims to publish the specific recipes we achieved for the popular L
     <td>0.9938</td>
     <td>52.92%</td>
     <td>0.9942</td>
-    <td></td>
   </tr>
   <tr>
     <td>THUDM/chatglm3-6b</td>
@@ -261,7 +244,6 @@ This document aims to publish the specific recipes we achieved for the popular L
     <td>N/A</td>
     <td>N/A</td>
     <td>N/A</td>
-    <td></td>
   </tr>
   <tr>
     <td>tiiuae/falcon-40b</td>
@@ -274,7 +256,6 @@ This document aims to publish the specific recipes we achieved for the popular L
     <td>1.0043</td>
     <td>77.82%</td>
     <td>1.0078</td>
-    <td></td>
   </tr>
   <tr>
     <td>tiiuae/falcon-7b</td>
@@ -287,6 +268,5 @@ This document aims to publish the specific recipes we achieved for the popular L
     <td>1.0052</td>
     <td>74.00%</td>
     <td>0.9910</td>
-    <td></td>
   </tr>
 </tbody></table>
