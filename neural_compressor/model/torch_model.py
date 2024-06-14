@@ -418,7 +418,7 @@ class PyTorchModel(PyTorchBaseModel):
                 "but the torch version found is {}".format(Version("1.12.0"), version)
             )
 
-        from neural_compressor.experimental.export import torch_to_fp32_onnx, torch_to_int8_onnx
+        from neural_compressor.utils.export import torch_to_fp32_onnx, torch_to_int8_onnx
 
         if conf.dtype == "int8":
             torch_to_int8_onnx(

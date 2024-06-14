@@ -328,7 +328,6 @@ def awq_quantize_entry(
                 "use_full_range": op_config.use_full_range,
                 "use_mse_search": op_config.use_mse_search,
                 "use_layer_wise": op_config.use_layer_wise,
-                "export_compressed_model": op_config.export_compressed_model,
                 "use_double_quant": op_config.use_double_quant,
                 "double_quant_dtype": op_config.double_quant_dtype,
                 "double_quant_bits": op_config.double_quant_bits,
@@ -338,7 +337,6 @@ def awq_quantize_entry(
             use_auto_scale = op_config.use_auto_scale
             use_mse_search = op_config.use_auto_clip  # for awq clip
             folding = op_config.folding
-            return_int = op_config.export_compressed_model
             use_full_range = op_config.use_full_range
 
     run_fn = kwargs.get("run_fn", None)
@@ -357,7 +355,6 @@ def awq_quantize_entry(
         use_auto_scale=use_auto_scale,
         use_mse_search=use_mse_search,
         folding=folding,
-        return_int=return_int,
         use_full_range=use_full_range,
     )
 

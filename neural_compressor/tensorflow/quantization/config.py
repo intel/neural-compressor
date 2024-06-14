@@ -134,8 +134,7 @@ class StaticQuantConfig(BaseConfig):
         supported_configs.append(OperatorConfig(config=static_quant_config, operators=operators))
         cls.supported_configs = supported_configs
 
-    @staticmethod
-    def get_model_info(model) -> List[Tuple[str, Callable]]:
+    def get_model_info(self, model) -> List[Tuple[str, Callable]]:
         white_list = [
             "Conv2D",
             "FusedBatchNormV3",
@@ -154,6 +153,9 @@ class StaticQuantConfig(BaseConfig):
             "Conv2DBackpropInput",
             "Conv3DBackpropInputV2",
         ]
+        for key in self._local_config.keys():
+            if key in white_list:
+                white_list.remove(key)
         filter_result = []
         for node in model.graph_def.node:
             if node.op in white_list:

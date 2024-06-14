@@ -387,7 +387,6 @@ class AWQConfig(BaseConfig):
         "use_full_range",
         "use_mse_search",
         "use_layer_wise",
-        "export_compressed_model",
         "use_double_quant",
         "double_quant_dtype",
         "double_quant_bits",
@@ -410,7 +409,6 @@ class AWQConfig(BaseConfig):
         use_full_range: bool = False,
         use_mse_search: bool = False,
         use_layer_wise: bool = False,
-        export_compressed_model: bool = False,
         # double quant
         use_double_quant: bool = False,
         double_quant_dtype: str = "int",
@@ -434,7 +432,6 @@ class AWQConfig(BaseConfig):
             use_full_range (bool): Enables full range for activations, default is False.
             use_mse_search (bool): Enables mean squared error (MSE) search, default is False.
             use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
-            export_compressed_model (bool): Enables return model in int format or not. Defaults to False.
             use_double_quant (bool): Enables double quantization, default is False.
             double_quant_dtype (str): Data type for double_quant scale, default is "int".
             double_quant_bits (int): Number of bits used to represent double_quant scale, default is 4.
@@ -454,7 +451,6 @@ class AWQConfig(BaseConfig):
         self.use_full_range = use_full_range
         self.use_mse_search = use_mse_search
         self.use_layer_wise = use_layer_wise
-        self.export_compressed_model = export_compressed_model
         # double quant
         self.use_double_quant = use_double_quant
         self.double_quant_bits = double_quant_bits

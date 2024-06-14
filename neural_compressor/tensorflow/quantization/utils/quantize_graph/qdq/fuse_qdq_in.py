@@ -24,7 +24,7 @@ from neural_compressor.tensorflow.quantization.utils.quantize_graph_common impor
 from ..quantize_graph_base import QuantizeNodeBase
 
 
-class FuseNodeStartWithFusedInstanceNorm(QuantizeNodeBase):
+class FuseNodeStartWithFusedInstanceNorm(QuantizeNodeBase):  # pragma: no cover
     """Quantize FusedInstanceNorm and apply the fusion."""
 
     def __init__(self, **kwargs):

@@ -14,7 +14,7 @@ from neural_compressor.torch.quantization import (
     prepare,
     quantize,
 )
-from neural_compressor.torch.utils import accelerator
+from neural_compressor.torch.utils import accelerator, is_hpex_available
 
 device = accelerator.current_device_name()
 
@@ -76,6 +76,8 @@ class TestRTNQuant:
         model = convert(model)
         out = model(self.example_inputs)[0]
         assert (out != self.label).any(), "WOQ output should be different with raw output"
+        if is_hpex_available():
+            assert "hpu" in out.device, "Neural Compressor should run on HPU when HPEX is available."
         if (bits, use_sym, group_size, group_dim) == (8, True, -1, 1):
             assert torch.allclose(out, self.label, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
         if (bits, use_sym, group_size, group_dim) == [(4, True, 128, 0), (4, True, 32, 1)]:
@@ -290,7 +292,7 @@ class TestRTNQuant:
         from neural_compressor.torch.quantization import load
 
         # loading compressed model
-        loaded_model = load("saved_results")
+        loaded_model = load("saved_results", copy.deepcopy(self.tiny_gptj))
         loaded_out = loaded_model(self.example_inputs)[0]
         assert torch.allclose(inc_out, loaded_out), "Unexpected result. Please double check."
         assert isinstance(loaded_model.lm_head, WeightOnlyLinear), "loading compressed model failed."

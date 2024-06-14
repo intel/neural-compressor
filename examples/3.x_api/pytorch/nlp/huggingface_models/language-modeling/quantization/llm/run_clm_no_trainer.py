@@ -236,9 +236,10 @@ if args.quantize:
     # 3.x api
     if args.approach == 'weight_only':
         from neural_compressor.torch.quantization import RTNConfig, GPTQConfig, prepare, convert, quantize
-        from neural_compressor.torch.utils import get_double_quant_config
+        from neural_compressor.torch.utils import get_double_quant_config_dict
         weight_sym = True if args.woq_scheme == "sym" else False
-        double_quant_config_dict = get_double_quant_config(args.double_quant_type)
+        if args.double_quant_type is not None:
+            double_quant_config_dict = get_double_quant_config_dict(args.double_quant_type)
 
         if args.woq_algo == "RTN":
             if args.double_quant_type is not None:
@@ -366,7 +367,7 @@ if args.quantize:
         user_model = prepare(model=user_model, quant_config=quant_config, example_inputs=example_inputs)
         run_fn(user_model)
         user_model = convert(user_model)
-    
+
     user_model.save(args.output_dir)
 
 
@@ -376,9 +377,10 @@ if args.int8 or args.int8_bf16_mixed:
     print("load int8 model")
 
     from neural_compressor.torch.quantization import load
+    user_model, _ = get_user_model()
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     config = AutoConfig.from_pretrained(args.model)
-    user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)))
+    user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)), user_model)
     setattr(user_model, "config", config)
 else:
     user_model, tokenizer = get_user_model()
