@@ -137,7 +137,8 @@ def get_unquantized_node_set(gm: torch.fx.GraphModule):
     for node in gm.graph.nodes:
         if meta := getattr(node, "meta"):
             if quantization_annotation := meta.get(xiq.QUANT_ANNOTATION_KEY):
-                if quantization_annotation._annotated:
+                none_annotation = xiq._X86InductorQuantizationAnnotation(_annotated=True)
+                if quantization_annotation != none_annotation:
                     continue
         unquantized_node_set.add(node)
     return unquantized_node_set
