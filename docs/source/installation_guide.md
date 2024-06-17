@@ -52,27 +52,15 @@ The following prerequisites and requirements must be satisfied for a successful 
   pip install -i https://test.pypi.org/simple/ neural-compressor
   ```
 
-- Install from Conda 
-  ```Shell
-  # install on Linux OS
-  conda install opencv-python-headless -c fastai
-  conda install neural-compressor -c conda-forge -c intel
-  ```
-  ```Shell
-  # install on Windows OS
-  conda install pycocotools -c esri
-  conda install opencv-python-headless -c fastai
-  conda install neural-compressor -c conda-forge -c intel
-  ```
-
 ### Install from Source
 
   ```Shell
   git clone https://github.com/intel/neural-compressor.git
   cd neural-compressor
   pip install -r requirements.txt
-  # build with basic functionality
   python setup.py install
+  [optional] pip install requirements_pt.txt # for PyTorch framework extension API
+  [optional] pip install requirements_tf.txt # for TensorFlow framework extension API
   ```
 
 ### Install from AI Kit
@@ -112,7 +100,6 @@ The AI Kit is distributed through many common channels, including from Intel's w
   <tr style="vertical-align: middle; text-align: center;">
     <th>Framework</th>
     <th>TensorFlow</th>
-    <th>Intel<br>TensorFlow</th>
     <th>Intel®<br>Extension for<br>TensorFlow*</th>
     <th>PyTorch</th>
     <th>Intel®<br>Extension for<br>PyTorch*</th>
@@ -122,25 +109,26 @@ The AI Kit is distributed through many common channels, including from Intel's w
 <tbody>
   <tr align="center">
     <th>Version</th>
-    <td class="tg-7zrl"> <a href=https://github.com/tensorflow/tensorflow/tree/v2.15.0>2.15.0</a><br>
-    <a href=https://github.com/tensorflow/tensorflow/tree/v2.14.1>2.14.1</a><br>
-    <a href=https://github.com/tensorflow/tensorflow/tree/v2.13.1>2.13.1</a><br></td>
-    <td class="tg-7zrl"> <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.14.0>2.14.0</a><br>
-    <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.13.0>2.13.0</a><br></td>
-    <td class="tg-7zrl"> <a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v2.14.0.1>2.14.0.1</a><br>
+    <td class="tg-7zrl">
+    <a href=https://github.com/tensorflow/tensorflow/tree/v2.16.1>2.16.1</a><br>
+    <a href=https://github.com/tensorflow/tensorflow/tree/v2.15.0>2.15.0</a><br>
+    <a href=https://github.com/tensorflow/tensorflow/tree/v2.14.1>2.14.1</a><br></td>
+    <td class="tg-7zrl"> 
+    <a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v2.15.0.0>2.15.0.0</a><br>
+    <a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v2.14.0.1>2.14.0.1</a><br>
     <a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v2.13.0.0>2.13.0.0</a><br></td>
-    <td class="tg-7zrl"><a href=https://github.com/pytorch/pytorch/tree/v2.2.1>2.2.1</a><br>
-    <a href=https://github.com/pytorch/pytorch/tree/v2.1.0>2.1.0</a><br>
-    <a href=https://github.com/pytorch/pytorch/tree/v2.0.1>2.0.1</a><br></td>
-    <td class="tg-7zrl"><a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.2.0%2Bcpu>2.2.0</a><br>
-    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.1.100%2Bcpu>2.1.100</a><br>
-    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.0.100%2Bcpu>2.0.100</a><br></td>
-    <td class="tg-7zrl"><a href=https://github.com/microsoft/onnxruntime/tree/v1.17.1>1.17.1</a><br>
-    <a href=https://github.com/microsoft/onnxruntime/tree/v1.16.3>1.16.3</a><br>    
-    <a href=https://github.com/microsoft/onnxruntime/tree/v1.15.1>1.15.1</a><br></td>
+    <td class="tg-7zrl">
+    <a href=https://github.com/pytorch/pytorch/tree/v2.3.0>2.3.0</a><br>
+    <a href=https://github.com/pytorch/pytorch/tree/v2.2.2>2.2.2</a><br>
+    <a href=https://github.com/pytorch/pytorch/tree/v2.1.1>2.1.1</a><br></td>
+    <td class="tg-7zrl">
+    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.3.0%2Bcpu>2.3.0</a><br>
+    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.2.0%2Bcpu>2.2.0</a><br>
+    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.1.100%2Bcpu>2.1.100</a><br></td>
+    <td class="tg-7zrl">
+    <a href=https://github.com/microsoft/onnxruntime/tree/v1.18.0>1.18.0</a><br>
+    <a href=https://github.com/microsoft/onnxruntime/tree/v1.17.3>1.17.3</a><br>
+    <a href=https://github.com/microsoft/onnxruntime/tree/v1.16.3>1.16.3</a><br></td>
   </tr>
 </tbody>
 </table>
-
-> **Note:**
-> Set the environment variable ``TF_ENABLE_ONEDNN_OPTS=1`` to enable oneDNN optimizations if you are using TensorFlow before v2.9. oneDNN is the default for TensorFlow since [v2.9](https://github.com/tensorflow/tensorflow/releases/tag/v2.9.0) ([Intel Cascade Lake](https://www.intel.com/content/www/us/en/products/platforms/details/cascade-lake.html) and newer CPUs).
