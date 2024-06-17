@@ -231,7 +231,7 @@ class TestPT2EQuantization:
                     nodes_in_graph[n] = 1
         return nodes_in_graph
 
-    @pytest.mark.skipif(get_torch_version() <= TORCH_VERSION_2_2_2, reason="Requires torch>=2.3.0")
+    @pytest.mark.skipif(not GT_TORCH_VERSION_2_3_2, reason="Requires torch>=2.3.0")
     def test_mixed_fp16_and_int8(self, force_not_import_ipex):
         model, example_inputs = self.build_model_include_conv_and_linear()
         model = export(model, example_inputs=example_inputs)
