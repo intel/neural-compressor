@@ -168,6 +168,7 @@ class TestAutoTune(unittest.TestCase):
         self.assertIsNotNone(best_model)
 
     def test_autotune_return_qmodel_directly(self):
+        inc_utils.FUNC_CALL_COUNTS.clear()
 
         baseline = 1
         eval_result = [0.9, 1.1]
@@ -185,6 +186,7 @@ class TestAutoTune(unittest.TestCase):
         self.assertIsNotNone(best_model)
 
     def test_autotune_return_re_quant_qmodel(self):
+        inc_utils.FUNC_CALL_COUNTS.clear()
 
         baseline = 1
         eval_result = [0.9, 0.8]

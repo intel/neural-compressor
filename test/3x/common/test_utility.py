@@ -169,6 +169,9 @@ class TestSingletonDecorator:
 
 class TestCallCounter(unittest.TestCase):
     def test_call_counter(self):
+        # empty dict
+        inc_utils.FUNC_CALL_COUNTS.clear()
+
         @inc_utils.call_counter
         def add(a, b):
             return a + b
