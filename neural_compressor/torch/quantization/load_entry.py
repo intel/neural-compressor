@@ -32,7 +32,7 @@ config_name_mapping = {
 }
 
 
-def load(model_name_or_path, original_model=None, format="default", device="cpu", **kwargs):
+def load(model_name_or_path, original_model=None, format="inc", device="cpu", **kwargs):
     """Load quantized model.
 
     1. Load INC quantized model in local.
@@ -65,7 +65,8 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
             Defaults to None.
         format (str, optional): 'defult' for loading INC quantized model.
             'huggingface' for loading huggingface WOQ causal language model. Defaults to "default".
-        device (str, optional): 'cpu', 'hpu' or 'cuda'. specify the device the model will be loaded to.
+        device (str, optional): 'cpu', 'hpu'. specify the device the model will be loaded to.
+            currently only used for weight-only quantization.
         kwargs (remaining dictionary of keyword arguments, optional):
             remaining dictionary of keyword arguments for loading huggingface models.
             Will be passed to the huggingface model's `__init__` method, such as 'trust_remote_code', 'revision'.
@@ -92,7 +93,8 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
             if isinstance(config_object, (RTNConfig, GPTQConfig, AWQConfig, TEQConfig, AutoRoundConfig)):  # WOQ
                 from neural_compressor.torch.algorithms import weight_only
 
-                return weight_only.load(model_name_or_path, original_model, format=LoadFormat.DEFAULT)
+                qmodel = weight_only.load(model_name_or_path, original_model, format=LoadFormat.DEFAULT, device=device)
+                return qmodel.to(device)
 
             original_model.qconfig = config_mapping
             if isinstance(config_object, FP8Config):  # FP8
@@ -103,6 +105,7 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
         # now only support load huggingface WOQ causal language model
         from neural_compressor.torch.algorithms import weight_only
 
-        return weight_only.load(model_name_or_path, format=LoadFormat.HUGGINGFACE, **kwargs)
+        qmodel = weight_only.load(model_name_or_path, format=LoadFormat.HUGGINGFACE, device=device, **kwargs)
+        return qmodel.to(device)
     else:
-        raise ValueError("`format` in load function can only be 'huggingface' or 'default', but get {}".format(format))
+        raise ValueError("`format` in load function can only be 'huggingface' or 'inc', but get {}".format(format))

@@ -22,7 +22,7 @@ import re
 import torch
 
 from neural_compressor.common.utils import load_config_mapping, save_config_mapping
-from neural_compressor.torch.utils import QCONFIG_NAME, WEIGHT_NAME, LoadFormat, logger
+from neural_compressor.torch.utils import QCONFIG_NAME, WEIGHT_NAME, LoadFormat, logger, HPU_WEIGHT_NAME, HPU_SAFE_WEIGHTS_NAME
 
 
 def save(model, output_dir="./saved_results"):
@@ -82,51 +82,75 @@ class WOQModelLoader:
         self.device = device
         self.kwargs = kwargs
         self.quantization_config = {}
-        self.loaded_state_dict_keys = {}
+        self.loaded_state_dict = {}
+        self.loaded_state_dict_keys = []
+        self._should_save_hpu_format_tensor = False
+        self._model_local_dir = None # local dirctory where model files are saved
 
     def load_woq_model(self):
         if self.format == LoadFormat.HUGGINGFACE:
+            assert self.model_name_or_path is not None, "'model_name_or_path' can't be None."
+
             model = self.load_hf_format_woq_model()
             logger.info("Loading HuggingFace weight-only quantization model successfully.")
         elif self.format == LoadFormat.DEFAULT:
-            qmodel_weight_file_path = os.path.join(
-                os.path.abspath(os.path.expanduser(self.model_name_or_path)), WEIGHT_NAME
-            )
-            assert os.path.exists(qmodel_weight_file_path), (
-                "Cannot load model weight from path {}. "
-                "Please make sure '{}' file is saved in your '{}' directory ".format(
-                    qmodel_weight_file_path, WEIGHT_NAME, self.model_name_or_path
-                )
-            )
-
-            qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(self.model_name_or_path)), QCONFIG_NAME)
-            assert os.path.exists(qconfig_file_path), (
-                "Cannot load model quantization config from path {}. "
-                "Please make sure '{}' file is saved in your '{}' directory".format(
-                    qconfig_file_path, QCONFIG_NAME, self.model_name_or_path
-                )
-            )
-
+            assert os.path.exists(self.model_name_or_path), f"'{self.model_name_or_path}' path doesn't exist."
             assert (
                 self.original_model is not None
             ), "Can't get original model. Please pass `original_model` to load function."
 
-            model = self.load_inc_format_woq_model(qmodel_weight_file_path, qconfig_file_path)
+            model = self.load_inc_format_woq_model()
             logger.info("Loading weight-only quantization model successfully.")
         else:
             raise ValueError(f"`format` in load function can only be 'huggingface' or 'default', but get {self.format}")
 
         return model
 
-    def load_inc_format_woq_model(self, qmodel_weight_file_path, qconfig_file_path):
-        qweights = torch.load(qmodel_weight_file_path)
-        self.loaded_state_dict_keys = qweights.keys()
+    def load_inc_format_woq_model(self):
+        self._model_local_dir = self.model_name_or_path
 
+        qmodel_weight_file_path = os.path.join(
+            os.path.abspath(os.path.expanduser(self.model_name_or_path)), WEIGHT_NAME
+        )
+        # if hpu format tensor can be used directly, then update qmodel_weight_file_path to the hpu format tensor file
+        if self._with_hpu_format_tensor():
+            qmodel_weight_file_path = os.path.join(
+                os.path.abspath(os.path.expanduser(self.model_name_or_path)), HPU_WEIGHT_NAME
+            )
+        assert os.path.exists(qmodel_weight_file_path), (
+            "Cannot load model weight from path {}. "
+            "Please make sure '{}' file is saved in your '{}' directory ".format(
+                qmodel_weight_file_path, WEIGHT_NAME, self.model_name_or_path
+            )
+        )
+        logger.info(f"Find weights file {qmodel_weight_file_path}")
+
+        qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(self.model_name_or_path)), QCONFIG_NAME)
+        assert os.path.exists(qconfig_file_path), (
+            "Cannot load model quantization config from path {}. "
+            "Please make sure '{}' file is saved in your '{}' directory".format(
+                qconfig_file_path, QCONFIG_NAME, self.model_name_or_path
+            )
+        )
+
+        # get loaded state_dict
+        self.loaded_state_dict = torch.load(qmodel_weight_file_path)
+        self.loaded_state_dict_keys = list(self.loaded_state_dict.keys())
+
+        # get qconfig
         with open(qconfig_file_path, "r") as file:
             self.quantization_config = json.load(file)
 
+        # build weight-only quantization model with WeightOnlyLinear module
         model = self._build_woq_model()
-        model.load_state_dict(qweights, assign=True)
+
+        # load pretrained weight to weight-only quantization model
+        model.load_state_dict(self.loaded_state_dict, assign=True)
+
+        # save hpu format tensor to local directory
+        if self._should_save_hpu_format_tensor:
+            self._save_hpu_format_tensor(model)
+
         model.eval()
         return model
 
@@ -139,29 +163,52 @@ class WOQModelLoader:
         if not is_package_available("accelerate"):
             raise ImportError("Loading huggingface model requires accelerate: `pip install accelerate`")
 
-        # get model_class and config
+        # get model class and config
         model_class, config = self._get_model_class_and_config()
         self.quantization_config = config.quantization_config
 
-        # get loaded_state_dict_keys
-        self.loaded_state_dict_keys = self._get_loaded_state_dict_keys(config)
+        # get loaded state_dict
+        self.loaded_state_dict = self._get_loaded_state_dict(config)
+        self.loaded_state_dict_keys = list(self.loaded_state_dict.keys())
 
-        # initiate the huggingface model
+        # initiate the huggingface model (FP32 model)
         self.original_model = self._init_hf_model(model_class, config)
 
         # build weight-only quantization model with WeightOnlyLinear module
         model = self._build_woq_model()
 
-        # load quantized weight to woq model
+        # load pretrained weight to weight-only quantization model
         model = self._load_pretrained_weight(model, model_class)
 
+        # save hpu format tensor to local directory
+        if self._should_save_hpu_format_tensor:
+            self._save_hpu_format_tensor(model)
+
+        model.eval()
         return model
 
     def _build_woq_model(self):
         """Build weight-only quantization model."""
         from neural_compressor.torch.utils import set_module
-
+        from .modules import INCWeightOnlyLinear, HPUWeightOnlyLinear
         from .modules import MulLinear
+        from auto_round.export.export_to_itrex.model_wrapper import (
+            WeightOnlyLinear as AutoRoundWeightOnlyLinear,
+        )
+
+        # default setting
+        format_dict={
+            LoadFormat.HUGGINGFACE: INCWeightOnlyLinear,
+            LoadFormat.DEFAULT: INCWeightOnlyLinear
+        }
+        device_dict={
+            "cpu": INCWeightOnlyLinear,
+            "hpu": HPUWeightOnlyLinear
+        }
+
+        # if hpu format tensor can be used directly, then update mapping module to HPUWeightOnlyLinear
+        if self._with_hpu_format_tensor():
+            format_dict.update({self.format: HPUWeightOnlyLinear})
 
         for name, module in self.original_model.named_modules():
             _is_autoround = False
@@ -175,6 +222,14 @@ class WOQModelLoader:
                         _is_autoround = True
                     module_quantization_config = [config for config in q_config_value.values()][0]
 
+            # if is autoroud, replace INCWeightOnlyLinear to AutoRoundWeightOnlyLinear
+            if _is_autoround:
+                def update_dict_value(dictionary, original_value, new_value):
+                    return {key: new_value if value == original_value else value for key, value in dictionary.items()}
+                format_dict = update_dict_value(format_dict, INCWeightOnlyLinear, AutoRoundWeightOnlyLinear)
+                device_dict = update_dict_value(device_dict, INCWeightOnlyLinear, AutoRoundWeightOnlyLinear)
+
+            # replace `torch.nn.Linear` with `WeightOnlyLinear`
             if isinstance(module, torch.nn.Linear):
                 # module without qweight means it is not quantized, then skip it
                 loaded_state_dict_keys_set = set(self.loaded_state_dict_keys)
@@ -190,16 +245,19 @@ class WOQModelLoader:
                     set_module(self.original_model, name, new_module)
                     name += ".linear"
 
-                # replace `torch.nn.Linear` with `WeightOnlyLinear`
                 zp = True if name + ".qzeros" in loaded_state_dict_keys_set else False
                 g_idx = True if name + ".g_idx" in loaded_state_dict_keys_set else False
 
+                WeightOnlyLinearClass = format_dict[self.format]
                 kwargs = {}
-                if _is_autoround:
-                    from auto_round.export.export_to_itrex.model_wrapper import (
-                        WeightOnlyLinear as AutoRoundWeightOnlyLinear,
-                    )
-
+                if WeightOnlyLinearClass == INCWeightOnlyLinear:
+                    kwargs["group_size"] = module_quantization_config.get("group_size", 32)
+                    kwargs["g_idx"] = g_idx
+                elif WeightOnlyLinearClass == HPUWeightOnlyLinear:
+                    # TODO: update kwargs specific to HPUWeightOnlyLinear
+                    kwargs["group_size"] = module_quantization_config.get("group_size", 32)
+                    kwargs["g_idx"] = g_idx
+                elif WeightOnlyLinearClass == AutoRoundWeightOnlyLinear:
                     from .utility import convert_dtype_str2torch
 
                     WeightOnlyLinearClass = AutoRoundWeightOnlyLinear
@@ -207,12 +265,6 @@ class WOQModelLoader:
                     kwargs["scale_dtype"] = convert_dtype_str2torch(
                         module_quantization_config.get("scale_dtype", "fp16")
                     )
-                else:
-                    from .modules import WeightOnlyLinear as INCWeightOnlyLinear
-
-                    WeightOnlyLinearClass = INCWeightOnlyLinear
-                    kwargs["group_size"] = module_quantization_config.get("group_size", 32)
-                    kwargs["g_idx"] = g_idx
 
                 new_module = WeightOnlyLinearClass(
                     module.in_features,
@@ -224,6 +276,57 @@ class WOQModelLoader:
                     use_optimum_format=True,
                     **kwargs,
                 )
+
+                # load quantized data of current module
+                new_module_state_dict = {}
+                keys = [".qweight", ".scales", ".qzeros", ".bias", ".g_idx"]
+                for key in keys:
+                    if name + key in self.loaded_state_dict:
+                        new_module_state_dict[key[1:]] = self.loaded_state_dict[name + key]
+                self.load_data_to_new_module_from_state_dict(new_module, new_module_state_dict)
+
+                # if format mapping module doesn't match device mapping module, then replace to device mapping module
+                if format_dict[self.format] != device_dict[self.device]:
+                    # TODO: need to enhance AutoRoundWeightOnlyLinear
+                    if format_dict[self.format] == "AutoRoundWeightOnlyLinear":
+                        assert False, "Auto-round algorithm doesn't support 'device='hpu' now.'"
+
+                    logger.debug(
+                        f"Replacing {name}'s type from "
+                        f"'{format_dict[self.format].__name__}' to '{device_dict[self.device].__name__}'")
+                    WeightOnlyLinearClass = device_dict[self.device]
+
+                    # update kwargs for the device mapping WeightOnlyLinear module
+                    kwargs = {}
+                    if WeightOnlyLinearClass == INCWeightOnlyLinear:
+                        kwargs["group_size"] = module_quantization_config.get("group_size", 32)
+                        kwargs["g_idx"] = g_idx
+                    elif WeightOnlyLinearClass == HPUWeightOnlyLinear:
+                        # TODO: update kwargs specific to HPUWeightOnlyLinear
+                        kwargs["group_size"] = module_quantization_config.get("group_size", 32)
+                        kwargs["g_idx"] = g_idx
+
+                    int_weight, scale, zp = new_module.unpack()
+                    bias = new_module.bias
+                    g_idx = new_module.g_idx
+                    new_module = WeightOnlyLinearClass(
+                        module.in_features,
+                        module.out_features,
+                        dtype=module_quantization_config.get("dtype", "int"),
+                        bits=module_quantization_config.get("bits", 4),
+                        zp=zp,
+                        bias=module.bias is not None,
+                        use_optimum_format=True,
+                        **kwargs,
+                    )
+                    new_module.pack(int_weight, scale, zp)
+                    new_module.bias = bias
+                    new_module.g_idx = g_idx
+
+                    # if the new module is HPUWeightOnlyLinear, save hpu_model.safetensors for next loading
+                    if not self._should_save_hpu_format_tensor and WeightOnlyLinearClass == HPUWeightOnlyLinear:
+                        self._should_save_hpu_format_tensor = True
+
                 set_module(self.original_model, name, new_module)
         woq_model = self.original_model
         return woq_model
@@ -266,7 +369,7 @@ class WOQModelLoader:
 
         return model_class, config
 
-    def _get_loaded_state_dict_keys(self, config):
+    def _get_loaded_state_dict(self, config):
         from transformers.configuration_utils import PretrainedConfig
         from transformers.modeling_utils import _add_variant, get_checkpoint_shard_files, load_state_dict
         from transformers.utils import (
@@ -297,10 +400,14 @@ class WOQModelLoader:
         from_auto_class = self.kwargs.pop("_from_auto", False)
         revision = self.kwargs.pop("revision", "main")
         commit_hash = self.kwargs.pop("_commit_hash", None)
+        use_hpu_safetensors = self.kwargs.pop("use_hpu_safetensors", None)
         use_safetensors = self.kwargs.pop("use_safetensors", None)
 
         if use_safetensors is None and not is_safetensors_available():
             use_safetensors = False
+
+        if use_hpu_safetensors is None and not is_safetensors_available():
+            use_hpu_safetensors = False
 
         if use_auth_token is not None:  # pragma: no cover
             logger.warn(
@@ -346,165 +453,168 @@ class WOQModelLoader:
         is_sharded = False
         sharded_metadata = None
 
-        if self.model_name_or_path is not None:  # pragma: no cover
-            self.model_name_or_path = str(self.model_name_or_path)
-            is_local = os.path.isdir(self.model_name_or_path)
-            if is_local:
-                if os.path.isfile(
-                    os.path.join(
-                        self.model_name_or_path,
-                        subfolder,
-                        _add_variant(WEIGHTS_NAME, variant),
-                    )
-                ):
-                    # Load from a PyTorch checkpoint
-                    archive_file = os.path.join(
-                        self.model_name_or_path,
-                        subfolder,
-                        _add_variant(WEIGHTS_NAME, variant),
-                    )
-                elif os.path.isfile(
-                    os.path.join(
-                        self.model_name_or_path,
-                        subfolder,
-                        _add_variant(WEIGHTS_INDEX_NAME, variant),
-                    )
-                ):
-                    # Load from a sharded PyTorch checkpoint
-                    archive_file = os.path.join(
-                        self.model_name_or_path,
-                        subfolder,
-                        _add_variant(WEIGHTS_INDEX_NAME, variant),
-                    )
-                    is_sharded = True
-                elif os.path.isfile(
-                    os.path.join(
-                        self.model_name_or_path,
-                        subfolder,
-                        _add_variant(SAFE_WEIGHTS_NAME, variant),
-                    )
-                ):
-                    # Load from a safetensors checkpoint
-                    archive_file = os.path.join(
-                        self.model_name_or_path,
-                        subfolder,
-                        _add_variant(SAFE_WEIGHTS_NAME, variant),
-                    )
-                elif os.path.isfile(
-                    os.path.join(
-                        self.model_name_or_path,
-                        subfolder,
-                        _add_variant(SAFE_WEIGHTS_INDEX_NAME, variant),
-                    )
-                ):
-                    # Load from a safetensors checkpoint
-                    archive_file = os.path.join(
-                        self.model_name_or_path,
-                        subfolder,
-                        _add_variant(SAFE_WEIGHTS_INDEX_NAME, variant),
-                    )
-                    is_sharded = True
-            elif os.path.isfile(os.path.join(subfolder, self.model_name_or_path)):
-                archive_file = self.model_name_or_path
-                is_local = True
-            elif is_remote_url(self.model_name_or_path):
-                filename = self.model_name_or_path
-                resolved_archive_file = download_url(self.model_name_or_path)
+        self.model_name_or_path = str(self.model_name_or_path)
+
+        resolved_archive_file = None
+        is_local = os.path.isdir(self.model_name_or_path)
+        if is_local:
+            if os.path.isfile(
+                os.path.join(
+                    self.model_name_or_path,
+                    subfolder,
+                    _add_variant(WEIGHTS_NAME, variant),
+                )
+            ):
+                # Load from a PyTorch checkpoint
+                archive_file = os.path.join(
+                    self.model_name_or_path,
+                    subfolder,
+                    _add_variant(WEIGHTS_NAME, variant),
+                )
+            elif os.path.isfile(
+                os.path.join(
+                    self.model_name_or_path,
+                    subfolder,
+                    _add_variant(WEIGHTS_INDEX_NAME, variant),
+                )
+            ):
+                # Load from a sharded PyTorch checkpoint
+                archive_file = os.path.join(
+                    self.model_name_or_path,
+                    subfolder,
+                    _add_variant(WEIGHTS_INDEX_NAME, variant),
+                )
+                is_sharded = True
+            elif os.path.isfile(
+                os.path.join(
+                    self.model_name_or_path,
+                    subfolder,
+                    _add_variant(SAFE_WEIGHTS_NAME, variant),
+                )
+            ):
+                # Load from a safetensors checkpoint
+                archive_file = os.path.join(
+                    self.model_name_or_path,
+                    subfolder,
+                    _add_variant(SAFE_WEIGHTS_NAME, variant),
+                )
+            elif os.path.isfile(
+                os.path.join(
+                    self.model_name_or_path,
+                    subfolder,
+                    _add_variant(SAFE_WEIGHTS_INDEX_NAME, variant),
+                )
+            ):
+                # Load from a safetensors checkpoint
+                archive_file = os.path.join(
+                    self.model_name_or_path,
+                    subfolder,
+                    _add_variant(SAFE_WEIGHTS_INDEX_NAME, variant),
+                )
+                is_sharded = True
+        elif os.path.isfile(os.path.join(subfolder, self.model_name_or_path)):
+            archive_file = self.model_name_or_path
+            is_local = True
+        elif is_remote_url(self.model_name_or_path):
+            filename = self.model_name_or_path
+            resolved_archive_file = download_url(self.model_name_or_path)
+        else:
+            if use_safetensors is not False:
+                filename = _add_variant(SAFE_WEIGHTS_NAME, variant)
             else:
-                if use_safetensors is not False:
-                    filename = _add_variant(SAFE_WEIGHTS_NAME, variant)
-                else:
-                    filename = _add_variant(WEIGHTS_NAME, variant)
-                try:
-                    # Load from URL or cache if already cached
-                    cached_file_kwargs = {
-                        "cache_dir": cache_dir,
-                        "force_download": force_download,
-                        "proxies": proxies,
-                        "resume_download": resume_download,
-                        "local_files_only": local_files_only,
-                        "token": token,
-                        "user_agent": user_agent,
+                filename = _add_variant(WEIGHTS_NAME, variant)
+            try:
+                # Load from URL or cache if already cached
+                cached_file_kwargs = {
+                    "cache_dir": cache_dir,
+                    "force_download": force_download,
+                    "proxies": proxies,
+                    "resume_download": resume_download,
+                    "local_files_only": local_files_only,
+                    "token": token,
+                    "user_agent": user_agent,
+                    "revision": revision,
+                    "subfolder": subfolder,
+                    "_raise_exceptions_for_gated_repo": False,
+                    "_raise_exceptions_for_missing_entries": False,
+                    "_commit_hash": commit_hash,
+                }
+                resolved_archive_file = cached_file(self.model_name_or_path, filename, **cached_file_kwargs)
+
+                # Since we set _raise_exceptions_for_missing_entries=False, we don't get an exception but a None
+                # result when internet is up, the repo and revision exist, but the file does not.
+                if resolved_archive_file is None and filename == _add_variant(SAFE_WEIGHTS_NAME, variant):
+                    # Maybe the checkpoint is sharded, we try to grab the index name in this case.
+                    resolved_archive_file = cached_file(
+                        self.model_name_or_path,
+                        _add_variant(SAFE_WEIGHTS_INDEX_NAME, variant),
+                        **cached_file_kwargs,
+                    )
+                    if resolved_archive_file is not None:
+                        is_sharded = True
+                    elif use_safetensors:
+                        raise EnvironmentError(
+                            f"{self.model_name_or_path} does not appear to have a file named"
+                            f" {_add_variant(SAFE_WEIGHTS_NAME, variant)} or "
+                            f"{_add_variant(SAFE_WEIGHTS_INDEX_NAME, variant)} "
+                            "and thus cannot be loaded with `safetensors`. Please make sure that the model has "
+                            "been saved with `safe_serialization=True` or do not set `use_safetensors=True`."
+                        )
+                    else:
+                        # This repo has no safetensors file of any kind, we switch to PyTorch.
+                        filename = _add_variant(WEIGHTS_NAME, variant)
+                        resolved_archive_file = cached_file(self.model_name_or_path, filename, **cached_file_kwargs)
+                if resolved_archive_file is None and filename == _add_variant(WEIGHTS_NAME, variant):
+                    # Maybe the checkpoint is sharded, we try to grab the index name in this case.
+                    resolved_archive_file = cached_file(
+                        self.model_name_or_path,
+                        _add_variant(WEIGHTS_INDEX_NAME, variant),
+                        **cached_file_kwargs,
+                    )
+                    if resolved_archive_file is not None:
+                        is_sharded = True
+
+                if resolved_archive_file is None:
+                    # Otherwise, maybe there is a TF or Flax model file.  We try those to give a helpful error
+                    # message.
+                    has_file_kwargs = {
                         "revision": revision,
-                        "subfolder": subfolder,
-                        "_raise_exceptions_for_gated_repo": False,
-                        "_raise_exceptions_for_missing_entries": False,
-                        "_commit_hash": commit_hash,
+                        "proxies": proxies,
+                        "token": token,
                     }
-                    resolved_archive_file = cached_file(self.model_name_or_path, filename, **cached_file_kwargs)
-
-                    # Since we set _raise_exceptions_for_missing_entries=False, we don't get an exception but a None
-                    # result when internet is up, the repo and revision exist, but the file does not.
-                    if resolved_archive_file is None and filename == _add_variant(SAFE_WEIGHTS_NAME, variant):
-                        # Maybe the checkpoint is sharded, we try to grab the index name in this case.
-                        resolved_archive_file = cached_file(
-                            self.model_name_or_path,
-                            _add_variant(SAFE_WEIGHTS_INDEX_NAME, variant),
-                            **cached_file_kwargs,
+                    if variant is not None and has_file(self.model_name_or_path, WEIGHTS_NAME, **has_file_kwargs):
+                        raise EnvironmentError(
+                            f"{self.model_name_or_path} does not appear to have a file named"
+                            f" {_add_variant(WEIGHTS_NAME, variant)} but there is a file without the variant"
+                            f" {variant}. Use `variant=None` to load this model from those weights."
                         )
-                        if resolved_archive_file is not None:
-                            is_sharded = True
-                        elif use_safetensors:
-                            raise EnvironmentError(
-                                f"{self.model_name_or_path} does not appear to have a file named"
-                                f" {_add_variant(SAFE_WEIGHTS_NAME, variant)} or "
-                                f"{_add_variant(SAFE_WEIGHTS_INDEX_NAME, variant)} "
-                                "and thus cannot be loaded with `safetensors`. Please make sure that the model has "
-                                "been saved with `safe_serialization=True` or do not set `use_safetensors=True`."
-                            )
-                        else:
-                            # This repo has no safetensors file of any kind, we switch to PyTorch.
-                            filename = _add_variant(WEIGHTS_NAME, variant)
-                            resolved_archive_file = cached_file(self.model_name_or_path, filename, **cached_file_kwargs)
-                    if resolved_archive_file is None and filename == _add_variant(WEIGHTS_NAME, variant):
-                        # Maybe the checkpoint is sharded, we try to grab the index name in this case.
-                        resolved_archive_file = cached_file(
-                            self.model_name_or_path,
-                            _add_variant(WEIGHTS_INDEX_NAME, variant),
-                            **cached_file_kwargs,
+                    else:
+                        raise EnvironmentError(
+                            f"{self.model_name_or_path} does not appear to have a file named"
+                            f" {_add_variant(WEIGHTS_NAME, variant)}."
                         )
-                        if resolved_archive_file is not None:
-                            is_sharded = True
+            except EnvironmentError:
+                # Raise any environment error raise by `cached_file`. It will have a helpful error message adapted
+                # to the original exception.
+                raise
+            except Exception as e:
+                # For any other exception, we throw a generic error.
+                raise EnvironmentError(
+                    f"Can't load the model for '{self.model_name_or_path}'. If you were trying to load it"
+                    " from 'https://huggingface.co/models', make sure you don't have a local directory with the"
+                    f" same name. Otherwise, make sure '{self.model_name_or_path}' is the correct path to a"
+                    f" directory containing a file named {_add_variant(WEIGHTS_NAME, variant)}."
+                ) from e
 
-                    if resolved_archive_file is None:
-                        # Otherwise, maybe there is a TF or Flax model file.  We try those to give a helpful error
-                        # message.
-                        has_file_kwargs = {
-                            "revision": revision,
-                            "proxies": proxies,
-                            "token": token,
-                        }
-                        if variant is not None and has_file(self.model_name_or_path, WEIGHTS_NAME, **has_file_kwargs):
-                            raise EnvironmentError(
-                                f"{self.model_name_or_path} does not appear to have a file named"
-                                f" {_add_variant(WEIGHTS_NAME, variant)} but there is a file without the variant"
-                                f" {variant}. Use `variant=None` to load this model from those weights."
-                            )
-                        else:
-                            raise EnvironmentError(
-                                f"{self.model_name_or_path} does not appear to have a file named"
-                                f" {_add_variant(WEIGHTS_NAME, variant)}."
-                            )
-                except EnvironmentError:
-                    # Raise any environment error raise by `cached_file`. It will have a helpful error message adapted
-                    # to the original exception.
-                    raise
-                except Exception as e:
-                    # For any other exception, we throw a generic error.
-                    raise EnvironmentError(
-                        f"Can't load the model for '{self.model_name_or_path}'. If you were trying to load it"
-                        " from 'https://huggingface.co/models', make sure you don't have a local directory with the"
-                        f" same name. Otherwise, make sure '{self.model_name_or_path}' is the correct path to a"
-                        f" directory containing a file named {_add_variant(WEIGHTS_NAME, variant)}."
-                    ) from e
+        if is_local:
+            resolved_archive_file = archive_file
 
-            if is_local:
-                logger.info(f"loading weights file {archive_file}")
-                resolved_archive_file = archive_file
-            else:
-                logger.info(f"loading weights file {filename} from cache at {resolved_archive_file}")
-        else:  # pragma: no cover
-            resolved_archive_file = None
+        self._model_local_dir = os.path.abspath(os.path.expanduser(os.path.dirname(resolved_archive_file)))
+        # if hpu format tensor can be used directly, then update resolved_archive_file to the hpu format tensor file
+        if self._with_hpu_format_tensor():
+            resolved_archive_file = os.path.join(self._model_local_dir, HPU_SAFE_WEIGHTS_NAME)
+
+        logger.info(f"Find weights file {resolved_archive_file}")
 
         if is_sharded:  # pragma: no cover
             # rsolved_archive_file becomes a list of files that point to the different checkpoint shards in this case.
@@ -525,11 +635,10 @@ class WOQModelLoader:
             self.kwargs["sharded_metadata"] = sharded_metadata
 
         if is_sharded:  # pragma: no cover
-            loaded_state_dict_keys = sharded_metadata["all_checkpoint_keys"]
+            state_dict = sharded_metadata["weight_map"]
         else:
             # Time to load the checkpoint
             state_dict = load_state_dict(resolved_archive_file)
-            loaded_state_dict_keys = list(state_dict.keys())
 
         # set kwargs for next functions to use
         self.kwargs["is_sharded"] = is_sharded
@@ -537,7 +646,8 @@ class WOQModelLoader:
         self.kwargs["offload_state_dict"] = offload_state_dict
         self.kwargs["resolved_archive_file"] = resolved_archive_file
 
-        return loaded_state_dict_keys
+        # return loaded_state_dict_keys
+        return state_dict
 
     def _init_hf_model(self, model_class, config):
         from accelerate.big_modeling import init_empty_weights
@@ -636,3 +746,44 @@ class WOQModelLoader:
         model.eval()
 
         return model
+
+    def load_data_to_new_module_from_state_dict(self, new_module, new_module_weight):
+        new_module.load_state_dict(new_module_weight)
+
+    def _save_hpu_format_tensor(self, model):
+        from safetensors.torch import save_file
+
+        if not os.path.exists(self._model_local_dir):
+            logger.warning(f"{self._model_local_dir} doesn't exist, can't save hpu format safetensors")
+
+        if self.format == LoadFormat.HUGGINGFACE:
+            filename = os.path.join(self._model_local_dir, HPU_SAFE_WEIGHTS_NAME)
+            save_file(
+                model.state_dict(),
+                filename=filename,
+                metadata={"format": "pt"})
+            logger.debug(f"Save hpu format tensor to {filename}")
+        elif self.format == LoadFormat.DEFAULT:
+            qmodel_weight_file_path = os.path.join(self._model_local_dir, HPU_WEIGHT_NAME)
+            torch.save(model.state_dict(), qmodel_weight_file_path)
+            logger.debug(f"Save hpu format tensor to {qmodel_weight_file_path}")
+
+    def _with_hpu_format_tensor(self):
+        """Check whether hpu format tensor file is included in model local cache dir.
+
+            If device is 'hpu' and
+            model has hpu format tensor:
+            1. has 'hpu_model.safetensors' file with huggingface format
+            2. or has 'quantized_hpu_weight.pt' file with default format
+            then return True, else return False.
+        """
+        if self.device == "hpu" and os.path.exists(self._model_local_dir):
+            if self.format == LoadFormat.HUGGINGFACE:
+                if os.path.exists(os.path.join(self._model_local_dir, HPU_SAFE_WEIGHTS_NAME)):
+                    # update resolved_archive_file
+                    self.kwargs["resolved_archive_file"] = os.path.join(self._model_local_dir, HPU_SAFE_WEIGHTS_NAME)
+                    return True
+            elif self.format == LoadFormat.DEFAULT:
+                if os.path.exists(os.path.join(self._model_local_dir, HPU_WEIGHT_NAME)):
+                    return True
+        return False

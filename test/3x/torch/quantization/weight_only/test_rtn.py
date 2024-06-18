@@ -32,6 +32,13 @@ class ModelConv1d(torch.nn.Module):
         out = self.fc3(out)
         return out
 
+def get_woq_linear_num(model, woq_module_type_name):
+    woq_linear_num = 0
+    for _, module in model.named_modules():
+        if module.__class__.__name__ == woq_module_type_name:
+            woq_linear_num += 1
+    return woq_linear_num
+
 
 class TestRTNQuant:
     def setup_class(self):
@@ -282,6 +289,10 @@ class TestRTNQuant:
             assert torch.allclose(out2, out1, atol=0.5), "Accuracy gap atol > 0.5 is unexpected."
 
     def test_save_and_load(self):
+        from neural_compressor.torch.quantization import load
+        from neural_compressor.torch.algorithms.weight_only.save_load import WOQModelLoader
+        from neural_compressor.torch.utils import LoadFormat
+
         fp32_model = copy.deepcopy(self.tiny_gptj)
         quant_config = get_default_rtn_config()
         q_model = quantize(fp32_model, quant_config=quant_config)
@@ -289,13 +300,35 @@ class TestRTNQuant:
         q_model.save("saved_results")
         inc_out = q_model(self.example_inputs)[0]
 
-        from neural_compressor.torch.quantization import load
-
-        # loading compressed model
+        # 1. loading compressed model (format=INC, device="cpu")
+        # linear -> INCWeightOnlyLinear
         loaded_model = load("saved_results", copy.deepcopy(self.tiny_gptj))
-        loaded_out = loaded_model(self.example_inputs)[0]
-        assert torch.allclose(inc_out, loaded_out), "Unexpected result. Please double check."
-        assert isinstance(loaded_model.lm_head, WeightOnlyLinear), "loading compressed model failed."
+        output1 = loaded_model(self.example_inputs)[0]
+        assert torch.allclose(inc_out, output1), "Unexpected result. Please double check."
+        assert get_woq_linear_num(loaded_model, "INCWeightOnlyLinear") == 31, "Incorrect number of INCWeightOnlyLinear modules"
+
+        # 2. loading compressed model (format=INC, device="hpu")
+        # first load: linear -> INCWeightOnlyLinear -> HPUWeightOnlyLinear, save quantized_hpu_weight.pt to local cache dir
+        model_loader = WOQModelLoader(
+            model_name_or_path="saved_results",
+            original_model=copy.deepcopy(self.tiny_gptj),
+            format=LoadFormat.DEFAULT,
+            device="hpu")
+        loaded_model = model_loader.load_woq_model()
+        assert get_woq_linear_num(loaded_model, "HPUWeightOnlyLinear") == 31, "Incorrect number of HPUWeightOnlyLinear modules"
+        output2 = loaded_model(self.example_inputs)[0]
+
+        # second load: linear -> HPUWeightOnlyLinear using quantized_hpu_weight.pt saved in local cache dir
+        model_loader = WOQModelLoader(
+            model_name_or_path="saved_results",
+            original_model=copy.deepcopy(self.tiny_gptj),
+            format=LoadFormat.DEFAULT,
+            device="hpu")
+        loaded_model = model_loader.load_woq_model()
+        assert get_woq_linear_num(loaded_model, "HPUWeightOnlyLinear") == 31, "Incorrect number of HPUWeightOnlyLinear modules"
+        output3 = loaded_model(self.example_inputs)[0]
+
+        assert torch.equal(output2, output3), "The model loaded the second time is different from the model loaded the first time"
 
     def test_no_transformers(self, monkeypatch):
         def mock_is_transformers_imported():
