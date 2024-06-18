@@ -23,12 +23,14 @@ def get_gpt_j():
     )
     return tiny_gptj
 
+
 def get_woq_linear_num(model, woq_module_type_name):
     woq_linear_num = 0
     for _, module in model.named_modules():
         if module.__class__.__name__ == woq_module_type_name:
             woq_linear_num += 1
     return woq_linear_num
+
 
 class TestAWQQuant:
     @classmethod
@@ -116,8 +118,8 @@ class TestAWQQuant:
         ), "The results of calling `convert` + `prepare` and calling `quantize` should be equal."
 
     def test_save_and_load(self):
-        from neural_compressor.torch.quantization import load
         from neural_compressor.torch.algorithms.weight_only.save_load import WOQModelLoader
+        from neural_compressor.torch.quantization import load
         from neural_compressor.torch.utils import LoadFormat
 
         @torch.no_grad()
@@ -145,7 +147,9 @@ class TestAWQQuant:
         loaded_model = load("saved_results", copy.deepcopy(self.tiny_gptj))
         output1 = loaded_model(self.example_inputs)[0]
         assert torch.allclose(inc_out, output1), "Unexpected result. Please double check."
-        assert get_woq_linear_num(loaded_model, "INCWeightOnlyLinear") == 31, "Incorrect number of INCWeightOnlyLinear modules"
+        assert (
+            get_woq_linear_num(loaded_model, "INCWeightOnlyLinear") == 31
+        ), "Incorrect number of INCWeightOnlyLinear modules"
 
         # 2. loading compressed model (format=INC, device="hpu")
         # first load: linear -> INCWeightOnlyLinear -> HPUWeightOnlyLinear, save quantized_hpu_weight.pt to local cache dir
@@ -153,9 +157,12 @@ class TestAWQQuant:
             model_name_or_path="saved_results",
             original_model=copy.deepcopy(self.tiny_gptj),
             format=LoadFormat.DEFAULT,
-            device="hpu")
+            device="hpu",
+        )
         loaded_model = model_loader.load_woq_model()
-        assert get_woq_linear_num(loaded_model, "HPUWeightOnlyLinear") == 31, "Incorrect number of HPUWeightOnlyLinear modules"
+        assert (
+            get_woq_linear_num(loaded_model, "HPUWeightOnlyLinear") == 31
+        ), "Incorrect number of HPUWeightOnlyLinear modules"
         output2 = loaded_model(self.example_inputs)[0]
 
         # second load: linear -> HPUWeightOnlyLinear using quantized_hpu_weight.pt saved in local cache dir
@@ -163,9 +170,14 @@ class TestAWQQuant:
             model_name_or_path="saved_results",
             original_model=copy.deepcopy(self.tiny_gptj),
             format=LoadFormat.DEFAULT,
-            device="hpu")
+            device="hpu",
+        )
         loaded_model = model_loader.load_woq_model()
-        assert get_woq_linear_num(loaded_model, "HPUWeightOnlyLinear") == 31, "Incorrect number of HPUWeightOnlyLinear modules"
+        assert (
+            get_woq_linear_num(loaded_model, "HPUWeightOnlyLinear") == 31
+        ), "Incorrect number of HPUWeightOnlyLinear modules"
         output3 = loaded_model(self.example_inputs)[0]
 
-        assert torch.equal(output2, output3), "The model loaded the second time is different from the model loaded the first time"
+        assert torch.equal(
+            output2, output3
+        ), "The model loaded the second time is different from the model loaded the first time"

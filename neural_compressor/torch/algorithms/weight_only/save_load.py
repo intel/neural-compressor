@@ -22,7 +22,14 @@ import re
 import torch
 
 from neural_compressor.common.utils import load_config_mapping, save_config_mapping
-from neural_compressor.torch.utils import QCONFIG_NAME, WEIGHT_NAME, LoadFormat, logger, HPU_WEIGHT_NAME, HPU_SAFE_WEIGHTS_NAME
+from neural_compressor.torch.utils import (
+    HPU_SAFE_WEIGHTS_NAME,
+    HPU_WEIGHT_NAME,
+    QCONFIG_NAME,
+    WEIGHT_NAME,
+    LoadFormat,
+    logger,
+)
 
 
 def save(model, output_dir="./saved_results"):
@@ -84,7 +91,7 @@ class WOQModelLoader:
         self.loaded_state_dict = {}
         self.loaded_state_dict_keys = []
         self._should_save_hpu_format_tensor = False
-        self._model_local_dir = None # local dirctory where model files are saved
+        self._model_local_dir = None  # local directory where model files are saved
 
     def load_woq_model(self):
         if self.format == LoadFormat.HUGGINGFACE:
@@ -188,22 +195,15 @@ class WOQModelLoader:
 
     def _build_woq_model(self):
         """Build weight-only quantization model."""
+        from auto_round.export.export_to_itrex.model_wrapper import WeightOnlyLinear as AutoRoundWeightOnlyLinear
+
         from neural_compressor.torch.utils import set_module
-        from .modules import INCWeightOnlyLinear, HPUWeightOnlyLinear
-        from .modules import MulLinear
-        from auto_round.export.export_to_itrex.model_wrapper import (
-            WeightOnlyLinear as AutoRoundWeightOnlyLinear,
-        )
+
+        from .modules import HPUWeightOnlyLinear, INCWeightOnlyLinear, MulLinear
 
         # default setting
-        format_dict={
-            LoadFormat.HUGGINGFACE: INCWeightOnlyLinear,
-            LoadFormat.DEFAULT: INCWeightOnlyLinear
-        }
-        device_dict={
-            "cpu": INCWeightOnlyLinear,
-            "hpu": HPUWeightOnlyLinear
-        }
+        format_dict = {LoadFormat.HUGGINGFACE: INCWeightOnlyLinear, LoadFormat.DEFAULT: INCWeightOnlyLinear}
+        device_dict = {"cpu": INCWeightOnlyLinear, "hpu": HPUWeightOnlyLinear}
 
         # if hpu format tensor can be used directly, then update mapping module to HPUWeightOnlyLinear
         if self._with_hpu_format_tensor():
@@ -223,8 +223,10 @@ class WOQModelLoader:
 
             # if is autoroud, replace INCWeightOnlyLinear to AutoRoundWeightOnlyLinear
             if _is_autoround:
+
                 def update_dict_value(dictionary, original_value, new_value):
                     return {key: new_value if value == original_value else value for key, value in dictionary.items()}
+
                 format_dict = update_dict_value(format_dict, INCWeightOnlyLinear, AutoRoundWeightOnlyLinear)
                 device_dict = update_dict_value(device_dict, INCWeightOnlyLinear, AutoRoundWeightOnlyLinear)
 
@@ -292,7 +294,8 @@ class WOQModelLoader:
 
                     logger.debug(
                         f"Replacing {name}'s type from "
-                        f"'{format_dict[self.format].__name__}' to '{device_dict[self.device].__name__}'")
+                        f"'{format_dict[self.format].__name__}' to '{device_dict[self.device].__name__}'"
+                    )
                     WeightOnlyLinearClass = device_dict[self.device]
 
                     # update kwargs for the device mapping WeightOnlyLinear module
@@ -757,10 +760,7 @@ class WOQModelLoader:
 
         if self.format == LoadFormat.HUGGINGFACE:
             filename = os.path.join(self._model_local_dir, HPU_SAFE_WEIGHTS_NAME)
-            save_file(
-                model.state_dict(),
-                filename=filename,
-                metadata={"format": "pt"})
+            save_file(model.state_dict(), filename=filename, metadata={"format": "pt"})
             logger.debug(f"Save hpu format tensor to {filename}")
         elif self.format == LoadFormat.DEFAULT:
             qmodel_weight_file_path = os.path.join(self._model_local_dir, HPU_WEIGHT_NAME)
@@ -770,11 +770,11 @@ class WOQModelLoader:
     def _with_hpu_format_tensor(self):
         """Check whether hpu format tensor file is included in model local cache dir.
 
-            If device is 'hpu' and
-            model has hpu format tensor:
-            1. has 'hpu_model.safetensors' file with huggingface format
-            2. or has 'quantized_hpu_weight.pt' file with default format
-            then return True, else return False.
+        If device is 'hpu' and
+        model has hpu format tensor:
+        1. has 'hpu_model.safetensors' file with huggingface format
+        2. or has 'quantized_hpu_weight.pt' file with default format
+        then return True, else return False.
         """
         if self.device == "hpu" and os.path.exists(self._model_local_dir):
             if self.format == LoadFormat.HUGGINGFACE:

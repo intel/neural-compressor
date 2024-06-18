@@ -18,11 +18,12 @@
 # Note: Do not import this file unless you have already imported torch,
 # since the model classes inherit torch.nn.Module.
 import math
+from abc import abstractmethod
+
 import numpy as np
 import torch
 from torch.autograd import Function
 from torch.nn import functional as F
-from abc import abstractmethod
 
 from neural_compressor.torch.utils import accelerator, logger
 
@@ -48,16 +49,7 @@ class QDQLayer(torch.nn.Module):
 
 class WeightOnlyLinear(torch.nn.Module):
     def __init__(
-        self,
-        in_features,
-        out_features,
-        dtype,
-        bits,
-        group_size,
-        bias,
-        scale_dtype,
-        compression_dtype,
-        device
+        self, in_features, out_features, dtype, bits, group_size, bias, scale_dtype, compression_dtype, device
     ):
         super().__init__()
         self.dtype = dtype
@@ -217,6 +209,7 @@ class WeightOnlyLinear(torch.nn.Module):
             self.bias is not None,
         )
         return tmp_str
+
 
 class INCWeightOnlyLinear(WeightOnlyLinear):
     def __init__(
@@ -436,6 +429,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
         if self.use_optimum_format:
             tmp_str += ", use_optimum_format=True"
         return tmp_str
+
 
 # TODO: implement HPUWeightOnlyLinear
 class HPUWeightOnlyLinear(INCWeightOnlyLinear):
