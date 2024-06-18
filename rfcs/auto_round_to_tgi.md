@@ -6,7 +6,7 @@ Hi, here is the INC team from Intel. Thank you for developing this amazing proje
 
 ### Motivation 
 
-Our team have developed a new weight-only quantization algorithm called Auto-Round. It has achieved superior accuracy compared to [GPTQ](https://arxiv.org/abs/2210.17323), [AWQ](https://arxiv.org/abs/2306.00978), [OmniQuant](https://arxiv.org/abs/2308.13137), and [HQQ](https://mobiusml.github.io/hqq_blog/) across 11 tasks, sepcallity on extract low-bits, particularly excelling in low-bit quantization (e.g., 2-bits and 3-bits). Auto-Round supports quantization from 2 to 8 bits, involves low tuning costs, and imposes no additional overhead during inference. Key results are summarized below, with detailed information available in our [paper](https://arxiv.org/abs/2309.05516) and [code repository](https://github.com/intel/auto-round/blob/main/docs/acc.md).
+Our team have developed a new weight-only quantization algorithm called Auto-Round. It has achieved superior accuracy compared to [GPTQ](https://arxiv.org/abs/2210.17323), [AWQ](https://arxiv.org/abs/2306.00978), [OmniQuant](https://arxiv.org/abs/2308.13137), and [HQQ](https://mobiusml.github.io/hqq_blog/) across 11 tasks, particularly excelling in low-bit quantization (e.g., 2-bits and 3-bits). Auto-Round supports quantization from 2 to 8 bits, involves low tuning costs, and imposes no additional overhead during inference. Key results are summarized below, with detailed information available in our [paper](https://arxiv.org/abs/2309.05516) and [code repository](https://github.com/intel/auto-round/blob/main/docs/acc.md).
 
 <!-- Key result table -->
 
@@ -36,7 +36,7 @@ Auto-Round is currently released as a pure [Python binary](). TGI can include `a
 
 Advantages:
 
-- Minimal maintenance effort for TGI. We already integrated it into our [INC] project, and enabled the integration tests.
+- Minimal maintenance effort for TGI. We already integrated it into our [INC](https://github.com/intel/neural-compressor) project, and enabled the integration tests.
 - Easy synchronization with new enhancements. As we continually improve the Auto-Round algorithm, updates can be effortlessly incorporated into TGI by updating the package version.
 
 ### Option 2: Porting all source code of auto-round into TGI
