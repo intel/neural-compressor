@@ -67,10 +67,9 @@ def autotune(
             logger.info("Stopped tuning.")
             best_trial_record = tuning_monitor.get_best_trial_record()
             if best_trial_record.trial_index != trial_index:
-                logger.info("Reconvering the best quantized model...")
-                del q_model  # maybe gc.collect() is needed for memory release
+                logger.info("Re-quantizing with best quantization config...")
+                del q_model
                 best_quant_config: BaseConfig = best_trial_record.quant_config
-                # !!! Make sure to use deepcopy only when inplace is set to `True`.
                 best_quant_model = quantize_model(model, best_quant_config, calib_dataloader, calib_iteration)
             else:
                 best_quant_model = q_model
