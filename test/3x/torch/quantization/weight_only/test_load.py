@@ -19,18 +19,6 @@ class TestHFModelLoad:
         self.local_hf_model = "./TinyLlama-1.1B-python-v0.1-GPTQ"
         huggingface_hub.snapshot_download(self.model_name, local_dir=self.local_hf_model)
 
-        self.tiny_gptj = transformers.AutoModelForCausalLM.from_pretrained(
-            "hf-internal-testing/tiny-random-GPTJForCausalLM",
-            device_map=device,
-        )
-
-        self.gptj = transformers.AutoModelForCausalLM.from_pretrained(
-            "hf-internal-testing/tiny-random-GPTJForCausalLM",
-            torchscript=True,
-            device_map=device,
-        )
-        self.gptj.seqlen = 512
-
     def teardown_class(self):
         shutil.rmtree("TinyLlama-1.1B-python-v0.1-GPTQ", ignore_errors=True)
         shutil.rmtree("saved_results", ignore_errors=True)
