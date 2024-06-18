@@ -1,4 +1,4 @@
-numpy
+numpy < 2.0
 peft==0.10.0
 psutil
 py-cpuinfo
