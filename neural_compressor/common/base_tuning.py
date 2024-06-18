@@ -336,13 +336,17 @@ class TuningMonitor:
     def get_number_of_trials(self):
         return len(self.tuning_history)
 
-    def get_best_quant_config(self) -> BaseConfig:
+    def get_best_trial_record(self) -> _TrialRecord:
         assert self.get_number_of_trials() > 0, "No trial record in tuning monitor."
         # Put the record with a higher score at the beginning
         sorted_trials_records: List[_TrialRecord] = sorted(
             self.tuning_history, key=lambda x: x.trial_result, reverse=True
         )
-        return sorted_trials_records[0].quant_config
+        return sorted_trials_records[0]
+
+    def get_best_quant_config(self) -> BaseConfig:
+        best_trial_record = self.get_best_trial_record()
+        return best_trial_record.quant_config
 
     def need_stop(self) -> bool:
         """Check if need to stop tuning. Either accuracy goal is met, max trials is reached or timeout is reached.
