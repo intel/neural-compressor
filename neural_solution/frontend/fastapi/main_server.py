@@ -37,6 +37,7 @@ from neural_solution.frontend.utility import (
     get_cluster_table,
     get_res_during_tuning,
     is_valid_task,
+    is_valid_uuid,
     list_to_string,
     serialize,
 )
@@ -97,7 +98,8 @@ def ping():
             msg = "Ping fail! Make sure Neural Solution runner is running!"
             break
         except Exception as e:
-            msg = "Ping fail! {}".format(e)
+            print(e)
+            msg = "Ping fail!"
             break
         sock.close()
     return {"status": "Healthy", "msg": msg} if count == 2 else {"status": "Failed", "msg": msg}
@@ -167,18 +169,22 @@ async def submit_task(task: Task):
         cursor = conn.cursor()
         task_id = str(uuid.uuid4()).replace("-", "")
         sql = (
-            r"insert into task(id, script_url, optimized, arguments, approach, requirements, workers, status)"
-            + r" values ('{}', '{}', {}, '{}', '{}', '{}', {}, 'pending')".format(
-                task_id,
-                task.script_url,
-                task.optimized,
-                list_to_string(task.arguments),
-                task.approach,
-                list_to_string(task.requirements),
-                task.workers,
-            )
+            "INSERT INTO task "
+            "(id, script_url, optimized, arguments, approach, requirements, workers, status) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')"
         )
-        cursor.execute(sql)
+
+        task_params = (
+            task_id,
+            task.script_url,
+            task.optimized,
+            list_to_string(task.arguments),
+            task.approach,
+            list_to_string(task.requirements),
+            task.workers,
+        )
+
+        conn.execute(sql, task_params)
         conn.commit()
         try:
             task_submitter.submit_task(task_id)
@@ -186,7 +192,8 @@ async def submit_task(task: Task):
             msg = "Task Submitted fail! Make sure Neural Solution runner is running!"
             status = "failed"
         except Exception as e:
-            msg = "Task Submitted fail! {}".format(e)
+            msg = "Task Submitted fail!"
+            print(e)
             status = "failed"
         conn.close()
     else:
@@ -205,6 +212,8 @@ def get_task_by_id(task_id: str):
     Returns:
         json: task status, result, quantized model path
     """
+    if not is_valid_uuid(task_id):
+        raise HTTPException(status_code=422, detail="Invalid task id")
     res = None
     db_path = get_db_path(config.workspace)
     if os.path.isfile(db_path):
@@ -246,6 +255,8 @@ def get_task_status_by_id(request: Request, task_id: str):
     Returns:
         json: task status and information
     """
+    if not is_valid_uuid(task_id):
+        raise HTTPException(status_code=422, detail="Invalid task id")
     status = "unknown"
     tuning_info = {}
     optimization_result = {}
@@ -290,7 +301,13 @@ async def read_logs(task_id: str):
     Yields:
         str: log lines
     """
-    log_path = "{}/task_{}.txt".format(get_task_log_workspace(config.workspace), task_id)
+    if not is_valid_uuid(task_id):
+        raise HTTPException(status_code=422, detail="Invalid task id")
+    log_path = os.path.normpath(os.path.join(get_task_log_workspace(config.workspace), "task_{}.txt".format(task_id)))
+
+    if not log_path.startswith(os.path.normpath(config.workspace)):
+        return {"error": "Logfile not found."}
+
     if not os.path.exists(log_path):
         return {"error": "Logfile not found."}
 
@@ -388,12 +405,17 @@ async def websocket_endpoint(websocket: WebSocket, task_id: str):
     Raises:
         HTTPException: exception
     """
+    if not is_valid_uuid(task_id):
+        raise HTTPException(status_code=422, detail="Invalid task id")
     if not check_log_exists(task_id=task_id, task_log_path=get_task_log_workspace(config.workspace)):
         raise HTTPException(status_code=404, detail="Task not found")
     await websocket.accept()
 
     # send the log that has been written
-    log_path = "{}/task_{}.txt".format(get_task_log_workspace(config.workspace), task_id)
+    log_path = os.path.normpath(os.path.join(get_task_log_workspace(config.workspace), "task_{}.txt".format(task_id)))
+
+    if not log_path.startswith(os.path.normpath(config.workspace)):
+        return {"error": "Logfile not found."}
     last_position = 0
     previous_log = []
     if os.path.exists(log_path):
@@ -429,6 +451,8 @@ async def download_file(task_id: str):
     Returns:
         FileResponse: quantized model of zip file format
     """
+    if not is_valid_uuid(task_id):
+        raise HTTPException(status_code=422, detail="Invalid task id")
     db_path = get_db_path(config.workspace)
     if os.path.isfile(db_path):
         conn = sqlite3.connect(db_path)
@@ -444,6 +468,9 @@ async def download_file(task_id: str):
     path = res[2]
     zip_filename = "quantized_model.zip"
     zip_filepath = os.path.abspath(os.path.join(get_task_workspace(config.workspace), task_id, zip_filename))
+
+    if not zip_filepath.startswith(os.path.normpath(os.path.abspath(get_task_workspace(config.workspace)))):
+        raise HTTPException(status_code=422, detail="Invalid File")
     # create zipfile and add file
     with zipfile.ZipFile(zip_filepath, "w", zipfile.ZIP_DEFLATED) as zip_file:
         for root, dirs, files in os.walk(path):

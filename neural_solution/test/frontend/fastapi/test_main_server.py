@@ -169,14 +169,13 @@ class TestMain(unittest.TestCase):
         mock_submit_task.assert_called()
 
         # test generic Exception case
-        mock_submit_task.side_effect = Exception("Something went wrong")
         response = client.post("/task/submit/", json=task)
         self.assertEqual(response.status_code, 200)
         self.assertIn("status", response.json())
         self.assertIn("task_id", response.json())
         self.assertIn("msg", response.json())
         self.assertEqual(response.json()["status"], "failed")
-        self.assertIn("Something went wrong", response.json()["msg"])
+        self.assertIn("Task Submitted fail!", response.json()["msg"])
         mock_submit_task.assert_called()
 
         delete_db()
@@ -225,11 +224,11 @@ class TestMain(unittest.TestCase):
         self.assertIn("pending", response.text)
 
         response = client.get("/task/status/error_id")
-        assert response.status_code == 200
-        self.assertIn("Please check url", response.text)
+        assert response.status_code == 422
+        self.assertIn("Invalid task id", response.text)
 
     def test_read_logs(self):
-        task_id = "12345"
+        task_id = "65f87f89fd674724930ef659cbe86e08"
         log_path = f"{TASK_LOG_path}/task_{task_id}.txt"
         with open(log_path, "w") as f:
             f.write(f"I am {task_id}.")

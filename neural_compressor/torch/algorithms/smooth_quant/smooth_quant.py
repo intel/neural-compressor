@@ -82,13 +82,14 @@ class SmoothQuantQuantizer(Quantizer):
             model.output_tensor_id_op_name,
         )
 
-        # Update json file in ipex_config_path
-        cfg_to_qconfig(self.quant_config, cfgs, op_infos_from_cfgs, output_tensor_id_op_name)
-        model.eval()
-
         # check smoothquant alpha and act_algo value
         recipe_cfgs = self.quant_config.get("recipe_cfgs", None)
         alpha = recipe_cfgs["smooth_quant_args"]["alpha"]
+
+        # Update json file in ipex_config_path
+        cfg_to_qconfig(self.quant_config, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, alpha, smooth_quant=True)
+        model.eval()
+
         for op, _ in self.quant_config["op"].items():
             act_algo = self.quant_config["op"][op]["activation"]["algorithm"]
 
@@ -120,7 +121,6 @@ class SmoothQuantQuantizer(Quantizer):
             else:
                 model = ipex.quantization.prepare(model, static_qconfig, example_inputs=example_inputs, inplace=inplace)
 
-        cfg_to_qconfig(self.quant_config, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, smooth_quant=True)
         model.load_qconf_summary(qconf_summary=ipex_config_path)
         return model
 

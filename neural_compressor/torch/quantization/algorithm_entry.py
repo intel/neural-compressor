@@ -45,7 +45,14 @@ from neural_compressor.torch.quantization import (
     StaticQuantConfig,
     TEQConfig,
 )
-from neural_compressor.torch.utils import get_quantizer, is_ipex_imported, logger, postprocess_model, register_algo
+from neural_compressor.torch.utils import (
+    dump_model_op_stats,
+    get_quantizer,
+    is_ipex_imported,
+    logger,
+    postprocess_model,
+    register_algo,
+)
 from neural_compressor.torch.utils.constants import PT2E_DYNAMIC_QUANT, PT2E_STATIC_QUANT
 
 
@@ -89,6 +96,7 @@ def rtn_entry(
     model.qconfig = configs_mapping
     model.save = MethodType(save, model)
     postprocess_model(model, mode, quantizer)
+    dump_model_op_stats(mode, configs_mapping)
     return model
 
 
@@ -141,6 +149,7 @@ def gptq_entry(
     model.qconfig = configs_mapping
     model.save = MethodType(save, model)
     postprocess_model(model, mode, quantizer)
+    dump_model_op_stats(mode, configs_mapping)
 
     return model
 
@@ -328,7 +337,6 @@ def awq_quantize_entry(
                 "use_full_range": op_config.use_full_range,
                 "use_mse_search": op_config.use_mse_search,
                 "use_layer_wise": op_config.use_layer_wise,
-                "export_compressed_model": op_config.export_compressed_model,
                 "use_double_quant": op_config.use_double_quant,
                 "double_quant_dtype": op_config.double_quant_dtype,
                 "double_quant_bits": op_config.double_quant_bits,
@@ -338,7 +346,6 @@ def awq_quantize_entry(
             use_auto_scale = op_config.use_auto_scale
             use_mse_search = op_config.use_auto_clip  # for awq clip
             folding = op_config.folding
-            return_int = op_config.export_compressed_model
             use_full_range = op_config.use_full_range
 
     run_fn = kwargs.get("run_fn", None)
@@ -357,13 +364,13 @@ def awq_quantize_entry(
         use_auto_scale=use_auto_scale,
         use_mse_search=use_mse_search,
         folding=folding,
-        return_int=return_int,
         use_full_range=use_full_range,
     )
 
     model.qconfig = configs_mapping
     model.save = MethodType(save, model)
     postprocess_model(model, mode, quantizer)
+    dump_model_op_stats(mode, configs_mapping)
     return model
 
 
@@ -418,6 +425,7 @@ def teq_quantize_entry(
     model.qconfig = configs_mapping
     model.save = MethodType(save, model)
     postprocess_model(model, mode, quantizer)
+    dump_model_op_stats(mode, configs_mapping)
 
     return model
 
@@ -494,6 +502,7 @@ def autoround_quantize_entry(
     model.qconfig = configs_mapping
     model.save = MethodType(save, model)
     postprocess_model(model, mode, quantizer)
+    dump_model_op_stats(mode, configs_mapping)
     return model
 
 
@@ -514,6 +523,7 @@ def hqq_entry(
     quantizer = get_quantizer(model, quantizer_cls=HQQuantizer, quant_config=configs_mapping)
     model = quantizer.execute(model, mode=mode)
     postprocess_model(model, mode, quantizer)
+    dump_model_op_stats(mode, configs_mapping)
 
     return model
 

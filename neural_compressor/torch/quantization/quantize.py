@@ -18,7 +18,7 @@ from typing import Any, Callable, Dict, Tuple
 import torch
 
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
-from neural_compressor.common.utils import Mode, log_process
+from neural_compressor.common.utils import Mode, call_counter, log_process
 from neural_compressor.torch.quantization.config import SmoothQuantConfig, StaticQuantConfig
 from neural_compressor.torch.utils import is_ipex_available, logger
 from neural_compressor.torch.utils.utility import WHITE_MODULE_LIST, algos_mapping, get_model_info
@@ -31,6 +31,7 @@ def need_apply(configs_mapping: Dict[Tuple[str, callable], BaseConfig], algo_nam
 
 
 @log_process(mode=Mode.QUANTIZE)
+@call_counter
 def quantize(
     model: torch.nn.Module,
     quant_config: BaseConfig,
@@ -97,6 +98,7 @@ def quantize(
                 example_inputs=example_inputs,
                 mode=Mode.QUANTIZE,
             )
+    setattr(q_model, "is_quantized", True)
     return q_model
 
 
@@ -152,7 +154,7 @@ def prepare(
                 example_inputs=example_inputs,
                 mode=Mode.PREPARE,
             )
-            setattr(prepared_model, "prepared", True)
+            setattr(prepared_model, "is_prepared", True)
     setattr(prepared_model, "quant_config", quant_config)
     setattr(prepared_model, "example_inputs", example_inputs)
     return prepared_model
@@ -177,12 +179,12 @@ def convert(
     q_model = model if inplace else copy.deepcopy(model)
 
     # TODO: Optimize the check for prepared flag after adding HQT FP8 Quant
-    assert getattr(model, "prepared", False), "Please run prepare function before convert."
+    assert getattr(model, "is_prepared", False), "Please run prepare function before convert."
 
-    if getattr(model, "prepared", False):
+    if getattr(model, "is_prepared", False):
         if quant_config is None:
             quant_config = model.quant_config
-    example_inputs = model.example_inputs if getattr(model, "prepared", False) else None
+    example_inputs = model.example_inputs if getattr(model, "is_prepared", False) else None
 
     registered_configs = config_registry.get_cls_configs()
     if isinstance(quant_config, dict):
@@ -215,4 +217,5 @@ def convert(
                 example_inputs=example_inputs,
                 mode=Mode.CONVERT,
             )
+    setattr(q_model, "is_quantized", True)
     return q_model

@@ -230,6 +230,10 @@ def get_res_during_tuning(task_id: str, task_log_path):
     """
     results = {}
     log_path = "{}/task_{}.txt".format(task_log_path, task_id)
+    log_path = os.path.normpath(os.path.join(task_log_path, "task_{}.txt".format(task_id)))
+
+    if not log_path.startswith(os.path.normpath(task_log_path)):
+        return {"error": "Logfile not found."}
     for line in reversed(open(log_path).readlines()):
         res_pattern = r"Tune (\d+) result is: "
         res_pattern = r"Tune (\d+) result is:\s.*?\(int8\|fp32\):\s+(\d+\.\d+).*?\(int8\|fp32\):\s+(\d+\.\d+).*?"
@@ -256,6 +260,10 @@ def get_baseline_during_tuning(task_id: str, task_log_path):
     """
     results = {}
     log_path = "{}/task_{}.txt".format(task_log_path, task_id)
+    log_path = os.path.normpath(os.path.join(task_log_path, "task_{}.txt".format(task_id)))
+
+    if not log_path.startswith(os.path.normpath(task_log_path)):
+        return {"error": "Logfile not found."}
     for line in reversed(open(log_path).readlines()):
         res_pattern = "FP32 baseline is:\s+.*?(\d+\.\d+).*?(\d+\.\d+).*?"
         res_matches = re.findall(res_pattern, line)
@@ -269,6 +277,19 @@ def get_baseline_during_tuning(task_id: str, task_log_path):
     return results if results else "Getting FP32 baseline..."
 
 
+def is_valid_uuid(uuid_string):
+    """Validate UUID format using regular expression.
+
+    Args:
+        uuid_string (str): task id.
+
+    Returns:
+        bool: task id is valid or invalid.
+    """
+    uuid_regex = re.compile(r"(?i)^[0-9a-f]{8}[0-9a-f]{4}[1-5][0-9a-f]{3}[89ab][0-9a-f]{3}[0-9a-f]{12}$")
+    return bool(uuid_regex.match(uuid_string))
+
+
 def check_log_exists(task_id: str, task_log_path):
     """Check whether the log file exists.
 
@@ -278,7 +299,12 @@ def check_log_exists(task_id: str, task_log_path):
     Returns:
         bool: Does the log file exist.
     """
-    log_path = "{}/task_{}.txt".format(task_log_path, task_id)
+    if not is_valid_uuid(task_id):
+        return False
+    log_path = os.path.normpath(os.path.join(task_log_path, "task_{}.txt".format(task_id)))
+
+    if not log_path.startswith(os.path.normpath(task_log_path)):
+        return False
     if os.path.exists(log_path):
         return True
     else:
