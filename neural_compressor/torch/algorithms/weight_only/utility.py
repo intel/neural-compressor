@@ -1132,4 +1132,3 @@ def convert_dtype_str2torch(str_dtype):
         return torch.bfloat16
     else:
         assert False, "Unsupported str dtype {} to torch dtype".format(str_dtype)
-        
