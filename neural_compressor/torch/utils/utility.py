@@ -15,8 +15,8 @@
 
 from typing import Callable, Dict, List, Tuple, Union
 
-import torch
 import prettytable as pt
+import torch
 from typing_extensions import TypeAlias
 
 from neural_compressor.common.utils import LazyImport, Mode, logger
@@ -165,6 +165,7 @@ def postprocess_model(model, mode, quantizer):
         if getattr(model, "quantizer", False):
             del model.quantizer
 
+
 class Statistics:  # pragma: no cover
     """The statistics printer."""
 
@@ -205,58 +206,59 @@ class Statistics:  # pragma: no cover
         self.output_handle("|" + self.header.center(len(lines[0]) - 2, "*") + "|")
         for i in lines:
             self.output_handle(i)
-            
+
+
 def dump_model_op_stats(mode, tune_cfg):
-        """This is a function to dump quantizable ops of model to user.
+    """This is a function to dump quantizable ops of model to user.
 
-        Args:
-            model (object): input model
-            tune_cfg (dict): quantization config
-        Returns:
-            None
-        """
-        if mode == Mode.PREPARE:
-            return
-        res = {}
-        # collect all dtype info and build empty results with existing op_type
-        dtype_set = set()
-        for op, config in tune_cfg.items():
-            op_type = op[1]
-            config = config.to_dict()
-            # import pdb; pdb.set_trace()
-            if not config["dtype"] == "fp32":
-                num_bits = config["bits"]
-                group_size = config["group_size"]
-                dtype_str = "A32W{}G{}".format(num_bits, group_size)
-                dtype_set.add(dtype_str)
-        dtype_set.add("FP32")
-        dtype_list = list(dtype_set)
-        dtype_list.sort()
-        
-        for op, config in tune_cfg.items():
-            config = config.to_dict()
-            op_type = op[1]
-            if op_type not in res.keys():
-                res[op_type] = {dtype: 0 for dtype in dtype_list}
+    Args:
+        model (object): input model
+        tune_cfg (dict): quantization config
+    Returns:
+        None
+    """
+    if mode == Mode.PREPARE:
+        return
+    res = {}
+    # collect all dtype info and build empty results with existing op_type
+    dtype_set = set()
+    for op, config in tune_cfg.items():
+        op_type = op[1]
+        config = config.to_dict()
+        # import pdb; pdb.set_trace()
+        if not config["dtype"] == "fp32":
+            num_bits = config["bits"]
+            group_size = config["group_size"]
+            dtype_str = "A32W{}G{}".format(num_bits, group_size)
+            dtype_set.add(dtype_str)
+    dtype_set.add("FP32")
+    dtype_list = list(dtype_set)
+    dtype_list.sort()
 
-        # fill in results with op_type and dtype
-        for op, config in tune_cfg.items():
-            config = config.to_dict()
-            if config["dtype"] == "fp32":
-                res[op_type]["FP32"] += 1
-            else:
-                num_bits = config["bits"]
-                group_size = config["group_size"]
-                dtype_str = "A32W{}G{}".format(num_bits, group_size)
-                res[op_type][dtype_str] += 1
+    for op, config in tune_cfg.items():
+        config = config.to_dict()
+        op_type = op[1]
+        if op_type not in res.keys():
+            res[op_type] = {dtype: 0 for dtype in dtype_list}
 
-        # update stats format for dump.
-        field_names = ["Op Type", "Total"]
-        field_names.extend(dtype_list)
-        output_data = []
-        for op_type in res.keys():
-            field_results = [op_type, sum(res[op_type].values())]
-            field_results.extend([res[op_type][dtype] for dtype in dtype_list])
-            output_data.append(field_results)
+    # fill in results with op_type and dtype
+    for op, config in tune_cfg.items():
+        config = config.to_dict()
+        if config["dtype"] == "fp32":
+            res[op_type]["FP32"] += 1
+        else:
+            num_bits = config["bits"]
+            group_size = config["group_size"]
+            dtype_str = "A32W{}G{}".format(num_bits, group_size)
+            res[op_type][dtype_str] += 1
 
-        Statistics(output_data, header="Mixed Precision Statistics", field_names=field_names).print_stat()
+    # update stats format for dump.
+    field_names = ["Op Type", "Total"]
+    field_names.extend(dtype_list)
+    output_data = []
+    for op_type in res.keys():
+        field_results = [op_type, sum(res[op_type].values())]
+        field_results.extend([res[op_type][dtype] for dtype in dtype_list])
+        output_data.append(field_results)
+
+    Statistics(output_data, header="Mixed Precision Statistics", field_names=field_names).print_stat()
