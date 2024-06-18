@@ -80,8 +80,8 @@ def create_xiq_quantizer_from_pt2e_config(config, is_dynamic=False) -> X86Induct
     # set global
     global_config = _map_inc_config_to_torch_quant_config(config, is_dynamic)
     quantizer.set_global(global_config)
-    # Skip the local config for now (need torch >= 2.3.2)
-    if GT_TORCH_VERSION_2_3_2:
+    # need torch >= 2.3.2
+    if GT_TORCH_VERSION_2_3_2:  # pragma: no cover
         op_type_config_dict, op_name_config_dict = config._get_op_name_op_type_config()
         if op_type_config_dict:
             for op_type, config in op_type_config_dict.items():
