@@ -73,7 +73,6 @@ def load(model_name_or_path, original_model=None, format="inc", device="cpu", **
     Returns:
         The quantized model
     """
-    # TODO: When loading WOQ model, use different WeightOnlyLinear module according to device.
     if format == LoadFormat.DEFAULT.value:
         from neural_compressor.common.base_config import ConfigRegistry
 

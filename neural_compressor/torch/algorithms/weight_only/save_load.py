@@ -75,7 +75,6 @@ def load(model_name_or_path, original_model=None, format=LoadFormat.DEFAULT, dev
 
 class WOQModelLoader:
     def __init__(self, model_name_or_path, original_model=None, format=LoadFormat.DEFAULT, device="cpu", **kwargs):
-        # TODO: When loading WOQ model, use different WeightOnlyLinear module according to device.
         self.model_name_or_path = model_name_or_path
         self.original_model = original_model
         self.format = format
