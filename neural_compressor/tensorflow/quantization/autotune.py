@@ -20,7 +20,7 @@ import tensorflow as tf
 from neural_compressor.common import logger
 from neural_compressor.common.base_config import BaseConfig, get_all_config_set_from_config_registry
 from neural_compressor.common.base_tuning import EvaluationFuncWrapper, TuningConfig, init_tuning
-from neural_compressor.common.utils import dump_elapsed_time
+from neural_compressor.common.utils import call_counter, dump_elapsed_time
 from neural_compressor.tensorflow.quantization import quantize_model
 from neural_compressor.tensorflow.quantization.config import FRAMEWORK_NAME, StaticQuantConfig
 from neural_compressor.tensorflow.utils import BaseModel, Model, constants
@@ -36,6 +36,7 @@ def get_all_config_set() -> Union[BaseConfig, List[BaseConfig]]:
 
 
 @dump_elapsed_time("Pass auto-tune")
+@call_counter
 def autotune(
     model: Union[str, tf.keras.Model, BaseModel],
     tune_config: TuningConfig,
