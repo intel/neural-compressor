@@ -15,9 +15,9 @@
 
 from typing import Callable, Dict, List, Tuple, Union
 
-import prettytable as pt
 import torch
 from typing_extensions import TypeAlias
+from prettytable import PrettyTable
 
 from neural_compressor.common.utils import LazyImport, Mode, logger
 
@@ -182,7 +182,7 @@ class Statistics:  # pragma: no cover
         self.header = header
         self.data = data
         self.output_handle = output_handle
-        self.tb = pt.PrettyTable(min_table_width=40)
+        self.tb = PrettyTable(min_table_width=40)
 
     def print_stat(self):
         """Print the statistics."""
