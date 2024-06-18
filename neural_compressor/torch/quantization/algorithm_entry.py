@@ -90,7 +90,6 @@ def rtn_entry(
     model.save = MethodType(save, model)
     postprocess_model(model, mode, quantizer)
     dump_model_op_stats(mode, configs_mapping)
-    
     return model
 
 

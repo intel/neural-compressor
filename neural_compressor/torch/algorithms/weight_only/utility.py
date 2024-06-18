@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import torch
-import prettytable as pt
 
 from neural_compressor.torch.utils import accelerator, device_synchronize, logger
 
