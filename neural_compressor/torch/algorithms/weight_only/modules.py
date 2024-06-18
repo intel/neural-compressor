@@ -18,7 +18,6 @@
 # Note: Do not import this file unless you have already imported torch,
 # since the model classes inherit torch.nn.Module.
 import math
-import time
 import numpy as np
 import torch
 from torch.autograd import Function

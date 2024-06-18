@@ -107,4 +107,4 @@ def load(model_name_or_path, original_model=None, format="inc", device="cpu", **
         qmodel = weight_only.load(model_name_or_path, format=LoadFormat.HUGGINGFACE, device=device, **kwargs)
         return qmodel.to(device)
     else:
-        raise ValueError("`format` in load function can only be 'huggingface' or 'inc', but get {}".format(format))
+        raise ValueError("`format` in load function can only be 'huggingface' or 'default', but get {}".format(format))
