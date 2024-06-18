@@ -16,8 +16,8 @@
 from typing import Callable, Dict, List, Tuple, Union
 
 import torch
-from typing_extensions import TypeAlias
 from prettytable import PrettyTable
+from typing_extensions import TypeAlias
 
 from neural_compressor.common.utils import LazyImport, Mode, logger
 
