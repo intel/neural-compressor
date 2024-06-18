@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import math
-
 import torch
+import prettytable as pt
 
 from neural_compressor.torch.utils import accelerator, device_synchronize, logger
 
@@ -1134,3 +1133,4 @@ def convert_dtype_str2torch(str_dtype):
         return torch.bfloat16
     else:
         assert False, "Unsupported str dtype {} to torch dtype".format(str_dtype)
+        
