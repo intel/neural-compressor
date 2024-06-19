@@ -6,6 +6,7 @@ from unittest.mock import patch
 import torch
 import transformers
 
+import neural_compressor.common.utils.utility as inc_utils
 from neural_compressor.common import logger
 from neural_compressor.torch.quantization import (
     MixPrecisionConfig,
@@ -163,6 +164,43 @@ class TestAutoTune(unittest.TestCase):
 
         custom_tune_config = TuningConfig(config_set=[RTNConfig(bits=[4, 6])], max_trials=2)
         best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fn=eval_acc_fn)
+        print(inc_utils.FUNC_CALL_COUNTS)
+        self.assertIsNotNone(best_model)
+
+    def test_autotune_return_qmodel_directly(self):
+        inc_utils.FUNC_CALL_COUNTS.clear()
+
+        baseline = 1
+        eval_result = [0.9, 1.1]
+        acc_list = [baseline] + eval_result
+
+        def eval_acc_fn(model) -> float:
+            acc = acc_list.pop(0)
+            return acc
+
+        custom_tune_config = TuningConfig(config_set=[RTNConfig(bits=[4, 6])], max_trials=2)
+        best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fn=eval_acc_fn)
+        assert (
+            inc_utils.FUNC_CALL_COUNTS.get("quantize") == 2
+        ), f"quantize should be called twice, but got {inc_utils.FUNC_CALL_COUNTS.get('quantize')}"
+        self.assertIsNotNone(best_model)
+
+    def test_autotune_return_re_quant_qmodel(self):
+        inc_utils.FUNC_CALL_COUNTS.clear()
+
+        baseline = 1
+        eval_result = [0.9, 0.8]
+        acc_list = [baseline] + eval_result
+
+        def eval_acc_fn(model) -> float:
+            acc = acc_list.pop(0)
+            return acc
+
+        custom_tune_config = TuningConfig(config_set=[RTNConfig(bits=[4, 6])], max_trials=2)
+        best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fn=eval_acc_fn)
+        assert (
+            inc_utils.FUNC_CALL_COUNTS.get("quantize") == 3
+        ), f"quantize should be called three times, but got {inc_utils.FUNC_CALL_COUNTS.get('quantize')}"
         self.assertIsNotNone(best_model)
 
     @reset_tuning_target

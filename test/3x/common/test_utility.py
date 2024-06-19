@@ -11,6 +11,7 @@ import time
 import unittest
 from unittest.mock import MagicMock, patch
 
+import neural_compressor.common.utils.utility as inc_utils
 from neural_compressor.common import options
 from neural_compressor.common.utils import (
     CpuInfo,
@@ -164,6 +165,27 @@ class TestSingletonDecorator:
         instance.value = 1
         instance2 = TestSingleton()
         assert instance2.value == 1, "Singleton should return the same instance"
+
+
+class TestCallCounter(unittest.TestCase):
+    def test_call_counter(self):
+        # empty dict
+        inc_utils.FUNC_CALL_COUNTS.clear()
+
+        @inc_utils.call_counter
+        def add(a, b):
+            return a + b
+
+        # Initial count should be 0
+        self.assertEqual(inc_utils.FUNC_CALL_COUNTS["add"], 0)
+
+        # Call the function multiple times
+        add(1, 2)
+        add(3, 4)
+        add(5, 6)
+
+        # Count should be incremented accordingly
+        self.assertEqual(inc_utils.FUNC_CALL_COUNTS["add"], 3)
 
 
 if __name__ == "__main__":

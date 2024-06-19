@@ -20,7 +20,7 @@ import tensorflow as tf
 from neural_compressor.common import logger
 from neural_compressor.common.base_config import BaseConfig, get_all_config_set_from_config_registry
 from neural_compressor.common.base_tuning import EvaluationFuncWrapper, TuningConfig, init_tuning
-from neural_compressor.common.utils import dump_elapsed_time
+from neural_compressor.common.utils import call_counter, dump_elapsed_time
 from neural_compressor.tensorflow.quantization import quantize_model
 from neural_compressor.tensorflow.quantization.config import FRAMEWORK_NAME, StaticQuantConfig
 from neural_compressor.tensorflow.utils import BaseModel, Model, constants
@@ -36,6 +36,7 @@ def get_all_config_set() -> Union[BaseConfig, List[BaseConfig]]:
 
 
 @dump_elapsed_time("Pass auto-tune")
+@call_counter
 def autotune(
     model: Union[str, tf.keras.Model, BaseModel],
     tune_config: TuningConfig,
@@ -52,7 +53,7 @@ def autotune(
     baseline: float = eval_func_wrapper.evaluate(model)
     tuning_monitor.set_baseline(baseline)
     tuning_logger.tuning_start()
-    for trial_index, quant_config in enumerate(config_loader):
+    for trial_index, quant_config in enumerate(config_loader, 1):
         tuning_logger.trial_start(trial_index=trial_index)
         tuning_logger.execution_start()
         logger.info(quant_config.to_dict())
@@ -65,8 +66,14 @@ def autotune(
         tuning_logger.trial_end(trial_index)
         if tuning_monitor.need_stop():
             logger.info("Stopped tuning.")
-            best_quant_config: BaseConfig = tuning_monitor.get_best_quant_config()
-            best_quant_model = quantize_model(model, quant_config, calib_dataloader, calib_iteration)
+            best_trial_record = tuning_monitor.get_best_trial_record()
+            if best_trial_record.trial_index != trial_index:
+                logger.info("Re-quantizing with best quantization config...")
+                del q_model
+                best_quant_config: BaseConfig = best_trial_record.quant_config
+                best_quant_model = quantize_model(model, best_quant_config, calib_dataloader, calib_iteration)
+            else:
+                best_quant_model = q_model
             break
     tuning_logger.tuning_end()
     return best_quant_model
