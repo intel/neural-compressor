@@ -54,13 +54,8 @@ class TestHFModelLoad:
         assert (
             self.get_woq_linear_num(model, "HPUWeightOnlyLinear") == 154
         ), "Incorrect number of HPUWeightOnlyLinear modules"
-        import pdb
-
-        pdb.set_trace()
         output1 = model(self.example_inputs)[0]
-        import pdb
 
-        pdb.set_trace()
         # second load: linear -> HPUWeightOnlyLinear using hpu_model.safetensors saved in local cache dir
         model = load(
             model_name_or_path=self.model_name,

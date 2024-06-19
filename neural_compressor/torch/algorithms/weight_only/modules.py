@@ -73,25 +73,8 @@ class WeightOnlyLinear(torch.nn.Module):
         raise NotImplementedError("{} doesn't implement `unpack` function. ".format(self.__class__.__name__))
 
     @abstractmethod
-    def recover(self, *args, **kwargs):
-        raise NotImplementedError("{} doesn't implement `recover` function. ".format(self.__class__.__name__))
-
     def forward(self, input):
-        if not hasattr(self, "weight"):
-            weight = self.recover()
-            device = self.scales.device
-            if weight.dtype == torch.float16 and device.type == "cpu":
-                weight = weight.float()
-                self.bias = self.bias.float() if self.bias is not None else None
-        if True:  # keep reusing self.weight due to recover is too slow.
-            if not hasattr(self, "weight"):
-                self.weight = weight
-            input = input.type(self.weight.dtype)
-            logger.debug(f"Calculating {self}")
-            return F.linear(input, self.weight, self.bias)
-        else:
-            input = input.type(weight.dtype)
-            return F.linear(input, weight, self.bias)
+        raise NotImplementedError("{} doesn't implement `forward` function. ".format(self.__class__.__name__))
 
     def extra_repr(self) -> str:
         tmp_str = "in_features={}, out_features={}, bits={}, group_size={}, bias={}".format(
@@ -339,6 +322,23 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
                 fp32_weight[:, idx] = weight[:, idx] * scales[:, self.g_idx[idx]]
 
         return fp32_weight.to(scales.device)
+
+    def forward(self, input):
+        if not hasattr(self, "weight"):
+            weight = self.recover()
+            device = self.scales.device
+            if weight.dtype == torch.float16 and device.type == "cpu":
+                weight = weight.float()
+                self.bias = self.bias.float() if self.bias is not None else None
+        if True:  # keep reusing self.weight due to recover is too slow.
+            if not hasattr(self, "weight"):
+                self.weight = weight
+            input = input.type(self.weight.dtype)
+            logger.debug(f"Calculating {self}")
+            return F.linear(input, self.weight, self.bias)
+        else:
+            input = input.type(weight.dtype)
+            return F.linear(input, weight, self.bias)
 
     def pack_tensor(self, raw_tensor):
         if "cuda" in self.device:

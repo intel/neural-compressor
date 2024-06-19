@@ -199,6 +199,7 @@ class WOQModelLoader:
 
         from .modules import HPUWeightOnlyLinear, INCWeightOnlyLinear, MulLinear
 
+        # TODO: consider using a decorator to register the xxxWeightOnlyLinear.
         # default setting
         format_dict = {LoadFormat.HUGGINGFACE: INCWeightOnlyLinear, LoadFormat.DEFAULT: INCWeightOnlyLinear}
         device_dict = {"cpu": INCWeightOnlyLinear, "hpu": HPUWeightOnlyLinear}
