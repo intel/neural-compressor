@@ -1610,12 +1610,12 @@ def get_default_hqq_config() -> HQQConfig:
 
 ######################## FP8 Quant Config ###############################
 # refer to habana_quantization_toolkit/_core/common.py
-FP8_WHITE_LIST = (
+FP8_WHITE_LIST = [
         "Matmul", "Linear", "FalconLinear", "KVCache", "Conv2d",
-        "LoRACompatibleLinear", "LoRACompatibleConv", "Softmax", "ModuleFusedSDPA")
+        "LoRACompatibleLinear", "LoRACompatibleConv", "Softmax", "ModuleFusedSDPA"]
 if importlib.util.find_spec("deepspeed"):
-    FP8_WHITE_LIST.append(
-        "LinearLayer", "LinearAllreduce","ScopedLinearAllReduce", "LmHeadLinearAllreduce")
+    FP8_WHITE_LIST.extend(
+        ["LinearLayer", "LinearAllreduce","ScopedLinearAllReduce", "LmHeadLinearAllreduce"])
 
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=FP8_QUANT)
 class FP8Config(TorchBaseConfig):
