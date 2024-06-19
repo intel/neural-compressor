@@ -146,7 +146,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
             torch.int16,
             torch.int32,
             torch.int64,
-        ], "Only support torch.int8|16|32|64 as compressed dtype."
+        ], f"Only support torch.int8|16|32|64 as compressed dtype. but got {compression_dtype}"
         dtype_bits_mapping = {torch.int8: 8, torch.int16: 16, torch.int32: 32, torch.int64: 64}
         self.compress_bits = dtype_bits_mapping[compression_dtype]
         self.n_pack = self.compress_bits // self.bits
