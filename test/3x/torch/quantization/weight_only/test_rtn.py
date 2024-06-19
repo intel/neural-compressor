@@ -138,6 +138,34 @@ class TestRTNQuant:
         except:
             assert torch.allclose(atol_false, atol_true, atol=0.012), "atol is very close, double checked the logic."
 
+    def test_quant_lm_head(self):
+        # tie_word_embeddings=false
+        gptj_model = transformers.AutoModelForCausalLM.from_pretrained(
+            "hf-internal-testing/tiny-random-GPTJForCausalLM",
+            device_map=device,
+        )
+        lm_head_id = id(gptj_model.lm_head.weight)
+        assert id(gptj_model.transformer.wte.weight) != lm_head_id, "The lm_head weight is tied, please check!"
+        quant_config = RTNConfig(quant_lm_head=True)
+        model = prepare(gptj_model, quant_config)
+        model = convert(model)
+
+        # tie_word_embeddings=true
+        opt_model = transformers.AutoModelForCausalLM.from_pretrained(
+            "trl-internal-testing/tiny-random-OPTForCausalLM",
+            device_map=device,
+        )
+        lm_head_id = id(opt_model.lm_head.weight)
+        assert (
+            id(opt_model.model.decoder.embed_tokens.weight) == lm_head_id
+        ), "The lm_head weight is not tied, please check!"
+        quant_config = RTNConfig(quant_lm_head=True)
+        model = prepare(opt_model, quant_config)
+        model = convert(model)
+        assert (
+            id(model.model.decoder.embed_tokens.weight) == lm_head_id
+        ), "The tied lm_head weight is not deep copied, please check!"
+
     def test_layer_wise(self):
         model = copy.deepcopy(self.tiny_gptj)
         quant_config = RTNConfig(
