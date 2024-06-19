@@ -980,7 +980,7 @@ class StaticQuantConfig(BaseConfig):
         act_dtype: str = "uint8",
         act_sym: bool = False,
         act_granularity: str = "per_tensor",
-        act_algo: str = "kl",
+        act_algo: str = "minmax",
         excluded_precisions: list = [],
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):

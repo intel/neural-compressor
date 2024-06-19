@@ -118,7 +118,7 @@ def find_layers(module, layers=SUPPORTED_LAYERS, name=""):
         return {name: module}
     else:
         # use string type to find name:
-        if type(module).__name__ in ["Linear"]:
+        if isinstance(module, tuple(layers)):
             return {name: module}
         else:
             pass
