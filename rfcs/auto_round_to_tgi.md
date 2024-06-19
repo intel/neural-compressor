@@ -8,8 +8,6 @@ Hi, here is the INC team from Intel. Thank you for developing this amazing proje
 
 Our team have developed a new weight-only quantization algorithm called Auto-Round. It has achieved superior accuracy compared to [GPTQ](https://arxiv.org/abs/2210.17323), [AWQ](https://arxiv.org/abs/2306.00978), [OmniQuant](https://arxiv.org/abs/2308.13137), and [HQQ](https://mobiusml.github.io/hqq_blog/) across 11 tasks, particularly excelling in low-bit quantization (e.g., 2-bits and 3-bits). Auto-Round supports quantization from 2 to 8 bits, involves low tuning costs, and imposes no additional overhead during inference. Key results are summarized below, with detailed information available in our [paper](https://arxiv.org/abs/2309.05516), [code repository](https://github.com/intel/auto-round/blob/main/docs/acc.md) and Hugging Face [low-bit quantization leaderboard](https://huggingface.co/spaces/Intel/low_bit_open_llm_leaderboard).
 
- impressive results in the paper and on the https://huggingface.co/spaces/Intel/low_bit_open_llm_leaderboard a
-
 ![alt text](Autoround-res.png)
 
 
