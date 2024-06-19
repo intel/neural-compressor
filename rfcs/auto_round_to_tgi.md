@@ -33,7 +33,7 @@ We propose two options to implement it:
 
 #### Option 1: Adding Auto-Round as a New Python Dependency (Recommended)
 
-Auto-Round is currently released as a pure [Python binary](https://pypi.org/project/auto-round/). The option prefer include `auto-round` in TGI's [`requirements_xx.txt`](https://github.com/huggingface/text-generation-inference/blob/main/server/requirements_cuda.txt) and utilize Auto-Round's API to obtain the quantized model.
+Auto-Round is currently released as a pure [Python binary](https://pypi.org/project/auto-round/). The option prefers include `auto-round` in TGI's [`requirements_xx.txt`](https://github.com/huggingface/text-generation-inference/blob/main/server/requirements_cuda.txt) and utilizing Auto-Round's API to obtain the quantized model.
 
 Advantages:
 
