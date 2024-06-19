@@ -1,12 +1,13 @@
 import copy
 import shutil
-import pytest
+
 import huggingface_hub
+import pytest
 import torch
 import transformers
 
-from neural_compressor.torch.utils import LoadFormat, accelerator, is_hpex_available
 from neural_compressor.torch.quantization import load
+from neural_compressor.torch.utils import LoadFormat, accelerator, is_hpex_available
 
 device = accelerator.current_device_name()
 
@@ -46,18 +47,25 @@ class TestHFModelLoad:
         # 1. use huggingface model_id (format=huggingface, device="hpu")
         # first load: linear -> INCWeightOnlyLinear -> HPUWeightOnlyLinear, save hpu_model.safetensors to local cache dir
         model = load(
-            model_name_or_path=self.model_name, format="huggingface", device="hpu",
+            model_name_or_path=self.model_name,
+            format="huggingface",
+            device="hpu",
         )
         assert (
             self.get_woq_linear_num(model, "HPUWeightOnlyLinear") == 154
         ), "Incorrect number of HPUWeightOnlyLinear modules"
-        import pdb;pdb.set_trace()
-        output1 = model(self.example_inputs)[0]
-        import pdb;pdb.set_trace()
+        import pdb
 
+        pdb.set_trace()
+        output1 = model(self.example_inputs)[0]
+        import pdb
+
+        pdb.set_trace()
         # second load: linear -> HPUWeightOnlyLinear using hpu_model.safetensors saved in local cache dir
         model = load(
-            model_name_or_path=self.model_name, format="huggingface", device="hpu",
+            model_name_or_path=self.model_name,
+            format="huggingface",
+            device="hpu",
         )
         assert (
             self.get_woq_linear_num(model, "HPUWeightOnlyLinear") == 154
@@ -71,7 +79,9 @@ class TestHFModelLoad:
         # 2. use huggingface local model_path (format=huggingface, device="hpu")
         # first load: linear -> INCWeightOnlyLinear -> HPUWeightOnlyLinear, save hpu_model.safetensors to local cache dir
         model = load(
-            model_name_or_path=self.local_hf_model, format="huggingface", device="hpu",
+            model_name_or_path=self.local_hf_model,
+            format="huggingface",
+            device="hpu",
         )
         assert (
             self.get_woq_linear_num(model, "HPUWeightOnlyLinear") == 154
@@ -80,7 +90,9 @@ class TestHFModelLoad:
 
         # second load: linear -> HPUWeightOnlyLinear using hpu_model.safetensors saved in local cache dir
         model = load(
-            model_name_or_path=self.local_hf_model, format="huggingface", device="hpu",
+            model_name_or_path=self.local_hf_model,
+            format="huggingface",
+            device="hpu",
         )
         assert (
             self.get_woq_linear_num(model, "HPUWeightOnlyLinear") == 154

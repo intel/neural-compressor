@@ -196,6 +196,7 @@ class WOQModelLoader:
     def _build_woq_model(self):
         """Build weight-only quantization model."""
         from neural_compressor.torch.utils import set_module
+
         from .modules import HPUWeightOnlyLinear, INCWeightOnlyLinear, MulLinear
 
         # default setting

@@ -3,6 +3,7 @@ import shutil
 
 import pytest
 import torch
+
 torch.manual_seed(0)
 import transformers
 from packaging.version import Version
@@ -116,8 +117,8 @@ class TestAutoRound:
         q_model.save("saved_results")
         inc_out = q_model(self.inp)[0]
 
-        from neural_compressor.torch.quantization import load
         from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
+        from neural_compressor.torch.quantization import load
 
         # loading compressed model
         loaded_model = load("saved_results", copy.deepcopy(self.gptj))
