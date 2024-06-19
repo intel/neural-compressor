@@ -169,10 +169,6 @@ class RTNConfig(BaseConfig):
         self.double_quant_group_size = double_quant_group_size
         self.quant_lm_head = quant_lm_head
         self._post_init()  # initialize global & local configuration
-        if not self.quant_lm_head:
-            # use .* for re.match
-            usual_lm_head_names = [".*lm_head", ".*output_layer", ".*embed_out"]
-            self.set_local(usual_lm_head_names, RTNConfig(dtype="fp32"))
 
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
@@ -208,6 +204,15 @@ class RTNConfig(BaseConfig):
         operators = list(WOQ_WHITE_LIST)
         supported_configs.append(OperatorConfig(config=linear_rtn_config, operators=operators))
         cls.supported_configs = supported_configs
+
+    def to_config_mapping(
+        self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
+    ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
+        if not self.quant_lm_head:
+            usual_lm_head_names = [".*lm_head", ".*output_layer", ".*embed_out"]
+            self.set_local(usual_lm_head_names, RTNConfig(dtype="fp32"))
+        config_mapping = super().to_config_mapping(config_list, model_info)
+        return config_mapping
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:

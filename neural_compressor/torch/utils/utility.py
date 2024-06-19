@@ -225,7 +225,6 @@ def dump_model_op_stats(mode, tune_cfg):
     for op, config in tune_cfg.items():
         op_type = op[1]
         config = config.to_dict()
-        # import pdb; pdb.set_trace()
         if not config["dtype"] == "fp32":
             num_bits = config["bits"]
             group_size = config["group_size"]

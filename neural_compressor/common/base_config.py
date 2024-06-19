@@ -198,10 +198,16 @@ class BaseConfig(ABC):
     def local_config(self, config):
         self._local_config = config
 
-    def set_local(self, operator_name: Union[str, Callable], config: BaseConfig) -> BaseConfig:
-        if operator_name in self.local_config:
-            logger.warning("The configuration for %s has already been set, update it.", operator_name)
-        self.local_config[operator_name] = config
+    def set_local(self, operator_name_or_list: Union[List, str, Callable], config: BaseConfig) -> BaseConfig:
+        if hasattr(operator_name_or_list, "__iter__"):
+            for operator_name in operator_name_or_list:
+                if operator_name in self.local_config:
+                    logger.warning("The configuration for %s has already been set, update it.", operator_name)
+                self.local_config[operator_name] = config
+        else:
+            if operator_name_or_list in self.local_config:
+                logger.warning("The configuration for %s has already been set, update it.", operator_name)
+            self.local_config[operator_name_or_list] = config
         return self
 
     def to_dict(self):
