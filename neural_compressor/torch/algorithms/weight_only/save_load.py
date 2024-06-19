@@ -129,7 +129,7 @@ class WOQModelLoader:
                 qmodel_weight_file_path, WEIGHT_NAME, self.model_name_or_path
             )
         )
-        logger.info(f"Find weights file {qmodel_weight_file_path}")
+        logger.info(f"Find weight file {qmodel_weight_file_path}")
 
         qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(self.model_name_or_path)), QCONFIG_NAME)
         assert os.path.exists(qconfig_file_path), (
@@ -195,10 +195,7 @@ class WOQModelLoader:
 
     def _build_woq_model(self):
         """Build weight-only quantization model."""
-        from auto_round.export.export_to_itrex.model_wrapper import WeightOnlyLinear as AutoRoundWeightOnlyLinear
-
         from neural_compressor.torch.utils import set_module
-
         from .modules import HPUWeightOnlyLinear, INCWeightOnlyLinear, MulLinear
 
         # default setting
@@ -220,15 +217,6 @@ class WOQModelLoader:
                     if isinstance(q_config_value, dict) and [algo for algo in q_config_value.keys()][0] == "autoround":
                         _is_autoround = True
                     module_quantization_config = [config for config in q_config_value.values()][0]
-
-            # if is autoroud, replace INCWeightOnlyLinear to AutoRoundWeightOnlyLinear
-            if _is_autoround:
-
-                def update_dict_value(dictionary, original_value, new_value):
-                    return {key: new_value if value == original_value else value for key, value in dictionary.items()}
-
-                format_dict = update_dict_value(format_dict, INCWeightOnlyLinear, AutoRoundWeightOnlyLinear)
-                device_dict = update_dict_value(device_dict, INCWeightOnlyLinear, AutoRoundWeightOnlyLinear)
 
             # replace `torch.nn.Linear` with `WeightOnlyLinear`
             if isinstance(module, torch.nn.Linear):
@@ -254,18 +242,16 @@ class WOQModelLoader:
                 if WeightOnlyLinearClass == INCWeightOnlyLinear:
                     kwargs["group_size"] = module_quantization_config.get("group_size", 32)
                     kwargs["g_idx"] = g_idx
+                    if _is_autoround:
+                        from .utility import convert_dtype_str2torch
+
+                        kwargs["scale_dtype"] = convert_dtype_str2torch(
+                            module_quantization_config.get("scale_dtype", "fp16")
+                        )
                 elif WeightOnlyLinearClass == HPUWeightOnlyLinear:
                     # TODO: update kwargs specific to HPUWeightOnlyLinear
                     kwargs["group_size"] = module_quantization_config.get("group_size", 32)
                     kwargs["g_idx"] = g_idx
-                elif WeightOnlyLinearClass == AutoRoundWeightOnlyLinear:
-                    from .utility import convert_dtype_str2torch
-
-                    WeightOnlyLinearClass = AutoRoundWeightOnlyLinear
-                    kwargs["groupsize"] = module_quantization_config.get("group_size", 32)
-                    kwargs["scale_dtype"] = convert_dtype_str2torch(
-                        module_quantization_config.get("scale_dtype", "fp16")
-                    )
 
                 new_module = WeightOnlyLinearClass(
                     module.in_features,
@@ -288,10 +274,6 @@ class WOQModelLoader:
 
                 # if format mapping module doesn't match device mapping module, then replace to device mapping module
                 if format_dict[self.format] != device_dict[self.device]:
-                    # TODO: need to enhance AutoRoundWeightOnlyLinear
-                    if format_dict[self.format] == "AutoRoundWeightOnlyLinear":
-                        assert False, "Auto-round algorithm doesn't support 'device='hpu' now.'"
-
                     logger.debug(
                         f"Replacing {name}'s type from "
                         f"'{format_dict[self.format].__name__}' to '{device_dict[self.device].__name__}'"
@@ -321,9 +303,9 @@ class WOQModelLoader:
                         use_optimum_format=True,
                         **kwargs,
                     )
-                    new_module.pack(int_weight, scale, zp)
-                    new_module.bias = bias
-                    new_module.g_idx = g_idx
+                    new_module.pack(int_weight.to(self.device), scale.to(self.device), zp.to(self.device))
+                    new_module.bias = bias.to(self.device)
+                    new_module.g_idx = g_idx.to(self.device)
 
                     # if the new module is HPUWeightOnlyLinear, save hpu_model.safetensors for next loading
                     if not self._should_save_hpu_format_tensor and WeightOnlyLinearClass == HPUWeightOnlyLinear:
@@ -616,7 +598,7 @@ class WOQModelLoader:
         if self._with_hpu_format_tensor():
             resolved_archive_file = os.path.join(self._model_local_dir, HPU_SAFE_WEIGHTS_NAME)
 
-        logger.info(f"Find weights file {resolved_archive_file}")
+        logger.info(f"Find weight file {resolved_archive_file}")
 
         if is_sharded:  # pragma: no cover
             # rsolved_archive_file becomes a list of files that point to the different checkpoint shards in this case.
@@ -739,6 +721,7 @@ class WOQModelLoader:
             offload_state_dict=offload_state_dict,
             dtype=torch_dtype,
             keep_in_fp32_modules=[],
+            device_map={"": self.device},
         )
 
         # make sure token embedding weights are still tied if needed

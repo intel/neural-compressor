@@ -30,7 +30,8 @@ class TestHPUAccelerator:
         assert accelerator.empty_cache() is None
 
     def test_get_device(self):
-        if torch.hpu.device_count() < 2:
+        import habana_frameworks.torch.hpu as torch_hpu
+        if torch_hpu.device_count() < 2:
             return
         accelerator = auto_detect_accelerator()
         assert accelerator.set_device(1) is None

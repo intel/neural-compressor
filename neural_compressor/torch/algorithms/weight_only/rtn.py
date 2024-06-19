@@ -188,9 +188,9 @@ class RTNQuantizer(Quantizer):
                 int_weight = int_weight.t_().contiguous()
                 scale = scale.t_().contiguous()
                 zp = zp.t_().contiguous() if zp is not None else zp
-            from .modules import WeightOnlyLinear
+            from .modules import INCWeightOnlyLinear
 
-            new_module = WeightOnlyLinear(
+            new_module = INCWeightOnlyLinear(
                 in_features,
                 out_features,
                 dtype=dtype,

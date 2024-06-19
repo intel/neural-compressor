@@ -1,13 +1,12 @@
 import copy
 import shutil
-
+import pytest
 import huggingface_hub
 import torch
 import transformers
 
-from neural_compressor.common import logger
-from neural_compressor.torch.algorithms.weight_only.save_load import WOQModelLoader
-from neural_compressor.torch.utils import LoadFormat, accelerator
+from neural_compressor.torch.utils import LoadFormat, accelerator, is_hpex_available
+from neural_compressor.torch.quantization import load
 
 device = accelerator.current_device_name()
 
@@ -31,35 +30,35 @@ class TestHFModelLoad:
                 woq_linear_num += 1
         return woq_linear_num
 
-    def test_load_hf_woq_model(self):
-        from neural_compressor.torch.quantization import load
-
-        # 1. huggingface model_id (format=huggingface, device="cpu")
+    def test_load_hf_woq_model_cpu(self):
+        # use huggingface model_id (format=huggingface, device="cpu")
         qmodel = load(
             model_name_or_path=self.model_name, format="huggingface", torch_dtype=torch.float32
         )  # 'torch_dtype=torch.float32' for cpu test
         assert (
             self.get_woq_linear_num(qmodel, "INCWeightOnlyLinear") == 154
         ), "Incorrect number of INCWeightOnlyLinear modules"
-        output = qmodel(self.example_inputs)[0]
+        output = qmodel(self.example_inputs.to("cpu"))[0]
         assert len(output) > 0, "Not loading the model correctly"
 
-        # 2. huggingface model_id (format=huggingface, device="hpu")
+    @pytest.mark.skipif(not is_hpex_available(), reason="no hpex in environment here.")
+    def test_load_hf_woq_model_hpu(self):
+        # 1. use huggingface model_id (format=huggingface, device="hpu")
         # first load: linear -> INCWeightOnlyLinear -> HPUWeightOnlyLinear, save hpu_model.safetensors to local cache dir
-        model_loader = WOQModelLoader(
-            model_name_or_path=self.model_name, format=LoadFormat.HUGGINGFACE, device="hpu", torch_dtype=torch.float32
+        model = load(
+            model_name_or_path=self.model_name, format="huggingface", device="hpu",
         )
-        model = model_loader.load_woq_model()
         assert (
             self.get_woq_linear_num(model, "HPUWeightOnlyLinear") == 154
         ), "Incorrect number of HPUWeightOnlyLinear modules"
+        import pdb;pdb.set_trace()
         output1 = model(self.example_inputs)[0]
+        import pdb;pdb.set_trace()
 
         # second load: linear -> HPUWeightOnlyLinear using hpu_model.safetensors saved in local cache dir
-        model_loader = WOQModelLoader(
-            model_name_or_path=self.model_name, format=LoadFormat.HUGGINGFACE, device="hpu", torch_dtype=torch.float32
+        model = load(
+            model_name_or_path=self.model_name, format="huggingface", device="hpu",
         )
-        model = model_loader.load_woq_model()
         assert (
             self.get_woq_linear_num(model, "HPUWeightOnlyLinear") == 154
         ), "Incorrect number of HPUWeightOnlyLinear modules"
@@ -69,28 +68,20 @@ class TestHFModelLoad:
             output1, output2
         ), "The model loaded the second time is different from the model loaded the first time"
 
-        # 3. huggingface local model_path (format=huggingface, device="hpu")
+        # 2. use huggingface local model_path (format=huggingface, device="hpu")
         # first load: linear -> INCWeightOnlyLinear -> HPUWeightOnlyLinear, save hpu_model.safetensors to local cache dir
-        model_loader = WOQModelLoader(
-            model_name_or_path=self.local_hf_model,
-            format=LoadFormat.HUGGINGFACE,
-            device="hpu",
-            torch_dtype=torch.float32,
+        model = load(
+            model_name_or_path=self.local_hf_model, format="huggingface", device="hpu",
         )
-        model = model_loader.load_woq_model()
         assert (
             self.get_woq_linear_num(model, "HPUWeightOnlyLinear") == 154
         ), "Incorrect number of HPUWeightOnlyLinear modules"
         output1 = model(self.example_inputs)[0]
 
         # second load: linear -> HPUWeightOnlyLinear using hpu_model.safetensors saved in local cache dir
-        model_loader = WOQModelLoader(
-            model_name_or_path=self.local_hf_model,
-            format=LoadFormat.HUGGINGFACE,
-            device="hpu",
-            torch_dtype=torch.float32,
+        model = load(
+            model_name_or_path=self.local_hf_model, format="huggingface", device="hpu",
         )
-        model = model_loader.load_woq_model()
         assert (
             self.get_woq_linear_num(model, "HPUWeightOnlyLinear") == 154
         ), "Incorrect number of HPUWeightOnlyLinear modules"
@@ -99,9 +90,3 @@ class TestHFModelLoad:
         assert torch.equal(
             output1, output2
         ), "The model loaded the second time is different from the model loaded the first time"
-
-
-test = TestHFModelLoad()
-test.setup_class()
-test.test_load_hf_woq_model()
-test.teardown_class()

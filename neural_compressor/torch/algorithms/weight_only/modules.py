@@ -49,30 +49,20 @@ class QDQLayer(torch.nn.Module):
 
 class WeightOnlyLinear(torch.nn.Module):
     def __init__(
-        self, in_features, out_features, dtype, bits, group_size, bias, scale_dtype, compression_dtype, device
+        self,
+        in_features,
+        out_features,
+        dtype,
+        bits,
+        group_size,
+        bias,
     ):
         super().__init__()
-        self.dtype = dtype
-        if self.dtype != "int" and "int" in self.dtype:  # for nf4, fp4
-            bits = int(self.dtype.lstrip("int"))
-            self.dtype = "int"
-        self.bits = bits
-        self.device = device
         self.in_features = in_features
         self.out_features = out_features
+        self.dtype = dtype
+        self.bits = bits
         self.group_size = group_size if group_size != -1 else in_features
-        self.float_type = scale_dtype
-        assert compression_dtype in [
-            torch.int8,
-            torch.int16,
-            torch.int32,
-            torch.int64,
-        ], "Only support torch.int8|16|32|64 as compressed dtype."
-        dtype_bits_mapping = {torch.int8: 8, torch.int16: 16, torch.int32: 32, torch.int64: 64}
-        self.compress_bits = dtype_bits_mapping[compression_dtype]
-        self.n_pack = self.compress_bits // self.bits
-        self.compression_dtype = compression_dtype
-        self.float_type = scale_dtype
 
     @abstractmethod
     def pack(self, *args, **kwargs):
@@ -82,106 +72,9 @@ class WeightOnlyLinear(torch.nn.Module):
     def unpack(self, *args, **kwargs):
         raise NotImplementedError("{} doesn't implement `unpack` function. ".format(self.__class__.__name__))
 
-    def pack_tensor(self, raw_tensor):
-        if "cuda" in self.device:
-            return self.pack_tensor_with_torch(raw_tensor)
-        else:
-            return self.pack_tensor_with_numpy(raw_tensor)
-
-    def unpack_tensor(self, packed_tensor):
-        if "cuda" in self.device:
-            return self.unpack_tensor_with_torch(packed_tensor)
-        else:
-            return self.unpack_tensor_with_numpy(packed_tensor)
-
-    def recover(self):
-        logger.debug(f"Recovering {self} weight")
-        weight, scales, zp = self.unpack()
-        device = scales.device
-        fp32_weight = torch.zeros(self.out_features, self.in_features, dtype=self.float_type).to(device)
-
-        # recover fp32 weight
-        if zp is not None:
-            # recover fp32 weight with int_weight, scale, and zero_point
-            for idx in range(self.in_features):
-                fp32_weight[:, idx] = (torch.subtract(weight[:, idx], zp[:, self.g_idx[idx]]).to(torch.int8)) * scales[
-                    :, self.g_idx[idx]
-                ]
-        else:
-            # recover fp32 weight with int_weight, scale
-            for idx in range(self.in_features):
-                fp32_weight[:, idx] = weight[:, idx] * scales[:, self.g_idx[idx]]
-        return fp32_weight
-
-    def pack_tensor_with_torch(self, raw_tensor):
-        target_len = math.ceil(raw_tensor.shape[1] / self.n_pack)
-        packed_tensor = torch.zeros(raw_tensor.shape[0], target_len, dtype=self.compression_dtype).to(self.device)
-        mask = torch.tensor(2**self.bits - 1, dtype=self.compression_dtype).to(self.device)
-        for j in range(packed_tensor.shape[1]):
-            start = self.n_pack * j
-            end = self.n_pack * (j + 1)
-            tmp = raw_tensor[:, start:end].type(self.compression_dtype)
-            tmp &= mask
-            for e in range(tmp.shape[1]):
-                tmp[:, e] = tmp[:, e] << (self.bits * e)
-                packed_tensor[:, j] |= tmp[:, e]
-                accelerator.synchronize()
-        return packed_tensor
-
-    def unpack_tensor_with_torch(self, packed_tensor):
-        target_dtype = torch.int8 if not hasattr(self, "qzeros") or "int" not in self.dtype else torch.uint8
-        target_len = packed_tensor.shape[1] * self.n_pack
-        unpacked_tensor = torch.zeros(packed_tensor.shape[0], target_len, dtype=target_dtype).to(self.device)
-        mask = torch.tensor(2**self.bits - 1, dtype=self.compression_dtype).to(self.device)
-        for j in range(packed_tensor.shape[1]):
-            for e in range(self.n_pack):
-                index = j * self.n_pack + e
-                tmp = packed_tensor[:, j]
-                tmp = tmp << (self.compress_bits - self.bits * (e + 1))
-                tmp = tmp >> self.compress_bits - self.bits
-                if target_dtype == torch.uint8:
-                    tmp &= mask  # remove sign bit
-                unpacked_tensor[:, index].copy_(tmp.type(target_dtype))
-                accelerator.synchronize()
-        return unpacked_tensor
-
-    def pack_tensor_with_numpy(self, raw_tensor):
-        raw_array = raw_tensor.cpu().numpy()
-        target_len = np.ceil(raw_array.shape[1] / self.n_pack).astype(int)
-        torch.int32
-        target_dtype = torch.tensor(0, dtype=self.compression_dtype).numpy().dtype
-        packed_array = np.zeros((raw_array.shape[0], target_len), dtype=target_dtype)
-        mask = np.uint8(2**self.bits - 1)
-        for j in range(packed_array.shape[1]):
-            start = self.n_pack * j
-            end = self.n_pack * (j + 1)
-            tmp = raw_array[:, start:end].astype(target_dtype)
-            tmp &= mask
-            for e in range(tmp.shape[1]):
-                tmp[:, e] = np.left_shift(tmp[:, e], self.bits * e)
-                packed_array[:, j] |= tmp[:, e]
-                accelerator.synchronize()
-        packed_tensor = torch.from_numpy(packed_array).to(device=raw_tensor.device)
-        return packed_tensor
-
-    def unpack_tensor_with_numpy(self, packed_tensor):
-        packed_array = packed_tensor.cpu().numpy()
-        target_dtype = np.int8 if not hasattr(self, "qzeros") or "int" not in self.dtype else np.uint8
-        target_len = packed_array.shape[1] * self.n_pack
-        unpacked_array = np.zeros((packed_array.shape[0], target_len), dtype=target_dtype)
-        mask = np.uint8(2**self.bits - 1)
-        for j in range(packed_array.shape[1]):
-            for e in range(self.n_pack):
-                index = j * self.n_pack + e
-                tmp = packed_array[:, j]
-                tmp = np.left_shift(tmp, self.compress_bits - self.bits * (e + 1))
-                tmp = np.right_shift(tmp, self.compress_bits - self.bits)
-                if target_dtype == np.uint8:
-                    tmp &= mask
-                unpacked_array[:, index] = tmp.astype(target_dtype)
-                accelerator.synchronize()
-        unpacked_tensor = torch.from_numpy(unpacked_array).to(device=packed_tensor.device)
-        return unpacked_tensor
+    @abstractmethod
+    def recover(self, *args, **kwargs):
+        raise NotImplementedError("{} doesn't implement `recover` function. ".format(self.__class__.__name__))
 
     def forward(self, input):
         if not hasattr(self, "weight"):
@@ -235,9 +128,6 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
             bits,
             group_size,
             bias,
-            scale_dtype,
-            compression_dtype,
-            device,
         )
         self.use_optimum_format = use_optimum_format
         if "int" not in self.dtype:  # for nf4, fp4
@@ -249,7 +139,18 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
             self.int2float_mapping = {}
             for k, v in zip(int_list, float_list):
                 self.int2float_mapping[k] = v
+        self.device = device
         self.compression_dim = compression_dim
+        assert compression_dtype in [
+            torch.int8,
+            torch.int16,
+            torch.int32,
+            torch.int64,
+        ], "Only support torch.int8|16|32|64 as compressed dtype."
+        dtype_bits_mapping = {torch.int8: 8, torch.int16: 16, torch.int32: 32, torch.int64: 64}
+        self.compress_bits = dtype_bits_mapping[compression_dtype]
+        self.n_pack = self.compress_bits // self.bits
+        # K is input channel, N is output channel
         assert compression_dim in [0, 1], (
             "Only support 0 or 1 as compression dimension, " + "0 is output channel, 1 is input channel."
         )
@@ -418,6 +319,109 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
                 zp = torch.where(zp > (2**self.bits - 1), 0, zp)
         return weight, scales, zp
 
+    def recover(self):
+        logger.info(f"Recovering {self} weight")
+        weight, scales, zp = self.unpack()
+        device = scales.device
+
+        fp32_weight = torch.zeros(self.out_features, self.in_features, dtype=self.float_type).to(device)
+
+        # recover fp32 weight
+        if zp is not None:
+            # recover fp32 weight with int_weight, scale, and zero_point
+            for idx in range(self.in_features):
+                fp32_weight[:, idx] = (torch.subtract(weight[:, idx], zp[:, self.g_idx[idx]]).to(torch.int8)) * scales[
+                    :, self.g_idx[idx]
+                ]
+        else:
+            # recover fp32 weight with int_weight, scale
+            for idx in range(self.in_features):
+                fp32_weight[:, idx] = weight[:, idx] * scales[:, self.g_idx[idx]]
+
+        return fp32_weight.to(scales.device)
+
+    def pack_tensor(self, raw_tensor):
+        if "cuda" in self.device:
+            return self.pack_tensor_with_torch(raw_tensor)
+        else:
+            return self.pack_tensor_with_numpy(raw_tensor)
+
+    def unpack_tensor(self, packed_tensor):
+        if "cuda" in self.device:
+            return self.unpack_tensor_with_torch(packed_tensor)
+        else:
+            return self.unpack_tensor_with_numpy(packed_tensor)
+
+    def pack_tensor_with_torch(self, raw_tensor):
+        target_len = math.ceil(raw_tensor.shape[1] / self.n_pack)
+        packed_tensor = torch.zeros(raw_tensor.shape[0], target_len, dtype=self.compression_dtype).to(self.device)
+        mask = torch.tensor(2**self.bits - 1, dtype=self.compression_dtype).to(self.device)
+        for j in range(packed_tensor.shape[1]):
+            start = self.n_pack * j
+            end = self.n_pack * (j + 1)
+            tmp = raw_tensor[:, start:end].type(self.compression_dtype)
+            tmp &= mask
+            for e in range(tmp.shape[1]):
+                tmp[:, e] = tmp[:, e] << (self.bits * e)
+                packed_tensor[:, j] |= tmp[:, e]
+                accelerator.synchronize()
+        return packed_tensor
+
+    def unpack_tensor_with_torch(self, packed_tensor):
+        target_dtype = torch.int8 if not hasattr(self, "qzeros") or "int" not in self.dtype else torch.uint8
+        target_len = packed_tensor.shape[1] * self.n_pack
+        unpacked_tensor = torch.zeros(packed_tensor.shape[0], target_len, dtype=target_dtype).to(self.device)
+        mask = torch.tensor(2**self.bits - 1, dtype=self.compression_dtype).to(self.device)
+        for j in range(packed_tensor.shape[1]):
+            for e in range(self.n_pack):
+                index = j * self.n_pack + e
+                tmp = packed_tensor[:, j]
+                tmp = tmp << (self.compress_bits - self.bits * (e + 1))
+                tmp = tmp >> self.compress_bits - self.bits
+                if target_dtype == torch.uint8:
+                    tmp &= mask  # remove sign bit
+                unpacked_tensor[:, index].copy_(tmp.type(target_dtype))
+                accelerator.synchronize()
+        return unpacked_tensor
+
+    def pack_tensor_with_numpy(self, raw_tensor):
+        raw_array = raw_tensor.cpu().numpy()
+        target_len = np.ceil(raw_array.shape[1] / self.n_pack).astype(int)
+        torch.int32
+        target_dtype = torch.tensor(0, dtype=self.compression_dtype).numpy().dtype
+        packed_array = np.zeros((raw_array.shape[0], target_len), dtype=target_dtype)
+        mask = np.uint8(2**self.bits - 1)
+        for j in range(packed_array.shape[1]):
+            start = self.n_pack * j
+            end = self.n_pack * (j + 1)
+            tmp = raw_array[:, start:end].astype(target_dtype)
+            tmp &= mask
+            for e in range(tmp.shape[1]):
+                tmp[:, e] = np.left_shift(tmp[:, e], self.bits * e)
+                packed_array[:, j] |= tmp[:, e]
+                accelerator.synchronize()
+        packed_tensor = torch.from_numpy(packed_array).to(device=raw_tensor.device)
+        return packed_tensor
+
+    def unpack_tensor_with_numpy(self, packed_tensor):
+        packed_array = packed_tensor.cpu().numpy()
+        target_dtype = np.int8 if not hasattr(self, "qzeros") or "int" not in self.dtype else np.uint8
+        target_len = packed_array.shape[1] * self.n_pack
+        unpacked_array = np.zeros((packed_array.shape[0], target_len), dtype=target_dtype)
+        mask = np.uint8(2**self.bits - 1)
+        for j in range(packed_array.shape[1]):
+            for e in range(self.n_pack):
+                index = j * self.n_pack + e
+                tmp = packed_array[:, j]
+                tmp = np.left_shift(tmp, self.compress_bits - self.bits * (e + 1))
+                tmp = np.right_shift(tmp, self.compress_bits - self.bits)
+                if target_dtype == np.uint8:
+                    tmp &= mask
+                unpacked_array[:, index] = tmp.astype(target_dtype)
+                accelerator.synchronize()
+        unpacked_tensor = torch.from_numpy(unpacked_array).to(device=packed_tensor.device)
+        return unpacked_tensor
+
     def extra_repr(self) -> str:
         tmp_str = "in_features={}, out_features={}, bits={}, group_size={}, bias={}".format(
             self.in_features,
@@ -432,9 +436,40 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
 
 
 # TODO: implement HPUWeightOnlyLinear
+# temporarily let HPUWeightOnlyLinear inherit INCWeightOnlyLinear
+# should be 'class HPUWeightOnlyLinear(WeightOnlyLinear)'
 class HPUWeightOnlyLinear(INCWeightOnlyLinear):
-    def __init__(self, *args, **kwargs):
-        super(HPUWeightOnlyLinear, self).__init__(*args, **kwargs)
+    def __init__(
+        self,
+        in_features,
+        out_features,
+        dtype="int",
+        bits=4,
+        group_size=32,
+        zp=False,
+        bias=False,
+        scale_dtype=torch.float32,
+        compression_dtype=torch.int32,
+        compression_dim=1,
+        g_idx=False,
+        device="hpu",
+        use_optimum_format=True,
+    ):
+        super(HPUWeightOnlyLinear, self).__init__(
+            in_features,
+            out_features,
+            dtype,
+            bits,
+            group_size,
+            zp,
+            bias,
+            scale_dtype,
+            compression_dtype,
+            compression_dim,
+            g_idx,
+            device,
+            use_optimum_format,
+        )
 
 
 class FakeAffineTensorQuantFunction(Function):
