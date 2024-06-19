@@ -33,10 +33,9 @@ from neural_compressor.common.utils import LazyImport, logger
 
 from .environ import is_hpex_available
 
-if is_hpex_available():
-    import habana_frameworks.torch.hpu as torch_hpu
-
 htcore = LazyImport("habana_frameworks.torch.core")
+if is_hpex_available():
+    torch_hpu = LazyImport("habana_frameworks.torch.hpu")
 
 PRIORITY_HPU = 100
 PRIORITY_XPU = 95
