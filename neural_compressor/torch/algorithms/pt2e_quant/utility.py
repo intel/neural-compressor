@@ -56,7 +56,7 @@ def create_quant_spec_from_config(dtype, sym, granularity, algo, is_dynamic=Fals
 
 def _map_inc_config_to_torch_quant_config(inc_config, is_dynamic=False) -> QuantizationConfig:
     NOT_QUANT_DTYPES = ["fp32", "fp16", "bf16"]
-    if inc_config.act_dtype in NOT_QUANT_DTYPES and inc_config.w_dtype in NOT_QUANT_DTYPES:
+    if inc_config.act_dtype in NOT_QUANT_DTYPES and inc_config.w_dtype in NOT_QUANT_DTYPES:  # pragma: no cover
         return None
     default_quant_config = xiq.get_default_x86_inductor_quantization_config(is_dynamic=is_dynamic)
     input_act_quant_spec = create_quant_spec_from_config(
