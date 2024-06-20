@@ -31,11 +31,7 @@ import torch
 
 from neural_compressor.common.utils import LazyImport, logger
 
-from .environ import is_hpex_available
-
 htcore = LazyImport("habana_frameworks.torch.core")
-if is_hpex_available():
-    torch_hpu = LazyImport("habana_frameworks.torch.hpu")
 
 PRIORITY_HPU = 100
 PRIORITY_XPU = 95
@@ -266,7 +262,7 @@ class HPU_Accelerator(Auto_Accelerator):  # pragma: no cover
         from .environ import is_hpex_available
 
         if is_hpex_available():
-            return torch_hpu.is_available()
+            return torch.hpu.is_available()
         else:
             return False
 
@@ -276,26 +272,26 @@ class HPU_Accelerator(Auto_Accelerator):  # pragma: no cover
         return f"hpu:{device_indx}"
 
     def synchronize(self):
-        return torch_hpu.synchronize()
+        return torch.hpu.synchronize()
 
     def set_device(self, device_index):
         try:
-            torch_hpu.set_device(device_index)
+            torch.hpu.set_device(device_index)
         except Exception as e:
             logger.warning(e)
 
     def current_device(self):
-        return torch_hpu.current_device()
+        return torch.hpu.current_device()
 
     def current_device_name(self):
-        return "hpu:{}".format(torch_hpu.current_device())
+        return "hpu:{}".format(torch.hpu.current_device())
 
     def device(self, device_index=None):
-        return torch_hpu.device(device_index)
+        return torch.hpu.device(device_index)
 
     def empty_cache(self):
         try:
-            torch_hpu.empty_cache()
+            torch.hpu.empty_cache()
         except Exception as e:
             logger.warning(e)
 

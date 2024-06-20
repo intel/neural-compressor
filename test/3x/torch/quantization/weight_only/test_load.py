@@ -42,6 +42,16 @@ class TestHFModelLoad:
         output = qmodel(self.example_inputs.to("cpu"))[0]
         assert len(output) > 0, "Not loading the model correctly"
 
+        # use huggingface local model_path (format=huggingface, device="cpu")
+        qmodel = load(
+            model_name_or_path=self.local_hf_model, format="huggingface", torch_dtype=torch.float32
+        )  # 'torch_dtype=torch.float32' for cpu test
+        assert (
+            self.get_woq_linear_num(qmodel, "INCWeightOnlyLinear") == 154
+        ), "Incorrect number of INCWeightOnlyLinear modules"
+        output = qmodel(self.example_inputs.to("cpu"))[0]
+        assert len(output) > 0, "Not loading the model correctly"
+
     @pytest.mark.skipif(not is_hpex_available(), reason="no hpex in environment here.")
     def test_load_hf_woq_model_hpu(self):
         # 1. use huggingface model_id (format=huggingface, device="hpu")

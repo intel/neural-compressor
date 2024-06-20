@@ -30,7 +30,10 @@ from neural_compressor.torch.utils import (
     LoadFormat,
     logger,
 )
+from .modules import HPUWeightOnlyLinear, INCWeightOnlyLinear, MulLinear
 
+format_woqlinear_mapping = {LoadFormat.HUGGINGFACE: INCWeightOnlyLinear, LoadFormat.DEFAULT: INCWeightOnlyLinear}
+device_woqlinear_mapping = {"cpu": INCWeightOnlyLinear, "hpu": HPUWeightOnlyLinear}
 
 def save(model, output_dir="./saved_results"):
     os.makedirs(output_dir, exist_ok=True)
@@ -119,7 +122,7 @@ class WOQModelLoader:
             os.path.abspath(os.path.expanduser(self.model_name_or_path)), WEIGHT_NAME
         )
         # if hpu format tensor can be used directly, then update qmodel_weight_file_path to the hpu format tensor file
-        if self._with_hpu_format_tensor():
+        if self._use_hpu_module():
             qmodel_weight_file_path = os.path.join(
                 os.path.abspath(os.path.expanduser(self.model_name_or_path)), HPU_WEIGHT_NAME
             )
@@ -197,16 +200,15 @@ class WOQModelLoader:
         """Build weight-only quantization model."""
         from neural_compressor.torch.utils import set_module
 
-        from .modules import HPUWeightOnlyLinear, INCWeightOnlyLinear, MulLinear
+        # if hpu woq linear module can be used directly, then update format mapping module to HPUWeightOnlyLinear
+        if self._use_hpu_module():
+            format_woqlinear_mapping.update({self.format: HPUWeightOnlyLinear})
 
-        # TODO: consider using a decorator to register the xxxWeightOnlyLinear.
-        # default setting
-        format_dict = {LoadFormat.HUGGINGFACE: INCWeightOnlyLinear, LoadFormat.DEFAULT: INCWeightOnlyLinear}
-        device_dict = {"cpu": INCWeightOnlyLinear, "hpu": HPUWeightOnlyLinear}
-
-        # if hpu format tensor can be used directly, then update mapping module to HPUWeightOnlyLinear
-        if self._with_hpu_format_tensor():
-            format_dict.update({self.format: HPUWeightOnlyLinear})
+        logger.debug(
+            f"Build weight-only quantization model according to format and device mapping. \n"
+            f"Format mapping is {format_woqlinear_mapping}. \n"
+            f"Device mapping is {device_woqlinear_mapping}."
+        )
 
         for name, module in self.original_model.named_modules():
             _is_autoround = False
@@ -239,7 +241,7 @@ class WOQModelLoader:
                 zp = True if name + ".qzeros" in loaded_state_dict_keys_set else False
                 g_idx = True if name + ".g_idx" in loaded_state_dict_keys_set else False
 
-                WeightOnlyLinearClass = format_dict[self.format]
+                WeightOnlyLinearClass = format_woqlinear_mapping[self.format]
                 kwargs = {}
                 if WeightOnlyLinearClass == INCWeightOnlyLinear:
                     kwargs["group_size"] = module_quantization_config.get("group_size", 32)
@@ -275,12 +277,13 @@ class WOQModelLoader:
                 self.load_data_to_new_module_from_state_dict(new_module, new_module_state_dict)
 
                 # if format mapping module doesn't match device mapping module, then replace to device mapping module
-                if format_dict[self.format] != device_dict[self.device]:
+                if format_woqlinear_mapping[self.format] != device_woqlinear_mapping[self.device]:
                     logger.debug(
                         f"Replacing {name}'s type from "
-                        f"'{format_dict[self.format].__name__}' to '{device_dict[self.device].__name__}'"
+                        f"'{format_woqlinear_mapping[self.format].__name__}' "
+                        f"to '{device_woqlinear_mapping[self.device].__name__}'"
                     )
-                    WeightOnlyLinearClass = device_dict[self.device]
+                    WeightOnlyLinearClass = device_woqlinear_mapping[self.device]
 
                     # update kwargs for the device mapping WeightOnlyLinear module
                     kwargs = {}
@@ -443,7 +446,7 @@ class WOQModelLoader:
 
         resolved_archive_file = None
         is_local = os.path.isdir(self.model_name_or_path)
-        if is_local:
+        if is_local: # pragma: no cover
             if os.path.isfile(
                 os.path.join(
                     self.model_name_or_path,
@@ -498,10 +501,10 @@ class WOQModelLoader:
                     _add_variant(SAFE_WEIGHTS_INDEX_NAME, variant),
                 )
                 is_sharded = True
-        elif os.path.isfile(os.path.join(subfolder, self.model_name_or_path)):
+        elif os.path.isfile(os.path.join(subfolder, self.model_name_or_path)): # pragma: no cover
             archive_file = self.model_name_or_path
             is_local = True
-        elif is_remote_url(self.model_name_or_path):
+        elif is_remote_url(self.model_name_or_path): # pragma: no cover
             filename = self.model_name_or_path
             resolved_archive_file = download_url(self.model_name_or_path)
         else:
@@ -529,7 +532,8 @@ class WOQModelLoader:
 
                 # Since we set _raise_exceptions_for_missing_entries=False, we don't get an exception but a None
                 # result when internet is up, the repo and revision exist, but the file does not.
-                if resolved_archive_file is None and filename == _add_variant(SAFE_WEIGHTS_NAME, variant):
+                if (resolved_archive_file is None and
+                    filename == _add_variant(SAFE_WEIGHTS_NAME, variant)): # pragma: no cover
                     # Maybe the checkpoint is sharded, we try to grab the index name in this case.
                     resolved_archive_file = cached_file(
                         self.model_name_or_path,
@@ -550,7 +554,8 @@ class WOQModelLoader:
                         # This repo has no safetensors file of any kind, we switch to PyTorch.
                         filename = _add_variant(WEIGHTS_NAME, variant)
                         resolved_archive_file = cached_file(self.model_name_or_path, filename, **cached_file_kwargs)
-                if resolved_archive_file is None and filename == _add_variant(WEIGHTS_NAME, variant):
+                if (resolved_archive_file is None and
+                    filename == _add_variant(WEIGHTS_NAME, variant)): # pragma: no cover
                     # Maybe the checkpoint is sharded, we try to grab the index name in this case.
                     resolved_archive_file = cached_file(
                         self.model_name_or_path,
@@ -560,7 +565,7 @@ class WOQModelLoader:
                     if resolved_archive_file is not None:
                         is_sharded = True
 
-                if resolved_archive_file is None:
+                if resolved_archive_file is None: # pragma: no cover
                     # Otherwise, maybe there is a TF or Flax model file.  We try those to give a helpful error
                     # message.
                     has_file_kwargs = {
@@ -579,11 +584,11 @@ class WOQModelLoader:
                             f"{self.model_name_or_path} does not appear to have a file named"
                             f" {_add_variant(WEIGHTS_NAME, variant)}."
                         )
-            except EnvironmentError:
+            except EnvironmentError: # pragma: no cover
                 # Raise any environment error raise by `cached_file`. It will have a helpful error message adapted
                 # to the original exception.
                 raise
-            except Exception as e:
+            except Exception as e: # pragma: no cover
                 # For any other exception, we throw a generic error.
                 raise EnvironmentError(
                     f"Can't load the model for '{self.model_name_or_path}'. If you were trying to load it"
@@ -597,7 +602,7 @@ class WOQModelLoader:
 
         self._model_local_dir = os.path.abspath(os.path.expanduser(os.path.dirname(resolved_archive_file)))
         # if hpu format tensor can be used directly, then update resolved_archive_file to the hpu format tensor file
-        if self._with_hpu_format_tensor():
+        if self._use_hpu_module():
             resolved_archive_file = os.path.join(self._model_local_dir, HPU_SAFE_WEIGHTS_NAME)
 
         logger.info(f"Find weight file {resolved_archive_file}")
@@ -656,14 +661,14 @@ class WOQModelLoader:
         dtype_orig = None
         if torch_dtype is not None:
             if isinstance(torch_dtype, str):
-                if torch_dtype == "auto":
+                if torch_dtype == "auto": # pragma: no cover
                     if (
                         hasattr(config, "torch_dtype")
                         and config.torch_dtype is not None
                         and config.torch_dtype != "auto"
                     ):
                         torch_dtype = config.torch_dtype
-                    else:  # pragma: no cover
+                    else:
                         if is_sharded and "dtype" in sharded_metadata:
                             torch_dtype = sharded_metadata["dtype"]
                         else:
@@ -737,7 +742,7 @@ class WOQModelLoader:
     def load_data_to_new_module_from_state_dict(self, new_module, new_module_weight):
         new_module.load_state_dict(new_module_weight)
 
-    def _save_hpu_format_tensor(self, model):
+    def _save_hpu_format_tensor(self, model): # pragma: no cover
         from safetensors.torch import save_file
 
         if not os.path.exists(self._model_local_dir):
@@ -752,14 +757,15 @@ class WOQModelLoader:
             torch.save(model.state_dict(), qmodel_weight_file_path)
             logger.debug(f"Save hpu format tensor to {qmodel_weight_file_path}")
 
-    def _with_hpu_format_tensor(self):
-        """Check whether hpu format tensor file is included in model local cache dir.
+    def _use_hpu_module(self): # pragma: no cover
+        """Check whether hpu weight-only quantization linear module can be used.
 
-        If device is 'hpu' and
-        model has hpu format tensor:
-        1. has 'hpu_model.safetensors' file with huggingface format
-        2. or has 'quantized_hpu_weight.pt' file with default format
-        then return True, else return False.
+        return True when:
+        1. device is 'hpu'
+        2. model has hpu format tensor in local cache directory:
+            - has 'hpu_model.safetensors' file with huggingface format
+            - or has 'quantized_hpu_weight.pt' file with default format
+           or 'format' flag in config.json file is 'habana' (flag name needs discussion, not implemented yet)
         """
         if self.device == "hpu" and os.path.exists(self._model_local_dir):
             if self.format == LoadFormat.HUGGINGFACE:

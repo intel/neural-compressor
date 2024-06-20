@@ -303,7 +303,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
         return weight, scales, zp
 
     def recover(self):
-        logger.info(f"Recovering {self} weight")
+        logger.debug(f"Recovering {self} weight")
         weight, scales, zp = self.unpack()
         device = scales.device
 
