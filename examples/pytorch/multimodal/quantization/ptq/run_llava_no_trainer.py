@@ -2,7 +2,7 @@ import sys
 sys.path.append("./")
 import argparse
 import os
-os.environ["TRANSFORMERS_OFFLINE"] = "1"
+# os.environ["TRANSFORMERS_OFFLINE"] = "1"
 import json
 from tqdm import tqdm
 import shortuuid
@@ -12,11 +12,13 @@ import copy
 import torch
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image
+
+from transformers import AutoModelForCausalLM, AutoTokenizer
 from llava.utils import disable_torch_init
 from llava.mm_utils import get_model_name_from_path
 from llava.train.train import preprocess, preprocess_multimodal
 
-class CustomDataset(Dataset):
+class LlavaDataset(Dataset):
     # much refer to https://github.com/haotian-liu/LLaVA/blob/main/llava/train/train.py
     def __init__(self, list_data_dict, image_folder, tokenizer, image_processor, args):
         self.list_data_dict = list_data_dict
@@ -53,17 +55,52 @@ class CustomDataset(Dataset):
     def __len__(self):
         return len(self.list_data_dict)
 
-def collate_fn(batch):
+class QwenDataset(Dataset):
+    def __init__(self, list_data_dict, image_folder, tokenizer, args):
+        self.list_data_dict = list_data_dict
+        self.image_folder = image_folder
+        self.tokenizer = tokenizer
+        self.args = args
+    
+    def obtain_text_from_coco2017(self, source):
+        res = []
+        for item in source["conversations"]:
+            res.append(item["value"])
+        return " ".join(res)
+
+    def __getitem__(self, index):
+        sources = self.list_data_dict[index]        
+        image_file = os.path.basename(sources["image"])
+        image_file = os.path.join(self.image_folder, image_file)
+        query = self.tokenizer.from_list_format([
+            {'image': 'https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-VL/assets/demo.jpeg'},
+            {'text': 'Generate the caption in English with grounding:'},
+        ])
+        inputs = self.tokenizer(query, return_tensors='pt')
+        return inputs
+
+    def __len__(self):
+        return len(self.list_data_dict)
+
+def collate_llava(batch):
     input_ids, image_tensors, image_sizes = zip(*batch)
     input_ids = torch.stack(input_ids, dim=0)
     image_tensors = torch.stack(image_tensors, dim=0)
     return input_ids, image_tensors, image_sizes
 
-def create_data_loader(dataset, batch_size=1):
+def create_llava_data_loader(dataset, batch_size=1):
     assert batch_size == 1, "batch_size must be 1"
-    data_loader = DataLoader(dataset, batch_size=batch_size, num_workers=0, shuffle=False, collate_fn=collate_fn)
+    data_loader = DataLoader(dataset, batch_size=batch_size, num_workers=0, shuffle=False, collate_fn=collate_llava)
     return data_loader
 
+def collate_qwen(batch):
+    batch = batch[0]
+    return batch
+
+def create_qwen_data_loader(dataset, batch_size=1):
+    assert batch_size == 1, "batch_size must be 1"
+    data_loader = DataLoader(dataset, batch_size=batch_size, num_workers=0, shuffle=False, collate_fn=collate_qwen)
+    return data_loader
 #=====================
 
 def get_user_argument():
@@ -119,15 +156,20 @@ def main():
     args = get_user_argument()
 
     # Step 2 load the unquantized model and calibration datasets (aligned with visual instruction tuning)
-    from llava.model.builder import load_pretrained_model
-    model_path = os.path.expanduser(args.model_name_or_path)
-    model_name = get_model_name_from_path(model_path)
-    tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, args.model_base, model_name)
-
-    # load the quantization files
+    # a calibration dataloader should be generated
     questions = json.load(open(args.question_file, "r"))
-    dataset = CustomDataset(questions, args.image_folder, tokenizer, image_processor, args)
-    dataloader = create_data_loader(dataset)
+    if 'llava' in args.model_name_or_path.lower():
+        from llava.model.builder import load_pretrained_model
+        model_path = os.path.expanduser(args.model_name_or_path)
+        model_name = get_model_name_from_path(model_path)
+        tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, args.model_base, model_name)
+        dataset = LlavaDataset(questions, args.image_folder, tokenizer, image_processor, args)
+        dataloader = create_llava_data_loader(dataset)
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, trust_remote_code=True)
+        model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path, device_map="cuda", trust_remote_code=True).eval()
+        dataset = QwenDataset(questions, args.image_folder, tokenizer, args)
+        dataloader = create_qwen_data_loader(dataset)
 
     # Step 3: do quantization
     model.float()

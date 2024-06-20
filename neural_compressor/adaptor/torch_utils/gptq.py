@@ -320,7 +320,8 @@ class GPTQuantizer(object):
                 else:
                     batch_final = batch[:]
             # dict
-            elif isinstance(batch, dict):
+            elif isinstance(batch, dict) or type(batch).__name__ == 'BatchEncoding': 
+                # Qwen-VL model input type is 'transformers.tokenization_utils_base.BatchEncoding'
                 try:
                     length = batch["input_ids"].shape[-1]
                 except:
@@ -530,7 +531,8 @@ class GPTQuantizer(object):
                         self.model(batch[0])
                     else:
                         self.model(*batch)
-                elif isinstance(batch, dict):
+                elif isinstance(batch, dict) or type(batch).__name__ == 'BatchEncoding':
+                    # Qwen-VL model input type is 'transformers.tokenization_utils_base.BatchEncoding'
                     self.model(**batch)
                 else:
                     self.model(batch)

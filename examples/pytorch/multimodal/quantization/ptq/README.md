@@ -33,7 +33,7 @@ Download [TextVQA_0.5.1_val.json](https://dl.fbaipublicfiles.com/textvqa/data/Te
 For evaluation on more benchmarks, please refer to [official guide](https://github.com/haotian-liu/LLaVA/blob/main/docs/Evaluation.md) to prepare data and run evaluation.
 
 ## Run quantization
-Run following codes
+Run following codes for LlaVA
 ```sh
 python examples/pytorch/multimodal/quantization/ptq/run_llava_no_trainer.py \
     --model_name_or_path liuhaotian/llava-v1.5-7b \
@@ -51,4 +51,23 @@ python examples/pytorch/multimodal/quantization/ptq/run_llava_no_trainer.py \
     --eval-image-folder /path/to/textvqa/train_images \
     --eval-annotation-file /path/to/textvqa/TextVQA_0.5.1_val.json \
     --eval-result-file ./llava-1.5-7b-hf.jsonl
+```
+
+We currently also support quantization for Qwen-VL model
+```
+python examples/pytorch/multimodal/quantization/ptq/run_llava_no_trainer.py \
+    --model_name_or_path Qwen/Qwen-VL \
+    --image-folder /path/to/coco/images/train2017/ \
+    --question-file /path/to/LLaVA-Instruct-150K/llava_v1_5_mix665k.json \
+    --quantize \
+    --approach weight_only \
+    --woq_algo GPTQ \
+    --woq_bits 4 \
+    --woq_scheme asym \
+    --woq_group_size 128 \
+    --gptq_true_sequential \
+    --gptq_nsamples 16 \
+    --gptq_multimodal \
+    --eval-result-file ./qwen-vl.jsonl
+
 ```
