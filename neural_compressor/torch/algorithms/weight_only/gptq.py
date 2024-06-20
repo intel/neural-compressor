@@ -345,6 +345,18 @@ class RAWGPTQuantizer(object):
         self.gptq_related_blocks["transformers"][0].forward = partial(
             forward, self.gptq_related_blocks["transformers"][0]
         )
+        # Step 3: replace model_forward to avoid ValueError
+        self.orig_model_forward_cache = self.model.forward
+        model_forward_cache = self.model.forward
+
+        def model_forward(model, *args, **kwargs):
+            nonlocal model_forward_cache
+            try:
+                model_forward_cache(*args, **kwargs)
+            except ValueError:
+                pass
+
+        self.model.forward = partial(model_forward, self.model)
 
     @torch.no_grad()
     def remove_prepare_for_calibration(self):
@@ -359,6 +371,7 @@ class RAWGPTQuantizer(object):
         logger.info("Done.")
 
         # Step 4: restore original forward function, relocate layers back to cpu.
+        self.model.forward = self.orig_model_forward_cache
         self.gptq_related_blocks["transformers"][0].forward = self.forward_cache
         if not self.use_layer_wise:  # pragma: no cover
             self.gptq_related_blocks["transformers"][0] = self.gptq_related_blocks["transformers"][0].cpu()
