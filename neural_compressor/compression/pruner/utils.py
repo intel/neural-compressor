@@ -26,9 +26,8 @@ import yaml
 from ...config import WeightPruningConfig as WeightPruningConf
 
 try:
-    from neural_compressor.conf.config import Pruner
-    from neural_compressor.conf.dotdict import DotDict
     from neural_compressor.utils import logger
+    from neural_compressor.utils.utility import DotDict
 
     from ...conf.config import PrunerV2
     from ...conf.pythonic_config import WeightPruningConfig
@@ -616,25 +615,6 @@ def parse_to_prune_tf(config, model):
             continue
         new_modules[name] = modules[name]
     return new_modules
-
-
-def generate_pruner_config(info):
-    """Generate pruner config object from prune information.
-
-    Args:
-        info: A dotdict that saves prune information.
-
-    Returns:
-        pruner: A pruner config object.
-    """
-    return Pruner(
-        initial_sparsity=0,
-        method=info.method,
-        target_sparsity=info.target_sparsity,
-        start_epoch=info.start_step,
-        end_epoch=info.end_step,
-        update_frequency=info.pruning_frequency,
-    )
 
 
 def get_layers(model):

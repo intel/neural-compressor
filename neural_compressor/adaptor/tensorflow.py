@@ -2206,13 +2206,6 @@ class TensorflowQuery(QueryBackendCapability):
                 )
         self._update_cfg_with_usr_definition()
 
-    def _update_cfg_with_usr_definition(self):
-        """Add user defined precision configuration."""
-        from neural_compressor.conf.pythonic_config import tensorflow_config
-
-        if tensorflow_config.precisions is not None:
-            self.cur_config["precisions"]["names"] = ",".join(tensorflow_config.precisions)
-
     def get_version(self):
         """Get the current backend version information.
 
