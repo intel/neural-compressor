@@ -191,6 +191,7 @@ def static_quant_entry(
             },
         }
         quant_config_mapping["use_bf16"] = "bf16" not in cfg.excluded_precisions
+        quant_config_mapping["device"] = cfg.device
 
     run_fn = kwargs.get("run_fn", None)
     example_inputs = kwargs.get("example_inputs", None)

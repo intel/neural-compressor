@@ -68,6 +68,10 @@ class StaticQuantQuantizer(Quantizer):
         Returns:
             A prepared model.
         """
+        device = self.user_cfg.get("device", None)
+        if device == "xpu":
+            model = model.to("xpu")
+
         assert example_inputs is not None, "Please provide example_inputs for static quantization."
 
         _, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, _ = get_quantizable_ops_recursively(
@@ -84,7 +88,12 @@ class StaticQuantQuantizer(Quantizer):
         if not hasattr(model, "save_qconf_summary") or not hasattr(model, "load_qconf_summary"):
             from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
 
-            if ipex_ver.release >= Version("2.1").release:
+            if device == "xpu":
+                static_qconfig = QConfig(
+                    activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                    weight=MinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_tensor_symmetric),
+                )
+            elif ipex_ver.release >= Version("2.1").release:
                 # HistogramObserver will cause a performance issue.
                 # static_qconfig = ipex.quantization.default_static_qconfig_mapping
                 qconfig = QConfig(

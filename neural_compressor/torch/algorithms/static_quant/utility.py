@@ -259,7 +259,7 @@ def generate_activation_observer(
             return minmax_activation_observer
 
 
-def get_quantizable_ops_recursively(model, example_inputs):  # pragma: no cover
+def get_quantizable_ops_recursively(model, example_inputs, device="cpu"):  # pragma: no cover
     """Get all quantizable ops from model.
 
     Args:
@@ -292,7 +292,12 @@ def get_quantizable_ops_recursively(model, example_inputs):  # pragma: no cover
         assert example_inputs is not None, "IPEX need q_dataloader or example_inputs to prepare the model"
         from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
 
-        if ipex_ver.release >= Version("2.1").release:
+        if device == "xpu":
+            static_qconfig = QConfig(
+                activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                weight=MinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_tensor_symmetric),
+            )
+        elif ipex_ver.release >= Version("2.1").release:
             # HistogramObserver will cause a performance issue.
             # static_qconfig = ipex.quantization.default_static_qconfig_mapping
             qconfig = QConfig(
