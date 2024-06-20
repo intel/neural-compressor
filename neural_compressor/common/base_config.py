@@ -199,7 +199,7 @@ class BaseConfig(ABC):
         self._local_config = config
 
     def set_local(self, operator_name_or_list: Union[List, str, Callable], config: BaseConfig) -> BaseConfig:
-        if hasattr(operator_name_or_list, "__iter__"):
+        if isinstance(operator_name_or_list, list):
             for operator_name in operator_name_or_list:
                 if operator_name in self.local_config:
                     logger.warning("The configuration for %s has already been set, update it.", operator_name)
