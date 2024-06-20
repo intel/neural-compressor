@@ -41,7 +41,7 @@ def save(model, output_dir="./saved_results"):
     del model.save
     torch.save(model.state_dict(), qmodel_weight_file_path)
 
-    logger.info("Save quantized model weight to {}.".format(qmodel_weight_file_path))
+    logger.info("Save quantized model to {}.".format(qmodel_weight_file_path))
     logger.info("Save configuration of quantized model to {}.".format(qconfig_file_path))
 
 

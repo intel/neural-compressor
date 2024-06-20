@@ -1,0 +1,3 @@
+tensorflow==2.15
+datasets
+transformers==4.35

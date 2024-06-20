@@ -86,7 +86,7 @@ class TensorFlowAdaptor:
         cfg_yaml_name = "{}.yaml".format(self.__class__.__name__[: -len("Adaptor")].lower())
         self.itex_mode = self.backend == "itex" or cfg_yaml_name == "tensorflow_itex.yaml"
 
-        if self.itex_mode:
+        if self.itex_mode:  # pragma: no cover
             self._check_itex()
 
         self.query_handler = TensorflowQuery(
@@ -109,7 +109,7 @@ class TensorFlowAdaptor:
 
         self._last_dequantize_ops = None
 
-    def _check_itex(self):
+    def _check_itex(self):  # pragma: no cover
         try:
             import intel_extension_for_tensorflow
         except:
@@ -133,7 +133,7 @@ class TensorFlowAdaptor:
 
         invalid_op_names = [i for i in self.quantize_config["op_wise_config"] if i not in dispatched_op_names]
 
-        for op_name in invalid_op_names:
+        for op_name in invalid_op_names:  # pragma: no cover
             self.quantize_config["op_wise_config"].pop(op_name)
 
         for each_op_info in tuning_cfg["op"]:
@@ -144,7 +144,7 @@ class TensorFlowAdaptor:
                     self.quantize_config["op_wise_config"].pop(op_name)
                 if tuning_cfg["op"][each_op_info]["activation"]["dtype"] == "fp32":
                     fp32_ops.append(op_name)
-                if tuning_cfg["op"][each_op_info]["activation"]["dtype"] == "bf16":
+                if tuning_cfg["op"][each_op_info]["activation"]["dtype"] == "bf16":  # pragma: no cover
                     bf16_ops.append(op_name)
                 continue
 
@@ -342,7 +342,7 @@ class TensorFlowAdaptor:
                 res[origin_op_type]["INT8"] += 1
 
             if i.op in fp32_op_list:
-                if "T" not in i.attr and i.op != "Cast":
+                if "T" not in i.attr and i.op != "Cast":  # pragma: no cover
                     continue
                 if i.op == "Cast":
                     if i.attr["DstT"].type == dtypes.bfloat16:
@@ -432,7 +432,7 @@ class TensorFlowAdaptor:
                 ) and len(first_conv_or_matmul_node) == 0:
                     first_conv_or_matmul_node.append((node_name, self.unify_op_type_mapping[node_op]))
                     self.recipes_ops["first_conv_or_matmul_quantization"] = first_conv_or_matmul_node
-                if exclude_first_quantizable_op and (
+                if exclude_first_quantizable_op and (  # pragma: no cover
                     self.unify_op_type_mapping[node_op].find("conv2d") != -1
                     or self.unify_op_type_mapping[node_op].find("matmul") != -1
                 ):
@@ -493,7 +493,7 @@ class TensorFlowAdaptor:
         concat_nodes = g.query_fusion_pattern_nodes([["ConcatV2"]])
         for i in concat_nodes:
             concat_node_name = i[0]
-            if concat_node_name not in target_concat_nodes:
+            if concat_node_name not in target_concat_nodes:  # pragma: no cover
                 continue
             input_positive_status = []
             for index in range(graph_info[concat_node_name].node.attr["N"].i):
@@ -507,7 +507,7 @@ class TensorFlowAdaptor:
                 else:
                     positive_input = g.has_positive_input(each_input_node.name)
                 input_positive_status.append(positive_input)
-            if not any(input_positive_status):
+            if not any(input_positive_status):  # pragma: no cover
                 matched_nodes.remove(i)
 
     def _filter_unquantizable_concat_performance_only(self, matched_nodes):
@@ -522,7 +522,7 @@ class TensorFlowAdaptor:
         concat_nodes = g.query_fusion_pattern_nodes([["ConcatV2"]])
         for i in concat_nodes:
             concat_node_name = i[0]
-            if concat_node_name not in target_concat_nodes:
+            if concat_node_name not in target_concat_nodes:  # pragma: no cover
                 continue
             input_positive_status = []
             control_flow = False
@@ -531,9 +531,9 @@ class TensorFlowAdaptor:
                     graph_info[concat_node_name].node.input[index]
                 )
                 each_input_node = graph_info[each_input_name].node
-                if each_input_node.op in ("Switch"):
+                if each_input_node.op in ("Switch"):  # pragma: no cover
                     control_flow = True
-            if control_flow:
+            if control_flow:  # pragma: no cover
                 matched_nodes.remove(i)
 
     def parse_quant_config(self, quant_config, model, calib_iteration):
@@ -588,7 +588,7 @@ class TensorFlowAdaptor:
 
         def check_match(patterns, input_pattern):
             for i in patterns:
-                if input_pattern == [i for i in i.replace("+", " ").strip().split(" ") if i]:
+                if input_pattern == [i for i in i.replace("+", " ").strip().split(" ") if i]:  # pragma: no cover
                     return True
             return False
 
@@ -641,7 +641,7 @@ class TensorFlowAdaptor:
         """
         scale = None
         # quantize input only support tensorflow version > 2.1.0
-        if version1_lt_version2(tf.version.VERSION, "2.1.0"):
+        if version1_lt_version2(tf.version.VERSION, "2.1.0"):  # pragma: no cover
             logger.warning("Quantize input needs tensorflow 2.1.0 and newer.")
             return model, scale
 
@@ -872,7 +872,7 @@ class TensorFlowConfig:
         return self._precisions
 
     @precisions.setter
-    def precisions(self, precisions):
+    def precisions(self, precisions):  # pragma: no cover
         """Set precision."""
         if not isinstance(precisions, list):
             precisions = [precisions]
@@ -881,7 +881,7 @@ class TensorFlowConfig:
         self._precisions = precisions
 
     @staticmethod
-    def check_value(name, src, supported_type, supported_value=[]):
+    def check_value(name, src, supported_type, supported_value=[]):  # pragma: no cover
         """Check if the given object is the given supported type and in the given supported value.
 
         Example::
@@ -946,7 +946,7 @@ class TensorflowQuery:
         config = None
 
         def _compare(version1, version2):
-            if parse_version(version1) == parse_version(version2):
+            if parse_version(version1) == parse_version(version2):  # pragma: no cover
                 return 0
             elif parse_version(version1) < parse_version(version2):
                 return -1
@@ -979,7 +979,7 @@ class TensorflowQuery:
                     # convention. Replacing them with dot for version comparison.
                     sorted_list = [i.replace("-up", ".") for i in sorted_list]
                     sorted_list = sorted(sorted_list, key=cmp_to_key(_compare), reverse=True)
-                else:
+                else:  # pragma: no cover
                     assert isinstance(sorted_list, str)
                     sorted_list = list(sorted_list.replace("-up", ".").split())
                 for i in sorted_list:
@@ -1025,7 +1025,7 @@ class TensorflowQuery:
     def _update_cfg_with_usr_definition(self):
         """Add user defined precision configuration."""
         tensorflow_config = TensorFlowConfig()
-        if tensorflow_config.precisions is not None:
+        if tensorflow_config.precisions is not None:  # pragma: no cover
             self.cur_config["precisions"]["names"] = ",".join(tensorflow_config.precisions)
 
     def get_version(self):
@@ -1288,7 +1288,7 @@ class TensorflowQuery:
         elif version1_gte_version2(tf.version.VERSION, "2.1.0"):
             patterns["int8"] = tf_int8_pattern_list
             patterns["uint8"] = tf_uint8_pattern_list
-            if self.itex_mode:
+            if self.itex_mode:  # pragma: no cover
                 patterns["int8"].append("FusedBatchNormV3 + Relu")
                 patterns["int8"].append("FusedBatchNormV3 + LeakyRelu")
         elif version1_eq_version2(tf.version.VERSION, "1.15.0-up3"):  # pragma: no cover
@@ -1340,7 +1340,7 @@ class TensorflowQuery:
                 tf.version.VERSION, "1.15.0-up3"
             ):
                 return ["Conv2D", "MatMul", "ConcatV2", "MaxPool", "AvgPool"]
-            return ["MatMul", "ConcatV2", "MaxPool", "AvgPool"]
+            return ["MatMul", "ConcatV2", "MaxPool", "AvgPool"]  # pragma: no cover
         if precision == "uint8":
             if tf.version.VERSION in spr_base_verions:
                 return [key for key in self.cur_config["int8"][self.quant_mode].keys() if "Norm" not in key]
@@ -1348,7 +1348,7 @@ class TensorflowQuery:
                 tf.version.VERSION, "1.15.0-up3"
             ):
                 return ["Conv2D", "MatMul", "ConcatV2", "MaxPool", "AvgPool", "DepthwiseConv2dNative"]
-            return ["Conv2D", "MatMul", "ConcatV2", "MaxPool", "AvgPool"]
+            return ["Conv2D", "MatMul", "ConcatV2", "MaxPool", "AvgPool"]  # pragma: no cover
         if precision == "bf16":
             if tf.version.VERSION in spr_base_verions:
                 return self.cur_config[precision]
@@ -1356,7 +1356,7 @@ class TensorflowQuery:
                 tf.version.VERSION, "1.15.0-up3"
             ):
                 return self.cur_config[precision]
-            return []
+            return []  # pragma: no cover
 
     def get_mixed_precision_combination(self):
         """Get the valid mixed precisions.

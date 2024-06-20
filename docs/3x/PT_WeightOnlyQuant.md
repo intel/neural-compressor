@@ -258,7 +258,7 @@ loaded_model = load(
 
 ## Examples
 
-Users can also refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/3.x_api/pytorch/nlp/huggingface_models/language-modeling/quantization/llm) on how to quantize a  model with WeightOnlyQuant.
+Users can also refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/3.x_api/pytorch/nlp/huggingface_models/language-modeling/quantization/weight_only) on how to quantize a  model with WeightOnlyQuant.
 
 ## Reference
 

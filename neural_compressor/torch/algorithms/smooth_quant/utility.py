@@ -164,7 +164,7 @@ def get_quantizable_ops_recursively(model, example_inputs, alpha, act_algo, inpl
 
 
 def check_cfg_and_qconfig(
-    tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_op_name, smooth_quant=False
+    tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_op_name, alpha=0.5, smooth_quant=True
 ):  # pragma: no cover
     """Check configs and quantization configs.
 
@@ -205,7 +205,7 @@ def check_cfg_and_qconfig(
                         else:
                             smooth_quant_enable = False
                         activation_observer = generate_activation_observer(
-                            inc_scheme, inc_algorithm, smooth_quant, smooth_quant_enable
+                            inc_scheme, inc_algorithm, smooth_quant, smooth_quant_enable, alpha
                         )
                         if not smooth_quant:
                             if inc_scheme == "sym":
@@ -241,11 +241,11 @@ def check_cfg_and_qconfig(
 
 
 def cfg_to_qconfig(
-    tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, smooth_quant=False
+    tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, alpha=0.5, smooth_quant=True
 ):  # pragma: no cover
     assert cfgs is not None, "No configure for IPEX int8 model..."
     op_infos = copy.deepcopy(op_infos_from_cfgs)
-    cfgs = check_cfg_and_qconfig(tune_cfg["op"], cfgs, op_infos, output_tensor_id_op_name, smooth_quant)
+    cfgs = check_cfg_and_qconfig(tune_cfg["op"], cfgs, op_infos, output_tensor_id_op_name, alpha, smooth_quant)
     with open(ipex_config_path, "w") as write_f:
         json.dump(cfgs, write_f, indent=4)
     return None
