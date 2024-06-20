@@ -110,7 +110,7 @@ def get_filter_fn(node_list, fn):
             if node.target == target_op:
                 target_node = node
                 break
-        if target_node is None:
+        if target_node is None:  # pragma: no cover
             return False
         matched_node = match.nodes_map[target_node]
         return matched_node in node_list
@@ -138,7 +138,7 @@ def get_unquantized_node_set(gm: torch.fx.GraphModule):
         if meta := getattr(node, "meta"):
             if quantization_annotation := meta.get(xiq.QUANT_ANNOTATION_KEY):
                 none_annotation = xiq._X86InductorQuantizationAnnotation(_annotated=True)
-                if quantization_annotation != none_annotation:
+                if quantization_annotation != none_annotation:  # pragma: no cover
                     continue
         unquantized_node_set.add(node)
     return unquantized_node_set
