@@ -127,7 +127,7 @@ class RTNConfig(BaseConfig):
         double_quant_bits: int = 8,  # not available when double_quant_dtype is not 'int'
         double_quant_use_sym: bool = False,
         double_quant_group_size: int = 256,
-        # double quant
+        # quant lm_head
         quant_lm_head: bool = False,
         # Tuning space
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
@@ -272,6 +272,8 @@ class GPTQConfig(BaseConfig):
         # layer wise params
         "use_layer_wise",
         "model_path",
+        # quant lm_head
+        "quant_lm_head",
         # gptq params
         "act_order",
         "percdamp",
@@ -295,6 +297,8 @@ class GPTQConfig(BaseConfig):
         double_quant_bits: int = 8,  # not available when double_quant_dtype is not 'int'
         double_quant_use_sym: bool = False,
         double_quant_group_size: int = 256,
+        # double quant
+        quant_lm_head: bool = False,
         # gptq params
         act_order: bool = False,
         percdamp: float = 0.01,
@@ -318,6 +322,7 @@ class GPTQConfig(BaseConfig):
             double_quant_bits (int): Number of bits used to represent double_quant scale. Default is 4.
             double_quant_use_sym (bool): Indicates whether double_quant scale are symmetric. Default is True.
             double_quant_group_size (int): Size of double_quant groups. Default is 32.
+            quant_lm_head (bool): Indicates whether quantize the lm_head layer in transformers。 Default is False.
             act_order (bool): Whether to sort Hessian's diagonal values to rearrange channel-wise
                               quantization order. Default is False.
             percdamp (float): Percentage of Hessian's diagonal values' average, which will be added to
@@ -328,6 +333,7 @@ class GPTQConfig(BaseConfig):
                                   This option mitigate actorder's extra computational requirements.
                                   Default is False.
         """
+        assert not quant_lm_head, "GPTQ doesn't support lm_head quantization currently, it's coming soon!"
         super().__init__(white_list=white_list)
         self.dtype = dtype
         self.bits = bits
@@ -348,6 +354,7 @@ class GPTQConfig(BaseConfig):
         self.percdamp = percdamp
         self.block_size = block_size
         self.static_groups = static_groups
+        self.quant_lm_head = quant_lm_head
         self._post_init()  # initialize global & local configuration
 
     @classmethod
@@ -355,9 +362,18 @@ class GPTQConfig(BaseConfig):
         supported_configs = []
         # TODO(Yi)
         linear_gptq_config = GPTQConfig()
-        operators = [torch.nn.Linear]
+        operators = list(WOQ_WHITE_LIST)
         supported_configs.append(OperatorConfig(config=linear_gptq_config, operators=operators))
         cls.supported_configs = supported_configs
+
+    def to_config_mapping(
+        self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
+    ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
+        if not self.quant_lm_head:
+            usual_lm_head_names = [".*lm_head", ".*output_layer", ".*embed_out"]
+            self.set_local(usual_lm_head_names, GPTQConfig(dtype="fp32"))
+        config_mapping = super().to_config_mapping(config_list, model_info)
+        return config_mapping
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
@@ -408,6 +424,8 @@ class AWQConfig(BaseConfig):
         "double_quant_bits",
         "double_quant_use_sym",
         "double_quant_group_size",
+        # quant_lm_head
+        "quant_lm_head",
         # AWQ params
         "use_auto_scale",
         "use_auto_clip",
@@ -431,6 +449,8 @@ class AWQConfig(BaseConfig):
         double_quant_bits: int = 8,  # not available when double_quant_dtype is not 'int'
         double_quant_use_sym: bool = True,
         double_quant_group_size: int = 256,
+        # quant lm_head
+        quant_lm_head: bool = False,
         # awq
         use_auto_scale: bool = True,
         use_auto_clip: bool = True,
@@ -453,6 +473,7 @@ class AWQConfig(BaseConfig):
             double_quant_bits (int): Number of bits used to represent double_quant scale, default is 4.
             double_quant_use_sym (bool): Indicates whether double_quant scale are symmetric, default is True.
             double_quant_group_size (int): Size of double_quant groups, default is 32.
+            quant_lm_head (bool): Indicates whether quantize the lm_head layer in transformers。 Default is False.
             use_auto_scale (bool): Enables best scales search based on activation distribution, default is True.
             use_auto_clip (bool):  Enables clip range search. Defaults to True.
             folding(bool): Allow insert mul before linear when the scale cannot be absorbed by last layer,
@@ -473,6 +494,7 @@ class AWQConfig(BaseConfig):
         self.double_quant_dtype = double_quant_dtype
         self.double_quant_use_sym = double_quant_use_sym
         self.double_quant_group_size = double_quant_group_size
+        self.quant_lm_head = quant_lm_head
         self.use_auto_scale = use_auto_scale
         self.use_auto_clip = use_auto_clip
         self.folding = folding
@@ -483,9 +505,18 @@ class AWQConfig(BaseConfig):
         supported_configs = []
         # TODO(Yi)
         linear_awq_config = AWQConfig()
-        operators = [torch.nn.Linear, torch.nn.functional.linear]
+        operators = list(WOQ_WHITE_LIST)
         supported_configs.append(OperatorConfig(config=linear_awq_config, operators=operators))
         cls.supported_configs = supported_configs
+
+    def to_config_mapping(
+        self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
+    ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
+        if not self.quant_lm_head:
+            usual_lm_head_names = [".*lm_head", ".*output_layer", ".*embed_out"]
+            self.set_local(usual_lm_head_names, AWQConfig(dtype="fp32"))
+        config_mapping = super().to_config_mapping(config_list, model_info)
+        return config_mapping
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
@@ -536,6 +567,8 @@ class TEQConfig(BaseConfig):
         "double_quant_bits",
         "double_quant_use_sym",
         "double_quant_group_size",
+        # quant_lm_head
+        "quant_lm_head",
         # TEQ params
         "absorb_to_layer",
         "folding",
@@ -558,6 +591,8 @@ class TEQConfig(BaseConfig):
         double_quant_bits: int = 8,  # not available when double_quant_dtype is not 'int'
         double_quant_use_sym: bool = True,
         double_quant_group_size: int = 256,
+        # double quant
+        quant_lm_head: bool = False,
         # teq
         absorb_to_layer: dict = {},
         folding: bool = True,
@@ -579,6 +614,7 @@ class TEQConfig(BaseConfig):
             double_quant_bits (int): Number of bits used to represent double_quant scale, default is 4.
             double_quant_use_sym (bool): Indicates whether double_quant scale are symmetric, default is True.
             double_quant_group_size (int): Size of double_quant groups, default is 32.
+            quant_lm_head (bool): Indicates whether quantize the lm_head layer in transformers。 Default is False.
             absorb_to_layer (bool): The layer dict that scale can be absorbed, default is {}.
             folding(bool): Allow insert mul before linear when the scale cannot be absorbed by last layer,
               default is False.
@@ -598,6 +634,7 @@ class TEQConfig(BaseConfig):
         self.double_quant_dtype = double_quant_dtype
         self.double_quant_use_sym = double_quant_use_sym
         self.double_quant_group_size = double_quant_group_size
+        self.quant_lm_head = quant_lm_head
         self.absorb_to_layer = absorb_to_layer
         self.folding = folding
         self._post_init()
@@ -607,9 +644,18 @@ class TEQConfig(BaseConfig):
         supported_configs = []
         # TODO(Yi)
         linear_teq_config = TEQConfig()
-        operators = [torch.nn.Linear, torch.nn.functional.linear]
+        operators = list(WOQ_WHITE_LIST)
         supported_configs.append(OperatorConfig(config=linear_teq_config, operators=operators))
         cls.supported_configs = supported_configs
+
+    def to_config_mapping(
+        self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
+    ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
+        if not self.quant_lm_head:
+            usual_lm_head_names = [".*lm_head", ".*output_layer", ".*embed_out"]
+            self.set_local(usual_lm_head_names, TEQConfig(dtype="fp32"))
+        config_mapping = super().to_config_mapping(config_list, model_info)
+        return config_mapping
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
