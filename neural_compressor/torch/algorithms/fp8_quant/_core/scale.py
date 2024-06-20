@@ -125,12 +125,14 @@ def get_config(
             if mname not in scales:
                 logger.debug("Calculating scales for layer %s", mname)
                 if mname not in measurement:
-                    qconfig[UNMEASURED_MODELS].append(mname)
+                    if mod_dict[mod_type_str].should_measure:
+                        qconfig[UNMEASURED_MODELS].append(mname)
                     logger.debug(
                         "Layer '%s' has no measurements therefore it can't be quantized.",
                         mname,
                     )
                     continue
+
                 layer_measure = measurement[mname]  # ModuleConfig() of measurements
                 scales[mname] = method[layer_type][0](mod, layer_measure, params)  # ModuleConfig() of scales
                 if scales_file is not None:
