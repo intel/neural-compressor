@@ -30,10 +30,12 @@ from neural_compressor.torch.utils import (
     LoadFormat,
     logger,
 )
+
 from .modules import HPUWeightOnlyLinear, INCWeightOnlyLinear, MulLinear
 
 format_woqlinear_mapping = {LoadFormat.HUGGINGFACE: INCWeightOnlyLinear, LoadFormat.DEFAULT: INCWeightOnlyLinear}
 device_woqlinear_mapping = {"cpu": INCWeightOnlyLinear, "hpu": HPUWeightOnlyLinear}
+
 
 def save(model, output_dir="./saved_results"):
     os.makedirs(output_dir, exist_ok=True)
@@ -446,7 +448,7 @@ class WOQModelLoader:
 
         resolved_archive_file = None
         is_local = os.path.isdir(self.model_name_or_path)
-        if is_local: # pragma: no cover
+        if is_local:  # pragma: no cover
             if os.path.isfile(
                 os.path.join(
                     self.model_name_or_path,
@@ -501,10 +503,10 @@ class WOQModelLoader:
                     _add_variant(SAFE_WEIGHTS_INDEX_NAME, variant),
                 )
                 is_sharded = True
-        elif os.path.isfile(os.path.join(subfolder, self.model_name_or_path)): # pragma: no cover
+        elif os.path.isfile(os.path.join(subfolder, self.model_name_or_path)):  # pragma: no cover
             archive_file = self.model_name_or_path
             is_local = True
-        elif is_remote_url(self.model_name_or_path): # pragma: no cover
+        elif is_remote_url(self.model_name_or_path):  # pragma: no cover
             filename = self.model_name_or_path
             resolved_archive_file = download_url(self.model_name_or_path)
         else:
@@ -532,8 +534,9 @@ class WOQModelLoader:
 
                 # Since we set _raise_exceptions_for_missing_entries=False, we don't get an exception but a None
                 # result when internet is up, the repo and revision exist, but the file does not.
-                if (resolved_archive_file is None and
-                    filename == _add_variant(SAFE_WEIGHTS_NAME, variant)): # pragma: no cover
+                if resolved_archive_file is None and filename == _add_variant(
+                    SAFE_WEIGHTS_NAME, variant
+                ):  # pragma: no cover
                     # Maybe the checkpoint is sharded, we try to grab the index name in this case.
                     resolved_archive_file = cached_file(
                         self.model_name_or_path,
@@ -554,8 +557,9 @@ class WOQModelLoader:
                         # This repo has no safetensors file of any kind, we switch to PyTorch.
                         filename = _add_variant(WEIGHTS_NAME, variant)
                         resolved_archive_file = cached_file(self.model_name_or_path, filename, **cached_file_kwargs)
-                if (resolved_archive_file is None and
-                    filename == _add_variant(WEIGHTS_NAME, variant)): # pragma: no cover
+                if resolved_archive_file is None and filename == _add_variant(
+                    WEIGHTS_NAME, variant
+                ):  # pragma: no cover
                     # Maybe the checkpoint is sharded, we try to grab the index name in this case.
                     resolved_archive_file = cached_file(
                         self.model_name_or_path,
@@ -565,7 +569,7 @@ class WOQModelLoader:
                     if resolved_archive_file is not None:
                         is_sharded = True
 
-                if resolved_archive_file is None: # pragma: no cover
+                if resolved_archive_file is None:  # pragma: no cover
                     # Otherwise, maybe there is a TF or Flax model file.  We try those to give a helpful error
                     # message.
                     has_file_kwargs = {
@@ -584,11 +588,11 @@ class WOQModelLoader:
                             f"{self.model_name_or_path} does not appear to have a file named"
                             f" {_add_variant(WEIGHTS_NAME, variant)}."
                         )
-            except EnvironmentError: # pragma: no cover
+            except EnvironmentError:  # pragma: no cover
                 # Raise any environment error raise by `cached_file`. It will have a helpful error message adapted
                 # to the original exception.
                 raise
-            except Exception as e: # pragma: no cover
+            except Exception as e:  # pragma: no cover
                 # For any other exception, we throw a generic error.
                 raise EnvironmentError(
                     f"Can't load the model for '{self.model_name_or_path}'. If you were trying to load it"
@@ -661,7 +665,7 @@ class WOQModelLoader:
         dtype_orig = None
         if torch_dtype is not None:
             if isinstance(torch_dtype, str):
-                if torch_dtype == "auto": # pragma: no cover
+                if torch_dtype == "auto":  # pragma: no cover
                     if (
                         hasattr(config, "torch_dtype")
                         and config.torch_dtype is not None
@@ -742,7 +746,7 @@ class WOQModelLoader:
     def load_data_to_new_module_from_state_dict(self, new_module, new_module_weight):
         new_module.load_state_dict(new_module_weight)
 
-    def _save_hpu_format_tensor(self, model): # pragma: no cover
+    def _save_hpu_format_tensor(self, model):  # pragma: no cover
         from safetensors.torch import save_file
 
         if not os.path.exists(self._model_local_dir):
@@ -757,7 +761,7 @@ class WOQModelLoader:
             torch.save(model.state_dict(), qmodel_weight_file_path)
             logger.debug(f"Save hpu format tensor to {qmodel_weight_file_path}")
 
-    def _use_hpu_module(self): # pragma: no cover
+    def _use_hpu_module(self):  # pragma: no cover
         """Check whether hpu weight-only quantization linear module can be used.
 
         return True when:
