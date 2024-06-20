@@ -9,6 +9,7 @@ from .._quant_common.quant_config import (
     ScaleMethod,
     MeasureExclude,
     get_hqt_config,
+    set_hqt_config,
 )
 from .common import *
 from ..utils.logger import logger
@@ -227,11 +228,6 @@ def load_measurements(model, fname):
     d = defaultdict(lambda: None, d)
 
     return d
-
-
-def get_default_config(mod_list):
-    config = {k: "default" for k in mod_list}
-    return config
 
 
 def save_json(d, fname):
