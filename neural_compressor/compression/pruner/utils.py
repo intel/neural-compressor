@@ -29,8 +29,6 @@ try:
     from neural_compressor.utils import logger
     from neural_compressor.utils.utility import DotDict
 
-    from ...conf.config import PrunerV2
-    from ...conf.pythonic_config import WeightPruningConfig
     from ...utils.utility import LazyImport
 
     torch = LazyImport("torch")
