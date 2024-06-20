@@ -96,11 +96,13 @@ def prepare_model(model, qconfig, mod_list, hp_dtype=torch.float):
             # When offloading weight to disk, need to transfer the weight from disk to cpu using hf_hook
             apply_hf_hook(mod)
             if name in mod_list:
-                mod_extra_config = qconfig[name]
-
-                if config.cfg["fake_quant"] == False:
-                    quantize_params(mod, mod_extra_config)
-
+                if name in qconfig:
+                    mod_extra_config = qconfig[name]
+                    if config.cfg["fake_quant"] == False:
+                        quantize_params(mod, mod_extra_config)
+                else:
+                    # patched module without measure/quant
+                    mod_extra_config = None
                 patch_module(mod, mod_extra_config, mod_default_dict)
                 patched_modules.append(name)
                 patched_module_types.add(type(mod))

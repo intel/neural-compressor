@@ -33,9 +33,10 @@ UNMEASURED_MODELS = "UnmeasuredModels"
 
 
 class ModuleInfo:
-    def __init__(self, type, patched_module):
+    def __init__(self, type, patched_module, should_measure=True):
         self.type = type
         self.patched_module = patched_module
+        self.should_measure = should_measure
 
 
 class ModuleConfig:
@@ -264,6 +265,9 @@ mod_default_dict = {
     "LoRACompatibleConv": ModuleInfo("linear", PatchedLoRACompatibleConv),
     "Softmax": ModuleInfo("softmax", PatchedSoftmax),
     "ModuleFusedSDPA": ModuleInfo("fused_sdpa", PatchedModuleFusedSDPA),
+    "MoeMatmul": ModuleInfo("linear", PatchedMoeMatmul),
+    "ReplicatedLinear": ModuleInfo("linear", PatchedReplicatedLinear),
+    "FusedMoE": ModuleInfo("linear", PatchedMixtralMoE, False),
 }
 
 

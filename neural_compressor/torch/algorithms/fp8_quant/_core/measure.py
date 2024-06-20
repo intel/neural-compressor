@@ -139,13 +139,14 @@ def register_patched_measure_modules(model, mod_list, observer_class, d_shapes=N
                     skip_outputs_measurements,
                     (d_shapes[name] if ((d_shapes is not None) and (name in d_shapes)) else None),
                     params,
-                )
+                ) if mod_default_dict[mod_type_str].should_measure else None
                 pmod = patch_module_measure(mod, mod_extra_config, mod_default_dict)
-                for param_name in pmod._mod_extra_config.params:
-                    param = getattr(pmod, param_name)
-                    param = param.to("hpu")
-                    pmod._mod_extra_config.params[param_name].measure(param)
-                    htcore.mark_step()
+                if pmod._mod_extra_config:
+                    for param_name in pmod._mod_extra_config.params:
+                        param = getattr(pmod, param_name)
+                        param = param.to("hpu")
+                        pmod._mod_extra_config.params[param_name].measure(param)
+                        htcore.mark_step()
                 if observer_class == SaveObserver:
                     save_module(pmod)
                 patched_modules.append(name)
@@ -172,7 +173,7 @@ def is_measure_done(mod_extra_config):
 def get_mod_extra_config_dict(model):
     mcd = {}
     for name, mod in model.named_modules():
-        if hasattr(mod, "_mod_extra_config"):
+        if hasattr(mod, "_mod_extra_config") and mod._mod_extra_config:
             if is_measure_done(mod._mod_extra_config):
                 name = name.replace("_orig_mod.", "")  # remove _orig_mod part added by dynamo mechanism
                 mcd[name] = mod._mod_extra_config
