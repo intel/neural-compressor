@@ -21,14 +21,14 @@ Classes
 Module Contents
 ---------------
 
-.. py:class:: ONNXRTBertDataLoader(dataset, batch_size=1, last_batch='rollover', collate_fn=None, sampler=None, batch_sampler=None, num_workers=0, pin_memory=False, shuffle=False, distributed=False)
+.. py:class:: ONNXRTBertDataLoader
 
 
 
    Built-in dataloader for onnx bert model and its variants.
 
 
-.. py:class:: ONNXRTDataLoader(dataset, batch_size=1, last_batch='rollover', collate_fn=None, sampler=None, batch_sampler=None, num_workers=0, pin_memory=False, shuffle=False, distributed=False)
+.. py:class:: ONNXRTDataLoader
 
 
 
