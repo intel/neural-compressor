@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch
 
-from .quant_config import QuantMode, get_hqt_config, set_hqt_config
+from .quant_config import QuantMode, get_hqt_config
 
 try:  # backwards compatibility for 1.16
     from habana_frameworks.torch.hpex.kernels import fp8_fused_sdpa

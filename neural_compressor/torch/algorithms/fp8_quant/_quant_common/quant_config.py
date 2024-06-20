@@ -13,7 +13,6 @@ from ..utils.logger import logger
 
 local_rank = int(os.getenv("LOCAL_RANK", "-1"))
 world_size = int(os.getenv("WORLD_SIZE", "-1"))
-global_rank = int(os.getenv("RANK", "-1"))
 
 
 class QuantMode(Enum):

@@ -55,7 +55,6 @@ mod_types = {
 }
 descale_fcn = lambda x, scale: torch.mul(x, scale)
 scale_fcn = lambda x, scale: torch.div(x, scale)
-mat_scale_fcn = lambda x, scale_col, scale_row: torch.div(torch.div(x, scale_col), scale_row)
 cast_fcn = lambda x, dtype: x.to(dtype=dtype)
 cast_to_fp8_fcn = lambda x, dtype, scale_inv=None: torch.ops.hpu.cast_to_fp8_v2(x, scale_inv, False, False, dtype)[0]
 cast_from_fp8_fcn = lambda x, dtype, scale=None: torch.ops.hpu.cast_from_fp8(x, scale, dtype)
@@ -74,25 +73,6 @@ def rec_fn(x, fn):
         return tuple([rec_fn(k, fn) for k in x])
     else:
         return fn(x)
-
-
-def np_to_pt(x):
-    return rec_fn(x, lambda x: torch.tensor(x) if isinstance(x, np.ndarray) else x)
-
-
-def pt_to_np(x):
-    return rec_fn(
-        x,
-        lambda x: (x.detach().cpu().float().numpy() if isinstance(x, torch.Tensor) else x),
-    )
-
-
-def np_to_list(x):
-    return rec_fn(x, lambda x: x.tolist() if isinstance(x, np.ndarray) else x)
-
-
-def list_to_np(x):
-    return rec_fn(x, lambda x: np.array(x) if isinstance(x, list) else x)
 
 
 def save_json(d, fname):

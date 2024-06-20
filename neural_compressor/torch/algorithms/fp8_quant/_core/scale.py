@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 
-from .._quant_common.quant_config import ScaleMethod
+from .._quant_common.quant_config import ScaleMethod, set_hqt_config
 from .scale_methods import *
 from .quant_dequant import *
 
