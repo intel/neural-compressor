@@ -85,7 +85,6 @@ class HQQuantizer(Quantizer):
         Args:
             quant_config (ConfigMappingType): quantization config for ops.
         """
-        quant_config = self._parse_hqq_configs_mapping(quant_config)
         super().__init__(quant_config=quant_config)
 
     @torch.no_grad()
@@ -142,15 +141,3 @@ class HQQuantizer(Quantizer):
         hqq_module_config = HQQModuleConfig(weight=weight_qconfig, scale=scale_qconfig, zero=zero_qconfig)
         logger.debug(hqq_module_config)
         return hqq_module_config
-
-    def _parse_hqq_configs_mapping(self, configs_mapping):
-        qconfig_mapping = {}
-        for (op_name, op_type), quant_config in configs_mapping.items():
-            if quant_config.skip_lm_head and "lm_head" in op_name:
-                logger.warning("Skip quantizing %s due to `skip_lm_head` is True.", op_name)
-                continue
-            if quant_config is not None and quant_config.dtype == "fp32":
-                logger.warning("Fallback %s.", op_name)
-                continue
-            qconfig_mapping[op_name] = self._convert_hqq_module_config(quant_config)
-        return qconfig_mapping

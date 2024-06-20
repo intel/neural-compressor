@@ -591,7 +591,7 @@ class TEQConfig(BaseConfig):
         double_quant_bits: int = 8,  # not available when double_quant_dtype is not 'int'
         double_quant_use_sym: bool = True,
         double_quant_group_size: int = 256,
-        # double quant
+        # quant lm_head
         quant_lm_head: bool = False,
         # teq
         absorb_to_layer: dict = {},
@@ -1231,7 +1231,8 @@ class HQQConfig(BaseConfig):
         "quant_zero",
         "quant_scale",
         "scale_quant_group_size",
-        "skip_lm_head",
+        # quant_lm_head
+        "quant_lm_head",
     ]
     supported_configs: List[OperatorConfig] = []
 
@@ -1243,7 +1244,8 @@ class HQQConfig(BaseConfig):
         quant_zero: bool = True,
         quant_scale: bool = False,
         scale_quant_group_size: int = 128,
-        skip_lm_head: bool = True,
+        # quant lm_head
+        quant_lm_head: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         super().__init__(white_list=white_list)
@@ -1253,8 +1255,17 @@ class HQQConfig(BaseConfig):
         self.quant_zero = quant_zero
         self.quant_scale = quant_scale
         self.scale_quant_group_size = scale_quant_group_size
-        self.skip_lm_head = skip_lm_head
+        self.quant_lm_head = quant_lm_head
         self._post_init()
+
+    @classmethod
+    def register_supported_configs(cls) -> List[OperatorConfig]:
+        # TODO: to be refined
+        supported_configs = []
+        linear_hqq_config = HQQConfig()
+        operators = list(WOQ_WHITE_LIST)
+        supported_configs.append(OperatorConfig(config=linear_hqq_config, operators=operators))
+        cls.supported_configs = supported_configs
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
@@ -1265,14 +1276,14 @@ class HQQConfig(BaseConfig):
                 filter_result.append(pair)
         return filter_result
 
-    @classmethod
-    def register_supported_configs(cls) -> List[OperatorConfig]:
-        # TODO: to be refined
-        supported_configs = []
-        linear_hqq_config = HQQConfig()
-        operators = [torch.nn.Linear]
-        supported_configs.append(OperatorConfig(config=linear_hqq_config, operators=operators))
-        cls.supported_configs = supported_configs
+    def to_config_mapping(
+        self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
+    ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
+        if not self.quant_lm_head:
+            usual_lm_head_names = [".*lm_head", ".*output_layer", ".*embed_out"]
+            self.set_local(usual_lm_head_names, HQQConfig(dtype="fp32"))
+        config_mapping = super().to_config_mapping(config_list, model_info)
+        return config_mapping
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "HQQConfig", List["HQQConfig"]]:
