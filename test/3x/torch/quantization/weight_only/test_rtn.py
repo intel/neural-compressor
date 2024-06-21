@@ -241,7 +241,7 @@ class TestRTNQuant:
         out = model(self.example_inputs)[0]
         atol_true = (out - self.q_label).amax()
         # compare atol, this case is an ideal case.
-        if not (dtype, double_quant_bits, double_quant_group_size) == (256, 6, "nf4"):
+        if not (dtype, double_quant_bits, double_quant_group_size) == ("nf4", 6, 256):
             assert (
                 atol_false < atol_true
             ), "asym for double quant should have smaller atol because scales is bigger than zero, please double check."
