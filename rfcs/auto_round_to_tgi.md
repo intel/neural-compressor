@@ -47,7 +47,7 @@ We are also willing to integrate all source code of Auto-Round directly into TGI
 Advantages:
 
 - No third-party dependency introduced.
-- TCI maintainers have better control.
+- TGI maintainers have better control.
 
 ### 2. Perform inference with an AutoRound-quantized model.
 
