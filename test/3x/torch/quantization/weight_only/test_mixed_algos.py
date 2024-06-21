@@ -18,8 +18,8 @@ def run_fn(model):
 class TestMixedTwoAlgo:
     def test_mixed_gptq_and_rtn(self):
         with patch.object(logger, "info") as mock_info:
-            rtn_config = RTNConfig(quant_lm_head=True)
-            gptq_config = GPTQConfig(double_quant_bits=4, white_list=["transformer.*"])
+            rtn_config = RTNConfig(white_list=[".*mlp.*"])
+            gptq_config = GPTQConfig(double_quant_bits=4, white_list=[".*attn.*"])
             combined_config = rtn_config + gptq_config
             logger.info(combined_config)
 
