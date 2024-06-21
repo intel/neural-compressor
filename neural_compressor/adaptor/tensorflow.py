@@ -2204,7 +2204,6 @@ class TensorflowQuery(QueryBackendCapability):
                 raise ValueError(
                     "Please check if the format of {} follows Neural Compressor yaml schema.".format(self.cfg)
                 )
-        self._update_cfg_with_usr_definition()
 
     def get_version(self):
         """Get the current backend version information.

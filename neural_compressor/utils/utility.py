@@ -663,8 +663,9 @@ from functools import reduce
 
 
 def deep_get(dictionary, keys, default=None):
-    """Get the dot key's item in nested dict
-       eg person = {'person':{'name':{'first':'John'}}}
+    """Get the dot key's item in nested dict.
+
+       For example, person = {'person':{'name':{'first':'John'}}}
        deep_get(person, "person.name.first") will output 'John'.
 
     Args:
@@ -678,8 +679,9 @@ def deep_get(dictionary, keys, default=None):
 
 
 def deep_set(dictionary, keys, value):
-    """Set the dot key's item in nested dict
-       eg person = {'person':{'name':{'first':'John'}}}
+    """Set the dot key's item in nested dict.
+
+       For example, person = {'person':{'name':{'first':'John'}}}
        deep_set(person, "person.sex", 'male') will output
        {'person': {'name': {'first': 'John'}, 'sex': 'male'}}
 
