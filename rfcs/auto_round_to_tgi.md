@@ -40,7 +40,7 @@ Advantages:
 - Minimal maintenance effort for TGI. We already integrated it into our [INC](https://github.com/intel/neural-compressor) project, and enabled the integration tests.
 - Easy synchronization with new enhancements. As we continually improve the Auto-Round algorithm, updates can be effortlessly incorporated into TGI by updating the package version.
 
-### Option 2: Porting All Source Code of Auto-Round into TGI
+#### Option 2: Porting All Source Code of Auto-Round into TGI
 
 We are also willing to integrate all source code of Auto-Round directly into TGI.  
 
