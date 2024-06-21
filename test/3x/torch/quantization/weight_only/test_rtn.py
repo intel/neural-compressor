@@ -195,6 +195,19 @@ class TestRTNQuant:
         assert torch.allclose(out, self.label, atol=0.11), "Accuracy gap atol > 0.11 is unexpected."
         assert torch.allclose(out, out_next), "output should be same"
 
+    def test_mix_dtype(self):
+        model = copy.deepcopy(self.tiny_gptj)
+        quant_config = RTNConfig()
+        quant_config.set_local(".*mlp.*", RTNConfig(bits=8))
+        quant_config.set_local(".*.out_proj", RTNConfig(bits=6))
+        quant_config.set_local(".*.k_proj", RTNConfig(dtype="nf4"))
+        model = prepare(model, quant_config)
+        model = convert(model)
+        out = model(self.example_inputs)[0]
+        out_next = model(self.example_inputs)[0]
+        assert torch.allclose(out, self.label, atol=0.08), "Accuracy gap atol > 0.08 is unexpected."
+        assert torch.allclose(out, out_next), "output should be same"
+
     @pytest.mark.parametrize("dtype", ["int4", "nf4"])
     @pytest.mark.parametrize("double_quant_bits", [6])
     @pytest.mark.parametrize("double_quant_group_size", [8, 256])
