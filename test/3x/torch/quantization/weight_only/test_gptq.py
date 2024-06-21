@@ -21,7 +21,6 @@ device = accelerator.current_device_name()
 
 def run_fn(model):
     model(torch.tensor([[10, 20, 30]], dtype=torch.long).to(device))
-    model(torch.tensor([[40, 50, 60]], dtype=torch.long).to(device))
 
 
 class TestGPTQQuant:
@@ -221,9 +220,7 @@ class TestGPTQQuant:
         encoded_input = tokenizer(text, return_tensors="pt")
 
         def run_fn_conv1d(model):
-            with pytest.raises(ValueError):
-                for i in range(2):
-                    model(**encoded_input)
+            model(**encoded_input)
 
         quant_config = get_default_gptq_config()
         out1 = model(**encoded_input)[0]

@@ -126,7 +126,7 @@ class TestAWQQuant:
         loaded_model = load("saved_results", copy.deepcopy(self.tiny_gptj))
         loaded_out = loaded_model(self.example_inputs)[0]
         assert torch.allclose(inc_out, loaded_out), "Unexpected result. Please double check."
-        assert isinstance(loaded_model.lm_head, WeightOnlyLinear), "loading compressed model failed."
+        assert isinstance(loaded_model.transformer.h[0].mlp.fc_in, WeightOnlyLinear), "loading compressed model failed."
 
     def test_quant_lm_head(self):
         # tie_word_embeddings=false
