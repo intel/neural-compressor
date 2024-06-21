@@ -14,7 +14,7 @@ Our team have developed a new weight-only quantization algorithm called Auto-Rou
 We would like to contribute this quantization algorithm to TGI to enable users to:
 
 1. Quantize a floating model using Auto-Round.
-2. Perform inference using the quantized model.
+2. Perform inference with an AutoRound-quantized model.
 
 ### 1. Quantize Floating Model Using Auto-Round
 
@@ -49,8 +49,9 @@ Advantages:
 - No third-party dependency introduced.
 - TCI maintainers have better control.
 
-### 2. Inference AutoRound-Quantized Model
-After obtaining the quantized model using Auto-Round, users can use it like other algorithms by specifying `--quantize` with `autoround`.
+### 2. Perform inference with an AutoRound-quantized model.
+
+Extend the current `text-generation-launcher` API and add `autoround` as a new option of `--quantize`. We propose supporting both loading an already quantized model and quantizing it on the fly, similar to the `bitsandbytes` algorithm. Users can utilize it as follows:
 
 ```bash
 text-generation-launcher \
