@@ -108,6 +108,9 @@ def set_attrs_from_orig_model(cls_instance, mod, mod_extra_config, *func_names):
     cls_instance.class_name_org = mod.__class__.__name__
     cls_instance._mod_extra_config = mod_extra_config
     cls_instance.quantization_mode = config.cfg["mode"]
+    # store original module in order to invoke its functions during measurements.
+    # this may be omitted of torch remove the related validation from dynamo. see SW-187731.
+    cls_instance.__dict__["orig_mod"] = mod
     cls_instance.forward_orig = mod.forward
     if func_names is not None:
         for func in func_names:
@@ -164,7 +167,7 @@ class PatchedMatmul(nn.Module):
 
     def forward_measure(self, input, other):
         measure_input((input, other), observer=self._mod_extra_config.inputs)
-        output = self.forward_orig(input, other)
+        output = self.orig_mod(input, other)
         measure_output((output,), self._mod_extra_config.outputs)
         return output
 
@@ -210,7 +213,7 @@ class PatchedLinear(nn.Module):
 
     def forward_measure(self, input):
         measure_input((input,), observer=self._mod_extra_config.inputs)
-        output = self.forward_orig(input)
+        output = self.orig_mod(input)
         measure_output((output,), self._mod_extra_config.outputs)
         return output
 
@@ -372,7 +375,7 @@ class PatchedColumnParallelLinear(nn.Module):
         )
         dqoutput = self.quant_output(output)
         if self.gather_output:
-            dqoutput = self.collective_func(dqoutput)
+            dqoutput = self.orig_mod.collective_func(dqoutput)
         return self.post_all_reduce(dqoutput)
 
     def forward_measure(self, input):
@@ -380,7 +383,7 @@ class PatchedColumnParallelLinear(nn.Module):
         output = torch.matmul(input, self.weight.transpose(-1, -2))
         measure_output((output,), self._mod_extra_config.outputs)
         if self.gather_output:
-            output = self.collective_func(output)
+            output = self.orig_mod.collective_func(output)
         return self.post_all_reduce(output)
 
     def post_all_reduce(self, output):
@@ -563,7 +566,7 @@ class PatchedConv2d(nn.Conv2d):
 
     def forward_measure(self, input):
         measure_input((input,), observer=self._mod_extra_config.inputs)
-        output = self.forward_orig(input)
+        output = self.orig_mod(input)
         measure_output((output,), self._mod_extra_config.outputs)
         return output
 
@@ -593,7 +596,7 @@ class PatchedSoftmax(nn.Module):
 
     def forward_measure(self, x, dim=None, invAttnHead=None):
         measure_input((x,), observer=self._mod_extra_config.inputs)
-        output = self.forward_orig(x, dim, invAttnHead)
+        output = self.orig_mod(x, dim, invAttnHead)
         measure_output((output,), self._mod_extra_config.outputs)
         return output
 
@@ -634,7 +637,7 @@ class PatchedLoRACompatibleLinear(nn.Linear):
 
     def forward_measure(self, input, scale: float = 1.0):
         measure_input((input,), observer=self._mod_extra_config.inputs)
-        output = self.forward_orig(input, scale)
+        output = self.orig_mod(input, scale)
         measure_output((output,), self._mod_extra_config.outputs)
         return output
 
@@ -682,7 +685,7 @@ class PatchedLoRACompatibleConv(nn.Conv2d):
 
     def forward_measure(self, input, scale: float = 1.0):
         measure_input((input,), observer=self._mod_extra_config.inputs)
-        output = self.forward_orig(input, scale)
+        output = self.orig_mod(input, scale)
         measure_output((output,), self._mod_extra_config.outputs)
         return output
 
