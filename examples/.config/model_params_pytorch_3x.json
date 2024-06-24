@@ -146,6 +146,13 @@
         "input_model": "",
         "main_script": "run_clm_no_trainer.py",
         "batch_size": 1
+      },
+      "resnet18_mix_precision": {
+        "model_src_dir": "image_recognition/torchvision_models/mixed_precision/resnet18",
+        "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
+        "input_model": "resnet18",
+        "main_script": "main.py",
+        "batch_size": 100
       }
     }
 }
