@@ -23,6 +23,7 @@ from typing import Dict
 
 import cpuinfo
 import psutil
+from prettytable import PrettyTable
 
 from neural_compressor.common.utils import Mode, TuningLogger, logger
 
@@ -38,6 +39,7 @@ __all__ = [
     "CpuInfo",
     "default_tuning_logger",
     "call_counter",
+    "Statistics",
 ]
 
 
@@ -240,3 +242,45 @@ def call_counter(func):
         return func(*args, **kwargs)
 
     return wrapper
+
+
+class Statistics:
+    """The statistics printer."""
+
+    def __init__(self, data, header, field_names, output_handle=logger.info):
+        """Init a Statistics object.
+
+        Args:
+            data: The statistics data
+            header: The table header
+            field_names: The field names
+            output_handle: The output logging method
+        """
+        self.field_names = field_names
+        self.header = header
+        self.data = data
+        self.output_handle = output_handle
+        self.tb = PrettyTable(min_table_width=40)
+
+    def print_stat(self):
+        """Print the statistics."""
+        valid_field_names = []
+        for index, value in enumerate(self.field_names):
+            if index < 2:
+                valid_field_names.append(value)
+                continue
+
+            if any(i[index] for i in self.data):
+                valid_field_names.append(value)
+        self.tb.field_names = valid_field_names
+        for i in self.data:
+            tmp_data = []
+            for index, value in enumerate(i):
+                if self.field_names[index] in valid_field_names:
+                    tmp_data.append(value)
+            if any(tmp_data[1:]):
+                self.tb.add_row(tmp_data)
+        lines = self.tb.get_string().split("\n")
+        self.output_handle("|" + self.header.center(len(lines[0]) - 2, "*") + "|")
+        for i in lines:
+            self.output_handle(i)
