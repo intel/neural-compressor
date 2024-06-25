@@ -170,7 +170,7 @@ def submit_task_to_db(task, task_submitter, db_path):
             msg = "Task Submitted fail! Make sure neural solution runner is running!"
         except Exception as e:
             msg = "Task Submitted fail!"
-            print(f"Task Submitted fail! {e}")
+            print(f"{msg} {e}")
         conn.close()
         status = "successfully"
         msg = "Task submitted successfully"
