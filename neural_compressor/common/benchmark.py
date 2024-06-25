@@ -1,0 +1,303 @@
+# Copyright (c) 2024 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import argparse
+import os
+import re
+import subprocess
+import sys
+
+import psutil
+
+from neural_compressor.common.utils import Statistics, logger
+
+description = """
+This is the command used to launch the Intel CPU performance benchmark.
+To get the peak performance on Intel Xeon CPU, we should avoid crossing numa node in one instance.
+By default, `incbench` will trigger 1 instance on the first numa node.
+
+Params in `incbench`:
+ - num_instances            Default to 1.
+ - core                     Default to 0-${num_cpus_per_numa}, decides visible core range.
+                                Note: The visible core range should be in the same numa node.
+ - numa                     Default to 0, decides visible core range.
+ - socket                   Default to None, decides visible core range.
+ - mode                     Defaults to None, which disables any mode.
+                                Available params: [per_numa, per_socket, per_4cores], using all cores in CPU.
+
+# Use cases:
+1. `incbench main.py`: run 1 instance on numa:0.
+2. `incbench --socket 1 main.py`: run 1 instance on socket:1.
+3. `incbench --numa 0,1 main.py`: run 1 instance on numa:0,1.
+4. `incbench --num_instances 2 --numa 0,1 main.py`: run 2 instances on numa:0,1, (per-numa instance).
+6. `incbench --socket 0,1 --num_cores_per_instance 4 main.py`: run `math.ceil(${core_number}/4)` instances on all cores.
+5. `incbench --mode per_numa main.py`: run `$(numa_number)` instances on all numa nodes (per-numa instance).
+6. `incbench --mode per_4cores main.py`: run `math.ceil(${core_number}/4)` instances on all cores.
+"""
+
+
+def get_linux_numa_info():
+    result = subprocess.run(["lscpu"], capture_output=True, text=True)
+    output = result.stdout
+
+    numa_info = {}
+    for line in output.splitlines():
+        # demo: "NUMA node0 CPU(s): 0-3"
+        node_match = re.match(r"^NUMA node(\d+) CPU\(s\):\s+(.*)$", line)
+        if node_match:
+            node_id = int(node_match.group(1))
+            cpus = node_match.group(2).strip()
+            numa_info[node_id] = {
+                "physical_cpus": cpus.split(",")[0],
+                "logical_cpus": cpus.split(","),
+            }
+    return numa_info
+
+
+def get_windows_numa_info():
+    # pip install WMI
+    import wmi
+
+    c = wmi.WMI()
+    numa_nodes = c.Win32_ComputerSystem()
+    print(f"Number of NUMA node: {len(numa_nodes)}")
+
+
+def dump_numa_info():
+    """Fetch NUMA info and dump stats in shell, return numa_info.
+
+    Returns:
+        numa_info (dict): {numa_node_index: list of Physical CPUs in this numa node, ...}
+    """
+    if psutil.WINDOWS:
+        numa_info = get_windows_numa_info()
+    elif psutil.LINUX:
+        numa_info = get_linux_numa_info()
+    else:
+        logger.error(f"Unsupported platform detected: {sys.platform}, only supported on Linux and Windows")
+
+    # dump stats to shell
+    field_names = ["NUMA node", "physical CPUs", "logical CPUs"]
+    output_data = []
+    for op_type in numa_info.keys():
+        field_results = [op_type, numa_info[op_type]["physical_cpus"], numa_info[op_type]["logical_cpus"]]
+        output_data.append(field_results)
+    Statistics(output_data, header="CPU Information", field_names=field_names).print_stat()
+
+    # parse numa_info for ease-of-use
+    for n in numa_info:
+        numa_info[n] = parse_str2list(numa_info[n]["physical_cpus"])
+    return numa_info
+
+
+def parse_str2list(cpu_ranges):
+    """Parse '0-4,7,8' into [0,1,2,3,4,7,8] for machine readable."""
+    cpus = []
+    ranges = cpu_ranges.split(",")
+    for r in ranges:
+        if "-" in r:
+            try:
+                start, end = r.split("-")
+                cpus.extend(range(int(start), int(end) + 1))
+            except ValueError:
+                raise ValueError(f"Invalid range: {r}")
+        else:
+            try:
+                cpus.append(int(r))
+            except ValueError:
+                raise ValueError(f"Invalid number: {r}")
+    return cpus
+
+
+def format_list2str(cpus):
+    """Format [0,1,2,3,4,7,8] back to '0-4,7,8' for human readable."""
+    if not cpus:
+        return ""
+    cpus = sorted(set(cpus))
+    ranges = []
+    start = cpus[0]
+    end = start
+    for i in range(1, len(cpus)):
+        if cpus[i] == end + 1:
+            end = cpus[i]
+        else:
+            if start == end:
+                ranges.append(f"{start}")
+            else:
+                ranges.append(f"{start}-{end}")
+            start = cpus[i]
+            end = start
+    if start == end:
+        ranges.append(f"{start}")
+    else:
+        ranges.append(f"{start}-{end}")
+    return ",".join(ranges)
+
+
+def get_reversed_numa_info(numa_info):
+    """Reverse numa_info."""
+    reversed_numa_info = {}
+    for n, cpu_info in numa_info.items():
+        for i in cpu_info:
+            reversed_numa_info[i] = n
+    return reversed_numa_info
+
+
+def get_numa_node(core_list, reversed_numa_info):
+    """Return numa node used in current core_list."""
+    numa_set = set()
+    for c in core_list:
+        assert c in reversed_numa_info, "Cores should be in physical CPUs"
+        numa_set.add(reversed_numa_info[c])
+    return numa_set
+
+
+def set_cores_for_instance(args, numa_info):
+    """All use cases are listed below:
+         - a: num_instance; b: num_cores_per_instance, c. cores
+             - no a, b, c == no a, b: a=1, c=numa:0
+             - no a == no a, c: a=numa:0/b, c=numa:0
+             - no b == no b, c: a=a, c=numa:0
+             - no c == a, b, c: a=a, c=a*b
+    Args:
+        args (_type_): _description_
+        numa_info (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    available_cores_list = []
+    for n in numa_info:
+        available_cores_list.extend(numa_info[n])
+    # preprocess args.cores to set default values
+    if args.cores is None:
+        if args.num_cores_per_instance and args.num_instances:
+            target_cores = args.num_instances * args.num_cores_per_instance
+            assert target_cores <= len(
+                available_cores_list
+            ), f"num_instances * num_cores_per_instance = {target_cores} exceeds the range of physical CPUs:{len(available_cores_list)}"
+            cores_list = list(range(target_cores))
+        else:
+            # default behavior, only use numa:0
+            cores_list = numa_info[0]
+    else:
+        cores_list = parse_str2list(args.cores)
+        if args.num_cores_per_instance and args.num_instances:
+            target_cores = args.num_instances * args.num_cores_per_instance
+            assert target_cores <= len(
+                cores_list
+            ), f"num_instances * num_cores_per_instance = {target_cores} exceeds the range of available CPUs:{len(cores_list)}"
+            cores_list = cores_list[:target_cores]
+    # preprocess args.num_instances to set default values
+    if args.num_instances is None:
+        if args.num_cores_per_instance:
+            args.num_instances = len(cores_list) // args.num_cores_per_instance
+        else:
+            args.num_instances = 1
+
+    # only need to process num_cores_per_instance now
+    core_list_per_instance = {}
+    # num_cores_per_instance = all_cores / num_instances
+    num_cores_per_instance = len(cores_list) // args.num_instances
+    for i in range(args.num_instances):
+        core_list_per_instance[i] = cores_list[i * num_cores_per_instance : (i + 1) * num_cores_per_instance]
+    if len(cores_list) % args.num_instances != 0:  # pragma: no cover
+        last_index = args.num_instances - 1
+        core_list_per_instance[last_index] = cores_list[last_index * num_cores_per_instance :]
+
+    # convert core_list_per_instance = {"instance_index": cpu_index_list} -> {"instance_index": ["node_index", "cpu_index", num_cpu]}
+    reversed_numa_info = get_reversed_numa_info(numa_info)
+    for i, core_list in core_list_per_instance.items():
+        core_list_per_instance[i] = [
+            format_list2str(get_numa_node(core_list, reversed_numa_info)),
+            format_list2str(core_list),
+            len(core_list),
+        ]
+
+    # dump stats to shell
+    field_names = ["Instance", "NUMA node", "physical CPUs"]
+    output_data = []
+    for i, core_list in core_list_per_instance.items():
+        field_results = [i + 1, core_list[0], core_list[1]]
+        output_data.append(field_results)
+    Statistics(output_data, header="Instance Binding Information", field_names=field_names).print_stat()
+    return core_list_per_instance
+
+
+def generate_prefix(args, core_list):
+    """Generate the command prefix with numactl (Linux) or start (Windows).
+
+    Args:
+        core_list: ["node_index", "cpu_index", num_cpu]
+    """
+    if sys.platform in ["linux"] and os.system("numactl --show >/dev/null 2>&1") == 0:
+        if args.cross_memory:
+            return "OMP_NUM_THREADS={} numactl -l -C {}".format(core_list[2], core_list[1])
+        else:
+            return "OMP_NUM_THREADS={} numactl -m {} -C {}".format(core_list[2], core_list[0], core_list[1])
+    elif sys.platform in ["win32"]:  # pragma: no cover
+        from neural_compressor.utils.utility import get_number_of_sockets
+
+        num_of_socket = int(get_number_of_sockets())
+        cores_per_instance = int(os.environ.get("CORES_PER_INSTANCE"))
+        cores_per_socket = int(psutil.cpu_count(logical=False)) / num_of_socket
+        socket_id = int(core_list[0] // cores_per_socket)
+        # cores per socket should integral multiple of cores per instance, else not bind core
+        if cores_per_socket % cores_per_instance == 0:
+            from functools import reduce
+
+            hex_core = hex(reduce(lambda x, y: x | y, [1 << p for p in core_list]))
+            return "start /b /WAIT /node {} /affinity {} CMD /c".format(socket_id, hex_core)
+    else:
+        return ""
+
+
+def build_multi_instance_command(args, core_list_per_instance, raw_cmd):
+    multi_instance_cmd = ""
+    for i, core_list in core_list_per_instance.items():
+        prefix = generate_prefix(args, core_list)
+        instance_cmd = "{} {}".format(prefix, raw_cmd)
+        if sys.platform in ["linux"]:
+            instance_log = "{}_{}_{}C.log".format(i + 1, len(core_list_per_instance), core_list[2])
+            multi_instance_cmd += "{} 2>&1|tee {} & \\\n".format(instance_cmd, instance_log)
+        else:  # pragma: no cover
+            multi_instance_cmd += "{} \n".format(instance_cmd)
+
+    multi_instance_cmd += "wait" if sys.platform in ["linux"] else ""
+    print(multi_instance_cmd)
+
+
+def benchmark():
+    logger.info("Start benchmark with Intel Neural Compressor.")
+    logger.info("By default, Intel Neural Compressor triggers only one instance on numa:0.")
+
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument("--num_instances", type=int, default=None, help="Determine the number of instances.")
+    parser.add_argument(
+        "--num_cores_per_instance", type=int, default=None, help="Determine the number of cores in 1 instance."
+    )
+    parser.add_argument("-C", "--cores", type=str, default=None, help="Determine the visible core range.")
+    parser.add_argument("--cross_memory", action="store_true", help="Determine the visible core range.")
+    parser.add_argument("script", type=str, help="The path to the script to launch.")
+    parser.add_argument("parameters", nargs=argparse.REMAINDER, help="arguments to the script.")
+
+    args = parser.parse_args()
+
+    assert sys.platform in ["linux", "win32"], "only support platform windows and linux..."
+
+    numa_info = dump_numa_info()  # show numa info and current usage of cores
+    logger.info("Intel Neural Compressor only uses physical CPUs for the best performance.")
+    core_list_per_instance = set_cores_for_instance(args, numa_info=numa_info)
+    script_and_parameters = args.script + " " + " ".join(args.parameters)
+    build_multi_instance_command(args, core_list_per_instance, raw_cmd=script_and_parameters)

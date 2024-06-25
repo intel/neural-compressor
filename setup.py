@@ -202,6 +202,11 @@ if __name__ == "__main__":
     entry_points = PKG_INSTALL_CFG[cfg_key].get("entry_points") or {}
     extras_require = PKG_INSTALL_CFG[cfg_key].get("extras_require") or {}
 
+    entry_points = {
+        "console_scripts": [
+            "incbench = neural_compressor.common.benchmark:benchmark",
+        ]
+    }
     setup(
         name=project_name,
         author="Intel AIPT Team",
