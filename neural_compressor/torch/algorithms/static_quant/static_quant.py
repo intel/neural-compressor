@@ -33,6 +33,7 @@ from packaging.version import Version
 
 from neural_compressor.torch.algorithms import Quantizer
 from neural_compressor.torch.utils import logger
+from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
 from .utility import (
     CpuInfo,
@@ -68,8 +69,9 @@ class StaticQuantQuantizer(Quantizer):
         Returns:
             A prepared model.
         """
-        device = self.user_cfg.get("device", None)
-        if device == "xpu":
+        device = auto_detect_accelerator().current_device()
+
+        if device == "xpu":  # pragma: no cover
             model = model.to("xpu")
 
         assert example_inputs is not None, "Please provide example_inputs for static quantization."
@@ -88,7 +90,7 @@ class StaticQuantQuantizer(Quantizer):
         if not hasattr(model, "save_qconf_summary") or not hasattr(model, "load_qconf_summary"):
             from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
 
-            if device == "xpu":
+            if device == "xpu":  # pragma: no cover
                 static_qconfig = QConfig(
                     activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_affine, dtype=torch.quint8),
                     weight=MinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_tensor_symmetric),

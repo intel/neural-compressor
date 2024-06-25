@@ -30,6 +30,7 @@ except:  # pragma: no cover
 
 from neural_compressor.common.utils import DEFAULT_WORKSPACE, CpuInfo
 from neural_compressor.torch.utils import get_ipex_version, get_torch_version, logger
+from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
 version = get_torch_version()
 ipex_ver = get_ipex_version()
@@ -259,7 +260,7 @@ def generate_activation_observer(
             return minmax_activation_observer
 
 
-def get_quantizable_ops_recursively(model, example_inputs, device="cpu"):  # pragma: no cover
+def get_quantizable_ops_recursively(model, example_inputs):  # pragma: no cover
     """Get all quantizable ops from model.
 
     Args:
@@ -278,6 +279,8 @@ def get_quantizable_ops_recursively(model, example_inputs, device="cpu"):  # pra
     ffn_blocks = detect_result.get("ffn_blocks", None)
     logger.info(f"Attention Blocks: {len(attention_block)}")
     logger.info(f"FFN Blocks: {len(ffn_blocks)}")
+
+    device = auto_detect_accelerator().current_device()
     if not os.path.exists(ipex_config_path):
         assert isinstance(model, torch.nn.Module), "The model passed in is not the instance of torch.nn.Module"
 
@@ -292,7 +295,7 @@ def get_quantizable_ops_recursively(model, example_inputs, device="cpu"):  # pra
         assert example_inputs is not None, "IPEX need q_dataloader or example_inputs to prepare the model"
         from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
 
-        if device == "xpu":
+        if device == "xpu":  # pragma: no cover
             static_qconfig = QConfig(
                 activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_affine, dtype=torch.quint8),
                 weight=MinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_tensor_symmetric),

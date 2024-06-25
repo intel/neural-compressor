@@ -968,7 +968,6 @@ class StaticQuantConfig(BaseConfig):
         "act_granularity",
         "act_algo",
         "excluded_precisions",
-        "device",
     ]
     supported_configs: List[OperatorConfig] = []
 
@@ -983,7 +982,6 @@ class StaticQuantConfig(BaseConfig):
         act_granularity: str = "per_tensor",
         act_algo: str = "minmax",
         excluded_precisions: list = [],
-        device: str = "cpu",
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init Static Quant Configs."""
@@ -997,7 +995,6 @@ class StaticQuantConfig(BaseConfig):
         self.act_granularity = act_granularity
         self.act_algo = act_algo
         self.excluded_precisions = excluded_precisions
-        self.device = device
         self._post_init()
 
     @classmethod
@@ -1008,17 +1005,17 @@ class StaticQuantConfig(BaseConfig):
         supported_configs.append(OperatorConfig(config=linear_static_config, operators=operators))
         cls.supported_configs = supported_configs
 
-    def get_model_info_for_ipex(self, model: torch.nn.Module, example_inputs) -> List[Tuple[str, Callable]]:
+    @staticmethod
+    def get_model_info_for_ipex(model: torch.nn.Module, example_inputs) -> List[Tuple[str, Callable]]:
         from neural_compressor.torch.algorithms.static_quant import get_quantizable_ops_recursively
 
-        _, _, _, _, model_info = get_quantizable_ops_recursively(
-            model, example_inputs=example_inputs, device=self.device
-        )
+        _, _, _, _, model_info = get_quantizable_ops_recursively(model, example_inputs=example_inputs)
         return model_info
 
-    def get_model_info(self, model: torch.nn.Module, example_inputs=None) -> List[Tuple[str, Callable]]:
+    @staticmethod
+    def get_model_info(model: torch.nn.Module, example_inputs=None) -> List[Tuple[str, Callable]]:
         if is_ipex_imported():
-            return StaticQuantConfig.get_model_info_for_ipex(self, model, example_inputs)
+            return StaticQuantConfig.get_model_info_for_ipex(model, example_inputs)
 
     def to_config_mapping(
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
