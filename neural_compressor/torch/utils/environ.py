@@ -91,6 +91,9 @@ def get_torch_version():
     return version
 
 
+GT_TORCH_VERSION_2_3_2 = get_torch_version() > Version("2.3.2")
+
+
 def get_accelerator(device_name="auto"):
     global accelerator  # update the global accelerator when calling this func
     from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
