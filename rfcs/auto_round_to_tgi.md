@@ -49,13 +49,37 @@ Advantages:
 - No third-party dependency introduced.
 - TGI maintainers have better control.
 
+The overview of the call flow for the two options above is as follows:
+```python
+# tgi/server/text_generation_server/layers/autoround/quantize.py
+
+def quantize(
+    model_id: str,
+    bits: int,
+    groupsize: int,
+    output_dir: str,
+    revision: str,
+    trust_remote_code: bool,
+    ...
+):
+    # Load model...
+    model = ...
+    # Quantize model using auto-round
+    # Import autoround from auto-round package for Option1
+    # Import autoround from the current folder for Option2
+    import autoround 
+    rounder = autoround.AutoRound(model, ...)
+    rounder.save_quantized(output_dir)
+
+```
+
 ### 2. Perform inference with an AutoRound-quantized model.
 
-Extend the current `text-generation-launcher` API and add `autoround` as a new option of `--quantize`. We propose supporting both loading an already quantized model and quantizing it on the fly, similar to the `bitsandbytes` algorithm. Users can utilize it as follows:
+we support exporting it in several formats compatible with high-speed, low-bits kernels such as `Exllama v1`, `Exllama v2`, and Triton kernels from AutoGPTQ for Nvidia GPUs, as well as QBits Kernel, W4A16 kernel from IPEX for Intel CPUs. We propose extending the current `text-generation-launcher` API to include `autoround` as a new option under `--quantize`. We propose supporting both loading an already quantized model and quantizing it on the fly. Users can utilize it as follows:
 
 ```bash
 text-generation-launcher \
-    --model-id INC/Llama-2-7b-Chat-Autoround \
+    --model-id INC/Llama-2-7b-Chat-Autoround \ # or float model, like meta-llama/Llama-2-17b-hf
     --trust-remote-code --port 8080 \
     --max-input-length 3072 --max-total-tokens 4096 --max-batch-prefill-tokens 4096 \
     --quantize autoround   # <------ select Auto-Round
