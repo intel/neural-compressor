@@ -20,6 +20,8 @@ from torch.ao.quantization.observer import HistogramObserver, MinMaxObserver, Pl
 from torch.ao.quantization.quantizer import QuantizationSpec
 from torch.ao.quantization.quantizer.x86_inductor_quantizer import QuantizationConfig, X86InductorQuantizer
 
+from neural_compressor.torch.utils import GT_TORCH_VERSION_2_3_2
+
 
 def create_quant_spec_from_config(dtype, sym, granularity, algo, is_dynamic=False) -> QuantizationSpec:
     dtype_mapping: Dict[str, torch.dtype] = {"int8": torch.int8, "uint8": torch.uint8}
@@ -53,6 +55,9 @@ def create_quant_spec_from_config(dtype, sym, granularity, algo, is_dynamic=Fals
 
 
 def _map_inc_config_to_torch_quant_config(inc_config, is_dynamic=False) -> QuantizationConfig:
+    NOT_QUANT_DTYPES = ["fp32", "fp16", "bf16"]
+    if inc_config.act_dtype in NOT_QUANT_DTYPES and inc_config.w_dtype in NOT_QUANT_DTYPES:  # pragma: no cover
+        return None
     default_quant_config = xiq.get_default_x86_inductor_quantization_config(is_dynamic=is_dynamic)
     input_act_quant_spec = create_quant_spec_from_config(
         inc_config.act_dtype, inc_config.act_sym, inc_config.act_granularity, inc_config.act_algo, is_dynamic=is_dynamic
@@ -75,5 +80,22 @@ def create_xiq_quantizer_from_pt2e_config(config, is_dynamic=False) -> X86Induct
     # set global
     global_config = _map_inc_config_to_torch_quant_config(config, is_dynamic)
     quantizer.set_global(global_config)
-    # Skip the local config for now (need torch 2.4)
+    # need torch >= 2.3.2
+    if GT_TORCH_VERSION_2_3_2:  # pragma: no cover
+        op_type_config_dict, op_name_config_dict = config._get_op_name_op_type_config()
+        if op_type_config_dict:
+            for op_type, config in op_type_config_dict.items():
+                _nn_module_type = getattr(torch.nn, op_type, None)
+                if _nn_module_type:
+                    quantizer.set_module_type_qconfig(
+                        _nn_module_type, _map_inc_config_to_torch_quant_config(config, is_dynamic)
+                    )
+                _nn_func_type = getattr(torch.nn.functional, op_type, None)
+                if _nn_func_type:
+                    quantizer.set_function_type_qconfig(
+                        _nn_module_type, _map_inc_config_to_torch_quant_config(config, is_dynamic)
+                    )
+        if op_name_config_dict:
+            for op_name, config in op_name_config_dict.items():
+                quantizer.set_module_name_qconfig(op_name, _map_inc_config_to_torch_quant_config(config, is_dynamic))
     return quantizer
