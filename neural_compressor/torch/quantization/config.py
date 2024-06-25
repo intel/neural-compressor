@@ -46,6 +46,7 @@ from neural_compressor.common.utils import (
 )
 from neural_compressor.torch.utils import is_hpex_available, is_ipex_imported, is_transformers_imported, logger
 from neural_compressor.torch.utils.constants import (
+    LM_HEAD_NAMES,
     PRIORITY_AUTOROUND,
     PRIORITY_AWQ,
     PRIORITY_GPTQ,
@@ -198,8 +199,7 @@ class RTNConfig(BaseConfig):
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
         if not self.quant_lm_head:
-            usual_lm_head_names = [".*lm_head", ".*output_layer", ".*embed_out"]
-            self.set_local(usual_lm_head_names, RTNConfig(dtype="fp32"))
+            self.set_local(LM_HEAD_NAMES, RTNConfig(dtype="fp32"))
         config_mapping = super().to_config_mapping(config_list, model_info)
         return config_mapping
 
@@ -359,8 +359,7 @@ class GPTQConfig(BaseConfig):
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
         if not self.quant_lm_head:
-            usual_lm_head_names = [".*lm_head", ".*output_layer", ".*embed_out"]
-            self.set_local(usual_lm_head_names, GPTQConfig(dtype="fp32"))
+            self.set_local(LM_HEAD_NAMES, GPTQConfig(dtype="fp32"))
         config_mapping = super().to_config_mapping(config_list, model_info)
         return config_mapping
 
@@ -502,8 +501,7 @@ class AWQConfig(BaseConfig):
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
         if not self.quant_lm_head:
-            usual_lm_head_names = [".*lm_head", ".*output_layer", ".*embed_out"]
-            self.set_local(usual_lm_head_names, AWQConfig(dtype="fp32"))
+            self.set_local(LM_HEAD_NAMES, AWQConfig(dtype="fp32"))
         config_mapping = super().to_config_mapping(config_list, model_info)
         return config_mapping
 
@@ -641,8 +639,7 @@ class TEQConfig(BaseConfig):
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
         if not self.quant_lm_head:
-            usual_lm_head_names = [".*lm_head", ".*output_layer", ".*embed_out"]
-            self.set_local(usual_lm_head_names, TEQConfig(dtype="fp32"))
+            self.set_local(LM_HEAD_NAMES, TEQConfig(dtype="fp32"))
         config_mapping = super().to_config_mapping(config_list, model_info)
         return config_mapping
 
@@ -1269,8 +1266,7 @@ class HQQConfig(BaseConfig):
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
         if not self.quant_lm_head:
-            usual_lm_head_names = [".*lm_head", ".*output_layer", ".*embed_out"]
-            self.set_local(usual_lm_head_names, HQQConfig(dtype="fp32"))
+            self.set_local(LM_HEAD_NAMES, HQQConfig(dtype="fp32"))
         config_mapping = super().to_config_mapping(config_list, model_info)
         return config_mapping
 
