@@ -443,7 +443,6 @@ class RAWGPTQuantizer(object):
                 weight_config_this_layer = self.get_layer_config(full_layer_name)
                 if self.use_layer_wise:  # pragma: no cover
                     from neural_compressor.torch.algorithms.layer_wise import load_value
-                    # import pdb; pdb.set_trace()
                     W = load_value(self.model, full_layer_name + ".weight", self.model_path)
                 else:
                     W = sub_layers[layer_name].weight.data.clone()
@@ -485,7 +484,6 @@ class RAWGPTQuantizer(object):
                     full_layer_name = self.get_full_layer_name(layer_name, block_idx)
                     for n, p in sub_layers[layer_name].named_parameters():
                         param_name = full_layer_name + "." + n
-                        # breakpoint()
                         if n == "weight":
                             W = load_value(self.model, full_layer_name + ".weight", self.model_path)
                         else:
@@ -494,8 +492,6 @@ class RAWGPTQuantizer(object):
                     
                 else:
                     W = sub_layers[layer_name].weight.data.clone()
-                    
-                    
                     
                 accelerator.mark_step()
                 if "hpu" in self.device:
@@ -568,7 +564,6 @@ class RAWGPTQuantizer(object):
                     device=self.device,
                 )
                 new_module.pack(int_weight, gptq_scale, gptq_zp, sub_layers[layer_name].bias, gptq_perm)
-                
                     
                 if self.use_layer_wise:  # pragma: no cover
                     from neural_compressor.torch.algorithms.layer_wise import (

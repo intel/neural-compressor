@@ -65,6 +65,7 @@ class RTNQuantizer(Quantizer):
         quantile=1.0,
         use_full_range=False,
         use_mse_search=False,
+        use_layer_wise=False,
         *args,
         **kwargs,
     ):
@@ -89,6 +90,11 @@ class RTNQuantizer(Quantizer):
         """
         weight_config = self.quant_config
         device = get_accelerator(kwargs.pop("device", "auto")).current_device_name()
+
+        # Put model on device explicitly
+        # TODO: refine it later, Put module on device one by one instead of the whole model
+        if not use_layer_wise:
+            model.to(device)
 
         assert isinstance(model, torch.nn.Module), "only support torch module"
         if is_transformers_imported():
@@ -126,7 +132,6 @@ class RTNQuantizer(Quantizer):
                 group_dim = weight_config[name]["group_dim"]
                 use_full_range = weight_config[name]["use_full_range"]
                 use_mse_search = weight_config[name]["use_mse_search"]
-                use_layer_wise = weight_config[name]["use_layer_wise"]
                 model_path = weight_config[name]["model_path"]
                 use_optimum_format = kwargs.get("use_optimum_format", True)
                 # double quant config
@@ -162,14 +167,8 @@ class RTNQuantizer(Quantizer):
                 model_path = get_path(model_path)
             
                 # load weight
-                # breakpoint()
                 load_module(model, name, model_path, device=device)
-                # load_value(model, name + ".weight", model_path)
-            else:
-                # Put model on device explicitly
-                # TODO: refine it later, Put module on device one by one instead of the whole model
-                model.to(device)
-            
+           
             # for only group_dim is 0 or only `transformers.Conv1D`, we need transpose weight.
             if is_transformers_imported():
                 transpose = (group_dim == 0) ^ (isinstance(m, transformers.Conv1D))
@@ -218,8 +217,7 @@ class RTNQuantizer(Quantizer):
                 device=device,
             )
             new_module.pack(int_weight, scale, zp, m.bias)
-            
-            # import pdb; pdb.set_trace()
+
             if use_layer_wise:
                 # save and clean weight
                 from neural_compressor.torch.algorithms.layer_wise.utils import clean_module_weight

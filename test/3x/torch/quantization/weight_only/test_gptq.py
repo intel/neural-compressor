@@ -191,8 +191,7 @@ class TestGPTQQuant:
         )
         model = quantize(model, quant_config, run_fn=run_fn)
         out = model(self.example_inputs)[0]
-        atol_true = (out - q_label).amax()
-        print(out, atol_true)
+        assert torch.equal(out, q_label), "use_layer_wise=True output should be same. Please double check."
         
     @pytest.mark.parametrize("dtype", ["nf4", "int4"])
     @pytest.mark.parametrize("double_quant_bits", [6])
