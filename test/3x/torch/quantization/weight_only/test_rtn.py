@@ -139,7 +139,6 @@ class TestRTNQuant:
             assert torch.allclose(atol_false, atol_true, atol=0.012), "atol is very close, double checked the logic."
 
     def test_layer_wise(self):
-        # model = copy.deepcopy(self.tiny_gptj)
         from neural_compressor.torch.algorithms.layer_wise import load_empty_model
 
         model = load_empty_model("hf-internal-testing/tiny-random-GPTJForCausalLM")
