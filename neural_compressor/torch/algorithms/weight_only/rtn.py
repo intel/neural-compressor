@@ -19,10 +19,10 @@
 # limitations under the License.
 
 
+import gc
 from collections import OrderedDict
 
 import torch
-import gc
 
 from neural_compressor.torch.algorithms import Quantizer
 from neural_compressor.torch.utils import get_accelerator, is_transformers_imported, logger, set_module
@@ -157,18 +157,20 @@ class RTNQuantizer(Quantizer):
                 continue
             logger.debug(f"RTN quantized module:{name, m}")
             logger.debug(log_msg)
-            
+
             if use_layer_wise:
+                import os
+
                 from neural_compressor.common.utils import DEFAULT_WORKSPACE
                 from neural_compressor.torch.algorithms.layer_wise.utils import get_path, load_module, load_value
-                import os
+
                 lwq_workspace = os.path.join(DEFAULT_WORKSPACE, "lwq_tmpdir")
                 os.makedirs(lwq_workspace, exist_ok=True)
                 model_path = get_path(model_path)
-            
+
                 # load weight
                 load_module(model, name, model_path, device=device)
-           
+
             # for only group_dim is 0 or only `transformers.Conv1D`, we need transpose weight.
             if is_transformers_imported():
                 transpose = (group_dim == 0) ^ (isinstance(m, transformers.Conv1D))
@@ -230,7 +232,7 @@ class RTNQuantizer(Quantizer):
                 return new_module
             else:
                 set_module(model, name, new_module)
-            
+
         if use_layer_wise:
             # register hooks
             from neural_compressor.torch.algorithms.layer_wise.utils import register_weight_hooks

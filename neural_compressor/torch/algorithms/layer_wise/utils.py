@@ -214,6 +214,7 @@ def _get_path(pretrained_model_name_or_path):
         path = dowload_hf_model(pretrained_model_name_or_path)
     return path
 
+
 get_path = _get_path
 
 

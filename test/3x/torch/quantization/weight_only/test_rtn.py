@@ -141,6 +141,7 @@ class TestRTNQuant:
     def test_layer_wise(self):
         # model = copy.deepcopy(self.tiny_gptj)
         from neural_compressor.torch.algorithms.layer_wise import load_empty_model
+
         model = load_empty_model("hf-internal-testing/tiny-random-GPTJForCausalLM")
         quant_config = RTNConfig(
             use_layer_wise=True,
@@ -149,7 +150,7 @@ class TestRTNQuant:
         model = prepare(model, quant_config)
         model = convert(model)
         out = model(self.example_inputs)[0]
-        assert torch.equal(out, self.q_label),  "use_layer_wise=True output should be same. Please double check."
+        assert torch.equal(out, self.q_label), "use_layer_wise=True output should be same. Please double check."
 
     @pytest.mark.parametrize(
         "dtype",

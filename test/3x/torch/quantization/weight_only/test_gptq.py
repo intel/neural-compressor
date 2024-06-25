@@ -178,20 +178,18 @@ class TestGPTQQuant:
         run_fn(model)
         model = convert(model)
         q_label = model(self.example_inputs)[0]
-    
+
         from neural_compressor.torch.algorithms.layer_wise import load_empty_model
+
         model = load_empty_model("hf-internal-testing/tiny-random-GPTJForCausalLM")
-    
-        quant_config = GPTQConfig(
-            use_layer_wise=True,
-            model_path="hf-internal-testing/tiny-random-GPTJForCausalLM"
-        )
+
+        quant_config = GPTQConfig(use_layer_wise=True, model_path="hf-internal-testing/tiny-random-GPTJForCausalLM")
         model = prepare(model, quant_config)
         run_fn(model)
         model = convert(model)
         out = model(self.example_inputs)[0]
         assert torch.equal(out, q_label), "use_layer_wise=True output should be same. Please double check."
-        
+
     @pytest.mark.parametrize("dtype", ["nf4", "int4"])
     @pytest.mark.parametrize("double_quant_bits", [6])
     @pytest.mark.parametrize("double_quant_group_size", [8, 256])
