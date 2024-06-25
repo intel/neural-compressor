@@ -28,8 +28,10 @@ def run_fn(model):
     # GPTQ uses ValueError to reduce computation when collecting input data of the first block
     # It's special for UTs, no need to add this wrapper in examples.
     with pytest.raises(ValueError):
-        model(torch.tensor([[10, 20, 30]], dtype=torch.long).to(device))
-        model(torch.tensor([[40, 50, 60]], dtype=torch.long).to(device))
+    #     model(torch.tensor([[10, 20, 30]], dtype=torch.long).to(device))
+    #     model(torch.tensor([[40, 50, 60]], dtype=torch.long).to(device))
+        model(torch.tensor([[10, 20, 30]], dtype=torch.long))
+        model(torch.tensor([[40, 50, 60]], dtype=torch.long))
 
 
 class TestGPTQQuant:
@@ -170,14 +172,28 @@ class TestGPTQQuant:
         # compare atol, this case is an ideal case.
         assert atol_false > atol_true, "act_order=True doesn't help accuracy, maybe is reasonable, please double check."
 
-    # def test_layer_wise(self):
-    #     model = copy.deepcopy(self.tiny_gptj)
-    #     quant_config = GPTQConfig(
-    #         use_layer_wise=True,
-    #     )
-    #     model = quantize(model, quant_config, run_fn=run_fn)
-    # TODO: (Xin) not implemented
-
+    def test_layer_wise(self):
+        # model = copy.deepcopy(self.tiny_gptj)
+        model = copy.deepcopy(self.tiny_gptj)
+        quant_config = GPTQConfig()
+        model = prepare(model, quant_config)
+        run_fn(model)
+        model = convert(model)
+        q_label = model(self.example_inputs)[0]
+    
+        from neural_compressor.torch.algorithms.layer_wise import load_empty_model
+        model = load_empty_model("hf-internal-testing/tiny-random-GPTJForCausalLM",  torchscript=True)
+        
+    
+        quant_config = GPTQConfig(
+            use_layer_wise=True,
+            model_path="hf-internal-testing/tiny-random-GPTJForCausalLM"
+        )
+        model = quantize(model, quant_config, run_fn=run_fn)
+        out = model(self.example_inputs)[0]
+        atol_true = (out - q_label).amax()
+        print(out, atol_true)
+        
     @pytest.mark.parametrize("dtype", ["nf4", "int4"])
     @pytest.mark.parametrize("double_quant_bits", [6])
     @pytest.mark.parametrize("double_quant_group_size", [8, 256])

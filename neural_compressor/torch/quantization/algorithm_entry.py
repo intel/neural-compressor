@@ -84,6 +84,7 @@ def rtn_entry(
             "use_full_range": quant_config.use_full_range,
             "use_mse_search": quant_config.use_mse_search,
             "use_layer_wise": quant_config.use_layer_wise,
+            "model_path": quant_config.model_path,
             "use_double_quant": quant_config.use_double_quant,
             "double_quant_dtype": quant_config.double_quant_dtype,
             "double_quant_bits": quant_config.double_quant_bits,

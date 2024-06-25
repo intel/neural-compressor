@@ -175,7 +175,8 @@ class WeightOnlyLinear(torch.nn.Module):
             self.scales = self.scales.T.contiguous()
             self.qweight = self.qweight.T.contiguous()
             self.qzeros = self.qzeros.T.contiguous()
-        int_weight = int_weight.to(self.device)
+        if int_weight.device.type != "meta":
+            int_weight = int_weight.to(self.device)
         if self.use_optimum_format and zp is None:
             # to avoid overflow
             int_weight = int_weight.type(torch.int32)

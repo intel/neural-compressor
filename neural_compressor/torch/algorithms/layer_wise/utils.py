@@ -214,6 +214,8 @@ def _get_path(pretrained_model_name_or_path):
         path = dowload_hf_model(pretrained_model_name_or_path)
     return path
 
+get_path = _get_path
+
 
 def load_value(model, param_name, path):
     if "lm_head" in param_name and getattr(model.config, "tie_word_embeddings", True):
