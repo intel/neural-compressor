@@ -573,18 +573,6 @@ class RAWGPTQuantizer(object):
                         set_module_tensor_to_device,
                     )
 
-                    # sub_layer = sub_layers[layer_name]
-                    # full_layer_name = self.get_full_layer_name(layer_name, block_idx)
-                    # for n, p in sub_layer.named_parameters():
-                    #     param_name = full_layer_name + "." + n
-                    #     # breakpoint()
-                    #     if n == "weight":
-                    #         set_module_tensor_to_device(self.model, param_name, self.device, Q)
-                    #     else:
-                    #         value = load_value(self.model, param_name, model_path)
-                    #         set_module_tensor_to_device(self.model, param_name, self.device, value)
-                    # sub_layer.weight.data = Q
-                    # torch.save(sub_layer.state_dict(), LWQ_WORKSPACE + f"/{full_layer_name}.pt")
                     torch.save(new_module.state_dict(), LWQ_WORKSPACE + f"/{full_layer_name}.pt")
                     clean_module_weight(new_module)
                     del Q

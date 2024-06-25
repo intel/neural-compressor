@@ -28,10 +28,8 @@ def run_fn(model):
     # GPTQ uses ValueError to reduce computation when collecting input data of the first block
     # It's special for UTs, no need to add this wrapper in examples.
     with pytest.raises(ValueError):
-    #     model(torch.tensor([[10, 20, 30]], dtype=torch.long).to(device))
-    #     model(torch.tensor([[40, 50, 60]], dtype=torch.long).to(device))
-        model(torch.tensor([[10, 20, 30]], dtype=torch.long))
-        model(torch.tensor([[40, 50, 60]], dtype=torch.long))
+        model(torch.tensor([[10, 20, 30]], dtype=torch.long).to(device))
+        model(torch.tensor([[40, 50, 60]], dtype=torch.long).to(device))
 
 
 class TestGPTQQuant:
@@ -182,14 +180,15 @@ class TestGPTQQuant:
         q_label = model(self.example_inputs)[0]
     
         from neural_compressor.torch.algorithms.layer_wise import load_empty_model
-        model = load_empty_model("hf-internal-testing/tiny-random-GPTJForCausalLM",  torchscript=True)
-        
+        model = load_empty_model("hf-internal-testing/tiny-random-GPTJForCausalLM")
     
         quant_config = GPTQConfig(
             use_layer_wise=True,
             model_path="hf-internal-testing/tiny-random-GPTJForCausalLM"
         )
-        model = quantize(model, quant_config, run_fn=run_fn)
+        model = prepare(model, quant_config)
+        run_fn(model)
+        model = convert(model)
         out = model(self.example_inputs)[0]
         assert torch.equal(out, q_label), "use_layer_wise=True output should be same. Please double check."
         
