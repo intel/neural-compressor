@@ -167,7 +167,7 @@ class RTNQuantizer(Quantizer):
                 lwq_workspace = os.path.join(DEFAULT_WORKSPACE, "lwq_tmpdir")
                 os.makedirs(lwq_workspace, exist_ok=True)
                 if model_path == "":
-                    model_path = self.model.path
+                    model_path = model.path
                 assert model_path, "model_path should not be None."
                 model_path = get_path(model_path)
 
