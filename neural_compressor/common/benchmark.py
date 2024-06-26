@@ -331,18 +331,35 @@ def generate_prefix(args, core_list):
 
 
 def build_multi_instance_command(args, core_list_per_instance, raw_cmd):
-    multi_instance_cmd = ""
+    instance_cmd = ""
+    if not os.getenv("PYTHON_PATH"):
+        logger.info("The interpreter path is not set, and the `python` command is used directly.")
+    interpreter = os.getenv("PYTHON_PATH", "python")
+    current_work_dir = os.getcwd()
     for i, core_list in core_list_per_instance.items():
         prefix = generate_prefix(args, core_list)
-        instance_cmd = "{} {}".format(prefix, raw_cmd)
+        instance_cmd = "{} {} {}".format(prefix, interpreter, raw_cmd)
+        logger.info(f"Instance {i+1}: {instance_cmd}")
+        instance_log_file = "{}_{}_{}C.log".format(i + 1, len(core_list_per_instance), core_list[2])
+        instance_log_file = os.path.join(current_work_dir, instance_log_file)
+        logger.info(f"The log file path of Instance {i+1}: {instance_log_file}")
         if sys.platform in ["linux"]:
-            instance_log = "{}_{}_{}C.log".format(i + 1, len(core_list_per_instance), core_list[2])
-            multi_instance_cmd += "{} 2>&1|tee {} & \\\n".format(instance_cmd, instance_log)
+            instance_cmd += "{} 2>&1|tee {} \n".format(instance_cmd, instance_log_file)
+            logger.debug(f"Instance {i+1}: {instance_cmd}")
+            p = subprocess.Popen(instance_cmd, preexec_fn=os.setsid, shell=True)  # nosec
         else:  # pragma: no cover
-            multi_instance_cmd += "{} \n".format(instance_cmd)
-
-    multi_instance_cmd += "wait" if sys.platform in ["linux"] else ""
-    print(multi_instance_cmd)
+            instance_cmd += "{} \n".format(instance_cmd)
+            logger.debug(f"Instance {i+1}: {instance_cmd}")
+            p = subprocess.Popen(
+                instance_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True
+            )  # nosec
+            with open(instance_log_file, "w", 1, encoding="utf-8") as log_file:
+                log_file.write(f"[ COMMAND ] {instance_cmd} \n")
+                for line in p.stdout:
+                    decoded_line = line.decode("utf-8", errors="ignore").strip()
+                    logger.info(decoded_line)  # redirect to terminal
+                    log_file.write(decoded_line + "\n")
+    p.communicate()
 
 
 def benchmark():
