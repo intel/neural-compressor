@@ -161,7 +161,7 @@ class RTNQuantizer(Quantizer):
 
             if use_layer_wise:
                 from neural_compressor.common.utils import DEFAULT_WORKSPACE
-                from neural_compressor.torch.algorithms.layer_wise.utils import get_path, load_module, LWQ_WORKSPACE
+                from neural_compressor.torch.algorithms.layer_wise.utils import LWQ_WORKSPACE, get_path, load_module
 
                 os.makedirs(LWQ_WORKSPACE, exist_ok=True)
                 if model_path == "":
