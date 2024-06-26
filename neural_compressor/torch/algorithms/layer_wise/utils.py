@@ -289,7 +289,7 @@ def clean_module_weight(module, woq_type=False):
             old_value = getattr(submodule, n)
             with torch.no_grad():
                 submodule._buffers[n] = torch.zeros(old_value.shape, device="meta")
-        
+
     for n, m in submodule.named_parameters():
         is_buffer = n in submodule._buffers
         old_value = getattr(submodule, n)
