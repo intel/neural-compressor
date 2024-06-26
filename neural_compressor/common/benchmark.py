@@ -145,6 +145,7 @@ def get_windows_numa_info():
             "physical_cpus": physical_cpus_str,
             "logical_cpus": logical_cpus_str,
         }
+    return numa_info
 
 
 def dump_numa_info():
@@ -320,18 +321,11 @@ def generate_prefix(args, core_list):
         else:
             return "OMP_NUM_THREADS={} numactl -m {} -C {}".format(core_list[2], core_list[0], core_list[1])
     elif sys.platform in ["win32"]:  # pragma: no cover
-        from neural_compressor.utils.utility import get_number_of_sockets
+        socket_id = core_list[0]
+        from functools import reduce
 
-        num_of_socket = int(get_number_of_sockets())
-        cores_per_instance = int(os.environ.get("CORES_PER_INSTANCE"))
-        cores_per_socket = int(psutil.cpu_count(logical=False)) / num_of_socket
-        socket_id = int(core_list[0] // cores_per_socket)
-        # cores per socket should integral multiple of cores per instance, else not bind core
-        if cores_per_socket % cores_per_instance == 0:
-            from functools import reduce
-
-            hex_core = hex(reduce(lambda x, y: x | y, [1 << p for p in core_list]))
-            return "start /b /WAIT /node {} /affinity {} CMD /c".format(socket_id, hex_core)
+        hex_core = hex(reduce(lambda x, y: x | y, [1 << p for p in core_list[1]]))
+        return "start /b /WAIT /node {} /affinity {} CMD /c".format(socket_id, hex_core)
     else:
         return ""
 
