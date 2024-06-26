@@ -66,6 +66,7 @@ class RTNQuantizer(Quantizer):
         use_full_range=False,
         use_mse_search=False,
         use_layer_wise=False,
+        model_path="",
         *args,
         **kwargs,
     ):
@@ -132,7 +133,6 @@ class RTNQuantizer(Quantizer):
                 group_dim = weight_config[name]["group_dim"]
                 use_full_range = weight_config[name]["use_full_range"]
                 use_mse_search = weight_config[name]["use_mse_search"]
-                model_path = weight_config[name]["model_path"]
                 use_optimum_format = kwargs.get("use_optimum_format", True)
                 # double quant config
                 double_quant_config = {
@@ -166,6 +166,9 @@ class RTNQuantizer(Quantizer):
 
                 lwq_workspace = os.path.join(DEFAULT_WORKSPACE, "lwq_tmpdir")
                 os.makedirs(lwq_workspace, exist_ok=True)
+                if model_path == "":
+                    model_path = self.model.path
+                assert model_path, "model_path should not be None."
                 model_path = get_path(model_path)
 
                 # load weight
