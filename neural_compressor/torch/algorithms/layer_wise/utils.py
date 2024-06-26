@@ -25,12 +25,13 @@ from accelerate import init_empty_weights
 from accelerate.utils import set_module_tensor_to_device
 from transformers import AutoConfig, AutoModelForCausalLM
 from transformers.models.auto.auto_factory import _BaseAutoModelClass
+from neural_compressor.torch.algorithms.weight_only.modules import WeightOnlyLinear
 
 from neural_compressor.common import options
 
 from .load import load
 
-LWQ_WORKSPACE = os.path.join(options.workspace, "layer_wise_tmp")
+LWQ_WORKSPACE = os.path.join(options.workspace, "lwq_tmpdir")
 
 
 class QDQLayer(torch.nn.Module):
@@ -250,13 +251,17 @@ def register_weight_hooks(model, path, device="cpu", clean_weight=True, saved_pa
             state_dict = None
             if os.path.exists(os.path.join(LWQ_WORKSPACE, f"{name}.pt")):
                 state_dict = torch.load(os.path.join(LWQ_WORKSPACE, f"{name}.pt"))
-            for n, p in module.named_parameters():
-                param_name = name + "." + n
-                if state_dict:
-                    value = state_dict[n]
-                else:
-                    value = load_value(model, param_name, path)
-                set_module_tensor_to_device(model, param_name, device, value)
+            if isinstance(module, WeightOnlyLinear):
+                for n, p in module._buffers.items():
+                    setattr(module, n, state_dict[n]) 
+            else:
+                for n, p in module.named_parameters():
+                    param_name = name + "." + n
+                    if state_dict:
+                        value = state_dict[n]
+                    else:
+                        value = load_value(model, param_name, path)
+                    set_module_tensor_to_device(model, param_name, device, value)
 
         return hook
 
@@ -278,13 +283,13 @@ def register_weight_hooks(model, path, device="cpu", clean_weight=True, saved_pa
     return handle
 
 
-def clean_module_weight(module, woq_type=False):
+def clean_module_weight(module):
     if isinstance(module, QDQLayer):
         submodule = module.module
     else:
         submodule = module
 
-    if woq_type is True:
+    if isinstance(module, WeightOnlyLinear):
         for n, m in submodule._buffers.items():
             old_value = getattr(submodule, n)
             with torch.no_grad():

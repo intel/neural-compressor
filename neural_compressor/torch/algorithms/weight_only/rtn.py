@@ -228,7 +228,7 @@ class RTNQuantizer(Quantizer):
                 from neural_compressor.torch.algorithms.layer_wise.utils import clean_module_weight
 
                 torch.save(new_module.state_dict(), os.path.join(lwq_workspace, f"{name}.pt"))
-                clean_module_weight(new_module, woq_type=True)
+                clean_module_weight(new_module)
                 clean_module_weight(m)
                 del m
                 gc.collect()
