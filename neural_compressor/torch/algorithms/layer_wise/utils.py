@@ -278,12 +278,18 @@ def register_weight_hooks(model, path, device="cpu", clean_weight=True, saved_pa
     return handle
 
 
-def clean_module_weight(module):
+def clean_module_weight(module, woq_type=False):
     if isinstance(module, QDQLayer):
         submodule = module.module
     else:
         submodule = module
 
+    if woq_type is True:
+        for n, m in submodule._buffers.items():
+            old_value = getattr(submodule, n)
+            with torch.no_grad():
+                submodule._buffers[n] = torch.zeros(old_value.shape, device="meta")
+        
     for n, m in submodule.named_parameters():
         is_buffer = n in submodule._buffers
         old_value = getattr(submodule, n)
