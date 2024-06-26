@@ -3,9 +3,9 @@ Benchmark
 
 1. [Introduction](#introduction)
 
-2. [Supported Parameters](#supported-parameters)
+2. [Supported Matrix](#supported-matrix)
 
-3. [General Use Cases](#general-use-cases)
+3. [Usage](#usage)
 
 ## Introduction
 
@@ -14,7 +14,14 @@ Intel Neural Compressor provides a command `incbench` to launch the Intel CPU pe
 To get the peak performance on Intel Xeon CPU, we should avoid crossing NUMA node in one instance.
 Therefore, by default, `incbench` will trigger 1 instance on the first NUMA node.
 
-## Supported Parameters
+## Supported Matrix
+
+| Platform | Status |
+|:---:|:---:|
+| Linux   | &#10004; |
+| Windows | &#10004; |
+
+## Usage
 
 |       Parameters       |          Default         |                comments               |
 |:----------------------:|:------------------------:|:-------------------------------------:|
@@ -25,7 +32,7 @@ Therefore, by default, `incbench` will trigger 1 instance on the first NUMA node
 
 > Note: cross_memory is set to True only when memory is insufficient.
 
-## General Use Cases
+### General Use Cases
 
 1. `incbench main.py`: run 1 instance on NUMA:0.
 2. `incbench --num_i 2 main.py`: run 2 instances on NUMA:0.

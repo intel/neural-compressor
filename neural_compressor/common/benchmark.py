@@ -23,8 +23,8 @@ import psutil
 from neural_compressor.common.utils import Statistics, logger
 
 description = """
-#########################################################################################################
-This is the command used to launch the Intel CPU performance benchmark.
+##################################################################################################################
+This is the command used to launch the Intel CPU performance benchmark, supports both Linux and Windows platform.
 To get the peak performance on Intel Xeon CPU, we should avoid crossing NUMA node in one instance.
 By default, `incbench` will trigger 1 instance on the first NUMA node.
 
@@ -45,7 +45,7 @@ Params in `incbench`:
 Note:
     - `num_i` works the same as `num_instances`
     - `num_c` works the same as `num_cores_per_instance`
-#########################################################################################################
+##################################################################################################################
 """
 
 
