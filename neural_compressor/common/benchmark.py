@@ -23,27 +23,29 @@ import psutil
 from neural_compressor.common.utils import Statistics, logger
 
 description = """
+#########################################################################################################
 This is the command used to launch the Intel CPU performance benchmark.
-To get the peak performance on Intel Xeon CPU, we should avoid crossing numa node in one instance.
-By default, `incbench` will trigger 1 instance on the first numa node.
+To get the peak performance on Intel Xeon CPU, we should avoid crossing NUMA node in one instance.
+By default, `incbench` will trigger 1 instance on the first NUMA node.
 
 Params in `incbench`:
  - num_instances            Default to 1.
- - core                     Default to 0-${num_cpus_per_numa}, decides visible core range.
-                                Note: The visible core range should be in the same numa node.
- - numa                     Default to 0, decides visible core range.
- - socket                   Default to None, decides visible core range.
- - mode                     Defaults to None, which disables any mode.
-                                Available params: [per_numa, per_socket, per_4cores], using all cores in CPU.
+ - num_cores_per_instance   Default to None.
+ - C, cores                 Default to 0-${num_cores_on_NUMA-1}, decides the visible core range.
+ - cross_memory             Default to False, decides whether to allocate memory cross NUMA.
+                                Note: Use it only when memory for instance is not enough.
 
-# Use cases:
-1. `incbench main.py`: run 1 instance on numa:0.
-2. `incbench --socket 1 main.py`: run 1 instance on socket:1.
-3. `incbench --numa 0,1 main.py`: run 1 instance on numa:0,1.
-4. `incbench --num_instances 2 --numa 0,1 main.py`: run 2 instances on numa:0,1, (per-numa instance).
-6. `incbench --socket 0,1 --num_cores_per_instance 4 main.py`: run `math.ceil(${core_number}/4)` instances on all cores.
-5. `incbench --mode per_numa main.py`: run `$(numa_number)` instances on all numa nodes (per-numa instance).
-6. `incbench --mode per_4cores main.py`: run `math.ceil(${core_number}/4)` instances on all cores.
+# General use cases:
+1. `incbench main.py`: run 1 instance on NUMA:0.
+2. `incbench --num_i 2 main.py`: run 2 instances on NUMA:0.
+3. `incbench --num_c 2 main.py`: run multi-instances with 2 cores per instance on NUMA:0.
+4. `incbench -C 24-47 main.py`: run 1 instance on COREs:24-47.
+5. `incbench -C 24-47 --num_c 4 main.py`: run multi-instances with 4 COREs per instance on COREs:24-47.
+
+Note:
+    - `num_i` works the same as `num_instances`
+    - `num_c` works the same as `num_cores_per_instance`
+#########################################################################################################
 """
 
 
@@ -367,7 +369,7 @@ def benchmark():
     logger.info("Start benchmark with Intel Neural Compressor.")
     logger.info("By default, Intel Neural Compressor triggers only one instance on numa:0.")
 
-    parser = argparse.ArgumentParser(description=description)
+    parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("--num_instances", type=int, default=None, help="Determine the number of instances.")
     parser.add_argument(
         "--num_cores_per_instance", type=int, default=None, help="Determine the number of cores in 1 instance."
