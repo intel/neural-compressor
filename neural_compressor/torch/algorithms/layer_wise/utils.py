@@ -25,9 +25,9 @@ from accelerate import init_empty_weights
 from accelerate.utils import set_module_tensor_to_device
 from transformers import AutoConfig, AutoModelForCausalLM
 from transformers.models.auto.auto_factory import _BaseAutoModelClass
-from neural_compressor.torch.algorithms.weight_only.modules import WeightOnlyLinear
 
 from neural_compressor.common import options
+from neural_compressor.torch.algorithms.weight_only.modules import WeightOnlyLinear
 
 from .load import load
 
@@ -253,7 +253,7 @@ def register_weight_hooks(model, path, device="cpu", clean_weight=True, saved_pa
                 state_dict = torch.load(os.path.join(LWQ_WORKSPACE, f"{name}.pt"))
             if isinstance(module, WeightOnlyLinear):
                 for n, p in module._buffers.items():
-                    setattr(module, n, state_dict[n]) 
+                    setattr(module, n, state_dict[n])
             else:
                 for n, p in module.named_parameters():
                     param_name = name + "." + n
