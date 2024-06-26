@@ -324,8 +324,8 @@ def generate_prefix(args, core_list):
         socket_id = core_list[0]
         from functools import reduce
 
-        hex_core = hex(reduce(lambda x, y: x | y, [1 << p for p in core_list[1]]))
-        return "start /b /WAIT /node {} /affinity {} CMD /c".format(socket_id, hex_core)
+        hex_core = hex(reduce(lambda x, y: x | y, [1 << p for p in parse_str2list(core_list[1])]))
+        return "start /B /WAIT /node {} /affinity {}".format(socket_id, hex_core)
     else:
         return ""
 
@@ -336,29 +336,30 @@ def build_multi_instance_command(args, core_list_per_instance, raw_cmd):
         logger.info("The interpreter path is not set, and the `python` command is used directly.")
     interpreter = os.getenv("PYTHON_PATH", "python")
     current_work_dir = os.getcwd()
+    logfile_process_map = {}
     for i, core_list in core_list_per_instance.items():
+        # build cmd and log file path
         prefix = generate_prefix(args, core_list)
         instance_cmd = "{} {} {}".format(prefix, interpreter, raw_cmd)
         logger.info(f"Instance {i+1}: {instance_cmd}")
         instance_log_file = "{}_{}_{}C.log".format(i + 1, len(core_list_per_instance), core_list[2])
         instance_log_file = os.path.join(current_work_dir, instance_log_file)
         logger.info(f"The log file path of Instance {i+1}: {instance_log_file}")
-        if sys.platform in ["linux"]:
-            instance_cmd += "{} 2>&1|tee {} \n".format(instance_cmd, instance_log_file)
-            logger.debug(f"Instance {i+1}: {instance_cmd}")
-            p = subprocess.Popen(instance_cmd, preexec_fn=os.setsid, shell=True)  # nosec
-        else:  # pragma: no cover
-            instance_cmd += "{} \n".format(instance_cmd)
-            logger.debug(f"Instance {i+1}: {instance_cmd}")
-            p = subprocess.Popen(
-                instance_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True
-            )  # nosec
-            with open(instance_log_file, "w", 1, encoding="utf-8") as log_file:
-                log_file.write(f"[ COMMAND ] {instance_cmd} \n")
-                for line in p.stdout:
-                    decoded_line = line.decode("utf-8", errors="ignore").strip()
-                    logger.info(decoded_line)  # redirect to terminal
-                    log_file.write(decoded_line + "\n")
+        # trigger subprocess
+        p = subprocess.Popen(
+            instance_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True
+        )  # nosec
+        logfile_process_map[instance_log_file] = [instance_cmd, p]
+
+    # Dump each instance's standard output to the corresponding log file
+    for instance_log_file, cmd_p in logfile_process_map.items():
+        with open(instance_log_file, "w", 1, encoding="utf-8") as log_file:
+            log_file.write(f"[COMMAND]: {cmd_p[0]}\n")
+            for line in cmd_p[1].stdout:
+                decoded_line = line.decode("utf-8", errors="ignore").strip()
+                log_file.write(decoded_line + "\n")
+        logger.info(f"The log of instance {i+1} is saved to {instance_log_file}.")
+
     p.communicate()
 
 
