@@ -19,6 +19,8 @@
 # limitations under the License.
 
 
+import gc
+import os
 from collections import OrderedDict
 
 import torch
@@ -64,6 +66,8 @@ class RTNQuantizer(Quantizer):
         quantile=1.0,
         use_full_range=False,
         use_mse_search=False,
+        use_layer_wise=False,
+        model_path="",
         *args,
         **kwargs,
     ):
@@ -91,7 +95,8 @@ class RTNQuantizer(Quantizer):
 
         # Put model on device explicitly
         # TODO: refine it later, Put module on device one by one instead of the whole model
-        model.to(device)
+        if not use_layer_wise:
+            model.to(device)
 
         assert isinstance(model, torch.nn.Module), "only support torch module"
         if is_transformers_imported():
@@ -129,7 +134,6 @@ class RTNQuantizer(Quantizer):
                 group_dim = weight_config[name]["group_dim"]
                 use_full_range = weight_config[name]["use_full_range"]
                 use_mse_search = weight_config[name]["use_mse_search"]
-                use_layer_wise = weight_config[name]["use_layer_wise"]
                 use_optimum_format = kwargs.get("use_optimum_format", True)
                 # double quant config
                 double_quant_config = {
@@ -154,6 +158,20 @@ class RTNQuantizer(Quantizer):
                 continue
             logger.debug(f"RTN quantized module:{name, m}")
             logger.debug(log_msg)
+
+            if use_layer_wise:
+                from neural_compressor.common.utils import DEFAULT_WORKSPACE
+                from neural_compressor.torch.algorithms.layer_wise.utils import LWQ_WORKSPACE, get_path, load_module
+
+                os.makedirs(LWQ_WORKSPACE, exist_ok=True)
+                if model_path == "":
+                    model_path = model.path
+                assert model_path, "model_path should not be None."
+                model_path = get_path(model_path)
+
+                # load weight
+                load_module(model, name, model_path, device=device)
+
             # for only group_dim is 0 or only `transformers.Conv1D`, we need transpose weight.
             if is_transformers_imported():
                 transpose = (group_dim == 0) ^ (isinstance(m, transformers.Conv1D))
@@ -202,8 +220,24 @@ class RTNQuantizer(Quantizer):
                 device=device,
             )
             new_module.pack(int_weight, scale, zp, m.bias)
+
+            if use_layer_wise:
+                # save and clean weight
+                from neural_compressor.torch.algorithms.layer_wise.utils import clean_module_weight
+
+                torch.save(new_module.state_dict(), os.path.join(LWQ_WORKSPACE, f"{name}.pt"))
+                clean_module_weight(new_module)
+                clean_module_weight(m)
+                del m
+                gc.collect()
             if name == "":
                 return new_module
             else:
                 set_module(model, name, new_module)
+
+        if use_layer_wise:
+            # register hooks
+            from neural_compressor.torch.algorithms.layer_wise.utils import register_weight_hooks
+
+            register_weight_hooks(model, model_path, device=device, clean_weight=True)
         return model
