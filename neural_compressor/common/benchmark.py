@@ -48,6 +48,15 @@ Params in `incbench`:
 
 
 def get_linux_numa_info():
+    """Collect numa/socket information on linux system.
+
+    Returns:
+        numa_info (dict):   demo: {numa_index: {"physical_cpus": "xxx"; "logical_cpus": "xxx"}}
+                            E.g.    numa_info = {
+                                        0: {"physical_cpus": "0-23", "logical_cpus": "0-23,48-71"},
+                                        1: {"physical_cpus": "24-47", "logical_cpus": "24-47,72-95"}
+                                    }
+    """
     result = subprocess.run(["lscpu"], capture_output=True, text=True)
     output = result.stdout
 
@@ -60,18 +69,82 @@ def get_linux_numa_info():
             cpus = node_match.group(2).strip()
             numa_info[node_id] = {
                 "physical_cpus": cpus.split(",")[0],
-                "logical_cpus": cpus.split(","),
+                "logical_cpus": ",".join(cpus.split(",")),
+            }
+
+    # if numa_info is not collected, we go back to socket_info
+    if not numa_info:
+        for line in output.splitlines():
+            # demo: "Socket(s):             2"
+            socket_match = re.match(r"^Socket\(s\):\s+(.*)$", line)
+            if socket_match:
+                num_socket = int(socket_match.group(1))
+        # process big cores (w/ physical cores) and small cores (w/o physical cores)
+        physical_cpus = psutil.cpu_count(logical=False)
+        logical_cpus = psutil.cpu_count(logical=True)
+        physical_cpus_per_socket = physical_cpus // num_socket
+        logical_cpus_per_socket = logical_cpus // num_socket
+        for i in range(num_socket):
+            physical_cpus_str = str(i * physical_cpus_per_socket) + "-" + str((i + 1) * physical_cpus_per_socket - 1)
+            if num_socket == 1:
+                logical_cpus_str = str(i * logical_cpus_per_socket) + "-" + str((i + 1) * logical_cpus_per_socket - 1)
+            else:
+                remain_cpus = logical_cpus_per_socket - physical_cpus_per_socket
+                logical_cpus_str = (
+                    physical_cpus_str
+                    + ","
+                    + str(i * (remain_cpus) + physical_cpus)
+                    + "-"
+                    + str((i + 1) * remain_cpus + physical_cpus - 1)
+                )
+            numa_info[i] = {
+                "physical_cpus": physical_cpus_str,
+                "logical_cpus": logical_cpus_str,
             }
     return numa_info
 
 
 def get_windows_numa_info():
-    # pip install WMI
+    """Collect socket information on Windows system due to no available numa info.
+
+    Returns:
+        numa_info (dict):   demo: {numa_index: {"physical_cpus": "xxx"; "logical_cpus": "xxx"}}
+                            E.g.    numa_info = {
+                                        0: {"physical_cpus": "0-23", "logical_cpus": "0-23,48-71"},
+                                        1: {"physical_cpus": "24-47", "logical_cpus": "24-47,72-95"}
+                                    }
+    """
     import wmi
 
     c = wmi.WMI()
-    numa_nodes = c.Win32_ComputerSystem()
-    print(f"Number of NUMA node: {len(numa_nodes)}")
+    processors = c.Win32_Processor()
+    socket_designations = set()
+    for processor in processors:
+        socket_designations.add(processor.SocketDesignation)
+    num_socket = len(socket_designations)
+    physical_cpus = sum(processor.NumberOfCores for processor in processors)
+    logical_cpus = sum(processor.NumberOfLogicalProcessors for processor in processors)
+    physical_cpus_per_socket = physical_cpus // num_socket
+    logical_cpus_per_socket = logical_cpus // num_socket
+
+    numa_info = {}
+    for i in range(num_socket):
+        physical_cpus_str = str(i * physical_cpus_per_socket) + "-" + str((i + 1) * physical_cpus_per_socket - 1)
+        if num_socket == 1:
+            logical_cpus_str = str(i * logical_cpus_per_socket) + "-" + str((i + 1) * logical_cpus_per_socket - 1)
+        else:
+            remain_cpus = logical_cpus_per_socket - physical_cpus_per_socket
+            logical_cpus_str = (
+                physical_cpus_str
+                + ","
+                + str(i * (remain_cpus) + physical_cpus)
+                + "-"
+                + str((i + 1) * remain_cpus + physical_cpus - 1)
+            )
+        numa_info[i] = {
+            "physical_cpus": physical_cpus_str,
+            "logical_cpus": logical_cpus_str,
+        }
 
 
 def dump_numa_info():
