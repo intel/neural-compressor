@@ -20,6 +20,7 @@
 
 
 import gc
+import os
 from collections import OrderedDict
 
 import torch
@@ -159,13 +160,10 @@ class RTNQuantizer(Quantizer):
             logger.debug(log_msg)
 
             if use_layer_wise:
-                import os
-
                 from neural_compressor.common.utils import DEFAULT_WORKSPACE
-                from neural_compressor.torch.algorithms.layer_wise.utils import get_path, load_module, load_value
+                from neural_compressor.torch.algorithms.layer_wise.utils import get_path, load_module, LWQ_WORKSPACE
 
-                lwq_workspace = os.path.join(DEFAULT_WORKSPACE, "lwq_tmpdir")
-                os.makedirs(lwq_workspace, exist_ok=True)
+                os.makedirs(LWQ_WORKSPACE, exist_ok=True)
                 if model_path == "":
                     model_path = model.path
                 assert model_path, "model_path should not be None."
@@ -227,7 +225,7 @@ class RTNQuantizer(Quantizer):
                 # save and clean weight
                 from neural_compressor.torch.algorithms.layer_wise.utils import clean_module_weight
 
-                torch.save(new_module.state_dict(), os.path.join(lwq_workspace, f"{name}.pt"))
+                torch.save(new_module.state_dict(), os.path.join(LWQ_WORKSPACE, f"{name}.pt"))
                 clean_module_weight(new_module)
                 clean_module_weight(m)
                 del m
