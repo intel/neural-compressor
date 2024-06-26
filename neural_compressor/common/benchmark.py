@@ -332,8 +332,8 @@ def generate_prefix(args, core_list):
 
 def build_multi_instance_command(args, core_list_per_instance, raw_cmd):
     instance_cmd = ""
-    if not os.getenv("PYTHON_PATH"):
-        logger.info("The interpreter path is not set, and the `python` command is used directly.")
+    if not os.getenv("PYTHON_PATH"):  # pragma: no cover
+        logger.info("The interpreter path is not set, using `python` command.")
     interpreter = os.getenv("PYTHON_PATH", "python")
     current_work_dir = os.getcwd()
     logfile_process_map = {}
@@ -344,21 +344,21 @@ def build_multi_instance_command(args, core_list_per_instance, raw_cmd):
         logger.info(f"Instance {i+1}: {instance_cmd}")
         instance_log_file = "{}_{}_{}C.log".format(i + 1, len(core_list_per_instance), core_list[2])
         instance_log_file = os.path.join(current_work_dir, instance_log_file)
-        logger.info(f"The log file path of Instance {i+1}: {instance_log_file}")
         # trigger subprocess
         p = subprocess.Popen(
             instance_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True
         )  # nosec
-        logfile_process_map[instance_log_file] = [instance_cmd, p]
+        # log_file_path: [process_object, instance_command, instance_index]
+        logfile_process_map[instance_log_file] = [p, instance_cmd, i + 1]
 
     # Dump each instance's standard output to the corresponding log file
-    for instance_log_file, cmd_p in logfile_process_map.items():
+    for instance_log_file, p_cmd_i in logfile_process_map.items():
         with open(instance_log_file, "w", 1, encoding="utf-8") as log_file:
-            log_file.write(f"[COMMAND]: {cmd_p[0]}\n")
-            for line in cmd_p[1].stdout:
+            log_file.write(f"[COMMAND]: {p_cmd_i[1]}\n")
+            for line in p_cmd_i[0].stdout:
                 decoded_line = line.decode("utf-8", errors="ignore").strip()
                 log_file.write(decoded_line + "\n")
-        logger.info(f"The log of instance {i+1} is saved to {instance_log_file}.")
+        logger.info(f"The log of instance {p_cmd_i[2]} is saved to {instance_log_file}")
 
     p.communicate()
 
