@@ -241,17 +241,22 @@ def get_numa_node(core_list, reversed_numa_info):
 
 def set_cores_for_instance(args, numa_info):
     """All use cases are listed below:
-         - a: num_instance; b: num_cores_per_instance, c. cores
-             - no a, b, c == no a, b: a=1, c=numa:0
-             - no a == no a, c: a=numa:0/b, c=numa:0
-             - no b == no b, c: a=a, c=numa:0
-             - no c == a, b, c: a=a, c=a*b
+        Params: a=num_instance; b=num_cores_per_instance; c=cores;
+            - no a, b, c: a=1, c=numa:0
+            - no a, b: a=1, c=c
+            - no a, c: a=numa:0/b, c=numa:0
+            - no b, c: a=a, c=numa:0
+            - no a: a=numa:0/b, c=c
+            - no b: a=a, c=c
+            - no c: a=a, c=a*b
+            - a, b, c: a=a, c=a*b
+
     Args:
-        args (_type_): _description_
-        numa_info (_type_): _description_
+        args (argparse): arguments for setting different configurations
+        numa_info (dict): {numa_node_index: list of Physical CPUs in this numa node, ...}
 
     Returns:
-        _type_: _description_
+        core_list_per_instance (dict): {"instance_index": ["node_index", "cpu_index", num_cpu]}
     """
     available_cores_list = []
     for n in numa_info:
@@ -312,10 +317,13 @@ def set_cores_for_instance(args, numa_info):
 
 
 def generate_prefix(args, core_list):
-    """Generate the command prefix with numactl (Linux) or start (Windows).
+    """Generate the command prefix with `numactl` (Linux) or `start` (Windows) command.
 
     Args:
+        args (argparse): arguments for setting different configurations
         core_list: ["node_index", "cpu_index", num_cpu]
+    Returns:
+        command_prefix (str): command_prefix with specific core list for Linux or Windows.
     """
     if sys.platform in ["linux"] and os.system("numactl --show >/dev/null 2>&1") == 0:
         if args.cross_memory:
@@ -332,7 +340,14 @@ def generate_prefix(args, core_list):
         return ""
 
 
-def build_multi_instance_command(args, core_list_per_instance, raw_cmd):
+def run_multi_instance_command(args, core_list_per_instance, raw_cmd):
+    """Build and trigger commands for multi-instances with subprocess.
+
+    Args:
+        args (argparse): arguments for setting different configurations
+        core_list_per_instance (dict): {"instance_index": ["node_index", "cpu_index", num_cpu]}
+        raw_cmd (str): script.py and parameters for this script
+    """
     instance_cmd = ""
     if not os.getenv("PYTHON_PATH"):  # pragma: no cover
         logger.info("The interpreter path is not set, using `python` command.")
@@ -366,6 +381,7 @@ def build_multi_instance_command(args, core_list_per_instance, raw_cmd):
 
 
 def benchmark():
+    """Benchmark API interface."""
     logger.info("Start benchmark with Intel Neural Compressor.")
     logger.info("By default, Intel Neural Compressor triggers only one instance on numa:0.")
 
@@ -387,4 +403,4 @@ def benchmark():
     logger.info("Intel Neural Compressor only uses physical CPUs for the best performance.")
     core_list_per_instance = set_cores_for_instance(args, numa_info=numa_info)
     script_and_parameters = args.script + " " + " ".join(args.parameters)
-    build_multi_instance_command(args, core_list_per_instance, raw_cmd=script_and_parameters)
+    run_multi_instance_command(args, core_list_per_instance, raw_cmd=script_and_parameters)
