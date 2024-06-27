@@ -19,17 +19,8 @@ from neural_compressor.torch.utils import accelerator
 device = accelerator.current_device_name()
 
 
-def run_fn_for_rtn(model):
-    model(torch.tensor([[10, 20, 30]], dtype=torch.long).to(device))
-    model(torch.tensor([[40, 50, 60]], dtype=torch.long).to(device))
-
-
 def run_fn(model):
-    # GPTQ uses ValueError to reduce computation when collecting input data of the first block
-    # It's special for UTs, no need to add this wrapper in examples.
-    with pytest.raises(ValueError):
-        model(torch.tensor([[10, 20, 30]], dtype=torch.long).to(device))
-        model(torch.tensor([[40, 50, 60]], dtype=torch.long).to(device))
+    model(torch.tensor([[10, 20, 30]], dtype=torch.long).to(device))
 
 
 class TestGPTQQuant:
@@ -50,7 +41,7 @@ class TestGPTQQuant:
         model = copy.deepcopy(self.tiny_gptj)
         quant_config = get_default_rtn_config()
         model = prepare(model, quant_config)
-        run_fn_for_rtn(model)
+        run_fn(model)
         model = convert(model)
         rtn_label = model(self.example_inputs)[0]
         rtn_atol = (rtn_label - self.label).amax()
@@ -229,9 +220,7 @@ class TestGPTQQuant:
         encoded_input = tokenizer(text, return_tensors="pt")
 
         def run_fn_conv1d(model):
-            with pytest.raises(ValueError):
-                for i in range(2):
-                    model(**encoded_input)
+            model(**encoded_input)
 
         quant_config = get_default_gptq_config()
         out1 = model(**encoded_input)[0]

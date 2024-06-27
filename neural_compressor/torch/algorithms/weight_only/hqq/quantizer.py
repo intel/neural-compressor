@@ -119,7 +119,8 @@ class HQQuantizer(Quantizer):
         pass
 
     def _convert_hqq_module_config(self, config) -> HQQModuleConfig:
-        # * 3.x API use `bits` for woq while HQQ internal API use `nbits`
+        # TODO: (Yi) Please note that the configuration defined by INC should be separated from the algorithm.
+        # * 3.x API use `bits` for woq while HQQ internal API use `nbits`, we should change it in algorithm_entry.py
         nbits = config.bits
         group_size = config.group_size
         quant_zero = config.quant_zero
@@ -146,9 +147,6 @@ class HQQuantizer(Quantizer):
     def _parse_hqq_configs_mapping(self, configs_mapping):
         qconfig_mapping = {}
         for (op_name, op_type), quant_config in configs_mapping.items():
-            if quant_config.skip_lm_head and "lm_head" in op_name:
-                logger.warning("Skip quantizing %s due to `skip_lm_head` is True.", op_name)
-                continue
             if quant_config is not None and quant_config.dtype == "fp32":
                 logger.warning("Fallback %s.", op_name)
                 continue

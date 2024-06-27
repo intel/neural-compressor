@@ -92,7 +92,7 @@ def rtn_entry(
         }
 
     quantizer = get_quantizer(model, quantizer_cls=RTNQuantizer, quant_config=weight_config)
-    model = quantizer.execute(model, mode=mode)
+    model = quantizer.execute(model, mode=mode, quant_lm_head=quant_config.quant_lm_head)
     model.qconfig = configs_mapping
     model.save = MethodType(save, model)
     postprocess_model(model, mode, quantizer)
