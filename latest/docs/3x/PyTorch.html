@@ -309,6 +309,28 @@
  </tr>
  </tbody>
  </table></li>
+<li><p>How to set different configuration for specific op_name or op_type?</p>
+<blockquote>
+<div><p>INC extends a <code class="docutils literal notranslate"><span class="pre">set_local</span></code> method based on the global configuration object to set custom configuration.</p>
+</div></blockquote>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">set_local</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">operator_name_or_list</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">],</span> <span class="n">config</span><span class="p">:</span> <span class="n">BaseConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Set custom configuration based on the global configuration object.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        operator_name_or_list (Union[List, str, Callable]): specific operator</span>
+<span class="sd">        config (BaseConfig): specific configuration</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p>Demo:</p>
+</div></blockquote>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">quant_config</span> <span class="o">=</span> <span class="n">RTNConfig</span><span class="p">()</span>  <span class="c1"># Initialize global configuration with default bits=4</span>
+<span class="n">quant_config</span><span class="o">.</span><span class="n">set_local</span><span class="p">(</span><span class="s2">&quot;.*mlp.*&quot;</span><span class="p">,</span> <span class="n">RTNConfig</span><span class="p">(</span><span class="n">bits</span><span class="o">=</span><span class="mi">8</span><span class="p">))</span>  <span class="c1"># For layers with &quot;mlp&quot; in their names, set bits=8</span>
+<span class="n">quant_config</span><span class="o">.</span><span class="n">set_local</span><span class="p">(</span><span class="s2">&quot;Conv1d&quot;</span><span class="p">,</span> <span class="n">RTNConfig</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;fp32&quot;</span><span class="p">))</span>  <span class="c1"># For Conv1d layers, do not quantize them.</span>
+</pre></div>
+</div>
+</li>
 </ol>
 </section>
 </section>
@@ -327,7 +349,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fc52b92c220> 
+   <jinja2.runtime.BlockReference object at 0x7faf9650a9e0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

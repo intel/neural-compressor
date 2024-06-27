@@ -1,6 +1,7 @@
 
 PyTorch Weight Only Quantization
 ===============
+
 - [Introduction](#introduction)
 - [Supported Matrix](#supported-matrix)
 - [Usage](#usage)
@@ -27,7 +28,6 @@ Text generation:  The most famous application of LLMs is text generation, which 
 Besides, as mentioned in many papers[1][2], activation quantization is the main reason to cause the accuracy drop. So for text generation task,  weight only quantization is a preferred option in most cases.
 
 Theoretically, round-to-nearest (RTN) is the most straightforward way to quantize weight using scale maps. However, when the number of bits is small (e.g. 3), the MSE loss is larger than expected. A group size is introduced to reduce elements using the same scale to improve accuracy.
-
 
 ## Supported Matrix
 
@@ -58,12 +58,14 @@ Theoretically, round-to-nearest (RTN) is the most straightforward way to quantiz
 WeightOnlyQuant quantization for PyTorch is using prepare and convert [APIs](./PyTorch.html#quantization-apis).
 
 #### Common arguments
+
 | Config | Capability |
 |---|---|
 | dtype (str)| ['int', 'nf4', 'fp4'] |
 | bits (int)| [1, ..., 8] |
 | group_size (int)| [-1, 1, ..., $C_{in}$] |
 | use_sym (bool)| [True, False] |
+| quant_lm_head (bool)| [False, True] |
 |               use_double_quant (bool)       |  [True, False]                           |
 |               double_quant_dtype (str)      |  ['int']                      |
 |               double_quant_bits (int)       |  [1, ..., bits] |
@@ -71,12 +73,14 @@ WeightOnlyQuant quantization for PyTorch is using prepare and convert [APIs](./P
 |               double_quant_group_size (int) |  [-1, 1, ..., $C_{in}$]                           |
 
 Notes:
+
 - *group_size = -1* refers to **per output channel quantization**. Taking a linear layer (input channel = $C_{in}$, output channel = $C_{out}$) for instance, when *group size = -1*, quantization will calculate total $C_{out}$ quantization parameters. Otherwise, when *group_size = gs* quantization parameters are calculate with every $gs$ elements along with the input channel, leading to total $C_{out} \times (C_{in} / gs)$ quantization parameters.
 - 4-bit NormalFloat(NF4) is proposed in QLoRA[7]. 'fp4' includes [fp4_e2m1](../../neural_compressor/adaptor/torch_utils/weight_only.py#L37) and [fp4_e2m1_bnb](https://github.com/TimDettmers/bitsandbytes/blob/18e827d666fa2b70a12d539ccedc17aa51b2c97c/bitsandbytes/functional.py#L735). By default, fp4 refers to fp4_e2m1_bnb.
--  Only RTN and GPTQ support double quant.
-
+- *quant_lm_head* defaults to False. This means that, except for transformer blocks, the last layer in transformer models will not be quantized by default. The last layer may be named "lm_head", "output_layer" or "embed_out".
+- Only RTN and GPTQ support double quant.
 
 #### RTN
+
 |  rtn_args  | comments |                                 default value                            |
 |----------|-------------|-------------------------------------------------------------------|
 |               group_dim (int)       |  Dimension for grouping                                 |  1      |
@@ -86,6 +90,7 @@ Notes:
 |               model_path (str)      |  Model path that is used to load   state_dict per layer |                    |
 
 > **Notes:** `model_path` is only used when use_layer_wise=True. `layer-wise` is stay-tuned.
+
 ``` python
 # Quantization code
 from neural_compressor.torch.quantization import prepare, convert, RTNConfig
@@ -96,6 +101,7 @@ model = convert(model)
 ```
 
 #### GPTQ
+
 |  gptq_args  | comments |      default value                                                       |
 |----------|-------------|-------------------------------------------------------------------|
 |               use_mse_search (bool)   |  Enables mean squared error (MSE) search                                                                                                   |  False
@@ -107,6 +113,7 @@ model = convert(model)
 |               block_size (int)        |  Execute GPTQ quantization per   block, block shape = [C_out, block_size]                                                                  |  128     |
 |               static_groups (bool)    |  Whether to calculate group wise   quantization parameters in advance. This option mitigate actorder's extra   computational requirements. |  False.  |
 > **Note:** `model_path` is only used when use_layer_wise=True. `layer-wise` is stay-tuned.
+
 ``` python
 # Quantization code
 from neural_compressor.torch.quantization import prepare, convert, GPTQConfig
@@ -118,6 +125,7 @@ model = convert(model)
 ```
 
 #### AutoRound
+
 |  autoround_args  | comments |      default value                                                       |
 |----------|-------------|-------------------------------------------------------------------|
 |             enable_full_range (bool)        |  Whether to enable full range   quantization                                               | False
@@ -138,6 +146,7 @@ model = convert(model)
 |             not_use_best_mse (bool)         |  Whether to use mean squared   error                                                       | False     |
 |             dynamic_max_gap (int)           |  The dynamic maximum gap                                                                   | -1        |
 |             scale_dtype (str)               | The data type of quantization scale to be used, different kernels have   different choices | "float16" |
+
 ``` python
 # Quantization code
 from neural_compressor.torch.quantization import prepare, convert, AutoRoundConfig
@@ -149,6 +158,7 @@ model = convert(model)
 ```
 
 #### AWQ
+
 |  awq_args  | comments |      default value                                                       |
 |----------|-------------|-------------------------------------------------------------------|
 |               group_dim (int)                |  Dimension for grouping                                                           |  1       |
@@ -159,6 +169,7 @@ model = convert(model)
 |               use_auto_clip (bool)           |   Enables clip range search                                                       |  True    |
 |               folding(bool)                  |  Allow insert mul before linear   when the scale cannot be absorbed by last layer |   False. |
 > **Notes:** `layer-wise` is stay-tuned.
+
 ``` python
 # Quantization code
 from neural_compressor.torch.quantization import prepare, convert, AWQConfig
@@ -170,6 +181,7 @@ model = convert(model)
 ```
 
 #### TEQ
+
 |  teq_args  | comments |      default value                                                       |
 |----------|-------------|-------------------------------------------------------------------|
 |               group_dim (int)         |  Dimension for grouping                                                           |  1     |
@@ -179,6 +191,7 @@ model = convert(model)
 |               use_double_quant (bool) |  Enables double quantization                                                      |  False |
 |               folding(bool)           |  Allow insert mul before linear   when the scale cannot be absorbed by last layer |  False |
 > **Notes:** `layer-wise` is stay-tuned.
+
 ``` python
 # Quantization code
 from neural_compressor.torch.quantization import prepare, convert, TEQConfig
@@ -190,12 +203,13 @@ model = convert(model)
 ```
 
 #### HQQ
+
 |  hqq_args  | comments |      default value                                                       |
 |----------|-------------|-------------------------------------------------------------------|
 |           quant_zero (bool)            | Whether to quantize zero point         | True  |
 |         quant_scale:   (bool)          | Whether to quantize scale: point       | False |
 |           scale_quant_group_size (int) | The group size for quantizing scale    | 128   |
-|         skip_lm_head   (bool)          | Whether to skip for quantizing lm_head | True  |
+
 ``` python
 # Quantization code
 from neural_compressor.torch.quantization import prepare, convert, HQQConfig
@@ -205,10 +219,13 @@ model = prepare(model, quant_config)
 run_fn(model)  # calibration
 model = convert(model)
 ```
+
 ### Specify Quantization Rules
+
 Intel(R) Neural Compressor support specify quantization rules by operator name or operator type. Users can set `local` in dict or use `set_local` method of config class to achieve the above purpose.
 
 1. Example of setting `local` from a dict
+
 ```python
 quant_config = {
     "rtn": {
@@ -226,7 +243,9 @@ quant_config = {
     }
 }
 ```
+
 2. Example of using `set_local`
+
 ```python
 quant_config = RTNConfig()
 lm_head_config = RTNConfig(dtype="fp32")
@@ -234,7 +253,9 @@ quant_config.set_local("lm_head", lm_head_config)
 ```
 
 ### Saving and Loading
+
 The saved_results folder contains two files: quantized_model.pt and qconfig.json, and the generated model is a quantized model. The quantitative model will include WeightOnlyLinear. To support low memory inference, Intel(R) Neural Compressor implemented WeightOnlyLinear, a torch.nn.Module, to compress the fake quantized fp32 model. Since torch does not provide flexible data type storage, WeightOnlyLinear combines low bits data into a long date type, such as torch.int8 and torch.int32. Low bits data includes weights and zero points. When using WeightOnlyLinear for inference, it will restore the compressed data to float32 and run torch linear function.
+
 ```python
 # Quantization code
 from neural_compressor.torch.quantization import prepare, convert, RTNConfig
@@ -255,7 +276,6 @@ loaded_model = load(
 )  # Please note that the original_model parameter passes the original model.
 ```
 
-
 ## Examples
 
 Users can also refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/3.x_api/pytorch/nlp/huggingface_models/language-modeling/quantization/weight_only) on how to quantize a  model with WeightOnlyQuant.
@@ -272,6 +292,6 @@ Users can also refer to [examples](https://github.com/intel/neural-compressor/bl
 
 [5]. Cheng, Wenhua, et al. "Optimize Weight Rounding via Signed Gradient Descent for the Quantization of LLMs" arXiv preprint arXiv:2309.05516 (2023).
 
-[6]. Badri, Hicham and Shaji, Appu. "Half-Quadratic Quantization of Large Machine Learning Models." [Online] Available: https://mobiusml.github.io/hqq_blog/ (2023).
+[6]. Badri, Hicham and Shaji, Appu. "Half-Quadratic Quantization of Large Machine Learning Models." [Online] Available: <https://mobiusml.github.io/hqq_blog/> (2023).
 
 [7]. Dettmers, Tim, et al. "Qlora: Efficient finetuning of quantized llms." arXiv preprint arXiv:2305.14314 (2023).

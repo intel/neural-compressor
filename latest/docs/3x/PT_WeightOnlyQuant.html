@@ -182,34 +182,101 @@
 <p>WeightOnlyQuant quantization for PyTorch is using prepare and convert <a class="reference external" href="./PyTorch.html#quantization-apis">APIs</a>.</p>
 <section id="common-arguments">
 <h4>Common arguments<a class="headerlink" href="#common-arguments" title="Permalink to this heading"></a></h4>
-<p>| Config | Capability |
-|—|—|
-| dtype (str)| [’int’, ‘nf4’, ‘fp4’] |
-| bits (int)| [1, …, 8] |
-| group_size (int)| [-1, 1, …, $C_{in}$] |
-| use_sym (bool)| [True, False] |
-|               use_double_quant (bool)       |  [True, False]                           |
-|               double_quant_dtype (str)      |  [’int’]                      |
-|               double_quant_bits (int)       |  [1, …, bits] |
-|               double_quant_use_sym (bool)   |  [True, False] |
-|               double_quant_group_size (int) |  [-1, 1, …, $C_{in}$]                           |</p>
-<p>Notes:</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Config</th>
+<th>Capability</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>dtype (str)</td>
+<td>['int', 'nf4', 'fp4']</td>
+</tr>
+<tr>
+<td>bits (int)</td>
+<td>[1, ..., 8]</td>
+</tr>
+<tr>
+<td>group_size (int)</td>
+<td>[-1, 1, ..., $C_{in}$]</td>
+</tr>
+<tr>
+<td>use_sym (bool)</td>
+<td>[True, False]</td>
+</tr>
+<tr>
+<td>quant_lm_head (bool)</td>
+<td>[False, True]</td>
+</tr>
+<tr>
+<td>use_double_quant (bool)</td>
+<td>[True, False]</td>
+</tr>
+<tr>
+<td>double_quant_dtype (str)</td>
+<td>['int']</td>
+</tr>
+<tr>
+<td>double_quant_bits (int)</td>
+<td>[1, ..., bits]</td>
+</tr>
+<tr>
+<td>double_quant_use_sym (bool)</td>
+<td>[True, False]</td>
+</tr>
+<tr>
+<td>double_quant_group_size (int)</td>
+<td>[-1, 1, ..., $C_{in}$]</td>
+</tr>
+</tbody>
+</table><p>Notes:</p>
 <ul class="simple">
 <li><p><em>group_size = -1</em> refers to <strong>per output channel quantization</strong>. Taking a linear layer (input channel = $C_{in}$, output channel = $C_{out}$) for instance, when <em>group size = -1</em>, quantization will calculate total $C_{out}$ quantization parameters. Otherwise, when <em>group_size = gs</em> quantization parameters are calculate with every $gs$ elements along with the input channel, leading to total $C_{out} \times (C_{in} / gs)$ quantization parameters.</p></li>
 <li><p>4-bit NormalFloat(NF4) is proposed in QLoRA[7]. ‘fp4’ includes <a class="reference external" href="../../neural_compressor/adaptor/torch_utils/weight_only.py#L37">fp4_e2m1</a> and <a class="reference external" href="https://github.com/TimDettmers/bitsandbytes/blob/18e827d666fa2b70a12d539ccedc17aa51b2c97c/bitsandbytes/functional.py#L735">fp4_e2m1_bnb</a>. By default, fp4 refers to fp4_e2m1_bnb.</p></li>
+<li><p><em>quant_lm_head</em> defaults to False. This means that, except for transformer blocks, the last layer in transformer models will not be quantized by default. The last layer may be named “lm_head”, “output_layer” or “embed_out”.</p></li>
 <li><p>Only RTN and GPTQ support double quant.</p></li>
 </ul>
 </section>
 <section id="rtn">
 <h4>RTN<a class="headerlink" href="#rtn" title="Permalink to this heading"></a></h4>
-<p>|  rtn_args  | comments |                                 default value                            |
-|———-|————-|——————————————————————-|
-|               group_dim (int)       |  Dimension for grouping                                 |  1      |
-|               use_full_range (bool) |  Enables full range for activations                     |  False  |
-|               use_mse_search (bool) |  Enables mean squared error (MSE)   search              |  False  |
-|               use_layer_wise (bool) |  Enables quantize model per layer                       |  False |
-|               model_path (str)      |  Model path that is used to load   state_dict per layer |                    |</p>
-<blockquote>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>rtn_args</th>
+<th>comments</th>
+<th>default value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>group_dim (int)</td>
+<td>Dimension for grouping</td>
+<td>1</td>
+</tr>
+<tr>
+<td>use_full_range (bool)</td>
+<td>Enables full range for activations</td>
+<td>False</td>
+</tr>
+<tr>
+<td>use_mse_search (bool)</td>
+<td>Enables mean squared error (MSE)   search</td>
+<td>False</td>
+</tr>
+<tr>
+<td>use_layer_wise (bool)</td>
+<td>Enables quantize model per layer</td>
+<td>False</td>
+</tr>
+<tr>
+<td>model_path (str)</td>
+<td>Model path that is used to load   state_dict per layer</td>
+<td></td>
+</tr>
+</tbody>
+</table><blockquote>
 <div><p><strong>Notes:</strong> <code class="docutils literal notranslate"><span class="pre">model_path</span></code> is only used when use_layer_wise=True. <code class="docutils literal notranslate"><span class="pre">layer-wise</span></code> is stay-tuned.</p>
 </div></blockquote>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Quantization code</span>
@@ -223,20 +290,62 @@
 </section>
 <section id="gptq">
 <h4>GPTQ<a class="headerlink" href="#gptq" title="Permalink to this heading"></a></h4>
-<p>|  gptq_args  | comments |      default value                                                       |
-|———-|————-|——————————————————————-|
-|               use_mse_search (bool)   |  Enables mean squared error (MSE) search                                                                                                   |  False
-|               use_layer_wise (bool)   |  Enables quantize model per layer                                                                                                          |  False |
-|               model_path (str)        |  Model path that is used to load   state_dict per layer                                                                                    |                    |
-|               use_double_quant (bool) |  Enables double quantization                                                                                                               |  False  |
-|               act_order (bool)        |  Whether to sort Hessian’s diagonal   values to rearrange channel-wise quantization order                                                  |  False  |
-|               percdamp (float)        |  Percentage of Hessian’s diagonal   values’ average, which will be added to Hessian’s diagonal to increase   numerical stability           |  0.01.  |
-|               block_size (int)        |  Execute GPTQ quantization per   block, block shape = [C_out, block_size]                                                                  |  128     |
-|               static_groups (bool)    |  Whether to calculate group wise   quantization parameters in advance. This option mitigate actorder’s extra   computational requirements. |  False.  |</p>
-<blockquote>
-<div><p><strong>Note:</strong> <code class="docutils literal notranslate"><span class="pre">model_path</span></code> is only used when use_layer_wise=True. <code class="docutils literal notranslate"><span class="pre">layer-wise</span></code> is stay-tuned.</p>
-</div></blockquote>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Quantization code</span>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>gptq_args</th>
+<th>comments</th>
+<th>default value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>use_mse_search (bool)</td>
+<td>Enables mean squared error (MSE) search</td>
+<td>False</td>
+</tr>
+<tr>
+<td>use_layer_wise (bool)</td>
+<td>Enables quantize model per layer</td>
+<td>False</td>
+</tr>
+<tr>
+<td>model_path (str)</td>
+<td>Model path that is used to load   state_dict per layer</td>
+<td></td>
+</tr>
+<tr>
+<td>use_double_quant (bool)</td>
+<td>Enables double quantization</td>
+<td>False</td>
+</tr>
+<tr>
+<td>act_order (bool)</td>
+<td>Whether to sort Hessian's diagonal   values to rearrange channel-wise quantization order</td>
+<td>False</td>
+</tr>
+<tr>
+<td>percdamp (float)</td>
+<td>Percentage of Hessian's diagonal   values' average, which will be added to Hessian's diagonal to increase   numerical stability</td>
+<td>0.01.</td>
+</tr>
+<tr>
+<td>block_size (int)</td>
+<td>Execute GPTQ quantization per   block, block shape = [C_out, block_size]</td>
+<td>128</td>
+</tr>
+<tr>
+<td>static_groups (bool)</td>
+<td>Whether to calculate group wise   quantization parameters in advance. This option mitigate actorder's extra   computational requirements.</td>
+<td>False.</td>
+</tr>
+<tr>
+<td>&gt; <strong>Note:</strong> <code>model_path</code> is only used when use_layer_wise=True. <code>layer-wise</code> is stay-tuned.</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Quantization code</span>
 <span class="kn">from</span> <span class="nn">neural_compressor.torch.quantization</span> <span class="kn">import</span> <span class="n">prepare</span><span class="p">,</span> <span class="n">convert</span><span class="p">,</span> <span class="n">GPTQConfig</span>
 
 <span class="n">quant_config</span> <span class="o">=</span> <span class="n">GPTQConfig</span><span class="p">()</span>
@@ -248,27 +357,107 @@
 </section>
 <section id="autoround">
 <h4>AutoRound<a class="headerlink" href="#autoround" title="Permalink to this heading"></a></h4>
-<p>|  autoround_args  | comments |      default value                                                       |
-|———-|————-|——————————————————————-|
-|             enable_full_range (bool)        |  Whether to enable full range   quantization                                               | False
-|             batch_size (int)                |  Batch size for training                                                                   | 8         |
-|             lr_scheduler                    |  The learning rate scheduler to be   used                                                  |     None                 |
-|             enable_quanted_input (bool)     |  Whether to use quantized input   data                                                     | True      |
-|             enable_minmax_tuning (bool)     |  Whether to enable min-max   tuning                                                        | True      |
-|             lr (float)                      |  The learning rate                                                                         | 0         |
-|             minmax_lr (float)               |  The learning rate for min-max   tuning                                                    | None      |
-|             low_gpu_mem_usage (bool)        |  Whether to use low GPU memory                                                             | True      |
-|             iters (int)                     |  Number of iterations                                                                      | 200       |
-|             seqlen (int)                    |  Length of the sequence                                                                    | 2048      |
-|             n_samples (int)                 |  Number of samples                                                                         | 512       |
-|             sampler (str)                   |  The sampling method                                                                       | “rand”    |
-|             seed (int)                      |  The random seed                                                                           | 42        |
-|             n_blocks (int)                  |  Number of blocks                                                                          | 1         |
-|             gradient_accumulate_steps (int) |  Number of gradient accumulation   steps                                                   | 1         |
-|             not_use_best_mse (bool)         |  Whether to use mean squared   error                                                       | False     |
-|             dynamic_max_gap (int)           |  The dynamic maximum gap                                                                   | -1        |
-|             scale_dtype (str)               | The data type of quantization scale to be used, different kernels have   different choices | “float16” |</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Quantization code</span>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>autoround_args</th>
+<th>comments</th>
+<th>default value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>enable_full_range (bool)</td>
+<td>Whether to enable full range   quantization</td>
+<td>False</td>
+</tr>
+<tr>
+<td>batch_size (int)</td>
+<td>Batch size for training</td>
+<td>8</td>
+</tr>
+<tr>
+<td>lr_scheduler</td>
+<td>The learning rate scheduler to be   used</td>
+<td>None</td>
+</tr>
+<tr>
+<td>enable_quanted_input (bool)</td>
+<td>Whether to use quantized input   data</td>
+<td>True</td>
+</tr>
+<tr>
+<td>enable_minmax_tuning (bool)</td>
+<td>Whether to enable min-max   tuning</td>
+<td>True</td>
+</tr>
+<tr>
+<td>lr (float)</td>
+<td>The learning rate</td>
+<td>0</td>
+</tr>
+<tr>
+<td>minmax_lr (float)</td>
+<td>The learning rate for min-max   tuning</td>
+<td>None</td>
+</tr>
+<tr>
+<td>low_gpu_mem_usage (bool)</td>
+<td>Whether to use low GPU memory</td>
+<td>True</td>
+</tr>
+<tr>
+<td>iters (int)</td>
+<td>Number of iterations</td>
+<td>200</td>
+</tr>
+<tr>
+<td>seqlen (int)</td>
+<td>Length of the sequence</td>
+<td>2048</td>
+</tr>
+<tr>
+<td>n_samples (int)</td>
+<td>Number of samples</td>
+<td>512</td>
+</tr>
+<tr>
+<td>sampler (str)</td>
+<td>The sampling method</td>
+<td>"rand"</td>
+</tr>
+<tr>
+<td>seed (int)</td>
+<td>The random seed</td>
+<td>42</td>
+</tr>
+<tr>
+<td>n_blocks (int)</td>
+<td>Number of blocks</td>
+<td>1</td>
+</tr>
+<tr>
+<td>gradient_accumulate_steps (int)</td>
+<td>Number of gradient accumulation   steps</td>
+<td>1</td>
+</tr>
+<tr>
+<td>not_use_best_mse (bool)</td>
+<td>Whether to use mean squared   error</td>
+<td>False</td>
+</tr>
+<tr>
+<td>dynamic_max_gap (int)</td>
+<td>The dynamic maximum gap</td>
+<td>-1</td>
+</tr>
+<tr>
+<td>scale_dtype (str)</td>
+<td>The data type of quantization scale to be used, different kernels have   different choices</td>
+<td>"float16"</td>
+</tr>
+</tbody>
+</table><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Quantization code</span>
 <span class="kn">from</span> <span class="nn">neural_compressor.torch.quantization</span> <span class="kn">import</span> <span class="n">prepare</span><span class="p">,</span> <span class="n">convert</span><span class="p">,</span> <span class="n">AutoRoundConfig</span>
 
 <span class="n">quant_config</span> <span class="o">=</span> <span class="n">AutoRoundConfig</span><span class="p">()</span>
@@ -280,19 +469,57 @@
 </section>
 <section id="awq">
 <h4>AWQ<a class="headerlink" href="#awq" title="Permalink to this heading"></a></h4>
-<p>|  awq_args  | comments |      default value                                                       |
-|———-|————-|——————————————————————-|
-|               group_dim (int)                |  Dimension for grouping                                                           |  1       |
-|               use_full_range (bool)          |  Enables full range for activations                                               |  False   |
-|               use_mse_search (bool)          |  Enables mean squared error (MSE)   search                                        |  False   |
-|               use_layer_wise (bool)          |  Enables quantize model per layer                                                 |  False   |
-|               use_auto_scale (bool)          |  Enables best scales search based   on activation distribution                    |  True    |
-|               use_auto_clip (bool)           |   Enables clip range search                                                       |  True    |
-|               folding(bool)                  |  Allow insert mul before linear   when the scale cannot be absorbed by last layer |   False. |</p>
-<blockquote>
-<div><p><strong>Notes:</strong> <code class="docutils literal notranslate"><span class="pre">layer-wise</span></code> is stay-tuned.</p>
-</div></blockquote>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Quantization code</span>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>awq_args</th>
+<th>comments</th>
+<th>default value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>group_dim (int)</td>
+<td>Dimension for grouping</td>
+<td>1</td>
+</tr>
+<tr>
+<td>use_full_range (bool)</td>
+<td>Enables full range for activations</td>
+<td>False</td>
+</tr>
+<tr>
+<td>use_mse_search (bool)</td>
+<td>Enables mean squared error (MSE)   search</td>
+<td>False</td>
+</tr>
+<tr>
+<td>use_layer_wise (bool)</td>
+<td>Enables quantize model per layer</td>
+<td>False</td>
+</tr>
+<tr>
+<td>use_auto_scale (bool)</td>
+<td>Enables best scales search based   on activation distribution</td>
+<td>True</td>
+</tr>
+<tr>
+<td>use_auto_clip (bool)</td>
+<td>Enables clip range search</td>
+<td>True</td>
+</tr>
+<tr>
+<td>folding(bool)</td>
+<td>Allow insert mul before linear   when the scale cannot be absorbed by last layer</td>
+<td>False.</td>
+</tr>
+<tr>
+<td>&gt; <strong>Notes:</strong> <code>layer-wise</code> is stay-tuned.</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Quantization code</span>
 <span class="kn">from</span> <span class="nn">neural_compressor.torch.quantization</span> <span class="kn">import</span> <span class="n">prepare</span><span class="p">,</span> <span class="n">convert</span><span class="p">,</span> <span class="n">AWQConfig</span>
 
 <span class="n">quant_config</span> <span class="o">=</span> <span class="n">AWQConfig</span><span class="p">()</span>
@@ -304,18 +531,52 @@
 </section>
 <section id="teq">
 <h4>TEQ<a class="headerlink" href="#teq" title="Permalink to this heading"></a></h4>
-<p>|  teq_args  | comments |      default value                                                       |
-|———-|————-|——————————————————————-|
-|               group_dim (int)         |  Dimension for grouping                                                           |  1     |
-|               use_full_range (bool)   |  Enables full range for activations                                               |  False |
-|               use_mse_search (bool)   |  Enables mean squared error (MSE)   search                                        |  False |
-|               use_layer_wise (bool)   |  Enables quantize model per layer                                                 |  False |
-|               use_double_quant (bool) |  Enables double quantization                                                      |  False |
-|               folding(bool)           |  Allow insert mul before linear   when the scale cannot be absorbed by last layer |  False |</p>
-<blockquote>
-<div><p><strong>Notes:</strong> <code class="docutils literal notranslate"><span class="pre">layer-wise</span></code> is stay-tuned.</p>
-</div></blockquote>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Quantization code</span>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>teq_args</th>
+<th>comments</th>
+<th>default value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>group_dim (int)</td>
+<td>Dimension for grouping</td>
+<td>1</td>
+</tr>
+<tr>
+<td>use_full_range (bool)</td>
+<td>Enables full range for activations</td>
+<td>False</td>
+</tr>
+<tr>
+<td>use_mse_search (bool)</td>
+<td>Enables mean squared error (MSE)   search</td>
+<td>False</td>
+</tr>
+<tr>
+<td>use_layer_wise (bool)</td>
+<td>Enables quantize model per layer</td>
+<td>False</td>
+</tr>
+<tr>
+<td>use_double_quant (bool)</td>
+<td>Enables double quantization</td>
+<td>False</td>
+</tr>
+<tr>
+<td>folding(bool)</td>
+<td>Allow insert mul before linear   when the scale cannot be absorbed by last layer</td>
+<td>False</td>
+</tr>
+<tr>
+<td>&gt; <strong>Notes:</strong> <code>layer-wise</code> is stay-tuned.</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Quantization code</span>
 <span class="kn">from</span> <span class="nn">neural_compressor.torch.quantization</span> <span class="kn">import</span> <span class="n">prepare</span><span class="p">,</span> <span class="n">convert</span><span class="p">,</span> <span class="n">TEQConfig</span>
 
 <span class="n">quant_config</span> <span class="o">=</span> <span class="n">TEQConfig</span><span class="p">()</span>
@@ -327,13 +588,32 @@
 </section>
 <section id="hqq">
 <h4>HQQ<a class="headerlink" href="#hqq" title="Permalink to this heading"></a></h4>
-<p>|  hqq_args  | comments |      default value                                                       |
-|———-|————-|——————————————————————-|
-|           quant_zero (bool)            | Whether to quantize zero point         | True  |
-|         quant_scale:   (bool)          | Whether to quantize scale: point       | False |
-|           scale_quant_group_size (int) | The group size for quantizing scale    | 128   |
-|         skip_lm_head   (bool)          | Whether to skip for quantizing lm_head | True  |</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Quantization code</span>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>hqq_args</th>
+<th>comments</th>
+<th>default value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>quant_zero (bool)</td>
+<td>Whether to quantize zero point</td>
+<td>True</td>
+</tr>
+<tr>
+<td>quant_scale:   (bool)</td>
+<td>Whether to quantize scale: point</td>
+<td>False</td>
+</tr>
+<tr>
+<td>scale_quant_group_size (int)</td>
+<td>The group size for quantizing scale</td>
+<td>128</td>
+</tr>
+</tbody>
+</table><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Quantization code</span>
 <span class="kn">from</span> <span class="nn">neural_compressor.torch.quantization</span> <span class="kn">import</span> <span class="n">prepare</span><span class="p">,</span> <span class="n">convert</span><span class="p">,</span> <span class="n">HQQConfig</span>
 
 <span class="n">quant_config</span> <span class="o">=</span> <span class="n">HQQConfig</span><span class="p">()</span>
@@ -411,7 +691,7 @@
 <p>[3]. Lin, Ji, et al. “AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration.” arXiv preprint arXiv:2306.00978 (2023).</p>
 <p>[4]. Frantar, Elias, et al. “Gptq: Accurate post-training quantization for generative pre-trained transformers.” arXiv preprint arXiv:2210.17323 (2022).</p>
 <p>[5]. Cheng, Wenhua, et al. “Optimize Weight Rounding via Signed Gradient Descent for the Quantization of LLMs” arXiv preprint arXiv:2309.05516 (2023).</p>
-<p>[6]. Badri, Hicham and Shaji, Appu. “Half-Quadratic Quantization of Large Machine Learning Models.” [Online] Available: https://mobiusml.github.io/hqq_blog/ (2023).</p>
+<p>[6]. Badri, Hicham and Shaji, Appu. “Half-Quadratic Quantization of Large Machine Learning Models.” [Online] Available: <a class="reference external" href="https://mobiusml.github.io/hqq_blog/">https://mobiusml.github.io/hqq_blog/</a> (2023).</p>
 <p>[7]. Dettmers, Tim, et al. “Qlora: Efficient finetuning of quantized llms.” arXiv preprint arXiv:2305.14314 (2023).</p>
 </section>
 </section>
@@ -430,7 +710,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fc52bacf580> 
+   <jinja2.runtime.BlockReference object at 0x7faf9650b640> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
