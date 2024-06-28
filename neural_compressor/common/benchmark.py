@@ -165,7 +165,7 @@ def dump_numa_info():
         logger.error(f"Unsupported platform detected: {sys.platform}, only supported on Linux and Windows")
 
     # dump stats to shell
-    field_names = ["NUMA node", "physical CPUs", "logical CPUs"]
+    field_names = ["NUMA node", "Physical CPUs", "Logical CPUs"]
     output_data = []
     for op_type in numa_info.keys():
         field_results = [op_type, numa_info[op_type]["physical_cpus"], numa_info[op_type]["logical_cpus"]]
@@ -268,7 +268,9 @@ def set_cores_for_instance(args, numa_info):
             target_cores = args.num_instances * args.num_cores_per_instance
             assert target_cores <= len(
                 available_cores_list
-            ), f"num_instances * num_cores_per_instance = {target_cores} exceeds the range of physical CPUs:{len(available_cores_list)}"
+            ), "num_instances * num_cores_per_instance = {} exceeds the range of physical CPUs:{}".format(
+                target_cores, len(available_cores_list)
+            )
             cores_list = list(range(target_cores))
         else:
             # default behavior, only use numa:0
@@ -279,7 +281,9 @@ def set_cores_for_instance(args, numa_info):
             target_cores = args.num_instances * args.num_cores_per_instance
             assert target_cores <= len(
                 cores_list
-            ), f"num_instances * num_cores_per_instance = {target_cores} exceeds the range of available CPUs:{len(cores_list)}"
+            ), "num_instances * num_cores_per_instance = {} exceeds the range of available CPUs:{}".format(
+                target_cores, len(cores_list)
+            )
             cores_list = cores_list[:target_cores]
     # preprocess args.num_instances to set default values
     if args.num_instances is None:
@@ -299,7 +303,7 @@ def set_cores_for_instance(args, numa_info):
         core_list_per_instance[last_index] = cores_list[last_index * num_cores_per_instance :]
 
     # convert core_list_per_instance = {"instance_index": cpu_index_list}
-    #                                -> {"instance_index": ["node_index", "cpu_index", num_cpu]}
+    #                                -> {"instance_index": ["node_index", "cpu_index", num_cores]}
     reversed_numa_info = get_reversed_numa_info(numa_info)
     for i, core_list in core_list_per_instance.items():
         core_list_per_instance[i] = [
@@ -309,10 +313,10 @@ def set_cores_for_instance(args, numa_info):
         ]
 
     # dump stats to shell
-    field_names = ["Instance", "NUMA node", "physical CPUs"]
+    field_names = ["Instance", "NUMA node", "Physical CPUs", "Number of cores"]
     output_data = []
     for i, core_list in core_list_per_instance.items():
-        field_results = [i + 1, core_list[0], core_list[1]]
+        field_results = [i + 1, core_list[0], core_list[1], core_list[2]]
         output_data.append(field_results)
     Statistics(output_data, header="Instance Binding Information", field_names=field_names).print_stat()
     return core_list_per_instance

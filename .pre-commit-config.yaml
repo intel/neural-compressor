@@ -118,6 +118,8 @@ repos:
               neural_compressor/conf/pythonic_config.py|
               examples/.+
           )$
+        args:
+          - --line-length=120
 
   - repo: https://github.com/asottile/blacken-docs
     rev: 1.16.0
