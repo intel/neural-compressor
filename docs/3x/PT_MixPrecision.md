@@ -107,4 +107,5 @@ best_model = autotune(model=build_torch_model(), tune_config=custom_tune_config,
   
 ## Examples
 
-Example will be added later.
+Users can also refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/3.x_api/pytorch\image_recognition\torchvision_models\mixed_precision\resnet18
+) on how to quantize a model with Mixed Precision.

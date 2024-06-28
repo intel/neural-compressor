@@ -61,22 +61,13 @@ function run_benchmark {
         extra_cmd="${dataset_location}"
     fi
 
-    if [[ ${mode} == "accuracy" ]]; then
-        python main.py \
-                --pretrained \
-                --tuned_checkpoint ${tuned_checkpoint} \
-                -b ${batch_size} \
-                -a ${input_model} \
-                ${mode_cmd} \
-                ${extra_cmd}
-    elif [[ ${mode} == "performance" ]]; then
-        numactl -m 0 -C 0-3 python main.py \
-                            --pretrained \
-                            --tuned_checkpoint ${tuned_checkpoint} \
-                            -b ${batch_size} \
-                            -a ${input_model} \
-                            ${mode_cmd} \
-                            ${extra_cmd}
+    python main.py \
+            --pretrained \
+            --tuned_checkpoint ${tuned_checkpoint} \
+            -b ${batch_size} \
+            -a ${input_model} \
+            ${mode_cmd} \
+            ${extra_cmd}
 }
 
 main "$@"

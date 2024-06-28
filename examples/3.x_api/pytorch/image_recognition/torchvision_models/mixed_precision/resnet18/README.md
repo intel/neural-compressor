@@ -35,7 +35,7 @@ python main.py -t -a resnet18 --pretrained /path/to/imagenet
 
 ## Benchmark
 ```Shell
-# run optimized performance, the CPU core 0~3 will be used
+# run optimized performance
 bash run_benchmark.sh --input_model=resnet18 --dataset_location=/path/to/imagenet --mode=performance --batch_size=1 --optimized=true --iters=500
 # run optimized accuracy
 bash run_benchmark.sh --input_model=resnet18 --dataset_location=/path/to/imagenet --mode=accuracy --batch_size=100 --optimized=true

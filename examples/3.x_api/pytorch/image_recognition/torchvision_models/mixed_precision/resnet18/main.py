@@ -92,6 +92,7 @@ best_acc1 = 0
 
 
 def main():
+    os.environ['ONEDNN_MAX_CPU_ISA'] = "AVX512_CORE_AMX_FP16"
     args = parser.parse_args()
 
     if 'mobilenet_v2' in args.arch:
