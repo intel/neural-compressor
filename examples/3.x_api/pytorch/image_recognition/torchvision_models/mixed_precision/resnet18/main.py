@@ -6,6 +6,8 @@ import time
 import warnings
 import sys
 
+import numpy as np
+
 import torch
 import torch.nn as nn
 import torch.nn.parallel
@@ -178,19 +180,13 @@ def main():
         from neural_compressor.torch.quantization import MixPrecisionConfig, TuningConfig, autotune
         custom_tune_config = TuningConfig(config_set=[MixPrecisionConfig(dtype=["fp16", "fp32"])], max_trials=1)
         best_model = autotune(model=model, tune_config=custom_tune_config, eval_fn=eval_func)
-        save_dict = {
-            'state_dict': best_model.state_dict(),
-            'optimizer': optimizer.state_dict(),
-        }
-        torch.save(save_dict, os.path.join(args.tuned_checkpoint, "best_model.pt"))
+        torch.save(best_model, args.tuned_checkpoint)
         return
 
     if args.performance or args.accuracy:
         model.eval()
         if args.optimized:
-            checkpoint = torch.load(args.tuned_checkpoint)
-            model.load_state_dict(checkpoint['state_dict'])
-            optimizer.load_state_dict(checkpoint['optimizer'])
+            new_model = torch.load(args.tuned_checkpoint)
         else:
             new_model = model
         if args.performance or args.accuracy:
