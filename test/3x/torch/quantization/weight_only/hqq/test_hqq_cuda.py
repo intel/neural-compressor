@@ -10,7 +10,9 @@ from neural_compressor.torch.algorithms.weight_only.hqq.utility import see_cuda_
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
 
-def _common_cuda_test(nbits=4, group_size=64, quant_zero=True, quant_scale=False, scale_quant_group_size=128):
+def _common_hqq_test(
+    nbits=4, group_size=64, quant_zero=True, quant_scale=False, scale_quant_group_size=128, device=None
+):
     # Parse config
     weight_qconfig = QTensorConfig(
         nbits=nbits, channel_wise=True, group_size=group_size, optimize=True, round_zero=True if nbits == 4 else False
@@ -22,22 +24,17 @@ def _common_cuda_test(nbits=4, group_size=64, quant_zero=True, quant_scale=False
     if quant_scale:
         scale_qconfig = QTensorConfig(nbits=8, channel_wise=True, group_size=scale_quant_group_size, optimize=False)
     hqq_quant_config = HQQModuleConfig(weight=weight_qconfig, scale=scale_qconfig, zero=zero_qconfig)
-    device = torch.cuda.current_device()
 
     # Create HQQ Linear
     bs = 4
     in_features = 64
     out_features = 128
-    see_cuda_memory_usage(message="Before create float linear")
     float_linear = torch.nn.Linear(in_features=in_features, out_features=out_features)
     if hqq_global_option.use_half:
         float_linear = float_linear.half()
-    see_cuda_memory_usage(message="After create float linear")
     float_linear.to(device)
     float_linear_copy = deepcopy(float_linear)
-    see_cuda_memory_usage(message="After copy the float linear")
     hqq_linear = HQQLinear.from_float(float_linear_copy, quant_config=hqq_quant_config)
-    see_cuda_memory_usage(message="After create hqq linear")
 
     # Forward
     input = torch.randn(bs, in_features, device=device)
@@ -52,7 +49,6 @@ def _common_cuda_test(nbits=4, group_size=64, quant_zero=True, quant_scale=False
     torch.allclose(hqq_output, hqq_output_2)
     del float_linear, hqq_linear
     del float_output, hqq_output, hqq_output_2
-    see_cuda_memory_usage("At the end of test")
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="test requires a GPU")
@@ -87,6 +83,7 @@ class TestHQQCUDA:
             q_label_1.eq(q_label_2)
         ), "The results of calling `convert` + `prepare` and calling `quantize` should be equal."
 
+    @pytest.mark.parametrize("device_name", ["cuda", "cpu"])
     @pytest.mark.parametrize(
         "nbits, group_size, quant_zero, quant_scale, scale_quant_group_size",
         [
@@ -106,25 +103,20 @@ class TestHQQCUDA:
     )
     def test_hqq_module_cuda(
         self,
+        device_name,
         nbits,
         group_size,
         quant_zero,
         quant_scale,
         scale_quant_group_size,
     ):
-        _common_cuda_test(
+        if device_name == "cuda" and not torch.cuda.is_available():
+            pytest.skip("Skipping CUDA test because cuda is not available")
+        _common_hqq_test(
             nbits=nbits,
             group_size=group_size,
             quant_zero=quant_zero,
             quant_scale=quant_scale,
             scale_quant_group_size=scale_quant_group_size,
+            device=torch.device(device_name),
         )
-
-
-# _common_cuda_test(
-#     nbits=4,
-#     group_size=64,
-#     quant_zero=False,
-#     quant_scale=False,
-#     scale_quant_group_size=128
-# )
