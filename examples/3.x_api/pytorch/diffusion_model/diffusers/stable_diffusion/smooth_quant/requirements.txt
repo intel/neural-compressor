@@ -1,0 +1,7 @@
+diffusers
+accelerate
+torch
+transformers
+tensorboard
+intel_extension_for_pytorch
+tqdm
