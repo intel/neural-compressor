@@ -532,7 +532,6 @@ class TestAdaptorONNXRT(unittest.TestCase):
 
     @classmethod
     def tearDownClass(self):
-        os.remove("rename_model.onnx")
         os.remove("rn50_9.onnx")
         os.remove(self.mb_v2_export_path)
         os.remove(self.rn50_export_path)
