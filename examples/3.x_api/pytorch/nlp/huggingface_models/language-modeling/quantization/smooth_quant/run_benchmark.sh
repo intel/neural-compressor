@@ -84,13 +84,26 @@ function run_benchmark {
         extra_cmd=$extra_cmd" --ipex --sq --alpha 1.0"
     fi
 
-    python -u run_clm_no_trainer.py \
-        --model ${model_name_or_path} \
-        --approach ${approach} \
-        --output_dir ${tuned_checkpoint} \
-        --task ${task} \
-        --batch_size ${batch_size} \
-        ${extra_cmd} ${mode_cmd}
+    if [[ ${mode} == "accuracy" ]]; then
+        python -u run_clm_no_trainer.py \
+            --model ${model_name_or_path} \
+            --approach ${approach} \
+            --output_dir ${tuned_checkpoint} \
+            --task ${task} \
+            --batch_size ${batch_size} \
+            ${extra_cmd} ${mode_cmd}
+    elif [[ ${mode} == "performance" ]]; then
+        incbench --num_cores_per_instance 4 run_clm_no_trainer.py \
+            --model ${model_name_or_path} \
+            --approach ${approach} \
+            --output_dir ${tuned_checkpoint} \
+            --task ${task} \
+            --batch_size ${batch_size} \
+            ${extra_cmd} ${mode_cmd}
+    else
+        echo "Error: No such mode: ${mode}"
+        exit 1
+    fi
 }
 
 main "$@"

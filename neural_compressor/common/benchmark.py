@@ -116,6 +116,7 @@ def get_windows_numa_info():
                                         1: {"physical_cpus": "24-47", "logical_cpus": "24-47,72-95"}
                                     }
     """
+    # pylint: disable=import-error
     import wmi
 
     c = wmi.WMI()
@@ -297,7 +298,8 @@ def set_cores_for_instance(args, numa_info):
         last_index = args.num_instances - 1
         core_list_per_instance[last_index] = cores_list[last_index * num_cores_per_instance :]
 
-    # convert core_list_per_instance = {"instance_index": cpu_index_list} -> {"instance_index": ["node_index", "cpu_index", num_cpu]}
+    # convert core_list_per_instance = {"instance_index": cpu_index_list}
+    #                                -> {"instance_index": ["node_index", "cpu_index", num_cpu]}
     reversed_numa_info = get_reversed_numa_info(numa_info)
     for i, core_list in core_list_per_instance.items():
         core_list_per_instance[i] = [
@@ -388,7 +390,10 @@ def benchmark():
     parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("--num_instances", type=int, default=None, help="Determine the number of instances.")
     parser.add_argument(
-        "--num_cores_per_instance", type=int, default=None, help="Determine the number of cores in 1 instance."
+        "--num_cores_per_instance",
+        type=int,
+        default=None,
+        help="Determine the number of cores in 1 instance.",
     )
     parser.add_argument("-C", "--cores", type=str, default=None, help="Determine the visible core range.")
     parser.add_argument("--cross_memory", action="store_true", help="Determine the visible core range.")
