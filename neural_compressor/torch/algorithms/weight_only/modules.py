@@ -55,7 +55,7 @@ class WeightOnlyLinear(torch.nn.Module):
         dtype,
         bits,
         group_size,
-        bias,
+        device,
     ):
         super().__init__()
         self.in_features = in_features
@@ -63,6 +63,7 @@ class WeightOnlyLinear(torch.nn.Module):
         self.dtype = dtype
         self.bits = bits
         self.group_size = group_size if group_size != -1 else in_features
+        self.device = device
 
     @abstractmethod
     def pack(self, *args, **kwargs):
@@ -110,7 +111,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
             dtype,
             bits,
             group_size,
-            bias,
+            device,
         )
         self.use_optimum_format = use_optimum_format
         if "int" not in self.dtype:  # for nf4, fp4
@@ -122,7 +123,6 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
             self.int2float_mapping = {}
             for k, v in zip(int_list, float_list):
                 self.int2float_mapping[k] = v
-        self.device = device
         self.compression_dim = compression_dim
         assert compression_dtype in [
             torch.int8,
@@ -272,7 +272,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
         device = scales.device
         if self.g_idx is None:
             # used for recovering fp32_weight
-            self.g_idx = torch.tensor([i // self.group_size for i in range(self.in_features)], dtype=torch.int32)
+            self.g_idx = torch.tensor([i // self.group_size for i in range(self.in_features)], dtype=torch.int32).to(device)
         # unpack weight
         if not self.use_optimum_format and self.compression_dim == 0:
             qweight = qweight.T.contiguous()
