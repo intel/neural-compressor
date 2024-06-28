@@ -120,6 +120,12 @@ class Logger(object):
     def info(msg, *args, **kwargs):
         """Output log with the info level."""
         kwargs.setdefault("stacklevel", 2)
+        highlight = kwargs.pop("highlight", False)
+        if highlight:
+            RESET = "\033[0m"
+            BOLD = "\033[1m"
+            RED = "\033[91m"
+            msg = f"{BOLD}{RED}{msg}{RESET}"
         if isinstance(msg, dict):
             for _, line in enumerate(_pretty_dict(msg).split("\n")):
                 Logger().get_logger().info(line, *args, **kwargs)

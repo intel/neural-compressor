@@ -75,13 +75,13 @@ function run_benchmark {
 
     if [ "${topology}" = "opt_125m_ipex_sq" ]; then
         model_name_or_path="facebook/opt-125m"
-        extra_cmd=$extra_cmd" --ipex --sq --alpha 0.5"
+        extra_cmd=$extra_cmd" --ipex"
     elif [ "${topology}" = "llama2_7b_ipex_sq" ]; then
         model_name_or_path="meta-llama/Llama-2-7b-hf"
-        extra_cmd=$extra_cmd" --ipex --sq --alpha 0.8"
+        extra_cmd=$extra_cmd" --ipex"
     elif [ "${topology}" = "gpt_j_ipex_sq" ]; then
         model_name_or_path="EleutherAI/gpt-j-6b"
-        extra_cmd=$extra_cmd" --ipex --sq --alpha 1.0"
+        extra_cmd=$extra_cmd" --ipex"
     fi
 
     if [[ ${mode} == "accuracy" ]]; then
@@ -96,9 +96,8 @@ function run_benchmark {
         incbench --num_cores_per_instance 4 run_clm_no_trainer.py \
             --model ${model_name_or_path} \
             --approach ${approach} \
-            --output_dir ${tuned_checkpoint} \
-            --task ${task} \
             --batch_size ${batch_size} \
+            --output_dir ${tuned_checkpoint} \
             ${extra_cmd} ${mode_cmd}
     else
         echo "Error: No such mode: ${mode}"

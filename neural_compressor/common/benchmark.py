@@ -268,29 +268,47 @@ def set_cores_for_instance(args, numa_info):
             target_cores = args.num_instances * args.num_cores_per_instance
             assert target_cores <= len(
                 available_cores_list
-            ), "num_instances * num_cores_per_instance = {} exceeds the range of physical CPUs:{}".format(
+            ), "num_instances * num_cores_per_instance = {} exceeds the range of physical CPUs:{}.".format(
                 target_cores, len(available_cores_list)
             )
             cores_list = list(range(target_cores))
+            # log for cores in use
+            logger.info("num_instances * num_cores_per_instance = {} cores are used.".format(target_cores))
         else:
             # default behavior, only use numa:0
             cores_list = numa_info[0]
+            # log for cores in use
+            logger.info("By default, Intel Neural Compressor uses all cores on numa:0.")
     else:
         cores_list = parse_str2list(args.cores)
+        # log for cores available
+        logger.info("{} cores are available.".format(len(cores_list)))
         if args.num_cores_per_instance and args.num_instances:
             target_cores = args.num_instances * args.num_cores_per_instance
             assert target_cores <= len(
                 cores_list
-            ), "num_instances * num_cores_per_instance = {} exceeds the range of available CPUs:{}".format(
+            ), "num_instances * num_cores_per_instance = {} exceeds the range of available CPUs:{}.".format(
                 target_cores, len(cores_list)
             )
             cores_list = cores_list[:target_cores]
+
     # preprocess args.num_instances to set default values
     if args.num_instances is None:
         if args.num_cores_per_instance:
             args.num_instances = len(cores_list) // args.num_cores_per_instance
         else:
             args.num_instances = 1
+            logger.info("By default, Intel Neural Compressor triggers only one instance.")
+
+    ### log for instances number and cores in use
+    if args.num_instances == 1:
+        logger.info("1 instance is triggered.", highlight=True)
+    else:
+        logger.info("{} instances are triggered.".format(args.num_instances), highlight=True)
+    if len(cores_list) == 1:
+        logger.info("Only 1 core is in use.", highlight=True)
+    else:
+        logger.info("{} cores are in use.".format(len(cores_list)), highlight=True)
 
     # only need to process num_cores_per_instance now
     core_list_per_instance = {}
@@ -356,10 +374,12 @@ def run_multi_instance_command(args, core_list_per_instance, raw_cmd):
     """
     instance_cmd = ""
     if not os.getenv("PYTHON_PATH"):  # pragma: no cover
-        logger.info("The interpreter path is not set, using `python` command.")
+        logger.info("The interpreter path is not set, using string `python` as command.")
+        logger.info("To replace it, use `export PYTHON_PATH=xxx`.")
     interpreter = os.getenv("PYTHON_PATH", "python")
     current_work_dir = os.getcwd()
     logfile_process_map = {}
+    logfile_dict = {}
     for i, core_list in core_list_per_instance.items():
         # build cmd and log file path
         prefix = generate_prefix(args, core_list)
@@ -373,6 +393,7 @@ def run_multi_instance_command(args, core_list_per_instance, raw_cmd):
         )  # nosec
         # log_file_path: [process_object, instance_command, instance_index]
         logfile_process_map[instance_log_file] = [p, instance_cmd, i + 1]
+        logfile_dict[i + 1] = instance_log_file
 
     # Dump each instance's standard output to the corresponding log file
     for instance_log_file, p_cmd_i in logfile_process_map.items():
@@ -384,12 +405,60 @@ def run_multi_instance_command(args, core_list_per_instance, raw_cmd):
         logger.info(f"The log of instance {p_cmd_i[2]} is saved to {instance_log_file}")
 
     p.communicate()
+    return logfile_dict
+
+
+def summary_latency_throughput(logfile_dict):
+    """Get the summary of the benchmark."""
+    throughput_pattern = r"[T,t]hroughput:\s*([0-9]*\.?[0-9]+)\s*([a-zA-Z/]*)"
+    latency_pattern = r"[L,l]atency:\s*([0-9]*\.?[0-9]+)\s*([a-zA-Z/]*)"
+
+    latency_list = []
+    throughput_list = []
+    latency_unit_name = ""
+    throughput_unit_name = ""
+    for idx, logfile in logfile_dict.items():
+        with open(logfile, "r") as f:
+            for line in f:
+                re_latency = re.search(latency_pattern, line)
+                re_throughput = re.search(throughput_pattern, line)
+                if re_latency:
+                    latency_list.append(float(re_latency.group(1)))
+                    if not latency_unit_name:
+                        latency_unit_name = re_latency.group(2)
+                if re_throughput:
+                    throughput_list.append(float(re_throughput.group(1)))
+                    if not throughput_unit_name:
+                        throughput_unit_name = re_throughput.group(2)
+    if throughput_list and latency_list:
+        assert (
+            len(latency_list) == len(throughput_list) == len(logfile_dict)
+        ), "Multiple instance benchmark failed with some instances!"
+
+        # dump collected latency and throughput info
+        header = "Multiple Instance Benchmark Summary"
+        field_names = [
+            "Instance",
+            "Latency ({})".format(latency_unit_name),
+            "Throughput ({})".format(throughput_unit_name),
+        ]
+        output_data = []
+        for idx, (latency, throughput) in enumerate(zip(latency_list, throughput_list)):
+            output_data.append([idx + 1, round(latency, 3), round(throughput, 3)])
+        output_data.append(
+            [
+                format_list2str(logfile_dict.keys()),
+                round(sum(latency_list) / len(latency_list), 3),
+                round(sum(throughput_list), 3),
+            ]
+        )
+        Statistics(output_data, header=header, field_names=field_names).print_stat()
 
 
 def benchmark():
     """Benchmark API interface."""
     logger.info("Start benchmark with Intel Neural Compressor.")
-    logger.info("By default, Intel Neural Compressor triggers only one instance on numa:0.")
+    logger.info("Intel Neural Compressor only uses physical CPUs for the best performance.")
 
     parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("--num_instances", type=int, default=None, help="Determine the number of instances.")
@@ -409,7 +478,7 @@ def benchmark():
     assert sys.platform in ["linux", "win32"], "only support platform windows and linux..."
 
     numa_info = dump_numa_info()  # show numa info and current usage of cores
-    logger.info("Intel Neural Compressor only uses physical CPUs for the best performance.")
     core_list_per_instance = set_cores_for_instance(args, numa_info=numa_info)
     script_and_parameters = args.script + " " + " ".join(args.parameters)
-    run_multi_instance_command(args, core_list_per_instance, raw_cmd=script_and_parameters)
+    logfile_dict = run_multi_instance_command(args, core_list_per_instance, raw_cmd=script_and_parameters)
+    summary_latency_throughput(logfile_dict)

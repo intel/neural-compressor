@@ -239,13 +239,13 @@ if args.accuracy:
 
 if args.performance:
     user_model.eval()
-    batch_size, input_leng = 1, 512
+    batch_size, input_leng = args.batch_size, 512
     example_inputs = torch.ones((batch_size, input_leng), dtype=torch.long)
     print("Batch size = {:d}".format(batch_size))
     print("The length of input tokens = {:d}".format(input_leng))
     import time
 
-    total_iters = 100
+    total_iters = args.iters
     warmup_iters = 5
     with torch.no_grad():
         for i in range(total_iters):
@@ -253,7 +253,7 @@ if args.performance:
                 start = time.time()
             user_model(example_inputs)
         end = time.time()
-    latency = (end - start) / ((total_iters - warmup_iters))
-    throughput = ((total_iters - warmup_iters)) / (end - start)
+    latency = (end - start) / ((total_iters - warmup_iters) * args.batch_size)
+    throughput = ((total_iters - warmup_iters) * args.batch_size) / (end - start)
     print("Latency: {:.3f} ms".format(latency * 10**3))
     print("Throughput: {:.3f} samples/sec".format(throughput))
