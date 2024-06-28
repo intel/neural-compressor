@@ -445,13 +445,57 @@ def summary_latency_throughput(logfile_dict):
         output_data = []
         for idx, (latency, throughput) in enumerate(zip(latency_list, throughput_list)):
             output_data.append([idx + 1, round(latency, 3), round(throughput, 3)])
-        output_data.append(
-            [
-                format_list2str(logfile_dict.keys()),
-                round(sum(latency_list) / len(latency_list), 3),
-                round(sum(throughput_list), 3),
-            ]
-        )
+        if len(logfile_dict) != 1:
+            # combine all instances
+            output_data.append(
+                [
+                    format_list2str(logfile_dict.keys()),
+                    round(sum(latency_list) / len(latency_list), 3),
+                    round(sum(throughput_list), 3),
+                ]
+            )
+        Statistics(output_data, header=header, field_names=field_names).print_stat()
+    elif throughput_list:
+        assert len(throughput_list) == len(logfile_dict), "Multiple instance benchmark failed with some instances!"
+
+        # dump collected throughput info
+        header = "Multiple Instance Benchmark Summary"
+        field_names = [
+            "Instance",
+            "Throughput ({})".format(throughput_unit_name),
+        ]
+        output_data = []
+        for idx, throughput in enumerate(throughput_list):
+            output_data.append([idx + 1, round(throughput, 3)])
+        if len(logfile_dict) != 1:
+            # combine all instances
+            output_data.append(
+                [
+                    format_list2str(logfile_dict.keys()),
+                    round(sum(throughput_list), 3),
+                ]
+            )
+        Statistics(output_data, header=header, field_names=field_names).print_stat()
+    elif latency_list:
+        assert len(latency_list) == len(logfile_dict), "Multiple instance benchmark failed with some instances!"
+
+        # dump collected latency info
+        header = "Multiple Instance Benchmark Summary"
+        field_names = [
+            "Instance",
+            "Latency ({})".format(latency_unit_name),
+        ]
+        output_data = []
+        for idx, latency in enumerate(latency_list):
+            output_data.append([idx + 1, round(latency, 3)])
+        if len(logfile_dict) != 1:
+            # combine all instances
+            output_data.append(
+                [
+                    format_list2str(logfile_dict.keys()),
+                    round(sum(latency_list) / len(latency_list), 3),
+                ]
+            )
         Statistics(output_data, header=header, field_names=field_names).print_stat()
 
 

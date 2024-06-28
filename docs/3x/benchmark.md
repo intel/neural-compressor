@@ -43,3 +43,19 @@ Therefore, by default, `incbench` will trigger 1 instance on the first NUMA node
 > Note:
     > - `num_i` works the same as `num_instances`
     > - `num_c` works the same as `num_cores_per_instance`
+
+### Dump Throughput and Latency Summary
+
+To merge benchmark results from multi-instances, "incbench" automatically checks log file messages for "throughput" and "latency" information matching the following patterns.
+
+```python
+throughput_pattern = r"[T,t]hroughput:\s*([0-9]*\.?[0-9]+)\s*([a-zA-Z/]*)"
+latency_pattern = r"[L,l]atency:\s*([0-9]*\.?[0-9]+)\s*([a-zA-Z/]*)"
+```
+
+#### Demo usage
+
+```python
+print("Throughput: {:.3f} samples/sec".format(throughput))
+print("Latency: {:.3f} ms".format(latency * 10**3))
+```
