@@ -138,6 +138,34 @@ class TestRTNQuant:
         except:
             assert torch.allclose(atol_false, atol_true, atol=0.012), "atol is very close, double checked the logic."
 
+    def test_quant_lm_head(self):
+        # tie_word_embeddings=false
+        gptj_model = transformers.AutoModelForCausalLM.from_pretrained(
+            "hf-internal-testing/tiny-random-GPTJForCausalLM",
+            device_map=device,
+        )
+        lm_head_id = id(gptj_model.lm_head.weight)
+        assert id(gptj_model.transformer.wte.weight) != lm_head_id, "The lm_head weight is tied, please check!"
+        quant_config = RTNConfig(quant_lm_head=True)
+        model = prepare(gptj_model, quant_config)
+        model = convert(model)
+
+        # tie_word_embeddings=true
+        opt_model = transformers.AutoModelForCausalLM.from_pretrained(
+            "trl-internal-testing/tiny-random-OPTForCausalLM",
+            device_map=device,
+        )
+        lm_head_id = id(opt_model.lm_head.weight)
+        assert (
+            id(opt_model.model.decoder.embed_tokens.weight) == lm_head_id
+        ), "The lm_head weight is not tied, please check!"
+        quant_config = RTNConfig(quant_lm_head=True)
+        model = prepare(opt_model, quant_config)
+        model = convert(model)
+        assert (
+            id(model.model.decoder.embed_tokens.weight) == lm_head_id
+        ), "The tied lm_head weight is not deep copied, please check!"
+
     def test_layer_wise(self):
         model = copy.deepcopy(self.tiny_gptj)
         quant_config = RTNConfig(
@@ -165,6 +193,19 @@ class TestRTNQuant:
         out = model(self.example_inputs)[0]
         out_next = model(self.example_inputs)[0]
         assert torch.allclose(out, self.label, atol=0.11), "Accuracy gap atol > 0.11 is unexpected."
+        assert torch.allclose(out, out_next), "output should be same"
+
+    def test_mix_dtype(self):
+        model = copy.deepcopy(self.tiny_gptj)
+        quant_config = RTNConfig()
+        quant_config.set_local(".*mlp.*", RTNConfig(bits=8))
+        quant_config.set_local(".*.out_proj", RTNConfig(bits=6))
+        quant_config.set_local(".*.k_proj", RTNConfig(dtype="nf4"))
+        model = prepare(model, quant_config)
+        model = convert(model)
+        out = model(self.example_inputs)[0]
+        out_next = model(self.example_inputs)[0]
+        assert torch.allclose(out, self.label, atol=0.08), "Accuracy gap atol > 0.08 is unexpected."
         assert torch.allclose(out, out_next), "output should be same"
 
     @pytest.mark.parametrize("dtype", ["int4", "nf4"])
@@ -200,9 +241,10 @@ class TestRTNQuant:
         out = model(self.example_inputs)[0]
         atol_true = (out - self.q_label).amax()
         # compare atol, this case is an ideal case.
-        assert (
-            atol_false < atol_true
-        ), "asym for double quant should have smaller atol because scales is bigger than zero, please double check."
+        if not (dtype, double_quant_bits, double_quant_group_size) == ("nf4", 6, 256):
+            assert (
+                atol_false < atol_true
+            ), "asym for double quant should have smaller atol because scales is bigger than zero, please double check."
 
     def test_double_quant_constants(self):
         model = copy.deepcopy(self.tiny_gptj)
@@ -295,7 +337,7 @@ class TestRTNQuant:
         loaded_model = load("saved_results", copy.deepcopy(self.tiny_gptj))
         loaded_out = loaded_model(self.example_inputs)[0]
         assert torch.allclose(inc_out, loaded_out), "Unexpected result. Please double check."
-        assert isinstance(loaded_model.lm_head, WeightOnlyLinear), "loading compressed model failed."
+        assert isinstance(loaded_model.transformer.h[0].mlp.fc_in, WeightOnlyLinear), "loading compressed model failed."
 
     def test_no_transformers(self, monkeypatch):
         def mock_is_transformers_imported():

@@ -272,15 +272,12 @@ if args.quantize:
         def run_fn_for_gptq(model, dataloader_for_calibration, *args):
             for batch in tqdm(dataloader_for_calibration):
                 batch = move_input_to_device(batch, device=None)
-                try:
-                    if isinstance(batch, tuple) or isinstance(batch, list):
-                        model(batch[0])
-                    elif isinstance(batch, dict):
-                        model(**batch)
-                    else:
-                        model(batch)
-                except ValueError:
-                    pass
+                if isinstance(batch, tuple) or isinstance(batch, list):
+                    model(batch[0])
+                elif isinstance(batch, dict):
+                    model(**batch)
+                else:
+                    model(batch)
             return
         if args.double_quant_type is not None:
             double_quant_config_dict.update(

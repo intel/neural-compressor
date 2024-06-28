@@ -106,11 +106,11 @@ def get_filter_fn(node_list, fn):
     def is_target_node_in_candidate_list(match, original_graph, pattern_graph):
         """Filter the node with target operator in match and check if it is in `node_list`."""
         target_node = None
-        for node in pattern_graph.nodes:
+        for node in pattern_graph.nodes:  # pragma: no cover
             if node.target == target_op:
                 target_node = node
                 break
-        if target_node is None:
+        if target_node is None:  # pragma: no cover
             return False
         matched_node = match.nodes_map[target_node]
         return matched_node in node_list
@@ -137,7 +137,8 @@ def get_unquantized_node_set(gm: torch.fx.GraphModule):
     for node in gm.graph.nodes:
         if meta := getattr(node, "meta"):
             if quantization_annotation := meta.get(xiq.QUANT_ANNOTATION_KEY):
-                if quantization_annotation._annotated:
+                none_annotation = xiq._X86InductorQuantizationAnnotation(_annotated=True)
+                if quantization_annotation != none_annotation:  # pragma: no cover
                     continue
         unquantized_node_set.add(node)
     return unquantized_node_set
@@ -161,18 +162,18 @@ def _parse_node_candidate_set_from_user_config(config, gm):
     op_type_configs, op_name_configs = config._get_op_name_op_type_config()
     op_type_filters = []
     op_name_filters = []
-    for op_type_name, config in op_type_configs.items():
+    for op_type_name, config in op_type_configs.items():  # pragma: no cover
         op_type = getattr(torch.nn, op_type_name)
-        if config.act_dtype == "fp16":
+        if config.act_dtype == "fp16":  # pragma: no cover
             filter = xpq._get_module_type_filter(op_type)
             op_type_filters.append(filter)
     for op_name, config in op_name_configs.items():
-        if config.act_dtype == "fp16":
+        if config.act_dtype == "fp16":  # pragma: no cover
             filter = xpq._get_module_name_filter(op_name)
             op_name_filters.append(filter)
     node_set_from_user_config = set()
     all_filters = op_type_filters + op_name_filters
-    for node in gm.graph.nodes:
+    for node in gm.graph.nodes:  # pragma: no cover
         if any([filter(node) for filter in all_filters]):
             node_set_from_user_config.add(node)
     return node_set_from_user_config

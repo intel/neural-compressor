@@ -19,12 +19,20 @@
 # limitations under the License.
 
 
+import copy
 from collections import OrderedDict
 
 import torch
 
 from neural_compressor.torch.algorithms import Quantizer
-from neural_compressor.torch.utils import get_accelerator, is_transformers_imported, logger, set_module
+from neural_compressor.torch.utils import (
+    get_accelerator,
+    get_attr,
+    is_transformers_imported,
+    logger,
+    set_attr,
+    set_module,
+)
 
 from .utility import cast_fp8, quant_tensor, search_clip
 
@@ -64,6 +72,7 @@ class RTNQuantizer(Quantizer):
         quantile=1.0,
         use_full_range=False,
         use_mse_search=False,
+        quant_lm_head=False,
         *args,
         **kwargs,
     ):
@@ -80,8 +89,10 @@ class RTNQuantizer(Quantizer):
             quantile (float, optional): percentile of clip. Defaults to 1.0.
             use_full_range (bool, optional): Choose sym range whether use -2**(bits-1).
                                         Defaults to False.
-            use_mse_search (bool, optional):  Whether search clip range.
+            use_mse_search (bool, optional):  Whether to search clip range.
                                         Defaults to True.
+            quant_lm_head (bool, optional):  Whether to quantize the lm_head layer.
+                                        Defaults to False.
 
         Returns:
             model: fake quantized torch module
@@ -92,6 +103,12 @@ class RTNQuantizer(Quantizer):
         # Put model on device explicitly
         # TODO: refine it later, Put module on device one by one instead of the whole model
         model.to(device)
+
+        # for transformers model. If lm_head is tied from embedding, we deepcopy it.
+        if quant_lm_head and getattr(getattr(model, "config", None), "tie_word_embeddings", False):
+            for key in model._tied_weights_keys:
+                weight = get_attr(model, key)
+                set_attr(model, key, copy.deepcopy(weight))
 
         assert isinstance(model, torch.nn.Module), "only support torch module"
         if is_transformers_imported():

@@ -15,9 +15,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import collections
 import importlib
 import subprocess
 import time
+from typing import Dict
 
 import cpuinfo
 import psutil
@@ -35,6 +37,7 @@ __all__ = [
     "LazyImport",
     "CpuInfo",
     "default_tuning_logger",
+    "call_counter",
 ]
 
 
@@ -225,3 +228,15 @@ def log_process(mode=Mode.QUANTIZE):
         return inner_wrapper
 
     return log_process_wrapper
+
+
+# decorator for recording number of times a function is called
+FUNC_CALL_COUNTS: Dict[str, int] = collections.defaultdict(int)
+
+
+def call_counter(func):
+    def wrapper(*args, **kwargs):
+        FUNC_CALL_COUNTS[func.__name__] += 1
+        return func(*args, **kwargs)
+
+    return wrapper
