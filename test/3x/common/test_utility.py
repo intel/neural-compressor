@@ -19,6 +19,7 @@ from neural_compressor.common.utils import (
     Mode,
     default_tuning_logger,
     dump_elapsed_time,
+    get_workspace,
     log_process,
     set_random_seed,
     set_resume_from,
@@ -43,6 +44,8 @@ class TestOptions(unittest.TestCase):
         workspace = "/path/to/workspace"
         set_workspace(workspace)
         self.assertEqual(options.workspace, workspace)
+        returned_workspace = get_workspace()
+        self.assertEqual(returned_workspace, workspace)
 
         # non String type
         workspace = 12345

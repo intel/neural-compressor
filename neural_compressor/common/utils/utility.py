@@ -29,6 +29,7 @@ from neural_compressor.common.utils import Mode, TuningLogger, logger
 
 __all__ = [
     "set_workspace",
+    "get_workspace",
     "set_random_seed",
     "set_resume_from",
     "set_tensorboard",
@@ -193,6 +194,13 @@ def set_workspace(workspace: str):
     from neural_compressor.common import options
 
     options.workspace = workspace
+
+
+def get_workspace():
+    """Get the workspace in config."""
+    from neural_compressor.common import options
+
+    return options.workspace
 
 
 def set_resume_from(resume_from: str):

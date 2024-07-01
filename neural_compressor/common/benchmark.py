@@ -20,7 +20,7 @@ import sys
 
 import psutil
 
-from neural_compressor.common.utils import Statistics, logger
+from neural_compressor.common.utils import Statistics, get_workspace, logger
 
 description = """
 ##################################################################################################################
@@ -296,6 +296,8 @@ def set_cores_for_instance(args, numa_info):
     if args.num_instances is None:
         if args.num_cores_per_instance:
             args.num_instances = len(cores_list) // args.num_cores_per_instance
+            target_cores = args.num_instances * args.num_cores_per_instance
+            cores_list = cores_list[:target_cores]
         else:
             args.num_instances = 1
             logger.info("By default, Intel Neural Compressor triggers only one instance.")
@@ -377,7 +379,7 @@ def run_multi_instance_command(args, core_list_per_instance, raw_cmd):
         logger.info("The interpreter path is not set, using string `python` as command.")
         logger.info("To replace it, use `export PYTHON_PATH=xxx`.")
     interpreter = os.getenv("PYTHON_PATH", "python")
-    current_work_dir = os.getcwd()
+    workspace_dir = get_workspace()
     logfile_process_map = {}
     logfile_dict = {}
     for i, core_list in core_list_per_instance.items():
@@ -386,7 +388,7 @@ def run_multi_instance_command(args, core_list_per_instance, raw_cmd):
         instance_cmd = "{} {} {}".format(prefix, interpreter, raw_cmd)
         logger.info(f"Instance {i+1}: {instance_cmd}")
         instance_log_file = "{}_{}_{}C.log".format(i + 1, len(core_list_per_instance), core_list[2])
-        instance_log_file = os.path.join(current_work_dir, instance_log_file)
+        instance_log_file = os.path.join(workspace_dir, instance_log_file)
         # trigger subprocess
         p = subprocess.Popen(
             instance_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True
@@ -397,14 +399,13 @@ def run_multi_instance_command(args, core_list_per_instance, raw_cmd):
 
     # Dump each instance's standard output to the corresponding log file
     for instance_log_file, p_cmd_i in logfile_process_map.items():
+        # p.communicate() reads std to avoid dead-lock, p.wait() only return.
+        stdout, stderr = p_cmd_i[0].communicate()  # stderr is merged to stdout, so it's None
         with open(instance_log_file, "w", 1, encoding="utf-8") as log_file:
             log_file.write(f"[COMMAND]: {p_cmd_i[1]}\n")
-            for line in p_cmd_i[0].stdout:
-                decoded_line = line.decode("utf-8", errors="ignore").strip()
-                log_file.write(decoded_line + "\n")
+            log_file.write(stdout.decode())
         logger.info(f"The log of instance {p_cmd_i[2]} is saved to {instance_log_file}")
 
-    p.communicate()
     return logfile_dict
 
 
