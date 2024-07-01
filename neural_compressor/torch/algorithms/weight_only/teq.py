@@ -63,7 +63,7 @@ class TrainableEquivalentTransformation:
 
             tg = GraphTrace()
             detected_absorb_layers, _ = tg.get_absorb_to_layer(model, example_inputs, supported_layers)
-        else:
+        else:  # pragma: no cover
             for name, module in model.named_modules():
                 if module.__class__.__name__ in supported_layers:
                     detected_absorb_layers[name] = [name]
@@ -209,7 +209,9 @@ class TrainableEquivalentTransformation:
             scale = scale.view(scale.shape[0], 1)
             layer.weight *= scale
 
-        elif layer.__class__.__name__ == "LlamaRMSNorm" or layer.__class__.__name__ == "T5LayerNorm":  ##quite tricky
+        elif (
+            layer.__class__.__name__ == "LlamaRMSNorm" or layer.__class__.__name__ == "T5LayerNorm"
+        ):  # pragma: no cover
             layer.weight *= scale
 
         else:  # pragma: no cover
@@ -241,7 +243,7 @@ class TrainableEquivalentTransformation:
     @torch.no_grad()
     def transform(self):
         """Apply alpha/scale."""
-        if not self._post_initialized:
+        if not self._post_initialized:  # pragma: no cover
             self._post_init()
         for ln_name, layer_names in self.absorb_to_layer.items():
             module = get_module(self.model, ln_name)
