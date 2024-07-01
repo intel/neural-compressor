@@ -3579,6 +3579,16 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             return q_model
 
         self.tune_cfg["fx_sub_module_list"] = self.sub_module_list
+
+        # BF16 fallback
+        if (
+            len(self.tune_cfg["bf16_ops_list"]) > 0
+            and self.version.release >= Version("1.11.0").release
+            and self.use_bf16
+            and (CpuInfo().bf16 or os.getenv("FORCE_BF16") == "1")
+        ):  # pragma: no cover
+            q_model._model = torch_utils.bf16_convert.Convert(q_model._model, self.tune_cfg)
+
         if self.approach == "quant_aware_training":
             q_model._model.train()
             if self.sub_module_list is None:
@@ -3664,14 +3674,6 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             PyTorch_FXAdaptor.convert_sub_graph(
                 self.sub_module_list, q_model._model, prefix="", custom_config=self.prepare_custom_config_dict
             )
-
-        if (
-            len(self.tune_cfg["bf16_ops_list"]) > 0
-            and self.version.release >= Version("1.11.0").release
-            and self.use_bf16
-            and (CpuInfo().bf16 or os.getenv("FORCE_BF16") == "1")
-        ):  # pragma: no cover
-            q_model._model = torch_utils.bf16_convert.Convert(q_model._model, self.tune_cfg)
 
         self.fused_dict = self.get_fused_list(q_model.model)
         q_model.is_quantized = True
