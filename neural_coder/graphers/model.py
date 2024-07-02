@@ -262,7 +262,7 @@ def register_nnModule_instance_definition():
                 and rhs not in ["self.model", "model", "self.call", "call"]
                 and "forward" not in rhs
                 and "config" not in lhs
-                and "congfig" not in lhs
+                and "config" not in lhs
                 and "," not in lhs
                 and "inference" not in lhs
                 and "tokenizer" not in lhs
