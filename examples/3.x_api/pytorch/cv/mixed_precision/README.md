@@ -30,7 +30,7 @@ train  val
 
 ## MixedPrecision
 ```Shell
-python main.py -t -a resnet18 --pretrained /path/to/imagenet
+bash run_autotune.sh --input_model=resnet18 --dataset_location=/path/to/imagenet
 ```
 
 ## Benchmark
