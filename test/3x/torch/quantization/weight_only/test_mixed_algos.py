@@ -12,18 +12,14 @@ device = accelerator.current_device_name()
 
 
 def run_fn(model):
-    # GPTQ uses ValueError to reduce computation when collecting input data of the first block
-    # It's special for UTs, no need to add this wrapper in examples.
-    with pytest.raises(ValueError):
-        model(torch.tensor([[10, 20, 30]], dtype=torch.long).to(device))
-        model(torch.tensor([[40, 50, 60]], dtype=torch.long).to(device))
+    model(torch.tensor([[10, 20, 30]], dtype=torch.long).to(device))
 
 
 class TestMixedTwoAlgo:
     def test_mixed_gptq_and_rtn(self):
         with patch.object(logger, "info") as mock_info:
-            rtn_config = RTNConfig(white_list=["lm_head"])
-            gptq_config = GPTQConfig(double_quant_bits=4, white_list=["transformer.*"])
+            rtn_config = RTNConfig(white_list=[".*mlp.*"])
+            gptq_config = GPTQConfig(double_quant_bits=4, white_list=[".*attn.*"])
             combined_config = rtn_config + gptq_config
             logger.info(combined_config)
 
