@@ -11,7 +11,6 @@ import torchvision
 
 from neural_compressor.adaptor import FRAMEWORKS
 from neural_compressor.adaptor.tf_utils.util import version1_lt_version2
-from neural_compressor.conf.dotdict import DotDict
 from neural_compressor.config import (
     DistillationConfig,
     IntermediateLayersKnowledgeDistillationLossConfig,
@@ -22,6 +21,7 @@ from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoa
 from neural_compressor.data.dataloaders.tensorflow_dataloader import TensorflowDataLoader
 from neural_compressor.training import prepare_compression
 from neural_compressor.utils import create_obj_from_config
+from neural_compressor.utils.utility import DotDict
 
 
 class TestDistillation(unittest.TestCase):

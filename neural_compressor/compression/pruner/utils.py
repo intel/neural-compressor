@@ -18,90 +18,20 @@
 # limitations under the License.
 
 import re
-from collections import UserDict, defaultdict
+from collections import UserDict
 
 import numpy as np
-import yaml
+
+from neural_compressor.utils import logger
+from neural_compressor.utils.utility import DotDict
 
 from ...config import WeightPruningConfig as WeightPruningConf
+from ...utils.utility import LazyImport
 
-try:
-    from neural_compressor.conf.config import Pruner
-    from neural_compressor.conf.dotdict import DotDict
-    from neural_compressor.utils import logger
-
-    from ...conf.config import PrunerV2
-    from ...conf.pythonic_config import WeightPruningConfig
-    from ...utils.utility import LazyImport
-
-    torch = LazyImport("torch")
-    nn = LazyImport("torch.nn")
-    F = LazyImport("torch.nn.functional")
-    tf = LazyImport("tensorflow")
-except:
-    import logging
-
-    import tensorflow as tf
-    import torch
-    import torch.nn as nn
-    import torch.nn.functional as F
-
-    from .dot_dict import DotDict  # #TODO
-
-    logger = logging.getLogger(__name__)
-    from .schema_check import PrunerV2
-
-    class WeightPruningConfig:
-        """Similar to torch optimizer's interface."""
-
-        def __init__(
-            self,
-            pruning_configs=[{}],  ##empty dict will use global values
-            target_sparsity=0.9,
-            pruning_type="snip_momentum",
-            pattern="4x1",
-            op_names=[],
-            excluded_op_names=[],
-            start_step=0,
-            end_step=0,
-            pruning_scope="global",
-            pruning_frequency=1,
-            min_sparsity_ratio_per_op=0.0,
-            max_sparsity_ratio_per_op=0.98,
-            sparsity_decay_type="exp",
-            pruning_op_types=["Conv", "Linear"],
-            **kwargs,
-        ):
-            """Init a WeightPruningConfig object."""
-            self.pruning_configs = pruning_configs
-            self._weight_compression = DotDict(
-                {
-                    "target_sparsity": target_sparsity,
-                    "pruning_type": pruning_type,
-                    "pattern": pattern,
-                    "op_names": op_names,
-                    "excluded_op_names": excluded_op_names,  ##global only
-                    "start_step": start_step,
-                    "end_step": end_step,
-                    "pruning_scope": pruning_scope,
-                    "pruning_frequency": pruning_frequency,
-                    "min_sparsity_ratio_per_op": min_sparsity_ratio_per_op,
-                    "max_sparsity_ratio_per_op": max_sparsity_ratio_per_op,
-                    "sparsity_decay_type": sparsity_decay_type,
-                    "pruning_op_types": pruning_op_types,
-                }
-            )
-            self._weight_compression.update(kwargs)
-
-        @property
-        def weight_compression(self):
-            """Get weight_compression."""
-            return self._weight_compression
-
-        @weight_compression.setter
-        def weight_compression(self, weight_compression):
-            """Set weight_compression."""
-            self._weight_compression = weight_compression
+torch = LazyImport("torch")
+nn = LazyImport("torch.nn")
+F = LazyImport("torch.nn.functional")
+tf = LazyImport("tensorflow")
 
 
 def get_sparsity_ratio(pruners, model):
@@ -423,14 +353,10 @@ def check_key_validity(template_config, user_config):
         for obj in user_config:
             if isinstance(obj, dict):
                 check_key_validity_dict(template_config, obj)
-            elif isinstance(obj, PrunerV2):
-                check_key_validity_prunerv2(template_config, obj)
 
     # single pruner, weightconfig or yaml
     elif isinstance(user_config, dict):
         check_key_validity_dict(template_config, user_config)
-    elif isinstance(user_config, PrunerV2):
-        check_key_validity_prunerv2(template_config, user_config)
     return
 
 
@@ -470,7 +396,7 @@ def process_and_check_config(val):
     default_config.update(default_global_config)
     default_config.update(default_local_config)
     default_config.update(params_default_config)
-    if isinstance(val, WeightPruningConfig) or isinstance(val, WeightPruningConf):
+    if isinstance(val, WeightPruningConf):
         global_configs = val.weight_compression
         pruning_configs = val.pruning_configs
         check_key_validity(default_config, pruning_configs)
@@ -494,21 +420,7 @@ def process_config(config):
     Returns:
         A config dict object.
     """
-    if isinstance(config, str):
-        try:
-            with open(config, "r") as f:
-                content = f.read()
-                val = yaml.safe_load(content)
-                ##schema.validate(val)
-            return process_and_check_config(val)
-        except FileNotFoundError as f:
-            logger.error("{}.".format(f))
-            raise RuntimeError("The yaml file is not exist. Please check the file name or path.")
-        except Exception as e:
-            logger.error("{}.".format(e))
-            raise RuntimeError("The yaml file format is not correct. Please refer to document.")
-
-    if isinstance(config, WeightPruningConfig) or isinstance(config, WeightPruningConf):
+    if isinstance(config, WeightPruningConf):
         return process_and_check_config(config)
     else:
         assert False, f"not supported type {config}"
@@ -616,25 +528,6 @@ def parse_to_prune_tf(config, model):
             continue
         new_modules[name] = modules[name]
     return new_modules
-
-
-def generate_pruner_config(info):
-    """Generate pruner config object from prune information.
-
-    Args:
-        info: A dotdict that saves prune information.
-
-    Returns:
-        pruner: A pruner config object.
-    """
-    return Pruner(
-        initial_sparsity=0,
-        method=info.method,
-        target_sparsity=info.target_sparsity,
-        start_epoch=info.start_step,
-        end_epoch=info.end_step,
-        update_frequency=info.pruning_frequency,
-    )
 
 
 def get_layers(model):

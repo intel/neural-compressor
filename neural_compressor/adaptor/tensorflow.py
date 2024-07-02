@@ -24,7 +24,6 @@ from collections import OrderedDict, UserDict
 import numpy as np
 import yaml
 
-from ..conf.dotdict import deep_get
 from ..data.dataloaders.base_dataloader import BaseDataLoader
 from ..utils import logger
 from ..utils.utility import (
@@ -34,6 +33,7 @@ from ..utils.utility import (
     Dequantize,
     LazyImport,
     Statistics,
+    deep_get,
     dump_elapsed_time,
     singleton,
     version1_eq_version2,
@@ -2204,14 +2204,6 @@ class TensorflowQuery(QueryBackendCapability):
                 raise ValueError(
                     "Please check if the format of {} follows Neural Compressor yaml schema.".format(self.cfg)
                 )
-        self._update_cfg_with_usr_definition()
-
-    def _update_cfg_with_usr_definition(self):
-        """Add user defined precision configuration."""
-        from neural_compressor.conf.pythonic_config import tensorflow_config
-
-        if tensorflow_config.precisions is not None:
-            self.cur_config["precisions"]["names"] = ",".join(tensorflow_config.precisions)
 
     def get_version(self):
         """Get the current backend version information.

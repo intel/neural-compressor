@@ -5102,13 +5102,6 @@ class PyTorchQuery(QueryBackendCapability):
             self.cur_config = self.cur_config[self.device]
         elif "cpu" in self.cur_config:
             self.cur_config = self.cur_config["cpu"]
-        self._update_cfg_with_usr_definition()
-
-    def _update_cfg_with_usr_definition(self):
-        from neural_compressor.conf.pythonic_config import pytorch_config
-
-        if pytorch_config.precisions is not None:
-            self.cur_config["precisions"]["names"] = ",".join(pytorch_config.precisions)
 
     def get_quantization_capability(self, datatype="int8"):
         """Get the supported op types' quantization capability.

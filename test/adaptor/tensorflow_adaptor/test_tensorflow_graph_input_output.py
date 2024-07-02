@@ -12,63 +12,6 @@ from neural_compressor.adaptor.tf_utils.graph_util import GraphAnalyzer
 from neural_compressor.adaptor.tf_utils.util import get_input_output_node_names
 
 
-def build_fake_yaml():
-    fake_yaml = """
-        model:
-          name: fake_yaml
-          framework: tensorflow
-        device: cpu
-        quantization:
-          model_wise:
-            weight:
-                granularity: per_tensor
-                scheme: sym
-                dtype: int8
-                algorithm: minmax
-        evaluation:
-          accuracy:
-            metric:
-              topk: 1
-        tuning:
-            strategy:
-              name: basic
-            accuracy_criterion:
-              relative: 0.1
-            workspace:
-              path: saved
-        """
-    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
-    with open("fake_yaml.yaml", "w", encoding="utf-8") as f:
-        yaml.dump(y, f)
-    f.close()
-
-
-def build_fake_yaml_2():
-    fake_yaml = """
-        model:
-          name: fake_yaml
-          framework: tensorflow
-        device: cpu
-        evaluation:
-          accuracy:
-            metric:
-              topk: 1
-        tuning:
-            strategy:
-              name: bayesian
-            accuracy_criterion:
-              relative: 0.01
-            exit_policy:
-              performance_only: True
-            workspace:
-              path: saved
-        """
-    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
-    with open("fake_yaml_2.yaml", "w", encoding="utf-8") as f:
-        yaml.dump(y, f)
-    f.close()
-
-
 def build_fake_model_1():
     with tf.compat.v1.Session(graph=tf.Graph()) as sess:
         dataset = tf.data.Dataset.range(10)
@@ -124,8 +67,6 @@ class TestGraphInputOutputDetection(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        build_fake_yaml()
-        build_fake_yaml_2()
         if not os.path.exists(self.pb_path):
             if self.platform == "linux":
                 os.system(
@@ -146,8 +87,6 @@ class TestGraphInputOutputDetection(unittest.TestCase):
 
     @classmethod
     def tearDownClass(self):
-        os.remove("fake_yaml.yaml")
-        os.remove("fake_yaml_2.yaml")
         os.remove("model_1.pb")
         os.remove("model_2.pb")
         os.remove("model_3.pb")
@@ -201,40 +140,6 @@ class TestGraphInputOutputDetection(unittest.TestCase):
         inputs, outputs = get_input_output_node_names(input_graph)
         self.assertEqual(inputs, [])
         self.assertEqual(outputs, [])
-
-    def test_no_input_output_config(self):
-        g = GraphAnalyzer()
-        g.graph = self.input_graph
-        g.parse_graph()
-
-        float_graph_def = g.dump_graph()
-        from neural_compressor.experimental import Quantization, common
-
-        quantizer = Quantization("fake_yaml.yaml")
-        dataset = quantizer.dataset("dummy", shape=(20, 224, 224, 3), label=True)
-        quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
-        quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
-        quantizer.model = float_graph_def
-        output_graph = quantizer.fit()
-        self.assertGreater(len(output_graph.graph_def.node), 0)
-
-    def test_invalid_input_output_config(self):
-        g = GraphAnalyzer()
-        g.graph = self.input_graph
-        g.parse_graph()
-
-        float_graph_def = g.dump_graph()
-        from neural_compressor.experimental import Quantization, common
-
-        quantizer = Quantization("fake_yaml_2.yaml")
-        dataset = quantizer.dataset("dummy", shape=(20, 224, 224, 3), label=True)
-        quantizer.calib_dataloader = common.DataLoader(dataset, batch_size=2)
-        quantizer.eval_dataloader = common.DataLoader(dataset, batch_size=2)
-        quantizer.model = float_graph_def
-        model = quantizer.fit()
-        # will detect the right inputs/outputs
-        self.assertNotEqual(model.input_node_names, ["x"])
-        self.assertNotEqual(model.output_node_names, ["op_to_store"])
 
 
 if __name__ == "__main__":

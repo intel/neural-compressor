@@ -16,7 +16,7 @@
 # limitations under the License.
 """ONNX options."""
 
-from ..conf.dotdict import DotDict
+from .utility import DotDict
 
 
 class onnxrt:

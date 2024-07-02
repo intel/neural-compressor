@@ -1,59 +1,19 @@
-#
-#  -*- coding: utf-8 -*-
-#
-import os
 import shutil
 import unittest
 
 import tensorflow as tf
-import yaml
 from tensorflow.compat.v1 import graph_util
 
 from neural_compressor.adaptor.tf_utils.util import disable_random, version1_gte_version2, version1_lt_version2
-from neural_compressor.experimental import Benchmark, Quantization, common
-
-
-def build_fake_yaml(fake_yaml, save_path, **kwargs):
-    y = yaml.load(fake_yaml, Loader=yaml.SafeLoader)
-    with open(file=save_path, mode=kwargs["mode"], encoding=kwargs["encoding"]) as f:
-        yaml.dump(y, f)
 
 
 class TestConvertTensorflowQDQToOnnxQDQ(unittest.TestCase):
     @classmethod
     def setUpClass(self):
-        fake_yaml = """
-        model:
-          name: fake_model_cpu
-          framework: tensorflow_itex
-          inputs: input
-        device: cpu
-        quantization:
-          model_wise:
-            weight:
-                granularity: per_tensor
-                scheme: sym
-                dtype: int8
-                algorithm: minmax
-        evaluation:
-          accuracy:
-            metric:
-              topk: 1
-        tuning:
-            strategy:
-              name: basic
-            accuracy_criterion:
-              relative: 0.1
-            exit_policy:
-              performance_only: True
-            workspace:
-              path: workspace
-        """
-        build_fake_yaml(fake_yaml, "fake_yaml.yaml", mode="w", encoding="utf-8")
+        pass
 
     @classmethod
     def tearDownClass(self):
-        os.remove("fake_yaml.yaml")
         if version1_gte_version2(tf.version.VERSION, "2.8.0"):
             shutil.rmtree("workspace")
 

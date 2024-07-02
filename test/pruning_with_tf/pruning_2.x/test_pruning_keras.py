@@ -7,11 +7,11 @@ class TestPruning(unittest.TestCase):
 
         from neural_compressor import WeightPruningConfig
         from neural_compressor.adaptor import FRAMEWORKS
-        from neural_compressor.conf.config import default_workspace
-        from neural_compressor.conf.dotdict import DotDict
+        from neural_compressor.config import default_workspace
         from neural_compressor.data import DataLoader, Datasets
         from neural_compressor.training import prepare_compression
         from neural_compressor.utils import create_obj_from_config, logger
+        from neural_compressor.utils.utility import DotDict
 
         model = tf.keras.applications.ResNet50V2(weights="imagenet")
 

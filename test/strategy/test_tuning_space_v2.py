@@ -1,9 +1,9 @@
 import unittest
 from copy import deepcopy
 
-from neural_compressor.conf.dotdict import DotDict
 from neural_compressor.strategy.utils.tuning_space import TuningItem, TuningSpace
 from neural_compressor.utils import logger
+from neural_compressor.utils.utility import DotDict
 
 op_cap = {
     # op1 have both weight and activation and support static/dynamic/fp32/b16
