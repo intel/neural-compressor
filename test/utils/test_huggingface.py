@@ -15,7 +15,6 @@ class TestQuantization(unittest.TestCase):
     def tearDownClass(self):
         shutil.rmtree("./saved_results", ignore_errors=True)
 
-    @unittest.skip("skipping this test as it import `dotdict` from neural_compressor.conf.")
     def test_int8_huggingface_model(self):
         from neural_compressor.utils.load_huggingface import OptimizedModel
 
