@@ -29,12 +29,12 @@ from neural_compressor.torch.utils import (
     QCONFIG_NAME,
     WEIGHT_NAME,
     LoadFormat,
-    set_module,
     logger,
-
+    set_module,
 )
-from .utility import convert_dtype_str2torch
+
 from .modules import HPUWeightOnlyLinear, INCWeightOnlyLinear, MulLinear
+from .utility import convert_dtype_str2torch
 
 format_woqlinear_mapping = {LoadFormat.HUGGINGFACE: INCWeightOnlyLinear, LoadFormat.DEFAULT: INCWeightOnlyLinear}
 device_woqlinear_mapping = {"cpu": INCWeightOnlyLinear, "hpu": HPUWeightOnlyLinear}
@@ -163,7 +163,7 @@ class WOQModelLoader:
         # build weight-only quantization model with WeightOnlyLinear module
         model = self._build_woq_model()
 
-        # load remianing pretrained weight to weight-only quantization model
+        # load remaining pretrained weight to weight-only quantization model
         model.load_state_dict(self.loaded_state_dict, assign=True, strict=False)
 
         # save hpu format tensor to local directory
@@ -285,7 +285,7 @@ class WOQModelLoader:
         if WeightOnlyLinearClass == INCWeightOnlyLinear:
             class_specific_kwargs["g_idx"] = True if name + ".g_idx" in self.loaded_state_dict_keys else False
             class_specific_kwargs["zp"] = True if name + ".qzeros" in self.loaded_state_dict_keys else False
-            class_specific_kwargs["use_optimum_format"]=True
+            class_specific_kwargs["use_optimum_format"] = True
             class_specific_kwargs["bias"] = linear_module.bias is not None
             if _is_autoround:
                 class_specific_kwargs["scale_dtype"] = convert_dtype_str2torch(
@@ -295,7 +295,7 @@ class WOQModelLoader:
             # TODO: update kwargs specific to HPUWeightOnlyLinear
             class_specific_kwargs["g_idx"] = True if name + ".g_idx" in self.loaded_state_dict_keys else False
             class_specific_kwargs["zp"] = True if name + ".qzeros" in self.loaded_state_dict_keys else False
-            class_specific_kwargs["use_optimum_format"]=True
+            class_specific_kwargs["use_optimum_format"] = True
             class_specific_kwargs["bias"] = linear_module.bias is not None
 
         new_module = WeightOnlyLinearClass(**base_kwargs, **class_specific_kwargs)
@@ -334,7 +334,7 @@ class WOQModelLoader:
         if OldWeightOnlyLinearClass == INCWeightOnlyLinear and NewWeightOnlyLinearClass == HPUWeightOnlyLinear:
             # INCWeightOnlyLinear --> HPUWeightOnlyLinear
             # TODO: need to rewrite once HPUWeightOnlyLinear is implemented
-            class_specific_kwargs = {} # class spceific initialization kwargs
+            class_specific_kwargs = {}  # class spceific initialization kwargs
             class_specific_kwargs["g_idx"] = getattr(format_woqlinear_module, "g_idx", None) is not None
             class_specific_kwargs["zp"] = getattr(format_woqlinear_module, "qzeros", None) is not None
             class_specific_kwargs["use_optimum_format"] = True
@@ -345,7 +345,10 @@ class WOQModelLoader:
             g_idx = format_woqlinear_module.g_idx
 
             # initialize the new WeightOnlyLinearClass
-            device_mapping_module = NewWeightOnlyLinearClass(**base_kwargs, **class_specific_kwargs,)
+            device_mapping_module = NewWeightOnlyLinearClass(
+                **base_kwargs,
+                **class_specific_kwargs,
+            )
 
             device_mapping_module.pack(int_weight.to(self.device), scale.to(self.device), zp.to(self.device))
             device_mapping_module.bias = bias.to(self.device)
@@ -355,7 +358,9 @@ class WOQModelLoader:
             if not self._should_save_hpu_format_tensor:
                 self._should_save_hpu_format_tensor = True
         else:
-            raise RuntimeError(f"Not support update {OldWeightOnlyLinearClass.__name__} to {NewWeightOnlyLinearClass.__name__}.")
+            raise RuntimeError(
+                f"Not support update {OldWeightOnlyLinearClass.__name__} to {NewWeightOnlyLinearClass.__name__}."
+            )
 
         return device_mapping_module
 
@@ -400,11 +405,7 @@ class WOQModelLoader:
     def _get_loaded_state_dict(self, config):
         from transformers.configuration_utils import PretrainedConfig
         from transformers.modeling_utils import get_checkpoint_shard_files, load_state_dict
-        from transformers.utils import (
-            cached_file,
-            extract_commit_hash,
-            is_safetensors_available,
-        )
+        from transformers.utils import cached_file, extract_commit_hash, is_safetensors_available
 
         subfolder = self.kwargs.pop("subfolder", "")
         variant = self.kwargs.pop("variant", None)
@@ -540,7 +541,6 @@ class WOQModelLoader:
 
     def _get_resolved_archive_file(self, **kwargs):
         """Get weight archive file of model."""
-        from transformers.utils import is_remote_url
         from transformers.modeling_utils import _add_variant
         from transformers.utils import (
             SAFE_WEIGHTS_INDEX_NAME,
@@ -550,6 +550,7 @@ class WOQModelLoader:
             cached_file,
             download_url,
             has_file,
+            is_remote_url,
         )
 
         use_safetensors = kwargs.pop("use_safetensors")
@@ -706,7 +707,6 @@ class WOQModelLoader:
 
         return resolved_archive_file
 
-
     def _init_hf_model(self, model_class, config):
         from accelerate.big_modeling import init_empty_weights
         from transformers.modeling_utils import no_init_weights
@@ -761,14 +761,13 @@ class WOQModelLoader:
         return model
 
     def _load_remaining_pretrained_weight(self, model):
-        """Load remaing pretrained weight.
+        """Load remaining pretrained weight.
 
         In _build_woq_model function, linear will be replaced to weight-only quantization linear
         and its quantized weight will be loaded. Remaining pretrained weight (like layernorm weight,
         embedding weight or other unquantized linear weight) will be loaded in this function.
         """
-        from transformers.modeling_utils import load_state_dict
-        from transformers.modeling_utils import _load_state_dict_into_meta_model
+        from transformers.modeling_utils import _load_state_dict_into_meta_model, load_state_dict
 
         resolved_archive_file = self.kwargs.pop("resolved_archive_file", None)
         torch_dtype = self.kwargs.pop("torch_dtype", torch.float32)

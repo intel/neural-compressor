@@ -272,7 +272,9 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
         device = scales.device
         if self.g_idx is None:
             # used for recovering fp32_weight
-            self.g_idx = torch.tensor([i // self.group_size for i in range(self.in_features)], dtype=torch.int32).to(device)
+            self.g_idx = torch.tensor([i // self.group_size for i in range(self.in_features)], dtype=torch.int32).to(
+                device
+            )
         # unpack weight
         if not self.use_optimum_format and self.compression_dim == 0:
             qweight = qweight.T.contiguous()

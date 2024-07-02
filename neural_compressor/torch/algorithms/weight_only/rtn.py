@@ -34,8 +34,8 @@ from neural_compressor.torch.utils import (
     set_module,
 )
 
-from .utility import cast_fp8, quant_tensor, search_clip
 from .modules import INCWeightOnlyLinear
+from .utility import cast_fp8, quant_tensor, search_clip
 
 if is_transformers_imported():
     import transformers
