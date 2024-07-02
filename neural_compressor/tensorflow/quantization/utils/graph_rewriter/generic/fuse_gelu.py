@@ -22,7 +22,6 @@ from tensorflow.python.framework import dtypes
 from neural_compressor.tensorflow.quantization.utils.graph_rewriter.graph_base import GraphRewriterBase
 from neural_compressor.tensorflow.quantization.utils.graph_util import GraphAnalyzer
 from neural_compressor.tensorflow.quantization.utils.graph_util import GraphRewriterHelper as Helper
-from neural_compressor.tensorflow.utils import SPR_BASE_VERSIONS
 
 
 class FuseGeluOptimizer(GraphRewriterBase):  # pragma: no cover
@@ -30,7 +29,7 @@ class FuseGeluOptimizer(GraphRewriterBase):  # pragma: no cover
 
     def do_transformation(self):
         """Execute the fusion from small ops to Gelu."""
-        if not (tf.version.VERSION in ("1.15.0-up2", "1.15.0-up3") or tf.version.VERSION in SPR_BASE_VERSIONS):
+        if tf.version.VERSION not in ("1.15.0-up2", "1.15.0-up3"):
             return self.model
 
         cur_graph = GraphAnalyzer()
