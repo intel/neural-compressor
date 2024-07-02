@@ -40,7 +40,7 @@ class SSD300(nn.Module):
 
         self.loc = nn.ModuleList(self.loc)
         self.conf = nn.ModuleList(self.conf)
-        # intitalize all weights
+        # initialize all weights
         self._init_weights()
 
     def _build_additional_features(self, input_size, input_channels):

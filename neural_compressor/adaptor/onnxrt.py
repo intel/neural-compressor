@@ -252,7 +252,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, data_loader, q_func=None):
-        """The function is used to do calibration and quanitization in post-training
+        """The function is used to do calibration and quantization in post-training
            quantization.
 
         Args:
@@ -1904,7 +1904,7 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
 
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, data_loader, q_func=None):
-        """The function is used to do calibration and quanitization in post-training
+        """The function is used to do calibration and quantization in post-training
            quantization.
 
         Args:

@@ -236,7 +236,7 @@ class SparseDummyDataset(IterableDataset):  # pragma: no cover
                 self.label_shape = len(self.dense_shape) * self.label_shape
             assert len(self.label_shape) == len(
                 self.dense_shape
-            ), "length of dense_shape should be euqal to length of label_shape"
+            ), "length of dense_shape should be equal to length of label_shape"
             self.label_dim = len(self.label_shape)
 
         self.input_dim = 1 if isinstance(dense_shape, tuple) else len(dense_shape)

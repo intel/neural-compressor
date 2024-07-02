@@ -212,7 +212,7 @@ class GraphAnalyzer:
             return self._search_patterns(patterns)
 
     def _search_patterns(self, input_pattern):
-        """Search user specified patterns on internal grpah structure.
+        """Search user specified patterns on internal graph structure.
 
         Args:
             input_pattern (list): The element of the pattern list could be string/list/tuple.
