@@ -346,7 +346,7 @@ class TestRTNQuant:
         output = loaded_model(self.example_inputs)[0]
         assert torch.allclose(inc_out, output), "Unexpected result. Please double check."
         assert (
-            get_woq_linear_num(loaded_model, "INCWeightOnlyLinear") == 31
+            get_woq_linear_num(loaded_model, "INCWeightOnlyLinear") == 30
         ), "Incorrect number of INCWeightOnlyLinear modules"
 
     @pytest.mark.skipif(not is_hpex_available(), reason="no hpex in environment here.")
