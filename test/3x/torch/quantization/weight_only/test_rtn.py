@@ -352,3 +352,16 @@ class TestRTNQuant:
         model = convert(model)
         out = model(self.example_inputs)[0]
         assert torch.allclose(out, self.label, atol=1e-1), "Accuracy gap atol > 0.1 is unexpected."
+
+    @pytest.mark.skipif(device == "cpu", reason="no available accelerator")
+    def test_auto_host2device(self):
+        # if model is on CPU, we move it to device layer-by-layer for acceleration,
+        # and then move it back to CPU after quantization.
+        model = copy.deepcopy(self.tiny_gptj).to("cpu")
+        example_inputs = copy.deepcopy(self.example_inputs).to("cpu")
+        quant_config = get_default_rtn_config()
+        model = prepare(model, quant_config)
+        model = convert(model)
+        rtn_label = model(example_inputs)[0]
+        rtn_atol = (rtn_label - self.label.to("cpu")).amax()
+        assert rtn_atol < 0.08, "RTN should have low atol."

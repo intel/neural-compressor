@@ -36,6 +36,20 @@ class TestGPTQQuant:
     def teardown_class(self):
         shutil.rmtree("saved_results", ignore_errors=True)
 
+    @pytest.mark.skipif(device == "cpu", reason="no available accelerator")
+    def test_auto_host2device(self):
+        # if model is on CPU, we move it to device layer-by-layer for acceleration,
+        # and then move it back to CPU after quantization.
+        model = copy.deepcopy(self.tiny_gptj).to("cpu")
+        example_inputs = copy.deepcopy(self.example_inputs).to("cpu")
+        quant_config = get_default_gptq_config()
+        model = prepare(model, quant_config)
+        run_fn(model)
+        model = convert(model)
+        gptq_label = model(example_inputs)[0]
+        gptq_atol = (gptq_label - self.label.to("cpu")).amax()
+        assert gptq_atol < 0.06, "GPTQ should have low atol."
+
     def test_accuracy_improvement(self):
         # test_default_rtn_config
         model = copy.deepcopy(self.tiny_gptj)
@@ -215,9 +229,9 @@ class TestGPTQQuant:
         from transformers import GPT2Model, GPT2Tokenizer
 
         tokenizer = GPT2Tokenizer.from_pretrained("sshleifer/tiny-gpt2")
-        model = GPT2Model.from_pretrained("sshleifer/tiny-gpt2")
+        model = GPT2Model.from_pretrained("sshleifer/tiny-gpt2").to(device)
         text = "Replace me by any text you'd like."
-        encoded_input = tokenizer(text, return_tensors="pt")
+        encoded_input = tokenizer(text, return_tensors="pt").to(device)
 
         def run_fn_conv1d(model):
             model(**encoded_input)
