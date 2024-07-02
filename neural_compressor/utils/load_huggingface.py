@@ -24,15 +24,7 @@ import torch
 import transformers
 from transformers import AutoConfig
 
-import neural_compressor.utils as inc_utils
 from neural_compressor.utils import logger
-
-# In 1.x, the `best_configure` is an instance of `neural_compressor.conf.dotdict.DotDict`,
-# which was removed since 2.x. This configuration was saved directly in the model's state_dict.
-# During loading, the pickle requires `neural_compressor.conf.dotdict.DotDict` to deserialize the `best_configure`.
-# In 2.x, the `DotDict` was moved to `neural_compressor.utils.utility`. Create an alias to make the pickle import work.
-# https://stackoverflow.com/a/13398680/23445462
-sys.modules["neural_compressor.conf.dotdict"] = inc_utils.utility
 
 WEIGHTS_NAME = "pytorch_model.bin"
 
