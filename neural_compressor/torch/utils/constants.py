@@ -62,3 +62,6 @@ from enum import Enum
 class LoadFormat(Enum):
     DEFAULT = "default"
     HUGGINGFACE = "huggingface"
+
+
+LM_HEAD_NAMES = [".*lm_head", ".*output_layer", ".*embed_out"]

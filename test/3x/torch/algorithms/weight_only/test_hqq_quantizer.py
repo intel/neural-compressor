@@ -1,19 +1,63 @@
-# Copyright (c) 2024 Intel Corporation
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+import pytest
 import torch
 
+from neural_compressor.torch.algorithms.weight_only.hqq.bitpack import Packer
+from neural_compressor.torch.algorithms.weight_only.hqq.config import (
+    HQQModuleConfig,
+    QTensorConfig,
+    default_hqq_module_config,
+    default_scale_quant_config,
+    default_weight_quant_config,
+    default_zero_quant_config,
+)
 from neural_compressor.torch.algorithms.weight_only.hqq.qtensor import QTensor, QTensorMetaInfo
+
+
+def test_default_hqq_module_config():
+    config = default_hqq_module_config
+    print(config)
+    assert isinstance(config, HQQModuleConfig)
+    assert config.weight == default_weight_quant_config
+    assert config.zero == default_zero_quant_config
+    assert config.scale == default_scale_quant_config
+
+
+def test_default_weight_quant_config():
+    config = default_weight_quant_config
+    assert isinstance(config, QTensorConfig)
+    assert config.nbits == 4
+    assert config.channel_wise is True
+
+
+def test_default_zero_quant_config():
+    config = default_zero_quant_config
+    assert isinstance(config, QTensorConfig)
+    assert config.nbits == 8
+    assert config.channel_wise is False
+
+
+def test_default_scale_quant_config():
+    config = default_scale_quant_config
+    assert isinstance(config, QTensorConfig)
+    assert config.nbits == 8
+    assert config.channel_wise is True
+
+
+def test_qtensor_meta_info():
+    meta_info = QTensorMetaInfo
+    print(meta_info)
+
+
+@pytest.mark.parametrize("nbits", [2, 3, 4, 8])
+def test_packer(nbits):
+    # TODO:　add test for 3 bits
+    range_max = 2**nbits
+    dims = 16 if nbits != 3 else 10
+    W = torch.randint(0, range_max, (dims, dims)).to(torch.uint8)
+    W_pack = Packer.get_pack_fn(nbits)(W)
+    W_pack_unpack = Packer.get_unpack_fn(nbits)(W_pack)
+    assert torch.allclose(W, W_pack_unpack)
+    print("Packer test passed!")
 
 
 class TestQTensor:
