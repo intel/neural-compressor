@@ -265,3 +265,16 @@ def dump_model_op_stats(mode, tune_cfg):
         output_data.append(field_results)
 
     Statistics(output_data, header="Mixed Precision Statistics", field_names=field_names).print_stat()
+
+
+def get_model_device(model: torch.nn.Module):
+    """Get the device.
+
+    Args:
+        model (torch.nn.Module): the input model.
+
+    Returns:
+        device (str): a string.
+    """
+    for n, p in model.named_parameters():
+        return p.data.device.type  # p.data.device == device(type='cpu')

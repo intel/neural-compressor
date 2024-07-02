@@ -27,7 +27,13 @@ import torch
 import torch.nn as nn
 from tqdm import tqdm
 
-from neural_compressor.torch.utils import get_accelerator, is_transformers_imported, logger, set_module
+from neural_compressor.torch.utils import (
+    get_accelerator,
+    get_model_device,
+    is_transformers_imported,
+    logger,
+    set_module,
+)
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
 from .modules import WeightOnlyLinear
@@ -995,6 +1001,7 @@ class GPTQuantizer(INCQuantizer):
         if use_layer_wise:  # pragma: no cover
             assert model_path is not None, "model_path should not be None when use layer wise mode"
 
+        self.model_device = get_model_device(model)  # return model on the same device
         self.gptq_quantizer = RAWGPTQuantizer(
             model,
             weight_config=self.quant_config,
@@ -1013,6 +1020,7 @@ class GPTQuantizer(INCQuantizer):
         self.gptq_quantizer.model = model
         self.gptq_quantizer.remove_prepare_for_calibration()
         q_model, gptq_config = self.gptq_quantizer.execute_quantization()
+        q_model = q_model.to(self.model_device)
         q_model.gptq_config = gptq_config
         logger.info("GPTQ quantizing done.")
         return q_model

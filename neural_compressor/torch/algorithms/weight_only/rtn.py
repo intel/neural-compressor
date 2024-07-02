@@ -28,6 +28,7 @@ from neural_compressor.torch.algorithms import Quantizer
 from neural_compressor.torch.utils import (
     get_accelerator,
     get_attr,
+    get_model_device,
     is_transformers_imported,
     logger,
     set_attr,
@@ -99,10 +100,7 @@ class RTNQuantizer(Quantizer):
         """
         weight_config = self.quant_config
         device = get_accelerator(kwargs.pop("device", "auto")).current_device_name()
-
-        # Put model on device explicitly
-        # TODO: refine it later, Put module on device one by one instead of the whole model
-        model.to(device)
+        model_device = get_model_device(model)  # return model on the same device
 
         # for transformers model. If lm_head is tied from embedding, we deepcopy it.
         if quant_lm_head and getattr(getattr(model, "config", None), "tie_word_embeddings", False):
@@ -132,6 +130,8 @@ class RTNQuantizer(Quantizer):
                 dtype = weight_config[name].get("dtype", "int")
                 if dtype == "fp32":
                     continue
+                # Move modules to the accelerator device layer-by-layer
+                m.to(device)
                 ### FP8 cast part
                 if dtype in ["fp8_e5m2", "fp8_e5m2fnuz", "fp8_e4m3fn", "fp8_e4m3fnuz"]:
                     logger.debug("Cast module {} to FP8 using qdq mode, no scaling".format(name))
@@ -223,4 +223,8 @@ class RTNQuantizer(Quantizer):
                 return new_module
             else:
                 set_module(model, name, new_module)
+            # Move modules back to the model device layer-by-layer
+            m.to(model_device)
+            new_module.to(model_device)
+        model.to(model_device)
         return model
