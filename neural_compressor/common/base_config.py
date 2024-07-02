@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import inspect
 import json
+import os
 import re
 from abc import ABC, abstractmethod
 from collections import OrderedDict
@@ -639,6 +640,7 @@ class Options:
     @property
     def workspace(self):
         """Get workspace."""
+        os.makedirs(self._workspace, exist_ok=True)
         return self._workspace
 
     @workspace.setter

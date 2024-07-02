@@ -80,7 +80,7 @@ function run_tuning {
         --save-model ${tuned_checkpoint} --test-freq=2048 --print-auc $ARGS \
         --load-model=${input_model}  --accuracy_only
     elif [[ ${mode} == "performance" ]]; then
-        python -u $MODEL_SCRIPT \
+        incbench --num_cores_per_instance 4 -u $MODEL_SCRIPT \
         --raw-data-file=${dataset_location}/day --processed-data-file=${dataset_location}/terabyte_processed.npz \
         --data-set=terabyte --benchmark \
         --memory-map --mlperf-bin-loader --round-targets=True --learning-rate=1.0 \
