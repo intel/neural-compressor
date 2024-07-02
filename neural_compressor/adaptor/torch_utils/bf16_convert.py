@@ -17,7 +17,6 @@
 """Bf16 Convert for Torch Utils."""
 import torch
 import torch.nn as nn
-from torch.fx import symbolic_trace
 
 from ...utils import logger
 
@@ -58,8 +57,6 @@ def Convert(model, tune_cfg):
     if len(bf16_ops_list) > 0:
         logger.info("Convert operators to bfloat16")
     mixed_precision_model = _bf16_wrapper_model(model, bf16_ops_list)
-    if fx_sub_module_list is not None and len(fx_sub_module_list) > 0:
-        mixed_precision_model = bf16_symbolic_trace(mixed_precision_model, fx_sub_module_list)
     return mixed_precision_model
 
 
@@ -71,27 +68,5 @@ def _bf16_wrapper_model(model, bf16_ops_list, prefix=""):
                 child = BF16ModuleWrapper(child)
         else:
             _bf16_wrapper_model(child, bf16_ops_list, op_name)
-            setattr(model, name, child)
-    return model
-
-
-def bf16_symbolic_trace(model, fx_sub_module_list, prefix=""):
-    """Symbolic trace for bf16 models.
-
-    Args:
-        model (object): the input model.
-        fx_sub_module_list (list): _description_
-        prefix (str): prefix of op name.
-
-    Returns:
-        model (object)
-    """
-    for name, child in model.named_children():
-        op_name = prefix + "." + name if prefix != "" else name
-        for fx_sub_module_name in fx_sub_module_list:
-            if op_name == fx_sub_module_name:
-                child = symbolic_trace(child)
-        else:
-            bf16_symbolic_trace(child, fx_sub_module_list, op_name)
             setattr(model, name, child)
     return model
