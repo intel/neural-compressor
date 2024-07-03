@@ -75,7 +75,7 @@ def get_linux_numa_info():
             }
 
     # if numa_info is not collected, we go back to socket_info
-    if not numa_info:
+    if not numa_info:  # pragma: no cover
         for line in output.splitlines():
             # demo: "Socket(s):             2"
             socket_match = re.match(r"^Socket\(s\):\s+(.*)$", line)
@@ -117,6 +117,7 @@ def get_windows_numa_info():
                                     }
     """
     # pylint: disable=import-error
+    # pragma: no cover
     import wmi
 
     c = wmi.WMI()
@@ -157,11 +158,11 @@ def dump_numa_info():
     Returns:
         numa_info (dict): {numa_node_index: list of Physical CPUs in this numa node, ...}
     """
-    if psutil.WINDOWS:
+    if psutil.WINDOWS:  # pragma: no cover
         numa_info = get_windows_numa_info()
     elif psutil.LINUX:
         numa_info = get_linux_numa_info()
-    else:
+    else:  # pragma: no cover
         logger.error(f"Unsupported platform detected: {sys.platform}, only supported on Linux and Windows")
 
     # dump stats to shell
@@ -187,19 +188,19 @@ def parse_str2list(cpu_ranges):
             try:
                 start, end = r.split("-")
                 cpus.extend(range(int(start), int(end) + 1))
-            except ValueError:
+            except ValueError:  # pragma: no cover
                 raise ValueError(f"Invalid range: {r}")
         else:
             try:
                 cpus.append(int(r))
-            except ValueError:
+            except ValueError:  # pragma: no cover
                 raise ValueError(f"Invalid number: {r}")
     return cpus
 
 
 def format_list2str(cpus):
     """Format [0,1,2,3,4,7,8] back to '0-4,7,8' for human readable."""
-    if not cpus:
+    if not cpus:  # pragma: no cover
         return ""
     cpus = sorted(set(cpus))
     ranges = []
@@ -268,7 +269,7 @@ def set_cores_for_instance(args, numa_info):
             target_cores = args.num_instances * args.num_cores_per_instance
             assert target_cores <= len(
                 available_cores_list
-            ), "num_instances * num_cores_per_instance = {} exceeds the range of physical CPUs:{}.".format(
+            ), "Invalid configuration: num_instances * num_cores_per_instance = {} exceeds the range of physical CPUs:{}.".format(
                 target_cores, len(available_cores_list)
             )
             cores_list = list(range(target_cores))
@@ -287,7 +288,7 @@ def set_cores_for_instance(args, numa_info):
             target_cores = args.num_instances * args.num_cores_per_instance
             assert target_cores <= len(
                 cores_list
-            ), "num_instances * num_cores_per_instance = {} exceeds the range of available CPUs:{}.".format(
+            ), "Invalid configuration: num_instances * num_cores_per_instance = {} exceeds the range of available CPUs:{}.".format(
                 target_cores, len(cores_list)
             )
             cores_list = cores_list[:target_cores]
@@ -295,6 +296,11 @@ def set_cores_for_instance(args, numa_info):
     # preprocess args.num_instances to set default values
     if args.num_instances is None:
         if args.num_cores_per_instance:
+            assert args.num_cores_per_instance <= len(
+                cores_list
+            ), "Invalid configuration: num_cores_per_instance = {} exceeds the number of available CPUs = {}.".format(
+                args.num_cores_per_instance, len(cores_list)
+            )
             args.num_instances = len(cores_list) // args.num_cores_per_instance
             target_cores = args.num_instances * args.num_cores_per_instance
             cores_list = cores_list[:target_cores]
@@ -308,7 +314,7 @@ def set_cores_for_instance(args, numa_info):
     else:
         logger.info("{} instances are triggered.".format(args.num_instances), highlight=True)
     if len(cores_list) == 1:
-        logger.info("Only 1 core is in use.", highlight=True)
+        logger.info("1 core is in use.", highlight=True)
     else:
         logger.info("{} cores are in use.".format(len(cores_list)), highlight=True)
 
@@ -362,7 +368,7 @@ def generate_prefix(args, core_list):
 
         hex_core = hex(reduce(lambda x, y: x | y, [1 << p for p in parse_str2list(core_list[1])]))
         return "start /B /WAIT /node {} /affinity {}".format(socket_id, hex_core)
-    else:
+    else:  # pragma: no cover
         return ""
 
 
