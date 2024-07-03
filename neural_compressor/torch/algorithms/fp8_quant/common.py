@@ -24,7 +24,13 @@ import torch
 
 def save_calib_result(model):
     import habana_quantization_toolkit as hqt
-    hqt.finish_measurements(model)
+    if (hasattr(model, "__hqt_config__") and
+            isinstance(model.__hqt_config__, hqt._quant_common.quant_config.Fp8cfg)):
+        # TODO SW-184714 modify hqt notation to inc notation once code is ported
+        hqt.finish_measurements(model)
+    else:
+        raise NotImplementedError("Saving calibration results currently supported only in HPU.")
+
 
 
 def update_mode(config_path, measure_step=False, quant_step=False):

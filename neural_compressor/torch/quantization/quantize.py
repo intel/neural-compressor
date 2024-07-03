@@ -220,9 +220,5 @@ def convert(
 
 
 def finalize_calibration(model):
-    if hasattr(model, "quant_config") and isinstance(model.quant_config, FP8Config): # FP8
         from neural_compressor.torch.algorithms.fp8_quant import save_calib_result
-
         save_calib_result(model)
-    else:
-        raise NotImplementedError("`finalize_calibration` only supports FP8 measurement now.")
