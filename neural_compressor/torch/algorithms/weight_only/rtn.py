@@ -92,12 +92,23 @@ class RTNQuantizer(Quantizer):
         """
         weight_config = self.quant_config
         device = get_accelerator(kwargs.pop("device", "auto")).current_device_name()
+        if use_layer_wise:
+            from neural_compressor.torch.algorithms.layer_wise.utils import LWQ_WORKSPACE, get_path, load_module
+
+            os.makedirs(LWQ_WORKSPACE, exist_ok=True)
 
         # Put model on device explicitly
         # TODO: refine it later, Put module on device one by one instead of the whole model
-        if not use_layer_wise:
-            model.to(device)
+        #if not use_layer_wise:
+        #    model.to(device)
 
+        total_time = 0.0
+        total_load_time = 0.0
+        total_save_time = 0.0
+        total_quant_time = 0.0
+        total_quant_int_time = 0.0
+        total_set_module_time = 0.0
+        import time
         assert isinstance(model, torch.nn.Module), "only support torch module"
         if is_transformers_imported():
             supported_layers = (torch.nn.Linear, transformers.Conv1D)
@@ -113,6 +124,7 @@ class RTNQuantizer(Quantizer):
         }
         use_optimum_format = kwargs.get("use_optimum_format", True)
         for name, m in model.named_modules():
+            
             if not isinstance(m, supported_layers):
                 continue
             if name in weight_config:  # pragma: no cover
@@ -159,7 +171,8 @@ class RTNQuantizer(Quantizer):
             logger.debug(f"RTN quantized module:{name, m}")
             logger.debug(log_msg)
 
-            if use_layer_wise:
+            if use_layer_wise and True:
+                start_load = time.time()
                 from neural_compressor.common.utils import DEFAULT_WORKSPACE
                 from neural_compressor.torch.algorithms.layer_wise.utils import LWQ_WORKSPACE, get_path, load_module
 
@@ -171,6 +184,9 @@ class RTNQuantizer(Quantizer):
 
                 # load weight
                 load_module(model, name, model_path, device=device)
+                load_time = time.time() - start_load
+                total_load_time += load_time
+                logger.info(load_time)
 
             # for only group_dim is 0 or only `transformers.Conv1D`, we need transpose weight.
             if is_transformers_imported():
@@ -183,6 +199,7 @@ class RTNQuantizer(Quantizer):
                 weight = m.weight.detach()
             if use_mse_search:
                 quantile = search_clip(m, bits, group_size, scheme, dtype, use_full_range)
+            start_quant = time.time()
             int_weight, scale, zp = quant_tensor(
                 weight,
                 dtype=dtype,
@@ -194,6 +211,8 @@ class RTNQuantizer(Quantizer):
                 full_range=use_full_range,
                 **double_quant_config,
             )
+            quant_int_time = time.time() - start_quant
+            total_quant_int_time += quant_int_time
             int_weight = int_weight.t_().contiguous() if transpose else int_weight
             scale = scale.t_().contiguous() if transpose else scale
             zp = zp.t_().contiguous() if transpose and zp is not None else zp
@@ -219,22 +238,51 @@ class RTNQuantizer(Quantizer):
                 use_optimum_format=use_optimum_format,
                 device=device,
             )
+            if name in ["model.layers.11.mlp.up_proj", "model.layers.16.mlp.gate_proj"]:
+                print("will break")
+                #breakpoint()
+            logger.info(name)
             new_module.pack(int_weight, scale, zp, m.bias)
 
             if use_layer_wise:
                 # save and clean weight
                 from neural_compressor.torch.algorithms.layer_wise.utils import clean_module_weight
+                from neural_compressor.torch.algorithms.layer_wise.utils import LWQ_WORKSPACE, get_path, load_module
 
+                import time
+
+                start = time.time()
                 torch.save(new_module.state_dict(), os.path.join(LWQ_WORKSPACE, f"{name}.pt"))
-                clean_module_weight(new_module)
-                clean_module_weight(m)
+                save_time = time.time() - start
+                logger.info(f"save time {save_time}")
+                total_save_time += save_time
+                start = time.time()
+                #clean_module_weight(new_module)
+                new_module = new_module.to_empty(device=torch.device("meta"))
+                m = m.to_empty(device=torch.device("meta"))
+                #clean_module_weight(m)
+                layer_time = time.time() - start
+                total_time += layer_time
+                logger.info(layer_time)
                 del m
                 gc.collect()
             if name == "":
                 return new_module
             else:
+                start_set = time.time()
                 set_module(model, name, new_module)
+                set_module_time = time.time() - start_set
+                total_set_module_time += set_module_time
+            quant_time = time.time() - start_quant - save_time - layer_time
+            logger.info(f"quant time {quant_time}")
+            total_quant_time += quant_time
 
+        logger.info(f"load time: {total_load_time}")
+        logger.info(f"save time: {total_save_time}")
+        logger.info(f"clean time: {total_time}")
+        logger.info(f"quant time: {total_quant_time}")
+        logger.info(f"quant int time: {total_quant_int_time}")
+        logger.info(f"set module time: {total_set_module_time}")
         if use_layer_wise:
             # register hooks
             from neural_compressor.torch.algorithms.layer_wise.utils import register_weight_hooks

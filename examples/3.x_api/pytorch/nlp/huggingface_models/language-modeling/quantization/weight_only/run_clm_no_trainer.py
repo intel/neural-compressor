@@ -212,17 +212,35 @@ def get_user_model():
 
 if args.quantize:
     # dataset
-    user_model, tokenizer = get_user_model()
-    calib_dataset = load_dataset(args.dataset, split="train")
+    if 0:
+        user_model, tokenizer = get_user_model()
+        use_layer_wise =False
+        # user_model.save_pretrained("./saved",max_shard_size="20GB", safe_serialization=False)
+    else:
+        from neural_compressor.torch.algorithms.layer_wise import load_empty_model
+        user_model = load_empty_model(args.model)
+    #     user_model = AutoModelForCausalLM.from_pretrained(
+    #     args.model,
+    #     #trust_remote_code=args.trust_remote_code,
+    #     low_cpu_mem_usage=True,
+    #     torch_dtype="auto"
+    #    )
+       #from accelerate import init_empty_weights, load_checkpoint_and_dispatch
+        #tokenizer = AutoTokenizer.from_pretrained(args.model)
+       # checkpoint_file = "/home/sdp/.cache/huggingface/hub/models--meta-llama--Llama-2-7b-chat-hf/snapshots/f5db02db724555f92da89c216ac04704f23d4590"
+        #checkpoint_file = "./saved" #if checkpoint_file in "./saved" else checkpoint_file
+        #user_model = load_checkpoint_and_dispatch(user_model, checkpoint=checkpoint_file, device_mp="auto", offload_folder=checkpoint_file)
+        use_layer_wise = True 
+    #calib_dataset = load_dataset(args.dataset, split="train")
     # calib_dataset = datasets.load_from_disk('/your/local/dataset/pile-10k/') # use this if trouble with connecting to HF
-    calib_dataset = calib_dataset.shuffle(seed=args.seed)
-    calib_evaluator = Evaluator(calib_dataset, tokenizer, args.batch_size, pad_max=args.pad_max_length, is_calib=True)
-    calib_dataloader = DataLoader(
-        calib_evaluator.dataset,
-        batch_size=calib_size,
-        shuffle=False,
-        collate_fn=calib_evaluator.collate_batch,
-    )
+    #calib_dataset = calib_dataset.shuffle(seed=args.seed)
+    #calib_evaluator = Evaluator(calib_dataset, tokenizer, args.batch_size, pad_max=args.pad_max_length, is_calib=True)
+    #calib_dataloader = DataLoader(
+    #    calib_evaluator.dataset,
+    #    batch_size=calib_size,
+    #    shuffle=False,
+    #    collate_fn=calib_evaluator.collate_batch,
+    #)
 
     # 3.x api
     from neural_compressor.torch.quantization import RTNConfig, GPTQConfig, prepare, convert, quantize
@@ -255,8 +273,9 @@ if args.quantize:
                 double_quant_dtype=args.double_quant_dtype,
                 double_quant_use_sym=args.double_quant_use_sym,
                 double_quant_group_size=args.double_quant_group_size,
+                use_layer_wise=use_layer_wise,
             )
-        quant_config.set_local("lm_head", RTNConfig(dtype="fp32"))
+        quant_config.set_local("lm_head", RTNConfig(use_layer_wise=use_layer_wise, dtype="fp32"))
         user_model = prepare(model=user_model, quant_config=quant_config)
         user_model = convert(model=user_model)
     elif args.woq_algo == "GPTQ":
@@ -315,6 +334,7 @@ if args.quantize:
         run_fn_for_gptq(user_model, dataloader_for_calibration)
         user_model = convert(user_model)
 
+    exit(0)
     user_model.save(args.output_dir)
 
 
