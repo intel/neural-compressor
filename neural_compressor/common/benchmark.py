@@ -267,10 +267,9 @@ def set_cores_for_instance(args, numa_info):
     if args.cores is None:
         if args.num_cores_per_instance and args.num_instances:
             target_cores = args.num_instances * args.num_cores_per_instance
-            assert target_cores <= len(
-                available_cores_list
-            ), "Invalid configuration: num_instances * num_cores_per_instance = {} exceeds the range of physical CPUs:{}.".format(
-                target_cores, len(available_cores_list)
+            assert target_cores <= len(available_cores_list), (
+                "Invalid configuration: num_instances * num_cores_per_instance = "
+                + "{} exceeds the number of physical CPUs = {}.".format(target_cores, len(available_cores_list))
             )
             cores_list = list(range(target_cores))
             # log for cores in use
@@ -286,20 +285,18 @@ def set_cores_for_instance(args, numa_info):
         logger.info("{} cores are available.".format(len(cores_list)))
         if args.num_cores_per_instance and args.num_instances:
             target_cores = args.num_instances * args.num_cores_per_instance
-            assert target_cores <= len(
-                cores_list
-            ), "Invalid configuration: num_instances * num_cores_per_instance = {} exceeds the range of available CPUs:{}.".format(
-                target_cores, len(cores_list)
+            assert target_cores <= len(cores_list), (
+                "Invalid configuration: num_instances * num_cores_per_instance = "
+                + "{} exceeds the number of available CPUs = {}.".format(target_cores, len(cores_list))
             )
             cores_list = cores_list[:target_cores]
 
     # preprocess args.num_instances to set default values
     if args.num_instances is None:
         if args.num_cores_per_instance:
-            assert args.num_cores_per_instance <= len(
-                cores_list
-            ), "Invalid configuration: num_cores_per_instance = {} exceeds the number of available CPUs = {}.".format(
-                args.num_cores_per_instance, len(cores_list)
+            assert args.num_cores_per_instance <= len(cores_list), (
+                "Invalid configuration: num_cores_per_instance = "
+                + "{} exceeds the number of available CPUs = {}.".format(args.num_cores_per_instance, len(cores_list))
             )
             args.num_instances = len(cores_list) // args.num_cores_per_instance
             target_cores = args.num_instances * args.num_cores_per_instance
@@ -307,6 +304,12 @@ def set_cores_for_instance(args, numa_info):
         else:
             args.num_instances = 1
             logger.info("By default, Intel Neural Compressor triggers only one instance.")
+    else:
+        assert args.num_instances <= len(
+            cores_list
+        ), "Invalid configuration: num_instances = " + "{} exceeds the number of available CPUs = {}.".format(
+            args.num_instances, len(cores_list)
+        )
 
     ### log for instances number and cores in use
     if args.num_instances == 1:
