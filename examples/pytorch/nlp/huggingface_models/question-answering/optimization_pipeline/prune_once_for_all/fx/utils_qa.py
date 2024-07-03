@@ -288,7 +288,7 @@ def postprocess_qa_predictions_with_beam_search(
 
     assert len(predictions[0]) == len(
         features
-    ), f"Got {len(predictions[0])} predicitions and {len(features)} features."
+    ), f"Got {len(predictions[0])} predictions and {len(features)} features."
 
     # Build a map example to its corresponding features.
     example_id_to_index = {k: i for i, k in enumerate(examples["id"])}
