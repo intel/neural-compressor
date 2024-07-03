@@ -22,6 +22,7 @@ SPR_BASE_VERSIONS = (
     "2.15.0202341",
     "2.16.1",
     "2.17.0",
+    "2.18.0",
 )
 
 DEFAULT_SQ_ALPHA_ARGS = {

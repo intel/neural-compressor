@@ -31,7 +31,7 @@ from ..graph_base import GraphRewriterBase
 class ConvertUniformQDQOptimizer(GraphRewriterBase):
     """Fuse newAPI Quantized MatMul Op with the successor Requantize Op."""
 
-    def __init__(self, model, device="cpu"):
+    def __init__(self, model, min_max_dict, device="cpu"):
         """Initialization."""
         super().__init__(model)
         self.device = device
@@ -44,35 +44,37 @@ class ConvertUniformQDQOptimizer(GraphRewriterBase):
         self.int8_type = dtypes.qint8.as_datatype_enum
         self.float32_type = dtypes.float32.as_datatype_enum
         self.qint32_type = dtypes.qint32.as_datatype_enum
-
+        self.min_max_dict = min_max_dict
         self.quantization_min_val = None
         self.quantization_max_val = None
 
-    def _calculate_zp_and_scale(self, min_value, max_value, dtype):
+    def _calculate_zp_and_scale(self, min_value, max_value, dtype, quantize_pre_node_op):
+        if isinstance(min_value, list):
+            assert quantize_pre_node_op == Const, "Scales and zero-points for activations must always be a scalar"
+
         if dtype == attr_value_pb2.AttrValue(type=self.int8_type):
             zp = 0
             scale_range = 127
-            self.quantization_min_val = -127
-            self.quantization_max_val = 128
+            self.quantization_min_val = -128
+            self.quantization_max_val = 127
         elif dtype == attr_value_pb2.AttrValue(type=self.uint8_type):
+            assert quantize_pre_node_op != "Const", "Zero-point must be always 0 for weights"
             zp = 128
             scale_range = 255
             self.quantization_min_val = 0
             self.quantization_max_val = 255
         else:
             raise ValueError("Unexpected data type for Quantize Op.")
-        
+
         if isinstance(max_value, float):
             scale_factor = max(abs(max_value), abs(min_value))/scale_range
-            return zp, scale_factor if scale_range == 127 else scale_factor*min_value, scale_factor
-        
+            return (zp, scale_factor) if scale_range == 127 else (-round(scale_factor*min_value), scale_factor)
+
         scales = []
         zero_points = []
         for i in range(len(max_value)):
             scale_factor = max(abs(max_value[i]), abs(min_value[i]))/scale_range
             scales.append(scale_factor)
-            if scale_range == 127:
-                zp = min_value[i]*scale_factor
             zero_points.append(zp)
 
         return zero_points, scales
@@ -91,19 +93,24 @@ class ConvertUniformQDQOptimizer(GraphRewriterBase):
             quantize_node_name = i[0]
             dequantize_node_name = i[1]
             dequantize_node = self.graph_info[dequantize_node_name].node
+            dequantize_down_node = self.graph_info[self.graph_info[dequantize_node_name].outputs[0]].node
 
             quantize_node = self.graph_info[quantize_node_name].node
+            quantize_pre_node_op = self.graph_info[quantize_node.input[0]].node.op
             quantize_min_name = quantize_node.input[1]
             quantize_max_name = quantize_node.input[2]
 
             dtype = quantize_node.attr["T"]
-            min_value = self.graph_info[quantize_min_name].node.attr["value"].tensor.float_val[0]
-            max_value = self.graph_info[quantize_max_name].node.attr["value"].tensor.float_val[0]
-
-            zero_point_value, scale_value = self._calculate_zp_and_scale(min_value, max_value, dtype)
+            try:
+                min_value = self.graph_info[quantize_min_name].node.attr["value"].tensor.float_val[0]
+                max_value = self.graph_info[quantize_max_name].node.attr["value"].tensor.float_val[0]
+            except:
+                min_value = self.min_max_dict[quantize_min_name]
+                max_value = self.min_max_dict[quantize_max_name]
+            zero_point_value, scale_value = self._calculate_zp_and_scale(min_value, max_value, dtype, quantize_pre_node_op)
             zero_point_name = quantize_min_name[:-4] + "zero_point"
             scale_name = quantize_min_name[:-4] + "scale"
-
+            print("zero_point_value:", zero_point_value)
             zero_point_node = Helper.create_constant_node(zero_point_name, zero_point_value, dtypes.int32, device="cpu")
             scale_node = Helper.create_constant_node(scale_name, scale_value, dtypes.float32, device="cpu")
 
@@ -115,24 +122,35 @@ class ConvertUniformQDQOptimizer(GraphRewriterBase):
             Helper.set_attr_int(uniform_quantize_node, "quantization_max_val", self.quantization_max_val)
             Helper.set_attr_dtype(uniform_quantize_node, "Tin", dtypes.float32)
 
-            if "axis" in quantize_node.attr:
-                uniform_quantize_node.attr["quantization_axis"].CopyFrom(quantize_node.attr["axis"])
-            uniform_quantize_node.attr["Tout"].CopyFrom(quantize_node.attr["T"])
+            # per-channel weights
+            if isinstance(zero_point_value, list):
+                # const_weight->q->dq->conv2d
+                if dequantize_down_node.op == "Conv2D":
+                    Helper.set_attr_int(uniform_quantize_node, "quantization_axis", 3)
+                # const_weight->q->dq->matmul
+                elif dequantize_down_node.op == "MatMul":
+                    if str(dequantize_down_node.attr["transpose_b"])=='b: true\n':
+                        Helper.set_attr_int(uniform_quantize_node, "quantization_axis", 0)
+                    else:
+                        Helper.set_attr_int(uniform_quantize_node, "quantization_axis", 1)
+            # per-tensor weights and activations
+            else:
+                Helper.set_attr_int(uniform_quantize_node, "quantization_axis", -1)
 
+            uniform_quantize_node.attr["Tout"].CopyFrom(quantize_node.attr["T"])
             uniform_dequantize_node = node_def_pb2.NodeDef()
             uniform_dequantize_node.op = "UniformDequantize"
             uniform_dequantize_node.name = dequantize_node_name+"_UniformDequantize"
-
-            uniform_dequantize_node.input.extend([uniform_quantize_node.name, 
-                                            scale_name, 
-                                            zero_point_name, 
+            uniform_dequantize_node.input.extend([uniform_quantize_node.name,
+                                            scale_name,
+                                            zero_point_name,
                                             ])
             Helper.set_attr_int(uniform_dequantize_node, "quantization_min_val", self.quantization_min_val)
             Helper.set_attr_int(uniform_dequantize_node, "quantization_max_val", self.quantization_max_val)
             Helper.set_attr_dtype(uniform_dequantize_node, "Tout", dtypes.float32)
-            
-            if "quantization_axis" in quantize_node.attr:
-                uniform_dequantize_node.attr["quantization_axis"].CopyFrom(quantize_node.attr["quantization_axis"])
+
+            if "quantization_axis" in uniform_quantize_node.attr:
+                uniform_dequantize_node.attr["quantization_axis"].CopyFrom(uniform_quantize_node.attr["quantization_axis"])
             if "Tin" in uniform_quantize_node.attr:
                 uniform_dequantize_node.attr["Tin"].CopyFrom(uniform_quantize_node.attr["Tout"])
 

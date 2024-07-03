@@ -52,6 +52,9 @@ spr_base_verions = (
     "2.14.0202335",
     "2.14.dev202335",
     "2.15.0202341",
+    "2.16.1", 
+    "2.17.0", 
+    "2.18.0",
 )
 
 
@@ -624,7 +627,6 @@ class TensorFlowAdaptor(Adaptor):
 
             return self.convert(Model(qat_model), "QAT", "default")
 
-        assert q_func is None, "post-training quantization mode is not support calibration function for Tensorflow!"
         self._tuning_cfg_to_fw(tune_cfg)
         self.bf16_ops.extend(self.smooth_quant_mul_ops)
         logger.debug("Dump quantization configurations:")
@@ -744,8 +746,10 @@ class TensorFlowAdaptor(Adaptor):
             res[op_type] = {"INT8": 0, "BF16": 0, "FP32": 0}
         res["QuantizeV2"] = {"INT8": 0, "BF16": 0, "FP32": 0}
         res["Dequantize"] = {"INT8": 0, "BF16": 0, "FP32": 0}
+        res["UniformQuantize"] = {"INT8": 0, "BF16": 0, "FP32": 0}
+        res["UniformDequantize"] = {"INT8": 0, "BF16": 0, "FP32": 0}
         res["Cast"] = {"INT8": 0, "BF16": 0, "FP32": 0}
-        fp32_op_list.extend(["QuantizeV2", "Dequantize", "Cast"])
+        fp32_op_list.extend(["QuantizeV2", "Dequantize", "Cast", "UniformQuantize", "UniformDequantize"])
         for i in model_graphdef.node:
             if i.op == "Const":
                 continue
@@ -770,13 +774,15 @@ class TensorFlowAdaptor(Adaptor):
                 res[origin_op_type]["INT8"] += 1
 
             if i.op in fp32_op_list:
-                if "T" not in i.attr and i.op != "Cast":
+                if "T" not in i.attr and i.op not in ("Cast", "UniformQuantize", "UniformDequantize"):
                     continue
                 if i.op == "Cast":
                     if i.attr["DstT"].type == dtypes.bfloat16:
                         res[i.op]["BF16"] += 1
                     elif i.attr["DstT"].type == dtypes.float32:
                         res[i.op]["FP32"] += 1
+                elif i.op in ("UniformQuantize", "UniformDequantize"):
+                    res[i.op]["INT8"] += 1
                 elif i.attr["T"].type == dtypes.bfloat16:
                     res[i.op]["BF16"] += 1
                 elif i.attr["T"].type in (dtypes.quint8, dtypes.qint8):
@@ -1996,7 +2002,6 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
         Returns:
             tf.compat.v1.GraphDef: the quantized model
         """
-        assert q_func is None, "quantization aware training mode is not support on tensorflow"
         self._tuning_cfg_to_fw(tune_cfg)
         logger.debug("Dump quantization configurations:")
         logger.debug(self.quantize_config)
