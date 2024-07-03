@@ -28,7 +28,7 @@
             "hellaswag": {
                 "mean": 0.6473,
                 "sem": 0.0048,
-                "mean_diff": 0.0056,
+                "mean_diff": -0.0056,
                 "sem_diff": 0.0014
             },
             "piqa": {

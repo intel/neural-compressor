@@ -103,8 +103,8 @@ if __name__ == "__main__":
         else:
             ref_mean_diff = golden_metrics_json[lp_dtype][task]["mean_diff"]
             ref_stderr_diff = golden_metrics_json[lp_dtype][task]["sem_diff"]
-        test_mean_diff = test_mean_hp - test_mean_lp
-        p_diff_value = ztest(ref_mean_diff, ref_stderr_diff, test_mean_diff)
+        test_mean_diff = test_mean_lp - test_mean_hp
+        p_diff_value = ztest(ref_mean_diff, ref_stderr_diff, test_mean_diff, ref_stderr_diff)
         print(f"Z-Test low precision diff p-value={p_diff_value*100:.2f}% in {task} task")
         if p_diff_value < 0.05:
             regressions.append(f"Z-Test low precision diff p-value is less than 0.05 in {task} task.")
