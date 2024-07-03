@@ -27,6 +27,7 @@ class BF16ModuleWrapper(nn.Module):
     def __init__(self, module):
         """Init a BF16ModuleWrapper object."""
         super(BF16ModuleWrapper, self).__init__()
+        module = module.bfloat16()
         self.add_module("module", module)
         self.train(module.training)
         # WA for TransformerEncoder to access its Linear's weights and bias
@@ -37,7 +38,6 @@ class BF16ModuleWrapper(nn.Module):
     def forward(self, X):
         """Convert dtype."""
         X = X.to(torch.bfloat16)
-        self.module.bfloat16()
         X = self.module(X)
         return X.float()
 
@@ -53,7 +53,6 @@ def Convert(model, tune_cfg):
         mixed_precision_model (object): model with mixed precision.
     """
     bf16_ops_list = tune_cfg["bf16_ops_list"]
-    fx_sub_module_list = tune_cfg["fx_sub_module_list"] if "fx_sub_module_list" in tune_cfg.keys() else []
     if len(bf16_ops_list) > 0:
         logger.info("Convert operators to bfloat16")
     mixed_precision_model = _bf16_wrapper_model(model, bf16_ops_list)
@@ -64,9 +63,8 @@ def _bf16_wrapper_model(model, bf16_ops_list, prefix=""):
     for name, child in model.named_children():
         op_name = prefix + "." + name if prefix != "" else name
         for bf16_op_name in bf16_ops_list:
-            if op_name == bf16_op_name[0]:
+            if op_name == bf16_op_name[0] or op_name == bf16_op_name[0].split(".module")[0]:
                 child = BF16ModuleWrapper(child)
-        else:
-            _bf16_wrapper_model(child, bf16_ops_list, op_name)
-            setattr(model, name, child)
+                setattr(model, name, child)
+        _bf16_wrapper_model(child, bf16_ops_list, op_name)
     return model
