@@ -22,8 +22,6 @@ class TensorFlowKerasAMP(object):
         self.keras_edited_flag = False
 
     def transform(self):
-        # import pdb
-        # pdb.set_trace()
         lines = self.file.split("\n")
         for line in lines:
             if self.is_modify(line):
