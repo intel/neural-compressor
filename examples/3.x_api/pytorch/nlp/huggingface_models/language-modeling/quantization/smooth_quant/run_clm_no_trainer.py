@@ -52,6 +52,7 @@ parser.add_argument("--calib_iters", default=512, type=int,
                     help="calibration iters.")
 parser.add_argument("--tasks", default="lambada_openai,hellaswag,winogrande,piqa,wikitext",
                     type=str, help="tasks for accuracy validation")
+parser.add_argument("--max_new_tokens", default=32, type=int, help="output max new tokens")
 parser.add_argument("--peft_model_id", type=str, default=None, help="model_name_or_path of peft model")
 # ============SmoothQuant configs==============
 parser.add_argument("--sq", action="store_true")
@@ -203,20 +204,23 @@ if args.quantize:
 
 
 if args.load:
-    # TODO: we need run_benchmark.sh for loading and remove --accuracy in run_quant.sh, currently run_quant.sh will get fp32 result
     if args.int8 or args.int8_bf16_mixed:
-        print("load int8 model")
+        print("Loading SmoothQuant int8 model.")
         from neural_compressor.torch.quantization import load
+        from intel_extension_for_transformers.transformers.llm.evaluation.models import (
+            TSModelCausalLMForITREX,
+        )
         tokenizer = AutoTokenizer.from_pretrained(args.model)
         config = AutoConfig.from_pretrained(args.model)
+        origin_model_type = config.model_type
         user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)))
-        setattr(user_model, "config", config)
+        user_model = TSModelCausalLMForITREX(user_model, config=config)
+        user_model.config.model_type = origin_model_type
     else:
         user_model, tokenizer = get_user_model()
 
 
 if args.accuracy:
-    user_model.eval()
     from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
     eval_args = LMEvalParser(
         model="hf",
@@ -229,36 +233,33 @@ if args.accuracy:
     results = evaluate(eval_args)
     for task_name in args.tasks.split(","):
         if task_name == "wikitext":
-            acc = results["results"][task_name]["word_perplexity,none"]
+            print("Accuracy for %s is: %s" % (task_name, results["results"][task_name]["word_perplexity,none"]))
         else:
-            acc = results["results"][task_name]["acc,none"]
-    print("Accuracy: %.5f" % acc)
-    print('Batch size = %d' % args.batch_size)
+            print("Accuracy for %s is: %s" % (task_name, results["results"][task_name]["acc,none"]))
+
 
 if args.performance:
-    user_model.eval()
-    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
+    batch_size, input_leng = args.batch_size, 512
+    example_inputs = torch.ones((batch_size, input_leng), dtype=torch.long)
+    print("Batch size = {:d}".format(batch_size))
+    print("The length of input tokens = {:d}".format(input_leng))
     import time
 
-    samples = args.iters * args.batch_size
-    eval_args = LMEvalParser(
-        model="hf",
-        user_model=user_model,
-        tokenizer=tokenizer,
-        batch_size=args.batch_size,
-        tasks=args.tasks,
-        limit=samples,
-        device="cpu",
-    )
-    start = time.time()
-    results = evaluate(eval_args)
-    end = time.time()
-    for task_name in args.tasks.split(","):
-        if task_name == "wikitext":
-            acc = results["results"][task_name]["word_perplexity,none"]
-        else:
-            acc = results["results"][task_name]["acc,none"]
-    print("Accuracy: %.5f" % acc)
-    print('Throughput: %.3f samples/sec' % (samples / (end - start)))
-    print('Latency: %.3f ms' % ((end - start) * 1000 / samples))
-    print('Batch size = %d' % args.batch_size)
+    total_iters = args.iters
+    warmup_iters = 5
+    with torch.no_grad():
+        for i in range(total_iters):
+            if i == warmup_iters:
+                start = time.time()
+            user_model.generate(
+                example_inputs,
+                max_new_tokens=args.max_new_tokens,
+                do_sample=False,
+                temperature=0.9,
+                num_beams=4,
+            )
+        end = time.time()
+    latency = (end - start) / ((total_iters - warmup_iters) * args.batch_size)
+    throughput = ((total_iters - warmup_iters) * args.batch_size) / (end - start)
+    print("Latency: {:.3f} ms".format(latency * 10**3))
+    print("Throughput: {:.3f} samples/sec".format(throughput))
