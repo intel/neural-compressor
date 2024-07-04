@@ -62,6 +62,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         self.llm_weight_minmax = llm_weight_minmax
         self.node_details = namedtuple("node_details", ["node", "output"])
         self.node_name_mapping = {}
+        self.min_max_name_value_dict={}
         self.check_op_list = {
             "ConcatV2",
             "Conv2D",
@@ -217,7 +218,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
                     if each_input == deq_node_name:
                         self.g_qdq.node_name_details[next_node_name].node.input[input_index] = rep_dequantize_node.name
 
-        return self.g_qdq.dump_graph()
+        return self.g_qdq.dump_graph(), self.min_max_name_value_dict
 
     def _check_op_list(self, node_type):
         """Check if the node_type in the allowed op list."""
@@ -596,6 +597,8 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
             min_value = np.min(min_max_values[computational_node.name + "__min"])
             max_value = np.max(min_max_values[computational_node.name + "__max"])
 
+        self.min_max_name_value_dict[min_name] = min_value
+        self.min_max_name_value_dict[max_name] = max_value
         min_node = Helper.create_constant_node(min_name, min_value, dtypes.float32, device="cpu")
         max_node = Helper.create_constant_node(max_name, max_value, dtypes.float32, device="cpu")
         if "BatchMatMul" in host_op_type and "BatchMatMul" not in weight_node.op:

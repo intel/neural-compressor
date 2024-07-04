@@ -894,7 +894,7 @@ class GraphConverter:
         gc.collect()
 
         # Insert QDQ pattern
-        self._tmp_graph_def = GenerateGraphWithQDQPattern(
+        self._tmp_graph_def, self.min_max_name_value_dict = GenerateGraphWithQDQPattern(
             self._tmp_graph_def,
             self._calibration_data,
             self.op_wise_config,
@@ -938,7 +938,7 @@ class GraphConverter:
             # self._tmp_graph_def = MergeDuplicatedQDQOptimizer(self._tmp_graph_def).do_transformation()
             from neural_compressor.adaptor.tf_utils.graph_rewriter.int8.convert_qdq_to_uniform_qdq import ConvertUniformQDQOptimizer
             self._tmp_graph_def = ConvertUniformQDQOptimizer(
-                self._tmp_graph_def
+                self._tmp_graph_def, self.min_max_name_value_dict
                 ).do_transformation()
             self._tmp_graph_def = StripUnusedNodesOptimizer(
                 self._tmp_graph_def, self._tmp_model.input_node_names, self._tmp_model.output_node_names
