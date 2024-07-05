@@ -1,38 +1,26 @@
-
 import os
+import logging
+import tempfile
+import shutil
 import argparse
+import pandas as pd
+import time
 import torch
 import intel_extension_for_pytorch as ipex
-from diffusers import EulerDiscreteScheduler, StableDiffusionXLPipeline
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from diffusers import (
+    DDPMScheduler,
+    DDIMScheduler,
+    EulerDiscreteScheduler,
+    EulerAncestralDiscreteScheduler,
+    StableDiffusionXLPipeline,
+    StableDiffusionXLImg2ImgPipeline,
+)
 from diffusers.pipelines.stable_diffusion_xl.pipeline_stable_diffusion_xl import (
     deprecate, retrieve_timesteps, rescale_noise_cfg,
     PipelineImageInput, StableDiffusionXLPipelineOutput
 )
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-def prompts2images(pipeline, prompts, **kwargs):
-    images = pipeline(
-        prompt=prompts,
-        num_inference_steps=kwargs["n_steps"],
-        negative_prompt=[
-            "normal quality, low quality, worst quality, low res, blurry, nsfw, nude"
-        ]
-        * len(prompts),
-        latents=kwargs["latent"],
-        guidance_scale=8.0,  # MLPerf requirements
-    ).images
-    return images
-
-def save_images(prompts, images, save_dir, prefix='ref'):
-    for prompt, image in zip(prompts, images):
-        image_name = f"{prefix}_{'_'.join(prompt.replace('/', ' ').split(' '))}.jpg"
-        image.save(os.path.join(save_dir, image_name))
-
-def do_calibration(pipeline, calibration_prompts, **kwargs):
-    for i_th, prompts in enumerate(calibration_prompts):
-        if i_th >= kwargs["calib_size"]:
-            return
-        prompts2images(pipeline, prompts, **kwargs)
 
 class StableDiffusionXLPipelineSQ(StableDiffusionXLPipeline):
     def _get_add_time_ids(
@@ -132,7 +120,7 @@ class StableDiffusionXLPipelineSQ(StableDiffusionXLPipeline):
         else:
             batch_size = prompt_embeds.shape[0]
 
-        device = self._execution_device
+        device = 'cpu'
 
         # 3. Encode input prompt
         lora_scale = (
@@ -332,105 +320,159 @@ class StableDiffusionXLPipelineSQ(StableDiffusionXLPipeline):
         return StableDiffusionXLPipelineOutput(images=image)
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--model_name_or_path", type=str, default="stabilityai/stable-diffusion-xl-base-1.0"
+parser = argparse.ArgumentParser()
+parser.add_argument('--model-id', default="stabilityai/stable-diffusion-xl-base-1.0", type=str)
+parser.add_argument('--precision', default='fp32', type=str)
+parser.add_argument('--base-output-dir', default="./output", type=str)
+parser.add_argument('--quantized-unet', default="./saved_results", type=str)
+parser.add_argument('--output-dir-name', default=None, type=str)
+parser.add_argument('--output-dir-name-postfix', default=None, type=str)
+parser.add_argument('--captions-fname', default="captions_5k.tsv", type=str)
+parser.add_argument('--guidance', default=8.0, type=float)
+parser.add_argument('--scheduler', default="euler", type=str)
+parser.add_argument('--steps', default=20, type=int)
+parser.add_argument('--negative-prompt', default="normal quality, low quality, worst quality, low res, blurry, nsfw, nude", type=str)
+parser.add_argument('--latent-path', default="latents.pt", type=str)
+parser.add_argument('--generator-seed', default=None, type=int)
+parser.add_argument("--refiner", dest='refiner', action="store_true",
+                    help="Whether to add a refiner to the SDXL pipeline."
+                          "Applicable only with --model-id=xl")
+parser.add_argument("--no-refiner", dest='refiner', action="store_false",
+                    help="Whether to add a refiner to the SDXL pipeline."
+                          "Applicable only with --model-id=xl")
+
+args = parser.parse_args()
+
+# Init the logger
+logging.basicConfig(
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    level=logging.INFO,
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+
+if args.latent_path and args.generator_seed:
+    raise ValueError(
+        "Cannot specify both --latent-path and --generator-seed"
     )
-    parser.add_argument("--quantize", action="store_true")
-    parser.add_argument("--load", action="store_true")
-    parser.add_argument("--int8", action="store_true", help="Load quantized model.")
-    parser.add_argument("--performance", action="store_true")
-    parser.add_argument("--n_steps", type=int, default=20)
-    parser.add_argument("--batch-size", type=int, default=1)
-    parser.add_argument("--calib-size", type=int, default=10)
-    parser.add_argument("--latent", type=str, default="latents.pt")
-    parser.add_argument("--alpha", type=float, default=0.5, help="SmoothQuant Alpha")
-    parser.add_argument("--output_dir", type=str, default="./saved_results", help="output directory")
-    parser.add_argument("--iters", default=10, type=int, help="For performance measurement only.")
 
-    args = parser.parse_args()
-    os.makedirs(args.output_dir, exist_ok=True)
-
-    args.calib_size = args.calib_size // args.batch_size
-
+if args.precision == "fp16":
+    dtype = torch.float16
+elif args.precision == "bf16":
+    dtype = torch.bfloat16
+else:
     dtype = torch.float32
 
-    pipeline = StableDiffusionXLPipelineSQ.from_pretrained(
-        args.model_name_or_path,
-        torch_dtype=dtype,
-        use_safetensors=True,
-    )
-    pipeline.scheduler = EulerDiscreteScheduler.from_config(pipeline.scheduler.config)
+# Initialize defaults
+device = torch.device('cpu')
+world_size = 1
+rank = 0
+
+# load frozen latent
+latent_noise = None
+if args.latent_path:
+    logging.info(f"[{rank}] loading latent from: {args.latent_path}")
+    latent_noise = torch.load(args.latent_path).to(dtype)
+
+logging.info(f"[{rank}] args: {args}")
+logging.info(f"[{rank}] world_size: {world_size}")
+logging.info(f"[{rank}] device: {device}")
+
+logging.info(f"[{rank}] using captions from: {args.captions_fname}")
+df = pd.read_csv(args.captions_fname, sep='\t')
+logging.info(f"[{rank}] {len(df)} captions loaded")
+
+# split captions among ranks
+df = df[rank::world_size]
+logging.info(f"[{rank}] {len(df)} captions assigned")
+
+# Build the pipeline
+schedulers = {
+    "ddpm": DDPMScheduler.from_pretrained(args.model_id, subfolder="scheduler"),
+    "ddim": DDIMScheduler.from_pretrained(args.model_id, subfolder="scheduler"),
+    "euler_anc": EulerAncestralDiscreteScheduler.from_pretrained(args.model_id, subfolder="scheduler"),
+    "euler": EulerDiscreteScheduler.from_pretrained(args.model_id, subfolder="scheduler"),
+}
+pipe = StableDiffusionXLPipelineSQ.from_pretrained(
+    "stabilityai/stable-diffusion-xl-base-1.0",
+    torch_dtype=dtype,
+    use_safetensors=True,
+)
+pipe.scheduler = EulerDiscreteScheduler.from_config(pipe.scheduler.config)
+
+if args.refiner:
+    refiner_pipe = StableDiffusionXLImg2ImgPipeline.from_pretrained(args.model_id,
+                                                                    scheduler=schedulers[args.scheduler],
+                                                                    safety_checker=None,
+                                                                    add_watermarker=False,
+                                                                    variant="fp16" if args.precision == 'fp16' else None,
+                                                                    torch_dtype=dtype)
+
+
+from neural_compressor.torch.quantization import load
+example_inputs = {"sample": torch.randn((2, 4, 128, 128), dtype=dtype),
+            "timestep": torch.tensor(951.0),
+            "encoder_hidden_states": torch.randn((2, 77, 2048), dtype=dtype),
+            "added_cond_kwargs": {'text_embeds':torch.randn((2, 1280), dtype=dtype),
+                                  'time_ids': torch.tensor([[1024., 1024.,    0.,    0., 1024., 1024.],
+                                                            [1024., 1024.,    0.,    0., 1024., 1024.]], dtype=dtype)},}
+q_unet = load(args.quantized_unet)
+for _ in range(2):
+    q_unet(**example_inputs)
+print("Loaded Quantized Model")
+setattr(q_unet, "config", pipe.unet.config)
+pipe.unet = q_unet
     
-    # This is a list of prompts
-    cali_prompts = [['A brown and white dog runs on some brown grass near a Frisbee that is just sailing above the ground.'],
-                    ['The bus is traveling down a two way street.']]
+pipe.set_progress_bar_config(disable=True)
+logging.info(f"[{rank}] Pipeline initialized: {pipe}")
 
-    torch.random.manual_seed(42)
-    if args.latent is not None:
-        init_latent = torch.load(args.latent).to(dtype)
-    else:
-        init_latent = torch.randn((1,4,128,128), dtype=dtype)
+if args.refiner:
+    refiner_pipe = refiner_pipe.to(device)
+    refiner_pipe.set_progress_bar_config(disable=True)
+    logging.info(f"[{rank}] Refiner pipeline initialized: {refiner_pipe}")
 
-    prompts = cali_prompts[0]
-    ref_images = prompts2images(pipeline, prompts, n_steps=args.n_steps, latent=init_latent)
-    save_images(prompts, ref_images, args.output_dir, prefix='ref')
+# Output directory
+output_dir = args.output_dir_name or f"{args.model_id.replace('/','--')}__{args.scheduler}__{args.steps}__{args.guidance}__{args.precision}"
+if args.output_dir_name_postfix is not None:
+    output_dir = f"{output_dir}_{args.output_dir_name_postfix}"
 
-    def forward_loop(model):
-        do_calibration(
-            pipeline=pipeline,
-            calibration_prompts=cali_prompts,
-            calib_size=args.calib_size,
-            n_steps=args.n_steps,
-            latent=init_latent,
-        )
-    
-    if args.quantize:
-        excluded_precisions = ["bf16"]
-        example_inputs = {"sample": torch.randn((2, 4, 128, 128), dtype=dtype),
-                        "timestep": torch.tensor(951.0),
-                        "encoder_hidden_states": torch.randn((2, 77, 2048), dtype=dtype),
-                        "added_cond_kwargs": {'text_embeds':torch.randn((2, 1280), dtype=dtype),
-                                              'time_ids': torch.tensor([[1024., 1024.,    0.,    0., 1024., 1024.],
-                                                                        [1024., 1024.,    0.,    0., 1024., 1024.]], dtype=dtype)},}
-        
-        from neural_compressor.torch.quantization import SmoothQuantConfig, prepare, convert
-        quant_config = SmoothQuantConfig(alpha=args.alpha, excluded_precisions=excluded_precisions)
-        user_model = prepare(model=pipeline.unet, quant_config=quant_config, example_inputs=example_inputs)
-        forward_loop(user_model)
-        q_unet = convert(user_model)
-        q_unet.save(args.output_dir)
-    
-    if args.load:
-        if args.int8:
-            from neural_compressor.torch.quantization import load
-            q_unet = load(os.path.abspath(os.path.expanduser(args.output_dir)))
-        else:
-            q_unet = pipeline.unet
-    
-    setattr(q_unet, "config", pipeline.unet.config)
-    pipeline.unet = q_unet
-    quant_images = prompts2images(pipeline, prompts, n_steps=args.n_steps, latent=init_latent)
-    save_images(prompts, quant_images, args.output_dir, prefix='quant')
+output_dir = os.path.join(args.base_output_dir, output_dir)
 
-    if args.performance:
-        import time
+# Ensure the output directory exists
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
 
-        total_iters = args.iters * args.batch_size
-        warmup_iters = 5
-        for i in range(total_iters):
-            if i == warmup_iters:
-                start = time.time()
-                prompts2images(pipeline, prompts, n_steps=args.n_steps, latent=init_latent)
-        end = time.time()
+# Create a temporary directory to atomically move the images
+tmp_dir = tempfile.mkdtemp()
 
-        latency = (end - start) / ((total_iters - warmup_iters) * args.batch_size)
-        throughput = ((total_iters - warmup_iters) * args.batch_size) / (end - start)
-        print("Latency: {:.3f} ms".format(latency * 10**3))
-        print("Throughput: {:.3f} samples/sec".format(throughput))
-        print('Batch size = %d' % args.batch_size)
+# Generate the images
+for index, row in df.iterrows():
+    image_id = row['image_id']
+    caption_id = row['id']
+    caption_text = row['caption']
 
+    destination_path = os.path.join(output_dir, f"{caption_id}.png")
 
-if __name__ == "__main__":
-    main()
+    # Check if the image already exists in the output directory
+    if not os.path.exists(destination_path):
+        # Generate the image
+        print(index, caption_text)
+        tic = time.time()
+        image = pipe(prompt=caption_text,
+                     negative_prompt="normal quality, low quality, worst quality, low res, blurry, nsfw, nude",
+                     guidance_scale=8.0,
+                     generator=torch.Generator(device=device).manual_seed(args.generator_seed) if args.generator_seed else None,
+                     latents=latent_noise,
+                     num_inference_steps=20).images[0]
+        toc = time.time()
+        print("Time taken : ",toc-tic)
+
+        if args.refiner:
+            image = refiner_pipe(caption_text,
+                                 image=image).images[0]
+
+        # Save the image
+        image_path_tmp = os.path.join(tmp_dir, f"{caption_id}.png")
+        image.save(image_path_tmp)
+        shutil.move(image_path_tmp, destination_path)
+
+        logging.info(f"[{rank}] Saved image {caption_id}: {caption_text}")
