@@ -51,7 +51,6 @@ subprojects:
       - "Model-Test"
       - "Model-Test (Generate Report GenerateReport)"
       - "Model-Test (Run ONNX Model resnet50-v1-12)"
-      - "Model-Test (Run PyTorch Model resnet18)"
       - "Model-Test (Run PyTorch Model resnet18_fx)"
       - "Model-Test (Run TensorFlow Model resnet50v1.5)"
       - "Model-Test (Run TensorFlow Model ssd_resnet50_v1)"
