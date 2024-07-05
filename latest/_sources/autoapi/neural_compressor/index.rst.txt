@@ -18,7 +18,6 @@ Subpackages
    /autoapi/neural_compressor/algorithm/index
    /autoapi/neural_compressor/contrib/index
    /autoapi/neural_compressor/data/index
-   /autoapi/neural_compressor/experimental/index
    /autoapi/neural_compressor/metric/index
    /autoapi/neural_compressor/model/index
    /autoapi/neural_compressor/profiling/index
