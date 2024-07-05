@@ -192,14 +192,35 @@ if args.quantize:
             if calib_iter >= args.calib_iters:
                 break
         return
-
+    
+    def eval_func(model):
+        from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
+        eval_args = LMEvalParser(
+            model="hf",
+            user_model=model,
+            tokenizer=tokenizer,
+            batch_size=args.batch_size,
+            tasks=args.tasks,
+            device="cpu",
+        )
+        results = evaluate(eval_args)
+        if args.tasks == "wikitext":
+            return results["results"][args.tasks]["word_perplexity,none"]
+        else:
+            return results["results"][args.tasks]["acc,none"]
+        
     from utils import get_example_inputs
     example_inputs = get_example_inputs(user_model, calib_dataloader)
 
-    from neural_compressor.torch.quantization import prepare, convert
-    user_model = prepare(model=user_model, quant_config=quant_config, example_inputs=example_inputs)
-    run_fn(user_model)
-    user_model = convert(user_model)
+    from neural_compressor.torch.quantization import SmoothQuantConfig, autotune, TuningConfig
+    tune_config = TuningConfig(config_set=SmoothQuantConfig.get_config_set_for_tuning())
+    user_model = autotune(
+        user_model, 
+        tune_config=tune_config,
+        eval_fn=eval_func,
+        run_fn=run_fn,
+        example_inputs=example_inputs,
+    )
     user_model.save(args.output_dir)
 
 

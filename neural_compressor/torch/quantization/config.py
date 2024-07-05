@@ -1191,7 +1191,11 @@ class SmoothQuantConfig(BaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "SmoothQuantConfig", List["SmoothQuantConfig"]]:
-        return SmoothQuantConfig(alpha=[0.1, 0.5], folding=[True, False], scale_sharing=[True, False])
+        import numpy as np
+
+        return SmoothQuantConfig(
+            alpha=np.arange(0.1, 1.0, 0.1).tolist(), folding=[True, False], scale_sharing=[True, False]
+        )
 
 
 def get_default_sq_config() -> SmoothQuantConfig:
