@@ -21,13 +21,15 @@ from typing import Union
 
 import torch
 
+from neural_compressor.torch.algorithms.fp8_quant.prepare_quant.prepare_model import finish_measurements
+from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import Fp8cfg
+
 
 def save_calib_result(model):
-    import habana_quantization_toolkit as hqt
     if (hasattr(model, "__hqt_config__") and
-            isinstance(model.__hqt_config__, hqt._quant_common.quant_config.Fp8cfg)):
+            isinstance(model.__hqt_config__, Fp8cfg)):
         # TODO SW-184714 modify hqt notation to inc notation once code is ported
-        hqt.finish_measurements(model)
+        finish_measurements(model)
     else:
         raise NotImplementedError("Saving calibration results currently supported only in HPU.")
 

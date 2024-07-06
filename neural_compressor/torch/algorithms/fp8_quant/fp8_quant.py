@@ -20,6 +20,7 @@ from neural_compressor.torch.algorithms.fp8_quant import (
     restore_patched_module,
     update_mode,
     with_patched_module,
+    prep_model,
 )
 
 
@@ -44,12 +45,10 @@ class FP8Quantizer(Quantizer):
 
 
 def _convert(model, config_path):
-    import habana_quantization_toolkit as hqt
-
     # update mode to QUANTIZE
     config_path = update_mode(config_path, quant_step=True)
 
-    return hqt.prep_model(model, config_path)
+    return prep_model(model, config_path)
 
 
 def _prepare(model, config_path):
@@ -58,4 +57,4 @@ def _prepare(model, config_path):
     # update mode to MEASURE
     config_path = update_mode(config_path, measure_step=True)
 
-    return hqt.prep_model(model, config_path)
+    return prep_model(model, config_path)

@@ -1,0 +1,5 @@
+{
+    "mode": "MEASURE",
+    "scale_method": "MAX",
+    "fp8_config": "E4M3"
+}

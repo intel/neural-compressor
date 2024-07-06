@@ -1,0 +1,13 @@
+{
+    "mode": "QUANTIZE",
+    "observer": "maxabs",
+    "scale_method": "maxabs_hw",
+    "fp8_config": "E4M3",
+    "allowlist": {
+        "types": [
+            "torch.nn.Linear",
+            "torch.nn.Conv2d"
+        ]
+    },
+    "dump_stats_path": "./run_outputs/fp8/stats"
+}
