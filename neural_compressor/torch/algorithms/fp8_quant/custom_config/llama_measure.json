@@ -1,0 +1,14 @@
+{
+    "mode": "MEASURE",
+    "observer": "maxabs",
+    "allowlist": {
+        "types": [],
+        "names": []
+    },
+    "blocklist": {
+        "types": [],
+        "names": []
+    },
+    "quantize_weight": false,
+    "dump_stats_path": "./llama_output/7b_measure"
+}
