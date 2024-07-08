@@ -139,7 +139,7 @@ if __name__ == "__main__":
         license="Apache 2.0",
         keywords="quantization",
         url="",
-        packages=find_packages(include=['neural_compressor', 'neural_compressor.*']),
+        packages=include_packages,
         include_package_data=True,
         package_data=package_data,
         install_requires=install_requires,
