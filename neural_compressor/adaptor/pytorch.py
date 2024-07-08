@@ -1242,6 +1242,8 @@ class TemplateAdaptor(Adaptor):
                 q_capability["opwise"][bf16_op] = [bf16_config, fp32_config]
                 if bf16_op[1] not in q_capability["optypewise"]:
                     q_capability["optypewise"][bf16_op[1]] = [bf16_config, fp32_config]
+            if bf16_op[1] in q_capability["optypewise"] and bf16_config not in q_capability["optypewise"][bf16_op[1]]:
+                q_capability["optypewise"][bf16_op[1]].append(bf16_config)
         return q_capability
 
     def get_fused_list(self, model):
