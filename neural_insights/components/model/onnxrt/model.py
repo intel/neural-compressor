@@ -14,7 +14,7 @@
 # limitations under the License.
 """Onnxrt model class."""
 # pylint: disable=import-error
-# pylint: no-name-in-module
+# pylint: disable=no-name-in-module
 import os
 import re
 import sys

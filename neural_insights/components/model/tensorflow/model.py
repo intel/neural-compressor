@@ -14,7 +14,7 @@
 # limitations under the License.
 """Abstract Tensorflow model class."""
 # pylint: disable=import-error
-# pylint: no-name-in-module
+# pylint: disable=no-name-in-module
 import os.path
 from typing import Any, List, Optional
 
