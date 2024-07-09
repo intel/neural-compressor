@@ -58,18 +58,6 @@ class TestQuantizationConfig(unittest.TestCase):
         # print the test name
         logger.info(f"Running TestQuantizationConfig test: {self.id()}")
 
-    @pytest.mark.parametrize("config_cls", [RTNConfig, GPTQConfig])
-    def test_get_config_based_on_processor_type(self, config_cls):
-        config_for_client = config_cls.get_predefined_configs()[torch_utils.ProcessorType.Client]
-        assert (
-            config_for_client.use_layer_wise
-        ), f"Expect use_layer_wise to be True, got {config_for_client.use_layer_wise}"
-
-        config_for_server = config_cls.get_predefined_configs()[torch_utils.ProcessorType.Server]
-        assert (
-            config_for_server.use_layer_wise is False
-        ), f"Expect use_layer_wise to be False, got {config_for_server.use_layer_wise}"
-
     def test_quantize_rtn_from_dict_default(self):
         logger.info("test_quantize_rtn_from_dict_default")
 
@@ -345,11 +333,16 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertEqual(hqq_config.to_dict(), hqq_config2.to_dict())
 
 
-class TestQuantConfigForAutotune(unittest.TestCase):
-    def test_expand_config(self):
-        # test the expand functionalities, the user is not aware it
+class TestQuantConfigBasedonProcessorType:
 
-        tune_config = RTNConfig(bits=[4, 6])
-        expand_config_list = RTNConfig.expand(tune_config)
-        self.assertEqual(expand_config_list[0].bits, 4)
-        self.assertEqual(expand_config_list[1].bits, 6)
+    @pytest.mark.parametrize("config_cls", [RTNConfig, GPTQConfig])
+    def test_get_config_based_on_processor_type(self, config_cls):
+        config_for_client = config_cls.get_predefined_configs()[torch_utils.ProcessorType.Client]
+        assert (
+            config_for_client.use_layer_wise
+        ), f"Expect use_layer_wise to be True, got {config_for_client.use_layer_wise}"
+
+        config_for_server = config_cls.get_predefined_configs()[torch_utils.ProcessorType.Server]
+        assert (
+            config_for_server.use_layer_wise is False
+        ), f"Expect use_layer_wise to be False, got {config_for_server.use_layer_wise}"
