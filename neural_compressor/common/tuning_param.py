@@ -127,5 +127,5 @@ class TuningParam:
             return False
 
     def __str__(self) -> str:
-        """A string representation of the TuningParam object."""
-        return f"TuningParam(name={self.name}, default_val={self.default_val}, tunable_type={self.tunable_type}, options={self.options}, level={self.level})"
+        """Return the name of the tuning parameter."""
+        return self.name
