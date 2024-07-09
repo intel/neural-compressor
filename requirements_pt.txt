@@ -3,5 +3,6 @@ numpy < 2.0
 peft
 prettytable
 psutil
+py-cpuinfo
 pydantic
 tbb
