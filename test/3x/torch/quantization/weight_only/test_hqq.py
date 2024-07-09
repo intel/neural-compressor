@@ -3,13 +3,21 @@ from copy import deepcopy
 
 import pytest
 import torch
+import transformers
 from transformers import AutoModelForCausalLM
 
+from neural_compressor.common.utils import logger
 from neural_compressor.torch.algorithms.weight_only.hqq.config import HQQModuleConfig, QTensorConfig, hqq_global_option
 from neural_compressor.torch.algorithms.weight_only.hqq.core import HQQLinear
+from neural_compressor.torch.quantization import HQQConfig, convert, get_default_hqq_config, prepare, quantize
+from neural_compressor.torch.utils import accelerator
+
+device = accelerator.current_device_name()
 
 
-def _common_cpu_test(nbits=4, group_size=64, quant_zero=True, quant_scale=False, scale_quant_group_size=128):
+def _common_hqq_test(
+    nbits=4, group_size=64, quant_zero=True, quant_scale=False, scale_quant_group_size=128, device=None
+):
     # Parse config
     weight_qconfig = QTensorConfig(
         nbits=nbits, channel_wise=True, group_size=group_size, optimize=True, round_zero=True if nbits == 4 else False
@@ -21,7 +29,6 @@ def _common_cpu_test(nbits=4, group_size=64, quant_zero=True, quant_scale=False,
     if quant_scale:
         scale_qconfig = QTensorConfig(nbits=8, channel_wise=True, group_size=scale_quant_group_size, optimize=False)
     hqq_quant_config = HQQModuleConfig(weight=weight_qconfig, scale=scale_qconfig, zero=zero_qconfig)
-    device = "cpu"
 
     # Create HQQ Linear
     bs = 4
@@ -29,7 +36,7 @@ def _common_cpu_test(nbits=4, group_size=64, quant_zero=True, quant_scale=False,
     out_features = 128
     float_linear = torch.nn.Linear(in_features=in_features, out_features=out_features)
     if hqq_global_option.use_half:
-        print(f"hqq_global_option use half: {hqq_global_option.use_half}")
+        logger.info(f"hqq_global_option use half: {hqq_global_option.use_half}")
         float_linear = float_linear.half()
     float_linear.to(device)
     float_linear_copy = deepcopy(float_linear)
@@ -49,7 +56,7 @@ def _common_cpu_test(nbits=4, group_size=64, quant_zero=True, quant_scale=False,
     del float_output, hqq_output, hqq_output_2
 
 
-class TestHQQCPU:
+class TestHQQ:
 
     @classmethod
     def setup_class(cls):
@@ -65,10 +72,9 @@ class TestHQQCPU:
         monkeypatch.setattr(hqq_global_option, "use_half", False)
 
     def test_hqq_quant(self, force_use_cpu, force_not_half):
-        from neural_compressor.torch.quantization import convert, get_default_hqq_config, prepare, quantize
 
         hqq_global_option.use_half = False
-        fp32_model = AutoModelForCausalLM.from_pretrained("facebook/opt-125m")
+        fp32_model = AutoModelForCausalLM.from_pretrained("trl-internal-testing/tiny-random-OPTForCausalLM")
         example_inputs = torch.tensor([[10, 20, 30, 40, 50, 60]], dtype=torch.long, device="cpu")
         # test_default_config
         quant_config = get_default_hqq_config()
@@ -88,7 +94,6 @@ class TestHQQCPU:
         ), "The results of calling `convert` + `prepare` and calling `quantize` should be equal."
 
     def test_hqq_fallback(self, force_use_cpu, force_not_half):
-        from neural_compressor.torch.quantization import HQQConfig, convert, prepare
 
         class ToyModel(torch.nn.Module):
             def __init__(self):
@@ -106,6 +111,35 @@ class TestHQQCPU:
         assert type(qmodel.fc1).__name__ == torch.nn.Linear.__name__, f"Expect fallback fc1, but get {type(qmodel.fc1)}"
         assert type(qmodel.fc2).__name__ != torch.nn.Linear.__name__, f"Expect quantize fc2, but get {type(qmodel.fc2)}"
 
+    def test_quant_lm_head(self, force_use_cpu, force_not_half):
+        # tie_word_embeddings=false
+        gptj_model = transformers.AutoModelForCausalLM.from_pretrained(
+            "hf-internal-testing/tiny-random-GPTJForCausalLM",
+            device_map=device,
+        )
+        lm_head_id = id(gptj_model.lm_head.weight)
+        assert id(gptj_model.transformer.wte.weight) != lm_head_id, "The lm_head weight is tied, please check!"
+        quant_config = HQQConfig(quant_lm_head=True)
+        model = prepare(gptj_model, quant_config)
+        model = convert(model)
+
+        # tie_word_embeddings=true
+        opt_model = transformers.AutoModelForCausalLM.from_pretrained(
+            "facebook/opt-125m",  # group_size should be divisible by tensor.numel(). Dummy model cannot work.
+            device_map=device,
+        )
+        lm_head_id = id(opt_model.lm_head.weight)
+        assert (
+            id(opt_model.model.decoder.embed_tokens.weight) == lm_head_id
+        ), "The lm_head weight is not tied, please check!"
+        quant_config = HQQConfig(quant_lm_head=True)
+        model = prepare(opt_model, quant_config)
+        model = convert(model)
+        assert (
+            id(model.model.decoder.embed_tokens.weight) == lm_head_id
+        ), "The tied lm_head weight is not deep copied, please check!"
+
+    @pytest.mark.parametrize("device_name", ["cuda", "cpu"])
     @pytest.mark.parametrize(
         "nbits, group_size, quant_zero, quant_scale, scale_quant_group_size",
         [
@@ -124,22 +158,26 @@ class TestHQQCPU:
             (4, -1, False, True, 64),
         ],
     )
-    def test_hqq_module_cpu(
-        self, force_use_cpu, force_not_half, nbits, group_size, quant_zero, quant_scale, scale_quant_group_size
+    def test_hqq_module(
+        self,
+        nbits,
+        group_size,
+        quant_zero,
+        quant_scale,
+        scale_quant_group_size,
+        device_name,
     ):
-        _common_cpu_test(
+        if device_name == "cuda" and not torch.cuda.is_available():
+            pytest.skip("Skipping CUDA test because cuda is not available")
+        if device_name == "cpu":
+            os.environ["FORCE_DEVICE"] = "cpu"
+            hqq_global_option.use_half = False
+
+        _common_hqq_test(
             nbits=nbits,
             group_size=group_size,
             quant_zero=quant_zero,
             quant_scale=quant_scale,
             scale_quant_group_size=scale_quant_group_size,
+            device=torch.device(device_name),
         )
-
-
-# _common_cpu_test(
-#     nbits=4,
-#     group_size=64,
-#     quant_zero=False,
-#     quant_scale=False,
-#     scale_quant_group_size=128
-# )

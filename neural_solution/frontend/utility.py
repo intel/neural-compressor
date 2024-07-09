@@ -140,30 +140,37 @@ def submit_task_to_db(task, task_submitter, db_path):
     status = "failed"
     task_id = "-1"
     result = {"status": status, "task_id": task_id, "msg": msg}
+    if not is_valid_task(task.__dict__):
+        return result
     if os.path.isfile(db_path):
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         task_id = str(uuid.uuid4()).replace("-", "")
         sql = (
-            r"insert into task(id, script_url, optimized, arguments, approach, requirements, workers, status)"
-            + r" values ('{}', '{}', {}, '{}', '{}', '{}', {}, 'pending')".format(
-                task_id,
-                task.script_url,
-                task.optimized,
-                list_to_string(task.arguments),
-                task.approach,
-                list_to_string(task.requirements),
-                task.workers,
-            )
+            "INSERT INTO task "
+            "(id, script_url, optimized, arguments, approach, requirements, workers, status) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')"
         )
-        cursor.execute(sql)
+
+        task_params = (
+            task_id,
+            task.script_url,
+            task.optimized,
+            list_to_string(task.arguments),
+            task.approach,
+            list_to_string(task.requirements),
+            task.workers,
+        )
+
+        conn.execute(sql, task_params)
         conn.commit()
         try:
             task_submitter.submit_task(task_id)
         except ConnectionRefusedError:
             msg = "Task Submitted fail! Make sure neural solution runner is running!"
         except Exception as e:
-            msg = "Task Submitted fail! {}".format(e)
+            msg = "Task Submitted fail!"
+            print(f"{msg} {e}")
         conn.close()
         status = "successfully"
         msg = "Task submitted successfully"

@@ -659,6 +659,43 @@ def dump_class_attrs(obj, result={}):
                 result[obj_name][attr] = value
 
 
+from functools import reduce
+
+
+def deep_get(dictionary, keys, default=None):
+    """Get the dot key's item in nested dict.
+
+       For example, person = {'person':{'name':{'first':'John'}}}
+       deep_get(person, "person.name.first") will output 'John'.
+
+    Args:
+        dictionary (dict): The dict object to get keys
+        keys (dict): The deep keys
+        default (object): The return item if key not exists
+    Returns:
+        item: the item of the deep dot keys
+    """
+    return reduce(lambda d, key: d.get(key, default) if isinstance(d, dict) else default, keys.split("."), dictionary)
+
+
+def deep_set(dictionary, keys, value):
+    """Set the dot key's item in nested dict.
+
+       For example, person = {'person':{'name':{'first':'John'}}}
+       deep_set(person, "person.sex", 'male') will output
+       {'person': {'name': {'first': 'John'}, 'sex': 'male'}}
+
+    Args:
+        dictionary (dict): The dict object to get keys
+        keys (dict): The deep keys
+        value (object): The value of the setting key
+    """
+    keys = keys.split(".")
+    for key in keys[:-1]:
+        dictionary = dictionary.setdefault(key, DotDict())
+    dictionary[keys[-1]] = value
+
+
 class DotDict(dict):
     """Access yaml using attributes instead of using the dictionary notation.
 

@@ -131,7 +131,6 @@ def _add_observer(module, qconfig):
 
     ### Insert input observer into model, only for fp8_e4m3 static quantization ###
     observer_cls = observer_mapping[act_observer]
-    # import pdb;pdb.set_trace()
 
     if isinstance(module, white_list):
         observer_obj = observer_cls(dtype=dtype_mapping[qconfig.act_dtype])

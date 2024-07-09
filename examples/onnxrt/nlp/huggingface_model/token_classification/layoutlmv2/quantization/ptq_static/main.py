@@ -216,8 +216,6 @@ class IncDataset:
         self.label = []
         self.onnx_inputs = []
         for inputs in self.dataset:
-            # import pdb;
-            # pdb.set_trace()
             onnx_inputs = []
             has_labels = all(inputs.get(k) is not None for k in self.label_names)
             if has_labels:
@@ -237,8 +235,6 @@ class IncDataset:
             }
             """
             for key in self.onnx_input_names:
-                # import pdb;
-                # pdb.set_trace()
                 if key in inputs:
                     # onnx_inputs[key] = np.array([inputs[key]])
                     onnx_inputs.append(np.array(inputs[key]))
