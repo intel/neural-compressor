@@ -2242,15 +2242,6 @@ class ONNXRTQuery(QueryBackendCapability):
                 raise ValueError(
                     "Please check if the format of {} follows Neural Compressor yaml schema.".format(self.cfg)
                 )
-        self._update_cfg_with_usr_definition()
-
-    def _update_cfg_with_usr_definition(self):
-        from neural_compressor.conf.pythonic_config import onnxruntime_config
-
-        if onnxruntime_config.graph_optimization_level is not None:
-            self.cur_config["graph_optimization"]["level"] = onnxruntime_config.graph_optimization_level
-        if onnxruntime_config.precisions is not None:
-            self.cur_config["precisions"]["names"] = ",".join(onnxruntime_config.precisions)
 
     def _get_specified_version_cfg(self, data):  # pragma: no cover
         """Get the configuration for the current runtime.
