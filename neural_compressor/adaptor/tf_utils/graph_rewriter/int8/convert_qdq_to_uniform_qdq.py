@@ -67,8 +67,11 @@ class ConvertUniformQDQOptimizer(GraphRewriterBase):
             raise ValueError("Unexpected data type for Quantize Op.")
 
         if isinstance(max_value, float):
-            scale_factor = max(abs(max_value), abs(min_value))/scale_range
-            return (zp, scale_factor) if scale_range == 127 else (-round(scale_factor*min_value), scale_factor)
+            if dtype == attr_value_pb2.AttrValue(type=self.int8_type):
+                scale_factor = max(abs(max_value), abs(min_value))/scale_range
+            else : # uint8
+                scale_factor = (max_value - min_value) / scale_range
+            return (zp, scale_factor) if scale_range == 127 else (-round(min_value/scale_factor), scale_factor)
 
         scales = []
         zero_points = []
