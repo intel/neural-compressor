@@ -313,13 +313,13 @@ def set_cores_for_instance(args, numa_info):
 
     ### log for instances number and cores in use
     if args.num_instances == 1:
-        logger.info("1 instance is triggered.", highlight=True)
+        logger.info("1 instance is triggered.")
     else:
-        logger.info("{} instances are triggered.".format(args.num_instances), highlight=True)
+        logger.info("{} instances are triggered.".format(args.num_instances))
     if len(cores_list) == 1:
-        logger.info("1 core is in use.", highlight=True)
+        logger.info("1 core is in use.")
     else:
-        logger.info("{} cores are in use.".format(len(cores_list)), highlight=True)
+        logger.info("{} cores are in use.".format(len(cores_list)))
 
     # only need to process num_cores_per_instance now
     core_list_per_instance = {}
@@ -457,13 +457,8 @@ def summary_latency_throughput(logfile_dict):
             output_data.append([idx + 1, round(latency, 3), round(throughput, 3)])
         Statistics(output_data, header=header, field_names=field_names).print_stat()
         # show summary info
-        logger.info(
-            "Average latency: {} {}".format(round(sum(latency_list) / len(latency_list), 3), latency_unit_name),
-            highlight=True,
-        )
-        logger.info(
-            "Total throughput: {} {}".format(round(sum(throughput_list), 3), throughput_unit_name), highlight=True
-        )
+        logger.info("Average latency: {} {}".format(round(sum(latency_list) / len(latency_list), 3), latency_unit_name))
+        logger.info("Total throughput: {} {}".format(round(sum(throughput_list), 3), throughput_unit_name))
     elif throughput_list:
         assert len(throughput_list) == len(logfile_dict), "Multiple instance benchmark failed with some instances!"
 
@@ -478,9 +473,7 @@ def summary_latency_throughput(logfile_dict):
             output_data.append([idx + 1, round(throughput, 3)])
         Statistics(output_data, header=header, field_names=field_names).print_stat()
         # show summary info
-        logger.info(
-            "Total throughput: {} {}".format(round(sum(throughput_list), 3), throughput_unit_name), highlight=True
-        )
+        logger.info("Total throughput: {} {}.hdfghdfghs".format(round(sum(throughput_list), 3), throughput_unit_name))
     elif latency_list:
         assert len(latency_list) == len(logfile_dict), "Multiple instance benchmark failed with some instances!"
 
@@ -495,10 +488,7 @@ def summary_latency_throughput(logfile_dict):
             output_data.append([idx + 1, round(latency, 3)])
         Statistics(output_data, header=header, field_names=field_names).print_stat()
         # show summary info
-        logger.info(
-            "Average latency: {} {}".format(round(sum(latency_list) / len(latency_list), 3), latency_unit_name),
-            highlight=True,
-        )
+        logger.info("Average latency: {} {}".format(round(sum(latency_list) / len(latency_list), 3), latency_unit_name))
 
 
 def benchmark():
