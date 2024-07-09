@@ -42,6 +42,13 @@ def is_substr(substr_list, target):
 
 
 def prepare_model(model):
+    """Receives the parent module to quantize.
+    Replaces its submodules with patched submodules that perform calibration and quantization.
+    Returns the patched parent module that can perform calibration or quantization according to the configuration.
+
+    Args:
+        model (nn.module): The model that will be measured/quantized.
+    """
     config = get_hqt_config(model)
     update_mod_dict(config)
     allowlist = set(config.cfg["mod_dict"].keys())

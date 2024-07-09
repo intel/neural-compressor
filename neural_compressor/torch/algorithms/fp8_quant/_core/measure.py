@@ -28,6 +28,16 @@ gmod_list = []
 
 
 def patch_module_measure(mod, mconfig, mod_dict):
+    """Replaces the module with patched module according to mconfig.
+
+    Args:
+        mod (nn.module): The module that will be replaced with patched module that measures the inputs.
+        mconfig (e.g. MaxAbsObserver/MaxAbsPerChannelObserver): The observer object that will measure the parameters.
+        mod_dict (dict): dictionary from module name to its patched module.
+
+    Returns:
+        nn.module: The new module after patching.
+    """
     parent = parent_child_mod_dict[mod].parent
     name = parent_child_mod_dict[mod].name
     patched_mod = mod_dict[mod.__class__.__name__].patched_module(mod, mconfig, name)
@@ -72,6 +82,12 @@ def init_measure_object(mod, name, observer_class, mod_type, skip_measure_output
 
 
 def prepare_model(model, mod_list=None):
+    """Defines the observer class and modules for measurement as preparation.
+
+    Args:
+        model (nn.module): The model that will be measured.
+        mod_list (list, optional): The specific submodules that will be measured in the model. Defaults to None.
+    """
     config = get_hqt_config(model).cfg
     observer_class = observer_types[config["observer"]]
     if (config["shape_file"] is not None) and (observer_class != ShapeObserver):
@@ -85,6 +101,16 @@ def prepare_model(model, mod_list=None):
 
 
 def register_patched_measure_modules(model, mod_list, observer_class, d_shapes=None):
+    """Replace the submodules of the model that appear in mod_list with a patched submodule that uses the given observer_class
+    so the submodule will preform measurement on inputs/outputs in forward stage.
+    Weights measurement is done during model preparation as they are static.
+
+    Args:
+        model (nn.module): The model that will be measured.
+        mod_list (list): The specific submodules that will be measured in the model.
+        observer_class (e.g. MaxAbsObserver/MaxAbsPerChannelObserver): The observer type that will measure the weights.
+        d_shapes (dict, optional): Defaults to None.
+    """
     top_level_config = get_hqt_config(model)
     config = top_level_config.cfg
     skip_outputs_measurements = config["measure_exclude"] & (MeasureExclude.OUTPUT | MeasureExclude.ALL)
