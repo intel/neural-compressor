@@ -13,17 +13,6 @@ subprojects:
       - "Code-Scan (DocStyle Code Scan DocStyle)"
       - "Code-Scan (Pylint Code Scan Pylint)"
 
-  - id: "Code Scan Neural-Insights Tests workflow"
-    paths:
-      - "neural_insights/**"
-      - "setup.py"
-      - ".azure-pipelines/code-scan-neural-insights.yml"
-    checks:
-      - "Code-Scan-Neural-Insights"
-      - "Code-Scan-Neural-Insights (Bandit Code Scan Bandit)"
-      - "Code-Scan-Neural-Insights (DocStyle Code Scan DocStyle)"
-      - "Code-Scan-Neural-Insights (Pylint Code Scan Pylint)"
-
   - id: "Code Scan Neural-Solution Tests workflow"
     paths:
       - "neural_solution/**"
@@ -136,13 +125,6 @@ subprojects:
       - "!neural_compressor/tensorflow/**"
     checks:
       - "UT-ITREX"
-
-  - id: "Unit Tests Neural-Insights workflow"
-    paths:
-      - "neural_insights/**"
-      - "setup.py"
-    checks:
-      - "UT-Neural-Insights"
 
   - id: "Unit Tests Neural-Solution workflow"
     paths:
