@@ -21,8 +21,6 @@ class TensorFlowKerasINC(object):
         self.result = []
 
     def transform(self):
-        # import pdb
-        # pdb.set_trace()
         lines = self.file.split("\n")
         for line in lines:
             if self.is_modify(line):

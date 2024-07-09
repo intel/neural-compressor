@@ -270,8 +270,8 @@ class WeightOnlyLinear(torch.nn.Module):
 
     def pack_tensor_with_torch(self, raw_tensor):
         target_len = math.ceil(raw_tensor.shape[1] / self.n_pack)
-        packed_tensor = torch.zeros(raw_tensor.shape[0], target_len, dtype=self.compression_dtype).to(self.device)
-        mask = torch.tensor(2**self.bits - 1, dtype=self.compression_dtype).to(self.device)
+        packed_tensor = torch.zeros(raw_tensor.shape[0], target_len, dtype=self.compression_dtype).to(raw_tensor.device)
+        mask = torch.tensor(2**self.bits - 1, dtype=self.compression_dtype).to(raw_tensor.device)
         for j in range(packed_tensor.shape[1]):
             start = self.n_pack * j
             end = self.n_pack * (j + 1)
@@ -286,8 +286,8 @@ class WeightOnlyLinear(torch.nn.Module):
     def unpack_tensor_with_torch(self, packed_tensor):
         target_dtype = torch.int8 if not hasattr(self, "qzeros") or "int" not in self.dtype else torch.uint8
         target_len = packed_tensor.shape[1] * self.n_pack
-        unpacked_tensor = torch.zeros(packed_tensor.shape[0], target_len, dtype=target_dtype).to(self.device)
-        mask = torch.tensor(2**self.bits - 1, dtype=self.compression_dtype).to(self.device)
+        unpacked_tensor = torch.zeros(packed_tensor.shape[0], target_len, dtype=target_dtype).to(packed_tensor.device)
+        mask = torch.tensor(2**self.bits - 1, dtype=self.compression_dtype).to(packed_tensor.device)
         for j in range(packed_tensor.shape[1]):
             for e in range(self.n_pack):
                 index = j * self.n_pack + e
@@ -338,13 +338,13 @@ class WeightOnlyLinear(torch.nn.Module):
         return unpacked_tensor
 
     def pack_tensor(self, raw_tensor):
-        if "cuda" in self.device:
+        if "cuda" in raw_tensor.device.type:
             return self.pack_tensor_with_torch(raw_tensor)
         else:
             return self.pack_tensor_with_numpy(raw_tensor)
 
     def unpack_tensor(self, packed_tensor):
-        if "cuda" in self.device:
+        if "cuda" in packed_tensor.device.type:
             return self.unpack_tensor_with_torch(packed_tensor)
         else:
             return self.unpack_tensor_with_numpy(packed_tensor)
