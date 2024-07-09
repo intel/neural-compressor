@@ -117,7 +117,6 @@ class eval_classifier_optimized_graph:
             q_model.save(args.output_graph)
 
         if args.benchmark:
-            dataloader = create_dataloader('tensorflow', dataloader_args)
             dataset = ImageRecordDataset(
                 root=args.dataset_location, 
                 transform=ComposeTransform(transform_list= [
