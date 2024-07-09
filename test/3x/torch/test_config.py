@@ -1,9 +1,11 @@
 import copy
 import unittest
 
+import pytest
 import torch
 import transformers
 
+import neural_compressor.torch.utils as torch_utils
 from neural_compressor.torch.quantization import (
     AutoRoundConfig,
     AWQConfig,
@@ -55,6 +57,18 @@ class TestQuantizationConfig(unittest.TestCase):
     def setUp(self):
         # print the test name
         logger.info(f"Running TestQuantizationConfig test: {self.id()}")
+
+    @pytest.mark.parametrize("config_cls", [RTNConfig, GPTQConfig])
+    def test_get_config_based_on_processor_type(self, config_cls):
+        config_for_client = config_cls.get_predefined_configs()[torch_utils.ProcessorType.Client]
+        assert (
+            config_for_client.use_layer_wise
+        ), f"Expect use_layer_wise to be True, got {config_for_client.use_layer_wise}"
+
+        config_for_server = config_cls.get_predefined_configs()[torch_utils.ProcessorType.Server]
+        assert (
+            config_for_server.use_layer_wise is False
+        ), f"Expect use_layer_wise to be False, got {config_for_server.use_layer_wise}"
 
     def test_quantize_rtn_from_dict_default(self):
         logger.info("test_quantize_rtn_from_dict_default")
@@ -339,7 +353,3 @@ class TestQuantConfigForAutotune(unittest.TestCase):
         expand_config_list = RTNConfig.expand(tune_config)
         self.assertEqual(expand_config_list[0].bits, 4)
         self.assertEqual(expand_config_list[1].bits, 6)
-
-
-if __name__ == "__main__":
-    unittest.main()

@@ -23,6 +23,7 @@ from typing import Tuple, Union
 
 import torch
 
+import neural_compressor.torch.utils as torch_utils
 from neural_compressor.common.base_config import (
     BaseConfig,
     config_registry,
@@ -219,14 +220,17 @@ class RTNConfig(BaseConfig):
             dtype=["int4", "nf4"], use_sym=[True, False], group_size=[32, 128], use_mse_search=[False, True]
         )
 
+    @classmethod
+    def get_predefined_configs(cls) -> Dict[torch_utils.ProcessorType, "RTNConfig"]:
+        pre_defined_configs: Dict[torch_utils.ProcessorType, RTNConfig] = {}
+        pre_defined_configs[torch_utils.ProcessorType.Client] = cls(use_layer_wise=True)
+        pre_defined_configs[torch_utils.ProcessorType.Server] = cls()
+        return pre_defined_configs
 
-def get_default_rtn_config() -> RTNConfig:
-    """Generate the default rtn config.
 
-    Returns:
-        the default rtn config.
-    """
-    return RTNConfig()
+def get_default_rtn_config(processor_type: Optional[Union[str, torch_utils.ProcessorType]] = None) -> RTNConfig:
+    process_type = torch_utils.get_processor_type_from_user_config(processor_type)
+    return RTNConfig.get_predefined_configs()[process_type]
 
 
 def get_default_double_quant_config(type="BNB_NF4"):
@@ -378,14 +382,17 @@ class GPTQConfig(BaseConfig):
         # TODO fwk owner needs to update it.
         return GPTQConfig(act_order=[True, False], use_sym=[False, True])
 
+    @classmethod
+    def get_predefined_configs(cls) -> Dict[torch_utils.ProcessorType, "GPTQConfig"]:
+        pre_defined_configs: Dict[torch_utils.ProcessorType, GPTQConfig] = {}
+        pre_defined_configs[torch_utils.ProcessorType.Client] = cls(use_layer_wise=True)
+        pre_defined_configs[torch_utils.ProcessorType.Server] = cls()
+        return pre_defined_configs
 
-def get_default_gptq_config() -> GPTQConfig:
-    """Generate the default gptq config.
 
-    Returns:
-        the default gptq config.
-    """
-    return GPTQConfig()
+def get_default_gptq_config(processor_type: Optional[Union[str, torch_utils.ProcessorType]] = None) -> RTNConfig:
+    process_type = torch_utils.get_processor_type_from_user_config(processor_type)
+    return GPTQConfig.get_predefined_configs()[process_type]
 
 
 ######################## AWQ Config ###############################

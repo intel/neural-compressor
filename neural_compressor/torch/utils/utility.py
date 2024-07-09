@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-from typing import Callable, Dict, List, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import torch
 from prettytable import PrettyTable
@@ -278,3 +278,36 @@ def get_model_device(model: torch.nn.Module):
     """
     for n, p in model.named_parameters():
         return p.data.device.type  # p.data.device == device(type='cpu')
+
+
+import enum
+
+import psutil
+
+
+class ProcessorType(enum.Enum):
+    Client = "Client"
+    Server = "Server"
+
+
+def detect_processor_type_based_on_hw():
+    # TODO: refine the logic
+    ram_size = psutil.virtual_memory().total / (1024**3)
+    if ram_size > 32:
+        return ProcessorType.Server
+    else:
+        return ProcessorType.Client
+
+
+def get_processor_type_from_user_config(user_processor_type: Optional[Union[str, ProcessorType]] = None):
+    if user_processor_type is None:
+        processor_type = detect_processor_type_based_on_hw()
+    elif isinstance(user_processor_type, ProcessorType):
+        processor_type = user_processor_type
+    elif isinstance(user_processor_type, str):
+        user_processor_type = user_processor_type.lower().capitalize()
+        assert user_processor_type in ProcessorType.__members__, f"Unsupported processor type: {user_processor_type}"
+        processor_type = ProcessorType(user_processor_type)
+    else:
+        raise NotImplementedError(f"Unsupported processor type: {user_processor_type}")
+    return processor_type
