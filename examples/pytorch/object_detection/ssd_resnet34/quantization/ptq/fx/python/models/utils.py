@@ -59,7 +59,6 @@ class Conv2d_tf(nn.Conv2d):
         return additional_padding, total_padding
 
     def forward(self, input):
-        #import pdb; pdb.set_trace()
         if self.padding == "VALID":
             return F.conv2d(
                 input,
@@ -180,7 +179,6 @@ def decode_boxes(rel_codes, boxes, weights):
     dh = dh / wh
 
     pred_ctr_x = dx * widths + ctr_x
-    #import pdb; pdb.set_trace()
     pred_ctr_y = dy * heights + ctr_y
     pred_w = torch.exp(dw) * widths
     pred_h = torch.exp(dh) * heights
@@ -194,5 +192,4 @@ def decode_boxes(rel_codes, boxes, weights):
         ],
         dim=2,
     )
-    #import pdb; pdb.set_trace()
     return pred_boxes
