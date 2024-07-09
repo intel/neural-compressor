@@ -454,11 +454,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
             tmp_str += ", use_optimum_format=True"
         return tmp_str
 
-
-# TODO: implement HPUWeightOnlyLinear
-# temporarily let HPUWeightOnlyLinear inherit INCWeightOnlyLinear
-# should be 'class HPUWeightOnlyLinear(WeightOnlyLinear)'
-class HPUWeightOnlyLinear(INCWeightOnlyLinear):
+class HPUWeightOnlyLinear(WeightOnlyLinear):
     def __init__(
         self,
         in_features,
@@ -468,7 +464,7 @@ class HPUWeightOnlyLinear(INCWeightOnlyLinear):
         group_size=32,
         zp=False,
         bias=False,
-        scale_dtype=torch.float32,
+        scale_dtype=torch.bfloat16,
         compression_dtype=torch.int32,
         compression_dim=1,
         g_idx=False,
@@ -482,17 +478,128 @@ class HPUWeightOnlyLinear(INCWeightOnlyLinear):
             dtype,
             bits,
             group_size,
-            zp,
-            bias,
-            scale_dtype,
-            compression_dtype,
-            compression_dim,
-            g_idx,
             device,
-            use_optimum_format,
-            **kwargs,
+        )
+        self.float_type = torch.bfloat16
+        self.compression_dim = compression_dim
+        self.compression_dtype = compression_dtype
+
+        if bits != 4:
+            raise NotImplementedError("Only 4 bits are supported.")
+        self.maxq = 2**self.bits - 1
+
+        if bias:
+            self.register_buffer("bias", torch.zeros(self.out_features, dtype=self.float_type).to(self.device))
+        else:
+            self.bias = None
+
+        self.register_buffer(
+            "qweight",
+            torch.zeros((in_features, out_features // 32 * self.bits), dtype=self.compression_dtype).to(self.device),
         )
 
+        self.register_buffer(
+            "qzeros",
+            torch.zeros(
+                (
+                    math.ceil(in_features / self.group_size),
+                    out_features // 32 * self.bits,
+                ),
+                dtype=self.compression_dtype,
+            ),
+        )
+        self.register_buffer(
+            "scales",
+            torch.zeros(
+                (math.ceil(in_features / self.group_size), out_features),
+                dtype=self.float_type,
+            ),
+        )
+
+        if g_idx:
+            self.register_buffer(
+                "g_idx",
+                torch.tensor([i // self.group_size for i in range(in_features)], dtype=torch.int32),
+            )
+        else:
+            self.g_idx = None
+
+        self.half_indim = self.in_features // 2
+
+        self.wf = torch.tensor(list(range(0, 32, self.bits)), dtype=torch.int32).unsqueeze(0)
+
+    def forward(self, input):
+        input_dtype = input.dtype
+        output_shape = input.shape[:-1] + (self.out_features,)
+        scales = self.scales
+        qweight = self.qweight
+        zeros = self.qzeros
+        weight = torch.ops.hpu.convert_from_uint4(qweight, scales, zeros, input_dtype)
+        output = torch.matmul(input, weight)
+        output = output.to(dtype=input_dtype).reshape(
+            output_shape
+
+        )  # A cast is needed here as for some reason the vecquant2matmul_faster_old still allocate a float32 output.
+        output = output + self.bias if self.bias is not None else output
+        return output
+
+
+    def pack(self, int_weight, scales, zp, bias=None, g_idx=None):
+        logger.debug(f"Packing for HPU")
+
+        scales = scales.T.contiguous()
+        qzeros = zp.T.contiguous()
+        qweight = int_weight.T.contiguous()
+
+        self.scales = scales.to(dtype=torch.bfloat16)
+
+        # weights and zp are on device from unpack, need to load to cpu for packing
+        self.qweight = qweight.cpu()
+        new_qweight = self.pack_tensor(self.qweight)
+        self.qweight = new_qweight.to("hpu")
+
+        self.qzeros = qzeros.cpu()
+        new_qzeros = self.pack_tensor(self.qzeros)
+        self.qzeros = new_qzeros.to("hpu")
+
+        if bias is not None:
+            self.bias = bias.to("hpu").to(torch.bfloat16)
+
+    def unpack(self):
+        logger.debug(f"Unpacking from HPU")
+        self.qweight = self.qweight.cpu()
+        weight = torch.bitwise_right_shift(
+                torch.unsqueeze(self.qweight, 1).expand(-1, 32 // self.bits, -1),
+                self.wf.unsqueeze(-1),
+            ).to(torch.int16 if self.bits == 8 else torch.int8)
+        weight = torch.bitwise_and(weight, (2**self.bits) - 1)
+        weight = weight.reshape((weight.shape[0]*weight.shape[1], weight.shape[2]))
+        self.qweight = self.qweight.to(self.device)
+
+        zeros = torch.bitwise_right_shift(
+            torch.unsqueeze(self.qzeros, 2).expand(-1, -1, 32 // self.bits),
+            self.wf.unsqueeze(0),
+        ).to(torch.int16 if self.bits == 8 else torch.int8)
+
+        zeros = torch.bitwise_and(
+            zeros, (2**self.bits) - 1
+        ).to(self.scales.dtype)  # NOTE: It appears that casting here after the `zeros = zeros + 1` is important.
+        zeros = zeros + 1
+        zeros = zeros.reshape(-1, 1, zeros.shape[1] * zeros.shape[2])
+        return weight, zeros
+
+    def pack_tensor(self, input, bits = 4):
+        normal = input.to(torch.int32)
+        q = torch.zeros((normal.shape[0], normal.shape[1] // 32 * bits), dtype=torch.int32)
+        i = 0
+        col = 0
+        while col < q.shape[1]:
+            for j in range(i, i + (32 // bits)):
+                q[:, col] |= normal[:, j] << (bits * (j - i))
+            i += 32 // bits
+            col += 1
+        q = q.to(torch.int32)
+        return q
 
 class FakeAffineTensorQuantFunction(Function):
     """Fake version of affine quantization."""
