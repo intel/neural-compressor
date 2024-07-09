@@ -82,7 +82,7 @@ FP4_E2M1 = [
     0.5,
     0.6666666666666666,
     1.0,
-    ]
+]
 
 # the order is the same as float list, bit value range is [-7, 7]
 # 1111 = -1, 1110 = -2, 1101= -3, ...
