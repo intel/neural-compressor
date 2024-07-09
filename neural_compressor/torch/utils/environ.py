@@ -57,6 +57,7 @@ def is_hpex_available():
 ## check ipex
 if is_package_available("intel_extension_for_pytorch"):
     _ipex_available = True
+    import habana_frameworks.torch.hpex  # pylint: disable=E0401
 else:
     _ipex_available = False
 

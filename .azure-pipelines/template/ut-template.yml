@@ -17,6 +17,9 @@ parameters:
   - name: utContainerName
     type: string
     default: "utTest"
+  - name: imageSource
+    type: string
+    default: "build"
 
 steps:
   - template: docker-template.yml
@@ -27,6 +30,7 @@ steps:
       dockerFileName: "Dockerfile"
       containerName: ${{ parameters.utContainerName }}
       repo: ${{ parameters.repo }}
+      imageSource: ${{ parameters.imageSource }}
 
   - script: |
       docker exec ${{ parameters.utContainerName }} bash -c "cd /neural-compressor/.azure-pipelines/scripts \
