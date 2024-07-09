@@ -47,7 +47,6 @@ if __name__ == "__main__":
         # model.to("hpu")
         output = model(torch.randn(1, 10).to("hpu"))
 
-    finalize_calibration(model)
     model = convert(model)
     print(model)
 
