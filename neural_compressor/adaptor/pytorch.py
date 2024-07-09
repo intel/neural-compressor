@@ -1242,6 +1242,8 @@ class TemplateAdaptor(Adaptor):
                 q_capability["opwise"][bf16_op] = [bf16_config, fp32_config]
                 if bf16_op[1] not in q_capability["optypewise"]:
                     q_capability["optypewise"][bf16_op[1]] = [bf16_config, fp32_config]
+            if bf16_op[1] in q_capability["optypewise"] and bf16_config not in q_capability["optypewise"][bf16_op[1]]:
+                q_capability["optypewise"][bf16_op[1]].append(bf16_config)
         return q_capability
 
     def get_fused_list(self, model):
@@ -3579,6 +3581,16 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             return q_model
 
         self.tune_cfg["fx_sub_module_list"] = self.sub_module_list
+
+        # BF16 fallback
+        if (
+            len(self.tune_cfg["bf16_ops_list"]) > 0
+            and self.version.release >= Version("1.11.0").release
+            and self.use_bf16
+            and (CpuInfo().bf16 or os.getenv("FORCE_BF16") == "1")
+        ):  # pragma: no cover
+            q_model._model = torch_utils.bf16_convert.Convert(q_model._model, self.tune_cfg)
+
         if self.approach == "quant_aware_training":
             q_model._model.train()
             if self.sub_module_list is None:
@@ -3664,14 +3676,6 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             PyTorch_FXAdaptor.convert_sub_graph(
                 self.sub_module_list, q_model._model, prefix="", custom_config=self.prepare_custom_config_dict
             )
-
-        if (
-            len(self.tune_cfg["bf16_ops_list"]) > 0
-            and self.version.release >= Version("1.11.0").release
-            and self.use_bf16
-            and (CpuInfo().bf16 or os.getenv("FORCE_BF16") == "1")
-        ):  # pragma: no cover
-            q_model._model = torch_utils.bf16_convert.Convert(q_model._model, self.tune_cfg)
 
         self.fused_dict = self.get_fused_list(q_model.model)
         q_model.is_quantized = True
