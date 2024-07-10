@@ -2,10 +2,10 @@
 
 echo -e "\n Install Neural Compressor ... "
 cd /neural-compressor
-if [[ $1 = *"3x_pt" ]]; then
+if [[ $1 = *"3x_pt"* ]]; then
     python -m pip install --no-cache-dir -r requirements_pt.txt
     python setup.py pt bdist_wheel
-    pip install dist/neural_compressor*.whl --force-reinstall
+    pip install --no-deps dist/neural_compressor*.whl --force-reinstall
 elif [[ $1 = *"3x_tf"* ]]; then
     python -m pip install --no-cache-dir -r requirements_tf.txt
     python setup.py tf bdist_wheel
