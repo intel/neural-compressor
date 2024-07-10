@@ -24,36 +24,33 @@ class Net(nn.Module):
         out = F.log_softmax(out, dim=1)
         return out
 
-model = Net()
-model_link = "https://vault.habana.ai/artifactory/misc/inference/mnist/mnist-epoch_20.pth"
-model_path = "/tmp/.neural_compressor/mnist-epoch_20.pth"
-os.system("mkdir -p /tmp/.neural_compressor && wget {} -O {} ".format(model_link, model_path))
-checkpoint = torch.load(model_path)
-model.load_state_dict(checkpoint)
+def test_hpu():
+    model = Net()
+    model_link = "https://vault.habana.ai/artifactory/misc/inference/mnist/mnist-epoch_20.pth"
+    model_path = "/tmp/.neural_compressor/mnist-epoch_20.pth"
+    os.system("mkdir -p /tmp/.neural_compressor && wget {} -O {} ".format(model_link, model_path))
+    checkpoint = torch.load(model_path)
+    model.load_state_dict(checkpoint)
 
-model = model.eval()
+    model = model.eval()
 
-model = model.to("hpu")
+    model = model.to("hpu")
 
+    transform=transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,))])
 
-transform=transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,))])
+    data_path = './data'
+    test_kwargs = {'batch_size': 32}
+    dataset1 = datasets.MNIST(data_path, train=False, download=True, transform=transform)
+    test_loader = torch.utils.data.DataLoader(dataset1,**test_kwargs)
 
-data_path = './data'
-test_kwargs = {'batch_size': 32}
-dataset1 = datasets.MNIST(data_path, train=False, download=True, transform=transform)
-test_loader = torch.utils.data.DataLoader(dataset1,**test_kwargs)
+    correct = 0
+    for batch_idx, (data, label) in enumerate(test_loader):
+        data = data.to("hpu")
+        output = model(data)
+        htcore.mark_step()
+        correct += output.max(1)[1].eq(label).sum()
 
-correct = 0
-for batch_idx, (data, label) in enumerate(test_loader):
-
-    data = data.to("hpu")
-
-    output = model(data)
-
-    htcore.mark_step()
-
-    correct += output.max(1)[1].eq(label).sum()
-
-print('Accuracy: {:.2f}%'.format(100. * correct / (len(test_loader) * 32)))
+    accuracy = 100. * correct / (len(test_loader) * 32)
+    assert accuracy > 90
