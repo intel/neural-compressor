@@ -1,16 +1,16 @@
-:orphan:
-
-:py:mod:`neural_compressor.common.base_config`
-==============================================
+neural_compressor.common.base_config
+====================================
 
 .. py:module:: neural_compressor.common.base_config
 
+.. autoapi-nested-parse::
 
-Module Contents
----------------
+   The base config.
+
+
 
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -19,9 +19,8 @@ Classes
    neural_compressor.common.base_config.ComposableConfig
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -30,14 +29,14 @@ Functions
    neural_compressor.common.base_config.register_supported_configs_for_fwk
 
 
+Module Contents
+---------------
 
-Attributes
-~~~~~~~~~~
+.. py:class:: ConfigRegistry
 
-.. autoapisummary::
 
-   neural_compressor.common.base_config.options
 
+   A registry for managing configuration classes for different algorithms within specific frameworks.
 
 
 .. py:function:: register_config(framework_name: str, algo_name: str, priority: Union[float, int] = 0)
@@ -61,17 +60,48 @@ Attributes
 
 
 
-
    The base config for all algorithm configs.
+
+   .. attribute:: name
+
+      The name of the config.
+
+      :type: str
+
+   .. attribute:: params_list
+
+      The list of **tunable parameters** in the config.
+
+      :type: list
 
 
 .. py:class:: ComposableConfig(configs: List[BaseConfig])
 
 
 
+   A class representing a composable configuration.
 
-   The base config for all algorithm configs.
+   This class allows for composing multiple configurations together by using the `+` operator.
 
+   :param configs: A list of base configurations to be composed.
+   :type configs: List[BaseConfig]
+
+   .. attribute:: config_list
+
+      The list of base configurations.
+
+      :type: List[BaseConfig]
+
+
+.. py:function:: get_all_config_set_from_config_registry(fwk_name: str) -> Union[BaseConfig, List[BaseConfig]]
+
+   Retrieves all the configuration sets from the config registry for a given framework name.
+
+   :param fwk_name: The name of the framework.
+   :type fwk_name: str
+
+   :returns: The configuration set(s) for the given framework name.
+   :rtype: Union[BaseConfig, List[BaseConfig]]
 
 
 .. py:function:: register_supported_configs_for_fwk(fwk_name: str)
@@ -79,6 +109,5 @@ Attributes
    Register supported configs for specific framework.
 
    :param fwk_name: the framework name.
-
 
 

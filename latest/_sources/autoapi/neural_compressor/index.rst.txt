@@ -16,6 +16,7 @@ Subpackages
    :maxdepth: 1
 
    /autoapi/neural_compressor/algorithm/index
+   /autoapi/neural_compressor/common/index
    /autoapi/neural_compressor/contrib/index
    /autoapi/neural_compressor/data/index
    /autoapi/neural_compressor/metric/index

@@ -1,16 +1,16 @@
-:orphan:
-
-:py:mod:`neural_compressor.common.base_tuning`
-==============================================
+neural_compressor.common.base_tuning
+====================================
 
 .. py:module:: neural_compressor.common.base_tuning
 
+.. autoapi-nested-parse::
 
-Module Contents
----------------
+   The auto-tune module.
+
+
 
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -24,27 +24,23 @@ Classes
    neural_compressor.common.base_tuning.TuningMonitor
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
    neural_compressor.common.base_tuning.init_tuning
 
 
+Module Contents
+---------------
 
-Attributes
-~~~~~~~~~~
+.. py:class:: EvaluationFuncWrapper(eval_fn: Callable, eval_args=None)
 
-.. autoapisummary::
-
-   neural_compressor.common.base_tuning.default_sampler
-
+   Evaluation function wrapper.
 
 
 .. py:class:: Evaluator
-
 
    Evaluator is a collection of evaluation functions.
 
@@ -68,10 +64,26 @@ Attributes
        ]
 
 
+.. py:class:: ConfigSet(config_list: List[neural_compressor.common.base_config.BaseConfig])
+
+   A class representing a set of configurations.
+
+   :param config_list: A list of BaseConfig objects.
+   :type config_list: List[BaseConfig]
+
+   .. attribute:: config_list
+
+      The list of BaseConfig objects.
+
+      :type: List[BaseConfig]
+
+
+.. py:class:: Sampler(config_source: Optional[ConfigSet])
+
+   Base class for samplers.
 
 
 .. py:class:: SequentialSampler(config_source: Sized)
-
 
 
 
@@ -81,10 +93,12 @@ Attributes
    :type config_source: _ConfigSet
 
 
+.. py:class:: ConfigLoader(config_set: ConfigSet, sampler: Sampler = default_sampler, skip_verified_config: bool = True)
+
+   ConfigLoader is a generator that yields configs from a config set.
 
 
 .. py:class:: TuningConfig(config_set: Union[neural_compressor.common.base_config.BaseConfig, List[neural_compressor.common.base_config.BaseConfig]] = None, sampler: Sampler = default_sampler, tolerable_loss=0.01, max_trials=100)
-
 
    Config for auto tuning pipeline.
 
@@ -111,5 +125,16 @@ Attributes
            The metric loss is within the tolerable loss, so the tuning process is stopped.
 
 
+.. py:class:: TuningMonitor(tuning_config: TuningConfig)
+
+   The tuning monitor class for auto-tuning.
+
+
+.. py:function:: init_tuning(tuning_config: TuningConfig) -> Tuple[ConfigLoader, neural_compressor.common.utils.TuningLogger, TuningMonitor]
+
+   Initializes the tuning process.
+
+   :param tuning_config: The configuration for the tuning process.
+   :type tuning_config: TuningConfig
 
 

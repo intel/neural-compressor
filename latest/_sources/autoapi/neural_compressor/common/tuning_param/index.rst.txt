@@ -1,16 +1,16 @@
-:orphan:
-
-:py:mod:`neural_compressor.common.tuning_param`
-===============================================
+neural_compressor.common.tuning_param
+=====================================
 
 .. py:module:: neural_compressor.common.tuning_param
 
+.. autoapi-nested-parse::
 
-Module Contents
----------------
+   The tunable parameters module.
+
+
 
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -18,20 +18,29 @@ Classes
    neural_compressor.common.tuning_param.TuningParam
 
 
-
+Module Contents
+---------------
 
 .. py:class:: ParamLevel
 
 
 
+   Enumeration representing the different levels of tuning parameters.
 
-   Generic enumeration.
+   .. attribute:: OP_LEVEL
 
-   Derive from this class to define new enumerations.
+      Represents the level of tuning parameters for operations.
+
+   .. attribute:: OP_TYPE_LEVEL
+
+      Represents the level of tuning parameters for operation types.
+
+   .. attribute:: MODEL_LEVEL
+
+      Represents the level of tuning parameters for models.
 
 
 .. py:class:: TuningParam(name: str, default_val: Any = None, tunable_type=None, options=None, level: ParamLevel = ParamLevel.OP_LEVEL)
-
 
    Define the tunable parameter for the algorithm.
 

@@ -1,17 +1,16 @@
-:orphan:
-
-:py:mod:`neural_compressor.common.utils.save_load`
-==================================================
+neural_compressor.common.utils.save_load
+========================================
 
 .. py:module:: neural_compressor.common.utils.save_load
 
+.. autoapi-nested-parse::
 
-Module Contents
----------------
+   The module for save/load config.
+
 
 
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -19,6 +18,8 @@ Functions
    neural_compressor.common.utils.save_load.load_config_mapping
 
 
+Module Contents
+---------------
 
 .. py:function:: save_config_mapping(config_mapping, qconfig_file_path)
 

@@ -1,17 +1,23 @@
-:orphan:
-
-:py:mod:`neural_compressor.common.utils`
-========================================
+neural_compressor.common.utils
+==============================
 
 .. py:module:: neural_compressor.common.utils
+
+.. autoapi-nested-parse::
+
+   The utils of common module.
+
 
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   logger/index.rst
+   /autoapi/neural_compressor/common/utils/constants/index
+   /autoapi/neural_compressor/common/utils/logger/index
+   /autoapi/neural_compressor/common/utils/save_load/index
+   /autoapi/neural_compressor/common/utils/utility/index
 
 

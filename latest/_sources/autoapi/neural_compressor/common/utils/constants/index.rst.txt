@@ -1,31 +1,29 @@
-:orphan:
-
-:py:mod:`neural_compressor.common.utils.constants`
-==================================================
+neural_compressor.common.utils.constants
+========================================
 
 .. py:module:: neural_compressor.common.utils.constants
 
+.. autoapi-nested-parse::
 
-Module Contents
----------------
+   All frameworks-agnostic constants.
+
+
 
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.common.utils.constants.Mode
 
 
-
+Module Contents
+---------------
 
 .. py:class:: Mode
 
 
 
-
-   Generic enumeration.
-
-   Derive from this class to define new enumerations.
+   Enumeration class representing different modes of the quantizer execution.
 
 

@@ -78,7 +78,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.common.utils.utility</span></code></li>
+      <li class="breadcrumb-item active">neural_compressor.common.utils.utility</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../../../../../_sources/autoapi/neural_compressor/common/utils/utility/index.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -89,11 +89,10 @@
            <div itemprop="articleBody">
              
   <section id="module-neural_compressor.common.utils.utility">
-<span id="neural-compressor-common-utils-utility"></span><h1><a class="reference internal" href="#module-neural_compressor.common.utils.utility" title="neural_compressor.common.utils.utility"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.common.utils.utility</span></code></a><a class="headerlink" href="#module-neural_compressor.common.utils.utility" title="Permalink to this heading"></a></h1>
-<section id="module-contents">
-<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<span id="neural-compressor-common-utils-utility"></span><h1>neural_compressor.common.utils.utility<a class="headerlink" href="#module-neural_compressor.common.utils.utility" title="Permalink to this heading"></a></h1>
+<p>The utility of common module.</p>
 <section id="classes">
-<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
+<h2>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.common.utils.utility.LazyImport" title="neural_compressor.common.utils.utility.LazyImport"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LazyImport</span></code></a></p></td>
@@ -106,7 +105,7 @@
 </table>
 </section>
 <section id="functions">
-<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
+<h2>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.common.utils.utility.singleton" title="neural_compressor.common.utils.utility.singleton"><code class="xref py py-obj docutils literal notranslate"><span class="pre">singleton</span></code></a>(cls)</p></td>
@@ -127,11 +126,17 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.common.utils.utility.set_tensorboard" title="neural_compressor.common.utils.utility.set_tensorboard"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_tensorboard</span></code></a>(tensorboard)</p></td>
 <td><p>Set the tensorboard in config.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_process</span></code>([mode])</p></td>
-<td><p></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.common.utils.utility.log_process" title="neural_compressor.common.utils.utility.log_process"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_process</span></code></a>([mode])</p></td>
+<td><p>Decorator function that logs the stage of process.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.common.utils.utility.call_counter" title="neural_compressor.common.utils.utility.call_counter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">call_counter</span></code></a>(func)</p></td>
+<td><p>A decorator that keeps track of the number of times a function is called.</p></td>
 </tr>
 </tbody>
 </table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.common.utils.utility.singleton">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.common.utils.utility.</span></span><span class="sig-name descname"><span class="pre">singleton</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/common/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.utils.utility.singleton" title="Permalink to this definition"></a></dt>
@@ -185,7 +190,34 @@
 <dd><p>Set the tensorboard in config.</p>
 </dd></dl>
 
-</section>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.common.utils.utility.log_process">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.utils.utility.</span></span><span class="sig-name descname"><span class="pre">log_process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Mode.QUANTIZE</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/common/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.utils.utility.log_process" title="Permalink to this definition"></a></dt>
+<dd><p>Decorator function that logs the stage of process.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mode</strong> (<a class="reference internal" href="../constants/index.html#neural_compressor.common.utils.constants.Mode" title="neural_compressor.common.utils.constants.Mode"><em>Mode</em></a>) – The mode of the process.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The decorated function.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.common.utils.utility.call_counter">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.utils.utility.</span></span><span class="sig-name descname"><span class="pre">call_counter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/common/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.utils.utility.call_counter" title="Permalink to this definition"></a></dt>
+<dd><p>A decorator that keeps track of the number of times a function is called.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>func</strong> – The function to be decorated.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The decorated function.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 
@@ -203,7 +235,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fc37d2ff5b0> 
+   <jinja2.runtime.BlockReference object at 0x7fe9153e8a30> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

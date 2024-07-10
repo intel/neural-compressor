@@ -1,16 +1,16 @@
-:orphan:
-
-:py:mod:`neural_compressor.common.utils.utility`
-================================================
+neural_compressor.common.utils.utility
+======================================
 
 .. py:module:: neural_compressor.common.utils.utility
 
+.. autoapi-nested-parse::
 
-Module Contents
----------------
+   The utility of common module.
+
+
 
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -18,9 +18,8 @@ Classes
    neural_compressor.common.utils.utility.CpuInfo
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -31,8 +30,11 @@ Functions
    neural_compressor.common.utils.utility.set_resume_from
    neural_compressor.common.utils.utility.set_tensorboard
    neural_compressor.common.utils.utility.log_process
+   neural_compressor.common.utils.utility.call_counter
 
 
+Module Contents
+---------------
 
 .. py:function:: singleton(cls)
 
@@ -43,12 +45,10 @@ Functions
 
 
 
-
    Lazy import python module till use.
 
 
 .. py:class:: CpuInfo
-
 
 
 
@@ -82,5 +82,23 @@ Functions
 
    Set the tensorboard in config.
 
+
+.. py:function:: log_process(mode=Mode.QUANTIZE)
+
+   Decorator function that logs the stage of process.
+
+   :param mode: The mode of the process.
+   :type mode: Mode
+
+   :returns: The decorated function.
+
+
+.. py:function:: call_counter(func)
+
+   A decorator that keeps track of the number of times a function is called.
+
+   :param func: The function to be decorated.
+
+   :returns: The decorated function.
 
 
