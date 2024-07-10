@@ -27,7 +27,10 @@ class Net(nn.Module):
 
 
 model = Net()
-checkpoint = torch.load("mnist-epoch_20.pth")
+model_link = "https://vault.habana.ai/artifactory/misc/inference/mnist/mnist-epoch_20.pth"
+model_path = "/tmp/.neural_compressor/mnist-epoch_20.pth"
+os.system("mkdir -p /tmp/.neural_compressor && wget {} -O {} ".format(model_link, model_path))
+checkpoint = torch.load(model_path)
 model.load_state_dict(checkpoint)
 
 model = model.eval()
