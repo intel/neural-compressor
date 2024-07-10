@@ -27,7 +27,7 @@ steps:
       script: |
         docker ps -a
         if [[ $(docker ps -a | grep -i '${{ parameters.containerName }}'$) ]]; then
-            docker start $(docker ps -aq)
+            docker start $(docker ps -aq --filter "name=${{ parameters.containerName }}")
             echo "remove left files through container ..."
             docker exec ${{ parameters.containerName }} bash -c "ls -a /neural-compressor && rm -fr /neural-compressor/* && rm -fr /neural-compressor/.* && ls -a /neural-compressor  || true"
         fi
@@ -78,7 +78,7 @@ steps:
         displayName: "Pull habana docker image"
 
   - script: |
-      docker stop $(docker ps -aq)
+      docker stop $(docker ps -aq --filter "name=${{ parameters.containerName }}")
       docker rm -vf ${{ parameters.containerName }} || true
       env | sort
     displayName: "Clean docker container"

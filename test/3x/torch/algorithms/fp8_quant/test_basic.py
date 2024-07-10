@@ -1,30 +1,28 @@
 import os
 import sys
+import torch
 import time
 
 import habana_frameworks.torch.core as htcore
-import torch
+
+from torch.utils.data import DataLoader
+from torchvision import transforms, datasets
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.utils.data import DataLoader
-from torchvision import datasets, transforms
-
 
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.fc1 = nn.Linear(784, 256)
-        self.fc2 = nn.Linear(256, 64)
-        self.fc3 = nn.Linear(64, 10)
-
+        self.fc1   = nn.Linear(784, 256)
+        self.fc2   = nn.Linear(256, 64)
+        self.fc3   = nn.Linear(64, 10)
     def forward(self, x):
-        out = x.view(-1, 28 * 28)
+        out = x.view(-1,28*28)
         out = F.relu(self.fc1(out))
         out = F.relu(self.fc2(out))
         out = self.fc3(out)
         out = F.log_softmax(out, dim=1)
         return out
-
 
 model = Net()
 model_link = "https://vault.habana.ai/artifactory/misc/inference/mnist/mnist-epoch_20.pth"
@@ -38,25 +36,24 @@ model = model.eval()
 model = model.to("hpu")
 
 
-model = torch.compile(model, backend="hpu_backend")
+transform=transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.1307,), (0.3081,))])
 
-
-transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
-
-data_path = "./data"
-test_dataset = datasets.MNIST(data_path, train=False, download=True, transform=transform)
-test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=32)
+data_path = './data'
+test_kwargs = {'batch_size': 32}
+dataset1 = datasets.MNIST(data_path, train=False, download=True, transform=transform)
+test_loader = torch.utils.data.DataLoader(dataset1,**test_kwargs)
 
 correct = 0
-with torch.no_grad():
-    for data, label in test_loader:
+for batch_idx, (data, label) in enumerate(test_loader):
 
-        data = data.to("hpu")
+    data = data.to("hpu")
 
-        label = label.to("hpu")
+    output = model(data)
 
-        output = model(data)
-        correct += output.argmax(1).eq(label).sum().item()
+    htcore.mark_step()
 
-accuracy = correct / len(test_loader.dataset) * 100
-print("Inference with torch.compile Completed. Accuracy: {:.2f}%".format(accuracy))
+    correct += output.max(1)[1].eq(label).sum()
+
+print('Accuracy: {:.2f}%'.format(100. * correct / (len(test_loader) * 32)))
