@@ -49,9 +49,8 @@ def trigger_process(cmd):
 
 
 def check_main_process(message):
-    # ASCII: \x1b\[1m\x1b\[91m is bold, red.
-    num_i_pattern = r"(.*) \x1b\[1m\x1b\[91m(\d+) instance(.*) triggered"
-    num_c_pattern = r"(.*) \x1b\[1m\x1b\[91m(\d+) core(.*) in use"
+    num_i_pattern = r"(.*) (\d+) instance(.*) triggered"
+    num_c_pattern = r"(.*) (\d+) core(.*) in use"
     log_file_pattern = r"(.*) The log of instance 1 is saved to (.*)"
     num_i = re.search(num_i_pattern, message, flags=re.DOTALL).group(2)
     all_c = re.search(num_c_pattern, message).group(2)
