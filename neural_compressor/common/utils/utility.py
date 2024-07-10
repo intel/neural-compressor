@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""The utility of common module."""
 
 import collections
 import importlib
@@ -43,7 +44,6 @@ __all__ = [
 
 def singleton(cls):
     """Singleton decorator."""
-
     instances = {}
 
     def _singleton(*args, **kw):
@@ -211,6 +211,15 @@ default_tuning_logger = TuningLogger()
 
 
 def log_process(mode=Mode.QUANTIZE):
+    """Decorator function that logs the stage of process.
+
+    Args:
+        mode (Mode): The mode of the process.
+
+    Returns:
+        The decorated function.
+    """
+
     def log_process_wrapper(func):
         def inner_wrapper(*args, **kwargs):
             start_log = default_tuning_logger.execution_start
@@ -235,6 +244,15 @@ FUNC_CALL_COUNTS: Dict[str, int] = collections.defaultdict(int)
 
 
 def call_counter(func):
+    """A decorator that keeps track of the number of times a function is called.
+
+    Args:
+        func: The function to be decorated.
+
+    Returns:
+        The decorated function.
+    """
+
     def wrapper(*args, **kwargs):
         FUNC_CALL_COUNTS[func.__name__] += 1
         return func(*args, **kwargs)

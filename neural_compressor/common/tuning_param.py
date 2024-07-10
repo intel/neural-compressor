@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""The tunable parameters module."""
+
 
 import typing
 from enum import Enum, auto
@@ -22,6 +24,14 @@ from neural_compressor.common import logger
 
 
 class ParamLevel(Enum):
+    """Enumeration representing the different levels of tuning parameters.
+
+    Attributes:
+        OP_LEVEL: Represents the level of tuning parameters for operations.
+        OP_TYPE_LEVEL: Represents the level of tuning parameters for operation types.
+        MODEL_LEVEL: Represents the level of tuning parameters for models.
+    """
+
     OP_LEVEL = auto()
     OP_TYPE_LEVEL = auto()
     MODEL_LEVEL = auto()
@@ -63,6 +73,15 @@ class TuningParam:
         options=None,
         level: ParamLevel = ParamLevel.OP_LEVEL,
     ) -> None:
+        """Initialize a TuningParam object.
+
+        Args:
+            name (str): The name of the tuning parameter.
+            default_val (Any, optional): The default value of the tuning parameter. Defaults to None.
+            tunable_type (optional): The type of the tuning parameter. Defaults to None.
+            options (optional): The available options for the tuning parameter. Defaults to None.
+            level (ParamLevel, optional): The level of the tuning parameter. Defaults to ParamLevel.OP_LEVEL.
+        """
         self.name = name
         self.default_val = default_val
         self.tunable_type = tunable_type
@@ -70,14 +89,14 @@ class TuningParam:
         self.level = level
 
     @staticmethod
-    def create_input_args_model(expect_args_type: Any) -> type:
+    def create_input_args_model(expect_args_type: Any):
         """Dynamically create an InputArgsModel based on the provided type hint.
 
-        Parameters:
-        - expect_args_type (Any): The user-provided type hint for input_args.
+        Args:
+            expect_args_type (Any): The user-provided type hint for input_args.
 
         Returns:
-        - type: The dynamically created InputArgsModel class.
+            The dynamically created InputArgsModel class.
         """
 
         class DynamicInputArgsModel(BaseModel):
@@ -86,6 +105,14 @@ class TuningParam:
         return DynamicInputArgsModel
 
     def is_tunable(self, value: Any) -> bool:
+        """Checks if the given value is tunable based on the specified tunable type.
+
+        Args:
+            value (Any): The value to be checked for tunability.
+
+        Returns:
+            bool: True if the value is tunable, False otherwise.
+        """
         # Use `Pydantic` to validate the input_args.
         # TODO: refine the implementation in further.
         assert isinstance(
@@ -100,4 +127,5 @@ class TuningParam:
             return False
 
     def __str__(self) -> str:
+        """Return the name of the tuning parameter."""
         return self.name
