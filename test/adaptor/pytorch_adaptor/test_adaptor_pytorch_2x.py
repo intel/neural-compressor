@@ -392,21 +392,15 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         "Please use PyTroch 1.11 or higher version for mixed precision with pytorch_fx or pytorch backend",
     )
     def test_mix_precision(self):
+        os.environ["FORCE_BF16"] = "1"
         model_origin = DynamicControlModel()
-        # run fx_quant in neural_compressor and save the quantized GraphModule
         dataset = Datasets("pytorch")["dummy"]((100, 3, 224, 224))
         dataloader = DataLoader("pytorch", dataset)
         set_workspace("./saved")
+        # fx mode usually has .module suffix due to tracing of the entire model fails, so use conv.* to leverage re.match
+        ptq_fx_op_name_list["conv.*"] = {"weight": {"dtype": "bf16"}, "activation": {"dtype": "bf16"}}
         conf = PostTrainingQuantConfig(op_name_dict=ptq_fx_op_name_list)
         q_model = quantization.fit(model_origin, conf, calib_dataloader=dataloader, calib_func=eval_func)
-        tune_cfg = q_model.q_config
-        tune_cfg["op"][("conv.module", "Conv2d")].clear()
-        tune_cfg["op"][("conv.module", "Conv2d")] = {"weight": {"dtype": "bf16"}, "activation": {"dtype": "bf16"}}
-        tune_cfg["bf16_ops_list"].append(("conv.module", "Conv2d"))
-        from neural_compressor.adaptor.torch_utils.bf16_convert import Convert
-
-        q_model._model = Convert(q_model._model, tune_cfg)
-
         self.assertEqual(q_model._model.conv.module.module.weight.dtype, torch.bfloat16)
         self.assertEqual(q_model._model.conv.module.module.bias.dtype, torch.bfloat16)
 
