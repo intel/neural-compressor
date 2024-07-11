@@ -24,12 +24,11 @@ from packaging.version import Version
 
 try:
     import intel_extension_for_pytorch as ipex
-    import prettytable as pt
 except:  # pragma: no cover
     pass
 
 from neural_compressor.common.utils import DEFAULT_WORKSPACE, CpuInfo
-from neural_compressor.torch.utils import get_ipex_version, get_torch_version, logger
+from neural_compressor.torch.utils import Statistics, get_ipex_version, get_torch_version, logger
 
 version = get_torch_version()
 ipex_ver = get_ipex_version()
@@ -565,48 +564,6 @@ def get_quantizable_ops_from_cfgs(ops_name, op_infos_from_cfgs, input_tensor_ids
             for q_op in q_ops:
                 quantizable_ops.append(q_op)
     return quantizable_ops
-
-
-class Statistics:  # pragma: no cover
-    """The statistics printer."""
-
-    def __init__(self, data, header, field_names, output_handle=logger.info):
-        """Init a Statistics object.
-
-        Args:
-            data: The statistics data
-            header: The table header
-            field_names: The field names
-            output_handle: The output logging method
-        """
-        self.field_names = field_names
-        self.header = header
-        self.data = data
-        self.output_handle = output_handle
-        self.tb = pt.PrettyTable(min_table_width=40)
-
-    def print_stat(self):
-        """Print the statistics."""
-        valid_field_names = []
-        for index, value in enumerate(self.field_names):
-            if index < 2:
-                valid_field_names.append(value)
-                continue
-
-            if any(i[index] for i in self.data):
-                valid_field_names.append(value)
-        self.tb.field_names = valid_field_names
-        for i in self.data:
-            tmp_data = []
-            for index, value in enumerate(i):
-                if self.field_names[index] in valid_field_names:
-                    tmp_data.append(value)
-            if any(tmp_data[1:]):
-                self.tb.add_row(tmp_data)
-        lines = self.tb.get_string().split("\n")
-        self.output_handle("|" + self.header.center(len(lines[0]) - 2, "*") + "|")
-        for i in lines:
-            self.output_handle(i)
 
 
 class TransformerBasedModelBlockPatternDetector:  # pragma: no cover
