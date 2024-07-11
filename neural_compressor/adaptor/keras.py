@@ -24,7 +24,6 @@ from collections import OrderedDict, UserDict
 import numpy as np
 import yaml
 
-from ..conf.dotdict import deep_get
 from ..data.dataloaders.base_dataloader import BaseDataLoader
 from ..utils import logger
 from ..utils.utility import (
@@ -34,6 +33,7 @@ from ..utils.utility import (
     Dequantize,
     LazyImport,
     Statistics,
+    deep_get,
     dump_elapsed_time,
     singleton,
     version1_lt_version2,
