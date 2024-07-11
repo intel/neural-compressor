@@ -1,7 +1,5 @@
 Quantization on Client
-
 ==========================================
-
 1. [Introduction](#introduction)
 3. [Get Started](#get-started) \
     2.1 [Get Default Algorithm Configuration](#get-default-algorithm-configuration)\
