@@ -16,6 +16,7 @@ Classes
 
    neural_compressor.common.utils.utility.LazyImport
    neural_compressor.common.utils.utility.CpuInfo
+   neural_compressor.common.utils.utility.Statistics
 
 
 Functions
@@ -27,6 +28,7 @@ Functions
    neural_compressor.common.utils.utility.dump_elapsed_time
    neural_compressor.common.utils.utility.set_random_seed
    neural_compressor.common.utils.utility.set_workspace
+   neural_compressor.common.utils.utility.get_workspace
    neural_compressor.common.utils.utility.set_resume_from
    neural_compressor.common.utils.utility.set_tensorboard
    neural_compressor.common.utils.utility.log_process
@@ -73,6 +75,11 @@ Module Contents
    Set the workspace in config.
 
 
+.. py:function:: get_workspace()
+
+   Get the workspace in config.
+
+
 .. py:function:: set_resume_from(resume_from: str)
 
    Set the resume_from in config.
@@ -100,5 +107,10 @@ Module Contents
    :param func: The function to be decorated.
 
    :returns: The decorated function.
+
+
+.. py:class:: Statistics(data, header, field_names, output_handle=logger.info)
+
+   The statistics printer.
 
 
