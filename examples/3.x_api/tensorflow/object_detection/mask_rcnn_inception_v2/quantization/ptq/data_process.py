@@ -256,6 +256,23 @@ class BaseMetric(object):
         self._hvd = hvd
 
 
+class LabelBalanceCOCORecordFilter(object):
+    """The label balance filter for COCO Record."""
+
+    def __init__(self, size=1):
+        """Initialize the attribute of class."""
+        self.size = size
+
+    def __call__(self, image, label):
+        """Execute the filter.
+
+        Args:
+            image: Not used.
+            label: label of a sample.
+        """
+        return tf.math.equal(len(label[0]), self.size)
+
+
 class COCOmAPv2(BaseMetric):
     """Compute mean average precision of the detection task."""
 

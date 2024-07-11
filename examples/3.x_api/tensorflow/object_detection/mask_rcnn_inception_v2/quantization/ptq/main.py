@@ -30,6 +30,7 @@ from data_process import(
     ComposeTransform,
     ResizeTFTransform,
     TFDataLoader,
+    LabelBalanceCOCORecordFilter,
 )
 
 arg_parser = ArgumentParser(description='Parse args')
