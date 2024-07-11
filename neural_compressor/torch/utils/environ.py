@@ -46,6 +46,7 @@ def is_package_available(package_name):
 ## check hpex
 if is_package_available("habana_frameworks"):
     _hpex_available = True
+    import habana_frameworks.torch.hpex  # pylint: disable=E0401
 else:
     _hpex_available = False
 
@@ -89,6 +90,9 @@ def get_torch_version():
         assert False, "Got an unknown version of torch: {}".format(e)
     version = Version(torch_version)
     return version
+
+
+GT_TORCH_VERSION_2_3_2 = get_torch_version() > Version("2.3.2")
 
 
 def get_accelerator(device_name="auto"):

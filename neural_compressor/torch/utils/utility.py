@@ -13,12 +13,21 @@
 # limitations under the License.
 
 
-from typing import Callable, Dict, List, Tuple, Union
+import enum
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
+import psutil
 import torch
 from typing_extensions import TypeAlias
 
-from neural_compressor.common.utils import LazyImport, Mode, logger
+from neural_compressor.common.utils import (
+    Mode,
+    ProcessorType,
+    Statistics,
+    cpu_info,
+    detect_processor_type_based_on_hw,
+    logger,
+)
 
 OP_NAME_AND_TYPE_TUPLE_TYPE: TypeAlias = Tuple[str, Union[torch.nn.Module, Callable]]
 
@@ -101,6 +110,10 @@ def set_module(model, op_name, new_module):
             setattr(second_last_module, name_list[-1], new_module)
 
 
+get_attr = fetch_module
+set_attr = set_module
+
+
 def get_model_info(model: torch.nn.Module, white_module_list: List[Callable]) -> List[Tuple[str, str]]:
     module_dict = dict(model.named_modules())
     filter_result = []
@@ -163,3 +176,99 @@ def postprocess_model(model, mode, quantizer):
     elif mode == Mode.CONVERT or mode == Mode.QUANTIZE:
         if getattr(model, "quantizer", False):
             del model.quantizer
+
+
+def dump_model_op_stats(mode, tune_cfg):
+    """This is a function to dump quantizable ops of model to user.
+
+    Args:
+        model (object): input model
+        tune_cfg (dict): quantization config
+    Returns:
+        None
+    """
+    if mode == Mode.PREPARE:
+        return
+    res = {}
+    # collect all dtype info and build empty results with existing op_type
+    dtype_set = set()
+    for op, config in tune_cfg.items():
+        op_type = op[1]
+        config = config.to_dict()
+        if not config["dtype"] == "fp32":
+            num_bits = config["bits"]
+            group_size = config["group_size"]
+            dtype_str = "A32W{}G{}".format(num_bits, group_size)
+            dtype_set.add(dtype_str)
+    dtype_set.add("FP32")
+    dtype_list = list(dtype_set)
+    dtype_list.sort()
+
+    for op, config in tune_cfg.items():
+        config = config.to_dict()
+        op_type = op[1]
+        if op_type not in res.keys():
+            res[op_type] = {dtype: 0 for dtype in dtype_list}
+
+    # fill in results with op_type and dtype
+    for op, config in tune_cfg.items():
+        config = config.to_dict()
+        if config["dtype"] == "fp32":
+            res[op_type]["FP32"] += 1
+        else:
+            num_bits = config["bits"]
+            group_size = config["group_size"]
+            dtype_str = "A32W{}G{}".format(num_bits, group_size)
+            res[op_type][dtype_str] += 1
+
+    # update stats format for dump.
+    field_names = ["Op Type", "Total"]
+    field_names.extend(dtype_list)
+    output_data = []
+    for op_type in res.keys():
+        field_results = [op_type, sum(res[op_type].values())]
+        field_results.extend([res[op_type][dtype] for dtype in dtype_list])
+        output_data.append(field_results)
+
+    Statistics(output_data, header="Mixed Precision Statistics", field_names=field_names).print_stat()
+
+
+def get_model_device(model: torch.nn.Module):
+    """Get the device.
+
+    Args:
+        model (torch.nn.Module): the input model.
+
+    Returns:
+        device (str): a string.
+    """
+    for n, p in model.named_parameters():
+        return p.data.device.type  # p.data.device == device(type='cpu')
+
+
+def get_processor_type_from_user_config(user_processor_type: Optional[Union[str, ProcessorType]] = None):
+    """Get the processor type.
+
+    Get the processor type based on the user configuration or automatically detect it based on the hardware.
+
+    Args:
+        user_processor_type (Optional[Union[str, ProcessorType]]): The user-specified processor type. Defaults to None.
+
+    Returns:
+        ProcessorType: The detected or user-specified processor type.
+
+    Raises:
+        AssertionError: If the user-specified processor type is not supported.
+        NotImplementedError: If the processor type is not recognized.
+    """
+    if user_processor_type is None:
+        processor_type = detect_processor_type_based_on_hw()
+    elif isinstance(user_processor_type, ProcessorType):
+        processor_type = user_processor_type
+    elif isinstance(user_processor_type, str):
+        user_processor_type = user_processor_type.lower().capitalize()
+        assert user_processor_type in ProcessorType.__members__, f"Unsupported processor type: {user_processor_type}"
+        processor_type = ProcessorType(user_processor_type)
+    else:
+        raise NotImplementedError(f"Unsupported processor type: {user_processor_type}")
+    return processor_type

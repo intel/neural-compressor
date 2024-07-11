@@ -16,8 +16,7 @@
 # limitations under the License.
 #
 
-import copy
-from typing import Any
+from typing import Any, List
 
 import torch
 
@@ -36,10 +35,10 @@ __all__ = ["TrainableEquivalentTransformation", "TEQuantizer"]
 class TrainableEquivalentTransformation:
     """Weight-only quantization, Trainable Equivalent Transformation (TEQ)."""
 
-    _PREPARE_ATTRS: list[str] = ["weight_config", "trained_alphas"]
+    _PREPARE_ATTRS: List[str] = ["weight_config", "trained_alphas"]
     _PREPARE_ATTRS_PREFIX = "_prepare_"
 
-    def __init__(self, model, weight_config={}, absorb_to_layer={}, folding=True, example_inputs=None):
+    def __init__(self, model, weight_config={}, absorb_to_layer=None, folding=True, example_inputs=None):
         """
         :param model: the model for quantization
         :param weight_config (dict, optional): contains all info required by RTN. Defaults to {}.
@@ -53,6 +52,24 @@ class TrainableEquivalentTransformation:
         self.trained_alphas = {}
         self.absorb_to_layer = absorb_to_layer
         self._post_initialized = False
+
+    def _detect_absorb_to_layer(self, model, folding, example_inputs):
+        # If user not provide the layers to absorb the quantization, detect layers automatically
+        supported_layers = ["Linear"]
+        detected_absorb_layers = {}
+        # Detect the layers that can be absorbed automatically
+        if folding:
+            from neural_compressor.torch.algorithms.weight_only.utility import GraphTrace
+
+            tg = GraphTrace()
+            detected_absorb_layers, _ = tg.get_absorb_to_layer(model, example_inputs, supported_layers)
+        else:  # pragma: no cover
+            for name, module in model.named_modules():
+                if module.__class__.__name__ in supported_layers:
+                    detected_absorb_layers[name] = [name]
+        logger.info("Detected **absorb layer**: **absorbed layers**")
+        logger.info(detected_absorb_layers)
+        return detected_absorb_layers
 
     def _post_init(self):
         self.dtype = self._get_dtype()
@@ -75,6 +92,8 @@ class TrainableEquivalentTransformation:
         to the paper for more details
         :param sqrt_w_init: use sqrt weight to init."""
 
+        if not self.absorb_to_layer:
+            self.absorb_to_layer = self._detect_absorb_to_layer(self.model, self.folding, self.example_inputs)
         if not self._post_initialized:
             self._post_init()
         # freeze model.
@@ -104,7 +123,7 @@ class TrainableEquivalentTransformation:
 
             self.trained_alphas[layer_norm] = alpha
             for layer_name in self.absorb_to_layer[layer_norm]:
-                if self.weight_config.get(layer_name) is None:  # pragma: no cover
+                if not self.weight_config.get(layer_name):  # pragma: no cover
                     logger.info(f"layer {layer_name} not in weight config, skip.")
                     continue
                 num_bits = self.weight_config[layer_name]["bits"]
@@ -117,10 +136,10 @@ class TrainableEquivalentTransformation:
                 )
                 set_module(self.model, layer_name, wrapper_module)
 
-        for n, m in self.model.named_modules():
+        for layer_name, m in self.model.named_modules():
             if isinstance(m, torch.nn.Linear) and "orig_layer" not in n:
-                if self.weight_config.get(n) is None:  # pragma: no cover
-                    logger.info(f"out of absorbed layer {n} not in weight config, skip.")
+                if not self.weight_config.get(layer_name):  # pragma: no cover
+                    logger.info(f"out of absorbed layer {layer_name} not in weight config, skip.")
                     continue
                 num_bits = self.weight_config[layer_name]["bits"]
                 group_size = self.weight_config[layer_name]["group_size"]
@@ -131,7 +150,7 @@ class TrainableEquivalentTransformation:
                 wrapper_module = TEQLinearFakeQuant(
                     orig_layer=m, alpha=alpha, num_bits=num_bits, group_size=group_size, scheme=scheme
                 )
-                set_module(self.model, n, wrapper_module)
+                set_module(self.model, layer_name, wrapper_module)
         # Attach the weight config captured at prepare stage to the model
         self.model._weight_config = self.weight_config
         self.model._trained_alphas = self.trained_alphas
@@ -190,7 +209,9 @@ class TrainableEquivalentTransformation:
             scale = scale.view(scale.shape[0], 1)
             layer.weight *= scale
 
-        elif layer.__class__.__name__ == "LlamaRMSNorm" or layer.__class__.__name__ == "T5LayerNorm":  ##quite tricky
+        elif (
+            layer.__class__.__name__ == "LlamaRMSNorm" or layer.__class__.__name__ == "T5LayerNorm"
+        ):  # pragma: no cover
             layer.weight *= scale
 
         else:  # pragma: no cover
@@ -222,7 +243,7 @@ class TrainableEquivalentTransformation:
     @torch.no_grad()
     def transform(self):
         """Apply alpha/scale."""
-        if not self._post_initialized:
+        if not self._post_initialized:  # pragma: no cover
             self._post_init()
         for ln_name, layer_names in self.absorb_to_layer.items():
             module = get_module(self.model, ln_name)
@@ -272,7 +293,7 @@ class TrainableEquivalentTransformation:
 
 class TEQuantizer(Quantizer):
 
-    def __init__(self, quant_config, folding, absorb_to_layer, example_inputs):
+    def __init__(self, quant_config, folding, example_inputs, absorb_to_layer=None):
         super().__init__(quant_config=quant_config)
         self.folding = folding
         self.absorb_to_layer = absorb_to_layer
