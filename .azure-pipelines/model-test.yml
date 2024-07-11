@@ -57,7 +57,7 @@ parameters:
   - name: PyTorchModelList
     type: object
     default:
-      - resnet18
+#      - resnet18
       - resnet18_fx
   - name: ONNXModelList
     type: object

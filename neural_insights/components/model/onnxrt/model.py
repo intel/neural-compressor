@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Onnxrt model class."""
+# pylint: disable=import-error
+# pylint: disable=no-name-in-module
 import os
 import re
 import sys
