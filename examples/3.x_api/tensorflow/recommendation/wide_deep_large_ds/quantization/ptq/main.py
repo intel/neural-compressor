@@ -18,6 +18,10 @@
 
 #
 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import sys
 import os
 import numpy as np
@@ -29,10 +33,6 @@ import json
 import datetime
 
 import tensorflow as tf
-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
 from tensorflow.python.framework import ops
 from tensorflow.core.framework import graph_pb2

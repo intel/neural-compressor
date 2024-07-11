@@ -143,9 +143,7 @@ def eval_func(infer_graph, iteration=-1):
         'model/Transformer/strided_slice_19:0')
 
     ds = Dataset(FLAGS.inputs_file, FLAGS.reference_file, FLAGS.vocab_file)
-    dataloader = DataLoader(framework='tensorflow', dataset=ds,
-                                batch_size=FLAGS.batch_size, collate_fn=collate_fn)
-
+    dataloader = BaseDataLoader(dataset=ds, batch_size=FLAGS.batch_size, collate_fn=collate_fn)
     config = tf.compat.v1.ConfigProto()
     config.use_per_session_threads = 1
     config.inter_op_parallelism_threads = 1

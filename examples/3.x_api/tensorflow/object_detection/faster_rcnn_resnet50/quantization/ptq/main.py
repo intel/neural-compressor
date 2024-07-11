@@ -16,13 +16,13 @@
 # limitations under the License.
 #
 #
+from __future__ import division
 
 import time
 
 import numpy as np
 import tensorflow as tf
 
-from __future__ import division
 from argparse import ArgumentParser
 from data_process import(
     COCOmAPv2,

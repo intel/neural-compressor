@@ -16,13 +16,13 @@
 # limitations under the License.
 #
 #
+from __future__ import division
 
 import time
 
 import numpy as np
 import tensorflow as tf
 
-from __future__ import division
 from argparse import ArgumentParser
 from data_process import(
     COCOmAPv2,
@@ -93,7 +93,7 @@ def evaluate(model):
 
     eval_dataset = COCORecordDataset(root=args.dataset_location, filter=None, \
             transform=ComposeTransform(transform_list=[ResizeTFTransform(size=300)]))
-    eval_dataloader=TFDataLoader(framework='tensorflow', dataset=eval_dataset, batch_size=args.batch_size)
+    eval_dataloader=TFDataLoader(dataset=eval_dataset, batch_size=args.batch_size)
     latency = eval_func(eval_dataloader)
     if args.benchmark and args.mode == 'performance':
         print("Batch size = {}".format(args.batch_size))
@@ -105,7 +105,7 @@ def evaluate(model):
 def main(_):
     calib_dataset = COCORecordDataset(root=args.dataset_location, filter=None, \
             transform=ComposeTransform(transform_list=[ResizeTFTransform(size=300)]))
-    calib_dataloader = TFDataLoader(framework='tensorflow', dataset=calib_dataset, batch_size=args.batch_size)
+    calib_dataloader = TFDataLoader(dataset=calib_dataset, batch_size=args.batch_size)
 
     if args.tune:
         from neural_compressor.tensorflow import StaticQuantConfig, quantize_model, Model
