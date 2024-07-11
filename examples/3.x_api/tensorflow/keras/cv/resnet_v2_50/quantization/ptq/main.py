@@ -119,7 +119,8 @@ def evaluate(model):
 def main(_):
     if FLAGS.tune:
         from neural_compressor.common import set_random_seed
-        from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
+        from neural_compressor.tensorflow import quantize_model
+        from neural_compressor.tensorflow.keras import StaticQuantConfig
 
         set_random_seed(9527)
         quant_config = StaticQuantConfig()
