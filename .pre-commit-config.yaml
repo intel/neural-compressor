@@ -52,10 +52,6 @@ repos:
           (?x)^(
             neural_compressor/.*(py|yaml|yml|sh)
           )$
-        exclude: |
-          (?x)^(
-              neural_solution/test/.*
-          )$
         args:
           [
             --license-filepath=.github/license_template.txt,
