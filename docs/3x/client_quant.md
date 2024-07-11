@@ -20,7 +20,7 @@ Users can get the default algorithm configuration by passing the `processor_type
 - If the DRAM size is greater than 32GB
 
 
-> The last condition may not be very accurate, but models greater than 7B generally need more than 32GB, and we assume that the user won't try these models on a client machine.
+> The last condition may not be very accurate, but models greater than 7B generally need more than 32GB DRAM, and we assume that the user won't try these models on a client machine.
 
 Below is an example to get the default configuration of RTN.
 
