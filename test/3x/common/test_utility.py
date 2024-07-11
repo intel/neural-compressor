@@ -43,7 +43,7 @@ class TestOptions(unittest.TestCase):
             set_random_seed(seed)
 
     def test_set_workspace(self):
-        workspace = "/path/to/workspace"
+        workspace = "/tmp/inc_workspace"
         set_workspace(workspace)
         self.assertEqual(options.workspace, workspace)
         returned_workspace = get_workspace()
