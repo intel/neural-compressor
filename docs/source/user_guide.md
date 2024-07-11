@@ -52,19 +52,6 @@ In 2.X API, it's very important to create the `DataLoader` and `Metrics` for you
 </tbody>
 </table>
 
-## Neural Coder (Zero-code Optimization)
-Neural Coder shows our special innovation about zero-code optimization to help user quickly apply Intel® Neural Compressor optimization without coding.
-<table class="docutils">
-<tbody>
-<tr>
-<td colspan="1" align="center"><a href="/neural_coder/docs/PythonLauncher.md">Launcher</a></td>
-<td colspan="2" align="center"><a href="/neural_coder/extensions/neural_compressor_ext_lab/README.md">JupyterLab Extension</a></td>
-<td colspan="3" align="center"><a href="/neural_coder/extensions/neural_compressor_ext_vscode/README.md">Visual Studio Code Extension</a></td>
-<td colspan="3" align="center"><a href="/neural_coder/docs/SupportMatrix.md">Supported Matrix</a></td>
-</tr>
-</tbody>
-</table>
-
 ## Advanced Topics
 This part provides the advanced topics that help user dive deep into Intel® Neural Compressor.
 <table class="docutils">
