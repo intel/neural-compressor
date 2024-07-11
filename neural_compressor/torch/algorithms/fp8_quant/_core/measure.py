@@ -261,8 +261,7 @@ class MaxAbsObserver:
         return state
 
     def update_state(self, x):
-        # TODO: [SW-189690] Find better way to update self.state in MaxAbsObserver class in HQT
-        self.state = torch.maximum(torch.max(torch.abs(x)), self.state)
+        self.state.copy_(torch.maximum(torch.max(torch.abs(x)), self.state))
 
     def measure(self, x):
         if self.first:
