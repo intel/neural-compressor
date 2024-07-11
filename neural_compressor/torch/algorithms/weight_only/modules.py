@@ -468,8 +468,7 @@ class WeightOnlyLinear(torch.nn.Module):
     ) -> np.ndarray:
         for i in range(new_in_features):
             packed_array[:, i] = (
-                (raw_array[:, i * n_pack + 8] << 16)
-                | (raw_array[:, i * n_pack + 7] << 14)
+                (raw_array[:, i * n_pack + 7] << 14)
                 | (raw_array[:, i * n_pack + 6] << 12)
                 | (raw_array[:, i * n_pack + 5] << 10)
                 | (raw_array[:, i * n_pack + 4] << 8)
@@ -536,7 +535,7 @@ class WeightOnlyLinear(torch.nn.Module):
             )
         return packed_array
     
-    def pack_array_with_numba1(
+    def pack_array_with_numba(
         self, raw_array: np.ndarray, n_pack: int, bits: int, compress_bits: int, compression_dtype=np.int32
     ) -> np.ndarray:
         """Packs the input array by combining elements into a specified bit-width format using NumPy.
@@ -562,7 +561,7 @@ class WeightOnlyLinear(torch.nn.Module):
         
     @staticmethod
     @numba.jit(nopython=True)
-    def pack_array_with_numba(
+    def pack_array_with_numba_yi(
         raw_tensor: np.ndarray, n_pack: int, bits: int, compression_dtype=np.int32
     ) -> np.ndarray:
         """Packs the input tensor by combining elements into a specified bit-width format using NumPy.
@@ -607,12 +606,11 @@ class WeightOnlyLinear(torch.nn.Module):
         return packed_tensor
 
     def pack_tensor_with_numpy(self, raw_tensor):
-        # breakpoint()
         if self.bits not in [2, 4, 8]:
             return self.pack_tensor_with_reshape(raw_tensor)
         compression_dtype = torch.tensor(0, dtype=self.compression_dtype).numpy().dtype
-        packed_array = self.pack_array_with_numba(raw_tensor.cpu().numpy(), self.n_pack, self.bits,  compression_dtype)
-        # packed_array = self.pack_array_with_numba(raw_tensor.cpu().numpy(), self.n_pack, self.bits, self.compress_bits, compression_dtype)
+        # packed_array = self.pack_array_with_numba_yi(raw_tensor.cpu().numpy(), self.n_pack, self.bits,  compression_dtype)
+        packed_array = self.pack_array_with_numba(raw_tensor.cpu().numpy(), self.n_pack, self.bits, self.compress_bits, compression_dtype)
         return torch.from_numpy(packed_array).to(device=raw_tensor.device)
 
     def unpack_tensor_with_numpy(self, packed_tensor):

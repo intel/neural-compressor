@@ -22,8 +22,8 @@ device = accelerator.current_device_name()
 class ModelConv1d(torch.nn.Module):
     def __init__(self):
         super(ModelConv1d, self).__init__()
-        self.fc1 = transformers.Conv1D(50, 32)
-        self.fc2 = torch.nn.Linear(50, 32)
+        self.fc1 = transformers.Conv1D(64, 32)
+        self.fc2 = torch.nn.Linear(64, 32)
         self.fc3 = torch.nn.Linear(32, 5)
 
     def forward(self, x):
