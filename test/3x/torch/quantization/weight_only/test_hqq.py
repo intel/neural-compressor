@@ -116,7 +116,6 @@ class TestHQQ:
         loaded_model = load(save_path, copy.deepcopy(fp32_model))
         loaded_model_out = loaded_model(example_inputs)[0]
         assert torch.allclose(qmodel_out_ref, loaded_model_out), "Unexpected result. Please double check."
-        # assert isinstance(loaded_model.transformer.h[0].mlp.fc_in, WeightOnlyLinear), "loading compressed model failed."
 
     def test_hqq_fallback(self, force_use_cpu, force_not_half):
 
