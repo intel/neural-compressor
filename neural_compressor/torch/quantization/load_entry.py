@@ -22,6 +22,7 @@ from neural_compressor.torch.quantization.config import (
     AWQConfig,
     FP8Config,
     GPTQConfig,
+    HQQConfig,
     RTNConfig,
     TEQConfig,
 )
@@ -89,7 +90,9 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
             # select load function
             config_object = config_mapping[next(iter(config_mapping))]
 
-            if isinstance(config_object, (RTNConfig, GPTQConfig, AWQConfig, TEQConfig, AutoRoundConfig)):  # WOQ
+            if isinstance(
+                config_object, (RTNConfig, GPTQConfig, AWQConfig, TEQConfig, AutoRoundConfig, HQQConfig)
+            ):  # WOQ
                 from neural_compressor.torch.algorithms import weight_only
 
                 return weight_only.load(model_name_or_path, original_model, format=LoadFormat.DEFAULT)

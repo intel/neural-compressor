@@ -1,3 +1,4 @@
+import copy
 import os
 import time
 from copy import deepcopy
@@ -94,6 +95,28 @@ class TestHQQ:
         assert torch.all(
             q_label_1.eq(q_label_2)
         ), "The results of calling `convert` + `prepare` and calling `quantize` should be equal."
+
+    def test_hqq_load_save(self, force_use_cpu, force_not_half):
+
+        hqq_global_option.use_half = False
+        fp32_model = AutoModelForCausalLM.from_pretrained("trl-internal-testing/tiny-random-OPTForCausalLM")
+        example_inputs = torch.tensor([[10, 20, 30, 40, 50, 60]], dtype=torch.long, device="cpu")
+        # test_default_config
+        quant_config = get_default_hqq_config()
+
+        # prepare + convert API
+        model = prepare(deepcopy(fp32_model), quant_config)
+        qmodel = convert(model)
+        qmodel_out_ref = model(example_inputs)[0]
+        save_path = options.workspace + f"/_hqq_model_{time.time()}.pth"
+        qmodel.save(save_path)
+        from neural_compressor.torch.quantization import load
+
+        # loading compressed model
+        loaded_model = load(save_path, copy.deepcopy(fp32_model))
+        loaded_model_out = loaded_model(example_inputs)[0]
+        assert torch.allclose(qmodel_out_ref, loaded_model_out), "Unexpected result. Please double check."
+        # assert isinstance(loaded_model.transformer.h[0].mlp.fc_in, WeightOnlyLinear), "loading compressed model failed."
 
     def test_hqq_fallback(self, force_use_cpu, force_not_half):
 
