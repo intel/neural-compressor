@@ -1,4 +1,5 @@
 import os
+import time
 from copy import deepcopy
 
 import pytest
@@ -6,6 +7,7 @@ import torch
 import transformers
 from transformers import AutoModelForCausalLM
 
+from neural_compressor.common import options
 from neural_compressor.common.utils import logger
 from neural_compressor.torch.algorithms.weight_only.hqq.config import HQQModuleConfig, QTensorConfig, hqq_global_option
 from neural_compressor.torch.algorithms.weight_only.hqq.core import HQQLinear
@@ -181,3 +183,53 @@ class TestHQQ:
             scale_quant_group_size=scale_quant_group_size,
             device=torch.device(device_name),
         )
+
+    @pytest.mark.parametrize(
+        "nbits, group_size, quant_zero, quant_scale, scale_quant_group_size",
+        [
+            (4, 64, True, False, 128),
+        ],
+    )
+    def test_hqq_linear_save_and_load(
+        self,
+        nbits,
+        group_size,
+        quant_zero,
+        quant_scale,
+        scale_quant_group_size,
+    ):
+        hqq_global_option.use_half = False
+        # Parse config
+        weight_qconfig = QTensorConfig(
+            nbits=nbits,
+            channel_wise=True,
+            group_size=group_size,
+            optimize=True,
+            round_zero=True if nbits == 4 else False,
+        )
+        zero_qconfig = None
+        if quant_zero:
+            zero_qconfig = QTensorConfig(nbits=8, channel_wise=False, group_size=None, optimize=False)
+        scale_qconfig = None
+        if quant_scale:
+            scale_qconfig = QTensorConfig(nbits=8, channel_wise=True, group_size=scale_quant_group_size, optimize=False)
+        hqq_quant_config = HQQModuleConfig(weight=weight_qconfig, scale=scale_qconfig, zero=zero_qconfig)
+        # Create HQQ Linear
+        bs = 4
+        in_features = 64
+        out_features = 128
+        float_linear = torch.nn.Linear(in_features=in_features, out_features=out_features)
+        float_linear.to(device)
+        float_linear_copy = deepcopy(float_linear)
+        input = torch.randn(bs, in_features, device=device)
+        hqq_linear = HQQLinear.from_float(float_linear_copy, quant_config=hqq_quant_config)
+        out_ref = hqq_linear(input)
+        state_dict = hqq_linear.state_dict()
+        hqq_module_path = options.workspace + f"/_hqq_linear_{time.time()}.pth"
+        torch.save(state_dict, hqq_module_path)
+        reload_state_dict = torch.load(hqq_module_path)
+        new_float = torch.nn.Linear(in_features=in_features, out_features=out_features)
+        new_hqq_linear = HQQLinear.from_float(new_float, quant_config=hqq_quant_config)
+        new_hqq_linear.load_state_dict(reload_state_dict)
+        out = new_hqq_linear(input)
+        assert torch.equal(out_ref, out), f"out_ref: {out_ref}, out: {out}"

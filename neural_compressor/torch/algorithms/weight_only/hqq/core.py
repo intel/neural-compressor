@@ -278,3 +278,31 @@ class HQQLinear(torch.nn.Linear):
         # !!! Delete the float explicitly to save memory
         del float_module
         return new_mod
+
+    def state_dict(self, *args, **kwargs):  # nn.Module override compatible
+        state_dict = self.q_weight.to_state_dict()
+        if self.bias is not None:
+            state_dict["bias"] = self.bias
+        return state_dict
+
+    def load_state_dict(self, state_dict):
+        _scale_quantized = state_dict["scale_quantized"]
+        _zero_quantized = state_dict["zero_quantized"]
+        scale_state = state_dict["meta_info"]["scale"]
+        zero_state = state_dict["meta_info"]["zero"]
+        if _scale_quantized:
+            scale = HQQTensorHandle._create_q_tensor(scale_state["val"], scale_state["meta_info"])
+        else:
+            scale = state_dict["meta_info"]["scale"]
+        if _zero_quantized:
+            zero = HQQTensorHandle._create_q_tensor(zero_state["val"], zero_state["meta_info"])
+        else:
+            zero = state_dict["meta_info"]["zero"]
+        meta = state_dict["meta_info"]
+        meta["scale"] = scale
+        meta["zero"] = zero
+        self.q_weight = HQQTensorHandle._create_q_tensor(state_dict["val"], meta)
+        if self.bias is not None:
+            self.bias = state_dict["bias"]
+        self.quantized = True
+        return self
