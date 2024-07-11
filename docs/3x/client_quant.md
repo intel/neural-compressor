@@ -10,15 +10,14 @@ Quantization on Client
     2.3 [Set several environment variables for optimal performance]
     
 ## Introduction
-Currently, we supported different default algorithm configuration based on the type of machine for RTN, GPTQ, and Auto-Round on Pytorch framework.
-
-## Support matrix
-
+Currently, we supported different default algorithm configuration based on the type of processor for `RTN`, `GPTQ`, and `Auto-Round` on Pytorch framework.
+We roughly divide processors into two categories, client and server, and provide the lightweight configuration for client.
 
 ## Get Started
 ### Get default algorithm configuration
 
 Currently, we detect the machine as server if one of below conditions meet, user can override it by setting the `processor_type` explicitly.
+- 
 
 ```python
 config_for_client = get_default_rtn_config(processor_type="client")
