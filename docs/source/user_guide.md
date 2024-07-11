@@ -76,26 +76,14 @@ This part provides the advanced topics that help user dive deep into Intel® Neu
 <td colspan="3" align="center"><a href="calibration.md">Calibration</a></td>
 </tr>
 <tr>
-<td colspan="4" align="center"><a href="diagnosis.md">Diagnosis</a></td>
-<td colspan="4" align="center"><a href="add_new_data_type.md">Add New Data Type</a></td>
-<td colspan="4" align="center"><a href="add_new_adaptor.md">Add New Adaptor</a></td>
+<td colspan="6" align="center"><a href="add_new_data_type.md">Add New Data Type</a></td>
+<td colspan="6" align="center"><a href="add_new_adaptor.md">Add New Adaptor</a></td>
 </tr>
 <tr>
 <td colspan="3" align="center"><a href="distillation_quantization.md">Distillation for Quantization</a></td>
 <td colspan="3" align="center"><a href="smooth_quant.md">SmoothQuant</a></td>
 <td colspan="3" align="center"><a href="quantization_weight_only.md">Weight-Only Quantization</a></td>
 <td colspan="3" align="center"><a href="quantization_layer_wise.md">Layer-Wise Quantization</a></td>
-</tr>
-</tbody>
-</table>
-
-## Innovations for Productivity
-We are continue creating some user-friendly applications to improve the productivity. From v2.2 we have `Neural Solution` for distributed quantization and `Neural Insights` for quantization accuracy debugging.
-<table class="docutils">
-<tbody>
-<tr>
-<td colspan="4" align="center"><a href="/neural_solution/README.md">Neural Solution</a></td>
-<td colspan="4" align="center"><a href="/neural_insights/README.md">Neural Insights</a></td>
 </tr>
 </tbody>
 </table>
