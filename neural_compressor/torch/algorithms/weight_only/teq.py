@@ -282,9 +282,9 @@ class TrainableEquivalentTransformation:
             # for only group_dim is 0 or only `transformers.Conv1D`, we need transpose weight.
             if is_transformers_imported():
                 transpose = (group_dim == 0) ^ (isinstance(m, transformers.Conv1D))
-            else:
+            else:  # pragma: no cover
                 transpose = group_dim == 0
-            if transpose:
+            if transpose:  # pragma: no cover
                 weight = m.weight.detach().T.contiguous()
             else:
                 weight = m.weight.detach()
