@@ -70,7 +70,7 @@ def generate_model_info(model):
 
 
 def get_patched_mod_list():
-    from habana_quantization_toolkit._core.common import mod_default_dict
+    from ._core.common import mod_default_dict
 
     patched_mod_list = []
     for patched_mod in mod_default_dict.values():

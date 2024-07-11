@@ -13,10 +13,10 @@ def update_mod_dict(config):
 
 def print_init_info(config):
   import importlib.metadata
-  versionStr = importlib.metadata.version('habana_quantization_toolkit')
+  versionStr = importlib.metadata.version('neural_compressor_3x_pt')
   locationStr = versionStr.find('git') + 3
-  logger.info("HQT Git revision = %s", versionStr[locationStr:])
-  logger.info("HQT Configuration = %s", config)
+  logger.info("neural_compressor_3x_pt Git revision = %s", versionStr[locationStr:])
+  logger.info("neural_compressor_3x_pt Configuration = %s", config)
 
 def is_substr(substr_list, target):
   return any([x in target for x in substr_list])
