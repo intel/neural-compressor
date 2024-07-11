@@ -13,7 +13,7 @@ Currently, we support different default algorithm configurations based on the ty
 ## Get Started
 ### Get Default Algorithm Configuration
 
-Users can get the default algorithm configuration by passing the processor_type explicitly to the get default configuration API, or leave it empty, and we will return the appropriate configuration according to the hardware information. Currently, the machine is detected as a server if one of the following conditions is met:
+Users can get the default algorithm configuration by passing the `processor_type` explicitly to the get configuration API, or leave it empty, and we will return the appropriate configuration according to the hardware information. Currently, the machine is detected as a server if one of the following conditions is met:
 
 - If there is more than one sockets
 - If the brand name includes `Xeon`
