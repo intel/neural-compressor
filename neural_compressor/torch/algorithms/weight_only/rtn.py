@@ -108,6 +108,8 @@ class RTNQuantizer(Quantizer):
         total_quant_time = 0.0
         total_quant_int_time = 0.0
         total_set_module_time = 0.0
+        save_time = 0.0
+        layer_time = 0.0
         import time
         assert isinstance(model, torch.nn.Module), "only support torch module"
         if is_transformers_imported():
@@ -264,8 +266,6 @@ class RTNQuantizer(Quantizer):
                 layer_time = time.time() - start
                 total_time += layer_time
                 logger.info(layer_time)
-                del m
-                gc.collect()
             if name == "":
                 return new_module
             else:
