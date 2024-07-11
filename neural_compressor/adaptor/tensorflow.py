@@ -1640,7 +1640,6 @@ class TensorFlowAdaptor(Adaptor):
 
         return converter.convert_without_calib()
 
-
     def get_output_op_names(self, qmodel):
         """Get the oupur OPs's names."""
         from .tf_utils.graph_util import GraphAnalyzer

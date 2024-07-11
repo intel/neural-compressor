@@ -2532,5 +2532,4 @@ class _Config:
         return self._onnxruntime
 
 
-
 config = _Config()

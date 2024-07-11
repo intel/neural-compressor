@@ -2070,4 +2070,3 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             if isinstance(op_config, OpTuningConfig) and quant_mode in op_config.op_quant_mode:
                 ops_lst.append(op_info)
         return ops_lst
-

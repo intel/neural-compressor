@@ -1697,7 +1697,6 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         acc = 0 if metrics is None else [metric.result() for metric in metrics]
         return acc if not isinstance(acc, list) or len(acc) > 1 else acc[0]
 
-
     def save(self, model, path):
         """Save model.
 
