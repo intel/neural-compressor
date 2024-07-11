@@ -290,7 +290,11 @@ class TrainableEquivalentTransformation:
                 weight = m.weight.detach()
             if isinstance(m, torch.nn.Linear):  # pragma: no cover
                 int_weight, scale, zp = quant_tensor(
-                    weight.data, num_bits=num_bits, group_size=group_size, scheme=scheme
+                    weight.data,
+                    num_bits=num_bits,
+                    group_size=group_size,
+                    scheme=scheme,
+                    return_int=True,
                 )
                 int_weight = int_weight.t_().contiguous() if transpose else int_weight
                 scale = scale.t_().contiguous() if transpose else scale
