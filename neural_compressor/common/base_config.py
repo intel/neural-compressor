@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import inspect
 import json
+import os
 import re
 from abc import ABC, abstractmethod
 from collections import OrderedDict
@@ -875,6 +876,7 @@ class Options:
 
     def __init__(self, random_seed=1978, workspace=DEFAULT_WORKSPACE, resume_from=None, tensorboard=False):
         """Init an Option object."""
+        os.makedirs(workspace, exist_ok=True)
         self.random_seed = random_seed
         self.workspace = workspace
         self.resume_from = resume_from
@@ -894,6 +896,7 @@ class Options:
     @property
     def workspace(self):
         """Get workspace."""
+        os.makedirs(self._workspace, exist_ok=True)
         return self._workspace
 
     @workspace.setter
