@@ -54,8 +54,6 @@ def _convert(model, config_path):
 
 
 def _prepare(model, config_path):
-    import habana_quantization_toolkit as hqt
-
     # update mode to MEASURE
     config_path = update_mode(config_path, measure_step=True)
 
