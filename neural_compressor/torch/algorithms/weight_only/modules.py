@@ -309,14 +309,14 @@ class WeightOnlyLinear(torch.nn.Module):
     ) -> np.ndarray:
         for i in range(new_in_features):
             packed_array[:, i] = (
-                (raw_array[:, i * n_pack + 7] << 28)
-                | (raw_array[:, i * n_pack + 6] << 24)
-                | (raw_array[:, i * n_pack + 5] << 20)
-                | (raw_array[:, i * n_pack + 4] << 16)
-                | (raw_array[:, i * n_pack + 3] << 12)
-                | (raw_array[:, i * n_pack + 2] << 8)
-                | (raw_array[:, i * n_pack + 1] << 4)
-                | raw_array[:, i * n_pack]
+                ((raw_array[:, i * n_pack + 7] & 0b1111) << 28)
+                | ((raw_array[:, i * n_pack + 6] & 0b1111) << 24)
+                | ((raw_array[:, i * n_pack + 5] & 0b1111) << 20)
+                | ((raw_array[:, i * n_pack + 4] & 0b1111) << 16)
+                | ((raw_array[:, i * n_pack + 3] & 0b1111) << 12)
+                | ((raw_array[:, i * n_pack + 2] & 0b1111) << 8)
+                | ((raw_array[:, i * n_pack + 1] & 0b1111) << 4)
+                | (raw_array[:, i * n_pack] & 0b1111)
             )
         return packed_array
     
@@ -327,10 +327,10 @@ class WeightOnlyLinear(torch.nn.Module):
     ) -> np.ndarray:
         for i in range(new_in_features):
             packed_array[:, i] = (
-                (raw_array[:, i * n_pack + 3] << 12)
-                | (raw_array[:, i * n_pack + 2] << 8)
-                | (raw_array[:, i * n_pack + 1] << 4)
-                | raw_array[:, i * n_pack]
+                ((raw_array[:, i * n_pack + 3] & 0b1111) << 12)
+                | ((raw_array[:, i * n_pack + 2] & 0b1111) << 8)
+                | ((raw_array[:, i * n_pack + 1] & 0b1111) << 4)
+                | (raw_array[:, i * n_pack] & 0b1111)
             )
         return packed_array
     
@@ -341,8 +341,8 @@ class WeightOnlyLinear(torch.nn.Module):
     ) -> np.ndarray:
         for i in range(new_in_features):
             packed_array[:, i] = (
-                (raw_array[:, i * n_pack + 1] << 4)
-                | raw_array[:, i * n_pack]
+                ((raw_array[:, i * n_pack + 1] & 0b1111) << 4)
+                | (raw_array[:, i * n_pack] & 0b1111)
             )
         return packed_array
     
@@ -353,22 +353,22 @@ class WeightOnlyLinear(torch.nn.Module):
     ) -> np.ndarray:
         for i in range(new_in_features):
             packed_array[:, i] = (
-                (raw_array[:, i * n_pack + 15] << 60)
-                | (raw_array[:, i * n_pack + 14] << 56)
-                | (raw_array[:, i * n_pack + 13] << 52)
-                | (raw_array[:, i * n_pack + 12] << 48)
-                | (raw_array[:, i * n_pack + 11] << 44)
-                | (raw_array[:, i * n_pack + 10] << 40)
-                | (raw_array[:, i * n_pack + 9] << 36)
-                | (raw_array[:, i * n_pack + 8] << 32)
-                | (raw_array[:, i * n_pack + 7] << 28)
-                | (raw_array[:, i * n_pack + 6] << 24)
-                | (raw_array[:, i * n_pack + 5] << 20)
-                | (raw_array[:, i * n_pack + 4] << 16)
-                | (raw_array[:, i * n_pack + 3] << 12)
-                | (raw_array[:, i * n_pack + 2] << 8)
-                | (raw_array[:, i * n_pack + 1] << 4)
-                | raw_array[:, i * n_pack]
+                ((raw_array[:, i * n_pack + 15] & 0b1111) << 60)
+                | ((raw_array[:, i * n_pack + 14] & 0b1111) << 56)
+                | ((raw_array[:, i * n_pack + 13] & 0b1111) << 52)
+                | ((raw_array[:, i * n_pack + 12] & 0b1111) << 48)
+                | ((raw_array[:, i * n_pack + 11] & 0b1111) << 44)
+                | ((raw_array[:, i * n_pack + 10] & 0b1111) << 40)
+                | ((raw_array[:, i * n_pack + 9] & 0b1111) << 36)
+                | ((raw_array[:, i * n_pack + 8] & 0b1111) << 32)
+                | ((raw_array[:, i * n_pack + 7] & 0b1111) << 28)
+                | ((raw_array[:, i * n_pack + 6] & 0b1111) << 24)
+                | ((raw_array[:, i * n_pack + 5] & 0b1111) << 20)
+                | ((raw_array[:, i * n_pack + 4] & 0b1111) << 16)
+                | ((raw_array[:, i * n_pack + 3] & 0b1111) << 12)
+                | ((raw_array[:, i * n_pack + 2] & 0b1111) << 8)
+                | ((raw_array[:, i * n_pack + 1] & 0b1111) << 4)
+                | (raw_array[:, i * n_pack] & 0b1111)
             )
         return packed_array
 
@@ -380,10 +380,10 @@ class WeightOnlyLinear(torch.nn.Module):
     ) -> np.ndarray:
         for i in range(new_in_features):
             packed_array[:, i] = (
-                (raw_array[:, i * n_pack + 3] << 24)
-                | (raw_array[:, i * n_pack + 2] << 16)
-                | (raw_array[:, i * n_pack + 1] << 8)
-                | raw_array[:, i * n_pack]
+                ((raw_array[:, i * n_pack + 3] & 0b11111111) << 24)
+                | ((raw_array[:, i * n_pack + 2] & 0b11111111) << 16)
+                | ((raw_array[:, i * n_pack + 1] & 0b11111111) << 8)
+                | (raw_array[:, i * n_pack] & 0b11111111)
             )
         return packed_array
     
@@ -394,10 +394,10 @@ class WeightOnlyLinear(torch.nn.Module):
     ) -> np.ndarray:
         for i in range(new_in_features):
             packed_array[:, i] = (
-                (raw_array[:, i * n_pack + 3] << 24)
-                | (raw_array[:, i * n_pack + 2] << 16)
-                | (raw_array[:, i * n_pack + 1] << 8)
-                | raw_array[:, i * n_pack]
+                ((raw_array[:, i * n_pack + 3] & 0b11111111) << 24)
+                | ((raw_array[:, i * n_pack + 2] & 0b11111111) << 16)
+                | ((raw_array[:, i * n_pack + 1] & 0b11111111) << 8)
+                | (raw_array[:, i * n_pack] & 0b11111111)
             )
         return packed_array
     
@@ -407,7 +407,7 @@ class WeightOnlyLinear(torch.nn.Module):
         raw_array: np.ndarray, packed_array:np.ndarray, n_pack: int, new_in_features:int
     ) -> np.ndarray:
         for i in range(new_in_features):
-            packed_array[:, i] = raw_array[:, i * n_pack]
+            packed_array[:, i] = (raw_array[:, i * n_pack] & 0b11111111)
         return packed_array
     
     @staticmethod
@@ -417,22 +417,15 @@ class WeightOnlyLinear(torch.nn.Module):
     ) -> np.ndarray:
         for i in range(new_in_features):
             packed_array[:, i] = (
-                (raw_array[:, i * n_pack + 7] << 56)
-                | (raw_array[:, i * n_pack + 6] << 48)
-                | (raw_array[:, i * n_pack + 5] << 40)
-                | (raw_array[:, i * n_pack + 4] << 32)
-                | (raw_array[:, i * n_pack + 3] << 24)
-                | (raw_array[:, i * n_pack + 2] << 16)
-                | (raw_array[:, i * n_pack + 1] << 8)
-                | raw_array[:, i * n_pack]
+                ((raw_array[:, i * n_pack + 7] & 0b11111111) << 56)
+                | ((raw_array[:, i * n_pack + 6] & 0b11111111) << 48)
+                | ((raw_array[:, i * n_pack + 5] & 0b11111111) << 40)
+                | ((raw_array[:, i * n_pack + 4] & 0b11111111) << 32)
+                | ((raw_array[:, i * n_pack + 3] & 0b11111111) << 24)
+                | ((raw_array[:, i * n_pack + 2] & 0b11111111) << 16)
+                | ((raw_array[:, i * n_pack + 1] & 0b11111111) << 8)
+                | (raw_array[:, i * n_pack] & 0b11111111)
             )
-        return packed_array
-    
-    @staticmethod
-    @numba.jit(nopython=True, parallel=True)
-    def pack_array_with_numba_b2_c32(
-        raw_array: np.ndarray, packed_array:np.ndarray, n_pack: int, new_in_features:int
-    ) -> np.ndarray:
         return packed_array
     
     @staticmethod
@@ -442,22 +435,22 @@ class WeightOnlyLinear(torch.nn.Module):
     ) -> np.ndarray:
         for i in range(new_in_features):
             packed_array[:, i] = (
-                (raw_array[:, i * n_pack + 15] << 30)
-                | (raw_array[:, i * n_pack + 14] << 28)
-                | (raw_array[:, i * n_pack + 13] << 26)
-                | (raw_array[:, i * n_pack + 12] << 24)
-                | (raw_array[:, i * n_pack + 11] << 22)
-                | (raw_array[:, i * n_pack + 10] << 20)
-                | (raw_array[:, i * n_pack + 9] << 18)
-                | (raw_array[:, i * n_pack + 8] << 16)
-                | (raw_array[:, i * n_pack + 7] << 14)
-                | (raw_array[:, i * n_pack + 6] << 12)
-                | (raw_array[:, i * n_pack + 5] << 10)
-                | (raw_array[:, i * n_pack + 4] << 8)
-                | (raw_array[:, i * n_pack + 3] << 6)
-                | (raw_array[:, i * n_pack + 2] << 4)
-                | (raw_array[:, i * n_pack + 1] << 2)
-                | raw_array[:, i * n_pack]
+                ((raw_array[:, i * n_pack + 15] & 0b11) << 30)
+                | ((raw_array[:, i * n_pack + 14] & 0b11) << 28)
+                | ((raw_array[:, i * n_pack + 13] & 0b11) << 26)
+                | ((raw_array[:, i * n_pack + 12] & 0b11) << 24)
+                | ((raw_array[:, i * n_pack + 11] & 0b11) << 22)
+                | ((raw_array[:, i * n_pack + 10] & 0b11) << 20)
+                | ((raw_array[:, i * n_pack + 9] & 0b11) << 18)
+                | ((raw_array[:, i * n_pack + 8] & 0b11) << 16)
+                | ((raw_array[:, i * n_pack + 7] & 0b11) << 14)
+                | ((raw_array[:, i * n_pack + 6] & 0b11) << 12)
+                | ((raw_array[:, i * n_pack + 5] & 0b11) << 10)
+                | ((raw_array[:, i * n_pack + 4] & 0b11) << 8)
+                | ((raw_array[:, i * n_pack + 3] & 0b11) << 6)
+                | ((raw_array[:, i * n_pack + 2] & 0b11) << 4)
+                | ((raw_array[:, i * n_pack + 1] & 0b11) << 2)
+                | (raw_array[:, i * n_pack] & 0b11)
             )
         return packed_array
 
@@ -468,14 +461,14 @@ class WeightOnlyLinear(torch.nn.Module):
     ) -> np.ndarray:
         for i in range(new_in_features):
             packed_array[:, i] = (
-                (raw_array[:, i * n_pack + 7] << 14)
-                | (raw_array[:, i * n_pack + 6] << 12)
-                | (raw_array[:, i * n_pack + 5] << 10)
-                | (raw_array[:, i * n_pack + 4] << 8)
-                | (raw_array[:, i * n_pack + 3] << 6)
-                | (raw_array[:, i * n_pack + 2] << 4)
-                | (raw_array[:, i * n_pack + 1] << 2)
-                | raw_array[:, i * n_pack]
+                ((raw_array[:, i * n_pack + 7] & 0b11) << 14)
+                | ((raw_array[:, i * n_pack + 6] & 0b11) << 12)
+                | ((raw_array[:, i * n_pack + 5] & 0b11) << 10)
+                | ((raw_array[:, i * n_pack + 4] & 0b11) << 8)
+                | ((raw_array[:, i * n_pack + 3] & 0b11) << 6)
+                | ((raw_array[:, i * n_pack + 2] & 0b11) << 4)
+                | ((raw_array[:, i * n_pack + 1] & 0b11) << 2)
+                | (raw_array[:, i * n_pack] & 0b11)
             )
         return packed_array
     
@@ -486,10 +479,10 @@ class WeightOnlyLinear(torch.nn.Module):
     ) -> np.ndarray:
         for i in range(new_in_features):
             packed_array[:, i] = (
-                (raw_array[:, i * n_pack + 3] << 6)
-                | (raw_array[:, i * n_pack + 2] << 4)
-                | (raw_array[:, i * n_pack + 1] << 2)
-                | raw_array[:, i * n_pack]
+                ((raw_array[:, i * n_pack + 3] & 0b11) << 6)
+                | ((raw_array[:, i * n_pack + 2] & 0b11) << 4)
+                | ((raw_array[:, i * n_pack + 1] & 0b11) << 2)
+                | (raw_array[:, i * n_pack] & 0b11)
             )
         return packed_array
     
@@ -500,38 +493,38 @@ class WeightOnlyLinear(torch.nn.Module):
     ) -> np.ndarray:
         for i in range(new_in_features):
             packed_array[:, i] = (
-                (raw_array[:, i * n_pack + 31] << 62)
-                | (raw_array[:, i * n_pack + 30] << 60)
-                | (raw_array[:, i * n_pack + 29] << 58)
-                | (raw_array[:, i * n_pack + 28] << 56)
-                | (raw_array[:, i * n_pack + 27] << 54)
-                | (raw_array[:, i * n_pack + 26] << 52)
-                | (raw_array[:, i * n_pack + 25] << 50)
-                | (raw_array[:, i * n_pack + 24] << 48)
-                | (raw_array[:, i * n_pack + 23] << 46)
-                | (raw_array[:, i * n_pack + 22] << 44)
-                | (raw_array[:, i * n_pack + 21] << 42)
-                | (raw_array[:, i * n_pack + 20] << 40)
-                | (raw_array[:, i * n_pack + 19] << 38)
-                | (raw_array[:, i * n_pack + 18] << 36)
-                | (raw_array[:, i * n_pack + 17] << 34)
-                | (raw_array[:, i * n_pack + 16] << 32)
-                | (raw_array[:, i * n_pack + 15] << 30)
-                | (raw_array[:, i * n_pack + 14] << 28)
-                | (raw_array[:, i * n_pack + 13] << 26)
-                | (raw_array[:, i * n_pack + 12] << 24)
-                | (raw_array[:, i * n_pack + 11] << 22)
-                | (raw_array[:, i * n_pack + 10] << 20)
-                | (raw_array[:, i * n_pack + 9] << 18)
-                | (raw_array[:, i * n_pack + 8] << 16)
-                | (raw_array[:, i * n_pack + 7] << 14)
-                | (raw_array[:, i * n_pack + 6] << 12)
-                | (raw_array[:, i * n_pack + 5] << 10)
-                | (raw_array[:, i * n_pack + 4] << 8)
-                | (raw_array[:, i * n_pack + 3] << 6)
-                | (raw_array[:, i * n_pack + 2] << 4)
-                | (raw_array[:, i * n_pack + 1] << 2)
-                | raw_array[:, i * n_pack]
+                ((raw_array[:, i * n_pack + 31] & 0b11) << 62)
+                | ((raw_array[:, i * n_pack + 30] & 0b11) << 60)
+                | ((raw_array[:, i * n_pack + 29] & 0b11) << 58)
+                | ((raw_array[:, i * n_pack + 28] & 0b11) << 56)
+                | ((raw_array[:, i * n_pack + 27] & 0b11) << 54)
+                | ((raw_array[:, i * n_pack + 26] & 0b11) << 52)
+                | ((raw_array[:, i * n_pack + 25] & 0b11) << 50)
+                | ((raw_array[:, i * n_pack + 24] & 0b11) << 48)
+                | ((raw_array[:, i * n_pack + 23] & 0b11) << 46)
+                | ((raw_array[:, i * n_pack + 22] & 0b11) << 44)
+                | ((raw_array[:, i * n_pack + 21] & 0b11) << 42)
+                | ((raw_array[:, i * n_pack + 20] & 0b11) << 40)
+                | ((raw_array[:, i * n_pack + 19] & 0b11) << 38)
+                | ((raw_array[:, i * n_pack + 18] & 0b11) << 36)
+                | ((raw_array[:, i * n_pack + 17] & 0b11) << 34)
+                | ((raw_array[:, i * n_pack + 16] & 0b11) << 32)
+                | ((raw_array[:, i * n_pack + 15] & 0b11) << 30)
+                | ((raw_array[:, i * n_pack + 14] & 0b11) << 28)
+                | ((raw_array[:, i * n_pack + 13] & 0b11) << 26)
+                | ((raw_array[:, i * n_pack + 12] & 0b11) << 24)
+                | ((raw_array[:, i * n_pack + 11] & 0b11) << 22)
+                | ((raw_array[:, i * n_pack + 10] & 0b11) << 20)
+                | ((raw_array[:, i * n_pack + 9] & 0b11) << 18)
+                | ((raw_array[:, i * n_pack + 8] & 0b11) << 16)
+                | ((raw_array[:, i * n_pack + 7] & 0b11) << 14)
+                | ((raw_array[:, i * n_pack + 6] & 0b11) << 12)
+                | ((raw_array[:, i * n_pack + 5] & 0b11) << 10)
+                | ((raw_array[:, i * n_pack + 4] & 0b11) << 8)
+                | ((raw_array[:, i * n_pack + 3] & 0b11) << 6)
+                | ((raw_array[:, i * n_pack + 2] & 0b11) << 4)
+                | ((raw_array[:, i * n_pack + 1] & 0b11) << 2)
+                | (raw_array[:, i * n_pack] & 0b11)
             )
         return packed_array
     
@@ -582,7 +575,7 @@ class WeightOnlyLinear(torch.nn.Module):
             for i in range(new_in_features):
                 packed_tensor[:, i] = (
                     (raw_tensor[:, i * n_pack + 7] << 28)
-                    | (raw_tensor[:, i * n_pack + 6] << 24)
+                    | (raw_tensor[:, i * n_pack + 6]  << 24)
                     | (raw_tensor[:, i * n_pack + 5] << 20)
                     | (raw_tensor[:, i * n_pack + 4] << 16)
                     | (raw_tensor[:, i * n_pack + 3] << 12)
