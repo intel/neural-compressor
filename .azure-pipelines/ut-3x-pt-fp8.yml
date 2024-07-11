@@ -8,10 +8,8 @@ pr:
       - master
   paths:
     include:
-      - neural_compressor/common
-      - setup.py
-      - requirements_pt.txt
       - .azure-pipelines/scripts/ut/3x/run_3x_pt_fp8.sh
+      - .azure-pipelines/ut-3x-pt-fp8.yml
 
 pool: GAUDI
 
@@ -52,7 +50,7 @@ stages:
               dockerConfigName: "gitCloneDockerConfig"
               utScriptFileName: "3x/run_3x_pt_fp8"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut_3x_pt_fp8"
+              utArtifact: "ut_3x_pt_fp8_baseline"
 
   - stage: Coverage
     displayName: "Coverage Compare"
