@@ -16,6 +16,9 @@ parameters:
   - name: repo
     type: string
     default: "https://github.com/intel/neural-compressor"
+  - name: imageSource
+    type: string
+    default: "build"
 
 steps:
   - task: Bash@3
@@ -24,7 +27,7 @@ steps:
       script: |
         docker ps -a
         if [[ $(docker ps -a | grep -i '${{ parameters.containerName }}'$) ]]; then
-            docker start $(docker ps -aq)
+            docker start $(docker ps -aq --filter "name=${{ parameters.containerName }}")
             echo "remove left files through container ..."
             docker exec ${{ parameters.containerName }} bash -c "ls -a /neural-compressor && rm -fr /neural-compressor/* && rm -fr /neural-compressor/.* && ls -a /neural-compressor  || true"
         fi
@@ -57,19 +60,25 @@ steps:
           git checkout master
         displayName: "Checkout out master"
 
-  - script: |
-      if [[ ! $(docker images | grep -i ${{ parameters.repoName }}:${{ parameters.repoTag }}) ]]; then
-        docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/${{parameters.dockerFileName}}.devel -t ${{ parameters.repoName }}:${{ parameters.repoTag }} .
-      fi
-      docker images | grep -i ${{ parameters.repoName }}
-      if [[ $? -ne 0 ]]; then
-        echo "NO Such Repo"
-        exit 1
-      fi
-    displayName: "Build develop docker image"
+  - ${{ if eq(parameters.imageSource, 'build') }}:
+      - script: |
+          if [[ ! $(docker images | grep -i ${{ parameters.repoName }}:${{ parameters.repoTag }}) ]]; then
+            docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/${{parameters.dockerFileName}}.devel -t ${{ parameters.repoName }}:${{ parameters.repoTag }} .
+          fi
+          docker images | grep -i ${{ parameters.repoName }}
+          if [[ $? -ne 0 ]]; then
+            echo "NO Such Repo"
+            exit 1
+          fi
+        displayName: "Build develop docker image"
+
+  - ${{ if eq(parameters.imageSource, 'pull') }}:
+      - script: |
+            docker pull vault.habana.ai/gaudi-docker/1.16.1/ubuntu22.04/habanalabs/pytorch-installer-2.2.2:latest
+        displayName: "Pull habana docker image"
 
   - script: |
-      docker stop $(docker ps -aq)
+      docker stop $(docker ps -aq --filter "name=${{ parameters.containerName }}")
       docker rm -vf ${{ parameters.containerName }} || true
       env | sort
     displayName: "Clean docker container"
@@ -79,8 +88,15 @@ steps:
         inputs:
           targetType: "inline"
           script: |
-            docker run -dit --disable-content-trust --privileged --name=${{ parameters.containerName }} --shm-size="2g" \
-            -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor -v /tf_dataset:/tf_dataset -v /tf_dataset2:/tf_dataset2 ${{ parameters.repoName }}:${{ parameters.repoTag }}
+            if [[ "${{ parameters.imageSource }}" == "build" ]]; then
+                docker run -dit --disable-content-trust --privileged --name=${{ parameters.containerName }} --shm-size="2g" \
+                -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor -v /tf_dataset:/tf_dataset -v /tf_dataset2:/tf_dataset2 \
+                ${{ parameters.repoName }}:${{ parameters.repoTag }}
+            else
+                docker run -dit --disable-content-trust --privileged --name=${{ parameters.containerName }} --shm-size="2g" \
+                --runtime=habana -e HABANA_VISIBLE_DEVICES=all -e OMPI_MCA_btl_vader_single_copy_mechanism=none --cap-add=sys_nice --net=host --ipc=host \
+                -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor vault.habana.ai/gaudi-docker/1.16.1/ubuntu22.04/habanalabs/pytorch-installer-2.2.2:latest
+            fi
             echo "Show the container list after docker run ... "
             docker ps -a
         displayName: "Docker run - ${{ parameters.containerName }} Container"

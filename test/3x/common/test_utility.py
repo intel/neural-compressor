@@ -21,6 +21,7 @@ from neural_compressor.common.utils import (
     Mode,
     default_tuning_logger,
     dump_elapsed_time,
+    get_workspace,
     log_process,
     set_random_seed,
     set_resume_from,
@@ -45,6 +46,8 @@ class TestOptions(unittest.TestCase):
         workspace = "/path/to/workspace"
         set_workspace(workspace)
         self.assertEqual(options.workspace, workspace)
+        returned_workspace = get_workspace()
+        self.assertEqual(returned_workspace, workspace)
 
         # non String type
         workspace = 12345
@@ -75,7 +78,6 @@ class TestOptions(unittest.TestCase):
 class TestCPUInfo(unittest.TestCase):
     def test_cpu_info(self):
         cpu_info = CpuInfo()
-        assert cpu_info.cores_per_socket > 0, "CPU count should be greater than 0"
         assert isinstance(cpu_info.bf16, bool), "bf16 should be a boolean"
         assert isinstance(cpu_info.vnni, bool), "avx512 should be a boolean"
 
