@@ -14,16 +14,16 @@ function init_params {
   do
     case $var in
       --topology=*)
-          topology=$(echo $var |cut -f2 -d=)
+          topology=$(echo $var | cut -f2 -d=)
       ;;
       --dataset_location=*)
-          dataset_location=$(echo $var |cut -f2 -d=)
+          dataset_location=$(echo $var | cut -f2 -d=)
       ;;
       --input_model=*)
-          input_model=$(echo $var |cut -f2 -d=)
+          input_model=$(echo $var | cut -f2 -d=)
       ;;
        --output_model=*)
-           tuned_checkpoint=$(echo $var |cut -f2 -d=)
+           tuned_checkpoint=$(echo $var | cut -f2 -d=)
        ;;
       *)
           echo "Error: No such parameter: ${var}"

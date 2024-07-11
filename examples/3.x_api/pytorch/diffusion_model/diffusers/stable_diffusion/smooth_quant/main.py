@@ -325,6 +325,7 @@ parser.add_argument('--model-id', default="stabilityai/stable-diffusion-xl-base-
 parser.add_argument('--precision', default='fp32', type=str)
 parser.add_argument('--base-output-dir', default="./output", type=str)
 parser.add_argument('--quantized-unet', default="./saved_results", type=str)
+parser.add_argument("--int8", action="store_true", help="Load quantized model.")
 parser.add_argument('--output-dir-name', default=None, type=str)
 parser.add_argument('--output-dir-name-postfix', default=None, type=str)
 parser.add_argument('--captions-fname', default="captions_5k.tsv", type=str)
@@ -407,21 +408,21 @@ if args.refiner:
                                                                     variant="fp16" if args.precision == 'fp16' else None,
                                                                     torch_dtype=dtype)
 
+if args.int8:
+    from neural_compressor.torch.quantization import load
+    example_inputs = {"sample": torch.randn((2, 4, 128, 128), dtype=dtype),
+                "timestep": torch.tensor(951.0),
+                "encoder_hidden_states": torch.randn((2, 77, 2048), dtype=dtype),
+                "added_cond_kwargs": {'text_embeds':torch.randn((2, 1280), dtype=dtype),
+                                    'time_ids': torch.tensor([[1024., 1024.,    0.,    0., 1024., 1024.],
+                                                                [1024., 1024.,    0.,    0., 1024., 1024.]], dtype=dtype)},}
+    q_unet = load(args.quantized_unet)
+    for _ in range(2):
+        q_unet(**example_inputs)
+    print("Loaded Quantized Model")
+    setattr(q_unet, "config", pipe.unet.config)
+    pipe.unet = q_unet
 
-from neural_compressor.torch.quantization import load
-example_inputs = {"sample": torch.randn((2, 4, 128, 128), dtype=dtype),
-            "timestep": torch.tensor(951.0),
-            "encoder_hidden_states": torch.randn((2, 77, 2048), dtype=dtype),
-            "added_cond_kwargs": {'text_embeds':torch.randn((2, 1280), dtype=dtype),
-                                  'time_ids': torch.tensor([[1024., 1024.,    0.,    0., 1024., 1024.],
-                                                            [1024., 1024.,    0.,    0., 1024., 1024.]], dtype=dtype)},}
-q_unet = load(args.quantized_unet)
-for _ in range(2):
-    q_unet(**example_inputs)
-print("Loaded Quantized Model")
-setattr(q_unet, "config", pipe.unet.config)
-pipe.unet = q_unet
-    
 pipe.set_progress_bar_config(disable=True)
 logging.info(f"[{rank}] Pipeline initialized: {pipe}")
 

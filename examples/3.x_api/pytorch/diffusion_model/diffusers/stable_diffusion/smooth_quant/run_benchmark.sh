@@ -17,10 +17,10 @@ function init_params {
   do
     case $var in
       --model_name_or_path=*)
-          model_name_or_path=$(echo $var |cut -f2 -d=)
+          model_name_or_path=$(echo $var | cut -f2 -d=)
       ;;
       --latent=*)
-          latent=$(echo $var |cut -f2 -d=)
+          latent=$(echo $var | cut -f2 -d=)
       ;;
       *)
           echo "Error: No such parameter: ${var}"
@@ -41,7 +41,7 @@ function run_benchmark {
     base-output-dir="./output/"
 
     if [[ ${int8} == "true" ]]; then
-        extra_cmd=$extra_cmd" --int8 --load"
+        extra_cmd=$extra_cmd" --int8"
     fi
     echo $extra_cmd
 
