@@ -21,7 +21,7 @@ import torch
 from prettytable import PrettyTable
 from typing_extensions import TypeAlias
 
-from neural_compressor.common.utils import LazyImport, Mode, cpu_info, logger
+from neural_compressor.common.utils import Mode, ProcessorType, cpu_info, detect_processor_type_based_on_hw, logger
 
 OP_NAME_AND_TYPE_TUPLE_TYPE: TypeAlias = Tuple[str, Union[torch.nn.Module, Callable]]
 
@@ -280,36 +280,6 @@ def get_model_device(model: torch.nn.Module):
     """
     for n, p in model.named_parameters():
         return p.data.device.type  # p.data.device == device(type='cpu')
-
-
-class ProcessorType(enum.Enum):
-    Client = "Client"
-    Server = "Server"
-
-
-def detect_processor_type_based_on_hw():
-    """Detects the processor type based on the hardware configuration.
-
-    Returns:
-        ProcessorType: The detected processor type (Server or Client).
-    """
-    # Detect the processor type based on below conditions:
-    #   1. If there are more than one sockets, it is a server.
-    #   2. If the memory size is greater than 64GB, it is a server.
-    log_mgs = "Processor type detected as {processor_type} due to {reason}."
-    if cpu_info.sockets > 1:
-        logger.info(log_mgs.format(processor_type=ProcessorType.Server.value, reason="there are more than one sockets"))
-        return ProcessorType.Server
-    elif psutil.virtual_memory().total / (1024**3) > 64:
-        logger.info(
-            log_mgs.format(processor_type=ProcessorType.Server.value, reason="the memory size is greater than 64GB")
-        )
-        return ProcessorType.Server
-    else:
-        logger.info(
-            f"Processor type detected as {ProcessorType.Client.value}, pass `processor_type='server'` to override it if needed."
-        )
-        return ProcessorType.Client
 
 
 def get_processor_type_from_user_config(user_processor_type: Optional[Union[str, ProcessorType]] = None):

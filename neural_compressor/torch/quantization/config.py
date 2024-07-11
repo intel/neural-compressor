@@ -732,6 +732,7 @@ class AutoRoundConfig(BaseConfig):
         not_use_best_mse: bool = False,
         dynamic_max_gap: int = -1,
         scale_dtype: str = "fp16",
+        use_layer_wise: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init AUTOROUND weight-only quantization config.
@@ -784,6 +785,7 @@ class AutoRoundConfig(BaseConfig):
         self.not_use_best_mse = not_use_best_mse
         self.dynamic_max_gap = dynamic_max_gap
         self.scale_dtype = scale_dtype
+        self.use_layer_wise = use_layer_wise
         self._post_init()
 
     @classmethod
@@ -810,14 +812,17 @@ class AutoRoundConfig(BaseConfig):
         # TODO fwk owner needs to update it.
         return AutoRoundConfig(bits=[4, 6])
 
+    @classmethod
+    def get_predefined_configs(cls) -> Dict[torch_utils.ProcessorType, "AutoRoundConfig"]:
+        pre_defined_configs: Dict[torch_utils.ProcessorType, AutoRoundConfig] = {}
+        pre_defined_configs[torch_utils.ProcessorType.Client] = cls(use_layer_wise=True)
+        pre_defined_configs[torch_utils.ProcessorType.Server] = cls()
+        return pre_defined_configs
 
-def get_default_AutoRound_config() -> AutoRoundConfig:
-    """Generate the default AUTOROUND config.
 
-    Returns:
-        the default AUTOROUND config.
-    """
-    return AutoRoundConfig()
+def get_default_AutoRound_config(processor_type: Optional[Union[str, torch_utils.ProcessorType]] = None) -> RTNConfig:
+    process_type = torch_utils.get_processor_type_from_user_config(processor_type)
+    return AutoRoundConfig.get_predefined_configs()[process_type]
 
 
 ######################## MX Config ###############################

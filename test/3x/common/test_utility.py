@@ -11,6 +11,8 @@ import time
 import unittest
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 import neural_compressor.common.utils.utility as inc_utils
 from neural_compressor.common import options
 from neural_compressor.common.utils import (
@@ -188,5 +190,22 @@ class TestCallCounter(unittest.TestCase):
         self.assertEqual(inc_utils.FUNC_CALL_COUNTS["add"], 3)
 
 
-if __name__ == "__main__":
-    unittest.main()
+class TestAutoDetectProcessorType:
+    @pytest.fixture
+    def force_client(self, monkeypatch):
+        monkeypatch.setattr(inc_utils.cpu_info, "sockets", 1)
+        monkeypatch.setattr(inc_utils.cpu_info, "brand_raw", "")
+
+        # force the ram size detected by psutil <= 64GB
+        class MockMemory:
+            def __init__(self, total):
+                self.total = total
+
+        # Patch the psutil.virtual_memory() method
+        monkeypatch.setattr(inc_utils.psutil, "virtual_memory", lambda: MockMemory(16 * 1024**3))
+
+    def test_auto_detect_processor_type(self, force_client):
+        p_type = inc_utils.detect_processor_type_based_on_hw()
+        assert (
+            p_type == inc_utils.ProcessorType.Client
+        ), f"Expect processor type to be {inc_utils.ProcessorType.Client}, got {p_type}"

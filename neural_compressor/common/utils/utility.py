@@ -17,6 +17,7 @@
 """The utility of common module."""
 
 import collections
+import enum
 import importlib
 import subprocess
 import time
@@ -25,7 +26,7 @@ from typing import Dict
 import cpuinfo
 import psutil
 
-from neural_compressor.common.utils import Mode, TuningLogger, logger
+from neural_compressor.common.utils import Mode, TuningLogger, constants, logger
 
 __all__ = [
     "set_workspace",
@@ -40,6 +41,8 @@ __all__ = [
     "default_tuning_logger",
     "call_counter",
     "cpu_info",
+    "ProcessorType",
+    "detect_processor_type_based_on_hw",
 ]
 
 
@@ -112,10 +115,21 @@ class CpuInfo(object):
                 )
                 self._bf16 = bool(eax & (1 << 5))
         self._info = info
+        self._brand_raw = info.get("brand_raw", "")
         # detect the below info when needed
         self._cores = None
         self._sockets = None
         self._cores_per_socket = None
+
+    @property
+    def brand_raw(self):
+        """Get the brand name of the CPU."""
+        return self._brand_raw
+
+    @brand_raw.setter
+    def brand_raw(self, brand_name):
+        """Set the brand name of the CPU."""
+        self._brand_raw = brand_name
 
     @staticmethod
     def _detect_cores():
@@ -301,3 +315,40 @@ def call_counter(func):
         return func(*args, **kwargs)
 
     return wrapper
+
+
+class ProcessorType(enum.Enum):
+    Client = "Client"
+    Server = "Server"
+
+
+def detect_processor_type_based_on_hw():
+    """Detects the processor type based on the hardware configuration.
+
+    Returns:
+        ProcessorType: The detected processor type (Server or Client).
+    """
+    # Detect the processor type based on below conditions:
+    #   If there are more than one sockets, it is a server.
+    #   If the brand name includes key word in `SERVER_PROCESSOR_BRAND_KEY_WORLD_LST`, it is a server.
+    #   If the memory size is greater than 32GB, it is a server.
+    log_mgs = "Processor type detected as {processor_type} due to {reason}."
+    if cpu_info.sockets > 1:
+        logger.info(log_mgs.format(processor_type=ProcessorType.Server.value, reason="there are more than one sockets"))
+        return ProcessorType.Server
+    elif any(brand in cpu_info.brand_raw for brand in constants.SERVER_PROCESSOR_BRAND_KEY_WORLD_LST):
+        logger.info(
+            log_mgs.format(processor_type=ProcessorType.Server.value, reason=f"the brand name is {cpu_info.brand_raw}.")
+        )
+        return ProcessorType.Server
+    elif psutil.virtual_memory().total / (1024**3) > 32:
+        logger.info(
+            log_mgs.format(processor_type=ProcessorType.Server.value, reason="the memory size is greater than 32GB")
+        )
+        return ProcessorType.Server
+    else:
+        logger.info(
+            "Processor type detected as %s, pass `processor_type='server'` to override it if needed.",
+            ProcessorType.Client.value,
+        )
+        return ProcessorType.Client
