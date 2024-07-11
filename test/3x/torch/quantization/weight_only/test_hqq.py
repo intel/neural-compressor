@@ -188,6 +188,10 @@ class TestHQQ:
         "nbits, group_size, quant_zero, quant_scale, scale_quant_group_size",
         [
             (4, 64, True, False, 128),
+            (4, 64, False, False, 128),
+            (4, 64, True, True, 128),
+            (4, 64, False, True, 128),
+            (8, 64, True, False, 128),
         ],
     )
     def test_hqq_linear_save_and_load(
