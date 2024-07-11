@@ -95,6 +95,7 @@ def register_patched_measure_modules(model, mod_list, observer_class, d_shapes=N
                 )
                 patched_types.add(type(mod))
 
+                set_hqt_config(mod, top_level_config)
                 mod_extra_config = init_measure_object(
                     mod,
                     name,
@@ -104,7 +105,6 @@ def register_patched_measure_modules(model, mod_list, observer_class, d_shapes=N
                     (d_shapes[name] if ((d_shapes is not None) and (name in d_shapes)) else None),
                     params,
                 )
-                set_hqt_config(mod, top_level_config)  # set config in the module, as it consumed by the patched module
                 pmod = patch_module_measure(mod, mod_extra_config, mod_default_dict)
                 for param_name in pmod._mod_extra_config.params:
                     param = getattr(pmod, param_name)
@@ -247,27 +247,13 @@ class MaxAbsObserver:
         self.mod = mod
         self.first = True
         self.used = False
-        self.state = self.init_state_from_shape(d_shape)
-
-    def init_state(self, x):
-        device = x.device
-        state = torch.zeros((1, 1), device=device, dtype=torch.float32)
-        self.shape = list(x.shape)
-        return state
-
-    def init_state_from_shape(self, x_shape, device="hpu"):
-        state = torch.zeros((1, 1), device=device, dtype=torch.float32)
-        self.first = False
-        return state
+        config = get_hqt_config(mod).cfg
+        self.state = torch.zeros((1, 1), device="hpu", dtype=config["hp_dtype"])
 
     def update_state(self, x):
-        # TODO: [SW-189690] Find better way to update self.state in MaxAbsObserver class in HQT
-        self.state = torch.maximum(torch.max(torch.abs(x)), self.state)
+        self.state.copy_(torch.maximum(torch.max(torch.abs(x)), self.state))
 
     def measure(self, x):
-        if self.first:
-            self.state = self.init_state(x)
-            self.first = False
         self.update_state(x)
         self.used = True
 
