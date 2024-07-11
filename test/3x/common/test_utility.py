@@ -80,6 +80,9 @@ class TestCPUInfo(unittest.TestCase):
         cpu_info = CpuInfo()
         assert isinstance(cpu_info.bf16, bool), "bf16 should be a boolean"
         assert isinstance(cpu_info.vnni, bool), "avx512 should be a boolean"
+        assert cpu_info.cores >= 1
+        assert cpu_info.sockets >= 1
+        assert cpu_info.cores_per_socket >= 1
 
 
 class TestLazyImport(unittest.TestCase):
@@ -114,6 +117,11 @@ class TestLazyImport(unittest.TestCase):
             mock_import_module.assert_called_with(module_name)
 
         self.assertIsNotNone(lazy_import.module)
+
+    def test_call_method_module_not_found(self):
+        with self.assertRaises(ImportError):
+            lazy_import = LazyImport("non_existent_module")
+            lazy_import(3, 4)
 
 
 class TestUtils(unittest.TestCase):
@@ -211,3 +219,20 @@ class TestAutoDetectProcessorType:
         assert (
             p_type == inc_utils.ProcessorType.Client
         ), f"Expect processor type to be {inc_utils.ProcessorType.Client}, got {p_type}"
+
+    def test_detect_processor_type_based_on_hw(self):
+        # Test when the brand name includes a server keyword
+        inc_utils.cpu_info.brand_raw = "Intel Xeon Server"
+        assert inc_utils.detect_processor_type_based_on_hw() == inc_utils.ProcessorType.Server
+
+        # Test when the memory size is greater than 32GB
+        with patch("psutil.virtual_memory") as mock_virtual_memory:
+            mock_virtual_memory.return_value.total = 64 * 1024**3
+            assert inc_utils.detect_processor_type_based_on_hw() == inc_utils.ProcessorType.Server
+
+        # Test when none of the conditions are met
+        inc_utils.cpu_info.sockets = 1
+        inc_utils.cpu_info.brand_raw = "Intel Core i7"
+        with patch("psutil.virtual_memory") as mock_virtual_memory:
+            mock_virtual_memory.return_value.total = 16 * 1024**3
+            assert inc_utils.detect_processor_type_based_on_hw() == inc_utils.ProcessorType.Client
