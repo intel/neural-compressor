@@ -239,7 +239,7 @@ class WOQModelLoader:
         return woq_model
 
     def _build_hqq_model(self):
-        """Build weight-only quantization model."""
+        """Replace quantized Linear with HQQLinear."""
         from neural_compressor.torch.algorithms.weight_only.hqq.core import HQQLinear
         from neural_compressor.torch.utils import set_module
 
