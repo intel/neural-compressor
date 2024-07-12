@@ -251,17 +251,13 @@ def register_weight_hooks(model, path, device="cpu", clean_weight=True, saved_pa
             state_dict = None
             if os.path.exists(os.path.join(LWQ_WORKSPACE, f"{name}.pt")):
                 state_dict = torch.load(os.path.join(LWQ_WORKSPACE, f"{name}.pt"))
-            if isinstance(module, WeightOnlyLinear):
-                for n, p in module._buffers.items():
-                    setattr(module, n, state_dict[n])
-            else:
-                for n, p in module.named_parameters():
-                    param_name = name + "." + n
-                    if state_dict:
-                        value = state_dict[n]
-                    else:
-                        value = load_value(model, param_name, path)
-                    set_module_tensor_to_device(model, param_name, device, value)
+            for n, p in module.named_parameters():
+                param_name = name + "." + n
+                if state_dict:
+                    value = state_dict[n]
+                else:
+                    value = load_value(model, param_name, path)
+                set_module_tensor_to_device(model, param_name, device, value)
 
         return hook
 
