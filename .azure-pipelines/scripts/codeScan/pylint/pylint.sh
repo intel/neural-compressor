@@ -44,22 +44,6 @@ pip install torch \
             pydantic \
             protobuf
 
-if [ "${scan_module}" = "neural_solution" ]; then
-    cd /neural-compressor
-    python setup.py install
-
-    echo "Install Neural Solution ... "
-    bash /neural-compressor/.azure-pipelines/scripts/install_neural_solution.sh
-
-elif [ "${scan_module}" = "neural_insights" ]; then
-    cd /neural-compressor
-    python setup.py install
-
-    echo "Install Neural Insights ... "
-    bash /neural-compressor/.azure-pipelines/scripts/install_neural_insights.sh
-
-fi
-
 echo "[DEBUG] list pipdeptree..."
 pip install pipdeptree
 pipdeptree

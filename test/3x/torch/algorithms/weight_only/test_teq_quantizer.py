@@ -82,8 +82,21 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
         )
         self.gptj.seqlen = 512
 
-    def train_func(self):
-        pass
+    def test_teq_detect_absorb_layers(self):
+        example_inputs = torch.ones([1, 512], dtype=torch.long)
+        test_input = torch.ones([1, 512], dtype=torch.long)
+        model = copy.deepcopy(self.gptj)
+        out0 = model(test_input)
+
+        weight_config = {
+            # 'op_name': (bit, group_size, scheme)
+            "transformer.h.0.mlp.fc_in": {"bits": 8, "group_size": -1, "scheme": "sym"},
+            "transformer.h.0.mlp.fc_out": {"bits": 4, "group_size": 32, "scheme": "asym"},
+        }
+        quantizer = TEQuantizer(quant_config=weight_config, folding=True, example_inputs=example_inputs)
+        model = quantizer.quantize(copy.deepcopy(self.gptj), run_fn=train)
+        out1 = model(test_input)
+        self.assertTrue(torch.allclose(out1[0], out0[0], atol=0.03))
 
     def test_teq(self):
         example_inputs = torch.ones([1, 512], dtype=torch.long)

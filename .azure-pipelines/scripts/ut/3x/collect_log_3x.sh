@@ -25,7 +25,8 @@ git config --global --add safe.directory /neural-compressor
 git fetch
 git checkout master
 rm -rf build dist *egg-info
-echo y | pip uninstall neural_compressor_${1}
+binary_index="${1%_fp8}"
+echo y | pip uninstall neural_compressor_${binary_index}
 cd /neural-compressor/.azure-pipelines-pr/scripts && bash install_nc.sh ${1}
 
 coverage erase

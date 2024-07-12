@@ -2,7 +2,7 @@ import argparse
 import os
 import sys
 
-sys.path.append('./')
+sys.path.append("./")
 import time
 import re
 import torch
@@ -12,15 +12,11 @@ from torch.utils.data import DataLoader
 from transformers import AutoModelForCausalLM, AutoConfig, AutoTokenizer
 
 parser = argparse.ArgumentParser()
+parser.add_argument("--model", nargs="?", default="EleutherAI/gpt-j-6b")
+parser.add_argument("--trust_remote_code", default=True, help="Transformers parameter: use the external repo")
 parser.add_argument(
-    "--model", nargs="?", default="EleutherAI/gpt-j-6b"
+    "--revision", default=None, help="Transformers parameter: set the model hub commit number"
 )
-parser.add_argument(
-    "--trust_remote_code", default=True,
-    help="Transformers parameter: use the external repo")
-parser.add_argument(
-    "--revision", default=None,
-    help="Transformers parameter: set the model hub commit number")
 parser.add_argument("--dataset", nargs="?", default="NeelNanda/pile-10k", const="NeelNanda/pile-10k")
 parser.add_argument("--output_dir", nargs="?", default="./saved_results")
 parser.add_argument("--quantize", action="store_true")
@@ -29,29 +25,26 @@ parser.add_argument(
     action="store_true",
     help="By default it is int8-fp32 mixed, to enable int8 mixed amp bf16 (work on platforms like SPR)",
 )
+parser.add_argument("--seed", type=int, default=42, help="Seed for sampling the calibration data.")
 parser.add_argument(
-    '--seed',
-    type=int, default=42, help='Seed for sampling the calibration data.'
+    "--approach", type=str, default="static", help="Select from ['dynamic', 'static', 'weight-only']"
 )
-parser.add_argument("--approach", type=str, default='static',
-                    help="Select from ['dynamic', 'static', 'weight-only']")
 parser.add_argument("--int8", action="store_true")
 parser.add_argument("--ipex", action="store_true", help="Use intel extension for pytorch.")
 parser.add_argument("--load", action="store_true", help="Load quantized model.")
 parser.add_argument("--accuracy", action="store_true")
 parser.add_argument("--performance", action="store_true")
-parser.add_argument("--iters", default=100, type=int,
-                    help="For accuracy measurement only.")
-parser.add_argument("--batch_size", default=1, type=int,
-                    help="For accuracy measurement only.")
-parser.add_argument("--save_accuracy_path", default=None,
-                    help="Save accuracy results path.")
-parser.add_argument("--pad_max_length", default=512, type=int,
-                    help="Pad input ids to max length.")
-parser.add_argument("--calib_iters", default=512, type=int,
-                    help="calibration iters.")
-parser.add_argument("--tasks", default="lambada_openai,hellaswag,winogrande,piqa,wikitext",
-                    type=str, help="tasks for accuracy validation")
+parser.add_argument("--iters", default=100, type=int, help="For accuracy measurement only.")
+parser.add_argument("--batch_size", default=1, type=int, help="For accuracy measurement only.")
+parser.add_argument("--save_accuracy_path", default=None, help="Save accuracy results path.")
+parser.add_argument("--pad_max_length", default=512, type=int, help="Pad input ids to max length.")
+parser.add_argument("--calib_iters", default=512, type=int, help="calibration iters.")
+parser.add_argument(
+    "--tasks",
+    default="lambada_openai,hellaswag,winogrande,piqa,wikitext",
+    type=str,
+    help="tasks for accuracy validation",
+)
 parser.add_argument("--peft_model_id", type=str, default=None, help="model_name_or_path of peft model")
 # ============SmoothQuant configs==============
 parser.add_argument("--sq", action="store_true")
@@ -91,7 +84,7 @@ class Evaluator:
             pad_len = self.pad_max - input_ids.shape[0]
             last_ind.append(input_ids.shape[0] - 1)
             if self.is_calib:
-                input_ids = input_ids[:self.pad_max] if len(input_ids) > self.pad_max else input_ids
+                input_ids = input_ids[: self.pad_max] if len(input_ids) > self.pad_max else input_ids
             else:
                 input_ids = pad(input_ids, (0, pad_len), value=self.pad_val)
             input_ids_padded.append(input_ids)
@@ -144,6 +137,7 @@ def get_user_model():
 
     if args.peft_model_id is not None:
         from peft import PeftModel
+
         user_model = PeftModel.from_pretrained(user_model, args.peft_model_id)
 
     # to channels last
@@ -158,7 +152,9 @@ if args.quantize:
     calib_dataset = load_dataset(args.dataset, split="train")
     # calib_dataset = datasets.load_from_disk('/your/local/dataset/pile-10k/') # use this if trouble with connecting to HF
     calib_dataset = calib_dataset.shuffle(seed=args.seed)
-    calib_evaluator = Evaluator(calib_dataset, tokenizer, args.batch_size, pad_max=args.pad_max_length, is_calib=True)
+    calib_evaluator = Evaluator(
+        calib_dataset, tokenizer, args.batch_size, pad_max=args.pad_max_length, is_calib=True
+    )
     calib_dataloader = DataLoader(
         calib_evaluator.dataset,
         batch_size=calib_size,
@@ -167,6 +163,7 @@ if args.quantize:
     )
 
     from neural_compressor.torch.quantization import SmoothQuantConfig
+
     args.alpha = eval(args.alpha)
     excluded_precisions = [] if args.int8_bf16_mixed else ["bf16"]
     quant_config = SmoothQuantConfig(alpha=args.alpha, folding=False, excluded_precisions=excluded_precisions)
@@ -176,6 +173,7 @@ if args.quantize:
 
     from neural_compressor.torch.algorithms.smooth_quant import move_input_to_device
     from tqdm import tqdm
+
     def run_fn(model):
         calib_iter = 0
         for batch in tqdm(calib_dataloader, total=args.calib_iters):
@@ -186,16 +184,18 @@ if args.quantize:
                 model(**batch)
             else:
                 model(batch)
-            
+
             calib_iter += 1
             if calib_iter >= args.calib_iters:
                 break
         return
 
     from utils import get_example_inputs
+
     example_inputs = get_example_inputs(user_model, calib_dataloader)
 
     from neural_compressor.torch.quantization import prepare, convert
+
     user_model = prepare(model=user_model, quant_config=quant_config, example_inputs=example_inputs)
     run_fn(user_model)
     user_model = convert(user_model)
@@ -207,6 +207,7 @@ if args.load:
     if args.int8 or args.int8_bf16_mixed:
         print("load int8 model")
         from neural_compressor.torch.quantization import load
+
         tokenizer = AutoTokenizer.from_pretrained(args.model)
         config = AutoConfig.from_pretrained(args.model)
         user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)))
@@ -218,6 +219,7 @@ if args.load:
 if args.accuracy:
     user_model.eval()
     from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
+
     eval_args = LMEvalParser(
         model="hf",
         user_model=user_model,
@@ -233,32 +235,25 @@ if args.accuracy:
         else:
             acc = results["results"][task_name]["acc,none"]
     print("Accuracy: %.5f" % acc)
-    print('Batch size = %d' % args.batch_size)
+    print("Batch size = %d" % args.batch_size)
 
 if args.performance:
     user_model.eval()
-    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
+    batch_size, input_leng = args.batch_size, 512
+    example_inputs = torch.ones((batch_size, input_leng), dtype=torch.long)
+    print("Batch size = {:d}".format(batch_size))
+    print("The length of input tokens = {:d}".format(input_leng))
     import time
 
-    samples = args.iters * args.batch_size
-    eval_args = LMEvalParser(
-        model="hf",
-        user_model=user_model,
-        tokenizer=tokenizer,
-        batch_size=args.batch_size,
-        tasks=args.tasks,
-        limit=samples,
-        device="cpu",
-    )
-    start = time.time()
-    results = evaluate(eval_args)
-    end = time.time()
-    for task_name in args.tasks.split(","):
-        if task_name == "wikitext":
-            acc = results["results"][task_name]["word_perplexity,none"]
-        else:
-            acc = results["results"][task_name]["acc,none"]
-    print("Accuracy: %.5f" % acc)
-    print('Throughput: %.3f samples/sec' % (samples / (end - start)))
-    print('Latency: %.3f ms' % ((end - start) * 1000 / samples))
-    print('Batch size = %d' % args.batch_size)
+    total_iters = args.iters
+    warmup_iters = 5
+    with torch.no_grad():
+        for i in range(total_iters):
+            if i == warmup_iters:
+                start = time.time()
+            user_model(example_inputs)
+        end = time.time()
+    latency = (end - start) / ((total_iters - warmup_iters) * args.batch_size)
+    throughput = ((total_iters - warmup_iters) * args.batch_size) / (end - start)
+    print("Latency: {:.3f} ms".format(latency * 10**3))
+    print("Throughput: {:.3f} samples/sec".format(throughput))

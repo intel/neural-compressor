@@ -15,6 +15,7 @@ inc_path=$(python -c 'import neural_compressor; print(neural_compressor.__path__
 cd /neural-compressor/test/3x || exit 1
 rm -rf tensorflow
 rm -rf onnxrt
+rm -rf torch/algorithms/fp8_quant
 
 LOG_DIR=/neural-compressor/log_dir
 mkdir -p ${LOG_DIR}

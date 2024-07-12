@@ -93,6 +93,7 @@ def rtn_entry(
         {
             "use_layer_wise": quant_config.use_layer_wise,
             "model_path": quant_config.model_path,
+            "quant_lm_head": quant_config.quant_lm_head,
         }
     )
     quantizer = get_quantizer(model, quantizer_cls=RTNQuantizer, quant_config=weight_config)
