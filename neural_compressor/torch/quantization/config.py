@@ -200,7 +200,9 @@ class RTNConfig(BaseConfig):
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
         if not self.quant_lm_head:
-            self.set_local(LM_HEAD_NAMES, RTNConfig(dtype="fp32", use_layer_wise=self.use_layer_wise, model_path=self.model_path))
+            self.set_local(
+                LM_HEAD_NAMES, RTNConfig(dtype="fp32", use_layer_wise=self.use_layer_wise, model_path=self.model_path)
+            )
         config_mapping = super().to_config_mapping(config_list, model_info)
         return config_mapping
 
@@ -363,7 +365,9 @@ class GPTQConfig(BaseConfig):
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
         if not self.quant_lm_head:
-            self.set_local(LM_HEAD_NAMES, GPTQConfig(dtype="fp32", use_layer_wise=self.use_layer_wise, model_path=self.model_path))
+            self.set_local(
+                LM_HEAD_NAMES, GPTQConfig(dtype="fp32", use_layer_wise=self.use_layer_wise, model_path=self.model_path)
+            )
         config_mapping = super().to_config_mapping(config_list, model_info)
         return config_mapping
 
@@ -385,7 +389,9 @@ class GPTQConfig(BaseConfig):
     @classmethod
     def get_predefined_configs(cls) -> Dict[torch_utils.ProcessorType, "GPTQConfig"]:
         pre_defined_configs: Dict[torch_utils.ProcessorType, GPTQConfig] = {}
-        pre_defined_configs[torch_utils.ProcessorType.Client] = cls(use_layer_wise=True)#, model_path=self.model_path)
+        pre_defined_configs[torch_utils.ProcessorType.Client] = cls(
+            use_layer_wise=True
+        )  # , model_path=self.model_path)
         pre_defined_configs[torch_utils.ProcessorType.Server] = cls()
         return pre_defined_configs
 
@@ -508,7 +514,9 @@ class AWQConfig(BaseConfig):
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
         if not self.quant_lm_head:
-            self.set_local(LM_HEAD_NAMES, AWQConfig(dtype="fp32", use_layer_wise=self.use_layer_wise, model_path=self.model_path))
+            self.set_local(
+                LM_HEAD_NAMES, AWQConfig(dtype="fp32", use_layer_wise=self.use_layer_wise, model_path=self.model_path)
+            )
         config_mapping = super().to_config_mapping(config_list, model_info)
         return config_mapping
 

@@ -124,7 +124,7 @@ class RTNQuantizer(Quantizer):
             "double_quant_group_size": kwargs.get("double_quant_group_size", 256),
         }
         use_optimum_format = kwargs.get("use_optimum_format", True)
-        
+
         if use_layer_wise:
             from neural_compressor.common.utils import DEFAULT_WORKSPACE
             from neural_compressor.torch.algorithms.layer_wise.utils import get_path, load_module, register_weight_hooks
@@ -135,10 +135,10 @@ class RTNQuantizer(Quantizer):
             model_path = get_path(model_path)
 
             register_weight_hooks(model, model_path, device=device, clean_weight=True)
-        
+
         for name, m in model.named_modules():
-            
-            if not isinstance(m, supported_layers): 
+
+            if not isinstance(m, supported_layers):
                 continue
             if name in weight_config:  # pragma: no cover
                 # initialize op configuration
@@ -186,7 +186,7 @@ class RTNQuantizer(Quantizer):
                 continue
             logger.debug(f"RTN quantized module:{name, m}")
             logger.debug(log_msg)
-            
+
             if use_layer_wise:
                 load_module(model, name, model_path, device=device)
 

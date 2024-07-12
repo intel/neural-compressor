@@ -581,7 +581,7 @@ class RAWGPTQuantizer(object):
                     state_dict = torch.load(LWQ_WORKSPACE + f"/{self.get_full_layer_name(layer_name, block_idx)}.pt")
                     Q = state_dict["weight"].data
                     bias = state_dict["bias"] if "bias" in state_dict.keys() else None
-                        
+
                 else:
                     Q = sub_layers[layer_name].weight.data
                 if weight_config_this_layer["act_order"]:
@@ -614,7 +614,7 @@ class RAWGPTQuantizer(object):
 
                 if not self.use_layer_wise:
                     bias = sub_layers[layer_name].bias
-                
+
                 new_module = WeightOnlyLinear(
                     in_features,
                     out_features,

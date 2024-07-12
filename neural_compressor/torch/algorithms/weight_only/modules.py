@@ -19,11 +19,11 @@
 # since the model classes inherit torch.nn.Module.
 import math
 
+import numba
 import numpy as np
 import torch
 from torch.autograd import Function
 from torch.nn import functional as F
-import numba
 
 from neural_compressor.torch.utils import accelerator, logger
 
@@ -301,11 +301,11 @@ class WeightOnlyLinear(torch.nn.Module):
                 unpacked_tensor[:, index].copy_(tmp.type(target_dtype))
                 accelerator.synchronize()
         return unpacked_tensor
-    
+
     @staticmethod
     @numba.jit(nopython=True, parallel=True)
     def pack_array_with_numba_b4_c32(
-        raw_array: np.ndarray, packed_array:np.ndarray, n_pack: int, new_in_features:int
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
     ) -> np.ndarray:
         for i in range(new_in_features):
             packed_array[:, i] = (
@@ -319,11 +319,11 @@ class WeightOnlyLinear(torch.nn.Module):
                 | (raw_array[:, i * n_pack] & 0b1111)
             )
         return packed_array
-    
+
     @staticmethod
     @numba.jit(nopython=True, parallel=True)
     def pack_array_with_numba_b4_c16(
-        raw_array: np.ndarray, packed_array:np.ndarray, n_pack: int, new_in_features:int
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
     ) -> np.ndarray:
         for i in range(new_in_features):
             packed_array[:, i] = (
@@ -333,23 +333,20 @@ class WeightOnlyLinear(torch.nn.Module):
                 | (raw_array[:, i * n_pack] & 0b1111)
             )
         return packed_array
-    
+
     @staticmethod
     @numba.jit(nopython=True, parallel=True)
     def pack_array_with_numba_b4_c8(
-        raw_array: np.ndarray, packed_array:np.ndarray, n_pack: int, new_in_features:int
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
     ) -> np.ndarray:
         for i in range(new_in_features):
-            packed_array[:, i] = (
-                ((raw_array[:, i * n_pack + 1] & 0b1111) << 4)
-                | (raw_array[:, i * n_pack] & 0b1111)
-            )
+            packed_array[:, i] = ((raw_array[:, i * n_pack + 1] & 0b1111) << 4) | (raw_array[:, i * n_pack] & 0b1111)
         return packed_array
-    
+
     @staticmethod
     @numba.jit(nopython=True, parallel=True)
     def pack_array_with_numba_b4_c64(
-        raw_array: np.ndarray, packed_array:np.ndarray, n_pack: int, new_in_features:int
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
     ) -> np.ndarray:
         for i in range(new_in_features):
             packed_array[:, i] = (
@@ -372,11 +369,10 @@ class WeightOnlyLinear(torch.nn.Module):
             )
         return packed_array
 
-    
     @staticmethod
     @numba.jit(nopython=True, parallel=True)
     def pack_array_with_numba_b8_c32(
-        raw_array: np.ndarray, packed_array:np.ndarray, n_pack: int, new_in_features:int
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
     ) -> np.ndarray:
         for i in range(new_in_features):
             packed_array[:, i] = (
@@ -386,11 +382,11 @@ class WeightOnlyLinear(torch.nn.Module):
                 | (raw_array[:, i * n_pack] & 0b11111111)
             )
         return packed_array
-    
+
     @staticmethod
     @numba.jit(nopython=True, parallel=True)
     def pack_array_with_numba_b8_c16(
-        raw_array: np.ndarray, packed_array:np.ndarray, n_pack: int, new_in_features:int
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
     ) -> np.ndarray:
         for i in range(new_in_features):
             packed_array[:, i] = (
@@ -400,20 +396,20 @@ class WeightOnlyLinear(torch.nn.Module):
                 | (raw_array[:, i * n_pack] & 0b11111111)
             )
         return packed_array
-    
+
     @staticmethod
     @numba.jit(nopython=True, parallel=True)
     def pack_array_with_numba_b8_c8(
-        raw_array: np.ndarray, packed_array:np.ndarray, n_pack: int, new_in_features:int
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
     ) -> np.ndarray:
         for i in range(new_in_features):
-            packed_array[:, i] = (raw_array[:, i * n_pack] & 0b11111111)
+            packed_array[:, i] = raw_array[:, i * n_pack] & 0b11111111
         return packed_array
-    
+
     @staticmethod
     @numba.jit(nopython=True, parallel=True)
     def pack_array_with_numba_b8_c64(
-        raw_array: np.ndarray, packed_array:np.ndarray, n_pack: int, new_in_features:int
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
     ) -> np.ndarray:
         for i in range(new_in_features):
             packed_array[:, i] = (
@@ -427,11 +423,11 @@ class WeightOnlyLinear(torch.nn.Module):
                 | (raw_array[:, i * n_pack] & 0b11111111)
             )
         return packed_array
-    
+
     @staticmethod
     @numba.jit(nopython=True, parallel=True)
     def pack_array_with_numba_b2_c32(
-        raw_array: np.ndarray, packed_array:np.ndarray, n_pack: int, new_in_features:int
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
     ) -> np.ndarray:
         for i in range(new_in_features):
             packed_array[:, i] = (
@@ -457,7 +453,7 @@ class WeightOnlyLinear(torch.nn.Module):
     @staticmethod
     @numba.jit(nopython=True, parallel=True)
     def pack_array_with_numba_b2_c16(
-        raw_array: np.ndarray, packed_array:np.ndarray, n_pack: int, new_in_features:int
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
     ) -> np.ndarray:
         for i in range(new_in_features):
             packed_array[:, i] = (
@@ -471,11 +467,11 @@ class WeightOnlyLinear(torch.nn.Module):
                 | (raw_array[:, i * n_pack] & 0b11)
             )
         return packed_array
-    
+
     @staticmethod
     @numba.jit(nopython=True, parallel=True)
     def pack_array_with_numba_b2_c8(
-        raw_array: np.ndarray, packed_array:np.ndarray, n_pack: int, new_in_features:int
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
     ) -> np.ndarray:
         for i in range(new_in_features):
             packed_array[:, i] = (
@@ -485,11 +481,11 @@ class WeightOnlyLinear(torch.nn.Module):
                 | (raw_array[:, i * n_pack] & 0b11)
             )
         return packed_array
-    
+
     @staticmethod
     @numba.jit(nopython=True, parallel=True)
     def pack_array_with_numba_b2_c64(
-        raw_array: np.ndarray, packed_array:np.ndarray, n_pack: int, new_in_features:int
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
     ) -> np.ndarray:
         for i in range(new_in_features):
             packed_array[:, i] = (
@@ -527,7 +523,7 @@ class WeightOnlyLinear(torch.nn.Module):
                 | (raw_array[:, i * n_pack] & 0b11)
             )
         return packed_array
-    
+
     def pack_array_with_numba(
         self, raw_array: np.ndarray, n_pack: int, bits: int, compress_bits: int, compression_dtype=np.int32
     ) -> np.ndarray:
@@ -547,17 +543,18 @@ class WeightOnlyLinear(torch.nn.Module):
         new_in_features = (in_features + n_pack - 1) // n_pack
         packed_array = np.zeros((out_features, new_in_features), dtype=compression_dtype)
         raw_array = raw_array.astype(compression_dtype)
-        
+
         pack_method_name = f"pack_array_with_numba_b{bits}_c{compress_bits}"
         pack_method = getattr(self, pack_method_name)
         return pack_method(raw_array, packed_array, n_pack, new_in_features)
-        
+
     @staticmethod
     @numba.jit(nopython=True)
     def pack_array_with_numba_yi(
         raw_tensor: np.ndarray, n_pack: int, bits: int, compression_dtype=np.int32
     ) -> np.ndarray:
         """Packs the input tensor by combining elements into a specified bit-width format using NumPy.
+
         Args:
             raw_tensor (np.ndarray): The tensor to be packed. Shape: [out_features, in_features] or [1, in_features].
             n_pack (int): The number of elements to be packed together.
@@ -575,7 +572,7 @@ class WeightOnlyLinear(torch.nn.Module):
             for i in range(new_in_features):
                 packed_tensor[:, i] = (
                     (raw_tensor[:, i * n_pack + 7] << 28)
-                    | (raw_tensor[:, i * n_pack + 6]  << 24)
+                    | (raw_tensor[:, i * n_pack + 6] << 24)
                     | (raw_tensor[:, i * n_pack + 5] << 20)
                     | (raw_tensor[:, i * n_pack + 4] << 16)
                     | (raw_tensor[:, i * n_pack + 3] << 12)
@@ -585,7 +582,7 @@ class WeightOnlyLinear(torch.nn.Module):
                 )
 
         return packed_tensor
-    
+
     def pack_tensor_with_reshape(self, raw_tensor):
         raw_array = raw_tensor.cpu().numpy()
         target_len = np.ceil(raw_array.shape[1] / self.n_pack).astype(int)
@@ -593,9 +590,11 @@ class WeightOnlyLinear(torch.nn.Module):
         reshaped = raw_array.reshape(-1, self.n_pack)
         packed_array = np.zeros(reshaped.shape[0], dtype=target_dtype)
         for i in range(self.n_pack):
-            packed_array |= (reshaped[:, i].astype(target_dtype) << (self.bits * i))
-       
-        packed_tensor = torch.from_numpy(packed_array.reshape((raw_array.shape[0], target_len))).to(device=raw_tensor.device)
+            packed_array |= reshaped[:, i].astype(target_dtype) << (self.bits * i)
+
+        packed_tensor = torch.from_numpy(packed_array.reshape((raw_array.shape[0], target_len))).to(
+            device=raw_tensor.device
+        )
         return packed_tensor
 
     def pack_tensor_with_numpy(self, raw_tensor):
@@ -603,7 +602,9 @@ class WeightOnlyLinear(torch.nn.Module):
             return self.pack_tensor_with_reshape(raw_tensor)
         compression_dtype = torch.tensor(0, dtype=self.compression_dtype).numpy().dtype
         # packed_array = self.pack_array_with_numba_yi(raw_tensor.cpu().numpy(), self.n_pack, self.bits,  compression_dtype)
-        packed_array = self.pack_array_with_numba(raw_tensor.cpu().numpy(), self.n_pack, self.bits, self.compress_bits, compression_dtype)
+        packed_array = self.pack_array_with_numba(
+            raw_tensor.cpu().numpy(), self.n_pack, self.bits, self.compress_bits, compression_dtype
+        )
         return torch.from_numpy(packed_array).to(device=raw_tensor.device)
 
     def unpack_tensor_with_numpy(self, packed_tensor):
