@@ -58,6 +58,7 @@ class StaticQuantQuantizer(Quantizer):
         """
         super().__init__(quant_config)
         self.user_cfg = OrderedDict()
+        self.device = auto_detect_accelerator().current_device()
 
     def prepare(self, model, example_inputs, inplace=True, *args, **kwargs):
         """Prepares a given model for quantization.
@@ -70,10 +71,9 @@ class StaticQuantQuantizer(Quantizer):
         Returns:
             A prepared model.
         """
-        device = auto_detect_accelerator().current_device()
         assert example_inputs is not None, "Please provide example_inputs for static quantization."
 
-        if device == "cpu":
+        if self.device == "cpu":
             _, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, _ = get_quantizable_ops_recursively(
                 model, example_inputs
             )
@@ -89,7 +89,7 @@ class StaticQuantQuantizer(Quantizer):
         if not hasattr(model, "save_qconf_summary") or not hasattr(model, "load_qconf_summary"):  # pragma: no cover
             from torch.ao.quantization import HistogramObserver, MinMaxObserver, PerChannelMinMaxObserver, QConfig
 
-            if device != "cpu":  # pragma: no cover
+            if self.device != "cpu":  # pragma: no cover
                 from torch.quantization.quantize_jit import prepare_jit
 
                 with torch.no_grad():
@@ -125,7 +125,7 @@ class StaticQuantQuantizer(Quantizer):
                         model, static_qconfig, example_inputs=example_inputs, inplace=inplace
                     )
 
-        if device == "cpu":
+        if self.device == "cpu":
             model.load_qconf_summary(qconf_summary=ipex_config_path)
 
         return model
@@ -141,12 +141,11 @@ class StaticQuantQuantizer(Quantizer):
         Returns:
             A quantized model.
         """
-        device = auto_detect_accelerator().current_device()
         use_bf16 = self.quant_config.get("use_bf16", None)
 
         from neural_compressor.torch.algorithms.static_quant import save
 
-        if device != "cpu":  # pragma: no cover
+        if self.device != "cpu":  # pragma: no cover
             from torch.quantization.quantize_jit import convert_jit
 
             model = convert_jit(model, inplace)
