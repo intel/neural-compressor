@@ -13,6 +13,7 @@ function init_params {
   model_name_or_path="stabilityai/stable-diffusion-xl-base-1.0"
   latent="latents.pt"
   tuned_checkpoint="./saved_results/"
+  iters=200
   for var in "$@"
   do
     case $var in
@@ -21,6 +22,9 @@ function init_params {
       ;;
       --latent=*)
           latent=$(echo $var | cut -f2 -d=)
+      ;;
+      --iters=*)
+          iters=$(echo $var | cut -f2 -d=)
       ;;
       *)
           echo "Error: No such parameter: ${var}"
@@ -39,6 +43,7 @@ function run_benchmark {
     precision="fp32"
     latent="latents.pt"
     base-output-dir="./output/"
+    iters=200
 
     if [[ ${int8} == "true" ]]; then
         extra_cmd=$extra_cmd" --int8"
@@ -56,6 +61,7 @@ function run_benchmark {
         --precision ${precision} \
         --latent-path ${latent} \
         --base-output-dir ${base-output-dir} \
+        --iters ${iters} \
         ${extra_cmd}
     
     mv ./output/stabilityai--stable-diffusion-xl-base-1.0__euler__20__8.0__fp32/* ./output/

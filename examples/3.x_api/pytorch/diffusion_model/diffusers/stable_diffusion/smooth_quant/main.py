@@ -326,6 +326,7 @@ parser.add_argument('--precision', default='fp32', type=str)
 parser.add_argument('--base-output-dir', default="./output", type=str)
 parser.add_argument('--quantized-unet', default="./saved_results", type=str)
 parser.add_argument("--int8", action="store_true", help="Load quantized model.")
+parser.add_argument('--iters', default=5000, type=int, help="Num of image generated.")
 parser.add_argument('--output-dir-name', default=None, type=str)
 parser.add_argument('--output-dir-name-postfix', default=None, type=str)
 parser.add_argument('--captions-fname', default="captions_5k.tsv", type=str)
@@ -452,6 +453,9 @@ for index, row in df.iterrows():
     caption_text = row['caption']
 
     destination_path = os.path.join(output_dir, f"{caption_id}.png")
+
+    if index >= args.iters:
+        break
 
     # Check if the image already exists in the output directory
     if not os.path.exists(destination_path):
