@@ -210,6 +210,7 @@ def static_quant_entry(
 def pt2e_dynamic_quant_entry(model: torch.nn.Module, configs_mapping, mode: Mode, *args, **kwargs) -> torch.nn.Module:
     logger.info("Quantize model with the PT2E static quant algorithm.")
     from neural_compressor.torch.algorithms.pt2e_quant.core import W8A8PT2EQuantizer
+    from neural_compressor.torch.algorithms.pt2e_quant.save_load import save
 
     run_fn = kwargs.get("run_fn", None)
     example_inputs = kwargs.get("example_inputs", None)
@@ -221,6 +222,8 @@ def pt2e_dynamic_quant_entry(model: torch.nn.Module, configs_mapping, mode: Mode
             model = w8a8_quantizer.execute(
                 model, mode=mode, run_fn=run_fn, example_inputs=example_inputs, inplace=inplace
             )
+            model.qconfig = configs_mapping
+            model.save = MethodType(save, model)
             return model
 
 
@@ -230,6 +233,7 @@ def pt2e_dynamic_quant_entry(model: torch.nn.Module, configs_mapping, mode: Mode
 def pt2e_static_quant_entry(model: torch.nn.Module, configs_mapping, mode: Mode, *args, **kwargs) -> torch.nn.Module:
     logger.info("Quantize model with the PT2E static quant algorithm.")
     from neural_compressor.torch.algorithms.pt2e_quant.core import W8A8PT2EQuantizer
+    from neural_compressor.torch.algorithms.pt2e_quant.save_load import save
 
     run_fn = kwargs.get("run_fn", None)
     example_inputs = kwargs.get("example_inputs", None)
@@ -240,6 +244,8 @@ def pt2e_static_quant_entry(model: torch.nn.Module, configs_mapping, mode: Mode,
             model = w8a8_quantizer.execute(
                 model, mode=mode, run_fn=run_fn, example_inputs=example_inputs, inplace=inplace
             )
+            model.qconfig = configs_mapping
+            model.save = MethodType(save, model)
             return model
 
 
