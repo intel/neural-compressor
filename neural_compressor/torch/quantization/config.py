@@ -23,7 +23,6 @@ from typing import Tuple, Union
 
 import torch
 
-import neural_compressor.torch.utils as torch_utils
 from neural_compressor.common.base_config import (
     BaseConfig,
     config_registry,
@@ -220,17 +219,14 @@ class RTNConfig(BaseConfig):
             dtype=["int4", "nf4"], use_sym=[True, False], group_size=[32, 128], use_mse_search=[False, True]
         )
 
-    @classmethod
-    def get_predefined_configs(cls) -> Dict[torch_utils.ProcessorType, "RTNConfig"]:
-        pre_defined_configs: Dict[torch_utils.ProcessorType, RTNConfig] = {}
-        pre_defined_configs[torch_utils.ProcessorType.Client] = cls(use_layer_wise=True)
-        pre_defined_configs[torch_utils.ProcessorType.Server] = cls()
-        return pre_defined_configs
 
+def get_default_rtn_config() -> RTNConfig:
+    """Generate the default rtn config.
 
-def get_default_rtn_config(processor_type: Optional[Union[str, torch_utils.ProcessorType]] = None) -> RTNConfig:
-    process_type = torch_utils.get_processor_type_from_user_config(processor_type)
-    return RTNConfig.get_predefined_configs()[process_type]
+    Returns:
+        the default rtn config.
+    """
+    return RTNConfig()
 
 
 def get_default_double_quant_config(type="BNB_NF4"):
@@ -382,17 +378,14 @@ class GPTQConfig(BaseConfig):
         # TODO fwk owner needs to update it.
         return GPTQConfig(act_order=[True, False], use_sym=[False, True])
 
-    @classmethod
-    def get_predefined_configs(cls) -> Dict[torch_utils.ProcessorType, "GPTQConfig"]:
-        pre_defined_configs: Dict[torch_utils.ProcessorType, GPTQConfig] = {}
-        pre_defined_configs[torch_utils.ProcessorType.Client] = cls(use_layer_wise=True)
-        pre_defined_configs[torch_utils.ProcessorType.Server] = cls()
-        return pre_defined_configs
 
+def get_default_gptq_config() -> GPTQConfig:
+    """Generate the default gptq config.
 
-def get_default_gptq_config(processor_type: Optional[Union[str, torch_utils.ProcessorType]] = None) -> RTNConfig:
-    process_type = torch_utils.get_processor_type_from_user_config(processor_type)
-    return GPTQConfig.get_predefined_configs()[process_type]
+    Returns:
+        the default gptq config.
+    """
+    return GPTQConfig()
 
 
 ######################## AWQ Config ###############################
@@ -732,7 +725,6 @@ class AutoRoundConfig(BaseConfig):
         not_use_best_mse: bool = False,
         dynamic_max_gap: int = -1,
         scale_dtype: str = "fp16",
-        use_layer_wise: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init AUTOROUND weight-only quantization config.
@@ -785,7 +777,6 @@ class AutoRoundConfig(BaseConfig):
         self.not_use_best_mse = not_use_best_mse
         self.dynamic_max_gap = dynamic_max_gap
         self.scale_dtype = scale_dtype
-        self.use_layer_wise = use_layer_wise
         self._post_init()
 
     @classmethod
@@ -812,17 +803,14 @@ class AutoRoundConfig(BaseConfig):
         # TODO fwk owner needs to update it.
         return AutoRoundConfig(bits=[4, 6])
 
-    @classmethod
-    def get_predefined_configs(cls) -> Dict[torch_utils.ProcessorType, "AutoRoundConfig"]:
-        pre_defined_configs: Dict[torch_utils.ProcessorType, AutoRoundConfig] = {}
-        pre_defined_configs[torch_utils.ProcessorType.Client] = cls(use_layer_wise=True)
-        pre_defined_configs[torch_utils.ProcessorType.Server] = cls()
-        return pre_defined_configs
 
+def get_default_AutoRound_config() -> AutoRoundConfig:
+    """Generate the default AUTOROUND config.
 
-def get_default_AutoRound_config(processor_type: Optional[Union[str, torch_utils.ProcessorType]] = None) -> RTNConfig:
-    process_type = torch_utils.get_processor_type_from_user_config(processor_type)
-    return AutoRoundConfig.get_predefined_configs()[process_type]
+    Returns:
+        the default AUTOROUND config.
+    """
+    return AutoRoundConfig()
 
 
 ######################## MX Config ###############################
@@ -1043,6 +1031,7 @@ class StaticQuantConfig(BaseConfig):
         act_algo: str = "minmax",
         excluded_precisions: list = [],
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+        model_info: Optional[List[Tuple[str, Callable]]] = None,
     ):
         """Init Static Quant Configs."""
         super().__init__(white_list=white_list)
@@ -1055,6 +1044,7 @@ class StaticQuantConfig(BaseConfig):
         self.act_granularity = act_granularity
         self.act_algo = act_algo
         self.excluded_precisions = excluded_precisions
+        self.model_info = model_info
         self._post_init()
 
     @classmethod
@@ -1072,10 +1062,28 @@ class StaticQuantConfig(BaseConfig):
         _, _, _, _, model_info = get_quantizable_ops_recursively(model, example_inputs=example_inputs)
         return model_info
 
-    @staticmethod
-    def get_model_info(model: torch.nn.Module, example_inputs=None) -> List[Tuple[str, Callable]]:
+    def get_model_info_for_ipex_xpu(self, model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+        if self.model_info:
+            return self.model_info
+        else:
+            white_list = torch.quantization.quantization_mappings.get_default_qconfig_propagation_list()
+            filter_result = []
+            for op_name, module in model.named_modules():
+                if type(module) in white_list:
+                    pair = (op_name, type(module).__name__)
+                    filter_result.append(pair)
+            logger.debug(f"Get model info: {filter_result}")
+            self.model_info = filter_result
+            return filter_result
+
+    def get_model_info(self, model: torch.nn.Module, example_inputs=None) -> List[Tuple[str, Callable]]:
+        from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
+
         if is_ipex_imported():
-            return StaticQuantConfig.get_model_info_for_ipex(model, example_inputs)
+            if auto_detect_accelerator().current_device() == "cpu":
+                return StaticQuantConfig.get_model_info_for_ipex(model, example_inputs)
+            else:
+                return StaticQuantConfig.get_model_info_for_ipex_xpu(self, model)
 
     def to_config_mapping(
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
