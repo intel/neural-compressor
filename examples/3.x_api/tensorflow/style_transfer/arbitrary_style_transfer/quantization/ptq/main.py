@@ -26,8 +26,8 @@ import tensorflow.compat.v1 as tf
 from PIL import Image
 import time
 
+from neural_compressor.tensorflow.utils import BaseDataLoader, DummyDatasetV2
 from data_process import (
-    TFDataLoader,
     StyleTransferDataset,
     ComposeTransform,
     ParseDecodeVocTransform,
@@ -137,7 +137,7 @@ def main(args=None):
                         ]
                     )
                 )
-                calib_dataloader = TFDataLoader(dataset=dataset, batch_size=FLAGS.batch_size)
+                calib_dataloader = BaseDataLoader(dataset=dataset, batch_size=FLAGS.batch_size)
                 
                 quant_config = StaticQuantConfig()
                 q_model = quantize_model(graph, quant_config, calib_dataloader)
@@ -156,10 +156,9 @@ def main(args=None):
                     resize_shape=(256, 256)
                 )
         else: 
-            from neural_compressor.tensorflow.utils import DummyDatasetV2
             dataset = DummyDatasetV2(input_shape=[(256, 256, 3), (256, 256, 3)], label_shape=(1, ))
 
-        dataloader = TFDataLoader(dataset=dataset, batch_size=FLAGS.batch_size)
+        dataloader = BaseDataLoader(dataset=dataset, batch_size=FLAGS.batch_size)
         tf.import_graph_def(frozen_graph, name='')
         style_transfer(sess, dataloader)
 

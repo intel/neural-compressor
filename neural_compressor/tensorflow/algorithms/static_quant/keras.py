@@ -204,6 +204,8 @@ class KerasAdaptor:
                     else:
                         for bound_node in layer._inbound_nodes:
                             inbound_layer = bound_node.inbound_layers
+                            if isinstance(inbound_layer, list) and len(inbound_layer) == 0:
+                                continue
                             if inbound_layer in self.bn_weights.keys():
                                 for bn_inbound_node in inbound_layer._inbound_nodes:
                                     bn_inbound_layer = bn_inbound_node.inbound_layers

@@ -61,7 +61,7 @@ optional arguments:
 
 ```shell
 wget https://storage.googleapis.com/download.magenta.tensorflow.org/models/arbitrary_style_transfer.tar.gz
-tar -xvzf arbitrary_style_transfer.tar.gz ./model
+tar -xvzf arbitrary_style_transfer.tar.gz
 ```
 
 ### 3. Prepare Dataset
@@ -70,21 +70,11 @@ There are two folders named style_images and content_images in current folder. P
 
 # Run Command
   ```shell
-  python style_tune.py --output_dir=./result --style_images_paths=./style_images --content_images_paths=./content_images --input_model=./model/model.ckpt
+  python main.py --output_dir=./result --style_images_paths=./style_images --content_images_paths=./content_images --input_model=./model/model.ckpt
   ```
 
 
 ## Quantization Config
-
-The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
-
-```
-config = PostTrainingQuantConfig(
-    device="gpu",
-    backend="itex",
-    ...
-    )
-```
 
 ## Quantization
   ```shell
@@ -119,13 +109,9 @@ Here we set the input tensor and output tensors name into *inputs* and *outputs*
 
 After prepare step is done, we just need add 2 lines to get the quantized model.
 ```python
-from neural_compressor import quantization
-from neural_compressor.config import PostTrainingQuantConfig
-conf = PostTrainingQuantConfig(inputs=['style_input', 'content_input'],
-                                outputs=['transformer/expand/conv3/conv/Sigmoid'],
-                                calibration_sampling_size=[50, 100])
-quantized_model = quantization.fit(args.input_graph, conf=conf, calib_dataloader=dataloader,
-            eval_dataloader==dataloader)
-```
+from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
 
-The Intel® Neural Compressor quantizer.fit() function will return a best quantized model during timeout constrain.
+quant_config = StaticQuantConfig()
+q_model = quantize_model(graph, quant_config, calib_dataloader)
+q_model.save(FLAGS.output_model)
+```

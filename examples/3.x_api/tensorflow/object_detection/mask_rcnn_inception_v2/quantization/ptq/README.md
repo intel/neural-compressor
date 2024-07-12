@@ -103,6 +103,8 @@ Now we support both pb and ckpt formats.
 ## 2. Benchmark
   ```shell
   bash run_benchmark.sh --input_model=./tensorflow-mask_rcnn_inception_v2-tune.pb  --dataset_location=/path/to/dataset/coco_val.record --mode=performance
+
+  bash run_benchmark.sh --input_model=./tensorflow-mask_rcnn_inception_v2-tune.pb  --dataset_location=/path/to/dataset/coco_val.record --mode=accuracy
   ```
 
 Details of enabling Intel® Neural Compressor on mask_rcnn_inception_v2 for Tensorflow.

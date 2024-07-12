@@ -28,9 +28,9 @@ from data_process import(
     COCOmAPv2,
     COCORecordDataset,
     ComposeTransform,
-    ResizeTFTransform,
     TFDataLoader,
     LabelBalanceCOCORecordFilter,
+    TensorflowResizeWithRatio,
 )
 
 arg_parser = ArgumentParser(description='Parse args')
@@ -92,11 +92,12 @@ def evaluate(model):
         latency = np.array(latency_list[warmup:]).mean() / args.batch_size
         return latency
 
+    use_padding = True if args.mode == 'performance' else False
     eval_dataset = COCORecordDataset(root=args.dataset_location, filter=None, \
             transform=ComposeTransform(transform_list=[TensorflowResizeWithRatio(
-                                        min_dim=800, max_dim=1356, padding=False)]))
+                                        min_dim=800, max_dim=1356, padding=use_padding)]))
     batch_size = 1 if args.mode == 'accuracy' else args.batch_size
-    eval_dataloader=TFDataLoader(dataset=eval_dataset, batch_size=args.batch_size)
+    eval_dataloader=TFDataLoader(dataset=eval_dataset, batch_size=batch_size)
 
     latency = eval_func(eval_dataloader)
     if args.benchmark and args.mode == 'performance':

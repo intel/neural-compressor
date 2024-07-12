@@ -51,7 +51,7 @@ if __name__ == "__main__":
                                 help="One of three options: 'benchmark'/'accuracy'/'tune'.")
         arg_parser.add_argument('-n', "--iters",
                                 help='The number of iteration. shall > warmup num(10)',
-                                type=int, default=20)
+                                type=int, default=100)
         arg_parser.add_argument('-e', "--num-inter-threads",
                                 help='The number of inter-thread.',
                                 dest='num_inter_threads', type=int, default=0)
@@ -209,7 +209,7 @@ if __name__ == "__main__":
 
         set_random_seed(9527)
         quant_config = StaticQuantConfig()
-        calib_dataloader=BaseDataloader(dataset=CalibrationDL())
+        calib_dataloader=BaseDataLoader(dataset=CalibrationDL())
         q_model = quantize_model(graph, quant_config, calib_dataloader)
         try:
             q_model.save(args.output_model)

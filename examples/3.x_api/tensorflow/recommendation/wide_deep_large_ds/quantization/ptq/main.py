@@ -111,7 +111,7 @@ def input_fn(data_file, num_epochs, shuffle, batch_size, compute_accuracy=True):
     return dataset
 
 def evaluation_func(model, measurer=None):
-    evaluate_opt_graph.eval_inference(model)
+    return evaluate_opt_graph.eval_inference(model)
 
 class eval_classifier_optimized_graph:
     """Evaluate image classifier with optimized TensorFlow graph"""
@@ -294,8 +294,7 @@ class eval_classifier_optimized_graph:
         print('Throughput: %.3f records/sec' % throughput)
         print('--------------------------------------------------')
 
-        if self.args.accuracy:
-            return accuracy
+        return accuracy
 
     def run(self):
         """ This is neural_compressor function include tuning and benchmark option """
