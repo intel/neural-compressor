@@ -548,60 +548,28 @@ class WeightOnlyLinear(torch.nn.Module):
         pack_method = getattr(self, pack_method_name)
         return pack_method(raw_array, packed_array, n_pack, new_in_features)
 
-    @staticmethod
-    @numba.jit(nopython=True)
-    def pack_array_with_numba_yi(
-        raw_tensor: np.ndarray, n_pack: int, bits: int, compression_dtype=np.int32
-    ) -> np.ndarray:
-        """Packs the input tensor by combining elements into a specified bit-width format using NumPy.
-
-        Args:
-            raw_tensor (np.ndarray): The tensor to be packed. Shape: [out_features, in_features] or [1, in_features].
-            n_pack (int): The number of elements to be packed together.
-            bits (int): The number of bits for each element.
-            compression_dtype (np.dtype, optional): The data type of the compressed tensor. Defaults to np.int32.
-        Returns:
-            np.ndarray: The packed tensor.
-        """
-        out_features, in_features = raw_tensor.shape
-        new_in_features = (in_features + n_pack - 1) // n_pack
-        packed_tensor = np.zeros((out_features, new_in_features), dtype=compression_dtype)
-        raw_tensor = raw_tensor.astype(compression_dtype)
-
-        if bits == 4:
-            for i in range(new_in_features):
-                packed_tensor[:, i] = (
-                    (raw_tensor[:, i * n_pack + 7] << 28)
-                    | (raw_tensor[:, i * n_pack + 6] << 24)
-                    | (raw_tensor[:, i * n_pack + 5] << 20)
-                    | (raw_tensor[:, i * n_pack + 4] << 16)
-                    | (raw_tensor[:, i * n_pack + 3] << 12)
-                    | (raw_tensor[:, i * n_pack + 2] << 8)
-                    | (raw_tensor[:, i * n_pack + 1] << 4)
-                    | raw_tensor[:, i * n_pack]
-                )
-
-        return packed_tensor
-
-    def pack_tensor_with_reshape(self, raw_tensor):
+    def pack_tensor_with_numpy_impl(self, raw_tensor):
         raw_array = raw_tensor.cpu().numpy()
         target_len = np.ceil(raw_array.shape[1] / self.n_pack).astype(int)
         target_dtype = torch.tensor(0, dtype=self.compression_dtype).numpy().dtype
-        reshaped = raw_array.reshape(-1, self.n_pack)
-        packed_array = np.zeros(reshaped.shape[0], dtype=target_dtype)
-        for i in range(self.n_pack):
-            packed_array |= reshaped[:, i].astype(target_dtype) << (self.bits * i)
-
-        packed_tensor = torch.from_numpy(packed_array.reshape((raw_array.shape[0], target_len))).to(
-            device=raw_tensor.device
-        )
+        packed_array = np.zeros((raw_array.shape[0], target_len), dtype=target_dtype)
+        mask = np.uint8(2**self.bits - 1)
+        for j in range(packed_array.shape[1]):
+            start = self.n_pack * j
+            end = self.n_pack * (j + 1)
+            tmp = raw_array[:, start:end].astype(target_dtype)
+            tmp &= mask
+            for e in range(tmp.shape[1]):
+                tmp[:, e] = np.left_shift(tmp[:, e], self.bits * e)
+                packed_array[:, j] |= tmp[:, e]
+                accelerator.synchronize()
+        packed_tensor = torch.from_numpy(packed_array).to(device=raw_tensor.device)
         return packed_tensor
 
     def pack_tensor_with_numpy(self, raw_tensor):
         if self.bits not in [2, 4, 8]:
-            return self.pack_tensor_with_reshape(raw_tensor)
+            return self.pack_tensor_with_numpy_impl(raw_tensor)
         compression_dtype = torch.tensor(0, dtype=self.compression_dtype).numpy().dtype
-        # packed_array = self.pack_array_with_numba_yi(raw_tensor.cpu().numpy(), self.n_pack, self.bits,  compression_dtype)
         packed_array = self.pack_array_with_numba(
             raw_tensor.cpu().numpy(), self.n_pack, self.bits, self.compress_bits, compression_dtype
         )
