@@ -13,17 +13,6 @@ subprojects:
       - "Code-Scan (DocStyle Code Scan DocStyle)"
       - "Code-Scan (Pylint Code Scan Pylint)"
 
-  - id: "Code Scan Neural-Solution Tests workflow"
-    paths:
-      - "neural_solution/**"
-      - "setup.py"
-      - ".azure-pipelines/code-scan-neural-solution.yml"
-    checks:
-      - "Code-Scan-Neural-Solution"
-      - "Code-Scan-Neural-Solution (Bandit Code Scan Bandit)"
-      - "Code-Scan-Neural-Solution (DocStyle Code Scan DocStyle)"
-      - "Code-Scan-Neural-Solution (Pylint Code Scan Pylint)"
-
   - id: "Model Tests workflow"
     paths:
       - "neural_compressor/**"
@@ -66,7 +55,6 @@ subprojects:
       - "setup.py"
       - "requirements.txt"
       - ".azure-pipelines/scripts/ut/**"
-      - "!test/neural_coder/**"
       - "!test/3x/**"
       - "!neural_compressor/common/**"
       - "!neural_compressor/torch/**"
@@ -98,7 +86,6 @@ subprojects:
       - "setup.py"
       - "requirements.txt"
       - ".azure-pipelines/scripts/ut/**"
-      - "!test/neural_coder/**"
       - "!test/3x/**"
       - "!neural_compressor/common/**"
       - "!neural_compressor/torch/**"
@@ -125,21 +112,6 @@ subprojects:
       - "!neural_compressor/tensorflow/**"
     checks:
       - "UT-ITREX"
-
-  - id: "Unit Tests Neural-Solution workflow"
-    paths:
-      - "neural_solution/**"
-      - "setup.py"
-    checks:
-      - "UT-Neural-Solution"
-
-  - id: "Unit Tests Neural-Coder workflow"
-    paths:
-      - "neural_coder/**"
-      - "test/neural_coder/**"
-      - "setup.py"
-    checks:
-      - "UT-Coder"
 
   - id: "Unit Tests 3x-TensorFlow workflow"
     paths:
