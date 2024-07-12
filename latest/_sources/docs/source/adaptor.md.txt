@@ -144,9 +144,6 @@ Onnxruntime already has [quantization tools](https://github.com/microsoft/onnxru
                 tensorboard=False, fp32_baseline=False):
        ......
 
-     def diagnosis_helper(self, fp32_model, int8_model, tune_cfg=None, save_path=None):
-       ......
-
      def save(self, model, path):
        ......
    ```

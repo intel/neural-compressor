@@ -91,7 +91,7 @@ Module Contents
        set_tensorboard(True)
 
 
-.. py:class:: BenchmarkConfig(inputs=[], outputs=[], backend='default', device='cpu', warmup=5, iteration=-1, model_name='', cores_per_instance=None, num_of_instance=1, inter_num_of_threads=None, intra_num_of_threads=None, diagnosis=False, ni_workload_name='profiling')
+.. py:class:: BenchmarkConfig(inputs=[], outputs=[], backend='default', device='cpu', warmup=5, iteration=-1, model_name='', cores_per_instance=None, num_of_instance=1, inter_num_of_threads=None, intra_num_of_threads=None, ni_workload_name='profiling')
 
    Config Class for Benchmark.
 
@@ -178,7 +178,7 @@ Module Contents
        )
 
 
-.. py:class:: PostTrainingQuantConfig(device='cpu', backend='default', domain='auto', recipes={}, quant_format='default', inputs=[], outputs=[], approach='static', calibration_sampling_size=[100], op_type_dict=None, op_name_dict=None, reduce_range=None, example_inputs=None, excluded_precisions=[], quant_level='auto', accuracy_criterion=accuracy_criterion, tuning_criterion=tuning_criterion, diagnosis=False, ni_workload_name='quantization')
+.. py:class:: PostTrainingQuantConfig(device='cpu', backend='default', domain='auto', recipes={}, quant_format='default', inputs=[], outputs=[], approach='static', calibration_sampling_size=[100], op_type_dict=None, op_name_dict=None, reduce_range=None, example_inputs=None, excluded_precisions=[], quant_level='auto', accuracy_criterion=accuracy_criterion, tuning_criterion=tuning_criterion, ni_workload_name='quantization')
 
 
 
@@ -263,11 +263,6 @@ Module Contents
                               Instance of AccuracyCriterion class. In this class you can set higher_is_better,
                                   criterion and tolerable_loss.
                               Please refer to docstring of AccuracyCriterion class.
-   :param diagnosis: This flag indicates whether to do diagnosis.
-                     Default value is False.
-   :type diagnosis: bool
-   :param ni_workload_name: Custom workload name for Neural Insights diagnosis workload.
-                            Default value is "quantization".
 
    Example::
 

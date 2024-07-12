@@ -113,7 +113,6 @@
 <section id="known-issues">
 <h2>Known Issues<a class="headerlink" href="#known-issues" title="Permalink to this heading"></a></h2>
 <p>The MSE tuning strategy does not work with the PyTorch adaptor layer. This strategy requires a comparison between the FP32 and INT8 tensors to decide which op impacts the final quantization accuracy. The PyTorch adaptor layer does not implement this inspect tensor interface. Therefore, do not choose the MSE tuning strategy for PyTorch models.</p>
-<p>The diagnosis function does not work with ONNX Runtime 1.13.1 for QDQ format quantization of ONNX models. It can not dump the output value of QDQ pairs since framework limitation.</p>
 </section>
 <section id="incompatible-changes">
 <h2>Incompatible Changes<a class="headerlink" href="#incompatible-changes" title="Permalink to this heading"></a></h2>
@@ -142,7 +141,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f25993f9840> 
+   <jinja2.runtime.BlockReference object at 0x7fe4d775f850> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

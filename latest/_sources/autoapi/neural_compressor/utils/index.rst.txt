@@ -30,7 +30,6 @@ Submodules
    /autoapi/neural_compressor/utils/kl_divergence/index
    /autoapi/neural_compressor/utils/load_huggingface/index
    /autoapi/neural_compressor/utils/logger/index
-   /autoapi/neural_compressor/utils/neural_insights_utils/index
    /autoapi/neural_compressor/utils/options/index
    /autoapi/neural_compressor/utils/pytorch/index
    /autoapi/neural_compressor/utils/utility/index

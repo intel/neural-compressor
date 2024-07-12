@@ -195,7 +195,6 @@ QuantizationAwareTrainingConfig(
     objective="performance",  # tuning.objective: same as in the conf.yaml;
     performance_only=False,  # tuning.performance_only: same as in the conf.yaml;
     ## tuning.random_seed and tuning.tensorboard: these parameters do not need to specially be defined;
-    ## diagnosis: these parameters do not need to specially be defined;
 )
 ```
 
