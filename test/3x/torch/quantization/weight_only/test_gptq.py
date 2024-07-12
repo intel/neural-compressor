@@ -176,7 +176,6 @@ class TestGPTQQuant:
         assert atol_false > atol_true, "act_order=True doesn't help accuracy, maybe is reasonable, please double check."
 
     def test_layer_wise(self):
-        # model = copy.deepcopy(self.tiny_gptj)
         model = copy.deepcopy(self.tiny_gptj)
         quant_config = GPTQConfig()
         model = prepare(model, quant_config)
