@@ -146,7 +146,8 @@ class RTNQuantizer(Quantizer):
                 if dtype == "fp32":
                     continue
                 # Move modules to the accelerator device layer-by-layer
-                m.to(device)
+                if not use_layer_wise:
+                    m.to(device)
                 ### FP8 cast part
                 if dtype in ["fp8_e5m2", "fp8_e5m2fnuz", "fp8_e4m3fn", "fp8_e4m3fnuz"]:
                     logger.debug("Cast module {} to FP8 using qdq mode, no scaling".format(name))
@@ -200,7 +201,6 @@ class RTNQuantizer(Quantizer):
                 weight = m.weight.detach()
             if use_mse_search:
                 quantile = search_clip(m, bits, group_size, scheme, dtype, use_full_range)
-            start_quant = time.time()
             int_weight, scale, zp = quant_tensor(
                 weight,
                 dtype=dtype,
@@ -212,8 +212,6 @@ class RTNQuantizer(Quantizer):
                 full_range=use_full_range,
                 **double_quant_config,
             )
-            quant_int_time = time.time() - start_quant
-            total_quant_int_time += quant_int_time
             int_weight = int_weight.t_().contiguous() if transpose else int_weight
             scale = scale.t_().contiguous() if transpose else scale
             zp = zp.t_().contiguous() if transpose and zp is not None else zp
@@ -248,7 +246,9 @@ class RTNQuantizer(Quantizer):
             else:
                 set_module(model, name, new_module)
             # Move modules back to the model device layer-by-layer
-            m.to(model_device)
-            new_module.to(model_device)
-        model.to(model_device)
+            if not use_layer_wise:
+                m.to(model_device)
+                new_module.to(model_device)
+        if not use_layer_wise:
+            model.to(model_device)
         return model

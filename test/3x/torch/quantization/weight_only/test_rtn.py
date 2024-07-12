@@ -44,7 +44,7 @@ class TestRTNQuant:
         self.label = self.tiny_gptj(self.example_inputs)[0]
         # test_default_config
         model = copy.deepcopy(self.tiny_gptj)
-        quant_config = get_default_rtn_config()
+        quant_config = get_default_rtn_config("Server")
         model = prepare(model, quant_config)
         model = convert(model)
         # record q_label for comparison
@@ -172,7 +172,6 @@ class TestRTNQuant:
         model = load_empty_model("hf-internal-testing/tiny-random-GPTJForCausalLM")
         quant_config = RTNConfig(
             use_layer_wise=True,
-            model_path="hf-internal-testing/tiny-random-GPTJForCausalLM",
         )
         model = prepare(model, quant_config)
         model = convert(model)

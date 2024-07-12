@@ -1045,7 +1045,8 @@ class GPTQuantizer(INCQuantizer):
         self.gptq_quantizer.remove_prepare_for_calibration()
 
         q_model, gptq_config = self.gptq_quantizer.execute_quantization()
-        q_model = q_model.to(self.model_device)
+        if not self.gptq_quantizer.use_layer_wise:
+            q_model = q_model.to(self.model_device)
         q_model.gptq_config = gptq_config
         logger.info("GPTQ quantizing done.")
         return q_model
