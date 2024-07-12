@@ -313,9 +313,9 @@ class HQQLinear(torch.nn.Linear):
             cur_state_dict[key] = state_dict.pop(prefix + key)
 
         unexpected_keys += state_dict.keys()
-        self.load_state_dict(cur_state_dict, strict)
+        self._assign_state_dict(cur_state_dict, strict)
 
-    def load_state_dict(self, state_dict: Mapping[str, Any], strict: bool = True, assign: bool = False):
+    def _assign_state_dict(self, state_dict: Mapping[str, Any], strict: bool = True, assign: bool = False):
         _scale_quantized = state_dict["scale_quantized"]
         _zero_quantized = state_dict["zero_quantized"]
         scale_state = state_dict["meta_info"]["scale"]
