@@ -110,7 +110,6 @@ class TuneStrategyMeta(type):
             new_strategy.pre_tuning_algo_scheduler = pre_strategy.pre_tuning_algo_scheduler
             new_strategy.algo_scheduler = pre_strategy.algo_scheduler
             new_strategy.tuning_history = pre_strategy.tuning_history
-            new_strategy.diagnosis_done = pre_strategy.diagnosis_done
         return new_strategy
 
 
@@ -212,8 +211,6 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         self._not_tuning_recipes_values = {}
         self._initialize_recipe()
         self.applied_all_recipes_flag = False
-        # for diagnosis
-        self.diagnosis_done = False
 
         self._resume = resume
         self._initial_adaptor()
@@ -439,7 +436,6 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             Tuning config
         """
         config = conf.quantization
-        config.diagnosis = getattr(config, "diagnosis", None)
         return config
 
     @abstractmethod
@@ -512,9 +508,6 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             )
             self.last_qmodel = self.algo_scheduler("post_quantization")  # pylint: disable=E1102
             self.last_tune_cfg = copy.deepcopy(tune_cfg)
-            # start diagnose, if needed
-            if self._need_do_diagnosis():
-                self._diagnosis(tune_cfg)
             # remove the reference to model
             self.algo_scheduler.reset_exec_algorithms()
             assert self.last_qmodel
@@ -551,9 +544,6 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                     continue
                 # recover the best quantized model from tuning config
                 self._recover_best_qmodel_from_tuning_cfg()
-                if self._need_do_diagnosis():
-                    logger.debug("*** Start to do diagnosis (inspect tensor).")
-                    self._diagnosis(tune_cfg)
                 if (
                     self.use_multi_objective and len(self.tune_result_record) > 1 and self.best_tune_result is not None
                 ):  # pragma: no cover
@@ -1029,12 +1019,8 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             logger.info("Do not evaluate the baseline and quantize the model with default configuration.")
             return
         else:
-            # If needed, push off the baseline evaluation until the diagnosis is finished.
-            if self._need_do_diagnosis():
-                logger.info("Push off the baseline evaluation until the diagnosis is finished.")
-                return
             # get fp32 model baseline
-            elif self.baseline is None:
+            if self.baseline is None:
                 logger.info("Get FP32 model baseline.")
                 self._fp32_model = self.model
                 self.baseline = self._evaluate(self.model)
@@ -1356,17 +1342,6 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             if isinstance(op_config, OpTuningConfig):
                 tune_cfg["op"][op_name_type] = op_config.get_state()
                 op_cap_lst = self.capability["opwise"][op_name_type]
-                # Add pattern for diagnosis
-                for op_cap in op_cap_lst:
-                    if "pattern" in op_cap:
-                        op_pattern = {}
-                        op_pattern["sequence"] = (
-                            op_cap["pattern"]["sequence"][0] if "sequence" in op_cap["pattern"] else None
-                        )
-                        op_pattern["precision"] = (
-                            op_cap["pattern"]["precision"][0] if "precision" in op_cap["pattern"] else None
-                        )
-                        tune_cfg["op"][op_name_type]["pattern"] = op_pattern
             else:
                 tune_cfg[op_name_type] = op_config
         tune_cfg["calib_sampling_size"] = op_tuning_cfg["calib_sampling_size"]
@@ -2095,107 +2070,3 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             if isinstance(op_config, OpTuningConfig) and quant_mode in op_config.op_quant_mode:
                 ops_lst.append(op_info)
         return ops_lst
-
-    def _need_do_diagnosis(self):
-        """Check if need to do diagnosis or not."""
-        # if user specifies to do it and does not do it.
-        if getattr(self.config, "diagnosis", None) is True and not self.diagnosis_done:
-            return True
-        return False
-
-    def _diagnosis(self, tune_cfg):
-        """Dump diagnosis information."""
-        import logging
-
-        logger = logging.getLogger("neural_compressor")
-        logger.debug("[Strategy] Start to do diagnosis (inspect tensor).")
-        iteration_list = [1]
-        inspect_type = "all"
-        save_to_disk = True
-        save_path = os.path.join(options.workspace, "inspect_saved")
-        inspect_node_lst, updated_cfg = self.adaptor.diagnosis_helper(
-            self.model,
-            self.last_qmodel,
-            tune_cfg,
-            save_path=save_path,
-        )
-        op_list = []
-        if not op_list:
-            op_list = list(inspect_node_lst)
-        else:
-            op_list = list(set(op_list).intersection(inspect_node_lst))
-
-        # step1. inspect tensor
-        logger.debug(f"[Strategy] Start to inspect tensor :{op_list} in  fp32 model.")
-        self.adaptor.inspect_tensor(
-            self.model,
-            dataloader=self.calib_dataloader,
-            op_list=op_list,
-            iteration_list=iteration_list,
-            inspect_type=inspect_type,
-            save_to_disk=save_to_disk,
-            save_path=os.path.join(save_path, "fp32"),
-            quantization_cfg=updated_cfg,
-        )
-
-        logger.debug(f"[Strategy] Start to inspect tensor :{op_list} in  quantized model.")
-        self.adaptor.inspect_tensor(
-            self.last_qmodel,
-            dataloader=self.calib_dataloader,
-            op_list=op_list,
-            iteration_list=iteration_list,
-            inspect_type=inspect_type,
-            save_to_disk=save_to_disk,
-            save_path=os.path.join(save_path, "quan"),
-            quantization_cfg=updated_cfg,
-        )
-
-        print_op_list(workload_location=options.workspace)
-        weights_details = get_weights_details(workload_location=options.workspace)
-
-        sorted_weights_details: List[WeightsDetails] = sorted(weights_details, key=lambda x: x.mse, reverse=True)
-        print_table(
-            title="Weights summary",
-            column_mapping={
-                "OP name": "op_name",
-                "MSE": "mse",
-                "Input model min": "input_stats.min",
-                "Input model max": "input_stats.max",
-                "Input model mean": "input_stats.mean",
-                "Input model standard deviation": "input_stats.std",
-                "Input model variance": "input_stats.var",
-            },
-            table_entries=sorted_weights_details,
-            precision=5,
-        )
-        logger.info("For more details execute quantization with Neural Insights GUI.")
-
-        weights_table_file = os.path.join(
-            options.workspace,
-            "weights_table.csv",
-        )
-        dump_table(
-            filepath=weights_table_file,
-            column_mapping={
-                "OP name": "op_name",
-                "MSE": "mse",
-                "Input model min": "input_stats.min",
-                "Input model max": "input_stats.max",
-                "Input model mean": "input_stats.mean",
-                "Input model standard deviation": "input_stats.std",
-                "Input model variance": "input_stats.var",
-                "Optimized model min": "optimized_stats.min",
-                "Optimized model max": "optimized_stats.max",
-                "Optimized model mean": "optimized_stats.mean",
-                "Optimized model standard deviation": "optimized_stats.std",
-                "Optimized model variance": "optimized_stats.var",
-            },
-            table_entries=sorted_weights_details,
-            file_type="csv",
-        )
-
-        logger.info(f"Weights data has been saved to {weights_table_file}")
-
-        # step2.mask the diagnosis has been done and evaluate baseline (fp32 model)
-        self.diagnosis_done = True
-        self._eval_baseline()

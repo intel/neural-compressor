@@ -286,9 +286,6 @@ if __name__ == "__main__":
         return eval_func(onnx_model, dataloader, top1)
 
     if args.benchmark:
-        if args.diagnose and args.mode != "performance":
-            print("[ WARNING ] Diagnosis works only with performance benchmark.")
-
         if args.mode == 'performance':
             from neural_compressor.benchmark import fit
             from neural_compressor.config import BenchmarkConfig
@@ -297,7 +294,6 @@ if __name__ == "__main__":
                 iteration=1000,
                 cores_per_instance=4,
                 num_of_instance=1,
-                diagnosis=args.diagnose,
             )
             fit(model, conf, b_dataloader=dataloader)
         elif args.mode == 'accuracy':
@@ -308,7 +304,6 @@ if __name__ == "__main__":
         from neural_compressor import quantization, PostTrainingQuantConfig
         config = PostTrainingQuantConfig(
             quant_format=args.quant_format,
-            diagnosis=args.diagnose,
         )
  
         q_model = quantization.fit(model, config, calib_dataloader=dataloader,

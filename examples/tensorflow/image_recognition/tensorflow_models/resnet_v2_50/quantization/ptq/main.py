@@ -114,7 +114,6 @@ class eval_classifier_optimized_graph:
             eval_dataloader = create_dataloader('tensorflow', eval_dataloader_args)
             conf = PostTrainingQuantConfig(
                 calibration_sampling_size=[50, 100],
-                diagnosis=args.diagnose,
             )
             from neural_compressor import Metric
             top1 = Metric(name="topk", k=1)
@@ -148,7 +147,6 @@ class eval_classifier_optimized_graph:
                     iteration=100,
                     cores_per_instance=4,
                     num_of_instance=1,
-                    diagnosis=args.diagnose,
                 )
                 fit(args.input_graph, conf, b_dataloader=dataloader)
             elif args.mode == 'accuracy':

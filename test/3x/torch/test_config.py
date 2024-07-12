@@ -1,9 +1,11 @@
 import copy
 import unittest
 
+import pytest
 import torch
 import transformers
 
+import neural_compressor.torch.utils as torch_utils
 from neural_compressor.torch.quantization import (
     AutoRoundConfig,
     AWQConfig,
@@ -13,6 +15,8 @@ from neural_compressor.torch.quantization import (
     SmoothQuantConfig,
     StaticQuantConfig,
     TEQConfig,
+    get_default_AutoRound_config,
+    get_default_gptq_config,
     get_default_hqq_config,
     get_default_rtn_config,
     quantize,
@@ -331,15 +335,41 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertEqual(hqq_config.to_dict(), hqq_config2.to_dict())
 
 
-class TestQuantConfigForAutotune(unittest.TestCase):
-    def test_expand_config(self):
-        # test the expand functionalities, the user is not aware it
+class TestQuantConfigBasedonProcessorType:
 
-        tune_config = RTNConfig(bits=[4, 6])
-        expand_config_list = RTNConfig.expand(tune_config)
-        self.assertEqual(expand_config_list[0].bits, 4)
-        self.assertEqual(expand_config_list[1].bits, 6)
+    @pytest.mark.parametrize("config_cls", [RTNConfig, GPTQConfig, AutoRoundConfig])
+    def test_get_config_based_on_processor_type(self, config_cls):
+        config_for_client = config_cls.get_predefined_configs()[torch_utils.ProcessorType.Client]
+        assert (
+            config_for_client.use_layer_wise
+        ), f"Expect use_layer_wise to be True, got {config_for_client.use_layer_wise}"
 
+        config_for_server = config_cls.get_predefined_configs()[torch_utils.ProcessorType.Server]
+        assert (
+            config_for_server.use_layer_wise is False
+        ), f"Expect use_layer_wise to be False, got {config_for_server.use_layer_wise}"
 
-if __name__ == "__main__":
-    unittest.main()
+    @pytest.fixture
+    def force_server(self, monkeypatch):
+        monkeypatch.setattr(torch_utils.utility.cpu_info, "sockets", 2)
+
+    def test_get_default_config_force_server(self, force_server):
+        rtn_config = get_default_rtn_config()
+        assert not rtn_config.use_layer_wise, f"Expect use_layer_wise to be `False`, got {rtn_config.use_layer_wise}"
+        gptq_config = get_default_gptq_config()
+        assert not gptq_config.use_layer_wise, f"Expect use_layer_wise to be `False`, got {gptq_config.use_layer_wise}"
+
+    @pytest.mark.parametrize("p_type", [None, torch_utils.ProcessorType.Client, torch_utils.ProcessorType.Server])
+    def test_get_default_config(self, p_type):
+        rtn_config = get_default_rtn_config(processor_type=p_type)
+        assert rtn_config.use_layer_wise == (
+            p_type == torch_utils.ProcessorType.Client
+        ), f"Expect use_layer_wise to be {p_type == torch_utils.ProcessorType.Client}, got {rtn_config.use_layer_wise}"
+        gptq_config = get_default_gptq_config(processor_type=p_type)
+        assert gptq_config.use_layer_wise == (
+            p_type == torch_utils.ProcessorType.Client
+        ), f"Expect use_layer_wise to be {p_type == torch_utils.ProcessorType.Client}, got {gptq_config.use_layer_wise}"
+        autoround_config = get_default_AutoRound_config(processor_type=p_type)
+        assert autoround_config.use_layer_wise == (
+            p_type == torch_utils.ProcessorType.Client
+        ), f"Expect use_layer_wise to be {p_type == torch_utils.ProcessorType.Client}, got {autoround_config.use_layer_wise}"
