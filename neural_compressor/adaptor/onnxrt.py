@@ -1697,57 +1697,6 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         acc = 0 if metrics is None else [metric.result() for metric in metrics]
         return acc if not isinstance(acc, list) or len(acc) > 1 else acc[0]
 
-    def diagnosis_helper(self, fp32_model, int8_model, tune_cfg=None, save_path=None):
-        from neural_compressor.adaptor.ox_utils.util import find_by_name
-        from neural_compressor.utils.utility import dump_data_to_local
-
-        if self.format == "qlinearops":
-            supported_optype = [
-                "Conv",
-                "MatMul",
-                "Concat",
-                "Attention",
-                "FusedConv",
-                "Add",
-                "Mul",
-                "LeakyRelu",
-                "Sigmoid",
-                "GlobalAveragePool",
-                "AveragePool",
-            ]
-        elif self.format == "qdq":
-            supported_optype = [
-                "Conv",
-                "MatMul",
-                "Concat",
-                "Attention",
-                "FusedConv",
-                "LeakyRelu",
-                "Sigmoid",
-                "GlobalAveragePool",
-                "AveragePool",
-            ]
-        else:
-            supported_optype = ["Conv", "MatMul", "Attention", "LSTM"]
-        inspect_node_list = []
-        int8_node_names = [i.name for i in int8_model.nodes()]
-        for node in fp32_model.nodes():
-            if node.op_type in supported_optype and node.name + "_quant" in int8_node_names:
-                inspect_node_list.append(node.name)
-
-        filtered_params = {}
-        if self.min_max:
-            for node_name in inspect_node_list:
-                node = find_by_name(node_name, fp32_model.nodes())
-                filtered_params[node_name] = {
-                    "min": np.array(self.min_max[node.output[0]][0], dtype=np.float32),
-                    "max": np.array(self.min_max[node.output[0]][1], dtype=np.float32),
-                }
-        if save_path:
-            dump_data_to_local(filtered_params, save_path, "activation_min_max.pkl")
-            dump_data_to_local(tune_cfg, save_path, "cfg.pkl")
-        return inspect_node_list, tune_cfg
-
     def save(self, model, path):
         """Save model.
 

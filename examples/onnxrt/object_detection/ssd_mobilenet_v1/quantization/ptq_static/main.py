@@ -140,8 +140,6 @@ if __name__ == "__main__":
         return metric.result()
 
     if args.benchmark:
-        if args.diagnose and args.mode != "performance":
-            print("[ WARNING ] Diagnosis works only with performance benchmark.")
         if args.mode == 'performance':
             from neural_compressor.benchmark import fit
             from neural_compressor.config import BenchmarkConfig
@@ -149,7 +147,6 @@ if __name__ == "__main__":
                 iteration=100,
                 cores_per_instance=4,
                 num_of_instance=1,
-                diagnosis=args.diagnose,
                 device=args.device,
                 backend=backend,
             )
@@ -169,7 +166,6 @@ if __name__ == "__main__":
             accuracy_criterion=accuracy_criterion,
             quant_format=args.quant_format,
             calibration_sampling_size=[50],
-            diagnosis=args.diagnose,
             device=args.device,
             backend=backend,
         )
