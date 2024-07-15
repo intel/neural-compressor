@@ -524,40 +524,6 @@ def int8_node_name_reverse(node):
     return node_name
 
 
-def tf_diagnosis_helper(fp32_model, quan_model, tune_cfg, save_path):
-    """Tensorflow diagnosis helper function."""
-    from ...utils.utility import dump_data_to_local
-
-    fp32_node_mapping = {}
-    qnode_mapping = {}
-    for node in fp32_model.graph_def.node:
-        fp32_node_mapping[node.name] = node
-    for node in quan_model.graph_def.node:
-        qnode_mapping[node.name] = node
-    supported_op_lst = set(["Conv2D", "MatMul", "ConcatV2", "MaxPool", "AvgPool", "DepthwiseConv2dNative"])
-    fp32_node_lst = set()
-    for node in fp32_model.graph_def.node:
-        if node.op in supported_op_lst:
-            fp32_node_lst.add(node.name)
-    int8_node_lst = set()
-    bf16_node_lst = set()
-    for node in quan_model.graph_def.node:
-        node_name = node.name
-        node_name = int8_node_name_reverse(node)
-        if "Quantized" in node.op:
-            int8_node_lst.add(node_name)
-        elif node.attr["value"].tensor.dtype == tf.dtypes.bfloat16.as_datatype_enum:  # pragma: no cover
-            bf16_node_lst.add(node.name)
-        else:
-            continue
-    inspect_node_lst = fp32_node_lst.intersection(bf16_node_lst.union(int8_node_lst))
-    activation_min_max, updated_cfg = _parse_config(quan_model.q_config, tune_cfg, inspect_node_lst)
-    dump_data_to_local(activation_min_max, save_path, "activation_min_max.pkl")
-    dump_data_to_local(updated_cfg, save_path, "cfg.pkl")
-
-    return inspect_node_lst, updated_cfg
-
-
 def _parse_config(q_config, cfg, op_list):
     """Parse q_config and get dequantize min max value."""
     activation_min_max = {}
