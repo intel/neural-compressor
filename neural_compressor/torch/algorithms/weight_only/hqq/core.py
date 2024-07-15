@@ -19,7 +19,7 @@
 # NOTICE: the original `Quantizer` has been modified to `HQQTensorHandle`
 # and `QTensor` to decouple the data structure and the quantization logic.
 
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Mapping, Tuple
 
 import torch
 
@@ -278,3 +278,61 @@ class HQQLinear(torch.nn.Linear):
         # !!! Delete the float explicitly to save memory
         del float_module
         return new_mod
+
+    def state_dict(self, *args, **kwargs):  # nn.Module override compatible
+        state_dict = self.q_weight.to_state_dict()
+        if self.bias is not None:
+            state_dict["bias"] = self.bias
+        if "destination" in kwargs and "prefix" in kwargs:
+            for key, value in state_dict.items():
+                kwargs["destination"][kwargs["prefix"] + key] = value
+        return state_dict
+
+    def _load_from_state_dict(
+        self,
+        state_dict,
+        prefix,
+        local_metadata,
+        strict,
+        missing_keys,
+        unexpected_keys,
+        error_msgs,
+    ):
+        all_expected_keys = ["val", "scale_quantized", "zero_quantized", "meta_info"]
+        if self.bias is not None:
+            all_expected_keys.append("bias")
+
+        for key in all_expected_keys:
+            if prefix + key not in state_dict:
+                missing_keys.append(key)
+        if missing_keys:
+            return  # Can't load weights if either weight or meta is missing
+
+        cur_state_dict = {}
+        for key in all_expected_keys:
+            cur_state_dict[key] = state_dict.pop(prefix + key)
+
+        unexpected_keys += state_dict.keys()
+        self._assign_state_dict(cur_state_dict, strict)
+
+    def _assign_state_dict(self, state_dict: Mapping[str, Any], strict: bool = True, assign: bool = False):
+        _scale_quantized = state_dict["scale_quantized"]
+        _zero_quantized = state_dict["zero_quantized"]
+        scale_state = state_dict["meta_info"]["scale"]
+        zero_state = state_dict["meta_info"]["zero"]
+        if _scale_quantized:
+            scale = HQQTensorHandle._create_q_tensor(scale_state["val"], scale_state["meta_info"])
+        else:
+            scale = state_dict["meta_info"]["scale"]
+        if _zero_quantized:
+            zero = HQQTensorHandle._create_q_tensor(zero_state["val"], zero_state["meta_info"])
+        else:
+            zero = state_dict["meta_info"]["zero"]
+        meta = state_dict["meta_info"]
+        meta["scale"] = scale
+        meta["zero"] = zero
+        self.q_weight = HQQTensorHandle._create_q_tensor(state_dict["val"], meta)
+        if self.bias is not None:
+            self.bias = state_dict["bias"]
+        self.quantized = True
+        return self
