@@ -1,5 +1,6 @@
-import pytest
 import shutil
+
+import pytest
 import torch
 import torch.testing._internal.common_quantization as torch_test_quant_common
 
@@ -113,14 +114,18 @@ class TestPT2EQuantization:
         config.freezing = True
         q_model_out = q_model(*example_inputs)
         assert torch.allclose(float_model_output, q_model_out, atol=1e-2), "Quantization failed!"
-        
+
         # test save and load
-        q_model.save(example_inputs=example_inputs, output_dir="./saved_results",)
+        q_model.save(
+            example_inputs=example_inputs,
+            output_dir="./saved_results",
+        )
         from neural_compressor.torch.quantization import load
+
         loaded_quantized_model = load("./saved_results")
         loaded_q_model_out = loaded_quantized_model(*example_inputs)
         assert torch.allclose(loaded_q_model_out, q_model_out)
-        
+
         opt_model = torch.compile(q_model)
         out = opt_model(*example_inputs)
         logger.warning("out shape is %s", out.shape)
