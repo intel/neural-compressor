@@ -105,11 +105,11 @@ def _get_absorb_dict(model, absorb_layer_dict):
     for i in range(block_num):
         block_absorb_dict[i] = []
         block_name = block_prefix + "." + str(i) + "."
-        
+
         for k, v in absorb_layer_dict.items():
-            
+
             if isinstance(v, str):
-                name_list = (block_name + v, )
+                name_list = (block_name + v,)
             else:
                 name_list = tuple(block_name + vv for vv in v)
             block_absorb_dict[i].append(name_list)
