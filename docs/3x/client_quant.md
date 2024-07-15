@@ -53,7 +53,7 @@ OMP_NUM_THREADS=12 taskset -c 0-11 python main.py
 ```
 
 > [!NOTE]
-> To identify E-cores and P-cores on a Linux system,, please refer [this](https://stackoverflow.com/a/71282744/23445462).
+> To identify E-cores and P-cores on a Linux system, please refer [this](https://stackoverflow.com/a/71282744/23445462).
 
 
 > [!CAUTION]
