@@ -27,7 +27,7 @@ pip install -r requirements.txt
 
 The pretrained model is provided by [Keras Applications](https://keras.io/api/applications/). prepare the model, Run as follow: 
  ```
-python prepare_model.py --output_model=/path/to/model
+python prepare_model.py --output_model=./resnetv2_50_keras
  ```
 `--output_model ` the model should be saved as SavedModel format or H5 format.
 
@@ -39,9 +39,9 @@ python prepare_model.py --output_model=/path/to/model
   ```shell
   cd examples/3.x_api/tensorflow/keras/cv/
   # convert validation subset
-  bash prepare_dataset.sh --output_dir=/resnetv2_50/quantization/ptq/data --raw_dir=/PATH/TO/img_raw/val/ --subset=validation
+  bash prepare_dataset.sh --output_dir=./resnetv2_50/quantization/ptq/data --raw_dir=/PATH/TO/img_raw/val/ --subset=validation
   # convert train subset
-  bash prepare_dataset.sh --output_dir=/resnetv2_50/quantization/ptq/data --raw_dir=/PATH/TO/img_raw/train/ --subset=train
+  bash prepare_dataset.sh --output_dir=./resnetv2_50/quantization/ptq/data --raw_dir=/PATH/TO/img_raw/train/ --subset=train
   cd resnetv2_50/quantization/ptq
   ```
 > **Note**: 
@@ -54,7 +54,7 @@ python prepare_model.py --output_model=/path/to/model
 
 ## Quantization
   ```shell
-  bash run_quant.sh --input_model=./resnetv2_50_keras/ --output_model=./result --dataset_location=/path/to/evaluation/dataset
+  bash run_quant.sh --input_model=./resnetv2_50_keras --output_model=./result --dataset_location=/path/to/evaluation/dataset
   ```
 
 ## Benchmark

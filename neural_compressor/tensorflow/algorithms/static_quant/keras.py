@@ -203,19 +203,20 @@ class KerasAdaptor:
                         fuse_layers.append(layer)
                     else:
                         for bound_node in layer._inbound_nodes:
-                            inbound_layer = bound_node.inbound_layers
-                            if isinstance(inbound_layer, list) and len(inbound_layer) == 0:
-                                continue
-                            if inbound_layer in self.bn_weights.keys():
-                                for bn_inbound_node in inbound_layer._inbound_nodes:
-                                    bn_inbound_layer = bn_inbound_node.inbound_layers
-                                    if bn_inbound_layer.name in self.conv_weights.keys():
-                                        new_bound_nodes.append(bn_inbound_node)
-                                    else:
-                                        if bound_node not in new_bound_nodes:
-                                            new_bound_nodes.append(bound_node)
-                            else:
-                                new_bound_nodes.append(bound_node)
+                            inbound_layers = bound_node.inbound_layers
+                            if not isinstance(inbound_layers, list):
+                                inbound_layers = [inbound_layers]
+                            for inbound_layer in inbound_layers:
+                                if inbound_layer in self.bn_weights.keys():
+                                    for bn_inbound_node in inbound_layer._inbound_nodes:
+                                        bn_inbound_layer = bn_inbound_node.inbound_layers
+                                        if bn_inbound_layer.name in self.conv_weights.keys():
+                                            new_bound_nodes.append(bn_inbound_node)
+                                        else:
+                                            if bound_node not in new_bound_nodes:
+                                                new_bound_nodes.append(bound_node)
+                                else:
+                                    new_bound_nodes.append(bound_node)
 
                         layer._inbound_nodes.clear()
                         for bound_node in new_bound_nodes:
