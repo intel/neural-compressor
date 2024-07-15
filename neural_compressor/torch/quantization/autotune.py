@@ -37,6 +37,7 @@ def get_rtn_double_quant_config_set() -> List[RTNConfig]:
         rtn_double_quant_config_set.append(RTNConfig.from_dict(double_quant_config))
     return rtn_double_quant_config_set
 
+
 def get_all_config_set() -> Union[BaseConfig, List[BaseConfig]]:
     return get_all_config_set_from_config_registry(fwk_name=FRAMEWORK_NAME)
 

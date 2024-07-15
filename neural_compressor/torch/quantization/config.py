@@ -1485,7 +1485,7 @@ def get_all_registered_configs() -> Dict[str, BaseConfig]:
 ######################## WOQ Tuning Config ###############################
 def get_woq_tuning_config() -> list:
     """Generate the config set for WOQ tuning.
-    
+
     Returns:
         the list of WOQ quant config.
     """
