@@ -161,8 +161,8 @@ class StaticQuantQuantizer(Quantizer):
 
             dump_model_op_stats(self.user_cfg)
 
-            model.ori_save = model.save
-            model.save = MethodType(save, model)
+        model.ori_save = model.save
+        model.save = MethodType(save, model)
 
         logger.info("Static quantization done.")
         return model
