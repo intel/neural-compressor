@@ -19,7 +19,7 @@
     name: '1.11'
 
   bf16: ['Linear', 'bmm', 'mm', 'baddbmm', 'addmm', 'addbmm',
-          '_convolution', 'LSTM', 'LSTMCell', 'GRU', 'GRUCell']
+          'Conv1d', 'Conv2d', 'Conv3d', 'LSTM', 'LSTMCell', 'GRU', 'GRUCell']
   fp32: ['*'] # `*` means all op types.
   int8: &1_11_capabilities {
     'static': &cap_s8_1_11 {

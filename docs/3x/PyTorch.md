@@ -223,3 +223,24 @@ def load(output_dir="./saved_results", model=None):
     </tr>
     </tbody>
     </table>
+
+2. How to set different configuration for specific op_name or op_type?
+    > INC extends a `set_local` method based on the global configuration object to set custom configuration.
+
+    ```python
+    def set_local(self, operator_name_or_list: Union[List, str, Callable], config: BaseConfig) -> BaseConfig:
+        """Set custom configuration based on the global configuration object.
+
+        Args:
+            operator_name_or_list (Union[List, str, Callable]): specific operator
+            config (BaseConfig): specific configuration
+        """
+    ```
+
+    > Demo:
+
+    ```python
+    quant_config = RTNConfig()  # Initialize global configuration with default bits=4
+    quant_config.set_local(".*mlp.*", RTNConfig(bits=8))  # For layers with "mlp" in their names, set bits=8
+    quant_config.set_local("Conv1d", RTNConfig(dtype="fp32"))  # For Conv1d layers, do not quantize them.
+    ```

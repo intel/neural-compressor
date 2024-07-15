@@ -46,6 +46,7 @@ def is_package_available(package_name):
 ## check hpex
 if is_package_available("habana_frameworks"):
     _hpex_available = True
+    import habana_frameworks.torch.hpex  # pylint: disable=E0401
 else:
     _hpex_available = False
 

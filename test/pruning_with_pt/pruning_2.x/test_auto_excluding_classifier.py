@@ -24,7 +24,6 @@ class NaiveMLP(nn.Module):
 
 class TestPruning(unittest.TestCase):
     def test_pruning_basic(self):
-        # import pdb;pdb.set_trace()
         hidden_size = 32
         model = NaiveMLP(hidden_size)
         # import classifier searching functions
