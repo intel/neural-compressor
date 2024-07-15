@@ -87,7 +87,7 @@ class KerasAdaptor:
         self.fold_conv = []
         self.keras3 = True if version1_gte_version2(tf.__version__, "2.16.1") else False
         if not os.path.exists(DEFAULT_WORKSPACE):
-            os.mkdir(DEFAULT_WORKSPACE)
+            os.makedirs(DEFAULT_WORKSPACE)
         self.tmp_dir = (DEFAULT_WORKSPACE + "tmp_model.keras") if self.keras3 else (DEFAULT_WORKSPACE + "tmp_model")
 
     def _set_weights(self, qmodel, layer_weights):

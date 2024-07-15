@@ -250,10 +250,9 @@ def main(_):
     if FLAGS.benchmark:
         assert FLAGS.mode == 'performance' or FLAGS.mode == 'accuracy', \
         "Benchmark only supports performance or accuracy mode."
-        eval_func(graph)
-    elif FLAGS.mode == 'accuracy':
         acc = eval_func(graph)
-        print('Accuracy is {:.3f}'.format(acc))
+        if FLAGS.mode == 'accuracy':
+            print('Accuracy is {:.3f}'.format(acc))
 
 if __name__ == "__main__":
     tf.compat.v1.app.run()

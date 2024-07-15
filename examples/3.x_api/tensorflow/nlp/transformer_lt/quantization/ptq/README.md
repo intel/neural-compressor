@@ -58,22 +58,22 @@ bash prepare_dataset_model.sh
 ```
 
 ## Run Command
+### Quantization
 
 ```shell
-python main.py --input_graph=/path/to/fp32_graphdef.pb --inputs_file=/path/to/newstest2014.en --reference_file=/path/to/newstest2014.de --vocab_file=/path/to/vocab.txt --tune
+bash run_quant.sh --input_model=./model/fp32_graphdef.pb --dataset_location=./data --output_model=./model/int8_graphdef.pb
+```
+### Benchmark
+```shell
+bash run_benchmark.sh --input_model=./model/int8_graphdef.pb --dataset_location=./data --mode=performance
+
+bash run_benchmark.sh --input_model=./model/int8_graphdef.pb --dataset_location=./data --mode=accuracy --batch_size=1
 ```
 
 Details of enabling Intel® Neural Compressor on transformer-lt for Tensorflow.
 =========================
 
 This is a tutorial of how to enable transformer-lt model with Intel® Neural Compressor.
-## User Code Analysis
-1. User specifies fp32 *model*, calibration dataset *q_dataloader*, evaluation dataset *eval_dataloader* and metric in tuning.metric field of model-specific yaml config file.
-
-2. User specifies fp32 *model*, calibration dataset *q_dataloader* and a custom *eval_func* which encapsulates the evaluation dataset and metric by itself.
-
-For transformer-lt, we applied the latter one because we don't have dataset and metric for transformer-lt. The task is to implement the *q_dataloader* and *eval_func*.
-
 
 ### q_dataloader Part Adaption
 Below dataset class uses getitem to provide the model with input.
@@ -124,9 +124,7 @@ After prepare step is done, we add tune code to generate quantized model.
     if FLAGS.benchmark:
         assert FLAGS.mode == 'performance' or FLAGS.mode == 'accuracy', \
         "Benchmark only supports performance or accuracy mode."
-        eval_func(graph)
-    elif FLAGS.mode == 'accuracy':
         acc = eval_func(graph)
-        print('Accuracy is {:.3f}'.format(acc))
+        if FLAGS.mode == 'accuracy':
+            print('Accuracy is {:.3f}'.format(acc))
 ```
-The Intel® Neural Compressor quantization.fit() function will return a best quantized model under time constraint.
