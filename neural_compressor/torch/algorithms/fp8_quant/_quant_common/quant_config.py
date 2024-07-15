@@ -1,13 +1,28 @@
+# Copyright (c) 2024 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from __future__ import annotations
 
 import json
 import os
-import torch
-from enum import Enum, Flag, auto
 from dataclasses import dataclass
+from enum import Enum, Flag, auto
 from json.decoder import JSONDecodeError
 from typing import Any, Mapping
+
 import habana_frameworks.torch.utils.experimental as htexp
+import torch
 
 from ..utils.logger import logger
 
@@ -121,6 +136,16 @@ class Fp8cfg:
                 else:
                     raise ValueError("invalid fp8_config in custom config. Enter E4M3 or E5M2")
 
+            if keys == "hp_dtype":
+                if custom_config[keys].lower() == "bf16":
+                    custom_config[keys] = torch.bfloat16
+                elif custom_config[keys].lower() == "fp16":
+                    custom_config[keys] = torch.float16
+                elif custom_config[keys].lower() == "fp32":
+                    custom_config[keys] = torch.float32
+                else:
+                    raise ValueError("invalid hp_dtype in custom config. Enter bf16, fp16 or fp32")
+
             if keys == "scale_method":
                 if custom_config[keys].lower() == "unit_scale":
                     custom_config[keys] = ScaleMethod.UNIT_SCALE
@@ -176,7 +201,7 @@ class Fp8cfg:
         # If seperate_measure_files is True (default value), then it is assumed that there are multiple distinct measure and scale files
         # and they are stored in / loaded from paths with the correct index as a suffix. Else, only one is searched for.
         measured_global_config["local_rank"] = (
-            local_rank if local_rank >= 0 and (custom_config.get("seperate_measure_files", True) == True) else None
+            local_rank if local_rank >= 0 and custom_config.get("seperate_measure_files", True) else None
         )
 
         base_name = measured_global_config["dump_stats_path"].split("/")[-1]
@@ -185,7 +210,7 @@ class Fp8cfg:
         os.makedirs(folder_name, exist_ok=True)
         worker_st = (
             ""
-            if measured_global_config["local_rank"] == None
+            if measured_global_config["local_rank"] is None
             else "_" + str(measured_global_config["local_rank"]) + "_" + str(measured_global_config["world_size"])
         )
         measured_global_config["shape_file"] = measured_global_config["dump_stats_path"] + "_hooks_shape" + worker_st
