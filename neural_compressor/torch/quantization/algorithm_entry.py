@@ -317,10 +317,10 @@ def awq_quantize_entry(
     from neural_compressor.torch.algorithms.weight_only.save_load import save
 
     weight_config = {}
-    for (op_name, op_type), op_config in configs_mapping.items():
-        if op_config.name != AWQ:
+    for (op_name, op_type), quant_config in configs_mapping.items():
+        if quant_config.name != AWQ:
             continue
-        if op_config.dtype == "fp32":
+        if quant_config.dtype == "fp32":
             weight_config[op_name] = {
                 "bits": -1,
                 "dtype": "fp32",  # skip quantization
@@ -329,31 +329,32 @@ def awq_quantize_entry(
             }
         else:
             weight_config[op_name] = {
-                "dtype": op_config.dtype,
-                "bits": op_config.bits,
-                "group_size": op_config.group_size,
-                "group_dim": op_config.group_dim,
-                "scheme": "sym" if op_config.use_sym else "asym",
-                "use_full_range": op_config.use_full_range,
-                "use_mse_search": op_config.use_mse_search,
-                "use_layer_wise": op_config.use_layer_wise,
-                "use_double_quant": op_config.use_double_quant,
-                "double_quant_dtype": op_config.double_quant_dtype,
-                "double_quant_bits": op_config.double_quant_bits,
-                "double_quant_scheme": op_config.double_quant_use_sym,
-                "double_quant_group_size": op_config.double_quant_group_size,
+                "dtype": quant_config.dtype,
+                "bits": quant_config.bits,
+                "group_size": quant_config.group_size,
+                "group_dim": quant_config.group_dim,
+                "scheme": "sym" if quant_config.use_sym else "asym",
+                "use_full_range": quant_config.use_full_range,
+                "use_mse_search": quant_config.use_mse_search,
+                "use_layer_wise": quant_config.use_layer_wise,
+                "use_double_quant": quant_config.use_double_quant,
+                "double_quant_dtype": quant_config.double_quant_dtype,
+                "double_quant_bits": quant_config.double_quant_bits,
+                "double_quant_scheme": quant_config.double_quant_use_sym,
+                "double_quant_group_size": quant_config.double_quant_group_size,
             }
-            use_auto_scale = op_config.use_auto_scale
-            use_mse_search = op_config.use_auto_clip  # for awq clip
-            folding = op_config.folding
-            use_full_range = op_config.use_full_range
+            use_auto_scale = quant_config.use_auto_scale
+            use_mse_search = quant_config.use_auto_clip  # for awq clip
+            folding = quant_config.folding
+            use_full_range = quant_config.use_full_range
+            absorb_to_layer = quant_config.absorb_to_layer
 
     run_fn = kwargs.get("run_fn", None)
     run_args = kwargs.get("run_args", None)
     example_inputs = kwargs.get("example_inputs", None)
     assert example_inputs is not None, "Please provide example_inputs for AWQ quantization."
 
-    quantizer = get_quantizer(model, quantizer_cls=AWQQuantizer, quant_config=weight_config)
+    quantizer = get_quantizer(model, quantizer_cls=AWQQuantizer, quant_config=weight_config, absorb_to_layer=absorb_to_layer)
     model = quantizer.execute(
         model,
         mode=mode,

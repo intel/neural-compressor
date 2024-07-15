@@ -425,6 +425,7 @@ class AWQConfig(BaseConfig):
         "use_auto_scale",
         "use_auto_clip",
         "folding",
+        "absorb_to_layer",
     ]
     name = AWQ
 
@@ -451,6 +452,7 @@ class AWQConfig(BaseConfig):
         use_auto_clip: bool = True,
         folding: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+        absorb_to_layer: dict = {},
     ):
         """Init AWQ weight-only quantization config.
 
@@ -473,6 +475,7 @@ class AWQConfig(BaseConfig):
             use_auto_clip (bool):  Enables clip range search. Defaults to True.
             folding(bool): Allow insert mul before linear when the scale cannot be absorbed by last layer,
               default is False.
+            absorb_to_layer (dict): The layer dict that scale can be absorbed, default is {}.
         """
         super().__init__(white_list=white_list)
         self.dtype = dtype
@@ -493,6 +496,7 @@ class AWQConfig(BaseConfig):
         self.use_auto_scale = use_auto_scale
         self.use_auto_clip = use_auto_clip
         self.folding = folding
+        self.absorb_to_layer = absorb_to_layer
         self._post_init()
 
     @classmethod
@@ -609,7 +613,7 @@ class TEQConfig(BaseConfig):
             double_quant_use_sym (bool): Indicates whether double_quant scale are symmetric, default is True.
             double_quant_group_size (int): Size of double_quant groups, default is 32.
             quant_lm_head (bool): Indicates whether quantize the lm_head layer in transformers。 Default is False.
-            absorb_to_layer (bool): The layer dict that scale can be absorbed, default is {}.
+            absorb_to_layer (dict): The layer dict that scale can be absorbed, default is {}.
             folding(bool): Allow insert mul before linear when the scale cannot be absorbed by last layer,
               default is False.
         """
