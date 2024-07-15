@@ -354,7 +354,9 @@ def awq_quantize_entry(
     example_inputs = kwargs.get("example_inputs", None)
     assert example_inputs is not None, "Please provide example_inputs for AWQ quantization."
 
-    quantizer = get_quantizer(model, quantizer_cls=AWQQuantizer, quant_config=weight_config, absorb_to_layer=absorb_to_layer)
+    quantizer = get_quantizer(
+        model, quantizer_cls=AWQQuantizer, quant_config=weight_config, absorb_to_layer=absorb_to_layer
+    )
     model = quantizer.execute(
         model,
         mode=mode,

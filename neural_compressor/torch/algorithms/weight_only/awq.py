@@ -88,6 +88,7 @@ def _get_absorb_per_block(model, example_inputs, folding=False, weight_config={}
     logger.debug(f"The absorb_layer_dict: {absorb_layer_dict}")
     return block_absorb_dict, absorb_layer_dict
 
+
 def _get_block_absorb_dict(model, absorb_layer_dict):
     """Get absorbed layer per block from absorbed layer dict.
 
@@ -109,6 +110,7 @@ def _get_block_absorb_dict(model, absorb_layer_dict):
     logger.debug(f"The absorbed layers per block: {block_absorb_dict}")
     logger.debug(f"The absorb_layer_dict: {absorb_layer_dict}")
     return block_absorb_dict
+
 
 @torch.no_grad()
 def _get_weight_scale(weight, q_group_size=-1):
