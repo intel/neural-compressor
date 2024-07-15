@@ -517,11 +517,14 @@ def hqq_entry(
     **kwargs,
 ) -> torch.nn.Module:
     from neural_compressor.torch.algorithms.weight_only.hqq import HQQuantizer
+    from neural_compressor.torch.algorithms.weight_only.save_load import save
 
     logger.info("Quantize model with the HQQ algorithm.")
 
     quantizer = get_quantizer(model, quantizer_cls=HQQuantizer, quant_config=configs_mapping)
     model = quantizer.execute(model, mode=mode)
+    model.qconfig = configs_mapping
+    model.save = MethodType(save, model)
     postprocess_model(model, mode, quantizer)
     dump_model_op_stats(mode, configs_mapping)
 

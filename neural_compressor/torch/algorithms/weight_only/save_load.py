@@ -124,7 +124,6 @@ class WOQModelLoader:
 
         with open(qconfig_file_path, "r") as file:
             self.quantization_config = json.load(file)
-
         model = self._build_woq_model()
         model.load_state_dict(qweights, assign=True)
         model.eval()
@@ -157,8 +156,19 @@ class WOQModelLoader:
 
         return model
 
+    def _is_hqq_model(self):
+        for name, module in self.original_model.named_modules():
+            pattern = rf"(\(.*{re.escape(name)}.*{re.escape(type(module).__name__)}.*\))"
+            for q_config_key, q_config_value in self.quantization_config.items():
+                if re.search(pattern, q_config_key):
+                    if isinstance(q_config_value, dict) and [algo for algo in q_config_value.keys()][0] == "hqq":
+                        return True
+
     def _build_woq_model(self):
         """Build weight-only quantization model."""
+        if self._is_hqq_model():
+            return self._build_hqq_model()
+
         from neural_compressor.torch.utils import set_module
 
         from .modules import MulLinear
@@ -223,6 +233,23 @@ class WOQModelLoader:
                     bias=module.bias is not None,
                     use_optimum_format=True,
                     **kwargs,
+                )
+                set_module(self.original_model, name, new_module)
+        woq_model = self.original_model
+        return woq_model
+
+    def _build_hqq_model(self):
+        """Replace quantized Linear with HQQLinear."""
+        from neural_compressor.torch.algorithms.weight_only.hqq.core import HQQLinear
+        from neural_compressor.torch.utils import set_module
+
+        for name, module in self.original_model.named_modules():
+            if isinstance(module, torch.nn.Linear):
+                loaded_state_dict_keys_set = set(self.loaded_state_dict_keys)
+                if name + ".val" not in loaded_state_dict_keys_set:
+                    continue
+                new_module = HQQLinear(
+                    in_features=module.in_features, out_features=module.out_features, bias=module.bias is not None
                 )
                 set_module(self.original_model, name, new_module)
         woq_model = self.original_model
