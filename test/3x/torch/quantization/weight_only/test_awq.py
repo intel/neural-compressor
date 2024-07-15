@@ -169,8 +169,7 @@ class TestAWQQuant:
             "attn.out_proj": "attn.out_proj",
             "mlp.fc_out": ("mlp.fc_out"),
         }
-        
-        
+
         quant_config = AWQConfig(absorb_layer_dict=absorb_layer_dict)
         logger.info(f"Test AWQ with config {quant_config}")
         # prepare + convert API
