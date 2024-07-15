@@ -1,10 +1,10 @@
-User Guide
+2.X API User Guide
 ===========================
 
 Intel® Neural Compressor aims to provide popular model compression techniques such as quantization, pruning (sparsity), distillation, and neural architecture search to help the user optimize their model. The below documents could help you to get familiar with concepts and modules in Intel® Neural Compressor. Learn how to utilize the APIs in Intel® Neural Compressor to conduct quantization, pruning (sparsity), distillation, and neural architecture search on mainstream frameworks.
 
 ## Overview
-This part helps user to get a quick understand about design structure and workflow of Intel® Neural Compressor. We provided broad examples to help users get started.
+This part helps user to get a quick understand about design structure and workflow of 2.X Intel® Neural Compressor. We provided broad examples to help users get started.
 <table class="docutils">
 <tbody>
 <tr>
@@ -53,7 +53,7 @@ In 2.X API, it's very important to create the `DataLoader` and `Metrics` for you
 </table>
 
 ## Advanced Topics
-This part provides the advanced topics that help user dive deep into Intel® Neural Compressor.
+This part provides the advanced topics that help user dive deep into Intel® Neural Compressor 2.X API.
 <table class="docutils">
 <tbody>
 <tr>
