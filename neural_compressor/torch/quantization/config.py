@@ -723,7 +723,7 @@ class AutoRoundConfig(BaseConfig):
         minmax_lr: float = None,
         low_gpu_mem_usage: bool = True,
         iters: int = 200,
-        seqlen: int = 2048,
+        seqlen: int = 512,
         n_samples: int = 512,
         sampler: str = "rand",
         seed: int = 42,
@@ -1485,13 +1485,12 @@ def get_all_registered_configs() -> Dict[str, BaseConfig]:
 ######################## WOQ Tuning Config ###############################
 def get_woq_tuning_config() -> list:
     """Generate the config set for WOQ tuning.
-
+    
     Returns:
         the list of WOQ quant config.
     """
     RTN_G32ASYM = RTNConfig(use_sym=False, group_size=32)
+    AUTO_ROUND_CONFIG = AutoRoundConfig(use_sym=False, group_size=32)
     GPTQ_G32ASYM = GPTQConfig(use_sym=False, group_size=32)
-    GPTQ_G32ASYM_DISABLE_LAST_LINEAR = GPTQConfig(use_sym=False).set_local("*.lm_head", GPTQConfig(dtype="fp32"))
-    GPTQ_G128ASYM = GPTQConfig(group_size=128, use_sym=False)
     AWQ_G32ASYM = AWQConfig(use_sym=False, group_size=32)
-    return [RTN_G32ASYM, GPTQ_G32ASYM, GPTQ_G32ASYM_DISABLE_LAST_LINEAR, GPTQ_G128ASYM, AWQ_G32ASYM]
+    return [RTN_G32ASYM, AUTO_ROUND_CONFIG, GPTQ_G32ASYM, AWQ_G32ASYM]
