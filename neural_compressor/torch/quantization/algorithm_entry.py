@@ -347,7 +347,7 @@ def awq_quantize_entry(
             use_mse_search = quant_config.use_auto_clip  # for awq clip
             folding = quant_config.folding
             use_full_range = quant_config.use_full_range
-            absorb_to_layer = quant_config.absorb_to_layer
+            absorb_layer_dict = quant_config.absorb_layer_dict
 
     run_fn = kwargs.get("run_fn", None)
     run_args = kwargs.get("run_args", None)
@@ -355,7 +355,7 @@ def awq_quantize_entry(
     assert example_inputs is not None, "Please provide example_inputs for AWQ quantization."
 
     quantizer = get_quantizer(
-        model, quantizer_cls=AWQQuantizer, quant_config=weight_config, absorb_to_layer=absorb_to_layer
+        model, quantizer_cls=AWQQuantizer, quant_config=weight_config, absorb_layer_dict=absorb_layer_dict
     )
     model = quantizer.execute(
         model,

@@ -89,7 +89,7 @@ def _get_absorb_per_block(model, example_inputs, folding=False, weight_config={}
     return block_absorb_dict, absorb_layer_dict
 
 
-def _get_block_absorb_dict(model, absorb_layer_dict):
+def _get_absorb_dict(model, absorb_layer_dict):
     """Get absorbed layer per block from absorbed layer dict.
 
     Args:
@@ -101,15 +101,22 @@ def _get_block_absorb_dict(model, absorb_layer_dict):
     """
     block_absorb_dict = {}
     block_prefix, block_num = get_block_prefix(model)
+    new_absorb_layer_dict = {}
     for i in range(block_num):
         block_absorb_dict[i] = []
         block_name = block_prefix + "." + str(i) + "."
+        
         for k, v in absorb_layer_dict.items():
-            if all(block_name in elem for elem in k):
-                block_absorb_dict[i].append(k)
+            
+            if isinstance(v, str):
+                name_list = (block_name + v, )
+            else:
+                name_list = tuple(block_name + vv for vv in v)
+            block_absorb_dict[i].append(name_list)
+            new_absorb_layer_dict[name_list] = block_name + k
     logger.debug(f"The absorbed layers per block: {block_absorb_dict}")
     logger.debug(f"The absorb_layer_dict: {absorb_layer_dict}")
-    return block_absorb_dict
+    return block_absorb_dict, new_absorb_layer_dict
 
 
 @torch.no_grad()
@@ -198,7 +205,7 @@ class ActAwareWeightQuant:
                 weight_config=self.weight_config,
             )
         else:
-            self.block_absorb_dict = _get_block_absorb_dict(self.model, self.absorb_layer_dict)
+            self.block_absorb_dict, self.absorb_layer_dict = _get_absorb_dict(self.model, self.absorb_layer_dict)
         # process per block
         for i, module_list in self.block_absorb_dict.items():
             logger.info(f"Processing block: {i+1}/{self.block_num}")
@@ -519,15 +526,15 @@ class ActAwareWeightQuant:
 
 
 class AWQQuantizer(Quantizer):
-    def __init__(self, quant_config: OrderedDict = {}, absorb_to_layer: dict = {}):
+    def __init__(self, quant_config: OrderedDict = {}, absorb_layer_dict: dict = {}):
         """Init an AWQQuantizer object.
 
         Args:
             quant_config (OrderedDict, optional): quantization config for ops. Defaults to {}.
-            absorb_to_layer (dict): The layer dict that scale can be absorbed, default is {}.
+            absorb_layer_dict (dict): The layer dict that scale can be absorbed, default is {}.
         """
         super().__init__(quant_config)
-        self.absorb_to_layer = absorb_to_layer
+        self.absorb_layer_dict = absorb_layer_dict
 
     @torch.no_grad()
     def prepare(self, model, *args, **kwargs):
@@ -596,7 +603,7 @@ class AWQQuantizer(Quantizer):
             weight_config=self.quant_config,
             total_block_args=total_block_args,
             total_block_kwargs=total_block_kwargs,
-            absorb_layer_dict=self.absorb_to_layer,
+            absorb_layer_dict=self.absorb_layer_dict,
         )
         qdq_model = awq.quantize(
             use_auto_scale=use_auto_scale,

@@ -425,7 +425,7 @@ class AWQConfig(BaseConfig):
         "use_auto_scale",
         "use_auto_clip",
         "folding",
-        "absorb_to_layer",
+        "absorb_layer_dict",
     ]
     name = AWQ
 
@@ -452,7 +452,7 @@ class AWQConfig(BaseConfig):
         use_auto_clip: bool = True,
         folding: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
-        absorb_to_layer: dict = {},
+        absorb_layer_dict: dict = {},
     ):
         """Init AWQ weight-only quantization config.
 
@@ -475,7 +475,7 @@ class AWQConfig(BaseConfig):
             use_auto_clip (bool):  Enables clip range search. Defaults to True.
             folding(bool): Allow insert mul before linear when the scale cannot be absorbed by last layer,
               default is False.
-            absorb_to_layer (dict): The layer dict that scale can be absorbed, default is {}.
+            absorb_layer_dict (dict): The layer dict that scale can be absorbed, default is {}.
         """
         super().__init__(white_list=white_list)
         self.dtype = dtype
@@ -496,7 +496,7 @@ class AWQConfig(BaseConfig):
         self.use_auto_scale = use_auto_scale
         self.use_auto_clip = use_auto_clip
         self.folding = folding
-        self.absorb_to_layer = absorb_to_layer
+        self.absorb_layer_dict = absorb_layer_dict
         self._post_init()
 
     @classmethod
