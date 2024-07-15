@@ -125,30 +125,32 @@ quantized_model = fit(model=float_model, conf=static_quant_conf, calib_dataloade
   </tbody>
   <thead>
     <tr>
-      <th colspan="8"><a href="./docs/3x/PyTorch.md">PyTorch Extension APIs</a></th>
+      <th colspan="8">PyTorch Extension APIs</th>
     </tr>
   </thead>
   <tbody>
     <tr>
+        <td colspan="2" align="center"><a href="./docs/3x/PyTorch.md">Overview</a></td>
         <td colspan="2" align="center"><a href="./docs/3x/PT_StaticQuant.md">Static Quantization</a></td>
         <td colspan="2" align="center"><a href="./docs/3x/PT_DynamicQuant.md">Dynamic Quantization</a></td>
         <td colspan="2" align="center"><a href="./docs/3x/PT_SmoothQuant.md">Smooth Quantization</a></td>
-        <td colspan="2" align="center"><a href="./docs/3x/PT_WeightOnlyQuant.md">Weight-Only Quantization</a></td>
     </tr>
     <tr>
-        <td colspan="2" align="center"><a href="./docs/3x/PT_MXQuant.md">MX Quantization</a></td>
+        <td colspan="3" align="center"><a href="./docs/3x/PT_WeightOnlyQuant.md">Weight-Only Quantization</a></td>
+        <td colspan="3" align="center"><a href="./docs/3x/PT_MXQuant.md">MX Quantization</a></td>
         <td colspan="2" align="center"><a href="./docs/3x/PT_MixedPrecision.md">Mixed Precision</a></td>
     </tr>
   </tbody>
   <thead>
       <tr>
-        <th colspan="8"><a href="./docs/3x/TensorFlow.md">Tensorflow Extension APIs</a></th>
+        <th colspan="8">Tensorflow Extension APIs</th>
       </tr>
   </thead>
   <tbody>
       <tr>
-          <td colspan="4" align="center"><a href="./docs/3x/TF_Quant.md">Static Quantization</a></td>
-          <td colspan="4" align="center"><a href="./docs/3x/TF_SQ.md">Smooth Quantization</a></td>
+          <td colspan="3" align="center"><a href="./docs/3x/TensorFlow.md">Overview</a></td>
+          <td colspan="3" align="center"><a href="./docs/3x/TF_Quant.md">Static Quantization</a></td>
+          <td colspan="2" align="center"><a href="./docs/3x/TF_SQ.md">Smooth Quantization</a></td>
       </tr>
   </tbody>
   <thead>
