@@ -1,0 +1,15 @@
+{
+    "mode": "MEASURE",
+    "observer": "maxabs",
+    "allowlist": {
+        "types": [],
+        "names": []
+    },
+    "blocklist": {
+        "types": [],
+        "names": [
+            "lm_head"
+        ]
+    },
+    "dump_stats_path": "./test_outputs/unit_test"
+}

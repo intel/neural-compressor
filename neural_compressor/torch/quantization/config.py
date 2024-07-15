@@ -1259,7 +1259,7 @@ class FP8Config(BaseConfig):
         self,
         dump_stats_path: str = "./hqt_output/measure",
         fp8_config: str = "E4M3",
-        hp_dtype: torch.dtype = torch.bfloat16,
+        hp_dtype: str = "bf16",
         blocklist: dict = {'names': [], 'types': ()},
         allowlist: dict = {'names': [], 'types': FP8_WHITE_LIST},
         mode: str = "AUTO",
@@ -1294,13 +1294,6 @@ class FP8Config(BaseConfig):
 
     @property
     def json_file(self):
-        if self._json_file is None:
-            import tempfile
-            from pathlib import Path
-
-            json_file_tmp = tempfile.NamedTemporaryFile(suffix=".json")
-            self.to_json_file(json_file_tmp.name)
-            self.json_file(json_file_tmp.name)
         return self._json_file
 
     @json_file.setter
@@ -1314,6 +1307,14 @@ class FP8Config(BaseConfig):
         config = cls.from_dict(config_dict)
         config.json_file = filename
         return config
+
+    def save_temp_json_file(self):
+        import tempfile
+        from pathlib import Path
+
+        json_file_tmp = tempfile.NamedTemporaryFile(suffix=".json", delete=False)
+        self.to_json_file(json_file_tmp.name)
+        self._json_file = json_file_tmp.name
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "FP8Config", List["FP8Config"]]:
@@ -1361,6 +1362,8 @@ class FP8Config(BaseConfig):
     def to_config_mapping(
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ):
+        if self.json_file is None:
+            self.save_temp_json_file()
         config_mapping = OrderedDict()
         if config_list is None:
             config_list = [self]
