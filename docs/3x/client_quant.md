@@ -39,9 +39,9 @@ On Windows machines, it is recommended to run the application directly. The syst
 ```bash
 python ./main.py
 ```
-> [!TIP]
-> For 7B models, like [meta-llama/Llama-2-7b-chat-hf](https://huggingface.co/meta-llama/Llama-2-7b-chat-hf), the quantization process takes about 65 seconds and the peak memory usage is about 6GB.
-> For 1.5B models, like [Qwen/Qwen2-1.5B-Instruct](https://huggingface.co/Qwen/Qwen2-1.5B-Instruct),  the quantization process takes about 20 seconds and the peak memory usage is about 5GB.
+> [!NOTE]
+> - For 7B models, like [meta-llama/Llama-2-7b-chat-hf](https://huggingface.co/meta-llama/Llama-2-7b-chat-hf), the quantization process takes about 65 seconds and the peak memory usage is about 6GB.
+> - For 1.5B models, like [Qwen/Qwen2-1.5B-Instruct](https://huggingface.co/Qwen/Qwen2-1.5B-Instruct),  the quantization process takes about 20 seconds and the peak memory usage is about 5GB.
 
 ### Linux
 
