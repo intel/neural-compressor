@@ -124,7 +124,7 @@ class TestPT2EQuantization:
 
         loaded_quantized_model = load("./saved_results")
         loaded_q_model_out = loaded_quantized_model(*example_inputs)
-        assert torch.allclose(loaded_q_model_out, q_model_out)
+        assert torch.equal(loaded_q_model_out, q_model_out)
 
         opt_model = torch.compile(q_model)
         out = opt_model(*example_inputs)
