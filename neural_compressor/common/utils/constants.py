@@ -14,9 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
-# All constants
+"""All frameworks-agnostic constants."""
 
 # constants for configs
 GLOBAL = "global"
@@ -53,6 +51,11 @@ from enum import Enum
 
 
 class Mode(Enum):
+    """Enumeration class representing different modes of the quantizer execution."""
+
     PREPARE = "prepare"
     CONVERT = "convert"
     QUANTIZE = "quantize"
+
+
+SERVER_PROCESSOR_BRAND_KEY_WORLD_LST = ["Xeon"]

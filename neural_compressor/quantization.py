@@ -27,11 +27,6 @@ from .metric import register_customer_metric
 from .model import Model
 from .strategy import STRATEGIES
 from .utils import logger
-from .utils.neural_insights_utils import (
-    register_neural_insights_workload,
-    update_neural_insights_workload,
-    update_neural_insights_workload_accuracy_data,
-)
 from .utils.utility import dump_class_attrs, time_limit
 
 
@@ -144,7 +139,6 @@ def fit(
         q_model.save("./saved")
     """
     _raw_model = model
-    ni_workload_id = None
 
     if calib_dataloader is not None:
         check_dataloader(calib_dataloader)
@@ -222,29 +216,13 @@ def fit(
                 return o
 
             logger.info(update(conf_dict))
-            if conf.diagnosis:
-                ni_workload_id = register_neural_insights_workload(
-                    workload_location=os.path.abspath(options.workspace),
-                    model=wrapped_model,
-                    workload_mode="quantization",
-                    workload_name=conf.ni_workload_name,
-                )
-                if ni_workload_id:
-                    update_neural_insights_workload(ni_workload_id, "wip")
+
             strategy.traverse()
-            if ni_workload_id:
-                update_neural_insights_workload(ni_workload_id, "success")
-                update_neural_insights_workload_accuracy_data(
-                    ni_workload_id,
-                    strategy.baseline[0],
-                    strategy.cur_best_acc,
-                )
+
     except KeyboardInterrupt:
         pass
     except Exception as e:  # pragma: no cover
         logger.error("Unexpected exception {} happened during tuning.".format(repr(e)))
-        if ni_workload_id:
-            update_neural_insights_workload(ni_workload_id, "failure")
         import traceback
 
         traceback.print_exc()

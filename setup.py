@@ -46,7 +46,7 @@ PKG_INSTALL_CFG = {
     "neural_compressor": {
         "project_name": "neural_compressor",
         "include_packages": find_packages(
-            include=["neural_compressor", "neural_compressor.*", "neural_coder", "neural_coder.*"],
+            include=["neural_compressor", "neural_compressor.*"],
             exclude=[
                 "neural_compressor.template",
             ],
@@ -58,7 +58,7 @@ PKG_INSTALL_CFG = {
     "neural_compressor_2x": {
         "project_name": "neural_compressor",
         "include_packages": find_packages(
-            include=["neural_compressor", "neural_compressor.*", "neural_coder", "neural_coder.*"],
+            include=["neural_compressor", "neural_compressor.*"],
             exclude=[
                 "neural_compressor.template",
                 "neural_compressor.common",
@@ -119,35 +119,6 @@ PKG_INSTALL_CFG = {
         ),
         "install_requires": fetch_requirements("requirements_ort.txt"),
     },
-    "neural_insights": {
-        "project_name": "neural_insights",
-        "include_packages": find_packages(include=["neural_insights", "neural_insights.*"], exclude=["test.*", "test"]),
-        "package_data": {
-            "neural_insights": [
-                "bin/*",
-                "*.yaml",
-                "web/app/*.*",
-                "web/app/static/css/*",
-                "web/app/static/js/*",
-                "web/app/static/media/*",
-                "web/app/icons/*",
-            ]
-        },
-        "install_requires": fetch_requirements("neural_insights/requirements.txt"),
-        "entry_points": {"console_scripts": ["neural_insights = neural_insights.bin.neural_insights:execute"]},
-    },
-    "neural_solution": {
-        "project_name": "neural_solution",
-        "include_packages": find_packages(include=["neural_solution", "neural_solution.*"]),
-        "package_data": {
-            "neural_solution": [
-                "scripts/*.*",
-                "frontend/*.json",
-            ]
-        },
-        "install_requires": fetch_requirements("neural_solution/requirements.txt"),
-        "entry_points": {"console_scripts": ["neural_solution = neural_solution.bin.neural_solution:exec"]},
-    },
 }
 
 
@@ -159,14 +130,6 @@ if __name__ == "__main__":
     # https://github.com/pytorch/pytorch/pull/114662
     ext_modules = []
     cmdclass = {}
-
-    if "neural_insights" in sys.argv:
-        sys.argv.remove("neural_insights")
-        cfg_key = "neural_insights"
-
-    if "neural_solution" in sys.argv:
-        sys.argv.remove("neural_solution")
-        cfg_key = "neural_solution"
 
     if "2x" in sys.argv:
         sys.argv.remove("2x")
@@ -199,8 +162,12 @@ if __name__ == "__main__":
     include_packages = PKG_INSTALL_CFG[cfg_key].get("include_packages") or {}
     package_data = PKG_INSTALL_CFG[cfg_key].get("package_data") or {}
     install_requires = PKG_INSTALL_CFG[cfg_key].get("install_requires") or []
-    entry_points = PKG_INSTALL_CFG[cfg_key].get("entry_points") or {}
     extras_require = PKG_INSTALL_CFG[cfg_key].get("extras_require") or {}
+    entry_points = {
+        "console_scripts": [
+            "incbench = neural_compressor.common.benchmark:benchmark",
+        ]
+    }
 
     setup(
         name=project_name,
