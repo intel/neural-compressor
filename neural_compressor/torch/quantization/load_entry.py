@@ -85,6 +85,10 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
             from neural_compressor.torch.algorithms import static_quant
 
             return static_quant.load(model_name_or_path)
+        elif "static_quant" in per_op_qconfig.keys() or "pt2e_dynamic_quant" in per_op_qconfig.keys():  # PT2E
+            from neural_compressor.torch.algorithms import pt2e_quant
+
+            return pt2e_quant.load(model_name_or_path)
         else:
             config_mapping = load_config_mapping(qconfig_file_path, ConfigRegistry.get_all_configs()["torch"])
             # select load function
@@ -102,6 +106,7 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
                 from neural_compressor.torch.algorithms import habana_fp8
 
                 return habana_fp8.load(model_name_or_path, original_model)
+
     elif format == LoadFormat.HUGGINGFACE.value:
         # now only support load huggingface WOQ causal language model
         from neural_compressor.torch.algorithms import weight_only

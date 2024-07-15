@@ -14,3 +14,4 @@
 
 
 from neural_compressor.torch.algorithms.pt2e_quant.core import W8A8PT2EQuantizer
+from .save_load import save, load
