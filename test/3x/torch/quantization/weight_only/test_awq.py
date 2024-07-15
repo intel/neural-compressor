@@ -159,49 +159,19 @@ class TestAWQQuant:
         ), "The tied lm_head weight is not deep copied, please check!"
 
     def test_awq_absorb_to_layer(self):
-        absorb_to_layer = {
-            (
-                "transformer.h.0.attn.q_proj",
-                "transformer.h.0.attn.k_proj",
-                "transformer.h.0.attn.v_proj",
-                "transformer.h.0.mlp.fc_in",
-            ): "transformer.h.0.ln_1",
-            ("transformer.h.0.attn.out_proj",): "transformer.h.0.attn.out_proj",
-            ("transformer.h.0.mlp.fc_out",): "transformer.h.0.mlp.fc_out",
-            (
-                "transformer.h.1.attn.q_proj",
-                "transformer.h.1.attn.k_proj",
-                "transformer.h.1.attn.v_proj",
-                "transformer.h.1.mlp.fc_in",
-            ): "transformer.h.1.ln_1",
-            ("transformer.h.1.attn.out_proj",): "transformer.h.1.attn.out_proj",
-            ("transformer.h.1.mlp.fc_out",): "transformer.h.1.mlp.fc_out",
-            (
-                "transformer.h.2.attn.q_proj",
-                "transformer.h.2.attn.k_proj",
-                "transformer.h.2.attn.v_proj",
-                "transformer.h.2.mlp.fc_in",
-            ): "transformer.h.2.ln_1",
-            ("transformer.h.2.attn.out_proj",): "transformer.h.2.attn.out_proj",
-            ("transformer.h.2.mlp.fc_out",): "transformer.h.2.mlp.fc_out",
-            (
-                "transformer.h.3.attn.q_proj",
-                "transformer.h.3.attn.k_proj",
-                "transformer.h.3.attn.v_proj",
-                "transformer.h.3.mlp.fc_in",
-            ): "transformer.h.3.ln_1",
-            ("transformer.h.3.attn.out_proj",): "transformer.h.3.attn.out_proj",
-            ("transformer.h.3.mlp.fc_out",): "transformer.h.3.mlp.fc_out",
-            (
-                "transformer.h.4.attn.q_proj",
-                "transformer.h.4.attn.k_proj",
-                "transformer.h.4.attn.v_proj",
-                "transformer.h.4.mlp.fc_in",
-            ): "transformer.h.4.ln_1",
-            ("transformer.h.4.attn.out_proj",): "transformer.h.4.attn.out_proj",
-            ("transformer.h.4.mlp.fc_out",): "transformer.h.4.mlp.fc_out",
+        absorb_layer_dict = {
+            "ln_1": (
+                "attn.q_proj",
+                "attn.k_proj",
+                "attn.v_proj",
+                "mlp.fc_in",
+            ),
+            "attn.out_proj": "attn.out_proj",
+            "mlp.fc_out": ("mlp.fc_out"),
         }
-        quant_config = AWQConfig(absorb_to_layer=absorb_to_layer)
+        
+        
+        quant_config = AWQConfig(absorb_layer_dict=absorb_layer_dict)
         logger.info(f"Test AWQ with config {quant_config}")
         # prepare + convert API
         model = prepare(
@@ -212,7 +182,6 @@ class TestAWQQuant:
         calib_func(model)
         model = convert(model)
         out1 = model(self.example_inputs)
-
         quant_config = AWQConfig()
         logger.info(f"Test AWQ with config {quant_config}")
 
