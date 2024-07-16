@@ -18,8 +18,8 @@
 """Intel Neural Compressor Pytorch quantization config API."""
 
 
-import json
 import importlib
+import json
 from collections import OrderedDict
 from typing import Callable, Dict, List, NamedTuple, Optional
 from typing import OrderedDict as OrderedDictType
@@ -1611,11 +1611,19 @@ def get_default_hqq_config() -> HQQConfig:
 ######################## FP8 Quant Config ###############################
 # refer to habana_quantization_toolkit/_core/common.py
 FP8_WHITE_LIST = [
-        "Matmul", "Linear", "FalconLinear", "KVCache", "Conv2d",
-        "LoRACompatibleLinear", "LoRACompatibleConv", "Softmax", "ModuleFusedSDPA"]
+    "Matmul",
+    "Linear",
+    "FalconLinear",
+    "KVCache",
+    "Conv2d",
+    "LoRACompatibleLinear",
+    "LoRACompatibleConv",
+    "Softmax",
+    "ModuleFusedSDPA",
+]
 if importlib.util.find_spec("deepspeed"):
-    FP8_WHITE_LIST.extend(
-        ["LinearLayer", "LinearAllreduce","ScopedLinearAllReduce", "LmHeadLinearAllreduce"])
+    FP8_WHITE_LIST.extend(["LinearLayer", "LinearAllreduce", "ScopedLinearAllReduce", "LmHeadLinearAllreduce"])
+
 
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=FP8_QUANT)
 class FP8Config(TorchBaseConfig):
@@ -1636,8 +1644,8 @@ class FP8Config(TorchBaseConfig):
         dump_stats_path: str = "./hqt_output/measure",
         fp8_config: str = "E4M3",
         hp_dtype: str = "bf16",
-        blocklist: dict = {'names': [], 'types': ()},
-        allowlist: dict = {'names': [], 'types': FP8_WHITE_LIST},
+        blocklist: dict = {"names": [], "types": ()},
+        allowlist: dict = {"names": [], "types": FP8_WHITE_LIST},
         mode: str = "AUTO",
         scale_method: str = "maxabs_hw",
         scale_params: dict = {},
@@ -1648,7 +1656,7 @@ class FP8Config(TorchBaseConfig):
     ):
         """Init FP8 config."""
         super().__init__()
-        self.dump_stats_path =dump_stats_path
+        self.dump_stats_path = dump_stats_path
         self.fp8_config = fp8_config
         self.hp_dtype = hp_dtype
         self.blocklist = blocklist
@@ -1697,9 +1705,8 @@ class FP8Config(TorchBaseConfig):
         # just a simple example here
         # usually write parameter combinations that are more suitable to tune based on experience.
         return FP8Config(
-            fp8_config=["E4M3", "E5M2"],
-            scale_method=["without_scale", "maxabs_hw"],
-            measure_exclude=["NONE", "OUTPUT"])
+            fp8_config=["E4M3", "E5M2"], scale_method=["without_scale", "maxabs_hw"], measure_exclude=["NONE", "OUTPUT"]
+        )
 
     @classmethod
     def register_supported_configs(cls):
@@ -1708,15 +1715,22 @@ class FP8Config(TorchBaseConfig):
         linear_rtn_config = FP8Config(
             mode=["AUTO", "MEASURE", "QUANTIZE"],
             fp8_config=["E4M3", "E5M2"],
-            scale_method=["without_scale", "unit_scale", "max", "maxabs_hw",
-                "maxabs_pow2", "maxabs_hw_opt_weight", "maxabs_pow2_opt_weight",
+            scale_method=[
+                "without_scale",
+                "unit_scale",
+                "max",
+                "maxabs_hw",
+                "maxabs_pow2",
+                "maxabs_hw_opt_weight",
+                "maxabs_pow2_opt_weight",
                 "smoothquant_weights_output_channel_maxabs_pow2",
                 "weaksmoothquant_weights_output_channel_maxabs_pow2",
                 "act_maxabs_hw_weights_pcs_maxabs_pow2",
                 "act_maxabs_hw_weights_pcs_opt_pow2",
                 "act_maxabs_pow2_weights_pcs_maxabs_pow2",
                 "act_maxabs_pow2_weights_pcs_opt_pow2",
-                "smoothquant_opt"],
+                "smoothquant_opt",
+            ],
             observer=["shape", "maxabs", "maxabs_per_channel", "save"],
             measure_exclude=["NONE", "OUTPUT", "INPUT", "ALL"],
         )
@@ -1728,16 +1742,16 @@ class FP8Config(TorchBaseConfig):
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
         filter_result = []
         for op_name, module in model.named_modules():
-            if module.__class__.__name__ in FP8_WHITE_LIST or \
-            module.__class__.__name__.split("Patched")[-1] in FP8_WHITE_LIST:
+            if (
+                module.__class__.__name__ in FP8_WHITE_LIST
+                or module.__class__.__name__.split("Patched")[-1] in FP8_WHITE_LIST
+            ):
                 pair = (op_name, module.__class__.__name__)
                 filter_result.append(pair)
         logger.debug(f"Get model info: {filter_result}")
         return filter_result
 
-    def to_config_mapping(
-        self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
-    ):
+    def to_config_mapping(self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None):
         if self.json_file is None:
             self.save_temp_json_file()
         config_mapping = OrderedDict()

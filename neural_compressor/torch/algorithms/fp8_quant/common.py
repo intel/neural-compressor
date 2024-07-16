@@ -21,22 +21,20 @@ from typing import Union
 
 import torch
 
-from neural_compressor.torch.algorithms.fp8_quant.prepare_quant.prepare_model import finish_measurements
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import Fp8cfg
+from neural_compressor.torch.algorithms.fp8_quant.prepare_quant.prepare_model import finish_measurements
 
 
 def save_calib_result(model):
-    if (hasattr(model, "__hqt_config__") and
-            isinstance(model.__hqt_config__, Fp8cfg)):
+    if hasattr(model, "__hqt_config__") and isinstance(model.__hqt_config__, Fp8cfg):
         # TODO SW-184714 modify hqt notation to inc notation once code is ported
         finish_measurements(model)
     else:
         raise NotImplementedError("Saving calibration results currently supported only in HPU.")
 
 
-
 def update_mode(config_path, measure_step=False, quant_step=False):
-    with open(config_path, 'r') as file:
+    with open(config_path, "r") as file:
         config = json.load(file)
 
     if (measure_step and config.get("mode") == "MEASURE") or (quant_step and config.get("mode") == "QUANTIZE"):
@@ -50,7 +48,7 @@ def update_mode(config_path, measure_step=False, quant_step=False):
         temp_file = tempfile.NamedTemporaryFile(suffix=".json", delete=False)
         temp_file_path = temp_file.name
 
-        with open(temp_file_path, 'w') as temp_file:
+        with open(temp_file_path, "w") as temp_file:
             json.dump(config, temp_file)
 
         return temp_file_path
@@ -80,6 +78,7 @@ def get_patched_mod_list():
 
 def restore_patched_module(patched_model):
     from neural_compressor.torch.algorithms.fp8_quant.helper_modules import helper_mods
+
     patched_mod_list = get_patched_mod_list()
 
     parent_child_mod_dict = generate_model_info(patched_model)
@@ -89,8 +88,9 @@ def restore_patched_module(patched_model):
             if patched_mod_type_str in patched_mod_list:
                 parent = parent_child_mod_dict[patched_mod].parent
                 name = parent_child_mod_dict[patched_mod].name
-                class_name_org = getattr(patched_mod, "class_name_org", None) or \
-                    patched_mod.__class__.__name__.split("Patched")[-1]
+                class_name_org = (
+                    getattr(patched_mod, "class_name_org", None) or patched_mod.__class__.__name__.split("Patched")[-1]
+                )
                 origin_mod = helper_mods[class_name_org](patched_mod)
                 origin_mod.forward = patched_mod.forward_orig
                 setattr(parent, name, origin_mod)

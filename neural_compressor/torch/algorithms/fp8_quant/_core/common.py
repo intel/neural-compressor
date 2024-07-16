@@ -1,9 +1,24 @@
-import os
-import torch
-import json
-import numpy as np
+# Copyright (c) 2024 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import functools
 import importlib.util
+import json
+import os
+
+import numpy as np
+import torch
 
 from .._quant_common.helper_modules import *
 from .._quant_common.quant_config import get_hqt_config
@@ -117,7 +132,13 @@ def save_file(model, d, source_format, fname, mode):
 def module_convert(m, fcn):
     mt = ModuleConfig(
         tuple([fcn(x) for x in m.inputs]),
-        tuple([fcn(m.outputs)],) if type(m.outputs) == np.ndarray else tuple([fcn(y) for y in m.outputs]),
+        (
+            tuple(
+                [fcn(m.outputs)],
+            )
+            if type(m.outputs) == np.ndarray
+            else tuple([fcn(y) for y in m.outputs])
+        ),
         {k: fcn(m.params[k]) for k in m.params},
     )
     return mt

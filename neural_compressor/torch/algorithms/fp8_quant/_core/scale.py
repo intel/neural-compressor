@@ -1,13 +1,26 @@
-import torch
+# Copyright (c) 2024 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import numpy as np
+import torch
 
 from .._quant_common.quant_config import ScaleMethod, set_hqt_config
-from .scale_methods import *
-from .quant_dequant import *
-
-from .fp_utils import *
-from .common import *
 from ..utils.logger import logger
+from .common import *
+from .fp_utils import *
+from .quant_dequant import *
+from .scale_methods import *
 
 
 def matmul_scales_to_mod_config(mod, scales, params):
@@ -109,7 +122,7 @@ def get_config(
             mod_type_str = mod.__class__.__name__
             layer_type = mod_dict[mod_type_str].type
             if mname not in scales:
-                logger.debug("Calcuating scales for layer %s", mname)
+                logger.debug("Calculating scales for layer %s", mname)
                 if mname not in measurement:
                     qconfig[UNMEASURED_MODELS].append(mname)
                     logger.debug(
@@ -118,7 +131,7 @@ def get_config(
                     )
                     continue
                 layer_measure = measurement[mname]  # ModuleConfig() of measurements
-                scales[mname] = method[layer_type][0](mod, layer_measure, params)   # ModuleConfig() of scales
+                scales[mname] = method[layer_type][0](mod, layer_measure, params)  # ModuleConfig() of scales
                 if scales_file is not None:
                     scales_obj[mname] = ModuleConfig(
                         **format_functions_rec((torch.Tensor, scales_file_format))(scales[mname].__dict__)
@@ -366,18 +379,6 @@ scale_method_mapping = {
         ScaleMethod.ACT_MAXABS_POW2_WEIGHTS_PCS_OPT_POW2,
         "maxabs",
     ): "act_maxabs_pts_pow2_weights_opt_pcs_pow2",
-    (
-        ScaleMethod.ACT_MAXABS_POW2_WEIGHTS_PCS_OPT_POW2,
-        "maxabs_per_channel",
-    ): "act_maxabs_pts_pow2_weights_opt_pcs_pow2",
-    (
-        ScaleMethod.WEAKSMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2,
-        "maxabs_per_channel",
-    ): "weaksmoothquant_weights_maxabs_pow2",
-    (
-        ScaleMethod.SMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2,
-        "maxabs_per_channel",
-    ): "smoothquant_weights_maxabs_pow2",
     (ScaleMethod.SMOOTHQUANT_OPT, "maxabs_per_channel"): "smoothquant_weights_opt_pow2",
 }
 

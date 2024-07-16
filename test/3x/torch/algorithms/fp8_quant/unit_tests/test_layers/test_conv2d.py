@@ -3,8 +3,7 @@ import typing
 import pytest
 import torch
 from habana_quantization_toolkit._quant_common.quant_config import ScaleMethod
-
-from habana_quantization_toolkit.tests import run_accuracy_test, TestVector
+from habana_quantization_toolkit.tests import TestVector, run_accuracy_test
 
 
 def get_test_vectors(*, dtype: torch.dtype, C_in: int, H: int, W: int) -> typing.Iterable[TestVector]:

@@ -3,8 +3,7 @@ import typing
 import pytest
 import torch
 from habana_quantization_toolkit._quant_common.quant_config import ScaleMethod
-
-from habana_quantization_toolkit.tests import run_accuracy_test, TestVector
+from habana_quantization_toolkit.tests import TestVector, run_accuracy_test
 
 
 def get_test_vectors(*, dtype: torch.dtype) -> typing.Iterable[TestVector]:
@@ -32,8 +31,8 @@ def get_test_vectors(*, dtype: torch.dtype) -> typing.Iterable[TestVector]:
 
 
 class Matmul(torch.nn.Module):
-    """
-    This is a mimic of other implementations of `Matmul`.
+    """This is a mimic of other implementations of `Matmul`.
+
     It is here to not create a dependency on optimum-habana (which is logically needed).
     It should not be used directly in user code.
     """

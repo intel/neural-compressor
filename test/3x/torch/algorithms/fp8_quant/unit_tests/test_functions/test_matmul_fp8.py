@@ -1,11 +1,11 @@
 import itertools
+from typing import Iterable, Tuple
+
+import habana_frameworks.torch.utils.experimental as htexp
 import pytest
 import torch
-
-from typing import Iterable, Tuple
 from habana_quantization_toolkit._core.fp_utils import FP8_143_SCALES
 from habana_quantization_toolkit._quant_common.helper_modules import matmul_fp8
-import habana_frameworks.torch.utils.experimental as htexp
 
 
 def run_test_matmul_fp8(

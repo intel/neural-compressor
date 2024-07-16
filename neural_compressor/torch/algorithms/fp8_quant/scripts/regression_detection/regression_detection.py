@@ -1,7 +1,22 @@
+# Copyright (c) 2024 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import argparse
+import json
+
 import numpy as np
 import scipy
-import json
 
 tasks = ["winogrande", "hellaswag", "piqa", "lambada_openai"]
 
@@ -83,7 +98,7 @@ if __name__ == "__main__":
             regressions.append(f"Z-Test high precision p-value is less than 0.05 in {task} task.")
 
         # The two-sample z-test comparing the golden and under-test low-precision configuration
-        if mode != None:
+        if mode is not None:
             ref_mean_lp = golden_metrics_json[lp_dtype][mode][task]["mean"]
             ref_stderr_lp = golden_metrics_json[lp_dtype][mode][task]["sem"]
         else:
@@ -97,7 +112,7 @@ if __name__ == "__main__":
             regressions.append(f"Z-Test low precision p-value is less than 0.05 in {task} task.")
 
         # The single-sample z-test comparing the golden and under-test degradation of low-precision configuration
-        if mode != None:
+        if mode is not None:
             ref_mean_diff = golden_metrics_json[lp_dtype][mode][task]["mean_diff"]
             ref_stderr_diff = golden_metrics_json[lp_dtype][mode][task]["sem_diff"]
         else:

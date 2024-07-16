@@ -1,3 +1,17 @@
+# Copyright (c) 2024 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 # Taken and adjusted from neural-compressor-fork/neural_compressor/common/utils/logger.py
 # Should be merged with INC logger once HQT code is inserted into INC
 # TODO: SW-185347 merge INC logger with HQT logger
@@ -5,8 +19,8 @@
 
 
 import logging
-from logging.handlers import RotatingFileHandler
 import os
+from logging.handlers import RotatingFileHandler
 
 __all__ = ["logger"]
 
@@ -44,8 +58,7 @@ logging.TRACE = 5  # There is no 'trace' level for python logger.
 
 
 def trace(self, msg, *args, **kwargs):
-    """
-    Log 'msg % args' with severity 'TRACE'.
+    """Log 'msg % args' with severity 'TRACE'.
 
     To pass exception information, use the keyword argument exc_info with
     a true value, e.g.
@@ -91,7 +104,7 @@ class _Logger(object):
     def get_enable_console_val(self):
         enableConsole = os.environ.get("ENABLE_CONSOLE", "False").upper()
         if enableConsole not in ["TRUE", "FALSE"]:
-            raise Exception(f"Env var 'ENABLE_CONSOLE' has to be true or false.")
+            raise Exception("Env var 'ENABLE_CONSOLE' has to be true or false.")
         return enableConsole == "TRUE"
 
     def get_log_level(self):

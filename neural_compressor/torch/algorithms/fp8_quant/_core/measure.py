@@ -1,18 +1,27 @@
+# Copyright (c) 2024 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import json
 import os
-import torch
-import numpy as np
-import habana_frameworks.torch.core as htcore
 
-from .._quant_common.quant_config import (
-    QuantMode,
-    ScaleMethod,
-    MeasureExclude,
-    get_hqt_config,
-    set_hqt_config,
-)
-from .common import *
+import habana_frameworks.torch.core as htcore
+import numpy as np
+import torch
+
+from .._quant_common.quant_config import MeasureExclude, QuantMode, ScaleMethod, get_hqt_config, set_hqt_config
 from ..utils.logger import logger
+from .common import *
 
 imod_dict = {}
 gmod_list = []
@@ -139,7 +148,7 @@ def get_mod_extra_config_dict(model):
     for name, mod in model.named_modules():
         if hasattr(mod, "_mod_extra_config"):
             if is_measure_done(mod._mod_extra_config):
-                name = name.replace("_orig_mod.", "") # remove _orig_mod part added by dynamo mechanism
+                name = name.replace("_orig_mod.", "")  # remove _orig_mod part added by dynamo mechanism
                 mcd[name] = mod._mod_extra_config
             else:
                 logger.debug(
@@ -181,9 +190,7 @@ def measure_control_to_state_dict(mcd):
             sdl[mname]["params"] = dict()
             for param_name in mcd[mname].params:
                 if mcd[mname].params[param_name].state is not None:
-                    sd[mname]["params"][param_name] = (
-                        mcd[mname].params[param_name].state.detach().cpu().float().numpy()
-                    )
+                    sd[mname]["params"][param_name] = mcd[mname].params[param_name].state.detach().cpu().float().numpy()
                     sdl[mname]["params"][param_name] = (
                         mcd[mname].params[param_name].state.detach().cpu().float().numpy().tolist()
                     )
@@ -409,6 +416,13 @@ observer_types = {
 observer_params = {
     "maxabs_per_channel": {
         "linear": ModuleConfig(({"dim": -1},), ({"dim": -1},), {"weight": {"dim": 0}}),
-        "matmul": ModuleConfig(({"dim": -1}, {"dim": -2},), ({"dim": -1},), None),
+        "matmul": ModuleConfig(
+            (
+                {"dim": -1},
+                {"dim": -2},
+            ),
+            ({"dim": -1},),
+            None,
+        ),
     }
 }

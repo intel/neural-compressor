@@ -1,5 +1,19 @@
-import torch.nn as nn
+# Copyright (c) 2024 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import torch
+import torch.nn as nn
 
 from .quant_config import QuantMode, get_hqt_config
 
@@ -534,7 +548,7 @@ class PatchedVLLMKVCache(nn.Module):
         quant_cache = self.quant_input(cache)
         output_cache = self.orig_fetch_from_cache(quant_cache, blocks, permutations)
         for i in range(len(output_cache)):
-            output_cache[i]=self.quant_output(output_cache[i])
+            output_cache[i] = self.quant_output(output_cache[i])
         return output_cache
 
 
@@ -700,7 +714,7 @@ class PatchedLoRACompatibleConv(nn.Conv2d):
 class PatchedModuleFusedSDPA(nn.Module):
     def __init__(self, mod, mod_extra_config, *args, **kwargs):
         # fsdpa is combined out of - BMM1(Q,K) -> Softmax -> BMM2(AMAX,V)
-        # during measure we recieve the amax value from the cguid and apply it during quant as input
+        # during measure we receive the amax value from the cguid and apply it during quant as input
         super().__init__()
         set_attrs_from_orig_model(self, mod, mod_extra_config)
         if self.quantization_mode == QuantMode.QUANTIZE:
@@ -812,4 +826,4 @@ class PatchedUnmeasuredModule(nn.Module):
         )
 
     def extra_repr(self) -> str:
-        return f"Dummy patch of {self.name} to raise excption as there are no measurements provided."
+        return f"Dummy patch of {self.name} to raise exception as there are no measurements provided."

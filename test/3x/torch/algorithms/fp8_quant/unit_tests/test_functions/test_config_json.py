@@ -1,13 +1,9 @@
-"""
-Use this module as an example of how to write new unit tests for layers.
-"""
-
-import torch
+"""Use this module as an example of how to write new unit tests for layers."""
 
 import habana_quantization_toolkit as hqt
-
-from habana_quantization_toolkit._quant_common.quant_config import QuantMode
+import torch
 from habana_quantization_toolkit._quant_common.helper_modules import Matmul
+from habana_quantization_toolkit._quant_common.quant_config import QuantMode
 
 
 class Model(torch.nn.Module):

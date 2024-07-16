@@ -1,17 +1,27 @@
+# Copyright (c) 2024 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import habana_frameworks.torch.core as htcore
 import torch
 import torch.nn as nn
-import habana_frameworks.torch.core as htcore
-from .._quant_common.quant_config import get_hqt_config
+
 from .._quant_common.helper_modules import PatchedUnmeasuredModule
-from .measure import load_measurements
-from .scale import scale_method_mapping, get_config, scaling_methods
-from .common import (
-    mod_default_dict,
-    generate_model_info,
-    parent_child_mod_dict,
-    UNMEASURED_MODELS,
-)
+from .._quant_common.quant_config import get_hqt_config
 from ..utils.logger import logger
+from .common import UNMEASURED_MODELS, generate_model_info, mod_default_dict, parent_child_mod_dict
+from .measure import load_measurements
+from .scale import get_config, scale_method_mapping, scaling_methods
 
 
 def patch_module(mod, qconfig, mod_dict, patched_mod=None):
