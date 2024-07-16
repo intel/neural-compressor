@@ -97,7 +97,7 @@ class AutoRoundQuantizer(Quantizer):
                 the input for the current block (default is True).
             enable_minmax_tuning (bool): Whether to enable weight min-max tuning (default is True).
             lr (float): The learning rate (default is None, will be set to 1.0/iters).
-            minmax_lr (float): The learning rate for min-max tuning 
+            minmax_lr (float): The learning rate for min-max tuning
                 (default is None, it will be set to lr automatically).
             low_gpu_mem_usage (bool): Whether to use low GPU memory (default is True).
             iters (int): Number of iterations (default is 200).
