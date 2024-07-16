@@ -83,16 +83,21 @@ def rtn_entry(
             "group_dim": quant_config.group_dim,
             "use_full_range": quant_config.use_full_range,
             "use_mse_search": quant_config.use_mse_search,
-            "use_layer_wise": quant_config.use_layer_wise,
             "use_double_quant": quant_config.use_double_quant,
             "double_quant_dtype": quant_config.double_quant_dtype,
             "double_quant_bits": quant_config.double_quant_bits,
             "double_quant_scheme": "sym" if quant_config.double_quant_use_sym else "asym",
             "double_quant_group_size": quant_config.double_quant_group_size,
         }
-
+    kwargs.update(
+        {
+            "use_layer_wise": quant_config.use_layer_wise,
+            "model_path": quant_config.model_path,
+            "quant_lm_head": quant_config.quant_lm_head,
+        }
+    )
     quantizer = get_quantizer(model, quantizer_cls=RTNQuantizer, quant_config=weight_config)
-    model = quantizer.execute(model, mode=mode, quant_lm_head=quant_config.quant_lm_head)
+    model = quantizer.execute(model, mode=mode, *args, **kwargs)
     model.qconfig = configs_mapping
     model.save = MethodType(save, model)
     postprocess_model(model, mode, quantizer)
