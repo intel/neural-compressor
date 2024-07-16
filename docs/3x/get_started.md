@@ -86,4 +86,3 @@ It also provides some common APIs across different frameworks. For example, Auto
 
 > **Note**:   
 > From 3.0 release, we recommend to use 3.X API. Compression techniques during training such as QAT, Pruning, Distillation only available in [2.X API](https://github.com/intel/neural-compressor/blob/master/docs/source/2x_user_guide.md).
-
