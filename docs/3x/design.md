@@ -9,6 +9,8 @@ Design
 
 ## Workflow
 
+Intel® Neural Compressor provides two workflows: Quantization and Auto-tune.
+
 <a target="_blank" href="imgs/workflow.png">
   <img src="imgs/workflow.png" alt="Workflow">
 </a>
