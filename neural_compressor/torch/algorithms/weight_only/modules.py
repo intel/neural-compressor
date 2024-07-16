@@ -19,6 +19,7 @@
 # since the model classes inherit torch.nn.Module.
 import math
 
+import numba
 import numpy as np
 import torch
 from torch.autograd import Function
@@ -175,7 +176,8 @@ class WeightOnlyLinear(torch.nn.Module):
             self.scales = self.scales.T.contiguous()
             self.qweight = self.qweight.T.contiguous()
             self.qzeros = self.qzeros.T.contiguous()
-        int_weight = int_weight.to(self.device)
+        if int_weight.device.type != "meta":
+            int_weight = int_weight.to(self.device)
         if self.use_optimum_format and zp is None:
             # to avoid overflow
             int_weight = int_weight.type(torch.int32)
@@ -300,7 +302,253 @@ class WeightOnlyLinear(torch.nn.Module):
                 accelerator.synchronize()
         return unpacked_tensor
 
-    def pack_tensor_with_numpy(self, raw_tensor):
+    @staticmethod
+    @numba.jit(nopython=True, parallel=True)
+    def pack_array_with_numba_b4_c32(
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
+    ) -> np.ndarray:
+        for i in range(new_in_features):
+            packed_array[:, i] = (
+                ((raw_array[:, i * n_pack + 7] & 0b1111) << 28)
+                | ((raw_array[:, i * n_pack + 6] & 0b1111) << 24)
+                | ((raw_array[:, i * n_pack + 5] & 0b1111) << 20)
+                | ((raw_array[:, i * n_pack + 4] & 0b1111) << 16)
+                | ((raw_array[:, i * n_pack + 3] & 0b1111) << 12)
+                | ((raw_array[:, i * n_pack + 2] & 0b1111) << 8)
+                | ((raw_array[:, i * n_pack + 1] & 0b1111) << 4)
+                | (raw_array[:, i * n_pack] & 0b1111)
+            )
+        return packed_array
+
+    @staticmethod
+    @numba.jit(nopython=True, parallel=True)
+    def pack_array_with_numba_b4_c16(
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
+    ) -> np.ndarray:
+        for i in range(new_in_features):
+            packed_array[:, i] = (
+                ((raw_array[:, i * n_pack + 3] & 0b1111) << 12)
+                | ((raw_array[:, i * n_pack + 2] & 0b1111) << 8)
+                | ((raw_array[:, i * n_pack + 1] & 0b1111) << 4)
+                | (raw_array[:, i * n_pack] & 0b1111)
+            )
+        return packed_array
+
+    @staticmethod
+    @numba.jit(nopython=True, parallel=True)
+    def pack_array_with_numba_b4_c8(
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
+    ) -> np.ndarray:
+        for i in range(new_in_features):
+            packed_array[:, i] = ((raw_array[:, i * n_pack + 1] & 0b1111) << 4) | (raw_array[:, i * n_pack] & 0b1111)
+        return packed_array
+
+    @staticmethod
+    @numba.jit(nopython=True, parallel=True)
+    def pack_array_with_numba_b4_c64(
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
+    ) -> np.ndarray:
+        for i in range(new_in_features):
+            packed_array[:, i] = (
+                ((raw_array[:, i * n_pack + 15] & 0b1111) << 60)
+                | ((raw_array[:, i * n_pack + 14] & 0b1111) << 56)
+                | ((raw_array[:, i * n_pack + 13] & 0b1111) << 52)
+                | ((raw_array[:, i * n_pack + 12] & 0b1111) << 48)
+                | ((raw_array[:, i * n_pack + 11] & 0b1111) << 44)
+                | ((raw_array[:, i * n_pack + 10] & 0b1111) << 40)
+                | ((raw_array[:, i * n_pack + 9] & 0b1111) << 36)
+                | ((raw_array[:, i * n_pack + 8] & 0b1111) << 32)
+                | ((raw_array[:, i * n_pack + 7] & 0b1111) << 28)
+                | ((raw_array[:, i * n_pack + 6] & 0b1111) << 24)
+                | ((raw_array[:, i * n_pack + 5] & 0b1111) << 20)
+                | ((raw_array[:, i * n_pack + 4] & 0b1111) << 16)
+                | ((raw_array[:, i * n_pack + 3] & 0b1111) << 12)
+                | ((raw_array[:, i * n_pack + 2] & 0b1111) << 8)
+                | ((raw_array[:, i * n_pack + 1] & 0b1111) << 4)
+                | (raw_array[:, i * n_pack] & 0b1111)
+            )
+        return packed_array
+
+    @staticmethod
+    @numba.jit(nopython=True, parallel=True)
+    def pack_array_with_numba_b8_c32(
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
+    ) -> np.ndarray:
+        for i in range(new_in_features):
+            packed_array[:, i] = (
+                ((raw_array[:, i * n_pack + 3] & 0b11111111) << 24)
+                | ((raw_array[:, i * n_pack + 2] & 0b11111111) << 16)
+                | ((raw_array[:, i * n_pack + 1] & 0b11111111) << 8)
+                | (raw_array[:, i * n_pack] & 0b11111111)
+            )
+        return packed_array
+
+    @staticmethod
+    @numba.jit(nopython=True, parallel=True)
+    def pack_array_with_numba_b8_c16(
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
+    ) -> np.ndarray:
+        for i in range(new_in_features):
+            packed_array[:, i] = (
+                ((raw_array[:, i * n_pack + 3] & 0b11111111) << 24)
+                | ((raw_array[:, i * n_pack + 2] & 0b11111111) << 16)
+                | ((raw_array[:, i * n_pack + 1] & 0b11111111) << 8)
+                | (raw_array[:, i * n_pack] & 0b11111111)
+            )
+        return packed_array
+
+    @staticmethod
+    @numba.jit(nopython=True, parallel=True)
+    def pack_array_with_numba_b8_c8(
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
+    ) -> np.ndarray:
+        for i in range(new_in_features):
+            packed_array[:, i] = raw_array[:, i * n_pack] & 0b11111111
+        return packed_array
+
+    @staticmethod
+    @numba.jit(nopython=True, parallel=True)
+    def pack_array_with_numba_b8_c64(
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
+    ) -> np.ndarray:
+        for i in range(new_in_features):
+            packed_array[:, i] = (
+                ((raw_array[:, i * n_pack + 7] & 0b11111111) << 56)
+                | ((raw_array[:, i * n_pack + 6] & 0b11111111) << 48)
+                | ((raw_array[:, i * n_pack + 5] & 0b11111111) << 40)
+                | ((raw_array[:, i * n_pack + 4] & 0b11111111) << 32)
+                | ((raw_array[:, i * n_pack + 3] & 0b11111111) << 24)
+                | ((raw_array[:, i * n_pack + 2] & 0b11111111) << 16)
+                | ((raw_array[:, i * n_pack + 1] & 0b11111111) << 8)
+                | (raw_array[:, i * n_pack] & 0b11111111)
+            )
+        return packed_array
+
+    @staticmethod
+    @numba.jit(nopython=True, parallel=True)
+    def pack_array_with_numba_b2_c32(
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
+    ) -> np.ndarray:
+        for i in range(new_in_features):
+            packed_array[:, i] = (
+                ((raw_array[:, i * n_pack + 15] & 0b11) << 30)
+                | ((raw_array[:, i * n_pack + 14] & 0b11) << 28)
+                | ((raw_array[:, i * n_pack + 13] & 0b11) << 26)
+                | ((raw_array[:, i * n_pack + 12] & 0b11) << 24)
+                | ((raw_array[:, i * n_pack + 11] & 0b11) << 22)
+                | ((raw_array[:, i * n_pack + 10] & 0b11) << 20)
+                | ((raw_array[:, i * n_pack + 9] & 0b11) << 18)
+                | ((raw_array[:, i * n_pack + 8] & 0b11) << 16)
+                | ((raw_array[:, i * n_pack + 7] & 0b11) << 14)
+                | ((raw_array[:, i * n_pack + 6] & 0b11) << 12)
+                | ((raw_array[:, i * n_pack + 5] & 0b11) << 10)
+                | ((raw_array[:, i * n_pack + 4] & 0b11) << 8)
+                | ((raw_array[:, i * n_pack + 3] & 0b11) << 6)
+                | ((raw_array[:, i * n_pack + 2] & 0b11) << 4)
+                | ((raw_array[:, i * n_pack + 1] & 0b11) << 2)
+                | (raw_array[:, i * n_pack] & 0b11)
+            )
+        return packed_array
+
+    @staticmethod
+    @numba.jit(nopython=True, parallel=True)
+    def pack_array_with_numba_b2_c16(
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
+    ) -> np.ndarray:
+        for i in range(new_in_features):
+            packed_array[:, i] = (
+                ((raw_array[:, i * n_pack + 7] & 0b11) << 14)
+                | ((raw_array[:, i * n_pack + 6] & 0b11) << 12)
+                | ((raw_array[:, i * n_pack + 5] & 0b11) << 10)
+                | ((raw_array[:, i * n_pack + 4] & 0b11) << 8)
+                | ((raw_array[:, i * n_pack + 3] & 0b11) << 6)
+                | ((raw_array[:, i * n_pack + 2] & 0b11) << 4)
+                | ((raw_array[:, i * n_pack + 1] & 0b11) << 2)
+                | (raw_array[:, i * n_pack] & 0b11)
+            )
+        return packed_array
+
+    @staticmethod
+    @numba.jit(nopython=True, parallel=True)
+    def pack_array_with_numba_b2_c8(
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
+    ) -> np.ndarray:
+        for i in range(new_in_features):
+            packed_array[:, i] = (
+                ((raw_array[:, i * n_pack + 3] & 0b11) << 6)
+                | ((raw_array[:, i * n_pack + 2] & 0b11) << 4)
+                | ((raw_array[:, i * n_pack + 1] & 0b11) << 2)
+                | (raw_array[:, i * n_pack] & 0b11)
+            )
+        return packed_array
+
+    @staticmethod
+    @numba.jit(nopython=True, parallel=True)
+    def pack_array_with_numba_b2_c64(
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
+    ) -> np.ndarray:
+        for i in range(new_in_features):
+            packed_array[:, i] = (
+                ((raw_array[:, i * n_pack + 31] & 0b11) << 62)
+                | ((raw_array[:, i * n_pack + 30] & 0b11) << 60)
+                | ((raw_array[:, i * n_pack + 29] & 0b11) << 58)
+                | ((raw_array[:, i * n_pack + 28] & 0b11) << 56)
+                | ((raw_array[:, i * n_pack + 27] & 0b11) << 54)
+                | ((raw_array[:, i * n_pack + 26] & 0b11) << 52)
+                | ((raw_array[:, i * n_pack + 25] & 0b11) << 50)
+                | ((raw_array[:, i * n_pack + 24] & 0b11) << 48)
+                | ((raw_array[:, i * n_pack + 23] & 0b11) << 46)
+                | ((raw_array[:, i * n_pack + 22] & 0b11) << 44)
+                | ((raw_array[:, i * n_pack + 21] & 0b11) << 42)
+                | ((raw_array[:, i * n_pack + 20] & 0b11) << 40)
+                | ((raw_array[:, i * n_pack + 19] & 0b11) << 38)
+                | ((raw_array[:, i * n_pack + 18] & 0b11) << 36)
+                | ((raw_array[:, i * n_pack + 17] & 0b11) << 34)
+                | ((raw_array[:, i * n_pack + 16] & 0b11) << 32)
+                | ((raw_array[:, i * n_pack + 15] & 0b11) << 30)
+                | ((raw_array[:, i * n_pack + 14] & 0b11) << 28)
+                | ((raw_array[:, i * n_pack + 13] & 0b11) << 26)
+                | ((raw_array[:, i * n_pack + 12] & 0b11) << 24)
+                | ((raw_array[:, i * n_pack + 11] & 0b11) << 22)
+                | ((raw_array[:, i * n_pack + 10] & 0b11) << 20)
+                | ((raw_array[:, i * n_pack + 9] & 0b11) << 18)
+                | ((raw_array[:, i * n_pack + 8] & 0b11) << 16)
+                | ((raw_array[:, i * n_pack + 7] & 0b11) << 14)
+                | ((raw_array[:, i * n_pack + 6] & 0b11) << 12)
+                | ((raw_array[:, i * n_pack + 5] & 0b11) << 10)
+                | ((raw_array[:, i * n_pack + 4] & 0b11) << 8)
+                | ((raw_array[:, i * n_pack + 3] & 0b11) << 6)
+                | ((raw_array[:, i * n_pack + 2] & 0b11) << 4)
+                | ((raw_array[:, i * n_pack + 1] & 0b11) << 2)
+                | (raw_array[:, i * n_pack] & 0b11)
+            )
+        return packed_array
+
+    def pack_array_with_numba(
+        self, raw_array: np.ndarray, n_pack: int, bits: int, compress_bits: int, compression_dtype=np.int32
+    ) -> np.ndarray:
+        """Packs the input array by combining elements into a specified bit-width format using NumPy.
+
+        Args:
+            raw_array (np.ndarray): The array to be packed. Shape: [out_features, in_features] or [1, in_features].
+            n_pack (int): The number of elements to be packed together.
+            bits (int): The number of bits for each element.
+            compress_bits (int): The number of bits for each element of the compressed array, supported 2, 4, 8.
+            compression_dtype (np.dtype, optional): The data type of the compressed array. Defaults to np.int32.
+
+        Returns:
+            np.ndarray: The packed array.
+        """
+        out_features, in_features = raw_array.shape
+        new_in_features = (in_features + n_pack - 1) // n_pack
+        packed_array = np.zeros((out_features, new_in_features), dtype=compression_dtype)
+        raw_array = raw_array.astype(compression_dtype)
+
+        pack_method_name = f"pack_array_with_numba_b{bits}_c{compress_bits}"
+        pack_method = getattr(self, pack_method_name)
+        return pack_method(raw_array, packed_array, n_pack, new_in_features)
+
+    def pack_tensor_with_numpy_impl(self, raw_tensor):
         raw_array = raw_tensor.cpu().numpy()
         target_len = np.ceil(raw_array.shape[1] / self.n_pack).astype(int)
         target_dtype = torch.tensor(0, dtype=self.compression_dtype).numpy().dtype
@@ -317,6 +565,15 @@ class WeightOnlyLinear(torch.nn.Module):
                 accelerator.synchronize()
         packed_tensor = torch.from_numpy(packed_array).to(device=raw_tensor.device)
         return packed_tensor
+
+    def pack_tensor_with_numpy(self, raw_tensor):
+        if self.bits not in [2, 4, 8]:
+            return self.pack_tensor_with_numpy_impl(raw_tensor)
+        compression_dtype = torch.tensor(0, dtype=self.compression_dtype).numpy().dtype
+        packed_array = self.pack_array_with_numba(
+            raw_tensor.cpu().numpy(), self.n_pack, self.bits, self.compress_bits, compression_dtype
+        )
+        return torch.from_numpy(packed_array).to(device=raw_tensor.device)
 
     def unpack_tensor_with_numpy(self, packed_tensor):
         packed_array = packed_tensor.cpu().numpy()
