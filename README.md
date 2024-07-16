@@ -26,13 +26,16 @@ In particular, the tool provides the key features, typical examples, and open co
 * Collaborate with cloud marketplaces such as [Google Cloud Platform](https://console.cloud.google.com/marketplace/product/bitnami-launchpad/inc-tensorflow-intel?project=verdant-sensor-286207), [Amazon Web Services](https://aws.amazon.com/marketplace/pp/prodview-yjyh2xmggbmga#pdp-support), and [Azure](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/bitnami.inc-tensorflow-intel), software platforms such as [Alibaba Cloud](https://www.intel.com/content/www/us/en/developer/articles/technical/quantize-ai-by-oneapi-analytics-on-alibaba-cloud.html), [Tencent TACO](https://new.qq.com/rain/a/20221202A00B9S00) and [Microsoft Olive](https://github.com/microsoft/Olive), and open AI ecosystem such as [Hugging Face](https://huggingface.co/blog/intel), [PyTorch](https://pytorch.org/tutorials/recipes/intel_neural_compressor_for_pytorch.html), [ONNX](https://github.com/onnx/models#models), [ONNX Runtime](https://github.com/microsoft/onnxruntime), and [Lightning AI](https://github.com/Lightning-AI/lightning/blob/master/docs/source-pytorch/advanced/post_training_quantization.rst)
 
 ## What's New
-* [2024/03] A new SOTA approach [AutoRound](https://github.com/intel/auto-round) Weight-Only Quantization on [Intel Gaudi2 AI accelerator](https://habana.ai/products/gaudi2/) is available for LLMs.
+* [2024/07] From 3.0 release, 3.X framework extension API is recommended to be used for LLM quantization.
 
 ## Installation
 
 ### Install from pypi
 ```Shell
-pip install neural-compressor
+# Install 2.X API + PyTorch extension API + PyTorch dependency
+pip install neural-compressor[pt] 
+# Install 2.X API + TensorFlow extension API + TensorFlow dependency
+pip install neural-compressor[tf]
 ```
 > **Note**: 
 > Further installation methods can be found under [Installation Guide](https://github.com/intel/neural-compressor/blob/master/docs/source/installation_guide.md). check out our [FAQ](https://github.com/intel/neural-compressor/blob/master/docs/source/faq.md) for more details.
