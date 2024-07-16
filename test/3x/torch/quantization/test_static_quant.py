@@ -245,7 +245,7 @@ class TestStaticQuant:
             (False, "minmax"),
         ],
     )
-    def test_static_quant_params_xpu(self, act_sym, act_algo):
+    def test_static_quant_xpu(self, act_sym, act_algo):
         import torchvision.models as models
 
         model = models.resnet50(pretrained=True)
@@ -264,3 +264,19 @@ class TestStaticQuant:
         q_model = convert(prepared_model)
         run_fn(q_model)
         assert q_model is not None, "Quantization failed!"
+
+        quant_config = StaticQuantConfig(act_sym=act_sym, act_algo=act_algo, excluded_precisions=["bf16"])
+        # fallback by op_type
+        quant_config.set_local("Conv2d", StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
+        prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
+        run_fn(prepared_model)
+        q_model = convert(prepared_model)
+        run_fn(q_model)
+        assert q_model is not None, "Quantization failed!"
+
+        q_model.save("saved_results")
+        from neural_compressor.torch.quantization import load
+
+        # load
+        loaded_model = load("saved_results")
+        assert isinstance(loaded_model, torch.jit.ScriptModule), "Loading failed!"

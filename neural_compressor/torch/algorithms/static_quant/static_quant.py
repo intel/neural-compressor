@@ -150,7 +150,8 @@ class StaticQuantQuantizer(Quantizer):
 
             model = convert_jit(model, inplace)
             simple_inference(model, example_inputs, iterations=2)
-            dump_model_op_stats(self.quant_config["op"])
+            model.qconfig = self.quant_config["op"]
+            dump_model_op_stats(model.qconfig)
         else:
             model.save_qconf_summary(qconf_summary=ipex_config_path)
             model = _ipex_post_quant_process(model, example_inputs, use_bf16, inplace=inplace)
