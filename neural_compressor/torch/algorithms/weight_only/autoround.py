@@ -87,7 +87,6 @@ class AutoRoundQuantizer(Quantizer):
             bits (int): Number of bits for quantization (default is 4).
             group_size (int): Size of the quantization group (default is 128).
             sym (bool): Whether symmetric quantization is to be used (default is False).
-
             enable_full_range (bool): Whether to enable full range quantization (default is False).
             batch_size (int): Batch size for training (default is 8).
             amp (bool): Whether to use automatic mixed precision (default is True).
@@ -95,10 +94,11 @@ class AutoRoundQuantizer(Quantizer):
             lr_scheduler: The learning rate scheduler to be used.
             dataset (str): The default dataset name (default is "NeelNanda/pile-10k").
             enable_quanted_input (bool): Whether to use the output of the previous quantized block as
-                                    the input for the current block (default is True).
+                the input for the current block (default is True).
             enable_minmax_tuning (bool): Whether to enable weight min-max tuning (default is True).
             lr (float): The learning rate (default is None, will be set to 1.0/iters).
-            minmax_lr (float): The learning rate for min-max tuning (default is None, it will be set to lr automatically).
+            minmax_lr (float): The learning rate for min-max tuning 
+                (default is None, it will be set to lr automatically).
             low_gpu_mem_usage (bool): Whether to use low GPU memory (default is True).
             iters (int): Number of iterations (default is 200).
             seqlen (int): Data length of the sequence for tuning (default is 2048).
@@ -111,7 +111,7 @@ class AutoRoundQuantizer(Quantizer):
             dynamic_max_gap (int): The dynamic maximum gap (default is -1).
             data_type (str): The data type to be used (default is "int").
             scale_dtype (str): The data type of quantization scale to be used (default is "float16"), different kernels
-                            have different choices.
+                have different choices.
             multimodal(bool): Enable multimodal model quantization, (default is "False").
             act_bits (int): Number of bits for activation quantization. Default is 32.
             act_group_size (int): Group size for activation quantization. Default is None.
