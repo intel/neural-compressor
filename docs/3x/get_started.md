@@ -21,7 +21,7 @@ quantized_model = convert(model=prepared_model)
 ```
 
 ## Feature Matrix
-Intel Neural Compressor 3.X aim to provide framework extension APIs for the popular deep learning frameworks PyTorch and TensorFlow. 
+Intel Neural Compressor 3.X extends PyTorch and TensorFlow's APIs to support compression techniques.
 The below table provides a quick overview of the APIs available in Intel Neural Compressor 3.X.
 The new APIs mainly focus on quantization related features especially for the algorithms benefit LLM inference. 
 It also provides some common APIs across different frameworks. For example, Auto Tune API support accuracy driven quantization and mixed precision, benchmark API aimed to measure the multiple instances performance of the quantized model.
