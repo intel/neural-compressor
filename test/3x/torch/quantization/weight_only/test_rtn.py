@@ -167,7 +167,7 @@ class TestRTNQuant:
         ), "The tied lm_head weight is not deep copied, please check!"
 
     def test_layer_wise(self):
-        from neural_compressor.torch import load_empty_model
+        from neural_compressor.torch.utils import load_empty_model
 
         model = load_empty_model("hf-internal-testing/tiny-random-GPTJForCausalLM")
         quant_config = RTNConfig(
