@@ -1,8 +1,12 @@
-import pytest
 import copy
+
+import pytest
 import torch
+
 from neural_compressor.torch.algorithms.weight_only.modules import WeightOnlyLinear
 from neural_compressor.torch.algorithms.weight_only.utility import quant_tensor
+
+
 class TestWeightOnlyLinear:
     @pytest.mark.parametrize(
         "bits, compression_dtype",
@@ -26,12 +30,12 @@ class TestWeightOnlyLinear:
         dtype = "int"
         weight = m.weight.detach()
         int_weight, scale, zp = quant_tensor(
-                weight,
-                dtype=dtype,
-                bits=bits,
-                return_int=True,
-                group_size=32,
-            )
+            weight,
+            dtype=dtype,
+            bits=bits,
+            return_int=True,
+            group_size=32,
+        )
         new_module = WeightOnlyLinear(
             m.in_features,
             m.out_features,
