@@ -155,7 +155,7 @@ quantized_model = fit(model=float_model, conf=static_quant_conf, calib_dataloade
   </tbody>
   <thead>
       <tr>
-        <th colspan="8">Common APIs</th>
+        <th colspan="8">Other Modules</th>
       </tr>
   </thead>
   <tbody>
@@ -167,8 +167,7 @@ quantized_model = fit(model=float_model, conf=static_quant_conf, calib_dataloade
 </table>
 
 > **Note**:   
-> From 3.0 release, we recommended to use 3.X API, and the 2.X API will be deprecated in the future.  
-> Documentations for 2.X API can be found at [2.X API User Guide](https://github.com/intel/neural-compressor/blob/master/docs/source/2x_user_guide.md).
+> From 3.0 release, we recommend to use 3.X API. Compression techniques during training such as QAT, Pruning, Distillation only available in [2.X API](https://github.com/intel/neural-compressor/blob/master/docs/source/2x_user_guide.md).
 
 ## Selected Publications/Events
 * Blog by Intel: [Neural Compressor: Boosting AI Model Efficiency](https://community.intel.com/t5/Blogs/Tech-Innovation/Artificial-Intelligence-AI/Neural-Compressor-Boosting-AI-Model-Efficiency/post/1604740) (June 2024) 
