@@ -1,7 +1,6 @@
-import torch
-
-import habana_quantization_toolkit
 import habana_frameworks.torch.core as htcore
+import habana_quantization_toolkit
+import torch
 
 # This file is for small tests run for debug flow and accuracy. (Not for CI)
 

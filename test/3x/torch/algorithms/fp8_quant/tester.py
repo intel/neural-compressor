@@ -7,17 +7,10 @@ import random
 import typing
 from dataclasses import dataclass
 
-import torch
-
 import habana_frameworks as htcore
-
+import torch
 from habana_quantization_toolkit._core.common import mod_default_dict
-
-from habana_quantization_toolkit._quant_common.quant_config import (
-    Fp8cfg,
-    QuantMode,
-    ScaleMethod,
-)
+from habana_quantization_toolkit._quant_common.quant_config import Fp8cfg, QuantMode, ScaleMethod
 
 
 @dataclass
@@ -34,8 +27,8 @@ M = typing.TypeVar("M", bound=torch.nn.Module)
 
 
 def _assert_quantized_correctly(*, reference_model: WrapModel, quantized_model: WrapModel):
-    """
-    In quantized mode, assert the reference model is not quantized, and the quantized model is.
+    """In quantized mode, assert the reference model is not quantized, and the quantized model is.
+
     Otherwise, assert that both are not quantized.
     """
     for reference_name in mod_default_dict.keys():
@@ -59,8 +52,7 @@ def run_accuracy_test(
     test_vectors: typing.Iterable[TestVector],
     seed: typing.Optional[int] = None,
 ):
-    """
-    Run both the reference and the quantized versions of this module,
+    """Run both the reference and the quantized versions of this module,
     and compare the outputs on every test vector.
 
     First the measure vectors are used for measurements.
@@ -132,8 +124,7 @@ def run_accuracy_test(
 
 
 def _set_optional_seed(*, module_class: typing.Type[M], seed: typing.Optional[int]):
-    """
-    Set random seed to a unique reproducible value derived from the module.
+    """Set random seed to a unique reproducible value derived from the module.
 
     Args:
         module_class: The module class to test.
@@ -156,8 +147,7 @@ def _set_optional_seed(*, module_class: typing.Type[M], seed: typing.Optional[in
 
 
 class WrapModel(torch.nn.Module):
-    """
-    Wrap an inner module.
+    """Wrap an inner module.
     If we do not wrap the inner module, it will not be quantized properly.
 
     Maybe we can change this behavior in the future.
@@ -182,7 +172,7 @@ class WrapModel(torch.nn.Module):
         return any(module._get_name() == module_name for module in self.modules())
 
 
-TEST_ONLY_OUTPUT_DIRECTORY = f"habana_quantization_toolkit/tests/output/"
+TEST_ONLY_OUTPUT_DIRECTORY = "habana_quantization_toolkit/tests/output/"
 
 
 def get_test_unique_dump_path():
@@ -198,8 +188,7 @@ def _get_test_only_config(
     scale_method: ScaleMethod,
     lp_dtype: torch.dtype,
 ) -> Fp8cfg:
-    """
-    Should NOT be used externally.
+    """Should NOT be used externally.
 
     Return a new config used only for the tests.
     """

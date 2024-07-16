@@ -1,6 +1,21 @@
-import torch
+# Copyright (c) 2024 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import habana_frameworks.torch.core as htcore
 import habana_frameworks.torch.utils.experimental as htexp
+import torch
+
 from .common import *
 
 GAUDI2 = htexp.synDeviceType.synDeviceGaudi2
@@ -37,7 +52,7 @@ MAX_RANGE = {
 def get_fullscale(dtype, exp_bias=None):
     default_exp_bias = get_default_exp_bias(dtype)
     fullscale = MAX_RANGE[dtype]
-    exp_bias = default_exp_bias if exp_bias == None else exp_bias
+    exp_bias = default_exp_bias if exp_bias is None else exp_bias
     fullscale = fullscale * (2 ** (default_exp_bias - exp_bias))
     return fullscale
 
@@ -50,7 +65,7 @@ def get_fp8_hw_alligned_scales(dtype, device):
     exp_bias_set = EXP_BIAS_SETS.get((device, dtype), None)
     return (
         None
-        if exp_bias_set == None
+        if exp_bias_set is None
         else [x / MAX_RANGE[dtype] for x in get_fullscales_by_expbias_set(dtype, exp_bias_set)]
     )
 
@@ -82,11 +97,11 @@ def scale_to_pow2(scale):
     return scale_pow2
 
 
-# Considering range of hw alligned scales: 2^a, 2^a+1,..., 2^b (a<b)
+# Considering range of hw aligned scales: 2^a, 2^a+1,..., 2^b (a<b)
 # we want to choose scale s for maxabs m such that 2^a <= s=2^x <= 2^b (for integer a<=x<=b)
 # and also 2^(x-1) < m <= 2^x
-# if m>=2^b then s=2^b, therefor min(_, 2^b)
-# if m<=2^a then s=2^a, therefor max(_, 2^a) --> 2^a <= min(max(_,2^a),2^b) <=2^b
+# if m>=2^b then s=2^b, therefore min(_, 2^b)
+# if m<=2^a then s=2^a, therefore max(_, 2^a) --> 2^a <= min(max(_,2^a),2^b) <=2^b
 # if s^a<m<2^b then m as a positive number can be written as m=2^y (y=log2(m))
 # if y is integer then y=ciel(y) we choose x=y so s=2^x=2^y=2^ciel(y)=2^ciel(log2(m))
 # else we choose x=ciel(y) and a<=x-1<y<x<=b and s=2^x=2^ciel(y)=2^ciel(log2(m))

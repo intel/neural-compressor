@@ -1,7 +1,21 @@
+# Copyright (c) 2024 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import torch
 
-from ..fp_utils import *
 from ..common import *
+from ..fp_utils import *
 
 
 def linear_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales(mod, measurement, params):
@@ -140,7 +154,7 @@ def fsdpa_act_maxabs_pts_weight_maxabs_pts_pow2_scales(mod, measurement, params)
         for x in measurement.inputs
     ]
     # fsdpa is combined out of - BMM1(Q,K) -> Softmax -> BMM2(AMAX,V)
-    # during measure we recieve the amax value from the cguid and apply it during quant as input
+    # during measure we receive the amax value from the cguid and apply it during quant as input
     input_scale.append(
         calc_maxabs_scale(
             torch.tensor(measurement.outputs[1], dtype=hp_dtype, device=device).max(),
