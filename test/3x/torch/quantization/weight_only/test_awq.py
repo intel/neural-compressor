@@ -157,3 +157,41 @@ class TestAWQQuant:
         assert (
             id(model.model.decoder.embed_tokens.weight) == lm_head_id
         ), "The tied lm_head weight is not deep copied, please check!"
+
+    def test_awq_absorb_to_layer(self):
+        absorb_layer_dict = {
+            "ln_1": (
+                "attn.q_proj",
+                "attn.k_proj",
+                "attn.v_proj",
+                "mlp.fc_in",
+            ),
+            "attn.out_proj": "attn.out_proj",
+            "mlp.fc_out": ("mlp.fc_out"),
+        }
+
+        quant_config = AWQConfig(absorb_layer_dict=absorb_layer_dict)
+        logger.info(f"Test AWQ with config {quant_config}")
+        # prepare + convert API
+        model = prepare(
+            model=copy.deepcopy(self.tiny_gptj),
+            quant_config=quant_config,
+            example_inputs=self.example_inputs,
+        )
+        calib_func(model)
+        model = convert(model)
+        out1 = model(self.example_inputs)
+        quant_config = AWQConfig()
+        logger.info(f"Test AWQ with config {quant_config}")
+
+        # prepare + convert API
+        model = prepare(
+            model=copy.deepcopy(self.tiny_gptj),
+            quant_config=quant_config,
+            example_inputs=self.example_inputs,
+        )
+        calib_func(model)
+        model = convert(model)
+        out2 = model(self.example_inputs)
+
+        assert torch.all(out1[0].eq(out2[0])), "The results should be equal."

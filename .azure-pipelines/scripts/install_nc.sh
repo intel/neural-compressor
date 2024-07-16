@@ -16,7 +16,7 @@ elif [[ $1 = *"3x_ort" ]]; then
     pip install dist/neural_compressor*.whl --force-reinstall
 else
     python -m pip install --no-cache-dir -r requirements.txt
-    python setup.py 2x bdist_wheel
+    python setup.py bdist_wheel
     pip install dist/neural_compressor*.whl --force-reinstall
 fi
 
