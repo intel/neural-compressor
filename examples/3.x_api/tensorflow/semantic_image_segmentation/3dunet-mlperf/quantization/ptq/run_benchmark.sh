@@ -31,6 +31,9 @@ function init_params {
       --batch_size=*)
           batch_size=$(echo $var |cut -f2 -d=)
       ;;
+      --iters=*)
+          iters=$(echo $var |cut -f2 -d=)
+      ;;
       *)
           echo "Error: No such parameter: ${var}"
           exit 1
@@ -55,6 +58,7 @@ function run_benchmark {
       --calib-preprocess=${BUILD_DIR}/calib_preprocess \
       --batch-size=${batch_size} \
       --mode=${mode} \
+      --iters=${iters} \
       ${extra_cmd}
 }
 

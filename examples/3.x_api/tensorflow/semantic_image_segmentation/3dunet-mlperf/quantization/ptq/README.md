@@ -71,6 +71,6 @@ Please set the following environment variables before running quantization or be
 
 ## Benchmark
 
-`bash run_benchmark.sh --input_model=3dunet_dynamic_ndhwc_int8.pb --dataset_location=<path/to/build>/build --batch_size=100 --mode=benchmark`
+`bash run_benchmark.sh --input_model=3dunet_dynamic_ndhwc_int8.pb --dataset_location=<path/to/build>/build --batch_size=100 --iters=500 --mode=benchmark`
 
 `bash run_benchmark.sh --input_model=3dunet_dynamic_ndhwc_int8.pb --dataset_location=<path/to/build>/build --batch_size=1 --mode=accuracy`

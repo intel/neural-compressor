@@ -1,7 +1,0 @@
-datasets>=2.6.1
-scikit-learn>=1.1.2
-scipy>=1.9.3
-sklearn==0.0
-tokenizers==0.13.1
-transformers>=4.31.0
-intel-tensorflow>=2.12.0
