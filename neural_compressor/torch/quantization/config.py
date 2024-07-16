@@ -745,7 +745,7 @@ class AutoRoundConfig(TorchBaseConfig):
         low_gpu_mem_usage: bool = True,
         iters: int = 200,
         seqlen: int = 2048,
-        nsamples: int = 512,
+        nsamples: int = 128,
         sampler: str = "rand",
         seed: int = 42,
         nblocks: int = 1,
