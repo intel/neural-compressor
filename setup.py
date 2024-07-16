@@ -28,8 +28,7 @@ def get_build_version():
         return __version__
     try:
         result = subprocess.run(["git", "describe", "--tags"], capture_output=True, text=True, check=True)
-        distance = result.stdout.strip().split("-")[-2]
-        commit = result.stdout.strip().split("-")[-1]
+        _, distance, commit = result.stdout.strip().split("-")
         return f"{__version__}.dev{distance}+{commit}"
     except subprocess.CalledProcessError:
         return __version__
@@ -185,17 +184,6 @@ if __name__ == "__main__":
         sys.argv.remove("ort")
         cfg_key = "neural_compressor_3x_ort"
 
-    if bool(os.getenv("USE_FP8_CONVERT", False)):
-        from torch.utils.cpp_extension import BuildExtension, CppExtension
-
-        ext_modules = [
-            CppExtension(
-                "fp8_convert",
-                ["neural_compressor/torch/algorithms/habana_fp8/tensor/convert.cpp"],
-            ),
-        ]
-        cmdclass = {"build_ext": BuildExtension}
-
     project_name = PKG_INSTALL_CFG[cfg_key].get("project_name")
     include_packages = PKG_INSTALL_CFG[cfg_key].get("include_packages") or {}
     package_data = PKG_INSTALL_CFG[cfg_key].get("package_data") or {}
@@ -211,15 +199,16 @@ if __name__ == "__main__":
         description="Repository of Intel® Neural Compressor",
         long_description=open("README.md", "r", encoding="utf-8").read(),
         long_description_content_type="text/markdown",
+        keywords="quantization,auto-tuning,post-training static quantization,"
+        "post-training dynamic quantization,quantization-aware training",
         license="Apache 2.0",
-        keywords="quantization",
-        url="",
+        url="https://github.com/intel/neural-compressor",
         packages=include_packages,
         include_package_data=True,
         package_data=package_data,
         install_requires=install_requires,
-        ext_modules=ext_modules,  # for fp8
-        cmdclass=cmdclass,  # for fp8
+        ext_modules=ext_modules,
+        cmdclass=cmdclass,
         entry_points=entry_points,
         extras_require=extras_require,
         python_requires=">=3.7.0",
