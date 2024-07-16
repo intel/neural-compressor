@@ -459,6 +459,10 @@ def autoround_quantize_entry(
                 "bits": quant_config.bits,
                 "sym": quant_config.use_sym,
                 "group_size": quant_config.group_size,
+                "act_bits": quant_config.act_bits,
+                "act_group_size": quant_config.act_group_size,
+                "act_sym": quant_config.act_sym,
+                "act_dynamic": quant_config.act_dynamic,
             }
             enable_full_range = quant_config.enable_full_range
             batch_size = quant_config.batch_size
@@ -470,14 +474,16 @@ def autoround_quantize_entry(
             low_gpu_mem_usage = quant_config.low_gpu_mem_usage
             iters = quant_config.iters
             seqlen = quant_config.seqlen
-            n_samples = quant_config.n_samples
+            nsamples = quant_config.nsamples
             sampler = quant_config.sampler
             seed = quant_config.seed
-            n_blocks = quant_config.n_blocks
+            nblocks = quant_config.nblocks
             gradient_accumulate_steps = quant_config.gradient_accumulate_steps
             not_use_best_mse = quant_config.not_use_best_mse
             dynamic_max_gap = quant_config.dynamic_max_gap
             scale_dtype = quant_config.scale_dtype
+            multimodal =  quant_config.multimodal
+            low_cpu_mem_usage =  quant_config.use_layer_wise
 
     kwargs.pop("example_inputs")
 
@@ -495,14 +501,16 @@ def autoround_quantize_entry(
         low_gpu_mem_usage=low_gpu_mem_usage,
         iters=iters,
         seqlen=seqlen,
-        n_samples=n_samples,
+        nsamples=nsamples,
         sampler=sampler,
         seed=seed,
-        n_blocks=n_blocks,
+        nblocks=nblocks,
         gradient_accumulate_steps=gradient_accumulate_steps,
         not_use_best_mse=not_use_best_mse,
         dynamic_max_gap=dynamic_max_gap,
         scale_dtype=scale_dtype,
+        multimodal=multimodal,
+        low_cpu_mem_usage=low_cpu_mem_usage,
     )
     model = quantizer.execute(model=model, mode=mode, *args, **kwargs)
     model.qconfig = configs_mapping
