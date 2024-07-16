@@ -126,7 +126,7 @@ def main(_):
         quant_config = StaticQuantConfig()
         q_model = quantize_model(FLAGS.input_model, quant_config, calib_dataloader)
         q_model.save(FLAGS.output_model)
-        
+        logger.info("Save quantized model to {}.".format(FLAGS.output_model))
 
     if FLAGS.benchmark:
         from neural_compressor.tensorflow import Model
