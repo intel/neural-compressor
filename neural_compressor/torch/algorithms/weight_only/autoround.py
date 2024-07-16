@@ -72,6 +72,10 @@ class AutoRoundQuantizer(Quantizer):
                             'bits': 4,
                             'group_size': 32,
                             'sym': False,
+                            'act_data_type': None,
+                            'act_bits': 32,
+                            'group_size': None,
+                            'sym': None,
                         }
                         ...,
                     }
