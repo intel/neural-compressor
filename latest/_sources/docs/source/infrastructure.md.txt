@@ -182,19 +182,6 @@ Intel® Neural Compressor has unified interfaces which dispatch tasks to differe
 </table>
 
 
-</br>
-</br>
-
-[Neural architecture search](NAS.html):
-|Approach                          |Framework    |
-|------------------------------------------------|:-----------:|
-|Basic                          |PyTorch     |
-|DyNas       |PyTorch     |
-
-</br>
-</br>
-
-
 [Mixed precision](mixed_precision.html):
 |Framework     |         |
 |--------------|:-----------:|
