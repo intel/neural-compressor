@@ -694,18 +694,24 @@ def autoround_quantize(
     enable_minmax_tuning: bool = True,
     lr: float = None,
     minmax_lr: float = None,
-    low_gpu_mem_usage: bool = True,
+    low_gpu_mem_usage: bool = False,
     iters: int = 200,
     seqlen: int = 2048,
-    n_samples: int = 512,
+    nsamples: int = 128,
     sampler: str = "rand",
     seed: int = 42,
-    n_blocks: int = 1,
+    nblocks: int = 1,
     gradient_accumulate_steps: int = 1,
     not_use_best_mse: bool = False,
     dynamic_max_gap: int = -1,
     data_type: str = "int",  ##only support int for now
     scale_dtype: str = "fp16",
+    multimodal: bool = False,
+    act_bits: int = 32,
+    act_group_size: int = None,
+    act_sym: bool = None,
+    act_dynamic: bool = True,
+    use_layer_wise: bool = False,
     **kwargs,
 ):
     """Run autoround weight-only quantization.
@@ -717,15 +723,19 @@ def autoround_quantize(
         sym (bool): Whether symmetric quantization is to be used (default is False).
         weight_config (dict): Configuration for weight quantization (default is an empty dictionary).
         weight_config={
-                   'layer1':##layer_name
-                   {
-                       'data_type': 'int',
-                       'bits': 4,
-                       'group_size': 32,
-                       'sym': False
-                   }
-                   ...
-               }
+                    'layer1':##layer_name
+                        {
+                            'data_type': 'int',
+                            'bits': 4,
+                            'group_size': 32,
+                            'sym': False,
+                            'act_data_type': None,
+                            'act_bits': 32,
+                            'act_sym': None,
+                            'act_dynamic': True,
+                        }
+                    ...,
+                }
         enable_full_range (bool): Whether to enable full range quantization (default is False).
         batch_size (int): Batch size for training (default is 8).
         amp (bool): Whether to use automatic mixed precision (default is True).
@@ -737,7 +747,7 @@ def autoround_quantize(
         enable_minmax_tuning (bool): Whether to enable weight min-max tuning (default is True).
         lr (float): The learning rate (default is None, will be set to 1.0/iters).
         minmax_lr (float): The learning rate for min-max tuning (default is None, it will be set to lr automatically).
-        low_gpu_mem_usage (bool): Whether to use low GPU memory (default is True).
+        low_gpu_mem_usage (bool): Whether to use low GPU memory (default is False).
         iters (int): Number of iterations (default is 200).
         seqlen (int): Data length of the sequence for tuning (default is 2048).
         n_samples (int): Number of samples (default is 512).
@@ -750,7 +760,11 @@ def autoround_quantize(
         data_type (str): The data type to be used (default is "int").
         scale_dtype (str): The data type of quantization scale to be used (default is "float32"), different kernels
                            have different choices.
-
+        multimodal(bool): Enable multimodal model quantization, (default is "False").
+        act_bits (int): Number of bits for activation quantization. Default is 32.
+        act_group_size (int): Group size for activation quantization. Default is None.
+        act_sym (bool): Whether to use symmetric activation quantization. Default is None.
+        act_dynamic (bool): Whether to use dynamic activation quantization. Default is True.
     Returns:
         The quantized model.
     """
@@ -776,15 +790,21 @@ def autoround_quantize(
         low_gpu_mem_usage=low_gpu_mem_usage,
         iters=iters,
         seqlen=seqlen,
-        n_samples=n_samples,
+        nsamples=nsamples,
         sampler=sampler,
         seed=seed,
-        n_blocks=n_blocks,
+        nblocks=nblocks,
         gradient_accumulate_steps=gradient_accumulate_steps,
         not_use_best_mse=not_use_best_mse,
         dynamic_max_gap=dynamic_max_gap,
         data_type=data_type,  ## only support data_type
         scale_dtype=scale_dtype,
+        multimodal=multimodal,
+        act_bits=act_bits,
+        act_group_size=act_group_size,
+        act_sym=act_sym,
+        act_dynamic=act_dynamic,
+        low_cpu_mem_usage=use_layer_wise,
         **kwargs,
     )
     qdq_model, weight_config = rounder.quantize()
