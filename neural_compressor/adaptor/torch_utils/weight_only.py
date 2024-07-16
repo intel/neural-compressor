@@ -751,10 +751,10 @@ def autoround_quantize(
         low_gpu_mem_usage (bool): Whether to use low GPU memory (default is False).
         iters (int): Number of iterations (default is 200).
         seqlen (int): Data length of the sequence for tuning (default is 2048).
-        n_samples (int): Number of samples (default is 512).
+        nsamples (int): Number of samples (default is 128).
         sampler (str): The sampling method (default is "rand").
         seed (int): The random seed (default is 42).
-        n_blocks (int): Number of blocks (default is 1).
+        nblocks (int): Number of blocks (default is 1).
         gradient_accumulate_steps (int): Number of gradient accumulation steps (default is 1).
         not_use_best_mse (bool): Whether to use mean squared error (default is False).
         dynamic_max_gap (int): The dynamic maximum gap (default is -1).
@@ -777,7 +777,7 @@ def autoround_quantize(
         bits=bits,
         group_size=group_size,
         sym=sym,
-        weight_config=weight_config,
+        layer_config=weight_config,
         enable_full_range=enable_full_range,  ##for symmetric, TODO support later
         batch_size=batch_size,
         amp=amp,
