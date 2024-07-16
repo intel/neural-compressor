@@ -24,7 +24,7 @@ quantized_model = convert(model=prepared_model)
 Intel Neural Compressor 3.X extends PyTorch and TensorFlow's APIs to support compression techniques.
 The below table provides a quick overview of the APIs available in Intel Neural Compressor 3.X.
 The Intel Neural Compressor 3.X mainly focuses on quantization-related features, especially for algorithms that benefit LLM accuracy and inference.
-It also provides some common APIs across different frameworks. For example, Auto Tune API support accuracy driven quantization and mixed precision, benchmark API aimed to measure the multiple instances performance of the quantized model.
+It also provides some common modules across different frameworks. For example, Auto-tune support accuracy driven quantization and mixed precision, benchmark aimed to measure the multiple instances performance of the quantized model.
 
 <table class="docutils">
   <thead>
