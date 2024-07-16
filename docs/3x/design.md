@@ -7,7 +7,7 @@ Design
   <img src="imgs/architecture.png" alt="Architecture">
 </a>
 
-## Workflow
+## Workflows
 
 Intel® Neural Compressor provides two workflows: Quantization and Auto-tune.
 
