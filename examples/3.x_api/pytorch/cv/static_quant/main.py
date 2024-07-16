@@ -81,6 +81,8 @@ parser.add_argument('-q', '--quantize', dest='quantize', action='store_true',
                     help='quantize model')
 parser.add_argument("--calib_iters", default=2, type=int,
                     help="For calibration only.")
+parser.add_argument('-o', '--output_dir', default='', type=str, metavar='PATH',
+                    help='path to quantized result.')
 
 best_acc1 = 0
 
@@ -297,9 +299,13 @@ def main_worker(gpu, ngpus_per_node, args):
         config.freezing = True
         opt_model = torch.compile(q_model)
         model = opt_model
-
+        if args.output_dir:
+            model.save(example_inputs=example_inputs, output_dir = args.output_dir)
     
     if args.evaluate:
+        if args.output_dir:
+            from neural_compressor.torch.quantization import load
+            model = load(args.output_dir)
         validate(val_loader, model, criterion, args)
         return
 

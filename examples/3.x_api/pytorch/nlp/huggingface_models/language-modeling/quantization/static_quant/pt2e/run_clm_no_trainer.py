@@ -14,7 +14,7 @@ parser.add_argument(
     "--revision", default=None,
     help="Transformers parameter: set the model hub commit number")
 parser.add_argument("--dataset", nargs="?", default="NeelNanda/pile-10k", const="NeelNanda/pile-10k")
-parser.add_argument("--output_dir", nargs="?", default="./saved_results")
+parser.add_argument("--output_dir", nargs="?", default="")
 parser.add_argument("--quantize", action="store_true")
 parser.add_argument("--approach", type=str, default='static',
                     help="Select from ['dynamic', 'static', 'weight-only']")
@@ -98,9 +98,15 @@ if args.quantize:
 
     opt_model.config = user_model.config # for lm eval
     user_model = opt_model
+    if args.output_dir:
+        user_model.save(example_inputs=example_inputs, output_dir = args.output_dir)
 
 
 if args.accuracy:
+    if args.output_dir:
+        from neural_compressor.torch.quantization import load
+        model = load(args.output_dir)
+        model.config = user_model.config
     from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
     eval_args = LMEvalParser(
         model="hf",
