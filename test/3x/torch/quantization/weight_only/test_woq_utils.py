@@ -170,7 +170,7 @@ class TestUtility:
         result = list(dataloader)
 
         assert result == [1, 2, 3]
-        
+
         # Test case when kwargs is empty
         args_list = [(1, 2), (2, 3), (3, 4)]
         kwargs_list = [{}, {}, {}]
