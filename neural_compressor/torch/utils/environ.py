@@ -22,6 +22,7 @@ from packaging.version import Version
 
 ################ Check imported sys.module first to decide behavior #################
 def is_ipex_imported() -> bool:
+    """Check whether intel_extension_for_pytorch is imported."""
     for name, _ in sys.modules.items():
         if name == "intel_extension_for_pytorch":
             return True
@@ -29,6 +30,7 @@ def is_ipex_imported() -> bool:
 
 
 def is_transformers_imported() -> bool:
+    """Check whether transformers is imported."""
     for name, _ in sys.modules.items():
         if name == "transformers":
             return True
@@ -37,6 +39,11 @@ def is_transformers_imported() -> bool:
 
 ################ Check available sys.module to decide behavior #################
 def is_package_available(package_name):
+    """Check if the package exists in the environment without importing.
+
+    Args:
+        package_name (str): package name
+    """
     from importlib.util import find_spec
 
     package_spec = find_spec(package_name)
@@ -52,6 +59,7 @@ else:
 
 
 def is_hpex_available():
+    """Returns whether hpex is available."""
     return _hpex_available
 
 
@@ -63,10 +71,12 @@ else:
 
 
 def is_ipex_available():
+    """Return whether ipex is available."""
     return _ipex_available
 
 
 def get_ipex_version():
+    """Return ipex version if ipex exists."""
     if is_ipex_available():
         try:
             import intel_extension_for_pytorch as ipex
@@ -84,6 +94,7 @@ TORCH_VERSION_2_2_2 = Version("2.2.2")
 
 
 def get_torch_version():
+    """Return torch version if ipex exists."""
     try:
         torch_version = torch.__version__.split("+")[0]
     except ValueError as e:  # pragma: no cover
@@ -96,6 +107,7 @@ GT_TORCH_VERSION_2_3_2 = get_torch_version() > Version("2.3.2")
 
 
 def get_accelerator(device_name="auto"):
+    """Return the recommended accelerator based on device priority."""
     global accelerator  # update the global accelerator when calling this func
     from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
@@ -109,6 +121,7 @@ accelerator = get_accelerator()
 
 # for habana ease-of-use
 def device_synchronize(raw_func):
+    """Function decorator that calls accelerated.synchronize before and after a function call."""
     from functools import wraps
 
     @wraps(raw_func)
