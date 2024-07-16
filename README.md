@@ -116,54 +116,58 @@ quantized_model = fit(model=float_model, conf=static_quant_conf, calib_dataloade
   </thead>
   <tbody>
     <tr>
-      <td colspan="2" align="center"><a href="./docs/source/design.md#architecture">Architecture</a></td>
-      <td colspan="2" align="center"><a href="./docs/source/design.md#workflow">Workflow</a></td>
-      <td colspan="1" align="center"><a href="https://intel.github.io/neural-compressor/latest/docs/source/api-doc/apis.html">APIs</a></td>
-      <td colspan="1" align="center"><a href="./docs/source/llm_recipes.md">LLMs Recipes</a></td>
-      <td colspan="2" align="center"><a href="examples/README.md">Examples</a></td>
+      <td colspan="2" align="center"><a href="./docs/3x/design.md#architecture">Architecture</a></td>
+      <td colspan="2" align="center"><a href="./docs/3x/design.md#workflow">Workflow</a></td>
+      <td colspan="2" align="center"><a href="https://intel.github.io/neural-compressor/latest/docs/source/api-doc/apis.html">APIs</a></td>
+      <td colspan="1" align="center"><a href="./docs/3x/llm_recipes.md">LLMs Recipes</a></td>
+      <td colspan="1" align="center">Examples</td>
     </tr>
   </tbody>
   <thead>
     <tr>
-      <th colspan="8">Python-based APIs</th>
+      <th colspan="8">PyTorch Extension APIs</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-        <td colspan="2" align="center"><a href="./docs/source/quantization.md">Quantization</a></td>
-        <td colspan="2" align="center"><a href="./docs/source/mixed_precision.md">Advanced Mixed Precision</a></td>
-        <td colspan="2" align="center"><a href="./docs/source/pruning.md">Pruning (Sparsity)</a></td>
-        <td colspan="2" align="center"><a href="./docs/source/distillation.md">Distillation</a></td>
+        <td colspan="2" align="center"><a href="./docs/3x/PyTorch.md">Overview</a></td>
+        <td colspan="2" align="center"><a href="./docs/3x/PT_StaticQuant.md">Static Quantization</a></td>
+        <td colspan="2" align="center"><a href="./docs/3x/PT_DynamicQuant.md">Dynamic Quantization</a></td>
+        <td colspan="2" align="center"><a href="./docs/3x/PT_SmoothQuant.md">Smooth Quantization</a></td>
     </tr>
     <tr>
-        <td colspan="2" align="center"><a href="./docs/source/orchestration.md">Orchestration</a></td>
-        <td colspan="2" align="center"><a href="./docs/source/benchmark.md">Benchmarking</a></td>
-        <td colspan="2" align="center"><a href="./docs/source/distributed.md">Distributed Compression</a></td>
-        <td colspan="2" align="center"><a href="./docs/source/export.md">Model Export</a></td>
+        <td colspan="4" align="center"><a href="./docs/3x/PT_WeightOnlyQuant.md">Weight-Only Quantization</a></td>
+        <td colspan="2" align="center"><a href="./docs/3x/PT_MXQuant.md">MX Quantization</a></td>
+        <td colspan="2" align="center"><a href="./docs/3x/PT_MixedPrecision.md">Mixed Precision</a></td>
     </tr>
   </tbody>
   <thead>
       <tr>
-        <th colspan="8">Advanced Topics</th>
+        <th colspan="8">Tensorflow Extension APIs</th>
       </tr>
   </thead>
   <tbody>
       <tr>
-          <td colspan="2" align="center"><a href="./docs/source/adaptor.md">Adaptor</a></td>
-          <td colspan="2" align="center"><a href="./docs/source/tuning_strategies.md">Strategy</a></td>
-          <td colspan="2" align="center"><a href="./docs/source/distillation_quantization.md">Distillation for Quantization</a></td>
-          <td colspan="2" align="center"><a href="./docs/source/smooth_quant.md">SmoothQuant</td>
+          <td colspan="3" align="center"><a href="./docs/3x/TensorFlow.md">Overview</a></td>
+          <td colspan="3" align="center"><a href="./docs/3x/TF_Quant.md">Static Quantization</a></td>
+          <td colspan="2" align="center"><a href="./docs/3x/TF_SQ.md">Smooth Quantization</a></td>
       </tr>
+  </tbody>
+  <thead>
       <tr>
-          <td colspan="4" align="center"><a href="./docs/source/quantization_weight_only.md">Weight-Only Quantization (INT8/INT4/FP4/NF4) </td>
-          <td colspan="2" align="center"><a href="https://github.com/intel/neural-compressor/blob/fp8_adaptor/docs/source/fp8.md">FP8 Quantization </td>
-          <td colspan="2" align="center"><a href="./docs/source/quantization_layer_wise.md">Layer-Wise Quantization </td>
+        <th colspan="8">Other Modules</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td colspan="4" align="center"><a href="./docs/3x/autotune.md">Auto Tune</a></td>
+          <td colspan="4" align="center"><a href="./docs/3x/benchmark.md">Benchmark</a></td>
       </tr>
   </tbody>
 </table>
 
-> **Note**: 
-> Further documentations can be found at [User Guide](https://github.com/intel/neural-compressor/blob/master/docs/source/user_guide.md).
+> **Note**:   
+> From 3.0 release, we recommend to use 3.X API. Compression techniques during training such as QAT, Pruning, Distillation only available in [2.X API](https://github.com/intel/neural-compressor/blob/master/docs/source/2x_user_guide.md) currently.
 
 ## Selected Publications/Events
 * Blog by Intel: [Neural Compressor: Boosting AI Model Efficiency](https://community.intel.com/t5/Blogs/Tech-Innovation/Artificial-Intelligence-AI/Neural-Compressor-Boosting-AI-Model-Efficiency/post/1604740) (June 2024) 
