@@ -74,8 +74,8 @@ class AutoRoundQuantizer(Quantizer):
                             'sym': False,
                             'act_data_type': None,
                             'act_bits': 32,
-                            'group_size': None,
-                            'sym': None,
+                            'act_sym': None,
+                            'act_dynamic': True,
                         }
                         ...,
                     }
