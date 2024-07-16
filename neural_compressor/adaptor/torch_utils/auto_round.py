@@ -25,7 +25,7 @@ def get_dataloader(tokenizer, seqlen, dataset_name="NeelNanda/pile-10k", seed=42
         split (str, optional): The data split to use. Defaults to None.
         seed (int, optional): The random seed for reproducibility. Defaults to 42.
         bs (int, optional): The batch size. Defaults to 4.
-        n_samples (int, optional): The total number of samples to include. Defaults to 128.
+        nsamples (int, optional): The total number of samples to include. Defaults to 128.
 
     Returns:
         DataLoader: The DataLoader for the calibrated dataset.
