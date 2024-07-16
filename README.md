@@ -136,8 +136,8 @@ quantized_model = fit(model=float_model, conf=static_quant_conf, calib_dataloade
         <td colspan="2" align="center"><a href="./docs/3x/PT_SmoothQuant.md">Smooth Quantization</a></td>
     </tr>
     <tr>
-        <td colspan="3" align="center"><a href="./docs/3x/PT_WeightOnlyQuant.md">Weight-Only Quantization</a></td>
-        <td colspan="3" align="center"><a href="./docs/3x/PT_MXQuant.md">MX Quantization</a></td>
+        <td colspan="4" align="center"><a href="./docs/3x/PT_WeightOnlyQuant.md">Weight-Only Quantization</a></td>
+        <td colspan="2" align="center"><a href="./docs/3x/PT_MXQuant.md">MX Quantization</a></td>
         <td colspan="2" align="center"><a href="./docs/3x/PT_MixedPrecision.md">Mixed Precision</a></td>
     </tr>
   </tbody>
