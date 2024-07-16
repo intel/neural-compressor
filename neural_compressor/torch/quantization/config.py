@@ -754,7 +754,7 @@ class AutoRoundConfig(TorchBaseConfig):
         dynamic_max_gap: int = -1,
         scale_dtype: str = "fp16",
         use_layer_wise: bool = False,
-        multimodal:bool = False,
+        multimodal: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init AUTOROUND weight-only quantization config.

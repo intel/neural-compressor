@@ -53,7 +53,7 @@ class AutoRoundQuantizer(Quantizer):
         dynamic_max_gap: int = -1,
         data_type: str = "int",
         scale_dtype: str = "fp16",
-        multimodal:bool = False,
+        multimodal: bool = False,
         act_bits: int = 32,
         act_group_size: int = None,
         act_sym: bool = None,
@@ -87,7 +87,7 @@ class AutoRoundQuantizer(Quantizer):
             bits (int): Number of bits for quantization (default is 4).
             group_size (int): Size of the quantization group (default is 128).
             sym (bool): Whether symmetric quantization is to be used (default is False).
-                    
+
             enable_full_range (bool): Whether to enable full range quantization (default is False).
             batch_size (int): Batch size for training (default is 8).
             amp (bool): Whether to use automatic mixed precision (default is True).
@@ -194,9 +194,9 @@ class AutoRoundQuantizer(Quantizer):
             multimodal=self.multimodal,
             act_bits=self.act_bits,
             act_group_size=self.act_group_size,
-            act_sym = self.act_sym,
-            act_dynamic = self.act_dynamic,
-            low_cpu_mem_usage = self.low_cpu_mem_usage,
+            act_sym=self.act_sym,
+            act_dynamic=self.act_dynamic,
+            low_cpu_mem_usage=self.low_cpu_mem_usage,
         )
         model, weight_config = rounder.quantize()
         model.autoround_config = weight_config
