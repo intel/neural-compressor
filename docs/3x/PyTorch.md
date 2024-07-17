@@ -195,6 +195,21 @@ def load(output_dir="./saved_results", model=None):
     <td class="tg-9wq8"><a href="PT_DynamicQuant.md">link</a></td>
   </tr>
   <tr>
+    <td class="tg-9wq8">MX Quantization</td>
+    <td class="tg-9wq8"><a href=https://arxiv.org/pdf/2310.10537>Microscaling Data Formats for
+Deep Learning</a></td>
+    <td class="tg-9wq8">PyTorch eager mode</td>
+    <td class="tg-9wq8">&#10004</td>
+    <td class="tg-9wq8"><a href="PT_MXQuant.md">link</a></td>
+  </tr>
+  <tr>
+    <td class="tg-9wq8">Mixed Precision</td>
+    <td class="tg-9wq8"><a href=https://arxiv.org/abs/1710.03740>Mixed precision</a></td>
+    <td class="tg-9wq8">PyTorch eager mode</td>
+    <td class="tg-9wq8">&#10004</td>
+    <td class="tg-9wq8"><a href="PT_MixPrecision.md">link</a></td>
+  </tr>
+  <tr>
     <td class="tg-9wq8">Quantization Aware Training</td>
     <td class="tg-9wq8"><a href=https://pytorch.org/docs/master/quantization.html#quantization-aware-training-for-static-quantization>Quantization Aware Training</a></td>
     <td class="tg-9wq8">TorchDynamo</td>

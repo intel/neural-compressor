@@ -1105,7 +1105,11 @@ class CapturedDataloader:
             if not args:
                 yield kwargs
             elif not kwargs:
-                yield args
+                # case: tensor
+                if len(args) == 1:
+                    yield args[0]
+                else:
+                    yield args
             else:
                 yield args, kwargs
 

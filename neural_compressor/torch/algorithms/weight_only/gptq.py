@@ -230,11 +230,13 @@ class RAWGPTQuantizer(object):
 
         # device
         self.device = get_accelerator(kwargs.pop("device", "auto")).current_device_name()
-        self.model.to(self.device)
+        if not use_layer_wise:
+            self.model.to(self.device)
         self.is_ready = False
 
         self.use_layer_wise = use_layer_wise
-        self.model_path = model_path
+        if use_layer_wise:
+            self.prepare_layer_wise(model_path)
 
         # dataloader
         self.use_max_length = use_max_length
@@ -242,6 +244,20 @@ class RAWGPTQuantizer(object):
         self.dataloader_original = dataloader
         self.dataloader = []
         self.nsamples = nsamples
+
+    def prepare_layer_wise(self, model_path):
+        import os
+
+        from neural_compressor.torch.algorithms.layer_wise import LWQ_WORKSPACE, get_path, register_weight_hooks
+
+        os.makedirs(LWQ_WORKSPACE, exist_ok=True)
+        if model_path == "":
+            model_path = self.model.path
+        assert model_path, "model_path should not be None."
+        self.model_path = get_path(model_path)
+        register_weight_hooks(
+            self.model, self.model_path, device=self.device, clean_weight=True, saved_path=LWQ_WORKSPACE
+        )
 
     def get_full_layer_name(self, sub_layer_name, block_idx):
         transformer_name = self.gptq_related_blocks["transformers_name"]
@@ -413,7 +429,6 @@ class RAWGPTQuantizer(object):
         # Step1: prepare quantization (calibration datasets)
 
         logger.info("Begin ====>")
-        model_path = self.model_path
 
         # Step2: run gptq quantization in a transformer block-wise manner.
         gptq_config = {}
@@ -450,7 +465,7 @@ class RAWGPTQuantizer(object):
                 if self.use_layer_wise:  # pragma: no cover
                     from neural_compressor.torch.algorithms.layer_wise import load_value
 
-                    W = load_value(self.model, full_layer_name + ".weight", model_path)
+                    W = load_value(self.model, full_layer_name + ".weight", self.model_path)
                 else:
                     W = sub_layers[layer_name].weight.data.clone()
 
@@ -489,7 +504,7 @@ class RAWGPTQuantizer(object):
                     from neural_compressor.torch.algorithms.layer_wise import load_value
 
                     full_layer_name = self.get_full_layer_name(layer_name, block_idx)
-                    W = load_value(self.model, full_layer_name + ".weight", model_path)
+                    W = load_value(self.model, full_layer_name + ".weight", self.model_path)
                 else:
                     W = sub_layers[layer_name].weight.data.clone()
                 accelerator.mark_step()
@@ -518,7 +533,7 @@ class RAWGPTQuantizer(object):
                         if n == "weight":
                             set_module_tensor_to_device(self.model, param_name, self.device, Q)
                         else:
-                            value = load_value(self.model, param_name, model_path)
+                            value = load_value(self.model, param_name, self.model_path)
                             set_module_tensor_to_device(self.model, param_name, self.device, value)
                     # sub_layer.weight.data = Q
                     torch.save(sub_layer.state_dict(), LWQ_WORKSPACE + f"/{full_layer_name}.pt")
@@ -562,7 +577,13 @@ class RAWGPTQuantizer(object):
                     gptq_perm = gptq_config[self.get_full_layer_name(layer_name, block_idx)]["perm"]
                 else:
                     gptq_perm = None
-                Q = sub_layers[layer_name].weight.data
+                if self.use_layer_wise:
+                    state_dict = torch.load(LWQ_WORKSPACE + f"/{self.get_full_layer_name(layer_name, block_idx)}.pt")
+                    Q = state_dict["weight"].data
+                    bias = state_dict["bias"] if "bias" in state_dict.keys() else None
+
+                else:
+                    Q = sub_layers[layer_name].weight.data
                 if weight_config_this_layer["act_order"]:
                     Q.copy_(Q[:, gptq_perm])
                 if is_transformers_imported() and isinstance(sub_layers[layer_name], transformers.Conv1D):
@@ -591,6 +612,9 @@ class RAWGPTQuantizer(object):
                     scale = scale.t_().contiguous()
                     zp = zp.t_().contiguous() if zp is not None else zp
 
+                if not self.use_layer_wise:
+                    bias = sub_layers[layer_name].bias
+
                 new_module = WeightOnlyLinear(
                     in_features,
                     out_features,
@@ -598,11 +622,11 @@ class RAWGPTQuantizer(object):
                     bits=weight_config_this_layer["bits"],
                     group_size=weight_config_this_layer["group_size"],
                     zp=gptq_zp is not None,
-                    bias=sub_layers[layer_name].bias is not None,
+                    bias=bias is not None,
                     g_idx=gptq_perm is not None,
                     device=self.device,
                 )
-                new_module.pack(int_weight, gptq_scale, gptq_zp, sub_layers[layer_name].bias, gptq_perm)
+                new_module.pack(int_weight, gptq_scale, gptq_zp, bias, gptq_perm)
                 set_module(transformer_block, layer_name, new_module)
             del gptq_for_this_block
             torch.cuda.empty_cache()
@@ -1019,8 +1043,10 @@ class GPTQuantizer(INCQuantizer):
     def convert(self, model, *args, **kwargs):
         self.gptq_quantizer.model = model
         self.gptq_quantizer.remove_prepare_for_calibration()
+
         q_model, gptq_config = self.gptq_quantizer.execute_quantization()
-        q_model = q_model.to(self.model_device)
+        if not self.gptq_quantizer.use_layer_wise:
+            q_model = q_model.to(self.model_device)
         q_model.gptq_config = gptq_config
         logger.info("GPTQ quantizing done.")
         return q_model

@@ -32,7 +32,7 @@ from torch.serialization import (
     _open_zipfile_reader,
 )
 
-from neural_compressor.adaptor.torch_utils.layer_wise_quant import modified_pickle as pickle
+from neural_compressor.torch.algorithms.layer_wise import modified_pickle as pickle
 
 from .utils import torch
 
