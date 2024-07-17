@@ -735,8 +735,8 @@ class AutoRoundConfig(TorchBaseConfig):
         "minmax_lr",
         "iters",
         "seqlen",
-        "n_samples",
-        "n_blocks",
+        "nsamples",
+        "nblocks",
         "gradient_accumulate_steps",
         "not_use_best_mse",
         "dynamic_max_gap",
@@ -750,6 +750,10 @@ class AutoRoundConfig(TorchBaseConfig):
         use_sym: bool = False,
         group_size: int = 128,
         # AUTOROUND
+        act_bits: int = 32,
+        act_group_size: int = None,
+        act_sym: bool = None,
+        act_dynamic: bool = True,
         enable_full_range: bool = False,
         batch_size: int = 8,
         lr_scheduler=None,
@@ -759,16 +763,17 @@ class AutoRoundConfig(TorchBaseConfig):
         minmax_lr: float = None,
         low_gpu_mem_usage: bool = True,
         iters: int = 200,
-        seqlen: int = 512,
-        n_samples: int = 512,
+        seqlen: int = 2048,
+        nsamples: int = 128,
         sampler: str = "rand",
         seed: int = 42,
-        n_blocks: int = 1,
+        nblocks: int = 1,
         gradient_accumulate_steps: int = 1,
         not_use_best_mse: bool = False,
         dynamic_max_gap: int = -1,
         scale_dtype: str = "fp16",
         use_layer_wise: bool = False,
+        multimodal: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init AUTOROUND weight-only quantization config.
@@ -778,6 +783,10 @@ class AutoRoundConfig(TorchBaseConfig):
             bits (int): Number of bits used to represent weights, default is 4.
             use_sym (bool): Indicates whether weights are symmetric, default is False.
             group_size (int): Size of weight groups, default is 128.
+            act_bits (int): Number of bits for activation quantization. Default is 32.
+            act_group_size (int): Group size for activation quantization. Default is None.
+            act_sym (bool): Whether to use symmetric activation quantization. Default is None.
+            act_dynamic (bool): Whether to use dynamic activation quantization. Default is True.
             enable_full_range (bool): Whether to enable full range quantization (default is False).
             batch_size (int): Batch size for training (default is 8).
             lr_scheduler: The learning rate scheduler to be used.
@@ -788,21 +797,27 @@ class AutoRoundConfig(TorchBaseConfig):
             low_gpu_mem_usage (bool): Whether to use low GPU memory (default is True).
             iters (int): Number of iterations (default is 200).
             seqlen (int): Length of the sequence.
-            n_samples (int): Number of samples (default is 512).
+            nsamples (int): Number of samples (default is 512).
             sampler (str): The sampling method (default is "rand").
             seed (int): The random seed (default is 42).
-            n_blocks (int): Number of blocks (default is 1).
+            nblocks (int): Number of blocks (default is 1).
             gradient_accumulate_steps (int): Number of gradient accumulation steps (default is 1).
             not_use_best_mse (bool): Whether to use mean squared error (default is False).
             dynamic_max_gap (int): The dynamic maximum gap (default is -1).
             scale_dtype (str): The data type of quantization scale to be used (default is "float16"), different kernels
                         have different choices.
+            use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
+            multimodal(bool): Enable multimodal model quantization, (default is "False").
         """
         super().__init__(white_list=white_list)
         self.dtype = dtype
         self.bits = bits
         self.use_sym = use_sym
         self.group_size = group_size
+        self.act_bits = act_bits
+        self.act_group_size = act_group_size
+        self.act_sym = act_sym
+        self.act_dynamic = act_dynamic
         self.enable_full_range = enable_full_range
         self.batch_size = batch_size
         self.lr_scheduler = lr_scheduler
@@ -813,15 +828,16 @@ class AutoRoundConfig(TorchBaseConfig):
         self.low_gpu_mem_usage = low_gpu_mem_usage
         self.iters = iters
         self.seqlen = seqlen
-        self.n_samples = n_samples
+        self.nsamples = nsamples
         self.sampler = sampler
         self.seed = seed
-        self.n_blocks = n_blocks
+        self.nblocks = nblocks
         self.gradient_accumulate_steps = gradient_accumulate_steps
         self.not_use_best_mse = not_use_best_mse
         self.dynamic_max_gap = dynamic_max_gap
         self.scale_dtype = scale_dtype
         self.use_layer_wise = use_layer_wise
+        self.multimodal = multimodal
         self._post_init()
 
     @classmethod
@@ -1526,7 +1542,7 @@ def get_woq_tuning_config() -> list:
         the list of WOQ quant config.
     """
     RTN_G32ASYM = RTNConfig(use_sym=False, group_size=32)
-    AUTO_ROUND_CONFIG = AutoRoundConfig(use_sym=False, group_size=32)
+    AUTO_ROUND_CONFIG = AutoRoundConfig(use_sym=False, group_size=32, seqlen=512)
     GPTQ_G32ASYM = GPTQConfig(use_sym=False, group_size=32)
     AWQ_G32ASYM = AWQConfig(use_sym=False, group_size=32)
     return [RTN_G32ASYM, AUTO_ROUND_CONFIG, GPTQ_G32ASYM, AWQ_G32ASYM]
