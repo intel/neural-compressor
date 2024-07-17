@@ -1,6 +1,6 @@
 numba
 numpy < 2.0
-peft==0.10.0
+peft
 prettytable
 psutil
 py-cpuinfo
