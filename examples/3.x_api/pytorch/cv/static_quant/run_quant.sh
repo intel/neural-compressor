@@ -38,7 +38,7 @@ function init_params {
 function run_tuning {
     if [ "${topology}" = "resnet18_pt2e_static" ]; then
         model_name_or_path="resnet18"
-        output_dir = "saved_results"
+        output_dir="saved_results"
     fi
     python main.py -a ${model_name_or_path} ${dataset_location} -q -o ${output_dir}
 }

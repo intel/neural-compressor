@@ -39,7 +39,7 @@ function run_benchmark {
 
     if [ "${topology}" = "opt_125m_pt2e_static" ]; then
         model_name_or_path="facebook/opt-125m"
-        output_dir = "saved_results"
+        output_dir="saved_results"
     fi
     python run_clm_no_trainer.py --model ${model_name_or_path} --accuracy --output_dir ${output_dir} --tasks "lambada_openai"
 }
