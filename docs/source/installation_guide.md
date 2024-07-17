@@ -76,7 +76,7 @@ The AI Kit is distributed through many common channels, including from Intel's w
 
 ### Validated Hardware Environment
 
-#### Intel® Neural Compressor supports HPUs based on xxx
+#### Intel® Neural Compressor supports HPUs based on heterogeneous architecture with two compute engines (MME and TPC): 
 * Intel Gaudi Al Accelerators
 
 #### Intel® Neural Compressor supports CPUs based on [Intel 64 architecture or compatible processors](https://en.wikipedia.org/wiki/X86-64):
