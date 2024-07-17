@@ -37,9 +37,9 @@ class SmoothQuant:
     def __init__(
         self,
         config: SmoothQuantConfig,
-        calib_dataloader: Callable=None,
+        calib_dataloader: Callable = None,
         calib_iteration: int = 1,
-        calib_func: Callable=None,
+        calib_func: Callable = None,
     ):
         """Convert the model by smooth quant.
 

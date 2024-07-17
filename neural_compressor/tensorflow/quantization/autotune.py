@@ -72,7 +72,9 @@ def autotune(
                 logger.info("Re-quantizing with best quantization config...")
                 del q_model
                 best_quant_config: BaseConfig = best_trial_record.quant_config
-                best_quant_model = quantize_model(model, best_quant_config, calib_dataloader, calib_iteration, calib_func)
+                best_quant_model = quantize_model(
+                    model, best_quant_config, calib_dataloader, calib_iteration, calib_func
+                )
             else:
                 best_quant_model = q_model
             break

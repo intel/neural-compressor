@@ -41,7 +41,7 @@ def quantize_model(
         quant_config: single or lists of quantization configuration.
         calib_dataloader: a data loader for calibration.
         calib_iteration: the iteration of calibration.
-        calib_func: the function used for calibration, should be a substitution for calib_dataloader 
+        calib_func: the function used for calibration, should be a substitution for calib_dataloader
         when the built-in calibration function of INC does not work for model inference.
 
     Returns:
@@ -52,7 +52,9 @@ def quantize_model(
         for config in quant_config:
             q_model = quantize_model_with_single_config(q_model, config, calib_dataloader, calib_iteration, calib_func)
     else:
-        q_model = quantize_model_with_single_config(q_model, quant_config, calib_dataloader, calib_iteration, calib_func)
+        q_model = quantize_model_with_single_config(
+            q_model, quant_config, calib_dataloader, calib_iteration, calib_func
+        )
 
     return q_model
 
@@ -71,7 +73,7 @@ def quantize_model_with_single_config(
         quant_config: a quantization configuration.
         calib_dataloader: a data loader for calibration.
         calib_iteration: the iteration of calibration.
-        calib_func: the function used for calibration, should be a substitution for calib_dataloader 
+        calib_func: the function used for calibration, should be a substitution for calib_dataloader
         when the built-in calibration function of INC does not work for model inference.
 
     Returns:

@@ -27,6 +27,7 @@ from tensorflow import keras
 from neural_compressor.common import logger
 from neural_compressor.tensorflow.utils import version1_gte_version2
 
+
 def build_model():
     # Load MNIST dataset
     mnist = keras.datasets.mnist
@@ -110,8 +111,7 @@ class MyDataloader:
 
 def evaluate(model):
     input_tensor = model.input_tensor
-    output_tensor = model.output_tensor if len(model.output_tensor)>1 else \
-                        model.output_tensor[0]
+    output_tensor = model.output_tensor if len(model.output_tensor) > 1 else model.output_tensor[0]
 
     iteration = -1
     calib_dataloader = MyDataloader(dataset=Dataset())
@@ -152,7 +152,7 @@ class TestQuantizeModel(unittest.TestCase):
             if "Quantized" in node.op:
                 quantized = True
                 break
-        
+
         self.assertEqual(quantized, True)
 
 

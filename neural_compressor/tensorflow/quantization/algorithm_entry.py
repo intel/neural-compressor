@@ -37,7 +37,7 @@ def static_quant_entry(
         quant_config: a quantization configuration.
         calib_dataloader: a data loader for calibration.
         calib_iteration: the iteration of calibration.
-        calib_func: the function used for calibration, should be a substitution for calib_dataloader 
+        calib_func: the function used for calibration, should be a substitution for calib_dataloader
         when the built-in calibration function of INC does not work for model inference.
 
     Returns:
@@ -73,7 +73,7 @@ def smooth_quant_entry(
         quant_config: a quantization configuration.
         calib_dataloader: a data loader for calibration.
         calib_iteration: the iteration of calibration.
-        calib_func: the function used for calibration, should be a substitution for calib_dataloader 
+        calib_func: the function used for calibration, should be a substitution for calib_dataloader
         when the built-in calibration function of INC does not work for model inference.
 
     Returns:
