@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-def get_dataloader(tokenizer, seqlen, dataset_name="NeelNanda/pile-10k", seed=42, bs=8, n_samples=512):
+def get_dataloader(tokenizer, seqlen, dataset_name="NeelNanda/pile-10k", seed=42, bs=8, nsamples=128):
     """Generate a DataLoader for calibration using specified parameters.
 
     Args:
@@ -25,14 +25,12 @@ def get_dataloader(tokenizer, seqlen, dataset_name="NeelNanda/pile-10k", seed=42
         split (str, optional): The data split to use. Defaults to None.
         seed (int, optional): The random seed for reproducibility. Defaults to 42.
         bs (int, optional): The batch size. Defaults to 4.
-        n_samples (int, optional): The total number of samples to include. Defaults to 512.
+        nsamples (int, optional): The total number of samples to include. Defaults to 128.
 
     Returns:
         DataLoader: The DataLoader for the calibrated dataset.
     """
     from auto_round.calib_dataset import get_dataloader  # pylint: disable=E0401
 
-    dataloader = get_dataloader(
-        tokenizer, seqlen, dataset_name="NeelNanda/pile-10k", seed=seed, bs=bs, n_samples=n_samples
-    )
+    dataloader = get_dataloader(tokenizer, seqlen, dataset_name=dataset_name, seed=seed, bs=bs, nsamples=nsamples)
     return dataloader

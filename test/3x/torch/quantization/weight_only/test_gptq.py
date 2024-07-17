@@ -183,7 +183,7 @@ class TestGPTQQuant:
         model = convert(model)
         q_label = model(self.example_inputs)[0]
 
-        from neural_compressor.torch.utils import load_empty_model
+        from neural_compressor.torch import load_empty_model
 
         model = load_empty_model("hf-internal-testing/tiny-random-GPTJForCausalLM")
 
