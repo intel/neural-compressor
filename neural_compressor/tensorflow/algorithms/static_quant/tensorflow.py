@@ -172,7 +172,7 @@ class TensorFlowAdaptor:
         model: BaseModel,
         calib_dataloader: Callable = None,
         calib_iteration: int = 100,
-        q_func=None,
+        calib_func: Callable = None,
     ):
         """Execute the quantize process on the specified model.
 
@@ -181,11 +181,11 @@ class TensorFlowAdaptor:
             model: the fp32 model to be quantized.
             calib_dataloader: a data loader for calibration.
             calib_iteration: the iteration of calibration.
-            q_func: training function for quantization aware training mode,
-                                which not enabled for tensorflow yet.
+            calib_func: the function used for calibration, should be a substitution for calib_dataloader
+            when the built-in calibration function of INC does not work for model inference.
 
         Returns:
-            tf.compat.v1.GraphDef: the quantized model
+            converted_model: the quantized INC model wrapper.
         """
         assert (
             self.approach != "post_training_dynamic_quant"
@@ -195,7 +195,7 @@ class TensorFlowAdaptor:
             self.approach != "quant_aware_training"
         ), "Quantize Aware Training is not supported on TensorFlow framework now!"
 
-        self.calib_sampling_size = calib_dataloader.batch_size * calib_iteration
+        self.calib_sampling_size = calib_dataloader.batch_size * calib_iteration if calib_dataloader else 100
         tune_cfg = self.parse_quant_config(quant_config, model, calib_iteration)
         self._tuning_cfg_to_fw(tune_cfg)
         self.bf16_ops.extend(self.smooth_quant_mul_ops)
@@ -228,7 +228,7 @@ class TensorFlowAdaptor:
                     fp32_ops=self.fp32_ops,
                     bf16_ops=self.bf16_ops,
                     data_loader=calib_dataloader,
-                    calib_func=q_func,
+                    calib_func=calib_func,
                     qdq_enabled=self.qdq_enabled,
                     new_api=self.new_api,
                     performance_only=self.performance_only,
@@ -251,7 +251,7 @@ class TensorFlowAdaptor:
                     fp32_ops=self.fp32_ops,
                     bf16_ops=self.bf16_ops,
                     data_loader=calib_dataloader,
-                    calib_func=q_func,
+                    calib_func=calib_func,
                     qdq_enabled=self.qdq_enabled,
                     new_api=self.new_api,
                     performance_only=self.performance_only,
@@ -275,7 +275,7 @@ class TensorFlowAdaptor:
                 fp32_ops=self.fp32_ops,
                 bf16_ops=self.bf16_ops,
                 data_loader=calib_dataloader,
-                calib_func=q_func,
+                calib_func=calib_func,
                 qdq_enabled=self.qdq_enabled,
                 new_api=self.new_api,
                 performance_only=self.performance_only,
@@ -750,21 +750,21 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):  # pragma: no cover
         model: BaseModel,
         calib_dataloader: Callable = None,
         calib_iteration: int = 100,
-        q_func=None,
+        calib_func: Callable = None,
     ):
         """Execute the quantize process on the specified model.
 
         Args:
-            tune_cfg (dict): quantization configuration
-            model (tf.compat.v1.GraphDef): fp32 model
-            data_loader (generator): generator the data and labels
-            q_func (optional): training function for quantization aware training mode,
-                                which not enabled for tensorflow yet.
+            quant_config: a quantization configuration.
+            model: the fp32 model to be quantized.
+            calib_dataloader: a data loader for calibration.
+            calib_iteration: the iteration of calibration.
+            calib_func: the function used for calibration, should be a substitution for calib_dataloader
+            when the built-in calibration function of INC does not work for model inference.
 
         Returns:
-            tf.compat.v1.GraphDef: the quantized model
+            converted_model: the quantized INC model wrapper.
         """
-        assert q_func is None, "quantization aware training mode is not support on tensorflow"
         self.calib_sampling_size = calib_dataloader.batch_size * calib_iteration
         tune_cfg = self.parse_quant_config(quant_config, model, calib_iteration)
         self._tuning_cfg_to_fw(tune_cfg)
@@ -798,7 +798,7 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):  # pragma: no cover
                     fp32_ops=self.fp32_ops,
                     bf16_ops=self.bf16_ops,
                     data_loader=calib_dataloader,
-                    calib_func=q_func,
+                    calib_func=calib_func,
                     itex_mode=self.itex_mode,
                     qdq_enabled=self.qdq_enabled,
                     new_api=self.new_api,
@@ -846,7 +846,7 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):  # pragma: no cover
                 fp32_ops=self.fp32_ops,
                 bf16_ops=self.bf16_ops,
                 data_loader=calib_dataloader,
-                calib_func=q_func,
+                calib_func=calib_func,
                 itex_mode=self.itex_mode,
                 qdq_enabled=self.qdq_enabled,
                 new_api=self.new_api,
