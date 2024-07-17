@@ -4905,13 +4905,13 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         enable_minmax_tuning = self.recipes["autoround_args"].get("enable_minmax_tuning", True)
         lr = self.recipes["autoround_args"].get("lr", None)
         minmax_lr = self.recipes["autoround_args"].get("minmax_lr", None)
-        low_gpu_mem_usage = self.recipes["autoround_args"].get("low_gpu_mem_usage", True)
+        low_gpu_mem_usage = self.recipes["autoround_args"].get("low_gpu_mem_usage", False)
         iters = self.recipes["autoround_args"].get("iters", 200)
         seqlen = self.recipes["autoround_args"].get("seqlen", 2048)
-        n_samples = self.recipes["autoround_args"].get("n_samples", 512)
+        nsamples = self.recipes["autoround_args"].get("nsamples", 128)
         sampler = self.recipes["autoround_args"].get("sampler", "rand")
         seed = self.recipes["autoround_args"].get("seed", 42)
-        n_blocks = self.recipes["autoround_args"].get("n_blocks", 1)
+        nblocks = self.recipes["autoround_args"].get("nblocks", 1)
         gradient_accumulate_steps = self.recipes["autoround_args"].get("gradient_accumulate_steps", 1)
         not_use_best_mse = self.recipes["autoround_args"].get("not_use_best_mse", False)
         dynamic_max_gap = self.recipes["autoround_args"].get("dynamic_max_gap", -1)
@@ -4922,6 +4922,12 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         bits = self.recipes["autoround_args"].get("bits", 4)
         group_size = self.recipes["autoround_args"].get("group_size", 128)
         sym = self.recipes["autoround_args"].get("scheme", "asym") == "sym"
+        act_bits = self.recipes["autoround_args"].get("act_bits", 32)
+        act_group_size = self.recipes["autoround_args"].get("act_group_size", None)
+        act_sym = self.recipes["autoround_args"].get("act_sym", None)
+        act_dynamic = self.recipes["autoround_args"].get("act_dynamic", True)
+        multimodal = self.recipes["autoround_args"].get("multimodal", False)
+        use_layer_wise = self.recipes["autoround_args"].get("use_layer_wise", False)
 
         if dataloader is not None:
             dataset = dataloader
@@ -4944,15 +4950,21 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             low_gpu_mem_usage=low_gpu_mem_usage,
             iters=iters,
             seqlen=seqlen,
-            n_samples=n_samples,
+            nsamples=nsamples,
             sampler=sampler,
             seed=seed,
-            n_blocks=n_blocks,
+            nblocks=nblocks,
             gradient_accumulate_steps=gradient_accumulate_steps,
             not_use_best_mse=not_use_best_mse,
             dynamic_max_gap=dynamic_max_gap,
             data_type=data_type,
             scale_dtype=scale_dtype,
+            multimodal=multimodal,
+            act_bits=act_bits,
+            act_group_size=act_group_size,
+            act_sym=act_sym,
+            act_dynamic=act_dynamic,
+            use_layer_wise=use_layer_wise,
         )
         return model, autoround_config
 

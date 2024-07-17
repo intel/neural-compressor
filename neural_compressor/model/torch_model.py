@@ -609,7 +609,7 @@ class PyTorchModel(PyTorchBaseModel):
 
                 self.model = pack_model(
                     self.model,
-                    weight_config=autoround_config,
+                    layer_config=autoround_config,
                     enable_full_range=enable_full_range,
                     compression_dtype=compression_dtype,
                     compression_dim=compression_dim,

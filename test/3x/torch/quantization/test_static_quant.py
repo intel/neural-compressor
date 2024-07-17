@@ -76,7 +76,7 @@ class TestStaticQuant:
         quant_config = get_default_static_config()
         example_inputs = self.input
         # fallback by op_type
-        quant_config.set_local(torch.nn.Linear, StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
+        quant_config.set_local([torch.nn.Linear, "Linear&add"], StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
         prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
         run_fn(prepared_model)
         q_model = convert(prepared_model)

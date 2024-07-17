@@ -115,6 +115,7 @@ set_attr = set_module
 
 
 def get_model_info(model: torch.nn.Module, white_module_list: List[Callable]) -> List[Tuple[str, str]]:
+    """Get model info according to white_module_list."""
     module_dict = dict(model.named_modules())
     filter_result = []
     filter_result_set = set()
@@ -129,6 +130,11 @@ def get_model_info(model: torch.nn.Module, white_module_list: List[Callable]) ->
 
 
 def get_double_quant_config_dict(double_quant_type="BNB_NF4"):
+    """Query config dict of double_quant according to double_quant_type.
+
+    Args:
+        double_quant_type (str, optional): double_quant type. Defaults to "BNB_NF4".
+    """
     from neural_compressor.torch.utils.constants import DOUBLE_QUANT_CONFIGS
 
     assert double_quant_type in DOUBLE_QUANT_CONFIGS, "Supported double quant configs: {}".format(
