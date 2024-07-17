@@ -15,6 +15,7 @@ PyTorch Weight Only Quantization
     - [HQQ](#hqq)
   - [Specify Quantization Rules](#specify-quantization-rules)
   - [Saving and Loading](#saving-and-loading)
+- [Efficient Usage on Client-Side](#efficient-usage-on-client-side)
 - [Examples](#examples)
 
 ## Introduction
@@ -275,6 +276,11 @@ loaded_model = load(
     "saved_results", original_model=orig_model
 )  # Please note that the original_model parameter passes the original model.
 ```
+
+## Efficient Usage on Client-Side
+
+For client machines with limited RAM and cores, we offer optimizations to reduce computational overhead and minimize memory usage. For detailed information, please refer to [Quantization on Client](https://github.com/intel/neural-compressor/blob/master/docs/3x/client_quant.html).
+
 
 ## Examples
 
