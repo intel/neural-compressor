@@ -1095,6 +1095,7 @@ class StaticQuantConfig(TorchBaseConfig):
         act_algo: str = "minmax",
         excluded_precisions: list = [],
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+        model_info: Optional[List[Tuple[str, Callable]]] = None,
     ):
         """Init Static Quant Configs."""
         super().__init__(white_list=white_list)
@@ -1107,6 +1108,7 @@ class StaticQuantConfig(TorchBaseConfig):
         self.act_granularity = act_granularity
         self.act_algo = act_algo
         self.excluded_precisions = excluded_precisions
+        self.model_info = model_info
         self._post_init()
 
     @classmethod
@@ -1124,10 +1126,28 @@ class StaticQuantConfig(TorchBaseConfig):
         _, _, _, _, model_info = get_quantizable_ops_recursively(model, example_inputs=example_inputs)
         return model_info
 
-    @staticmethod
-    def get_model_info(model: torch.nn.Module, example_inputs=None) -> List[Tuple[str, Callable]]:
+    def get_model_info_for_ipex_xpu(self, model: torch.nn.Module) -> List[Tuple[str, Callable]]:  # pragma: no cover
+        if self.model_info:
+            return self.model_info
+        else:
+            white_list = torch.quantization.quantization_mappings.get_default_qconfig_propagation_list()
+            filter_result = []
+            for op_name, module in model.named_modules():
+                if type(module) in white_list:
+                    pair = (op_name, type(module).__name__)
+                    filter_result.append(pair)
+            logger.debug(f"Get model info: {filter_result}")
+            self.model_info = filter_result
+            return filter_result
+
+    def get_model_info(self, model: torch.nn.Module, example_inputs=None) -> List[Tuple[str, Callable]]:
+        from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
+
         if is_ipex_imported():
-            return StaticQuantConfig.get_model_info_for_ipex(model, example_inputs)
+            if auto_detect_accelerator().current_device() == "cpu":
+                return StaticQuantConfig.get_model_info_for_ipex(model, example_inputs)
+            else:
+                return StaticQuantConfig.get_model_info_for_ipex_xpu(self, model)
 
     def to_config_mapping(
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
