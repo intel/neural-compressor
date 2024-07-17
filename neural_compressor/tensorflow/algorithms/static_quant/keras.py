@@ -365,7 +365,6 @@ class KerasAdaptor:
             calibration_model,
             dataloader,
             self.quantize_config["calib_iteration"],
-            calib_func,
         )
 
         return quantized_model
