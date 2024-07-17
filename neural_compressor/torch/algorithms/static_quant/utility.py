@@ -163,7 +163,7 @@ def check_cfg_and_qconfig(user_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_
     return cfgs, ori_user_cfg
 
 
-def generate_xpu_qconfig(tune_cfg):
+def generate_xpu_qconfig(tune_cfg): # pragma: no cover
     # qconfig observer & config constants for ipex-xpu
     from torch.ao.quantization import HistogramObserver, MinMaxObserver, QConfig
 
