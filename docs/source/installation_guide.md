@@ -75,10 +75,15 @@ The AI Kit is distributed through many common channels, including from Intel's w
 ## System Requirements
 
 ### Validated Hardware Environment
+
+#### Intel® Neural Compressor supports HPUs based on xxx
+* Intel Gaudi Al Accelerators
+
 #### Intel® Neural Compressor supports CPUs based on [Intel 64 architecture or compatible processors](https://en.wikipedia.org/wiki/X86-64):
 
 * Intel Xeon Scalable processor (formerly Skylake, Cascade Lake, Cooper Lake, Ice Lake, and Sapphire Rapids)
 * Intel Xeon CPU Max Series (formerly Sapphire Rapids HBM)
+* Intel Core Ultra Processors (formerly Meteor Lake)
 
 #### Intel® Neural Compressor supports GPUs built on Intel's Xe architecture:
 
