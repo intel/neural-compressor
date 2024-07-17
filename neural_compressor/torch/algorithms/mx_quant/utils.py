@@ -425,7 +425,8 @@ def _quantize_fp(A, exp_bits=None, mantissa_bits=None, round="nearest", allow_de
     Args:
         A (torch.Tensor): a tensor that needs to be quantized
         exp_bits (int, optional): number of bits used to store exponent. Defaults to None.
-        mantissa_bits (int, optional): number of bits used to store mantissa, not including sign or implicit 1. Defaults to None.
+        mantissa_bits (int, optional): number of bits used to store mantissa.
+                                       Not including sign or implicit 1. Defaults to None.
         round (str, optional): rounding mode, (floor, nearest, even). Defaults to "nearest".
         allow_denorm (bool, optional): allow denorm numbers to exist. Defaults to True.
 
@@ -450,7 +451,8 @@ def _quantize_bfloat(A, bfloat, round="nearest", allow_denorm=True):
 
     Args:
         A (torch.Tensor): a tensor that needs to be quantized
-        bfloat (int): total number of bits for bfloatX format. Includes 1 sign, 8 exp bits, and variable mantissa bits. Must be >= 9.
+        bfloat (int): total number of bits for bfloatX format.
+                      Includes 1 sign, 8 exp bits, and variable mantissa bits. Must be >= 9.
         round (str, optional): rounding mode, (floor, nearest, even). Defaults to "nearest".
         allow_denorm (bool, optional): allow denorm numbers to exist. Defaults to True.
 
