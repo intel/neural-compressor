@@ -29,28 +29,27 @@ The following prerequisites and requirements must be satisfied for a successful 
 
 ### Install from Binary
 - Install from Pypi
-  ```Shell
-  # install stable basic version from pypi
-  pip install neural-compressor
-  ```
-  ```Shell
-  # [Experimental] install stable basic + PyTorch framework extension API from pypi 
-  pip install neural-compressor[pt]
-  ```
-  ```Shell
-  # [Experimental] install stable basic + TensorFlow framework extension API from pypi 
-  pip install neural-compressor[tf]
-  ```
-
-- Install from test Pypi
-  ```Shell
-  # install nightly version
-  git clone https://github.com/intel/neural-compressor.git
-  cd neural-compressor
-  pip install -r requirements.txt
-  # install nightly basic version from pypi
-  pip install -i https://test.pypi.org/simple/ neural-compressor
-  ```
+```Shell
+# Install 2.X API + Framework extension API + PyTorch dependency
+pip install neural-compressor[pt]
+```
+```Shell
+# Install 2.X API + Framework extension API + TensorFlow dependency
+pip install neural-compressor[tf]
+```
+```Shell
+# Install 2.X API + Framework extension API
+# With with install CMD, some dependencies for framework extension API not installed, you can install them separately by `pip install -r requirements_pt.txt` or `pip install -r requirements_tf.txt`.
+pip install neural-compressor
+```
+```Shell
+# Framework extension API + TensorFlow dependency
+pip install neural-compressor-pt
+```
+```Shell
+# Framework extension API + TensorFlow dependency
+pip install neural-compressor-tf
+```
 
 ### Install from Source
 
@@ -59,8 +58,8 @@ The following prerequisites and requirements must be satisfied for a successful 
   cd neural-compressor
   pip install -r requirements.txt
   python setup.py install
-  [optional] pip install requirements_pt.txt # for PyTorch framework extension API
-  [optional] pip install requirements_tf.txt # for TensorFlow framework extension API
+  [optional] pip install -r requirements_pt.txt # for PyTorch framework extension API
+  [optional] pip install -r requirements_tf.txt # for TensorFlow framework extension API
   ```
 
 ### Install from AI Kit
