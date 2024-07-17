@@ -181,7 +181,7 @@ class TensorFlowAdaptor:
             model: the fp32 model to be quantized.
             calib_dataloader: a data loader for calibration.
             calib_iteration: the iteration of calibration.
-            calib_func: the function used for calibration, should be a substitution for calib_dataloader 
+            calib_func: the function used for calibration, should be a substitution for calib_dataloader
             when the built-in calibration function of INC does not work for model inference.
 
         Returns:
@@ -759,7 +759,7 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):  # pragma: no cover
             model: the fp32 model to be quantized.
             calib_dataloader: a data loader for calibration.
             calib_iteration: the iteration of calibration.
-            calib_func: the function used for calibration, should be a substitution for calib_dataloader 
+            calib_func: the function used for calibration, should be a substitution for calib_dataloader
             when the built-in calibration function of INC does not work for model inference.
 
         Returns:

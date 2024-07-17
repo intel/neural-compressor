@@ -234,7 +234,7 @@ class GraphConverter:
         if self.calib_func:
             self.calib_func(model)
             return
-            
+
         if model.model_type == "llm_saved_model":
             self._inference_llm(model)
             return
