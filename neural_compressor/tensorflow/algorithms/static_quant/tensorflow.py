@@ -195,7 +195,7 @@ class TensorFlowAdaptor:
             self.approach != "quant_aware_training"
         ), "Quantize Aware Training is not supported on TensorFlow framework now!"
 
-        self.calib_sampling_size = calib_dataloader.batch_size * calib_iteration
+        self.calib_sampling_size = calib_dataloader.batch_size * calib_iteration if calib_dataloader else 100
         tune_cfg = self.parse_quant_config(quant_config, model, calib_iteration)
         self._tuning_cfg_to_fw(tune_cfg)
         self.bf16_ops.extend(self.smooth_quant_mul_ops)

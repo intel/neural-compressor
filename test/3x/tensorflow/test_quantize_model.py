@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2022 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
+import math
 import shutil
 import time
 import unittest
@@ -24,7 +24,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 
-from neural_compressor.common import Logger
+from neural_compressor.common import logger
 from neural_compressor.tensorflow.utils import version1_gte_version2
 
 def build_model():
@@ -67,7 +67,7 @@ def build_model():
 
     print("Baseline test accuracy:", baseline_model_accuracy)
     if version1_gte_version2(tf.__version__, "2.16.1"):
-        model.save("baseline_model.keras")
+        model.export("baseline_model")
     else:
         model.save("baseline_model")
 
@@ -109,8 +109,6 @@ class MyDataloader:
 
 
 def evaluate(model):
-    from neural_compressor.tensorflow import Model
-    model = Model(model)
     input_tensor = model.input_tensor
     output_tensor = model.output_tensor if len(model.output_tensor)>1 else \
                         model.output_tensor[0]
@@ -134,16 +132,11 @@ class TestQuantizeModel(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         build_model()
-        self.fp32_model_path = (
-            "baseline_model.keras" if version1_gte_version2(tf.__version__, "2.16.1") else "baseline_model"
-        )
+        self.fp32_model_path = "baseline_model"
 
     @classmethod
     def tearDownClass(self):
-        if self.fp32_model_path.endswith(".keras"):
-            os.remove(self.fp32_model_path)
-        else:
-            shutil.rmtree(self.fp32_model_path, ignore_errors=True)
+        shutil.rmtree(self.fp32_model_path, ignore_errors=True)
 
     def test_calib_func(self):
         logger.info("Run test_calib_func case...")
@@ -154,13 +147,13 @@ class TestQuantizeModel(unittest.TestCase):
         set_random_seed(9527)
         quant_config = StaticQuantConfig()
         q_model = quantize_model(self.fp32_model_path, quant_config, calib_func=evaluate)
-        conv2d_quantized = False
-        for node in qmodel.graph_def.node:
+        quantized = False
+        for node in q_model.graph_def.node:
             if "Quantized" in node.op:
-                conv2d_quantized = True
+                quantized = True
                 break
         
-        self.assertEqual(conv2d_quantized, True)
+        self.assertEqual(quantized, True)
 
 
 if __name__ == "__main__":
