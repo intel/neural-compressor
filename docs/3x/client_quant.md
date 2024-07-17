@@ -30,7 +30,7 @@ quantized_model = convert(prepared_model)
 ```
 
 > [!TIP]
-> By default, the appropriate configuration is determined based on hardware information, but users can explicitly specify `processor_type` as either `client` or `server` when calling get_default_rtn_config..
+> By default, the appropriate configuration is determined based on hardware information, but users can explicitly specify `processor_type` as either `client` or `server` when calling `get_default_rtn_config`.
 
 
 For Windows machines, run the following command to utilize all available cores automatically:
