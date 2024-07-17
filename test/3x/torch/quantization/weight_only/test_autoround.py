@@ -49,7 +49,7 @@ class TestAutoRound:
         tokenizer = transformers.AutoTokenizer.from_pretrained(
             "hf-internal-testing/tiny-random-GPTJForCausalLM", trust_remote_code=True
         )
-        self.dataloader = get_dataloader(tokenizer, 32, dataset_name="NeelNanda/pile-10k", seed=42, bs=8, n_samples=10)
+        self.dataloader = get_dataloader(tokenizer, 32, dataset_name="NeelNanda/pile-10k", seed=42, bs=8, nsamples=10)
         self.label = self.gptj(self.inp)[0]
 
     def teardown_class(self):
@@ -61,7 +61,7 @@ class TestAutoRound:
     @pytest.mark.parametrize("quant_lm_head", [True, False])
     def test_autoround(self, quant_lm_head):
         fp32_model = copy.deepcopy(self.gptj)
-        quant_config = AutoRoundConfig(n_samples=32, seqlen=10, iters=10, scale_dtype="fp32")
+        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, scale_dtype="fp32")
         if quant_lm_head is False:
             quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
         logger.info(f"Test AutoRound with config {quant_config}")
@@ -83,7 +83,7 @@ class TestAutoRound:
     def test_autoround_with_quantize_API(self):
         gpt_j_model = copy.deepcopy(self.gptj)
 
-        quant_config = AutoRoundConfig(n_samples=32, seqlen=10, iters=10, scale_dtype="fp32")
+        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, scale_dtype="fp32")
         quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
 
         logger.info(f"Test AutoRound with config {quant_config}")
@@ -101,7 +101,7 @@ class TestAutoRound:
 
     def test_save_and_load(self):
         fp32_model = copy.deepcopy(self.gptj)
-        quant_config = AutoRoundConfig(n_samples=32, seqlen=10, iters=10, scale_dtype="fp32")
+        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, scale_dtype="fp32")
         # quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
         logger.info(f"Test AutoRound with config {quant_config}")
 
@@ -133,7 +133,7 @@ class TestAutoRound:
         text = "Replace me by any text you'd like."
         encoded_input = tokenizer(text, return_tensors="pt")
         out1 = model(**encoded_input)[0]
-        quant_config = AutoRoundConfig(n_samples=32, seqlen=10, iters=10, scale_dtype="fp32")
+        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, scale_dtype="fp32")
         model = prepare(model=model, quant_config=quant_config)
         run_fn(model, self.dataloader)
         q_model = convert(model)

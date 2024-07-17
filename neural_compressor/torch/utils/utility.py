@@ -13,13 +13,21 @@
 # limitations under the License.
 
 
-from typing import Callable, Dict, List, Tuple, Union
+import enum
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
+import psutil
 import torch
-from prettytable import PrettyTable
 from typing_extensions import TypeAlias
 
-from neural_compressor.common.utils import LazyImport, Mode, logger
+from neural_compressor.common.utils import (
+    Mode,
+    ProcessorType,
+    Statistics,
+    cpu_info,
+    detect_processor_type_based_on_hw,
+    logger,
+)
 
 OP_NAME_AND_TYPE_TUPLE_TYPE: TypeAlias = Tuple[str, Union[torch.nn.Module, Callable]]
 
@@ -107,6 +115,7 @@ set_attr = set_module
 
 
 def get_model_info(model: torch.nn.Module, white_module_list: List[Callable]) -> List[Tuple[str, str]]:
+    """Get model info according to white_module_list."""
     module_dict = dict(model.named_modules())
     filter_result = []
     filter_result_set = set()
@@ -121,6 +130,11 @@ def get_model_info(model: torch.nn.Module, white_module_list: List[Callable]) ->
 
 
 def get_double_quant_config_dict(double_quant_type="BNB_NF4"):
+    """Query config dict of double_quant according to double_quant_type.
+
+    Args:
+        double_quant_type (str, optional): double_quant type. Defaults to "BNB_NF4".
+    """
     from neural_compressor.torch.utils.constants import DOUBLE_QUANT_CONFIGS
 
     assert double_quant_type in DOUBLE_QUANT_CONFIGS, "Supported double quant configs: {}".format(
@@ -168,48 +182,6 @@ def postprocess_model(model, mode, quantizer):
     elif mode == Mode.CONVERT or mode == Mode.QUANTIZE:
         if getattr(model, "quantizer", False):
             del model.quantizer
-
-
-class Statistics:  # pragma: no cover
-    """The statistics printer."""
-
-    def __init__(self, data, header, field_names, output_handle=logger.info):
-        """Init a Statistics object.
-
-        Args:
-            data: The statistics data
-            header: The table header
-            field_names: The field names
-            output_handle: The output logging method
-        """
-        self.field_names = field_names
-        self.header = header
-        self.data = data
-        self.output_handle = output_handle
-        self.tb = PrettyTable(min_table_width=40)
-
-    def print_stat(self):
-        """Print the statistics."""
-        valid_field_names = []
-        for index, value in enumerate(self.field_names):
-            if index < 2:
-                valid_field_names.append(value)
-                continue
-
-            if any(i[index] for i in self.data):
-                valid_field_names.append(value)
-        self.tb.field_names = valid_field_names
-        for i in self.data:
-            tmp_data = []
-            for index, value in enumerate(i):
-                if self.field_names[index] in valid_field_names:
-                    tmp_data.append(value)
-            if any(tmp_data[1:]):
-                self.tb.add_row(tmp_data)
-        lines = self.tb.get_string().split("\n")
-        self.output_handle("|" + self.header.center(len(lines[0]) - 2, "*") + "|")
-        for i in lines:
-            self.output_handle(i)
 
 
 def dump_model_op_stats(mode, tune_cfg):
@@ -278,3 +250,31 @@ def get_model_device(model: torch.nn.Module):
     """
     for n, p in model.named_parameters():
         return p.data.device.type  # p.data.device == device(type='cpu')
+
+
+def get_processor_type_from_user_config(user_processor_type: Optional[Union[str, ProcessorType]] = None):
+    """Get the processor type.
+
+    Get the processor type based on the user configuration or automatically detect it based on the hardware.
+
+    Args:
+        user_processor_type (Optional[Union[str, ProcessorType]]): The user-specified processor type. Defaults to None.
+
+    Returns:
+        ProcessorType: The detected or user-specified processor type.
+
+    Raises:
+        AssertionError: If the user-specified processor type is not supported.
+        NotImplementedError: If the processor type is not recognized.
+    """
+    if user_processor_type is None:
+        processor_type = detect_processor_type_based_on_hw()
+    elif isinstance(user_processor_type, ProcessorType):
+        processor_type = user_processor_type
+    elif isinstance(user_processor_type, str):
+        user_processor_type = user_processor_type.lower().capitalize()
+        assert user_processor_type in ProcessorType.__members__, f"Unsupported processor type: {user_processor_type}"
+        processor_type = ProcessorType(user_processor_type)
+    else:
+        raise NotImplementedError(f"Unsupported processor type: {user_processor_type}")
+    return processor_type

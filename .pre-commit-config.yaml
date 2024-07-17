@@ -2,16 +2,6 @@ ci:
   autofix_prs: true
   autoupdate_schedule: quarterly
 
-exclude: |
-  (?x)^(
-      conda_meta/.+|
-      neural_insights/gui.+|
-      neural_insights/test.+|
-      neural_solution/frontend/gRPC/proto/neural_solution_pb2.py|
-      neural_coder/extensions/.+|
-      neural_coder/examples/.+
-  )$
-
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
@@ -60,13 +50,7 @@ repos:
       - id: insert-license
         files: |
           (?x)^(
-            neural_solution/.*(py|yaml|yml|sh)|
-            neural_compressor/.*(py|yaml|yml|sh)|
-            neural_insights/.*(py|yaml|yml|sh)
-          )$
-        exclude: |
-          (?x)^(
-              neural_solution/test/.*
+            neural_compressor/.*(py|yaml|yml|sh)
           )$
         args:
           [

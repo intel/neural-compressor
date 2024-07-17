@@ -301,7 +301,6 @@ class BenchmarkConfig:
         num_of_instance=1,
         inter_num_of_threads=None,
         intra_num_of_threads=None,
-        diagnosis=False,
         ni_workload_name="profiling",
     ):
         """Init a BenchmarkConfig object."""
@@ -316,7 +315,6 @@ class BenchmarkConfig:
         self.num_of_instance = num_of_instance
         self.inter_num_of_threads = inter_num_of_threads
         self.intra_num_of_threads = intra_num_of_threads
-        self.diagnosis = diagnosis
         self.ni_workload_name = ni_workload_name
         self._framework = None
 
@@ -454,17 +452,6 @@ class BenchmarkConfig:
         """Get intra_num_of_threads."""
         if intra_num_of_threads is None or _check_value("intra_num_of_threads", intra_num_of_threads, int):
             self._intra_num_of_threads = intra_num_of_threads
-
-    @property
-    def diagnosis(self):
-        """Get diagnosis property."""
-        return self._diagnosis
-
-    @diagnosis.setter
-    def diagnosis(self, diagnosis):
-        """Set diagnosis property."""
-        if _check_value("diagnosis", diagnosis, bool):
-            self._diagnosis = diagnosis
 
     @property
     def ni_workload_name(self):
@@ -813,7 +800,6 @@ class _BaseQuantizationConfig:
         quant_level="auto",
         accuracy_criterion=accuracy_criterion,
         tuning_criterion=tuning_criterion,
-        diagnosis=False,
         ni_workload_name="quantization",
     ):
         """Initialize _BaseQuantizationConfig class."""
@@ -835,7 +821,6 @@ class _BaseQuantizationConfig:
         self.calibration_sampling_size = calibration_sampling_size
         self.quant_level = quant_level
         self._framework = None
-        self.diagnosis = diagnosis
         self.ni_workload_name = ni_workload_name
         self._example_inputs = example_inputs
 
@@ -1279,10 +1264,6 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
         accuracy_criterion: Instance of AccuracyCriterion class. In this class you can set higher_is_better,
                                 criterion and tolerable_loss.
                             Please refer to docstring of AccuracyCriterion class.
-        diagnosis(bool): This flag indicates whether to do diagnosis.
-                           Default value is False.
-        ni_workload_name: Custom workload name for Neural Insights diagnosis workload.
-                           Default value is "quantization".
 
     Example::
 
@@ -1316,7 +1297,6 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
         quant_level="auto",
         accuracy_criterion=accuracy_criterion,
         tuning_criterion=tuning_criterion,
-        diagnosis=False,
         ni_workload_name="quantization",
     ):
         """Init a PostTrainingQuantConfig object."""
@@ -1337,14 +1317,10 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
             quant_level=quant_level,
             accuracy_criterion=accuracy_criterion,
             tuning_criterion=tuning_criterion,
-            diagnosis=diagnosis,
             ni_workload_name=ni_workload_name,
         )
         self.approach = approach
-        self.diagnosis = diagnosis
         self.ni_workload_name = ni_workload_name
-        if self.diagnosis:
-            self.tuning_criterion.max_trials = 1
 
     @property
     def approach(self):
@@ -1360,28 +1336,6 @@ class PostTrainingQuantConfig(_BaseQuantizationConfig):
             approach = "dynamic"
         if _check_value("approach", approach, str, ["static", "dynamic", "auto", "weight_only"]):
             self._approach = QUANTMAPPING[approach]
-
-    @property
-    def diagnosis(self):
-        """Get diagnosis."""
-        return self._diagnosis
-
-    @diagnosis.setter
-    def diagnosis(self, diagnosis):
-        """Set diagnosis."""
-        if _check_value("diagnosis", diagnosis, bool):
-            self._diagnosis = diagnosis
-
-    @property
-    def ni_workload_name(self):
-        """Get Neural Insights workload name."""
-        return self._ni_workload_name
-
-    @ni_workload_name.setter
-    def ni_workload_name(self, ni_workload_name):
-        """Set Neural Insights workload name."""
-        if _check_value("ni_workload_name", ni_workload_name, str):
-            self._ni_workload_name = ni_workload_name
 
 
 class QuantizationAwareTrainingConfig(_BaseQuantizationConfig):
@@ -2508,7 +2462,6 @@ class _Config:
         pytorch=pytorch_config,
         mxnet=mxnet_config,
         keras=keras_config,
-        diagnosis=None,
     ):
         """Init a config object."""
         self._quantization = quantization
@@ -2522,13 +2475,6 @@ class _Config:
         self._pytorch = pytorch
         self._mxnet = mxnet
         self._keras = keras
-        if diagnosis is None:
-            diagnosis = False
-            if (quantization is not None and quantization.diagnosis) or (benchmark is not None and benchmark.diagnosis):
-                diagnosis = True
-        if diagnosis:
-            tuning_criterion.max_trials = 1
-        self._diagnosis = diagnosis
 
     @property
     def distillation(self):
@@ -2584,11 +2530,6 @@ class _Config:
     def onnxruntime(self):
         """Get the onnxruntime object."""
         return self._onnxruntime
-
-    @property
-    def diagnosis(self):
-        """Get the diagnosis value."""
-        return self._diagnosis
 
 
 config = _Config()

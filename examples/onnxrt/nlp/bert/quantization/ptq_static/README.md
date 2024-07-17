@@ -31,17 +31,6 @@ python prepare_model.py --input_model='MRPC.zip' --output_model='bert.onnx'
 
 # Run
 
-## Diagnosis
-Neural Compressor offers quantization and benchmark diagnosis. Adding `diagnosis` parameter to Quantization/Benchmark config will provide additional details useful in diagnostics.
-
-### Benchmark diagnosis
-```
-config = BenchmarkConfig(
-    diagnosis=True,
-    ...
-)
-``` 
-
 ## 1. Quantization
 
 Static quantization with QOperator format:

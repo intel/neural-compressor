@@ -59,8 +59,8 @@ The following prerequisites and requirements must be satisfied for a successful 
   cd neural-compressor
   pip install -r requirements.txt
   python setup.py install
-  [optional] pip install requirements_pt.txt # for PyTorch framework extension API
-  [optional] pip install requirements_tf.txt # for TensorFlow framework extension API
+  [optional] pip install -r requirements_pt.txt # for PyTorch framework extension API
+  [optional] pip install -r requirements_tf.txt # for TensorFlow framework extension API
   ```
 
 ### Install from AI Kit
