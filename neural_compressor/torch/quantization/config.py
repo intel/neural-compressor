@@ -67,12 +67,16 @@ else:
 
 
 class OperatorConfig(NamedTuple):
+    """OperatorConfig."""
+
     config: BaseConfig
     operators: List[Union[str, Callable]]
     valid_func_list: List[Callable] = []
 
 
 class TorchBaseConfig(BaseConfig):
+    """Base config class for torch backend."""
+
     # re-write func _get_op_name_op_type_config to fallback op_type with string
     # because there are some special op_types for IPEX backend: `Linear&Relu`, `Linear&add`, ...
     def _get_op_name_op_type_config(self):
@@ -217,7 +221,9 @@ class RTNConfig(TorchBaseConfig):
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
         if not self.quant_lm_head:
-            self.set_local(LM_HEAD_NAMES, RTNConfig(dtype="fp32"))
+            self.set_local(
+                LM_HEAD_NAMES, RTNConfig(dtype="fp32", use_layer_wise=self.use_layer_wise, model_path=self.model_path)
+            )
         config_mapping = super().to_config_mapping(config_list, model_info)
         return config_mapping
 
@@ -380,7 +386,9 @@ class GPTQConfig(TorchBaseConfig):
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
         if not self.quant_lm_head:
-            self.set_local(LM_HEAD_NAMES, GPTQConfig(dtype="fp32"))
+            self.set_local(
+                LM_HEAD_NAMES, GPTQConfig(dtype="fp32", use_layer_wise=self.use_layer_wise, model_path=self.model_path)
+            )
         config_mapping = super().to_config_mapping(config_list, model_info)
         return config_mapping
 
@@ -402,7 +410,9 @@ class GPTQConfig(TorchBaseConfig):
     @classmethod
     def get_predefined_configs(cls) -> Dict[torch_utils.ProcessorType, "GPTQConfig"]:
         pre_defined_configs: Dict[torch_utils.ProcessorType, GPTQConfig] = {}
-        pre_defined_configs[torch_utils.ProcessorType.Client] = cls(use_layer_wise=True)
+        pre_defined_configs[torch_utils.ProcessorType.Client] = cls(
+            use_layer_wise=True
+        )  # , model_path=self.model_path)
         pre_defined_configs[torch_utils.ProcessorType.Server] = cls()
         return pre_defined_configs
 
@@ -442,6 +452,7 @@ class AWQConfig(TorchBaseConfig):
         "use_auto_scale",
         "use_auto_clip",
         "folding",
+        "absorb_layer_dict",
     ]
     name = AWQ
 
@@ -455,6 +466,7 @@ class AWQConfig(TorchBaseConfig):
         use_full_range: bool = False,
         use_mse_search: bool = False,
         use_layer_wise: bool = False,
+        model_path: str = "",
         # double quant
         use_double_quant: bool = False,
         double_quant_dtype: str = "int",
@@ -468,6 +480,7 @@ class AWQConfig(TorchBaseConfig):
         use_auto_clip: bool = True,
         folding: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+        absorb_layer_dict: dict = {},
     ):
         """Init AWQ weight-only quantization config.
 
@@ -480,6 +493,7 @@ class AWQConfig(TorchBaseConfig):
             use_full_range (bool): Enables full range for activations, default is False.
             use_mse_search (bool): Enables mean squared error (MSE) search, default is False.
             use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
+            model_path (str): Model path that is used to load state_dict per layer.
             use_double_quant (bool): Enables double quantization, default is False.
             double_quant_dtype (str): Data type for double_quant scale, default is "int".
             double_quant_bits (int): Number of bits used to represent double_quant scale, default is 4.
@@ -490,6 +504,7 @@ class AWQConfig(TorchBaseConfig):
             use_auto_clip (bool):  Enables clip range search. Defaults to True.
             folding(bool): Allow insert mul before linear when the scale cannot be absorbed by last layer,
               default is False.
+            absorb_layer_dict (dict): The layer dict that scale can be absorbed, default is {}.
         """
         super().__init__(white_list=white_list)
         self.dtype = dtype
@@ -500,6 +515,7 @@ class AWQConfig(TorchBaseConfig):
         self.use_full_range = use_full_range
         self.use_mse_search = use_mse_search
         self.use_layer_wise = use_layer_wise
+        self.model_path = model_path
         # double quant
         self.use_double_quant = use_double_quant
         self.double_quant_bits = double_quant_bits
@@ -510,6 +526,7 @@ class AWQConfig(TorchBaseConfig):
         self.use_auto_scale = use_auto_scale
         self.use_auto_clip = use_auto_clip
         self.folding = folding
+        self.absorb_layer_dict = absorb_layer_dict
         self._post_init()
 
     @classmethod
@@ -525,7 +542,9 @@ class AWQConfig(TorchBaseConfig):
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
         if not self.quant_lm_head:
-            self.set_local(LM_HEAD_NAMES, AWQConfig(dtype="fp32"))
+            self.set_local(
+                LM_HEAD_NAMES, AWQConfig(dtype="fp32", use_layer_wise=self.use_layer_wise, model_path=self.model_path)
+            )
         config_mapping = super().to_config_mapping(config_list, model_info)
         return config_mapping
 
@@ -626,7 +645,7 @@ class TEQConfig(TorchBaseConfig):
             double_quant_use_sym (bool): Indicates whether double_quant scale are symmetric, default is True.
             double_quant_group_size (int): Size of double_quant groups, default is 32.
             quant_lm_head (bool): Indicates whether quantize the lm_head layer in transformers。 Default is False.
-            absorb_to_layer (bool): The layer dict that scale can be absorbed, default is {}.
+            absorb_to_layer (dict): The layer dict that scale can be absorbed, default is {}.
             folding(bool): Allow insert mul before linear when the scale cannot be absorbed by last layer,
               default is False.
         """
@@ -716,8 +735,8 @@ class AutoRoundConfig(TorchBaseConfig):
         "minmax_lr",
         "iters",
         "seqlen",
-        "n_samples",
-        "n_blocks",
+        "nsamples",
+        "nblocks",
         "gradient_accumulate_steps",
         "not_use_best_mse",
         "dynamic_max_gap",
@@ -731,6 +750,10 @@ class AutoRoundConfig(TorchBaseConfig):
         use_sym: bool = False,
         group_size: int = 128,
         # AUTOROUND
+        act_bits: int = 32,
+        act_group_size: int = None,
+        act_sym: bool = None,
+        act_dynamic: bool = True,
         enable_full_range: bool = False,
         batch_size: int = 8,
         lr_scheduler=None,
@@ -741,15 +764,16 @@ class AutoRoundConfig(TorchBaseConfig):
         low_gpu_mem_usage: bool = True,
         iters: int = 200,
         seqlen: int = 2048,
-        n_samples: int = 512,
+        nsamples: int = 128,
         sampler: str = "rand",
         seed: int = 42,
-        n_blocks: int = 1,
+        nblocks: int = 1,
         gradient_accumulate_steps: int = 1,
         not_use_best_mse: bool = False,
         dynamic_max_gap: int = -1,
         scale_dtype: str = "fp16",
         use_layer_wise: bool = False,
+        multimodal: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init AUTOROUND weight-only quantization config.
@@ -759,6 +783,10 @@ class AutoRoundConfig(TorchBaseConfig):
             bits (int): Number of bits used to represent weights, default is 4.
             use_sym (bool): Indicates whether weights are symmetric, default is False.
             group_size (int): Size of weight groups, default is 128.
+            act_bits (int): Number of bits for activation quantization. Default is 32.
+            act_group_size (int): Group size for activation quantization. Default is None.
+            act_sym (bool): Whether to use symmetric activation quantization. Default is None.
+            act_dynamic (bool): Whether to use dynamic activation quantization. Default is True.
             enable_full_range (bool): Whether to enable full range quantization (default is False).
             batch_size (int): Batch size for training (default is 8).
             lr_scheduler: The learning rate scheduler to be used.
@@ -769,21 +797,27 @@ class AutoRoundConfig(TorchBaseConfig):
             low_gpu_mem_usage (bool): Whether to use low GPU memory (default is True).
             iters (int): Number of iterations (default is 200).
             seqlen (int): Length of the sequence.
-            n_samples (int): Number of samples (default is 512).
+            nsamples (int): Number of samples (default is 512).
             sampler (str): The sampling method (default is "rand").
             seed (int): The random seed (default is 42).
-            n_blocks (int): Number of blocks (default is 1).
+            nblocks (int): Number of blocks (default is 1).
             gradient_accumulate_steps (int): Number of gradient accumulation steps (default is 1).
             not_use_best_mse (bool): Whether to use mean squared error (default is False).
             dynamic_max_gap (int): The dynamic maximum gap (default is -1).
             scale_dtype (str): The data type of quantization scale to be used (default is "float16"), different kernels
                         have different choices.
+            use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
+            multimodal(bool): Enable multimodal model quantization, (default is "False").
         """
         super().__init__(white_list=white_list)
         self.dtype = dtype
         self.bits = bits
         self.use_sym = use_sym
         self.group_size = group_size
+        self.act_bits = act_bits
+        self.act_group_size = act_group_size
+        self.act_sym = act_sym
+        self.act_dynamic = act_dynamic
         self.enable_full_range = enable_full_range
         self.batch_size = batch_size
         self.lr_scheduler = lr_scheduler
@@ -794,15 +828,16 @@ class AutoRoundConfig(TorchBaseConfig):
         self.low_gpu_mem_usage = low_gpu_mem_usage
         self.iters = iters
         self.seqlen = seqlen
-        self.n_samples = n_samples
+        self.nsamples = nsamples
         self.sampler = sampler
         self.seed = seed
-        self.n_blocks = n_blocks
+        self.nblocks = nblocks
         self.gradient_accumulate_steps = gradient_accumulate_steps
         self.not_use_best_mse = not_use_best_mse
         self.dynamic_max_gap = dynamic_max_gap
         self.scale_dtype = scale_dtype
         self.use_layer_wise = use_layer_wise
+        self.multimodal = multimodal
         self._post_init()
 
     @classmethod
@@ -1527,8 +1562,7 @@ def get_woq_tuning_config() -> list:
         the list of WOQ quant config.
     """
     RTN_G32ASYM = RTNConfig(use_sym=False, group_size=32)
+    AUTO_ROUND_CONFIG = AutoRoundConfig(use_sym=False, group_size=32, seqlen=512)
     GPTQ_G32ASYM = GPTQConfig(use_sym=False, group_size=32)
-    GPTQ_G32ASYM_DISABLE_LAST_LINEAR = GPTQConfig(use_sym=False).set_local("*.lm_head", GPTQConfig(dtype="fp32"))
-    GPTQ_G128ASYM = GPTQConfig(group_size=128, use_sym=False)
     AWQ_G32ASYM = AWQConfig(use_sym=False, group_size=32)
-    return [RTN_G32ASYM, GPTQ_G32ASYM, GPTQ_G32ASYM_DISABLE_LAST_LINEAR, GPTQ_G128ASYM, AWQ_G32ASYM]
+    return [RTN_G32ASYM, AUTO_ROUND_CONFIG, GPTQ_G32ASYM, AWQ_G32ASYM]

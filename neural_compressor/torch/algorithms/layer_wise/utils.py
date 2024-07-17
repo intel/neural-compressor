@@ -27,10 +27,11 @@ from transformers import AutoConfig, AutoModelForCausalLM
 from transformers.models.auto.auto_factory import _BaseAutoModelClass
 
 from neural_compressor.common import options
+from neural_compressor.torch.algorithms.weight_only.modules import WeightOnlyLinear
 
 from .load import load
 
-LWQ_WORKSPACE = os.path.join(options.workspace, "layer_wise_tmp")
+LWQ_WORKSPACE = os.path.join(options.workspace, "lwq_tmpdir")
 
 
 class QDQLayer(torch.nn.Module):
@@ -215,6 +216,9 @@ def _get_path(pretrained_model_name_or_path):
     return path
 
 
+get_path = _get_path
+
+
 def load_value(model, param_name, path):
     if "lm_head" in param_name and getattr(model.config, "tie_word_embeddings", True):
         input_embeddings = model.get_input_embeddings()
@@ -280,6 +284,12 @@ def clean_module_weight(module):
         submodule = module.module
     else:
         submodule = module
+
+    if isinstance(module, WeightOnlyLinear):
+        for n, m in submodule._buffers.items():
+            old_value = getattr(submodule, n)
+            with torch.no_grad():
+                submodule._buffers[n] = torch.zeros(old_value.shape, device="meta")
 
     for n, m in submodule.named_parameters():
         is_buffer = n in submodule._buffers

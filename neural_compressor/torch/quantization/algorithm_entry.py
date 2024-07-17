@@ -66,7 +66,16 @@ def rtn_entry(
     *args,
     **kwargs,
 ) -> torch.nn.Module:
-    """The main entry to apply rtn quantization."""
+    """The main entry to apply rtn quantization.
+
+    Args:
+        model (torch.nn.Module): raw fp32 model or prepared model.
+        configs_mapping (Dict[Tuple[str, callable], RTNConfig]): per-op configuration.
+        mode (Mode, optional): select from [PREPARE, CONVERT and QUANTIZE]. Defaults to Mode.QUANTIZE.
+
+    Returns:
+        torch.nn.Module: prepared model or quantized model.
+    """
     from neural_compressor.torch.algorithms.weight_only.rtn import RTNQuantizer
     from neural_compressor.torch.algorithms.weight_only.save_load import save
 
@@ -83,16 +92,21 @@ def rtn_entry(
             "group_dim": quant_config.group_dim,
             "use_full_range": quant_config.use_full_range,
             "use_mse_search": quant_config.use_mse_search,
-            "use_layer_wise": quant_config.use_layer_wise,
             "use_double_quant": quant_config.use_double_quant,
             "double_quant_dtype": quant_config.double_quant_dtype,
             "double_quant_bits": quant_config.double_quant_bits,
             "double_quant_scheme": "sym" if quant_config.double_quant_use_sym else "asym",
             "double_quant_group_size": quant_config.double_quant_group_size,
         }
-
+    kwargs.update(
+        {
+            "use_layer_wise": quant_config.use_layer_wise,
+            "model_path": quant_config.model_path,
+            "quant_lm_head": quant_config.quant_lm_head,
+        }
+    )
     quantizer = get_quantizer(model, quantizer_cls=RTNQuantizer, quant_config=weight_config)
-    model = quantizer.execute(model, mode=mode, quant_lm_head=quant_config.quant_lm_head)
+    model = quantizer.execute(model, mode=mode, *args, **kwargs)
     model.qconfig = configs_mapping
     model.save = MethodType(save, model)
     postprocess_model(model, mode, quantizer)
@@ -110,6 +124,16 @@ def gptq_entry(
     *args,
     **kwargs,
 ) -> torch.nn.Module:
+    """The main entry to apply gptq quantization.
+
+    Args:
+        model (torch.nn.Module): raw fp32 model or prepared model.
+        configs_mapping (Dict[Tuple[str, callable], GPTQConfig]): per-op configuration.
+        mode (Mode, optional): select from [PREPARE, CONVERT and QUANTIZE]. Defaults to Mode.QUANTIZE.
+
+    Returns:
+        torch.nn.Module: prepared model or quantized model.
+    """
     logger.info("Quantize model with the GPTQ algorithm.")
     from neural_compressor.torch.algorithms.weight_only.gptq import GPTQuantizer
     from neural_compressor.torch.algorithms.weight_only.save_load import save
@@ -164,6 +188,16 @@ def static_quant_entry(
     *args,
     **kwargs,
 ) -> torch.nn.Module:
+    """The main entry to apply static quantization, includes pt2e quantization and ipex quantization.
+
+    Args:
+        model (torch.nn.Module): raw fp32 model or prepared model.
+        configs_mapping (Dict[Tuple[str, callable], StaticQuantConfig]): per-op configuration.
+        mode (Mode, optional): select from [PREPARE, CONVERT and QUANTIZE]. Defaults to Mode.QUANTIZE.
+
+    Returns:
+        torch.nn.Module: prepared model or quantized model.
+    """
     if not is_ipex_imported():
         return pt2e_static_quant_entry(model, configs_mapping, mode, *args, **kwargs)
     logger.info("Quantize model with the static quant algorithm.")
@@ -207,7 +241,23 @@ def static_quant_entry(
 ###################### PT2E Dynamic Quant Algo Entry ##################################
 @register_algo(name=PT2E_DYNAMIC_QUANT)
 @torch.no_grad()
-def pt2e_dynamic_quant_entry(model: torch.nn.Module, configs_mapping, mode: Mode, *args, **kwargs) -> torch.nn.Module:
+def pt2e_dynamic_quant_entry(
+    model: torch.nn.Module,
+    configs_mapping,
+    mode: Mode,
+    *args,
+    **kwargs,
+) -> torch.nn.Module:
+    """The main entry to apply pt2e dynamic quantization.
+
+    Args:
+        model (torch.nn.Module): raw fp32 model or prepared model.
+        configs_mapping: per-op configuration.
+        mode (Mode, optional): select from [PREPARE, CONVERT and QUANTIZE]. Defaults to Mode.QUANTIZE.
+
+    Returns:
+        torch.nn.Module: prepared model or quantized model.
+    """
     logger.info("Quantize model with the PT2E static quant algorithm.")
     from neural_compressor.torch.algorithms.pt2e_quant.core import W8A8PT2EQuantizer
     from neural_compressor.torch.algorithms.pt2e_quant.save_load import save
@@ -230,7 +280,23 @@ def pt2e_dynamic_quant_entry(model: torch.nn.Module, configs_mapping, mode: Mode
 ###################### PT2E Static Quant Algo Entry ##################################
 @register_algo(name=PT2E_STATIC_QUANT)
 @torch.no_grad()
-def pt2e_static_quant_entry(model: torch.nn.Module, configs_mapping, mode: Mode, *args, **kwargs) -> torch.nn.Module:
+def pt2e_static_quant_entry(
+    model: torch.nn.Module,
+    configs_mapping,
+    mode: Mode,
+    *args,
+    **kwargs,
+) -> torch.nn.Module:
+    """The main entry to apply pt2e static quantization.
+
+    Args:
+        model (torch.nn.Module): raw fp32 model or prepared model.
+        configs_mapping: per-op configuration.
+        mode (Mode, optional): select from [PREPARE, CONVERT and QUANTIZE]. Defaults to Mode.QUANTIZE.
+
+    Returns:
+        torch.nn.Module: prepared model or quantized model.
+    """
     logger.info("Quantize model with the PT2E static quant algorithm.")
     from neural_compressor.torch.algorithms.pt2e_quant.core import W8A8PT2EQuantizer
     from neural_compressor.torch.algorithms.pt2e_quant.save_load import save
@@ -259,6 +325,16 @@ def smooth_quant_entry(
     *args,
     **kwargs,
 ) -> torch.nn.Module:
+    """The main entry to apply smooth quantization.
+
+    Args:
+        model (torch.nn.Module): raw fp32 model or prepared model.
+        configs_mapping (Dict[Tuple[str, callable], SmoothQuantConfig]): per-op configuration.
+        mode (Mode, optional): select from [PREPARE, CONVERT and QUANTIZE]. Defaults to Mode.QUANTIZE.
+
+    Returns:
+        torch.nn.Module: prepared model or quantized model.
+    """
     logger.info("Quantize model with the smooth quant algorithm.")
     from neural_compressor.torch.algorithms.smooth_quant import SmoothQuantQuantizer, TorchSmoothQuant
 
@@ -318,15 +394,25 @@ def awq_quantize_entry(
     *args,
     **kwargs,
 ) -> torch.nn.Module:
+    """The main entry to apply AWQ quantization.
+
+    Args:
+        model (torch.nn.Module): raw fp32 model or prepared model.
+        configs_mapping (Dict[Tuple[str, callable], AWQConfig]): per-op configuration.
+        mode (Mode, optional): select from [PREPARE, CONVERT and QUANTIZE]. Defaults to Mode.QUANTIZE.
+
+    Returns:
+        torch.nn.Module: prepared model or quantized model.
+    """
     logger.info("Quantize model with the AWQ algorithm.")
     from neural_compressor.torch.algorithms.weight_only.awq import AWQQuantizer
     from neural_compressor.torch.algorithms.weight_only.save_load import save
 
     weight_config = {}
-    for (op_name, op_type), op_config in configs_mapping.items():
-        if op_config.name != AWQ:
+    for (op_name, op_type), quant_config in configs_mapping.items():
+        if quant_config.name != AWQ:
             continue
-        if op_config.dtype == "fp32":
+        if quant_config.dtype == "fp32":
             weight_config[op_name] = {
                 "bits": -1,
                 "dtype": "fp32",  # skip quantization
@@ -335,31 +421,34 @@ def awq_quantize_entry(
             }
         else:
             weight_config[op_name] = {
-                "dtype": op_config.dtype,
-                "bits": op_config.bits,
-                "group_size": op_config.group_size,
-                "group_dim": op_config.group_dim,
-                "scheme": "sym" if op_config.use_sym else "asym",
-                "use_full_range": op_config.use_full_range,
-                "use_mse_search": op_config.use_mse_search,
-                "use_layer_wise": op_config.use_layer_wise,
-                "use_double_quant": op_config.use_double_quant,
-                "double_quant_dtype": op_config.double_quant_dtype,
-                "double_quant_bits": op_config.double_quant_bits,
-                "double_quant_scheme": op_config.double_quant_use_sym,
-                "double_quant_group_size": op_config.double_quant_group_size,
+                "dtype": quant_config.dtype,
+                "bits": quant_config.bits,
+                "group_size": quant_config.group_size,
+                "group_dim": quant_config.group_dim,
+                "scheme": "sym" if quant_config.use_sym else "asym",
+                "use_full_range": quant_config.use_full_range,
+                "use_mse_search": quant_config.use_mse_search,
+                "use_layer_wise": quant_config.use_layer_wise,
+                "use_double_quant": quant_config.use_double_quant,
+                "double_quant_dtype": quant_config.double_quant_dtype,
+                "double_quant_bits": quant_config.double_quant_bits,
+                "double_quant_scheme": quant_config.double_quant_use_sym,
+                "double_quant_group_size": quant_config.double_quant_group_size,
             }
-            use_auto_scale = op_config.use_auto_scale
-            use_mse_search = op_config.use_auto_clip  # for awq clip
-            folding = op_config.folding
-            use_full_range = op_config.use_full_range
+            use_auto_scale = quant_config.use_auto_scale
+            use_mse_search = quant_config.use_auto_clip  # for awq clip
+            folding = quant_config.folding
+            use_full_range = quant_config.use_full_range
+            absorb_layer_dict = quant_config.absorb_layer_dict
 
     run_fn = kwargs.get("run_fn", None)
     run_args = kwargs.get("run_args", None)
     example_inputs = kwargs.get("example_inputs", None)
     assert example_inputs is not None, "Please provide example_inputs for AWQ quantization."
 
-    quantizer = get_quantizer(model, quantizer_cls=AWQQuantizer, quant_config=weight_config)
+    quantizer = get_quantizer(
+        model, quantizer_cls=AWQQuantizer, quant_config=weight_config, absorb_layer_dict=absorb_layer_dict
+    )
     model = quantizer.execute(
         model,
         mode=mode,
@@ -383,8 +472,22 @@ def awq_quantize_entry(
 ###################### TEQ Algo Entry ##################################
 @register_algo(name=TEQ)
 def teq_quantize_entry(
-    model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], TEQConfig], mode: Mode, *args, **kwargs
+    model: torch.nn.Module,
+    configs_mapping: Dict[Tuple[str, callable], TEQConfig],
+    mode: Mode,
+    *args,
+    **kwargs,
 ) -> torch.nn.Module:
+    """The main entry to apply TEQ quantization.
+
+    Args:
+        model (torch.nn.Module): raw fp32 model or prepared model.
+        configs_mapping (Dict[Tuple[str, callable], TEQConfig]): per-op configuration.
+        mode (Mode, optional): select from [PREPARE, CONVERT and QUANTIZE]. Defaults to Mode.QUANTIZE.
+
+    Returns:
+        torch.nn.Module: prepared model or quantized model.
+    """
     from neural_compressor.torch.algorithms.weight_only.save_load import save
     from neural_compressor.torch.algorithms.weight_only.teq import TEQuantizer
 
@@ -445,6 +548,16 @@ def autoround_quantize_entry(
     *args,
     **kwargs,
 ) -> torch.nn.Module:
+    """The main entry to apply AutoRound quantization.
+
+    Args:
+        model (torch.nn.Module): raw fp32 model or prepared model.
+        configs_mapping (Dict[Tuple[str, callable], AutoRoundConfig]): per-op configuration.
+        mode (Mode, optional): select from [PREPARE, CONVERT and QUANTIZE]. Defaults to Mode.QUANTIZE.
+
+    Returns:
+        torch.nn.Module: prepared model or quantized model.
+    """
     from neural_compressor.torch.algorithms.weight_only.autoround import AutoRoundQuantizer
     from neural_compressor.torch.algorithms.weight_only.save_load import save
 
@@ -459,6 +572,10 @@ def autoround_quantize_entry(
                 "bits": quant_config.bits,
                 "sym": quant_config.use_sym,
                 "group_size": quant_config.group_size,
+                "act_bits": quant_config.act_bits,
+                "act_group_size": quant_config.act_group_size,
+                "act_sym": quant_config.act_sym,
+                "act_dynamic": quant_config.act_dynamic,
             }
             enable_full_range = quant_config.enable_full_range
             batch_size = quant_config.batch_size
@@ -470,14 +587,16 @@ def autoround_quantize_entry(
             low_gpu_mem_usage = quant_config.low_gpu_mem_usage
             iters = quant_config.iters
             seqlen = quant_config.seqlen
-            n_samples = quant_config.n_samples
+            nsamples = quant_config.nsamples
             sampler = quant_config.sampler
             seed = quant_config.seed
-            n_blocks = quant_config.n_blocks
+            nblocks = quant_config.nblocks
             gradient_accumulate_steps = quant_config.gradient_accumulate_steps
             not_use_best_mse = quant_config.not_use_best_mse
             dynamic_max_gap = quant_config.dynamic_max_gap
             scale_dtype = quant_config.scale_dtype
+            multimodal = quant_config.multimodal
+            low_cpu_mem_usage = quant_config.use_layer_wise
 
     kwargs.pop("example_inputs")
 
@@ -495,14 +614,16 @@ def autoround_quantize_entry(
         low_gpu_mem_usage=low_gpu_mem_usage,
         iters=iters,
         seqlen=seqlen,
-        n_samples=n_samples,
+        nsamples=nsamples,
         sampler=sampler,
         seed=seed,
-        n_blocks=n_blocks,
+        nblocks=nblocks,
         gradient_accumulate_steps=gradient_accumulate_steps,
         not_use_best_mse=not_use_best_mse,
         dynamic_max_gap=dynamic_max_gap,
         scale_dtype=scale_dtype,
+        multimodal=multimodal,
+        low_cpu_mem_usage=low_cpu_mem_usage,
     )
     model = quantizer.execute(model=model, mode=mode, *args, **kwargs)
     model.qconfig = configs_mapping
@@ -522,6 +643,16 @@ def hqq_entry(
     *args,
     **kwargs,
 ) -> torch.nn.Module:
+    """The main entry to apply AutoRound quantization.
+
+    Args:
+        model (torch.nn.Module): raw fp32 model or prepared model.
+        configs_mapping (Dict[Tuple[str, callable], AutoRoundConfig]): per-op configuration.
+        mode (Mode, optional): select from [PREPARE, CONVERT and QUANTIZE]. Defaults to Mode.QUANTIZE.
+
+    Returns:
+        torch.nn.Module: prepared model or quantized model.
+    """
     from neural_compressor.torch.algorithms.weight_only.hqq import HQQuantizer
     from neural_compressor.torch.algorithms.weight_only.save_load import save
 
@@ -564,6 +695,16 @@ def mx_quant_entry(
     *args,
     **kwargs,
 ) -> torch.nn.Module:
+    """The main entry to apply AutoRound quantization.
+
+    Args:
+        model (torch.nn.Module): raw fp32 model or prepared model.
+        configs_mapping (Dict[Tuple[str, callable], AutoRoundConfig]): per-op configuration.
+        mode (Mode, optional): select from [PREPARE, CONVERT and QUANTIZE]. Defaults to Mode.QUANTIZE.
+
+    Returns:
+        torch.nn.Module: prepared model or quantized model.
+    """
     logger.info("Quantize model with the mx quant algorithm.")
     from neural_compressor.torch.algorithms.mx_quant.mx import MXQuantizer
 
@@ -578,8 +719,21 @@ def mx_quant_entry(
 ###################### Mixed Precision Algo Entry ##################################
 @register_algo(MIX_PRECISION)
 def mix_precision_entry(
-    model: torch.nn.Module, configs_mapping: Dict[Tuple[str], MixPrecisionConfig], *args, **kwargs
+    model: torch.nn.Module,
+    configs_mapping: Dict[Tuple[str], MixPrecisionConfig],
+    *args,
+    **kwargs,
 ) -> torch.nn.Module:
+    """The main entry to apply Mixed Precision.
+
+    Args:
+        model (torch.nn.Module): raw fp32 model or prepared model.
+        configs_mapping (Dict[Tuple[str, callable], MixPrecisionConfig]): per-op configuration.
+        mode (Mode, optional): select from [PREPARE, CONVERT and QUANTIZE]. Defaults to Mode.QUANTIZE.
+
+    Returns:
+        torch.nn.Module: prepared model or quantized model.
+    """
     # only support fp16 and bf16 now, more types might be added later
     from neural_compressor.torch.algorithms.mix_precision import HalfPrecisionConverter
 

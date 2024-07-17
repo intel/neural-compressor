@@ -32,6 +32,11 @@ __all__ = [
 
 
 def get_rtn_double_quant_config_set() -> List[RTNConfig]:
+    """Generate RTN double quant config set.
+
+    Returns:
+        List[RTNConfig]: a set of quant config
+    """
     rtn_double_quant_config_set = []
     for double_quant_type, double_quant_config in constants.DOUBLE_QUANT_CONFIGS.items():
         rtn_double_quant_config_set.append(RTNConfig.from_dict(double_quant_config))
@@ -39,6 +44,11 @@ def get_rtn_double_quant_config_set() -> List[RTNConfig]:
 
 
 def get_all_config_set() -> Union[BaseConfig, List[BaseConfig]]:
+    """Generate all quant config set.
+
+    Returns:
+        Union[BaseConfig, List[BaseConfig]]: a set of quant config
+    """
     return get_all_config_set_from_config_registry(fwk_name=FRAMEWORK_NAME)
 
 
