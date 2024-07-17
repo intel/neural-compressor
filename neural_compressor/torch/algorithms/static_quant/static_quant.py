@@ -79,7 +79,7 @@ class StaticQuantQuantizer(Quantizer):
             )
             # update json file in ipex_config_path; map ipex op_name to pt op_name
             self.user_cfg = cfg_to_qconfig(self.quant_config, cfgs, op_infos_from_cfgs, output_tensor_id_op_name)
-        else: # pragma: no cover
+        else:  # pragma: no cover
             model = model.to("xpu")
 
         model.eval()
@@ -109,7 +109,7 @@ class StaticQuantQuantizer(Quantizer):
                     from torch.ao.quantization import QConfigMapping
 
                     static_qconfig = QConfigMapping().set_global(qconfig)
-                else: # pragma: no cover
+                else:  # pragma: no cover
                     static_qconfig = QConfig(
                         activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_affine, dtype=torch.quint8),
                         weight=PerChannelMinMaxObserver.with_args(

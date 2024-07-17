@@ -1126,7 +1126,7 @@ class StaticQuantConfig(TorchBaseConfig):
         _, _, _, _, model_info = get_quantizable_ops_recursively(model, example_inputs=example_inputs)
         return model_info
 
-    def get_model_info_for_ipex_xpu(self, model: torch.nn.Module) -> List[Tuple[str, Callable]]: # pragma: no cover
+    def get_model_info_for_ipex_xpu(self, model: torch.nn.Module) -> List[Tuple[str, Callable]]:  # pragma: no cover
         if self.model_info:
             return self.model_info
         else:
