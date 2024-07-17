@@ -23,7 +23,7 @@ Intel(R) Neural Compressor provides `quantize_model` and `autotune` as main inte
 
 **quantize_model**
 
-The design philosophy of the `quantize_model` interface is easy-of-use. With minimal parameters requirement, including `model`, `quant_config`, `calib_dataloader` and `calib_iteration`, it offers a straightforward choice of quantizing TF model in one-shot.
+The design philosophy of the `quantize_model` interface is easy-of-use. With minimal parameters requirement, including `model`, `quant_config`, `calib_dataloader`, `calib_iteration`, it offers a straightforward choice of quantizing TF model in one-shot.
 
 ```python
 def quantize_model(
@@ -31,6 +31,7 @@ def quantize_model(
     quant_config: Union[BaseConfig, list],
     calib_dataloader: Callable = None,
     calib_iteration: int = 100,
+    calib_func: Callable = None,
 ):
 ```
 `model` should be a string of the model's location, the object of Keras model or INC TF model wrapper class.
@@ -40,6 +41,9 @@ def quantize_model(
 `calib_dataloader` is used to load the data samples for calibration phase. In most cases, it could be the partial samples of the evaluation dataset.
 
 `calib_iteration` is used to decide how many iterations the calibration process will be run.
+
+`calib_func` is a substitution for `calib_dataloader` when the built-in calibration function of INC does not work for model inference.
+
 
 Here is a simple example of using `quantize_model` interface with a dummy calibration dataloader and the default `StaticQuantConfig`:
 ```python
@@ -68,6 +72,7 @@ def autotune(
     eval_args: Optional[Tuple[Any]] = None,
     calib_dataloader: Callable = None,
     calib_iteration: int = 100,
+    calib_func: Callable = None,
 ) -> Optional[BaseModel]:
 ```
 `model` should be a string of the model's location, the object of Keras model or INC TF model wrapper class.
@@ -81,6 +86,8 @@ def autotune(
 `calib_dataloader` is used to load the data samples for calibration phase. In most cases, it could be the partial samples of the evaluation dataset.
 
 `calib_iteration` is used to decide how many iterations the calibration process will be run.
+
+`calib_func` is a substitution for `calib_dataloader` when the built-in calibration function of INC does not work for model inference.
 
 Here is a simple example of using `autotune` interface with different quantization rules defined by a list of  `StaticQuantConfig`:
 ```python
