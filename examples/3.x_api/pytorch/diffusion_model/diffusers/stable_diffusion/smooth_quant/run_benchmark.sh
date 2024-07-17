@@ -1,4 +1,4 @@
-#!/bin/bash
+ert!/bin/bash
 set -x
 
 function main {
@@ -17,18 +17,17 @@ function init_params {
   for var in "$@"
   do
     case $var in
-      --model_name_or_path=*)
-          model_name_or_path=$(echo $var | cut -f2 -d=)
-      ;;
-      --latent=*)
-          latent=$(echo $var | cut -f2 -d=)
-      ;;
       --iters=*)
           iters=$(echo $var | cut -f2 -d=)
       ;;
+      --int8=*)
+          int8=$(echo $var | cut -f2 -d=)
+      ;;
+      --mode=*)
+          mode=$(echo $var | cut -f2 -d=)
+      ;;
       *)
           echo "Error: No such parameter: ${var}"
-          exit 1
       ;;
     esac
   done
@@ -50,12 +49,34 @@ function run_benchmark {
     fi
     echo $extra_cmd
 
-    git clone https://github.com/ahmadki/mlperf_sd_inference.git
-    cd mlperf_sd_inference
-    mv ../main.py ./
-    mv ../saved_results/ ./
+    if [[ ${mode} == "performance" ]]; then
+      extra_cmd=$extra_cmd" --performance"
+      if [[ ${int8} == "true" ]]; then
+        extra_cmd=$extra_cmd" --load"
+      fi
+      echo $extra_cmd
 
-    python -u main.py \
+      python -u sdxl_smooth_quant.py \
+        --model_name_or_path ${model_name_or_path} \
+        --latent ${latent} \
+        ${extra_cmd}
+    else
+      REPO_URL="https://github.com/ahmadki/mlperf_sd_inference.git"
+      TARGET_DIR="mlperf_sd_inference"
+
+      if [ -d "$TARGET_DIR" ]; then
+        echo "Directory $TARGET_DIR already exists. Skipping git clone."
+      else
+        git clone "$REPO_URL" "$TARGET_DIR"
+      fi
+
+      cd mlperf_sd_inference
+      cp ../main.py ./
+      if [ -d "../saved_results/" ]; then
+        mv ../saved_results/ ./
+      fi
+      
+      python -u main.py \
         --model-id ${model_name_or_path} \
         --quantized-unet ${tuned_checkpoint} \
         --precision ${precision} \
@@ -64,13 +85,17 @@ function run_benchmark {
         --iters ${iters} \
         ${extra_cmd}
     
-    mv ./output/stabilityai--stable-diffusion-xl-base-1.0__euler__20__8.0__fp32/* ./output/
-    rm -rf ./output/stabilityai--stable-diffusion-xl-base-1.0__euler__20__8.0__fp32/
+      mv ./output/stabilityai--stable-diffusion-xl-base-1.0__euler__20__8.0__fp32/* ./output/
+      rm -rf ./output/stabilityai--stable-diffusion-xl-base-1.0__euler__20__8.0__fp32/
 
-    python clip/clip_score.py \
-        --tsv-file captions_5k.tsv \
-        --image-folder ${base-output-dir} \
-        --device "cpu"
+      python clip/clip_score.py \
+          --tsv-file captions_5k.tsv \
+          --image-folder ${base-output-dir} \
+          --device "cpu"
+      
+      cd ..
+    fi
+
 }
 
 main "$@"

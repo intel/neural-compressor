@@ -13,18 +13,14 @@ function init_params {
   for var in "$@"
   do
     case $var in
-      --model_name_or_path=*)
-          model_name_or_path=$(echo $var |cut -f2 -d=)
-      ;;
       --alpha=*)
           alpha=$(echo $var |cut -f2 -d=)
       ;;
-      --latent=*)
-          latent=$(echo $var |cut -f2 -d=)
+      --int8=*)
+          int8=$(echo $var | cut -f2 -d=)
       ;;
       *)
           echo "Error: No such parameter: ${var}"
-          exit 1
       ;;
     esac
   done
@@ -41,13 +37,20 @@ function run_tuning {
     latent="latents.pt"
     alpha=0.44
 
+    if [[ ${int8} == "true" ]]; then
+        extra_cmd=$extra_cmd" --int8 --load"
+    else
+        extra_cmd=$extra_cmd" --quantize"
+    fi
+    echo $extra_cmd
+
     python -u sdxl_smooth_quant.py \
         --model_name_or_path ${model_name_or_path} \
         --n_steps ${n_steps} \
-        --quantize \
         --alpha ${alpha} \
         --latent ${latent} \
         ${extra_cmd}
+
 }
 
 main "$@"
