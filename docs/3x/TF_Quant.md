@@ -2,13 +2,12 @@
 TensorFlow Quantization
 ===============
 
-- [TensorFlow Quantization](#tensorflow-quantization)
-  - [Introduction](#introduction)
-  - [Get Started](#get-started)
-    - [Without Accuracy Aware Tuning](#without-accuracy-aware-tuning)
-    - [With Accuracy Aware Tuning](#with-accuracy-aware-tuning)
-    - [Specify Quantization Rules](#specify-quantization-rules)
-  - [Examples](#examples)
+1. [Introduction](#introduction)
+2. [Usage](#usage)  
+   2.1 [Without Accuracy Aware Tuning](#without-accuracy-aware-tuning)   
+   2.2 [With Accuracy Aware Tuning](#with-accuracy-aware-tuning)   
+   2.3 [Specify Quantization Rules](#specify-quantization-rules) 
+3. [Examples](#examples) 
 
 ## Introduction
 
