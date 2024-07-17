@@ -279,12 +279,14 @@ def get_processor_type_from_user_config(user_processor_type: Optional[Union[str,
         raise NotImplementedError(f"Unsupported processor type: {user_processor_type}")
     return processor_type
 
+
 def dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None):
     """Download hugging face model from hf hub."""
+    import os
+
     from huggingface_hub.constants import DEFAULT_REVISION, HUGGINGFACE_HUB_CACHE
     from huggingface_hub.file_download import REGEX_COMMIT_HASH, repo_folder_name
     from huggingface_hub.utils import EntryNotFoundError
-    import os
 
     if cache_dir is None:
         cache_dir = HUGGINGFACE_HUB_CACHE
@@ -315,9 +317,10 @@ def dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None):
 def load_empty_model(pretrained_model_name_or_path, cls=None, **kwargs):
     """Load a empty model."""
     import os
+
+    from accelerate import init_empty_weights
     from transformers import AutoConfig, AutoModelForCausalLM
     from transformers.models.auto.auto_factory import _BaseAutoModelClass
-    from accelerate import init_empty_weights
 
     cls = AutoModelForCausalLM if cls is None else cls
     is_local = os.path.isdir(pretrained_model_name_or_path)
