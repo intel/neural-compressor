@@ -67,12 +67,16 @@ else:
 
 
 class OperatorConfig(NamedTuple):
+    """OperatorConfig."""
+
     config: BaseConfig
     operators: List[Union[str, Callable]]
     valid_func_list: List[Callable] = []
 
 
 class TorchBaseConfig(BaseConfig):
+    """Base config class for torch backend."""
+
     # re-write func _get_op_name_op_type_config to fallback op_type with string
     # because there are some special op_types for IPEX backend: `Linear&Relu`, `Linear&add`, ...
     def _get_op_name_op_type_config(self):
