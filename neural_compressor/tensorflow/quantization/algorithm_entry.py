@@ -64,6 +64,7 @@ def smooth_quant_entry(
     smooth_quant_config: SmoothQuantConfig,
     calib_dataloader: Callable = None,
     calib_iteration: int = 100,
+    calib_func: Callable = None,
 ):
     """The main entry to apply smooth quantization.
 
@@ -72,6 +73,8 @@ def smooth_quant_entry(
         quant_config: a quantization configuration.
         calib_dataloader: a data loader for calibration.
         calib_iteration: the iteration of calibration.
+        calib_func: the function used for calibration, should be a substitution for calib_dataloader 
+        when the built-in calibration function of INC does not work for model inference.
 
     Returns:
         q_model: the quantized model.
@@ -80,7 +83,7 @@ def smooth_quant_entry(
 
     from neural_compressor.tensorflow.algorithms import SmoothQuant
 
-    converter = SmoothQuant(smooth_quant_config, calib_dataloader, calib_iteration)
+    converter = SmoothQuant(smooth_quant_config, calib_dataloader, calib_iteration, calib_func)
     sq_model = converter(model)
 
     return sq_model
