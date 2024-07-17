@@ -4,7 +4,7 @@ set -x
 function main {
 
   init_params "$@"
-  run_tuning
+  run_benchmark
 
 }
 
