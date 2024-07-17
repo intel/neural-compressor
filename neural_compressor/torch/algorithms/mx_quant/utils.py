@@ -29,6 +29,7 @@ FP32_MIN_NORMAL = 2 ** (-FP32_EXPONENT_BIAS + 1)
 
 class ElemFormat(Enum):
     """Element format."""
+
     int8 = 1
     int4 = 2
     int2 = 3
@@ -95,6 +96,7 @@ class ElemFormat(Enum):
 
 class RoundingMode(IntEnum):
     """Rounding mode."""
+
     nearest = 0
     floor = 1
     even = 2
@@ -131,7 +133,7 @@ def _get_format_params(fmt):
     - fp4,                  no NaN/Inf
     - fp6_e3m2/e2m3,        no NaN/Inf
     - fp8_e4m3/e5m2,        e5m2 normal NaN/Inf, e4m3 special behavior
-    
+
     Args:
         fmt (str od ElemFormat): format
 
@@ -419,7 +421,7 @@ def _quantize_fp(A, exp_bits=None, mantissa_bits=None, round="nearest", allow_de
     """Quantize values to IEEE fpX format..
 
     The format defines NaN/Inf and subnorm numbers in the same way as FP32 and FP16.
-    
+
     Args:
         A (torch.Tensor): a tensor that needs to be quantized
         exp_bits (int, optional): number of bits used to store exponent. Defaults to None.
