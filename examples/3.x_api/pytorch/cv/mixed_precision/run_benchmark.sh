@@ -70,7 +70,7 @@ function run_benchmark {
                 ${mode_cmd} \
                 ${extra_cmd}
     elif [[ ${mode} == "performance" ]]; then
-        incbench --num_c 4 --num_i 7 python main.py \
+        incbench --num_c 4 python main.py \
                 --pretrained \
                 --tuned_checkpoint ${tuned_checkpoint} \
                 -b ${batch_size} \
