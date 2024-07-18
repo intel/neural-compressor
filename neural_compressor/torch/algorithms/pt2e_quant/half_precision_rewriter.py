@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Rewrite the FP32 operators to FP16 or BF16 operators."""
 
 from dataclasses import dataclass
 from functools import partial
@@ -34,6 +35,14 @@ TorchFuncType: TypeAlias = Callable[..., Any]
 
 @dataclass
 class PatternPair:
+    """Represents a pair of patterns used for search and replacement in a graph.
+
+    Attributes:
+        fn (TorchFuncType): The function type associated with the pattern pair.
+        search_pattern (torch.fx.GraphModule): The search pattern to be matched in the graph.
+        replace_pattern (torch.fx.GraphModule): The replacement pattern to be used when a match is found.
+    """
+
     fn: TorchFuncType
     search_pattern: torch.fx.GraphModule
     replace_pattern: torch.fx.GraphModule
@@ -101,6 +110,15 @@ _register_pattern_pair(torch.float16)
 
 
 def get_filter_fn(node_list, fn):
+    """Filter function to check if a node with the target operator is in the given `node_list`.
+
+    Args:
+        node_list (list): List of nodes to check against.
+        fn (str): Target operator.
+
+    Returns:
+        bool: True if the node with the target operator is in the `node_list`, False otherwise.
+    """
     target_op = FN_ATEN_OPS_MAPPING[fn]
 
     def is_target_node_in_candidate_list(match, original_graph, pattern_graph):
@@ -119,6 +137,16 @@ def get_filter_fn(node_list, fn):
 
 
 def apply_single_pattern_pair(gm: torch.fx.GraphModule, pattern_pair: PatternPair, node_list):
+    """Applies a single pattern pair to a given GraphModule.
+
+    Args:
+        gm (torch.fx.GraphModule): The GraphModule to apply the pattern pair to.
+        pattern_pair (PatternPair): The pattern pair containing the search and replace patterns.
+        node_list: The list of nodes to filter for pattern matching.
+
+    Returns:
+        List[Match]: A list of Match objects representing the matches found after applying the pattern pair.
+    """
     filter_fn = get_filter_fn(node_list, pattern_pair.fn)
     match_and_replacements = subgraph_rewriter.replace_pattern_with_filters(
         gm=gm,
@@ -133,6 +161,14 @@ def apply_single_pattern_pair(gm: torch.fx.GraphModule, pattern_pair: PatternPai
 
 
 def get_unquantized_node_set(gm: torch.fx.GraphModule):
+    """Retrieves the set of unquantized nodes from a given GraphModule.
+
+    Args:
+        gm (torch.fx.GraphModule): The GraphModule to retrieve unquantized nodes from.
+
+    Returns:
+        set: A set containing the unquantized nodes.
+    """
     unquantized_node_set = set()
     for node in gm.graph.nodes:
         if meta := getattr(node, "meta"):
@@ -180,7 +216,17 @@ def _parse_node_candidate_set_from_user_config(config, gm):
 
 
 def get_half_precision_node_set(gm, config):
-    """Intersection between `unquantized_node_set` and `node_set_from_user_config`"""
+    """Retrieves a set of nodes from the given graph model (gm) that are candidates for conversion to half precision.
+
+    The result is the intersection between `unquantized_node_set` and `node_set_from_user_config`.
+
+    Args:
+        gm (GraphModel): The graph model to search for nodes.
+        config (dict): User configuration for node candidate set.
+
+    Returns:
+        set: A set of nodes that are candidates for conversion to half precision.
+    """
     # TODO: implement it, current return all unquantized_node_set
 
     node_set_from_user_config = _parse_node_candidate_set_from_user_config(config, gm)
