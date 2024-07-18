@@ -32,6 +32,7 @@ def quantize_model(
     quant_config: Union[BaseConfig, list],
     calib_dataloader: Callable = None,
     calib_iteration: int = 100,
+    calib_func: Callable = None,
 ):
     """The main entry to quantize model.
 
@@ -40,6 +41,8 @@ def quantize_model(
         quant_config: single or lists of quantization configuration.
         calib_dataloader: a data loader for calibration.
         calib_iteration: the iteration of calibration.
+        calib_func: the function used for calibration, should be a substitution for calib_dataloader
+        when the built-in calibration function of INC does not work for model inference.
 
     Returns:
         q_model: the quantized model.
@@ -47,9 +50,11 @@ def quantize_model(
     q_model = Model(model)
     if isinstance(quant_config, list):
         for config in quant_config:
-            q_model = quantize_model_with_single_config(q_model, config, calib_dataloader, calib_iteration)
+            q_model = quantize_model_with_single_config(q_model, config, calib_dataloader, calib_iteration, calib_func)
     else:
-        q_model = quantize_model_with_single_config(q_model, quant_config, calib_dataloader, calib_iteration)
+        q_model = quantize_model_with_single_config(
+            q_model, quant_config, calib_dataloader, calib_iteration, calib_func
+        )
 
     return q_model
 
@@ -59,6 +64,7 @@ def quantize_model_with_single_config(
     quant_config: BaseConfig,
     calib_dataloader: Callable = None,
     calib_iteration: int = 100,
+    calib_func: Callable = None,
 ):
     """Quantize model using single config.
 
@@ -67,6 +73,8 @@ def quantize_model_with_single_config(
         quant_config: a quantization configuration.
         calib_dataloader: a data loader for calibration.
         calib_iteration: the iteration of calibration.
+        calib_func: the function used for calibration, should be a substitution for calib_dataloader
+        when the built-in calibration function of INC does not work for model inference.
 
     Returns:
         q_model: the quantized model.
@@ -89,5 +97,5 @@ def quantize_model_with_single_config(
     for algo_name, algo_func in algos_mapping.items():
         if need_apply(configs_mapping, algo_name):
             logger.info(f"Start to apply {algo_name} on the model.")
-            q_model = algo_func(q_model, configs_mapping, calib_dataloader, calib_iteration)
+            q_model = algo_func(q_model, configs_mapping, calib_dataloader, calib_iteration, calib_func)
     return q_model

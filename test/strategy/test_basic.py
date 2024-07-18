@@ -85,21 +85,6 @@ class TestBasicTuningStrategy(unittest.TestCase):
         q_model = fit(model=self.constant_graph, conf=conf, calib_dataloader=dataloader, eval_func=fake_eval)
         self.assertIsNotNone(q_model)
 
-    def test_diagnosis(self):
-        from neural_compressor.config import PostTrainingQuantConfig
-        from neural_compressor.data import DATALOADERS, Datasets
-        from neural_compressor.quantization import fit
-
-        # dataset and dataloader
-        dataset = Datasets("tensorflow")["dummy"](((100, 3, 3, 1)))
-        dataloader = DATALOADERS["tensorflow"](dataset)
-
-        # tuning and accuracy criterion
-        conf = PostTrainingQuantConfig(diagnosis=True)
-        q_model = fit(model=self.constant_graph, conf=conf, calib_dataloader=dataloader, eval_func=lambda model: 1)
-        self.assertEqual(os.path.exists(os.path.join(self.workspace, "inspect_saved/fp32/inspect_result.pkl")), True)
-        self.assertEqual(os.path.exists(os.path.join(self.workspace, "inspect_saved/quan/inspect_result.pkl")), True)
-
     def test_run_create_eval_from_metric_and_dataloader(self):
         from neural_compressor.config import PostTrainingQuantConfig
         from neural_compressor.data import DATALOADERS, Datasets

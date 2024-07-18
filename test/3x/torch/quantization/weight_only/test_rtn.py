@@ -22,8 +22,8 @@ device = accelerator.current_device_name()
 class ModelConv1d(torch.nn.Module):
     def __init__(self):
         super(ModelConv1d, self).__init__()
-        self.fc1 = transformers.Conv1D(50, 32)
-        self.fc2 = torch.nn.Linear(50, 32)
+        self.fc1 = transformers.Conv1D(64, 32)
+        self.fc2 = torch.nn.Linear(64, 32)
         self.fc3 = torch.nn.Linear(32, 5)
 
     def forward(self, x):
@@ -44,7 +44,7 @@ class TestRTNQuant:
         self.label = self.tiny_gptj(self.example_inputs)[0]
         # test_default_config
         model = copy.deepcopy(self.tiny_gptj)
-        quant_config = get_default_rtn_config()
+        quant_config = get_default_rtn_config("Server")
         model = prepare(model, quant_config)
         model = convert(model)
         # record q_label for comparison
@@ -167,13 +167,16 @@ class TestRTNQuant:
         ), "The tied lm_head weight is not deep copied, please check!"
 
     def test_layer_wise(self):
-        model = copy.deepcopy(self.tiny_gptj)
+        from neural_compressor.torch import load_empty_model
+
+        model = load_empty_model("hf-internal-testing/tiny-random-GPTJForCausalLM")
         quant_config = RTNConfig(
             use_layer_wise=True,
         )
         model = prepare(model, quant_config)
         model = convert(model)
-        # TODO: (Xin) not implemented
+        out = model(self.example_inputs)[0]
+        assert torch.equal(out, self.q_label), "use_layer_wise=True output should be same. Please double check."
 
     @pytest.mark.parametrize(
         "dtype",

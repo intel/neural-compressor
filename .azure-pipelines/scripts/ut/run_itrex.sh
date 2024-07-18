@@ -4,6 +4,9 @@ source /neural-compressor/.azure-pipelines/scripts/change_color.sh
 python -c "import neural_compressor as nc;print(nc.version.__version__)"
 echo "run itrex ut..."
 
+# install inc 3x deps
+pip install -r /neural-compressor/requirements_pt.txt
+
 # prepare itrex
 git clone https://github.com/intel/intel-extension-for-transformers.git /intel-extension-for-transformers
 cd /intel-extension-for-transformers && git rev-parse --short HEAD

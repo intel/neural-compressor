@@ -115,3 +115,19 @@ class QTensor:
         if self.zero is not None:
             self.zero = self.zero.half()
         return self
+
+    def to_state_dict(self):
+        state = {}
+        state["val"] = self.val
+        state["meta_info"] = self.meta_info.to_dict()
+        state["scale_quantized"] = self.is_scale_quantized()
+        state["zero_quantized"] = self.is_zero_quantized()
+        if self.is_scale_quantized():
+            state["meta_info"]["scale"] = self.scale.to_state_dict()
+        else:
+            state["meta_info"]["scale"] = self.scale
+        if self.is_zero_quantized():
+            state["meta_info"]["zero"] = self.zero.to_state_dict()
+        else:
+            state["meta_info"]["zero"] = self.zero
+        return state
