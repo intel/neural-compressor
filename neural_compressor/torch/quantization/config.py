@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # pylint:disable=import-error
+"""Intel Neural Compressor Pytorch quantization config API"""
+
 
 from collections import OrderedDict
 from typing import Callable, Dict, List, NamedTuple, Optional
