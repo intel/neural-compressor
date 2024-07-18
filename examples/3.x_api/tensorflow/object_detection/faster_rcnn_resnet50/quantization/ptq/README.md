@@ -86,13 +86,16 @@ Download CoCo Dataset from [Official Website](https://cocodataset.org/#download)
 ## 1. Quantization
   
   ```shell
-  # The cmd of running faster_rcnn_resnet50
   bash run_quant.sh --input_model=./faster_rcnn_resnet50_fp32_coco_pretrained_model/frozen_inference_graph.pb --output_model=./tensorflow-faster_rcnn_resnet50-tune.pb --dataset_location=/path/to/dataset/coco_val.record
   ```
 
 ## 2. Benchmark
   ```shell
+  # run performance benchmark
   bash run_benchmark.sh --input_model=./tensorflow-faster_rcnn_resnet50-tune.pb  --dataset_location=/path/to/dataset/coco_val.record --mode=performance
+
+  # run accuracy benchmark
+  bash run_benchmark.sh --input_model=./tensorflow-faster_rcnn_resnet50-tune.pb  --dataset_location=/path/to/dataset/coco_val.record --mode=accuracy
   ```
 
 Details of enabling Intel® Neural Compressor on faster_rcnn_resnet50 for Tensorflow.
@@ -111,7 +114,7 @@ After prepare step is done, we just need update main.py like below.
     if args.tune:
         from neural_compressor.tensorflow import StaticQuantConfig, quantize_model, Model
 
-        quant_config = StaticQuantConfig()
+        quant_config = StaticQuantConfig(weight_granularity="per_channel")
         model = Model(args.input_graph)
         model.input_tensor_names = ['image_tensor']
         model.output_tensor_names = ["num_detections", "detection_boxes", "detection_scores", "detection_classes"]

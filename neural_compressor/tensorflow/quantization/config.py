@@ -113,7 +113,7 @@ class StaticQuantConfig(BaseConfig):
             weight_algorithm=["minmax", "kl"],
             act_dtype=["int8", "bf16", "fp32"],
             act_sym=[True, False],
-            act_granularity=["per_tensor", "per_channel"],
+            act_granularity=["per_tensor"],
             act_algorithm=["minmax", "kl"],
         )
         operators = [
@@ -173,7 +173,7 @@ class StaticQuantConfig(BaseConfig):
             weight_algorithm=["minmax", "kl"],
             act_dtype=["int8", "fp32"],
             act_sym=[True, False],
-            act_granularity=["per_tensor", "per_channel"],
+            act_granularity=["per_tensor"],
             act_algorithm=["minmax", "kl"],
         )
 

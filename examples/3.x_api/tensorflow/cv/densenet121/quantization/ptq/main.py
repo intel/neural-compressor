@@ -116,7 +116,7 @@ class eval_classifier_optimized_graph:
             )
             calib_dataloader = TFDataLoader(dataset=dataset, batch_size=10)
             
-            quant_config = StaticQuantConfig()
+            quant_config = StaticQuantConfig(weight_granularity="per_channel")
             q_model = quantize_model(args.input_graph, quant_config, calib_dataloader)
             q_model.save(args.output_graph)
 

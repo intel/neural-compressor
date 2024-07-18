@@ -110,7 +110,7 @@ def main(_):
     if args.tune:
         from neural_compressor.tensorflow import StaticQuantConfig, quantize_model, Model
 
-        quant_config = StaticQuantConfig()
+        quant_config = StaticQuantConfig(weight_granularity="per_channel")
         model = Model(args.input_graph)
         model.input_tensor_names = ['image_tensor']
         model.output_tensor_names = ["num_detections", "detection_boxes", "detection_scores", "detection_classes"]
