@@ -85,7 +85,7 @@
         "batch_size": 8
       },
       "gpt_j_ipex":{
-        "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/static_quant",
+        "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/static_quant/ipex",
         "dataset_location": "",
         "input_model": "",
         "main_script": "run_clm_no_trainer.py",
@@ -99,7 +99,7 @@
         "batch_size": 1
       },
       "llama2_7b_ipex":{
-        "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/static_quant",
+        "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/static_quant/ipex",
         "dataset_location": "",
         "input_model": "",
         "main_script": "run_clm_no_trainer.py",
@@ -113,7 +113,7 @@
         "batch_size": 1
       },
       "opt_125m_ipex":{
-        "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/static_quant",
+        "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/static_quant/ipex",
         "dataset_location": "",
         "input_model": "",
         "main_script": "run_clm_no_trainer.py",
