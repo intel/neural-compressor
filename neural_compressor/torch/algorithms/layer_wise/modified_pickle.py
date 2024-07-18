@@ -89,11 +89,13 @@ DEFAULT_PROTOCOL = 4
 
 class PickleError(Exception):
     """A common base class for the other pickling exceptions."""
+
     pass
 
 
 class PicklingError(PickleError):
     """This exception is raised when an unpicklable object is passed to the dump() method."""
+
     pass
 
 
@@ -104,6 +106,7 @@ class UnpicklingError(PickleError):
     (but not necessarily limited to) AttributeError, EOFError, ImportError,
     and IndexError.
     """
+
     pass
 
 

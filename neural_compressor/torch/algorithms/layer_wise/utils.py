@@ -36,6 +36,7 @@ LWQ_WORKSPACE = os.path.join(options.workspace, "lwq_tmpdir")
 
 class QDQLayer(torch.nn.Module):
     """Quantized and Dequantized Layer."""
+
     def __init__(self, module, input_scale=None) -> None:
         """Init the QDQLayer object."""
         super().__init__()
