@@ -43,6 +43,7 @@ if is_transformers_imported():
 
 class RTNQuantizer(Quantizer):
     """RTN Quantizer."""
+
     def __init__(self, quant_config: OrderedDict = {}):
         """Init a RTNQuantizer object.
 

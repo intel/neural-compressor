@@ -27,7 +27,7 @@ from neural_compressor.torch.utils import QCONFIG_NAME, WEIGHT_NAME, LoadFormat,
 
 def save(model, output_dir="./saved_results"):
     """Save the quantized model and config to the output path.
-    
+
     Args:
         model (torch.nn.module): raw fp32 model or prepared model.
         output_dir (str, optional): output path to save.
@@ -82,6 +82,7 @@ def load(model_name_or_path, original_model=None, format=LoadFormat.DEFAULT, dev
 
 class WOQModelLoader:
     """WOQ Model Loader."""
+
     def __init__(self, model_name_or_path, original_model=None, format=LoadFormat.DEFAULT, device="cpu", **kwargs):
         """Init the WOQModelLoader object."""
         # TODO: When loading WOQ model, use different WeightOnlyLinear module according to device.

@@ -32,6 +32,7 @@ from .utility import quant_tensor
 
 class QDQLayer(torch.nn.Module):
     """Quantized and dequantized layer."""
+
     def __init__(self, module, input_scale=None) -> None:
         """Init the QDQLayer object."""
         super().__init__()
@@ -52,6 +53,7 @@ class QDQLayer(torch.nn.Module):
 
 class WeightOnlyLinear(torch.nn.Module):
     """Weight Only Linear."""
+
     def __init__(
         self,
         in_features,
@@ -68,7 +70,7 @@ class WeightOnlyLinear(torch.nn.Module):
         device="cpu",
         use_optimum_format=True,
     ):
-        """Init the WeightOnlyLinear obeject.
+        """Init the WeightOnlyLinear object.
 
         Args:
             in_features (int): input features.
@@ -725,7 +727,7 @@ class FakeAffineTensorQuantFunction(Function):
     @staticmethod
     def backward(ctx, grad_outputs):
         """Backward function.
-        
+
         Args:
             ctx: Pytorch convention.
             grad_output: A tensor of gradient of outputs
@@ -774,7 +776,7 @@ class MulLinear(torch.nn.Module):
 
     def __init__(self, module, input_scale=None):
         """A forward hook to save input max of a module.
-        
+
         Args:
             module: the linear module.
             input_scale: scale for input.

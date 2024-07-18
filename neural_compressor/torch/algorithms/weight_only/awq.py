@@ -45,10 +45,10 @@ def _get_absorb_per_block(model, example_inputs, folding=False, weight_config={}
         folding (bool, optional): whether only allow update scale when it can be fold
                                     to upper layer. Defaults to False.
         weight_config (dict, optional): the quantization configuration. Defaults to {}.
-    
+
     Returns:
         block_absorb_dict: The dict of absorbed layer per block. eg. {0, [[absorbed_1, xx], [xx]], ...}
-        absorb_layer_dict: The layer dict that scale can be absorbed. The dict is the inverse of 
+        absorb_layer_dict: The layer dict that scale can be absorbed. The dict is the inverse of
                                 block_absorb_dict for all blocks.
     """
     block_absorb_dict = {}  # record absorbed layer per block
@@ -103,7 +103,7 @@ def _get_absorb_dict(model, absorb_layer_dict):
 
     Returns:
         block_absorb_dict: dict of absorbed layer per block. eg. {0, [[absorbed_1, xx], [xx]], ...}
-        new_absorb_layer_dict: The layer dict that scale can be absorbed. The dict is the inverse of 
+        new_absorb_layer_dict: The layer dict that scale can be absorbed. The dict is the inverse of
                                 block_absorb_dict for all blocks.
     """
     block_absorb_dict = {}
@@ -543,6 +543,7 @@ class ActAwareWeightQuant:
 
 class AWQQuantizer(Quantizer):
     """AWQ Quantizer."""
+
     def __init__(self, quant_config: OrderedDict = {}, absorb_layer_dict: dict = {}):
         """Init an AWQQuantizer object.
 

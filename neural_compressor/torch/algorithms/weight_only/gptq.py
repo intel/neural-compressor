@@ -200,12 +200,11 @@ class RAWGPTQuantizer(object):
             }
             nsamples (int): the number of calibration data samples.
             use_max_length (bool): set all sequence length to be same length.
-            max_seq_length (int): the same lenght of all sequence length.
+            max_seq_length (int): the same length of all sequence length.
             dataloader: an iterable containing calibration datasets, contains (inputs, targets)
             use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
             model_path (str): Model path that is used to load state_dict per layer.
             device (str): cpu or cuda.
-            
         """
         # model
         self.model = model
@@ -700,6 +699,7 @@ class GPTQ:
 
     GPTQ: Accurate Post-training Compression for Generative Pretrained Transformers (https://arxiv.org/abs/2210.17323)
     """
+
     def __init__(self, layer, W, device="cpu"):
         """Init GPTQ."""
         self.layer = layer
@@ -754,14 +754,14 @@ class GPTQ:
         Args:
             W (tensor): weight tensor.
             block_size (int): Execute quantization per block, block shape = [C_out, block_size]. Default to 128.
-            percdamp (float): percdamp (float): Percentage of Hessian's diagonal values' average, which will be added 
+            percdamp (float): percdamp (float): Percentage of Hessian's diagonal values' average, which will be added
                                 to Hessian's diagonal to increase numerical stability. Defaults to 0.01.
             groupsize (int): Size of weight groups. Defaults to -1.
             act_order (bool): Whether to sort Hessian's diagonal values to rearrange channel-wise quantization order.
                                 Defaults to False.
-            static_groups (bool): Whether to calculate group wise quantization parameters in advance. This option 
+            static_groups (bool): Whether to calculate group wise quantization parameters in advance. This option
                                     mitigate actorder's extra computational requirements. Default to False.
-        
+
         Returns:
             scale, zero, Q
         """
@@ -904,6 +904,7 @@ class GPTQ:
 
 class Quantizer(nn.Module):
     """Quantizer."""
+
     def __init__(self, shape=1):
         """Init Quantizer."""
         super(Quantizer, self).__init__()
@@ -1077,6 +1078,7 @@ from neural_compressor.torch.algorithms import Quantizer as INCQuantizer
 
 class GPTQuantizer(INCQuantizer):
     """GPTQ Quantizer."""
+
     def __init__(self, quant_config={}):
         """Init a GPTQQuantizer object.
 

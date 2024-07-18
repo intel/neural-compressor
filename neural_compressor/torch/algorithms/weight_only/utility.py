@@ -850,7 +850,7 @@ class GraphTrace:
 
         Args:
             parent_node : parent node.
-        
+
         Returns:
             bool: True or False.
         """
@@ -995,7 +995,7 @@ def get_example_input(dataloader, i=1):
 
     Args:
         dataloader (object): calibration dataset.
-    
+
     Returns:
         example_inp (object).
     """
@@ -1114,8 +1114,8 @@ def get_module_input_output(
         Args:
             name: the module name.
             record_input (bool): to record input.
-            record_ouput (bool): to record ouput.
-        
+            record_ouput (bool): to record output.
+
         Returns:
             A hook function
         """

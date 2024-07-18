@@ -29,6 +29,7 @@ from .utility import CapturedDataloader, InputCaptureModule
 
 class AutoRoundQuantizer(Quantizer):
     """AutoRound Quantizer."""
+
     def __init__(
         self,
         quant_config: dict = {},

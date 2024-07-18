@@ -40,7 +40,7 @@ class TrainableEquivalentTransformation:
 
     def __init__(self, model, weight_config={}, absorb_to_layer=None, folding=True, example_inputs=None):
         """Init the TrainableEquivalentTransformation object.
-        
+
         Args:
             model (torch.nn.module): the model for quantization
             weight_config (dict, optional): contains all info required by RTN. Defaults to {}.
@@ -84,7 +84,7 @@ class TrainableEquivalentTransformation:
 
     def _get_device(self):
         """Get the model device.
-        
+
         Returns:
             str: Model device.
         """
@@ -97,7 +97,7 @@ class TrainableEquivalentTransformation:
 
     def add_tuning_scale(self, sqrt_w_init=False):
         """Add tuning scales.
-        
+
         Args:
             sqrt_w_init: use sqrt weight to init.
         """
@@ -167,7 +167,7 @@ class TrainableEquivalentTransformation:
     @torch.no_grad()
     def _absorb_scales(self, layer, scale, layer_name=""):
         """Absorb the scale to the layer at output channel.
-        
+
         Args:
             layer: the module.
             scale: the scale to be absorbed.
@@ -239,7 +239,7 @@ class TrainableEquivalentTransformation:
     @torch.no_grad()
     def _scale_layer_weight(self, layer, scale):  ##input channel
         """Scale the layer weights at input channel, depthwise conv output channel.
-        
+
         Args:
             layer: the layer.
             scale: the scale to be multiplied.
@@ -346,7 +346,7 @@ class TrainableEquivalentTransformation:
 
     def save(self, save_scale_file="", save_state_dict_file=""):
         """Save alpha/scale or model weight.
-        
+
         Args:
             save_scale_file: path to save alpha/scale with torch.save.
             save_state_dict_file: path to save model state_dict.
@@ -360,6 +360,7 @@ class TrainableEquivalentTransformation:
 
 class TEQuantizer(Quantizer):
     """TEQ Quantizer."""
+
     def __init__(self, quant_config, folding, example_inputs, absorb_to_layer=None):
         """Init the TEQuantizer object."""
         super().__init__(quant_config=quant_config)
@@ -379,7 +380,7 @@ class TEQuantizer(Quantizer):
 
         Args:
             model: A float model to be quantized.
-        
+
         Returns:
             A prepared model.
         """
