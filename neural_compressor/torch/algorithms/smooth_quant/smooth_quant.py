@@ -14,6 +14,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""The quantizer using SmoothQuant path."""
+
 
 import json
 import os
@@ -263,9 +265,9 @@ def qdq_quantize(
         run_fn (Callable): a calibration function for calibrating the model.
         example_inputs (tensor/tuple/dict): used to trace torch model.
         inplace (bool): whether to carry out model transformations in-place. Defaults to True.
-        cfgs (dict): the input configs.
-        op_infos_from_cfgs (dict): op infos retrieved from configs.
-        output_tensor_id_op_name (dict): dictionary of output tensor op names.
+        cfgs (dict): configs loaded from ipex config path.
+        op_infos_from_cfgs (dict): dict containing configs that have been parsed for each op.
+        output_tensor_id_op_name (dict): dict containing op names corresponding to 'op_infos_from_cfgs'.
         sq (TorchSmoothQuant): TorchSmoothQuant class containing sq infos.
 
     Returns:

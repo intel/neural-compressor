@@ -14,6 +14,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""The quantizer using StaticQuant path."""
+
 
 import json
 import os
@@ -50,6 +52,8 @@ ipex_ver = get_ipex_version()
 
 
 class StaticQuantQuantizer(Quantizer):
+    """The quantizer using Static Quant."""
+
     def __init__(self, quant_config: OrderedDict = {}):
         """Init a StaticQuantQuantizer object.
 
