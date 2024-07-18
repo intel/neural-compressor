@@ -152,8 +152,7 @@ def load(
     # The first line of this docstring overrides the one Sphinx generates for the
     # documentation. We need it so that Sphinx doesn't leak `pickle`s path from
     # the build environment (e.g. `<module 'pickle' from '/leaked/path').
-
-    """Load(f, map_location=None, pickle_module=pickle, *, weights_only=False, **pickle_load_args)
+    """Load(f, map_location=None, pickle_module=pickle, *, weights_only=False, **pickle_load_args).
 
     Loads an object saved with :func:`torch.save` from a file.
 
@@ -198,6 +197,8 @@ def load(
         pickle_load_args: (Python 3 only) optional keyword arguments passed over to
             :func:`pickle_module.load` and :func:`pickle_module.Unpickler`, e.g.,
             :attr:`errors=...`.
+        prefix (str): the module prefix name.
+        tensor_name (str): the tensor name.
 
     .. warning::
         :func:`torch.load()` unless `weights_only` parameter is set to `True`,
