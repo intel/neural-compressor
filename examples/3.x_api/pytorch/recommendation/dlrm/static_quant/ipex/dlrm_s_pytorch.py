@@ -394,7 +394,7 @@ def dash_separated_ints(value):
     return value
 
 
-def trace_model(args, dlrm, test_ld, inplace=True):
+def trace_or_load_model(args, dlrm, test_ld, inplace=True):
     dlrm.eval()
     for j, inputBatch in enumerate(test_ld):
         X, lS_o, lS_i, _, _, _ = unpack_batch(inputBatch)
@@ -462,7 +462,7 @@ def inference(
     total_time = 0
     total_iter = 0
     if args.inference_only and trace:
-        dlrm = trace_model(args, dlrm, test_ld)
+        dlrm = trace_or_load_model(args, dlrm, test_ld)
     if args.share_weight_instance != 0:
         run_throughput_benchmark(args, dlrm, test_ld)
     with torch.cpu.amp.autocast(enabled=args.bf16):
@@ -833,11 +833,11 @@ def run():
 
         # calibration
         def calib_fn(model):
-            calib_number = 0
+            calib_iter = 0
             for X_test, lS_o_test, lS_i_test, T in train_ld:
-                if calib_number < 100:
+                if calib_iter < 100:
                     model(X_test, lS_o_test, lS_i_test)
-                    calib_number += 1
+                    calib_iter += 1
                 else:
                     break
 
@@ -857,8 +857,22 @@ def run():
         dlrm.save(args.save_model)
         exit(0)
     if args.benchmark:
-        # To do
-        print('Not implemented yet')
+        dlrm = trace_or_load_model(args, dlrm, test_ld, inplace=True)
+        import time
+        X_test, lS_o_test, lS_i_test, T = next(iter(test_ld))
+        total_iters = 100
+        warmup_iters = 5
+        with torch.no_grad():
+            for i in range(total_iters):
+                if i == warmup_iters:
+                    start = time.time()
+                dlrm(X_test, lS_o_test, lS_i_test)
+            end = time.time()
+        latency = (end - start) / ((total_iters - warmup_iters) * args.mini_batch_size)
+        throughput = ((total_iters - warmup_iters) * args.mini_batch_size) / (end - start)
+        print('Batch size = {:d}'.format(args.mini_batch_size))
+        print('Latency: {:.3f} ms'.format(latency * 10**3))
+        print('Throughput: {:.3f} samples/sec'.format(throughput))
         exit(0)
 
     if args.accuracy_only:
@@ -934,7 +948,7 @@ def run():
             training_record[0] += time
             training_record[1] += 1
 
-    def print_training_performance( training_record=training_record):
+    def print_training_performance(training_record=training_record):
         if training_record[0] == 0:
             print("num-batches larger than warm up iters, please increase num-batches or decrease warmup iters")
             exit()

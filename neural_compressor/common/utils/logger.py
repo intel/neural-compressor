@@ -161,36 +161,44 @@ class TuningLogger:
 
     @classmethod
     def tuning_start(cls) -> None:
+        """Log the start of the tuning process."""
         logger.info("Tuning started.")
 
     @classmethod
     def trial_start(cls, trial_index: int = None) -> None:
+        """Log the start of a trial."""
         logger.info("%d-trail started.", trial_index)
 
     @classmethod
     def execution_start(cls, mode=Mode.QUANTIZE, stacklevel=2):
+        """Log the start of the execution process."""
         log_msg = _get_log_msg(mode)
         assert log_msg is not None, "Please check `mode` in execution_start function of TuningLogger class."
         logger.info("{} started.".format(log_msg), stacklevel=stacklevel)
 
     @classmethod
     def execution_end(cls, mode=Mode.QUANTIZE, stacklevel=2):
+        """Log the end of the execution process."""
         log_msg = _get_log_msg(mode)
         assert log_msg is not None, "Please check `mode` in execution_end function of TuningLogger class."
         logger.info("{} end.".format(log_msg), stacklevel=stacklevel)
 
     @classmethod
     def evaluation_start(cls) -> None:
+        """Log the start of the evaluation process."""
         logger.info("Evaluation started.")
 
     @classmethod
     def evaluation_end(cls) -> None:
+        """Log the end of the evaluation process."""
         logger.info("Evaluation end.")
 
     @classmethod
     def trial_end(cls, trial_index: int = None) -> None:
+        """Log the end of a trial."""
         logger.info("%d-trail end.", trial_index)
 
     @classmethod
     def tuning_end(cls) -> None:
+        """Log the end of the tuning process."""
         logger.info("Tuning completed.")

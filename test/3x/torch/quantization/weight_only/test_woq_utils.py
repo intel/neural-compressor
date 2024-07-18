@@ -169,7 +169,16 @@ class TestUtility:
 
         result = list(dataloader)
 
-        assert result == [(1,), (2,), (3,)]
+        assert result == [1, 2, 3]
+
+        # Test case when kwargs is empty
+        args_list = [(1, 2), (2, 3), (3, 4)]
+        kwargs_list = [{}, {}, {}]
+        dataloader = CapturedDataloader(args_list, kwargs_list)
+
+        result = list(dataloader)
+
+        assert result == [(1, 2), (2, 3), (3, 4)]
 
         # Test case when both args and kwargs are present
         args_list = [(1,), (2,), (3,)]

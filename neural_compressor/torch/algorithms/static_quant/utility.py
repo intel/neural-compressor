@@ -24,12 +24,11 @@ from packaging.version import Version
 
 try:
     import intel_extension_for_pytorch as ipex
-    import prettytable as pt
 except:  # pragma: no cover
     pass
 
 from neural_compressor.common.utils import DEFAULT_WORKSPACE, CpuInfo
-from neural_compressor.torch.utils import get_ipex_version, get_torch_version, logger
+from neural_compressor.torch.utils import Statistics, get_ipex_version, get_torch_version, logger
 
 version = get_torch_version()
 ipex_ver = get_ipex_version()
@@ -162,6 +161,47 @@ def check_cfg_and_qconfig(user_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_
                             pass
             cfgs[name[0]][name[1]][name[2]] = ipex_op_cfg
     return cfgs, ori_user_cfg
+
+
+def generate_xpu_qconfig(tune_cfg):  # pragma: no cover
+    # qconfig observer & config constants for ipex-xpu
+    from torch.ao.quantization import HistogramObserver, MinMaxObserver, QConfig
+
+    act_observer_minmax_asym = MinMaxObserver.with_args(quant_min=0, quant_max=127)
+    act_observer_minmax_sym = MinMaxObserver.with_args(
+        dtype=torch.qint8, qscheme=torch.per_tensor_symmetric, quant_min=-128, quant_max=127
+    )
+    act_observer_kl_asym = HistogramObserver.with_args(quant_min=0, quant_max=127)
+    act_observer_kl_sym = HistogramObserver.with_args(
+        dtype=torch.qint8, qscheme=torch.per_tensor_symmetric, quant_min=-128, quant_max=127
+    )
+    # no tuning for granularity due to tuning space
+    weight_observer_minmax_sym = MinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_tensor_symmetric)
+
+    qconfig = {}
+    user_cfg = copy.deepcopy(tune_cfg["op"])
+    for _, cfg in user_cfg.items():
+        act_algo = cfg["activation"]["algorithm"]
+        act_sym = cfg["activation"]["scheme"]
+        break
+
+    if act_algo == "minmax":
+        if act_sym == "sym":
+            activation = act_observer_minmax_sym
+        else:
+            activation = act_observer_minmax_asym
+    else:
+        if act_sym == "sym":
+            activation = act_observer_kl_sym
+        else:
+            activation = act_observer_kl_asym
+
+    qconfig[""] = QConfig(activation=activation, weight=weight_observer_minmax_sym)
+
+    for (op_name, op_type), cfg in user_cfg.items():
+        if cfg["weight"]["dtype"] == "fp32":
+            qconfig[op_name] = None
+    return qconfig
 
 
 def generate_activation_observer(
@@ -565,48 +605,6 @@ def get_quantizable_ops_from_cfgs(ops_name, op_infos_from_cfgs, input_tensor_ids
             for q_op in q_ops:
                 quantizable_ops.append(q_op)
     return quantizable_ops
-
-
-class Statistics:  # pragma: no cover
-    """The statistics printer."""
-
-    def __init__(self, data, header, field_names, output_handle=logger.info):
-        """Init a Statistics object.
-
-        Args:
-            data: The statistics data
-            header: The table header
-            field_names: The field names
-            output_handle: The output logging method
-        """
-        self.field_names = field_names
-        self.header = header
-        self.data = data
-        self.output_handle = output_handle
-        self.tb = pt.PrettyTable(min_table_width=40)
-
-    def print_stat(self):
-        """Print the statistics."""
-        valid_field_names = []
-        for index, value in enumerate(self.field_names):
-            if index < 2:
-                valid_field_names.append(value)
-                continue
-
-            if any(i[index] for i in self.data):
-                valid_field_names.append(value)
-        self.tb.field_names = valid_field_names
-        for i in self.data:
-            tmp_data = []
-            for index, value in enumerate(i):
-                if self.field_names[index] in valid_field_names:
-                    tmp_data.append(value)
-            if any(tmp_data[1:]):
-                self.tb.add_row(tmp_data)
-        lines = self.tb.get_string().split("\n")
-        self.output_handle("|" + self.header.center(len(lines[0]) - 2, "*") + "|")
-        for i in lines:
-            self.output_handle(i)
 
 
 class TransformerBasedModelBlockPatternDetector:  # pragma: no cover

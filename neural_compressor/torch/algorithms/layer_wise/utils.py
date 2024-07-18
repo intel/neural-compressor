@@ -27,10 +27,11 @@ from transformers import AutoConfig, AutoModelForCausalLM
 from transformers.models.auto.auto_factory import _BaseAutoModelClass
 
 from neural_compressor.common import options
+from neural_compressor.torch.algorithms.weight_only.modules import WeightOnlyLinear
 
 from .load import load
 
-LWQ_WORKSPACE = os.path.join(options.workspace, "layer_wise_tmp")
+LWQ_WORKSPACE = os.path.join(options.workspace, "lwq_tmpdir")
 
 
 class QDQLayer(torch.nn.Module):
@@ -89,7 +90,7 @@ def get_named_children(model, pre=[]):
     return module_list
 
 
-def dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None):
+def dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None):  # pragma: no cover
     """Download hugging face model from hf hub."""
     from huggingface_hub.constants import DEFAULT_REVISION, HUGGINGFACE_HUB_CACHE
     from huggingface_hub.file_download import REGEX_COMMIT_HASH, repo_folder_name
@@ -121,7 +122,7 @@ def dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None):
         return file_path
 
 
-def load_empty_model(pretrained_model_name_or_path, cls=AutoModelForCausalLM, **kwargs):
+def load_empty_model(pretrained_model_name_or_path, cls=AutoModelForCausalLM, **kwargs):  # pragma: no cover
     """Load a empty model."""
     is_local = os.path.isdir(pretrained_model_name_or_path)
     if is_local:  # pragma: no cover
@@ -215,6 +216,9 @@ def _get_path(pretrained_model_name_or_path):
     return path
 
 
+get_path = _get_path
+
+
 def load_value(model, param_name, path):
     if "lm_head" in param_name and getattr(model.config, "tie_word_embeddings", True):
         input_embeddings = model.get_input_embeddings()
@@ -280,6 +284,12 @@ def clean_module_weight(module):
         submodule = module.module
     else:
         submodule = module
+
+    if isinstance(module, WeightOnlyLinear):
+        for n, m in submodule._buffers.items():
+            old_value = getattr(submodule, n)
+            with torch.no_grad():
+                submodule._buffers[n] = torch.zeros(old_value.shape, device="meta")
 
     for n, m in submodule.named_parameters():
         is_buffer = n in submodule._buffers

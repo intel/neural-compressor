@@ -195,6 +195,21 @@ def load(output_dir="./saved_results", model=None):
     <td class="tg-9wq8"><a href="PT_DynamicQuant.md">link</a></td>
   </tr>
   <tr>
+    <td class="tg-9wq8">MX Quantization</td>
+    <td class="tg-9wq8"><a href=https://arxiv.org/pdf/2310.10537>Microscaling Data Formats for
+Deep Learning</a></td>
+    <td class="tg-9wq8">PyTorch eager mode</td>
+    <td class="tg-9wq8">&#10004</td>
+    <td class="tg-9wq8"><a href="PT_MXQuant.md">link</a></td>
+  </tr>
+  <tr>
+    <td class="tg-9wq8">Mixed Precision</td>
+    <td class="tg-9wq8"><a href=https://arxiv.org/abs/1710.03740>Mixed precision</a></td>
+    <td class="tg-9wq8">PyTorch eager mode</td>
+    <td class="tg-9wq8">&#10004</td>
+    <td class="tg-9wq8"><a href="PT_MixPrecision.md">link</a></td>
+  </tr>
+  <tr>
     <td class="tg-9wq8">Quantization Aware Training</td>
     <td class="tg-9wq8"><a href=https://pytorch.org/docs/master/quantization.html#quantization-aware-training-for-static-quantization>Quantization Aware Training</a></td>
     <td class="tg-9wq8">TorchDynamo</td>
@@ -223,3 +238,24 @@ def load(output_dir="./saved_results", model=None):
     </tr>
     </tbody>
     </table>
+
+2. How to set different configuration for specific op_name or op_type?
+    > INC extends a `set_local` method based on the global configuration object to set custom configuration.
+
+    ```python
+    def set_local(self, operator_name_or_list: Union[List, str, Callable], config: BaseConfig) -> BaseConfig:
+        """Set custom configuration based on the global configuration object.
+
+        Args:
+            operator_name_or_list (Union[List, str, Callable]): specific operator
+            config (BaseConfig): specific configuration
+        """
+    ```
+
+    > Demo:
+
+    ```python
+    quant_config = RTNConfig()  # Initialize global configuration with default bits=4
+    quant_config.set_local(".*mlp.*", RTNConfig(bits=8))  # For layers with "mlp" in their names, set bits=8
+    quant_config.set_local("Conv1d", RTNConfig(dtype="fp32"))  # For Conv1d layers, do not quantize them.
+    ```
