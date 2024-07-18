@@ -32,7 +32,7 @@ def recover_model_from_json(model, json_file_path, example_inputs):  # pragma: n
         example_inputs (tuple or torch.Tensor or dict): example inputs that will be passed to the ipex function.
 
     Returns:
-        (object): quantized model
+        model (object): quantized model
     """
     from torch.ao.quantization.observer import MinMaxObserver
 

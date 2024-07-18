@@ -1097,7 +1097,19 @@ class StaticQuantConfig(TorchBaseConfig):
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
         model_info: Optional[List[Tuple[str, Callable]]] = None,
     ):
-        """Init Static Quant Configs."""
+        """Init StaticQuant Config.
+
+        Args:
+            w_dtype (str): Data type for weights, default is "int8".
+            w_sym (bool): Whether to use symmetric quantization for weights, default is True.
+            w_granularity (str): Level of quantization granularity for weights, default is "per_channel".
+            w_algo (str): Quatization algorithm used to compute parameters for weights, default is "minmax".
+            act_dtype (str): Data type for activations, default is "uint8".
+            act_sym (bool): Whether to use symmetric quantization for activations, default is False.
+            act_granularity (str): Level of quantization granularity for activations, default is "per_channel".
+            act_algo (str): Quatization algorithm used to compute parameters for activations, default is "minmax".
+            excluded_precisions (list): Precisions to be excluded, Default value is empty list.
+        """
         super().__init__(white_list=white_list)
         self.w_dtype = w_dtype
         self.w_sym = w_sym
@@ -1205,7 +1217,7 @@ class SmoothQuantConfig(TorchBaseConfig):
         act_dtype: str = "uint8",
         act_sym: bool = False,
         act_granularity: str = "per_tensor",
-        act_algo: str = "kl",
+        act_algo: str = "minmax",
         excluded_precisions: list = [],
         alpha: float = 0.5,
         folding: bool = False,
@@ -1220,7 +1232,28 @@ class SmoothQuantConfig(TorchBaseConfig):
         auto_alpha_args: dict = None,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
-        """Init SmoothQuant Configs."""
+        """Init SmoothQuant Config.
+
+        Args:
+            w_dtype (str): Data type for weights, default is "int8".
+            w_sym (bool): Whether to use symmetric quantization for weights, default is True.
+            w_granularity (str): Level of quantization granularity for weights, default is "per_channel".
+            w_algo (str): Quatization algorithm used to compute parameters for weights, default is "minmax".
+            act_dtype (str): Data type for activations, default is "uint8".
+            act_sym (bool): Whether to use symmetric quantization for activations, default is False.
+            act_granularity (str): Level of quantization granularity for activations, default is "per_channel".
+            act_algo (str): Quatization algorithm used to compute parameters for activations, default is "minmax".
+            excluded_precisions (list): Precisions to be excluded, Default value is empty list.
+            alpha (float): Value to balance input and weight quantization error, between 0 and 1, default is 0.5.
+            folding (bool): Whether to fold mul into the previous layer, default is False.
+            scale_sharing (bool): Whether share the same scale for layers with the same input, default is False.
+            init_alpha (float): Value to get baseline quantization error for auto-tuning, default is 0.5.
+            alpha_min (float): Min value of auto-tuning alpha search space, default is 0.0.
+            alpha_max (float): Max value of auto-tuning alpha search space, default is 1.0.
+            alpha_step (float): Step_size of auto-tuning alpha search space, default is 0.1.
+            shared_criterion (str): Criterion for input LayerNorm op of a transformer block, default is "max".
+            do_blockwise (bool): Whether to enable block-wise auto-tuning, default is False.
+        """
         super().__init__(white_list=white_list)
         self.w_dtype = w_dtype
         self.w_sym = w_sym
