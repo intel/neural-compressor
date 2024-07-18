@@ -42,7 +42,7 @@ except Exception as error:
     assert False, "Error: Could not open '%s' due %s\n" % (filepath, error)
 
 PKG_INSTALL_CFG = {
-    # overall install config for build from source, python setup.py install
+    # overall installation config, pip install neural-compressor
     "neural_compressor": {
         "project_name": "neural_compressor",
         "include_packages": find_packages(
@@ -53,33 +53,12 @@ PKG_INSTALL_CFG = {
         ),
         "package_data": {"": ["*.yaml"]},
         "install_requires": fetch_requirements("requirements.txt"),
-    },
-    # 2.x binary build config, pip install neural-compressor
-    "neural_compressor_2x": {
-        "project_name": "neural_compressor",
-        "include_packages": find_packages(
-            include=["neural_compressor", "neural_compressor.*"],
-            exclude=[
-                "neural_compressor.template",
-                "neural_compressor.common",
-                "neural_compressor.common.*",
-                "neural_compressor.torch",
-                "neural_compressor.torch.*",
-                "neural_compressor.tensorflow",
-                "neural_compressor.tensorflow.*",
-                "neural_compressor.onnxrt",
-                "neural_compressor.onnxrt.*",
-            ],
-        ),
-        "package_data": {"": ["*.yaml"]},
-        "install_requires": fetch_requirements("requirements.txt"),
         "extras_require": {
-            "pt": [f"neural_compressor_3x_pt=={__version__}"],
-            "tf": [f"neural_compressor_3x_tf=={__version__}"],
-            "ort": [f"neural_compressor_3x_ort=={__version__}"],
+            "pt": fetch_requirements("requirements_pt.txt"),
+            "tf": fetch_requirements("requirements_tf.txt"),
         },
     },
-    # 3.x pt binary build config, pip install neural-compressor[pt], install 2.x API + 3.x PyTorch API.
+    # 3.x pt binary build config, pip install neural-compressor-pt, install 3.x PyTorch API.
     "neural_compressor_3x_pt": {
         "project_name": "neural_compressor_3x_pt",
         "include_packages": find_packages(
@@ -92,7 +71,7 @@ PKG_INSTALL_CFG = {
         ),
         "install_requires": fetch_requirements("requirements_pt.txt"),
     },
-    # 3.x tf binary build config, pip install neural-compressor[tf], install 2.x API + 3.x TensorFlow API.
+    # 3.x tf binary build config, pip install neural-compressor-tf, install 3.x TensorFlow API.
     "neural_compressor_3x_tf": {
         "project_name": "neural_compressor_3x_tf",
         "include_packages": find_packages(
@@ -106,19 +85,6 @@ PKG_INSTALL_CFG = {
         "package_data": {"": ["*.yaml"]},
         "install_requires": fetch_requirements("requirements_tf.txt"),
     },
-    # 3.x ort binary build config, pip install neural-compressor[ort], install 2.x API + 3.x ONNXRT API.
-    "neural_compressor_3x_ort": {
-        "project_name": "neural_compressor_3x_ort",
-        "include_packages": find_packages(
-            include=[
-                "neural_compressor.common",
-                "neural_compressor.common.*",
-                "neural_compressor.onnxrt",
-                "neural_compressor.onnxrt.*",
-            ],
-        ),
-        "install_requires": fetch_requirements("requirements_ort.txt"),
-    },
 }
 
 
@@ -131,10 +97,6 @@ if __name__ == "__main__":
     ext_modules = []
     cmdclass = {}
 
-    if "2x" in sys.argv:
-        sys.argv.remove("2x")
-        cfg_key = "neural_compressor_2x"
-
     if "pt" in sys.argv:
         sys.argv.remove("pt")
         cfg_key = "neural_compressor_3x_pt"
@@ -142,10 +104,6 @@ if __name__ == "__main__":
     if "tf" in sys.argv:
         sys.argv.remove("tf")
         cfg_key = "neural_compressor_3x_tf"
-
-    if "ort" in sys.argv:
-        sys.argv.remove("ort")
-        cfg_key = "neural_compressor_3x_ort"
 
     if bool(os.getenv("USE_FP8_CONVERT", False)):
         from torch.utils.cpp_extension import BuildExtension, CppExtension

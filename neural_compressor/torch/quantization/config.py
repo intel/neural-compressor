@@ -67,14 +67,35 @@ else:
 
 
 class OperatorConfig(NamedTuple):
+    """OperatorConfig."""
+
     config: BaseConfig
     operators: List[Union[str, Callable]]
     valid_func_list: List[Callable] = []
 
 
+class TorchBaseConfig(BaseConfig):
+    """Base config class for torch backend."""
+
+    # re-write func _get_op_name_op_type_config to fallback op_type with string
+    # because there are some special op_types for IPEX backend: `Linear&Relu`, `Linear&add`, ...
+    def _get_op_name_op_type_config(self):
+        op_type_config_dict = dict()
+        op_name_config_dict = dict()
+        for name, config in self.local_config.items():
+            if self._is_op_type(name):
+                # Convert the Callable to String.
+                new_name = self._op_type_to_str(name)
+                op_type_config_dict[new_name] = config
+            else:
+                op_name_config_dict[name] = config
+                op_type_config_dict[name] = config
+        return op_type_config_dict, op_name_config_dict
+
+
 ######################## RNT Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=RTN, priority=PRIORITY_RTN)
-class RTNConfig(BaseConfig):
+class RTNConfig(TorchBaseConfig):
     """Config class for round-to-nearest weight-only quantization."""
 
     name = RTN
@@ -200,7 +221,9 @@ class RTNConfig(BaseConfig):
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
         if not self.quant_lm_head:
-            self.set_local(LM_HEAD_NAMES, RTNConfig(dtype="fp32"))
+            self.set_local(
+                LM_HEAD_NAMES, RTNConfig(dtype="fp32", use_layer_wise=self.use_layer_wise, model_path=self.model_path)
+            )
         config_mapping = super().to_config_mapping(config_list, model_info)
         return config_mapping
 
@@ -242,7 +265,7 @@ def get_default_double_quant_config(type="BNB_NF4"):
 
 ######################## GPTQ Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=GPTQ, priority=PRIORITY_GPTQ)
-class GPTQConfig(BaseConfig):
+class GPTQConfig(TorchBaseConfig):
     """Config class for GPTQ.
 
     GPTQ: Accurate Post-Training Quantization for Generative Pre-trained Transformers.
@@ -363,7 +386,9 @@ class GPTQConfig(BaseConfig):
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
         if not self.quant_lm_head:
-            self.set_local(LM_HEAD_NAMES, GPTQConfig(dtype="fp32"))
+            self.set_local(
+                LM_HEAD_NAMES, GPTQConfig(dtype="fp32", use_layer_wise=self.use_layer_wise, model_path=self.model_path)
+            )
         config_mapping = super().to_config_mapping(config_list, model_info)
         return config_mapping
 
@@ -385,7 +410,9 @@ class GPTQConfig(BaseConfig):
     @classmethod
     def get_predefined_configs(cls) -> Dict[torch_utils.ProcessorType, "GPTQConfig"]:
         pre_defined_configs: Dict[torch_utils.ProcessorType, GPTQConfig] = {}
-        pre_defined_configs[torch_utils.ProcessorType.Client] = cls(use_layer_wise=True)
+        pre_defined_configs[torch_utils.ProcessorType.Client] = cls(
+            use_layer_wise=True
+        )  # , model_path=self.model_path)
         pre_defined_configs[torch_utils.ProcessorType.Server] = cls()
         return pre_defined_configs
 
@@ -397,7 +424,7 @@ def get_default_gptq_config(processor_type: Optional[Union[str, torch_utils.Proc
 
 ######################## AWQ Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=AWQ, priority=PRIORITY_AWQ)
-class AWQConfig(BaseConfig):
+class AWQConfig(TorchBaseConfig):
     """Config class for AWQ.
 
     AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration.
@@ -425,6 +452,7 @@ class AWQConfig(BaseConfig):
         "use_auto_scale",
         "use_auto_clip",
         "folding",
+        "absorb_layer_dict",
     ]
     name = AWQ
 
@@ -438,6 +466,7 @@ class AWQConfig(BaseConfig):
         use_full_range: bool = False,
         use_mse_search: bool = False,
         use_layer_wise: bool = False,
+        model_path: str = "",
         # double quant
         use_double_quant: bool = False,
         double_quant_dtype: str = "int",
@@ -451,6 +480,7 @@ class AWQConfig(BaseConfig):
         use_auto_clip: bool = True,
         folding: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+        absorb_layer_dict: dict = {},
     ):
         """Init AWQ weight-only quantization config.
 
@@ -463,6 +493,7 @@ class AWQConfig(BaseConfig):
             use_full_range (bool): Enables full range for activations, default is False.
             use_mse_search (bool): Enables mean squared error (MSE) search, default is False.
             use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
+            model_path (str): Model path that is used to load state_dict per layer.
             use_double_quant (bool): Enables double quantization, default is False.
             double_quant_dtype (str): Data type for double_quant scale, default is "int".
             double_quant_bits (int): Number of bits used to represent double_quant scale, default is 4.
@@ -473,6 +504,7 @@ class AWQConfig(BaseConfig):
             use_auto_clip (bool):  Enables clip range search. Defaults to True.
             folding(bool): Allow insert mul before linear when the scale cannot be absorbed by last layer,
               default is False.
+            absorb_layer_dict (dict): The layer dict that scale can be absorbed, default is {}.
         """
         super().__init__(white_list=white_list)
         self.dtype = dtype
@@ -483,6 +515,7 @@ class AWQConfig(BaseConfig):
         self.use_full_range = use_full_range
         self.use_mse_search = use_mse_search
         self.use_layer_wise = use_layer_wise
+        self.model_path = model_path
         # double quant
         self.use_double_quant = use_double_quant
         self.double_quant_bits = double_quant_bits
@@ -493,6 +526,7 @@ class AWQConfig(BaseConfig):
         self.use_auto_scale = use_auto_scale
         self.use_auto_clip = use_auto_clip
         self.folding = folding
+        self.absorb_layer_dict = absorb_layer_dict
         self._post_init()
 
     @classmethod
@@ -508,7 +542,9 @@ class AWQConfig(BaseConfig):
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
         if not self.quant_lm_head:
-            self.set_local(LM_HEAD_NAMES, AWQConfig(dtype="fp32"))
+            self.set_local(
+                LM_HEAD_NAMES, AWQConfig(dtype="fp32", use_layer_wise=self.use_layer_wise, model_path=self.model_path)
+            )
         config_mapping = super().to_config_mapping(config_list, model_info)
         return config_mapping
 
@@ -539,7 +575,7 @@ def get_default_awq_config() -> AWQConfig:
 
 ######################## TEQ Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=TEQ, priority=PRIORITY_TEQ)
-class TEQConfig(BaseConfig):
+class TEQConfig(TorchBaseConfig):
     """Config class for TEQ.
 
     TEQ: Activation-aware Weight Quantization for LLM Compression and Acceleration.
@@ -609,7 +645,7 @@ class TEQConfig(BaseConfig):
             double_quant_use_sym (bool): Indicates whether double_quant scale are symmetric, default is True.
             double_quant_group_size (int): Size of double_quant groups, default is 32.
             quant_lm_head (bool): Indicates whether quantize the lm_head layer in transformers。 Default is False.
-            absorb_to_layer (bool): The layer dict that scale can be absorbed, default is {}.
+            absorb_to_layer (dict): The layer dict that scale can be absorbed, default is {}.
             folding(bool): Allow insert mul before linear when the scale cannot be absorbed by last layer,
               default is False.
         """
@@ -677,7 +713,7 @@ def get_default_teq_config() -> TEQConfig:
 
 ######################## AUTOROUND Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=AUTOROUND, priority=PRIORITY_AUTOROUND)
-class AutoRoundConfig(BaseConfig):
+class AutoRoundConfig(TorchBaseConfig):
     """Config class for AUTOROUND.
 
     AUTOROUND: Optimize Weight Rounding via Signed Gradient Descent for the Quantization of LLMs.
@@ -699,8 +735,8 @@ class AutoRoundConfig(BaseConfig):
         "minmax_lr",
         "iters",
         "seqlen",
-        "n_samples",
-        "n_blocks",
+        "nsamples",
+        "nblocks",
         "gradient_accumulate_steps",
         "not_use_best_mse",
         "dynamic_max_gap",
@@ -714,6 +750,10 @@ class AutoRoundConfig(BaseConfig):
         use_sym: bool = False,
         group_size: int = 128,
         # AUTOROUND
+        act_bits: int = 32,
+        act_group_size: int = None,
+        act_sym: bool = None,
+        act_dynamic: bool = True,
         enable_full_range: bool = False,
         batch_size: int = 8,
         lr_scheduler=None,
@@ -724,15 +764,16 @@ class AutoRoundConfig(BaseConfig):
         low_gpu_mem_usage: bool = True,
         iters: int = 200,
         seqlen: int = 2048,
-        n_samples: int = 512,
+        nsamples: int = 128,
         sampler: str = "rand",
         seed: int = 42,
-        n_blocks: int = 1,
+        nblocks: int = 1,
         gradient_accumulate_steps: int = 1,
         not_use_best_mse: bool = False,
         dynamic_max_gap: int = -1,
         scale_dtype: str = "fp16",
         use_layer_wise: bool = False,
+        multimodal: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init AUTOROUND weight-only quantization config.
@@ -742,6 +783,10 @@ class AutoRoundConfig(BaseConfig):
             bits (int): Number of bits used to represent weights, default is 4.
             use_sym (bool): Indicates whether weights are symmetric, default is False.
             group_size (int): Size of weight groups, default is 128.
+            act_bits (int): Number of bits for activation quantization. Default is 32.
+            act_group_size (int): Group size for activation quantization. Default is None.
+            act_sym (bool): Whether to use symmetric activation quantization. Default is None.
+            act_dynamic (bool): Whether to use dynamic activation quantization. Default is True.
             enable_full_range (bool): Whether to enable full range quantization (default is False).
             batch_size (int): Batch size for training (default is 8).
             lr_scheduler: The learning rate scheduler to be used.
@@ -752,21 +797,27 @@ class AutoRoundConfig(BaseConfig):
             low_gpu_mem_usage (bool): Whether to use low GPU memory (default is True).
             iters (int): Number of iterations (default is 200).
             seqlen (int): Length of the sequence.
-            n_samples (int): Number of samples (default is 512).
+            nsamples (int): Number of samples (default is 512).
             sampler (str): The sampling method (default is "rand").
             seed (int): The random seed (default is 42).
-            n_blocks (int): Number of blocks (default is 1).
+            nblocks (int): Number of blocks (default is 1).
             gradient_accumulate_steps (int): Number of gradient accumulation steps (default is 1).
             not_use_best_mse (bool): Whether to use mean squared error (default is False).
             dynamic_max_gap (int): The dynamic maximum gap (default is -1).
             scale_dtype (str): The data type of quantization scale to be used (default is "float16"), different kernels
                         have different choices.
+            use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
+            multimodal(bool): Enable multimodal model quantization, (default is "False").
         """
         super().__init__(white_list=white_list)
         self.dtype = dtype
         self.bits = bits
         self.use_sym = use_sym
         self.group_size = group_size
+        self.act_bits = act_bits
+        self.act_group_size = act_group_size
+        self.act_sym = act_sym
+        self.act_dynamic = act_dynamic
         self.enable_full_range = enable_full_range
         self.batch_size = batch_size
         self.lr_scheduler = lr_scheduler
@@ -777,15 +828,16 @@ class AutoRoundConfig(BaseConfig):
         self.low_gpu_mem_usage = low_gpu_mem_usage
         self.iters = iters
         self.seqlen = seqlen
-        self.n_samples = n_samples
+        self.nsamples = nsamples
         self.sampler = sampler
         self.seed = seed
-        self.n_blocks = n_blocks
+        self.nblocks = nblocks
         self.gradient_accumulate_steps = gradient_accumulate_steps
         self.not_use_best_mse = not_use_best_mse
         self.dynamic_max_gap = dynamic_max_gap
         self.scale_dtype = scale_dtype
         self.use_layer_wise = use_layer_wise
+        self.multimodal = multimodal
         self._post_init()
 
     @classmethod
@@ -827,7 +879,7 @@ def get_default_AutoRound_config(processor_type: Optional[Union[str, torch_utils
 
 ######################## MX Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=MX_QUANT)
-class MXQuantConfig(BaseConfig):
+class MXQuantConfig(TorchBaseConfig):
     """Config class for MX quantization."""
 
     supported_configs: List[OperatorConfig] = []
@@ -940,7 +992,7 @@ def get_default_mx_config() -> MXQuantConfig:
 
 ######################## Dynamic Quant Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=PT2E_DYNAMIC_QUANT)
-class DynamicQuantConfig(BaseConfig):
+class DynamicQuantConfig(TorchBaseConfig):
     """Config class for dynamic quantization."""
 
     name = PT2E_DYNAMIC_QUANT
@@ -1014,7 +1066,7 @@ def get_default_dynamic_config() -> DynamicQuantConfig:
 
 ######################## Static Quant Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=STATIC_QUANT)
-class StaticQuantConfig(BaseConfig):
+class StaticQuantConfig(TorchBaseConfig):
     """Config class for static quantization."""
 
     name = STATIC_QUANT
@@ -1043,6 +1095,7 @@ class StaticQuantConfig(BaseConfig):
         act_algo: str = "minmax",
         excluded_precisions: list = [],
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+        model_info: Optional[List[Tuple[str, Callable]]] = None,
     ):
         """Init Static Quant Configs."""
         super().__init__(white_list=white_list)
@@ -1055,6 +1108,7 @@ class StaticQuantConfig(BaseConfig):
         self.act_granularity = act_granularity
         self.act_algo = act_algo
         self.excluded_precisions = excluded_precisions
+        self.model_info = model_info
         self._post_init()
 
     @classmethod
@@ -1072,10 +1126,28 @@ class StaticQuantConfig(BaseConfig):
         _, _, _, _, model_info = get_quantizable_ops_recursively(model, example_inputs=example_inputs)
         return model_info
 
-    @staticmethod
-    def get_model_info(model: torch.nn.Module, example_inputs=None) -> List[Tuple[str, Callable]]:
+    def get_model_info_for_ipex_xpu(self, model: torch.nn.Module) -> List[Tuple[str, Callable]]:  # pragma: no cover
+        if self.model_info:
+            return self.model_info
+        else:
+            white_list = torch.quantization.quantization_mappings.get_default_qconfig_propagation_list()
+            filter_result = []
+            for op_name, module in model.named_modules():
+                if type(module) in white_list:
+                    pair = (op_name, type(module).__name__)
+                    filter_result.append(pair)
+            logger.debug(f"Get model info: {filter_result}")
+            self.model_info = filter_result
+            return filter_result
+
+    def get_model_info(self, model: torch.nn.Module, example_inputs=None) -> List[Tuple[str, Callable]]:
+        from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
+
         if is_ipex_imported():
-            return StaticQuantConfig.get_model_info_for_ipex(model, example_inputs)
+            if auto_detect_accelerator().current_device() == "cpu":
+                return StaticQuantConfig.get_model_info_for_ipex(model, example_inputs)
+            else:
+                return StaticQuantConfig.get_model_info_for_ipex_xpu(self, model)
 
     def to_config_mapping(
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
@@ -1103,7 +1175,7 @@ def get_default_static_config() -> StaticQuantConfig:
 
 ######################## Smooth Quant Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=SMOOTH_QUANT)
-class SmoothQuantConfig(BaseConfig):
+class SmoothQuantConfig(TorchBaseConfig):
     """Config class for smooth quantization."""
 
     name = SMOOTH_QUANT
@@ -1217,7 +1289,7 @@ def get_default_sq_config() -> SmoothQuantConfig:
 
 ######################## HQQ Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=HQQ, priority=PRIORITY_HQQ)
-class HQQConfig(BaseConfig):
+class HQQConfig(TorchBaseConfig):
     # Half-Quadratic Quantization (HQQ), more details:
     # Blog: https://mobiusml.github.io/hqq_blog/
     # Code: https://github.com/mobiusml/hqq
@@ -1298,7 +1370,7 @@ def get_default_hqq_config() -> HQQConfig:
 
 ######################## FP8 Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=FP8_QUANT)
-class FP8Config(BaseConfig):
+class FP8Config(TorchBaseConfig):
     """Config class for FP8 quantization."""
 
     name = FP8_QUANT
@@ -1393,7 +1465,7 @@ def get_default_fp8_config_set() -> FP8Config:
 
 ######################## MixPrecision Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=MIX_PRECISION)
-class MixPrecisionConfig(BaseConfig):
+class MixPrecisionConfig(TorchBaseConfig):
     """Config class for mix-precision."""
 
     name = MIX_PRECISION
@@ -1490,8 +1562,7 @@ def get_woq_tuning_config() -> list:
         the list of WOQ quant config.
     """
     RTN_G32ASYM = RTNConfig(use_sym=False, group_size=32)
+    AUTO_ROUND_CONFIG = AutoRoundConfig(use_sym=False, group_size=32, seqlen=512)
     GPTQ_G32ASYM = GPTQConfig(use_sym=False, group_size=32)
-    GPTQ_G32ASYM_DISABLE_LAST_LINEAR = GPTQConfig(use_sym=False).set_local("*.lm_head", GPTQConfig(dtype="fp32"))
-    GPTQ_G128ASYM = GPTQConfig(group_size=128, use_sym=False)
     AWQ_G32ASYM = AWQConfig(use_sym=False, group_size=32)
-    return [RTN_G32ASYM, GPTQ_G32ASYM, GPTQ_G32ASYM_DISABLE_LAST_LINEAR, GPTQ_G128ASYM, AWQ_G32ASYM]
+    return [RTN_G32ASYM, AUTO_ROUND_CONFIG, GPTQ_G32ASYM, AWQ_G32ASYM]

@@ -115,6 +115,7 @@ set_attr = set_module
 
 
 def get_model_info(model: torch.nn.Module, white_module_list: List[Callable]) -> List[Tuple[str, str]]:
+    """Get model info according to white_module_list."""
     module_dict = dict(model.named_modules())
     filter_result = []
     filter_result_set = set()
@@ -129,6 +130,11 @@ def get_model_info(model: torch.nn.Module, white_module_list: List[Callable]) ->
 
 
 def get_double_quant_config_dict(double_quant_type="BNB_NF4"):
+    """Query config dict of double_quant according to double_quant_type.
+
+    Args:
+        double_quant_type (str, optional): double_quant type. Defaults to "BNB_NF4".
+    """
     from neural_compressor.torch.utils.constants import DOUBLE_QUANT_CONFIGS
 
     assert double_quant_type in DOUBLE_QUANT_CONFIGS, "Supported double quant configs: {}".format(
@@ -272,3 +278,65 @@ def get_processor_type_from_user_config(user_processor_type: Optional[Union[str,
     else:
         raise NotImplementedError(f"Unsupported processor type: {user_processor_type}")
     return processor_type
+
+
+def dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None):
+    """Download hugging face model from hf hub."""
+    import os
+
+    from huggingface_hub.constants import DEFAULT_REVISION, HUGGINGFACE_HUB_CACHE
+    from huggingface_hub.file_download import REGEX_COMMIT_HASH, repo_folder_name
+    from huggingface_hub.utils import EntryNotFoundError
+
+    if cache_dir is None:
+        cache_dir = HUGGINGFACE_HUB_CACHE
+    if revision is None:
+        revision = DEFAULT_REVISION
+    if repo_type is None:
+        repo_type = "model"
+    storage_folder = os.path.join(cache_dir, repo_folder_name(repo_id=repo_id, repo_type=repo_type))
+    commit_hash = None
+    if REGEX_COMMIT_HASH.match(revision):
+        commit_hash = revision
+    else:
+        ref_path = os.path.join(storage_folder, "refs", revision)
+        if os.path.exists(ref_path):
+            with open(ref_path) as f:
+                commit_hash = f.read()
+    if storage_folder and commit_hash:
+        pointer_path = os.path.join(storage_folder, "snapshots", commit_hash)
+        if os.path.isdir(pointer_path):
+            return pointer_path
+    else:  # pragma: no cover
+        from huggingface_hub import snapshot_download
+
+        file_path = snapshot_download(repo_id)
+        return file_path
+
+
+def load_empty_model(pretrained_model_name_or_path, cls=None, **kwargs):
+    """Load a empty model."""
+    import os
+
+    from accelerate import init_empty_weights
+    from transformers import AutoConfig, AutoModelForCausalLM
+    from transformers.models.auto.auto_factory import _BaseAutoModelClass
+
+    cls = AutoModelForCausalLM if cls is None else cls
+    is_local = os.path.isdir(pretrained_model_name_or_path)
+    if is_local:  # pragma: no cover
+        path = pretrained_model_name_or_path
+    else:
+        path = dowload_hf_model(pretrained_model_name_or_path)
+    if cls.__base__ == _BaseAutoModelClass:
+        config = AutoConfig.from_pretrained(path, **kwargs)
+        with init_empty_weights():
+            model = cls.from_config(config)
+    else:  # pragma: no cover
+        config = cls.config_class.from_pretrained(path, **kwargs)
+        with init_empty_weights():
+            model = cls(config)
+    model.tie_weights()
+    model.eval()
+    model.path = pretrained_model_name_or_path
+    return model

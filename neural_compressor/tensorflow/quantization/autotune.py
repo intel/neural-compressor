@@ -44,6 +44,7 @@ def autotune(
     eval_args: Optional[Tuple[Any]] = None,
     calib_dataloader: Callable = None,
     calib_iteration: int = 100,
+    calib_func: Callable = None,
 ) -> Optional[BaseModel]:
     """The main entry of auto-tune."""
     model = Model(model)
@@ -57,7 +58,7 @@ def autotune(
         tuning_logger.trial_start(trial_index=trial_index)
         tuning_logger.execution_start()
         logger.info(quant_config.to_dict())
-        q_model = quantize_model(model, quant_config, calib_dataloader, calib_iteration)
+        q_model = quantize_model(model, quant_config, calib_dataloader, calib_iteration, calib_func)
         tuning_logger.execution_end()
         tuning_logger.evaluation_start()
         eval_result: float = eval_func_wrapper.evaluate(q_model)
@@ -71,7 +72,9 @@ def autotune(
                 logger.info("Re-quantizing with best quantization config...")
                 del q_model
                 best_quant_config: BaseConfig = best_trial_record.quant_config
-                best_quant_model = quantize_model(model, best_quant_config, calib_dataloader, calib_iteration)
+                best_quant_model = quantize_model(
+                    model, best_quant_config, calib_dataloader, calib_iteration, calib_func
+                )
             else:
                 best_quant_model = q_model
             break
