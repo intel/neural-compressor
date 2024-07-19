@@ -1097,7 +1097,19 @@ class StaticQuantConfig(TorchBaseConfig):
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
         model_info: Optional[List[Tuple[str, Callable]]] = None,
     ):
-        """Init Static Quant Configs."""
+        """Init StaticQuant Config.
+
+        Args:
+            w_dtype (str): Data type for weights, default is "int8".
+            w_sym (bool): Whether to use symmetric quantization for weights, default is True.
+            w_granularity (str): Level of quantization granularity for weights, default is "per_channel".
+            w_algo (str): Quatization algorithm used to compute parameters for weights, default is "minmax".
+            act_dtype (str): Data type for activations, default is "uint8".
+            act_sym (bool): Whether to use symmetric quantization for activations, default is False.
+            act_granularity (str): Level of quantization granularity for activations, default is "per_channel".
+            act_algo (str): Quatization algorithm used to compute parameters for activations, default is "minmax".
+            excluded_precisions (list): Precisions to be excluded, Default value is empty list.
+        """
         super().__init__(white_list=white_list)
         self.w_dtype = w_dtype
         self.w_sym = w_sym
@@ -1205,7 +1217,7 @@ class SmoothQuantConfig(TorchBaseConfig):
         act_dtype: str = "uint8",
         act_sym: bool = False,
         act_granularity: str = "per_tensor",
-        act_algo: str = "kl",
+        act_algo: str = "minmax",
         excluded_precisions: list = [],
         alpha: float = 0.5,
         folding: bool = False,
@@ -1220,7 +1232,28 @@ class SmoothQuantConfig(TorchBaseConfig):
         auto_alpha_args: dict = None,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
-        """Init SmoothQuant Configs."""
+        """Init SmoothQuant Config.
+
+        Args:
+            w_dtype (str): Data type for weights, default is "int8".
+            w_sym (bool): Whether to use symmetric quantization for weights, default is True.
+            w_granularity (str): Level of quantization granularity for weights, default is "per_channel".
+            w_algo (str): Quatization algorithm used to compute parameters for weights, default is "minmax".
+            act_dtype (str): Data type for activations, default is "uint8".
+            act_sym (bool): Whether to use symmetric quantization for activations, default is False.
+            act_granularity (str): Level of quantization granularity for activations, default is "per_channel".
+            act_algo (str): Quatization algorithm used to compute parameters for activations, default is "minmax".
+            excluded_precisions (list): Precisions to be excluded, Default value is empty list.
+            alpha (float): Value to balance input and weight quantization error, between 0 and 1, default is 0.5.
+            folding (bool): Whether to fold mul into the previous layer, default is False.
+            scale_sharing (bool): Whether share the same scale for layers with the same input, default is False.
+            init_alpha (float): Value to get baseline quantization error for auto-tuning, default is 0.5.
+            alpha_min (float): Min value of auto-tuning alpha search space, default is 0.0.
+            alpha_max (float): Max value of auto-tuning alpha search space, default is 1.0.
+            alpha_step (float): Step_size of auto-tuning alpha search space, default is 0.1.
+            shared_criterion (str): Criterion for input LayerNorm op of a transformer block, default is "max".
+            do_blockwise (bool): Whether to enable block-wise auto-tuning, default is False.
+        """
         super().__init__(white_list=white_list)
         self.w_dtype = w_dtype
         self.w_sym = w_sym
@@ -1290,9 +1323,12 @@ def get_default_sq_config() -> SmoothQuantConfig:
 ######################## HQQ Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=HQQ, priority=PRIORITY_HQQ)
 class HQQConfig(TorchBaseConfig):
-    # Half-Quadratic Quantization (HQQ), more details:
-    # Blog: https://mobiusml.github.io/hqq_blog/
-    # Code: https://github.com/mobiusml/hqq
+    """Configuration class for Half-Quadratic Quantization (HQQ).
+
+    HQQ is a quantization algorithm that reduces the precision of weights and activations in neural networks.
+    For more details, refer to the blog: https://mobiusml.github.io/hqq_blog/
+    and the code: https://github.com/mobiusml/hqq
+    """
 
     name = HQQ
     params_list = [
@@ -1301,7 +1337,6 @@ class HQQConfig(TorchBaseConfig):
         "quant_zero",
         "quant_scale",
         "scale_quant_group_size",
-        # quant_lm_head
         "quant_lm_head",
     ]
     supported_configs: List[OperatorConfig] = []
@@ -1314,10 +1349,22 @@ class HQQConfig(TorchBaseConfig):
         quant_zero: bool = True,
         quant_scale: bool = False,
         scale_quant_group_size: int = 128,
-        # quant lm_head
         quant_lm_head: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
+        """Initialize HQQConfig.
+
+        Args:
+            dtype (str): Data type for quantization. Default is "int".
+            bits (int): Number of bits for quantization. Default is 4.
+            group_size (int): Group size for quantization. Default is 64.
+            quant_zero (bool): Whether to quantize zero values. Default is True.
+            quant_scale (bool): Whether to quantize scale values. Default is False.
+            scale_quant_group_size (int): Group size for scale quantization. Default is 128.
+            quant_lm_head (bool): Whether to quantize the language model head. Default is False.
+            white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
+                Default is DEFAULT_WHITE_LIST.
+        """
         super().__init__(white_list=white_list)
         self.dtype = dtype
         self.bits = bits
@@ -1330,7 +1377,11 @@ class HQQConfig(TorchBaseConfig):
 
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
-        # TODO: to be refined
+        """Register supported configurations for HQQ.
+
+        Returns:
+            List[OperatorConfig]: List of supported operator configurations.
+        """
         supported_configs = []
         linear_hqq_config = HQQConfig()
         operators = list(WOQ_WHITE_LIST)
@@ -1339,6 +1390,14 @@ class HQQConfig(TorchBaseConfig):
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+        """Get information about the model.
+
+        Args:
+            model (torch.nn.Module): The model.
+
+        Returns:
+            List[Tuple[str, Callable]]: List of tuples containing the name and type of each module in the model.
+        """
         filter_result = []
         for op_name, module in model.named_modules():
             if isinstance(module, WOQ_WHITE_LIST):
@@ -1349,6 +1408,16 @@ class HQQConfig(TorchBaseConfig):
     def to_config_mapping(
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
+        """Convert the configuration to a mapping.
+
+        Args:
+            config_list (List[BaseConfig]): List of base configurations. Default is None.
+            model_info (List[Tuple[str, str]]): List of tuples containing the name and type of each module in the model.
+                Default is None.
+
+        Returns:
+            OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]: The configuration mapping.
+        """
         if not self.quant_lm_head:
             self.set_local(LM_HEAD_NAMES, HQQConfig(dtype="fp32"))
         config_mapping = super().to_config_mapping(config_list, model_info)
@@ -1356,6 +1425,11 @@ class HQQConfig(TorchBaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "HQQConfig", List["HQQConfig"]]:
+        """Get the configuration set for tuning.
+
+        Returns:
+            Union[None, "HQQConfig", List["HQQConfig"]]: The configuration set for tuning.
+        """
         return HQQConfig(bits=[4, 8])
 
 
