@@ -4,6 +4,14 @@ import shutil
 import pytest
 import torch
 
+try:
+    import intel_extension_for_pytorch as ipex
+
+    is_ipex_available = True
+except:  # pragma: no cover
+    is_ipex_available = False
+    assert False, "Please install IPEX for static quantization."
+
 from neural_compressor.torch.quantization import (
     StaticQuantConfig,
     convert,
@@ -11,10 +19,9 @@ from neural_compressor.torch.quantization import (
     prepare,
     quantize,
 )
-from neural_compressor.torch.utils import is_ipex_available
+from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
-if is_ipex_available():
-    import intel_extension_for_pytorch as ipex
+device = auto_detect_accelerator().current_device()
 
 
 def build_simple_torch_model():
@@ -53,7 +60,7 @@ class TestStaticQuant:
     def teardown_class(self):
         shutil.rmtree("saved_results", ignore_errors=True)
 
-    @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
+    @pytest.mark.skipif(not is_ipex_available or device != "cpu", reason="Requires IPEX on CPU device")
     def test_static_quant_default(self):
         fp32_model = copy.deepcopy(self.fp32_model)
         quant_config = get_default_static_config()
@@ -70,7 +77,7 @@ class TestStaticQuant:
         q_model = convert(prepared_model)
         assert q_model is not None, "Quantization failed!"
 
-    @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
+    @pytest.mark.skipif(not is_ipex_available or device != "cpu", reason="Requires IPEX on CPU device")
     def test_static_quant_fallback(self):
         fp32_model = copy.deepcopy(self.fp32_model)
         quant_config = get_default_static_config()
@@ -100,7 +107,7 @@ class TestStaticQuant:
                 dtype = q_model.tune_cfg[" "]["q_op_infos"][op]["input_tensor_infos"][0]["force_dtype"]
                 assert dtype == "torch.float32", "Failed to fallback fc2 layer, please check!"
 
-    @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
+    @pytest.mark.skipif(not is_ipex_available or device != "cpu", reason="Requires IPEX on CPU device")
     @pytest.mark.parametrize(
         "act_sym, act_algo",
         [
@@ -119,7 +126,7 @@ class TestStaticQuant:
         q_model = convert(prepared_model)
         assert q_model is not None, "Quantization failed!"
 
-    @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
+    @pytest.mark.skipif(not is_ipex_available or device != "cpu", reason="Requires IPEX on CPU device")
     def test_static_quant_accuracy(self):
         class M(torch.nn.Module):
             def __init__(self):
@@ -148,7 +155,7 @@ class TestStaticQuant:
         # set a big atol to avoid random issue
         assert torch.allclose(output1, output2, atol=2e-2), "Accuracy gap atol > 0.02 is unexpected. Please check."
 
-    @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
+    @pytest.mark.skipif(not is_ipex_available or device != "cpu", reason="Requires IPEX on CPU device")
     def test_static_quant_save_load(self):
         from intel_extension_for_pytorch.quantization import convert as ipex_convert
         from intel_extension_for_pytorch.quantization import prepare as ipex_prepare
@@ -196,7 +203,7 @@ class TestStaticQuant:
         loaded_model = load("saved_results")
         assert isinstance(loaded_model, torch.jit.ScriptModule)
 
-    @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
+    @pytest.mark.skipif(not is_ipex_available or device != "cpu", reason="Requires IPEX on CPU device")
     def test_static_quant_with_quantize_API(self):
         # quantize API
         fp32_model = copy.deepcopy(self.fp32_model)
@@ -205,7 +212,7 @@ class TestStaticQuant:
         q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
         assert q_model is not None, "Quantization failed!"
 
-    @pytest.mark.skipif(not is_ipex_available(), reason="Requires IPEX")
+    @pytest.mark.skipif(not is_ipex_available or device != "cpu", reason="Requires IPEX on CPU device")
     def test_static_quant_mixed_precision(self):
         fp32_model = copy.deepcopy(self.fp32_model)
         example_inputs = self.input
@@ -227,3 +234,49 @@ class TestStaticQuant:
         run_fn(prepared_model)
         q_model = convert(prepared_model)
         assert q_model is not None, "Quantization failed!"
+
+    @pytest.mark.skipif(not is_ipex_available or device == "cpu", reason="Requires IPEX on XPU device")
+    @pytest.mark.parametrize(
+        "act_sym, act_algo",
+        [
+            (True, "kl"),
+            (True, "minmax"),
+            (False, "kl"),
+            (False, "minmax"),
+        ],
+    )
+    def test_static_quant_xpu(self, act_sym, act_algo):
+        import torchvision.models as models
+
+        model = models.resnet50(pretrained=True)
+        fp32_model = copy.deepcopy(model)
+        data = torch.rand(1, 3, 224, 224)
+        example_inputs = data.to("xpu")
+
+        def run_fn(model):
+            model(example_inputs)
+
+        quant_config = StaticQuantConfig(act_sym=act_sym, act_algo=act_algo, excluded_precisions=["bf16"])
+        # fallback by op_name
+        quant_config.set_local("conv1", StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
+        prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
+        run_fn(prepared_model)
+        q_model = convert(prepared_model)
+        run_fn(q_model)
+        assert q_model is not None, "Quantization failed!"
+
+        quant_config = StaticQuantConfig(act_sym=act_sym, act_algo=act_algo, excluded_precisions=["bf16"])
+        # fallback by op_type
+        quant_config.set_local("Conv2d", StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
+        prepared_model = prepare(fp32_model, quant_config=quant_config, example_inputs=example_inputs)
+        run_fn(prepared_model)
+        q_model = convert(prepared_model)
+        run_fn(q_model)
+        assert q_model is not None, "Quantization failed!"
+
+        q_model.save("saved_results")
+        from neural_compressor.torch.quantization import load
+
+        # load
+        loaded_model = load("saved_results")
+        assert isinstance(loaded_model, torch.jit.ScriptModule), "Loading failed!"
