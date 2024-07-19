@@ -13,7 +13,6 @@ function init_params {
   iters=100
   batch_size=16
   tuned_checkpoint=saved_results
-  task=lambada_openai
   echo ${max_eval_samples}
   for var in "$@"
   do
@@ -56,35 +55,28 @@ function init_params {
 function run_benchmark {
     extra_cmd=''
 
-    if [[ ${mode} == "accuracy" ]]; then
-        mode_cmd=" --accuracy "
-        extra_cmd=$extra_cmd
-    elif [[ ${mode} == "performance" ]]; then
-        mode_cmd=" --performance --iters "${iters}
-        extra_cmd=$extra_cmd
-    else
-        echo "Error: No such mode: ${mode}"
-        exit 1
-    fi
+    # if [[ ${mode} == "accuracy" ]]; then
+    #     mode_cmd=" --accuracy "
+    # elif [[ ${mode} == "performance" ]]; then
+    #     mode_cmd=" --performance --iters "${iters}
+    # else
+    #     echo "Error: No such mode: ${mode}"
+    #     exit 1
+    # fi
+
     echo $extra_cmd
-    
-    if [ "${topology}" = "opt_125m_pt2e_static" ]; then
-        model_name_or_path="facebook/opt-125m"
-        tuned_checkpoint="saved"
+
+    if [ "${topology}" = "resnet18_pt2e_static" ]; then
+        model_name_or_path="resnet18"
     fi
+    python main.py -a ${model_name_or_path} ${dataset_location} -q -o ${tuned_checkpoint}
+
+
     if [[ ${mode} == "accuracy" ]]; then
-        python -u run_clm_no_trainer.py \
-            --model ${model_name_or_path} \
-            --output_dir ${tuned_checkpoint} \
-            --task ${task} \
-            --batch_size ${batch_size} \
-            ${extra_cmd} ${mode_cmd}
+        python main.py -a ${model_name_or_path} ${dataset_location} -e -o ${tuned_checkpoint} ${extra_cmd}
     elif [[ ${mode} == "performance" ]]; then
-        incbench --num_cores_per_instance 4 run_clm_no_trainer.py \
-            --model ${model_name_or_path} \
-            --batch_size ${batch_size} \
-            --output_dir ${tuned_checkpoint} \
-            ${extra_cmd} ${mode_cmd}
+        incbench --num_cores_per_instance 4 main.py -a ${model_name_or_path} 
+          ${dataset_location} -e -o ${tuned_checkpoint} ${extra_cmd}
     else
         echo "Error: No such mode: ${mode}"
         exit 1
