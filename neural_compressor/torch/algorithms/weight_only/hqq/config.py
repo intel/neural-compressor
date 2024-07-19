@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Configuration for HQQ."""
 
 import os
 from collections import namedtuple
@@ -33,6 +33,8 @@ __all__ = [
 
 
 class HQQGlobalOptions:
+    """Global options for HQQ."""
+
     use_half = os.getenv("HQQ_NOT_USE_HALF", "0") == "0"
 
 
@@ -41,6 +43,8 @@ hqq_global_option = HQQGlobalOptions()
 
 @dataclass
 class QTensorConfig:
+    """Configuration class for quantized tensors."""
+
     nbits: int
     channel_wise: bool = True
     group_size: int = 128
@@ -49,6 +53,7 @@ class QTensorConfig:
     pack: bool = True
 
     def __repr__(self) -> str:
+        """Return a string representation of the QTensorConfig."""
         return (
             f"QTensorConfig(nbits={self.nbits}, channel_wise={self.channel_wise}, "
             f"group_size={self.group_size}, optimize={self.optimize}, "
@@ -67,15 +72,25 @@ class HQQModuleConfig(
         ["weight", "scale", "zero"],
     )
 ):
+    """Configuration class for HQQModule.
+
+    Args:
+        weight (Any): The weight quantization configuration.
+        scale (Any): The scale quantization configuration.
+        zero (Any): The zero quantization configuration.
+    """
+
     def __new__(
         cls,
         weight=default_weight_quant_config,
         scale=default_scale_quant_config,
         zero=default_zero_quant_config,
     ):
+        """Create a new HQQModuleConfig."""
         return super().__new__(cls, weight, scale, zero)
 
     def __repr__(self) -> str:
+        """Return a string representation of the HQQModuleConfig."""
         return (
             f"HQQModuleConfig(\n" f"    weight={self.weight},\n" f"    scale={self.scale},\n" f"    zero={self.zero}\n)"
         )

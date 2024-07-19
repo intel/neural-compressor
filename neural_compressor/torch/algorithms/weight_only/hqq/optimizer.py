@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Optimization logic of HQQ."""
 
 import numpy as np
 import torch
@@ -35,6 +35,22 @@ def optimize_weights_proximal_legacy(
     opt_params={"lp_norm": 0.7, "beta": 1e1, "kappa": 1.01, "iters": 20},
     verbose=False,
 ):
+    """Quantize the scale/zero of quantized tensor using the HQQ.
+
+    Args:
+        tensor (torch.Tensor): The input tensor to optimize.
+        scale (torch.Tensor): The scaling factor for quantization.
+        zero (torch.Tensor): The zero-point for quantization.
+        min_max (tuple): The minimum and maximum values for quantization.
+        axis (int, optional): The axis along which to compute the mean for zero-point calculation. Defaults to 0.
+        device (str, optional): The device to use for computation. Defaults to "cuda".
+        opt_params (dict, optional): Optimization parameters.
+            Defaults to {"lp_norm": 0.7, "beta": 1e1, "kappa": 1.01, "iters": 20}.
+        verbose (bool, optional): Whether to print verbose output. Defaults to False.
+
+    Returns:
+        tuple: A tuple containing the optimized scale and zero-point tensors.
+    """
     lp_norm, beta, kappa, iters = (
         opt_params["lp_norm"],
         opt_params["beta"],

@@ -19,31 +19,57 @@
 # Notice: Copied from from https://github.com/mobiusml/hqq
 # Written by Dr. Hicham Badri @Mobius Labs GmbH - 2023
 #####################################################
+"""Bit packing logic for HQQ."""
+
 
 import numpy as np
 import torch
-
-from .utility import is_divisible
 
 __all__ = ["Packer"]
 
 
 # Bit packing logic. format: pack/unpack_nBits_target-<uint8 or int32>
 class BitPack:
+    """Packing and unpacking tensors into different bit representations."""
+
     # 8-bit
     ################################################
     @staticmethod
     def pack_8bit_u8(W_q):
+        """Packs the given tensor into 8-bit unsigned integers.
+
+        Args:
+            W_q (torch.Tensor): The input tensor.
+
+        Returns:
+            torch.Tensor: The packed tensor.
+        """
         return W_q.to(torch.uint8)
 
     @staticmethod
     def unpack_8bit_u8(W_q):
+        """Unpacks the given 8-bit tensor into 8-bit unsigned integer tensor.
+
+        Args:
+            W_q (torch.Tensor): The input tensor.
+
+        Returns:
+            torch.Tensor: The unpacked tensor.
+        """
         return W_q
 
     # 4-bit
     ################################################
     @staticmethod
     def pack_4bit_u8(W_q):  # uint8 > uint8/2
+        """Packs the given 4-bit tensor into 8-bit unsigned integers.
+
+        Args:
+            W_q (torch.Tensor): The input tensor.
+
+        Returns:
+            torch.Tensor: The packed tensor.
+        """
         W_q = W_q.to(torch.uint8)
         _step = int(len(W_q) / 2)
         return (W_q[:_step] << 4) | W_q[_step:]
@@ -51,6 +77,14 @@ class BitPack:
     # A bit faster than the _cat version
     @staticmethod
     def unpack_4bit_u8(W_q):  # uint8/2 > uint8
+        """Unpacks the given 4-bit tensor into 8-bit unsigned integers.
+
+        Args:
+            W_q (torch.Tensor): The input tensor.
+
+        Returns:
+            torch.Tensor: The unpacked tensor.
+        """
         _step = W_q.shape[0]
         tmp = torch.empty([2 * _step, W_q.shape[1]], dtype=torch.uint8, device=W_q.device)
         tmp[:_step] = (W_q & 0b11110000) >> 4
@@ -61,6 +95,14 @@ class BitPack:
     ################################################
     @staticmethod
     def pack_2bit_u8(W_q):  # uint8 > uint8/4
+        """Packs the given 2-bit tensor into 8-bit unsigned integers.
+
+        Args:
+            W_q (torch.Tensor): The input tensor.
+
+        Returns:
+            torch.Tensor: The packed tensor.
+        """
         W_q = W_q.to(torch.uint8)
         _step = int(len(W_q) / 4)
         return W_q[:_step] << 6 | W_q[_step : 2 * _step] << 4 | W_q[2 * _step : 3 * _step] << 2 | W_q[3 * _step :]
@@ -68,6 +110,14 @@ class BitPack:
     # A bit faster than the _cat version
     @staticmethod
     def unpack_2bit_u8(W_q):
+        """Unpacks the tensor packed by `pack_2bit_u8`.
+
+        Args:
+            W_q (torch.Tensor): The input tensor.
+
+        Returns:
+            torch.Tensor: The unpacked tensor.
+        """
         _step = W_q.shape[0]
         tmp = torch.empty([4 * _step, W_q.shape[1]], dtype=torch.uint8, device=W_q.device)
         tmp[:_step] = (W_q & 0b11000000) >> 6
@@ -80,6 +130,14 @@ class BitPack:
     ################################################
     @staticmethod
     def pack_3bit_32(W_q_in):
+        """Packs the given 3-bit tensor into 32-bit signed integers.
+
+        Args:
+            W_q_in (torch.Tensor): The input tensor.
+
+        Returns:
+            torch.Tensor: The packed tensor.
+        """
         W_q = torch.zeros(
             [int(10 * np.ceil(W_q_in.shape[0] / 10.0)), W_q_in.shape[1]], device=W_q_in.device, dtype=torch.int32
         )
@@ -102,6 +160,14 @@ class BitPack:
     # A bit faster than _cat version
     @staticmethod
     def unpack_3bit_32(W_q):
+        """Unpacks the tensor packed by `pack_3bit_32`.
+
+        Args:
+            W_q (torch.Tensor): The input tensor.
+
+        Returns:
+            torch.Tensor: The unpacked tensor.
+        """
         _step = W_q.shape[0]
         tmp = torch.empty([10 * _step, W_q.shape[1]], dtype=torch.uint8, device=W_q.device)
         tmp[:_step] = (W_q & 0b00111000000000000000000000000000) >> 27
@@ -118,7 +184,8 @@ class BitPack:
 
 
 class Packer:
-    # TODO: Refine the packer
+    """Pack/unpack functions collection."""
+
     bit_to_packing = {8: "8bit_u8", 4: "4bit_u8", 3: "3bit_32", 2: "2bit_u8"}
 
     pack_fn_mapping = {
@@ -137,8 +204,24 @@ class Packer:
 
     @staticmethod
     def get_pack_fn(nbits: int):
+        """Get the pack function for the specified number of bits.
+
+        Args:
+            nbits (int): The number of bits.
+
+        Returns:
+            function: The pack function for the specified number of bits.
+        """
         return Packer.pack_fn_mapping[Packer.bit_to_packing[nbits]]
 
     @staticmethod
     def get_unpack_fn(nbits: int):
+        """Get the unpack function for the specified number of bits.
+
+        Args:
+            nbits (int): The number of bits.
+
+        Returns:
+            function: The unpack function for the specified number of bits.
+        """
         return Packer.unpack_fn_mapping[Packer.bit_to_packing[nbits]]
