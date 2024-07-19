@@ -44,7 +44,8 @@ def optimize_weights_proximal_legacy(
         min_max (tuple): The minimum and maximum values for quantization.
         axis (int, optional): The axis along which to compute the mean for zero-point calculation. Defaults to 0.
         device (str, optional): The device to use for computation. Defaults to "cuda".
-        opt_params (dict, optional): Optimization parameters. Defaults to {"lp_norm": 0.7, "beta": 1e1, "kappa": 1.01, "iters": 20}.
+        opt_params (dict, optional): Optimization parameters.
+            Defaults to {"lp_norm": 0.7, "beta": 1e1, "kappa": 1.01, "iters": 20}.
         verbose (bool, optional): Whether to print verbose output. Defaults to False.
 
     Returns:

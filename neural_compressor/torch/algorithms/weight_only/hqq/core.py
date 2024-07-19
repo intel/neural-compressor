@@ -222,10 +222,12 @@ class HQQLinear(torch.nn.Linear):
 
         Args:
             W (torch.Tensor): The weight tensor to be quantized.
-            quant_config (HQQModuleConfig, optional): The quantization configuration. Defaults to default_hqq_module_config.
+            quant_config (HQQModuleConfig, optional): The quantization configuration.
+                Defaults to default_hqq_module_config.
 
         Returns:
-            Tuple[torch.Tensor, Dict[str, Any]]: A tuple containing the quantized weight tensor and a dictionary of additional information.
+            Tuple[torch.Tensor, Dict[str, Any]]: A tuple containing the quantized weight tensor
+                and a dictionary of additional information.
         """
         weight_quant_config, scale_quant_config, zero_quant_config = (
             quant_config.weight,
