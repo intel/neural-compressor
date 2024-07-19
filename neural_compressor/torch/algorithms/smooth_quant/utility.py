@@ -1922,8 +1922,8 @@ class TorchSmoothQuant:  # pragma: no cover
         Args:
             model (torch.nn.Module): Torch model.
             dataloader (DataLoader): Calibration dataloader.
-            traced_model (Optional[torch.jit.ScriptModule]): A specific model that shares the same architecture as the model and
-                could be traced by torch.jit. If not supplied, the model will be used instead.
+            traced_model (Optional[torch.jit.ScriptModule]): A specific model that shares the same architecture
+                as the model and could be traced by torch.jit. If not supplied, the model will be used instead.
 
         Returns:
             None
@@ -2312,7 +2312,8 @@ class TorchSmoothQuant:  # pragma: no cover
         Args:
             alpha (float or dict): Alpha value to balance the quantization difficulty of activation and weight.
                 Please refer to the paper for more details.
-            folding (bool): Whether to insert multiplication (False) or just allow foldable layers (True) for SmoothQuant.
+            folding (bool): Whether to insert multiplication (False) or just allow foldable layers (True)
+                for SmoothQuant.
             percentile (float): Not supported currently.
             op_types (list): The operation types to be smooth quantized.
             scales_per_op (dict): Not supported currently.
