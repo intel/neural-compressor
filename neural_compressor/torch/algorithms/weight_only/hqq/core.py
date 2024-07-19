@@ -291,7 +291,8 @@ class HQQLinear(torch.nn.Linear):
 
         Args:
             float_module (torch.nn.Linear): The floating-point module to convert.
-            quant_config (HQQModuleConfig, optional): The quantization configuration. Defaults to default_hqq_module_config.
+            quant_config (HQQModuleConfig, optional): The quantization configuration.
+                Defaults to default_hqq_module_config.
 
         Returns:
             HQQModule: The converted HQQModule instance.
