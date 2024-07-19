@@ -51,6 +51,8 @@ ipex_ver = get_ipex_version()
 
 
 class SmoothQuantQuantizer(Quantizer):
+    """SmoothQuantQuantizer Class."""
+
     def __init__(self, quant_config: OrderedDict = {}):  # pragma: no cover
         """Init a SmoothQuantQuantizer object.
 
