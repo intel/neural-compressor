@@ -1323,9 +1323,12 @@ def get_default_sq_config() -> SmoothQuantConfig:
 ######################## HQQ Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=HQQ, priority=PRIORITY_HQQ)
 class HQQConfig(TorchBaseConfig):
-    # Half-Quadratic Quantization (HQQ), more details:
-    # Blog: https://mobiusml.github.io/hqq_blog/
-    # Code: https://github.com/mobiusml/hqq
+    """Configuration class for Half-Quadratic Quantization (HQQ).
+
+    HQQ is a quantization algorithm that reduces the precision of weights and activations in neural networks.
+    For more details, refer to the blog: https://mobiusml.github.io/hqq_blog/
+    and the code: https://github.com/mobiusml/hqq
+    """
 
     name = HQQ
     params_list = [
@@ -1334,7 +1337,6 @@ class HQQConfig(TorchBaseConfig):
         "quant_zero",
         "quant_scale",
         "scale_quant_group_size",
-        # quant_lm_head
         "quant_lm_head",
     ]
     supported_configs: List[OperatorConfig] = []
@@ -1347,10 +1349,22 @@ class HQQConfig(TorchBaseConfig):
         quant_zero: bool = True,
         quant_scale: bool = False,
         scale_quant_group_size: int = 128,
-        # quant lm_head
         quant_lm_head: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
+        """Initialize HQQConfig.
+
+        Args:
+            dtype (str): Data type for quantization. Default is "int".
+            bits (int): Number of bits for quantization. Default is 4.
+            group_size (int): Group size for quantization. Default is 64.
+            quant_zero (bool): Whether to quantize zero values. Default is True.
+            quant_scale (bool): Whether to quantize scale values. Default is False.
+            scale_quant_group_size (int): Group size for scale quantization. Default is 128.
+            quant_lm_head (bool): Whether to quantize the language model head. Default is False.
+            white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
+                Default is DEFAULT_WHITE_LIST.
+        """
         super().__init__(white_list=white_list)
         self.dtype = dtype
         self.bits = bits
@@ -1363,7 +1377,11 @@ class HQQConfig(TorchBaseConfig):
 
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
-        # TODO: to be refined
+        """Register supported configurations for HQQ.
+
+        Returns:
+            List[OperatorConfig]: List of supported operator configurations.
+        """
         supported_configs = []
         linear_hqq_config = HQQConfig()
         operators = list(WOQ_WHITE_LIST)
@@ -1372,6 +1390,14 @@ class HQQConfig(TorchBaseConfig):
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+        """Get information about the model.
+
+        Args:
+            model (torch.nn.Module): The model.
+
+        Returns:
+            List[Tuple[str, Callable]]: List of tuples containing the name and type of each module in the model.
+        """
         filter_result = []
         for op_name, module in model.named_modules():
             if isinstance(module, WOQ_WHITE_LIST):
@@ -1382,6 +1408,16 @@ class HQQConfig(TorchBaseConfig):
     def to_config_mapping(
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
+        """Convert the configuration to a mapping.
+
+        Args:
+            config_list (List[BaseConfig]): List of base configurations. Default is None.
+            model_info (List[Tuple[str, str]]): List of tuples containing the name and type of each module in the model.
+                Default is None.
+
+        Returns:
+            OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]: The configuration mapping.
+        """
         if not self.quant_lm_head:
             self.set_local(LM_HEAD_NAMES, HQQConfig(dtype="fp32"))
         config_mapping = super().to_config_mapping(config_list, model_info)
@@ -1389,6 +1425,11 @@ class HQQConfig(TorchBaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "HQQConfig", List["HQQConfig"]]:
+        """Get the configuration set for tuning.
+
+        Returns:
+            Union[None, "HQQConfig", List["HQQConfig"]]: The configuration set for tuning.
+        """
         return HQQConfig(bits=[4, 8])
 
 
