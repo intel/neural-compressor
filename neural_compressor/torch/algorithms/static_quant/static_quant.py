@@ -14,6 +14,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""The quantizer using StaticQuant path."""
+
 
 import json
 import os
@@ -50,6 +52,8 @@ ipex_ver = get_ipex_version()
 
 
 class StaticQuantQuantizer(Quantizer):
+    """The quantizer using Static Quant."""
+
     def __init__(self, quant_config: OrderedDict = {}):
         """Init a StaticQuantQuantizer object.
 
@@ -64,9 +68,9 @@ class StaticQuantQuantizer(Quantizer):
         """Prepares a given model for quantization.
 
         Args:
-            model: A float model to be quantized.
-            example_inputs: Used to trace torch model.
-            inplace: Whether to carry out model transformations in-place. Defaults to True.
+            model (torch.nn.Module): raw fp32 model or prepared model.
+            example_inputs (tensor/tuple/dict): used to trace torch model.
+            inplace (bool, optional): whether to carry out model transformations in-place. Defaults to True.
 
         Returns:
             A prepared model.
@@ -134,9 +138,9 @@ class StaticQuantQuantizer(Quantizer):
         """Converts a prepared model to a quantized model.
 
         Args:
-            model: The prepared model to be converted.
-            example_inputs: Used to trace torch model.
-            inplace: Whether to carry out model transformations in-place. Defaults to True.
+            model (QuantizationInterceptionModule): the prepared model to be converted.
+            example_inputs (tensor/tuple/dict): used to trace torch model.
+            inplace (bool, optional): whether to carry out model transformations in-place. Defaults to True.
 
         Returns:
             A quantized model.
@@ -170,13 +174,13 @@ class StaticQuantQuantizer(Quantizer):
 
 
 def _ipex_post_quant_process(model, example_inputs, use_bf16, inplace=False):
-    """Convert to a jit model.
+    """Converts to a jit model.
 
     Args:
-        model: a prepared model.
-        example_inputs: used to trace torch model.
-        use_bf16: whether to use bf16 for mixed precision.
-        inplace: whether to carry out model transformations in-place.
+        model (QuantizationInterceptionModule): a prepared model.
+        example_inputs (tensor/tuple/dict): used to trace torch model.
+        use_bf16 (bool): whether to use bf16 for mixed precision.
+        inplace (bool, optional): whether to carry out model transformations in-place. Defaults to True.
 
     Returns:
         A converted jit model.
