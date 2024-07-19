@@ -2,7 +2,6 @@ auto_round @ git+https://github.com/intel/auto-round.git@24b2e74070f2b4e6f26ff06
 expecttest
 intel_extension_for_pytorch
 numpy
-peft==0.10.0
 prettytable
 psutil
 pytest

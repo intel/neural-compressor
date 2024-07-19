@@ -15,4 +15,3 @@
 from .environ import *
 from .constants import *
 from .utility import *
-from neural_compressor.torch.algorithms.layer_wise import load_empty_model

@@ -32,9 +32,16 @@ def save(model, output_dir="./saved_results"):
 
     qmodel_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), WEIGHT_NAME)
     qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), QCONFIG_NAME)
-    model.ori_save(qmodel_file_path)
-    with open(qconfig_file_path, "w") as f:
-        json.dump(model.tune_cfg, f, indent=4)
+    device = next(model.parameters(), None).device.type if next(model.parameters(), None) else "cpu"
+    if device == "cpu":
+        model.ori_save(qmodel_file_path)
+        with open(qconfig_file_path, "w") as f:
+            json.dump(model.tune_cfg, f, indent=4)
+    else:  # pragma: no cover
+        from neural_compressor.common.utils import save_config_mapping
+
+        torch.jit.save(model, qmodel_file_path)
+        save_config_mapping(model.qconfig, qconfig_file_path)
 
     logger.info("Save quantized model to {}.".format(qmodel_file_path))
     logger.info("Save configuration of quantized model to {}.".format(qconfig_file_path))

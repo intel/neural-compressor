@@ -314,16 +314,18 @@ class KerasAdaptor:
         return bn_fused_model
 
     @dump_elapsed_time("Pass quantize model")
-    def quantize(self, quant_config, model, dataloader, iteration, q_func=None):
+    def quantize(self, quant_config, model, dataloader, iteration, calib_func=None):
         """Execute the quantize process on the specified model.
 
         Args:
-            tune_cfg(dict): The user defined 'StaticQuantConfig' class.
+            quant_config(dict): The user defined 'StaticQuantConfig' class.
             model (object): The model to do quantization.
             dataloader(object): The calibration dataloader used to load quantization dataset.
             iteration(int): The iteration of calibration.
-            q_func (optional): training function for quantization aware training mode.
+            calib_func (optional): the function used for calibration, should be a substitution for calibration
+            dataloader when the built-in calibration function of INC does not work for model inference.
         """
+        assert calib_func is None, "The calibration function is not supported on Keras backend yet"
         self.query_fw_capability(model)
         converter = KerasConfigConverter(quant_config, iteration)
         tune_cfg = converter.parse_to_tune_cfg()
@@ -367,15 +369,13 @@ class KerasAdaptor:
 
         return quantized_model
 
-    def _calibrate(self, model, dataloader, calib_interation):
+    def _calibrate(self, model, dataloader=None, calib_interation=None):
         """Apply calibration.
 
         Args:
             model (tf.keras.Model): The model inserted with FakeQuant layers for calibration.
             dataloader(object): The calibration dataloader used to load quantization dataset.
             iteration(int): The iteration of calibration.
-            fq_output_layers (dict): A dict mapping from names of FakeQuant layers to
-                names of their output layers.
         """
         # run eagerly to fetch the numpy min/max
         results = {}

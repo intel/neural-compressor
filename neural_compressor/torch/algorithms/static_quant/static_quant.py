@@ -33,11 +33,13 @@ from packaging.version import Version
 
 from neural_compressor.torch.algorithms import Quantizer
 from neural_compressor.torch.utils import logger
+from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
 from .utility import (
     CpuInfo,
     cfg_to_qconfig,
     dump_model_op_stats,
+    generate_xpu_qconfig,
     get_ipex_version,
     get_quantizable_ops_recursively,
     ipex_config_path,
@@ -56,6 +58,7 @@ class StaticQuantQuantizer(Quantizer):
         """
         super().__init__(quant_config)
         self.user_cfg = OrderedDict()
+        self.device = auto_detect_accelerator().current_device()
 
     def prepare(self, model, example_inputs, inplace=True, *args, **kwargs):
         """Prepares a given model for quantization.
@@ -70,43 +73,61 @@ class StaticQuantQuantizer(Quantizer):
         """
         assert example_inputs is not None, "Please provide example_inputs for static quantization."
 
-        _, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, _ = get_quantizable_ops_recursively(
-            model, example_inputs
-        )
-        # update json file in ipex_config_path; map ipex op_name to pt op_name
-        self.user_cfg = cfg_to_qconfig(self.quant_config, cfgs, op_infos_from_cfgs, output_tensor_id_op_name)
+        if self.device == "cpu":
+            _, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, _ = get_quantizable_ops_recursively(
+                model, example_inputs
+            )
+            # update json file in ipex_config_path; map ipex op_name to pt op_name
+            self.user_cfg = cfg_to_qconfig(self.quant_config, cfgs, op_infos_from_cfgs, output_tensor_id_op_name)
+        else:  # pragma: no cover
+            model = model.to("xpu")
+
         model.eval()
 
-        use_bf16 = self.quant_config.get("use_bf16", None)
-
         # Check save_qconf_summary part is a workaround for IPEX bug.
-        # Sometimes the prepared model from get_op_capablitiy loss this attribute
-        if not hasattr(model, "save_qconf_summary") or not hasattr(model, "load_qconf_summary"):
-            from torch.ao.quantization import MinMaxObserver, PerChannelMinMaxObserver, QConfig
+        # Sometimes the prepared model from get_op_capablitiy loss this attributes
+        if not hasattr(model, "save_qconf_summary") or not hasattr(model, "load_qconf_summary"):  # pragma: no cover
+            from torch.ao.quantization import HistogramObserver, MinMaxObserver, PerChannelMinMaxObserver, QConfig
 
-            if ipex_ver.release >= Version("2.1").release:
-                # HistogramObserver will cause a performance issue.
-                # static_qconfig = ipex.quantization.default_static_qconfig_mapping
-                qconfig = QConfig(
-                    activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_affine, dtype=torch.quint8),
-                    weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_channel_symmetric),
-                )
-                from torch.ao.quantization import QConfigMapping
+            if self.device != "cpu":  # pragma: no cover
+                from torch.quantization.quantize_jit import prepare_jit
 
-                static_qconfig = QConfigMapping().set_global(qconfig)
+                with torch.no_grad():
+                    modelJit = torch.jit.trace(model, example_inputs)
+                qconfig = generate_xpu_qconfig(self.quant_config)
+                model = prepare_jit(modelJit, qconfig, inplace)
             else:
-                static_qconfig = QConfig(
-                    activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_affine, dtype=torch.quint8),
-                    weight=PerChannelMinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_channel_symmetric),
-                )
-            if isinstance(example_inputs, dict):
-                model = ipex.quantization.prepare(
-                    model, static_qconfig, example_kwarg_inputs=example_inputs, inplace=inplace
-                )
-            else:
-                model = ipex.quantization.prepare(model, static_qconfig, example_inputs=example_inputs, inplace=inplace)
+                if ipex_ver.release >= Version("2.1").release:
+                    # HistogramObserver will cause a performance issue.
+                    # static_qconfig = ipex.quantization.default_static_qconfig_mapping
+                    qconfig = QConfig(
+                        activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                        weight=PerChannelMinMaxObserver.with_args(
+                            dtype=torch.qint8, qscheme=torch.per_channel_symmetric
+                        ),
+                    )
+                    from torch.ao.quantization import QConfigMapping
 
-        model.load_qconf_summary(qconf_summary=ipex_config_path)
+                    static_qconfig = QConfigMapping().set_global(qconfig)
+                else:  # pragma: no cover
+                    static_qconfig = QConfig(
+                        activation=MinMaxObserver.with_args(qscheme=torch.per_tensor_affine, dtype=torch.quint8),
+                        weight=PerChannelMinMaxObserver.with_args(
+                            dtype=torch.qint8, qscheme=torch.per_channel_symmetric
+                        ),
+                    )
+                if isinstance(example_inputs, dict):
+                    model = ipex.quantization.prepare(
+                        model, static_qconfig, example_kwarg_inputs=example_inputs, inplace=inplace
+                    )
+                else:
+                    model = ipex.quantization.prepare(
+                        model, static_qconfig, example_inputs=example_inputs, inplace=inplace
+                    )
+
+        if self.device == "cpu":
+            model.load_qconf_summary(qconf_summary=ipex_config_path)
+
         return model
 
     def convert(self, model, example_inputs, inplace=True, *args, **kwargs):
@@ -124,18 +145,27 @@ class StaticQuantQuantizer(Quantizer):
 
         from neural_compressor.torch.algorithms.static_quant import save
 
-        model.save_qconf_summary(qconf_summary=ipex_config_path)
-        model = _ipex_post_quant_process(model, example_inputs, use_bf16, inplace=inplace)
+        if self.device != "cpu":  # pragma: no cover
+            from torch.quantization.quantize_jit import convert_jit
 
-        with open(ipex_config_path, "r") as f:
-            model.tune_cfg = json.load(f)
-        model.ipex_config_path = ipex_config_path
+            model = convert_jit(model, inplace)
+            simple_inference(model, example_inputs, iterations=2)
+            model.qconfig = self.quant_config["op"]
+            dump_model_op_stats(model.qconfig)
+        else:
+            model.save_qconf_summary(qconf_summary=ipex_config_path)
+            model = _ipex_post_quant_process(model, example_inputs, use_bf16, inplace=inplace)
 
-        dump_model_op_stats(self.user_cfg)
+            with open(ipex_config_path, "r") as f:
+                model.tune_cfg = json.load(f)
+            model.ipex_config_path = ipex_config_path
 
-        logger.info("Static quantization done.")
+            dump_model_op_stats(self.user_cfg)
+
         model.ori_save = model.save
         model.save = MethodType(save, model)
+
+        logger.info("Static quantization done.")
         return model
 
 

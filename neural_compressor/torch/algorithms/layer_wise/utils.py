@@ -90,7 +90,7 @@ def get_named_children(model, pre=[]):
     return module_list
 
 
-def dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None):
+def dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None):  # pragma: no cover
     """Download hugging face model from hf hub."""
     from huggingface_hub.constants import DEFAULT_REVISION, HUGGINGFACE_HUB_CACHE
     from huggingface_hub.file_download import REGEX_COMMIT_HASH, repo_folder_name
@@ -122,7 +122,7 @@ def dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None):
         return file_path
 
 
-def load_empty_model(pretrained_model_name_or_path, cls=AutoModelForCausalLM, **kwargs):
+def load_empty_model(pretrained_model_name_or_path, cls=AutoModelForCausalLM, **kwargs):  # pragma: no cover
     """Load a empty model."""
     is_local = os.path.isdir(pretrained_model_name_or_path)
     if is_local:  # pragma: no cover
