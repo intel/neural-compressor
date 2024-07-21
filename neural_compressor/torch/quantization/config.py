@@ -37,7 +37,7 @@ from neural_compressor.common.utils import (
     FP8_QUANT,
     GPTQ,
     HQQ,
-    MIX_PRECISION,
+    MIXED_PRECISION,
     MX_QUANT,
     OP_NAME_OR_MODULE_TYPE,
     RTN,
@@ -1537,12 +1537,12 @@ def get_default_fp8_config_set() -> FP8Config:
     return FP8Config.get_config_set_for_tuning()
 
 
-######################## MixPrecision Config ###############################
-@register_config(framework_name=FRAMEWORK_NAME, algo_name=MIX_PRECISION)
-class MixPrecisionConfig(TorchBaseConfig):
-    """Config class for mix-precision."""
+######################## MixedPrecision Config ###############################
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=MIXED_PRECISION)
+class MixedPrecisionConfig(BaseConfig):
+    """Config class for mixed-precision."""
 
-    name = MIX_PRECISION
+    name = MIXED_PRECISION
     supported_configs: List[OperatorConfig] = []
     params_list = [
         "dtype",
@@ -1559,7 +1559,7 @@ class MixPrecisionConfig(TorchBaseConfig):
         dtype: Union[str, List[str]] = "fp16",
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
-        """Init MixPrecision config.
+        """Init MixedPrecision config.
 
         Args:
         """
@@ -1570,16 +1570,16 @@ class MixPrecisionConfig(TorchBaseConfig):
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
         supported_configs = []
-        mix_precision_config = MixPrecisionConfig(
+        mixed_precision_config = MixedPrecisionConfig(
             dtype=["fp16", "bf16", "fp32"],
         )
         operators = cls.supported_half_precision_ops
-        supported_configs.append(OperatorConfig(config=mix_precision_config, operators=operators))
+        supported_configs.append(OperatorConfig(config=mixed_precision_config, operators=operators))
         cls.supported_configs = supported_configs
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
-        white_list = tuple(MixPrecisionConfig.supported_half_precision_ops)
+        white_list = tuple(MixedPrecisionConfig.supported_half_precision_ops)
         filter_result = []
         for op_name, module in model.named_modules():
             if isinstance(module, white_list):
@@ -1589,27 +1589,27 @@ class MixPrecisionConfig(TorchBaseConfig):
         return filter_result
 
     @classmethod
-    def get_config_set_for_tuning(cls) -> Union[None, "MixPrecisionConfig", List["MixPrecisionConfig"]]:
+    def get_config_set_for_tuning(cls) -> Union[None, "MixedPrecisionConfig", List["MixedPrecisionConfig"]]:
         # TODO fwk owner needs to update it.
-        return MixPrecisionConfig(dtype=["fp16", "bf16", "fp32"])
+        return MixedPrecisionConfig(dtype=["fp16", "bf16", "fp32"])
 
 
-def get_default_mix_precision_config() -> MixPrecisionConfig:
-    """Generate the default mix-precision config.
-
-    Returns:
-        the default mix-precision config.
-    """
-    return MixPrecisionConfig()
-
-
-def get_default_mix_precision_config_set() -> MixPrecisionConfig:
-    """Generate the default mix-precision config set.
+def get_default_mixed_precision_config() -> MixedPrecisionConfig:
+    """Generate the default mixed-precision config.
 
     Returns:
-        the default mix-precision config.
+        the default mixed-precision config.
     """
-    return MixPrecisionConfig.get_config_set_for_tuning()
+    return MixedPrecisionConfig()
+
+
+def get_default_mixed_precision_config_set() -> MixedPrecisionConfig:
+    """Generate the default mixed-precision config set.
+
+    Returns:
+        the default mixed-precision config.
+    """
+    return MixedPrecisionConfig.get_config_set_for_tuning()
 
 
 ##################### Algo Configs End ###################################
