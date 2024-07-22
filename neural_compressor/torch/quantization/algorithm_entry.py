@@ -567,9 +567,14 @@ def autoround_quantize_entry(
         if quant_config.name != AUTOROUND or quant_config.dtype == "fp32":
             continue
         else:
+            dtype = quant_config.dtype
+            bits = quant_config.bits
+            if dtype != "int" and "int" in dtype:
+                bits = int(dtype.lstrip("int"))
+                dtype = "int"
             weight_config[op_name] = {
-                "data_type": quant_config.dtype,
-                "bits": quant_config.bits,
+                "data_type": dtype,
+                "bits": bits,
                 "sym": quant_config.use_sym,
                 "group_size": quant_config.group_size,
                 "act_bits": quant_config.act_bits,
