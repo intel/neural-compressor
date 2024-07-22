@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""HQQ Quantizer."""
+
 
 from typing import Callable, List, Optional, Tuple
 
@@ -35,8 +37,7 @@ def _replace_with_custom_fn_if_matches_filter(
     cur_fqn: str = "",
     config_mapping: Optional[ConfigMappingType] = None,
 ) -> None:
-    """For each `child` in `model`, replaces it with `replacement_fn(child)`
-    if `filter_fn(child)` is `True`"""
+    """Recursively replaces modules in `model` with `replacement_fn` if `filter_fn` is `True`."""
     name_to_child = dict(model.named_children())
     for name, child in name_to_child.items():
         if cur_fqn == "":
@@ -64,21 +65,52 @@ def _replace_with_custom_fn_if_matches_filter(
 
 
 def patch_hqq_moduile(mod, config):
+    """Patch the given module with the HQQLinear module.
+
+    Args:
+        mod (torch.nn.Module): The module to be patched.
+        config (dict): Configuration parameters for the HQQLinear module.
+
+    Returns:
+        torch.nn.Module: The patched module with HQQLinear.
+    """
     new_mod = HQQLinear.from_float(mod, config)
     return new_mod
 
 
 def filter_fn(mod: torch.nn.Module, name: str, config_mapping: ConfigMappingType) -> bool:
+    """Filter function used to determine if a module should be quantized.
+
+    Args:
+        mod (torch.nn.Module): The module to be checked.
+        name (str): The name of the module.
+        config_mapping (ConfigMappingType): The configuration mapping.
+
+    Returns:
+        bool: True if the module should be quantized, False otherwise.
+    """
     return isinstance(mod, torch.nn.Linear) and name in config_mapping
 
 
 def replacement_fn(mod: torch.nn.Module, name: str, config_mapping: ConfigMappingType) -> torch.nn.Module:
+    """Replaces a Linear with HQQLinear if the module is in the config mapping.
+
+    Args:
+        mod (torch.nn.Module): The original module to be replaced.
+        name (str): The name of the module to be replaced.
+        config_mapping (ConfigMappingType): A mapping of module names to their corresponding configurations.
+
+    Returns:
+        torch.nn.Module: The patched module.
+    """
     config = config_mapping.get(name, None)
     logger.debug("Replace module %s", name)
     return patch_hqq_moduile(mod, config)
 
 
 class HQQuantizer(Quantizer):
+    """HQQ Quantizer."""
+
     def __init__(self, quant_config: ConfigMappingType) -> None:
         """Init a HQQuantizer object.
 
@@ -113,10 +145,6 @@ class HQQuantizer(Quantizer):
             model, replacement_fn=replacement_fn, filter_fn=filter_fn, config_mapping=self.quant_config
         )
         return model
-
-    def save(self, model, path):
-        # TODO: to implement it in the next PR
-        pass
 
     def _convert_hqq_module_config(self, config) -> HQQModuleConfig:
         # TODO: (Yi) Please note that the configuration defined by INC should be separated from the algorithm.

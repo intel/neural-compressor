@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Save and load the quantized model."""
+
 
 # pylint:disable=import-error
 import json
@@ -27,6 +29,12 @@ from neural_compressor.torch.utils import QCONFIG_NAME, WEIGHT_NAME, logger
 
 
 def save(model, output_dir="./saved_results"):
+    """Saves the quantized model to the output path.
+
+    Args:
+        model (RecursiveScriptModule): raw fp32 model or prepared model.
+        output_dir (str, optional): output path to save the quantized model.
+    """
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
 
@@ -48,6 +56,14 @@ def save(model, output_dir="./saved_results"):
 
 
 def load(output_dir="./saved_results"):
+    """Loads the quantized model from the output path.
+
+    Args:
+        output_dir (str, optional): output path to load the quantized model.
+
+    Returns:
+        A quantized model.
+    """
     qmodel_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), WEIGHT_NAME)
     model = torch.jit.load(qmodel_file_path)
     model = torch.jit.freeze(model.eval())

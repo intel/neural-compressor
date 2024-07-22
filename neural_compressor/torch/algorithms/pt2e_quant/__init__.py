@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""The PT2E-related modules."""
 
 
 from neural_compressor.torch.algorithms.pt2e_quant.core import W8A8PT2EQuantizer
