@@ -112,7 +112,7 @@ if args.int8:
         model = load(args.output_dir)
 
         model.config = user_model.config # for lm eval
-        user_model = opt_model
+        user_model = model
 
 if args.accuracy:
 
@@ -135,29 +135,21 @@ if args.accuracy:
     print('Batch size = %d' % args.batch_size)
 
 if args.performance:
-    # user_model.eval()
-    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
+    batch_size, input_leng = args.batch_size, 512
+    example_inputs = torch.ones((batch_size, input_leng), dtype=torch.long)
+    print("Batch size = {:d}".format(batch_size))
+    print("The length of input tokens = {:d}".format(input_leng))
     import time
 
-    samples = args.iters * args.batch_size
-    eval_args = LMEvalParser(
-        model="hf",
-        user_model=user_model,
-        tokenizer=tokenizer,
-        batch_size=args.batch_size,
-        tasks=args.tasks,
-        limit=samples,
-        device="cpu",
-    )
-    start = time.time()
-    results = evaluate(eval_args)
-    end = time.time()
-    for task_name in args.tasks.split(","):
-        if task_name == "wikitext":
-            acc = results["results"][task_name]["word_perplexity,none"]
-        else:
-            acc = results["results"][task_name]["acc,none"]
-    print("Accuracy: %.5f" % acc)
-    print('Throughput: %.3f samples/sec' % (samples / (end - start)))
-    print('Latency: %.3f ms' % ((end - start) * 1000 / samples))
-    print('Batch size = %d' % args.batch_size)
+    total_iters = args.iters
+    warmup_iters = 5
+    with torch.no_grad():
+        for i in range(total_iters):
+            if i == warmup_iters:
+                start = time.time()
+            user_model(example_inputs)
+        end = time.time()
+    latency = (end - start) / ((total_iters - warmup_iters) * args.batch_size)
+    throughput = ((total_iters - warmup_iters) * args.batch_size) / (end - start)
+    print("Latency: {:.3f} ms".format(latency * 10**3))
+    print("Throughput: {:.3f} samples/sec".format(throughput))
