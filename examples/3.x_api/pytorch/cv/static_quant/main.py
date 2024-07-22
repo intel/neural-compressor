@@ -79,10 +79,17 @@ parser.add_argument('--multiprocessing-distributed', action='store_true',
 parser.add_argument('--dummy', action='store_true', help="use fake data to benchmark")
 parser.add_argument('-q', '--quantize', dest='quantize', action='store_true',
                     help='quantize model')
-parser.add_argument("--calib_iters", default=2, type=int,
+parser.add_argument("--calib_iters", default=-1, type=int,
                     help="For calibration only.")
 parser.add_argument('-o', '--output_dir', default='', type=str, metavar='PATH',
                     help='path to quantized result.')
+parser.add_argument('--performance', dest='performance', action='store_true',
+                    help='do benchmark')
+parser.add_argument("--iters", default=-1, type=int,
+                    help="For benchmark only.")
+parser.add_argument('--int8', dest='int8', action='store_true',
+                    help='Load quantized model')
+
 
 best_acc1 = 0
 
@@ -290,8 +297,20 @@ def main_worker(gpu, ngpus_per_node, args):
         
         prepared_model = prepare(exported_model, quant_config=quant_config)
         # Calibrate
-        for i in range(args.calib_iters):
-            prepared_model(*example_inputs)
+        with torch.no_grad():
+            for i, (images, target) in enumerate(val_loader):
+                if i == args.calib_iters:
+                    break
+                if args.gpu is not None and torch.cuda.is_available():
+                    images = images.cuda(args.gpu, non_blocking=True)
+                if torch.backends.mps.is_available():
+                    images = images.to('mps')
+                    target = target.to('mps')
+                if torch.cuda.is_available():
+                    target = target.cuda(args.gpu, non_blocking=True)
+                # compute output
+                model(images)
+                
         q_model = convert(prepared_model)
         # Compile the quantized model and replace the Q/DQ pattern with Q-operator
         from torch._inductor import config
@@ -299,16 +318,56 @@ def main_worker(gpu, ngpus_per_node, args):
         config.freezing = True
         opt_model = torch.compile(q_model)
         model = opt_model
+
         if args.output_dir:
             model.save(example_inputs=example_inputs, output_dir = args.output_dir)
-    
-    if args.evaluate:
+ 
+    if args.int8:
         if args.output_dir:
+            print("load int8 model")
             from neural_compressor.torch.quantization import load
             model = load(args.output_dir)
+ 
+      
+    if args.evaluate:
         validate(val_loader, model, criterion, args)
         return
+        
+    if args.performance:
+        benchmark(val_loader, model, args)
+        return
 
+def benchmark(val_loader, model, args): 
+
+    total_iters = args.iters
+    warmup_iters = 5
+    with torch.no_grad():
+        
+        for i, (images, target) in enumerate(val_loader):
+            if i == total_iters:
+                break
+            if i == warmup_iters:
+                start = time.time()
+
+            if args.gpu is not None and torch.cuda.is_available():
+                images = images.cuda(args.gpu, non_blocking=True)
+            if torch.backends.mps.is_available():
+                images = images.to('mps')
+                target = target.to('mps')
+            if torch.cuda.is_available():
+                target = target.cuda(args.gpu, non_blocking=True)
+            
+            # model inference
+            model(images)
+            
+            if i % args.print_freq == 0:
+                print(f"benchmarking... {i+1}/{total_iters}")
+            
+        end = time.time()
+    latency = (end - start) / ((total_iters - warmup_iters) * args.batch_size)
+    throughput = ((total_iters - warmup_iters) * args.batch_size) / (end - start)
+    print("Latency: {:.3f} ms".format(latency * 10**3))
+    print("Throughput: {:.3f} samples/sec".format(throughput))
 
 def validate(val_loader, model, criterion, args):
 

@@ -53,30 +53,33 @@ function init_params {
 
 # run_benchmark
 function run_benchmark {
-    extra_cmd=''
+    extra_cmd=' --int8 '
 
-    # if [[ ${mode} == "accuracy" ]]; then
-    #     mode_cmd=" --accuracy "
-    # elif [[ ${mode} == "performance" ]]; then
-    #     mode_cmd=" --performance --iters "${iters}
-    # else
-    #     echo "Error: No such mode: ${mode}"
-    #     exit 1
-    # fi
+    if [[ ${mode} == "accuracy" ]]; then
+        mode_cmd=" -e "
+    elif [[ ${mode} == "performance" ]]; then
+        mode_cmd=" --performance --iters "${iters}
+    else
+        echo "Error: No such mode: ${mode}"
+        exit 1
+    fi
+    if [[ ${int8} == "true" ]]; then
+        extra_cmd=$extra_cmd" --int8"
+    fi
+    echo $extra_cmd
+
 
     echo $extra_cmd
 
     if [ "${topology}" = "resnet18_pt2e_static" ]; then
         model_name_or_path="resnet18"
     fi
-    python main.py -a ${model_name_or_path} ${dataset_location} -q -o ${tuned_checkpoint}
-
 
     if [[ ${mode} == "accuracy" ]]; then
-        python main.py -a ${model_name_or_path} ${dataset_location} -e -o ${tuned_checkpoint} ${extra_cmd}
+        python main.py -a ${model_name_or_path} ${dataset_location} -e -o ${tuned_checkpoint} ${extra_cmd} ${mode_cmd}
     elif [[ ${mode} == "performance" ]]; then
-        incbench --num_cores_per_instance 4 main.py -a ${model_name_or_path} 
-          ${dataset_location} -e -o ${tuned_checkpoint} ${extra_cmd}
+        incbench --num_cores_per_instance 4 main.py -a ${model_name_or_path} \
+          ${dataset_location} -o ${tuned_checkpoint} ${extra_cmd} ${mode_cmd}
     else
         echo "Error: No such mode: ${mode}"
         exit 1
