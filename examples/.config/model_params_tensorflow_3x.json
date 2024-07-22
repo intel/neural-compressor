@@ -42,6 +42,13 @@
       "input_model": "/tf_dataset/tensorflow/graphsage/graphsage_frozen_model.pb",
       "main_script": "main.py",
       "batch_size": 1000
+    },
+    "yolo_v5": {
+      "model_src_dir": "object_detection/yolo_v5/quantization/ptq",
+      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/val2017",
+      "input_model": "/tf_dataset2/models/tensorflow/yolo_v5/yolov5s.pb",
+      "main_script": "main.py",       
+      "batch_size": 1
     }
   }
 }
