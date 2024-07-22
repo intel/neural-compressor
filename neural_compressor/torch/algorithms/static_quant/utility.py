@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Utility functions for Static quantization."""
+
 
 import copy
 import json
@@ -70,6 +72,17 @@ BLOCK_PATTERNS = [
 
 
 def cfg_to_qconfig(tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_id_op_name):  # pragma: no cover
+    """Updates json file in ipex_config_path.
+
+    Args:
+        tune_cfg (dict): dictionary of quantization configuration.
+        cfgs (dict): configs loaded from ipex config path.
+        op_infos_from_cfgs (dict): dict containing configs that have been parsed for each op.
+        output_tensor_ids_op_name (dict): dict containing op names corresponding to 'op_infos_from_cfgs'.
+
+    Returns:
+        user_cfg (dict): quantization configuration for ops.
+    """
     assert cfgs is not None, "No configure for IPEX int8 model..."
     op_infos = copy.deepcopy(op_infos_from_cfgs)
     cfgs, user_cfg = check_cfg_and_qconfig(tune_cfg["op"], cfgs, op_infos, output_tensor_id_op_name)
@@ -164,6 +177,14 @@ def check_cfg_and_qconfig(user_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_
 
 
 def generate_xpu_qconfig(tune_cfg):  # pragma: no cover
+    """Generates qconfig for quantiztaion on xpu device.
+
+    Args:
+        tune_cfg (dict): dictionary of quantization configuration.
+
+    Returns:
+        qconfig (dict): quantization configuration for ops.
+    """
     # qconfig observer & config constants for ipex-xpu
     from torch.ao.quantization import HistogramObserver, MinMaxObserver, QConfig
 
@@ -305,9 +326,12 @@ def get_quantizable_ops_recursively(model, example_inputs):  # pragma: no cover
     Args:
         model (object): input model
         example_inputs (dict|list|tuple|torch.Tensor): used to trace torch model.
+
     Returns:
         quantizable_ops (list): list of tuples of op_name and op_type.
-        cfgs (dict): dict of configuration
+        cfgs (dict): dict of configuration.
+        op_infos_from_cfgs (dict): dict containing configs that have been parsed for each op.
+        output_tensor_ids_op_name (dict): dict containing op names corresponding to 'op_infos_from_cfgs'.
     """
     quantizable_ops = []
     op_name_info = []
@@ -438,6 +462,7 @@ def dump_model_op_stats(user_cfg):
 
     Args:
         user_cfg (dict): quantization config
+
     Returns:
         None
     """
@@ -492,7 +517,6 @@ def parse_cfgs(cfgs):  # pragma: no cover
 
     Args:
         cfgs (dict): the input configs.
-
 
     Returns:
         ops_name (list): list of op names.
@@ -625,7 +649,6 @@ class TransformerBasedModelBlockPatternDetector:  # pragma: no cover
         """Traverse the model definition and return the attention blocks and ffn blocks.
 
         Returns:
-
             blocks: A dict include the detected attention blocks and ffn blocks.
         """
         # Step 1: Traverse model definition and record the op position
