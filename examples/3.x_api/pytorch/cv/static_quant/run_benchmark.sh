@@ -53,7 +53,7 @@ function init_params {
 
 # run_benchmark
 function run_benchmark {
-    extra_cmd=' --int8 '
+    extra_cmd=''
 
     if [[ ${mode} == "accuracy" ]]; then
         mode_cmd=" -e "

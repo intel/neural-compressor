@@ -80,7 +80,7 @@ if args.quantize:
     dynamic_shapes = {"input_ids": (batch, seq_len)}
     example_inputs = get_example_inputs(tokenizer)
     exported_model = export(user_model, example_inputs=example_inputs, dynamic_shapes=dynamic_shapes)
-
+    
     quant_config = get_default_static_config()
     # prepare
     prepare_model = prepare(exported_model, quant_config)
@@ -98,15 +98,24 @@ if args.quantize:
 
     opt_model.config = user_model.config # for lm eval
     user_model = opt_model
+
+    # save
     if args.output_dir:
         user_model.save(example_inputs=example_inputs, output_dir = args.output_dir)
 
 
-if args.accuracy:
+
+if args.int8:
     if args.output_dir:
+        print("Load int8 model.")
         from neural_compressor.torch.quantization import load
         model = load(args.output_dir)
-        model.config = user_model.config
+
+        model.config = user_model.config # for lm eval
+        user_model = opt_model
+
+if args.accuracy:
+
     from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
     eval_args = LMEvalParser(
         model="hf",

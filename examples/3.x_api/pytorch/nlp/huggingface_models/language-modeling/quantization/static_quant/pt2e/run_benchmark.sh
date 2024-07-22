@@ -66,11 +66,16 @@ function run_benchmark {
         echo "Error: No such mode: ${mode}"
         exit 1
     fi
+
+    if [[ ${int8} == "true" ]]; then
+        extra_cmd=$extra_cmd" --int8"
+    fi
+    echo $extra_cmd
+
     echo $extra_cmd
     
     if [ "${topology}" = "opt_125m_pt2e_static" ]; then
         model_name_or_path="facebook/opt-125m"
-        tuned_checkpoint="saved"
     fi
     if [[ ${mode} == "accuracy" ]]; then
         python -u run_clm_no_trainer.py \
