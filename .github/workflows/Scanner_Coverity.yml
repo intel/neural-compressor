@@ -1,4 +1,5 @@
 name: Scanner Coverity
+permissions: read-all
 
 on:
   workflow_dispatch:
