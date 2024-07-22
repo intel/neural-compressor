@@ -725,6 +725,9 @@ class PatchedModuleFusedSDPA(nn.Module):
         is_causal=False,
         scale=None,
         softmax_mode="None",
+        recompute=None,
+        valid_seq_len=None,
+        seq_padding_type="None",
     ):
         qinput = self.quant_q(q).detach()
         kinput = self.quant_k(k).detach()
@@ -746,6 +749,8 @@ class PatchedModuleFusedSDPA(nn.Module):
             q_scale_o=self.scale_output,
             d_scale_s=self.descale_amax,
             is_amax_s=False,
+            valid_seq_len=valid_seq_len,
+            seq_padding_type=seq_padding_type
         )
         output = results[0]
         d_out = self.dequant_output(output)
@@ -761,6 +766,9 @@ class PatchedModuleFusedSDPA(nn.Module):
         is_causal=False,
         scale=None,
         softmax_mode="fast",
+        recompute=None,
+        valid_seq_len=None,
+        seq_padding_type="None",
     ):
         dq = q.detach()
         dk = k.detach()
@@ -777,6 +785,8 @@ class PatchedModuleFusedSDPA(nn.Module):
             # fp8_fused_sdpa in bf16 can use either FastSoftmax or regular
             softmax_mode="fast",
             is_amax_s=True,
+            valid_seq_len=valid_seq_len,
+            seq_padding_type=seq_padding_type
         )
         output = results[0]
         amax = results[1]
