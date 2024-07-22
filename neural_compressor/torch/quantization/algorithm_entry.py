@@ -24,7 +24,7 @@ from neural_compressor.common.utils import (
     FP8_QUANT,
     GPTQ,
     HQQ,
-    MIX_PRECISION,
+    MIXED_PRECISION,
     MX_QUANT,
     RTN,
     SMOOTH_QUANT,
@@ -38,7 +38,7 @@ from neural_compressor.torch.quantization import (
     FP8Config,
     GPTQConfig,
     HQQConfig,
-    MixPrecisionConfig,
+    MixedPrecisionConfig,
     MXQuantConfig,
     RTNConfig,
     SmoothQuantConfig,
@@ -717,12 +717,9 @@ def mx_quant_entry(
 
 
 ###################### Mixed Precision Algo Entry ##################################
-@register_algo(MIX_PRECISION)
-def mix_precision_entry(
-    model: torch.nn.Module,
-    configs_mapping: Dict[Tuple[str], MixPrecisionConfig],
-    *args,
-    **kwargs,
+@register_algo(MIXED_PRECISION)
+def mixed_precision_entry(
+    model: torch.nn.Module, configs_mapping: Dict[Tuple[str], MixedPrecisionConfig], *args, **kwargs
 ) -> torch.nn.Module:
     """The main entry to apply Mixed Precision.
 
@@ -735,9 +732,9 @@ def mix_precision_entry(
         torch.nn.Module: prepared model or quantized model.
     """
     # only support fp16 and bf16 now, more types might be added later
-    from neural_compressor.torch.algorithms.mix_precision import HalfPrecisionConverter
+    from neural_compressor.torch.algorithms.mixed_precision import HalfPrecisionConverter
 
     half_precision_converter = HalfPrecisionConverter(configs_mapping, *args, **kwargs)
-    mix_precision_model = half_precision_converter.convert(model)
+    mixed_precision_model = half_precision_converter.convert(model)
 
-    return mix_precision_model
+    return mixed_precision_model

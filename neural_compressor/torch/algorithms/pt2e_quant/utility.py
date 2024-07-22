@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Utility functions for PT2E quantization."""
 
 from typing import Dict
 
@@ -24,6 +25,18 @@ from neural_compressor.torch.utils import GT_TORCH_VERSION_2_3_2
 
 
 def create_quant_spec_from_config(dtype, sym, granularity, algo, is_dynamic=False) -> QuantizationSpec:
+    """Create a quantization specification based on the given configuration.
+
+    Args:
+        dtype (str): The desired data type for quantization. Valid options are "int8" and "uint8".
+        sym (bool): Whether to use symmetric quantization or not.
+        granularity (str): The granularity of quantization. Valid options are "per_channel" and "per_tensor".
+        algo (str): The algorithm to use for quantization. Valid options are "placeholder", "minmax", and "kl".
+        is_dynamic (bool, optional): Whether to use dynamic quantization or not. Defaults to False.
+
+    Returns:
+        QuantizationSpec: The created quantization specification.
+    """
     dtype_mapping: Dict[str, torch.dtype] = {"int8": torch.int8, "uint8": torch.uint8}
     select_dtype = dtype_mapping[dtype]
     min_max_mapping = {torch.int8: (-128, 127), torch.uint8: (0, 255)}
@@ -76,6 +89,15 @@ def _map_inc_config_to_torch_quant_config(inc_config, is_dynamic=False) -> Quant
 
 
 def create_xiq_quantizer_from_pt2e_config(config, is_dynamic=False) -> X86InductorQuantizer:
+    """Creates an instance of X86InductorQuantizer based on the given configuration.
+
+    Args:
+        config: The configuration object containing the quantization settings.
+        is_dynamic: A boolean indicating whether dynamic quantization is enabled.
+
+    Returns:
+        An instance of X86InductorQuantizer initialized with the provided configuration.
+    """
     quantizer = xiq.X86InductorQuantizer()
     # set global
     global_config = _map_inc_config_to_torch_quant_config(config, is_dynamic)
