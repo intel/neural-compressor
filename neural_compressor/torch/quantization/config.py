@@ -187,7 +187,7 @@ class RTNConfig(TorchBaseConfig):
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
         """Register supported configurations for RTN.
-        
+
         Returns:
             List[OperatorConfig]: List of supported operator configurations.
         """
@@ -228,12 +228,12 @@ class RTNConfig(TorchBaseConfig):
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
         """Convert the configuration to a mapping.
-        
+
         Args:
             config_list (List[BaseConfig]): List of base configurations. Default is None.
             model_info (List[Tuple[str, str]]): List of tuples containing the name and type of each module in the model.
                 Default is None.
-        
+
         Returns:
             OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]: The configuration mapping.
         """
@@ -247,10 +247,10 @@ class RTNConfig(TorchBaseConfig):
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
         """Get information about the model.
-        
+
         Args:
             model (torch.nn.Module): The model.
-        
+
         Returns:
             List[Tuple[str, Callable]]: List of tuples containing the name and type of each module in the model.
         """
@@ -265,10 +265,9 @@ class RTNConfig(TorchBaseConfig):
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "RTNConfig", List["RTNConfig"]]:
         """Get the configuration set for tuning.
-        
+
         Returns:
             Union[None, "RTNConfig", List["RTNConfig"]]: The configuration set for tuning.
-        
         """
         return RTNConfig(
             dtype=["int4", "nf4"], use_sym=[True, False], group_size=[32, 128], use_mse_search=[False, True]
@@ -277,10 +276,9 @@ class RTNConfig(TorchBaseConfig):
     @classmethod
     def get_predefined_configs(cls) -> Dict[torch_utils.ProcessorType, "RTNConfig"]:
         """Get the predefined configuration set.
-        
+
         Returns:
             Dict[torch_utils.ProcessorType, "RTNConfig"]: The configuration of RTN.
-        
         """
         pre_defined_configs: Dict[torch_utils.ProcessorType, RTNConfig] = {}
         pre_defined_configs[torch_utils.ProcessorType.Client] = cls(use_layer_wise=True)
@@ -289,7 +287,7 @@ class RTNConfig(TorchBaseConfig):
 
 
 def get_default_rtn_config(processor_type: Optional[Union[str, torch_utils.ProcessorType]] = None) -> RTNConfig:
-    """Get the defualt configuration of RTN.
+    """Get the default configuration of RTN.
 
     Args:
         processor_type (Optional[Union[str, torch_utils.ProcessorType]], optional): The user-specified processor type.
@@ -303,7 +301,7 @@ def get_default_rtn_config(processor_type: Optional[Union[str, torch_utils.Proce
 
 
 def get_default_double_quant_config(type="BNB_NF4"):
-    """Get the defualt configuration of double quant.
+    """Get the default configuration of double quant.
 
     Args:
         type (str, optional): double quant type. Defaults to "BNB_NF4".
@@ -432,7 +430,7 @@ class GPTQConfig(TorchBaseConfig):
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
         """Register supported configurations for GPTQ.
-        
+
         Returns:
             List[OperatorConfig]: List of supported operator configurations.
         """
@@ -447,12 +445,12 @@ class GPTQConfig(TorchBaseConfig):
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
         """Convert the configuration to a mapping.
-        
+
         Args:
             config_list (List[BaseConfig]): List of base configurations. Default is None.
             model_info (List[Tuple[str, str]]): List of tuples containing the name and type of each module in the model.
                 Default is None.
-        
+
         Returns:
             OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]: The configuration mapping.
         """
@@ -466,10 +464,10 @@ class GPTQConfig(TorchBaseConfig):
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
         """Get information about the model.
-        
+
         Args:
             model (torch.nn.Module): The model.
-        
+
         Returns:
             List[Tuple[str, Callable]]: List of tuples containing the name and type of each module in the model.
         """
@@ -484,10 +482,9 @@ class GPTQConfig(TorchBaseConfig):
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "GPTQConfig", List["GPTQConfig"]]:
         """Get the configuration set for tuning.
-        
+
         Returns:
             Union[None, "GPTQConfig", List["GPTQConfig"]]: The configuration set for tuning.
-        
         """
         # TODO fwk owner needs to update it.
         return GPTQConfig(act_order=[True, False], use_sym=[False, True])
@@ -617,7 +614,7 @@ class AWQConfig(TorchBaseConfig):
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
         """Register supported configurations for AWQ.
-        
+
         Returns:
             List[OperatorConfig]: List of supported operator configurations.
         """
@@ -632,12 +629,12 @@ class AWQConfig(TorchBaseConfig):
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
         """Convert the configuration to a mapping.
-        
+
         Args:
             config_list (List[BaseConfig]): List of base configurations. Default is None.
             model_info (List[Tuple[str, str]]): List of tuples containing the name and type of each module in the model.
                 Default is None.
-        
+
         Returns:
             OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]: The configuration mapping.
         """
@@ -651,10 +648,10 @@ class AWQConfig(TorchBaseConfig):
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
         """Get information about the model.
-        
+
         Args:
             model (torch.nn.Module): The model.
-        
+
         Returns:
             List[Tuple[str, Callable]]: List of tuples containing the name and type of each module in the model.
         """
@@ -669,10 +666,9 @@ class AWQConfig(TorchBaseConfig):
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "AWQConfig", List["AWQConfig"]]:
         """Get the configuration set for tuning.
-        
+
         Returns:
             Union[None, "AWQConfig", List["AWQConfig"]]: The configuration set for tuning.
-        
         """
         # TODO fwk owner needs to update it.
         return AWQConfig(bits=[4, 6])
@@ -786,7 +782,7 @@ class TEQConfig(TorchBaseConfig):
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
         """Register supported configurations for TEQ.
-        
+
         Returns:
             List[OperatorConfig]: List of supported operator configurations.
         """
@@ -801,12 +797,12 @@ class TEQConfig(TorchBaseConfig):
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
         """Convert the configuration to a mapping.
-        
+
         Args:
             config_list (List[BaseConfig]): List of base configurations. Default is None.
             model_info (List[Tuple[str, str]]): List of tuples containing the name and type of each module in the model.
                 Default is None.
-        
+
         Returns:
             OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]: The configuration mapping.
         """
@@ -818,10 +814,10 @@ class TEQConfig(TorchBaseConfig):
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
         """Get information about the model.
-        
+
         Args:
             model (torch.nn.Module): The model.
-        
+
         Returns:
             List[Tuple[str, Callable]]: List of tuples containing the name and type of each module in the model.
         """
@@ -836,10 +832,9 @@ class TEQConfig(TorchBaseConfig):
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "TEQConfig", List["TEQConfig"]]:
         """Get the configuration set for tuning.
-        
+
         Returns:
             Union[None, "TEQConfig", List["TEQConfig"]]: The configuration set for tuning.
-        
         """
         # TODO fwk owner needs to update it.
         return TEQConfig(bits=[4, 6])
@@ -986,7 +981,7 @@ class AutoRoundConfig(TorchBaseConfig):
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
         """Register supported configurations for AutoRound.
-        
+
         Returns:
             List[OperatorConfig]: List of supported operator configurations.
         """
@@ -1000,10 +995,10 @@ class AutoRoundConfig(TorchBaseConfig):
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
         """Get information about the model.
-        
+
         Args:
             model (torch.nn.Module): The model.
-        
+
         Returns:
             List[Tuple[str, Callable]]: List of tuples containing the name and type of each module in the model.
         """
@@ -1018,10 +1013,9 @@ class AutoRoundConfig(TorchBaseConfig):
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "AutoRoundConfig", List["AutoRoundConfig"]]:
         """Get the configuration set for tuning.
-        
+
         Returns:
             Union[None, "AutoRoundConfig", List["AutoRoundConfig"]]: The configuration set for tuning.
-        
         """
         # TODO fwk owner needs to update it.
         return AutoRoundConfig(bits=[4, 6])
