@@ -590,6 +590,8 @@ class AWQConfig(TorchBaseConfig):
             folding(bool): Allow insert mul before linear when the scale cannot be absorbed by last layer,
               default is False.
             absorb_layer_dict (dict): The layer dict that scale can be absorbed, default is {}.
+            white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
+              Default is DEFAULT_WHITE_LIST.
         """
         super().__init__(white_list=white_list)
         self.dtype = dtype
@@ -762,6 +764,8 @@ class TEQConfig(TorchBaseConfig):
             absorb_to_layer (dict): The layer dict that scale can be absorbed, default is {}.
             folding(bool): Allow insert mul before linear when the scale cannot be absorbed by last layer,
               default is False.
+            white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
+              Default is DEFAULT_WHITE_LIST.
         """
         super().__init__(white_list=white_list)
         self.dtype = dtype
@@ -948,9 +952,11 @@ class AutoRoundConfig(TorchBaseConfig):
             not_use_best_mse (bool): Whether to use mean squared error (default is False).
             dynamic_max_gap (int): The dynamic maximum gap (default is -1).
             scale_dtype (str): The data type of quantization scale to be used (default is "float16"), different kernels
-                        have different choices.
+              have different choices.
             use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
             multimodal(bool): Enable multimodal model quantization, (default is "False").
+            white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
+              Default is DEFAULT_WHITE_LIST.
         """
         super().__init__(white_list=white_list)
         self.dtype = dtype
