@@ -80,9 +80,12 @@ class WeightOnlyLinear(torch.nn.Module):
             group_size (int, optional): size of the quantization group. Defaults to 32.
             zp (bool, optional): zero point. Defaults to False.
             bias (bool, optional): module bias. Defaults to False.
-            scale_dtype (torch.Tensor, optional):  the data type of quantization scale to be used. Defaults to torch.float32.
-            compression_dtype (torch.Tensor, optional): the target dtype after comoression. Defaults to torch.int32.
-            compression_dim (int, optional): select from [0, 1], 0 is output channel, 1 is input channel. Defaults to 1.
+            scale_dtype (torch.Tensor, optional): the data type of quantization scale to be used. 
+                                                  Defaults to torch.float32.
+            compression_dtype (torch.Tensor, optional): the target dtype after comoression. 
+                                                        Defaults to torch.int32.
+            compression_dim (int, optional): select from [0, 1], 0 is output channel, 1 is input channel. 
+                                             Defaults to 1.
             g_idx (bool, optional): for recording the channel order.
             device (str, optional): choose device for compression. Defaults to cpu.
             use_optimum_format (bool, optional): use the popular huggingface compression format.
