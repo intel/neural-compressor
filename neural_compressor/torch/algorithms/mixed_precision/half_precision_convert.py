@@ -21,7 +21,7 @@ from typing import Dict, Tuple
 import torch
 
 from neural_compressor.common import logger
-from neural_compressor.torch.algorithms.mix_precision.module_wrappers import HalfPrecisionModuleWrapper
+from neural_compressor.torch.algorithms.mixed_precision.module_wrappers import HalfPrecisionModuleWrapper
 from neural_compressor.torch.utils import get_accelerator
 
 
@@ -37,7 +37,7 @@ class HalfPrecisionConverter:
         """Initialize the Half-precision Converter with config.
 
         Args:
-            configs_mapping (Dict): config class for mix-precision.
+            configs_mapping (Dict): config class for mixed-precision.
         """
         self.configs_mapping = configs_mapping
         self.device = get_accelerator().current_device_name()
@@ -49,7 +49,7 @@ class HalfPrecisionConverter:
             model (torch.nn.Module): the input model.
 
         Returns:
-            mix_precision_model (torch.nn.Module): model with mix-precision.
+            mixed_precision_model (torch.nn.Module): model with mixed-precision.
         """
         if len(self.configs_mapping) > 0:
             logger.info("Convert operators to half-precision")
@@ -59,10 +59,10 @@ class HalfPrecisionConverter:
         elif next(model.parameters()).is_cpu:
             self.device = "cpu"
 
-        mix_precision_model = self._wrap_half_precision_model(model)
-        mix_precision_model.to(self.device)
+        mixed_precision_model = self._wrap_half_precision_model(model)
+        mixed_precision_model.to(self.device)
 
-        return mix_precision_model
+        return mixed_precision_model
 
     def _wrap_half_precision_model(self, model: torch.nn.Module, prefix=""):
         """Wrap and replace half-precision target modules.

@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Save and load the quantized model."""
+
 
 import json
 import os
@@ -22,6 +24,13 @@ from neural_compressor.torch.utils import QCONFIG_NAME, WEIGHT_NAME, logger
 
 
 def save(model, example_inputs, output_dir="./saved_results"):
+    """Save the quantized model and its configuration.
+
+    Args:
+        model (torch.nn.Module): The quantized model to be saved.
+        example_inputs (torch.Tensor or tuple of torch.Tensor): Example inputs used for tracing the model.
+        output_dir (str, optional): The directory where the saved results will be stored. Defaults to "./saved_results".
+    """
     os.makedirs(output_dir, exist_ok=True)
     qmodel_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), WEIGHT_NAME)
     qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), QCONFIG_NAME)
@@ -37,6 +46,14 @@ def save(model, example_inputs, output_dir="./saved_results"):
 
 
 def load(output_dir="./saved_results"):
+    """Load a quantized model from the specified output directory.
+
+    Args:
+        output_dir (str): The directory where the quantized model is saved. Defaults to "./saved_results".
+
+    Returns:
+        torch.nn.Module: The loaded quantized model.
+    """
     qmodel_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), WEIGHT_NAME)
     loaded_quantized_ep = torch.export.load(qmodel_file_path)
     return loaded_quantized_ep.module()
