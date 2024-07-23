@@ -1,4 +1,5 @@
 name: Probot
+permissions: read-all
 
 on:
   pull_request:

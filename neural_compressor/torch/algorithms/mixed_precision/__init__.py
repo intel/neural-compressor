@@ -15,5 +15,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from neural_compressor.torch.algorithms.mix_precision.half_precision_convert import HalfPrecisionConverter
-from neural_compressor.torch.algorithms.mix_precision.module_wrappers import HalfPrecisionModuleWrapper
+from neural_compressor.torch.algorithms.mixed_precision.half_precision_convert import HalfPrecisionConverter
+from neural_compressor.torch.algorithms.mixed_precision.module_wrappers import HalfPrecisionModuleWrapper

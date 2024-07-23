@@ -1,4 +1,5 @@
 name: Publish
+permissions: read-all
 
 on:
   push:

@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
+"""TEQ quantization."""
 
 from typing import Any, List
 
@@ -39,10 +39,15 @@ class TrainableEquivalentTransformation:
     _PREPARE_ATTRS_PREFIX = "_prepare_"
 
     def __init__(self, model, weight_config={}, absorb_to_layer=None, folding=True, example_inputs=None):
-        """
-        :param model: the model for quantization
-        :param weight_config (dict, optional): contains all info required by RTN. Defaults to {}.
-        :param example_inputs: inputs for trace
+        """Init the TrainableEquivalentTransformation object.
+
+        Args:
+            model (torch.nn.module): the model for quantization
+            weight_config (dict, optional): contains all info required by RTN. Defaults to {}.
+            absorb_to_layer (dict): The layer dict that scale can be absorbed. Default to None.
+            folding(bool): Allow insert mul before linear when the scale cannot be absorbed by last layer.
+                            Default to True.
+            example_inputs: inputs for trace. Default to None.
         """
         self.model = model
         self.weight_config = weight_config
@@ -78,8 +83,11 @@ class TrainableEquivalentTransformation:
         self._post_initialized = True
 
     def _get_device(self):
-        """Get the model device
-        :return:Model device."""
+        """Get the model device.
+
+        Returns:
+            str: Model device.
+        """
         device = get_accelerator().current_device_name()
         return device
 
@@ -88,10 +96,11 @@ class TrainableEquivalentTransformation:
             return p.data.dtype
 
     def add_tuning_scale(self, sqrt_w_init=False):
-        """The main entry of smooth quant
-        to the paper for more details
-        :param sqrt_w_init: use sqrt weight to init."""
+        """Add tuning scales.
 
+        Args:
+            sqrt_w_init: use sqrt weight to init.
+        """
         if not self.absorb_to_layer:
             self.absorb_to_layer = self._detect_absorb_to_layer(self.model, self.folding, self.example_inputs)
         if not self._post_initialized:
@@ -157,10 +166,13 @@ class TrainableEquivalentTransformation:
 
     @torch.no_grad()
     def _absorb_scales(self, layer, scale, layer_name=""):
-        """Absorb the scale to the layer at output channel
-        :param layer: The module
-        :param scale: The scale to be absorbed
-        :param layer_name: The layer name."""
+        """Absorb the scale to the layer at output channel.
+
+        Args:
+            layer: the module.
+            scale: the scale to be absorbed.
+            layer_name: the layer name.
+        """
         # for insert mul
         if not self.folding:  # pragma: no cover
             if isinstance(layer, MulLinear):
@@ -226,10 +238,12 @@ class TrainableEquivalentTransformation:
 
     @torch.no_grad()
     def _scale_layer_weight(self, layer, scale):  ##input channel
-        """Scale the layer weights at input channel, depthwise conv output channel
-        :param layer_name: The layer name
-        :param scale: The scale to be multiplied
-        :return:"""
+        """Scale the layer weights at input channel, depthwise conv output channel.
+
+        Args:
+            layer: the layer.
+            scale: the scale to be multiplied.
+        """
         if layer.__class__.__name__ == "MulLinear":
             layer = layer.linear
 
@@ -331,10 +345,11 @@ class TrainableEquivalentTransformation:
         self.model = model
 
     def save(self, save_scale_file="", save_state_dict_file=""):
-        """
-        save alpha/scale or model weight
-        :param save_scale_file: save alpha/scale with torch.save
-        :param save_state_dict_file: save model state_dict
+        """Save alpha/scale or model weight.
+
+        Args:
+            save_scale_file: path to save alpha/scale with torch.save.
+            save_state_dict_file: path to save model state_dict.
         """
         if save_scale_file:  # pragma: no cover
             torch.save(self.trained_alphas, save_scale_file)
@@ -344,8 +359,10 @@ class TrainableEquivalentTransformation:
 
 
 class TEQuantizer(Quantizer):
+    """TEQ Quantizer."""
 
     def __init__(self, quant_config, folding, example_inputs, absorb_to_layer=None):
+        """Init the TEQuantizer object."""
         super().__init__(quant_config=quant_config)
         self.folding = folding
         self.absorb_to_layer = absorb_to_layer
@@ -363,6 +380,7 @@ class TEQuantizer(Quantizer):
 
         Args:
             model: A float model to be quantized.
+
         Returns:
             A prepared model.
         """
@@ -376,6 +394,14 @@ class TEQuantizer(Quantizer):
         return float_model
 
     def convert(self, model, *args: Any, **kwargs: Any):
+        """Convert the prepared model to a quantized model.
+
+        Args:
+            model (torch.nn.Module): the prepared model
+
+        Returns:
+            The quantized model.
+        """
         for attr in self._quantizer._PREPARE_ATTRS:
             setattr(self._quantizer, attr, getattr(model, self._quantizer._PREPARE_ATTRS_PREFIX + attr, None))
         self._quantizer.model = model

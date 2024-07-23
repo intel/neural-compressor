@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""WOQ save and load."""
 # pylint:disable=import-error
 
 import copy
@@ -26,6 +26,12 @@ from neural_compressor.torch.utils import QCONFIG_NAME, WEIGHT_NAME, LoadFormat,
 
 
 def save(model, output_dir="./saved_results"):
+    """Save the quantized model and config to the output path.
+
+    Args:
+        model (torch.nn.module): raw fp32 model or prepared model.
+        output_dir (str, optional): output path to save.
+    """
     os.makedirs(output_dir, exist_ok=True)
     qmodel_weight_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), WEIGHT_NAME)
     qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), QCONFIG_NAME)
@@ -65,6 +71,7 @@ def load(model_name_or_path, original_model=None, format=LoadFormat.DEFAULT, dev
         kwargs (remaining dictionary of keyword arguments, optional):
             remaining dictionary of keyword arguments for loading huggingface models.
             will be passed to the huggingface model's `__init__` method, such as 'trust_remote_code', 'revision'.
+
     Returns:
         torch.nn.Module: quantized model
     """
@@ -74,7 +81,10 @@ def load(model_name_or_path, original_model=None, format=LoadFormat.DEFAULT, dev
 
 
 class WOQModelLoader:
+    """WOQ Model Loader."""
+
     def __init__(self, model_name_or_path, original_model=None, format=LoadFormat.DEFAULT, device="cpu", **kwargs):
+        """Init the WOQModelLoader object."""
         # TODO: When loading WOQ model, use different WeightOnlyLinear module according to device.
         self.model_name_or_path = model_name_or_path
         self.original_model = original_model
@@ -85,6 +95,14 @@ class WOQModelLoader:
         self.loaded_state_dict_keys = {}
 
     def load_woq_model(self):
+        """Load quantized weight-only quantization model.
+
+        Raises:
+            ValueError: `format` in load function can only be 'huggingface' or 'default'.
+
+        Returns:
+            torch.nn.Module: quantized model
+        """
         if self.format == LoadFormat.HUGGINGFACE:
             model = self.load_hf_format_woq_model()
             logger.info("Loading HuggingFace weight-only quantization model successfully.")
@@ -119,6 +137,15 @@ class WOQModelLoader:
         return model
 
     def load_inc_format_woq_model(self, qmodel_weight_file_path, qconfig_file_path):
+        """Load INC weight-only quantized model in local.
+
+        Args:
+            qmodel_weight_file_path (str): path to the quantized model.
+            qconfig_file_path (str): path to the quant config.
+
+        Returns:
+            torch.nn.Module: quantized model
+        """
         qweights = torch.load(qmodel_weight_file_path)
         self.loaded_state_dict_keys = qweights.keys()
 
@@ -130,6 +157,11 @@ class WOQModelLoader:
         return model
 
     def load_hf_format_woq_model(self):
+        """Load HuggingFace weight-only quantized model.
+
+        Returns:
+            torch.nn.Module: quantized model
+        """
         # check required package
         from neural_compressor.torch.utils import is_package_available
 
