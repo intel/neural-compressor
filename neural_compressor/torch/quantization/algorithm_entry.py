@@ -600,7 +600,7 @@ def autoround_quantize_entry(
             not_use_best_mse = quant_config.not_use_best_mse
             dynamic_max_gap = quant_config.dynamic_max_gap
             scale_dtype = quant_config.scale_dtype
-            multimodal = quant_config.multimodal
+            quant_block_list = quant_config.quant_block_list
             low_cpu_mem_usage = quant_config.use_layer_wise
 
     kwargs.pop("example_inputs")
@@ -627,7 +627,7 @@ def autoround_quantize_entry(
         not_use_best_mse=not_use_best_mse,
         dynamic_max_gap=dynamic_max_gap,
         scale_dtype=scale_dtype,
-        multimodal=multimodal,
+        quant_block_list=quant_block_list,
         low_cpu_mem_usage=low_cpu_mem_usage,
     )
     model = quantizer.execute(model=model, mode=mode, *args, **kwargs)
