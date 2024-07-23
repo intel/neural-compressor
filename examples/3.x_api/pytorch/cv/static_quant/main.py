@@ -79,13 +79,13 @@ parser.add_argument('--multiprocessing-distributed', action='store_true',
 parser.add_argument('--dummy', action='store_true', help="use fake data to benchmark")
 parser.add_argument('-q', '--quantize', dest='quantize', action='store_true',
                     help='quantize model')
-parser.add_argument("--calib_iters", default=-1, type=int,
+parser.add_argument("--calib_iters", default=128, type=int,
                     help="For calibration only.")
 parser.add_argument('-o', '--output_dir', default='', type=str, metavar='PATH',
                     help='path to quantized result.')
 parser.add_argument('--performance', dest='performance', action='store_true',
                     help='do benchmark')
-parser.add_argument("--iters", default=-1, type=int,
+parser.add_argument("--iters", default=100, type=int,
                     help="For benchmark only.")
 parser.add_argument('--int8', dest='int8', action='store_true',
                     help='Load quantized model')
@@ -347,7 +347,7 @@ def main_worker(gpu, ngpus_per_node, args):
 
 def benchmark(val_loader, model, args): 
 
-    total_iters = args.iters
+    total_iters = args.iters if args.iters > len(val_loader) else len(val_loader)
     warmup_iters = 5
     with torch.no_grad():
         
