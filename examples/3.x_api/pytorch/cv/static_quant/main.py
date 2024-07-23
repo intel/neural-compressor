@@ -347,7 +347,7 @@ def main_worker(gpu, ngpus_per_node, args):
 
 def benchmark(val_loader, model, args): 
 
-    total_iters = args.iters if args.iters > len(val_loader) else len(val_loader)
+    total_iters = args.iters if args.iters < len(val_loader) else len(val_loader)
     warmup_iters = 5
     with torch.no_grad():
         
