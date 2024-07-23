@@ -1745,7 +1745,6 @@ class MixedPrecisionConfig(BaseConfig):
         cls.supported_configs = supported_configs
 
     @staticmethod
-    """Register supported configs."""
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
         """Get concrete node names for supported operators."""
         white_list = tuple(MixedPrecisionConfig.supported_half_precision_ops)
