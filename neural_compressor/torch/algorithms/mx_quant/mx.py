@@ -17,7 +17,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""MX quantization."""
 
 from collections import OrderedDict
 
@@ -31,6 +31,8 @@ from .utils import quantize_elemwise_op, quantize_mx_op
 
 
 class MXLinear(torch.nn.Linear):
+    """Linear for MX data type."""
+
     def __init__(
         self,
         in_features,
@@ -39,6 +41,7 @@ class MXLinear(torch.nn.Linear):
         mx_specs=None,
         name=None,
     ):
+        """Initialization function."""
         self.mx_none = mx_specs is None
 
         self.name = name
@@ -46,6 +49,7 @@ class MXLinear(torch.nn.Linear):
         super().__init__(in_features, out_features, bias)
 
     def apply_mx_specs(self):
+        """Apply MX data type to weight."""
         if self.mx_specs is not None:
             if self.mx_specs.out_dtype != "float32":
                 self.weight.data = quantize_elemwise_op(self.weight.data, mx_specs=self.mx_specs)
@@ -63,6 +67,7 @@ class MXLinear(torch.nn.Linear):
             )
 
     def forward(self, input):
+        """Forward function."""
         if self.mx_none:
             return super().forward(input)
 
@@ -93,6 +98,8 @@ class MXLinear(torch.nn.Linear):
 
 
 class MXQuantizer(Quantizer):
+    """Quantizer of MX data type."""
+
     def __init__(self, quant_config: OrderedDict = {}):
         """Init a MXQuantizer object.
 
