@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""The quantization classes for Keras."""
 
 import copy
 import json
@@ -373,9 +374,9 @@ class KerasAdaptor:
         """Apply calibration.
 
         Args:
-            model (tf.keras.Model): The model inserted with FakeQuant layers for calibration.
+            model(tf.keras.Model): The model inserted with FakeQuant layers for calibration.
             dataloader(object): The calibration dataloader used to load quantization dataset.
-            iteration(int): The iteration of calibration.
+            calib_interation(int): The iteration of calibration.
         """
         # run eagerly to fetch the numpy min/max
         results = {}
@@ -580,9 +581,9 @@ class KerasQuery:
 
     def _get_specified_version_cfg(self, data):
         """Get the configuration for the current runtime.
+
         If there's no matched configuration in the input yaml, we'll
         use the `default` field of yaml.
-
         Args:
             data (Yaml content): input yaml file.
 

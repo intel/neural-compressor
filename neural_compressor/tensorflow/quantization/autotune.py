@@ -34,6 +34,7 @@ __all__ = [
 
 
 def get_all_config_set() -> Union[BaseConfig, List[BaseConfig]]:
+    """get all config set."""
     return get_all_config_set_from_config_registry(fwk_name=FRAMEWORK_NAME)
 
 
