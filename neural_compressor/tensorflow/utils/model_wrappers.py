@@ -517,7 +517,7 @@ def try_loading_keras(model, input_tensor_names, output_tensor_names):  # pragma
         model (string or tf.keras.Model): model path or tf.keras.Model object.
         input_tensor_names (list of string): input tensor names of the model.
         output_tensor_names (list of string): output tensor names of the model.
-        
+
     Returns:
         graph_def (tf.compat.v1.Session): tf.compat.v1.Session object.
         input_names (list of string): validated input names.

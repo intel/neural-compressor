@@ -10,7 +10,7 @@ TensorFlow
       - [Quantization Approaches](#quantization-approaches)
         - [Post Training Static Quantization](#post-training-static-quantization)
         - [Smooth Quantization](#smooth-quantization)
-        - [Mixed Precison](#mixed-precison)
+        - [Mixed Precision](#mixed-precison)
       - [Backend and Device](#backend-and-device)
 
 ## Introduction
@@ -186,7 +186,7 @@ Smooth Quantization (SQ) is an advanced quantization technique designed to optim
 
 Refer to the [SQ Guide](./TF_SQ.md) for detailed information.
 
-##### Mixed Precison
+##### Mixed Precision
 The Mixed Precision (MP) is enabled with Post Training Static Quantization. Once `BF16` is supported on machine, the matched operators will be automatically converted.
 
 

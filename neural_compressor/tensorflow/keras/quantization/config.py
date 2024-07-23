@@ -38,6 +38,7 @@ FRAMEWORK_NAME = "keras"
 
 class OperatorConfig(NamedTuple):
     """The config for operator."""
+
     config: BaseConfig
     operators: List[Union[str, Callable]]
     valid_func_list: List[Callable] = []
