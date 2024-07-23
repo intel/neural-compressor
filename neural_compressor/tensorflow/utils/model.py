@@ -27,6 +27,7 @@ from neural_compressor.tensorflow.utils.utility import singleton
 @singleton
 class TensorflowGlobalConfig:
     """A global config class for setting framework specific information."""
+
     global_config = {
         "device": "cpu",
         "backend": "default",

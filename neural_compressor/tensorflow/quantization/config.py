@@ -241,7 +241,7 @@ class SmoothQuantConfig(BaseConfig):
             scales_per_op (bool): Whether to set individual scale for every op, default is True.
             record_max_info (bool): whether record the max info in model for alpha tuning, default is False.
             weight_clip: Whether to clip weight when calculating scales, default is True.
-            auto_alpha_args(dict) : Hyperparameters used to set the alpha search space in SQ auto-tuning, 
+            auto_alpha_args(dict) : Hyperparameters used to set the alpha search space in SQ auto-tuning,
                                     by default the search space is 0.0-1.0 with step_size 0.1.
             white_list (list): A list of supported operators of this algorithm.
         """
