@@ -721,12 +721,9 @@ class KerasSurgery:
 
                 for out_layer_name in out_layer_names:
                     if out_layer_name not in input_layer_dict:
-                        input_layer_dict[out_layer_name] = set([layer.name])
+                        input_layer_dict[out_layer_name] = [layer.name]
                     else:
-                        input_layer_dict[out_layer_name].add(layer.name)
-
-        for key in input_layer_dict.keys():
-            input_layer_dict[key] = list(input_layer_dict[key])
+                        input_layer_dict[out_layer_name].append(layer.name)
 
         try:
             model_input = self.model.input
