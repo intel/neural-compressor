@@ -14,6 +14,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""The quantizer using SmoothQuant path."""
+
 
 import json
 import os
@@ -49,6 +51,8 @@ ipex_ver = get_ipex_version()
 
 
 class SmoothQuantQuantizer(Quantizer):
+    """SmoothQuantQuantizer Class."""
+
     def __init__(self, quant_config: OrderedDict = {}):  # pragma: no cover
         """Init a SmoothQuantQuantizer object.
 
@@ -61,9 +65,9 @@ class SmoothQuantQuantizer(Quantizer):
         """Prepares a given model for quantization.
 
         Args:
-            model: A float model to be quantized.
-            example_inputs: Used to trace torch model.
-            inplace: Whether to carry out model transformations in-place. Defaults to True.
+            model (torch.nn.Module): raw fp32 model or prepared model.
+            example_inputs (tensor/tuple/dict): used to trace torch model.
+            inplace (bool, optional): whether to carry out model transformations in-place. Defaults to True.
 
         Returns:
             A prepared model.
@@ -128,9 +132,9 @@ class SmoothQuantQuantizer(Quantizer):
         """Converts a prepared model to a quantized model.
 
         Args:
-            model: The prepared model to be converted.
-            example_inputs: Used to trace torch model.
-            inplace: Whether to carry out model transformations in-place. Defaults to True.
+            model (QuantizationInterceptionModule): the prepared model to be converted.
+            example_inputs (tensor/tuple/dict): used to trace torch model.
+            inplace (bool, optional): whether to carry out model transformations in-place. Defaults to True.
 
         Returns:
             A quantized model.
@@ -153,14 +157,14 @@ class SmoothQuantQuantizer(Quantizer):
         return model
 
     def quantize(self, model, tune_cfg, run_fn, example_inputs, inplace=True, *args, **kwargs):
-        """Execute the quantize process on the specified model.
+        """Executes the quantize process on the specified model.
 
         Args:
-            model: a float model to be quantized.
-            tune_cfg: quantization config for ops.
-            run_fn: a calibration function for calibrating the model.
-            example_inputs: used to trace torch model.
-            inplace: whether to carry out model transformations in-place.
+            model (torch.nn.Module): raw fp32 model or prepared model.
+            tune_cfg (OrderedDict): quantization config for ops.
+            run_fn (Callable): a calibration function for calibrating the model.
+            example_inputs (tensor/tuple/dict): used to trace torch model.
+            inplace (bool, optional): whether to carry out model transformations in-place. Defaults to True.
 
         Returns:
             A quantized model.
@@ -255,6 +259,22 @@ class SmoothQuantQuantizer(Quantizer):
 def qdq_quantize(
     model, tune_cfg, run_fn, example_inputs, inplace, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, sq
 ):
+    """Executes the smooth quantize process.
+
+    Args:
+        model (torch.nn.Module): raw fp32 model or prepared model.
+        tune_cfg (OrderedDict): quantization config for ops.
+        run_fn (Callable): a calibration function for calibrating the model.
+        example_inputs (tensor/tuple/dict): used to trace torch model.
+        inplace (bool): whether to carry out model transformations in-place. Defaults to True.
+        cfgs (dict): configs loaded from ipex config path.
+        op_infos_from_cfgs (dict): dict containing configs that have been parsed for each op.
+        output_tensor_id_op_name (dict): dict containing op names corresponding to 'op_infos_from_cfgs'.
+        sq (TorchSmoothQuant): TorchSmoothQuant class containing sq infos.
+
+    Returns:
+        A quantized model.
+    """
     smoothquant_scale_info = sq.sq_scale_info
     sq_minmax_init = True if tune_cfg.get("act_algo", "kl") == "minmax" else False
 
@@ -325,6 +345,14 @@ def qdq_quantize(
 
 
 def _apply_pre_optimization(model, tune_cfg, sq, recover=False):
+    """Retrieves sq info to absorb the scale to the layer at output channel.
+
+    Args:
+        model (QuantizationInterceptionModule): a prepared model.
+        tune_cfg (OrderedDict): quantization config for ops.
+        sq (TorchSmoothQuant): TorchSmoothQuant class containing sq infos.
+        recover (bool, optional): whether to recover the scale. Defaults to False.
+    """
     sq_max_info = {}
     if sq.record_max_info:
         sq_max_info = sq.max_value_info
@@ -354,13 +382,13 @@ def _apply_pre_optimization(model, tune_cfg, sq, recover=False):
 
 
 def _ipex_post_quant_process(model, example_inputs, use_bf16, inplace=False):
-    """Convert to a jit model.
+    """Converts to a jit model.
 
     Args:
-        model: a prepared model.
-        example_inputs: used to trace torch model.
-        use_bf16: whether to use bf16 for mixed precision.
-        inplace: whether to carry out model transformations in-place.
+        model (QuantizationInterceptionModule): a prepared model.
+        example_inputs (tensor/tuple/dict): used to trace torch model.
+        use_bf16 (bool): whether to use bf16 for mixed precision.
+        inplace (bool, optional): whether to carry out model transformations in-place. Defaults to True.
 
     Returns:
         A converted jit model.

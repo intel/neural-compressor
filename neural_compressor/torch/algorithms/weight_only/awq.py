@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""AWQ quantization."""
 # Copied from neural_compressor/adaptor/torch_utils/awq.py
 
 import copy
@@ -40,11 +40,16 @@ def _get_absorb_per_block(model, example_inputs, folding=False, weight_config={}
     """Get absorbed layer per block.
 
     Args:
-        model (torch.nn.Module): input model
-        example_inputs: example_inputs
+        model (torch.nn.Module): input model.
+        example_inputs (tensor/tuple/dict, optional): used to trace torch model.
+        folding (bool, optional): whether only allow update scale when it can be fold
+                                    to upper layer. Defaults to False.
+        weight_config (dict, optional): the quantization configuration. Defaults to {}.
 
     Returns:
-        block_absorb_dict: dict of absorbed layer per block. eg. {0, [[absorbed_1, xx], [xx]], ...}
+        block_absorb_dict: The dict of absorbed layer per block. eg. {0, [[absorbed_1, xx], [xx]], ...}
+        absorb_layer_dict: The layer dict that scale can be absorbed. The dict is the inverse of
+                                block_absorb_dict for all blocks.
     """
     block_absorb_dict = {}  # record absorbed layer per block
     absorb_layer_dict = {}  # record absorb layers for absorbed layers
@@ -94,10 +99,12 @@ def _get_absorb_dict(model, absorb_layer_dict):
 
     Args:
         model (torch.nn.Module): input model
-        absorb_layer_dict (dict): The layer dict that scale can be absorbed, default is {}.
+        absorb_layer_dict (dict): The layer type dict that scale can be absorbed, default is {}.
 
     Returns:
         block_absorb_dict: dict of absorbed layer per block. eg. {0, [[absorbed_1, xx], [xx]], ...}
+        new_absorb_layer_dict: The layer dict that scale can be absorbed. The dict is the inverse of
+                                block_absorb_dict for all blocks.
     """
     block_absorb_dict = {}
     block_prefix, block_num = get_block_prefix(model)
@@ -121,6 +128,15 @@ def _get_absorb_dict(model, absorb_layer_dict):
 
 @torch.no_grad()
 def _get_weight_scale(weight, q_group_size=-1):
+    """Get scale for weight.
+
+    Args:
+        weight (tensor): input weight
+        q_group_size (int, optional): how many elements share one scale/zp. Defaults to -1.
+
+    Returns:
+        scale: the scale of input weight.
+    """
     org_shape = weight.shape
     if q_group_size > 0:
         weight = weight.view(-1, q_group_size)
@@ -526,6 +542,8 @@ class ActAwareWeightQuant:
 
 
 class AWQQuantizer(Quantizer):
+    """AWQ Quantizer."""
+
     def __init__(self, quant_config: OrderedDict = {}, absorb_layer_dict: dict = {}):
         """Init an AWQQuantizer object.
 
