@@ -138,7 +138,7 @@ class StaticQuantConfig(BaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "StaticQuantConfig", List["StaticQuantConfig"]]:
-        """Get a default config set for tunning."""
+        """Get a default config set for tuning."""
         return StaticQuantConfig(weight_sym=[True, False])
 
 

@@ -171,7 +171,7 @@ class StaticQuantConfig(BaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "StaticQuantConfig", List["StaticQuantConfig"]]:
-        """Get a default config set for tunning."""
+        """Get a default config set for tuning."""
         return StaticQuantConfig(
             weight_dtype=["int8", "fp32"],
             weight_sym=[True, False],
@@ -280,7 +280,7 @@ class SmoothQuantConfig(BaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "SmoothQuantConfig", List["SmoothQuantConfig"]]:
-        """Get a default config set for tunning."""
+        """Get a default config set for tuning."""
         return SmoothQuantConfig(alpha=0.5)
 
 
