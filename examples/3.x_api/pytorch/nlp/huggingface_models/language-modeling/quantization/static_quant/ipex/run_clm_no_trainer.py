@@ -164,9 +164,9 @@ if args.quantize:
     )
 
     
-    from neural_compressor.torch.quantization import get_default_static_config, StaticQuantConfig
-    quant_config =  get_default_static_config()
-    quant_config.excluded_precisions = [] if args.int8_bf16_mixed else ["bf16"]
+    from neural_compressor.torch.quantization import StaticQuantConfig
+    excluded_precisions = [] if args.int8_bf16_mixed else ["bf16"]
+    quant_config = StaticQuantConfig(excluded_precisions=excluded_precisions)
     if re.search("gpt", user_model.config.model_type):
         quant_config.set_local("add", StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
 
