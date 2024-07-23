@@ -170,7 +170,7 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
 
         @classmethod
         def from_config(cls, config):
-            """Deserialize this class from a config dict"""
+            """Deserialize this class from a config dict."""
             return cls(**config)
 
         def get_config(self):

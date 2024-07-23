@@ -91,7 +91,7 @@ class StaticQuantConfig(BaseConfig):
 
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
-        """register supported configs."""
+        """Register supported configs."""
         supported_configs = []
         static_quant_config = StaticQuantConfig(
             weight_dtype=["int8", "fp32"],
@@ -116,7 +116,7 @@ class StaticQuantConfig(BaseConfig):
 
     @staticmethod
     def get_model_info(model) -> List[Tuple[str, Callable]]:
-        """get concrete node names for supported operators."""
+        """Get concrete node names for supported operators."""
         white_list = [
             "Dense",
             "Conv2D",

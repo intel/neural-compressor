@@ -108,7 +108,7 @@ class StaticQuantConfig(BaseConfig):
 
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
-        """register supported config."""
+        """Register supported config."""
         supported_configs = []
         static_quant_config = StaticQuantConfig(
             weight_dtype=["int8", "bf16", "fp32"],
@@ -139,7 +139,7 @@ class StaticQuantConfig(BaseConfig):
         cls.supported_configs = supported_configs
 
     def get_model_info(self, model) -> List[Tuple[str, Callable]]:
-        """get concrete node names for supported operators."""
+        """Get concrete node names for supported operators."""
         white_list = [
             "Conv2D",
             "FusedBatchNormV3",
@@ -171,7 +171,7 @@ class StaticQuantConfig(BaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "StaticQuantConfig", List["StaticQuantConfig"]]:
-        """get a default config set for tunning."""
+        """Get a default config set for tunning."""
         return StaticQuantConfig(
             weight_dtype=["int8", "fp32"],
             weight_sym=[True, False],
@@ -259,7 +259,7 @@ class SmoothQuantConfig(BaseConfig):
 
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
-        """register supported configs."""
+        """Register supported configs."""
         supported_configs = []
         smooth_quant_config = SmoothQuantConfig()
         operators = ["MatMul", "Conv2D"]
@@ -268,7 +268,7 @@ class SmoothQuantConfig(BaseConfig):
 
     @staticmethod
     def get_model_info(model) -> List[Tuple[str, Callable]]:
-        """get concrete node names for supported operators."""
+        """Get concrete node names for supported operators."""
         white_list = ["MatMul", "Conv2D"]
         filter_result = []
         for node in model.graph_def.node:
@@ -280,7 +280,7 @@ class SmoothQuantConfig(BaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "SmoothQuantConfig", List["SmoothQuantConfig"]]:
-        """get a default config set for tunning."""
+        """Get a default config set for tunning."""
         return SmoothQuantConfig(alpha=0.5)
 
 
