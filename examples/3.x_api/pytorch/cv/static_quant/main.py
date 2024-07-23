@@ -289,9 +289,17 @@ def main_worker(gpu, ngpus_per_node, args):
         # Prepare the float model and example inputs for exporting model
         x = torch.randn(args.batch_size, 3, 224, 224).contiguous(memory_format=torch.channels_last)
         example_inputs = (x,)
+        
+        # Specify that the first dimension of each input is that batch size
+        from torch.export import Dim
+        print(args.batch_size)
+        batch = Dim("batch", min=16)
+    
+        # Specify that the first dimension of each input is that batch size
+        dynamic_shapes = {"x": {0: batch}}
 
         # Export eager model into FX graph model
-        exported_model = export(model=model, example_inputs=example_inputs)
+        exported_model = export(model=model, example_inputs=example_inputs, dynamic_shapes=dynamic_shapes)
         # Quantize the model
         quant_config = get_default_static_config()
         
