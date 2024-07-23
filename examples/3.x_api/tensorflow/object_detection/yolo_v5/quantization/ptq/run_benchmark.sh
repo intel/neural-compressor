@@ -10,7 +10,7 @@ function main {
 
 # init params
 function init_params {
-    batch_size=32
+    batch_size=128
     iters=100
     for var in "$@"
     do
@@ -38,12 +38,25 @@ function init_params {
 
 # run_tuning
 function run_benchmark {
-    python main.py \
-        --input_graph ${input_model} \
-        --dataset_location ${dataset_location} \
-        --mode ${mode} \
-        --batch_size ${batch_size} \
-        --benchmark \
+    if [[ ${mode} == "accuracy" ]]; then
+        python main.py \
+            --input_model ${input_model} \
+            --dataset_location ${dataset_location} \
+            --mode ${mode} \
+            --batch_size ${batch_size} \
+            --benchmark
+    elif [[ ${mode} == "performance" ]]; then
+        incbench --num_c 4 python main.py \
+            --input_model ${input_model} \
+            --dataset_location ${dataset_location} \
+            --mode ${mode} \
+            --batch_size ${batch_size} \
+            --iteration ${iters}
+            --benchmark
+    else
+        echo "Error: No such mode: ${mode}"
+        exit 1
+    fi
 }
 
 main "$@"

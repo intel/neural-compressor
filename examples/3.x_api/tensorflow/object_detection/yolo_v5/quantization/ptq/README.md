@@ -75,13 +75,7 @@ Run the `prepare_dataset.sh` script.
 ```shell
 . prepare_dataset.sh
 ```
-
-This script will download the *train*, *validation* and *test* COCO datasets. 
-
-### Manual download
-
-Download CoCo Dataset from [Official Website](https://cocodataset.org/#download).
-
+The validation set of coco2017 will be downloaded into a `./coco` folder.
 
 # Run
 

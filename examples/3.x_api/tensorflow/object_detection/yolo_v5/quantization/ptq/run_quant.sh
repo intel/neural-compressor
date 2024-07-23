@@ -31,8 +31,8 @@ function init_params {
 # run tuning
 function run_benchmark {
     python main.py \
-        --input_graph ${input_model} \
-        --output_graph ${output_model} \
+        --input_model ${input_model} \
+        --output_model ${output_model} \
         --dataset_location ${dataset_location} \
         --tune
 }
