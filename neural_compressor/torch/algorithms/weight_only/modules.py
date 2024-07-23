@@ -31,7 +31,10 @@ from .utility import quant_tensor
 
 
 class QDQLayer(torch.nn.Module):
+    """Quantized and dequantized layer."""
+
     def __init__(self, module, input_scale=None) -> None:
+        """Init the QDQLayer object."""
         super().__init__()
         self.quant = torch.ao.quantization.QuantStub()
         self.module = module
@@ -39,6 +42,7 @@ class QDQLayer(torch.nn.Module):
         self.input_scale = input_scale
 
     def forward(self, X):
+        """Forward function."""
         if self.input_scale is not None:
             X = torch.mul(X, self.input_scale)
         X = self.quant(X)
@@ -48,6 +52,8 @@ class QDQLayer(torch.nn.Module):
 
 
 class WeightOnlyLinear(torch.nn.Module):
+    """Weight Only Linear."""
+
     def __init__(
         self,
         in_features,
@@ -64,6 +70,31 @@ class WeightOnlyLinear(torch.nn.Module):
         device="cpu",
         use_optimum_format=True,
     ):
+        """Init the WeightOnlyLinear object.
+
+        Args:
+            in_features (int): input features.
+            out_features (int): out features.
+            dtype (str, optional):  the data type of the quantized model. Defaults to "int".
+            bits (int, optional): number of bits for quantization. Defaults to 4.
+            group_size (int, optional): size of the quantization group. Defaults to 32.
+            zp (bool, optional): zero point. Defaults to False.
+            bias (bool, optional): module bias. Defaults to False.
+            scale_dtype (torch.Tensor, optional): the data type of quantization scale to be used.
+                                                  Defaults to torch.float32.
+            compression_dtype (torch.Tensor, optional): the target dtype after comoression.
+                                                        Defaults to torch.int32.
+            compression_dim (int, optional): select from [0, 1], 0 is output channel, 1 is input channel.
+                                             Defaults to 1.
+            g_idx (bool, optional): for recording the channel order.
+            device (str, optional): choose device for compression. Defaults to cpu.
+            use_optimum_format (bool, optional): use the popular huggingface compression format.
+                1: compression_dim: weight = 1, zeros = 0 and both are transposed.
+                2: zeros -= 1 before compression.
+                3: g_idx: use same number for one group instead of recording the channel order.
+                4. parameter name changed, such as 'packed_weight' -> 'qweight'.
+                5. zeros is always needed even for sym.
+        """
         super().__init__()
         self.use_optimum_format = use_optimum_format
         self.dtype = dtype
@@ -172,6 +203,7 @@ class WeightOnlyLinear(torch.nn.Module):
             self.g_idx = None
 
     def pack(self, int_weight, scale, zp, bias, g_idx=None):
+        """Pack int weight."""
         if self.use_optimum_format:
             self.scales = self.scales.T.contiguous()
             self.qweight = self.qweight.T.contiguous()
@@ -225,6 +257,7 @@ class WeightOnlyLinear(torch.nn.Module):
             self.qzeros = self.qzeros.T.contiguous()
 
     def recover(self):
+        """Recover fp32 weight from packed weight."""
         logger.debug(f"Recovering {self} weight")
         scales = self.scales.T.contiguous() if self.use_optimum_format else self.scales
         qweight = self.qweight.T.contiguous() if self.use_optimum_format else self.qweight
@@ -271,6 +304,14 @@ class WeightOnlyLinear(torch.nn.Module):
         return fp32_weight
 
     def pack_tensor_with_torch(self, raw_tensor):
+        """Pack the tensor with torch.
+
+        Args:
+            raw_tensor (tensor): raw tensor.
+
+        Returns:
+            tensor: packed tensor.
+        """
         target_len = math.ceil(raw_tensor.shape[1] / self.n_pack)
         packed_tensor = torch.zeros(raw_tensor.shape[0], target_len, dtype=self.compression_dtype).to(raw_tensor.device)
         mask = torch.tensor(2**self.bits - 1, dtype=self.compression_dtype).to(raw_tensor.device)
@@ -286,6 +327,14 @@ class WeightOnlyLinear(torch.nn.Module):
         return packed_tensor
 
     def unpack_tensor_with_torch(self, packed_tensor):
+        """Unpack the tensor with torch.
+
+        Args:
+            packed_tensor (tensor): packed tensor.
+
+        Returns:
+            tensor: unpacked tensor.
+        """
         target_dtype = torch.int8 if not hasattr(self, "qzeros") or "int" not in self.dtype else torch.uint8
         target_len = packed_tensor.shape[1] * self.n_pack
         unpacked_tensor = torch.zeros(packed_tensor.shape[0], target_len, dtype=target_dtype).to(packed_tensor.device)
@@ -307,6 +356,7 @@ class WeightOnlyLinear(torch.nn.Module):
     def pack_array_with_numba_b4_c32(
         raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
     ) -> np.ndarray:
+        """Pack the array with numba when bits=4 and compress_bits=32."""
         for i in range(new_in_features):
             packed_array[:, i] = (
                 ((raw_array[:, i * n_pack + 7] & 0b1111) << 28)
@@ -325,6 +375,7 @@ class WeightOnlyLinear(torch.nn.Module):
     def pack_array_with_numba_b4_c16(
         raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
     ) -> np.ndarray:
+        """Pack the array with numba when bits=4 and compress_bits=16."""
         for i in range(new_in_features):
             packed_array[:, i] = (
                 ((raw_array[:, i * n_pack + 3] & 0b1111) << 12)
@@ -339,6 +390,7 @@ class WeightOnlyLinear(torch.nn.Module):
     def pack_array_with_numba_b4_c8(
         raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
     ) -> np.ndarray:
+        """Pack the array with numba when bits=4 and compress_bits=8."""
         for i in range(new_in_features):
             packed_array[:, i] = ((raw_array[:, i * n_pack + 1] & 0b1111) << 4) | (raw_array[:, i * n_pack] & 0b1111)
         return packed_array
@@ -348,6 +400,7 @@ class WeightOnlyLinear(torch.nn.Module):
     def pack_array_with_numba_b4_c64(
         raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
     ) -> np.ndarray:
+        """Pack the array with numba when bits=4 and compress_bits=64."""
         for i in range(new_in_features):
             packed_array[:, i] = (
                 ((raw_array[:, i * n_pack + 15] & 0b1111) << 60)
@@ -374,6 +427,7 @@ class WeightOnlyLinear(torch.nn.Module):
     def pack_array_with_numba_b8_c32(
         raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
     ) -> np.ndarray:
+        """Pack the array with numba when bits=8 and compress_bits=32."""
         for i in range(new_in_features):
             packed_array[:, i] = (
                 ((raw_array[:, i * n_pack + 3] & 0b11111111) << 24)
@@ -388,6 +442,7 @@ class WeightOnlyLinear(torch.nn.Module):
     def pack_array_with_numba_b8_c16(
         raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
     ) -> np.ndarray:
+        """Pack the array with numba when bits=8 and compress_bits=16."""
         for i in range(new_in_features):
             packed_array[:, i] = (
                 ((raw_array[:, i * n_pack + 3] & 0b11111111) << 24)
@@ -402,6 +457,7 @@ class WeightOnlyLinear(torch.nn.Module):
     def pack_array_with_numba_b8_c8(
         raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
     ) -> np.ndarray:
+        """Pack the array with numba when bits=8 and compress_bits=8."""
         for i in range(new_in_features):
             packed_array[:, i] = raw_array[:, i * n_pack] & 0b11111111
         return packed_array
@@ -411,6 +467,7 @@ class WeightOnlyLinear(torch.nn.Module):
     def pack_array_with_numba_b8_c64(
         raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
     ) -> np.ndarray:
+        """Pack the array with numba when bits=8 and compress_bits=64."""
         for i in range(new_in_features):
             packed_array[:, i] = (
                 ((raw_array[:, i * n_pack + 7] & 0b11111111) << 56)
@@ -429,6 +486,7 @@ class WeightOnlyLinear(torch.nn.Module):
     def pack_array_with_numba_b2_c32(
         raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
     ) -> np.ndarray:
+        """Pack the array with numba when bits=2 and compress_bits=32."""
         for i in range(new_in_features):
             packed_array[:, i] = (
                 ((raw_array[:, i * n_pack + 15] & 0b11) << 30)
@@ -455,6 +513,7 @@ class WeightOnlyLinear(torch.nn.Module):
     def pack_array_with_numba_b2_c16(
         raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
     ) -> np.ndarray:
+        """Pack the array with numba when bits=2 and compress_bits=16."""
         for i in range(new_in_features):
             packed_array[:, i] = (
                 ((raw_array[:, i * n_pack + 7] & 0b11) << 14)
@@ -473,6 +532,7 @@ class WeightOnlyLinear(torch.nn.Module):
     def pack_array_with_numba_b2_c8(
         raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
     ) -> np.ndarray:
+        """Pack the array with numba when bits=2 and compress_bits=8."""
         for i in range(new_in_features):
             packed_array[:, i] = (
                 ((raw_array[:, i * n_pack + 3] & 0b11) << 6)
@@ -487,6 +547,7 @@ class WeightOnlyLinear(torch.nn.Module):
     def pack_array_with_numba_b2_c64(
         raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
     ) -> np.ndarray:
+        """Pack the array with numba when bits=2 and compress_bits=64."""
         for i in range(new_in_features):
             packed_array[:, i] = (
                 ((raw_array[:, i * n_pack + 31] & 0b11) << 62)
@@ -549,6 +610,7 @@ class WeightOnlyLinear(torch.nn.Module):
         return pack_method(raw_array, packed_array, n_pack, new_in_features)
 
     def pack_tensor_with_numpy_impl(self, raw_tensor):
+        """The implement of packing tensor with numpy."""
         raw_array = raw_tensor.cpu().numpy()
         target_len = np.ceil(raw_array.shape[1] / self.n_pack).astype(int)
         target_dtype = torch.tensor(0, dtype=self.compression_dtype).numpy().dtype
@@ -567,6 +629,7 @@ class WeightOnlyLinear(torch.nn.Module):
         return packed_tensor
 
     def pack_tensor_with_numpy(self, raw_tensor):
+        """Pack the tensor with numpy."""
         if self.bits not in [2, 4, 8]:
             return self.pack_tensor_with_numpy_impl(raw_tensor)
         compression_dtype = torch.tensor(0, dtype=self.compression_dtype).numpy().dtype
@@ -576,6 +639,7 @@ class WeightOnlyLinear(torch.nn.Module):
         return torch.from_numpy(packed_array).to(device=raw_tensor.device)
 
     def unpack_tensor_with_numpy(self, packed_tensor):
+        """Unpack the packed tensor with numpy."""
         packed_array = packed_tensor.cpu().numpy()
         target_dtype = np.int8 if not hasattr(self, "qzeros") or "int" not in self.dtype else np.uint8
         target_len = packed_array.shape[1] * self.n_pack
@@ -595,18 +659,21 @@ class WeightOnlyLinear(torch.nn.Module):
         return unpacked_tensor
 
     def pack_tensor(self, raw_tensor):
+        """Pack tensor."""
         if "cuda" in raw_tensor.device.type:
             return self.pack_tensor_with_torch(raw_tensor)
         else:
             return self.pack_tensor_with_numpy(raw_tensor)
 
     def unpack_tensor(self, packed_tensor):
+        """Unpack tensor."""
         if "cuda" in packed_tensor.device.type:
             return self.unpack_tensor_with_torch(packed_tensor)
         else:
             return self.unpack_tensor_with_numpy(packed_tensor)
 
     def forward(self, input):
+        """Forward function."""
         if not hasattr(self, "weight"):
             weight = self.recover()
             device = self.scales.device
@@ -624,6 +691,11 @@ class WeightOnlyLinear(torch.nn.Module):
             return F.linear(input, weight, self.bias)
 
     def extra_repr(self) -> str:
+        """Extract the configuration string.
+
+        Returns:
+            str: the configuration string.
+        """
         tmp_str = "in_features={}, out_features={}, bits={}, group_size={}, bias={}".format(
             self.in_features,
             self.out_features,
@@ -657,7 +729,8 @@ class FakeAffineTensorQuantFunction(Function):
 
     @staticmethod
     def backward(ctx, grad_outputs):
-        """
+        """Backward function.
+
         Args:
             ctx: Pytorch convention.
             grad_output: A tensor of gradient of outputs
@@ -672,11 +745,15 @@ class TEQLinearFakeQuant(torch.nn.Module):
     """Wrapper quantization linear."""
 
     def __init__(self, orig_layer, alpha=None, num_bits=4, group_size=-1, scheme="asym"):
-        """A forward hook to linear module
-        :param orig_layer: the original module
-        :param alpha: trainable alpha/scale
-        :param num_bits: quantization level
-        :param group_size: for fine-grained quantization."""
+        """A forward hook to linear module.
+
+        Args:
+            orig_layer: the original module
+            alpha: trainable alpha/scale
+            num_bits: quantization level
+            group_size: for fine-grained quantization.
+            scheme: symmetric quantization or asymmetric quantization.
+        """
         super(TEQLinearFakeQuant, self).__init__()
         self.orig_layer = orig_layer
         self.alpha = alpha
@@ -686,6 +763,7 @@ class TEQLinearFakeQuant(torch.nn.Module):
         self.scheme = scheme
 
     def forward(self, x):
+        """Forward function."""
         alpha = torch.clip(self.alpha, 1e-5)
         shape_len = len(x.shape) - 1
         shape = (1,) * shape_len + (-1,)
@@ -700,9 +778,12 @@ class MulLinear(torch.nn.Module):
     """Linear wrapper to apply scale to input."""
 
     def __init__(self, module, input_scale=None):
-        """A forward hook to save input max of a module
-        :param module: the linear module
-        :param input_scale: scale for input."""
+        """A forward hook to save input max of a module.
+
+        Args:
+            module: the linear module.
+            input_scale: scale for input.
+        """
         super().__init__()
         if input_scale is None:
             input_scale = torch.empty(module.in_features)
@@ -711,13 +792,16 @@ class MulLinear(torch.nn.Module):
 
     @property
     def weight(self):
+        """Property weight."""
         return self.linear.weight
 
     @weight.setter
     def weight(self, weight):
+        """Property weight setter."""
         self.linear.weight = weight
 
     def forward(self, X):
+        """Forward function."""
         X = torch.mul(X, self.input_scale)
         X = self.linear(X)
         return X

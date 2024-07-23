@@ -162,6 +162,8 @@ class RTNConfig(TorchBaseConfig):
             double_quant_use_sym (bool): Indicates whether double_quant scale are symmetric. Default is True.
             double_quant_group_size (int): Size of double_quant groups. Default is 32.
             quant_lm_head (bool): Indicates whether quantize the lm_head layer in transformers。 Default is False.
+            white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
+                Default is DEFAULT_WHITE_LIST.
         """
         super().__init__(white_list=white_list)
         self.dtype = dtype
@@ -184,6 +186,11 @@ class RTNConfig(TorchBaseConfig):
 
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
+        """Register supported configurations for RTN.
+
+        Returns:
+            List[OperatorConfig]: List of supported operator configurations.
+        """
         supported_configs = []
         linear_rtn_config = RTNConfig(
             dtype=[
@@ -220,6 +227,16 @@ class RTNConfig(TorchBaseConfig):
     def to_config_mapping(
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
+        """Convert the configuration to a mapping.
+
+        Args:
+            config_list (List[BaseConfig]): List of base configurations. Default is None.
+            model_info (List[Tuple[str, str]]): List of tuples containing the name and type of each module in the model.
+                Default is None.
+
+        Returns:
+            OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]: The configuration mapping.
+        """
         if not self.quant_lm_head:
             self.set_local(
                 LM_HEAD_NAMES, RTNConfig(dtype="fp32", use_layer_wise=self.use_layer_wise, model_path=self.model_path)
@@ -229,6 +246,14 @@ class RTNConfig(TorchBaseConfig):
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+        """Get information about the model.
+
+        Args:
+            model (torch.nn.Module): The model.
+
+        Returns:
+            List[Tuple[str, Callable]]: List of tuples containing the name and type of each module in the model.
+        """
         filter_result = []
         for op_name, module in model.named_modules():
             if isinstance(module, WOQ_WHITE_LIST):
@@ -239,12 +264,22 @@ class RTNConfig(TorchBaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "RTNConfig", List["RTNConfig"]]:
+        """Get the configuration set for tuning.
+
+        Returns:
+            Union[None, "RTNConfig", List["RTNConfig"]]: The configuration set for tuning.
+        """
         return RTNConfig(
             dtype=["int4", "nf4"], use_sym=[True, False], group_size=[32, 128], use_mse_search=[False, True]
         )
 
     @classmethod
     def get_predefined_configs(cls) -> Dict[torch_utils.ProcessorType, "RTNConfig"]:
+        """Get the predefined configuration set.
+
+        Returns:
+            Dict[torch_utils.ProcessorType, "RTNConfig"]: The configuration of RTN.
+        """
         pre_defined_configs: Dict[torch_utils.ProcessorType, RTNConfig] = {}
         pre_defined_configs[torch_utils.ProcessorType.Client] = cls(use_layer_wise=True)
         pre_defined_configs[torch_utils.ProcessorType.Server] = cls()
@@ -252,11 +287,28 @@ class RTNConfig(TorchBaseConfig):
 
 
 def get_default_rtn_config(processor_type: Optional[Union[str, torch_utils.ProcessorType]] = None) -> RTNConfig:
+    """Get the default configuration of RTN.
+
+    Args:
+        processor_type (Optional[Union[str, torch_utils.ProcessorType]], optional): The user-specified processor type.
+            Defaults to None.
+
+    Returns:
+        RTNConfig: _description_
+    """
     process_type = torch_utils.get_processor_type_from_user_config(processor_type)
     return RTNConfig.get_predefined_configs()[process_type]
 
 
 def get_default_double_quant_config(type="BNB_NF4"):
+    """Get the default configuration of double quant.
+
+    Args:
+        type (str, optional): double quant type. Defaults to "BNB_NF4".
+
+    Returns:
+        dict: double quant config.
+    """
     from neural_compressor.torch.utils.constants import DOUBLE_QUANT_CONFIGS
 
     assert type in DOUBLE_QUANT_CONFIGS, "Supported double quant configs: {}".format(list(DOUBLE_QUANT_CONFIGS.keys()))
@@ -348,6 +400,8 @@ class GPTQConfig(TorchBaseConfig):
             static_groups (bool): Whether to calculate group wise quantization parameters in advance.
                                   This option mitigate actorder's extra computational requirements.
                                   Default is False.
+            white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
+                                                                 Default is DEFAULT_WHITE_LIST.
         """
         assert not quant_lm_head, "GPTQ doesn't support lm_head quantization currently, it's coming soon!"
         super().__init__(white_list=white_list)
@@ -375,6 +429,11 @@ class GPTQConfig(TorchBaseConfig):
 
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
+        """Register supported configurations for GPTQ.
+
+        Returns:
+            List[OperatorConfig]: List of supported operator configurations.
+        """
         supported_configs = []
         # TODO(Yi)
         linear_gptq_config = GPTQConfig()
@@ -385,6 +444,16 @@ class GPTQConfig(TorchBaseConfig):
     def to_config_mapping(
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
+        """Convert the configuration to a mapping.
+
+        Args:
+            config_list (List[BaseConfig]): List of base configurations. Default is None.
+            model_info (List[Tuple[str, str]]): List of tuples containing the name and type of each module in the model.
+                Default is None.
+
+        Returns:
+            OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]: The configuration mapping.
+        """
         if not self.quant_lm_head:
             self.set_local(
                 LM_HEAD_NAMES, GPTQConfig(dtype="fp32", use_layer_wise=self.use_layer_wise, model_path=self.model_path)
@@ -394,6 +463,14 @@ class GPTQConfig(TorchBaseConfig):
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+        """Get information about the model.
+
+        Args:
+            model (torch.nn.Module): The model.
+
+        Returns:
+            List[Tuple[str, Callable]]: List of tuples containing the name and type of each module in the model.
+        """
         filter_result = []
         for op_name, module in model.named_modules():
             if isinstance(module, WOQ_WHITE_LIST):
@@ -404,6 +481,11 @@ class GPTQConfig(TorchBaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "GPTQConfig", List["GPTQConfig"]]:
+        """Get the configuration set for tuning.
+
+        Returns:
+            Union[None, "GPTQConfig", List["GPTQConfig"]]: The configuration set for tuning.
+        """
         # TODO fwk owner needs to update it.
         return GPTQConfig(act_order=[True, False], use_sym=[False, True])
 
@@ -505,6 +587,8 @@ class AWQConfig(TorchBaseConfig):
             folding(bool): Allow insert mul before linear when the scale cannot be absorbed by last layer,
               default is False.
             absorb_layer_dict (dict): The layer dict that scale can be absorbed, default is {}.
+            white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
+              Default is DEFAULT_WHITE_LIST.
         """
         super().__init__(white_list=white_list)
         self.dtype = dtype
@@ -531,6 +615,11 @@ class AWQConfig(TorchBaseConfig):
 
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
+        """Register supported configurations for AWQ.
+
+        Returns:
+            List[OperatorConfig]: List of supported operator configurations.
+        """
         supported_configs = []
         # TODO(Yi)
         linear_awq_config = AWQConfig()
@@ -541,6 +630,16 @@ class AWQConfig(TorchBaseConfig):
     def to_config_mapping(
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
+        """Convert the configuration to a mapping.
+
+        Args:
+            config_list (List[BaseConfig]): List of base configurations. Default is None.
+            model_info (List[Tuple[str, str]]): List of tuples containing the name and type of each module in the model.
+                Default is None.
+
+        Returns:
+            OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]: The configuration mapping.
+        """
         if not self.quant_lm_head:
             self.set_local(
                 LM_HEAD_NAMES, AWQConfig(dtype="fp32", use_layer_wise=self.use_layer_wise, model_path=self.model_path)
@@ -550,6 +649,14 @@ class AWQConfig(TorchBaseConfig):
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+        """Get information about the model.
+
+        Args:
+            model (torch.nn.Module): The model.
+
+        Returns:
+            List[Tuple[str, Callable]]: List of tuples containing the name and type of each module in the model.
+        """
         filter_result = []
         for op_name, module in model.named_modules():
             if isinstance(module, WOQ_WHITE_LIST):
@@ -560,6 +667,11 @@ class AWQConfig(TorchBaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "AWQConfig", List["AWQConfig"]]:
+        """Get the configuration set for tuning.
+
+        Returns:
+            Union[None, "AWQConfig", List["AWQConfig"]]: The configuration set for tuning.
+        """
         # TODO fwk owner needs to update it.
         return AWQConfig(bits=[4, 6])
 
@@ -648,6 +760,8 @@ class TEQConfig(TorchBaseConfig):
             absorb_to_layer (dict): The layer dict that scale can be absorbed, default is {}.
             folding(bool): Allow insert mul before linear when the scale cannot be absorbed by last layer,
               default is False.
+            white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
+              Default is DEFAULT_WHITE_LIST.
         """
         super().__init__(white_list=white_list)
         self.dtype = dtype
@@ -671,6 +785,11 @@ class TEQConfig(TorchBaseConfig):
 
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
+        """Register supported configurations for TEQ.
+
+        Returns:
+            List[OperatorConfig]: List of supported operator configurations.
+        """
         supported_configs = []
         # TODO(Yi)
         linear_teq_config = TEQConfig()
@@ -681,6 +800,16 @@ class TEQConfig(TorchBaseConfig):
     def to_config_mapping(
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
+        """Convert the configuration to a mapping.
+
+        Args:
+            config_list (List[BaseConfig]): List of base configurations. Default is None.
+            model_info (List[Tuple[str, str]]): List of tuples containing the name and type of each module in the model.
+                Default is None.
+
+        Returns:
+            OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]: The configuration mapping.
+        """
         if not self.quant_lm_head:
             self.set_local(LM_HEAD_NAMES, TEQConfig(dtype="fp32"))
         config_mapping = super().to_config_mapping(config_list, model_info)
@@ -688,6 +817,14 @@ class TEQConfig(TorchBaseConfig):
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+        """Get information about the model.
+
+        Args:
+            model (torch.nn.Module): The model.
+
+        Returns:
+            List[Tuple[str, Callable]]: List of tuples containing the name and type of each module in the model.
+        """
         filter_result = []
         for op_name, module in model.named_modules():
             if isinstance(module, WOQ_WHITE_LIST):
@@ -698,6 +835,11 @@ class TEQConfig(TorchBaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "TEQConfig", List["TEQConfig"]]:
+        """Get the configuration set for tuning.
+
+        Returns:
+            Union[None, "TEQConfig", List["TEQConfig"]]: The configuration set for tuning.
+        """
         # TODO fwk owner needs to update it.
         return TEQConfig(bits=[4, 6])
 
@@ -805,9 +947,11 @@ class AutoRoundConfig(TorchBaseConfig):
             not_use_best_mse (bool): Whether to use mean squared error (default is False).
             dynamic_max_gap (int): The dynamic maximum gap (default is -1).
             scale_dtype (str): The data type of quantization scale to be used (default is "float16"), different kernels
-                        have different choices.
+              have different choices.
             use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
             multimodal(bool): Enable multimodal model quantization, (default is "False").
+            white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
+              Default is DEFAULT_WHITE_LIST.
         """
         super().__init__(white_list=white_list)
         self.dtype = dtype
@@ -842,6 +986,11 @@ class AutoRoundConfig(TorchBaseConfig):
 
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
+        """Register supported configurations for AutoRound.
+
+        Returns:
+            List[OperatorConfig]: List of supported operator configurations.
+        """
         supported_configs = []
         # TODO(Yi)
         linear_AUTOROUND_config = AutoRoundConfig()
@@ -851,6 +1000,14 @@ class AutoRoundConfig(TorchBaseConfig):
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+        """Get information about the model.
+
+        Args:
+            model (torch.nn.Module): The model.
+
+        Returns:
+            List[Tuple[str, Callable]]: List of tuples containing the name and type of each module in the model.
+        """
         filter_result = []
         for op_name, module in model.named_modules():
             if isinstance(module, WOQ_WHITE_LIST):
@@ -861,6 +1018,11 @@ class AutoRoundConfig(TorchBaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "AutoRoundConfig", List["AutoRoundConfig"]]:
+        """Get the configuration set for tuning.
+
+        Returns:
+            Union[None, "AutoRoundConfig", List["AutoRoundConfig"]]: The configuration set for tuning.
+        """
         # TODO fwk owner needs to update it.
         return AutoRoundConfig(bits=[4, 6])
 
