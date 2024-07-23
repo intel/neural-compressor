@@ -917,7 +917,7 @@ class AutoRoundConfig(TorchBaseConfig):
         dynamic_max_gap: int = -1,
         scale_dtype: str = "fp16",
         use_layer_wise: bool = False,
-        multimodal: bool = False,
+        quant_block_list: list = None,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init AUTOROUND weight-only quantization config.
@@ -951,7 +951,7 @@ class AutoRoundConfig(TorchBaseConfig):
             scale_dtype (str): The data type of quantization scale to be used (default is "float16"), different kernels
               have different choices.
             use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
-            multimodal(bool): Enable multimodal model quantization, (default is "False").
+            quant_block_list (list): A list whose elements are list of block's layer names to be quantized.
             white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
               Default is DEFAULT_WHITE_LIST.
         """
@@ -983,7 +983,7 @@ class AutoRoundConfig(TorchBaseConfig):
         self.dynamic_max_gap = dynamic_max_gap
         self.scale_dtype = scale_dtype
         self.use_layer_wise = use_layer_wise
-        self.multimodal = multimodal
+        self.quant_block_list = quant_block_list
         self._post_init()
 
     @classmethod
