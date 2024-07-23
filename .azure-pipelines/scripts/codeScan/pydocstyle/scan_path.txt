@@ -15,9 +15,11 @@
 /neural-compressor/neural_compressor/strategy
 /neural-compressor/neural_compressor/training.py
 /neural-compressor/neural_compressor/utils
+/neural_compressor/torch/algorithms/mx_quant
 /neural-compressor/neural_compressor/torch/algorithms/static_quant
 /neural-compressor/neural_compressor/torch/algorithms/smooth_quant
 /neural_compressor/torch/algorithms/pt2e_quant
 /neural_compressor/torch/export
 /neural_compressor/common
-/neural_compressor/torch/algorithms/weight_only/hqq
+/neural_compressor/torch/algorithms/weight_only
+/neural_compressor/torch/algorithms/layer_wise
