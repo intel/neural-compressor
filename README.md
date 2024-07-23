@@ -39,21 +39,21 @@ pip install neural-compressor[pt]
 # Install 2.X API + Framework extension API + TensorFlow dependency
 pip install neural-compressor[tf]
 ```
-> **Note**: 
+> **Note**:
 > Further installation methods can be found under [Installation Guide](https://github.com/intel/neural-compressor/blob/master/docs/source/installation_guide.md). check out our [FAQ](https://github.com/intel/neural-compressor/blob/master/docs/source/faq.md) for more details.
 
 ## Getting Started
 
-Setting up the environment:  
+Setting up the environment:
 ```bash
 pip install "neural-compressor>=2.3" "transformers>=4.34.0" torch torchvision
 ```
 After successfully installing these packages, try your first quantization program.
 
 ### Weight-Only Quantization (LLMs)
-Following example code demonstrates Weight-Only Quantization on LLMs, it supports Intel CPU, Intel Gaudi2 AI Accelerator, Nvidia GPU, best device will be selected automatically. 
+Following example code demonstrates Weight-Only Quantization on LLMs, it supports Intel CPU, Intel Gaudi2 AI Accelerator, Nvidia GPU, best device will be selected automatically.
 
-To try on Intel Gaudi2, docker image with Gaudi Software Stack is recommended, please refer to following script for environment setup. More details can be found in [Gaudi Guide](https://docs.habana.ai/en/latest/Installation_Guide/Bare_Metal_Fresh_OS.html#launch-docker-image-that-was-built). 
+To try on Intel Gaudi2, docker image with Gaudi Software Stack is recommended, please refer to following script for environment setup. More details can be found in [Gaudi Guide](https://docs.habana.ai/en/latest/Installation_Guide/Bare_Metal_Fresh_OS.html#launch-docker-image-that-was-built).
 ```bash
 # Run a container with an interactive shell
 docker run -it --runtime=habana -e HABANA_VISIBLE_DEVICES=all -e OMPI_MCA_btl_vader_single_copy_mechanism=none --cap-add=sys_nice --net=host --ipc=host vault.habana.ai/gaudi-docker/1.14.0/ubuntu22.04/habanalabs/pytorch-installer-2.1.1:latest
@@ -91,9 +91,9 @@ woq_conf = PostTrainingQuantConfig(
 )
 quantized_model = fit(model=float_model, conf=woq_conf, calib_dataloader=dataloader)
 ```
-**Note:** 
+**Note:**
 
-To try INT4 model inference, please directly use [Intel Extension for Transformers](https://github.com/intel/intel-extension-for-transformers), which leverages Intel Neural Compressor for model quantization.        
+To try INT4 model inference, please directly use [Intel Extension for Transformers](https://github.com/intel/intel-extension-for-transformers), which leverages Intel Neural Compressor for model quantization.
 
 ### Static Quantization (Non-LLMs)
 
@@ -121,10 +121,10 @@ quantized_model = fit(model=float_model, conf=static_quant_conf, calib_dataloade
   </thead>
   <tbody>
     <tr>
-      <td colspan="2" align="center"><a href="./docs/3x/design.md#architecture">Architecture</a></td>
-      <td colspan="2" align="center"><a href="./docs/3x/design.md#workflow">Workflow</a></td>
+      <td colspan="2" align="center"><a href="./docs/source/3x/design.md#architecture">Architecture</a></td>
+      <td colspan="2" align="center"><a href="./docs/source/3x/design.md#workflow">Workflow</a></td>
       <td colspan="2" align="center"><a href="https://intel.github.io/neural-compressor/latest/docs/source/api-doc/apis.html">APIs</a></td>
-      <td colspan="1" align="center"><a href="./docs/3x/llm_recipes.md">LLMs Recipes</a></td>
+      <td colspan="1" align="center"><a href="./docs/source/3x/llm_recipes.md">LLMs Recipes</a></td>
       <td colspan="1" align="center">Examples</td>
     </tr>
   </tbody>
@@ -135,15 +135,15 @@ quantized_model = fit(model=float_model, conf=static_quant_conf, calib_dataloade
   </thead>
   <tbody>
     <tr>
-        <td colspan="2" align="center"><a href="./docs/3x/PyTorch.md">Overview</a></td>
-        <td colspan="2" align="center"><a href="./docs/3x/PT_StaticQuant.md">Static Quantization</a></td>
-        <td colspan="2" align="center"><a href="./docs/3x/PT_DynamicQuant.md">Dynamic Quantization</a></td>
-        <td colspan="2" align="center"><a href="./docs/3x/PT_SmoothQuant.md">Smooth Quantization</a></td>
+        <td colspan="2" align="center"><a href="./docs/source/3x/PyTorch.md">Overview</a></td>
+        <td colspan="2" align="center"><a href="./docs/source/3x/PT_StaticQuant.md">Static Quantization</a></td>
+        <td colspan="2" align="center"><a href="./docs/source/3x/PT_DynamicQuant.md">Dynamic Quantization</a></td>
+        <td colspan="2" align="center"><a href="./docs/source/3x/PT_SmoothQuant.md">Smooth Quantization</a></td>
     </tr>
     <tr>
-        <td colspan="4" align="center"><a href="./docs/3x/PT_WeightOnlyQuant.md">Weight-Only Quantization</a></td>
-        <td colspan="2" align="center"><a href="./docs/3x/PT_MXQuant.md">MX Quantization</a></td>
-        <td colspan="2" align="center"><a href="./docs/3x/PT_MixedPrecision.md">Mixed Precision</a></td>
+        <td colspan="4" align="center"><a href="./docs/source/3x/PT_WeightOnlyQuant.md">Weight-Only Quantization</a></td>
+        <td colspan="2" align="center"><a href="./docs/source/3x/PT_MXQuant.md">MX Quantization</a></td>
+        <td colspan="2" align="center"><a href="./docs/source/3x/PT_MixedPrecision.md">Mixed Precision</a></td>
     </tr>
   </tbody>
   <thead>
@@ -153,9 +153,9 @@ quantized_model = fit(model=float_model, conf=static_quant_conf, calib_dataloade
   </thead>
   <tbody>
       <tr>
-          <td colspan="3" align="center"><a href="./docs/3x/TensorFlow.md">Overview</a></td>
-          <td colspan="3" align="center"><a href="./docs/3x/TF_Quant.md">Static Quantization</a></td>
-          <td colspan="2" align="center"><a href="./docs/3x/TF_SQ.md">Smooth Quantization</a></td>
+          <td colspan="3" align="center"><a href="./docs/source/3x/TensorFlow.md">Overview</a></td>
+          <td colspan="3" align="center"><a href="./docs/source/3x/TF_Quant.md">Static Quantization</a></td>
+          <td colspan="2" align="center"><a href="./docs/source/3x/TF_SQ.md">Smooth Quantization</a></td>
       </tr>
   </tbody>
   <thead>
@@ -165,24 +165,24 @@ quantized_model = fit(model=float_model, conf=static_quant_conf, calib_dataloade
   </thead>
   <tbody>
       <tr>
-          <td colspan="4" align="center"><a href="./docs/3x/autotune.md">Auto Tune</a></td>
-          <td colspan="4" align="center"><a href="./docs/3x/benchmark.md">Benchmark</a></td>
+          <td colspan="4" align="center"><a href="./docs/source/3x/autotune.md">Auto Tune</a></td>
+          <td colspan="4" align="center"><a href="./docs/source/3x/benchmark.md">Benchmark</a></td>
       </tr>
   </tbody>
 </table>
 
-> **Note**:   
+> **Note**:
 > From 3.0 release, we recommend to use 3.X API. Compression techniques during training such as QAT, Pruning, Distillation only available in [2.X API](https://github.com/intel/neural-compressor/blob/master/docs/source/2x_user_guide.md) currently.
 
 ## Selected Publications/Events
-* Blog by Intel: [Neural Compressor: Boosting AI Model Efficiency](https://community.intel.com/t5/Blogs/Tech-Innovation/Artificial-Intelligence-AI/Neural-Compressor-Boosting-AI-Model-Efficiency/post/1604740) (June 2024) 
+* Blog by Intel: [Neural Compressor: Boosting AI Model Efficiency](https://community.intel.com/t5/Blogs/Tech-Innovation/Artificial-Intelligence-AI/Neural-Compressor-Boosting-AI-Model-Efficiency/post/1604740) (June 2024)
 * Blog by Intel: [Optimization of Intel AI Solutions for Alibaba Cloud’s Qwen2 Large Language Models](https://www.intel.com/content/www/us/en/developer/articles/technical/intel-ai-solutions-accelerate-alibaba-qwen2-llms.html) (June 2024)
 * Blog by Intel: [Accelerate Meta* Llama 3 with Intel AI Solutions](https://www.intel.com/content/www/us/en/developer/articles/technical/accelerate-meta-llama3-with-intel-ai-solutions.html) (Apr 2024)
 * EMNLP'2023 (Under Review): [TEQ: Trainable Equivalent Transformation for Quantization of LLMs](https://openreview.net/forum?id=iaI8xEINAf&referrer=%5BAuthor%20Console%5D) (Sep 2023)
 * arXiv: [Efficient Post-training Quantization with FP8 Formats](https://arxiv.org/abs/2309.14592) (Sep 2023)
 * arXiv: [Optimize Weight Rounding via Signed Gradient Descent for the Quantization of LLMs](https://arxiv.org/abs/2309.05516) (Sep 2023)
 
-> **Note**: 
+> **Note**:
 > View [Full Publication List](https://github.com/intel/neural-compressor/blob/master/docs/source/publication_list.md).
 
 ## Additional Content
@@ -192,8 +192,8 @@ quantized_model = fit(model=float_model, conf=static_quant_conf, calib_dataloade
 * [Legal Information](./docs/source/legal_information.md)
 * [Security Policy](SECURITY.md)
 
-## Communication 
+## Communication
 - [GitHub Issues](https://github.com/intel/neural-compressor/issues): mainly for bug reports, new feature requests, question asking, etc.
-- [Email](mailto:inc.maintainers@intel.com): welcome to raise any interesting research ideas on model compression techniques by email for collaborations.  
+- [Email](mailto:inc.maintainers@intel.com): welcome to raise any interesting research ideas on model compression techniques by email for collaborations.
 - [Discord Channel](https://discord.com/invite/Wxk3J3ZJkU): join the discord channel for more flexible technical discussion.
 - [WeChat group](/docs/source/imgs/wechat_group.jpg): scan the QA code to join the technical discussion.

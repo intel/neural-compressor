@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Intel Neural Compressor Tensorflow quantization base API."""
+
 
 from typing import Any, Callable, Dict, Tuple, Union
 
