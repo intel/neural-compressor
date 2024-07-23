@@ -23,3 +23,4 @@
 /neural_compressor/common
 /neural_compressor/torch/algorithms/weight_only
 /neural_compressor/torch/algorithms/layer_wise
+/neural_compressor/tensorflow
