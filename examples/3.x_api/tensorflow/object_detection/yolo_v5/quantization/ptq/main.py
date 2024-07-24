@@ -50,7 +50,7 @@ from yolov5.utils.metrics import ap_per_class, box_iou
 from yolov5.utils.plots import output_to_target, plot_images, plot_val_study
 from yolov5.utils.torch_utils import select_device, smart_inference_mode
 
-from neural_compressor.tensorflow.utils import BaseModelm, CpuInfo
+from neural_compressor.tensorflow.utils import BaseModel, CpuInfo
 
 
 parser = argparse.ArgumentParser()
