@@ -15,6 +15,7 @@ PyTorch Weight Only Quantization
     - [HQQ](#hqq)
   - [Specify Quantization Rules](#specify-quantization-rules)
   - [Saving and Loading](#saving-and-loading)
+- [Layer Wise Quantization](#layer-wise-quantization)
 - [Efficient Usage on Client-Side](#efficient-usage-on-client-side)
 - [Examples](#examples)
 
@@ -275,6 +276,30 @@ orig_model = YOURMODEL()
 loaded_model = load(
     "saved_results", original_model=orig_model
 )  # Please note that the original_model parameter passes the original model.
+```
+
+## Layer Wise Quantization
+
+As the size of LLMs continues to grow, loading the entire model into a single GPU card or the RAM of a client machine becomes impractical. To address this challenge, we introduce Layer-wise Quantization (LWQ), a method that quantizes LLMs layer by layer or block by block. This approach significantly reduces memory consumption. The diagram below illustrates the LWQ process.
+
+<img src="./imgs/lwq.png" width=780 height=429>
+
+*Figure 1: The process of layer-wise quantization for PyTorch model. The color grey means empty parameters and the color blue represents parameters need to be quantized. Every rectangle inside model represents one layer.*
+
+
+Currently, we support LWQ for `RTN`, `Auto-Round`, and `GPTQ`.
+
+Here, we take the `RTN` algorithm as example to demonstrate the usage on a client machine.
+
+```python
+from neural_compressor.torch.quantization import RTNConfig, convert, prepare
+from neural_compressor.torch import load_empty_model
+
+model_state_dict_path = "/path/to/model/state/dict"
+float_model = load_empty_model(model_state_dict_path)
+quant_config = RTNConfig(use_layer_wise=True)
+prepared_model = prepare(float_model, quant_config)
+quantized_model = convert(prepared_model)
 ```
 
 ## Efficient Usage on Client-Side
