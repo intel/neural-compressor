@@ -275,6 +275,13 @@ def main():
         from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
 
         quant_config = StaticQuantConfig(weight_granularity="per_channel")
+        bf16_config = StaticQuantConfig(weight_dtype="bf16", act_dtype="bf16")
+        quant_config.set_local("functional_16_1/tf_conv_1/sequential_1/conv2d_1/convolution", bf16_config)
+        quant_config.set_local("functional_16_1/tf_conv_1_2/sequential_1_1/conv2d_1_1/convolution", bf16_config)
+        quant_config.set_local("functional_16_1/tfc3_1/tf_conv_2_1/conv2d_2_1/convolution", bf16_config)
+        quant_config.set_local("functional_16_1/tfc3_1/sequential_2_1/tf_bottleneck_1/tf_conv_5_1/conv2d_5_1/convolution", bf16_config)
+        quant_config.set_local("functional_16_1/tfc3_1/tf_conv_3_1/conv2d_3_1/convolution", bf16_config)
+        quant_config.set_local("functional_16_1/tfc3_1/tf_conv_4_1/conv2d_4_1/convolution", bf16_config)
         q_model = quantize_model(args.input_model, quant_config, calib_func=evaluate)
         q_model.save(args.output_model)
 
