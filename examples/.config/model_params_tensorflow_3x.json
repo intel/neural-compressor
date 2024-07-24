@@ -50,13 +50,6 @@
       "main_script": "main.py",
       "batch_size": 64
     },
-    "densenet121": {
-      "model_src_dir": "cv/densenet121/quantization/ptq",
-      "dataset_location": "/tf_dataset/dataset/imagenet",
-      "input_model": "/tf_dataset/tensorflow/densenet/densenet-121.pb",
-      "main_script": "main.py",
-      "batch_size": 32
-    },
     "inception_v3": {
       "model_src_dir": "cv/inception_v3/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/imagenet",

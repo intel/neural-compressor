@@ -13,13 +13,6 @@
       "input_model": "/tf_dataset2/models/tensorflow/inception_v3_keras/saved_model",
       "main_script": "main.py",
       "batch_size": 32
-    },
-    "mobilenet_v2": {
-      "model_src_dir": "keras/cv/mobilenet_v2/quantization/ptq",
-      "dataset_location": "/tf_dataset/dataset/imagenet",
-      "input_model": "/tf_dataset2/models/tensorflow/mobilenet_v2_keras/saved_model",
-      "main_script": "main.py",
-      "batch_size": 32
     }
   }
 }
