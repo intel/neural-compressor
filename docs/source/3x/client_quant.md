@@ -37,4 +37,4 @@ python main.py
 > [!TIP]
 > For Linux systems, users need to configure the environment variables appropriately to achieve optimal performance. For example, set the `OMP_NUM_THREADS` explicitly. For processors with hybrid architecture (including both P-cores and E-cores), it is recommended to bind tasks to all P-cores using `taskset`.
 
-When working with 7B models (e.g., [meta-llama/Llama-2-7b-chat-hf](https://huggingface.co/meta-llama/Llama-2-7b-chat-hf)), `RTN` quantization is a quick process, finishing in tens of seconds and using several GB of RAM. However, for the highest accuracy, `GPTQ` algorithm is recommended, but be prepared for a longer quantization time.
+RTN quantization is a quick process, finishing in tens of seconds and using several GB of RAM when working with 7B models, e.g.,[meta-llama/Llama-2-7b-chat-hf](https://huggingface.co/meta-llama/Llama-2-7b-chat-hf). However, for the higher accuracy, GPTQ algorithm is recommended, but be prepared for a longer quantization time.
