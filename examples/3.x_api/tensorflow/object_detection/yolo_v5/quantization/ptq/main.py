@@ -284,7 +284,7 @@ def main():
         ]
         quant_config = StaticQuantConfig(weight_granularity="per_channel")
         local_dtype = "bf16" if CpuInfo().bf16 or os.getenv("FORCE_BF16") == "1" else "fp32"
-        local_config = StaticQuantConfig(weight_dtype=local_dtype, act_dtype=local_dtype) \
+        local_config = StaticQuantConfig(weight_dtype=local_dtype, act_dtype=local_dtype)
         for conv_name in excluded_conv_names:
             quant_config.set_local(conv_name, local_config)
             
