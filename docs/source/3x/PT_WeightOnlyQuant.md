@@ -289,7 +289,7 @@ As the size of LLMs continues to grow, loading the entire model into a single GP
 
 Currently, we support LWQ for `RTN`, `Auto-Round`, and `GPTQ`.
 
-Here, we take the `RTN` algorithm as example to demonstrate the usage on a client machine.
+Here, we take the `RTN` algorithm as example to demonstrate the usage of LWQ.
 
 ```python
 from neural_compressor.torch.quantization import RTNConfig, convert, prepare
