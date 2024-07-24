@@ -287,7 +287,7 @@ As the size of LLMs continues to grow, loading the entire model into a single GP
 *Figure 1: The process of layer-wise quantization for PyTorch model. The color grey means empty parameters and the color blue represents parameters need to be quantized. Every rectangle inside model represents one layer.*
 
 
-Currently, we support LWQ for `RTN`, `Auto-Round`, and `GPTQ`.
+Currently, we support LWQ for `RTN`, `AutoRound`, and `GPTQ`.
 
 Here, we take the `RTN` algorithm as example to demonstrate the usage of LWQ.
 
