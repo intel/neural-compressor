@@ -279,7 +279,7 @@ loaded_model = load(
 
 ## Efficient Usage on Client-Side
 
-For client machines with limited RAM and cores, we offer optimizations to reduce computational overhead and minimize memory usage. For detailed information, please refer to [Quantization on Client](https://github.com/intel/neural-compressor/blob/master/docs/3x/client_quant.md).
+For client machines with limited RAM and cores, we offer optimizations to reduce computational overhead and minimize memory usage. For detailed information, please refer to [Quantization on Client](https://github.com/intel/neural-compressor/blob/master/docs/source/3x/client_quant.md).
 
 
 ## Examples
