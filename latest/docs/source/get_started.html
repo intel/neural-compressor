@@ -56,11 +56,8 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Getting Started</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#quick-samples">Quick Samples</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#quantization-with-python-api">Quantization with Python API</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#validated-models">Validated Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#quick-samples">Quick Samples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#feature-matrix">Feature Matrix</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
@@ -100,39 +97,90 @@
 <h1>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this heading"></a></h1>
 <ol class="simple">
 <li><p><a class="reference external" href="#quick-samples">Quick Samples</a></p></li>
-<li><p><a class="reference external" href="#validated-models">Validated Models</a></p></li>
+<li><p><a class="reference external" href="#feature-matrix">Feature Matrix</a></p></li>
 </ol>
 <section id="quick-samples">
 <h2>Quick Samples<a class="headerlink" href="#quick-samples" title="Permalink to this heading"></a></h2>
-<section id="quantization-with-python-api">
-<h3>Quantization with Python API<a class="headerlink" href="#quantization-with-python-api" title="Permalink to this heading"></a></h3>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install Intel Neural Compressor and TensorFlow</span>
-pip<span class="w"> </span>install<span class="w"> </span>neural-compressor
-pip<span class="w"> </span>install<span class="w"> </span>tensorflow
-<span class="c1"># Prepare fp32 model</span>
-wget<span class="w"> </span>https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install Intel Neural Compressor</span>
+pip<span class="w"> </span>install<span class="w"> </span>neural-compressor-pt
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.data</span> <span class="kn">import</span> <span class="n">DataLoader</span><span class="p">,</span> <span class="n">Datasets</span>
-<span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">transformers</span> <span class="kn">import</span> <span class="n">AutoModelForCausalLM</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.torch.quantization</span> <span class="kn">import</span> <span class="n">RTNConfig</span><span class="p">,</span> <span class="n">prepare</span><span class="p">,</span> <span class="n">convert</span>
 
-<span class="n">dataset</span> <span class="o">=</span> <span class="n">Datasets</span><span class="p">(</span><span class="s2">&quot;tensorflow&quot;</span><span class="p">)[</span><span class="s2">&quot;dummy&quot;</span><span class="p">](</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-<span class="n">dataloader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">framework</span><span class="o">=</span><span class="s2">&quot;tensorflow&quot;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">)</span>
-
-<span class="kn">from</span> <span class="nn">neural_compressor.quantization</span> <span class="kn">import</span> <span class="n">fit</span>
-
-<span class="n">q_model</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span>
-    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;./mobilenet_v1_1.0_224_frozen.pb&quot;</span><span class="p">,</span>
-    <span class="n">conf</span><span class="o">=</span><span class="n">PostTrainingQuantConfig</span><span class="p">(),</span>
-    <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="n">user_model</span> <span class="o">=</span> <span class="n">AutoModelForCausalLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s2">&quot;EleutherAI/gpt-neo-125m&quot;</span><span class="p">)</span>
+<span class="n">quant_config</span> <span class="o">=</span> <span class="n">RTNConfig</span><span class="p">()</span>
+<span class="n">prepared_model</span> <span class="o">=</span> <span class="n">prepare</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">user_model</span><span class="p">,</span> <span class="n">quant_config</span><span class="o">=</span><span class="n">quant_config</span><span class="p">)</span>
+<span class="n">quantized_model</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">prepared_model</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
-</section>
-<section id="validated-models">
-<h2>Validated Models<a class="headerlink" href="#validated-models" title="Permalink to this heading"></a></h2>
-<p>Intel® Neural Compressor validated the quantization for 10K+ models from popular model hubs (e.g., HuggingFace Transformers, Torchvision, TensorFlow Model Hub, ONNX Model Zoo).<br />Over 30 pruning, knowledge distillation and model export samples are also available.<br />More details for validated typical models are available <a class="reference external" href="/examples/README.html">here</a>.</p>
+<section id="feature-matrix">
+<h2>Feature Matrix<a class="headerlink" href="#feature-matrix" title="Permalink to this heading"></a></h2>
+<p>Intel Neural Compressor 3.X extends PyTorch and TensorFlow’s APIs to support compression techniques.
+The below table provides a quick overview of the APIs available in Intel Neural Compressor 3.X.
+The Intel Neural Compressor 3.X mainly focuses on quantization-related features, especially for algorithms that benefit LLM accuracy and inference.
+It also provides some common modules across different frameworks. For example, Auto-tune support accuracy driven quantization and mixed precision, benchmark aimed to measure the multiple instances performance of the quantized model.</p>
+<table class="docutils">
+  <thead>
+  <tr>
+    <th colspan="8">Overview</th>
+  </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td colspan="2" align="center"><a href="3x/design.html#architecture">Architecture</a></td>
+      <td colspan="2" align="center"><a href="3x/design.html#workflow">Workflow</a></td>
+      <td colspan="2" align="center"><a href="https://intel.github.io/neural-compressor/latest/docs/source/api-doc/apis.html">APIs</a></td>
+      <td colspan="1" align="center"><a href="3x/llm_recipes.html">LLMs Recipes</a></td>
+      <td colspan="1" align="center">Examples</td>
+    </tr>
+  </tbody>
+  <thead>
+    <tr>
+      <th colspan="8">PyTorch Extension APIs</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+        <td colspan="2" align="center"><a href="3x/PyTorch.html">Overview</a></td>
+        <td colspan="2" align="center"><a href="3x/PT_StaticQuant.html">Static Quantization</a></td>
+        <td colspan="2" align="center"><a href="3x/PT_DynamicQuant.html">Dynamic Quantization</a></td>
+        <td colspan="2" align="center"><a href="3x/PT_SmoothQuant.html">Smooth Quantization</a></td>
+    </tr>
+    <tr>
+        <td colspan="3" align="center"><a href="3x/PT_WeightOnlyQuant.html">Weight-Only Quantization</a></td>
+        <td colspan="3" align="center"><a href="3x/PT_MXQuant.html">MX Quantization</a></td>
+        <td colspan="2" align="center"><a href="3x/PT_MixedPrecision.html">Mixed Precision</a></td>
+    </tr>
+  </tbody>
+  <thead>
+      <tr>
+        <th colspan="8">Tensorflow Extension APIs</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td colspan="3" align="center"><a href="3x/TensorFlow.html">Overview</a></td>
+          <td colspan="3" align="center"><a href="3x/TF_Quant.html">Static Quantization</a></td>
+          <td colspan="2" align="center"><a href="3x/TF_SQ.html">Smooth Quantization</a></td>
+      </tr>
+  </tbody>
+  <thead>
+      <tr>
+        <th colspan="8">Other Modules</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td colspan="4" align="center"><a href="3x/autotune.html">Auto Tune</a></td>
+          <td colspan="4" align="center"><a href="3x/benchmark.html">Benchmark</a></td>
+      </tr>
+  </tbody>
+</table><blockquote>
+<div><p><strong>Note</strong>:
+From 3.0 release, we recommend to use 3.X API. Compression techniques during training such as QAT, Pruning, Distillation only available in <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/docs/source/2x_user_guide.html">2.X API</a> currently.</p>
+</div></blockquote>
 </section>
 </section>
 
@@ -153,7 +201,7 @@ wget<span class="w"> </span>https://storage.googleapis.com/intel-optimized-tenso
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f213e949900> 
+   <jinja2.runtime.BlockReference object at 0x7f9c3a815030> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

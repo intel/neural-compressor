@@ -1,17 +1,16 @@
-:orphan:
-
-:py:mod:`neural_compressor.torch.quantization.quantize`
-=======================================================
+neural_compressor.torch.quantization.quantize
+=============================================
 
 .. py:module:: neural_compressor.torch.quantization.quantize
 
+.. autoapi-nested-parse::
 
-Module Contents
----------------
+   Intel Neural Compressor Pytorch quantization base API.
+
 
 
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -20,6 +19,8 @@ Functions
    neural_compressor.torch.quantization.quantize.convert
 
 
+Module Contents
+---------------
 
 .. py:function:: quantize(model: torch.nn.Module, quant_config: neural_compressor.common.base_config.BaseConfig, run_fn: Callable = None, run_args: Any = None, inplace: bool = True, example_inputs: Any = None) -> torch.nn.Module
 
@@ -45,8 +46,9 @@ Functions
    :param quant_config: path to quantization config
    :type quant_config: BaseConfig
    :param inplace: It will change the given model in-place if True.
-   :type inplace: bool
+   :type inplace: bool, optional
    :param example_inputs: used to trace torch model.
+   :type example_inputs: tensor/tuple/dict, optional
 
    :returns: prepared and calibrated module.
 

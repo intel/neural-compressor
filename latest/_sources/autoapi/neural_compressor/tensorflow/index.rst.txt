@@ -1,8 +1,20 @@
-:orphan:
-
-:py:mod:`neural_compressor.tensorflow`
-======================================
+neural_compressor.tensorflow
+============================
 
 .. py:module:: neural_compressor.tensorflow
+
+.. autoapi-nested-parse::
+
+   Intel Neural Compressor Tensorflow API.
+
+
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/tensorflow/quantization/index
 
 

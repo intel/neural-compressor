@@ -1,16 +1,16 @@
-:orphan:
-
-:py:mod:`neural_compressor.tensorflow.quantization.config`
-==========================================================
+neural_compressor.tensorflow.quantization.config
+================================================
 
 .. py:module:: neural_compressor.tensorflow.quantization.config
 
+.. autoapi-nested-parse::
 
-Module Contents
----------------
+   Intel Neural Compressor Pytorch quantization config API.
+
+
 
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
@@ -18,9 +18,8 @@ Classes
    neural_compressor.tensorflow.quantization.config.SmoothQuantConfig
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -28,9 +27,10 @@ Functions
    neural_compressor.tensorflow.quantization.config.get_default_sq_config
 
 
+Module Contents
+---------------
 
 .. py:class:: StaticQuantConfig(weight_dtype: str = 'int8', weight_sym: bool = True, weight_granularity: str = 'per_tensor', weight_algorithm: str = 'minmax', act_dtype: str = 'int8', act_sym: bool = True, act_granularity: str = 'per_tensor', act_algorithm: str = 'minmax', white_list: Optional[List[neural_compressor.common.base_config.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
-
 
 
 
@@ -45,7 +45,6 @@ Functions
 
 
 .. py:class:: SmoothQuantConfig(alpha: float = 0.5, folding: bool = False, percentile: float = 99.999, op_types: list = ['MatMul', 'Conv2D'], scales_per_op: bool = True, record_max_info: bool = False, weight_clip: bool = True, auto_alpha_args: Dict = DEFAULT_SQ_ALPHA_ARGS, white_list: Optional[List[neural_compressor.common.base_config.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
-
 
 
 

@@ -1,17 +1,16 @@
-:orphan:
-
-:py:mod:`neural_compressor.tensorflow.quantization.quantize`
-============================================================
+neural_compressor.tensorflow.quantization.quantize
+==================================================
 
 .. py:module:: neural_compressor.tensorflow.quantization.quantize
 
+.. autoapi-nested-parse::
 
-Module Contents
----------------
+   Intel Neural Compressor Tensorflow quantization base API.
+
 
 
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -19,8 +18,10 @@ Functions
    neural_compressor.tensorflow.quantization.quantize.quantize_model_with_single_config
 
 
+Module Contents
+---------------
 
-.. py:function:: quantize_model(model: Union[str, tensorflow.keras.Model, neural_compressor.tensorflow.utils.BaseModel], quant_config: Union[neural_compressor.common.base_config.BaseConfig, list], calib_dataloader: Callable = None, calib_iteration: int = 100)
+.. py:function:: quantize_model(model: Union[str, tensorflow.keras.Model, neural_compressor.tensorflow.utils.BaseModel], quant_config: Union[neural_compressor.common.base_config.BaseConfig, list], calib_dataloader: Callable = None, calib_iteration: int = 100, calib_func: Callable = None)
 
    The main entry to quantize model.
 
@@ -28,12 +29,14 @@ Functions
    :param quant_config: single or lists of quantization configuration.
    :param calib_dataloader: a data loader for calibration.
    :param calib_iteration: the iteration of calibration.
+   :param calib_func: the function used for calibration, should be a substitution for calib_dataloader
+   :param when the built-in calibration function of INC does not work for model inference.:
 
    :returns: the quantized model.
    :rtype: q_model
 
 
-.. py:function:: quantize_model_with_single_config(q_model: neural_compressor.tensorflow.utils.BaseModel, quant_config: neural_compressor.common.base_config.BaseConfig, calib_dataloader: Callable = None, calib_iteration: int = 100)
+.. py:function:: quantize_model_with_single_config(q_model: neural_compressor.tensorflow.utils.BaseModel, quant_config: neural_compressor.common.base_config.BaseConfig, calib_dataloader: Callable = None, calib_iteration: int = 100, calib_func: Callable = None)
 
    Quantize model using single config.
 
@@ -41,6 +44,8 @@ Functions
    :param quant_config: a quantization configuration.
    :param calib_dataloader: a data loader for calibration.
    :param calib_iteration: the iteration of calibration.
+   :param calib_func: the function used for calibration, should be a substitution for calib_dataloader
+   :param when the built-in calibration function of INC does not work for model inference.:
 
    :returns: the quantized model.
    :rtype: q_model
