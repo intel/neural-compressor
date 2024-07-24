@@ -50,7 +50,7 @@ from yolov5.utils.metrics import ap_per_class, box_iou
 from yolov5.utils.plots import output_to_target, plot_images, plot_val_study
 from yolov5.utils.torch_utils import select_device, smart_inference_mode
 
-from neural_compressor.tensorflow.utils import BaseModel
+from neural_compressor.tensorflow.utils import BaseModelm, CpuInfo
 
 
 parser = argparse.ArgumentParser()
@@ -274,14 +274,20 @@ def main():
     if args.tune:
         from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
 
+        excluded_conv_names = [
+            "functional_16_1/tf_conv_1/sequential_1/conv2d_1/convolution",
+            "functional_16_1/tf_conv_1_2/sequential_1_1/conv2d_1_1/convolution",
+            "functional_16_1/tfc3_1/tf_conv_2_1/conv2d_2_1/convolution",
+            "functional_16_1/tfc3_1/sequential_2_1/tf_bottleneck_1/tf_conv_5_1/conv2d_5_1/convolution",
+            "functional_16_1/tfc3_1/tf_conv_3_1/conv2d_3_1/convolution",
+            "functional_16_1/tfc3_1/tf_conv_4_1/conv2d_4_1/convolution"
+        ]
         quant_config = StaticQuantConfig(weight_granularity="per_channel")
-        bf16_config = StaticQuantConfig(weight_dtype="bf16", act_dtype="bf16")
-        quant_config.set_local("functional_16_1/tf_conv_1/sequential_1/conv2d_1/convolution", bf16_config)
-        quant_config.set_local("functional_16_1/tf_conv_1_2/sequential_1_1/conv2d_1_1/convolution", bf16_config)
-        quant_config.set_local("functional_16_1/tfc3_1/tf_conv_2_1/conv2d_2_1/convolution", bf16_config)
-        quant_config.set_local("functional_16_1/tfc3_1/sequential_2_1/tf_bottleneck_1/tf_conv_5_1/conv2d_5_1/convolution", bf16_config)
-        quant_config.set_local("functional_16_1/tfc3_1/tf_conv_3_1/conv2d_3_1/convolution", bf16_config)
-        quant_config.set_local("functional_16_1/tfc3_1/tf_conv_4_1/conv2d_4_1/convolution", bf16_config)
+        local_dtype = "bf16" if CpuInfo().bf16 or os.getenv("FORCE_BF16") == "1" else "fp32"
+        local_config = StaticQuantConfig(weight_dtype=local_dtype, act_dtype=local_dtype) \
+        for conv_name in excluded_conv_names:
+            quant_config.set_local(conv_name, local_config)
+            
         q_model = quantize_model(args.input_model, quant_config, calib_func=evaluate)
         q_model.save(args.output_model)
 
