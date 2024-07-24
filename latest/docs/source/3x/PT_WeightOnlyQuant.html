@@ -109,6 +109,7 @@
 <li><p><a class="reference external" href="#saving-and-loading">Saving and Loading</a></p></li>
 </ul>
 </li>
+<li><p><a class="reference external" href="#layer-wise-quantization">Layer Wise Quantization</a></p></li>
 <li><p><a class="reference external" href="#efficient-usage-on-client-side">Efficient Usage on Client-Side</a></p></li>
 <li><p><a class="reference external" href="#examples">Examples</a></p></li>
 </ul>
@@ -680,9 +681,26 @@
 </div>
 </section>
 </section>
+<section id="layer-wise-quantization">
+<h2>Layer Wise Quantization<a class="headerlink" href="#layer-wise-quantization" title="Permalink to this heading"></a></h2>
+<p>As the size of LLMs continues to grow, loading the entire model into a single GPU card or the RAM of a client machine becomes impractical. To address this challenge, we introduce Layer-wise Quantization (LWQ), a method that quantizes LLMs layer by layer or block by block. This approach significantly reduces memory consumption. The diagram below illustrates the LWQ process.</p>
+<img src="./imgs/lwq.png" width=780 height=429><p><em>Figure 1: The process of layer-wise quantization for PyTorch model. The color grey means empty parameters and the color blue represents parameters need to be quantized. Every rectangle inside model represents one layer.</em></p>
+<p>Currently, we support LWQ for <code class="docutils literal notranslate"><span class="pre">RTN</span></code>, <code class="docutils literal notranslate"><span class="pre">AutoRound</span></code>, and <code class="docutils literal notranslate"><span class="pre">GPTQ</span></code>.</p>
+<p>Here, we take the <code class="docutils literal notranslate"><span class="pre">RTN</span></code> algorithm as example to demonstrate the usage of LWQ.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.torch.quantization</span> <span class="kn">import</span> <span class="n">RTNConfig</span><span class="p">,</span> <span class="n">convert</span><span class="p">,</span> <span class="n">prepare</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.torch</span> <span class="kn">import</span> <span class="n">load_empty_model</span>
+
+<span class="n">model_state_dict_path</span> <span class="o">=</span> <span class="s2">&quot;/path/to/model/state/dict&quot;</span>
+<span class="n">float_model</span> <span class="o">=</span> <span class="n">load_empty_model</span><span class="p">(</span><span class="n">model_state_dict_path</span><span class="p">)</span>
+<span class="n">quant_config</span> <span class="o">=</span> <span class="n">RTNConfig</span><span class="p">(</span><span class="n">use_layer_wise</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">prepared_model</span> <span class="o">=</span> <span class="n">prepare</span><span class="p">(</span><span class="n">float_model</span><span class="p">,</span> <span class="n">quant_config</span><span class="p">)</span>
+<span class="n">quantized_model</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="n">prepared_model</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
 <section id="efficient-usage-on-client-side">
 <h2>Efficient Usage on Client-Side<a class="headerlink" href="#efficient-usage-on-client-side" title="Permalink to this heading"></a></h2>
-<p>For client machines with limited RAM and cores, we offer optimizations to reduce computational overhead and minimize memory usage. For detailed information, please refer to <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/docs/3x/client_quant.html">Quantization on Client</a>.</p>
+<p>For client machines with limited RAM and cores, we offer optimizations to reduce computational overhead and minimize memory usage. For detailed information, please refer to <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/docs/source/3x/client_quant.html">Quantization on Client</a>.</p>
 </section>
 <section id="examples">
 <h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
@@ -714,7 +732,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f9c39ee3f40> 
+   <jinja2.runtime.BlockReference object at 0x7f22d8feabc0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
