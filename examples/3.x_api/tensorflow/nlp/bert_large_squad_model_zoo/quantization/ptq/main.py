@@ -134,8 +134,5 @@ def main(_):
         q_model = quantize_model(model, quant_config, dataloader)
         q_model.save(FLAGS.output_model)
 
-        dataset = ModelZooBertDataset(root=data_path, label_file=label_path)
-        dataloader = ModelZooBertDataLoader(dataset=dataset, batch_size=FLAGS.batch_size)
-
 if __name__ == "__main__":
     tf.compat.v1.app.run()

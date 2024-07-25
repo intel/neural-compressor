@@ -74,7 +74,7 @@ bash prepare_dataset.sh --output_dir=./data
 ### Convert the dataset to TF Record format
 After the dataset is downloaded by either of ways above, the dataset should be converted to files of TF Record format.
 ```shell
-python create_tf_record.py --vocab_file=data/vocab.txt --predict_file=data/dev-v1.1.json --output_file=./data/eval.tf_record
+python create_tf_record.py --vocab_file=data/vocab.txt --predict_file=data/dev-v1.1.json --output_file=data/eval.tf_record
 ```
 
 # Run Command
@@ -82,11 +82,11 @@ python create_tf_record.py --vocab_file=data/vocab.txt --predict_file=data/dev-v
 
 ## Quantization
   ```shell
-  bash run_quant.sh --input_model=./fp32_bert_squad.pb --output_model=./bert_squad_int8.pb --dataset_location=/path/to/evaluation/dataset
+  bash run_quant.sh --input_model=./fp32_bert_squad.pb --output_model=./bert_squad_int8.pb --dataset_location=data
   ```
 
 ## Benchmark
   ```shell
-  bash run_benchmark.sh --input_model=./bert_squad_int8.pb --mode=accuracy --dataset_location=/path/to/evaluation/dataset --batch_size=64
-  bash run_benchmark.sh --input_model=./bert_squad_int8.pb --mode=performance --dataset_location=/path/to/evaluation/dataset --batch_size=64
+  bash run_benchmark.sh --input_model=./bert_squad_int8.pb --mode=accuracy --dataset_location=data --batch_size=64
+  bash run_benchmark.sh --input_model=./bert_squad_int8.pb --mode=performance --dataset_location=data --batch_size=64
   ```
