@@ -26,13 +26,8 @@ Please refer to [intel/intel-extension-for-pytorch(github.com)](https://github.c
    ```
 
 ### Install IPEX XPU
-#### 1. Docker
 Please build an IPEX docker container according to the [official guide](https://intel.github.io/intel-extension-for-pytorch/index.html#installation?platform=gpu&version=v2.1.30%2bxpu&os=linux%2fwsl2&package=docker).
-#### 2. Prebuilt Wheel
-Prebuilt wheel files are available for Python python 3.8, python 3.9, python 3.10, python 3.11.
-```bash
-conda install intel-extension-for-pytorch=2.1.30 pytorch=2.1.0 -c intel -c conda-forge
-```
+
 You can run a simple sanity test to double confirm if the correct version is installed, and if the software stack can get correct hardware information onboard your system. The command should return PyTorch and IPEX versions installed, as well as GPU card(s) information detected.
 ```bash
 source {DPCPPROOT}/env/vars.sh
