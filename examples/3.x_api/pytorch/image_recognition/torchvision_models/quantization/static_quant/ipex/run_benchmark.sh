@@ -37,6 +37,9 @@ function init_params {
       --int8=*)
           int8=$(echo ${var} |cut -f2 -d=)
       ;;
+      --xpu=*)
+          xpu=$(echo ${var} |cut -f2 -d=)
+      ;;
       *)
           echo "Error: No such parameter: ${var}"
           exit 1
@@ -65,6 +68,10 @@ function run_benchmark {
 
     if [[ ${int8} == "true" ]]; then
         extra_cmd=$extra_cmd" --int8"
+    fi
+
+    if [[ ${xpu} == "true" ]]; then
+        extra_cmd=$extra_cmd" --xpu"
     fi
     echo $extra_cmd
 

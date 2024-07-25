@@ -40,6 +40,9 @@ function init_params {
       --config=*)
           tuned_checkpoint=$(echo $var |cut -f2 -d=)
       ;;
+      --xpu=*)
+          xpu=$(echo ${var} |cut -f2 -d=)
+      ;;
       *)
           echo "Error: No such parameter: ${var}"
           exit 1
@@ -64,6 +67,9 @@ function run_benchmark {
     extra_cmd=""
     if [[ ${int8} == "true" ]]; then
         extra_cmd=$extra_cmd" --int8"
+    fi
+    if [[ ${xpu} == "true" ]]; then
+        extra_cmd=$extra_cmd" --xpu"
     fi
     echo $extra_cmd
     if [[ "${topology}" == "bert_large_ipex" ]]; then

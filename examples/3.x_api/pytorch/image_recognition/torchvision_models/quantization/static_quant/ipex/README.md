@@ -7,58 +7,52 @@ This document describes the step-by-step instructions for reproducing PyTorch tu
 
 ## 1. Environment
 
-We verified examples with IPEX backend on Python 3.8, recommended.
+We verified examples with IPEX backend on Python 3.10, recommended.
 
 ```shell
 pip install -r requirements.txt
 ```
-> Note: Validated PyTorch [Version](/docs/source/installation_guide.md#validated-software-environment).
 
-## 2. Install pytorch and intel-pytorch-extension
+## 2. Install Intel-Pytorch-Extension
 
-refer [intel/intel-extension-for-pytorch(github.com)](https://github.com/intel/intel-extension-for-pytorch)
+Please refer to [intel/intel-extension-for-pytorch(github.com)](https://github.com/intel/intel-extension-for-pytorch).
 
-1. install PyTorch and TorchVision
+### Install IPEX CPU
 
-   refer [PyTorch install](https://pytorch.org/get-started/locally/)
-   ```shell position-relative
-    pip install requirements.txt
-   ```
-2. Get  Intel® Extension for PyTorch* source and install
-    > **Note**
-    >
-    > GCC9 compiler is recommended
-    >
+   > Note: GCC9 compiler is recommended
 
-   ```shell position-relative
+   ```shell
    python -m pip install intel_extension_for_pytorch -f https://software.intel.com/ipex-whl-stable
    ```
 
-   ```
-   # build from source for IPEX 1.12
-    git clone https://github.com/intel/intel-extension-for-pytorch/
-    cd intel-extension-for-pytorch
-    git submodule sync && git submodule update --init --recursive
-    git checkout 1279c5824f1bcb61cd8990f4148abcadf3f214a4
-    git apply ../patch.patch
-    python setup.py install
-   ```
-   > Note: Intel® Extension for PyTorch* has PyTorch version requirement. Please check more detailed information via the URL below.
-   >
-   > More installation methods can be found at [Installation Guide](https://intel.github.io/intel-extension-for-pytorch/1.12.0/tutorials/installation.html)
-   >
-   > Support IPEX version >= 1.9.0, 1.12.0 version need build from source and apply patch.
+### Install IPEX XPU
+#### 1. Docker
+Please build an IPEX docker container according to the [official guide](https://intel.github.io/intel-extension-for-pytorch/index.html#installation?platform=gpu&version=v2.1.30%2bxpu&os=linux%2fwsl2&package=docker).
+#### 2. Prebuilt Wheel
+Prebuilt wheel files are available for Python python 3.8, python 3.9, python 3.10, python 3.11.
+```bash
+conda install intel-extension-for-pytorch=2.1.30 pytorch=2.1.0 -c intel -c conda-forge
+```
+You can run a simple sanity test to double confirm if the correct version is installed, and if the software stack can get correct hardware information onboard your system. The command should return PyTorch and IPEX versions installed, as well as GPU card(s) information detected.
+```bash
+source {DPCPPROOT}/env/vars.sh
+source {MKLROOT}/env/vars.sh
+source {CCLROOT}/env/vars.sh
+source {MPIROOT}/env/vars.sh
+python -c "import torch; import intel_extension_for_pytorch as ipex; print(torch.__version__); print(ipex.__version__); [print(f'[{i}]: {torch.xpu.get_device_properties(i)}') for i in range(torch.xpu.device_count())];"
+```
+Please also refer to this [tutorial](https://intel.github.io/intel-extension-for-pytorch/index.html#installation?platform=gpu&version=v2.1.30%2bxpu&os=linux%2fwsl2&package=conda) to check system requirements and install dependencies.
 
 ## 3. Prepare Dataset
 
-Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/imagenet.  The dir include below folder:
+Download [ImageNet](http://www.image-net.org/) Raw image to dir: /path/to/imagenet. The dir include below folder:
 
 ```bash
 ls /path/to/imagenet
 train  val
 ```
 
-# Run
+# Run with CPU
 
 > Note: All torchvision model names can be passed as long as they are included in `torchvision.models`, below are some examples.
 
@@ -93,4 +87,19 @@ or
 ```shell
 bash run_quant.sh --input_model=resnext101_32x16d_wsl --dataset_location=/path/to/imagenet
 bash run_benchmark.sh --input_model=resnext101_32x16d_wsl --dataset_location=/path/to/imagenet --mode=performance/accuracy --int8=true/false
+```
+
+# Run with XPU
+
+> Note: All torchvision model names can be passed as long as they are included in `torchvision.models`, below are some examples.
+
+### 1. ResNet18 With Intel PyTorch Extension
+
+```shell
+python main.py -t -a resnet18 --ipex --pretrained /path/to/imagenet --xpu
+```
+or
+```shell
+bash run_quant.sh --input_model=resnet18 --dataset_location=/path/to/imagenet
+bash run_benchmark.sh --input_model=resnet18 --dataset_location=/path/to/imagenet --mode=performance/accuracy --int8=true/false --xpu=true/false
 ```
