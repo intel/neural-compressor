@@ -18,7 +18,7 @@ pip install intel_extension_for_pytorch
 ## 1. Quantization with CPU
 If IPEX version is equal or higher than 1.12, please install transformers 4.19.0.
 ```shell
-python run_qa.py 
+python run_qa.py \
     --model_name_or_path bert-large-uncased-whole-word-masking-finetuned-squad \
     --dataset_name squad \
     --do_eval \
@@ -50,7 +50,7 @@ Please also refer to this [tutorial](https://intel.github.io/intel-extension-for
 
 #### 2.2 Quantization Command
 ```shell
-python run_qa.py 
+python run_qa.py \
     --model_name_or_path bert-large-uncased-whole-word-masking-finetuned-squad \
     --dataset_name squad \
     --do_eval \
