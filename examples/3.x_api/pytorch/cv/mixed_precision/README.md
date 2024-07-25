@@ -36,7 +36,8 @@ bash run_autotune.sh --input_model=resnet18 --dataset_location=/path/to/imagenet
 ## Benchmark
 ```Shell
 # run optimized performance
-bash run_benchmark.sh --input_model=resnet18 --dataset_location=/path/to/imagenet --mode=performance --batch_size=100 --optimized=true --iters=500
+bash run_benchmark.sh --input_model=resnet18 --dataset_location=/path/to/imagenet --mode=performance --batch_size=20 --optimized=true --iters=500
+
 # run optimized accuracy
 bash run_benchmark.sh --input_model=resnet18 --dataset_location=/path/to/imagenet --mode=accuracy --batch_size=1 --optimized=true
 ```

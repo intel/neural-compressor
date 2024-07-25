@@ -152,7 +152,7 @@
         "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
         "input_model": "resnet18",
         "main_script": "main.py",
-        "batch_size": 100
+        "batch_size": 20
       }
     }
 }

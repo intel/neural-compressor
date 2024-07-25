@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Initialize custom pool2d layers for Keras quantization."""
 
 import json
 
@@ -24,6 +25,8 @@ from neural_compressor.tensorflow.utils import version1_gte_version2
 
 
 class QAvgPool2D(AveragePooling2D):
+    """The custom quantized AveragePooling2D layer."""
+
     def __init__(
         self,
         name,
@@ -44,6 +47,7 @@ class QAvgPool2D(AveragePooling2D):
         quant_axis=None,
         **kwargs
     ):
+        """Initialize custom quantized AveragePooling2D layer."""
         super(QAvgPool2D, self).__init__(
             name=name, pool_size=pool_size, strides=strides, padding=padding, data_format=data_format, **kwargs
         )
@@ -61,6 +65,7 @@ class QAvgPool2D(AveragePooling2D):
         self.quant_axis = quant_axis
 
     def __call__(self, inputs):
+        """The __call__ function of custom quantized AveragePooling2D layer."""
         if self.quant_status == "calib" and not (
             version1_gte_version2(tf.__version__, "2.16.1") and isinstance(inputs, tf.keras.KerasTensor)
         ):
@@ -94,9 +99,11 @@ class QAvgPool2D(AveragePooling2D):
 
     @classmethod
     def from_config(cls, config):
+        """Deserialize this class from a config dict."""
         return cls(**config)
 
     def get_config(self):
+        """Serialize this class to a config dict."""
         config = super(QAvgPool2D, self).get_config()
         config.update(
             {
@@ -118,6 +125,8 @@ class QAvgPool2D(AveragePooling2D):
 
 
 class QMaxPool2D(MaxPooling2D):
+    """The custom quantized MaxPooling2D layer."""
+
     def __init__(
         self,
         name,
@@ -138,6 +147,7 @@ class QMaxPool2D(MaxPooling2D):
         quant_axis=None,
         **kwargs
     ):
+        """Initialize custom quantized MaxPooling2D layer."""
         super(QMaxPool2D, self).__init__(
             name=name, pool_size=pool_size, strides=strides, padding=padding, data_format=data_format, **kwargs
         )
@@ -155,6 +165,7 @@ class QMaxPool2D(MaxPooling2D):
         self.quant_axis = quant_axis
 
     def __call__(self, inputs):
+        """The __call__ function of custom quantized MaxPooling2D layer."""
         if self.quant_status == "calib" and not (
             version1_gte_version2(tf.__version__, "2.16.1") and isinstance(inputs, tf.keras.KerasTensor)
         ):
@@ -189,9 +200,11 @@ class QMaxPool2D(MaxPooling2D):
 
     @classmethod
     def from_config(cls, config):
+        """Deserialize this class from a config dict."""
         return cls(**config)
 
     def get_config(self):
+        """Serialize this class to a config dict."""
         config = super(QMaxPool2D, self).get_config()
         config.update(
             {
@@ -213,6 +226,7 @@ class QMaxPool2D(MaxPooling2D):
 
 
 def initialize_int8_avgpool(fp32_layer, q_config):
+    """Initialize int8 avgpool."""
     kwargs = fp32_layer.get_config()
 
     param_list = [
@@ -241,6 +255,7 @@ def initialize_int8_avgpool(fp32_layer, q_config):
 
 
 def initialize_int8_maxpool(fp32_layer, q_config):
+    """Initialize int8 maxpool."""
     kwargs = fp32_layer.get_config()
 
     param_list = [

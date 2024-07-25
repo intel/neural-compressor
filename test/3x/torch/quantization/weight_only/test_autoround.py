@@ -80,6 +80,23 @@ class TestAutoRound:
         if quant_lm_head is True:
             assert isinstance(q_model.lm_head, WeightOnlyLinear), "quantization for lm_head failed."
 
+    def test_int4_dtype(self):
+        fp32_model = copy.deepcopy(self.gptj)
+        quant_config = AutoRoundConfig(dtype="int4", nsamples=32, seqlen=10, iters=10, scale_dtype="fp32")
+        logger.info(f"Test AutoRound with config {quant_config}")
+
+        # prepare + convert API
+        model = prepare(model=fp32_model, quant_config=quant_config)
+
+        run_fn(model, self.dataloader)
+        q_model = convert(model)
+        out = q_model(self.inp)[0]
+        assert torch.allclose(out, self.label, atol=1e-1)
+        assert "transformer.h.0.attn.k_proj" in q_model.autoround_config.keys()
+        assert "scale" in q_model.autoround_config["transformer.h.0.attn.k_proj"].keys()
+        assert torch.float32 == q_model.autoround_config["transformer.h.0.attn.k_proj"]["scale_dtype"]
+        assert isinstance(q_model.transformer.h[0].attn.k_proj, WeightOnlyLinear), "packing model failed."
+
     def test_autoround_with_quantize_API(self):
         gpt_j_model = copy.deepcopy(self.gptj)
 

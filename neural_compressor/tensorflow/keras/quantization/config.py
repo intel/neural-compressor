@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""The configs of algorithms for Keras."""
 
 from __future__ import annotations
 
@@ -36,6 +37,8 @@ FRAMEWORK_NAME = "keras"
 
 
 class OperatorConfig(NamedTuple):
+    """The config for operator."""
+
     config: BaseConfig
     operators: List[Union[str, Callable]]
     valid_func_list: List[Callable] = []
@@ -76,6 +79,7 @@ class StaticQuantConfig(BaseConfig):
             act_dtype (str): Data type for activations, default is "int8".
             act_sym (bool): Indicates whether activations are symmetric, default is True.
             act_granularity (str): Calculate tensor-wise scales or channel-wise scales for activations.
+            white_list (list): A list of supported operators of this algorithm.
         """
         super().__init__(white_list=white_list)
         self.weight_dtype = weight_dtype
@@ -88,6 +92,7 @@ class StaticQuantConfig(BaseConfig):
 
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
+        """Register supported configs."""
         supported_configs = []
         static_quant_config = StaticQuantConfig(
             weight_dtype=["int8", "fp32"],
@@ -112,6 +117,7 @@ class StaticQuantConfig(BaseConfig):
 
     @staticmethod
     def get_model_info(model) -> List[Tuple[str, Callable]]:
+        """Get concrete node names for supported operators."""
         white_list = [
             "Dense",
             "Conv2D",
@@ -133,7 +139,7 @@ class StaticQuantConfig(BaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "StaticQuantConfig", List["StaticQuantConfig"]]:
-        # TODO fwk owner needs to update it.
+        """Get a default config set for tuning."""
         return StaticQuantConfig(weight_sym=[True, False])
 
 
