@@ -51,7 +51,7 @@
       "batch_size": 64
     },
     "inception_v3": {
-      "model_src_dir": "cv/inception_v3/quantization/ptq",
+      "model_src_dir": "image_recognition/inception_v3/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/imagenet",
       "input_model": "/tf_dataset/pre-trained-models/inceptionv3/fp32/freezed_inceptionv3.pb",
       "main_script": "main.py",
@@ -59,28 +59,28 @@
       "fp32_model_url": "https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_8/inceptionv3_fp32_pretrained_model.pb"
     },
     "mobilenetv2": {
-      "model_src_dir": "cv/mobilenet_v2/quantization/ptq",
+      "model_src_dir": "image_recognition/mobilenet_v2/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/imagenet",
       "input_model": "/tf_dataset/pre-train-model-slim/pbfile/frozen_pb/frozen_mobilenet_v2.pb",
       "main_script": "main.py",
       "batch_size": 32
     },
     "resnetv2_50": {
-      "model_src_dir": "cv/resnet_v2_50/quantization/ptq",
+      "model_src_dir": "image_recognition/resnet_v2_50/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/imagenet",
       "input_model": "/tf_dataset/pre-train-model-slim/pbfile/frozen_pb/frozen_resnet_v2_50.pb",
       "main_script": "main.py",
       "batch_size": 32
     },
     "vgg16": {
-      "model_src_dir": "cv/vgg16/quantization/ptq",
+      "model_src_dir": "image_recognition/vgg16/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/imagenet",
       "input_model": "/tf_dataset/pre-train-model-slim/pbfile/frozen_pb/frozen_vgg16.pb",
       "main_script": "main.py",
       "batch_size": 32
     },
     "ViT": {
-      "model_src_dir": "cv/vision_transformer/quantization/ptq",
+      "model_src_dir": "image_recognition/vision_transformer/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/imagenet",
       "input_model": "/tf_dataset/tensorflow/vit/HF-ViT-Base16-Img224-frozen.pb",
       "main_script": "main.py",
