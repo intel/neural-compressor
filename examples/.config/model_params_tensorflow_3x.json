@@ -8,6 +8,20 @@
       "batch_size": 64,
       "fp32_model_url": "https://storage.googleapis.com/intel-optimized-tensorflow/models/v2_7_0/fp32_bert_squad.pb"
     },
+    "distilbert_base": {
+      "model_src_dir": "nlp/distilbert_base/quantization/ptq",
+      "dataset_location": "/tf_dataset2/datasets/sst2_validation_dataset",
+      "input_model": "/tf_dataset2/models/tensorflow/distilbert_base/fp32/distilbert_base_fp32.pb",
+      "main_script": "main.py",
+      "batch_size": 128
+    },
+    "distilbert_base_sq": {
+      "model_src_dir": "nlp/distilbert_base/quantization/ptq",
+      "dataset_location": "/tf_dataset2/datasets/sst2_validation_dataset",
+      "input_model": "/tf_dataset2/models/tensorflow/distilbert_base/fp32/distilbert_base_fp32.pb",
+      "main_script": "main.py",
+      "batch_size": 128
+    },
     "opt_125m_sq": {
       "model_src_dir": "nlp/large_language_models/quantization/ptq/smoothquant",
       "dataset_location": "",
@@ -29,6 +43,42 @@
       "main_script": "main.py",
       "batch_size": 1
     },
+    "transformer_lt": {
+      "model_src_dir": "nlp/transformer_lt/quantization/ptq",
+      "dataset_location": "/tf_dataset/tensorflow/transformer-lt-official-fp32-inference/transformer_lt_official_fp32_pretrained_model/data",
+      "input_model": "/tf_dataset/tensorflow/transformer-lt-official-fp32-inference/transformer_lt_official_fp32_pretrained_model/graph/fp32_graphdef.pb",
+      "main_script": "main.py",
+      "batch_size": 64
+    },
+    "inception_v3": {
+      "model_src_dir": "image_recognition/inception_v3/quantization/ptq",
+      "dataset_location": "/tf_dataset/dataset/imagenet",
+      "input_model": "/tf_dataset/pre-trained-models/inceptionv3/fp32/freezed_inceptionv3.pb",
+      "main_script": "main.py",
+      "batch_size": 32,
+      "fp32_model_url": "https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_8/inceptionv3_fp32_pretrained_model.pb"
+    },
+    "mobilenetv2": {
+      "model_src_dir": "image_recognition/mobilenet_v2/quantization/ptq",
+      "dataset_location": "/tf_dataset/dataset/imagenet",
+      "input_model": "/tf_dataset/pre-train-model-slim/pbfile/frozen_pb/frozen_mobilenet_v2.pb",
+      "main_script": "main.py",
+      "batch_size": 32
+    },
+    "resnetv2_50": {
+      "model_src_dir": "image_recognition/resnet_v2_50/quantization/ptq",
+      "dataset_location": "/tf_dataset/dataset/imagenet",
+      "input_model": "/tf_dataset/pre-train-model-slim/pbfile/frozen_pb/frozen_resnet_v2_50.pb",
+      "main_script": "main.py",
+      "batch_size": 32
+    },
+    "vgg16": {
+      "model_src_dir": "image_recognition/vgg16/quantization/ptq",
+      "dataset_location": "/tf_dataset/dataset/imagenet",
+      "input_model": "/tf_dataset/pre-train-model-slim/pbfile/frozen_pb/frozen_vgg16.pb",
+      "main_script": "main.py",
+      "batch_size": 32
+    },
     "ViT": {
       "model_src_dir": "image_recognition/vision_transformer/quantization/ptq",
       "dataset_location": "/tf_dataset/dataset/imagenet",
@@ -42,6 +92,63 @@
       "input_model": "/tf_dataset/tensorflow/graphsage/graphsage_frozen_model.pb",
       "main_script": "main.py",
       "batch_size": 1000
+    },
+    "faster_rcnn_resnet50": {
+      "model_src_dir": "object_detection/faster_rcnn_resnet50/quantization/ptq",
+      "dataset_location": "/tf_dataset/tensorflow/coco_val.record",
+      "input_model": "/tf_dataset/pre-train-model-oob/object_detection/faster_rcnn_resnet50/frozen_inference_graph.pb",
+      "main_script": "main.py",
+      "batch_size": 10
+    },
+    "mask_rcnn_inception_v2": {
+      "model_src_dir": "object_detection/mask_rcnn_inception_v2/quantization/ptq",
+      "dataset_location": "/tf_dataset/tensorflow/coco_val.record",
+      "input_model": "/tf_dataset/pre-train-model-oob/object_detection/mask_rcnn_inception_v2/frozen_inference_graph.pb",
+      "main_script": "main.py",
+      "batch_size": 10
+    },
+    "mask_rcnn_inception_v2_ckpt": {
+      "model_src_dir": "object_detection/mask_rcnn_inception_v2/quantization/ptq",
+      "dataset_location": "/tf_dataset/tensorflow/coco_val.record",
+      "input_model": "/tf_dataset/pre-train-model-oob/object_detection/mask_rcnn_inception_v2",
+      "main_script": "main.py",
+      "batch_size": 10
+    },
+    "ssd_mobilenet_v1": {
+      "model_src_dir": "object_detection/ssd_mobilenet_v1/quantization/ptq",
+      "dataset_location": "/tf_dataset/tensorflow/coco_val.record",
+      "input_model": "/tf_dataset/pre-train-model-oob/object_detection/ssd_mobilenet_v1/frozen_inference_graph.pb",
+      "main_script": "main.py",       
+      "batch_size": 10
+    },
+    "ssd_mobilenet_v1_ckpt": {
+      "model_src_dir": "object_detection/ssd_mobilenet_v1/quantization/ptq",
+      "dataset_location": "/tf_dataset/tensorflow/coco_val.record",
+      "input_model": "/tf_dataset/pre-train-model-oob/object_detection/ssd_mobilenet_v1",
+      "main_script": "main.py",       
+      "batch_size": 10
+    },
+    "wide_deep_large_ds": {
+      "model_src_dir": "recommendation/wide_deep_large_ds/quantization/ptq",
+      "dataset_location": "/tf_dataset/tensorflow/wide_deep_large_ds/dataset",
+      "input_model": "/tf_dataset/tensorflow/wide_deep_large_ds/fp32_optimized_graph.pb",
+      "main_script": "main.py",
+      "batch_size": 256,
+      "fp32_model_url": "https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_8/wide_deep_fp32_pretrained_model.pb"
+    },
+    "3dunet-mlperf": {
+      "model_src_dir": "semantic_image_segmentation/3dunet-mlperf/quantization/ptq",
+      "dataset_location": "/tf_dataset2/models/tensorflow/3dunet/build",
+      "input_model": "/tf_dataset2/models/tensorflow/3dunet/3dunet_dynamic_ndhwc.pb",
+      "main_script": "main.py",
+      "batch_size": 100
+    },
+    "style_transfer": {
+      "model_src_dir": "style_transfer/arbitrary_style_transfer/quantization/ptq",
+      "dataset_location": "style_images,content_images",
+      "input_model": "/tf_dataset/tensorflow/style_transfer/arbitrary_style_transfer/model.ckpt",
+      "main_script": "main.py",
+      "batch_size": 1
     }
   }
 }

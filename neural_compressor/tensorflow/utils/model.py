@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""The Model API for wrapping all TF model formats."""
 
 import copy
 
@@ -25,6 +26,8 @@ from neural_compressor.tensorflow.utils.utility import singleton
 
 @singleton
 class TensorflowGlobalConfig:
+    """A global config class for setting framework specific information."""
+
     global_config = {
         "device": "cpu",
         "backend": "default",
@@ -36,6 +39,7 @@ class TensorflowGlobalConfig:
     }
 
     def reset_global_config(self):
+        """Reset global config with default values."""
         self.global_config = copy.deepcopy(TENSORFLOW_DEFAULT_CONFIG)
         self.global_config["workspace_path"] = DEFAULT_WORKSPACE
 
@@ -79,6 +83,7 @@ class Model(object):  # pragma: no cover
 
     @staticmethod
     def set_tf_config(conf, model):
+        """Set tf global config with model information."""
         config = TFConfig.global_config
         framework = "keras" if isinstance(model, KerasModel) else "tensorflow"
 

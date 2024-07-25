@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Class for Tensorflow model."""
+"""The concrete model wrappers for parsing all TF model formats."""
 
 import copy
 import datetime
@@ -38,6 +38,7 @@ tensor_to_node = lambda s: list(set([x.split(":")[0] for x in s]))
 
 
 def get_tf_model_type(model):
+    """The interface of getting type of tensorflow models."""
     try:
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
@@ -332,6 +333,7 @@ def _get_graph_from_saved_model_v3(model, input_tensor_names, output_tensor_name
         model (string or tf.keras.Model): model path or tf.keras.Model object.
         input_tensor_names (list of string): input tensor names of the model.
         output_tensor_names (list of string): output tensor names of the model.
+
     Returns:
         graph_def (tf.compat.v1.Session): tf.compat.v1.Session object.
         inputs (list of string): validated input names.
@@ -377,6 +379,7 @@ def _get_graph_from_original_keras_v2(model):  # pragma: no cover
 
     Args:
         model (string or tf.keras.Model): model path or tf.keras.Model object.
+
     Returns:
         graph_def (tf.compat.v1.Session): tf.compat.v1.Session object.
         input_names (list of string): validated input names.
@@ -431,6 +434,7 @@ def _check_keras_format(model, saved_model_dir):  # pragma: no cover
     Args:
         model (string or tf.keras.Model): model path or tf.keras.Model object.
         saved_model_dir (string): the path to save a temporary saved_model.
+
     Returns:
         graph_def (tf.compat.v1.Session): tf.compat.v1.Session object.
         inputs (list of string): validated input names.
@@ -460,6 +464,7 @@ def _get_graph_from_saved_model_v1(model):
 
     Args:
         model (string or tf.keras.Model): model path or tf.keras.Model object.
+
     Returns:
         graph_def (tf.compat.v1.Session): tf.compat.v1.Session object.
         inputs (list of string): validated input names.
@@ -512,6 +517,7 @@ def try_loading_keras(model, input_tensor_names, output_tensor_names):  # pragma
         model (string or tf.keras.Model): model path or tf.keras.Model object.
         input_tensor_names (list of string): input tensor names of the model.
         output_tensor_names (list of string): output tensor names of the model.
+
     Returns:
         graph_def (tf.compat.v1.Session): tf.compat.v1.Session object.
         input_names (list of string): validated input names.
@@ -1429,6 +1435,7 @@ class KerasModel(BaseModel):
     def save(self, root, *args, **kwargs):
         """Save Keras model."""
         self._model_object.save(root)
+        logger.info("Save quantized model to {}.".format(root))
 
     @property
     def input_node_names(self):

@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""The utility functions and classes for Tensorflow."""
 
 import importlib
 import logging
@@ -67,6 +68,7 @@ def register_algo(name):
             ...
     Args:
         name (str): The name under which the algorithm function will be registered.
+
     Returns:
         decorator: The decorator function to be used with algorithm functions.
     """
@@ -79,14 +81,16 @@ def register_algo(name):
 
 
 def deep_get(dictionary, keys, default=None):
-    """Get the dot key's item in nested dict
-       eg person = {'person':{'name':{'first':'John'}}}
-       deep_get(person, "person.name.first") will output 'John'.
+    """Get the dot key's item in nested dict.
 
+    Usage example:
+       person = {'person':{'name':{'first':'John'}}}
+       deep_get(person, "person.name.first") will output 'John'.
     Args:
         dictionary (dict): The dict object to get keys
         keys (dict): The deep keys
         default (object): The return item if key not exists
+
     Returns:
         item: the item of the deep dot keys
     """

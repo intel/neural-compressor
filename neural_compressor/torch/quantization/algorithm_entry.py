@@ -567,9 +567,14 @@ def autoround_quantize_entry(
         if quant_config.name != AUTOROUND or quant_config.dtype == "fp32":
             continue
         else:
+            dtype = quant_config.dtype
+            bits = quant_config.bits
+            if dtype != "int" and "int" in dtype:
+                bits = int(dtype.lstrip("int"))
+                dtype = "int"
             weight_config[op_name] = {
-                "data_type": quant_config.dtype,
-                "bits": quant_config.bits,
+                "data_type": dtype,
+                "bits": bits,
                 "sym": quant_config.use_sym,
                 "group_size": quant_config.group_size,
                 "act_bits": quant_config.act_bits,
@@ -595,7 +600,7 @@ def autoround_quantize_entry(
             not_use_best_mse = quant_config.not_use_best_mse
             dynamic_max_gap = quant_config.dynamic_max_gap
             scale_dtype = quant_config.scale_dtype
-            multimodal = quant_config.multimodal
+            quant_block_list = quant_config.quant_block_list
             low_cpu_mem_usage = quant_config.use_layer_wise
 
     kwargs.pop("example_inputs")
@@ -622,7 +627,7 @@ def autoround_quantize_entry(
         not_use_best_mse=not_use_best_mse,
         dynamic_max_gap=dynamic_max_gap,
         scale_dtype=scale_dtype,
-        multimodal=multimodal,
+        quant_block_list=quant_block_list,
         low_cpu_mem_usage=low_cpu_mem_usage,
     )
     model = quantizer.execute(model=model, mode=mode, *args, **kwargs)

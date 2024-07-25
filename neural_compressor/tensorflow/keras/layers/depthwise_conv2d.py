@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Initialize custom depthwise conv2d layers for Keras quantization."""
 
 import json
 
@@ -35,6 +36,8 @@ else:
 if version1_gte_version2(tf.__version__, "2.16.1"):
 
     class QDepthwiseConv2D(BaseDepthwiseConv):  # pragma: no cover
+        """The custom quantized DepthwiseConv2D layer."""
+
         def __init__(
             self,
             kernel_size,
@@ -65,6 +68,7 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
             quant_axis=None,
             **kwargs
         ):
+            """Initialize custom quantized DepthwiseConv2D layer."""
             super().__init__(
                 2,
                 kernel_size=kernel_size,
@@ -98,6 +102,7 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
             self.quant_axis = quant_axis
 
         def call(self, inputs):
+            """The __call__ function of custom quantized DepthwiseConv2D layer."""
             if self.quant_status == "calib" and not isinstance(inputs, tf.keras.KerasTensor):
                 if self.granularity == "per_tensor":
                     self.act_min_value = tf.math.reduce_min(inputs)
@@ -165,9 +170,11 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
 
         @classmethod
         def from_config(cls, config):
+            """Deserialize this class from a config dict."""
             return cls(**config)
 
         def get_config(self):
+            """Serialize this class to a config dict."""
             config = super(QDepthwiseConv2D, self).get_config()
             config.update(
                 {
@@ -190,6 +197,8 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
 else:
 
     class QDepthwiseConv2D(DepthwiseConv):
+        """The custom quantized DepthwiseConv2D layer."""
+
         def __init__(
             self,
             kernel_size,
@@ -220,6 +229,7 @@ else:
             quant_axis=None,
             **kwargs
         ):
+            """Initialize custom quantized DepthwiseConv2D layer."""
             super().__init__(
                 2,
                 kernel_size=kernel_size,
@@ -253,6 +263,7 @@ else:
             self.quant_axis = quant_axis
 
         def call(self, inputs):
+            """The __call__ function of custom quantized DepthwiseConv2D layer."""
             if self.quant_status == "calib":
                 if self.granularity == "per_tensor":
                     self.act_min_value = tf.math.reduce_min(inputs)
@@ -315,9 +326,11 @@ else:
 
         @classmethod
         def from_config(cls, config):
+            """Deserialize this class from a config dict."""
             return cls(**config)
 
         def get_config(self):
+            """Serialize this class to a config dict."""
             config = super(QDepthwiseConv2D, self).get_config()
             config.update(
                 {
@@ -339,6 +352,7 @@ else:
 
         @tf_utils.shape_type_conversion
         def compute_output_shape(self, input_shape):
+            """Compute_output_shape."""
             if self.data_format == "channels_first":
                 rows = input_shape[2]
                 cols = input_shape[3]
@@ -369,6 +383,7 @@ else:
 
 
 def initialize_int8_depthwise_conv2d(fp32_layer, q_config):
+    """Initialize int8 depthwise conv2d."""
     kwargs = fp32_layer.get_config()
     q_name = fp32_layer.name
 
