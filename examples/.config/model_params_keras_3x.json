@@ -1,0 +1,18 @@
+{
+  "keras": {
+    "resnetv2_50": {
+      "model_src_dir": "keras/image_recognition/resnet_v2_50/quantization/ptq",
+      "dataset_location": "/tf_dataset/dataset/imagenet",
+      "input_model": "/tf_dataset2/models/tensorflow/resnetv2_50_keras/saved_model",
+      "main_script": "main.py",
+      "batch_size": 32
+    },
+    "inception_v3": {
+      "model_src_dir": "keras/image_recognition/inception_v3/quantization/ptq",
+      "dataset_location": "/tf_dataset/dataset/imagenet",
+      "input_model": "/tf_dataset2/models/tensorflow/inception_v3_keras/saved_model",
+      "main_script": "main.py",
+      "batch_size": 32
+    }
+  }
+}

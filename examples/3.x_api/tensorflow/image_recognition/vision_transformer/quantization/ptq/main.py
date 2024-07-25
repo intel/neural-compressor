@@ -146,7 +146,6 @@ class eval_classifier_optimized_graph:
             with tf.io.gfile.GFile(args.input_graph, "rb") as f:
                 sm.ParseFromString(f.read())
             graph_def = sm.meta_graphs[0].graph_def
-            postprocess = ShiftRescale()
 
             q_model = quantize_model(graph_def, quant_config, calib_dataloader)
             q_model.save(args.output_graph)

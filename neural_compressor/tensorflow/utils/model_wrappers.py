@@ -1435,6 +1435,7 @@ class KerasModel(BaseModel):
     def save(self, root, *args, **kwargs):
         """Save Keras model."""
         self._model_object.save(root)
+        logger.info("Save quantized model to {}.".format(root))
 
     @property
     def input_node_names(self):
