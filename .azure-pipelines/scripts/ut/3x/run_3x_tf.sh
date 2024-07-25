@@ -26,6 +26,8 @@ ut_log_name=${LOG_DIR}/ut_3x_tf.log
 # test for tensorflow ut
 pytest --cov="${inc_path}" -vs --disable-warnings --html=report_tf_quant.html --self-contained-html ./tensorflow/quantization 2>&1 | tee -a ${ut_log_name}
 rm -rf tensorflow/quantization
+pytest --cov="${inc_path}" --cov-append -vs --disable-warnings --html=report_tf_test_quantize_model.html --self-contained-html ./tensorflow/test_quantize_model.py 2>&1 | tee -a ${ut_log_name}
+rm -rf tensorflow/test_quantize_model.py
 pytest --cov="${inc_path}" --cov-append -vs --disable-warnings --html=report_tf.html --self-contained-html . 2>&1 | tee -a ${ut_log_name}
 
 # test for tensorflow new api ut
