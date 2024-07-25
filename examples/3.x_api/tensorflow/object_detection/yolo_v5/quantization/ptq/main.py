@@ -297,7 +297,7 @@ def main():
         elif args.mode == 'accuracy':
             map50 = evaluate(args.input_model)
             print("Batch size = %d" % args.batch_size)
-            LOGGER.info("Accuracy (map50): %.4g" % map50)
+            LOGGER.info("Accuracy: %.4g" % map50)
 
 
 if __name__ == "__main__":
