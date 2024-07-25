@@ -530,12 +530,10 @@ class PatchedVLLMKVCache(nn.Module):
         measure_output((output_cache), self._mod_extra_config.outputs)
         return output_cache
 
-    def fetch_from_cache(self, cache, blocks, permutations):
+    def fetch_from_cache(self, cache, blocks):
         quant_cache = self.quant_input(cache)
-        output_cache = self.orig_fetch_from_cache(quant_cache, blocks, permutations)
-        for i in range(len(output_cache)):
-            output_cache[i]=self.quant_output(output_cache[i])
-        return output_cache
+        output_cache = self.orig_fetch_from_cache(quant_cache, blocks)
+        return self.quant_output(output_cache)
 
 
 class PatchedConv2d(nn.Conv2d):
