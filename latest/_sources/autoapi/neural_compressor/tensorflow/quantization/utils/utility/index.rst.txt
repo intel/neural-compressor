@@ -24,14 +24,10 @@ Functions
    neural_compressor.tensorflow.quantization.utils.utility.get_input_output_node_names
    neural_compressor.tensorflow.quantization.utils.utility.fix_ref_type_of_graph_def
    neural_compressor.tensorflow.quantization.utils.utility.strip_unused_nodes
-   neural_compressor.tensorflow.quantization.utils.utility.get_estimator_graph
    neural_compressor.tensorflow.quantization.utils.utility.strip_equivalent_nodes
    neural_compressor.tensorflow.quantization.utils.utility.get_graph_def
    neural_compressor.tensorflow.quantization.utils.utility.get_model_input_shape
-   neural_compressor.tensorflow.quantization.utils.utility.get_tensor_val_from_graph_node
-   neural_compressor.tensorflow.quantization.utils.utility.int8_node_name_reverse
    neural_compressor.tensorflow.quantization.utils.utility.generate_feed_dict
-   neural_compressor.tensorflow.quantization.utils.utility.get_weight_from_input_tensor
    neural_compressor.tensorflow.quantization.utils.utility.apply_inlining
    neural_compressor.tensorflow.quantization.utils.utility.construct_function_from_graph_def
    neural_compressor.tensorflow.quantization.utils.utility.parse_saved_model
@@ -140,16 +136,6 @@ Module Contents
    of official tensorflow r1.15 branch
 
 
-.. py:function:: get_estimator_graph(estimator, input_fn)
-
-   Get the graph of the estimator.
-
-   :param estimator: tf estimator model
-   :param input_fn: input function
-
-   :returns: graph
-
-
 .. py:function:: strip_equivalent_nodes(graph_def, output_node_names)
 
    Strip nodes with the same input and attr.
@@ -165,42 +151,9 @@ Module Contents
    Get the input shape of the input model.
 
 
-.. py:function:: get_tensor_val_from_graph_node(graph_node_name_mapping, node_name)
-
-   Get the tensor value for given node name.
-
-   :param graph_node_name_mapping: key: node name, val: node
-   :param node_name: query node
-
-   :returns: numpy array
-   :rtype: tensor_val
-
-
-.. py:function:: int8_node_name_reverse(node)
-
-   Reverse int8 node name.
-
-
 .. py:function:: generate_feed_dict(input_tensor, inputs)
 
    Generate feed dict helper function.
-
-
-.. py:function:: get_weight_from_input_tensor(model, input_tensor_names, op_types)
-
-   Extracts weight tensors and their associated nodes from a smooth quant node's input tensor.
-
-   :param model: A TensorFlow model containing a `graph_def` attribute.
-   :param input_tensor_names: A list of input tensor names to search for weight tensors.
-   :param op_types: A list of operation types to search for when looking for weight tensors.
-
-   :returns:
-
-             - sq_weight_tensors: A dictionary mapping each input tensor name
-                 to a dict of its associated weight tensors with weight name.
-             - sq_weights_nodes: A dictionary mapping each input tensor name
-                 to a dict of its associated weight nodes with weight name.
-   :rtype: A tuple of two dictionaries
 
 
 .. py:function:: apply_inlining(func)

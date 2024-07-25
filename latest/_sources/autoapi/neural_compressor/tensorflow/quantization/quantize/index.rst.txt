@@ -14,12 +14,18 @@ Functions
 
 .. autoapisummary::
 
+   neural_compressor.tensorflow.quantization.quantize.need_apply
    neural_compressor.tensorflow.quantization.quantize.quantize_model
    neural_compressor.tensorflow.quantization.quantize.quantize_model_with_single_config
 
 
 Module Contents
 ---------------
+
+.. py:function:: need_apply(configs_mapping: Dict[Tuple[str, callable], neural_compressor.common.base_config.BaseConfig], algo_name)
+
+   Whether to apply the algorithm.
+
 
 .. py:function:: quantize_model(model: Union[str, tensorflow.keras.Model, neural_compressor.tensorflow.utils.BaseModel], quant_config: Union[neural_compressor.common.base_config.BaseConfig, list], calib_dataloader: Callable = None, calib_iteration: int = 100, calib_func: Callable = None)
 

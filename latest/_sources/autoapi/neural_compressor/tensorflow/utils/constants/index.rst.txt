@@ -1,8 +1,11 @@
-:orphan:
-
-:py:mod:`neural_compressor.tensorflow.utils.constants`
-======================================================
+neural_compressor.tensorflow.utils.constants
+============================================
 
 .. py:module:: neural_compressor.tensorflow.utils.constants
+
+.. autoapi-nested-parse::
+
+   The constants utils for Tensorflow.
+
 
 

@@ -1,25 +1,25 @@
-:orphan:
-
-:py:mod:`neural_compressor.tensorflow.keras.quantization.config`
-================================================================
+neural_compressor.tensorflow.keras.quantization.config
+======================================================
 
 .. py:module:: neural_compressor.tensorflow.keras.quantization.config
 
+.. autoapi-nested-parse::
 
-Module Contents
----------------
+   The configs of algorithms for Keras.
+
+
 
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
+   neural_compressor.tensorflow.keras.quantization.config.OperatorConfig
    neural_compressor.tensorflow.keras.quantization.config.StaticQuantConfig
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -27,9 +27,17 @@ Functions
    neural_compressor.tensorflow.keras.quantization.config.get_default_static_quant_config
 
 
+Module Contents
+---------------
+
+.. py:class:: OperatorConfig
+
+
+
+   The config for operator.
+
 
 .. py:class:: StaticQuantConfig(weight_dtype: str = 'int8', weight_sym: bool = True, weight_granularity: str = 'per_tensor', act_dtype: str = 'int8', act_sym: bool = True, act_granularity: str = 'per_tensor', white_list: Optional[List[neural_compressor.common.base_config.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
-
 
 
 

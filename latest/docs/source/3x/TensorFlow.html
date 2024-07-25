@@ -89,11 +89,30 @@
              
   <section id="tensorflow">
 <h1>TensorFlow<a class="headerlink" href="#tensorflow" title="Permalink to this heading"></a></h1>
-<ol class="simple">
+<ul class="simple">
+<li><p><a class="reference external" href="#tensorflow">TensorFlow</a></p>
+<ul>
 <li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
-<li><p><a class="reference external" href="#api-for-tensorflow">API for TensorFlow</a></p></li>
-<li><p><a class="reference external" href="#support-matrix">Support Matrix</a><br />3.1 <a class="reference external" href="#quantization-scheme">Quantization Scheme</a><br />3.2 <a class="reference external" href="#quantization-approaches">Quantization Approaches</a><br />3.3 <a class="reference external" href="#backend-and-device">Backend and Device</a></p></li>
-</ol>
+<li><p><a class="reference external" href="#api-for-tensorflow">API for TensorFlow</a></p>
+<ul>
+<li><p><a class="reference external" href="#support-matrix">Support Matrix</a></p>
+<ul>
+<li><p><a class="reference external" href="#quantization-scheme">Quantization Scheme</a></p></li>
+<li><p><a class="reference external" href="#quantization-approaches">Quantization Approaches</a></p>
+<ul>
+<li><p><a class="reference external" href="#post-training-static-quantization">Post Training Static Quantization</a></p></li>
+<li><p><a class="reference external" href="#smooth-quantization">Smooth Quantization</a></p></li>
+<li><p><a class="reference external" href="#mixed-precison">Mixed Precision</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#backend-and-device">Backend and Device</a></p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
 <section id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">neural_compressor.tensorflow</span></code> provides a integrated API for applying quantization on various TensorFlow model format, such as <code class="docutils literal notranslate"><span class="pre">pb</span></code>, <code class="docutils literal notranslate"><span class="pre">saved_model</span></code> and <code class="docutils literal notranslate"><span class="pre">keras</span></code>. The comprehensive range of supported models includes but not limited to CV models, NLP models, and large language models.</p>
@@ -232,9 +251,16 @@
             <td align="center"><a href="https://github.com/tensorflow/tensorflow">TensorFlow</a>/<a href="https://github.com/Intel-tensorflow/tensorflow">Intel TensorFlow</a></td>
         </tr>
         <tr>
-            <td rowspan="2" align="center">Smooth Quantization(SQ)</td>
-            <td rowspan="2" align="center">weights</td>
-            <td rowspan="2" align="center">calibration</td>
+            <td rowspan="1" align="center">Smooth Quantization(SQ)</td>
+            <td rowspan="1" align="center">weights</td>
+            <td rowspan="1" align="center">calibration</td>
+            <td align="center">Tensorflow</td>
+            <td align="center"><a href="https://github.com/tensorflow/tensorflow">TensorFlow</a>/<a href="https://github.com/Intel-tensorflow/tensorflow">Intel TensorFlow</a></td>
+        </tr>
+        <tr>
+            <td rowspan="1" align="center">Mixed Precision(MP)</td>
+            <td rowspan="1" align="center">weights and activations</td>
+            <td rowspan="1" align="center">NA</td>
             <td align="center">Tensorflow</td>
             <td align="center"><a href="https://github.com/tensorflow/tensorflow">TensorFlow</a>/<a href="https://github.com/Intel-tensorflow/tensorflow">Intel TensorFlow</a></td>
         </tr>
@@ -250,6 +276,10 @@
 <h5>Smooth Quantization<a class="headerlink" href="#smooth-quantization" title="Permalink to this heading"></a></h5>
 <p>Smooth Quantization (SQ) is an advanced quantization technique designed to optimize model performance while maintaining high accuracy. Unlike traditional quantization methods that can lead to significant accuracy loss, SQ focuses on a more refined approach by taking a balance between the scale of activations and weights.</p>
 <p>Refer to the <a class="reference external" href="./TF_SQ.html">SQ Guide</a> for detailed information.</p>
+</section>
+<section id="mixed-precision">
+<h5>Mixed Precision<a class="headerlink" href="#mixed-precision" title="Permalink to this heading"></a></h5>
+<p>The Mixed Precision (MP) is enabled with Post Training Static Quantization. Once <code class="docutils literal notranslate"><span class="pre">BF16</span></code> is supported on machine, the matched operators will be automatically converted.</p>
 </section>
 </section>
 <section id="backend-and-device">
@@ -301,7 +331,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f22d8f86290> 
+   <jinja2.runtime.BlockReference object at 0x7f5f833fccd0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

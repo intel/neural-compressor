@@ -5,7 +5,7 @@ neural_compressor.tensorflow.utils.model_wrappers
 
 .. autoapi-nested-parse::
 
-   Class for Tensorflow model.
+   The concrete model wrappers for parsing all TF model formats.
 
 
 
@@ -18,7 +18,6 @@ Classes
    neural_compressor.tensorflow.utils.model_wrappers.TensorflowBaseModel
    neural_compressor.tensorflow.utils.model_wrappers.TensorflowSavedModelModel
    neural_compressor.tensorflow.utils.model_wrappers.TensorflowLLMModel
-   neural_compressor.tensorflow.utils.model_wrappers.TensorflowQATModel
    neural_compressor.tensorflow.utils.model_wrappers.TensorflowCheckpointModel
    neural_compressor.tensorflow.utils.model_wrappers.KerasModel
    neural_compressor.tensorflow.utils.model_wrappers.TensorflowModel
@@ -29,6 +28,7 @@ Functions
 
 .. autoapisummary::
 
+   neural_compressor.tensorflow.utils.model_wrappers.get_tf_model_type
    neural_compressor.tensorflow.utils.model_wrappers.get_model_type
    neural_compressor.tensorflow.utils.model_wrappers.validate_graph_node
    neural_compressor.tensorflow.utils.model_wrappers.validate_and_inference_input_output
@@ -46,6 +46,11 @@ Functions
 
 Module Contents
 ---------------
+
+.. py:function:: get_tf_model_type(model)
+
+   The interface of getting type of tensorflow models.
+
 
 .. py:function:: get_model_type(model)
 
@@ -281,13 +286,6 @@ Module Contents
 
 
    The class Tensorflow saved model whose GraphDef exceeding maximum protobuf size of 2GB.
-
-
-.. py:class:: TensorflowQATModel(model='', **kwargs)
-
-
-
-   Build Tensorflow QAT model.
 
 
 .. py:class:: TensorflowCheckpointModel(model, **kwargs)

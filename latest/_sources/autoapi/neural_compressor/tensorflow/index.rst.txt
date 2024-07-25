@@ -15,6 +15,9 @@ Subpackages
 .. toctree::
    :maxdepth: 1
 
+   /autoapi/neural_compressor/tensorflow/algorithms/index
+   /autoapi/neural_compressor/tensorflow/keras/index
    /autoapi/neural_compressor/tensorflow/quantization/index
+   /autoapi/neural_compressor/tensorflow/utils/index
 
 

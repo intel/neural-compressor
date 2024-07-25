@@ -5,7 +5,7 @@ neural_compressor.tensorflow.quantization.config
 
 .. autoapi-nested-parse::
 
-   Intel Neural Compressor Pytorch quantization config API.
+   Intel Neural Compressor TF quantization config API.
 
 
 

@@ -1,19 +1,24 @@
-:orphan:
-
-:py:mod:`neural_compressor.tensorflow.utils`
-============================================
+neural_compressor.tensorflow.utils
+==================================
 
 .. py:module:: neural_compressor.tensorflow.utils
+
+.. autoapi-nested-parse::
+
+   The utils for Tensorflow.
+
 
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   data/index.rst
-   model_wrappers/index.rst
-   nets_factory/index.rst
+   /autoapi/neural_compressor/tensorflow/utils/constants/index
+   /autoapi/neural_compressor/tensorflow/utils/data/index
+   /autoapi/neural_compressor/tensorflow/utils/model/index
+   /autoapi/neural_compressor/tensorflow/utils/model_wrappers/index
+   /autoapi/neural_compressor/tensorflow/utils/utility/index
 
 

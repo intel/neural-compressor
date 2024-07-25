@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>neural_compressor.tensorflow.utils.utility &mdash; Intel® Neural Compressor 2.6 documentation</title>
+  <title>neural_compressor.tensorflow.utils.utility &mdash; Intel® Neural Compressor 3.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css" />
       <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css" />
       <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css" />
@@ -55,7 +55,6 @@
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/get_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/installation_guide.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/user_guide.html">User Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/examples_readme.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/api-doc/apis.html">APIs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/releases_info.html">Release</a></li>
@@ -78,7 +77,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.tensorflow.utils.utility</span></code></li>
+      <li class="breadcrumb-item active">neural_compressor.tensorflow.utils.utility</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../../../../../_sources/autoapi/neural_compressor/tensorflow/utils/utility/index.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -89,30 +88,26 @@
            <div itemprop="articleBody">
              
   <section id="module-neural_compressor.tensorflow.utils.utility">
-<span id="neural-compressor-tensorflow-utils-utility"></span><h1><a class="reference internal" href="#module-neural_compressor.tensorflow.utils.utility" title="neural_compressor.tensorflow.utils.utility"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.tensorflow.utils.utility</span></code></a><a class="headerlink" href="#module-neural_compressor.tensorflow.utils.utility" title="Permalink to this heading"></a></h1>
-<section id="module-contents">
-<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<span id="neural-compressor-tensorflow-utils-utility"></span><h1>neural_compressor.tensorflow.utils.utility<a class="headerlink" href="#module-neural_compressor.tensorflow.utils.utility" title="Permalink to this heading"></a></h1>
+<p>The utility functions and classes for Tensorflow.</p>
 <section id="classes">
-<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
+<h2>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.CpuInfo" title="neural_compressor.tensorflow.utils.utility.CpuInfo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CpuInfo</span></code></a></p></td>
 <td><p>Get CPU Info.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.Statistics" title="neural_compressor.tensorflow.utils.utility.Statistics"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Statistics</span></code></a></p></td>
-<td><p>The statistics printer.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.CaptureOutputToFile" title="neural_compressor.tensorflow.utils.utility.CaptureOutputToFile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CaptureOutputToFile</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.CaptureOutputToFile" title="neural_compressor.tensorflow.utils.utility.CaptureOutputToFile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CaptureOutputToFile</span></code></a></p></td>
 <td><p>Not displayed in API Docs.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.LazyImport" title="neural_compressor.tensorflow.utils.utility.LazyImport"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LazyImport</span></code></a></p></td>
-<td><p>Lazy import python module till use.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.TFSlimNetsFactory" title="neural_compressor.tensorflow.utils.utility.TFSlimNetsFactory"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TFSlimNetsFactory</span></code></a></p></td>
+<td><p>TF-Slim nets factory.</p></td>
 </tr>
 </tbody>
 </table>
 </section>
 <section id="functions">
-<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
+<h2>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.version1_lt_version2" title="neural_compressor.tensorflow.utils.utility.version1_lt_version2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">version1_lt_version2</span></code></a>(version1, version2)</p></td>
@@ -134,7 +129,7 @@
 <td><p>Decorator function to register algorithms in the algos_mapping dictionary.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.deep_get" title="neural_compressor.tensorflow.utils.utility.deep_get"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deep_get</span></code></a>(dictionary, keys[, default])</p></td>
-<td><p>Get the dot key's item in nested dict</p></td>
+<td><p>Get the dot key's item in nested dict.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.itex_installed" title="neural_compressor.tensorflow.utils.utility.itex_installed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">itex_installed</span></code></a>()</p></td>
 <td><p>Check if the Intel® Extension for TensorFlow has been installed.</p></td>
@@ -151,18 +146,6 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.get_tensor_histogram" title="neural_compressor.tensorflow.utils.utility.get_tensor_histogram"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_tensor_histogram</span></code></a>(tensor_data[, bins])</p></td>
 <td><p>Get the histogram of the tensor data.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.Dequantize" title="neural_compressor.tensorflow.utils.utility.Dequantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Dequantize</span></code></a>(data, scale_info)</p></td>
-<td><p>Dequantize the data with the scale_info.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.dequantize_weight" title="neural_compressor.tensorflow.utils.utility.dequantize_weight"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dequantize_weight</span></code></a>(weight_tensor, min_filter_tensor, ...)</p></td>
-<td><p>Dequantize the weight with min-max filter tensors.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.dump_data_to_local" title="neural_compressor.tensorflow.utils.utility.dump_data_to_local"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dump_data_to_local</span></code></a>(data, path, filename)</p></td>
-<td><p>Dump data to local as pkl file.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.load_data_from_pkl" title="neural_compressor.tensorflow.utils.utility.load_data_from_pkl"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_data_from_pkl</span></code></a>(path, filename)</p></td>
-<td><p>Load data from local pkl file.</p></td>
-</tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.singleton" title="neural_compressor.tensorflow.utils.utility.singleton"><code class="xref py py-obj docutils literal notranslate"><span class="pre">singleton</span></code></a>(cls)</p></td>
 <td><p>Not displayed in API Docs.</p></td>
 </tr>
@@ -174,6 +157,9 @@
 </tr>
 </tbody>
 </table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.utility.version1_lt_version2">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.utility.</span></span><span class="sig-name descname"><span class="pre">version1_lt_version2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/tensorflow/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.utility.version1_lt_version2" title="Permalink to this definition"></a></dt>
@@ -232,8 +218,9 @@ def example_algo(model: tf.keras.Model, quant_config: StaticQuantConfig) -&gt; t
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.utility.deep_get">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.utility.</span></span><span class="sig-name descname"><span class="pre">deep_get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dictionary</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/tensorflow/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.utility.deep_get" title="Permalink to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Get the dot key’s item in nested dict</dt><dd><p>eg person = {‘person’:{‘name’:{‘first’:’John’}}}
+<dd><p>Get the dot key’s item in nested dict.</p>
+<dl class="simple">
+<dt>Usage example:</dt><dd><p>person = {‘person’:{‘name’:{‘first’:’John’}}}
 deep_get(person, “person.name.first”) will output ‘John’.</p>
 </dd>
 </dl>
@@ -290,50 +277,6 @@ deep_get(person, “person.name.first”) will output ‘John’.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.utility.Dequantize">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.utility.</span></span><span class="sig-name descname"><span class="pre">Dequantize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_info</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/tensorflow/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.utility.Dequantize" title="Permalink to this definition"></a></dt>
-<dd><p>Dequantize the data with the scale_info.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.utility.dequantize_weight">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.utility.</span></span><span class="sig-name descname"><span class="pre">dequantize_weight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weight_tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_filter_tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_filter_tensor</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/tensorflow/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.utility.dequantize_weight" title="Permalink to this definition"></a></dt>
-<dd><p>Dequantize the weight with min-max filter tensors.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.utility.dump_data_to_local">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.utility.</span></span><span class="sig-name descname"><span class="pre">dump_data_to_local</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/tensorflow/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.utility.dump_data_to_local" title="Permalink to this definition"></a></dt>
-<dd><p>Dump data to local as pkl file.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> – Data used to dump</p></li>
-<li><p><strong>path</strong> – The directory to save data</p></li>
-<li><p><strong>filename</strong> – The filename to dump</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>loaded data</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.utility.load_data_from_pkl">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.utility.</span></span><span class="sig-name descname"><span class="pre">load_data_from_pkl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/tensorflow/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.utility.load_data_from_pkl" title="Permalink to this definition"></a></dt>
-<dd><p>Load data from local pkl file.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>path</strong> – The directory to load data</p></li>
-<li><p><strong>filename</strong> – The filename to load</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.utility.singleton">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.utility.</span></span><span class="sig-name descname"><span class="pre">singleton</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/tensorflow/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.utility.singleton" title="Permalink to this definition"></a></dt>
 <dd><p>Not displayed in API Docs.</p>
@@ -359,12 +302,6 @@ deep_get(person, “person.name.first”) will output ‘John’.</p>
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.utility.Statistics">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.utility.</span></span><span class="sig-name descname"><span class="pre">Statistics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_handle</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">logger.info</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/tensorflow/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.utility.Statistics" title="Permalink to this definition"></a></dt>
-<dd><p>The statistics printer.</p>
-</dd></dl>
-
-<dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.utility.CaptureOutputToFile">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.utility.</span></span><span class="sig-name descname"><span class="pre">CaptureOutputToFile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tmp_file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stream</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">sys.stderr</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/tensorflow/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.utility.CaptureOutputToFile" title="Permalink to this definition"></a></dt>
 <dd><p>Not displayed in API Docs.</p>
@@ -372,12 +309,11 @@ deep_get(person, “person.name.first”) will output ‘John’.</p>
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.utility.LazyImport">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.utility.</span></span><span class="sig-name descname"><span class="pre">LazyImport</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module_name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/tensorflow/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.utility.LazyImport" title="Permalink to this definition"></a></dt>
-<dd><p>Lazy import python module till use.</p>
+<dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.utility.TFSlimNetsFactory">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.utility.</span></span><span class="sig-name descname"><span class="pre">TFSlimNetsFactory</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/tensorflow/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.utility.TFSlimNetsFactory" title="Permalink to this definition"></a></dt>
+<dd><p>TF-Slim nets factory.</p>
 </dd></dl>
 
-</section>
 </section>
 </section>
 
@@ -395,7 +331,7 @@ deep_get(person, “person.name.first”) will output ‘John’.</p>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fc37e7f11b0> 
+   <jinja2.runtime.BlockReference object at 0x7f5f7e9fe7d0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

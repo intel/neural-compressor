@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>neural_compressor.tensorflow.quantization.utils.utility &mdash; Intel® Neural Compressor 2.6 documentation</title>
+  <title>neural_compressor.tensorflow.quantization.utils.utility &mdash; Intel® Neural Compressor 3.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../../../_static/pygments.css" />
       <link rel="stylesheet" type="text/css" href="../../../../../../_static/css/theme.css" />
       <link rel="stylesheet" type="text/css" href="../../../../../../_static/graphviz.css" />
@@ -55,7 +55,6 @@
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/get_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/installation_guide.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/user_guide.html">User Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/examples_readme.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/api-doc/apis.html">APIs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/releases_info.html">Release</a></li>
@@ -125,29 +124,17 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.quantization.utils.utility.strip_unused_nodes" title="neural_compressor.tensorflow.quantization.utils.utility.strip_unused_nodes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">strip_unused_nodes</span></code></a>(graph_def, input_node_names, ...)</p></td>
 <td><p>Strip unused nodes of the graph_def.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.quantization.utils.utility.get_estimator_graph" title="neural_compressor.tensorflow.quantization.utils.utility.get_estimator_graph"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_estimator_graph</span></code></a>(estimator, input_fn)</p></td>
-<td><p>Get the graph of the estimator.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.quantization.utils.utility.strip_equivalent_nodes" title="neural_compressor.tensorflow.quantization.utils.utility.strip_equivalent_nodes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">strip_equivalent_nodes</span></code></a>(graph_def, output_node_names)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.quantization.utils.utility.strip_equivalent_nodes" title="neural_compressor.tensorflow.quantization.utils.utility.strip_equivalent_nodes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">strip_equivalent_nodes</span></code></a>(graph_def, output_node_names)</p></td>
 <td><p>Strip nodes with the same input and attr.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.quantization.utils.utility.get_graph_def" title="neural_compressor.tensorflow.quantization.utils.utility.get_graph_def"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_graph_def</span></code></a>(model[, outputs, auto_input_output])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.quantization.utils.utility.get_graph_def" title="neural_compressor.tensorflow.quantization.utils.utility.get_graph_def"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_graph_def</span></code></a>(model[, outputs, auto_input_output])</p></td>
 <td><p>Get the model's graph_def.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.quantization.utils.utility.get_model_input_shape" title="neural_compressor.tensorflow.quantization.utils.utility.get_model_input_shape"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_model_input_shape</span></code></a>(model)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.quantization.utils.utility.get_model_input_shape" title="neural_compressor.tensorflow.quantization.utils.utility.get_model_input_shape"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_model_input_shape</span></code></a>(model)</p></td>
 <td><p>Get the input shape of the input model.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.quantization.utils.utility.get_tensor_val_from_graph_node" title="neural_compressor.tensorflow.quantization.utils.utility.get_tensor_val_from_graph_node"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_tensor_val_from_graph_node</span></code></a>(...)</p></td>
-<td><p>Get the tensor value for given node name.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.quantization.utils.utility.int8_node_name_reverse" title="neural_compressor.tensorflow.quantization.utils.utility.int8_node_name_reverse"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int8_node_name_reverse</span></code></a>(node)</p></td>
-<td><p>Reverse int8 node name.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.quantization.utils.utility.generate_feed_dict" title="neural_compressor.tensorflow.quantization.utils.utility.generate_feed_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_feed_dict</span></code></a>(input_tensor, inputs)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.quantization.utils.utility.generate_feed_dict" title="neural_compressor.tensorflow.quantization.utils.utility.generate_feed_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_feed_dict</span></code></a>(input_tensor, inputs)</p></td>
 <td><p>Generate feed dict helper function.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.quantization.utils.utility.get_weight_from_input_tensor" title="neural_compressor.tensorflow.quantization.utils.utility.get_weight_from_input_tensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_weight_from_input_tensor</span></code></a>(model, ...)</p></td>
-<td><p>Extracts weight tensors and their associated nodes from a smooth quant node's input tensor.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.quantization.utils.utility.apply_inlining" title="neural_compressor.tensorflow.quantization.utils.utility.apply_inlining"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_inlining</span></code></a>(func)</p></td>
 <td><p>Apply an inlining optimization to the function's graph definition.</p></td>
@@ -265,7 +252,7 @@ handle naming format like both name:0 and name.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>sess</strong> (<em>tf.compat.v1.Session</em>) – the model sess to run the graph</p></li>
-<li><p><strong>iter_op</strong> (<a class="reference internal" href="../../../../adaptor/ox_utils/operators/ops/index.html#neural_compressor.adaptor.ox_utils.operators.ops.Operator" title="neural_compressor.adaptor.ox_utils.operators.ops.Operator"><em>Operator</em></a>) – the MakeIterator op</p></li>
+<li><p><strong>iter_op</strong> (<em>Operator</em>) – the MakeIterator op</p></li>
 <li><p><strong>feed_dict</strong> (<em>dict</em>) – the feeds to initialize a new iterator</p></li>
 <li><p><strong>output_tensor</strong> (<em>list</em>) – the output tensors</p></li>
 <li><p><strong>iteration</strong> (<em>int</em>) – iterations to run, when -1 set, run to end of iterator</p></li>
@@ -307,23 +294,6 @@ of official tensorflow r1.15 branch</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.tensorflow.quantization.utils.utility.get_estimator_graph">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.quantization.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_estimator_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">estimator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_fn</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/tensorflow/quantization/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.quantization.utils.utility.get_estimator_graph" title="Permalink to this definition"></a></dt>
-<dd><p>Get the graph of the estimator.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>estimator</strong> – tf estimator model</p></li>
-<li><p><strong>input_fn</strong> – input function</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>graph</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.tensorflow.quantization.utils.utility.strip_equivalent_nodes">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.quantization.utils.utility.</span></span><span class="sig-name descname"><span class="pre">strip_equivalent_nodes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph_def</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_node_names</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/tensorflow/quantization/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.quantization.utils.utility.strip_equivalent_nodes" title="Permalink to this definition"></a></dt>
 <dd><p>Strip nodes with the same input and attr.</p>
@@ -342,68 +312,9 @@ of official tensorflow r1.15 branch</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.tensorflow.quantization.utils.utility.get_tensor_val_from_graph_node">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.quantization.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_tensor_val_from_graph_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph_node_name_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/tensorflow/quantization/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.quantization.utils.utility.get_tensor_val_from_graph_node" title="Permalink to this definition"></a></dt>
-<dd><p>Get the tensor value for given node name.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>graph_node_name_mapping</strong> – key: node name, val: node</p></li>
-<li><p><strong>node_name</strong> – query node</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>numpy array</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tensor_val</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.tensorflow.quantization.utils.utility.int8_node_name_reverse">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.quantization.utils.utility.</span></span><span class="sig-name descname"><span class="pre">int8_node_name_reverse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/tensorflow/quantization/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.quantization.utils.utility.int8_node_name_reverse" title="Permalink to this definition"></a></dt>
-<dd><p>Reverse int8 node name.</p>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.tensorflow.quantization.utils.utility.generate_feed_dict">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.quantization.utils.utility.</span></span><span class="sig-name descname"><span class="pre">generate_feed_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/tensorflow/quantization/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.quantization.utils.utility.generate_feed_dict" title="Permalink to this definition"></a></dt>
 <dd><p>Generate feed dict helper function.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.tensorflow.quantization.utils.utility.get_weight_from_input_tensor">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.quantization.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_weight_from_input_tensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_types</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/tensorflow/quantization/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.quantization.utils.utility.get_weight_from_input_tensor" title="Permalink to this definition"></a></dt>
-<dd><p>Extracts weight tensors and their associated nodes from a smooth quant node’s input tensor.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> – A TensorFlow model containing a <cite>graph_def</cite> attribute.</p></li>
-<li><p><strong>input_tensor_names</strong> – A list of input tensor names to search for weight tensors.</p></li>
-<li><p><strong>op_types</strong> – A list of operation types to search for when looking for weight tensors.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><dl class="simple">
-<dt>sq_weight_tensors: A dictionary mapping each input tensor name</dt><dd><p>to a dict of its associated weight tensors with weight name.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>sq_weights_nodes: A dictionary mapping each input tensor name</dt><dd><p>to a dict of its associated weight nodes with weight name.</p>
-</dd>
-</dl>
-</li>
-</ul>
-</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A tuple of two dictionaries</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -497,7 +408,7 @@ frozen_func: The reconstructed function from inlining optimized graph.</p>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7ff51f835a20> 
+   <jinja2.runtime.BlockReference object at 0x7f5f7e7e6dd0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

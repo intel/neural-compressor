@@ -1,28 +1,26 @@
-:orphan:
-
-:py:mod:`neural_compressor.tensorflow.utils.utility`
-====================================================
+neural_compressor.tensorflow.utils.utility
+==========================================
 
 .. py:module:: neural_compressor.tensorflow.utils.utility
 
+.. autoapi-nested-parse::
 
-Module Contents
----------------
+   The utility functions and classes for Tensorflow.
+
+
 
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.tensorflow.utils.utility.CpuInfo
-   neural_compressor.tensorflow.utils.utility.Statistics
    neural_compressor.tensorflow.utils.utility.CaptureOutputToFile
-   neural_compressor.tensorflow.utils.utility.LazyImport
-
+   neural_compressor.tensorflow.utils.utility.TFSlimNetsFactory
 
 
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -38,15 +36,13 @@ Functions
    neural_compressor.tensorflow.utils.utility.combine_histogram
    neural_compressor.tensorflow.utils.utility.get_all_fp32_data
    neural_compressor.tensorflow.utils.utility.get_tensor_histogram
-   neural_compressor.tensorflow.utils.utility.Dequantize
-   neural_compressor.tensorflow.utils.utility.dequantize_weight
-   neural_compressor.tensorflow.utils.utility.dump_data_to_local
-   neural_compressor.tensorflow.utils.utility.load_data_from_pkl
    neural_compressor.tensorflow.utils.utility.singleton
    neural_compressor.tensorflow.utils.utility.disable_random
    neural_compressor.tensorflow.utils.utility.valid_keras_format
 
 
+Module Contents
+---------------
 
 .. py:function:: version1_lt_version2(version1, version2)
 
@@ -90,10 +86,11 @@ Functions
 
 .. py:function:: deep_get(dictionary, keys, default=None)
 
-   Get the dot key's item in nested dict
-      eg person = {'person':{'name':{'first':'John'}}}
-      deep_get(person, "person.name.first") will output 'John'.
+   Get the dot key's item in nested dict.
 
+   Usage example:
+      person = {'person':{'name':{'first':'John'}}}
+      deep_get(person, "person.name.first") will output 'John'.
    :param dictionary: The dict object to get keys
    :type dictionary: dict
    :param keys: The deep keys
@@ -133,35 +130,6 @@ Functions
    Get the histogram of the tensor data.
 
 
-.. py:function:: Dequantize(data, scale_info)
-
-   Dequantize the data with the scale_info.
-
-
-.. py:function:: dequantize_weight(weight_tensor, min_filter_tensor, max_filter_tensor)
-
-   Dequantize the weight with min-max filter tensors.
-
-
-.. py:function:: dump_data_to_local(data, path, filename)
-
-   Dump data to local as pkl file.
-
-   :param data: Data used to dump
-   :param path: The directory to save data
-   :param filename: The filename to dump
-
-   :returns: loaded data
-
-
-.. py:function:: load_data_from_pkl(path, filename)
-
-   Load data from local pkl file.
-
-   :param path: The directory to load data
-   :param filename: The filename to load
-
-
 .. py:function:: singleton(cls)
 
    Not displayed in API Docs.
@@ -183,18 +151,10 @@ Functions
 
 
 
-
    Get CPU Info.
 
 
-.. py:class:: Statistics(data, header, field_names, output_handle=logger.info)
-
-
-   The statistics printer.
-
-
 .. py:class:: CaptureOutputToFile(tmp_file_path, stream=sys.stderr)
-
 
 
 
@@ -203,11 +163,10 @@ Functions
    Capture the output to file.
 
 
-.. py:class:: LazyImport(module_name)
+.. py:class:: TFSlimNetsFactory
 
 
 
-
-   Lazy import python module till use.
+   TF-Slim nets factory.
 
 
