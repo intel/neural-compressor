@@ -25,6 +25,7 @@ from neural_compressor.tensorflow.utils import BaseModel, KerasModel, Model, alg
 
 
 def need_apply(configs_mapping: Dict[Tuple[str, callable], BaseConfig], algo_name):
+    """Whether to apply the algorithm."""
     return any(config.name == algo_name for config in configs_mapping.values())
 
 

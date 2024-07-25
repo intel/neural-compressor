@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Intel Neural Compressor Pytorch quantization config API."""
+"""Intel Neural Compressor TF quantization config API."""
 
 
 from __future__ import annotations
@@ -93,6 +93,7 @@ class StaticQuantConfig(BaseConfig):
             act_sym (bool): Indicates whether activations are symmetric, default is True.
             act_granularity (str): Calculate tensor-wise scales or channel-wise scales for activations.
             act_algorithm (str): Choose quantization algorithms for activations.
+            white_list (list): A list of supported operators of this algorithm.
         """
         super().__init__(white_list=white_list)
         self.weight_dtype = weight_dtype
@@ -107,6 +108,7 @@ class StaticQuantConfig(BaseConfig):
 
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
+        """Register supported config."""
         supported_configs = []
         static_quant_config = StaticQuantConfig(
             weight_dtype=["int8", "bf16", "fp32"],
@@ -115,7 +117,7 @@ class StaticQuantConfig(BaseConfig):
             weight_algorithm=["minmax", "kl"],
             act_dtype=["int8", "bf16", "fp32"],
             act_sym=[True, False],
-            act_granularity=["per_tensor", "per_channel"],
+            act_granularity=["per_tensor"],
             act_algorithm=["minmax", "kl"],
         )
         operators = [
@@ -137,6 +139,7 @@ class StaticQuantConfig(BaseConfig):
         cls.supported_configs = supported_configs
 
     def get_model_info(self, model) -> List[Tuple[str, Callable]]:
+        """Get concrete node names for supported operators."""
         white_list = [
             "Conv2D",
             "FusedBatchNormV3",
@@ -168,6 +171,7 @@ class StaticQuantConfig(BaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "StaticQuantConfig", List["StaticQuantConfig"]]:
+        """Get a default config set for tuning."""
         return StaticQuantConfig(
             weight_dtype=["int8", "fp32"],
             weight_sym=[True, False],
@@ -175,7 +179,7 @@ class StaticQuantConfig(BaseConfig):
             weight_algorithm=["minmax", "kl"],
             act_dtype=["int8", "fp32"],
             act_sym=[True, False],
-            act_granularity=["per_tensor", "per_channel"],
+            act_granularity=["per_tensor"],
             act_algorithm=["minmax", "kl"],
         )
 
@@ -230,7 +234,16 @@ class SmoothQuantConfig(BaseConfig):
         """Init RTN weight-only quantization config.
 
         Args:
-            weight_dtype (str): Data type for weights, default is "int".
+            alpha (float): Value to balance input and weight quantization error, between 0 and 1, default is 0.5.
+            folding (bool): Whether to fold mul into the previous layer, default is False.
+            percentile (float): percentile of calibration to remove outliers, default is 99.99.
+            op_types (list): The op types whose input tensor will be dumped, default is ["MatMul", "Conv2D"].
+            scales_per_op (bool): Whether to set individual scale for every op, default is True.
+            record_max_info (bool): whether record the max info in model for alpha tuning, default is False.
+            weight_clip: Whether to clip weight when calculating scales, default is True.
+            auto_alpha_args(dict) : Hyperparameters used to set the alpha search space in SQ auto-tuning,
+                                    by default the search space is 0.0-1.0 with step_size 0.1.
+            white_list (list): A list of supported operators of this algorithm.
         """
         super().__init__()
         self.alpha = alpha
@@ -246,6 +259,7 @@ class SmoothQuantConfig(BaseConfig):
 
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
+        """Register supported configs."""
         supported_configs = []
         smooth_quant_config = SmoothQuantConfig()
         operators = ["MatMul", "Conv2D"]
@@ -254,6 +268,7 @@ class SmoothQuantConfig(BaseConfig):
 
     @staticmethod
     def get_model_info(model) -> List[Tuple[str, Callable]]:
+        """Get concrete node names for supported operators."""
         white_list = ["MatMul", "Conv2D"]
         filter_result = []
         for node in model.graph_def.node:
@@ -265,7 +280,7 @@ class SmoothQuantConfig(BaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "SmoothQuantConfig", List["SmoothQuantConfig"]]:
-        # TODO fwk owner needs to update it.
+        """Get a default config set for tuning."""
         return SmoothQuantConfig(alpha=0.5)
 
 

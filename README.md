@@ -28,7 +28,7 @@ support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testi
 
 ## What's New
 * [2024/07] From 3.0 release, framework extension API is recommended to be used for quantization.
-* [2024/07] Performance optimizations and usability improvements on [client-side](https://github.com/intel/neural-compressor/blob/master/docs/3x/client_quant.md).
+* [2024/07] Performance optimizations and usability improvements on [client-side](https://github.com/intel/neural-compressor/blob/master/docs/source/3x/client_quant.md).
 
 ## Installation
 

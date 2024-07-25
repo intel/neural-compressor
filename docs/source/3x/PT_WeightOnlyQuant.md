@@ -15,6 +15,7 @@ PyTorch Weight Only Quantization
     - [HQQ](#hqq)
   - [Specify Quantization Rules](#specify-quantization-rules)
   - [Saving and Loading](#saving-and-loading)
+- [Layer Wise Quantization](#layer-wise-quantization)
 - [Efficient Usage on Client-Side](#efficient-usage-on-client-side)
 - [Examples](#examples)
 
@@ -277,9 +278,33 @@ loaded_model = load(
 )  # Please note that the original_model parameter passes the original model.
 ```
 
+## Layer Wise Quantization
+
+As the size of LLMs continues to grow, loading the entire model into a single GPU card or the RAM of a client machine becomes impractical. To address this challenge, we introduce Layer-wise Quantization (LWQ), a method that quantizes LLMs layer by layer or block by block. This approach significantly reduces memory consumption. The diagram below illustrates the LWQ process.
+
+<img src="./imgs/lwq.png" width=780 height=429>
+
+*Figure 1: The process of layer-wise quantization for PyTorch model. The color grey means empty parameters and the color blue represents parameters need to be quantized. Every rectangle inside model represents one layer.*
+
+
+Currently, we support LWQ for `RTN`, `AutoRound`, and `GPTQ`.
+
+Here, we take the `RTN` algorithm as example to demonstrate the usage of LWQ.
+
+```python
+from neural_compressor.torch.quantization import RTNConfig, convert, prepare
+from neural_compressor.torch import load_empty_model
+
+model_state_dict_path = "/path/to/model/state/dict"
+float_model = load_empty_model(model_state_dict_path)
+quant_config = RTNConfig(use_layer_wise=True)
+prepared_model = prepare(float_model, quant_config)
+quantized_model = convert(prepared_model)
+```
+
 ## Efficient Usage on Client-Side
 
-For client machines with limited RAM and cores, we offer optimizations to reduce computational overhead and minimize memory usage. For detailed information, please refer to [Quantization on Client](https://github.com/intel/neural-compressor/blob/master/docs/3x/client_quant.md).
+For client machines with limited RAM and cores, we offer optimizations to reduce computational overhead and minimize memory usage. For detailed information, please refer to [Quantization on Client](https://github.com/intel/neural-compressor/blob/master/docs/source/3x/client_quant.md).
 
 
 ## Examples
