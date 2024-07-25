@@ -1,5 +1,5 @@
 --find-links https://download.pytorch.org/whl/torch_stable.html
-torch==1.13.1+cpu
+torch==2.2.0
 torchvision==0.14.1+cpu
 neural-compressor==2.0
 runipy
