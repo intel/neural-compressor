@@ -35,7 +35,10 @@ LWQ_WORKSPACE = os.path.join(options.workspace, "lwq_tmpdir")
 
 
 class QDQLayer(torch.nn.Module):
+    """Quantized and Dequantized Layer."""
+
     def __init__(self, module, input_scale=None) -> None:
+        """Init the QDQLayer object."""
         super().__init__()
         self.quant = torch.ao.quantization.QuantStub()
         self.module = module
@@ -43,6 +46,7 @@ class QDQLayer(torch.nn.Module):
         self.input_scale = input_scale
 
     def forward(self, X):
+        """Forward function."""
         if self.input_scale is not None:
             X = torch.mul(X, self.input_scale)
         X = self.quant(X)
@@ -220,6 +224,16 @@ get_path = _get_path
 
 
 def load_value(model, param_name, path):
+    """Load the module value.
+
+    Args:
+        model (torch.nn.module): torch model.
+        param_name (str): module name.
+        path (str): path to load state_dict per layer.
+
+    Returns:
+        tensor: the module value.
+    """
     if "lm_head" in param_name and getattr(model.config, "tie_word_embeddings", True):
         input_embeddings = model.get_input_embeddings()
         modules = get_named_children(model)
@@ -235,6 +249,14 @@ def load_value(model, param_name, path):
 
 
 def load_module(model, module_name, path, device="cpu"):
+    """Load all named parameters of module.
+
+    Args:
+        model (torch.nn.module): torch model.
+        module_name (str): module name.
+        path (str): path to load state_dict per layer.
+        device (str, optional): module device. Defaults to "cpu".
+    """
     module = get_module(model, module_name)
     for n, p in module.named_parameters():
         param_name = module_name + "." + n
@@ -243,6 +265,18 @@ def load_module(model, module_name, path, device="cpu"):
 
 
 def register_weight_hooks(model, path, device="cpu", clean_weight=True, saved_path=None):
+    """Register weight hooks for model.
+
+    Args:
+        model (torch.nn.module): torch model.
+        path (str): path to load state_dict per layer.
+        device (str, optional): module device. Defaults to "cpu".
+        clean_weight (bool, optional): to clean model weight. Defaults to True.
+        saved_path (str, optional): path to save module weight. Defaults to None.
+
+    Returns:
+        list: handlers.
+    """
     if saved_path:
         os.makedirs(saved_path, exist_ok=True)
 
@@ -280,6 +314,7 @@ def register_weight_hooks(model, path, device="cpu", clean_weight=True, saved_pa
 
 
 def clean_module_weight(module):
+    """Clean module weight."""
     if isinstance(module, QDQLayer):
         submodule = module.module
     else:

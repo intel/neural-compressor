@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""The quantization classes for Keras."""
 
 import copy
 import json
@@ -87,7 +88,7 @@ class KerasAdaptor:
         self.fold_conv = []
         self.keras3 = True if version1_gte_version2(tf.__version__, "2.16.1") else False
         if not os.path.exists(DEFAULT_WORKSPACE):
-            os.mkdir(DEFAULT_WORKSPACE)
+            os.makedirs(DEFAULT_WORKSPACE)
         self.tmp_dir = (DEFAULT_WORKSPACE + "tmp_model.keras") if self.keras3 else (DEFAULT_WORKSPACE + "tmp_model")
 
     def _set_weights(self, qmodel, layer_weights):
@@ -203,17 +204,20 @@ class KerasAdaptor:
                         fuse_layers.append(layer)
                     else:
                         for bound_node in layer._inbound_nodes:
-                            inbound_layer = bound_node.inbound_layers
-                            if inbound_layer in self.bn_weights.keys():
-                                for bn_inbound_node in inbound_layer._inbound_nodes:
-                                    bn_inbound_layer = bn_inbound_node.inbound_layers
-                                    if bn_inbound_layer.name in self.conv_weights.keys():
-                                        new_bound_nodes.append(bn_inbound_node)
-                                    else:
-                                        if bound_node not in new_bound_nodes:
-                                            new_bound_nodes.append(bound_node)
-                            else:
-                                new_bound_nodes.append(bound_node)
+                            inbound_layers = bound_node.inbound_layers
+                            if not isinstance(inbound_layers, list):
+                                inbound_layers = [inbound_layers]
+                            for inbound_layer in inbound_layers:
+                                if inbound_layer in self.bn_weights.keys():
+                                    for bn_inbound_node in inbound_layer._inbound_nodes:
+                                        bn_inbound_layer = bn_inbound_node.inbound_layers
+                                        if bn_inbound_layer.name in self.conv_weights.keys():
+                                            new_bound_nodes.append(bn_inbound_node)
+                                        else:
+                                            if bound_node not in new_bound_nodes:
+                                                new_bound_nodes.append(bound_node)
+                                else:
+                                    new_bound_nodes.append(bound_node)
 
                         layer._inbound_nodes.clear()
                         for bound_node in new_bound_nodes:
@@ -373,9 +377,9 @@ class KerasAdaptor:
         """Apply calibration.
 
         Args:
-            model (tf.keras.Model): The model inserted with FakeQuant layers for calibration.
+            model(tf.keras.Model): The model inserted with FakeQuant layers for calibration.
             dataloader(object): The calibration dataloader used to load quantization dataset.
-            iteration(int): The iteration of calibration.
+            calib_interation(int): The iteration of calibration.
         """
         # run eagerly to fetch the numpy min/max
         results = {}
@@ -580,9 +584,9 @@ class KerasQuery:
 
     def _get_specified_version_cfg(self, data):
         """Get the configuration for the current runtime.
+
         If there's no matched configuration in the input yaml, we'll
         use the `default` field of yaml.
-
         Args:
             data (Yaml content): input yaml file.
 
@@ -718,12 +722,9 @@ class KerasSurgery:
 
                 for out_layer_name in out_layer_names:
                     if out_layer_name not in input_layer_dict:
-                        input_layer_dict[out_layer_name] = set([layer.name])
+                        input_layer_dict[out_layer_name] = [layer.name]
                     else:
-                        input_layer_dict[out_layer_name].add(layer.name)
-
-        for key in input_layer_dict.keys():
-            input_layer_dict[key] = list(input_layer_dict[key])
+                        input_layer_dict[out_layer_name].append(layer.name)
 
         try:
             model_input = self.model.input

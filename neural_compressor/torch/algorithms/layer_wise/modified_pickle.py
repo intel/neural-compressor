@@ -94,15 +94,13 @@ class PickleError(Exception):
 
 
 class PicklingError(PickleError):
-    """This exception is raised when an unpicklable object is passed to the
-    dump() method."""
+    """This exception is raised when an unpicklable object is passed to the dump() method."""
 
     pass
 
 
 class UnpicklingError(PickleError):
-    """This exception is raised when there is a problem unpickling an object,
-    such as a security violation.
+    """This exception is raised when there is a problem unpickling an object, such as a security violation.
 
     Note that other exceptions may also be raised during unpickling, including
     (but not necessarily limited to) AttributeError, EOFError, ImportError,
@@ -367,6 +365,7 @@ def whichmodule(obj, name):  # pragma: no cover
 
 def encode_long(x):  # pragma: no cover
     r"""Encode a long to a two's complement little-endian binary string.
+
     Note that 0 is a special case, returning an empty string, to save a
     byte in the LONG1 pickling context.
 
@@ -503,7 +502,6 @@ class _Pickler:  # pragma: no cover
 
     def memoize(self, obj):
         """Store an object in the memo."""
-
         # The Pickler memo is a dictionary mapping object ids to 2-tuples
         # that contain the Unpickler memo key and the object being memoized.
         # The memo key is written to the pickle and will become

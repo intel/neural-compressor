@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Intel Neural Compressor Tensorflow quantization API."""
+
 
 from neural_compressor.tensorflow.quantization.quantize import quantize_model
 from neural_compressor.tensorflow.quantization.autotune import autotune, get_all_config_set, TuningConfig

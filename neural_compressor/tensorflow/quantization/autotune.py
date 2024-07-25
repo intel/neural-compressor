@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Intel Neural Compressor Tensorflow quantization AutoTune API."""
+
 
 from copy import deepcopy
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
@@ -32,6 +34,7 @@ __all__ = [
 
 
 def get_all_config_set() -> Union[BaseConfig, List[BaseConfig]]:
+    """Get all config set."""
     return get_all_config_set_from_config_registry(fwk_name=FRAMEWORK_NAME)
 
 

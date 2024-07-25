@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Intel Neural Compressor Tensorflow quantization base API."""
+
 
 from typing import Any, Callable, Dict, Tuple, Union
 
@@ -23,6 +25,7 @@ from neural_compressor.tensorflow.utils import BaseModel, KerasModel, Model, alg
 
 
 def need_apply(configs_mapping: Dict[Tuple[str, callable], BaseConfig], algo_name):
+    """Whether to apply the algorithm."""
     return any(config.name == algo_name for config in configs_mapping.values())
 
 
