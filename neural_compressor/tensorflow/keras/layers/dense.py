@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Initialize custom dense layers for Keras quantization."""
 
 import json
 
@@ -25,6 +26,8 @@ from neural_compressor.tensorflow.utils import version1_gte_version2
 
 
 class QDense(Dense):
+    """The custom quantized Dense layer."""
+
     def __init__(
         self,
         name,
@@ -51,6 +54,7 @@ class QDense(Dense):
         quant_axis=None,
         **kwargs
     ):
+        """Initialize custom quantized Dense layer."""
         super(QDense, self).__init__(
             name=name,
             units=units,
@@ -79,6 +83,7 @@ class QDense(Dense):
         self.quant_axis = quant_axis
 
     def call(self, inputs):
+        """The __call__ function of custom quantized Dense layer."""
         if self.quant_status == "calib" and not (
             version1_gte_version2(tf.__version__, "2.16.1") and isinstance(inputs, tf.keras.KerasTensor)
         ):
@@ -144,9 +149,11 @@ class QDense(Dense):
 
     @classmethod
     def from_config(cls, config):
+        """Deserialize this class from a config dict."""
         return cls(**config)
 
     def get_config(self):
+        """Serialize this class to a config dict."""
         config = super(QDense, self).get_config()
         config.update(
             {
@@ -168,6 +175,7 @@ class QDense(Dense):
 
 
 def initialize_int8_dense(fp32_layer, q_config):
+    """Initialize int8 dense."""
     kwargs = fp32_layer.get_config()
 
     param_list = [

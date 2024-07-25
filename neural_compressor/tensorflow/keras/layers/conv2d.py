@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Initialize custom conv2d layers for Keras quantization."""
 
 import json
 
@@ -33,6 +34,8 @@ else:
 if version1_gte_version2(tf.__version__, "2.16.1"):  # pragma: no cover
 
     class QConv2D(BaseConv):
+        """The custom quantized Conv2D layer."""
+
         def __init__(
             self,
             name,
@@ -65,6 +68,7 @@ if version1_gte_version2(tf.__version__, "2.16.1"):  # pragma: no cover
             quant_axis=None,
             **kwargs
         ):
+            """Initialize custom quantized Conv2D layer."""
             super(QConv2D, self).__init__(
                 name=name,
                 rank=2,
@@ -100,6 +104,7 @@ if version1_gte_version2(tf.__version__, "2.16.1"):  # pragma: no cover
             self.quant_axis = quant_axis
 
         def call(self, inputs):
+            """The __call__ function of custom quantized Conv2D layer."""
             if self.quant_status == "calib" and not isinstance(inputs, tf.keras.KerasTensor):
                 if self.granularity == "per_tensor":
                     self.act_min_value = tf.math.reduce_min(inputs)
@@ -168,9 +173,11 @@ if version1_gte_version2(tf.__version__, "2.16.1"):  # pragma: no cover
 
         @classmethod
         def from_config(cls, config):
+            """Deserialize this class from a config dict."""
             return cls(**config)
 
         def get_config(self):
+            """Serialize this class to a config dict."""
             config = super(QConv2D, self).get_config()
             config.update(
                 {
@@ -193,6 +200,8 @@ if version1_gte_version2(tf.__version__, "2.16.1"):  # pragma: no cover
 else:
 
     class QConv2D(Conv):
+        """The custom quantized Conv2D layer."""
+
         def __init__(
             self,
             name,
@@ -225,6 +234,7 @@ else:
             quant_axis=None,
             **kwargs
         ):
+            """Initialize custom quantized Conv2D layer."""
             super(QConv2D, self).__init__(
                 name=name,
                 rank=2,
@@ -260,6 +270,7 @@ else:
             self.quant_axis = quant_axis
 
         def call(self, inputs):
+            """The __call__ function of custom quantized Conv2D layer."""
             if self.quant_status == "calib":
                 if self.granularity == "per_tensor":
                     self.act_min_value = tf.math.reduce_min(inputs)
@@ -328,9 +339,11 @@ else:
 
         @classmethod
         def from_config(cls, config):
+            """Deserialize this class from a config dict."""
             return cls(**config)
 
         def get_config(self):
+            """Serialize this class to a config dict."""
             config = super(QConv2D, self).get_config()
             config.update(
                 {
@@ -352,6 +365,7 @@ else:
 
 
 def initialize_int8_conv2d(fp32_layer, q_config):
+    """Initialize int8 conv2d."""
     kwargs = fp32_layer.get_config()
 
     param_list = [

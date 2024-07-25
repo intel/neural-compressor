@@ -1726,6 +1726,8 @@ class MixedPrecisionConfig(BaseConfig):
         """Init MixedPrecision config.
 
         Args:
+            dtype (str or list): The data type of mixed precision, default is fp16.
+            white_list (list): White list of operator names or module types, default is DEFAULT_WHITE_LIST.
         """
         super().__init__(white_list=white_list)
         self.dtype = dtype
@@ -1733,6 +1735,7 @@ class MixedPrecisionConfig(BaseConfig):
 
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
+        """Register supported configs."""
         supported_configs = []
         mixed_precision_config = MixedPrecisionConfig(
             dtype=["fp16", "bf16", "fp32"],
@@ -1743,6 +1746,7 @@ class MixedPrecisionConfig(BaseConfig):
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+        """Get concrete node names for supported operators."""
         white_list = tuple(MixedPrecisionConfig.supported_half_precision_ops)
         filter_result = []
         for op_name, module in model.named_modules():
@@ -1754,7 +1758,7 @@ class MixedPrecisionConfig(BaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "MixedPrecisionConfig", List["MixedPrecisionConfig"]]:
-        # TODO fwk owner needs to update it.
+        """Get a default config set for tuning."""
         return MixedPrecisionConfig(dtype=["fp16", "bf16", "fp32"])
 
 
