@@ -51,7 +51,7 @@ function run_benchmark {
             --dataset_location ${dataset_location} \
             --mode ${mode} \
             --batch_size ${batch_size} \
-            --iteration ${iters}
+            --iteration ${iters} \
             --benchmark
     else
         echo "Error: No such mode: ${mode}"
