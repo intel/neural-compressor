@@ -28,6 +28,15 @@ FRAMEWORK_NAME = "torch"
 
 
 def need_apply(configs_mapping: Dict[Tuple[str, callable], BaseConfig], algo_name):
+    """Check whether to apply this algorithm according to configs_mapping.
+
+    Args:
+        configs_mapping (Dict[Tuple[str, callable], BaseConfig]): configs mapping
+        algo_name (str): algo name
+
+    Returns:
+        Bool: True or False.
+    """
     return any(config.name == algo_name for config in configs_mapping.values())
 
 
