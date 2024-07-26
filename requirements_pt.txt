@@ -5,5 +5,5 @@ prettytable
 psutil
 py-cpuinfo
 pydantic
-torch
 tbb
+torch
