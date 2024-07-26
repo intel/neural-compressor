@@ -315,6 +315,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
             self.qzeros = self.qzeros.T.contiguous()
 
     def unpack(self):
+        """Unpack weight and zero point."""
         scales = self.scales.T.contiguous() if self.use_optimum_format else self.scales
         qweight = self.qweight.T.contiguous() if self.use_optimum_format else self.qweight
 
@@ -354,6 +355,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
         return UnpackedWeightOnlyLinearParams(weight, scales, zp, g_idx=self.g_idx, bias=self.bias)
 
     def recover(self):
+        """Recover fp32 weight from packed weight."""
         logger.debug(f"Recovering {self} weight")
         unpack_params_dict = self.unpack()
         weight = unpack_params_dict.get("int_weight")
@@ -379,6 +381,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
         return fp32_weight.to(scales.device)
 
     def forward(self, input):
+        """Forward function."""
         if not hasattr(self, "weight"):
             weight = self.recover()
             device = self.scales.device
@@ -396,12 +399,14 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
             return F.linear(input, weight, self.bias)
 
     def pack_tensor(self, raw_tensor):
+        """Pack tensor."""
         if "cuda" in self.device:
             return self.pack_tensor_with_torch(raw_tensor)
         else:
             return self.pack_tensor_with_numpy(raw_tensor)
 
     def unpack_tensor(self, packed_tensor):
+        """Unpack tensor."""
         if "cuda" in self.device:
             return self.unpack_tensor_with_torch(packed_tensor)
         else:
