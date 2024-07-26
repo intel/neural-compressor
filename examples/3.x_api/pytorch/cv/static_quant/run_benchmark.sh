@@ -56,7 +56,7 @@ function run_benchmark {
     extra_cmd=''
 
     if [[ ${mode} == "accuracy" ]]; then
-        mode_cmd=" -e "
+        mode_cmd=" --accuracy "
     elif [[ ${mode} == "performance" ]]; then
         mode_cmd=" --performance --iters "${iters}
     else
@@ -76,10 +76,24 @@ function run_benchmark {
     fi
 
     if [[ ${mode} == "accuracy" ]]; then
-        python main.py -a ${model_name_or_path} ${dataset_location} -e -o ${tuned_checkpoint} ${extra_cmd} ${mode_cmd}
+        python main.py \
+                --pretrained \
+                -a resnet18 \
+                -b 30 \
+                --tuned_checkpoint ${tuned_checkpoint} \
+                ${dataset_location} \
+                ${extra_cmd} \
+                ${mode_cmd}
     elif [[ ${mode} == "performance" ]]; then
-        incbench --num_cores_per_instance 4 main.py -a ${model_name_or_path} \
-          ${dataset_location} -o ${tuned_checkpoint} ${extra_cmd} ${mode_cmd}
+        incbench --num_cores_per_instance 4 \
+                main.py \
+                --pretrained \
+                -a resnet18 \
+                -b 30 \
+                --tuned_checkpoint ${tuned_checkpoint} \
+                ${dataset_location} \
+                ${extra_cmd} \
+                ${mode_cmd}
     else
         echo "Error: No such mode: ${mode}"
         exit 1
