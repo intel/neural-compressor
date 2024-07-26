@@ -6,3 +6,4 @@ psutil
 py-cpuinfo
 pydantic
 torch
+tbb
