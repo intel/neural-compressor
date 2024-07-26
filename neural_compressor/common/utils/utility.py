@@ -328,6 +328,8 @@ def call_counter(func):
 
 
 class ProcessorType(enum.Enum):
+    """The processor type."""
+
     Client = "Client"
     Server = "Server"
 

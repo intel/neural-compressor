@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Benchmark API for Intel Neural Compressor."""
 
 import argparse
 import os
@@ -242,7 +243,9 @@ def get_numa_node(core_list, reversed_numa_info):
 
 
 def set_cores_for_instance(args, numa_info):
-    """All use cases are listed below:
+    """Set cores for each instance based on the input args.
+
+    All use cases are listed below:
         Params: a=num_instance; b=num_cores_per_instance; c=cores;
             - no a, b, c: a=1, c=numa:0
             - no a, b: a=1, c=c
@@ -357,6 +360,7 @@ def generate_prefix(args, core_list):
     Args:
         args (argparse): arguments for setting different configurations
         core_list: ["node_index", "cpu_index", num_cpu]
+
     Returns:
         command_prefix (str): command_prefix with specific core list for Linux or Windows.
     """
