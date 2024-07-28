@@ -31,11 +31,26 @@ support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testi
 * [2024/07] Performance optimizations and usability improvements on [client-side](https://github.com/intel/neural-compressor/blob/master/docs/source/3x/client_quant.md).
 
 ## Installation
+### Install Framework
+#### Install torch for CPU
+```Shell
+pip install torch --index-url https://download.pytorch.org/whl/cpu
+```
+#### Install torch for XPU
+https://intel.github.io/intel-extension-for-pytorch/index.html#installation 
+
+#### Install torch for other platform
+https://pytorch.org/get-started/locally
+
+#### Install tensorflow
+```Shell
+pip install tensorflow
+```
 
 ### Install from pypi
 ```Shell
 # Install 2.X API + Framework extension API + PyTorch dependency
-pip install neural-compressor[pt] 
+pip install neural-compressor[pt]
 # Install 2.X API + Framework extension API + TensorFlow dependency
 pip install neural-compressor[tf]
 ```

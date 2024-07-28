@@ -27,6 +27,22 @@ The following prerequisites and requirements must be satisfied for a successful 
 > Notes:
 > - If you get some build issues, please check [frequently asked questions](faq.md) at first.
 
+### Install Framework
+#### Install torch for CPU
+```Shell
+pip install torch --index-url https://download.pytorch.org/whl/cpu
+```
+#### Install torch for XPU
+https://intel.github.io/intel-extension-for-pytorch/index.html#installation 
+
+#### Install torch for other platform
+https://pytorch.org/get-started/locally
+
+#### Install tensorflow
+```Shell
+pip install tensorflow
+```
+
 ### Install from Binary
 - Install from Pypi
 ```Shell
