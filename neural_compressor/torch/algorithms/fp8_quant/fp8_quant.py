@@ -38,8 +38,8 @@ class FP8Quantizer(Quantizer):
         return model
 
     def convert(self, model):
-        if getattr(model, "prepared", False) and with_patched_module(model):  # if model was calibrated on hpu
-            finish_measurements(model)
+        if with_patched_module(model): # if model was calibrated on hpu
+            finish_measurements(model) # dump the measurements into files to be loaded in _convert
             # for INC flow, it calls `prepare` and then `convert` user-facing API in one run
             restore_patched_module(model)
         _convert(model, self.quant_config)
