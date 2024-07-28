@@ -36,7 +36,7 @@ support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testi
 ```Shell
 pip install torch --index-url https://download.pytorch.org/whl/cpu
 ```
-#### Install torch for XPU
+#### Install torch/intel_extension_for_pytorch for XPU
 https://intel.github.io/intel-extension-for-pytorch/index.html#installation 
 
 #### Install torch for other platform
