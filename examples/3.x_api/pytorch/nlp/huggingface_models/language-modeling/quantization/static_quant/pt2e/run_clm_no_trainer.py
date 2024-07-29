@@ -90,18 +90,10 @@ if args.quantize:
         prepare_model(*example_inputs)
     # convert
     converted_model = convert(prepare_model)
-    # inference
-    from torch._inductor import config
-
-    config.freezing = True
-    opt_model = torch.compile(converted_model)
-
-    opt_model.config = user_model.config # for lm eval
-    user_model = opt_model
-
+    
     # save
     if args.output_dir:
-        user_model.save(example_inputs=example_inputs, output_dir = args.output_dir)
+        converted_model.save(example_inputs=example_inputs, output_dir = args.output_dir)
 
 
 
@@ -112,7 +104,15 @@ if args.int8:
         model = load(args.output_dir)
 
         model.config = user_model.config # for lm eval
-        user_model = model
+        
+        # Compile the quantized model and replace the Q/DQ pattern with Q-operator
+        from torch._inductor import config
+
+        config.freezing = True
+        opt_model = torch.compile(model)
+
+        opt_model.config = user_model.config # for lm eval
+        user_model = opt_model
 
 if args.accuracy:
 
