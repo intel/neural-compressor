@@ -245,13 +245,9 @@ function generate_html_core {
               if((new_result == nan && previous_result == nan) || new_result == "unknown"){
                     printf("<td class=\"col-cell col-cell3\" colspan=2></td>");
               } else{
-                  if(new_result == nan) {
-                        job_status = "fail"
-                        status_png = "background-color:#FFD2D2";
-                        printf("<td style=\"%s\" colspan=2></td>", status_png);
-                  } else{
-                        printf("<td class=\"col-cell col-cell3\" colspan=2></td>");
-                  }
+                    job_status = "fail"
+                    status_png = "background-color:#FFD2D2";
+                    printf("<td style=\"%s\" colspan=2></td>", status_png);
               }
             }
         }
