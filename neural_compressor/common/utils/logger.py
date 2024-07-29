@@ -24,6 +24,7 @@ from neural_compressor.common.utils import Mode
 
 __all__ = [
     "level",
+    "level_name",
     "Logger",  # TODO: not expose it
     "logger",
     "TuningLogger",
@@ -138,6 +139,7 @@ class Logger(object):
 
 
 level = Logger().get_logger().level
+level_name = logging.getLevelName(level)
 
 logger = Logger
 

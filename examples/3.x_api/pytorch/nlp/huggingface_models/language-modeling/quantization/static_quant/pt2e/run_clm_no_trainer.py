@@ -14,7 +14,7 @@ parser.add_argument(
     "--revision", default=None,
     help="Transformers parameter: set the model hub commit number")
 parser.add_argument("--dataset", nargs="?", default="NeelNanda/pile-10k", const="NeelNanda/pile-10k")
-parser.add_argument("--output_dir", nargs="?", default="./saved_results")
+parser.add_argument("--output_dir", nargs="?", default="")
 parser.add_argument("--quantize", action="store_true")
 parser.add_argument("--approach", type=str, default='static',
                     help="Select from ['dynamic', 'static', 'weight-only']")
@@ -80,7 +80,7 @@ if args.quantize:
     dynamic_shapes = {"input_ids": (batch, seq_len)}
     example_inputs = get_example_inputs(tokenizer)
     exported_model = export(user_model, example_inputs=example_inputs, dynamic_shapes=dynamic_shapes)
-
+    
     quant_config = get_default_static_config()
     # prepare
     prepare_model = prepare(exported_model, quant_config)
@@ -90,17 +90,32 @@ if args.quantize:
         prepare_model(*example_inputs)
     # convert
     converted_model = convert(prepare_model)
-    # inference
-    from torch._inductor import config
+    
+    # save
+    if args.output_dir:
+        converted_model.save(example_inputs=example_inputs, output_dir = args.output_dir)
 
-    config.freezing = True
-    opt_model = torch.compile(converted_model)
 
-    opt_model.config = user_model.config # for lm eval
-    user_model = opt_model
 
+if args.int8:
+    if args.output_dir:
+        print("Load int8 model.")
+        from neural_compressor.torch.quantization import load
+        model = load(args.output_dir)
+
+        model.config = user_model.config # for lm eval
+        
+        # Compile the quantized model and replace the Q/DQ pattern with Q-operator
+        from torch._inductor import config
+
+        config.freezing = True
+        opt_model = torch.compile(model)
+
+        opt_model.config = user_model.config # for lm eval
+        user_model = opt_model
 
 if args.accuracy:
+
     from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
     eval_args = LMEvalParser(
         model="hf",
@@ -120,29 +135,21 @@ if args.accuracy:
     print('Batch size = %d' % args.batch_size)
 
 if args.performance:
-    # user_model.eval()
-    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
+    batch_size, input_leng = args.batch_size, 512
+    example_inputs = torch.ones((batch_size, input_leng), dtype=torch.long)
+    print("Batch size = {:d}".format(batch_size))
+    print("The length of input tokens = {:d}".format(input_leng))
     import time
 
-    samples = args.iters * args.batch_size
-    eval_args = LMEvalParser(
-        model="hf",
-        user_model=user_model,
-        tokenizer=tokenizer,
-        batch_size=args.batch_size,
-        tasks=args.tasks,
-        limit=samples,
-        device="cpu",
-    )
-    start = time.time()
-    results = evaluate(eval_args)
-    end = time.time()
-    for task_name in args.tasks.split(","):
-        if task_name == "wikitext":
-            acc = results["results"][task_name]["word_perplexity,none"]
-        else:
-            acc = results["results"][task_name]["acc,none"]
-    print("Accuracy: %.5f" % acc)
-    print('Throughput: %.3f samples/sec' % (samples / (end - start)))
-    print('Latency: %.3f ms' % ((end - start) * 1000 / samples))
-    print('Batch size = %d' % args.batch_size)
+    total_iters = args.iters
+    warmup_iters = 5
+    with torch.no_grad():
+        for i in range(total_iters):
+            if i == warmup_iters:
+                start = time.time()
+            user_model(example_inputs)
+        end = time.time()
+    latency = (end - start) / ((total_iters - warmup_iters) * args.batch_size)
+    throughput = ((total_iters - warmup_iters) * args.batch_size) / (end - start)
+    print("Latency: {:.3f} ms".format(latency * 10**3))
+    print("Throughput: {:.3f} samples/sec".format(throughput))

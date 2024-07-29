@@ -10,6 +10,7 @@ function main {
 
 # init params
 function init_params {
+  tuned_checkpoint="saved_results"
   for var in "$@"
   do
     case $var in
@@ -39,7 +40,13 @@ function run_tuning {
     if [ "${topology}" = "resnet18_pt2e_static" ]; then
         model_name_or_path="resnet18"
     fi
-    python main.py -a ${model_name_or_path} ${dataset_location} -q -e
+    python main.py \
+            --pretrained \
+            -t \
+            -a resnet18 \
+            -b 30 \
+            --tuned_checkpoint ${tuned_checkpoint} \
+            ${dataset_location}
 }
 
 main "$@"

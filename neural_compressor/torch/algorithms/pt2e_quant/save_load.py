@@ -34,7 +34,8 @@ def save(model, example_inputs, output_dir="./saved_results"):
     os.makedirs(output_dir, exist_ok=True)
     qmodel_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), WEIGHT_NAME)
     qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), QCONFIG_NAME)
-    quantized_ep = torch.export.export(model, example_inputs)
+    dynamic_shapes = model.dynamic_shapes
+    quantized_ep = torch.export.export(model, example_inputs, dynamic_shapes=dynamic_shapes)
     torch.export.save(quantized_ep, qmodel_file_path)
     for key, op_config in model.qconfig.items():
         model.qconfig[key] = op_config.to_dict()
