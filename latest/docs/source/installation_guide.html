@@ -59,6 +59,14 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#id1">Installation</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#install-framework">Install Framework</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#install-torch-for-cpu">Install torch for CPU</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#use-docker-image-with-torch-installed-for-hpu">Use Docker Image with torch installed for HPU</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#install-torch-intel-extension-for-pytorch-for-intel-gpu">Install torch/intel_extension_for_pytorch for Intel GPU</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#install-torch-for-other-platform">Install torch for other platform</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#install-tensorflow">Install tensorflow</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="#install-from-binary">Install from Binary</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#install-from-source">Install from Source</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#install-from-ai-kit">Install from AI Kit</a></li>
@@ -138,6 +146,33 @@
 <li><p>If you get some build issues, please check <a class="reference external" href="faq.html">frequently asked questions</a> at first.</p></li>
 </ul>
 </div></blockquote>
+</section>
+<section id="install-framework">
+<h3>Install Framework<a class="headerlink" href="#install-framework" title="Permalink to this heading"></a></h3>
+<section id="install-torch-for-cpu">
+<h4>Install torch for CPU<a class="headerlink" href="#install-torch-for-cpu" title="Permalink to this heading"></a></h4>
+<div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>torch<span class="w"> </span>--index-url<span class="w"> </span>https://download.pytorch.org/whl/cpu
+</pre></div>
+</div>
+</section>
+<section id="use-docker-image-with-torch-installed-for-hpu">
+<h4>Use Docker Image with torch installed for HPU<a class="headerlink" href="#use-docker-image-with-torch-installed-for-hpu" title="Permalink to this heading"></a></h4>
+<p>https://docs.habana.ai/en/latest/Installation_Guide/Bare_Metal_Fresh_OS.html#bare-metal-fresh-os-single-click</p>
+</section>
+<section id="install-torch-intel-extension-for-pytorch-for-intel-gpu">
+<h4>Install torch/intel_extension_for_pytorch for Intel GPU<a class="headerlink" href="#install-torch-intel-extension-for-pytorch-for-intel-gpu" title="Permalink to this heading"></a></h4>
+<p>https://intel.github.io/intel-extension-for-pytorch/index.html#installation</p>
+</section>
+<section id="install-torch-for-other-platform">
+<h4>Install torch for other platform<a class="headerlink" href="#install-torch-for-other-platform" title="Permalink to this heading"></a></h4>
+<p>https://pytorch.org/get-started/locally</p>
+</section>
+<section id="install-tensorflow">
+<h4>Install tensorflow<a class="headerlink" href="#install-tensorflow" title="Permalink to this heading"></a></h4>
+<div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>tensorflow
+</pre></div>
+</div>
+</section>
 </section>
 <section id="install-from-binary">
 <h3>Install from Binary<a class="headerlink" href="#install-from-binary" title="Permalink to this heading"></a></h3>
@@ -292,7 +327,7 @@ python<span class="w"> </span>setup.py<span class="w"> </span>install
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fb54ef4a410> 
+   <jinja2.runtime.BlockReference object at 0x7f61b16075b0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

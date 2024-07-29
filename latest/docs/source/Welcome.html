@@ -115,10 +115,37 @@ support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testi
 </section>
 <section id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading"></a></h2>
+<section id="install-framework">
+<h3>Install Framework<a class="headerlink" href="#install-framework" title="Permalink to this heading"></a></h3>
+<section id="install-torch-for-cpu">
+<h4>Install torch for CPU<a class="headerlink" href="#install-torch-for-cpu" title="Permalink to this heading"></a></h4>
+<div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>torch<span class="w"> </span>--index-url<span class="w"> </span>https://download.pytorch.org/whl/cpu
+</pre></div>
+</div>
+</section>
+<section id="use-docker-image-with-torch-installed-for-hpu">
+<h4>Use Docker Image with torch installed for HPU<a class="headerlink" href="#use-docker-image-with-torch-installed-for-hpu" title="Permalink to this heading"></a></h4>
+<p>https://docs.habana.ai/en/latest/Installation_Guide/Bare_Metal_Fresh_OS.html#bare-metal-fresh-os-single-click</p>
+</section>
+<section id="install-torch-intel-extension-for-pytorch-for-intel-gpu">
+<h4>Install torch/intel_extension_for_pytorch for Intel GPU<a class="headerlink" href="#install-torch-intel-extension-for-pytorch-for-intel-gpu" title="Permalink to this heading"></a></h4>
+<p>https://intel.github.io/intel-extension-for-pytorch/index.html#installation</p>
+</section>
+<section id="install-torch-for-other-platform">
+<h4>Install torch for other platform<a class="headerlink" href="#install-torch-for-other-platform" title="Permalink to this heading"></a></h4>
+<p>https://pytorch.org/get-started/locally</p>
+</section>
+<section id="install-tensorflow">
+<h4>Install tensorflow<a class="headerlink" href="#install-tensorflow" title="Permalink to this heading"></a></h4>
+<div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>tensorflow
+</pre></div>
+</div>
+</section>
+</section>
 <section id="install-from-pypi">
 <h3>Install from pypi<a class="headerlink" href="#install-from-pypi" title="Permalink to this heading"></a></h3>
 <div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install 2.X API + Framework extension API + PyTorch dependency</span>
-pip<span class="w"> </span>install<span class="w"> </span>neural-compressor<span class="o">[</span>pt<span class="o">]</span><span class="w"> </span>
+pip<span class="w"> </span>install<span class="w"> </span>neural-compressor<span class="o">[</span>pt<span class="o">]</span>
 <span class="c1"># Install 2.X API + Framework extension API + TensorFlow dependency</span>
 pip<span class="w"> </span>install<span class="w"> </span>neural-compressor<span class="o">[</span>tf<span class="o">]</span>
 </pre></div>
@@ -309,7 +336,7 @@ View <a class="reference external" href="https://github.com/intel/neural-compres
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fb552a24a30> 
+   <jinja2.runtime.BlockReference object at 0x7f61ae4a0f40> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
