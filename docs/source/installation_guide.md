@@ -32,7 +32,10 @@ The following prerequisites and requirements must be satisfied for a successful 
 ```Shell
 pip install torch --index-url https://download.pytorch.org/whl/cpu
 ```
-#### Install torch for XPU
+#### Use Docker Image with torch installed for HPU
+https://docs.habana.ai/en/latest/Installation_Guide/Bare_Metal_Fresh_OS.html#bare-metal-fresh-os-single-click 
+
+#### Install torch/intel_extension_for_pytorch for Intel GPU
 https://intel.github.io/intel-extension-for-pytorch/index.html#installation 
 
 #### Install torch for other platform
