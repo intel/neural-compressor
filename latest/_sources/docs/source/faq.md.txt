@@ -17,3 +17,12 @@ ImportError: libGL.so.1: cannot open shared object file: No such file or directo
 #### Issue 4:  
 Conda package *neural-compressor-full* (this binary is only available from v1.13 to v2.1.1) dependency conflict may pending on conda installation for a long time.   
 **Solution:** run *conda install sqlalchemy=1.4.27 alembic=1.7.7 -c conda-forge* before install *neural-compressor-full*. 
+#### Issue 5: 
+If you run 3X torch extension API inside a docker container, then you may encounter the following error:  
+```shell
+ValueError: No threading layer could be loaded.
+HINT:
+Intel TBB is required, try:
+$ conda/pip install tbb
+```
+**Solution:** It's actually already installed by `requirements_pt.txt`, so just need to set up with `export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH`. 

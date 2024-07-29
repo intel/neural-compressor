@@ -111,6 +111,17 @@ ln<span class="w"> </span>-sf<span class="w"> </span><span class="k">$(</span>wh
 <h3>Issue 4:<a class="headerlink" href="#issue-4" title="Permalink to this heading"></a></h3>
 <p>Conda package <em>neural-compressor-full</em> (this binary is only available from v1.13 to v2.1.1) dependency conflict may pending on conda installation for a long time.<br /><strong>Solution:</strong> run <em>conda install sqlalchemy=1.4.27 alembic=1.7.7 -c conda-forge</em> before install <em>neural-compressor-full</em>.</p>
 </section>
+<section id="issue-5">
+<h3>Issue 5:<a class="headerlink" href="#issue-5" title="Permalink to this heading"></a></h3>
+<p>If you run 3X torch extension API inside a docker container, then you may encounter the following error:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>ValueError:<span class="w"> </span>No<span class="w"> </span>threading<span class="w"> </span>layer<span class="w"> </span>could<span class="w"> </span>be<span class="w"> </span>loaded.
+HINT:
+Intel<span class="w"> </span>TBB<span class="w"> </span>is<span class="w"> </span>required,<span class="w"> </span>try:
+$<span class="w"> </span>conda/pip<span class="w"> </span>install<span class="w"> </span>tbb
+</pre></div>
+</div>
+<p><strong>Solution:</strong> It’s actually already installed by <code class="docutils literal notranslate"><span class="pre">requirements_pt.txt</span></code>, so just need to set up with <code class="docutils literal notranslate"><span class="pre">export</span> <span class="pre">LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH</span></code>.</p>
+</section>
 </section>
 </section>
 
@@ -128,7 +139,7 @@ ln<span class="w"> </span>-sf<span class="w"> </span><span class="k">$(</span>wh
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7effd61a0190> 
+   <jinja2.runtime.BlockReference object at 0x7ff404dbf400> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
