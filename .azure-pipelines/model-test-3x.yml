@@ -112,7 +112,7 @@ stages:
             displayName: "Publish report"
           - script: |
               if [ $(is_perf_reg) == 'true' ]; then
-                echo "[Performance Regression] Some model performance regression occurred, please check artifacts and reports."
+                echo "Some benchmark regression occurred or the reference data need to be updated, please check artifacts and reports."
                 exit 1
               fi
-            displayName: "Specify performance regression"
+            displayName: "Specify regression"
