@@ -215,21 +215,22 @@ def main():
                 prepared_model(images)
                 
         q_model = convert(prepared_model)
-        # Compile the quantized model and replace the Q/DQ pattern with Q-operator
-        from torch._inductor import config
-
-        config.freezing = True
-        opt_model = torch.compile(q_model)
-        model = opt_model
 
         if args.tuned_checkpoint:
-            model.save(example_inputs=example_inputs, output_dir = args.tuned_checkpoint)
+            q_model.save(example_inputs=example_inputs, output_dir = args.tuned_checkpoint)
         return
     
     if args.performance or args.accuracy:
         if args.int8:
             from neural_compressor.torch.quantization import load
-            new_model = load(args.tuned_checkpoint)
+            q_model = load(args.tuned_checkpoint)
+            
+            # Compile the quantized model and replace the Q/DQ pattern with Q-operator
+            from torch._inductor import config
+
+            config.freezing = True
+            opt_model = torch.compile(q_model)
+            new_model = opt_model
         else:
             new_model = model
             new_model.eval()
@@ -243,23 +244,21 @@ def main():
 
 def benchmark(val_loader, model, args): 
 
-    total_iters = args.iters if args.iters < len(val_loader) else len(val_loader)
+    total_iters = args.iters
     warmup_iters = args.warmup_iter
-    with torch.no_grad():
-        
-        for i, (images, target) in enumerate(val_loader):
+    for i, (images, target) in enumerate(val_loader):
+        if args.gpu is not None and torch.cuda.is_available():
+            images = images.cuda(args.gpu, non_blocking=True)
+        if torch.backends.mps.is_available():
+            images = images.to('mps')
+        break
+    
+    with torch.no_grad():        
+        for i in range(total_iters):
             if i == total_iters:
                 break
             if i == warmup_iters:
                 start = time.time()
-
-            if args.gpu is not None and torch.cuda.is_available():
-                images = images.cuda(args.gpu, non_blocking=True)
-            if torch.backends.mps.is_available():
-                images = images.to('mps')
-                target = target.to('mps')
-            if torch.cuda.is_available():
-                target = target.cuda(args.gpu, non_blocking=True)
             
             # model inference
             model(images)
@@ -435,3 +434,4 @@ def accuracy(output, target, topk=(1,)):
 
 if __name__ == '__main__':
     main()
+
