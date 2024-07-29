@@ -28,7 +28,8 @@ def get_build_version():
         return __version__
     try:
         result = subprocess.run(["git", "describe", "--tags"], capture_output=True, text=True, check=True)
-        _, distance, commit = result.stdout.strip().split("-")
+        distance = result.stdout.strip().split("-")[-2]
+        commit = result.stdout.strip().split("-")[-1]
         return f"{__version__}.dev{distance}+{commit}"
     except subprocess.CalledProcessError:
         return __version__
