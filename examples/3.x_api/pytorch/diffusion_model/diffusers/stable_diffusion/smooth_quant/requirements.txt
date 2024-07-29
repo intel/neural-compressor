@@ -5,3 +5,4 @@ transformers
 tensorboard
 intel_extension_for_pytorch
 tqdm
+open-clip-torch

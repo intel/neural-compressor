@@ -37,7 +37,7 @@ function init_params {
 
 # run_benchmark
 function run_benchmark {
-    extra_cmd=""
+    extra_cmd="--load"
     model_name_or_path="stabilityai/stable-diffusion-xl-base-1.0"
     precision="fp32"
     latent="latents.pt"
@@ -51,10 +51,8 @@ function run_benchmark {
 
     if [[ ${mode} == "performance" ]]; then
       extra_cmd=$extra_cmd" --performance"
-      if [[ ${int8} == "true" ]]; then
-        extra_cmd=$extra_cmd" --load"
-      fi
-      echo $extra_cmd
+    fi
+    echo $extra_cmd
 
       python -u sdxl_smooth_quant.py \
         --model_name_or_path ${model_name_or_path} \
@@ -84,7 +82,7 @@ function run_benchmark {
         --base-output-dir ${base-output-dir} \
         --iters ${iters} \
         ${extra_cmd}
-    
+
       mv ./output/stabilityai--stable-diffusion-xl-base-1.0__euler__20__8.0__fp32/* ./output/
       rm -rf ./output/stabilityai--stable-diffusion-xl-base-1.0__euler__20__8.0__fp32/
 
