@@ -227,12 +227,12 @@ def main():
         return
     
     if args.performance or args.accuracy:
-        # model.eval()
         if args.int8:
             from neural_compressor.torch.quantization import load
             new_model = load(args.tuned_checkpoint)
         else:
             new_model = model
+            new_model.eval()
         if args.performance:
             benchmark(val_loader, new_model, args)
             return
