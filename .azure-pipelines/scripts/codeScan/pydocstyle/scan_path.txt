@@ -21,8 +21,8 @@
 /neural-compressor/neural_compressor/torch/algorithms/mixed_precision
 /neural-compressor/neural_compressor/torch/algorithms/mx_quant
 /neural-compressor/neural_compressor/torch/algorithms/pt2e_quant
-/neural-compressor/neural-compressor/neural_compressor/torch/algorithms/smooth_quant
-/neural-compressor/neural-compressor/neural_compressor/torch/algorithms/static_quant
+/neural-compressor/neural_compressor/torch/algorithms/smooth_quant
+/neural-compressor/neural_compressor/torch/algorithms/static_quant
 /neural-compressor/neural_compressor/torch/algorithms/weight_only
 /neural-compressor/neural_compressor/torch/export
 /neural-compressor/neural_compressor/torch/quantization
