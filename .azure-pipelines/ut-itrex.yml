@@ -13,10 +13,6 @@ pr:
       - requirements.txt
       - .azure-pipelines/scripts/ut/run_itrex.sh
       - .azure-pipelines/ut-itrex.yml
-    exclude:
-      - neural_compressor/common
-      - neural_compressor/torch
-      - neural_compressor/tensorflow
 
 pool: MODEL_PERF_TEST
 

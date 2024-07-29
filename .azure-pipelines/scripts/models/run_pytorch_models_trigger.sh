@@ -72,6 +72,7 @@ FRAMEWORK="pytorch"
 source /neural-compressor/.azure-pipelines/scripts/fwk_version.sh 'latest'
 if [[ "${inc_new_api}" == "3x"* ]]; then
     FRAMEWORK_VERSION="latest"
+    export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH
 else
     FRAMEWORK_VERSION=${pytorch_version}
     TORCH_VISION_VERSION=${torchvision_version}
