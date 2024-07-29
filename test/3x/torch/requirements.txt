@@ -6,3 +6,4 @@ prettytable
 psutil
 pytest
 transformers
+torchvision
