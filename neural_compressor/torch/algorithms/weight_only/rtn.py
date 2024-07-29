@@ -17,7 +17,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""RTN quantization."""
 
 import copy
 from collections import OrderedDict
@@ -42,6 +42,8 @@ if is_transformers_imported():
 
 
 class RTNQuantizer(Quantizer):
+    """RTN Quantizer."""
+
     def __init__(self, quant_config: OrderedDict = {}):
         """Init a RTNQuantizer object.
 

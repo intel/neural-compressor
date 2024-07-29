@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Export model for quantization."""
 
 from typing import Any, Dict, Optional, Tuple, Union
 
@@ -29,7 +30,20 @@ def export_model_for_pt2e_quant(
     example_inputs: Tuple[Any],
     dynamic_shapes: Optional[Union[Dict[str, Any], Tuple[Any]]] = None,
 ) -> Optional[GraphModule]:
-    """Export the eager model into model with Aten IR."""
+    """Exports a eager model for PT2E quantization.
+
+    Args:
+        model (torch.nn.Module): The PyTorch model to be exported.
+        example_inputs (Tuple[Any]): Example inputs to the model.
+        dynamic_shapes (Optional[Union[Dict[str, Any], Tuple[Any]]], optional):
+            Dynamic shapes for the model inputs. Defaults to None.
+
+    Returns:
+        Optional[GraphModule]: The exported model as a GraphModule.
+
+    Raises:
+        AssertionError: If `example_inputs` is not a tuple.
+    """
     assert isinstance(example_inputs, tuple), f"Expected `example_inputs` to be a tuple, got {type(example_inputs)}"
     # Set the model to eval mode
     model = model.eval()
@@ -66,6 +80,17 @@ def export(
     example_inputs: Tuple[Any],
     dynamic_shapes: Optional[Union[Dict[str, Any], Tuple[Any]]] = None,
 ) -> Optional[GraphModule]:
+    """Unified export function for quantization.
+
+    Args:
+        model (torch.nn.Module): The model to be exported.
+        example_inputs (Tuple[Any]): Example inputs to the model.
+        dynamic_shapes (Optional[Union[Dict[str, Any], Tuple[Any]]], optional):
+            Dynamic shapes for the model. Defaults to None.
+
+    Returns:
+        Optional[GraphModule]: The exported model for quantization.
+    """
     if not is_ipex_imported():
         return export_model_for_pt2e_quant(model, example_inputs, dynamic_shapes)
     else:

@@ -24,7 +24,7 @@ from neural_compressor.common.utils import (
     FP8_QUANT,
     GPTQ,
     HQQ,
-    MIX_PRECISION,
+    MIXED_PRECISION,
     MX_QUANT,
     RTN,
     SMOOTH_QUANT,
@@ -38,7 +38,7 @@ from neural_compressor.torch.quantization import (
     FP8Config,
     GPTQConfig,
     HQQConfig,
-    MixPrecisionConfig,
+    MixedPrecisionConfig,
     MXQuantConfig,
     RTNConfig,
     SmoothQuantConfig,
@@ -567,9 +567,14 @@ def autoround_quantize_entry(
         if quant_config.name != AUTOROUND or quant_config.dtype == "fp32":
             continue
         else:
+            dtype = quant_config.dtype
+            bits = quant_config.bits
+            if dtype != "int" and "int" in dtype:
+                bits = int(dtype.lstrip("int"))
+                dtype = "int"
             weight_config[op_name] = {
-                "data_type": quant_config.dtype,
-                "bits": quant_config.bits,
+                "data_type": dtype,
+                "bits": bits,
                 "sym": quant_config.use_sym,
                 "group_size": quant_config.group_size,
                 "act_bits": quant_config.act_bits,
@@ -595,7 +600,7 @@ def autoround_quantize_entry(
             not_use_best_mse = quant_config.not_use_best_mse
             dynamic_max_gap = quant_config.dynamic_max_gap
             scale_dtype = quant_config.scale_dtype
-            multimodal = quant_config.multimodal
+            quant_block_list = quant_config.quant_block_list
             low_cpu_mem_usage = quant_config.use_layer_wise
 
     kwargs.pop("example_inputs")
@@ -622,7 +627,7 @@ def autoround_quantize_entry(
         not_use_best_mse=not_use_best_mse,
         dynamic_max_gap=dynamic_max_gap,
         scale_dtype=scale_dtype,
-        multimodal=multimodal,
+        quant_block_list=quant_block_list,
         low_cpu_mem_usage=low_cpu_mem_usage,
     )
     model = quantizer.execute(model=model, mode=mode, *args, **kwargs)
@@ -717,12 +722,9 @@ def mx_quant_entry(
 
 
 ###################### Mixed Precision Algo Entry ##################################
-@register_algo(MIX_PRECISION)
-def mix_precision_entry(
-    model: torch.nn.Module,
-    configs_mapping: Dict[Tuple[str], MixPrecisionConfig],
-    *args,
-    **kwargs,
+@register_algo(MIXED_PRECISION)
+def mixed_precision_entry(
+    model: torch.nn.Module, configs_mapping: Dict[Tuple[str], MixedPrecisionConfig], *args, **kwargs
 ) -> torch.nn.Module:
     """The main entry to apply Mixed Precision.
 
@@ -735,9 +737,9 @@ def mix_precision_entry(
         torch.nn.Module: prepared model or quantized model.
     """
     # only support fp16 and bf16 now, more types might be added later
-    from neural_compressor.torch.algorithms.mix_precision import HalfPrecisionConverter
+    from neural_compressor.torch.algorithms.mixed_precision import HalfPrecisionConverter
 
     half_precision_converter = HalfPrecisionConverter(configs_mapping, *args, **kwargs)
-    mix_precision_model = half_precision_converter.convert(model)
+    mixed_precision_model = half_precision_converter.convert(model)
 
-    return mix_precision_model
+    return mixed_precision_model

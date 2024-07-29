@@ -1,9 +1,0 @@
-numpy < 2.0
-onnx
-onnxruntime
-onnxruntime-extensions
-prettytable
-psutil
-py-cpuinfo
-pydantic
-transformers

@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""AutoRound quantization."""
 import copy
 import json
 import time
@@ -28,6 +28,8 @@ from .utility import CapturedDataloader, InputCaptureModule
 
 
 class AutoRoundQuantizer(Quantizer):
+    """AutoRound Quantizer."""
+
     def __init__(
         self,
         quant_config: dict = {},
@@ -53,7 +55,7 @@ class AutoRoundQuantizer(Quantizer):
         dynamic_max_gap: int = -1,
         data_type: str = "int",
         scale_dtype: str = "fp16",
-        multimodal: bool = False,
+        quant_block_list: list = None,
         act_bits: int = 32,
         act_group_size: int = None,
         act_sym: bool = None,
@@ -94,11 +96,11 @@ class AutoRoundQuantizer(Quantizer):
             lr_scheduler: The learning rate scheduler to be used.
             dataset (str): The default dataset name (default is "NeelNanda/pile-10k").
             enable_quanted_input (bool): Whether to use the output of the previous quantized block as
-                the input for the current block (default is True).
+                                            the input for the current block (default is True).
             enable_minmax_tuning (bool): Whether to enable weight min-max tuning (default is True).
             lr (float): The learning rate (default is None, will be set to 1.0/iters).
             minmax_lr (float): The learning rate for min-max tuning
-                (default is None, it will be set to lr automatically).
+                                    (default is None, it will be set to lr automatically).
             low_gpu_mem_usage (bool): Whether to use low GPU memory (default is True).
             iters (int): Number of iterations (default is 200).
             seqlen (int): Data length of the sequence for tuning (default is 2048).
@@ -112,7 +114,7 @@ class AutoRoundQuantizer(Quantizer):
             data_type (str): The data type to be used (default is "int").
             scale_dtype (str): The data type of quantization scale to be used (default is "float16"), different kernels
                 have different choices.
-            multimodal(bool): Enable multimodal model quantization, (default is "False").
+            quant_block_list (list): A list whose elements are list of block's layer names to be quantized.
             act_bits (int): Number of bits for activation quantization. Default is 32.
             act_group_size (int): Group size for activation quantization. Default is None.
             act_sym (bool): Whether to use symmetric activation quantization. Default is None.
@@ -144,7 +146,7 @@ class AutoRoundQuantizer(Quantizer):
         self.dynamic_max_gap = dynamic_max_gap
         self.data_type = data_type
         self.scale_dtype = scale_dtype
-        self.multimodal = multimodal
+        self.quant_block_list = quant_block_list
         self.act_bits = act_bits
         self.act_group_size = act_group_size
         self.act_sym = act_sym
@@ -153,6 +155,7 @@ class AutoRoundQuantizer(Quantizer):
 
     def prepare(self, model: torch.nn.Module, *args, **kwargs):
         """Prepares a given model for quantization.
+
         Args:
             model (torch.nn.Module): The model to be prepared.
 
@@ -163,6 +166,14 @@ class AutoRoundQuantizer(Quantizer):
         return prepare_model
 
     def convert(self, model: torch.nn.Module, *args, **kwargs):
+        """Convert the prepared model to a quantized model.
+
+        Args:
+            model (torch.nn.Module): the prepared model
+
+        Returns:
+            The quantized model.
+        """
         dataloader = CapturedDataloader(model.args_list, model.kwargs_list)
         model = model.orig_model
         rounder = AutoRound(
@@ -191,7 +202,7 @@ class AutoRoundQuantizer(Quantizer):
             dynamic_max_gap=self.dynamic_max_gap,
             data_type=self.data_type,
             scale_dtype=self.scale_dtype,
-            multimodal=self.multimodal,
+            quant_block_list=self.quant_block_list,
             act_bits=self.act_bits,
             act_group_size=self.act_group_size,
             act_sym=self.act_sym,
@@ -216,7 +227,7 @@ def get_dataloader(tokenizer, seqlen, dataset_name="NeelNanda/pile-10k", seed=42
         split (str, optional): The data split to use. Defaults to None.
         seed (int, optional): The random seed for reproducibility. Defaults to 42.
         bs (int, optional): The batch size. Defaults to 4.
-        n_samples (int, optional): The total number of samples to include. Defaults to 512.
+        nsamples (int, optional): The total number of samples to include. Defaults to 128.
 
     Returns:
         DataLoader: The DataLoader for the calibrated dataset.

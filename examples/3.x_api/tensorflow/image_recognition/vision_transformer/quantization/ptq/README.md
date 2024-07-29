@@ -40,10 +40,10 @@ wget https://storage.googleapis.com/intel-optimized-tensorflow/models/2_11_0/HF-
 ## 3. Prepare Dataset
 
   TensorFlow [models](https://github.com/tensorflow/models) repo provides [scripts and instructions](https://github.com/tensorflow/models/tree/master/research/slim#an-automated-script-for-processing-imagenet-data) to download, process and convert the ImageNet dataset to the TF records format.
-  We also prepared related scripts in ` examples/tensorflow/image_recognition/tensorflow_models/imagenet_prepare` directory. To download the raw images, the user must create an account with image-net.org. If you have downloaded the raw data and preprocessed the validation data by moving the images into the appropriate sub-directory based on the label (synset) of the image. we can use below command ro convert it to tf records format.
+  We also prepared related scripts in `examples/3.x_api/tensorflow/cv` directory. To download the raw images, the user must create an account with image-net.org. If you have downloaded the raw data and preprocessed the validation data by moving the images into the appropriate sub-directory based on the label (synset) of the image. we can use below command ro convert it to tf records format.
 
   ```shell
-  cd examples/3.x_api/tensorflow/image_recognition/tensorflow_models/
+  cd examples/3.x_api/tensorflow/cv
   # convert validation subset
   bash prepare_dataset.sh --output_dir=./vision_transformer/quantization/ptq/data --raw_dir=/PATH/TO/img_raw/val/ --subset=validation
   # convert train subset
@@ -60,7 +60,7 @@ wget https://storage.googleapis.com/intel-optimized-tensorflow/models/2_11_0/HF-
 ## 1. Quantization
 
 ```shell
-bash run_quant.sh --input_model=<path to HF-ViT-Base16-Img224-frozen.pb> --output_model=./output --dataset_location=<path to imagenet>
+bash run_quant.sh --input_model=./HF-ViT-Base16-Img224-frozen.pb --output_model=./output --dataset_location=<path to imagenet>
 ```
 
 
@@ -69,7 +69,7 @@ bash run_quant.sh --input_model=<path to HF-ViT-Base16-Img224-frozen.pb> --outpu
 ### Benchmark the fp32 model
 
 ```shell
-bash run_benchmark.sh --input_model=<path to HF-ViT-Base16-Img224-frozen.pb> --mode=accuracy --dataset_location=<path to imagenet> --batch_size=32
+bash run_benchmark.sh --input_model=./HF-ViT-Base16-Img224-frozen.pb --mode=accuracy --dataset_location=<path to imagenet> --batch_size=32
 ```
 
 ### Benchmark the int8 model

@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Save and load the quantized model."""
+
 
 # pylint:disable=import-error
 import torch
@@ -32,7 +34,7 @@ def recover_model_from_json(model, json_file_path, example_inputs):  # pragma: n
         example_inputs (tuple or torch.Tensor or dict): example inputs that will be passed to the ipex function.
 
     Returns:
-        (object): quantized model
+        model (object): quantized model
     """
     from torch.ao.quantization.observer import MinMaxObserver
 

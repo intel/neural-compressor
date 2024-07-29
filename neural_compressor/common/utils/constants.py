@@ -35,7 +35,7 @@ TEQ = "teq"  # pragma: no cover
 AUTOROUND = "autoround"
 FP8_QUANT = "fp8_quant"
 MX_QUANT = "mx_quant"
-MIX_PRECISION = "mix_precision"
+MIXED_PRECISION = "mixed_precision"
 
 # options
 import datetime
