@@ -2,8 +2,8 @@ import typing
 
 import pytest
 import torch
-from habana_quantization_toolkit._quant_common.quant_config import ScaleMethod
-from habana_quantization_toolkit.tests import TestVector, run_accuracy_test
+from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import ScaleMethod
+from ...tester import run_accuracy_test, TestVector
 
 
 def get_test_vectors(*, dtype: torch.dtype, N: int, D_in: int) -> typing.Iterable[TestVector]:
