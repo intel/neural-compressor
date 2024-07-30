@@ -607,6 +607,7 @@ class WeightOnlyLinear(torch.nn.Module):
 
         pack_method_name = f"pack_array_with_numba_b{bits}_c{compress_bits}"
         pack_method = getattr(self, pack_method_name)
+        numba.config.THREADING_LAYER = "safe"
         return pack_method(raw_array, packed_array, n_pack, new_in_features)
 
     def pack_tensor_with_numpy_impl(self, raw_tensor):

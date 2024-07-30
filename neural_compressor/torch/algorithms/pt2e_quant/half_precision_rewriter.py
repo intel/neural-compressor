@@ -185,7 +185,8 @@ def transformation(gm: torch.fx.GraphModule, node_candidate_list: List[str], tar
     for pattern_pair in HALF_PRECISION_PATTERN_REGISTRY[target_dtype].values():
         apply_single_pattern_pair(gm, pattern_pair, node_candidate_list)
     utils.logger.info("Half precision conversion is done:")
-    gm.print_readable(True)
+    if utils.level_name == "DEBUG":  # pragma: no cover
+        gm.print_readable(True)
 
 
 # =============================================================================
