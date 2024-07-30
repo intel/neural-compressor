@@ -162,15 +162,6 @@ if args.quantize:
         collate_fn=calib_evaluator.collate_batch,
     )
 
-    from neural_compressor.torch.quantization import SmoothQuantConfig
-
-    args.alpha = eval(args.alpha)
-    excluded_precisions = [] if args.int8_bf16_mixed else ["bf16"]
-    quant_config = SmoothQuantConfig(alpha=args.alpha, folding=False, excluded_precisions=excluded_precisions)
-
-    if re.search("gpt", user_model.config.model_type):
-        quant_config.set_local(torch.add, SmoothQuantConfig(w_dtype="fp32", act_dtype="fp32"))
-
     from neural_compressor.torch.algorithms.smooth_quant import move_input_to_device
     from tqdm import tqdm
 
