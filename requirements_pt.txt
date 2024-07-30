@@ -5,3 +5,4 @@ prettytable
 psutil
 py-cpuinfo
 pydantic
+tbb

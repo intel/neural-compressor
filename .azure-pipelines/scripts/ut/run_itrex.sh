@@ -6,6 +6,7 @@ echo "run itrex ut..."
 
 # install inc 3x deps
 pip install -r /neural-compressor/requirements_pt.txt
+export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH
 
 # prepare itrex
 git clone https://github.com/intel/intel-extension-for-transformers.git /intel-extension-for-transformers

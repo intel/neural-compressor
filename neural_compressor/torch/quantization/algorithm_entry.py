@@ -265,6 +265,7 @@ def pt2e_dynamic_quant_entry(
     run_fn = kwargs.get("run_fn", None)
     example_inputs = kwargs.get("example_inputs", None)
     inplace = kwargs.get("inplace", True)
+    dynamic_shapes = model.dynamic_shapes
     W8A8PT2EQuantizer.is_dynamic = True
     for _, quant_config in configs_mapping.items():
         if quant_config.name == PT2E_DYNAMIC_QUANT:
@@ -272,6 +273,7 @@ def pt2e_dynamic_quant_entry(
             model = w8a8_quantizer.execute(
                 model, mode=mode, run_fn=run_fn, example_inputs=example_inputs, inplace=inplace
             )
+            model.dynamic_shapes = dynamic_shapes
             model.qconfig = configs_mapping
             model.save = MethodType(save, model)
             return model
@@ -304,12 +306,14 @@ def pt2e_static_quant_entry(
     run_fn = kwargs.get("run_fn", None)
     example_inputs = kwargs.get("example_inputs", None)
     inplace = kwargs.get("inplace", True)
+    dynamic_shapes = model.dynamic_shapes
     for _, quant_config in configs_mapping.items():
         if quant_config.name == STATIC_QUANT:
             w8a8_quantizer = W8A8PT2EQuantizer(quant_config=quant_config)
             model = w8a8_quantizer.execute(
                 model, mode=mode, run_fn=run_fn, example_inputs=example_inputs, inplace=inplace
             )
+            model.dynamic_shapes = dynamic_shapes
             model.qconfig = configs_mapping
             model.save = MethodType(save, model)
             return model

@@ -15,6 +15,7 @@
 
 from neural_compressor.common.utils import (
     level,
+    level_name,
     logger,
     Logger,
     TuningLogger,
@@ -31,6 +32,7 @@ from neural_compressor.common.base_config import options
 __all__ = [
     "options",
     "level",
+    "level_name",
     "logger",
     "Logger",
     "TuningLogger",

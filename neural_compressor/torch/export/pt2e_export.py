@@ -92,7 +92,9 @@ def export(
         Optional[GraphModule]: The exported model for quantization.
     """
     if not is_ipex_imported():
-        return export_model_for_pt2e_quant(model, example_inputs, dynamic_shapes)
+        model = export_model_for_pt2e_quant(model, example_inputs, dynamic_shapes)
+        model.dynamic_shapes = dynamic_shapes
+        return model
     else:
         # TODO, add `export` for ipex
         pass
