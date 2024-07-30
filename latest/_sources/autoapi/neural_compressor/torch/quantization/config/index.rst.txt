@@ -142,7 +142,7 @@ Module Contents
    :returns: the default teq config.
 
 
-.. py:class:: AutoRoundConfig(dtype: str = 'int', bits: int = 4, use_sym: bool = False, group_size: int = 128, act_bits: int = 32, act_group_size: int = None, act_sym: bool = None, act_dynamic: bool = True, enable_full_range: bool = False, batch_size: int = 8, lr_scheduler=None, enable_quanted_input: bool = True, enable_minmax_tuning: bool = True, lr: float = None, minmax_lr: float = None, low_gpu_mem_usage: bool = True, iters: int = 200, seqlen: int = 2048, nsamples: int = 128, sampler: str = 'rand', seed: int = 42, nblocks: int = 1, gradient_accumulate_steps: int = 1, not_use_best_mse: bool = False, dynamic_max_gap: int = -1, scale_dtype: str = 'fp16', use_layer_wise: bool = False, quant_block_list: list = None, white_list: Optional[List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
+.. py:class:: AutoRoundConfig(dtype: str = 'int', bits: int = 4, use_sym: bool = False, group_size: int = 128, act_bits: int = 32, act_group_size: int = None, act_sym: bool = None, act_dynamic: bool = True, enable_full_range: bool = False, batch_size: int = 8, lr_scheduler=None, enable_quanted_input: bool = True, enable_minmax_tuning: bool = True, lr: float = None, minmax_lr: float = None, low_gpu_mem_usage: bool = False, iters: int = 200, seqlen: int = 2048, nsamples: int = 128, sampler: str = 'rand', seed: int = 42, nblocks: int = 1, gradient_accumulate_steps: int = 1, not_use_best_mse: bool = False, dynamic_max_gap: int = -1, scale_dtype: str = 'fp16', use_layer_wise: bool = False, quant_block_list: list = None, white_list: Optional[List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
 
 
 
