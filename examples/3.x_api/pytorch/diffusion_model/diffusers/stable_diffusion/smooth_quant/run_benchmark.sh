@@ -51,14 +51,26 @@ function run_benchmark {
 
     if [[ ${mode} == "performance" ]]; then
       extra_cmd=$extra_cmd" --performance"
-    fi
-    echo $extra_cmd
+      if [[ ${int8} == "true" ]]; then
+        extra_cmd=$extra_cmd" --int8"
+      fi
+      echo $extra_cmd
 
       python -u sdxl_smooth_quant.py \
         --model_name_or_path ${model_name_or_path} \
         --latent ${latent} \
         ${extra_cmd}
     else
+      if [[ ${int8} == "true" ]]; then
+        extra_cmd=$extra_cmd" --int8"
+      fi
+      echo $extra_cmd
+
+      python -u sdxl_smooth_quant.py \
+        --model_name_or_path ${model_name_or_path} \
+        --latent ${latent} \
+        ${extra_cmd}
+        
       REPO_URL="https://github.com/ahmadki/mlperf_sd_inference.git"
       TARGET_DIR="mlperf_sd_inference"
 
