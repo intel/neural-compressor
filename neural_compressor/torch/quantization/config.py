@@ -1478,7 +1478,7 @@ class SmoothQuantConfig(TorchBaseConfig):
             alpha=np.arange(0.1, 1.0, 0.1).tolist(),
             folding=[True, False],
             scale_sharing=[True, False],
-            excluded_precisions=["bf16"]
+            excluded_precisions=["bf16"],
         )
 
 
