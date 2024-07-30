@@ -191,6 +191,9 @@ if args.quantize:
         return
     
     def eval_func(model):
+        config = AutoConfig.from_pretrained(args.model)
+        setattr(model, "config", config)
+    
         from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
         eval_args = LMEvalParser(
             model="hf",
