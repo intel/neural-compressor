@@ -1319,6 +1319,7 @@ class StaticQuantConfig(TorchBaseConfig):
         act_algo: str = "minmax",
         excluded_precisions: list = [],
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+        model_info: Optional[List[Tuple[str, Callable]]] = None,
     ):
         """Init StaticQuant Config.
 
@@ -1345,7 +1346,7 @@ class StaticQuantConfig(TorchBaseConfig):
         self.act_granularity = act_granularity
         self.act_algo = act_algo
         self.excluded_precisions = excluded_precisions
-        self.model_info = None
+        self.model_info = model_info
         self._post_init()
 
     @classmethod
