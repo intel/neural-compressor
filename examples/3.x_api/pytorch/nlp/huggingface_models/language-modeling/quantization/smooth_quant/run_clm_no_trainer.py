@@ -217,18 +217,15 @@ if args.quantize:
 
 
 if args.load:
+    # TODO: we need run_benchmark.sh for loading and remove --accuracy in run_quant.sh, currently run_quant.sh will get fp32 result
     if args.int8 or args.int8_bf16_mixed:
-        print("Loading SmoothQuant int8 model.")
+        print("load int8 model")
         from neural_compressor.torch.quantization import load
-        from intel_extension_for_transformers.transformers.llm.evaluation.models import (
-            TSModelCausalLMForITREX,
-        )
+
         tokenizer = AutoTokenizer.from_pretrained(args.model)
         config = AutoConfig.from_pretrained(args.model)
-        origin_model_type = config.model_type
         user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)))
-        user_model = TSModelCausalLMForITREX(user_model, config=config)
-        user_model.config.model_type = origin_model_type
+        setattr(user_model, "config", config)
     else:
         user_model, tokenizer = get_user_model()
 
