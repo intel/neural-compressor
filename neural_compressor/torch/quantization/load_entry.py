@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Intel Neural Compressor PyTorch load entry for all algorithms."""
 
 import json
 import os
@@ -54,7 +55,6 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
             from neural_compressor.torch.quantization import load
             load(model_name_or_path=model_name_or_path)
 
-
     Args:
         model_name_or_path (str):  torch checkpoint directory or hugginface model_name_or_path.
             If 'format' is set to 'huggingface', it means the huggingface model_name_or_path.
@@ -70,6 +70,7 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
         kwargs (remaining dictionary of keyword arguments, optional):
             remaining dictionary of keyword arguments for loading huggingface models.
             Will be passed to the huggingface model's `__init__` method, such as 'trust_remote_code', 'revision'.
+
     Returns:
         The quantized model
     """
