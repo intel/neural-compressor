@@ -326,6 +326,7 @@ parser.add_argument('--precision', default='fp32', type=str)
 parser.add_argument('--base-output-dir', default="./output", type=str)
 parser.add_argument('--quantized-unet', default="./saved_results", type=str)
 parser.add_argument("--int8", action="store_true", help="Load quantized model.")
+parser.add_argument("--load", action="store_true")
 parser.add_argument('--iters', default=5000, type=int, help="Num of image generated.")
 parser.add_argument('--output-dir-name', default=None, type=str)
 parser.add_argument('--output-dir-name-postfix', default=None, type=str)
@@ -409,7 +410,7 @@ if args.refiner:
                                                                     variant="fp16" if args.precision == 'fp16' else None,
                                                                     torch_dtype=dtype)
 
-if args.int8:
+if args.int8 and args.load:
     from neural_compressor.torch.quantization import load
     example_inputs = {"sample": torch.randn((2, 4, 128, 128), dtype=dtype),
                 "timestep": torch.tensor(951.0),

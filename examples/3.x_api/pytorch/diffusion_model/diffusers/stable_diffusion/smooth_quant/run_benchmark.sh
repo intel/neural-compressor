@@ -41,8 +41,7 @@ function run_benchmark {
     model_name_or_path="stabilityai/stable-diffusion-xl-base-1.0"
     precision="fp32"
     latent="latents.pt"
-    base-output-dir="./output/"
-    iters=200
+    base_output_dir="./output/"
 
     if [[ ${int8} == "true" ]]; then
         extra_cmd=$extra_cmd" --int8"
@@ -91,7 +90,7 @@ function run_benchmark {
         --quantized-unet ${tuned_checkpoint} \
         --precision ${precision} \
         --latent-path ${latent} \
-        --base-output-dir ${base-output-dir} \
+        --base-output-dir ${base_output_dir} \
         --iters ${iters} \
         ${extra_cmd}
 
@@ -100,7 +99,7 @@ function run_benchmark {
 
       python clip/clip_score.py \
           --tsv-file captions_5k.tsv \
-          --image-folder ${base-output-dir} \
+          --image-folder ${base_output_dir} \
           --device "cpu"
       
       cd ..
