@@ -905,7 +905,7 @@ class AutoRoundConfig(TorchBaseConfig):
         enable_minmax_tuning: bool = True,
         lr: float = None,
         minmax_lr: float = None,
-        low_gpu_mem_usage: bool = True,
+        low_gpu_mem_usage: bool = False,
         iters: int = 200,
         seqlen: int = 2048,
         nsamples: int = 128,
@@ -938,7 +938,7 @@ class AutoRoundConfig(TorchBaseConfig):
             enable_minmax_tuning (bool): Whether to enable min-max tuning (default is True).
             lr (float): The learning rate (default is 0.005).
             minmax_lr (float): The learning rate for min-max tuning (default is None).
-            low_gpu_mem_usage (bool): Whether to use low GPU memory (default is True).
+            low_gpu_mem_usage (bool): Whether to use low GPU memory (default is False).
             iters (int): Number of iterations (default is 200).
             seqlen (int): Length of the sequence.
             nsamples (int): Number of samples (default is 512).
