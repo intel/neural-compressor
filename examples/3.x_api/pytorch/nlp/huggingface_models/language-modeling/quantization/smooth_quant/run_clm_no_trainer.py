@@ -231,6 +231,7 @@ if args.load:
 
 
 if args.accuracy:
+    user_model.eval()
     from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
 
     eval_args = LMEvalParser(
@@ -250,6 +251,7 @@ if args.accuracy:
 
 
 if args.performance:
+    user_model.eval()
     batch_size, input_leng = args.batch_size, 512
     example_inputs = torch.ones((batch_size, input_leng), dtype=torch.long)
     print("Batch size = {:d}".format(batch_size))
@@ -262,15 +264,7 @@ if args.performance:
         for i in range(total_iters):
             if i == warmup_iters:
                 start = time.time()
- 
-            user_model.generate(
-                example_inputs,
-                max_new_tokens=args.max_new_tokens,
-                do_sample=False,
-                temperature=0.9,
-                num_beams=4,
-            )
-
+            user_model(example_inputs)
         end = time.time()
     latency = (end - start) / ((total_iters - warmup_iters) * args.batch_size)
     throughput = ((total_iters - warmup_iters) * args.batch_size) / (end - start)
