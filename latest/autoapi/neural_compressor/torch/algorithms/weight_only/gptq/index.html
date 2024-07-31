@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>neural_compressor.torch.algorithms.weight_only.gptq &mdash; Intel® Neural Compressor 2.6 documentation</title>
+  <title>neural_compressor.torch.algorithms.weight_only.gptq &mdash; Intel® Neural Compressor 3.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../../../_static/pygments.css" />
       <link rel="stylesheet" type="text/css" href="../../../../../../_static/css/theme.css" />
       <link rel="stylesheet" type="text/css" href="../../../../../../_static/graphviz.css" />
@@ -55,7 +55,6 @@
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/get_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/installation_guide.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/user_guide.html">User Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/examples_readme.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/api-doc/apis.html">APIs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/releases_info.html">Release</a></li>
@@ -78,7 +77,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.torch.algorithms.weight_only.gptq</span></code></li>
+      <li class="breadcrumb-item active">neural_compressor.torch.algorithms.weight_only.gptq</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../../../../../../_sources/autoapi/neural_compressor/torch/algorithms/weight_only/gptq/index.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -89,27 +88,29 @@
            <div itemprop="articleBody">
              
   <section id="module-neural_compressor.torch.algorithms.weight_only.gptq">
-<span id="neural-compressor-torch-algorithms-weight-only-gptq"></span><h1><a class="reference internal" href="#module-neural_compressor.torch.algorithms.weight_only.gptq" title="neural_compressor.torch.algorithms.weight_only.gptq"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.torch.algorithms.weight_only.gptq</span></code></a><a class="headerlink" href="#module-neural_compressor.torch.algorithms.weight_only.gptq" title="Permalink to this heading"></a></h1>
-<section id="module-contents">
-<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<span id="neural-compressor-torch-algorithms-weight-only-gptq"></span><h1>neural_compressor.torch.algorithms.weight_only.gptq<a class="headerlink" href="#module-neural_compressor.torch.algorithms.weight_only.gptq" title="Permalink to this heading"></a></h1>
+<p>GPTQ quantization.</p>
 <section id="classes">
-<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
+<h2>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.gptq.RAWGPTQuantizer" title="neural_compressor.torch.algorithms.weight_only.gptq.RAWGPTQuantizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RAWGPTQuantizer</span></code></a></p></td>
 <td><p>Main API for GPTQ algorithm.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.gptq.GPTQ" title="neural_compressor.torch.algorithms.weight_only.gptq.GPTQ"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GPTQ</span></code></a></p></td>
-<td><p>Please refer to:</p></td>
+<td><p>Please refer to the following.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.gptq.GPTQuantizer" title="neural_compressor.torch.algorithms.weight_only.gptq.GPTQuantizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GPTQuantizer</span></code></a></p></td>
-<td><p>The base quantizer for all algorithm quantizers.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.gptq.Quantizer" title="neural_compressor.torch.algorithms.weight_only.gptq.Quantizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Quantizer</span></code></a></p></td>
+<td><p>Quantizer.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.gptq.GPTQuantizer" title="neural_compressor.torch.algorithms.weight_only.gptq.GPTQuantizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GPTQuantizer</span></code></a></p></td>
+<td><p>GPTQ Quantizer.</p></td>
 </tr>
 </tbody>
 </table>
 </section>
 <section id="functions">
-<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
+<h2>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.gptq.is_leaf" title="neural_compressor.torch.algorithms.weight_only.gptq.is_leaf"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_leaf</span></code></a>(module)</p></td>
@@ -127,11 +128,11 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.gptq.log_quantizable_layers_per_transformer" title="neural_compressor.torch.algorithms.weight_only.gptq.log_quantizable_layers_per_transformer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_quantizable_layers_per_transformer</span></code></a>(transformer_blocks)</p></td>
 <td><p>Print all layers which will be quantized in GPTQ algorithm.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.gptq.quantize" title="neural_compressor.torch.algorithms.weight_only.gptq.quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quantize</span></code></a>(x, scale, zero, maxq)</p></td>
-<td><p>Do quantization.</p></td>
-</tr>
 </tbody>
 </table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.gptq.is_leaf">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.gptq.</span></span><span class="sig-name descname"><span class="pre">is_leaf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/weight_only/gptq.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.gptq.is_leaf" title="Permalink to this definition"></a></dt>
@@ -193,15 +194,9 @@
 <dd><p>Print all layers which will be quantized in GPTQ algorithm.</p>
 </dd></dl>
 
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.gptq.quantize">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.gptq.</span></span><span class="sig-name descname"><span class="pre">quantize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zero</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxq</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/weight_only/gptq.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.gptq.quantize" title="Permalink to this definition"></a></dt>
-<dd><p>Do quantization.</p>
-</dd></dl>
-
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.gptq.RAWGPTQuantizer">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.gptq.</span></span><span class="sig-name descname"><span class="pre">RAWGPTQuantizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nsamples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_max_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_seq_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2048</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">export_compressed_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_layer_wise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/weight_only/gptq.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.gptq.RAWGPTQuantizer" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.gptq.</span></span><span class="sig-name descname"><span class="pre">RAWGPTQuantizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nsamples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_max_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_seq_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2048</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_layer_wise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/weight_only/gptq.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.gptq.RAWGPTQuantizer" title="Permalink to this definition"></a></dt>
 <dd><p>Main API for GPTQ algorithm.</p>
 <p>Please refer to:
 GPTQ: Accurate Post-training Compression for Generative Pretrained Transformers
@@ -211,27 +206,22 @@ url: <a class="reference external" href="https://arxiv.org/abs/2210.17323">https
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.gptq.GPTQ">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.gptq.</span></span><span class="sig-name descname"><span class="pre">GPTQ</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">W</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/weight_only/gptq.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.gptq.GPTQ" title="Permalink to this definition"></a></dt>
-<dd><p>Please refer to:
-GPTQ: Accurate Post-training Compression for Generative Pretrained Transformers (<a class="reference external" href="https://arxiv.org/abs/2210.17323">https://arxiv.org/abs/2210.17323</a>)</p>
+<dd><p>Please refer to the following.</p>
+<p>GPTQ: Accurate Post-training Compression for Generative Pretrained Transformers (<a class="reference external" href="https://arxiv.org/abs/2210.17323">https://arxiv.org/abs/2210.17323</a>)</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.gptq.Quantizer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.gptq.</span></span><span class="sig-name descname"><span class="pre">Quantizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/weight_only/gptq.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.gptq.Quantizer" title="Permalink to this definition"></a></dt>
+<dd><p>Quantizer.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.gptq.GPTQuantizer">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.gptq.</span></span><span class="sig-name descname"><span class="pre">GPTQuantizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quant_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/weight_only/gptq.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.gptq.GPTQuantizer" title="Permalink to this definition"></a></dt>
-<dd><p>The base quantizer for all algorithm quantizers.</p>
-<p>The <cite>Quantizer</cite> unifies the interfaces across various quantization algorithms, including GPTQ, RTN, etc.
-Given a float model, <cite>Quantizer</cite> apply the quantization algorithm to the model according to the <cite>quant_config</cite>.</p>
-<dl class="simple">
-<dt>To implement a new quantization algorithm,, inherit from <cite>Quantizer</cite> and implement the following methods:</dt><dd><ul class="simple">
-<li><p><cite>prepare</cite>: prepare a given model for convert.</p></li>
-<li><p><cite>convert</cite>: convert a prepared model to a quantized model.</p></li>
-</ul>
-</dd>
-</dl>
-<p>Note: <cite>quantize</cite> and <cite>execute</cite> are optional for new quantization algorithms.</p>
+<dd><p>GPTQ Quantizer.</p>
 </dd></dl>
 
-</section>
 </section>
 </section>
 
@@ -249,7 +239,7 @@ Given a float model, <cite>Quantizer</cite> apply the quantization algorithm to 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fc37ead37c0> 
+   <jinja2.runtime.BlockReference object at 0x7f212745fa60> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

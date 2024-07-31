@@ -115,9 +115,7 @@ Module Contents
 
 
 
-   Generic enumeration.
-
-   Derive from this class to define new enumerations.
+   The processor type.
 
 
 .. py:function:: detect_processor_type_based_on_hw()

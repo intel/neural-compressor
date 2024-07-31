@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>neural_compressor.torch.algorithms.layer_wise.utils &mdash; Intel® Neural Compressor 2.6 documentation</title>
+  <title>neural_compressor.torch.algorithms.layer_wise.utils &mdash; Intel® Neural Compressor 3.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../../../_static/pygments.css" />
       <link rel="stylesheet" type="text/css" href="../../../../../../_static/css/theme.css" />
       <link rel="stylesheet" type="text/css" href="../../../../../../_static/graphviz.css" />
@@ -55,7 +55,6 @@
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/get_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/installation_guide.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/user_guide.html">User Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/examples_readme.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/api-doc/apis.html">APIs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/releases_info.html">Release</a></li>
@@ -91,6 +90,16 @@
   <section id="module-neural_compressor.torch.algorithms.layer_wise.utils">
 <span id="neural-compressor-torch-algorithms-layer-wise-utils"></span><h1>neural_compressor.torch.algorithms.layer_wise.utils<a class="headerlink" href="#module-neural_compressor.torch.algorithms.layer_wise.utils" title="Permalink to this heading"></a></h1>
 <p>Utils for layer wise quantization.</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.layer_wise.utils.QDQLayer" title="neural_compressor.torch.algorithms.layer_wise.utils.QDQLayer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QDQLayer</span></code></a></p></td>
+<td><p>Quantized and Dequantized Layer.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
 <section id="functions">
 <h2>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
@@ -125,11 +134,29 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.layer_wise.utils.load_tensor" title="neural_compressor.torch.algorithms.layer_wise.utils.load_tensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_tensor</span></code></a>(path[, tensor_name, prefix])</p></td>
 <td><p>Load a tensor from bin file with given tensor name.</p></td>
 </tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.layer_wise.utils.load_value" title="neural_compressor.torch.algorithms.layer_wise.utils.load_value"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_value</span></code></a>(model, param_name, path)</p></td>
+<td><p>Load the module value.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.layer_wise.utils.load_module" title="neural_compressor.torch.algorithms.layer_wise.utils.load_module"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_module</span></code></a>(model, module_name, path[, device])</p></td>
+<td><p>Load all named parameters of module.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.layer_wise.utils.register_weight_hooks" title="neural_compressor.torch.algorithms.layer_wise.utils.register_weight_hooks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_weight_hooks</span></code></a>(model, path[, device, ...])</p></td>
+<td><p>Register weight hooks for model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.layer_wise.utils.clean_module_weight" title="neural_compressor.torch.algorithms.layer_wise.utils.clean_module_weight"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clean_module_weight</span></code></a>(module)</p></td>
+<td><p>Clean module weight.</p></td>
+</tr>
 </tbody>
 </table>
 </section>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.layer_wise.utils.QDQLayer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.layer_wise.utils.</span></span><span class="sig-name descname"><span class="pre">QDQLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/layer_wise/utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.layer_wise.utils.QDQLayer" title="Permalink to this definition"></a></dt>
+<dd><p>Quantized and Dequantized Layer.</p>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.torch.algorithms.layer_wise.utils.get_module">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.layer_wise.utils.</span></span><span class="sig-name descname"><span class="pre">get_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/layer_wise/utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.layer_wise.utils.get_module" title="Permalink to this definition"></a></dt>
@@ -198,6 +225,72 @@
 <dd><p>Load a tensor from bin file with given tensor name.</p>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.layer_wise.utils.load_value">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.layer_wise.utils.</span></span><span class="sig-name descname"><span class="pre">load_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/layer_wise/utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.layer_wise.utils.load_value" title="Permalink to this definition"></a></dt>
+<dd><p>Load the module value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>torch.nn.module</em>) – torch model.</p></li>
+<li><p><strong>param_name</strong> (<em>str</em>) – module name.</p></li>
+<li><p><strong>path</strong> (<em>str</em>) – path to load state_dict per layer.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the module value.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.layer_wise.utils.load_module">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.layer_wise.utils.</span></span><span class="sig-name descname"><span class="pre">load_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/layer_wise/utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.layer_wise.utils.load_module" title="Permalink to this definition"></a></dt>
+<dd><p>Load all named parameters of module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>torch.nn.module</em>) – torch model.</p></li>
+<li><p><strong>module_name</strong> (<em>str</em>) – module name.</p></li>
+<li><p><strong>path</strong> (<em>str</em>) – path to load state_dict per layer.</p></li>
+<li><p><strong>device</strong> (<em>str</em><em>, </em><em>optional</em>) – module device. Defaults to “cpu”.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.layer_wise.utils.register_weight_hooks">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.layer_wise.utils.</span></span><span class="sig-name descname"><span class="pre">register_weight_hooks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clean_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saved_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/layer_wise/utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.layer_wise.utils.register_weight_hooks" title="Permalink to this definition"></a></dt>
+<dd><p>Register weight hooks for model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>torch.nn.module</em>) – torch model.</p></li>
+<li><p><strong>path</strong> (<em>str</em>) – path to load state_dict per layer.</p></li>
+<li><p><strong>device</strong> (<em>str</em><em>, </em><em>optional</em>) – module device. Defaults to “cpu”.</p></li>
+<li><p><strong>clean_weight</strong> (<em>bool</em><em>, </em><em>optional</em>) – to clean model weight. Defaults to True.</p></li>
+<li><p><strong>saved_path</strong> (<em>str</em><em>, </em><em>optional</em>) – path to save module weight. Defaults to None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>handlers.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.layer_wise.utils.clean_module_weight">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.layer_wise.utils.</span></span><span class="sig-name descname"><span class="pre">clean_module_weight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/layer_wise/utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.layer_wise.utils.clean_module_weight" title="Permalink to this definition"></a></dt>
+<dd><p>Clean module weight.</p>
+</dd></dl>
+
 </section>
 </section>
 
@@ -215,7 +308,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7ff51fa1a350> 
+   <jinja2.runtime.BlockReference object at 0x7f212747d480> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

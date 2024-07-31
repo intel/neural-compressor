@@ -1,25 +1,24 @@
-:orphan:
-
-:py:mod:`neural_compressor.torch.algorithms.weight_only.utility`
-================================================================
+neural_compressor.torch.algorithms.weight_only.utility
+======================================================
 
 .. py:module:: neural_compressor.torch.algorithms.weight_only.utility
 
+.. autoapi-nested-parse::
 
-Module Contents
----------------
+   Weight-Only utility.
+
+
 
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.torch.algorithms.weight_only.utility.GraphTrace
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
@@ -39,35 +38,13 @@ Functions
    neural_compressor.torch.algorithms.weight_only.utility.get_parent
    neural_compressor.torch.algorithms.weight_only.utility.get_module
    neural_compressor.torch.algorithms.weight_only.utility.get_block_prefix
-   neural_compressor.torch.algorithms.weight_only.utility.get_example_input
    neural_compressor.torch.algorithms.weight_only.utility.replace_forward
    neural_compressor.torch.algorithms.weight_only.utility.recover_forward
    neural_compressor.torch.algorithms.weight_only.utility.get_module_input_output
 
 
-
-Attributes
-~~~~~~~~~~
-
-.. autoapisummary::
-
-   neural_compressor.torch.algorithms.weight_only.utility.NF4
-   neural_compressor.torch.algorithms.weight_only.utility.FP4_BNB
-   neural_compressor.torch.algorithms.weight_only.utility.FP4_E2M1
-   neural_compressor.torch.algorithms.weight_only.utility.NF4_BIT
-   neural_compressor.torch.algorithms.weight_only.utility.FP4_BNB_BIT
-   neural_compressor.torch.algorithms.weight_only.utility.FP4_E2M1_BIT
-   neural_compressor.torch.algorithms.weight_only.utility.FLOAT_MAPPING
-   neural_compressor.torch.algorithms.weight_only.utility.INT_MAPPING
-
-
-
-
-
-
-
-
-
+Module Contents
+---------------
 
 .. py:function:: quantize_4bit(tensor, quantile=1.0, dtype='nf4', return_int=False, **kwargs)
 
@@ -207,7 +184,19 @@ Attributes
    :rtype: output
 
 
+.. py:function:: model_forward(model, dataloader, iters, device)
 
+   The model forward function.
+
+
+.. py:function:: forward_wrapper(model, input, device=torch.device('cpu'))
+
+   The forward wrapper.
+
+
+.. py:function:: move_input_to_device(input, device=torch.device('cpu'))
+
+   Move input to the spevific device.
 
 
 .. py:function:: set_module(model, key, new_module)
@@ -251,6 +240,10 @@ Attributes
    :rtype: absorb_to_layer
 
 
+.. py:function:: get_parent(node, all_parents=False)
+
+   Get parent of node.
+
 
 .. py:function:: get_module(model, key)
 
@@ -261,6 +254,10 @@ Attributes
    :param key: module name to be replaced
    :type key: str
 
+
+.. py:class:: GraphTrace
+
+   GraphTrace.
 
 
 .. py:function:: get_block_prefix(model)
@@ -273,16 +270,6 @@ Attributes
    :returns: block_list name in model
              block_num(int): number of block in block_list
    :rtype: block_prefix(str)
-
-
-.. py:function:: get_example_input(dataloader, i=1)
-
-   Get the example input.
-
-   :param dataloader: calibration dataset.
-   :type dataloader: object
-
-   :returns: example_inp (object).
 
 
 .. py:function:: replace_forward(model)

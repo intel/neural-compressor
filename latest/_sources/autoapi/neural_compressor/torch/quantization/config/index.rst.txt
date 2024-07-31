@@ -37,8 +37,10 @@ Functions
 
    neural_compressor.torch.quantization.config.get_default_rtn_config
    neural_compressor.torch.quantization.config.get_default_double_quant_config
+   neural_compressor.torch.quantization.config.get_default_gptq_config
    neural_compressor.torch.quantization.config.get_default_awq_config
    neural_compressor.torch.quantization.config.get_default_teq_config
+   neural_compressor.torch.quantization.config.get_default_AutoRound_config
    neural_compressor.torch.quantization.config.get_default_mx_config
    neural_compressor.torch.quantization.config.get_default_dynamic_config
    neural_compressor.torch.quantization.config.get_default_static_config
@@ -48,6 +50,7 @@ Functions
    neural_compressor.torch.quantization.config.get_default_fp8_config_set
    neural_compressor.torch.quantization.config.get_default_mixed_precision_config
    neural_compressor.torch.quantization.config.get_default_mixed_precision_config_set
+   neural_compressor.torch.quantization.config.get_all_registered_configs
    neural_compressor.torch.quantization.config.get_woq_tuning_config
 
 
@@ -83,7 +86,7 @@ Module Contents
                           Defaults to None.
    :type processor_type: Optional[Union[str, torch_utils.ProcessorType]], optional
 
-   :returns: _description_
+   :returns: RTNConfig
    :rtype: RTNConfig
 
 
@@ -106,6 +109,18 @@ Module Contents
 
    GPTQ: Accurate Post-Training Quantization for Generative Pre-trained Transformers.
    https://arxiv.org/abs/2210.17323
+
+
+.. py:function:: get_default_gptq_config(processor_type: Optional[Union[str, neural_compressor.torch.utils.ProcessorType]] = None) -> GPTQConfig
+
+   Get the default configuration of GPTQ.
+
+   :param processor_type: The user-specified processor type.
+                          Defaults to None.
+   :type processor_type: Optional[Union[str, torch_utils.ProcessorType]], optional
+
+   :returns: GPTQConfig
+   :rtype: GPTQConfig
 
 
 .. py:class:: AWQConfig(dtype: str = 'int', bits: int = 4, use_sym: bool = True, group_size: int = 32, group_dim: int = 1, use_full_range: bool = False, use_mse_search: bool = False, use_layer_wise: bool = False, model_path: str = '', use_double_quant: bool = False, double_quant_dtype: str = 'int', double_quant_bits: int = 8, double_quant_use_sym: bool = True, double_quant_group_size: int = 256, quant_lm_head: bool = False, use_auto_scale: bool = True, use_auto_clip: bool = True, folding: bool = False, white_list: Optional[List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST, absorb_layer_dict: dict = {})
@@ -151,6 +166,18 @@ Module Contents
    AUTOROUND: Optimize Weight Rounding via Signed Gradient Descent for the Quantization of LLMs.
    https://arxiv.org/abs/2309.05516
    code: https://github.com/intel/auto-round
+
+
+.. py:function:: get_default_AutoRound_config(processor_type: Optional[Union[str, neural_compressor.torch.utils.ProcessorType]] = None) -> RTNConfig
+
+   Get the default configuration of AutoRound.
+
+   :param processor_type: The user-specified processor type.
+                          Defaults to None.
+   :type processor_type: Optional[Union[str, torch_utils.ProcessorType]], optional
+
+   :returns: AutoRoundConfig
+   :rtype: AutoRoundConfig
 
 
 .. py:class:: MXQuantConfig(w_dtype: str = 'int8', act_dtype: str = 'int8', out_dtype: str = 'bfloat16', blocksize: int = 32, round_method: str = 'nearest', weight_only: bool = False, white_list: Optional[List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
@@ -267,6 +294,11 @@ Module Contents
    Generate the default mixed-precision config set.
 
    :returns: the default mixed-precision config.
+
+
+.. py:function:: get_all_registered_configs() -> Dict[str, neural_compressor.common.base_config.BaseConfig]
+
+   Get all registered configs.
 
 
 .. py:function:: get_woq_tuning_config() -> list

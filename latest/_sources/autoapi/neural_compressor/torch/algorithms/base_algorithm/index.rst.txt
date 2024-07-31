@@ -1,26 +1,26 @@
-:orphan:
-
-:py:mod:`neural_compressor.torch.algorithms.base_algorithm`
-===========================================================
+neural_compressor.torch.algorithms.base_algorithm
+=================================================
 
 .. py:module:: neural_compressor.torch.algorithms.base_algorithm
 
+.. autoapi-nested-parse::
 
-Module Contents
----------------
+   Intel Neural Compressor PyTorch Quantizer API.
+
+
 
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.torch.algorithms.base_algorithm.Quantizer
 
 
-
+Module Contents
+---------------
 
 .. py:class:: Quantizer(quant_config: Optional[Any] = None)
-
 
 
 

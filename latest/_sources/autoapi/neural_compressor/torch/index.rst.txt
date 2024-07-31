@@ -15,7 +15,9 @@ Subpackages
 .. toctree::
    :maxdepth: 1
 
+   /autoapi/neural_compressor/torch/algorithms/index
    /autoapi/neural_compressor/torch/export/index
    /autoapi/neural_compressor/torch/quantization/index
+   /autoapi/neural_compressor/torch/utils/index
 
 

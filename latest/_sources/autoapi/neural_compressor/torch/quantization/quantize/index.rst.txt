@@ -14,6 +14,7 @@ Functions
 
 .. autoapisummary::
 
+   neural_compressor.torch.quantization.quantize.need_apply
    neural_compressor.torch.quantization.quantize.quantize
    neural_compressor.torch.quantization.quantize.prepare
    neural_compressor.torch.quantization.quantize.convert
@@ -21,6 +22,19 @@ Functions
 
 Module Contents
 ---------------
+
+.. py:function:: need_apply(configs_mapping: Dict[Tuple[str, callable], neural_compressor.common.base_config.BaseConfig], algo_name)
+
+   Check whether to apply this algorithm according to configs_mapping.
+
+   :param configs_mapping: configs mapping
+   :type configs_mapping: Dict[Tuple[str, callable], BaseConfig]
+   :param algo_name: algo name
+   :type algo_name: str
+
+   :returns: True or False.
+   :rtype: Bool
+
 
 .. py:function:: quantize(model: torch.nn.Module, quant_config: neural_compressor.common.base_config.BaseConfig, run_fn: Callable = None, run_args: Any = None, inplace: bool = True, example_inputs: Any = None) -> torch.nn.Module
 

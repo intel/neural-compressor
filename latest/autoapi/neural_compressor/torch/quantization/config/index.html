@@ -149,11 +149,17 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.quantization.config.get_default_double_quant_config" title="neural_compressor.torch.quantization.config.get_default_double_quant_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_default_double_quant_config</span></code></a>([type])</p></td>
 <td><p>Get the default configuration of double quant.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.quantization.config.get_default_awq_config" title="neural_compressor.torch.quantization.config.get_default_awq_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_default_awq_config</span></code></a>(→ AWQConfig)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.quantization.config.get_default_gptq_config" title="neural_compressor.torch.quantization.config.get_default_gptq_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_default_gptq_config</span></code></a>(→ GPTQConfig)</p></td>
+<td><p>Get the default configuration of GPTQ.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.quantization.config.get_default_awq_config" title="neural_compressor.torch.quantization.config.get_default_awq_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_default_awq_config</span></code></a>(→ AWQConfig)</p></td>
 <td><p>Generate the default awq config.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.quantization.config.get_default_teq_config" title="neural_compressor.torch.quantization.config.get_default_teq_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_default_teq_config</span></code></a>(→ TEQConfig)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.quantization.config.get_default_teq_config" title="neural_compressor.torch.quantization.config.get_default_teq_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_default_teq_config</span></code></a>(→ TEQConfig)</p></td>
 <td><p>Generate the default teq config.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.quantization.config.get_default_AutoRound_config" title="neural_compressor.torch.quantization.config.get_default_AutoRound_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_default_AutoRound_config</span></code></a>(→ RTNConfig)</p></td>
+<td><p>Get the default configuration of AutoRound.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.quantization.config.get_default_mx_config" title="neural_compressor.torch.quantization.config.get_default_mx_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_default_mx_config</span></code></a>(→ MXQuantConfig)</p></td>
 <td><p>Generate the default mx config.</p></td>
@@ -182,7 +188,10 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.quantization.config.get_default_mixed_precision_config_set" title="neural_compressor.torch.quantization.config.get_default_mixed_precision_config_set"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_default_mixed_precision_config_set</span></code></a>(...)</p></td>
 <td><p>Generate the default mixed-precision config set.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.quantization.config.get_woq_tuning_config" title="neural_compressor.torch.quantization.config.get_woq_tuning_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_woq_tuning_config</span></code></a>(→ list)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.quantization.config.get_all_registered_configs" title="neural_compressor.torch.quantization.config.get_all_registered_configs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_all_registered_configs</span></code></a>(→ Dict[str, ...)</p></td>
+<td><p>Get all registered configs.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.quantization.config.get_woq_tuning_config" title="neural_compressor.torch.quantization.config.get_woq_tuning_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_woq_tuning_config</span></code></a>(→ list)</p></td>
 <td><p>Generate the config set for WOQ tuning.</p></td>
 </tr>
 </tbody>
@@ -218,7 +227,7 @@
 Defaults to None.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>_description_</p>
+<dd class="field-even"><p>RTNConfig</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#neural_compressor.torch.quantization.config.RTNConfig" title="neural_compressor.torch.quantization.config.RTNConfig">RTNConfig</a></p>
@@ -249,6 +258,24 @@ Defaults to None.</p>
 <dd><p>Config class for GPTQ.</p>
 <p>GPTQ: Accurate Post-Training Quantization for Generative Pre-trained Transformers.
 <a class="reference external" href="https://arxiv.org/abs/2210.17323">https://arxiv.org/abs/2210.17323</a></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.quantization.config.get_default_gptq_config">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.quantization.config.</span></span><span class="sig-name descname"><span class="pre">get_default_gptq_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">processor_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">neural_compressor.torch.utils.ProcessorType</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#neural_compressor.torch.quantization.config.GPTQConfig" title="neural_compressor.torch.quantization.config.GPTQConfig"><span class="pre">GPTQConfig</span></a></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/quantization/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.quantization.config.get_default_gptq_config" title="Permalink to this definition"></a></dt>
+<dd><p>Get the default configuration of GPTQ.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>processor_type</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>str</em><em>, </em><em>torch_utils.ProcessorType</em><em>]</em><em>]</em><em>, </em><em>optional</em>) – The user-specified processor type.
+Defaults to None.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>GPTQConfig</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#neural_compressor.torch.quantization.config.GPTQConfig" title="neural_compressor.torch.quantization.config.GPTQConfig">GPTQConfig</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py class">
@@ -296,6 +323,24 @@ Defaults to None.</p>
 <p>AUTOROUND: Optimize Weight Rounding via Signed Gradient Descent for the Quantization of LLMs.
 <a class="reference external" href="https://arxiv.org/abs/2309.05516">https://arxiv.org/abs/2309.05516</a>
 code: <a class="reference external" href="https://github.com/intel/auto-round">https://github.com/intel/auto-round</a></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.quantization.config.get_default_AutoRound_config">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.quantization.config.</span></span><span class="sig-name descname"><span class="pre">get_default_AutoRound_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">processor_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">neural_compressor.torch.utils.ProcessorType</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#neural_compressor.torch.quantization.config.RTNConfig" title="neural_compressor.torch.quantization.config.RTNConfig"><span class="pre">RTNConfig</span></a></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/quantization/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.quantization.config.get_default_AutoRound_config" title="Permalink to this definition"></a></dt>
+<dd><p>Get the default configuration of AutoRound.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>processor_type</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>str</em><em>, </em><em>torch_utils.ProcessorType</em><em>]</em><em>]</em><em>, </em><em>optional</em>) – The user-specified processor type.
+Defaults to None.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>AutoRoundConfig</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#neural_compressor.torch.quantization.config.AutoRoundConfig" title="neural_compressor.torch.quantization.config.AutoRoundConfig">AutoRoundConfig</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py class">
@@ -443,6 +488,12 @@ and the code: <a class="reference external" href="https://github.com/mobiusml/hq
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.quantization.config.get_all_registered_configs">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.quantization.config.</span></span><span class="sig-name descname"><span class="pre">get_all_registered_configs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="../../../common/base_config/index.html#neural_compressor.common.base_config.BaseConfig" title="neural_compressor.common.base_config.BaseConfig"><span class="pre">neural_compressor.common.base_config.BaseConfig</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/quantization/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.quantization.config.get_all_registered_configs" title="Permalink to this definition"></a></dt>
+<dd><p>Get all registered configs.</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.torch.quantization.config.get_woq_tuning_config">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.quantization.config.</span></span><span class="sig-name descname"><span class="pre">get_woq_tuning_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/quantization/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.quantization.config.get_woq_tuning_config" title="Permalink to this definition"></a></dt>
 <dd><p>Generate the config set for WOQ tuning.</p>
@@ -470,7 +521,7 @@ and the code: <a class="reference external" href="https://github.com/mobiusml/hq
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fc5755d0100> 
+   <jinja2.runtime.BlockReference object at 0x7f21273cb070> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

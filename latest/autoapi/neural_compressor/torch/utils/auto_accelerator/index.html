@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>neural_compressor.torch.utils.auto_accelerator &mdash; Intel® Neural Compressor 2.6 documentation</title>
+  <title>neural_compressor.torch.utils.auto_accelerator &mdash; Intel® Neural Compressor 3.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css" />
       <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css" />
       <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css" />
@@ -55,7 +55,6 @@
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/get_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/installation_guide.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/user_guide.html">User Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/examples_readme.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/api-doc/apis.html">APIs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/releases_info.html">Release</a></li>
@@ -78,7 +77,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.torch.utils.auto_accelerator</span></code></li>
+      <li class="breadcrumb-item active">neural_compressor.torch.utils.auto_accelerator</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../../../../../_sources/autoapi/neural_compressor/torch/utils/auto_accelerator/index.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -89,40 +88,54 @@
            <div itemprop="articleBody">
              
   <section id="module-neural_compressor.torch.utils.auto_accelerator">
-<span id="neural-compressor-torch-utils-auto-accelerator"></span><h1><a class="reference internal" href="#module-neural_compressor.torch.utils.auto_accelerator" title="neural_compressor.torch.utils.auto_accelerator"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.torch.utils.auto_accelerator</span></code></a><a class="headerlink" href="#module-neural_compressor.torch.utils.auto_accelerator" title="Permalink to this heading"></a></h1>
-<section id="module-contents">
-<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<span id="neural-compressor-torch-utils-auto-accelerator"></span><h1>neural_compressor.torch.utils.auto_accelerator<a class="headerlink" href="#module-neural_compressor.torch.utils.auto_accelerator" title="Permalink to this heading"></a></h1>
+<p>Auto Accelerator Module.</p>
 <section id="classes">
-<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
+<h2>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.auto_accelerator.Auto_Accelerator" title="neural_compressor.torch.utils.auto_accelerator.Auto_Accelerator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Auto_Accelerator</span></code></a></p></td>
-<td><p>Helper class that provides a standard way to create an ABC using</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.auto_accelerator.AcceleratorRegistry" title="neural_compressor.torch.utils.auto_accelerator.AcceleratorRegistry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AcceleratorRegistry</span></code></a></p></td>
+<td><p>Accelerator Registry.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.auto_accelerator.CPU_Accelerator" title="neural_compressor.torch.utils.auto_accelerator.CPU_Accelerator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CPU_Accelerator</span></code></a></p></td>
-<td><p>Helper class that provides a standard way to create an ABC using</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.auto_accelerator.Auto_Accelerator" title="neural_compressor.torch.utils.auto_accelerator.Auto_Accelerator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Auto_Accelerator</span></code></a></p></td>
+<td><p>Auto Accelerator Base class.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.auto_accelerator.CUDA_Accelerator" title="neural_compressor.torch.utils.auto_accelerator.CUDA_Accelerator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CUDA_Accelerator</span></code></a></p></td>
-<td><p>Helper class that provides a standard way to create an ABC using</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.auto_accelerator.CPU_Accelerator" title="neural_compressor.torch.utils.auto_accelerator.CPU_Accelerator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CPU_Accelerator</span></code></a></p></td>
+<td><p>CPU Accelerator.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.auto_accelerator.XPU_Accelerator" title="neural_compressor.torch.utils.auto_accelerator.XPU_Accelerator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">XPU_Accelerator</span></code></a></p></td>
-<td><p>Helper class that provides a standard way to create an ABC using</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.auto_accelerator.CUDA_Accelerator" title="neural_compressor.torch.utils.auto_accelerator.CUDA_Accelerator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CUDA_Accelerator</span></code></a></p></td>
+<td><p>CUDA Accelerator.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.auto_accelerator.HPU_Accelerator" title="neural_compressor.torch.utils.auto_accelerator.HPU_Accelerator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">HPU_Accelerator</span></code></a></p></td>
-<td><p>Helper class that provides a standard way to create an ABC using</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.auto_accelerator.XPU_Accelerator" title="neural_compressor.torch.utils.auto_accelerator.XPU_Accelerator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">XPU_Accelerator</span></code></a></p></td>
+<td><p>XPU Accelerator.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.auto_accelerator.HPU_Accelerator" title="neural_compressor.torch.utils.auto_accelerator.HPU_Accelerator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">HPU_Accelerator</span></code></a></p></td>
+<td><p>HPU Accelerator.</p></td>
 </tr>
 </tbody>
 </table>
 </section>
 <section id="functions">
-<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
+<h2>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.auto_accelerator.register_accelerator" title="neural_compressor.torch.utils.auto_accelerator.register_accelerator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_accelerator</span></code></a>(→ Callable[Ellipsis, Any])</p></td>
 <td><p>Register new accelerator.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.auto_accelerator.auto_detect_accelerator" title="neural_compressor.torch.utils.auto_accelerator.auto_detect_accelerator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">auto_detect_accelerator</span></code></a>(→ Auto_Accelerator)</p></td>
+<td><p>Automatically detects and selects the appropriate accelerator.</p></td>
+</tr>
 </tbody>
 </table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.auto_accelerator.AcceleratorRegistry">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.auto_accelerator.</span></span><span class="sig-name descname"><span class="pre">AcceleratorRegistry</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/utils/auto_accelerator.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.auto_accelerator.AcceleratorRegistry" title="Permalink to this definition"></a></dt>
+<dd><p>Accelerator Registry.</p>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.torch.utils.auto_accelerator.register_accelerator">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.auto_accelerator.</span></span><span class="sig-name descname"><span class="pre">register_accelerator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">priority</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="pre">Ellipsis</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/utils/auto_accelerator.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.auto_accelerator.register_accelerator" title="Permalink to this definition"></a></dt>
@@ -148,39 +161,43 @@ class CUDA_Accelerator:</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.torch.utils.auto_accelerator.Auto_Accelerator">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.auto_accelerator.</span></span><span class="sig-name descname"><span class="pre">Auto_Accelerator</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/utils/auto_accelerator.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.auto_accelerator.Auto_Accelerator" title="Permalink to this definition"></a></dt>
-<dd><p>Helper class that provides a standard way to create an ABC using
-inheritance.</p>
+<dd><p>Auto Accelerator Base class.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.torch.utils.auto_accelerator.CPU_Accelerator">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.auto_accelerator.</span></span><span class="sig-name descname"><span class="pre">CPU_Accelerator</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/utils/auto_accelerator.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.auto_accelerator.CPU_Accelerator" title="Permalink to this definition"></a></dt>
-<dd><p>Helper class that provides a standard way to create an ABC using
-inheritance.</p>
+<dd><p>CPU Accelerator.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.torch.utils.auto_accelerator.CUDA_Accelerator">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.auto_accelerator.</span></span><span class="sig-name descname"><span class="pre">CUDA_Accelerator</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/utils/auto_accelerator.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.auto_accelerator.CUDA_Accelerator" title="Permalink to this definition"></a></dt>
-<dd><p>Helper class that provides a standard way to create an ABC using
-inheritance.</p>
+<dd><p>CUDA Accelerator.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.torch.utils.auto_accelerator.XPU_Accelerator">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.auto_accelerator.</span></span><span class="sig-name descname"><span class="pre">XPU_Accelerator</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/utils/auto_accelerator.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.auto_accelerator.XPU_Accelerator" title="Permalink to this definition"></a></dt>
-<dd><p>Helper class that provides a standard way to create an ABC using
-inheritance.</p>
+<dd><p>XPU Accelerator.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.torch.utils.auto_accelerator.HPU_Accelerator">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.auto_accelerator.</span></span><span class="sig-name descname"><span class="pre">HPU_Accelerator</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/utils/auto_accelerator.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.auto_accelerator.HPU_Accelerator" title="Permalink to this definition"></a></dt>
-<dd><p>Helper class that provides a standard way to create an ABC using
-inheritance.</p>
+<dd><p>HPU Accelerator.</p>
 </dd></dl>
 
-</section>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.auto_accelerator.auto_detect_accelerator">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.auto_accelerator.</span></span><span class="sig-name descname"><span class="pre">auto_detect_accelerator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#neural_compressor.torch.utils.auto_accelerator.Auto_Accelerator" title="neural_compressor.torch.utils.auto_accelerator.Auto_Accelerator"><span class="pre">Auto_Accelerator</span></a></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/utils/auto_accelerator.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.auto_accelerator.auto_detect_accelerator" title="Permalink to this definition"></a></dt>
+<dd><p>Automatically detects and selects the appropriate accelerator.</p>
+<p>Force use the cpu on node has both cpu and gpu: <cite>FORCE_DEVICE=cpu</cite> python main.py …
+The <cite>FORCE_DEVICE</cite> is case insensitive.
+The environment variable <cite>FORCE_DEVICE</cite> has higher priority than the <cite>device_name</cite>.
+TODO: refine the docs and logic later</p>
+</dd></dl>
+
 </section>
 </section>
 
@@ -198,7 +215,7 @@ inheritance.</p>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fc376f30790> 
+   <jinja2.runtime.BlockReference object at 0x7f21275bbbb0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

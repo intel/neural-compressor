@@ -1,27 +1,35 @@
-:orphan:
-
-:py:mod:`neural_compressor.torch.utils.utility`
-===============================================
+neural_compressor.torch.utils.utility
+=====================================
 
 .. py:module:: neural_compressor.torch.utils.utility
 
+.. autoapi-nested-parse::
 
-Module Contents
----------------
+   Intel Neural Compressor PyTorch utilities.
+
 
 
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
    neural_compressor.torch.utils.utility.register_algo
    neural_compressor.torch.utils.utility.fetch_module
    neural_compressor.torch.utils.utility.set_module
+   neural_compressor.torch.utils.utility.get_model_info
+   neural_compressor.torch.utils.utility.get_double_quant_config_dict
    neural_compressor.torch.utils.utility.get_quantizer
    neural_compressor.torch.utils.utility.postprocess_model
+   neural_compressor.torch.utils.utility.dump_model_op_stats
+   neural_compressor.torch.utils.utility.get_model_device
+   neural_compressor.torch.utils.utility.get_processor_type_from_user_config
+   neural_compressor.torch.utils.utility.dowload_hf_model
+   neural_compressor.torch.utils.utility.load_empty_model
 
 
+Module Contents
+---------------
 
 .. py:function:: register_algo(name)
 
@@ -65,6 +73,19 @@ Functions
    :returns: module (object).
 
 
+.. py:function:: get_model_info(model: torch.nn.Module, white_module_list: List[Callable]) -> List[Tuple[str, str]]
+
+   Get model info according to white_module_list.
+
+
+.. py:function:: get_double_quant_config_dict(double_quant_type='BNB_NF4')
+
+   Query config dict of double_quant according to double_quant_type.
+
+   :param double_quant_type: double_quant type. Defaults to "BNB_NF4".
+   :type double_quant_type: str, optional
+
+
 .. py:function:: get_quantizer(model, quantizer_cls, quant_config=None, *args, **kwargs)
 
    Get the quantizer.
@@ -97,5 +118,52 @@ Functions
    :type mode: Mode
    :param quantizer: quantizer object.
    :type quantizer: Quantizer
+
+
+.. py:function:: dump_model_op_stats(mode, tune_cfg)
+
+   Dump quantizable ops stats of model to user.
+
+   :param mode: quantization mode.
+   :type mode: object
+   :param tune_cfg: quantization config
+   :type tune_cfg: dict
+
+
+.. py:function:: get_model_device(model: torch.nn.Module)
+
+   Get the device.
+
+   :param model: the input model.
+   :type model: torch.nn.Module
+
+   :returns: a string.
+   :rtype: device (str)
+
+
+.. py:function:: get_processor_type_from_user_config(user_processor_type: Optional[Union[str, neural_compressor.common.utils.ProcessorType]] = None)
+
+   Get the processor type.
+
+   Get the processor type based on the user configuration or automatically detect it based on the hardware.
+
+   :param user_processor_type: The user-specified processor type. Defaults to None.
+   :type user_processor_type: Optional[Union[str, ProcessorType]]
+
+   :returns: The detected or user-specified processor type.
+   :rtype: ProcessorType
+
+   :raises AssertionError: If the user-specified processor type is not supported.
+   :raises NotImplementedError: If the processor type is not recognized.
+
+
+.. py:function:: dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None)
+
+   Download hugging face model from hf hub.
+
+
+.. py:function:: load_empty_model(pretrained_model_name_or_path, cls=None, **kwargs)
+
+   Load a empty model.
 
 

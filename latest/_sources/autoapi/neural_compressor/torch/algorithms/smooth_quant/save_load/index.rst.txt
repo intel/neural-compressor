@@ -1,23 +1,24 @@
-:orphan:
-
-:py:mod:`neural_compressor.torch.algorithms.smooth_quant.save_load`
-===================================================================
+neural_compressor.torch.algorithms.smooth_quant.save_load
+=========================================================
 
 .. py:module:: neural_compressor.torch.algorithms.smooth_quant.save_load
 
+.. autoapi-nested-parse::
 
-Module Contents
----------------
+   Save and load the quantized model.
+
 
 
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
    neural_compressor.torch.algorithms.smooth_quant.save_load.recover_model_from_json
 
 
+Module Contents
+---------------
 
 .. py:function:: recover_model_from_json(model, json_file_path, example_inputs)
 
@@ -31,6 +32,6 @@ Functions
    :type example_inputs: tuple or torch.Tensor or dict
 
    :returns: quantized model
-   :rtype: (object)
+   :rtype: model (object)
 
 

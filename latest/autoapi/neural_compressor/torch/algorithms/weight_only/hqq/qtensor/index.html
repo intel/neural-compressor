@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>neural_compressor.torch.algorithms.weight_only.hqq.qtensor &mdash; Intel® Neural Compressor 2.6 documentation</title>
+  <title>neural_compressor.torch.algorithms.weight_only.hqq.qtensor &mdash; Intel® Neural Compressor 3.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../../../../_static/pygments.css" />
       <link rel="stylesheet" type="text/css" href="../../../../../../../_static/css/theme.css" />
       <link rel="stylesheet" type="text/css" href="../../../../../../../_static/graphviz.css" />
@@ -55,7 +55,6 @@
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/get_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/installation_guide.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/user_guide.html">User Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/examples_readme.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/api-doc/apis.html">APIs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/releases_info.html">Release</a></li>
@@ -78,7 +77,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.torch.algorithms.weight_only.hqq.qtensor</span></code></li>
+      <li class="breadcrumb-item active">neural_compressor.torch.algorithms.weight_only.hqq.qtensor</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../../../../../../../_sources/autoapi/neural_compressor/torch/algorithms/weight_only/hqq/qtensor/index.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -89,22 +88,102 @@
            <div itemprop="articleBody">
              
   <section id="module-neural_compressor.torch.algorithms.weight_only.hqq.qtensor">
-<span id="neural-compressor-torch-algorithms-weight-only-hqq-qtensor"></span><h1><a class="reference internal" href="#module-neural_compressor.torch.algorithms.weight_only.hqq.qtensor" title="neural_compressor.torch.algorithms.weight_only.hqq.qtensor"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.torch.algorithms.weight_only.hqq.qtensor</span></code></a><a class="headerlink" href="#module-neural_compressor.torch.algorithms.weight_only.hqq.qtensor" title="Permalink to this heading"></a></h1>
-<section id="module-contents">
-<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<span id="neural-compressor-torch-algorithms-weight-only-hqq-qtensor"></span><h1>neural_compressor.torch.algorithms.weight_only.hqq.qtensor<a class="headerlink" href="#module-neural_compressor.torch.algorithms.weight_only.hqq.qtensor" title="Permalink to this heading"></a></h1>
+<p>QTensor for HQQ.</p>
 <section id="classes">
-<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
+<h2>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">QTensorMetaInfo</span></code></p></td>
-<td><p></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.hqq.qtensor.QTensorMetaInfo" title="neural_compressor.torch.algorithms.weight_only.hqq.qtensor.QTensorMetaInfo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QTensorMetaInfo</span></code></a></p></td>
+<td><p>Represents the meta information of a quantized tensor.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">QTensor</span></code></p></td>
-<td><p></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.hqq.qtensor.QTensor" title="neural_compressor.torch.algorithms.weight_only.hqq.qtensor.QTensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QTensor</span></code></a></p></td>
+<td><p>Represents a quantized tensor.</p></td>
 </tr>
 </tbody>
 </table>
 </section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.hqq.qtensor.QTensorMetaInfo">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.hqq.qtensor.</span></span><span class="sig-name descname"><span class="pre">QTensorMetaInfo</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/weight_only/hqq/qtensor.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.hqq.qtensor.QTensorMetaInfo" title="Permalink to this definition"></a></dt>
+<dd><p>Represents the meta information of a quantized tensor.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.hqq.qtensor.QTensorMetaInfo.nbits">
+<span class="sig-name descname"><span class="pre">nbits</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/weight_only/hqq/qtensor.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.hqq.qtensor.QTensorMetaInfo.nbits" title="Permalink to this definition"></a></dt>
+<dd><p>The number of bits used for quantization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.hqq.qtensor.QTensorMetaInfo.group_size">
+<span class="sig-name descname"><span class="pre">group_size</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/weight_only/hqq/qtensor.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.hqq.qtensor.QTensorMetaInfo.group_size" title="Permalink to this definition"></a></dt>
+<dd><p>The size of the quantization group.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.hqq.qtensor.QTensorMetaInfo.shape">
+<span class="sig-name descname"><span class="pre">shape</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/weight_only/hqq/qtensor.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.hqq.qtensor.QTensorMetaInfo.shape" title="Permalink to this definition"></a></dt>
+<dd><p>The shape of the tensor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.hqq.qtensor.QTensorMetaInfo.axis">
+<span class="sig-name descname"><span class="pre">axis</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/weight_only/hqq/qtensor.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.hqq.qtensor.QTensorMetaInfo.axis" title="Permalink to this definition"></a></dt>
+<dd><p>The axis along which the tensor is quantized.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.hqq.qtensor.QTensorMetaInfo.packing">
+<span class="sig-name descname"><span class="pre">packing</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/weight_only/hqq/qtensor.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.hqq.qtensor.QTensorMetaInfo.packing" title="Permalink to this definition"></a></dt>
+<dd><p>Indicates whether the tensor is packed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.hqq.qtensor.QTensor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.hqq.qtensor.</span></span><span class="sig-name descname"><span class="pre">QTensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">val</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zero</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meta_info</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/weight_only/hqq/qtensor.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.hqq.qtensor.QTensor" title="Permalink to this definition"></a></dt>
+<dd><p>Represents a quantized tensor.</p>
+<p class="rubric">Example</p>
+<p>val: torch.Tensor
+scale:</p>
+<blockquote>
+<div><p>val: torch.Tensor
+scale: torch.Tensor
+zero: torch.Tensor</p>
+</div></blockquote>
+<dl class="simple">
+<dt>zero:</dt><dd><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 
@@ -122,7 +201,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fc37793af20> 
+   <jinja2.runtime.BlockReference object at 0x7f212729c8b0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

@@ -1,0 +1,29 @@
+neural_compressor.torch.algorithms.mixed_precision.module_wrappers
+==================================================================
+
+.. py:module:: neural_compressor.torch.algorithms.mixed_precision.module_wrappers
+
+.. autoapi-nested-parse::
+
+   Half-precision Wrapper for Torch Modules.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.mixed_precision.module_wrappers.HalfPrecisionModuleWrapper
+
+
+Module Contents
+---------------
+
+.. py:class:: HalfPrecisionModuleWrapper(module, device='cpu', dtype=torch.float16)
+
+
+
+   FP16 or BF16 Module Wrapper Class.
+
+

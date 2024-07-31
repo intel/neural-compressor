@@ -1,19 +1,20 @@
-:orphan:
-
-:py:mod:`neural_compressor.torch.utils.auto_accelerator`
-========================================================
+neural_compressor.torch.utils.auto_accelerator
+==============================================
 
 .. py:module:: neural_compressor.torch.utils.auto_accelerator
 
+.. autoapi-nested-parse::
 
-Module Contents
----------------
+   Auto Accelerator Module.
+
+
 
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
+   neural_compressor.torch.utils.auto_accelerator.AcceleratorRegistry
    neural_compressor.torch.utils.auto_accelerator.Auto_Accelerator
    neural_compressor.torch.utils.auto_accelerator.CPU_Accelerator
    neural_compressor.torch.utils.auto_accelerator.CUDA_Accelerator
@@ -21,14 +22,21 @@ Classes
    neural_compressor.torch.utils.auto_accelerator.HPU_Accelerator
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
    neural_compressor.torch.utils.auto_accelerator.register_accelerator
+   neural_compressor.torch.utils.auto_accelerator.auto_detect_accelerator
 
+
+Module Contents
+---------------
+
+.. py:class:: AcceleratorRegistry
+
+   Accelerator Registry.
 
 
 .. py:function:: register_accelerator(name: str, priority: float = 0) -> Callable[Ellipsis, Any]
@@ -48,44 +56,44 @@ Functions
 
 
 
-
-   Helper class that provides a standard way to create an ABC using
-   inheritance.
+   Auto Accelerator Base class.
 
 
 .. py:class:: CPU_Accelerator
 
 
 
-
-   Helper class that provides a standard way to create an ABC using
-   inheritance.
+   CPU Accelerator.
 
 
 .. py:class:: CUDA_Accelerator
 
 
 
-
-   Helper class that provides a standard way to create an ABC using
-   inheritance.
+   CUDA Accelerator.
 
 
 .. py:class:: XPU_Accelerator
 
 
 
-
-   Helper class that provides a standard way to create an ABC using
-   inheritance.
+   XPU Accelerator.
 
 
 .. py:class:: HPU_Accelerator
 
 
 
+   HPU Accelerator.
 
-   Helper class that provides a standard way to create an ABC using
-   inheritance.
+
+.. py:function:: auto_detect_accelerator(device_name='auto') -> Auto_Accelerator
+
+   Automatically detects and selects the appropriate accelerator.
+
+   Force use the cpu on node has both cpu and gpu: `FORCE_DEVICE=cpu` python main.py ...
+   The `FORCE_DEVICE` is case insensitive.
+   The environment variable `FORCE_DEVICE` has higher priority than the `device_name`.
+   TODO: refine the docs and logic later
 
 

@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>neural_compressor.torch.algorithms.mx_quant.utils &mdash; Intel® Neural Compressor 2.6 documentation</title>
+  <title>neural_compressor.torch.algorithms.mx_quant.utils &mdash; Intel® Neural Compressor 3.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../../../_static/pygments.css" />
       <link rel="stylesheet" type="text/css" href="../../../../../../_static/css/theme.css" />
       <link rel="stylesheet" type="text/css" href="../../../../../../_static/graphviz.css" />
@@ -55,7 +55,6 @@
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/get_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/installation_guide.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/user_guide.html">User Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/examples_readme.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/api-doc/apis.html">APIs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/releases_info.html">Release</a></li>
@@ -78,7 +77,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.torch.algorithms.mx_quant.utils</span></code></li>
+      <li class="breadcrumb-item active">neural_compressor.torch.algorithms.mx_quant.utils</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../../../../../../_sources/autoapi/neural_compressor/torch/algorithms/mx_quant/utils/index.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -89,58 +88,74 @@
            <div itemprop="articleBody">
              
   <section id="module-neural_compressor.torch.algorithms.mx_quant.utils">
-<span id="neural-compressor-torch-algorithms-mx-quant-utils"></span><h1><a class="reference internal" href="#module-neural_compressor.torch.algorithms.mx_quant.utils" title="neural_compressor.torch.algorithms.mx_quant.utils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.torch.algorithms.mx_quant.utils</span></code></a><a class="headerlink" href="#module-neural_compressor.torch.algorithms.mx_quant.utils" title="Permalink to this heading"></a></h1>
-<section id="module-contents">
-<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<span id="neural-compressor-torch-algorithms-mx-quant-utils"></span><h1>neural_compressor.torch.algorithms.mx_quant.utils<a class="headerlink" href="#module-neural_compressor.torch.algorithms.mx_quant.utils" title="Permalink to this heading"></a></h1>
+<p>MX quantization utils.</p>
 <section id="classes">
-<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h3>
+<h2>Classes<a class="headerlink" href="#classes" title="Permalink to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.mx_quant.utils.ElemFormat" title="neural_compressor.torch.algorithms.mx_quant.utils.ElemFormat"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ElemFormat</span></code></a></p></td>
-<td><p>Generic enumeration.</p></td>
+<td><p>Element format.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.mx_quant.utils.RoundingMode" title="neural_compressor.torch.algorithms.mx_quant.utils.RoundingMode"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RoundingMode</span></code></a></p></td>
-<td><p>Enum where members are also (and must be) ints</p></td>
+<td><p>Rounding mode.</p></td>
 </tr>
 </tbody>
 </table>
 </section>
 <section id="functions">
-<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h3>
+<h2>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.mx_quant.utils.quantize_elemwise_op" title="neural_compressor.torch.algorithms.mx_quant.utils.quantize_elemwise_op"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quantize_elemwise_op</span></code></a>(A, mx_specs)</p></td>
-<td><p>A function used for element-wise quantization with mx_specs</p></td>
+<td><p>A function used for element-wise quantization with mx_specs.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.mx_quant.utils.quantize_mx_op" title="neural_compressor.torch.algorithms.mx_quant.utils.quantize_mx_op"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quantize_mx_op</span></code></a>(A, elem_format, round, block_size[, ...])</p></td>
+<td><p>Quantize tensor to MX data type.</p></td>
 </tr>
 </tbody>
 </table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.torch.algorithms.mx_quant.utils.ElemFormat">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.mx_quant.utils.</span></span><span class="sig-name descname"><span class="pre">ElemFormat</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/mx_quant/utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.mx_quant.utils.ElemFormat" title="Permalink to this definition"></a></dt>
-<dd><p>Generic enumeration.</p>
-<p>Derive from this class to define new enumerations.</p>
+<dd><p>Element format.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.torch.algorithms.mx_quant.utils.RoundingMode">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.mx_quant.utils.</span></span><span class="sig-name descname"><span class="pre">RoundingMode</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/mx_quant/utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.mx_quant.utils.RoundingMode" title="Permalink to this definition"></a></dt>
-<dd><p>Enum where members are also (and must be) ints</p>
+<dd><p>Rounding mode.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.torch.algorithms.mx_quant.utils.quantize_elemwise_op">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.mx_quant.utils.</span></span><span class="sig-name descname"><span class="pre">quantize_elemwise_op</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mx_specs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/mx_quant/utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.mx_quant.utils.quantize_elemwise_op" title="Permalink to this definition"></a></dt>
-<dd><p>A function used for element-wise quantization with mx_specs
-:param A          {PyTorch tensor} – a tensor that needs to be quantized:
-:param mx_specs {dictionary}     – dictionary to specify mx_specs:</p>
+<dd><p>A function used for element-wise quantization with mx_specs.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>quantized value {PyTorch tensor} – a tensor that has been quantized</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>A</strong> (<em>torch.Tensor</em>) – a tensor that needs to be quantized</p></li>
+<li><p><strong>mx_specs</strong> (<em>dict</em>) – dictionary to specify mx_specs</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tensor that has been quantized</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
 </dd></dl>
 
-</section>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.mx_quant.utils.quantize_mx_op">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.mx_quant.utils.</span></span><span class="sig-name descname"><span class="pre">quantize_mx_op</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elem_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">round</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">block_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_bits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expand_and_reshape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/mx_quant/utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.mx_quant.utils.quantize_mx_op" title="Permalink to this definition"></a></dt>
+<dd><p>Quantize tensor to MX data type.</p>
+</dd></dl>
+
 </section>
 </section>
 
@@ -158,7 +173,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fc37dd186a0> 
+   <jinja2.runtime.BlockReference object at 0x7f212747f430> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

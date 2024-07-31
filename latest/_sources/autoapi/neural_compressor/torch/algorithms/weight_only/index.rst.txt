@@ -1,17 +1,36 @@
-:orphan:
-
-:py:mod:`neural_compressor.torch.algorithms.weight_only`
-========================================================
+neural_compressor.torch.algorithms.weight_only
+==============================================
 
 .. py:module:: neural_compressor.torch.algorithms.weight_only
+
+.. autoapi-nested-parse::
+
+   Weight-Only algorithms.
+
+
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/torch/algorithms/weight_only/hqq/index
 
 
 Submodules
 ----------
+
 .. toctree::
-   :titlesonly:
    :maxdepth: 1
 
-   modules/index.rst
+   /autoapi/neural_compressor/torch/algorithms/weight_only/autoround/index
+   /autoapi/neural_compressor/torch/algorithms/weight_only/awq/index
+   /autoapi/neural_compressor/torch/algorithms/weight_only/gptq/index
+   /autoapi/neural_compressor/torch/algorithms/weight_only/modules/index
+   /autoapi/neural_compressor/torch/algorithms/weight_only/rtn/index
+   /autoapi/neural_compressor/torch/algorithms/weight_only/save_load/index
+   /autoapi/neural_compressor/torch/algorithms/weight_only/teq/index
+   /autoapi/neural_compressor/torch/algorithms/weight_only/utility/index
 
 

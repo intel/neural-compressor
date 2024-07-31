@@ -1,30 +1,30 @@
-:orphan:
-
-:py:mod:`neural_compressor.torch.algorithms.static_quant.utility`
-=================================================================
+neural_compressor.torch.algorithms.static_quant.utility
+=======================================================
 
 .. py:module:: neural_compressor.torch.algorithms.static_quant.utility
 
+.. autoapi-nested-parse::
 
-Module Contents
----------------
+   Utility functions for Static quantization.
+
+
 
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
-   neural_compressor.torch.algorithms.static_quant.utility.Statistics
    neural_compressor.torch.algorithms.static_quant.utility.TransformerBasedModelBlockPatternDetector
 
 
-
 Functions
-~~~~~~~~~
+---------
 
 .. autoapisummary::
 
+   neural_compressor.torch.algorithms.static_quant.utility.cfg_to_qconfig
    neural_compressor.torch.algorithms.static_quant.utility.check_cfg_and_qconfig
+   neural_compressor.torch.algorithms.static_quant.utility.generate_xpu_qconfig
    neural_compressor.torch.algorithms.static_quant.utility.generate_activation_observer
    neural_compressor.torch.algorithms.static_quant.utility.get_quantizable_ops_recursively
    neural_compressor.torch.algorithms.static_quant.utility.simple_inference
@@ -35,6 +35,25 @@ Functions
    neural_compressor.torch.algorithms.static_quant.utility.parse_cfgs
    neural_compressor.torch.algorithms.static_quant.utility.get_quantizable_ops_from_cfgs
 
+
+Module Contents
+---------------
+
+.. py:function:: cfg_to_qconfig(tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_id_op_name)
+
+   Updates json file in ipex_config_path.
+
+   :param tune_cfg: dictionary of quantization configuration.
+   :type tune_cfg: dict
+   :param cfgs: configs loaded from ipex config path.
+   :type cfgs: dict
+   :param op_infos_from_cfgs: dict containing configs that have been parsed for each op.
+   :type op_infos_from_cfgs: dict
+   :param output_tensor_ids_op_name: dict containing op names corresponding to 'op_infos_from_cfgs'.
+   :type output_tensor_ids_op_name: dict
+
+   :returns: quantization configuration for ops.
+   :rtype: user_cfg (dict)
 
 
 .. py:function:: check_cfg_and_qconfig(user_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_op_name)
@@ -54,16 +73,27 @@ Functions
    :rtype: cfgs (dict)
 
 
-.. py:function:: generate_activation_observer(scheme, algorithm, smooth_quant=False, smooth_quant_enable=False)
+.. py:function:: generate_xpu_qconfig(tune_cfg)
 
-   This is a helper method to generate a dict containing activation observer info.
+   Generates qconfig for quantiztaion on xpu device.
+
+   :param tune_cfg: dictionary of quantization configuration.
+   :type tune_cfg: dict
+
+   :returns: quantization configuration for ops.
+   :rtype: qconfig (dict)
+
+
+.. py:function:: generate_activation_observer(scheme, algorithm, smooth_quant=False, smooth_quant_enable=False, alpha=0.5)
+
+   This is a helper method to generate an activation observer.
 
    :param scheme: Quantization scheme to be used.
    :type scheme: str
    :param algorithm: What algorithm for computing the quantization parameters based on.
    :type algorithm: str
 
-   :returns: A dict containing observer info.zs
+   :returns: An observer.
 
 
 .. py:function:: get_quantizable_ops_recursively(model, example_inputs)
@@ -76,7 +106,9 @@ Functions
    :type example_inputs: dict|list|tuple|torch.Tensor
 
    :returns: list of tuples of op_name and op_type.
-             cfgs (dict): dict of configuration
+             cfgs (dict): dict of configuration.
+             op_infos_from_cfgs (dict): dict containing configs that have been parsed for each op.
+             output_tensor_ids_op_name (dict): dict containing op names corresponding to 'op_infos_from_cfgs'.
    :rtype: quantizable_ops (list)
 
 
@@ -138,14 +170,7 @@ Functions
    :returns: cfgs (dict).
 
 
-.. py:class:: Statistics(data, header, field_names, output_handle=logger.info)
-
-
-   The statistics printer.
-
-
 .. py:class:: TransformerBasedModelBlockPatternDetector(model: torch.nn.Module, pattern_lst: List[List[Union[str, int]]] = BLOCK_PATTERNS)
-
 
    Detect the attention block and FFN block in transformer-based model.
 

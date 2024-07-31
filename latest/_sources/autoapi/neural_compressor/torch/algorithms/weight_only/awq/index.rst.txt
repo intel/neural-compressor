@@ -1,37 +1,29 @@
-:orphan:
-
-:py:mod:`neural_compressor.torch.algorithms.weight_only.awq`
-============================================================
+neural_compressor.torch.algorithms.weight_only.awq
+==================================================
 
 .. py:module:: neural_compressor.torch.algorithms.weight_only.awq
 
+.. autoapi-nested-parse::
 
-Module Contents
----------------
+   AWQ quantization.
+
+
 
 Classes
-~~~~~~~
+-------
 
 .. autoapisummary::
 
    neural_compressor.torch.algorithms.weight_only.awq.AWQQuantizer
 
 
+Module Contents
+---------------
+
+.. py:class:: AWQQuantizer(quant_config: collections.OrderedDict = {}, absorb_layer_dict: dict = {})
 
 
-.. py:class:: AWQQuantizer(quant_config: collections.OrderedDict = {})
 
-
-
-
-   The base quantizer for all algorithm quantizers.
-
-   The `Quantizer` unifies the interfaces across various quantization algorithms, including GPTQ, RTN, etc.
-   Given a float model, `Quantizer` apply the quantization algorithm to the model according to the `quant_config`.
-
-   To implement a new quantization algorithm,, inherit from `Quantizer` and implement the following methods:
-       - `prepare`: prepare a given model for convert.
-       - `convert`: convert a prepared model to a quantized model.
-   Note: `quantize` and `execute` are optional for new quantization algorithms.
+   AWQ Quantizer.
 
 

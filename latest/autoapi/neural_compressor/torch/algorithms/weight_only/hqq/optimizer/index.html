@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>neural_compressor.torch.algorithms.weight_only.hqq.optimizer &mdash; Intel® Neural Compressor 2.6 documentation</title>
+  <title>neural_compressor.torch.algorithms.weight_only.hqq.optimizer &mdash; Intel® Neural Compressor 3.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../../../../_static/pygments.css" />
       <link rel="stylesheet" type="text/css" href="../../../../../../../_static/css/theme.css" />
       <link rel="stylesheet" type="text/css" href="../../../../../../../_static/graphviz.css" />
@@ -55,7 +55,6 @@
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/get_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/installation_guide.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/user_guide.html">User Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/examples_readme.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/api-doc/apis.html">APIs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../../docs/source/releases_info.html">Release</a></li>
@@ -78,7 +77,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.torch.algorithms.weight_only.hqq.optimizer</span></code></li>
+      <li class="breadcrumb-item active">neural_compressor.torch.algorithms.weight_only.hqq.optimizer</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../../../../../../../_sources/autoapi/neural_compressor/torch/algorithms/weight_only/hqq/optimizer/index.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -89,7 +88,48 @@
            <div itemprop="articleBody">
              
   <section id="module-neural_compressor.torch.algorithms.weight_only.hqq.optimizer">
-<span id="neural-compressor-torch-algorithms-weight-only-hqq-optimizer"></span><h1><a class="reference internal" href="#module-neural_compressor.torch.algorithms.weight_only.hqq.optimizer" title="neural_compressor.torch.algorithms.weight_only.hqq.optimizer"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.torch.algorithms.weight_only.hqq.optimizer</span></code></a><a class="headerlink" href="#module-neural_compressor.torch.algorithms.weight_only.hqq.optimizer" title="Permalink to this heading"></a></h1>
+<span id="neural-compressor-torch-algorithms-weight-only-hqq-optimizer"></span><h1>neural_compressor.torch.algorithms.weight_only.hqq.optimizer<a class="headerlink" href="#module-neural_compressor.torch.algorithms.weight_only.hqq.optimizer" title="Permalink to this heading"></a></h1>
+<p>Optimization logic of HQQ.</p>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.hqq.optimizer.optimize_weights_proximal_legacy" title="neural_compressor.torch.algorithms.weight_only.hqq.optimizer.optimize_weights_proximal_legacy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">optimize_weights_proximal_legacy</span></code></a>(tensor, scale, zero, ...)</p></td>
+<td><p>Quantize the scale/zero of quantized tensor using the HQQ.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.hqq.optimizer.optimize_weights_proximal_legacy">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.hqq.optimizer.</span></span><span class="sig-name descname"><span class="pre">optimize_weights_proximal_legacy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zero</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cuda'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opt_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'lp_norm':</span> <span class="pre">0.7,</span> <span class="pre">'beta':</span> <span class="pre">10.0,</span> <span class="pre">'kappa':</span> <span class="pre">1.01,</span> <span class="pre">'iters':</span> <span class="pre">20}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/weight_only/hqq/optimizer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.hqq.optimizer.optimize_weights_proximal_legacy" title="Permalink to this definition"></a></dt>
+<dd><p>Quantize the scale/zero of quantized tensor using the HQQ.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tensor</strong> (<em>torch.Tensor</em>) – The input tensor to optimize.</p></li>
+<li><p><strong>scale</strong> (<em>torch.Tensor</em>) – The scaling factor for quantization.</p></li>
+<li><p><strong>zero</strong> (<em>torch.Tensor</em>) – The zero-point for quantization.</p></li>
+<li><p><strong>min_max</strong> (<em>tuple</em>) – The minimum and maximum values for quantization.</p></li>
+<li><p><strong>axis</strong> (<em>int</em><em>, </em><em>optional</em>) – The axis along which to compute the mean for zero-point calculation. Defaults to 0.</p></li>
+<li><p><strong>device</strong> (<em>str</em><em>, </em><em>optional</em>) – The device to use for computation. Defaults to “cuda”.</p></li>
+<li><p><strong>opt_params</strong> (<em>dict</em><em>, </em><em>optional</em>) – Optimization parameters.
+Defaults to {“lp_norm”: 0.7, “beta”: 1e1, “kappa”: 1.01, “iters”: 20}.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to print verbose output. Defaults to False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple containing the optimized scale and zero-point tensors.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
 </section>
 
 
@@ -106,7 +146,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fc37eec75e0> 
+   <jinja2.runtime.BlockReference object at 0x7f21275310c0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
