@@ -266,7 +266,7 @@ class RTNConfig(TorchBaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "RTNConfig", List["RTNConfig"]]:
-        """Get the configuration set for tuning.
+        """Get the default configuration set for tuning.
 
         Returns:
             Union[None, "RTNConfig", List["RTNConfig"]]: The configuration set for tuning.
@@ -296,7 +296,7 @@ def get_default_rtn_config(processor_type: Optional[Union[str, torch_utils.Proce
             Defaults to None.
 
     Returns:
-        RTNConfig: _description_
+        RTNConfig: RTNConfig
     """
     process_type = torch_utils.get_processor_type_from_user_config(processor_type)
     return RTNConfig.get_predefined_configs()[process_type]
@@ -483,7 +483,7 @@ class GPTQConfig(TorchBaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "GPTQConfig", List["GPTQConfig"]]:
-        """Get the configuration set for tuning.
+        """Get the default configuration set for tuning.
 
         Returns:
             Union[None, "GPTQConfig", List["GPTQConfig"]]: The configuration set for tuning.
@@ -493,6 +493,11 @@ class GPTQConfig(TorchBaseConfig):
 
     @classmethod
     def get_predefined_configs(cls) -> Dict[torch_utils.ProcessorType, "GPTQConfig"]:
+        """Get the predefined configuration set.
+
+        Returns:
+            Dict[torch_utils.ProcessorType, "GPTQConfig"]: The configuration of GPTQ.
+        """
         pre_defined_configs: Dict[torch_utils.ProcessorType, GPTQConfig] = {}
         pre_defined_configs[torch_utils.ProcessorType.Client] = cls(
             use_layer_wise=True
@@ -501,7 +506,16 @@ class GPTQConfig(TorchBaseConfig):
         return pre_defined_configs
 
 
-def get_default_gptq_config(processor_type: Optional[Union[str, torch_utils.ProcessorType]] = None) -> RTNConfig:
+def get_default_gptq_config(processor_type: Optional[Union[str, torch_utils.ProcessorType]] = None) -> GPTQConfig:
+    """Get the default configuration of GPTQ.
+
+    Args:
+        processor_type (Optional[Union[str, torch_utils.ProcessorType]], optional): The user-specified processor type.
+            Defaults to None.
+
+    Returns:
+        GPTQConfig: GPTQConfig
+    """
     process_type = torch_utils.get_processor_type_from_user_config(processor_type)
     return GPTQConfig.get_predefined_configs()[process_type]
 
@@ -669,7 +683,7 @@ class AWQConfig(TorchBaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "AWQConfig", List["AWQConfig"]]:
-        """Get the configuration set for tuning.
+        """Get the default configuration set for tuning.
 
         Returns:
             Union[None, "AWQConfig", List["AWQConfig"]]: The configuration set for tuning.
@@ -837,7 +851,7 @@ class TEQConfig(TorchBaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "TEQConfig", List["TEQConfig"]]:
-        """Get the configuration set for tuning.
+        """Get the default configuration set for tuning.
 
         Returns:
             Union[None, "TEQConfig", List["TEQConfig"]]: The configuration set for tuning.
@@ -1020,7 +1034,7 @@ class AutoRoundConfig(TorchBaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "AutoRoundConfig", List["AutoRoundConfig"]]:
-        """Get the configuration set for tuning.
+        """Get the default configuration set for tuning.
 
         Returns:
             Union[None, "AutoRoundConfig", List["AutoRoundConfig"]]: The configuration set for tuning.
@@ -1030,6 +1044,11 @@ class AutoRoundConfig(TorchBaseConfig):
 
     @classmethod
     def get_predefined_configs(cls) -> Dict[torch_utils.ProcessorType, "AutoRoundConfig"]:
+        """Get the predefined configuration set.
+
+        Returns:
+            Dict[torch_utils.ProcessorType, "AutoRoundConfig"]: The configuration of AutoRound.
+        """
         pre_defined_configs: Dict[torch_utils.ProcessorType, AutoRoundConfig] = {}
         pre_defined_configs[torch_utils.ProcessorType.Client] = cls(use_layer_wise=True)
         pre_defined_configs[torch_utils.ProcessorType.Server] = cls()
@@ -1037,6 +1056,15 @@ class AutoRoundConfig(TorchBaseConfig):
 
 
 def get_default_AutoRound_config(processor_type: Optional[Union[str, torch_utils.ProcessorType]] = None) -> RTNConfig:
+    """Get the default configuration of AutoRound.
+
+    Args:
+        processor_type (Optional[Union[str, torch_utils.ProcessorType]], optional): The user-specified processor type.
+            Defaults to None.
+
+    Returns:
+        AutoRoundConfig: AutoRoundConfig
+    """
     process_type = torch_utils.get_processor_type_from_user_config(processor_type)
     return AutoRoundConfig.get_predefined_configs()[process_type]
 
@@ -1076,6 +1104,8 @@ class MXQuantConfig(TorchBaseConfig):
             blocksize (int): Granularity to share the scale, default is 32.
             round_method (str): Round method, default is "nearest".
             weight_only (bool): Whether implement weight_only, default is False.
+            white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
+              Default is DEFAULT_WHITE_LIST.
         """
         super().__init__(white_list=white_list)
         self.w_dtype = w_dtype
@@ -1088,6 +1118,7 @@ class MXQuantConfig(TorchBaseConfig):
 
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
+        """Register supported configurations."""
         supported_configs = []
         linear_mx_config = MXQuantConfig(
             w_dtype=[
@@ -1127,6 +1158,14 @@ class MXQuantConfig(TorchBaseConfig):
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+        """Get information about the model.
+
+        Args:
+            model (torch.nn.Module): The model.
+
+        Returns:
+            List[Tuple[str, Callable]]: List of tuples containing the name and type of each module in the model.
+        """
         white_list = (
             torch.nn.Linear,
             torch.nn.functional.linear,
@@ -1142,6 +1181,7 @@ class MXQuantConfig(TorchBaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "MXQuantConfig", List["MXQuantConfig"]]:
+        """Get the default configuration set for tuning."""
         return MXQuantConfig(weight_only=[False, True])
 
 
@@ -1198,6 +1238,7 @@ class DynamicQuantConfig(TorchBaseConfig):
 
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
+        """Register supported configurations."""
         supported_configs = []
         linear_static_config = cls()
         operators = [torch.nn.Linear]
@@ -1206,16 +1247,35 @@ class DynamicQuantConfig(TorchBaseConfig):
 
     @staticmethod
     def get_model_info(model: torch.nn.Module, example_inputs=None):
+        """Get information about the model.
+
+        Args:
+            model (torch.nn.Module): The model.
+
+        Returns:
+            List[Tuple[str, Callable]]: List of tuples containing the name and type of each module in the model.
+        """
         return None
 
     def to_config_mapping(
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
+        """Convert the configuration to a mapping.
+
+        Args:
+            config_list (List[BaseConfig]): List of base configurations. Default is None.
+            model_info (List[Tuple[str, str]]): List of tuples containing the name and type of each module in the model.
+                Default is None.
+
+        Returns:
+            OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]: The configuration mapping.
+        """
         config_mapping = OrderedDict({self.name: self})
         return config_mapping
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "DynamicQuantConfig", List["DynamicQuantConfig"]]:
+        """Get the default configuration set for tuning."""
         return cls(act_sym=[True, False], act_algo=["kl", "minmax"])
 
 
@@ -1273,6 +1333,8 @@ class StaticQuantConfig(TorchBaseConfig):
             act_granularity (str): Level of quantization granularity for activations, default is "per_channel".
             act_algo (str): Quatization algorithm used to compute parameters for activations, default is "minmax".
             excluded_precisions (list): Precisions to be excluded, Default value is empty list.
+            white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
+                                                                 Default is DEFAULT_WHITE_LIST.
         """
         super().__init__(white_list=white_list)
         self.w_dtype = w_dtype
@@ -1289,6 +1351,7 @@ class StaticQuantConfig(TorchBaseConfig):
 
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
+        """Register supported configurations."""
         supported_configs = []
         linear_static_config = StaticQuantConfig()
         operators = [torch.nn.Linear]
@@ -1297,12 +1360,28 @@ class StaticQuantConfig(TorchBaseConfig):
 
     @staticmethod
     def get_model_info_for_ipex(model: torch.nn.Module, example_inputs) -> List[Tuple[str, Callable]]:
+        """Get information about the model.
+
+        Args:
+            model (torch.nn.Module): The model.
+
+        Returns:
+            List[Tuple[str, Callable]]: List of tuples containing the name and type of each module in the model.
+        """
         from neural_compressor.torch.algorithms.static_quant import get_quantizable_ops_recursively
 
         _, _, _, _, model_info = get_quantizable_ops_recursively(model, example_inputs=example_inputs)
         return model_info
 
     def get_model_info_for_ipex_xpu(self, model: torch.nn.Module) -> List[Tuple[str, Callable]]:  # pragma: no cover
+        """Get information about the model.
+
+        Args:
+            model (torch.nn.Module): The model.
+
+        Returns:
+            List[Tuple[str, Callable]]: List of tuples containing the name and type of each module in the model.
+        """
         if self.model_info:
             return self.model_info
         else:
@@ -1317,6 +1396,14 @@ class StaticQuantConfig(TorchBaseConfig):
             return filter_result
 
     def get_model_info(self, model: torch.nn.Module, example_inputs=None) -> List[Tuple[str, Callable]]:
+        """Get information about the model.
+
+        Args:
+            model (torch.nn.Module): The model.
+
+        Returns:
+            List[Tuple[str, Callable]]: List of tuples containing the name and type of each module in the model.
+        """
         from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
         if is_ipex_imported():
@@ -1328,6 +1415,16 @@ class StaticQuantConfig(TorchBaseConfig):
     def to_config_mapping(
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
+        """Convert the configuration to a mapping.
+
+        Args:
+            config_list (List[BaseConfig]): List of base configurations. Default is None.
+            model_info (List[Tuple[str, str]]): List of tuples containing the name and type of each module in the model.
+                Default is None.
+
+        Returns:
+            OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]: The configuration mapping.
+        """
         if is_ipex_imported():
             return super().to_config_mapping(config_list, model_info)
         config_mapping = OrderedDict({self.name: self})
@@ -1335,6 +1432,7 @@ class StaticQuantConfig(TorchBaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "StaticQuantConfig", List["StaticQuantConfig"]]:
+        """Get the default configuration set for tuning."""
         return StaticQuantConfig(act_sym=[True, False], act_algo=["kl", "minmax"])
 
 
@@ -1417,6 +1515,9 @@ class SmoothQuantConfig(TorchBaseConfig):
             alpha_step (float): Step_size of auto-tuning alpha search space, default is 0.1.
             shared_criterion (str): Criterion for input LayerNorm op of a transformer block, default is "max".
             do_blockwise (bool): Whether to enable block-wise auto-tuning, default is False.
+            auto_alpha_args (bool): Arguments for auto alpha searching, default is None.
+            white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
+                                                                 Default is DEFAULT_WHITE_LIST.
         """
         super().__init__(white_list=white_list)
         self.w_dtype = w_dtype
@@ -1450,6 +1551,7 @@ class SmoothQuantConfig(TorchBaseConfig):
 
     @classmethod
     def register_supported_configs(cls) -> List[OperatorConfig]:
+        """Register supported configurations."""
         supported_configs = []
         # TODO(Yi)
         linear_sq_config = SmoothQuantConfig()
@@ -1458,6 +1560,14 @@ class SmoothQuantConfig(TorchBaseConfig):
         cls.supported_configs = supported_configs
 
     def get_model_info(self, model: torch.nn.Module, example_inputs) -> List[Tuple[str, Callable]]:
+        """Get information about the model.
+
+        Args:
+            model (torch.nn.Module): The model.
+
+        Returns:
+            List[Tuple[str, Callable]]: List of tuples containing the name and type of each module in the model.
+        """
         from neural_compressor.torch.algorithms.smooth_quant import get_quantizable_ops_recursively
 
         model_info, cfgs, op_infos_from_cfgs, output_tensor_id_op_name = get_quantizable_ops_recursively(
@@ -1472,6 +1582,7 @@ class SmoothQuantConfig(TorchBaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "SmoothQuantConfig", List["SmoothQuantConfig"]]:
+        """Get the default configuration set for tuning."""
         return SmoothQuantConfig(alpha=[0.1, 0.5], folding=[True, False], scale_sharing=[True, False])
 
 
@@ -1746,7 +1857,14 @@ class MixedPrecisionConfig(BaseConfig):
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
-        """Get concrete node names for supported operators."""
+        """Get information about the model.
+
+        Args:
+            model (torch.nn.Module): The model.
+
+        Returns:
+            List[Tuple[str, Callable]]: List of tuples containing the name and type of each module in the model.
+        """
         white_list = tuple(MixedPrecisionConfig.supported_half_precision_ops)
         filter_result = []
         for op_name, module in model.named_modules():
@@ -1787,6 +1905,7 @@ register_supported_configs_for_fwk(fwk_name=FRAMEWORK_NAME)
 
 
 def get_all_registered_configs() -> Dict[str, BaseConfig]:
+    """Get all registered configs."""
     registered_configs = config_registry.get_all_configs()
     return registered_configs.get(FRAMEWORK_NAME, {})
 

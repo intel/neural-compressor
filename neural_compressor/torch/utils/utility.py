@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Intel Neural Compressor PyTorch utilities."""
 
 
 import enum
@@ -185,13 +186,11 @@ def postprocess_model(model, mode, quantizer):
 
 
 def dump_model_op_stats(mode, tune_cfg):
-    """This is a function to dump quantizable ops of model to user.
+    """Dump quantizable ops stats of model to user.
 
     Args:
-        model (object): input model
+        mode (object): quantization mode.
         tune_cfg (dict): quantization config
-    Returns:
-        None
     """
     if mode == Mode.PREPARE:
         return
