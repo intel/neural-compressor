@@ -147,6 +147,13 @@
         "main_script": "run_clm_no_trainer.py",
         "batch_size": 1
       },
+      "sdxl_ipex_sq":{
+        "model_src_dir": "diffusion_model/diffusers/stable_diffusion/smooth_quant",
+        "dataset_location": "",
+        "input_model": "",
+        "main_script": "main.py",
+        "batch_size": 1
+      },
       "resnet18_mixed_precision": {
         "model_src_dir": "cv/mixed_precision",
         "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
