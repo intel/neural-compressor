@@ -12,10 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Intel Neural Compressor PyTorch constants."""
 
 # double quant params
-
 DOUBLE_QUANT_CONFIGS = {
     "BNB_NF4": {
         "dtype": "nf4",
@@ -60,6 +59,8 @@ from enum import Enum
 
 
 class LoadFormat(Enum):
+    """Load API formats for different usages."""
+
     DEFAULT = "default"
     HUGGINGFACE = "huggingface"
 
