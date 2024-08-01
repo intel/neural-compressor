@@ -6,7 +6,6 @@ import time
 import argparse
 import random
 import habana_frameworks.torch.gpu_migration
-
 import habana_frameworks.torch.core as htcore
 import numpy as np
 import torch
@@ -16,13 +15,16 @@ from datasets import load_dataset
 import auto_gptq
 from auto_gptq import BaseQuantizeConfig, AutoGPTQForCausalLM
 from neural_compressor.torch.algorithms.mixed_low_precision.custom_methods.gptq import BaseGaudiGPTQForCausalLM
-
+from neural_compressor.torch.algorithms.mixed_low_precision.custom_methods.quarot import rotate
 # Over-ride default AutoGPTQ quantization method to Gaudi friendly method
 auto_gptq.modeling._base.BaseGPTQForCausalLM.quantize = BaseGaudiGPTQForCausalLM.quantize
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter, description="Run GPTQ on Gaudi",)
 parser.add_argument("--pretrained_model",  type=str,  help="HF pretrained model",     default='meta-llama/Llama-2-7b-hf')
 parser.add_argument("--quantized_model_dir", type=str, help="output quantized model dir", default="llama-2-7b-4bit")
+parser.add_argument("--rotate_weights", action="store_true", help="Whether to use QuaRot for weights only rotation.")
+parser.add_argument("--rotate_mlp", action="store_true", help="Whether to use QuaRot for weights+mlp rotation.")
+parser.add_argument("--rotate_values", action="store_true", help="Whether to use QuaRot for weights+values rotation.")
 args = parser.parse_args()
 
 
@@ -66,6 +68,8 @@ quantize_config = BaseQuantizeConfig(
 # load un-quantized model, the model will always be force loaded into cpu
 model = AutoGPTQForCausalLM.from_pretrained(pretrained_model_dir, quantize_config)
 
+if args.rotate_weights:
+    rotate(model.model, args)
 start = time.time()
 
 # quantize model, the examples should be list of dict whose keys can only be "input_ids" and "attention_mask"
