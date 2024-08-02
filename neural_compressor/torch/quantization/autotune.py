@@ -81,7 +81,7 @@ def autotune(
     best_quant_model = None
     eval_func_wrapper = EvaluationFuncWrapper(eval_fn, eval_args)
     config_loader, tuning_logger, tuning_monitor = init_tuning(tuning_config=tune_config)
-    baseline: float = eval_func_wrapper.evaluate(model)
+    baseline: float = eval_func_wrapper.evaluate(deepcopy(model))
     tuning_monitor.set_baseline(baseline)
     tuning_logger.tuning_start()
     for trial_index, quant_config in enumerate(config_loader, 1):

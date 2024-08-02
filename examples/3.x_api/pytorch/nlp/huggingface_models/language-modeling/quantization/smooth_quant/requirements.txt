@@ -11,3 +11,4 @@ neural-compressor
 intel-extension-for-transformers
 lm_eval==0.4.2
 peft
+optimum-intel
