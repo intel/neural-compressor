@@ -1233,35 +1233,15 @@ def get_default_hqq_config() -> HQQConfig:
 
 
 ######################## FP8 Quant Config ###############################
-# refer to habana_quantization_toolkit/_core/common.py
-FP8_WHITE_LIST = [
-    "Matmul",
-    "Linear",
-    "FalconLinear",
-    "KVCache",
-    "Conv2d",
-    "LoRACompatibleLinear",
-    "LoRACompatibleConv",
-    "Softmax",
-    "ModuleFusedSDPA",
-]
-if importlib.util.find_spec("deepspeed"):
-    FP8_WHITE_LIST.extend(["LinearLayer", "LinearAllreduce", "ScopedLinearAllReduce", "LmHeadLinearAllreduce"])
 
+from ..algorithms.fp8_quant._core.common import mod_default_dict
+FP8_WHITE_LIST = mod_default_dict.keys()
 
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=FP8_QUANT)
 class FP8Config(BaseConfig):
     """Config class for FP8 quantization."""
 
     name = FP8_QUANT
-
-    # tunable params
-    params_list = [
-        "fp8_config",
-        "scale_method",
-        "observer",
-        "measure_exclude",
-    ]
 
     def __init__(
         self,
@@ -1328,39 +1308,11 @@ class FP8Config(BaseConfig):
     def get_config_set_for_tuning(cls) -> Union[None, "FP8Config", List["FP8Config"]]:
         # just a simple example here
         # usually write parameter combinations that are more suitable to tune based on experience.
-        return FP8Config(
-            fp8_config=["E4M3", "E5M2"], scale_method=["without_scale", "maxabs_hw"], measure_exclude=["NONE", "OUTPUT"]
-        )
+        return FP8Config()
 
     @classmethod
-    def register_supported_configs(cls):
-        """Add all supported configs."""
-        supported_configs = []
-        linear_rtn_config = FP8Config(
-            mode=["AUTO", "MEASURE", "QUANTIZE"],
-            fp8_config=["E4M3", "E5M2"],
-            scale_method=[
-                "without_scale",
-                "unit_scale",
-                "max",
-                "maxabs_hw",
-                "maxabs_pow2",
-                "maxabs_hw_opt_weight",
-                "maxabs_pow2_opt_weight",
-                "smoothquant_weights_output_channel_maxabs_pow2",
-                "weaksmoothquant_weights_output_channel_maxabs_pow2",
-                "act_maxabs_hw_weights_pcs_maxabs_pow2",
-                "act_maxabs_hw_weights_pcs_opt_pow2",
-                "act_maxabs_pow2_weights_pcs_maxabs_pow2",
-                "act_maxabs_pow2_weights_pcs_opt_pow2",
-                "smoothquant_opt",
-            ],
-            observer=["shape", "maxabs", "maxabs_per_channel", "save"],
-            measure_exclude=["NONE", "OUTPUT", "INPUT", "ALL"],
-        )
-        operators = list(FP8_WHITE_LIST)
-        supported_configs.append(OperatorConfig(config=linear_rtn_config, operators=operators))
-        cls.supported_configs = supported_configs
+    def register_supported_configs(cls) -> List:
+        pass
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
