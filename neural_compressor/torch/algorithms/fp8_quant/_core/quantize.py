@@ -133,7 +133,6 @@ def quantize(model, mod_list):
         scaling_method,
         params,
         config.cfg["scale_file"],
-        False,
         mod_list,
     )
     prepare_model(model, qconfig, mod_list, hp_dtype=hp_dtype)

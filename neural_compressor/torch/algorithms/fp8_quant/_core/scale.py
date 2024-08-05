@@ -102,11 +102,11 @@ def get_config(
     method,
     params,
     scales_file=None,
-    recalc_scales=False,
     mod_list=None,
 ):
     with torch.no_grad():
         top_level_config = get_hqt_config(model)
+        recalc_scales = top_level_config.cfg["recalc_scales"]
         qconfig = {UNMEASURED_MODELS: []}
         scales_file_format = np.ndarray  # file_functions[os.path.splitext(scales_file)[1]][0]
         scales_obj = (

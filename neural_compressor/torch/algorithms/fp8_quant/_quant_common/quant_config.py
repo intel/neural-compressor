@@ -69,6 +69,25 @@ class ScaleMethod(Enum):
     MAXABS_POW2_OPT_WEIGHT = 13
 
 
+class TrueFalse(Enum):
+    TRUE = True
+    FALSE = False
+
+
+_config_to_enum = {
+    "mode": QuantMode,
+    "measure_exclude": MeasureExclude,
+    "fp8_config": SupportedFp8,
+    "hp_dtype": HpDtype,
+    "scale_method": ScaleMethod,
+    "recalc_scales": TrueFalse,
+    "ignore_modules_wo_measures": TrueFalse,
+}
+
+
+_configs_that_use_enum_value = ["fp8_config", "hp_dtype", "ignore_modules_wo_measures", "recalc_scales"]
+
+
 def get_hqt_config(mod) -> Fp8cfg:
     return mod.__hqt_config__
 
@@ -113,28 +132,16 @@ class Fp8cfg:
             "seperate_measure_files": True,  # Determines whether to expect one or several measure files when using more than one gaudi
             "device_type": htexp._get_device_type(),  # Determines device type: Gaudi2, Gaudi3...
             "measure_exclude": MeasureExclude.OUTPUT,
+            "recalc_scales": False,
         }
         # assert measured_global_config['allowlist']['names'] == [''], "Allowlist names not yet implemented"
 
         # go over all user-defined keys from json, handle various cases
         for keys in custom_config:
-            if keys == "mode":
-                custom_config[keys] = _get_enum_from_string(QuantMode, custom_config[keys], keys)
-
-            if keys == "measure_exclude":
-                custom_config[keys] = _get_enum_from_string(MeasureExclude, custom_config[keys], keys)
-
-            if keys == "fp8_config":
-                custom_config[keys] = _get_enum_from_string(SupportedFp8, custom_config[keys], keys).value
-
-            if keys == "hp_dtype":
-                custom_config[keys] = _get_enum_from_string(HpDtype, custom_config[keys], keys).value
-
-            if keys == "scale_method":
-                custom_config[keys] = _get_enum_from_string(ScaleMethod, custom_config[keys], keys)
-
-            if keys == "ignore_modules_wo_measures":
-                custom_config[keys] = custom_config[keys].lower() == "true"
+            if keys in _config_to_enum.keys():
+                custom_config[keys] = _get_enum_from_string(_config_to_enum[keys], custom_config[keys], keys)
+                if keys in _configs_that_use_enum_value:
+                    custom_config[keys] = custom_config[keys].value
 
             # TODO [SW-175936] - remove checking for old key names whitelist and blacklist.
             if isinstance(custom_config[keys], dict):
