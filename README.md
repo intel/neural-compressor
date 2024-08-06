@@ -98,10 +98,11 @@ model = convert(model)
 Following example code demonstrates Weight-Only Quantization on LLMs, it supports Intel CPU, Intel Gaudi2 AI Accelerator, Nvidia GPU, best device will be selected automatically. 
 
 ```python
+from transformers import AutoModelForCausalLM
 from neural_compressor.torch.quantization import prepare, convert, AutoRoundConfig
 
 model_name = "EleutherAI/gpt-neo-125m"
-model = AutoModel.from_pretrained(model_name)
+model = AutoModelForCausalLM.from_pretrained(model_name)
 
 quant_config = AutoRoundConfig()
 model = prepare(model, quant_config)
