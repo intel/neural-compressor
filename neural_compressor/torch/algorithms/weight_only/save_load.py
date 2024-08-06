@@ -144,6 +144,7 @@ class WOQModelLoader:
         return model
 
     def load_inc_format_woq_model(self):
+        """Load WOQ model saved in INC file format."""
         self._model_local_dir = self.model_name_or_path
 
         qmodel_weight_file_path = os.path.join(

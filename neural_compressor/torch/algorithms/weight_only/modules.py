@@ -53,10 +53,13 @@ class QDQLayer(torch.nn.Module):
 
 
 class UnpackedWeightOnlyLinearParams(dict):
+    """Contains all unpacked weight values."""
     def __init__(self, unpack_weight, scales, unpack_zp, **kwargs):
+        """Create dict."""
         super().__init__(int_weight=unpack_weight, scales=scales, zp=unpack_zp, **kwargs)
 
     def to(self, device):
+        """Change device for all values."""
         for key, value in self.items():
             if isinstance(value, torch.Tensor) and value is not None:
                 self[key] = value.to(device)
@@ -64,8 +67,7 @@ class UnpackedWeightOnlyLinearParams(dict):
 
 
 class WeightOnlyLinear(torch.nn.Module):
-    """Weight Only Linear."""
-
+    """Base Weight Only Linear."""
     def __init__(
         self,
         in_features,
@@ -75,6 +77,7 @@ class WeightOnlyLinear(torch.nn.Module):
         group_size,
         device,
     ):
+        """Initialization."""
         super().__init__()
         self.in_features = in_features
         self.out_features = out_features
@@ -85,17 +88,21 @@ class WeightOnlyLinear(torch.nn.Module):
 
     @abstractmethod
     def pack(self, *args, **kwargs):
+        """Abstract method."""
         raise NotImplementedError("{} doesn't implement `pack` function. ".format(self.__class__.__name__))
 
     @abstractmethod
     def unpack(self, *args, **kwargs):
+        """Abstract method."""
         raise NotImplementedError("{} doesn't implement `unpack` function. ".format(self.__class__.__name__))
 
     @abstractmethod
     def forward(self, input):
+        """Abstract method."""
         raise NotImplementedError("{} doesn't implement `forward` function. ".format(self.__class__.__name__))
 
     def extra_repr(self) -> str:
+        """Show message about WeighOnlyLinear."""
         tmp_str = "in_features={}, out_features={}, bits={}, group_size={}, bias={}".format(
             self.in_features,
             self.out_features,
@@ -107,6 +114,7 @@ class WeightOnlyLinear(torch.nn.Module):
 
 
 class INCWeightOnlyLinear(WeightOnlyLinear):
+    """INC Weight Only Linear."""
     def __init__(
         self,
         in_features,
@@ -816,6 +824,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
 
 
 class HPUWeightOnlyLinear(WeightOnlyLinear):
+    """Weight Only Linear for HPU device."""
     def __init__(
         self,
         in_features,
@@ -833,6 +842,31 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
         use_optimum_format=True,
         **kwargs,
     ):
+        """Init the WeightOnlyLinear object.
+
+        Args:
+            in_features (int): input features.
+            out_features (int): out features.
+            dtype (str, optional):  the data type of the quantized model. Defaults to "int".
+            bits (int, optional): number of bits for quantization. Defaults to 4.
+            group_size (int, optional): size of the quantization group. Defaults to 32.
+            zp (bool, optional): zero point. Defaults to False.
+            bias (bool, optional): module bias. Defaults to False.
+            scale_dtype (torch.Tensor, optional): the data type of quantization scale to be used.
+                                                  Defaults to torch.float32.
+            compression_dtype (torch.Tensor, optional): the target dtype after comoression.
+                                                        Defaults to torch.int32.
+            compression_dim (int, optional): select from [0, 1], 0 is output channel, 1 is input channel.
+                                             Defaults to 1.
+            g_idx (bool, optional): for recording the channel order.
+            device (str, optional): choose device for compression. Defaults to cpu.
+            use_optimum_format (bool, optional): use the popular huggingface compression format.
+                1: compression_dim: weight = 1, zeros = 0 and both are transposed.
+                2: zeros -= 1 before compression.
+                3: g_idx: use same number for one group instead of recording the channel order.
+                4. parameter name changed, such as 'packed_weight' -> 'qweight'.
+                5. zeros is always needed even for sym.
+        """
         super(HPUWeightOnlyLinear, self).__init__(
             in_features,
             out_features,
@@ -890,6 +924,7 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
         self.wf = torch.tensor(list(range(0, 32, self.bits)), dtype=torch.int32).unsqueeze(0)
 
     def forward(self, input):
+        """The forward function of HPUWeighOnlyLinear."""
         input_dtype = input.dtype
         output_shape = input.shape[:-1] + (self.out_features,)
         scales = self.scales
@@ -904,6 +939,7 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
         return output
 
     def pack(self, int_weight, scales, zp, bias=None, g_idx=None):
+        """Pack weight and zero point."""
         logger.debug("Packing for HPU")
 
         scales = scales.T.contiguous()
@@ -925,6 +961,7 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
             self.bias = bias.to("hpu").to(torch.bfloat16)
 
     def unpack(self):
+        """Unpack weight and zero point."""
         logger.debug("Unpacking from HPU")
         self.qweight = self.qweight.cpu()
         weight = torch.bitwise_right_shift(
@@ -948,6 +985,7 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
         return weight, zeros
 
     def pack_tensor(self, input, bits=4):
+        """Pack tensor."""
         normal = input.to(torch.int32)
         q = torch.zeros((normal.shape[0], normal.shape[1] // 32 * bits), dtype=torch.int32)
         i = 0
