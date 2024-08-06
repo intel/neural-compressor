@@ -103,9 +103,9 @@ class _Logger(object):
 
     def get_enable_console_val(self):
         enableConsole = os.environ.get("ENABLE_CONSOLE", "False").upper()
-        if enableConsole not in ["TRUE", "FALSE"]:
-            raise Exception("Env var 'ENABLE_CONSOLE' has to be true or false.")
-        return enableConsole == "TRUE"
+        if enableConsole not in ["TRUE", "FALSE", "1", "0"]:
+            raise Exception("Env var 'ENABLE_CONSOLE' has to be 'true' or 'false' ('1' or '0' respectively).")
+        return enableConsole == "TRUE" or enableConsole == "1"
 
     def get_log_level(self):
         log_level_str = os.environ.get("LOG_LEVEL_HQT", os.environ.get("LOG_LEVEL_ALL"))
