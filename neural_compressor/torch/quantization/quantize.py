@@ -28,15 +28,7 @@ FRAMEWORK_NAME = "torch"
 
 
 def need_apply(configs_mapping: Dict[Tuple[str, callable], BaseConfig], algo_name):
-    """Check whether to apply this algorithm according to configs_mapping.
-
-    Args:
-        configs_mapping (Dict[Tuple[str, callable], BaseConfig]): configs mapping
-        algo_name (str): algo name
-
-    Returns:
-        Bool: True or False.
-    """
+    """Check whether to apply algorithm based on config_mapping."""
     return any(config.name == algo_name for config in configs_mapping.values())
 
 
@@ -233,6 +225,7 @@ def convert(
 
 
 def finalize_calibration(model):
+    """Generate and save calibration info."""
     from neural_compressor.torch.algorithms.fp8_quant import save_calib_result
 
     save_calib_result(model)

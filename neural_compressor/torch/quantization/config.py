@@ -1337,6 +1337,7 @@ class StaticQuantConfig(TorchBaseConfig):
             excluded_precisions (list): Precisions to be excluded, Default value is empty list.
             white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
                                                                  Default is DEFAULT_WHITE_LIST.
+            model_info (Optional): used to keep model info for XPU device.  # TODO: should be removed from input arguments
         """
         super().__init__(white_list=white_list)
         self.w_dtype = w_dtype
@@ -1584,6 +1585,7 @@ class SmoothQuantConfig(TorchBaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "SmoothQuantConfig", List["SmoothQuantConfig"]]:
+        """Get the default configuration set for tuning."""
         import numpy as np
 
         return SmoothQuantConfig(
@@ -1771,7 +1773,21 @@ class FP8Config(TorchBaseConfig):
         measure_exclude: str = "OUTPUT",
         **kwargs,
     ):
-        """Init FP8 config."""
+        """Initializing FP8Config.
+
+        Args:
+            dump_stats_path (str, optional): The file folder and file prefix to save measurement info. Defaults to "./hqt_output/measure".
+            fp8_config (str, optional): The data type of fp8. Defaults to "E4M3".
+            hp_dtype (str, optional): The hight precision data type used in fp8 quantization. Defaults to "bf16".
+            blocklist (dict, optional): whether to skip fp8 quantization for specific op names or types, name could be substring. Defaults to {"names": [], "types": ()}.
+            allowlist (dict, optional): whether to execute fp8 quantization for specific op names or types. Defaults to {"names": [], "types": FP8_WHITE_LIST}.
+            mode (str, optional): Choose the quantization mode. Defaults to "AUTO".
+            scale_method (str, optional): Select method used to generate scale from calibration info. Defaults to "maxabs_hw".
+            scale_params (dict, optional): _description_. Defaults to {}.
+            observer (str, optional): Params of scales. Defaults to "maxabs".
+            mod_dict (dict, optional): The dict of modules to quantize. Defaults to {}.
+            measure_exclude (str, optional): Select INPUT/OUTPUT to be exculded by measurement. Defaults to "OUTPUT".
+        """
         super().__init__()
         self.dump_stats_path = dump_stats_path
         self.fp8_config = fp8_config
@@ -1787,22 +1803,27 @@ class FP8Config(TorchBaseConfig):
 
     @property
     def measure(self):
+        """Check whether the mode is for measurement."""
         return self.mode == "MEASURE"
 
     @property
     def quantize(self):
+        """Check whether the mode is for quantization."""
         return self.mode == "QUANTIZE"
 
     @property
     def json_file(self):
+        """Get the path of json file."""
         return self._json_file
 
     @json_file.setter
     def json_file(self, json_file):
+        """Set the path of json file."""
         self._json_file = json_file
 
     @classmethod
     def from_json_file(cls, filename):
+        """Set configuration from json file."""
         with open(filename, "r", encoding="utf-8") as file:
             config_dict = json.load(file)
         config = cls.from_dict(config_dict)
@@ -1810,6 +1831,7 @@ class FP8Config(TorchBaseConfig):
         return config
 
     def save_temp_json_file(self):
+        """Save configuration to a temporary json file."""
         import tempfile
         from pathlib import Path
 
@@ -1819,6 +1841,7 @@ class FP8Config(TorchBaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "FP8Config", List["FP8Config"]]:
+        """Get the configuration set for tuning."""
         # just a simple example here
         # usually write parameter combinations that are more suitable to tune based on experience.
         return FP8Config(
@@ -1857,6 +1880,14 @@ class FP8Config(TorchBaseConfig):
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+        """Get information about the model.
+
+        Args:
+            model (torch.nn.Module): The model.
+
+        Returns:
+            List[Tuple[str, Callable]]: List of tuples containing the name and type of each module in the model.
+        """
         filter_result = []
         for op_name, module in model.named_modules():
             if (
@@ -1869,6 +1900,16 @@ class FP8Config(TorchBaseConfig):
         return filter_result
 
     def to_config_mapping(self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None):
+        """Convert the configuration to a mapping.
+
+        Args:
+            config_list (List[BaseConfig]): List of base configurations. Default is None.
+            model_info (List[Tuple[str, str]]): List of tuples containing the name and type of each module in the model.
+                Default is None.
+
+        Returns:
+            OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]: The configuration mapping.
+        """
         if self.json_file is None:
             self.save_temp_json_file()
         config_mapping = OrderedDict()
