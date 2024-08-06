@@ -54,6 +54,7 @@ class QDQLayer(torch.nn.Module):
 
 class UnpackedWeightOnlyLinearParams(dict):
     """Contains all unpacked weight values."""
+
     def __init__(self, unpack_weight, scales, unpack_zp, **kwargs):
         """Create dict."""
         super().__init__(int_weight=unpack_weight, scales=scales, zp=unpack_zp, **kwargs)
@@ -68,6 +69,7 @@ class UnpackedWeightOnlyLinearParams(dict):
 
 class WeightOnlyLinear(torch.nn.Module):
     """Base Weight Only Linear."""
+
     def __init__(
         self,
         in_features,
@@ -115,6 +117,7 @@ class WeightOnlyLinear(torch.nn.Module):
 
 class INCWeightOnlyLinear(WeightOnlyLinear):
     """INC Weight Only Linear."""
+
     def __init__(
         self,
         in_features,
@@ -825,6 +828,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
 
 class HPUWeightOnlyLinear(WeightOnlyLinear):
     """Weight Only Linear for HPU device."""
+
     def __init__(
         self,
         in_features,
