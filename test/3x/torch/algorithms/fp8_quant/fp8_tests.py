@@ -148,7 +148,7 @@ with torch.no_grad():
 
     # Test3: (Disable (comment) all other tests, delete all files from the test_outputs folder)
     #        (Change Line 73 above to: model = TinyModel3())
-    # Run: (add LOG_LEVEL_HQT=0/1 for additional logs)
+    # Run: (add LOG_LEVEL_INC=0/1 for additional logs)
     #      (Uncomment lines 164+165)
     # 1) QUANT_CONFIG=test_jsons/test_measure.json python3 fp8_tests.py
     # 2) QUANT_CONFIG=test_jsons/test_hw_quant.json python3 fp8_tests.py
