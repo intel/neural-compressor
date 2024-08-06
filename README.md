@@ -5,12 +5,12 @@ Intel® Neural Compressor
 <h3> An open-source Python library supporting popular model compression techniques on all mainstream deep learning frameworks (TensorFlow, PyTorch, ONNX Runtime, and MXNet)</h3>
 
 [![python](https://img.shields.io/badge/python-3.8%2B-blue)](https://github.com/intel/neural-compressor)
-[![version](https://img.shields.io/badge/release-2.6-green)](https://github.com/intel/neural-compressor/releases)
+[![version](https://img.shields.io/badge/release-3.0-green)](https://github.com/intel/neural-compressor/releases)
 [![license](https://img.shields.io/badge/license-Apache%202-blue)](https://github.com/intel/neural-compressor/blob/master/LICENSE)
 [![coverage](https://img.shields.io/badge/coverage-85%25-green)](https://github.com/intel/neural-compressor)
 [![Downloads](https://static.pepy.tech/personalized-badge/neural-compressor?period=total&units=international_system&left_color=grey&right_color=green&left_text=downloads)](https://pepy.tech/project/neural-compressor)
 
-[Architecture](./docs/source/design.md#architecture)&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;[Workflow](./docs/source/design.md#workflow)&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;[LLMs Recipes](./docs/source/llm_recipes.md)&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;[Results](./docs/source/validated_model_list.md)&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;[Documentations](https://intel.github.io/neural-compressor)
+[Architecture](./docs/source/3x/design.md#architecture)&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;[Workflow](./docs/source/3x/design.md#workflows)&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;[LLMs Recipes](./docs/source/llm_recipes.md)&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;[Results](./docs/source/validated_model_list.md)&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;[Documentations](https://intel.github.io/neural-compressor)
 
 ---
 <div align="left">
@@ -19,8 +19,8 @@ Intel® Neural Compressor aims to provide popular model compression techniques s
 as well as Intel extensions such as [Intel Extension for TensorFlow](https://github.com/intel/intel-extension-for-tensorflow) and [Intel Extension for PyTorch](https://github.com/intel/intel-extension-for-pytorch).
 In particular, the tool provides the key features, typical examples, and open collaborations as below:
 
-* Support a wide range of Intel hardware such as [Intel Gaudi Al Accelerators](https://www.intel.com/content/www/us/en/products/details/processors/ai-accelerators/gaudi-overview.html), [Intel Core Ultra Processors](https://www.intel.com/content/www/us/en/products/details/processors/core-ultra.html), [Intel Xeon Scalable Processors](https://www.intel.com/content/www/us/en/products/details/processors/xeon/scalable.html), [Intel Xeon CPU Max Series](https://www.intel.com/content/www/us/en/products/details/processors/xeon/max-series.html), [Intel Data Center GPU Flex Series](https://www.intel.com/content/www/us/en/products/details/discrete-gpus/data-center-gpu/flex-series.html), and [Intel Data Center GPU Max Series](https://www.intel.com/content/www/us/en/products/details/discrete-gpus/data-center-gpu/max-series.html) with extensive testing; 
-support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testing; support NVidia GPU for some WOQ algorithms like AutoRound and HQQ. 
+* Support a wide range of Intel hardware such as [Intel Gaudi Al Accelerators](https://www.intel.com/content/www/us/en/products/details/processors/ai-accelerators/gaudi-overview.html), [Intel Core Ultra Processors](https://www.intel.com/content/www/us/en/products/details/processors/core-ultra.html), [Intel Xeon Scalable Processors](https://www.intel.com/content/www/us/en/products/details/processors/xeon/scalable.html), [Intel Xeon CPU Max Series](https://www.intel.com/content/www/us/en/products/details/processors/xeon/max-series.html), [Intel Data Center GPU Flex Series](https://www.intel.com/content/www/us/en/products/details/discrete-gpus/data-center-gpu/flex-series.html), and [Intel Data Center GPU Max Series](https://www.intel.com/content/www/us/en/products/details/discrete-gpus/data-center-gpu/max-series.html) with extensive testing;
+support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testing; support NVidia GPU for some WOQ algorithms like AutoRound and HQQ.
 
 * Validate popular LLMs such as [LLama2](/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm), [Falcon](/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm), [GPT-J](/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm), [Bloom](/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm), [OPT](/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm), and more than 10,000 broad models such as [Stable Diffusion](/examples/pytorch/nlp/huggingface_models/text-to-image/quantization), [BERT-Large](/examples/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx), and [ResNet50](/examples/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx) from popular model hubs such as [Hugging Face](https://huggingface.co/), [Torch Vision](https://pytorch.org/vision/stable/index.html), and [ONNX Model Zoo](https://github.com/onnx/models#models), with automatic [accuracy-driven](/docs/source/design.md#workflow) quantization strategies
 
@@ -28,7 +28,7 @@ support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testi
 
 ## What's New
 * [2024/07] From 3.0 release, framework extension API is recommended to be used for quantization.
-* [2024/07] Performance optimizations and usability improvements on [client-side](https://github.com/intel/neural-compressor/blob/master/docs/source/3x/client_quant.md).
+* [2024/07] Performance optimizations and usability improvements on [client-side](./docs/source/3x/client_quant.md).
 
 ## Installation
 ### Install Framework
@@ -37,10 +37,10 @@ support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testi
 pip install torch --index-url https://download.pytorch.org/whl/cpu
 ```
 #### Use Docker Image with torch installed for HPU
-https://docs.habana.ai/en/latest/Installation_Guide/Bare_Metal_Fresh_OS.html#bare-metal-fresh-os-single-click 
+https://docs.habana.ai/en/latest/Installation_Guide/Bare_Metal_Fresh_OS.html#bare-metal-fresh-os-single-click
 
 #### Install torch/intel_extension_for_pytorch for Intel GPU
-https://intel.github.io/intel-extension-for-pytorch/index.html#installation 
+https://intel.github.io/intel-extension-for-pytorch/index.html#installation
 
 #### Install torch for other platform
 https://pytorch.org/get-started/locally
@@ -58,7 +58,7 @@ pip install neural-compressor[pt]
 pip install neural-compressor[tf]
 ```
 > **Note**:
-> Further installation methods can be found under [Installation Guide](https://github.com/intel/neural-compressor/blob/master/docs/source/installation_guide.md). check out our [FAQ](https://github.com/intel/neural-compressor/blob/master/docs/source/faq.md) for more details.
+> Further installation methods can be found under [Installation Guide](./docs/source/installation_guide.md). check out our [FAQ](./docs/source/faq.md) for more details.
 
 ## Getting Started
 
@@ -126,7 +126,7 @@ To try INT4 model inference, please directly use [Intel Extension for Transforme
   <tbody>
     <tr>
       <td colspan="2" align="center"><a href="./docs/source/3x/design.md#architecture">Architecture</a></td>
-      <td colspan="2" align="center"><a href="./docs/source/3x/design.md#workflow">Workflow</a></td>
+      <td colspan="2" align="center"><a href="./docs/source/3x/design.md#workflows">Workflow</a></td>
       <td colspan="2" align="center"><a href="https://intel.github.io/neural-compressor/latest/docs/source/api-doc/apis.html">APIs</a></td>
       <td colspan="1" align="center"><a href="./docs/source/3x/llm_recipes.md">LLMs Recipes</a></td>
       <td colspan="1" align="center">Examples</td>

@@ -162,15 +162,6 @@ if args.quantize:
         collate_fn=calib_evaluator.collate_batch,
     )
 
-    from neural_compressor.torch.quantization import SmoothQuantConfig
-
-    args.alpha = eval(args.alpha)
-    excluded_precisions = [] if args.int8_bf16_mixed else ["bf16"]
-    quant_config = SmoothQuantConfig(alpha=args.alpha, folding=False, excluded_precisions=excluded_precisions)
-
-    if re.search("gpt", user_model.config.model_type):
-        quant_config.set_local(torch.add, SmoothQuantConfig(w_dtype="fp32", act_dtype="fp32"))
-
     from neural_compressor.torch.algorithms.smooth_quant import move_input_to_device
     from tqdm import tqdm
 
@@ -189,16 +180,39 @@ if args.quantize:
             if calib_iter >= args.calib_iters:
                 break
         return
-
+    
+    def eval_func(model):
+        config = AutoConfig.from_pretrained(args.model)
+        setattr(model, "config", config)
+    
+        from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
+        eval_args = LMEvalParser(
+            model="hf",
+            user_model=model,
+            tokenizer=tokenizer,
+            batch_size=args.batch_size,
+            tasks=args.tasks,
+            device="cpu",
+        )
+        results = evaluate(eval_args)
+        if args.tasks == "wikitext":
+            return results["results"][args.tasks]["word_perplexity,none"]
+        else:
+            return results["results"][args.tasks]["acc,none"]
+        
     from utils import get_example_inputs
 
     example_inputs = get_example_inputs(user_model, calib_dataloader)
 
-    from neural_compressor.torch.quantization import prepare, convert
-
-    user_model = prepare(model=user_model, quant_config=quant_config, example_inputs=example_inputs)
-    run_fn(user_model)
-    user_model = convert(user_model)
+    from neural_compressor.torch.quantization import SmoothQuantConfig, autotune, TuningConfig
+    tune_config = TuningConfig(config_set=SmoothQuantConfig.get_config_set_for_tuning())
+    user_model = autotune(
+        user_model, 
+        tune_config=tune_config,
+        eval_fn=eval_func,
+        run_fn=run_fn,
+        example_inputs=example_inputs,
+    )
     user_model.save(args.output_dir)
 
 
@@ -231,11 +245,10 @@ if args.accuracy:
     results = evaluate(eval_args)
     for task_name in args.tasks.split(","):
         if task_name == "wikitext":
-            acc = results["results"][task_name]["word_perplexity,none"]
+            print("Accuracy for %s is: %s" % (task_name, results["results"][task_name]["word_perplexity,none"]))
         else:
-            acc = results["results"][task_name]["acc,none"]
-    print("Accuracy: %.5f" % acc)
-    print("Batch size = %d" % args.batch_size)
+            print("Accuracy for %s is: %s" % (task_name, results["results"][task_name]["acc,none"]))
+
 
 if args.performance:
     user_model.eval()
