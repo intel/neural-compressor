@@ -34,24 +34,29 @@ DEBUG = False
 
 
 # ================ device related ===================
-def move_input_to_device(input, device=torch.device("cpu")):
+def move_input_to_device(input, device=torch.device("cpu"), multimodal_mode=False):
     if isinstance(input, dict) or isinstance(input, UserDict):
         for inp in input.keys():
             input[inp] = input[inp].to(device) if isinstance(input[inp], torch.Tensor) else input[inp]
     elif isinstance(input, list) or isinstance(input, tuple):
-        input_res, prev_size = [], None
-        for inp in input:
-            if prev_size:
-                if isinstance(inp, torch.Tensor):
-                    if inp.size() == prev_size:
-                        input_res.append(inp.to(device))
+        if not multimodal_mode:
+            input_res, prev_size = [], None
+            for inp in input:
+                if prev_size:
+                    if isinstance(inp, torch.Tensor):
+                        if inp.size() == prev_size:
+                            input_res.append(inp.to(device))
+                    else:
+                        if torch.tensor(inp).size == prev_size:
+                            input_res.append(inp)
                 else:
-                    if torch.tensor(inp).size == prev_size:
-                        input_res.append(inp)
-            else:
-                input_res.append(inp.to(device) if isinstance(inp, torch.Tensor) else inp)
-            prev_size = torch.tensor(inp).size()
-        input = input_res
+                    input_res.append(inp.to(device) if isinstance(inp, torch.Tensor) else inp)
+                prev_size = torch.tensor(inp).size()
+            input = input_res
+        else:  # pragma: no cover
+            # multimodal model inputs
+            input_res = {"input_ids": input[0].to(device), "images": input[1].to(device), "image_sizes": input[2]}
+            input = input_res
     else:
         input = input.to(device)  # pylint: disable=no-member
     return input
@@ -73,7 +78,7 @@ def is_leaf(module):
     return True if children_cnt == 0 else False
 
 
-def trace_gptq_target_blocks(module, module_types=[torch.nn.ModuleList, torch.nn.Sequential]):
+def trace_gptq_target_blocks(module, module_types=[torch.nn.ModuleList, torch.nn.Sequential], multimodal_mode=False):
     """Search transformer stacked structures, which is critical in LLMs and GPTQ execution.
 
     Args:
@@ -123,7 +128,8 @@ def trace_gptq_target_blocks(module, module_types=[torch.nn.ModuleList, torch.nn
                 gptq_related_blocks["transformers_name"] = n
                 gptq_related_blocks["transformers"] = m
                 find_transformers = True
-                # return gptq_related_blocks
+                if multimodal_mode:
+                    return gptq_related_blocks
             elif is_leaf(m) and not find_transformers:
                 gptq_related_blocks["embeddings"][n] = m
             elif n.find(gptq_related_blocks["transformers_name"]) == -1 and find_transformers:
@@ -133,6 +139,10 @@ def trace_gptq_target_blocks(module, module_types=[torch.nn.ModuleList, torch.nn
             else:
                 continue
     return gptq_related_blocks
+
+
+def find_formal_transformers(inputs: dict):
+    """To find the transformer block that to be quantized."""
 
 
 def find_layers(module, layers=[nn.Conv2d, nn.Conv1d, nn.Linear, transformers.Conv1D], name=""):
@@ -206,6 +216,7 @@ class GPTQuantizer(object):
         pad_max_length=2048,
         device=None,
         layer_wise=False,
+        multimodal_mode=False,
     ):
         """
         Args:
@@ -226,9 +237,12 @@ class GPTQuantizer(object):
             device: cpu or cuda
         """
         # model
+        self.multimodal_mode = multimodal_mode
         self.model = model
         # self.use_cache = self.model.config.use_cache
-        self.gptq_related_blocks = trace_gptq_target_blocks(self.model)  # get the transformer block list above
+        self.gptq_related_blocks = trace_gptq_target_blocks(
+            self.model, multimodal_mode=self.multimodal_mode
+        )  # get the transformer block list above
         self.dtype = next(iter(self.model.parameters())).dtype
         log_quantizable_layers_per_transformer(self.gptq_related_blocks)
 
@@ -306,7 +320,8 @@ class GPTQuantizer(object):
                 else:
                     batch_final = batch[:]
             # dict
-            elif isinstance(batch, dict):
+            elif isinstance(batch, dict) or type(batch).__name__ == "BatchEncoding":
+                # Qwen-VL model input type is 'transformers.tokenization_utils_base.BatchEncoding'
                 try:
                     length = batch["input_ids"].shape[-1]
                 except:
@@ -509,11 +524,15 @@ class GPTQuantizer(object):
         logger.info("Collecting calibration inputs...")
         for batch in tqdm(self.dataloader):
             if not self.layer_wise:
-                batch = move_input_to_device(batch, self.device)
+                batch = move_input_to_device(batch, self.device, self.multimodal_mode)
             try:
                 if isinstance(batch, tuple) or isinstance(batch, list):
-                    self.model(batch[0])
-                elif isinstance(batch, dict):
+                    if not self.multimodal_mode:
+                        self.model(batch[0])
+                    else:
+                        self.model(*batch)
+                elif isinstance(batch, dict) or type(batch).__name__ == "BatchEncoding":
+                    # Qwen-VL model input type is 'transformers.tokenization_utils_base.BatchEncoding'
                     self.model(**batch)
                 else:
                     self.model(batch)
