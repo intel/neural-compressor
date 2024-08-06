@@ -30,6 +30,7 @@ def calib_func(model):
     for i in range(2):
         model(example_inputs)
 
+
 def get_woq_linear_num(model, woq_module_type_name):
     woq_linear_num = 0
     for _, module in model.named_modules():

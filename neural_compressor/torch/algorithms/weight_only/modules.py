@@ -54,17 +54,14 @@ class QDQLayer(torch.nn.Module):
 
 class UnpackedWeightOnlyLinearParams(dict):
     def __init__(self, unpack_weight, scales, unpack_zp, **kwargs):
-        super().__init__(
-            int_weight=unpack_weight,
-            scales=scales,
-            zp=unpack_zp,
-            **kwargs)
+        super().__init__(int_weight=unpack_weight, scales=scales, zp=unpack_zp, **kwargs)
 
     def to(self, device):
         for key, value in self.items():
             if isinstance(value, torch.Tensor) and value is not None:
                 self[key] = value.to(device)
         return self
+
 
 class WeightOnlyLinear(torch.nn.Module):
     """Weight Only Linear."""
@@ -817,6 +814,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
             tmp_str += ", use_optimum_format=True"
         return tmp_str
 
+
 class HPUWeightOnlyLinear(WeightOnlyLinear):
     def __init__(
         self,
@@ -901,14 +899,12 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
         output = torch.matmul(input, weight)
         output = output.to(dtype=input_dtype).reshape(
             output_shape
-
         )  # A cast is needed here as for some reason the vecquant2matmul_faster_old still allocate a float32 output.
         output = output + self.bias if self.bias is not None else output
         return output
 
-
     def pack(self, int_weight, scales, zp, bias=None, g_idx=None):
-        logger.debug(f"Packing for HPU")
+        logger.debug("Packing for HPU")
 
         scales = scales.T.contiguous()
         qzeros = zp.T.contiguous()
@@ -929,14 +925,14 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
             self.bias = bias.to("hpu").to(torch.bfloat16)
 
     def unpack(self):
-        logger.debug(f"Unpacking from HPU")
+        logger.debug("Unpacking from HPU")
         self.qweight = self.qweight.cpu()
         weight = torch.bitwise_right_shift(
-                torch.unsqueeze(self.qweight, 1).expand(-1, 32 // self.bits, -1),
-                self.wf.unsqueeze(-1),
-            ).to(torch.int16 if self.bits == 8 else torch.int8)
+            torch.unsqueeze(self.qweight, 1).expand(-1, 32 // self.bits, -1),
+            self.wf.unsqueeze(-1),
+        ).to(torch.int16 if self.bits == 8 else torch.int8)
         weight = torch.bitwise_and(weight, (2**self.bits) - 1)
-        weight = weight.reshape((weight.shape[0]*weight.shape[1], weight.shape[2]))
+        weight = weight.reshape((weight.shape[0] * weight.shape[1], weight.shape[2]))
         self.qweight = self.qweight.to(self.device)
 
         zeros = torch.bitwise_right_shift(
@@ -944,14 +940,14 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
             self.wf.unsqueeze(0),
         ).to(torch.int16 if self.bits == 8 else torch.int8)
 
-        zeros = torch.bitwise_and(
-            zeros, (2**self.bits) - 1
-        ).to(self.scales.dtype)  # NOTE: It appears that casting here after the `zeros = zeros + 1` is important.
+        zeros = torch.bitwise_and(zeros, (2**self.bits) - 1).to(
+            self.scales.dtype
+        )  # NOTE: It appears that casting here after the `zeros = zeros + 1` is important.
         zeros = zeros + 1
         zeros = zeros.reshape(-1, 1, zeros.shape[1] * zeros.shape[2])
         return weight, zeros
 
-    def pack_tensor(self, input, bits = 4):
+    def pack_tensor(self, input, bits=4):
         normal = input.to(torch.int32)
         q = torch.zeros((normal.shape[0], normal.shape[1] // 32 * bits), dtype=torch.int32)
         i = 0
@@ -963,6 +959,7 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
             col += 1
         q = q.to(torch.int32)
         return q
+
 
 class FakeAffineTensorQuantFunction(Function):
     """Fake version of affine quantization."""

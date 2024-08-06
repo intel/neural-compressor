@@ -507,7 +507,7 @@
  506: 'coil, spiral, volute, whorl, helix',
  507: 'combination lock',
  508: 'computer keyboard, keypad',
- 509: 'confectionery, confectionary, candy store',
+ 509: 'confectionery, confectionery, candy store',
  510: 'container ship, containership, container vessel',
  511: 'convertible',
  512: 'corkscrew, bottle screw',

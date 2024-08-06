@@ -8,7 +8,7 @@ the saved image is its label.
 3) Downsample the images to be 64*64 (using bicubic interpolation) and then restore them using Super Resolution. 
 4) Calculate  PSNR and SSIM between each ground truth image and restored image, and print the mean.
 
-Steps 1,2 and 4 are inluded here, while step 3 (downsampling and restoring) should be done seperately, using the 
+Steps 1,2 and 4 are included here, while step 3 (downsampling and restoring) should be done separately, using the 
 desired Super Resolution method. Keep in mind that this script assumes that the images are stored in a specific format, 
 (detailed later). Later, the restored images path should be given as an input to step 4.
 
