@@ -20,7 +20,7 @@ Classes
 Module Contents
 ---------------
 
-.. py:class:: FuseNodeStartWithPooling
+.. py:class:: FuseNodeStartWithPooling(**kwargs)
 
 
 
