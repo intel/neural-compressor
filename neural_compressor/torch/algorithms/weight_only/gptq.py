@@ -772,14 +772,22 @@ class GPTQ:
         if is_transformers_imported() and isinstance(self.layer, transformers.Conv1D):
             W = W.t()
         W = W.float()
+        is_hpu = "hpu" in self.device
+        # TODO [SW-199757]: Remove cholesky workaround
+        if is_hpu:
+            W = W.to("hpu")
 
         tick = time.time()
+
+        # TODO [SW-199757]: Remove cholesky workaround
+        if is_hpu:
+            accelerator.mark_step()
 
         if not self.quantizer.ready():
             self.quantizer.find_params(W, weight=True)
 
         H = self.H
-        if "hpu" in self.device:
+        if is_hpu:
             H = H.to("cpu")
         del self.H
         dead = torch.diag(H) == 0
@@ -808,12 +816,22 @@ class GPTQ:
         Q = torch.zeros_like(W)
 
         damp = percdamp * torch.mean(torch.diag(H))
-        diag = torch.arange(self.columns, device=self.device)
+        # TODO [SW-199757]: Remove cholesky workaround
+        if is_hpu:
+            diag = torch.arange(self.columns, device='cpu')
+        else:
+            diag = torch.arange(self.columns, device=self.device)
         H[diag, diag] += damp  # add a average value of
+        # TODO [SW-199757]: Remove cholesky workaround
+        if is_hpu:
+            H = H.cpu()
         H = torch.linalg.cholesky(H)
         H = torch.cholesky_inverse(H)
         H = torch.linalg.cholesky(H, upper=True)
         Hinv = H
+        # TODO [SW-199757]: Remove cholesky workaround
+        if is_hpu:
+            Hinv = Hinv.to("hpu")
 
         scale = []
         zero = []
@@ -831,6 +849,9 @@ class GPTQ:
             for i in range(count):  # within a block, channel wise
                 w = W1[:, i]
                 d = Hinv1[i, i]
+                # TODO [SW-199757]: Remove cholesky workaround
+                if is_hpu:
+                    d = d.to("hpu")
 
                 if groupsize != -1:
                     if not static_groups:
@@ -850,6 +871,9 @@ class GPTQ:
                 Losses1[:, i] = (w - q) ** 2 / d**2
 
                 err1 = (w - q) / d
+                # TODO [SW-199757]: Remove cholesky workaround
+                if is_hpu:
+                    err1 = err1.to("hpu")
                 W1[:, i:] -= err1.unsqueeze(1).matmul(Hinv1[i, i:].unsqueeze(0))
                 Err1[:, i] = err1
 
@@ -885,7 +909,7 @@ class GPTQ:
             zero.append(self.quantizer.zero)
         scale = torch.cat(scale, dim=1)
         zero = torch.cat(zero, dim=1)
-        if "hpu" in self.device:
+        if is_hpu:
             scale = scale.to(self.device)
             zero = zero.to(self.device)
             Q = Q.to(self.device)
