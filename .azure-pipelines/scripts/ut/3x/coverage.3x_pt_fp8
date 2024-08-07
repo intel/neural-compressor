@@ -3,8 +3,7 @@ branch = True
 
 [report]
 include =
- */neural_compressor/torch/algorithms/habana_fp8/*
- */neural_compressor/torch/amp/*
+ */neural_compressor/torch/algorithms/fp8_quant/*
 exclude_lines =
  pragma: no cover
  raise NotImplementedError
