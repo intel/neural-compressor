@@ -100,6 +100,7 @@ if [[ "${fwk_ver}" != "latest" ]]; then
     elif [[ "${framework}" == "onnxrt" ]]; then
         pip install onnx==1.15.0
         pip install onnxruntime==${fwk_ver}
+    fi
 fi
 
 if [ -f "requirements.txt" ]; then
