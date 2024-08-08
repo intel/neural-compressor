@@ -11,7 +11,7 @@ Intel® Neural Compressor v3.0 Release
 
 **Highlights**
  - FP8 quantization and INT4 model loading support on [Intel® Gaudi® AI accelerator](https://habana.ai/products/gaudi2/) 
- - Framework extension API (3.x API) for quantization, mixed-precision and benchmarking  
+ - Framework extension API for quantization, mixed-precision and benchmarking  
  - Accuracy-aware FP16 mixed precision support on [Intel® Xeon® 6 Processors](https://www.intel.com/content/www/us/en/products/details/processors/xeon.html)    
  - Performance optimizations and usability improvements on client-side quantization    
 
