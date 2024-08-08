@@ -5,5 +5,4 @@ numpy
 prettytable
 psutil
 pytest
-torchvision
 transformers
