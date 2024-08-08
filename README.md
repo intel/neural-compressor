@@ -40,7 +40,7 @@ pip install torch --index-url https://download.pytorch.org/whl/cpu
 https://docs.habana.ai/en/latest/Installation_Guide/Bare_Metal_Fresh_OS.html#bare-metal-fresh-os-single-click
 
 > **Note**:
-> There is a version mapping between Intel Neural Compressor and Gaudi Software Stack, please refer to this [table](./docs/source/3x/gaudi_version_map.md) and make sure to use a matched combination
+> There is a version mapping between Intel Neural Compressor and Gaudi Software Stack, please refer to this [table](./docs/source/3x/gaudi_version_map.md) and make sure to use a matched combination.
 
 #### Install torch/intel_extension_for_pytorch for Intel GPU
 https://intel.github.io/intel-extension-for-pytorch/index.html#installation
