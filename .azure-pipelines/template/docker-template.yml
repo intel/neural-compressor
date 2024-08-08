@@ -74,7 +74,7 @@ steps:
 
   - ${{ if eq(parameters.imageSource, 'pull') }}:
       - script: |
-            docker pull vault.habana.ai/gaudi-docker/1.16.1/ubuntu22.04/habanalabs/pytorch-installer-2.2.2:latest
+            docker pull vault.habana.ai/gaudi-docker/1.17.0/ubuntu22.04/habanalabs/pytorch-installer-2.3.1:latest
         displayName: "Pull habana docker image"
 
   - script: |
