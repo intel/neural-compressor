@@ -2,6 +2,69 @@
 
 Intel® Neural Compressor validated examples with multiple compression techniques, including quantization, pruning, knowledge distillation and orchestration. Part of the validated cases can be found in the example tables, and the release data is available [here](../docs/source/validated_model_list.md).
 
+
+# PyTorch Examples
+
+## Quantization
+<table>
+<thead>
+  <tr>
+    <th>Model</th>
+    <th>Domain</th>
+    <th>Method </th>
+    <th>Examples</th>
+  </tr>
+</thead>
+<tbody>
+
+<tr>
+    <td rowspan="2">gpt_j</td>
+    <td rowspan="2">Natural Language Processing</td>
+    <td>Weight-Only Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/weight_only">link</a></td>
+</tr>
+<tr>
+    <td>Static Quantization (IPEX)</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/static_quant/ipex">link</a></td>
+</tr>
+<tr>
+    <td rowspan="2">llama2_7b</td>
+    <td rowspan="2">Natural Language Processing</td>
+    <td>Weight-Only Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/weight_only">link</a></td>
+</tr>
+<tr>
+    <td>Static Quantization (IPEX)</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/static_quant/ipex">link</a></td>
+</tr>
+<tr>
+    <td rowspan="3">opt_125m</td>
+    <td rowspan="3">Natural Language Processing</td>
+    <td>Static Quantization (IPEX)</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/static_quant/ipex">link</a></td>
+</tr>
+<tr>
+    <td>Static Quantization (PT2E)</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/static_quant/pt2e">link</a></td>
+</tr>
+<tr>
+    <td>Weight-Only Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/weight_only">link</a></td>
+</tr>
+<tr>
+    <td rowspan="2">resnet18</td>
+    <td rowspan="2">Image Recognition</td>
+    <td>Mixed Precision</td>
+    <td><a href="./pytorch/cv/mixed_precision">link</a></td>
+</tr>
+<tr>
+    <td>Static Quantization</td>
+    <td><a href="./pytorch/cv/static_quant">link</a></td>
+</tr>
+</tbody>
+</table>
+
+
 # TensorFlow Examples
 
 ## Quantization
@@ -21,12 +84,6 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./tensorflow/nlp/bert_large_squad_model_zoo/quantization/ptq">link</a></td>
-</tr>
-<tr>
-    <td>gpt-j-6B</td>
-    <td>Natural Language Processing</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/nlp/large_language_models/quantization/ptq/gpt-j">link</a></td>
 </tr>
 <tr>
     <td>transformer_lt</td>
@@ -89,19 +146,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./tensorflow/object_detection/mask_rcnn_inception_v2/quantization/ptq">link</a></td>
 </tr>
 <tr>
-    <td>mask_rcnn_inception_v2_ckpt</td>
-    <td>Object Detection</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/object_detection/mask_rcnn_inception_v2/quantization/ptq">link</a></td>
-</tr>
-<tr>
     <td>ssd_mobilenet_v1</td>
-    <td>Object Detection</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/object_detection/ssd_mobilenet_v1/quantization/ptq">link</a></td>
-</tr>
-<tr>
-    <td>ssd_mobilenet_v1_ckpt</td>
     <td>Object Detection</td>
     <td>Post-Training Static Quantization</td>
     <td><a href="./tensorflow/object_detection/ssd_mobilenet_v1/quantization/ptq">link</a></td>
@@ -118,88 +163,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Post-Training Static Quantization</td>
     <td><a href="./tensorflow/semantic_image_segmentation/3dunet-mlperf/quantization/ptq">link</a></td>
 </tr>
-<tr>
-    <td>style_transfer</td>
-    <td>Style Transfer</td>
-    <td>Post-Training Static Quantization</td>
-    <td><a href="./tensorflow/style_transfer/arbitrary_style_transfer/quantization/ptq">link</a></td>
-</tr>
 
 </tbody>
 </table>
 
-# PyTorch Examples
-
-## Quantization
-<table>
-<thead>
-  <tr>
-    <th>Model</th>
-    <th>Domain</th>
-    <th>Method </th>
-    <th>Algorithm </th>
-    <th>Examples</th>
-  </tr>
-</thead>
-<tbody>
-
-<tr>
-    <td rowspan="3">gpt_j</td>
-    <td rowspan="3">Natural Language Processing</td>
-    <td>Weight-Only Quantization</td>
-    <td>RTN</td>
-    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/weight_only">link</a></td>
-</tr>
-<tr>
-    <td>Weight-Only Quantization</td>
-    <td>GPTQ</td>
-    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/weight_only">link</a></td>
-</tr>
-<tr>
-    <td>Static Quantization (IPEX)</td>
-    <td></td>
-    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/static_quant/ipex">link</a></td>
-</tr>
-<tr>
-    <td rowspan="2">llama2_7b</td>
-    <td rowspan="2">Natural Language Processing</td>
-    <td>Weight-Only Quantization</td>
-    <td>GPTQ</td>
-    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/weight_only">link</a></td>
-</tr>
-<tr>
-    <td>Static Quantization (IPEX)</td>
-    <td></td>
-    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/static_quant/ipex">link</a></td>
-</tr>
-<tr>
-    <td rowspan="3">opt_125m</td>
-    <td rowspan="3">Natural Language Processing</td>
-    <td>Static Quantization (IPEX)</td>
-    <td></td>
-    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/static_quant/ipex">link</a></td>
-</tr>
-<tr>
-    <td>Weight-Only Quantization</td>
-    <td>GPTQ</td>
-    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/weight_only">link</a></td>
-</tr>
-<tr>
-    <td>Static Quantization (PT2E)</td>
-    <td></td>
-    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/static_quant/pt2e">link</a></td>
-</tr>
-<tr>
-    <td rowspan="2">resnet18</td>
-    <td rowspan="2">Image Recognition</td>
-    <td>Mixed Precision</td>
-    <td></td>
-    <td><a href="./pytorch/cv/mixed_precision">link</a></td>
-</tr>
-<tr>
-    <td>Static Quantization</td>
-    <td></td>
-    <td><a href="./pytorch/cv/static_quant">link</a></td>
-</tr>
-</tbody>
-</table>
