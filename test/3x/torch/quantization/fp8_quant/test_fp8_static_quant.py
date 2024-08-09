@@ -20,6 +20,7 @@ from neural_compressor.torch.utils import is_hpex_available
 
 def change_to_cur_file_dir():
     import os
+
     current_file_path = os.path.abspath(__file__)
     current_directory = os.path.dirname(current_file_path)
     os.chdir(current_directory)
