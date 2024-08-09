@@ -420,7 +420,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
         Returns:
             tensor: unpacked tensor.
         """
-        target_dtype = torch.int8 if not hasattr(self, "qzeros") or "int" not in self.dtype else torch.uint8
+        target_dtype = torch.int16
         target_len = packed_tensor.shape[1] * self.n_pack
         unpacked_tensor = torch.zeros(packed_tensor.shape[0], target_len, dtype=target_dtype).to(packed_tensor.device)
         mask = torch.tensor(2**self.bits - 1, dtype=self.compression_dtype).to(packed_tensor.device)
@@ -430,7 +430,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
                 tmp = packed_tensor[:, j]
                 tmp = tmp << (self.compress_bits - self.bits * (e + 1))
                 tmp = tmp >> self.compress_bits - self.bits
-                if target_dtype == torch.uint8:
+                if hasattr(self, "qzeros"):
                     tmp &= mask  # remove sign bit
                 unpacked_tensor[:, index].copy_(tmp.type(target_dtype))
                 accelerator.synchronize()
@@ -746,14 +746,14 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
 
     def pack_tensor(self, raw_tensor):
         """Pack tensor."""
-        if "cuda" in raw_tensor.device.type:
+        if "cuda" in raw_tensor.device.type or "hpu" in raw_tensor.device.type:
             return self.pack_tensor_with_torch(raw_tensor)
         else:
             return self.pack_tensor_with_numpy(raw_tensor)
 
     def unpack_tensor(self, packed_tensor):
         """Unpack tensor."""
-        if "cuda" in packed_tensor.device.type:
+        if "cuda" in packed_tensor.device.type or "hpu" in packed_tensor.device.type:
             return self.unpack_tensor_with_torch(packed_tensor)
         else:
             return self.unpack_tensor_with_numpy(packed_tensor)
