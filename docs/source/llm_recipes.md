@@ -17,8 +17,8 @@ This document aims to publish the specific recipes we achieved for the popular L
 |       EleutherAI/gpt-j-6b       |    ✔    |    ✔     |    ✔     |
 |        facebook/opt-1.3b        |    ✔    |    ✔     |    ✔     |
 |        facebook/opt-30b         |    ✔    |    ✔     |    ✔     |
-|    meta-llama/Llama-2-7b-hf     |    ✔    |    ✔     |    ✔     |
-|    meta-llama/Llama-2-13b-hf    |    ✔    |    ✔     |    ✔     |
+|    meta-llama/Llama-2-7b-hf     |   WIP   |    ✔     |    ✔     |
+|    meta-llama/Llama-2-13b-hf    |   WIP   |    ✔     |    ✔     |
 |    meta-llama/Llama-2-70b-hf    |    ✔    |    ✔     |    ✔     |
 |        tiiuae/falcon-7b         |    ✔    |    ✔     |    ✔     |
 |        tiiuae/falcon-40b        |    ✔    |    ✔     |    ✔     |
@@ -29,8 +29,8 @@ This document aims to publish the specific recipes we achieved for the popular L
 |     databricks/dolly-v2-12b     |    ✖    |    ✔     |    ✖     |
 |     EleutherAI/gpt-neox-20b     |    ✖    |    ✔     |    ✔     |
 |    mistralai/Mistral-7B-v0.1    |    ✖    |    ✔     |    ✔     |
-|        THUDM/chatglm2-6b        |    ✔    |    ✔     |    ✔     |
-|        THUDM/chatglm3-6b        |   WIP   |    ✔     |   WIP    |
+|        THUDM/chatglm2-6b        |   WIP   |    ✔     |   WIP    |
+|        THUDM/chatglm3-6b        |   WIP   |    ✔     |    ✔     |
 
 **Detail recipes can be found [HERE](https://github.com/intel/intel-extension-for-transformers/blob/main/examples/huggingface/pytorch/text-generation/quantization/llm_quantization_recipes.md).**
 
@@ -68,48 +68,48 @@ This document aims to publish the specific recipes we achieved for the popular L
   <tr>
     <td>baichuan-inc/Baichuan-13B-Chat</td>
     <td>67.57%</td>
-    <td>69.07%</td>
-    <td>1.0222</td>
+    <td>67.86%</td>
+    <td>1.0043</td>
     <td>67.55%</td>
     <td>0.9997</td>
-    <td>68.12%</td>
-    <td>1.0081</td>
-    <td>66.93%</td>
-    <td>0.9905</td>
+    <td>67.46%</td>
+    <td>0.9984</td>
+    <td>N/A</td>
+    <td>N/A</td>
   </tr>
   <tr>
     <td>baichuan-inc/Baichuan2-13B-Chat</td>
     <td>71.51%</td>
-    <td>75.57%</td>
-    <td>1.0568</td>
+    <td>75.51%</td>
+    <td>1.0559</td>
     <td>71.57%</td>
     <td>1.0008</td>
-    <td>70.81%</td>
-    <td>0.9902</td>
-    <td>N/A</td>
-    <td>N/A</td>
+    <td>71.45%</td>
+    <td>0.9992</td>
+    <td>70.87%</td>
+    <td>0.9911</td>
   </tr>
   <tr>
     <td>baichuan-inc/Baichuan2-7B-Chat</td>
     <td>67.67%</td>
-    <td>68.06%</td>
-    <td>1.0058</td>
+    <td>67.51%</td>
+    <td>0.9976</td>
     <td>67.61%</td>
     <td>0.9991</td>
-    <td>67.90%</td>
-    <td>1.0034</td>
-    <td>N/A</td>
-    <td>N/A</td>
+    <td>68.08%</td>
+    <td>1.0061</td>
+    <td>67.18%</td>
+    <td>0.9928</td>
   </tr>
   <tr>
     <td>bigscience/bloom-1b7</td>
     <td>46.34%</td>
-    <td>47.99%</td>
-    <td>1.0356</td>
+    <td>47.97%</td>
+    <td>1.0352</td>
     <td>46.21%</td>
     <td>0.9972</td>
-    <td>46.90%</td>
-    <td>1.0121</td>
+    <td>47.00%</td>
+    <td>1.0142</td>
     <td>N/A</td>
     <td>N/A</td>
   </tr>
@@ -128,14 +128,14 @@ This document aims to publish the specific recipes we achieved for the popular L
   <tr>
     <td>EleutherAI/gpt-j-6b</td>
     <td>68.31%</td>
+    <td>68.00%</td>
+    <td>0.9955</td>
     <td>68.27%</td>
     <td>0.9994</td>
-    <td>68.27%</td>
-    <td>0.9994</td>
-    <td>68.35%</td>
-    <td>1.0006</td>
-    <td>68.02%</td>
-    <td>0.9958</td>
+    <td>68.23%</td>
+    <td>0.9988</td>
+    <td>67.40%</td>
+    <td>0.9867</td>
   </tr>
   <tr>
     <td>EleutherAI/gpt-neox-20b</td>
@@ -144,68 +144,68 @@ This document aims to publish the specific recipes we achieved for the popular L
     <td>N/A</td>
     <td>72.29%</td>
     <td>0.9994</td>
-    <td>71.74%</td>
-    <td>0.9918</td>
+    <td>72.15%</td>
+    <td>0.9975</td>
     <td>N/A</td>
     <td>N/A</td>
   </tr>
   <tr>
     <td>facebook/opt-1.3b</td>
     <td>57.89%</td>
-    <td>57.68%</td>
-    <td>0.9964</td>
+    <td>57.35%</td>
+    <td>0.9907</td>
     <td>58.12%</td>
     <td>1.0040</td>
-    <td>58.26%</td>
-    <td>1.0064</td>
+    <td>58.01%</td>
+    <td>1.0021</td>
     <td>N/A</td>
     <td>N/A</td>
   </tr>
   <tr>
     <td>facebook/opt-30b</td>
     <td>71.49%</td>
-    <td>71.78%</td>
-    <td>1.0041</td>
+    <td>71.51%</td>
+    <td>1.0003</td>
     <td>71.53%</td>
     <td>1.0006</td>
-    <td>71.59%</td>
-    <td>1.0014</td>
-    <td>71.80%</td>
-    <td>1.0043</td>
+    <td>71.82%</td>
+    <td>1.0046</td>
+    <td>71.43%</td>
+    <td>0.9992</td>
   </tr>
   <tr>
     <td>meta-llama/Llama-2-13b-hf</td>
     <td>76.77%</td>
-    <td>76.25%</td>
-    <td>0.9932</td>
+    <td>N/A</td>
+    <td>N/A</td>
     <td>76.89%</td>
     <td>1.0016</td>
-    <td>77.66%</td>
-    <td>1.0116</td>
-    <td>76.60%</td>
-    <td>0.9978</td>
+    <td>76.96%</td>
+    <td>1.0025</td>
+    <td>N/A</td>
+    <td>N/A</td>
   </tr>
   <tr>
     <td>meta-llama/Llama-2-70b-hf</td>
     <td>79.64%</td>
-    <td>79.14%</td>
-    <td>0.9937</td>
+    <td>79.53%</td>
+    <td>0.9986</td>
     <td>79.62%</td>
     <td>0.9997</td>
-    <td>80.09%</td>
-    <td>1.0057</td>
-    <td>79.68%</td>
-    <td>1.0005</td>
+    <td>80.05%</td>
+    <td>1.0051</td>
+    <td>N/A</td>
+    <td>N/A</td>
   </tr>
   <tr>
     <td>meta-llama/Llama-2-7b-hf</td>
     <td>73.92%</td>
-    <td>73.45%</td>
-    <td>0.9936</td>
+    <td>N/A</td>
+    <td>N/A</td>
     <td>73.90%</td>
     <td>0.9997</td>
-    <td>73.84%</td>
-    <td>0.9989</td>
+    <td>73.51%</td>
+    <td>0.9945</td>
     <td>N/A</td>
     <td>N/A</td>
   </tr>
@@ -216,22 +216,22 @@ This document aims to publish the specific recipes we achieved for the popular L
     <td>N/A</td>
     <td>75.80%</td>
     <td>0.9987</td>
-    <td>76.25%</td>
-    <td>1.0046</td>
-    <td>75.74%</td>
-    <td>0.9979</td>
+    <td>75.37%</td>
+    <td>0.9930</td>
+    <td>75.82%</td>
+    <td>0.9989</td>
   </tr>
   <tr>
     <td>THUDM/chatglm2-6b</td>
     <td>53.23%</td>
-    <td>52.86%</td>
-    <td>0.9930</td>
+    <td>N/A</td>
+    <td>N/A</td>
     <td>53.00%</td>
     <td>0.9957</td>
-    <td>52.90%</td>
-    <td>0.9938</td>
-    <td>52.92%</td>
-    <td>0.9942</td>
+    <td>N/A</td>
+    <td>N/A</td>
+    <td>N/A</td>
+    <td>N/A</td>
   </tr>
   <tr>
     <td>THUDM/chatglm3-6b</td>
@@ -242,31 +242,31 @@ This document aims to publish the specific recipes we achieved for the popular L
     <td>0.9990</td>
     <td>N/A</td>
     <td>N/A</td>
-    <td>N/A</td>
-    <td>N/A</td>
+    <td>58.59%</td>
+    <td>0.9915</td>
   </tr>
   <tr>
     <td>tiiuae/falcon-40b</td>
     <td>77.22%</td>
-    <td>76.95%</td>
-    <td>0.9965</td>
+    <td>77.26%</td>
+    <td>1.0005</td>
     <td>77.18%</td>
     <td>0.9995</td>
-    <td>77.55%</td>
-    <td>1.0043</td>
-    <td>77.82%</td>
-    <td>1.0078</td>
+    <td>77.97%</td>
+    <td>1.0097</td>
+    <td>N/A</td>
+    <td>N/A</td>
   </tr>
   <tr>
     <td>tiiuae/falcon-7b</td>
     <td>74.67%</td>
-    <td>76.63%</td>
-    <td>1.0262</td>
+    <td>76.17%</td>
+    <td>1.0201</td>
     <td>74.73%</td>
     <td>1.0008</td>
-    <td>75.06%</td>
-    <td>1.0052</td>
-    <td>74.00%</td>
-    <td>0.9910</td>
+    <td>74.79%</td>
+    <td>1.0016</td>
+    <td>N/A</td>
+    <td>N/A</td>
   </tr>
 </tbody></table>
