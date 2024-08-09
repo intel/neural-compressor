@@ -119,7 +119,7 @@ class TestAutoRound:
     def test_save_and_load(self):
         fp32_model = copy.deepcopy(self.gptj)
         # known issue: scale_dtype="fp32" will cause accuracy gap between quantized model (using auto-round WeightOnlyLinear) and reloaded model (using INCWeightOnlyLinear)
-        quant_config = AutoRoundConfig(n_samples=32, seqlen=10, iters=10, scale_dtype="fp16")
+        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, scale_dtype="fp16")
         # quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
         logger.info(f"Test AutoRound with config {quant_config}")
 
