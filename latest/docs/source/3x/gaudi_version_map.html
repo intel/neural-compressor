@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mix Precision &mdash; Intel® Neural Compressor 3.0 documentation</title>
+  <title>Version mapping between Intel Neural Compressor to Gaudi Software Stack &mdash; Intel® Neural Compressor 3.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css" />
       <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
@@ -26,9 +26,7 @@
 </script>
 
     <link rel="index" title="Index" href="../../../genindex.html" />
-    <link rel="search" title="Search" href="../../../search.html" />
-    <link rel="next" title="Training" href="training.html" />
-    <link rel="prev" title="Quantization" href="quantization.html" /> 
+    <link rel="search" title="Search" href="../../../search.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -54,27 +52,11 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul class="current">
+              <ul>
 <li class="toctree-l1"><a class="reference internal" href="../get_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../installation_guide.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../examples_readme.html">Examples</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="apis.html">APIs</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="api_3.html">3.0 API</a></li>
-<li class="toctree-l2 current"><a class="reference internal" href="api_2.html">2.0 API</a><ul class="current">
-<li class="toctree-l3"><a class="reference internal" href="quantization.html">Quantization</a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">Mix Precision</a></li>
-<li class="toctree-l3"><a class="reference internal" href="training.html">Training</a></li>
-<li class="toctree-l3"><a class="reference internal" href="benchmark.html">Benchmark</a></li>
-<li class="toctree-l3"><a class="reference internal" href="config.html">Config</a></li>
-<li class="toctree-l3"><a class="reference internal" href="objective.html">Objective</a></li>
-<li class="toctree-l3"><a class="reference internal" href="compression.html">Compression</a></li>
-<li class="toctree-l3"><a class="reference internal" href="strategy.html">Strategy</a></li>
-<li class="toctree-l3"><a class="reference internal" href="model.html">Model</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api_doc_example.html">API Document Example</a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="../api-doc/apis.html">APIs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../releases_info.html">Release</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../legal_information.html">Legal Information</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../SECURITY.html">Security Policy</a></li>
@@ -95,11 +77,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="apis.html">APIs</a></li>
-          <li class="breadcrumb-item"><a href="api_2.html">2.0 API</a></li>
-      <li class="breadcrumb-item active">Mix Precision</li>
+      <li class="breadcrumb-item active">Version mapping between Intel Neural Compressor to Gaudi Software Stack</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../../../_sources/docs/source/api-doc/mix_precision.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../../../_sources/docs/source/3x/gaudi_version_map.md.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -107,24 +87,27 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="mix-precision">
-<h1>Mix Precision<a class="headerlink" href="#mix-precision" title="Permalink to this heading"></a></h1>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../../../autoapi/neural_compressor/mix_precision/index.html#module-neural_compressor.mix_precision" title="neural_compressor.mix_precision"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mix_precision</span></code></a></p></td>
-<td><p>Mix Precision for Neural Compressor.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
+  <section id="version-mapping-between-intel-neural-compressor-to-gaudi-software-stack">
+<h1>Version mapping between Intel Neural Compressor to Gaudi Software Stack<a class="headerlink" href="#version-mapping-between-intel-neural-compressor-to-gaudi-software-stack" title="Permalink to this heading"></a></h1>
+<table>
+    <thead>
+        <tr>
+            <th>Intel Neural Compressor</th>
+            <th>Gaudi Software Stack</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>v3.0</td>
+            <td>v1.17</td>
+        </tr>
+    </tbody>
+</table></section>
 
 
            </div>
           </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="quantization.html" class="btn btn-neutral float-left" title="Quantization" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="training.html" class="btn btn-neutral float-right" title="Training" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-    </div>
+          <footer>
 
   <hr/>
 
@@ -135,7 +118,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f36227a66b0> 
+   <jinja2.runtime.BlockReference object at 0x7f3622a8c640> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
