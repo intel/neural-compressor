@@ -13,7 +13,7 @@ TensorFlow Quantization
 
 `neural_compressor.tensorflow` supports quantizing both TensorFlow and Keras model with or without accuracy aware tuning.
 
-For the detailed quantization fundamentals, please refer to the document for [Quantization](../quantization.md).
+For the detailed quantization fundamentals, please refer to the document for [Quantization](quantization.md).
 
 
 ## Get Started
