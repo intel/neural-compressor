@@ -99,6 +99,7 @@ Following example code demonstrates weight-only large language model loading on 
 
 ```python
 from neural_compressor.torch.quantization import load
+
 model_name = "TheBloke/Llama-2-7B-GPTQ"
 model = load(
     model_name_or_path=model_name,
