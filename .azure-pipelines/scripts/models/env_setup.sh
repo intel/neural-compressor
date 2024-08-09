@@ -100,12 +100,6 @@ if [[ "${fwk_ver}" != "latest" ]]; then
     elif [[ "${framework}" == "onnxrt" ]]; then
         pip install onnx==1.15.0
         pip install onnxruntime==${fwk_ver}
-    elif [[ "${framework}" == "mxnet" ]]; then
-        pip install numpy==1.23.5
-        echo "re-install pycocotools resolve the issue with numpy..."
-        pip uninstall pycocotools -y
-        pip install --no-cache-dir pycocotools
-        pip install mxnet==${fwk_ver}
     fi
 fi
 
@@ -117,9 +111,6 @@ if [ -f "requirements.txt" ]; then
     if [ "${framework}" == "tensorflow" ]; then
         sed -i '/tensorflow==/d;/tensorflow$/d' requirements.txt
         sed -i '/^intel-tensorflow/d' requirements.txt
-    fi
-    if [ "${framework}" == "mxnet" ]; then
-        sed -i '/mxnet==/d;/mxnet$/d;/mxnet-mkl==/d;/mxnet-mkl$/d' requirements.txt
     fi
     if [ "${framework}" == "pytorch" ]; then
         sed -i '/torch==/d;/torch$/d;/torchvision==/d;/torchvision$/d' requirements.txt

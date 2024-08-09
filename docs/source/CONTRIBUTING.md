@@ -48,7 +48,7 @@ Intel® Neural Compressor use [Azure DevOps](https://learn.microsoft.com/en-us/a
 And generally use [Azure Cloud Instance](https://azure.microsoft.com/en-us/pricing/purchase-options/pay-as-you-go) to deploy pipelines, e.g. Standard E16s v5.
 |     Test Name                 |     Test Scope                                |     Test Pass Criteria    |
 |-------------------------------|-----------------------------------------------|---------------------------|
-|     Code Scan                 |     Pylint/Bandit/CopyRight/DocStyle/SpellCheck       |     PASS          |
+|     Code Scan                 |     Bandit/CopyRight/DocStyle/SpellCheck       |     PASS          |
 |     [DCO](https://github.com/apps/dco/)     |     Use `git commit -s` to sign off     |     PASS          |
 |     Unit Test                 |     Pytest scripts under [test](/test)                |      PASS (No failure, No core dump, No segmentation fault, No coverage drop)      |
 |     Model Test                |     Pytorch + TensorFlow + ONNX Runtime + MXNet         |      PASS (Functionality pass, FP32/INT8 No performance regression)       |
