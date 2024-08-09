@@ -8,20 +8,6 @@
       "batch_size": 64,
       "fp32_model_url": "https://storage.googleapis.com/intel-optimized-tensorflow/models/v2_7_0/fp32_bert_squad.pb"
     },
-    "distilbert_base": {
-      "model_src_dir": "nlp/distilbert_base/quantization/ptq",
-      "dataset_location": "/tf_dataset2/datasets/sst2_validation_dataset",
-      "input_model": "/tf_dataset2/models/tensorflow/distilbert_base/fp32/distilbert_base_fp32.pb",
-      "main_script": "main.py",
-      "batch_size": 128
-    },
-    "distilbert_base_sq": {
-      "model_src_dir": "nlp/distilbert_base/quantization/ptq",
-      "dataset_location": "/tf_dataset2/datasets/sst2_validation_dataset",
-      "input_model": "/tf_dataset2/models/tensorflow/distilbert_base/fp32/distilbert_base_fp32.pb",
-      "main_script": "main.py",
-      "batch_size": 128
-    },
     "opt_125m_sq": {
       "model_src_dir": "nlp/large_language_models/quantization/ptq/smoothquant",
       "dataset_location": "",
@@ -97,9 +83,9 @@
       "model_src_dir": "object_detection/yolo_v5/quantization/ptq",
       "dataset_location": "/tf_dataset2/datasets/coco_yolov5/coco",
       "input_model": "/tf_dataset2/models/tensorflow/yolo_v5/yolov5s.pb",
-      "main_script": "main.py", 
+      "main_script": "main.py",
       "batch_size": 1
-    },     
+    },
     "faster_rcnn_resnet50": {
       "model_src_dir": "object_detection/faster_rcnn_resnet50/quantization/ptq",
       "dataset_location": "/tf_dataset/tensorflow/coco_val.record",
@@ -125,14 +111,14 @@
       "model_src_dir": "object_detection/ssd_mobilenet_v1/quantization/ptq",
       "dataset_location": "/tf_dataset/tensorflow/coco_val.record",
       "input_model": "/tf_dataset/pre-train-model-oob/object_detection/ssd_mobilenet_v1/frozen_inference_graph.pb",
-      "main_script": "main.py",       
+      "main_script": "main.py",
       "batch_size": 10
     },
     "ssd_mobilenet_v1_ckpt": {
       "model_src_dir": "object_detection/ssd_mobilenet_v1/quantization/ptq",
       "dataset_location": "/tf_dataset/tensorflow/coco_val.record",
       "input_model": "/tf_dataset/pre-train-model-oob/object_detection/ssd_mobilenet_v1",
-      "main_script": "main.py",       
+      "main_script": "main.py",
       "batch_size": 10
     },
     "wide_deep_large_ds": {
@@ -159,4 +145,3 @@
     }
   }
 }
-
