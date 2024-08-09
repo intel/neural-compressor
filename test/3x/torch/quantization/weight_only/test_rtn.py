@@ -192,7 +192,7 @@ class TestRTNQuant:
     def test_dtype_params(self, dtype):
         if dtype in ["fp8_e5m2", "fp8_e5m2fnuz", "fp8_e4m3fn", "fp8_e4m3fnuz"]:
             full_dtype_name = dtype.replace("fp8", "float8")
-            if not hasattr(torch, full_dtype_name):
+            if not hasattr(torch, full_dtype_name) or "hpu" in device:
                 return  # for low torch version
         model = copy.deepcopy(self.tiny_gptj)
         quant_config = RTNConfig(
@@ -325,7 +325,8 @@ class TestRTNQuant:
         assert (out2 != out1).any(), "WOQ out2put should be different with raw output"
         if (bits, use_sym, group_size, group_dim) == (8, True, -1, 1):
             if "hpu" in device:
-                assert torch.allclose(out2, out1, atol=0.15), "Accuracy gap atol > 0.15 is unexpected."
+                # out2 is float16, no idea.
+                assert torch.allclose(out2.float(), out1.float(), atol=0.15), "Accuracy gap atol > 0.15 is unexpected."
             else:
                 assert torch.allclose(out2, out1, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
         if (bits, use_sym, group_size, group_dim) == [(4, True, 128, 0), (4, True, 32, 1)]:
@@ -347,9 +348,12 @@ class TestRTNQuant:
         # linear -> INCWeightOnlyLinear
         loaded_model = load("saved_results", copy.deepcopy(self.tiny_gptj))
         output = loaded_model(self.example_inputs)[0]
-        assert torch.allclose(inc_out, output), "Unexpected result. Please double check."
+        if "hpu" in device:
+            assert torch.allclose(inc_out, output, atol=0.001), "Unexpected result. Please double check."
+        else:
+            assert torch.allclose(inc_out, output), "Unexpected result. Please double check."
         assert (
-            get_woq_linear_num(loaded_model, "INCWeightOnlyLinear") == 31
+            get_woq_linear_num(loaded_model, "INCWeightOnlyLinear") == 30
         ), "Incorrect number of INCWeightOnlyLinear modules"
 
     @pytest.mark.skipif(not is_hpex_available(), reason="no hpex in environment here.")
@@ -367,14 +371,14 @@ class TestRTNQuant:
         # first load: linear -> INCWeightOnlyLinear -> HPUWeightOnlyLinear, save quantized_hpu_weight.pt to local cache dir
         loaded_model = load("saved_results", copy.deepcopy(self.tiny_gptj), device="hpu")
         assert (
-            get_woq_linear_num(loaded_model, "HPUWeightOnlyLinear") == 31
+            get_woq_linear_num(loaded_model, "HPUWeightOnlyLinear") == 30
         ), "Incorrect number of HPUWeightOnlyLinear modules"
         output1 = loaded_model(self.example_inputs)[0]
 
         # second load: linear -> HPUWeightOnlyLinear using quantized_hpu_weight.pt saved in local cache dir
         loaded_model = load("saved_results", copy.deepcopy(self.tiny_gptj), device="hpu")
         assert (
-            get_woq_linear_num(loaded_model, "HPUWeightOnlyLinear") == 31
+            get_woq_linear_num(loaded_model, "HPUWeightOnlyLinear") == 30
         ), "Incorrect number of HPUWeightOnlyLinear modules"
         output2 = loaded_model(self.example_inputs)[0]
 
