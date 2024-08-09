@@ -396,7 +396,7 @@ For supported quantization methods for `accuracy aware tuning` and the detailed 
 
 User could refer to below chart to understand the whole tuning flow.
 
-<img src="../imgs/workflow.png" alt="accuracy aware tuning working flow">
+<img src="./imgs/workflow.png" alt="accuracy aware tuning working flow">
 
 
 
