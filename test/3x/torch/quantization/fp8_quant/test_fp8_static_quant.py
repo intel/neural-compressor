@@ -18,6 +18,13 @@ from neural_compressor.torch.quantization import (
 from neural_compressor.torch.utils import is_hpex_available
 
 
+def change_to_cur_file_dir():
+    import os
+    current_file_path = os.path.abspath(__file__)
+    current_directory = os.path.dirname(current_file_path)
+    os.chdir(current_directory)
+
+
 @torch.no_grad()
 def calib_func(model):
     example_inputs = torch.tensor([[10, 20, 30, 40, 50, 60]], dtype=torch.long).to("hpu")
@@ -80,6 +87,7 @@ class TestFP8StaticQuant:
         assert (fp32_out != fp8_out).any(), "FP32 output should be different with FP8 output"
 
     def test_two_step_quant_nlp(self):
+        change_to_cur_file_dir()
         # step 1: measurement
         model = copy.deepcopy(self.tiny_gptj)
         config = FP8Config.from_json_file("test_fp8_jsons/test_measure.json")
@@ -97,6 +105,7 @@ class TestFP8StaticQuant:
         ), "k_proj input dtype is not torch.float8_e4m3fn."
 
     def test_two_step_quant_cv(self):
+        change_to_cur_file_dir()
         # step 1: measurement
         model = copy.deepcopy(self.resnet18)
         config = FP8Config.from_json_file("test_fp8_jsons/test_measure.json")
