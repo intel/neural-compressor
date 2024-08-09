@@ -27,7 +27,7 @@ from transformers import AutoConfig, AutoModelForCausalLM
 from transformers.models.auto.auto_factory import _BaseAutoModelClass
 
 from neural_compressor.common import options
-from neural_compressor.torch.algorithms.weight_only.modules import WeightOnlyLinear
+from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
 
 from .load import load
 
@@ -320,7 +320,7 @@ def clean_module_weight(module):
     else:
         submodule = module
 
-    if isinstance(module, WeightOnlyLinear):
+    if isinstance(module, INCWeightOnlyLinear):
         for n, m in submodule._buffers.items():
             old_value = getattr(submodule, n)
             with torch.no_grad():

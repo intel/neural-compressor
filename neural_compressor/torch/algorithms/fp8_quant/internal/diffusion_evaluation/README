@@ -1,0 +1,32 @@
+How to calculate FID and clip score:
+
+We will use the MS-COCO database. We use this for two things:
+- Generating a large amount of prompts which we can use to create diffusion images
+- Once we have diffusion images, we need a "ground truth" dataset to calculate the FID.
+
+1) Run a python script which does the following things:
+ - Takes a subset of MSCOCO
+ - Create a CSV with prompts which can then be inserted into the diffusion model. These prompts are taken from captions of the images in the subset 
+ - Create a new folder with the images from the subset
+ - The standard number of images for this evaluation is 30K or 10K
+
+run the following:
+
+python create_dataset.py /datasets/coco2014 <path to save CSV and dataset> <size of subset>
+
+Now, create the generated images from the csv file
+
+IMPORTANT!! - the script that does the actual evaluation (explained below) expects to get an image where the prompt is the title of the image. For example, if the prompt is "a monster playing the guitar" then the name of the file that is created using diffusion should be "<path>/a monster playing the guitar.png" (or jpg or whatever)
+
+IMPORTANT!! #2 - from my experience, stable diffusion inference returns an error for prompts with the character '/' in them. There are very few, around one in a thousand. My recommendation, if you want to evaluate N images, create a subset of the size N+30 and delete prompts with '/' in them.  After creating the CSV I just deleted these prompts manually (takes 10 seconds to do).
+(Perhaps automating this should be a future commit).
+
+2) Now, run the evaluation script. This does the following:
+-	Calculates the CLIP score – takes the CLIP embedding of each generated image and the embedding of the caption that created it (in this case each image and its file name). Then, calculates the cosine distance between them. 
+- Calculates the FID - takes the real and generated images, and calculates according to the FID distance metric. 
+- insert the number of images to evaluate with - could be the number of images in the subset created above or less
+
+To do this, run:
+
+python evaluator.py --device hpu --real_images_path /datasets/coco2014/val2014 --diff_images_path <generated images path> --num_of_images <Num of images to evaluate with>
+

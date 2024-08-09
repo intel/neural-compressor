@@ -203,7 +203,7 @@ class ActAwareWeightQuant:
             use_mse_search (bool, optional): whether search clip range. Defaults to True.
             folding (bool, optional): whether only allow update scale when it can be fold
                                       to upper layer. Defaults to False.
-            return_int (bool, optional): whether return int dtype with WeightOnlyLinear.
+            return_int (bool, optional): whether return int dtype with INCWeightOnlyLinear.
                                          Defaults to False.
 
         Returns:
@@ -472,7 +472,7 @@ class ActAwareWeightQuant:
         """Quantize model with clip range.
 
         Args:
-            return_int (bool, optional): whether return int dtype with WeightOnlyLinear.
+            return_int (bool, optional): whether return int dtype with INCWeightOnlyLinear.
                                          Defaults to False.
         """
         # apply quantization and clip

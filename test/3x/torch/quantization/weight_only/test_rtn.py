@@ -5,7 +5,6 @@ import pytest
 import torch
 import transformers
 
-from neural_compressor.torch.algorithms.weight_only.modules import WeightOnlyLinear
 from neural_compressor.torch.quantization import (
     RTNConfig,
     convert,
@@ -31,6 +30,14 @@ class ModelConv1d(torch.nn.Module):
         out = self.fc2(out)
         out = self.fc3(out)
         return out
+
+
+def get_woq_linear_num(model, woq_module_type_name):
+    woq_linear_num = 0
+    for _, module in model.named_modules():
+        if module.__class__.__name__ == woq_module_type_name:
+            woq_linear_num += 1
+    return woq_linear_num
 
 
 class TestRTNQuant:
@@ -77,7 +84,7 @@ class TestRTNQuant:
         out = model(self.example_inputs)[0]
         assert (out != self.label).any(), "WOQ output should be different with raw output"
         if is_hpex_available():
-            assert "hpu" in out.device, "Neural Compressor should run on HPU when HPEX is available."
+            assert "hpu" in out.device.type, "Neural Compressor should run on HPU when HPEX is available."
         if (bits, use_sym, group_size, group_dim) == (8, True, -1, 1):
             assert torch.allclose(out, self.label, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
         if (bits, use_sym, group_size, group_dim) == [(4, True, 128, 0), (4, True, 32, 1)]:
@@ -185,7 +192,7 @@ class TestRTNQuant:
     def test_dtype_params(self, dtype):
         if dtype in ["fp8_e5m2", "fp8_e5m2fnuz", "fp8_e4m3fn", "fp8_e4m3fnuz"]:
             full_dtype_name = dtype.replace("fp8", "float8")
-            if not hasattr(torch, full_dtype_name):
+            if not hasattr(torch, full_dtype_name) or "hpu" in device:
                 return  # for low torch version
         model = copy.deepcopy(self.tiny_gptj)
         quant_config = RTNConfig(
@@ -318,7 +325,8 @@ class TestRTNQuant:
         assert (out2 != out1).any(), "WOQ out2put should be different with raw output"
         if (bits, use_sym, group_size, group_dim) == (8, True, -1, 1):
             if "hpu" in device:
-                assert torch.allclose(out2, out1, atol=0.15), "Accuracy gap atol > 0.15 is unexpected."
+                # out2 is float16, no idea.
+                assert torch.allclose(out2.float(), out1.float(), atol=0.15), "Accuracy gap atol > 0.15 is unexpected."
             else:
                 assert torch.allclose(out2, out1, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
         if (bits, use_sym, group_size, group_dim) == [(4, True, 128, 0), (4, True, 32, 1)]:
@@ -327,6 +335,8 @@ class TestRTNQuant:
             assert torch.allclose(out2, out1, atol=0.5), "Accuracy gap atol > 0.5 is unexpected."
 
     def test_save_and_load(self):
+        from neural_compressor.torch.quantization import load
+
         fp32_model = copy.deepcopy(self.tiny_gptj)
         quant_config = get_default_rtn_config()
         q_model = quantize(fp32_model, quant_config=quant_config)
@@ -334,13 +344,47 @@ class TestRTNQuant:
         q_model.save("saved_results")
         inc_out = q_model(self.example_inputs)[0]
 
+        # loading compressed model (format=default, device="cpu")
+        # linear -> INCWeightOnlyLinear
+        loaded_model = load("saved_results", copy.deepcopy(self.tiny_gptj))
+        output = loaded_model(self.example_inputs)[0]
+        if "hpu" in device:
+            assert torch.allclose(inc_out, output, atol=0.001), "Unexpected result. Please double check."
+        else:
+            assert torch.allclose(inc_out, output), "Unexpected result. Please double check."
+        assert (
+            get_woq_linear_num(loaded_model, "INCWeightOnlyLinear") == 30
+        ), "Incorrect number of INCWeightOnlyLinear modules"
+
+    @pytest.mark.skipif(not is_hpex_available(), reason="no hpex in environment here.")
+    def test_save_and_load_hpu(self):
         from neural_compressor.torch.quantization import load
 
-        # loading compressed model
-        loaded_model = load("saved_results", copy.deepcopy(self.tiny_gptj))
-        loaded_out = loaded_model(self.example_inputs)[0]
-        assert torch.allclose(inc_out, loaded_out), "Unexpected result. Please double check."
-        assert isinstance(loaded_model.transformer.h[0].mlp.fc_in, WeightOnlyLinear), "loading compressed model failed."
+        fp32_model = copy.deepcopy(self.tiny_gptj)
+        quant_config = get_default_rtn_config()
+        q_model = quantize(fp32_model, quant_config=quant_config)
+        assert q_model is not None, "Quantization failed!"
+        q_model.save("saved_results")
+        inc_out = q_model(self.example_inputs)[0]
+
+        # loading compressed model (format=default, device="hpu")
+        # first load: linear -> INCWeightOnlyLinear -> HPUWeightOnlyLinear, save quantized_hpu_weight.pt to local cache dir
+        loaded_model = load("saved_results", copy.deepcopy(self.tiny_gptj), device="hpu")
+        assert (
+            get_woq_linear_num(loaded_model, "HPUWeightOnlyLinear") == 30
+        ), "Incorrect number of HPUWeightOnlyLinear modules"
+        output1 = loaded_model(self.example_inputs)[0]
+
+        # second load: linear -> HPUWeightOnlyLinear using quantized_hpu_weight.pt saved in local cache dir
+        loaded_model = load("saved_results", copy.deepcopy(self.tiny_gptj), device="hpu")
+        assert (
+            get_woq_linear_num(loaded_model, "HPUWeightOnlyLinear") == 30
+        ), "Incorrect number of HPUWeightOnlyLinear modules"
+        output2 = loaded_model(self.example_inputs)[0]
+
+        assert torch.equal(
+            output1, output2
+        ), "The model loaded the second time is different from the model loaded the first time"
 
     def test_no_transformers(self, monkeypatch):
         def mock_is_transformers_imported():

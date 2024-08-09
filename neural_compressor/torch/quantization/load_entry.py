@@ -50,10 +50,10 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
             from neural_compressor.torch.quantization import load
             load(model_name_or_path='saved_result')
 
-    2. Load HuggingFace quantized model, including GPTQ/AWQ models and upstreamed INC quantized models in HF model hub.
+    2. Load HuggingFace quantized model, including GPTQ models and upstreamed INC quantized models in HF model hub.
         case 1: WOQ
             from neural_compressor.torch.quantization import load
-            load(model_name_or_path=model_name_or_path)
+            load(model_name_or_path=model_name_or_path, format="huggingface")
 
     Args:
         model_name_or_path (str):  torch checkpoint directory or hugginface model_name_or_path.
@@ -66,7 +66,8 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
             Defaults to None.
         format (str, optional): 'defult' for loading INC quantized model.
             'huggingface' for loading huggingface WOQ causal language model. Defaults to "default".
-        device (str, optional): 'cpu', 'hpu' or 'cuda'. specify the device the model will be loaded to.
+        device (str, optional): 'cpu', 'hpu'. specify the device the model will be loaded to.
+            currently only used for weight-only quantization.
         kwargs (remaining dictionary of keyword arguments, optional):
             remaining dictionary of keyword arguments for loading huggingface models.
             Will be passed to the huggingface model's `__init__` method, such as 'trust_remote_code', 'revision'.
@@ -74,7 +75,6 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
     Returns:
         The quantized model
     """
-    # TODO: When loading WOQ model, use different WeightOnlyLinear module according to device.
     if format == LoadFormat.DEFAULT.value:
         from neural_compressor.common.base_config import ConfigRegistry
 
@@ -100,18 +100,18 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
             ):  # WOQ
                 from neural_compressor.torch.algorithms import weight_only
 
-                return weight_only.load(model_name_or_path, original_model, format=LoadFormat.DEFAULT)
+                qmodel = weight_only.load(model_name_or_path, original_model, format=LoadFormat.DEFAULT, device=device)
+                return qmodel.to(device)
 
             original_model.qconfig = config_mapping
-            if isinstance(config_object, FP8Config):  # FP8
-                from neural_compressor.torch.algorithms import habana_fp8
-
-                return habana_fp8.load(model_name_or_path, original_model)
-
+            if isinstance(config_object, FP8Config):
+                # TODO: support loading FP8 model
+                raise NotImplementedError("`load` function for FP8 model is not supported yet.")
     elif format == LoadFormat.HUGGINGFACE.value:
         # now only support load huggingface WOQ causal language model
         from neural_compressor.torch.algorithms import weight_only
 
-        return weight_only.load(model_name_or_path, format=LoadFormat.HUGGINGFACE, **kwargs)
+        qmodel = weight_only.load(model_name_or_path, format=LoadFormat.HUGGINGFACE, device=device, **kwargs)
+        return qmodel.to(device)
     else:
         raise ValueError("`format` in load function can only be 'huggingface' or 'default', but get {}".format(format))

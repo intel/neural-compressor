@@ -5,7 +5,6 @@ import pytest
 import torch
 import transformers
 
-from neural_compressor.torch.algorithms.weight_only.modules import WeightOnlyLinear
 from neural_compressor.torch.quantization import (
     GPTQConfig,
     convert,
@@ -21,6 +20,14 @@ device = accelerator.current_device_name()
 
 def run_fn(model):
     model(torch.tensor([[10, 20, 30]], dtype=torch.long).to(device))
+
+
+def get_woq_linear_num(model, woq_module_type_name):
+    woq_linear_num = 0
+    for _, module in model.named_modules():
+        if module.__class__.__name__ == woq_module_type_name:
+            woq_linear_num += 1
+    return woq_linear_num
 
 
 class TestGPTQQuant:
@@ -256,6 +263,8 @@ class TestGPTQQuant:
         assert torch.allclose(out2, out1, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
 
     def test_save_and_load(self):
+        from neural_compressor.torch.quantization import load
+
         fp32_model = copy.deepcopy(self.tiny_gptj)
         quant_config = get_default_gptq_config()
         prepared_model = prepare(fp32_model, quant_config)
@@ -265,12 +274,11 @@ class TestGPTQQuant:
         q_model.save("saved_results")
         inc_out = q_model(self.example_inputs)[0]
 
-        from neural_compressor.torch.quantization import load
-
-        # loading compressed model
+        # loading compressed model (format=INC, device="cpu")
+        # linear -> INCWeightOnlyLinear
         loaded_model = load("saved_results", copy.deepcopy(self.tiny_gptj))
-        loaded_out = loaded_model(self.example_inputs)[0]
-        assert torch.allclose(inc_out, loaded_out), "Unexpected result. Please double check."
-        assert isinstance(
-            loaded_model.transformer.h[0].attn.k_proj, WeightOnlyLinear
-        ), "loading compressed model failed."
+        output = loaded_model(self.example_inputs)[0]
+        assert torch.allclose(inc_out, output), "Unexpected result. Please double check."
+        assert (
+            get_woq_linear_num(loaded_model, "INCWeightOnlyLinear") == 30
+        ), "Incorrect number of INCWeightOnlyLinear modules"

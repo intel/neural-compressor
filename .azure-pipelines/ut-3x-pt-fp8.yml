@@ -10,6 +10,12 @@ pr:
     include:
       - .azure-pipelines/scripts/ut/3x/run_3x_pt_fp8.sh
       - .azure-pipelines/ut-3x-pt-fp8.yml
+      - neural_compressor/common
+      - neural_compressor/torch
+      - test/3x/torch/algorithms/fp8_quant
+      - test/3x/torch/quantization/fp8_quant
+      - setup.py
+      - requirements_pt.txt
 
 pool: GAUDI
 

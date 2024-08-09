@@ -74,7 +74,7 @@ steps:
 
   - ${{ if eq(parameters.imageSource, 'pull') }}:
       - script: |
-            docker pull vault.habana.ai/gaudi-docker/1.16.1/ubuntu22.04/habanalabs/pytorch-installer-2.2.2:latest
+            docker pull vault.habana.ai/gaudi-docker/1.17.0/ubuntu22.04/habanalabs/pytorch-installer-2.3.1:latest
         displayName: "Pull habana docker image"
 
   - script: |
@@ -95,7 +95,7 @@ steps:
             else
                 docker run -dit --disable-content-trust --privileged --name=${{ parameters.containerName }} --shm-size="2g" \
                 --runtime=habana -e HABANA_VISIBLE_DEVICES=all -e OMPI_MCA_btl_vader_single_copy_mechanism=none --cap-add=sys_nice --net=host --ipc=host \
-                -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor vault.habana.ai/gaudi-docker/1.16.1/ubuntu22.04/habanalabs/pytorch-installer-2.2.2:latest
+                -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor vault.habana.ai/gaudi-docker/1.17.0/ubuntu22.04/habanalabs/pytorch-installer-2.3.1:latest
             fi
             echo "Show the container list after docker run ... "
             docker ps -a

@@ -679,20 +679,22 @@ def hqq_entry(
 
 
 ###################### Habana FP8 Algo Entry ##################################
-from neural_compressor.torch.utils import is_hpex_available
+@register_algo(FP8_QUANT)
+@torch.no_grad()
+def fp8_entry(
+    model: torch.nn.Module,
+    configs_mapping: Dict[Tuple[str], FP8Config],
+    mode: Mode = Mode.QUANTIZE,
+    *args,
+    **kwargs,
+) -> torch.nn.Module:
+    """The main entry to apply fp8 quantization."""
+    from neural_compressor.torch.algorithms.fp8_quant import FP8Quantizer
 
-if is_hpex_available():
-    from neural_compressor.torch.algorithms.habana_fp8 import quantize, save
-
-    @register_algo(FP8_QUANT)
-    def fp8_quant_entry(
-        model: torch.nn.Module, configs_mapping: Dict[Tuple[str], FP8Config], *args, **kwargs
-    ) -> torch.nn.Module:
-        kwargs.pop("example_inputs")
-        model = quantize(model, configs_mapping, *args, **kwargs)
-        model.qconfig = configs_mapping
-        model.save = MethodType(save, model)
-        return model
+    quantizer = get_quantizer(model, quantizer_cls=FP8Quantizer, quant_config=configs_mapping)
+    model = quantizer.execute(model, mode=mode)
+    postprocess_model(model, mode, quantizer)
+    return model
 
 
 ###################### MX Quant Algo Entry ##################################

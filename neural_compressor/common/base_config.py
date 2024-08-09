@@ -379,8 +379,10 @@ class BaseConfig(ABC):
         Args:
             filename (str): The path to save the JSON file.
         """
-        # Implementation details omitted for brevity
-        pass
+        config_dict = self.to_dict()
+        with open(filename, "w", encoding="utf-8") as file:
+            json.dump(config_dict, file, indent=4)
+        logger.info("Dump the config into %s.", filename)
 
     def to_json_string(self, use_diff: bool = False) -> str:
         """Serializes this instance to a JSON string.

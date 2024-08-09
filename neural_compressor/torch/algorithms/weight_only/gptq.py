@@ -37,7 +37,7 @@ from neural_compressor.torch.utils import (
 )
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
-from .modules import WeightOnlyLinear
+from .modules import INCWeightOnlyLinear
 
 if is_transformers_imported():
     import transformers
@@ -665,7 +665,7 @@ class RAWGPTQuantizer(object):
                 if not self.use_layer_wise:
                     bias = sub_layers[layer_name].bias
 
-                new_module = WeightOnlyLinear(
+                new_module = INCWeightOnlyLinear(
                     in_features,
                     out_features,
                     dtype=weight_config_this_layer["dtype"],

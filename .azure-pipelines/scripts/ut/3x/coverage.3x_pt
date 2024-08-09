@@ -6,7 +6,7 @@ include =
  */neural_compressor/common/*
  */neural_compressor/torch/*
 omit =
- */neural_compressor/torch/algorithms/habana_fp8/*
+ */neural_compressor/torch/algorithms/fp8_quant/*
  */neural_compressor/torch/amp/*
 exclude_lines =
  pragma: no cover

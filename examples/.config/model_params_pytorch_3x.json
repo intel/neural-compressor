@@ -140,6 +140,13 @@
         "main_script": "main.py",
         "batch_size": 1
       },
+      "resnet18_fp8_static":{
+        "model_src_dir": "cv/fp8_quant",
+        "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
+        "input_model": "",
+        "main_script": "main.py",
+        "batch_size": 1
+      },
       "opt_125m_pt2e_static":{
         "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/static_quant/pt2e",
         "dataset_location": "",
