@@ -93,27 +93,24 @@ calib_func(model)
 model = convert(model)
 ```
 
-### [Weight-Only Quantization (LLMs)](./examples/3.x_api/pytorch/nlp/huggingface_models/language-modeling/quantization/weight_only/)
+### Weight-Only Large Language Model Loading (LLMs)
 
-Following example code demonstrates Weight-Only Quantization on LLMs, it supports Intel CPU, Intel Gaudi2 AI Accelerator, Nvidia GPU, best device will be selected automatically. 
+Following example code demonstrates weight-only large language model loading on Intel Gaudi2 AI Accelerator. 
 
 ```python
-from transformers import AutoModelForCausalLM
-from neural_compressor.torch.quantization import prepare, convert, AutoRoundConfig
-
-model_name = "EleutherAI/gpt-neo-125m"
-model = AutoModelForCausalLM.from_pretrained(model_name)
-
-quant_config = AutoRoundConfig()
-model = prepare(model, quant_config)
-# customer defined calibration
-run_fn(model)  # calibration
-model = convert(model)
+from neural_compressor.torch.quantization import load
+model_name = "TheBloke/Llama-2-7B-GPTQ"
+model = load(
+    model_name_or_path=model_name,
+    format="huggingface",
+    device="hpu",
+    torch_dtype=torch.bfloat16,
+)
 ```
 
 **Note:**
 
-To try INT4 model inference, please directly use [Intel Extension for Transformers](https://github.com/intel/intel-extension-for-transformers), which leverages Intel Neural Compressor for model quantization.
+Intel Neural Compressor will convert the model format from auto-gptq to hpu format on the first load and save hpu_model.safetensors to the local cache directory for the next load. So it may take a while to load for the first time.
 
 ## Documentation
 
