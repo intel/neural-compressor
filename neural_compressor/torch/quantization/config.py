@@ -1778,7 +1778,7 @@ class FP8Config(TorchBaseConfig):
         Args:
             dump_stats_path (str, optional): The file folder and file prefix to save measurement info. Defaults to "./hqt_output/measure".
             fp8_config (str, optional): The data type of fp8. Defaults to "E4M3".
-            hp_dtype (str, optional): The hight precision data type used in fp8 quantization. Defaults to "bf16".
+            hp_dtype (str, optional): The high precision data type used in fp8 quantization. Defaults to "bf16".
             blocklist (dict, optional): whether to skip fp8 quantization for specific op names or types, name could be substring. Defaults to {"names": [], "types": ()}.
             allowlist (dict, optional): whether to execute fp8 quantization for specific op names or types. Defaults to {"names": [], "types": FP8_WHITE_LIST}.
             mode (str, optional): Choose the quantization mode. Defaults to "AUTO".

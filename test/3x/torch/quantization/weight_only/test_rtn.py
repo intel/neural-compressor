@@ -84,7 +84,7 @@ class TestRTNQuant:
         out = model(self.example_inputs)[0]
         assert (out != self.label).any(), "WOQ output should be different with raw output"
         if is_hpex_available():
-            assert "hpu" in out.device, "Neural Compressor should run on HPU when HPEX is available."
+            assert "hpu" in out.device.type, "Neural Compressor should run on HPU when HPEX is available."
         if (bits, use_sym, group_size, group_dim) == (8, True, -1, 1):
             assert torch.allclose(out, self.label, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
         if (bits, use_sym, group_size, group_dim) == [(4, True, 128, 0), (4, True, 32, 1)]:
