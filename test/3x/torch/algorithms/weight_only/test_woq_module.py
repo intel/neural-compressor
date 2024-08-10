@@ -3,7 +3,7 @@ import copy
 import pytest
 import torch
 
-from neural_compressor.torch.algorithms.weight_only.modules import WeightOnlyLinear
+from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
 from neural_compressor.torch.algorithms.weight_only.utility import quant_tensor
 
 
@@ -36,7 +36,7 @@ class TestWeightOnlyLinear:
             return_int=True,
             group_size=32,
         )
-        new_module = WeightOnlyLinear(
+        new_module = INCWeightOnlyLinear(
             m.in_features,
             m.out_features,
             dtype=dtype,

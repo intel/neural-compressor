@@ -39,8 +39,9 @@ algos_mapping: Dict[str, Callable] = {}
 # All constants for torch
 WHITE_MODULE_LIST = [torch.nn.Linear, torch.nn.Conv1d, torch.nn.Conv2d, torch.nn.Conv3d]
 
-
-WEIGHT_NAME = "quantized_model.pt"
+HPU_SAFE_WEIGHTS_NAME = "hpu_model.safetensors"
+WEIGHT_NAME = "quantized_weight.pt"
+HPU_WEIGHT_NAME = "quantized_hpu_weight.pt"
 QCONFIG_NAME = "qconfig.json"
 
 
