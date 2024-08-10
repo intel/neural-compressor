@@ -254,7 +254,7 @@ Module Contents
    :returns: the default HQQ config.
 
 
-.. py:class:: FP8Config(w_dtype: str = 'fp8_e4m3', w_observer: Union[str, List[str]] = 'minmax_per_channel', act_dtype: str = 'fp8_e4m3', act_observer: Union[str, List[str]] = 'minmax', approach: Union[str, List[str]] = 'static', device: Union[str, List[str]] = 'hpu', white_list: Optional[List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
+.. py:class:: FP8Config(dump_stats_path: str = './hqt_output/measure', fp8_config: str = 'E4M3', hp_dtype: str = 'bf16', blocklist: dict = {'names': [], 'types': ()}, allowlist: dict = {'names': [], 'types': FP8_WHITE_LIST}, mode: str = 'AUTO', scale_method: str = 'maxabs_hw', scale_params: dict = {}, observer: str = 'maxabs', mod_dict: dict = {}, measure_exclude: str = 'OUTPUT', **kwargs)
 
 
 

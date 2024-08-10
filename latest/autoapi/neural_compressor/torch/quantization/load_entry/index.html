@@ -123,9 +123,9 @@ load(model_name_or_path=’saved_result’)</p>
 </dl>
 </li>
 <li><dl class="simple">
-<dt>Load HuggingFace quantized model, including GPTQ/AWQ models and upstreamed INC quantized models in HF model hub.</dt><dd><dl class="simple">
+<dt>Load HuggingFace quantized model, including GPTQ models and upstreamed INC quantized models in HF model hub.</dt><dd><dl class="simple">
 <dt>case 1: WOQ</dt><dd><p>from neural_compressor.torch.quantization import load
-load(model_name_or_path=model_name_or_path)</p>
+load(model_name_or_path=model_name_or_path, format=”huggingface”)</p>
 </dd>
 </dl>
 </dd>
@@ -144,7 +144,8 @@ quantized model in local.</p></li>
 Defaults to None.</p></li>
 <li><p><strong>format</strong> (<em>str</em><em>, </em><em>optional</em>) – ‘defult’ for loading INC quantized model.
 ‘huggingface’ for loading huggingface WOQ causal language model. Defaults to “default”.</p></li>
-<li><p><strong>device</strong> (<em>str</em><em>, </em><em>optional</em>) – ‘cpu’, ‘hpu’ or ‘cuda’. specify the device the model will be loaded to.</p></li>
+<li><p><strong>device</strong> (<em>str</em><em>, </em><em>optional</em>) – ‘cpu’, ‘hpu’. specify the device the model will be loaded to.
+currently only used for weight-only quantization.</p></li>
 <li><p><strong>kwargs</strong> (<em>remaining dictionary</em><em> of </em><em>keyword arguments</em><em>, </em><em>optional</em>) – remaining dictionary of keyword arguments for loading huggingface models.
 Will be passed to the huggingface model’s <cite>__init__</cite> method, such as ‘trust_remote_code’, ‘revision’.</p></li>
 </ul>
@@ -172,7 +173,7 @@ Will be passed to the huggingface model’s <cite>__init__</cite> method, such a
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f6cbe7ae710> 
+   <jinja2.runtime.BlockReference object at 0x7f773aa4e050> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

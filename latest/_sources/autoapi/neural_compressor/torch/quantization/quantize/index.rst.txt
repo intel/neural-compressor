@@ -18,6 +18,7 @@ Functions
    neural_compressor.torch.quantization.quantize.quantize
    neural_compressor.torch.quantization.quantize.prepare
    neural_compressor.torch.quantization.quantize.convert
+   neural_compressor.torch.quantization.quantize.finalize_calibration
 
 
 Module Contents
@@ -79,5 +80,10 @@ Module Contents
    :type inplace: bool, optional
 
    :returns: The quantized model.
+
+
+.. py:function:: finalize_calibration(model)
+
+   Generate and save calibration info.
 
 

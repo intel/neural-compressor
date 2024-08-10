@@ -167,65 +167,47 @@ Further installation methods can be found under <a class="reference external" hr
 </pre></div>
 </div>
 <p>After successfully installing these packages, try your first quantization program.</p>
-<section id="weight-only-quantization-llms">
-<h3>Weight-Only Quantization (LLMs)<a class="headerlink" href="#weight-only-quantization-llms" title="Permalink to this heading"></a></h3>
-<p>Following example code demonstrates Weight-Only Quantization on LLMs, it supports Intel CPU, Intel Gaudi2 AI Accelerator, Nvidia GPU, best device will be selected automatically.</p>
+<section id="fp8-quantization">
+<h3><a class="reference external" href="./examples/3.x_api/pytorch/cv/fp8_quant/">FP8 Quantization</a><a class="headerlink" href="#fp8-quantization" title="Permalink to this heading"></a></h3>
+<p>Following example code demonstrates FP8 Quantization, it is supported by Intel Gaudi2 AI Accelerator.</p>
 <p>To try on Intel Gaudi2, docker image with Gaudi Software Stack is recommended, please refer to following script for environment setup. More details can be found in <a class="reference external" href="https://docs.habana.ai/en/latest/Installation_Guide/Bare_Metal_Fresh_OS.html#launch-docker-image-that-was-built">Gaudi Guide</a>.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run a container with an interactive shell</span>
-docker<span class="w"> </span>run<span class="w"> </span>-it<span class="w"> </span>--runtime<span class="o">=</span>habana<span class="w"> </span>-e<span class="w"> </span><span class="nv">HABANA_VISIBLE_DEVICES</span><span class="o">=</span>all<span class="w"> </span>-e<span class="w"> </span><span class="nv">OMPI_MCA_btl_vader_single_copy_mechanism</span><span class="o">=</span>none<span class="w"> </span>--cap-add<span class="o">=</span>sys_nice<span class="w"> </span>--net<span class="o">=</span>host<span class="w"> </span>--ipc<span class="o">=</span>host<span class="w"> </span>vault.habana.ai/gaudi-docker/1.14.0/ubuntu22.04/habanalabs/pytorch-installer-2.1.1:latest
-
-<span class="c1"># Install the optimum-habana</span>
-pip<span class="w"> </span>install<span class="w"> </span>--upgrade-strategy<span class="w"> </span>eager<span class="w"> </span>optimum<span class="o">[</span>habana<span class="o">]</span>
-
-<span class="c1"># Install INC/auto_round</span>
-pip<span class="w"> </span>install<span class="w"> </span>neural-compressor<span class="w"> </span>auto_round
+docker<span class="w"> </span>run<span class="w"> </span>-it<span class="w"> </span>--runtime<span class="o">=</span>habana<span class="w"> </span>-e<span class="w"> </span><span class="nv">HABANA_VISIBLE_DEVICES</span><span class="o">=</span>all<span class="w"> </span>-e<span class="w"> </span><span class="nv">OMPI_MCA_btl_vader_single_copy_mechanism</span><span class="o">=</span>none<span class="w"> </span>--cap-add<span class="o">=</span>sys_nice<span class="w"> </span>--net<span class="o">=</span>host<span class="w"> </span>--ipc<span class="o">=</span>host<span class="w"> </span>vault.habana.ai/gaudi-docker/1.17.0/ubuntu22.04/habanalabs/pytorch-installer-2.3.1:latest
 </pre></div>
 </div>
 <p>Run the example:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">transformers</span> <span class="kn">import</span> <span class="n">AutoModel</span><span class="p">,</span> <span class="n">AutoTokenizer</span>
-
-<span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span>
-<span class="kn">from</span> <span class="nn">neural_compressor.quantization</span> <span class="kn">import</span> <span class="n">fit</span>
-<span class="kn">from</span> <span class="nn">neural_compressor.adaptor.torch_utils.auto_round</span> <span class="kn">import</span> <span class="n">get_dataloader</span>
-
-<span class="n">model_name</span> <span class="o">=</span> <span class="s2">&quot;EleutherAI/gpt-neo-125m&quot;</span>
-<span class="n">float_model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
-<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">trust_remote_code</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">dataloader</span> <span class="o">=</span> <span class="n">get_dataloader</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">,</span> <span class="n">seqlen</span><span class="o">=</span><span class="mi">2048</span><span class="p">)</span>
-
-<span class="n">woq_conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
-    <span class="n">approach</span><span class="o">=</span><span class="s2">&quot;weight_only&quot;</span><span class="p">,</span>
-    <span class="n">op_type_dict</span><span class="o">=</span><span class="p">{</span>
-        <span class="s2">&quot;.*&quot;</span><span class="p">:</span> <span class="p">{</span>  <span class="c1"># match all ops</span>
-            <span class="s2">&quot;weight&quot;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;bits&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
-                <span class="s2">&quot;algorithm&quot;</span><span class="p">:</span> <span class="s2">&quot;AUTOROUND&quot;</span><span class="p">,</span>
-            <span class="p">},</span>
-        <span class="p">}</span>
-    <span class="p">},</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.torch.quantization</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FP8Config</span><span class="p">,</span>
+    <span class="n">prepare</span><span class="p">,</span>
+    <span class="n">convert</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">quantized_model</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">float_model</span><span class="p">,</span> <span class="n">conf</span><span class="o">=</span><span class="n">woq_conf</span><span class="p">,</span> <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">torchvision.models</span> <span class="k">as</span> <span class="nn">models</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">resnet18</span><span class="p">()</span>
+<span class="n">qconfig</span> <span class="o">=</span> <span class="n">FP8Config</span><span class="p">(</span><span class="n">fp8_config</span><span class="o">=</span><span class="s2">&quot;E4M3&quot;</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prepare</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">qconfig</span><span class="p">)</span>
+<span class="c1"># customer defined calibration</span>
+<span class="n">calib_func</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="weight-only-large-language-model-loading-llms">
+<h3>Weight-Only Large Language Model Loading (LLMs)<a class="headerlink" href="#weight-only-large-language-model-loading-llms" title="Permalink to this heading"></a></h3>
+<p>Following example code demonstrates weight-only large language model loading on Intel Gaudi2 AI Accelerator.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.torch.quantization</span> <span class="kn">import</span> <span class="n">load</span>
+
+<span class="n">model_name</span> <span class="o">=</span> <span class="s2">&quot;TheBloke/Llama-2-7B-GPTQ&quot;</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">load</span><span class="p">(</span>
+    <span class="n">model_name_or_path</span><span class="o">=</span><span class="n">model_name</span><span class="p">,</span>
+    <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;huggingface&quot;</span><span class="p">,</span>
+    <span class="n">device</span><span class="o">=</span><span class="s2">&quot;hpu&quot;</span><span class="p">,</span>
+    <span class="n">torch_dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bfloat16</span><span class="p">,</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 <p><strong>Note:</strong></p>
-<p>To try INT4 model inference, please directly use <a class="reference external" href="https://github.com/intel/intel-extension-for-transformers">Intel Extension for Transformers</a>, which leverages Intel Neural Compressor for model quantization.</p>
-</section>
-<section id="static-quantization-non-llms">
-<h3>Static Quantization (Non-LLMs)<a class="headerlink" href="#static-quantization-non-llms" title="Permalink to this heading"></a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">torchvision</span> <span class="kn">import</span> <span class="n">models</span>
-
-<span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span>
-<span class="kn">from</span> <span class="nn">neural_compressor.data</span> <span class="kn">import</span> <span class="n">DataLoader</span><span class="p">,</span> <span class="n">Datasets</span>
-<span class="kn">from</span> <span class="nn">neural_compressor.quantization</span> <span class="kn">import</span> <span class="n">fit</span>
-
-<span class="n">float_model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">resnet18</span><span class="p">()</span>
-<span class="n">dataset</span> <span class="o">=</span> <span class="n">Datasets</span><span class="p">(</span><span class="s2">&quot;pytorch&quot;</span><span class="p">)[</span><span class="s2">&quot;dummy&quot;</span><span class="p">](</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">))</span>
-<span class="n">calib_dataloader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">framework</span><span class="o">=</span><span class="s2">&quot;pytorch&quot;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">)</span>
-<span class="n">static_quant_conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">()</span>
-<span class="n">quantized_model</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">float_model</span><span class="p">,</span> <span class="n">conf</span><span class="o">=</span><span class="n">static_quant_conf</span><span class="p">,</span> <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">calib_dataloader</span><span class="p">)</span>
-</pre></div>
-</div>
+<p>Intel Neural Compressor will convert the model format from auto-gptq to hpu format on the first load and save hpu_model.safetensors to the local cache directory for the next load. So it may take a while to load for the first time.</p>
 </section>
 </section>
 <section id="documentation">
@@ -253,12 +235,13 @@ pip<span class="w"> </span>install<span class="w"> </span>neural-compressor<span
   <tbody>
     <tr>
         <td colspan="2" align="center"><a href="./3x/PyTorch.html">Overview</a></td>
-        <td colspan="2" align="center"><a href="./3x/PT_StaticQuant.html">Static Quantization</a></td>
         <td colspan="2" align="center"><a href="./3x/PT_DynamicQuant.html">Dynamic Quantization</a></td>
+        <td colspan="2" align="center"><a href="./3x/PT_StaticQuant.html">Static Quantization</a></td>
         <td colspan="2" align="center"><a href="./3x/PT_SmoothQuant.html">Smooth Quantization</a></td>
     </tr>
     <tr>
-        <td colspan="4" align="center"><a href="./3x/PT_WeightOnlyQuant.html">Weight-Only Quantization</a></td>
+        <td colspan="2" align="center"><a href="./3x/PT_WeightOnlyQuant.html">Weight-Only Quantization</a></td>
+        <td colspan="2" align="center"><a href="./docs/3x/PT_FP8Quant.html">FP8 Quantization</a></td>
         <td colspan="2" align="center"><a href="./3x/PT_MXQuant.html">MX Quantization</a></td>
         <td colspan="2" align="center"><a href="./3x/PT_MixedPrecision.html">Mixed Precision</a></td>
     </tr>
@@ -340,7 +323,7 @@ View <a class="reference external" href="https://github.com/intel/neural-compres
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f6cbe7f4550> 
+   <jinja2.runtime.BlockReference object at 0x7f773ab21060> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

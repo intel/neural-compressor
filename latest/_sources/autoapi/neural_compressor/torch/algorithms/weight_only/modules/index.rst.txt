@@ -15,7 +15,10 @@ Classes
 .. autoapisummary::
 
    neural_compressor.torch.algorithms.weight_only.modules.QDQLayer
+   neural_compressor.torch.algorithms.weight_only.modules.UnpackedWeightOnlyLinearParams
    neural_compressor.torch.algorithms.weight_only.modules.WeightOnlyLinear
+   neural_compressor.torch.algorithms.weight_only.modules.INCWeightOnlyLinear
+   neural_compressor.torch.algorithms.weight_only.modules.HPUWeightOnlyLinear
    neural_compressor.torch.algorithms.weight_only.modules.FakeAffineTensorQuantFunction
    neural_compressor.torch.algorithms.weight_only.modules.TEQLinearFakeQuant
    neural_compressor.torch.algorithms.weight_only.modules.MulLinear
@@ -31,11 +34,32 @@ Module Contents
    Quantized and dequantized layer.
 
 
-.. py:class:: WeightOnlyLinear(in_features, out_features, dtype='int', bits=4, group_size=32, zp=False, bias=False, scale_dtype=torch.float32, compression_dtype=torch.int32, compression_dim=1, g_idx=False, device='cpu', use_optimum_format=True)
+.. py:class:: UnpackedWeightOnlyLinearParams(unpack_weight, scales, unpack_zp, **kwargs)
 
 
 
-   Weight Only Linear.
+   Contains all unpacked weight values.
+
+
+.. py:class:: WeightOnlyLinear(in_features, out_features, dtype, bits, group_size, device)
+
+
+
+   Base Weight Only Linear.
+
+
+.. py:class:: INCWeightOnlyLinear(in_features, out_features, dtype='int', bits=4, group_size=32, zp=False, bias=False, scale_dtype=torch.float32, compression_dtype=torch.int32, compression_dim=1, g_idx=False, device='cpu', use_optimum_format=True, **kwargs)
+
+
+
+   INC Weight Only Linear.
+
+
+.. py:class:: HPUWeightOnlyLinear(in_features, out_features, dtype='int', bits=4, group_size=32, zp=False, bias=False, scale_dtype=torch.bfloat16, compression_dtype=torch.int32, compression_dim=1, g_idx=False, device='hpu', use_optimum_format=True, **kwargs)
+
+
+
+   Weight Only Linear for HPU device.
 
 
 .. py:class:: FakeAffineTensorQuantFunction

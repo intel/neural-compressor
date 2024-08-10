@@ -133,10 +133,20 @@
 <dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.save_load.load">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.save_load.</span></span><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name_or_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">original_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">LoadFormat.DEFAULT</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/torch/algorithms/weight_only/save_load.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.save_load.load" title="Permalink to this definition"></a></dt>
 <dd><p>Load quantized weight-only quantization model.</p>
-<ol class="arabic simple">
-<li><p>Load INC weight-only quantized model in local.</p></li>
-<li><p>Load HuggingFace weight-only quantized model,
-including GPTQ/AWQ models and upstreamed INC quantized models in HF model hub.</p></li>
+<ol class="arabic">
+<li><dl class="simple">
+<dt>Load INC weight-only quantized model in local.</dt><dd><p>from neural_compressor.torch.quantization import load
+load(model_name_or_path=”saved_results”, original_model=fp32_model, format=”default”, device=”cpu”)</p>
+</dd>
+</dl>
+</li>
+<li><p>Load HuggingFace weight-only quantized model, including GPTQ models and
+upstreamed INC quantized models in HF model hub.</p>
+<blockquote>
+<div><p>from neural_compressor.torch.quantization import load
+load(model_name_or_path=model_name_or_path, format=”huggingface”, device=”cpu”)</p>
+</div></blockquote>
+</li>
 </ol>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -147,7 +157,7 @@ If ‘format’ is set to ‘default’, it means the ‘checkpoint_dir’.
 Parameter should not be None. it coworks with ‘original_model’ parameter to load INC
 weight-only quantized model in local.</p></li>
 <li><p><strong>original_model</strong> (<em>torch.nn.module</em><em>, </em><em>optional</em>) – original model before quantization.
-Needed if ‘format’ is set to ‘default’ and not TorchScript model.Defaults to None.</p></li>
+Needed if ‘format’ is set to ‘default’. Defaults to None.</p></li>
 <li><p><strong>format</strong> (<em>str</em><em>, </em><em>optional</em>) – ‘defult’ for loading INC weight-only quantized model.
 ‘huggingface’ for loading huggingface WOQ causal language model. Defaults to “default”.</p></li>
 <li><p><strong>kwargs</strong> (<em>remaining dictionary</em><em> of </em><em>keyword arguments</em><em>, </em><em>optional</em>) – remaining dictionary of keyword arguments for loading huggingface models.
@@ -186,7 +196,7 @@ will be passed to the huggingface model’s <cite>__init__</cite> method, such a
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f6cc33826b0> 
+   <jinja2.runtime.BlockReference object at 0x7f773d9bd1b0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

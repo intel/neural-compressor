@@ -71,66 +71,50 @@ pip install "neural-compressor>=2.3" "transformers>=4.34.0" torch torchvision
 ```
 After successfully installing these packages, try your first quantization program.
 
-### Weight-Only Quantization (LLMs)
-Following example code demonstrates Weight-Only Quantization on LLMs, it supports Intel CPU, Intel Gaudi2 AI Accelerator, Nvidia GPU, best device will be selected automatically.
+### [FP8 Quantization](./examples/3.x_api/pytorch/cv/fp8_quant/)
+Following example code demonstrates FP8 Quantization, it is supported by Intel Gaudi2 AI Accelerator. 
 
 To try on Intel Gaudi2, docker image with Gaudi Software Stack is recommended, please refer to following script for environment setup. More details can be found in [Gaudi Guide](https://docs.habana.ai/en/latest/Installation_Guide/Bare_Metal_Fresh_OS.html#launch-docker-image-that-was-built).
 ```bash
 # Run a container with an interactive shell
-docker run -it --runtime=habana -e HABANA_VISIBLE_DEVICES=all -e OMPI_MCA_btl_vader_single_copy_mechanism=none --cap-add=sys_nice --net=host --ipc=host vault.habana.ai/gaudi-docker/1.14.0/ubuntu22.04/habanalabs/pytorch-installer-2.1.1:latest
-
-# Install the optimum-habana
-pip install --upgrade-strategy eager optimum[habana]
-
-# Install INC/auto_round
-pip install neural-compressor auto_round
+docker run -it --runtime=habana -e HABANA_VISIBLE_DEVICES=all -e OMPI_MCA_btl_vader_single_copy_mechanism=none --cap-add=sys_nice --net=host --ipc=host vault.habana.ai/gaudi-docker/1.17.0/ubuntu22.04/habanalabs/pytorch-installer-2.3.1:latest
 ```
 Run the example:
 ```python
-from transformers import AutoModel, AutoTokenizer
-
-from neural_compressor.config import PostTrainingQuantConfig
-from neural_compressor.quantization import fit
-from neural_compressor.adaptor.torch_utils.auto_round import get_dataloader
-
-model_name = "EleutherAI/gpt-neo-125m"
-float_model = AutoModel.from_pretrained(model_name)
-tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-dataloader = get_dataloader(tokenizer, seqlen=2048)
-
-woq_conf = PostTrainingQuantConfig(
-    approach="weight_only",
-    op_type_dict={
-        ".*": {  # match all ops
-            "weight": {
-                "dtype": "int",
-                "bits": 4,
-                "algorithm": "AUTOROUND",
-            },
-        }
-    },
+from neural_compressor.torch.quantization import (
+    FP8Config,
+    prepare,
+    convert,
 )
-quantized_model = fit(model=float_model, conf=woq_conf, calib_dataloader=dataloader)
+import torchvision.models as models
+
+model = models.resnet18()
+qconfig = FP8Config(fp8_config="E4M3")
+model = prepare(model, qconfig)
+# customer defined calibration
+calib_func(model)
+model = convert(model)
 ```
-**Note:**
 
-To try INT4 model inference, please directly use [Intel Extension for Transformers](https://github.com/intel/intel-extension-for-transformers), which leverages Intel Neural Compressor for model quantization.
+### Weight-Only Large Language Model Loading (LLMs)
 
-### Static Quantization (Non-LLMs)
+Following example code demonstrates weight-only large language model loading on Intel Gaudi2 AI Accelerator. 
 
 ```python
-from torchvision import models
+from neural_compressor.torch.quantization import load
 
-from neural_compressor.config import PostTrainingQuantConfig
-from neural_compressor.data import DataLoader, Datasets
-from neural_compressor.quantization import fit
-
-float_model = models.resnet18()
-dataset = Datasets("pytorch")["dummy"](shape=(1, 3, 224, 224))
-calib_dataloader = DataLoader(framework="pytorch", dataset=dataset)
-static_quant_conf = PostTrainingQuantConfig()
-quantized_model = fit(model=float_model, conf=static_quant_conf, calib_dataloader=calib_dataloader)
+model_name = "TheBloke/Llama-2-7B-GPTQ"
+model = load(
+    model_name_or_path=model_name,
+    format="huggingface",
+    device="hpu",
+    torch_dtype=torch.bfloat16,
+)
 ```
+
+**Note:**
+
+Intel Neural Compressor will convert the model format from auto-gptq to hpu format on the first load and save hpu_model.safetensors to the local cache directory for the next load. So it may take a while to load for the first time.
 
 ## Documentation
 
@@ -157,12 +141,13 @@ quantized_model = fit(model=float_model, conf=static_quant_conf, calib_dataloade
   <tbody>
     <tr>
         <td colspan="2" align="center"><a href="./3x/PyTorch.html">Overview</a></td>
-        <td colspan="2" align="center"><a href="./3x/PT_StaticQuant.html">Static Quantization</a></td>
         <td colspan="2" align="center"><a href="./3x/PT_DynamicQuant.html">Dynamic Quantization</a></td>
+        <td colspan="2" align="center"><a href="./3x/PT_StaticQuant.html">Static Quantization</a></td>
         <td colspan="2" align="center"><a href="./3x/PT_SmoothQuant.html">Smooth Quantization</a></td>
     </tr>
     <tr>
-        <td colspan="4" align="center"><a href="./3x/PT_WeightOnlyQuant.html">Weight-Only Quantization</a></td>
+        <td colspan="2" align="center"><a href="./3x/PT_WeightOnlyQuant.html">Weight-Only Quantization</a></td>
+        <td colspan="2" align="center"><a href="./docs/3x/PT_FP8Quant.html">FP8 Quantization</a></td>
         <td colspan="2" align="center"><a href="./3x/PT_MXQuant.html">MX Quantization</a></td>
         <td colspan="2" align="center"><a href="./3x/PT_MixedPrecision.html">Mixed Precision</a></td>
     </tr>
