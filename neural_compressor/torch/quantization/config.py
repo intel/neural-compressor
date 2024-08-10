@@ -1755,7 +1755,6 @@ class FP8Config(TorchBaseConfig):
         "fp8_config",
         "scale_method",
         "observer",
-        "measure_exclude",
     ]
 
     def __init__(
