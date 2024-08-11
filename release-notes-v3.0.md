@@ -105,5 +105,4 @@ Intel® Neural Compressor v3.0 Release
  - Python 3.8, 3.9, 3.10, 3.11 
  - PyTorch/IPEX 2.1, 2.2, 2.3 
  - TensorFlow 2.14, 2.15, 2.16 
- - ITEX 2.13.0, 2.14.0, 2.15.0 
  - ONNX Runtime 1.16, 1.17, 1.18
