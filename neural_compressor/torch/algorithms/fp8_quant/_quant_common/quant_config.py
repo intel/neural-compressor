@@ -36,7 +36,6 @@ class QuantMode(Enum):
     MEASURE = 2
     SHAPE = 3
 
-
 class MeasureExclude(Flag):
     NONE = auto()
     INPUT = auto()
@@ -68,7 +67,6 @@ class ScaleMethod(Enum):
     MAXABS_HW_OPT_WEIGHT = 12
     MAXABS_POW2_OPT_WEIGHT = 13
 
-
 class TrueFalse(Enum):
     TRUE = True
     FALSE = False
@@ -82,10 +80,11 @@ _config_to_enum = {
     "scale_method": ScaleMethod,
     "recalc_scales": TrueFalse,
     "ignore_modules_wo_measures": TrueFalse,
+    "fake_quant": TrueFalse
 }
 
 
-_configs_that_use_enum_value = ["fp8_config", "hp_dtype", "ignore_modules_wo_measures", "recalc_scales"]
+_configs_that_use_enum_value = ["fp8_config", "hp_dtype", "ignore_modules_wo_measures", "recalc_scales", "fake_quant"]
 
 
 def get_hqt_config(mod) -> Fp8cfg:
@@ -121,6 +120,7 @@ class Fp8cfg:
                 "types": (),
             },  # types and names to be quantized. Allowlist by names is not yet implemented
             "mode": QuantMode.QUANTIZE,  # Quantize or Measure
+            "fake_quant": False, # Fake or Real Quant
             "scale_method": ScaleMethod.UNIT_SCALE,  # Method to quantize with
             "scale_params": {},  # scaling parameters that are different then the default ones
             "observer": "maxabs",  # Supported ['shape', 'maxabs', 'maxabs_per_channel', 'save']

@@ -97,7 +97,10 @@ def prepare_model(model, qconfig, mod_list, hp_dtype=torch.float):
             apply_hf_hook(mod)
             if name in mod_list:
                 mod_extra_config = qconfig[name]
-                quantize_params(mod, mod_extra_config)
+
+                if config.cfg["fake_quant"] == False:
+                    quantize_params(mod, mod_extra_config)
+
                 patch_module(mod, mod_extra_config, mod_default_dict)
                 patched_modules.append(name)
                 patched_module_types.add(type(mod))

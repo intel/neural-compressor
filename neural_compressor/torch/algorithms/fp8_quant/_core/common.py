@@ -68,11 +68,6 @@ mod_types = {
     "softmax": ModuleType(1, [], 1, True),
     "fused_sdpa": ModuleType(3, [], 2, True),
 }
-descale_fcn = lambda x, scale: torch.mul(x, scale)
-scale_fcn = lambda x, scale: torch.div(x, scale)
-cast_fcn = lambda x, dtype: x.to(dtype=dtype)
-cast_to_fp8_fcn = lambda x, dtype, scale_inv=None: torch.ops.hpu.cast_to_fp8_v2(x, scale_inv, False, False, dtype)[0]
-cast_from_fp8_fcn = lambda x, dtype, scale=None: torch.ops.hpu.cast_from_fp8(x, scale, dtype)
 
 
 class ShapeList:

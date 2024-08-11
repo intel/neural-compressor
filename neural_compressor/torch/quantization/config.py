@@ -1256,6 +1256,7 @@ class FP8Config(BaseConfig):
         observer: str = "maxabs",
         mod_dict: dict = {},
         measure_exclude: str = "OUTPUT",
+        fake_quant: bool = False,
         **kwargs,
     ):
         """Init FP8 config."""
@@ -1271,6 +1272,7 @@ class FP8Config(BaseConfig):
         self.observer = observer
         self.mod_dict = mod_dict
         self._json_file = None
+        self.fake_quant = fake_quant
 
     @property
     def measure(self):
