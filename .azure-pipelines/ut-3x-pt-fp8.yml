@@ -41,7 +41,7 @@ stages:
               dockerConfigName: "commonDockerConfig"
               utScriptFileName: "3x/run_3x_pt_fp8"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut_3x_pt_fp8"
+              utArtifact: "ut_3x"
 
   - stage: Torch_habana_baseline
     displayName: Torch 3x Habana FP8 baseline
@@ -56,7 +56,7 @@ stages:
               dockerConfigName: "gitCloneDockerConfig"
               utScriptFileName: "3x/run_3x_pt_fp8"
               uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut_3x_pt_fp8_baseline"
+              utArtifact: "ut_3x_baseline"
 
   - stage: Coverage
     displayName: "Coverage Compare"
