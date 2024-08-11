@@ -6,7 +6,6 @@ Intel® Neural Compressor v3.0 Release
 - Examples
 - Bug Fixes
 - Documentations
-- External Contributions
 - Validated Configurations
 
 **Highlights**
@@ -16,6 +15,7 @@ Intel® Neural Compressor v3.0 Release
  - Performance optimizations and usability improvements on client-side quantization    
 
 **Features**
+ - [Quantization] Support FP8 quantization on Gaudi ([95197d](https://github.com/intel/neural-compressor/commit/95197d1697e19323b124c2a32bdef7425d4d1c3e))
  - [Quantization] Support INC and Huggingface model loading on framework extension API for Pytorch ([0eced1](https://github.com/intel/neural-compressor/commit/0eced1478c6796a5e2dcb254a65bbc96af4d1b8b), [bacc16](https://github.com/intel/neural-compressor/commit/bacc164df2c2080cb6b1a6250f745824bbca5a7b))
  - [Quantization] Support Weight-only Quantization on framework extension API for Pytorch ([34f0a9](https://github.com/intel/neural-compressor/commit/34f0a9f450b385aa3227f7f34e8d0f16460080a9), [de43d8](https://github.com/intel/neural-compressor/commit/de43d851a24a5f4290fe148f7d3607cad6d8433f), [4a4509](https://github.com/intel/neural-compressor/commit/4a45093c1418f34da2660a54052a2ff5c2b4edff), [1a4509](https://github.com/intel/neural-compressor/commit/1a4509060714559bdbc60524012997900c464d02), [a3a065](https://github.com/intel/neural-compressor/commit/a3a06508fa951f9b9dcd3786214f546c796c32e7), [1386ac](https://github.com/intel/neural-compressor/commit/1386ac5ec7be40608dfac082d2275307b8e4d14e), [a0dee9](https://github.com/intel/neural-compressor/commit/a0dee94dab0920ba30de049e871b19a72ddb8996), [503d9e](https://github.com/intel/neural-compressor/commit/503d9ef4136023f1952e397a2ab0f7f476040901), [84d705](https://github.com/intel/neural-compressor/commit/84d7055b3998724aecd7ca7e43ea653d0d0f4612), [099b7a](https://github.com/intel/neural-compressor/commit/099b7a4446d9c21af2066518ccc87ecaa717e08e), [e3c736](https://github.com/intel/neural-compressor/commit/e3c736fd910690faf08bf4609cc3b65529d79252), [e87c95](https://github.com/intel/neural-compressor/commit/e87c95f25d3fe0e286e832857974ce36d43b2f96), [2694bb](https://github.com/intel/neural-compressor/commit/2694bbf81622a936f5ef3c271901dea097af2474), [ec49a2](https://github.com/intel/neural-compressor/commit/ec49a29cafa92593d82635562ec200741fd4083c), [e7b4b6](https://github.com/intel/neural-compressor/commit/e7b4b648665df4d016d170cdf2f3f69e6f9c185f), [a9bf79](https://github.com/intel/neural-compressor/commit/a9bf79c63fbcd970cccc00d1db85e424fe286b27), [ac717b](https://github.com/intel/neural-compressor/commit/ac717bc4b6a1a1e82db218d7648121f157814fad), [915018](https://github.com/intel/neural-compressor/commit/9150181bb2ab71201fbdb052fbcaa2aba18a090a), [8447d7](https://github.com/intel/neural-compressor/commit/8447d7097fa33231b8a6e4a9e26e526d191787de), [dc9328](https://github.com/intel/neural-compressor/commit/dc9328c09b243d7df3bccc0a35a8a12feaabb40a))
  - [Quantization] Support static and dynamic quantization in PT2E path ([7a4715](https://github.com/intel/neural-compressor/commit/7a4715c1d488441e383b7c999fd1b574a3f6ceda), [43c358](https://github.com/intel/neural-compressor/commit/43c3580bdb1c6765bb4902fe721da629518acc74), [30b36b](https://github.com/intel/neural-compressor/commit/30b36b83a195c6ea350692c7ac0bfec1b52ee419), [1f58f0](https://github.com/intel/neural-compressor/commit/1f58f024d812b6c1f7f3430b62e61051599cd1b2), [02958d](https://github.com/intel/neural-compressor/commit/02958dd4a81251be26980a712cbb258d55edba67))
@@ -83,6 +83,7 @@ Intel® Neural Compressor v3.0 Release
  - Fix opt GPTQ double quant example config ([62aa85](https://github.com/intel/neural-compressor/commit/62aa85df23ce3f5db353ce9a4bfb8cd88395c376))
  - Fix GPTQ accuracy issue in framework extension API example ([c701ea](https://github.com/intel/neural-compressor/commit/c701eaff7d69c46a57172b0547bfe2fc05164a0c))
  - Fix bf16 symbolic_trace bug ([3fe2fd](https://github.com/intel/neural-compressor/commit/3fe2fd9aadda4991552d65fef09a75ba5127b5db))
+ - Fix `opt_125m_woq_gptq_int4_dq_ggml` issue ([b99aba](https://github.com/intel/neural-compressor/commit/b99abae5d937380cf9df80c9050fce18bddfb72d))
 
 **Documentations**
  - Update new API installation document ([50eb6f](https://github.com/intel/neural-compressor/commit/50eb6fb6f5924054b38d8ed99e78e0ebdab51f50), [ff3740](https://github.com/intel/neural-compressor/commit/ff3740146a829e845d79266acf233b202843d3fd))
@@ -95,10 +96,9 @@ Intel® Neural Compressor v3.0 Release
  - Update for API 3.0 online doc ([81a076](https://github.com/intel/neural-compressor/commit/81a076d7c59609be666ddddf64a574cacf1a5c36), [87f02c](https://github.com/intel/neural-compressor/commit/87f02c15a2f1047a8b4bcb5b7f443a4cecb4dfc7), [efcb29](https://github.com/intel/neural-compressor/commit/efcb2930be6b9d575b1fb8a6e86afdd6a09b5857))
  - Add docstring for API modules ([aa42e5](https://github.com/intel/neural-compressor/commit/aa42e5edcd0b5196a21ee7bb68a7965125601fea), [5767ae](https://github.com/intel/neural-compressor/commit/5767aed4dbc9a400f65f74bdc9c09209f0a4c145), [296c5d](https://github.com/intel/neural-compressor/commit/296c5d4f1138e5bf33584fb75cea0f6ca5080122), [1ebf69](https://github.com/intel/neural-compressor/commit/1ebf6987bd054b926d3cdd5630ae058c8d3a66c2), [0c52e1](https://github.com/intel/neural-compressor/commit/0c52e1243b78734e95fc348834303bc3c3cfe369), [b78794](https://github.com/intel/neural-compressor/commit/b787940ea2868e1fc8a56a81b94d62d4ea3d8454), [6b3020](https://github.com/intel/neural-compressor/commit/6b30207d0a3b6d6d497ecf8f6bb5891765d798ba), [28578b](https://github.com/intel/neural-compressor/commit/28578b96bf6217fa2b79699838e5a4af30843de4))
  - Add doc for client usage ([d254d5](https://github.com/intel/neural-compressor/commit/d254d508be9c6b14c474fd643ad448a4e261ca72), [305838](https://github.com/intel/neural-compressor/commit/30583882df76838ea3e4a719e25ddca7bb449b9b))
- - Remove 1.x API documents ([d32046](https://github.com/intel/neural-compressor/commit/d3204604aad007f3db67c46dcb0575aa8f5cd584))
-
-**External Contributions**
- - Update the Gaudi container example in the README ([cc763f](https://github.com/intel/neural-compressor/commit/cc763f5134f5f84b3020a8ea1bee409a60d15218))
+ - Remove 1.x API documents ([705672](https://github.com/intel/neural-compressor/commit/7056720df96f17c706522bc6b0530df534d22ee7), [d32046](https://github.com/intel/neural-compressor/commit/d3204604aad007f3db67c46dcb0575aa8f5cd584))
+ - Add readme for framework extension API examples ([385da7](https://github.com/intel/neural-compressor/commit/385da7c7ed018a66fcba6e28658d1a5eea2e52e4))
+ - Add version mapping between INC and Gaudi SW Stack ([acd8f4](https://github.com/intel/neural-compressor/commit/acd8f4f182eaccf03b221f765ec0ddb451be3415))
 
 **Validated Configurations** 
  - Centos 8.4 & Ubuntu 22.04 & Win 11 & MacOS Ventura 13.5 
