@@ -4,6 +4,10 @@ source /neural-compressor/.azure-pipelines/scripts/change_color.sh
 python -c "import neural_compressor as nc;print(nc.version.__version__)"
 echo "run itrex ut..."
 
+# install inc 3x deps
+pip install -r /neural-compressor/requirements_pt.txt
+export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH
+
 # prepare itrex
 git clone https://github.com/intel/intel-extension-for-transformers.git /intel-extension-for-transformers
 cd /intel-extension-for-transformers && git rev-parse --short HEAD
@@ -15,6 +19,8 @@ sed -i '/neural-compressor.git/d' /intel-extension-for-transformers/tests/requir
 pip install -r /intel-extension-for-transformers/tests/requirements.txt
 # workaround
 pip install onnx==1.15.0
+echo "pip list itrex ut deps..."
+pip list
 LOG_DIR=/neural-compressor/log_dir
 mkdir -p ${LOG_DIR}
 ut_log_name=${LOG_DIR}/ut_itrex.log

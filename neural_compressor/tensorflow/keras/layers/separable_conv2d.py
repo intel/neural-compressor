@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Initialize custom separable conv2d layers for Keras quantization."""
 
 import json
 
@@ -32,15 +33,15 @@ else:
     from keras.layers.convolutional.base_separable_conv import SeparableConv  # pylint: disable=E0401
     from keras.utils import conv_utils  # pylint: disable=E0401
 
-if version1_gte_version2(tf.__version__, "2.16.1"):
+if version1_gte_version2(tf.__version__, "2.16.1"):  # pragma: no cover
 
     class QSeparableConv2D(BaseSeparableConv):
+        """The custom quantized SeparableConv2D layer."""
+
         def __init__(
             self,
             filters,
             kernel_size,
-            min_value,
-            max_value,
             strides=(1, 1),
             padding="valid",
             data_format=None,
@@ -71,6 +72,7 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
             quant_axis=None,
             **kwargs
         ):
+            """Initialize custom quantized SeparableConv2D layer."""
             super().__init__(
                 rank=2,
                 filters=filters,
@@ -109,6 +111,7 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
             self.quant_axis = quant_axis
 
         def call(self, inputs):
+            """The __call__ function of custom quantized SeparableConv2D layer."""
             if self.quant_status == "calib" and not isinstance(inputs, tf.keras.KerasTensor):
                 if self.granularity == "per_tensor":
                     self.act_min_value = tf.math.reduce_min(inputs)
@@ -176,9 +179,11 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
 
         @classmethod
         def from_config(cls, config):
+            """Deserialize this class from a config dict."""
             return cls(**config)
 
         def get_config(self):
+            """Serialize this class to a config dict."""
             config = super(QSeparableConv2D, self).get_config()
             config.update(
                 {
@@ -201,12 +206,12 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
 else:
 
     class QSeparableConv2D(SeparableConv):
+        """The custom quantized SeparableConv2D layer."""
+
         def __init__(
             self,
             filters,
             kernel_size,
-            min_value,
-            max_value,
             strides=(1, 1),
             padding="valid",
             data_format=None,
@@ -237,6 +242,7 @@ else:
             quant_axis=None,
             **kwargs
         ):
+            """Initialize custom quantized SeparableConv2D layer."""
             super().__init__(
                 rank=2,
                 filters=filters,
@@ -274,6 +280,7 @@ else:
             self.quant_axis = quant_axis
 
         def call(self, inputs):
+            """The __call__ function of custom quantized SeparableConv2D layer."""
             if self.quant_status == "calib":
                 if self.granularity == "per_tensor":
                     self.act_min_value = tf.math.reduce_min(inputs)
@@ -342,9 +349,11 @@ else:
 
         @classmethod
         def from_config(cls, config):
+            """Deserialize this class from a config dict."""
             return cls(**config)
 
         def get_config(self):
+            """Serialize this class to a config dict."""
             config = super(QSeparableConv2D, self).get_config()
             config.update(
                 {
@@ -366,52 +375,34 @@ else:
 
 
 def initialize_int8_separable_conv2d(fp32_layer, q_config):
+    """Initialize int8 separable conv2d."""
     kwargs = fp32_layer.get_config()
 
-    if "name" in kwargs:
-        del kwargs["name"]
-    if "filters" in kwargs:
-        del kwargs["filters"]
-    if "kernel_size" in kwargs:
-        del kwargs["kernel_size"]
-    if "strides" in kwargs:
-        del kwargs["strides"]
-    if "padding" in kwargs:
-        del kwargs["padding"]
-    if "data_format" in kwargs:
-        del kwargs["data_format"]
-    if "dilation_rate" in kwargs:
-        del kwargs["dilation_rate"]
-    if "depth_multiplier" in kwargs:
-        del kwargs["depth_multiplier"]
-    if "activation" in kwargs:
-        del kwargs["activation"]
-    if "use_bias" in kwargs:
-        del kwargs["use_bias"]
-    if "depthwise_initializer" in kwargs:
-        del kwargs["depthwise_initializer"]
-    if "pointwise_initializer" in kwargs:
-        del kwargs["pointwise_initializer"]
-    if "bias_initializer" in kwargs:
-        del kwargs["bias_initializer"]
-    if "depthwise_regularizer" in kwargs:
-        del kwargs["depthwise_regularizer"]
-    if "pointwise_regularizer" in kwargs:
-        del kwargs["pointwise_regularizer"]
-    if "activity_regularizer" in kwargs:
-        del kwargs["activity_regularizer"]
-    if "bias_regularizer" in kwargs:
-        del kwargs["bias_regularizer"]
-    if "depthwise_constraint" in kwargs:
-        del kwargs["depthwise_constraint"]
-    if "pointwise_constraint" in kwargs:
-        del kwargs["pointwise_constraint"]
-    if "bias_constraint" in kwargs:
-        del kwargs["bias_constraint"]
-    if "min_value" in kwargs:
-        del kwargs["min_value"]
-    if "max_value" in kwargs:
-        del kwargs["max_value"]
+    param_list = [
+        "name",
+        "filters",
+        "kernel_size",
+        "strides",
+        "padding",
+        "data_format",
+        "dilation_rate",
+        "depth_multiplier",
+        "activation",
+        "use_bias",
+        "depthwise_initializer",
+        "bias_initializer",
+        "pointwise_initializer",
+        "depthwise_regularizer",
+        "activity_regularizer",
+        "bias_regularizer",
+        "pointwise_regularizer",
+        "depthwise_constraint",
+        "bias_constraint",
+        "pointwise_constraint",
+    ]
+    for p in param_list:  # pragma: no cover
+        if p in kwargs:
+            del kwargs[p]
 
     return QSeparableConv2D(
         name=fp32_layer.name,

@@ -1,4 +1,5 @@
 name: Publish
+permissions: {}
 
 on:
   push:
@@ -7,9 +8,10 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
+    permissions:
+      pull-requests: write
+      contents: write
     steps:
     - uses: actions/checkout@v3
     - name: Build Online Document

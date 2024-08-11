@@ -18,7 +18,7 @@ Now, create the generated images from the csv file
 
 IMPORTANT!! - the script that does the actual evaluation (explained below) expects to get an image where the prompt is the title of the image. For example, if the prompt is "a monster playing the guitar" then the name of the file that is created using diffusion should be "<path>/a monster playing the guitar.png" (or jpg or whatever)
 
-IMPORTANT!! #2 - from my experience, stable diffusion inference returns an error for prompts with the character '/' in them. There are very few, around one in a thousand. My recomendation, if you want to evaluate N images, create a subset of the size N+30 and delete prompts with '/' in them.  After creating the CSV I just deleted these prompts manually (takes 10 seconds to do).
+IMPORTANT!! #2 - from my experience, stable diffusion inference returns an error for prompts with the character '/' in them. There are very few, around one in a thousand. My recommendation, if you want to evaluate N images, create a subset of the size N+30 and delete prompts with '/' in them.  After creating the CSV I just deleted these prompts manually (takes 10 seconds to do).
 (Perhaps automating this should be a future commit).
 
 2) Now, run the evaluation script. This does the following:

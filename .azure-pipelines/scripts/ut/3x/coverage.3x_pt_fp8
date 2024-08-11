@@ -1,0 +1,14 @@
+[run]
+branch = True
+
+[report]
+include =
+ */neural_compressor/torch/algorithms/fp8_quant/*
+exclude_lines =
+ pragma: no cover
+ raise NotImplementedError
+ raise TypeError
+ if self.device == "gpu":
+ if device == "gpu":
+ except ImportError:
+ except Exception as e:

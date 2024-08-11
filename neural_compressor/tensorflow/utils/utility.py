@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""The utility functions and classes for Tensorflow."""
 
 import importlib
 import logging
@@ -24,11 +25,10 @@ from typing import Callable, Dict
 
 import cpuinfo
 import numpy as np
-import prettytable as pt
 import psutil
 from pkg_resources import parse_version
 
-from neural_compressor.common import logger
+from neural_compressor.common.utils import Statistics, logger
 
 # Dictionary to store a mapping between algorithm names and corresponding algo implementation(function)
 algos_mapping: Dict[str, Callable] = {}
@@ -68,6 +68,7 @@ def register_algo(name):
             ...
     Args:
         name (str): The name under which the algorithm function will be registered.
+
     Returns:
         decorator: The decorator function to be used with algorithm functions.
     """
@@ -80,14 +81,16 @@ def register_algo(name):
 
 
 def deep_get(dictionary, keys, default=None):
-    """Get the dot key's item in nested dict
-       eg person = {'person':{'name':{'first':'John'}}}
-       deep_get(person, "person.name.first") will output 'John'.
+    """Get the dot key's item in nested dict.
 
+    Usage example:
+       person = {'person':{'name':{'first':'John'}}}
+       deep_get(person, "person.name.first") will output 'John'.
     Args:
         dictionary (dict): The dict object to get keys
         keys (dict): The deep keys
         default (object): The return item if key not exists
+
     Returns:
         item: the item of the deep dot keys
     """
@@ -159,67 +162,6 @@ def get_tensor_histogram(tensor_data, bins=2048):
     th = max(abs(min_val), abs(max_val))
     hist, hist_edges = np.histogram(tensor_data, bins=2048, range=(-th, th))
     return (hist, hist_edges, min_val, max_val, th)
-
-
-def Dequantize(data, scale_info):
-    """Dequantize the data with the scale_info."""
-    original_shape = data.shape
-    max_value = 255.0 if scale_info[0].find("Relu") != -1.0 else 127.0
-    _scale = (np.array(scale_info[2]) - np.array(scale_info[1])) / max_value
-    de_scale = np.ones(original_shape) * _scale
-    de_data = np.multiply(data, de_scale).astype(np.float32)
-    return de_data
-
-
-def dequantize_weight(weight_tensor, min_filter_tensor, max_filter_tensor):
-    """Dequantize the weight with min-max filter tensors."""
-    weight_channel = weight_tensor.shape[-1]
-    if len(min_filter_tensor) == 1:
-        weight_tensor = weight_tensor * ((max_filter_tensor[0] - min_filter_tensor[0]) / 127.0)
-    else:
-        # TODO to calculate the de-quantized result in a parallel way
-        for i in range(weight_channel):
-            weight_tensor[:, :, :, i] = weight_tensor[:, :, :, i] * (
-                (max_filter_tensor[i] - min_filter_tensor[i]) / 127.0
-            )
-    return weight_tensor
-
-
-def dump_data_to_local(data, path, filename):
-    """Dump data to local as pkl file.
-
-    Args:
-        data: Data used to dump
-        path: The directory to save data
-        filename: The filename to dump
-
-    Returns:
-        loaded data
-    """
-    from pathlib import Path
-
-    if not os.path.exists(path):
-        Path(path).mkdir(parents=True, exist_ok=True)
-    file_path = os.path.join(path, filename)
-    with open(file_path, "wb") as fp:
-        pickle.dump(data, fp)
-        logging.getLogger("neural_compressor").info("Dumped data to %s" % file_path)
-
-
-def load_data_from_pkl(path, filename):
-    """Load data from local pkl file.
-
-    Args:
-        path: The directory to load data
-        filename: The filename to load
-    """
-    try:
-        file_path = os.path.join(path, filename)
-        with open(file_path, "rb") as fp:
-            data = pickle.load(fp)
-            return data
-    except FileExistsError:
-        logging.getLogger("neural_compressor").info("Can not open %s." % path)
 
 
 def singleton(cls):
@@ -329,48 +271,6 @@ class CpuInfo(object):
         return 0
 
 
-class Statistics:
-    """The statistics printer."""
-
-    def __init__(self, data, header, field_names, output_handle=logger.info):
-        """Init a Statistics object.
-
-        Args:
-            data: The statistics data
-            header: The table header
-            field_names: The field names
-            output_handle: The output logging method
-        """
-        self.field_names = field_names
-        self.header = header
-        self.data = data
-        self.output_handle = output_handle
-        self.tb = pt.PrettyTable(min_table_width=40)
-
-    def print_stat(self):
-        """Print the statistics."""
-        valid_field_names = []
-        for index, value in enumerate(self.field_names):
-            if index < 2:
-                valid_field_names.append(value)
-                continue
-
-            if any(i[index] for i in self.data):
-                valid_field_names.append(value)
-        self.tb.field_names = valid_field_names
-        for i in self.data:
-            tmp_data = []
-            for index, value in enumerate(i):
-                if self.field_names[index] in valid_field_names:
-                    tmp_data.append(value)
-            if any(tmp_data[1:]):
-                self.tb.add_row(tmp_data)
-        lines = self.tb.get_string().split("\n")
-        self.output_handle("|" + self.header.center(len(lines[0]) - 2, "*") + "|")
-        for i in lines:
-            self.output_handle(i)
-
-
 class CaptureOutputToFile(object):
     """Not displayed in API Docs.
 
@@ -395,33 +295,143 @@ class CaptureOutputToFile(object):
         self.tmp_file.close()
 
 
-class LazyImport(object):
-    """Lazy import python module till use."""
+@singleton
+class TFSlimNetsFactory(object):  # pragma: no cover
+    """TF-Slim nets factory."""
 
-    def __init__(self, module_name):
-        """Init LazyImport object.
+    def __init__(self):
+        """Initialize a TFSlimNetsFactory."""
+        # tf_slim only support specific models by default
+        self.default_slim_models = [
+            "alexnet_v2",
+            "overfeat",
+            "vgg_a",
+            "vgg_16",
+            "vgg_19",
+            "inception_v1",
+            "inception_v2",
+            "inception_v3",
+            "resnet_v1_50",
+            "resnet_v1_101",
+            "resnet_v1_152",
+            "resnet_v1_200",
+            "resnet_v2_50",
+            "resnet_v2_101",
+            "resnet_v2_152",
+            "resnet_v2_200",
+        ]
+
+        from tf_slim.nets import alexnet, inception, overfeat, resnet_v1, resnet_v2, vgg
+
+        self.networks_map = {
+            "alexnet_v2": {
+                "model": alexnet.alexnet_v2,
+                "input_shape": [None, 224, 224, 3],
+                "num_classes": 1001,
+                "arg_scope": alexnet.alexnet_v2_arg_scope,
+            },
+            "overfeat": {
+                "model": overfeat.overfeat,
+                "input_shape": [None, 224, 224, 3],
+                "num_classes": 1001,
+                "arg_scope": overfeat.overfeat_arg_scope,
+            },
+            "vgg_a": {
+                "model": vgg.vgg_a,
+                "input_shape": [None, 224, 224, 3],
+                "num_classes": 1000,
+                "arg_scope": vgg.vgg_arg_scope,
+            },
+            "vgg_16": {
+                "model": vgg.vgg_16,
+                "input_shape": [None, 224, 224, 3],
+                "num_classes": 1000,
+                "arg_scope": vgg.vgg_arg_scope,
+            },
+            "vgg_19": {
+                "model": vgg.vgg_19,
+                "input_shape": [None, 224, 224, 3],
+                "num_classes": 1000,
+                "arg_scope": vgg.vgg_arg_scope,
+            },
+            "inception_v1": {
+                "model": inception.inception_v1,
+                "input_shape": [None, 224, 224, 3],
+                "num_classes": 1001,
+                "arg_scope": inception.inception_v1_arg_scope,
+            },
+            "inception_v2": {
+                "model": inception.inception_v2,
+                "input_shape": [None, 224, 224, 3],
+                "num_classes": 1001,
+                "arg_scope": inception.inception_v2_arg_scope,
+            },
+            "inception_v3": {
+                "model": inception.inception_v3,
+                "input_shape": [None, 299, 299, 3],
+                "num_classes": 1001,
+                "arg_scope": inception.inception_v3_arg_scope,
+            },
+            "resnet_v1_50": {
+                "model": resnet_v1.resnet_v1_50,
+                "input_shape": [None, 224, 224, 3],
+                "num_classes": 1000,
+                "arg_scope": resnet_v1.resnet_arg_scope,
+            },
+            "resnet_v1_101": {
+                "model": resnet_v1.resnet_v1_101,
+                "input_shape": [None, 224, 224, 3],
+                "num_classes": 1000,
+                "arg_scope": resnet_v1.resnet_arg_scope,
+            },
+            "resnet_v1_152": {
+                "model": resnet_v1.resnet_v1_152,
+                "input_shape": [None, 224, 224, 3],
+                "num_classes": 1000,
+                "arg_scope": resnet_v1.resnet_arg_scope,
+            },
+            "resnet_v1_200": {
+                "model": resnet_v1.resnet_v1_200,
+                "input_shape": [None, 224, 224, 3],
+                "num_classes": 1000,
+                "arg_scope": resnet_v1.resnet_arg_scope,
+            },
+            "resnet_v2_50": {
+                "model": resnet_v2.resnet_v2_50,
+                "input_shape": [None, 224, 224, 3],
+                "num_classes": 1001,
+                "arg_scope": resnet_v2.resnet_arg_scope,
+            },
+            "resnet_v2_101": {
+                "model": resnet_v2.resnet_v2_101,
+                "input_shape": [None, 224, 224, 3],
+                "num_classes": 1001,
+                "arg_scope": resnet_v2.resnet_arg_scope,
+            },
+            "resnet_v2_152": {
+                "model": resnet_v2.resnet_v2_152,
+                "input_shape": [None, 224, 224, 3],
+                "num_classes": 1001,
+                "arg_scope": resnet_v2.resnet_arg_scope,
+            },
+            "resnet_v2_200": {
+                "model": resnet_v2.resnet_v2_200,
+                "input_shape": [None, 224, 224, 3],
+                "num_classes": 1001,
+                "arg_scope": resnet_v2.resnet_arg_scope,
+            },
+        }
+
+    def register(self, name, model_func, input_shape, arg_scope, **kwargs):
+        """Register a model to TFSlimNetsFactory.
 
         Args:
-           module_name (string): The name of module imported later
+            name (str): name of a model.
+            model_func (_type_): model that built from slim.
+            input_shape (_type_): input tensor shape.
+            arg_scope (_type_): slim arg scope that needed.
         """
-        self.module_name = module_name
-        self.module = None
-
-    def __getattr__(self, name):
-        """Get the attributes of the module by name."""
-        try:
-            self.module = importlib.import_module(self.module_name)
-            mod = getattr(self.module, name)
-        except:
-            spec = importlib.util.find_spec(str(self.module_name + "." + name))
-            mod = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(mod)
-        return mod
-
-    def __call__(self, *args, **kwargs):
-        """Call the function in that module."""
-        function_name = self.module_name.split(".")[-1]
-        module_name = self.module_name.split(f".{function_name}")[0]
-        self.module = importlib.import_module(module_name)
-        function = getattr(self.module, function_name)
-        return function(*args, **kwargs)
+        net_info = {"model": model_func, "input_shape": input_shape, "arg_scope": arg_scope}
+        net = {name: {**net_info, **kwargs}}
+        self.networks_map.update(net)
+        self.default_slim_models.append(name)

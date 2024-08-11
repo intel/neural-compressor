@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Intel Neural Compressor PyTorch load entry for all algorithms."""
 
 import json
 import os
@@ -22,6 +23,7 @@ from neural_compressor.torch.quantization.config import (
     AWQConfig,
     FP8Config,
     GPTQConfig,
+    HQQConfig,
     RTNConfig,
     TEQConfig,
 )
@@ -70,6 +72,7 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
         kwargs (remaining dictionary of keyword arguments, optional):
             remaining dictionary of keyword arguments for loading huggingface models.
             Will be passed to the huggingface model's `__init__` method, such as 'trust_remote_code', 'revision'.
+
     Returns:
         The quantized model
     """
@@ -84,12 +87,18 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
             from neural_compressor.torch.algorithms import static_quant
 
             return static_quant.load(model_name_or_path)
+        elif "static_quant" in per_op_qconfig.keys() or "pt2e_dynamic_quant" in per_op_qconfig.keys():  # PT2E
+            from neural_compressor.torch.algorithms import pt2e_quant
+
+            return pt2e_quant.load(model_name_or_path)
         else:
             config_mapping = load_config_mapping(qconfig_file_path, ConfigRegistry.get_all_configs()["torch"])
             # select load function
             config_object = config_mapping[next(iter(config_mapping))]
 
-            if isinstance(config_object, (RTNConfig, GPTQConfig, AWQConfig, TEQConfig, AutoRoundConfig)):  # WOQ
+            if isinstance(
+                config_object, (RTNConfig, GPTQConfig, AWQConfig, TEQConfig, AutoRoundConfig, HQQConfig)
+            ):  # WOQ
                 from neural_compressor.torch.algorithms import weight_only
 
                 qmodel = weight_only.load(model_name_or_path, original_model, format=LoadFormat.DEFAULT, device=device)

@@ -1242,6 +1242,8 @@ class TemplateAdaptor(Adaptor):
                 q_capability["opwise"][bf16_op] = [bf16_config, fp32_config]
                 if bf16_op[1] not in q_capability["optypewise"]:
                     q_capability["optypewise"][bf16_op[1]] = [bf16_config, fp32_config]
+            if bf16_op[1] in q_capability["optypewise"] and bf16_config not in q_capability["optypewise"][bf16_op[1]]:
+                q_capability["optypewise"][bf16_op[1]].append(bf16_config)
         return q_capability
 
     def get_fused_list(self, model):
@@ -1300,32 +1302,6 @@ class TemplateAdaptor(Adaptor):
                 if len(fp32_int8_ops) > 1:
                     fused_dict.update({op_name: fp32_int8_ops})
         return fused_dict
-
-    def diagnosis_helper(self, fp32_model, int8_model, tune_cfg=None, save_path=None):
-        """This is a helper function to diagnosis.
-
-        Args:
-            fp32_model (object): Fp32 model (original)
-            int8_model (object): Quantized model
-            tune_cfg (dict): Quantization config
-            save_path (Path): The path to save min/max value of op outputs
-
-        Returns:
-            Op name list for inspecting, tuning configuration
-        """
-        exclude_list = ["QuantStub", "DeQuantStub", "BatchNorm2d", "Sequential"]
-        optype_list = torch.quantization.get_default_qconfig_propagation_list()
-        supported_optype = []
-        for optype in optype_list:
-            op_type = str(optype).rstrip("'>").split(".")[-1]
-            if "intrinsic." not in str(optype) and op_type not in exclude_list:
-                supported_optype.append(optype)
-        inspect_node_list = []
-        for name, child in fp32_model.model.named_modules():
-            op_type = type(child)
-            if op_type in supported_optype:
-                inspect_node_list.append(name)
-        return inspect_node_list, tune_cfg
 
     def inspect_tensor(
         self,
@@ -3579,6 +3555,16 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             return q_model
 
         self.tune_cfg["fx_sub_module_list"] = self.sub_module_list
+
+        # BF16 fallback
+        if (
+            len(self.tune_cfg["bf16_ops_list"]) > 0
+            and self.version.release >= Version("1.11.0").release
+            and self.use_bf16
+            and (CpuInfo().bf16 or os.getenv("FORCE_BF16") == "1")
+        ):  # pragma: no cover
+            q_model._model = torch_utils.bf16_convert.Convert(q_model._model, self.tune_cfg)
+
         if self.approach == "quant_aware_training":
             q_model._model.train()
             if self.sub_module_list is None:
@@ -3664,14 +3650,6 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
             PyTorch_FXAdaptor.convert_sub_graph(
                 self.sub_module_list, q_model._model, prefix="", custom_config=self.prepare_custom_config_dict
             )
-
-        if (
-            len(self.tune_cfg["bf16_ops_list"]) > 0
-            and self.version.release >= Version("1.11.0").release
-            and self.use_bf16
-            and (CpuInfo().bf16 or os.getenv("FORCE_BF16") == "1")
-        ):  # pragma: no cover
-            q_model._model = torch_utils.bf16_convert.Convert(q_model._model, self.tune_cfg)
 
         self.fused_dict = self.get_fused_list(q_model.model)
         q_model.is_quantized = True
@@ -4927,13 +4905,13 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         enable_minmax_tuning = self.recipes["autoround_args"].get("enable_minmax_tuning", True)
         lr = self.recipes["autoround_args"].get("lr", None)
         minmax_lr = self.recipes["autoround_args"].get("minmax_lr", None)
-        low_gpu_mem_usage = self.recipes["autoround_args"].get("low_gpu_mem_usage", True)
+        low_gpu_mem_usage = self.recipes["autoround_args"].get("low_gpu_mem_usage", False)
         iters = self.recipes["autoround_args"].get("iters", 200)
         seqlen = self.recipes["autoround_args"].get("seqlen", 2048)
-        n_samples = self.recipes["autoround_args"].get("n_samples", 512)
+        nsamples = self.recipes["autoround_args"].get("nsamples", 128)
         sampler = self.recipes["autoround_args"].get("sampler", "rand")
         seed = self.recipes["autoround_args"].get("seed", 42)
-        n_blocks = self.recipes["autoround_args"].get("n_blocks", 1)
+        nblocks = self.recipes["autoround_args"].get("nblocks", 1)
         gradient_accumulate_steps = self.recipes["autoround_args"].get("gradient_accumulate_steps", 1)
         not_use_best_mse = self.recipes["autoround_args"].get("not_use_best_mse", False)
         dynamic_max_gap = self.recipes["autoround_args"].get("dynamic_max_gap", -1)
@@ -4944,6 +4922,12 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         bits = self.recipes["autoround_args"].get("bits", 4)
         group_size = self.recipes["autoround_args"].get("group_size", 128)
         sym = self.recipes["autoround_args"].get("scheme", "asym") == "sym"
+        act_bits = self.recipes["autoround_args"].get("act_bits", 32)
+        act_group_size = self.recipes["autoround_args"].get("act_group_size", None)
+        act_sym = self.recipes["autoround_args"].get("act_sym", None)
+        act_dynamic = self.recipes["autoround_args"].get("act_dynamic", True)
+        quant_block_list = self.recipes["autoround_args"].get("quant_block_list", None)
+        use_layer_wise = self.recipes["autoround_args"].get("use_layer_wise", False)
 
         if dataloader is not None:
             dataset = dataloader
@@ -4966,15 +4950,21 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             low_gpu_mem_usage=low_gpu_mem_usage,
             iters=iters,
             seqlen=seqlen,
-            n_samples=n_samples,
+            nsamples=nsamples,
             sampler=sampler,
             seed=seed,
-            n_blocks=n_blocks,
+            nblocks=nblocks,
             gradient_accumulate_steps=gradient_accumulate_steps,
             not_use_best_mse=not_use_best_mse,
             dynamic_max_gap=dynamic_max_gap,
             data_type=data_type,
             scale_dtype=scale_dtype,
+            quant_block_list=quant_block_list,
+            act_bits=act_bits,
+            act_group_size=act_group_size,
+            act_sym=act_sym,
+            act_dynamic=act_dynamic,
+            use_layer_wise=use_layer_wise,
         )
         return model, autoround_config
 
@@ -5102,13 +5092,6 @@ class PyTorchQuery(QueryBackendCapability):
             self.cur_config = self.cur_config[self.device]
         elif "cpu" in self.cur_config:
             self.cur_config = self.cur_config["cpu"]
-        self._update_cfg_with_usr_definition()
-
-    def _update_cfg_with_usr_definition(self):
-        from neural_compressor.conf.pythonic_config import pytorch_config
-
-        if pytorch_config.precisions is not None:
-            self.cur_config["precisions"]["names"] = ",".join(pytorch_config.precisions)
 
     def get_quantization_capability(self, datatype="int8"):
         """Get the supported op types' quantization capability.

@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Intel Neural Compressor Pytorch quantization AutoTune API."""
+
 
 from copy import deepcopy
 from typing import Callable, List, Optional, Union
@@ -32,6 +34,11 @@ __all__ = [
 
 
 def get_rtn_double_quant_config_set() -> List[RTNConfig]:
+    """Generate RTN double quant config set.
+
+    Returns:
+        List[RTNConfig]: a set of quant config
+    """
     rtn_double_quant_config_set = []
     for double_quant_type, double_quant_config in constants.DOUBLE_QUANT_CONFIGS.items():
         rtn_double_quant_config_set.append(RTNConfig.from_dict(double_quant_config))
@@ -39,6 +46,11 @@ def get_rtn_double_quant_config_set() -> List[RTNConfig]:
 
 
 def get_all_config_set() -> Union[BaseConfig, List[BaseConfig]]:
+    """Generate all quant config set.
+
+    Returns:
+        Union[BaseConfig, List[BaseConfig]]: a set of quant config
+    """
     return get_all_config_set_from_config_registry(fwk_name=FRAMEWORK_NAME)
 
 
@@ -69,10 +81,10 @@ def autotune(
     best_quant_model = None
     eval_func_wrapper = EvaluationFuncWrapper(eval_fn, eval_args)
     config_loader, tuning_logger, tuning_monitor = init_tuning(tuning_config=tune_config)
-    baseline: float = eval_func_wrapper.evaluate(model)
+    baseline: float = eval_func_wrapper.evaluate(deepcopy(model))
     tuning_monitor.set_baseline(baseline)
     tuning_logger.tuning_start()
-    for trial_index, quant_config in enumerate(config_loader):
+    for trial_index, quant_config in enumerate(config_loader, 1):
         tuning_logger.trial_start(trial_index=trial_index)
         tuning_logger.execution_start()
         logger.info(quant_config.to_dict())
@@ -93,17 +105,20 @@ def autotune(
         tuning_logger.trial_end(trial_index)
         if tuning_monitor.need_stop():
             logger.info("Stopped tuning.")
-            del q_model  # maybe gc.collect() is needed for memory release
-            best_quant_config: BaseConfig = tuning_monitor.get_best_quant_config()
-            # !!! Make sure to use deepcopy only when inplace is set to `True`.
-            q_model = quantize(
-                deepcopy(model),
-                quant_config=best_quant_config,
-                run_fn=run_fn,
-                run_args=run_args,
-                inplace=True,
-                example_inputs=example_inputs,
-            )
+            best_trial_record = tuning_monitor.get_best_trial_record()
+            if best_trial_record.trial_index != trial_index:
+                logger.info("Re-quantizing with best quantization config...")
+                del q_model  # maybe gc.collect() is needed for memory release
+                best_quant_config: BaseConfig = best_trial_record.quant_config
+                # !!! Make sure to use deepcopy only when inplace is set to `True`.
+                q_model = quantize(
+                    deepcopy(model),
+                    quant_config=best_quant_config,
+                    run_fn=run_fn,
+                    run_args=run_args,
+                    inplace=True,
+                    example_inputs=example_inputs,
+                )
             best_quant_model = q_model  # quantize model inplace
             break
     tuning_logger.tuning_end()

@@ -11,9 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""The common module."""
 
 from neural_compressor.common.utils import (
     level,
+    level_name,
     logger,
     Logger,
     TuningLogger,
@@ -30,6 +32,7 @@ from neural_compressor.common.base_config import options
 __all__ = [
     "options",
     "level",
+    "level_name",
     "logger",
     "Logger",
     "TuningLogger",

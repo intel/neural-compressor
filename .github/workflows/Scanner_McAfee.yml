@@ -1,4 +1,5 @@
 name: Virus Scan
+permissions: read-all
 
 on:
   workflow_dispatch:

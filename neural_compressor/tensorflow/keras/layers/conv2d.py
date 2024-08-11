@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Initialize custom conv2d layers for Keras quantization."""
 
 import json
 
@@ -30,9 +31,11 @@ elif version1_gte_version2(tf.__version__, "2.13.0"):
 else:
     from keras.layers.convolutional.base_conv import Conv  # pylint: disable=E0401
 
-if version1_gte_version2(tf.__version__, "2.16.1"):
+if version1_gte_version2(tf.__version__, "2.16.1"):  # pragma: no cover
 
     class QConv2D(BaseConv):
+        """The custom quantized Conv2D layer."""
+
         def __init__(
             self,
             name,
@@ -65,6 +68,7 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
             quant_axis=None,
             **kwargs
         ):
+            """Initialize custom quantized Conv2D layer."""
             super(QConv2D, self).__init__(
                 name=name,
                 rank=2,
@@ -100,6 +104,7 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
             self.quant_axis = quant_axis
 
         def call(self, inputs):
+            """The __call__ function of custom quantized Conv2D layer."""
             if self.quant_status == "calib" and not isinstance(inputs, tf.keras.KerasTensor):
                 if self.granularity == "per_tensor":
                     self.act_min_value = tf.math.reduce_min(inputs)
@@ -168,9 +173,11 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
 
         @classmethod
         def from_config(cls, config):
+            """Deserialize this class from a config dict."""
             return cls(**config)
 
         def get_config(self):
+            """Serialize this class to a config dict."""
             config = super(QConv2D, self).get_config()
             config.update(
                 {
@@ -193,6 +200,8 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
 else:
 
     class QConv2D(Conv):
+        """The custom quantized Conv2D layer."""
+
         def __init__(
             self,
             name,
@@ -225,6 +234,7 @@ else:
             quant_axis=None,
             **kwargs
         ):
+            """Initialize custom quantized Conv2D layer."""
             super(QConv2D, self).__init__(
                 name=name,
                 rank=2,
@@ -260,6 +270,7 @@ else:
             self.quant_axis = quant_axis
 
         def call(self, inputs):
+            """The __call__ function of custom quantized Conv2D layer."""
             if self.quant_status == "calib":
                 if self.granularity == "per_tensor":
                     self.act_min_value = tf.math.reduce_min(inputs)
@@ -328,9 +339,11 @@ else:
 
         @classmethod
         def from_config(cls, config):
+            """Deserialize this class from a config dict."""
             return cls(**config)
 
         def get_config(self):
+            """Serialize this class to a config dict."""
             config = super(QConv2D, self).get_config()
             config.update(
                 {
@@ -352,42 +365,31 @@ else:
 
 
 def initialize_int8_conv2d(fp32_layer, q_config):
+    """Initialize int8 conv2d."""
     kwargs = fp32_layer.get_config()
 
-    if "name" in kwargs:
-        del kwargs["name"]
-    if "filters" in kwargs:
-        del kwargs["filters"]
-    if "kernel_size" in kwargs:
-        del kwargs["kernel_size"]
-    if "strides" in kwargs:
-        del kwargs["strides"]
-    if "padding" in kwargs:
-        del kwargs["padding"]
-    if "data_format" in kwargs:
-        del kwargs["data_format"]
-    if "dilation_rate" in kwargs:
-        del kwargs["dilation_rate"]
-    if "groups" in kwargs:
-        del kwargs["groups"]
-    if "activation" in kwargs:
-        del kwargs["activation"]
-    if "use_bias" in kwargs:
-        del kwargs["use_bias"]
-    if "kernel_initializer" in kwargs:
-        del kwargs["kernel_initializer"]
-    if "bias_initializer" in kwargs:
-        del kwargs["bias_initializer"]
-    if "kernel_regularizer" in kwargs:
-        del kwargs["kernel_regularizer"]
-    if "activity_regularizer" in kwargs:
-        del kwargs["activity_regularizer"]
-    if "bias_regularizer" in kwargs:
-        del kwargs["bias_regularizer"]
-    if "kernel_constraint" in kwargs:
-        del kwargs["kernel_constraint"]
-    if "bias_constraint" in kwargs:
-        del kwargs["bias_constraint"]
+    param_list = [
+        "name",
+        "filters",
+        "kernel_size",
+        "strides",
+        "padding",
+        "data_format",
+        "dilation_rate",
+        "groups",
+        "activation",
+        "use_bias",
+        "kernel_initializer",
+        "bias_initializer",
+        "kernel_regularizer",
+        "activity_regularizer",
+        "bias_regularizer",
+        "kernel_constraint",
+        "bias_constraint",
+    ]
+    for p in param_list:  # pragma: no cover
+        if p in kwargs:
+            del kwargs[p]
 
     return QConv2D(
         name=fp32_layer.name,

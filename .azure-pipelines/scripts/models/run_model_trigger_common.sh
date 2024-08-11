@@ -80,8 +80,6 @@ if [ "${mode}" == "env_setup" ]; then
 elif [ "${mode}" == "tuning" ]; then
     if [ "${framework}" == "onnxrt" ]; then
         output_model=${log_dir}/${model}/${framework}-${model}-tune.onnx
-    elif [ "${framework}" == "mxnet" ]; then
-        output_model=${log_dir}/${model}/resnet50_v1
     elif [ "${framework}" == "tensorflow" ]; then
         output_model=${log_dir}/${model}/${framework}-${model}-tune.pb
     fi
@@ -140,8 +138,6 @@ elif [ "${mode}" == "int8_benchmark" ]; then
     $BOLD_YELLOW && echo "====== run benchmark int8 =======" && $RESET
     if [[ "${framework}" == "onnxrt" ]]; then
         model_name="${log_dir}/${model}/${framework}-${model}-tune.onnx"
-    elif [[ "${framework}" == "mxnet" ]]; then
-        model_name="${log_dir}/${model}"
     elif [[ "${framework}" == "tensorflow" ]]; then
         model_name="${log_dir}/${model}/${framework}-${model}-tune.pb"
     elif [[ "${framework}" == "pytorch" ]]; then

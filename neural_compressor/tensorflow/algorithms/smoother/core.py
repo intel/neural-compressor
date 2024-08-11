@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""The core components of sq."""
 
 from typing import Callable, Dict
 
@@ -37,19 +38,23 @@ class SmoothQuant:
     def __init__(
         self,
         config: SmoothQuantConfig,
-        calib_dataloader: Callable,
+        calib_dataloader: Callable = None,
         calib_iteration: int = 1,
+        calib_func: Callable = None,
     ):
         """Convert the model by smooth quant.
 
         Args:
-            config: the SmoothQuantConfig class used to set this class
-            calibdataloader: the calibration dataloader
-            calib_iteration: how many steps of iterations on the dataloader to move forward
+            config: the SmoothQuantConfig class used to set this class.
+            calibdataloader: the calibration dataloader.
+            calib_iteration: how many steps of iterations on the dataloader to move forward.
+            calib_func: the function used for calibration, should be a substitution for calib_dataloader
+            when the built-in calibration function of INC does not work for model inference.
 
         Returns:
             model: A smoothed Tensorflow model
         """
+        assert calib_func is None, "calibration function is not supported for smooth quant."
         self.config = config
         self.calib_dataloader = calib_dataloader
         self.calib_iteration = calib_iteration

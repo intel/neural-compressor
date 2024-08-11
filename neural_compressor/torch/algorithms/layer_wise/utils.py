@@ -27,14 +27,18 @@ from transformers import AutoConfig, AutoModelForCausalLM
 from transformers.models.auto.auto_factory import _BaseAutoModelClass
 
 from neural_compressor.common import options
+from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
 
 from .load import load
 
-LWQ_WORKSPACE = os.path.join(options.workspace, "layer_wise_tmp")
+LWQ_WORKSPACE = os.path.join(options.workspace, "lwq_tmpdir")
 
 
 class QDQLayer(torch.nn.Module):
+    """Quantized and Dequantized Layer."""
+
     def __init__(self, module, input_scale=None) -> None:
+        """Init the QDQLayer object."""
         super().__init__()
         self.quant = torch.ao.quantization.QuantStub()
         self.module = module
@@ -42,6 +46,7 @@ class QDQLayer(torch.nn.Module):
         self.input_scale = input_scale
 
     def forward(self, X):
+        """Forward function."""
         if self.input_scale is not None:
             X = torch.mul(X, self.input_scale)
         X = self.quant(X)
@@ -89,7 +94,7 @@ def get_named_children(model, pre=[]):
     return module_list
 
 
-def dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None):
+def dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None):  # pragma: no cover
     """Download hugging face model from hf hub."""
     from huggingface_hub.constants import DEFAULT_REVISION, HUGGINGFACE_HUB_CACHE
     from huggingface_hub.file_download import REGEX_COMMIT_HASH, repo_folder_name
@@ -121,7 +126,7 @@ def dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None):
         return file_path
 
 
-def load_empty_model(pretrained_model_name_or_path, cls=AutoModelForCausalLM, **kwargs):
+def load_empty_model(pretrained_model_name_or_path, cls=AutoModelForCausalLM, **kwargs):  # pragma: no cover
     """Load a empty model."""
     is_local = os.path.isdir(pretrained_model_name_or_path)
     if is_local:  # pragma: no cover
@@ -215,7 +220,20 @@ def _get_path(pretrained_model_name_or_path):
     return path
 
 
+get_path = _get_path
+
+
 def load_value(model, param_name, path):
+    """Load the module value.
+
+    Args:
+        model (torch.nn.module): torch model.
+        param_name (str): module name.
+        path (str): path to load state_dict per layer.
+
+    Returns:
+        tensor: the module value.
+    """
     if "lm_head" in param_name and getattr(model.config, "tie_word_embeddings", True):
         input_embeddings = model.get_input_embeddings()
         modules = get_named_children(model)
@@ -231,6 +249,14 @@ def load_value(model, param_name, path):
 
 
 def load_module(model, module_name, path, device="cpu"):
+    """Load all named parameters of module.
+
+    Args:
+        model (torch.nn.module): torch model.
+        module_name (str): module name.
+        path (str): path to load state_dict per layer.
+        device (str, optional): module device. Defaults to "cpu".
+    """
     module = get_module(model, module_name)
     for n, p in module.named_parameters():
         param_name = module_name + "." + n
@@ -239,6 +265,18 @@ def load_module(model, module_name, path, device="cpu"):
 
 
 def register_weight_hooks(model, path, device="cpu", clean_weight=True, saved_path=None):
+    """Register weight hooks for model.
+
+    Args:
+        model (torch.nn.module): torch model.
+        path (str): path to load state_dict per layer.
+        device (str, optional): module device. Defaults to "cpu".
+        clean_weight (bool, optional): to clean model weight. Defaults to True.
+        saved_path (str, optional): path to save module weight. Defaults to None.
+
+    Returns:
+        list: handlers.
+    """
     if saved_path:
         os.makedirs(saved_path, exist_ok=True)
 
@@ -276,10 +314,17 @@ def register_weight_hooks(model, path, device="cpu", clean_weight=True, saved_pa
 
 
 def clean_module_weight(module):
+    """Clean module weight."""
     if isinstance(module, QDQLayer):
         submodule = module.module
     else:
         submodule = module
+
+    if isinstance(module, INCWeightOnlyLinear):
+        for n, m in submodule._buffers.items():
+            old_value = getattr(submodule, n)
+            with torch.no_grad():
+                submodule._buffers[n] = torch.zeros(old_value.shape, device="meta")
 
     for n, m in submodule.named_parameters():
         is_buffer = n in submodule._buffers

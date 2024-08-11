@@ -418,7 +418,7 @@ class PyTorchModel(PyTorchBaseModel):
                 "but the torch version found is {}".format(Version("1.12.0"), version)
             )
 
-        from neural_compressor.experimental.export import torch_to_fp32_onnx, torch_to_int8_onnx
+        from neural_compressor.utils.export import torch_to_fp32_onnx, torch_to_int8_onnx
 
         if conf.dtype == "int8":
             torch_to_int8_onnx(
@@ -609,7 +609,7 @@ class PyTorchModel(PyTorchBaseModel):
 
                 self.model = pack_model(
                     self.model,
-                    weight_config=autoround_config,
+                    layer_config=autoround_config,
                     enable_full_range=enable_full_range,
                     compression_dtype=compression_dtype,
                     compression_dim=compression_dim,

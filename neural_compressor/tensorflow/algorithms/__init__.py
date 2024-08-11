@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Initialize all algorithms."""
 
 from neural_compressor.tensorflow.algorithms.smoother import SmoothQuant
 from neural_compressor.tensorflow.algorithms.static_quant import KerasAdaptor, TensorFlowAdaptor, Tensorflow_ITEXAdaptor

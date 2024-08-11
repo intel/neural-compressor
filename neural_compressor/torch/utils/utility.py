@@ -11,19 +11,24 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Intel Neural Compressor PyTorch utilities."""
 
 
-from typing import Callable, Dict, List, Tuple, Union
+import enum
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
+import psutil
 import torch
-import torch.ao.quantization.quantizer.x86_inductor_quantizer as xiq
-from torch.ao.quantization.observer import HistogramObserver, MinMaxObserver, PlaceholderObserver
-from torch.ao.quantization.quantizer import QuantizationSpec
-from torch.ao.quantization.quantizer.x86_inductor_quantizer import QuantizationConfig, X86InductorQuantizer
 from typing_extensions import TypeAlias
 
-from neural_compressor.common import logger
-from neural_compressor.common.utils import Mode
+from neural_compressor.common.utils import (
+    Mode,
+    ProcessorType,
+    Statistics,
+    cpu_info,
+    detect_processor_type_based_on_hw,
+    logger,
+)
 
 OP_NAME_AND_TYPE_TUPLE_TYPE: TypeAlias = Tuple[str, Union[torch.nn.Module, Callable]]
 
@@ -107,7 +112,12 @@ def set_module(model, op_name, new_module):
             setattr(second_last_module, name_list[-1], new_module)
 
 
+get_attr = fetch_module
+set_attr = set_module
+
+
 def get_model_info(model: torch.nn.Module, white_module_list: List[Callable]) -> List[Tuple[str, str]]:
+    """Get model info according to white_module_list."""
     module_dict = dict(model.named_modules())
     filter_result = []
     filter_result_set = set()
@@ -121,11 +131,14 @@ def get_model_info(model: torch.nn.Module, white_module_list: List[Callable]) ->
     return filter_result
 
 
-def get_double_quant_config(double_quant_type):
+def get_double_quant_config_dict(double_quant_type="BNB_NF4"):
+    """Query config dict of double_quant according to double_quant_type.
+
+    Args:
+        double_quant_type (str, optional): double_quant type. Defaults to "BNB_NF4".
+    """
     from neural_compressor.torch.utils.constants import DOUBLE_QUANT_CONFIGS
 
-    if double_quant_type is None:
-        return {}
     assert double_quant_type in DOUBLE_QUANT_CONFIGS, "Supported double quant configs: {}".format(
         list(DOUBLE_QUANT_CONFIGS.keys())
     )
@@ -173,59 +186,157 @@ def postprocess_model(model, mode, quantizer):
             del model.quantizer
 
 
-def create_quant_spec_from_config(dtype, sym, granularity, algo, is_dynamic=False) -> QuantizationSpec:
-    dtype_mapping: Dict[str, torch.dtype] = {"int8": torch.int8, "uint8": torch.uint8}
-    select_dtype = dtype_mapping[dtype]
-    min_max_mapping = {torch.int8: (-128, 127), torch.uint8: (0, 255)}
-    qscheme_mapping = {
-        "per_channel": {True: torch.per_channel_symmetric, False: torch.per_tensor_affine},
-        "per_tensor": {True: torch.per_tensor_symmetric, False: torch.per_tensor_affine},
-    }
-    observer_mapping = {
-        "placeholder": PlaceholderObserver,
-        "minmax": MinMaxObserver,
-        "kl": HistogramObserver,
-    }
-    # Force to use placeholder observer for dynamic quantization
-    if is_dynamic:
-        algo = "placeholder"
-    # algo
-    observer_or_fake_quant_ctr = observer_mapping[algo]
-    # qscheme
-    qscheme = qscheme_mapping[granularity][sym]
-    quantization_spec = QuantizationSpec(
-        dtype=select_dtype,
-        quant_min=min_max_mapping[select_dtype][0],
-        quant_max=min_max_mapping[select_dtype][1],
-        observer_or_fake_quant_ctr=observer_or_fake_quant_ctr,
-        qscheme=qscheme,
-        is_dynamic=is_dynamic,
-    )
-    return quantization_spec
+def dump_model_op_stats(mode, tune_cfg):
+    """Dump quantizable ops stats of model to user.
+
+    Args:
+        mode (object): quantization mode.
+        tune_cfg (dict): quantization config
+    """
+    if mode == Mode.PREPARE:
+        return
+    res = {}
+    # collect all dtype info and build empty results with existing op_type
+    dtype_set = set()
+    for op, config in tune_cfg.items():
+        op_type = op[1]
+        config = config.to_dict()
+        if not config["dtype"] == "fp32":
+            num_bits = config["bits"]
+            group_size = config["group_size"]
+            dtype_str = "A32W{}G{}".format(num_bits, group_size)
+            dtype_set.add(dtype_str)
+    dtype_set.add("FP32")
+    dtype_list = list(dtype_set)
+    dtype_list.sort()
+
+    for op, config in tune_cfg.items():
+        config = config.to_dict()
+        op_type = op[1]
+        if op_type not in res.keys():
+            res[op_type] = {dtype: 0 for dtype in dtype_list}
+
+    # fill in results with op_type and dtype
+    for op, config in tune_cfg.items():
+        config = config.to_dict()
+        if config["dtype"] == "fp32":
+            res[op_type]["FP32"] += 1
+        else:
+            num_bits = config["bits"]
+            group_size = config["group_size"]
+            dtype_str = "A32W{}G{}".format(num_bits, group_size)
+            res[op_type][dtype_str] += 1
+
+    # update stats format for dump.
+    field_names = ["Op Type", "Total"]
+    field_names.extend(dtype_list)
+    output_data = []
+    for op_type in res.keys():
+        field_results = [op_type, sum(res[op_type].values())]
+        field_results.extend([res[op_type][dtype] for dtype in dtype_list])
+        output_data.append(field_results)
+
+    Statistics(output_data, header="Mixed Precision Statistics", field_names=field_names).print_stat()
 
 
-def _map_inc_config_to_torch_quant_config(inc_config, is_dynamic=False) -> QuantizationConfig:
-    default_quant_config = xiq.get_default_x86_inductor_quantization_config(is_dynamic=is_dynamic)
-    input_act_quant_spec = create_quant_spec_from_config(
-        inc_config.act_dtype, inc_config.act_sym, inc_config.act_granularity, inc_config.act_algo, is_dynamic=is_dynamic
-    )
-    weight_quant_spec = create_quant_spec_from_config(
-        inc_config.w_dtype, inc_config.w_sym, inc_config.w_granularity, inc_config.w_algo
-    )
-    quant_config = QuantizationConfig(
-        input_activation=input_act_quant_spec,
-        output_activation=default_quant_config.output_activation,
-        weight=weight_quant_spec,
-        bias=default_quant_config.bias,
-        is_qat=False,
-    )
-    return quant_config
+def get_model_device(model: torch.nn.Module):
+    """Get the device.
+
+    Args:
+        model (torch.nn.Module): the input model.
+
+    Returns:
+        device (str): a string.
+    """
+    for n, p in model.named_parameters():
+        return p.data.device.type  # p.data.device == device(type='cpu')
 
 
-def create_xiq_quantizer_from_pt2e_config(config, is_dynamic=False) -> X86InductorQuantizer:
-    quantizer = xiq.X86InductorQuantizer()
-    # set global
-    global_config = _map_inc_config_to_torch_quant_config(config, is_dynamic)
-    quantizer.set_global(global_config)
-    # Skip the local config for now (need torch 2.4)
-    return quantizer
+def get_processor_type_from_user_config(user_processor_type: Optional[Union[str, ProcessorType]] = None):
+    """Get the processor type.
+
+    Get the processor type based on the user configuration or automatically detect it based on the hardware.
+
+    Args:
+        user_processor_type (Optional[Union[str, ProcessorType]]): The user-specified processor type. Defaults to None.
+
+    Returns:
+        ProcessorType: The detected or user-specified processor type.
+
+    Raises:
+        AssertionError: If the user-specified processor type is not supported.
+        NotImplementedError: If the processor type is not recognized.
+    """
+    if user_processor_type is None:
+        processor_type = detect_processor_type_based_on_hw()
+    elif isinstance(user_processor_type, ProcessorType):
+        processor_type = user_processor_type
+    elif isinstance(user_processor_type, str):
+        user_processor_type = user_processor_type.lower().capitalize()
+        assert user_processor_type in ProcessorType.__members__, f"Unsupported processor type: {user_processor_type}"
+        processor_type = ProcessorType(user_processor_type)
+    else:
+        raise NotImplementedError(f"Unsupported processor type: {user_processor_type}")
+    return processor_type
+
+
+def dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None):
+    """Download hugging face model from hf hub."""
+    import os
+
+    from huggingface_hub.constants import DEFAULT_REVISION, HUGGINGFACE_HUB_CACHE
+    from huggingface_hub.file_download import REGEX_COMMIT_HASH, repo_folder_name
+    from huggingface_hub.utils import EntryNotFoundError
+
+    if cache_dir is None:
+        cache_dir = HUGGINGFACE_HUB_CACHE
+    if revision is None:
+        revision = DEFAULT_REVISION
+    if repo_type is None:
+        repo_type = "model"
+    storage_folder = os.path.join(cache_dir, repo_folder_name(repo_id=repo_id, repo_type=repo_type))
+    commit_hash = None
+    if REGEX_COMMIT_HASH.match(revision):
+        commit_hash = revision
+    else:
+        ref_path = os.path.join(storage_folder, "refs", revision)
+        if os.path.exists(ref_path):
+            with open(ref_path) as f:
+                commit_hash = f.read()
+    if storage_folder and commit_hash:
+        pointer_path = os.path.join(storage_folder, "snapshots", commit_hash)
+        if os.path.isdir(pointer_path):
+            return pointer_path
+    else:  # pragma: no cover
+        from huggingface_hub import snapshot_download
+
+        file_path = snapshot_download(repo_id)
+        return file_path
+
+
+def load_empty_model(pretrained_model_name_or_path, cls=None, **kwargs):
+    """Load a empty model."""
+    import os
+
+    from accelerate import init_empty_weights
+    from transformers import AutoConfig, AutoModelForCausalLM
+    from transformers.models.auto.auto_factory import _BaseAutoModelClass
+
+    cls = AutoModelForCausalLM if cls is None else cls
+    is_local = os.path.isdir(pretrained_model_name_or_path)
+    if is_local:  # pragma: no cover
+        path = pretrained_model_name_or_path
+    else:
+        path = dowload_hf_model(pretrained_model_name_or_path)
+    if cls.__base__ == _BaseAutoModelClass:
+        config = AutoConfig.from_pretrained(path, **kwargs)
+        with init_empty_weights():
+            model = cls.from_config(config)
+    else:  # pragma: no cover
+        config = cls.config_class.from_pretrained(path, **kwargs)
+        with init_empty_weights():
+            model = cls(config)
+    model.tie_weights()
+    model.eval()
+    model.path = pretrained_model_name_or_path
+    return model

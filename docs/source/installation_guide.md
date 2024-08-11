@@ -27,43 +27,49 @@ The following prerequisites and requirements must be satisfied for a successful 
 > Notes:
 > - If you get some build issues, please check [frequently asked questions](faq.md) at first.
 
+### Install Framework
+#### Install torch for CPU
+```Shell
+pip install torch --index-url https://download.pytorch.org/whl/cpu
+```
+#### Use Docker Image with torch installed for HPU
+https://docs.habana.ai/en/latest/Installation_Guide/Bare_Metal_Fresh_OS.html#bare-metal-fresh-os-single-click 
+
+#### Install torch/intel_extension_for_pytorch for Intel GPU
+https://intel.github.io/intel-extension-for-pytorch/index.html#installation 
+
+#### Install torch for other platform
+https://pytorch.org/get-started/locally
+
+#### Install tensorflow
+```Shell
+pip install tensorflow
+```
+
 ### Install from Binary
 - Install from Pypi
-  ```Shell
-  # install stable basic version from pypi
-  pip install neural-compressor
-  ```
-  ```Shell
-  # [Experimental] install stable basic + PyTorch framework extension API from pypi 
-  pip install neural-compressor[pt]
-  ```
-  ```Shell
-  # [Experimental] install stable basic + TensorFlow framework extension API from pypi 
-  pip install neural-compressor[tf]
-  ```
-
-- Install from test Pypi
-  ```Shell
-  # install nightly version
-  git clone https://github.com/intel/neural-compressor.git
-  cd neural-compressor
-  pip install -r requirements.txt
-  # install nightly basic version from pypi
-  pip install -i https://test.pypi.org/simple/ neural-compressor
-  ```
-
-- Install from Conda 
-  ```Shell
-  # install on Linux OS
-  conda install opencv-python-headless -c fastai
-  conda install neural-compressor -c conda-forge -c intel
-  ```
-  ```Shell
-  # install on Windows OS
-  conda install pycocotools -c esri
-  conda install opencv-python-headless -c fastai
-  conda install neural-compressor -c conda-forge -c intel
-  ```
+```Shell
+# Install 2.X API + Framework extension API + PyTorch dependency
+pip install neural-compressor[pt]
+```
+```Shell
+# Install 2.X API + Framework extension API + TensorFlow dependency
+pip install neural-compressor[tf]
+```
+```Shell
+# Install 2.X API + Framework extension API
+# With this install CMD, some dependencies for framework extension API not installed, 
+# you can install them separately by `pip install -r requirements_pt.txt` or `pip install -r requirements_tf.txt`.
+pip install neural-compressor
+```
+```Shell
+# Framework extension API + TensorFlow dependency
+pip install neural-compressor-pt
+```
+```Shell
+# Framework extension API + TensorFlow dependency
+pip install neural-compressor-tf
+```
 
 ### Install from Source
 
@@ -71,8 +77,9 @@ The following prerequisites and requirements must be satisfied for a successful 
   git clone https://github.com/intel/neural-compressor.git
   cd neural-compressor
   pip install -r requirements.txt
-  # build with basic functionality
   python setup.py install
+  [optional] pip install -r requirements_pt.txt # for PyTorch framework extension API
+  [optional] pip install -r requirements_tf.txt # for TensorFlow framework extension API
   ```
 
 ### Install from AI Kit
@@ -88,15 +95,20 @@ The AI Kit is distributed through many common channels, including from Intel's w
 ## System Requirements
 
 ### Validated Hardware Environment
+
+#### Intel® Neural Compressor supports HPUs based on heterogeneous architecture with two compute engines (MME and TPC): 
+* Intel Gaudi Al Accelerators (Gaudi2)
+
 #### Intel® Neural Compressor supports CPUs based on [Intel 64 architecture or compatible processors](https://en.wikipedia.org/wiki/X86-64):
 
-* Intel Xeon Scalable processor (formerly Skylake, Cascade Lake, Cooper Lake, Ice Lake, and Sapphire Rapids)
-* Intel Xeon CPU Max Series (formerly Sapphire Rapids HBM)
+* Intel Xeon Scalable processor (Skylake, Cascade Lake, Cooper Lake, Ice Lake, and Sapphire Rapids)
+* Intel Xeon CPU Max Series (Sapphire Rapids HBM)
+* Intel Core Ultra Processors (Meteor Lake)
 
 #### Intel® Neural Compressor supports GPUs built on Intel's Xe architecture:
 
-* Intel Data Center GPU Flex Series (formerly Arctic Sound-M)
-* Intel Data Center GPU Max Series (formerly Ponte Vecchio)
+* Intel Data Center GPU Flex Series (Arctic Sound-M)
+* Intel Data Center GPU Max Series (Ponte Vecchio)
 
 #### Intel® Neural Compressor quantized ONNX models support multiple hardware vendors through ONNX Runtime:
 
@@ -112,7 +124,6 @@ The AI Kit is distributed through many common channels, including from Intel's w
   <tr style="vertical-align: middle; text-align: center;">
     <th>Framework</th>
     <th>TensorFlow</th>
-    <th>Intel<br>TensorFlow</th>
     <th>Intel®<br>Extension for<br>TensorFlow*</th>
     <th>PyTorch</th>
     <th>Intel®<br>Extension for<br>PyTorch*</th>
@@ -122,25 +133,26 @@ The AI Kit is distributed through many common channels, including from Intel's w
 <tbody>
   <tr align="center">
     <th>Version</th>
-    <td class="tg-7zrl"> <a href=https://github.com/tensorflow/tensorflow/tree/v2.15.0>2.15.0</a><br>
-    <a href=https://github.com/tensorflow/tensorflow/tree/v2.14.1>2.14.1</a><br>
-    <a href=https://github.com/tensorflow/tensorflow/tree/v2.13.1>2.13.1</a><br></td>
-    <td class="tg-7zrl"> <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.14.0>2.14.0</a><br>
-    <a href=https://github.com/Intel-tensorflow/tensorflow/tree/v2.13.0>2.13.0</a><br></td>
-    <td class="tg-7zrl"> <a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v2.14.0.1>2.14.0.1</a><br>
+    <td class="tg-7zrl">
+    <a href=https://github.com/tensorflow/tensorflow/tree/v2.16.1>2.16.1</a><br>
+    <a href=https://github.com/tensorflow/tensorflow/tree/v2.15.0>2.15.0</a><br>
+    <a href=https://github.com/tensorflow/tensorflow/tree/v2.14.1>2.14.1</a><br></td>
+    <td class="tg-7zrl"> 
+    <a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v2.15.0.0>2.15.0.0</a><br>
+    <a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v2.14.0.1>2.14.0.1</a><br>
     <a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v2.13.0.0>2.13.0.0</a><br></td>
-    <td class="tg-7zrl"><a href=https://github.com/pytorch/pytorch/tree/v2.2.1>2.2.1</a><br>
-    <a href=https://github.com/pytorch/pytorch/tree/v2.1.0>2.1.0</a><br>
-    <a href=https://github.com/pytorch/pytorch/tree/v2.0.1>2.0.1</a><br></td>
-    <td class="tg-7zrl"><a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.2.0%2Bcpu>2.2.0</a><br>
-    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.1.100%2Bcpu>2.1.100</a><br>
-    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.0.100%2Bcpu>2.0.100</a><br></td>
-    <td class="tg-7zrl"><a href=https://github.com/microsoft/onnxruntime/tree/v1.17.1>1.17.1</a><br>
-    <a href=https://github.com/microsoft/onnxruntime/tree/v1.16.3>1.16.3</a><br>    
-    <a href=https://github.com/microsoft/onnxruntime/tree/v1.15.1>1.15.1</a><br></td>
+    <td class="tg-7zrl">
+    <a href=https://github.com/pytorch/pytorch/tree/v2.3.0>2.3.0</a><br>
+    <a href=https://github.com/pytorch/pytorch/tree/v2.2.2>2.2.2</a><br>
+    <a href=https://github.com/pytorch/pytorch/tree/v2.1.1>2.1.1</a><br></td>
+    <td class="tg-7zrl">
+    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.3.0%2Bcpu>2.3.0</a><br>
+    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.2.0%2Bcpu>2.2.0</a><br>
+    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.1.100%2Bcpu>2.1.100</a><br></td>
+    <td class="tg-7zrl">
+    <a href=https://github.com/microsoft/onnxruntime/tree/v1.18.0>1.18.0</a><br>
+    <a href=https://github.com/microsoft/onnxruntime/tree/v1.17.3>1.17.3</a><br>
+    <a href=https://github.com/microsoft/onnxruntime/tree/v1.16.3>1.16.3</a><br></td>
   </tr>
 </tbody>
 </table>
-
-> **Note:**
-> Set the environment variable ``TF_ENABLE_ONEDNN_OPTS=1`` to enable oneDNN optimizations if you are using TensorFlow before v2.9. oneDNN is the default for TensorFlow since [v2.9](https://github.com/tensorflow/tensorflow/releases/tag/v2.9.0) ([Intel Cascade Lake](https://www.intel.com/content/www/us/en/products/platforms/details/cascade-lake.html) and newer CPUs).

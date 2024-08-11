@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Intel Neural Compressor PyTorch quantization API."""
 
 from neural_compressor.torch.quantization.quantize import quantize, prepare, convert, finalize_calibration
 from neural_compressor.torch.quantization.config import (
@@ -36,9 +37,9 @@ from neural_compressor.torch.quantization.config import (
     get_default_fp8_config_set,
     MXQuantConfig,
     get_default_mx_config,
-    MixPrecisionConfig,
-    get_default_mix_precision_config,
-    get_default_mix_precision_config_set,
+    MixedPrecisionConfig,
+    get_default_mixed_precision_config,
+    get_default_mixed_precision_config_set,
     get_woq_tuning_config,
     DynamicQuantConfig,
     get_default_dynamic_config,

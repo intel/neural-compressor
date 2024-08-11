@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""WOQ save and load."""
 # pylint:disable=import-error
 
 import copy
@@ -41,6 +41,12 @@ device_woqlinear_mapping = {"cpu": INCWeightOnlyLinear, "hpu": HPUWeightOnlyLine
 
 
 def save(model, output_dir="./saved_results"):
+    """Save the quantized model and config to the output path.
+
+    Args:
+        model (torch.nn.module): raw fp32 model or prepared model.
+        output_dir (str, optional): output path to save.
+    """
     os.makedirs(output_dir, exist_ok=True)
     qmodel_weight_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), WEIGHT_NAME)
     qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), QCONFIG_NAME)
@@ -85,6 +91,7 @@ def load(model_name_or_path, original_model=None, format=LoadFormat.DEFAULT, dev
         kwargs (remaining dictionary of keyword arguments, optional):
             remaining dictionary of keyword arguments for loading huggingface models.
             will be passed to the huggingface model's `__init__` method, such as 'trust_remote_code', 'revision'.
+
     Returns:
         torch.nn.Module: quantized model
     """
@@ -94,7 +101,10 @@ def load(model_name_or_path, original_model=None, format=LoadFormat.DEFAULT, dev
 
 
 class WOQModelLoader:
+    """WOQ Model Loader."""
+
     def __init__(self, model_name_or_path, original_model=None, format=LoadFormat.DEFAULT, device="cpu", **kwargs):
+        """Init the WOQModelLoader object."""
         self.model_name_or_path = model_name_or_path
         self.original_model = original_model
         self.format = format
@@ -107,6 +117,14 @@ class WOQModelLoader:
         self._model_local_dir = None  # local directory where model files are saved
 
     def load_woq_model(self):
+        """Load quantized weight-only quantization model.
+
+        Raises:
+            ValueError: `format` in load function can only be 'huggingface' or 'default'.
+
+        Returns:
+            torch.nn.Module: quantized model
+        """
         if self.format == LoadFormat.HUGGINGFACE:
             assert self.model_name_or_path is not None, "'model_name_or_path' can't be None."
 
@@ -126,6 +144,7 @@ class WOQModelLoader:
         return model
 
     def load_inc_format_woq_model(self):
+        """Load WOQ model saved in INC file format."""
         self._model_local_dir = self.model_name_or_path
 
         qmodel_weight_file_path = os.path.join(
@@ -174,6 +193,11 @@ class WOQModelLoader:
         return model
 
     def load_hf_format_woq_model(self):
+        """Load HuggingFace weight-only quantized model.
+
+        Returns:
+            torch.nn.Module: quantized model
+        """
         # check required package
         from neural_compressor.torch.utils import is_package_available
 
@@ -210,8 +234,36 @@ class WOQModelLoader:
         model.eval()
         return model
 
+    def _is_hqq_model(self):
+        for name, module in self.original_model.named_modules():
+            pattern = rf"(\(.*{re.escape(name)}.*{re.escape(type(module).__name__)}.*\))"
+            for q_config_key, q_config_value in self.quantization_config.items():
+                if re.search(pattern, q_config_key):
+                    if isinstance(q_config_value, dict) and [algo for algo in q_config_value.keys()][0] == "hqq":
+                        return True
+
+    def _build_hqq_model(self):
+        """Replace quantized Linear with HQQLinear."""
+        from neural_compressor.torch.algorithms.weight_only.hqq.core import HQQLinear
+        from neural_compressor.torch.utils import set_module
+
+        for name, module in self.original_model.named_modules():
+            if isinstance(module, torch.nn.Linear):
+                loaded_state_dict_keys_set = set(self.loaded_state_dict_keys)
+                if name + ".val" not in loaded_state_dict_keys_set:
+                    continue
+                new_module = HQQLinear(
+                    in_features=module.in_features, out_features=module.out_features, bias=module.bias is not None
+                )
+                set_module(self.original_model, name, new_module)
+        woq_model = self.original_model
+        return woq_model
+
     def _build_woq_model(self):
         """Build weight-only quantization model."""
+        if self._is_hqq_model():
+            return self._build_hqq_model()
+
         self._update_format_woqlinear_mapping()
 
         for name, module in self.original_model.named_modules():

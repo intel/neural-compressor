@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Rewrite the FP32 operators to FP16 or BF16 operators."""
 
 from dataclasses import dataclass
 from functools import partial
@@ -34,6 +35,14 @@ TorchFuncType: TypeAlias = Callable[..., Any]
 
 @dataclass
 class PatternPair:
+    """Represents a pair of patterns used for search and replacement in a graph.
+
+    Attributes:
+        fn (TorchFuncType): The function type associated with the pattern pair.
+        search_pattern (torch.fx.GraphModule): The search pattern to be matched in the graph.
+        replace_pattern (torch.fx.GraphModule): The replacement pattern to be used when a match is found.
+    """
+
     fn: TorchFuncType
     search_pattern: torch.fx.GraphModule
     replace_pattern: torch.fx.GraphModule
@@ -101,16 +110,25 @@ _register_pattern_pair(torch.float16)
 
 
 def get_filter_fn(node_list, fn):
+    """Filter function to check if a node with the target operator is in the given `node_list`.
+
+    Args:
+        node_list (list): List of nodes to check against.
+        fn (str): Target operator.
+
+    Returns:
+        bool: True if the node with the target operator is in the `node_list`, False otherwise.
+    """
     target_op = FN_ATEN_OPS_MAPPING[fn]
 
     def is_target_node_in_candidate_list(match, original_graph, pattern_graph):
         """Filter the node with target operator in match and check if it is in `node_list`."""
         target_node = None
-        for node in pattern_graph.nodes:
+        for node in pattern_graph.nodes:  # pragma: no cover
             if node.target == target_op:
                 target_node = node
                 break
-        if target_node is None:
+        if target_node is None:  # pragma: no cover
             return False
         matched_node = match.nodes_map[target_node]
         return matched_node in node_list
@@ -119,6 +137,16 @@ def get_filter_fn(node_list, fn):
 
 
 def apply_single_pattern_pair(gm: torch.fx.GraphModule, pattern_pair: PatternPair, node_list):
+    """Applies a single pattern pair to a given GraphModule.
+
+    Args:
+        gm (torch.fx.GraphModule): The GraphModule to apply the pattern pair to.
+        pattern_pair (PatternPair): The pattern pair containing the search and replace patterns.
+        node_list: The list of nodes to filter for pattern matching.
+
+    Returns:
+        List[Match]: A list of Match objects representing the matches found after applying the pattern pair.
+    """
     filter_fn = get_filter_fn(node_list, pattern_pair.fn)
     match_and_replacements = subgraph_rewriter.replace_pattern_with_filters(
         gm=gm,
@@ -133,11 +161,20 @@ def apply_single_pattern_pair(gm: torch.fx.GraphModule, pattern_pair: PatternPai
 
 
 def get_unquantized_node_set(gm: torch.fx.GraphModule):
+    """Retrieves the set of unquantized nodes from a given GraphModule.
+
+    Args:
+        gm (torch.fx.GraphModule): The GraphModule to retrieve unquantized nodes from.
+
+    Returns:
+        set: A set containing the unquantized nodes.
+    """
     unquantized_node_set = set()
     for node in gm.graph.nodes:
         if meta := getattr(node, "meta"):
             if quantization_annotation := meta.get(xiq.QUANT_ANNOTATION_KEY):
-                if quantization_annotation._annotated:
+                none_annotation = xiq._X86InductorQuantizationAnnotation(_annotated=True)
+                if quantization_annotation != none_annotation:  # pragma: no cover
                     continue
         unquantized_node_set.add(node)
     return unquantized_node_set
@@ -148,7 +185,8 @@ def transformation(gm: torch.fx.GraphModule, node_candidate_list: List[str], tar
     for pattern_pair in HALF_PRECISION_PATTERN_REGISTRY[target_dtype].values():
         apply_single_pattern_pair(gm, pattern_pair, node_candidate_list)
     utils.logger.info("Half precision conversion is done:")
-    gm.print_readable(True)
+    if utils.level_name == "DEBUG":  # pragma: no cover
+        gm.print_readable(True)
 
 
 # =============================================================================
@@ -161,25 +199,35 @@ def _parse_node_candidate_set_from_user_config(config, gm):
     op_type_configs, op_name_configs = config._get_op_name_op_type_config()
     op_type_filters = []
     op_name_filters = []
-    for op_type_name, config in op_type_configs.items():
+    for op_type_name, config in op_type_configs.items():  # pragma: no cover
         op_type = getattr(torch.nn, op_type_name)
-        if config.act_dtype == "fp16":
+        if config.act_dtype == "fp16":  # pragma: no cover
             filter = xpq._get_module_type_filter(op_type)
             op_type_filters.append(filter)
     for op_name, config in op_name_configs.items():
-        if config.act_dtype == "fp16":
+        if config.act_dtype == "fp16":  # pragma: no cover
             filter = xpq._get_module_name_filter(op_name)
             op_name_filters.append(filter)
     node_set_from_user_config = set()
     all_filters = op_type_filters + op_name_filters
-    for node in gm.graph.nodes:
+    for node in gm.graph.nodes:  # pragma: no cover
         if any([filter(node) for filter in all_filters]):
             node_set_from_user_config.add(node)
     return node_set_from_user_config
 
 
 def get_half_precision_node_set(gm, config):
-    """Intersection between `unquantized_node_set` and `node_set_from_user_config`"""
+    """Retrieves a set of nodes from the given graph model (gm) that are candidates for conversion to half precision.
+
+    The result is the intersection between `unquantized_node_set` and `node_set_from_user_config`.
+
+    Args:
+        gm (GraphModel): The graph model to search for nodes.
+        config (dict): User configuration for node candidate set.
+
+    Returns:
+        set: A set of nodes that are candidates for conversion to half precision.
+    """
     # TODO: implement it, current return all unquantized_node_set
 
     node_set_from_user_config = _parse_node_candidate_set_from_user_config(config, gm)

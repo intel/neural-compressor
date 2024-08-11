@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Initialize custom dense layers for Keras quantization."""
 
 import json
 
@@ -25,6 +26,8 @@ from neural_compressor.tensorflow.utils import version1_gte_version2
 
 
 class QDense(Dense):
+    """The custom quantized Dense layer."""
+
     def __init__(
         self,
         name,
@@ -51,6 +54,7 @@ class QDense(Dense):
         quant_axis=None,
         **kwargs
     ):
+        """Initialize custom quantized Dense layer."""
         super(QDense, self).__init__(
             name=name,
             units=units,
@@ -79,6 +83,7 @@ class QDense(Dense):
         self.quant_axis = quant_axis
 
     def call(self, inputs):
+        """The __call__ function of custom quantized Dense layer."""
         if self.quant_status == "calib" and not (
             version1_gte_version2(tf.__version__, "2.16.1") and isinstance(inputs, tf.keras.KerasTensor)
         ):
@@ -144,9 +149,11 @@ class QDense(Dense):
 
     @classmethod
     def from_config(cls, config):
+        """Deserialize this class from a config dict."""
         return cls(**config)
 
     def get_config(self):
+        """Serialize this class to a config dict."""
         config = super(QDense, self).get_config()
         config.update(
             {
@@ -168,30 +175,25 @@ class QDense(Dense):
 
 
 def initialize_int8_dense(fp32_layer, q_config):
+    """Initialize int8 dense."""
     kwargs = fp32_layer.get_config()
 
-    if "name" in kwargs:
-        del kwargs["name"]
-    if "units" in kwargs:
-        del kwargs["units"]
-    if "activation" in kwargs:
-        del kwargs["activation"]
-    if "use_bias" in kwargs:
-        del kwargs["use_bias"]
-    if "kernel_initializer" in kwargs:
-        del kwargs["kernel_initializer"]
-    if "bias_initializer" in kwargs:
-        del kwargs["bias_initializer"]
-    if "kernel_regularizer" in kwargs:
-        del kwargs["kernel_regularizer"]
-    if "activity_regularizer" in kwargs:
-        del kwargs["activity_regularizer"]
-    if "bias_regularizer" in kwargs:
-        del kwargs["bias_regularizer"]
-    if "kernel_constraint" in kwargs:
-        del kwargs["kernel_constraint"]
-    if "bias_constraint" in kwargs:
-        del kwargs["bias_constraint"]
+    param_list = [
+        "name",
+        "units",
+        "activation",
+        "use_bias",
+        "kernel_initializer",
+        "bias_initializer",
+        "kernel_regularizer",
+        "activity_regularizer",
+        "bias_regularizer",
+        "kernel_constraint",
+        "bias_constraint",
+    ]
+    for p in param_list:  # pragma: no cover
+        if p in kwargs:
+            del kwargs[p]
 
     q_layer = QDense(
         name=fp32_layer.name,

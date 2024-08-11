@@ -20,6 +20,7 @@
 import math
 from abc import abstractmethod
 
+import numba
 import numpy as np
 import torch
 from torch.autograd import Function
@@ -31,7 +32,10 @@ from .utility import quant_tensor
 
 
 class QDQLayer(torch.nn.Module):
+    """Quantized and dequantized layer."""
+
     def __init__(self, module, input_scale=None) -> None:
+        """Init the QDQLayer object."""
         super().__init__()
         self.quant = torch.ao.quantization.QuantStub()
         self.module = module
@@ -39,6 +43,7 @@ class QDQLayer(torch.nn.Module):
         self.input_scale = input_scale
 
     def forward(self, X):
+        """Forward function."""
         if self.input_scale is not None:
             X = torch.mul(X, self.input_scale)
         X = self.quant(X)
@@ -48,20 +53,23 @@ class QDQLayer(torch.nn.Module):
 
 
 class UnpackedWeightOnlyLinearParams(dict):
+    """Contains all unpacked weight values."""
+
     def __init__(self, unpack_weight, scales, unpack_zp, **kwargs):
-        super().__init__(
-            int_weight=unpack_weight,
-            scales=scales,
-            zp=unpack_zp,
-            **kwargs)
+        """Create dict."""
+        super().__init__(int_weight=unpack_weight, scales=scales, zp=unpack_zp, **kwargs)
 
     def to(self, device):
+        """Change device for all values."""
         for key, value in self.items():
             if isinstance(value, torch.Tensor) and value is not None:
                 self[key] = value.to(device)
         return self
 
+
 class WeightOnlyLinear(torch.nn.Module):
+    """Base Weight Only Linear."""
+
     def __init__(
         self,
         in_features,
@@ -71,6 +79,7 @@ class WeightOnlyLinear(torch.nn.Module):
         group_size,
         device,
     ):
+        """Initialization."""
         super().__init__()
         self.in_features = in_features
         self.out_features = out_features
@@ -81,17 +90,21 @@ class WeightOnlyLinear(torch.nn.Module):
 
     @abstractmethod
     def pack(self, *args, **kwargs):
+        """Abstract method."""
         raise NotImplementedError("{} doesn't implement `pack` function. ".format(self.__class__.__name__))
 
     @abstractmethod
     def unpack(self, *args, **kwargs):
+        """Abstract method."""
         raise NotImplementedError("{} doesn't implement `unpack` function. ".format(self.__class__.__name__))
 
     @abstractmethod
     def forward(self, input):
+        """Abstract method."""
         raise NotImplementedError("{} doesn't implement `forward` function. ".format(self.__class__.__name__))
 
     def extra_repr(self) -> str:
+        """Show message about WeighOnlyLinear."""
         tmp_str = "in_features={}, out_features={}, bits={}, group_size={}, bias={}".format(
             self.in_features,
             self.out_features,
@@ -103,6 +116,8 @@ class WeightOnlyLinear(torch.nn.Module):
 
 
 class INCWeightOnlyLinear(WeightOnlyLinear):
+    """INC Weight Only Linear."""
+
     def __init__(
         self,
         in_features,
@@ -120,6 +135,31 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
         use_optimum_format=True,
         **kwargs,
     ):
+        """Init the WeightOnlyLinear object.
+
+        Args:
+            in_features (int): input features.
+            out_features (int): out features.
+            dtype (str, optional):  the data type of the quantized model. Defaults to "int".
+            bits (int, optional): number of bits for quantization. Defaults to 4.
+            group_size (int, optional): size of the quantization group. Defaults to 32.
+            zp (bool, optional): zero point. Defaults to False.
+            bias (bool, optional): module bias. Defaults to False.
+            scale_dtype (torch.Tensor, optional): the data type of quantization scale to be used.
+                                                  Defaults to torch.float32.
+            compression_dtype (torch.Tensor, optional): the target dtype after comoression.
+                                                        Defaults to torch.int32.
+            compression_dim (int, optional): select from [0, 1], 0 is output channel, 1 is input channel.
+                                             Defaults to 1.
+            g_idx (bool, optional): for recording the channel order.
+            device (str, optional): choose device for compression. Defaults to cpu.
+            use_optimum_format (bool, optional): use the popular huggingface compression format.
+                1: compression_dim: weight = 1, zeros = 0 and both are transposed.
+                2: zeros -= 1 before compression.
+                3: g_idx: use same number for one group instead of recording the channel order.
+                4. parameter name changed, such as 'packed_weight' -> 'qweight'.
+                5. zeros is always needed even for sym.
+        """
         super(INCWeightOnlyLinear, self).__init__(
             in_features,
             out_features,
@@ -229,11 +269,13 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
             self.g_idx = None
 
     def pack(self, int_weight, scales, zp, bias=None, g_idx=None, **kwargs):
+        """Pack int weight."""
         if self.use_optimum_format:
             self.scales = self.scales.T.contiguous()
             self.qweight = self.qweight.T.contiguous()
             self.qzeros = self.qzeros.T.contiguous()
-        int_weight = int_weight.to(self.device)
+        if int_weight.device.type != "meta":
+            int_weight = int_weight.to(self.device)
         if self.use_optimum_format and zp is None:
             # to avoid overflow
             int_weight = int_weight.type(torch.int32)
@@ -281,6 +323,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
             self.qzeros = self.qzeros.T.contiguous()
 
     def unpack(self):
+        """Unpack weight and zero point."""
         scales = self.scales.T.contiguous() if self.use_optimum_format else self.scales
         qweight = self.qweight.T.contiguous() if self.use_optimum_format else self.qweight
 
@@ -320,6 +363,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
         return UnpackedWeightOnlyLinearParams(weight, scales, zp, g_idx=self.g_idx, bias=self.bias)
 
     def recover(self):
+        """Recover fp32 weight from packed weight."""
         logger.debug(f"Recovering {self} weight")
         unpack_params_dict = self.unpack()
         weight = unpack_params_dict.get("int_weight")
@@ -374,9 +418,17 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
             return self.unpack_tensor_with_numpy(packed_tensor)
 
     def pack_tensor_with_torch(self, raw_tensor):
+        """Pack the tensor with torch.
+
+        Args:
+            raw_tensor (tensor): raw tensor.
+
+        Returns:
+            tensor: packed tensor.
+        """
         target_len = math.ceil(raw_tensor.shape[1] / self.n_pack)
-        packed_tensor = torch.zeros(raw_tensor.shape[0], target_len, dtype=self.compression_dtype).to(self.device)
-        mask = torch.tensor(2**self.bits - 1, dtype=self.compression_dtype).to(self.device)
+        packed_tensor = torch.zeros(raw_tensor.shape[0], target_len, dtype=self.compression_dtype).to(raw_tensor.device)
+        mask = torch.tensor(2**self.bits - 1, dtype=self.compression_dtype).to(raw_tensor.device)
         for j in range(packed_tensor.shape[1]):
             start = self.n_pack * j
             end = self.n_pack * (j + 1)
@@ -389,23 +441,291 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
         return packed_tensor
 
     def unpack_tensor_with_torch(self, packed_tensor):
-        target_dtype = torch.int8 if not hasattr(self, "qzeros") or "int" not in self.dtype else torch.uint8
+        """Unpack the tensor with torch.
+
+        Args:
+            packed_tensor (tensor): packed tensor.
+
+        Returns:
+            tensor: unpacked tensor.
+        """
+        target_dtype = torch.int16
         target_len = packed_tensor.shape[1] * self.n_pack
-        unpacked_tensor = torch.zeros(packed_tensor.shape[0], target_len, dtype=target_dtype).to(self.device)
-        mask = torch.tensor(2**self.bits - 1, dtype=self.compression_dtype).to(self.device)
+        unpacked_tensor = torch.zeros(packed_tensor.shape[0], target_len, dtype=target_dtype).to(packed_tensor.device)
+        mask = torch.tensor(2**self.bits - 1, dtype=self.compression_dtype).to(packed_tensor.device)
         for j in range(packed_tensor.shape[1]):
             for e in range(self.n_pack):
                 index = j * self.n_pack + e
                 tmp = packed_tensor[:, j]
                 tmp = tmp << (self.compress_bits - self.bits * (e + 1))
                 tmp = tmp >> self.compress_bits - self.bits
-                if target_dtype == torch.uint8:
+                if hasattr(self, "qzeros"):
                     tmp &= mask  # remove sign bit
                 unpacked_tensor[:, index].copy_(tmp.type(target_dtype))
                 accelerator.synchronize()
         return unpacked_tensor
 
-    def pack_tensor_with_numpy(self, raw_tensor):
+    @staticmethod
+    @numba.jit(nopython=True, parallel=True)
+    def pack_array_with_numba_b4_c32(
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
+    ) -> np.ndarray:
+        """Pack the array with numba when bits=4 and compress_bits=32."""
+        for i in range(new_in_features):
+            packed_array[:, i] = (
+                ((raw_array[:, i * n_pack + 7] & 0b1111) << 28)
+                | ((raw_array[:, i * n_pack + 6] & 0b1111) << 24)
+                | ((raw_array[:, i * n_pack + 5] & 0b1111) << 20)
+                | ((raw_array[:, i * n_pack + 4] & 0b1111) << 16)
+                | ((raw_array[:, i * n_pack + 3] & 0b1111) << 12)
+                | ((raw_array[:, i * n_pack + 2] & 0b1111) << 8)
+                | ((raw_array[:, i * n_pack + 1] & 0b1111) << 4)
+                | (raw_array[:, i * n_pack] & 0b1111)
+            )
+        return packed_array
+
+    @staticmethod
+    @numba.jit(nopython=True, parallel=True)
+    def pack_array_with_numba_b4_c16(
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
+    ) -> np.ndarray:
+        """Pack the array with numba when bits=4 and compress_bits=16."""
+        for i in range(new_in_features):
+            packed_array[:, i] = (
+                ((raw_array[:, i * n_pack + 3] & 0b1111) << 12)
+                | ((raw_array[:, i * n_pack + 2] & 0b1111) << 8)
+                | ((raw_array[:, i * n_pack + 1] & 0b1111) << 4)
+                | (raw_array[:, i * n_pack] & 0b1111)
+            )
+        return packed_array
+
+    @staticmethod
+    @numba.jit(nopython=True, parallel=True)
+    def pack_array_with_numba_b4_c8(
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
+    ) -> np.ndarray:
+        """Pack the array with numba when bits=4 and compress_bits=8."""
+        for i in range(new_in_features):
+            packed_array[:, i] = ((raw_array[:, i * n_pack + 1] & 0b1111) << 4) | (raw_array[:, i * n_pack] & 0b1111)
+        return packed_array
+
+    @staticmethod
+    @numba.jit(nopython=True, parallel=True)
+    def pack_array_with_numba_b4_c64(
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
+    ) -> np.ndarray:
+        """Pack the array with numba when bits=4 and compress_bits=64."""
+        for i in range(new_in_features):
+            packed_array[:, i] = (
+                ((raw_array[:, i * n_pack + 15] & 0b1111) << 60)
+                | ((raw_array[:, i * n_pack + 14] & 0b1111) << 56)
+                | ((raw_array[:, i * n_pack + 13] & 0b1111) << 52)
+                | ((raw_array[:, i * n_pack + 12] & 0b1111) << 48)
+                | ((raw_array[:, i * n_pack + 11] & 0b1111) << 44)
+                | ((raw_array[:, i * n_pack + 10] & 0b1111) << 40)
+                | ((raw_array[:, i * n_pack + 9] & 0b1111) << 36)
+                | ((raw_array[:, i * n_pack + 8] & 0b1111) << 32)
+                | ((raw_array[:, i * n_pack + 7] & 0b1111) << 28)
+                | ((raw_array[:, i * n_pack + 6] & 0b1111) << 24)
+                | ((raw_array[:, i * n_pack + 5] & 0b1111) << 20)
+                | ((raw_array[:, i * n_pack + 4] & 0b1111) << 16)
+                | ((raw_array[:, i * n_pack + 3] & 0b1111) << 12)
+                | ((raw_array[:, i * n_pack + 2] & 0b1111) << 8)
+                | ((raw_array[:, i * n_pack + 1] & 0b1111) << 4)
+                | (raw_array[:, i * n_pack] & 0b1111)
+            )
+        return packed_array
+
+    @staticmethod
+    @numba.jit(nopython=True, parallel=True)
+    def pack_array_with_numba_b8_c32(
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
+    ) -> np.ndarray:
+        """Pack the array with numba when bits=8 and compress_bits=32."""
+        for i in range(new_in_features):
+            packed_array[:, i] = (
+                ((raw_array[:, i * n_pack + 3] & 0b11111111) << 24)
+                | ((raw_array[:, i * n_pack + 2] & 0b11111111) << 16)
+                | ((raw_array[:, i * n_pack + 1] & 0b11111111) << 8)
+                | (raw_array[:, i * n_pack] & 0b11111111)
+            )
+        return packed_array
+
+    @staticmethod
+    @numba.jit(nopython=True, parallel=True)
+    def pack_array_with_numba_b8_c16(
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
+    ) -> np.ndarray:
+        """Pack the array with numba when bits=8 and compress_bits=16."""
+        for i in range(new_in_features):
+            packed_array[:, i] = (
+                ((raw_array[:, i * n_pack + 3] & 0b11111111) << 24)
+                | ((raw_array[:, i * n_pack + 2] & 0b11111111) << 16)
+                | ((raw_array[:, i * n_pack + 1] & 0b11111111) << 8)
+                | (raw_array[:, i * n_pack] & 0b11111111)
+            )
+        return packed_array
+
+    @staticmethod
+    @numba.jit(nopython=True, parallel=True)
+    def pack_array_with_numba_b8_c8(
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
+    ) -> np.ndarray:
+        """Pack the array with numba when bits=8 and compress_bits=8."""
+        for i in range(new_in_features):
+            packed_array[:, i] = raw_array[:, i * n_pack] & 0b11111111
+        return packed_array
+
+    @staticmethod
+    @numba.jit(nopython=True, parallel=True)
+    def pack_array_with_numba_b8_c64(
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
+    ) -> np.ndarray:
+        """Pack the array with numba when bits=8 and compress_bits=64."""
+        for i in range(new_in_features):
+            packed_array[:, i] = (
+                ((raw_array[:, i * n_pack + 7] & 0b11111111) << 56)
+                | ((raw_array[:, i * n_pack + 6] & 0b11111111) << 48)
+                | ((raw_array[:, i * n_pack + 5] & 0b11111111) << 40)
+                | ((raw_array[:, i * n_pack + 4] & 0b11111111) << 32)
+                | ((raw_array[:, i * n_pack + 3] & 0b11111111) << 24)
+                | ((raw_array[:, i * n_pack + 2] & 0b11111111) << 16)
+                | ((raw_array[:, i * n_pack + 1] & 0b11111111) << 8)
+                | (raw_array[:, i * n_pack] & 0b11111111)
+            )
+        return packed_array
+
+    @staticmethod
+    @numba.jit(nopython=True, parallel=True)
+    def pack_array_with_numba_b2_c32(
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
+    ) -> np.ndarray:
+        """Pack the array with numba when bits=2 and compress_bits=32."""
+        for i in range(new_in_features):
+            packed_array[:, i] = (
+                ((raw_array[:, i * n_pack + 15] & 0b11) << 30)
+                | ((raw_array[:, i * n_pack + 14] & 0b11) << 28)
+                | ((raw_array[:, i * n_pack + 13] & 0b11) << 26)
+                | ((raw_array[:, i * n_pack + 12] & 0b11) << 24)
+                | ((raw_array[:, i * n_pack + 11] & 0b11) << 22)
+                | ((raw_array[:, i * n_pack + 10] & 0b11) << 20)
+                | ((raw_array[:, i * n_pack + 9] & 0b11) << 18)
+                | ((raw_array[:, i * n_pack + 8] & 0b11) << 16)
+                | ((raw_array[:, i * n_pack + 7] & 0b11) << 14)
+                | ((raw_array[:, i * n_pack + 6] & 0b11) << 12)
+                | ((raw_array[:, i * n_pack + 5] & 0b11) << 10)
+                | ((raw_array[:, i * n_pack + 4] & 0b11) << 8)
+                | ((raw_array[:, i * n_pack + 3] & 0b11) << 6)
+                | ((raw_array[:, i * n_pack + 2] & 0b11) << 4)
+                | ((raw_array[:, i * n_pack + 1] & 0b11) << 2)
+                | (raw_array[:, i * n_pack] & 0b11)
+            )
+        return packed_array
+
+    @staticmethod
+    @numba.jit(nopython=True, parallel=True)
+    def pack_array_with_numba_b2_c16(
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
+    ) -> np.ndarray:
+        """Pack the array with numba when bits=2 and compress_bits=16."""
+        for i in range(new_in_features):
+            packed_array[:, i] = (
+                ((raw_array[:, i * n_pack + 7] & 0b11) << 14)
+                | ((raw_array[:, i * n_pack + 6] & 0b11) << 12)
+                | ((raw_array[:, i * n_pack + 5] & 0b11) << 10)
+                | ((raw_array[:, i * n_pack + 4] & 0b11) << 8)
+                | ((raw_array[:, i * n_pack + 3] & 0b11) << 6)
+                | ((raw_array[:, i * n_pack + 2] & 0b11) << 4)
+                | ((raw_array[:, i * n_pack + 1] & 0b11) << 2)
+                | (raw_array[:, i * n_pack] & 0b11)
+            )
+        return packed_array
+
+    @staticmethod
+    @numba.jit(nopython=True, parallel=True)
+    def pack_array_with_numba_b2_c8(
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
+    ) -> np.ndarray:
+        """Pack the array with numba when bits=2 and compress_bits=8."""
+        for i in range(new_in_features):
+            packed_array[:, i] = (
+                ((raw_array[:, i * n_pack + 3] & 0b11) << 6)
+                | ((raw_array[:, i * n_pack + 2] & 0b11) << 4)
+                | ((raw_array[:, i * n_pack + 1] & 0b11) << 2)
+                | (raw_array[:, i * n_pack] & 0b11)
+            )
+        return packed_array
+
+    @staticmethod
+    @numba.jit(nopython=True, parallel=True)
+    def pack_array_with_numba_b2_c64(
+        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
+    ) -> np.ndarray:
+        """Pack the array with numba when bits=2 and compress_bits=64."""
+        for i in range(new_in_features):
+            packed_array[:, i] = (
+                ((raw_array[:, i * n_pack + 31] & 0b11) << 62)
+                | ((raw_array[:, i * n_pack + 30] & 0b11) << 60)
+                | ((raw_array[:, i * n_pack + 29] & 0b11) << 58)
+                | ((raw_array[:, i * n_pack + 28] & 0b11) << 56)
+                | ((raw_array[:, i * n_pack + 27] & 0b11) << 54)
+                | ((raw_array[:, i * n_pack + 26] & 0b11) << 52)
+                | ((raw_array[:, i * n_pack + 25] & 0b11) << 50)
+                | ((raw_array[:, i * n_pack + 24] & 0b11) << 48)
+                | ((raw_array[:, i * n_pack + 23] & 0b11) << 46)
+                | ((raw_array[:, i * n_pack + 22] & 0b11) << 44)
+                | ((raw_array[:, i * n_pack + 21] & 0b11) << 42)
+                | ((raw_array[:, i * n_pack + 20] & 0b11) << 40)
+                | ((raw_array[:, i * n_pack + 19] & 0b11) << 38)
+                | ((raw_array[:, i * n_pack + 18] & 0b11) << 36)
+                | ((raw_array[:, i * n_pack + 17] & 0b11) << 34)
+                | ((raw_array[:, i * n_pack + 16] & 0b11) << 32)
+                | ((raw_array[:, i * n_pack + 15] & 0b11) << 30)
+                | ((raw_array[:, i * n_pack + 14] & 0b11) << 28)
+                | ((raw_array[:, i * n_pack + 13] & 0b11) << 26)
+                | ((raw_array[:, i * n_pack + 12] & 0b11) << 24)
+                | ((raw_array[:, i * n_pack + 11] & 0b11) << 22)
+                | ((raw_array[:, i * n_pack + 10] & 0b11) << 20)
+                | ((raw_array[:, i * n_pack + 9] & 0b11) << 18)
+                | ((raw_array[:, i * n_pack + 8] & 0b11) << 16)
+                | ((raw_array[:, i * n_pack + 7] & 0b11) << 14)
+                | ((raw_array[:, i * n_pack + 6] & 0b11) << 12)
+                | ((raw_array[:, i * n_pack + 5] & 0b11) << 10)
+                | ((raw_array[:, i * n_pack + 4] & 0b11) << 8)
+                | ((raw_array[:, i * n_pack + 3] & 0b11) << 6)
+                | ((raw_array[:, i * n_pack + 2] & 0b11) << 4)
+                | ((raw_array[:, i * n_pack + 1] & 0b11) << 2)
+                | (raw_array[:, i * n_pack] & 0b11)
+            )
+        return packed_array
+
+    def pack_array_with_numba(
+        self, raw_array: np.ndarray, n_pack: int, bits: int, compress_bits: int, compression_dtype=np.int32
+    ) -> np.ndarray:
+        """Packs the input array by combining elements into a specified bit-width format using NumPy.
+
+        Args:
+            raw_array (np.ndarray): The array to be packed. Shape: [out_features, in_features] or [1, in_features].
+            n_pack (int): The number of elements to be packed together.
+            bits (int): The number of bits for each element.
+            compress_bits (int): The number of bits for each element of the compressed array, supported 2, 4, 8.
+            compression_dtype (np.dtype, optional): The data type of the compressed array. Defaults to np.int32.
+
+        Returns:
+            np.ndarray: The packed array.
+        """
+        out_features, in_features = raw_array.shape
+        new_in_features = (in_features + n_pack - 1) // n_pack
+        packed_array = np.zeros((out_features, new_in_features), dtype=compression_dtype)
+        raw_array = raw_array.astype(compression_dtype)
+
+        pack_method_name = f"pack_array_with_numba_b{bits}_c{compress_bits}"
+        pack_method = getattr(self, pack_method_name)
+        numba.config.THREADING_LAYER = "safe"
+        return pack_method(raw_array, packed_array, n_pack, new_in_features)
+
+    def pack_tensor_with_numpy_impl(self, raw_tensor):
+        """The implement of packing tensor with numpy."""
         raw_array = raw_tensor.cpu().numpy()
         target_len = np.ceil(raw_array.shape[1] / self.n_pack).astype(int)
         target_dtype = torch.tensor(0, dtype=self.compression_dtype).numpy().dtype
@@ -423,7 +743,18 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
         packed_tensor = torch.from_numpy(packed_array).to(device=raw_tensor.device)
         return packed_tensor
 
+    def pack_tensor_with_numpy(self, raw_tensor):
+        """Pack the tensor with numpy."""
+        if self.bits not in [2, 4, 8]:
+            return self.pack_tensor_with_numpy_impl(raw_tensor)
+        compression_dtype = torch.tensor(0, dtype=self.compression_dtype).numpy().dtype
+        packed_array = self.pack_array_with_numba(
+            raw_tensor.cpu().numpy(), self.n_pack, self.bits, self.compress_bits, compression_dtype
+        )
+        return torch.from_numpy(packed_array).to(device=raw_tensor.device)
+
     def unpack_tensor_with_numpy(self, packed_tensor):
+        """Unpack the packed tensor with numpy."""
         packed_array = packed_tensor.cpu().numpy()
         target_dtype = np.int8 if not hasattr(self, "qzeros") or "int" not in self.dtype else np.uint8
         target_len = packed_array.shape[1] * self.n_pack
@@ -442,7 +773,44 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
         unpacked_tensor = torch.from_numpy(unpacked_array).to(device=packed_tensor.device)
         return unpacked_tensor
 
+    def pack_tensor(self, raw_tensor):
+        """Pack tensor."""
+        if "cuda" in raw_tensor.device.type or "hpu" in raw_tensor.device.type:
+            return self.pack_tensor_with_torch(raw_tensor)
+        else:
+            return self.pack_tensor_with_numpy(raw_tensor)
+
+    def unpack_tensor(self, packed_tensor):
+        """Unpack tensor."""
+        if "cuda" in packed_tensor.device.type or "hpu" in packed_tensor.device.type:
+            return self.unpack_tensor_with_torch(packed_tensor)
+        else:
+            return self.unpack_tensor_with_numpy(packed_tensor)
+
+    def forward(self, input):
+        """Forward function."""
+        if not hasattr(self, "weight"):
+            weight = self.recover()
+            device = self.scales.device
+            if weight.dtype == torch.float16 and device.type == "cpu":
+                weight = weight.float()
+                self.bias = self.bias.float() if self.bias is not None else None
+        if True:  # keep reusing self.weight due to recover is too slow.
+            if not hasattr(self, "weight"):
+                self.weight = weight
+            input = input.type(self.weight.dtype)
+            logger.debug(f"Calculating {self}")
+            return F.linear(input, self.weight, self.bias)
+        else:
+            input = input.type(weight.dtype)
+            return F.linear(input, weight, self.bias)
+
     def extra_repr(self) -> str:
+        """Extract the configuration string.
+
+        Returns:
+            str: the configuration string.
+        """
         tmp_str = "in_features={}, out_features={}, bits={}, group_size={}, bias={}".format(
             self.in_features,
             self.out_features,
@@ -454,7 +822,10 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
             tmp_str += ", use_optimum_format=True"
         return tmp_str
 
+
 class HPUWeightOnlyLinear(WeightOnlyLinear):
+    """Weight Only Linear for HPU device."""
+
     def __init__(
         self,
         in_features,
@@ -472,6 +843,31 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
         use_optimum_format=True,
         **kwargs,
     ):
+        """Init the WeightOnlyLinear object.
+
+        Args:
+            in_features (int): input features.
+            out_features (int): out features.
+            dtype (str, optional):  the data type of the quantized model. Defaults to "int".
+            bits (int, optional): number of bits for quantization. Defaults to 4.
+            group_size (int, optional): size of the quantization group. Defaults to 32.
+            zp (bool, optional): zero point. Defaults to False.
+            bias (bool, optional): module bias. Defaults to False.
+            scale_dtype (torch.Tensor, optional): the data type of quantization scale to be used.
+                                                  Defaults to torch.float32.
+            compression_dtype (torch.Tensor, optional): the target dtype after comoression.
+                                                        Defaults to torch.int32.
+            compression_dim (int, optional): select from [0, 1], 0 is output channel, 1 is input channel.
+                                             Defaults to 1.
+            g_idx (bool, optional): for recording the channel order.
+            device (str, optional): choose device for compression. Defaults to cpu.
+            use_optimum_format (bool, optional): use the popular huggingface compression format.
+                1: compression_dim: weight = 1, zeros = 0 and both are transposed.
+                2: zeros -= 1 before compression.
+                3: g_idx: use same number for one group instead of recording the channel order.
+                4. parameter name changed, such as 'packed_weight' -> 'qweight'.
+                5. zeros is always needed even for sym.
+        """
         super(HPUWeightOnlyLinear, self).__init__(
             in_features,
             out_features,
@@ -529,6 +925,7 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
         self.wf = torch.tensor(list(range(0, 32, self.bits)), dtype=torch.int32).unsqueeze(0)
 
     def forward(self, input):
+        """The forward function of HPUWeighOnlyLinear."""
         input_dtype = input.dtype
         output_shape = input.shape[:-1] + (self.out_features,)
         scales = self.scales
@@ -538,14 +935,13 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
         output = torch.matmul(input, weight)
         output = output.to(dtype=input_dtype).reshape(
             output_shape
-
         )  # A cast is needed here as for some reason the vecquant2matmul_faster_old still allocate a float32 output.
         output = output + self.bias if self.bias is not None else output
         return output
 
-
     def pack(self, int_weight, scales, zp, bias=None, g_idx=None):
-        logger.debug(f"Packing for HPU")
+        """Pack weight and zero point."""
+        logger.debug("Packing for HPU")
 
         scales = scales.T.contiguous()
         qzeros = zp.T.contiguous()
@@ -566,14 +962,15 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
             self.bias = bias.to("hpu").to(torch.bfloat16)
 
     def unpack(self):
-        logger.debug(f"Unpacking from HPU")
+        """Unpack weight and zero point."""
+        logger.debug("Unpacking from HPU")
         self.qweight = self.qweight.cpu()
         weight = torch.bitwise_right_shift(
-                torch.unsqueeze(self.qweight, 1).expand(-1, 32 // self.bits, -1),
-                self.wf.unsqueeze(-1),
-            ).to(torch.int16 if self.bits == 8 else torch.int8)
+            torch.unsqueeze(self.qweight, 1).expand(-1, 32 // self.bits, -1),
+            self.wf.unsqueeze(-1),
+        ).to(torch.int16 if self.bits == 8 else torch.int8)
         weight = torch.bitwise_and(weight, (2**self.bits) - 1)
-        weight = weight.reshape((weight.shape[0]*weight.shape[1], weight.shape[2]))
+        weight = weight.reshape((weight.shape[0] * weight.shape[1], weight.shape[2]))
         self.qweight = self.qweight.to(self.device)
 
         zeros = torch.bitwise_right_shift(
@@ -581,14 +978,15 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
             self.wf.unsqueeze(0),
         ).to(torch.int16 if self.bits == 8 else torch.int8)
 
-        zeros = torch.bitwise_and(
-            zeros, (2**self.bits) - 1
-        ).to(self.scales.dtype)  # NOTE: It appears that casting here after the `zeros = zeros + 1` is important.
+        zeros = torch.bitwise_and(zeros, (2**self.bits) - 1).to(
+            self.scales.dtype
+        )  # NOTE: It appears that casting here after the `zeros = zeros + 1` is important.
         zeros = zeros + 1
         zeros = zeros.reshape(-1, 1, zeros.shape[1] * zeros.shape[2])
         return weight, zeros
 
-    def pack_tensor(self, input, bits = 4):
+    def pack_tensor(self, input, bits=4):
+        """Pack tensor."""
         normal = input.to(torch.int32)
         q = torch.zeros((normal.shape[0], normal.shape[1] // 32 * bits), dtype=torch.int32)
         i = 0
@@ -600,6 +998,7 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
             col += 1
         q = q.to(torch.int32)
         return q
+
 
 class FakeAffineTensorQuantFunction(Function):
     """Fake version of affine quantization."""
@@ -622,7 +1021,8 @@ class FakeAffineTensorQuantFunction(Function):
 
     @staticmethod
     def backward(ctx, grad_outputs):
-        """
+        """Backward function.
+
         Args:
             ctx: Pytorch convention.
             grad_output: A tensor of gradient of outputs
@@ -637,11 +1037,15 @@ class TEQLinearFakeQuant(torch.nn.Module):
     """Wrapper quantization linear."""
 
     def __init__(self, orig_layer, alpha=None, num_bits=4, group_size=-1, scheme="asym"):
-        """A forward hook to linear module
-        :param orig_layer: the original module
-        :param alpha: trainable alpha/scale
-        :param num_bits: quantization level
-        :param group_size: for fine-grained quantization."""
+        """A forward hook to linear module.
+
+        Args:
+            orig_layer: the original module
+            alpha: trainable alpha/scale
+            num_bits: quantization level
+            group_size: for fine-grained quantization.
+            scheme: symmetric quantization or asymmetric quantization.
+        """
         super(TEQLinearFakeQuant, self).__init__()
         self.orig_layer = orig_layer
         self.alpha = alpha
@@ -651,6 +1055,7 @@ class TEQLinearFakeQuant(torch.nn.Module):
         self.scheme = scheme
 
     def forward(self, x):
+        """Forward function."""
         alpha = torch.clip(self.alpha, 1e-5)
         shape_len = len(x.shape) - 1
         shape = (1,) * shape_len + (-1,)
@@ -665,9 +1070,12 @@ class MulLinear(torch.nn.Module):
     """Linear wrapper to apply scale to input."""
 
     def __init__(self, module, input_scale=None):
-        """A forward hook to save input max of a module
-        :param module: the linear module
-        :param input_scale: scale for input."""
+        """A forward hook to save input max of a module.
+
+        Args:
+            module: the linear module.
+            input_scale: scale for input.
+        """
         super().__init__()
         if input_scale is None:
             input_scale = torch.empty(module.in_features)
@@ -676,13 +1084,16 @@ class MulLinear(torch.nn.Module):
 
     @property
     def weight(self):
+        """Property weight."""
         return self.linear.weight
 
     @weight.setter
     def weight(self, weight):
+        """Property weight setter."""
         self.linear.weight = weight
 
     def forward(self, X):
+        """Forward function."""
         X = torch.mul(X, self.input_scale)
         X = self.linear(X)
         return X

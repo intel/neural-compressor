@@ -130,7 +130,7 @@ def register_patched_measure_modules(model, mod_list, observer_class, d_shapes=N
                 )
                 patched_types.add(type(mod))
 
-                set_hqt_config(mod, top_level_config)
+                set_hqt_config(mod, top_level_config) # set config in the module, as it consumed by the patched module
                 mod_extra_config = init_measure_object(
                     mod,
                     name,

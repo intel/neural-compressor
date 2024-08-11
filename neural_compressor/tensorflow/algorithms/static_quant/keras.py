@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""The quantization classes for Keras."""
 
 import copy
 import json
@@ -87,41 +88,8 @@ class KerasAdaptor:
         self.fold_conv = []
         self.keras3 = True if version1_gte_version2(tf.__version__, "2.16.1") else False
         if not os.path.exists(DEFAULT_WORKSPACE):
-            os.mkdir(DEFAULT_WORKSPACE)
+            os.makedirs(DEFAULT_WORKSPACE)
         self.tmp_dir = (DEFAULT_WORKSPACE + "tmp_model.keras") if self.keras3 else (DEFAULT_WORKSPACE + "tmp_model")
-
-    def _check_itex(self):
-        """Check if the Intel® Extension for TensorFlow has been installed."""
-        try:
-            import intel_extension_for_tensorflow
-        except:
-            raise ImportError(
-                "The Intel® Extension for TensorFlow is not installed. "
-                "Please install it to run models on ITEX backend"
-            )
-
-    def convert_bf16(self):
-        """Execute the BF16 conversion."""
-        tf.keras.mixed_precision.set_global_policy("mixed_bfloat16")
-        model = self.pre_optimized_model
-
-        for layer in model.layers:
-            if layer.name in self.bf16_ops:
-                layer.dtype = "mixed_bfloat16"
-
-        model.save(self.tmp_dir)
-        converted_model = tf.keras.models.load_model(self.tmp_dir)
-        tf.keras.mixed_precision.set_global_policy("float32")
-
-        return converted_model
-
-    # (TODO) choose the properly quantize mode
-    def _check_quantize_mode(self, model):
-        """Check what quantize mode to use."""
-        for layer in model.layers:
-            if "ReLU" in layer.__class__.__name__:
-                return "MIN_FIRST"
-        return "SCALED"
 
     def _set_weights(self, qmodel, layer_weights):
         """Set fp32 weights to qmodel."""
@@ -129,7 +97,7 @@ class KerasAdaptor:
             if qlayer.get_weights():
                 if qlayer.name in layer_weights:
                     qlayer.set_weights(layer_weights[qlayer.name])
-                else:
+                else:  # pragma: no cover
                     hit_layer = False
                     for sub_layer in qlayer.submodules:
                         if sub_layer.name in layer_weights:
@@ -164,7 +132,7 @@ class KerasAdaptor:
                         self.conv_format[layer.name] = "u8"
                         break
 
-    def _fuse_bn_keras3(self, fuse_conv_bn, fp32_layers):
+    def _fuse_bn_keras3(self, fuse_conv_bn, fp32_layers):  # pragma: no cover
         fuse_layers = []
         fused_bn_name = ""
         for idx, layer in enumerate(fp32_layers):
@@ -211,7 +179,7 @@ class KerasAdaptor:
 
         return fuse_layers
 
-    def _fuse_bn_keras2(self, fuse_conv_bn, fp32_layers):
+    def _fuse_bn_keras2(self, fuse_conv_bn, fp32_layers):  # pragma: no cover
         fuse_layers = []
         for idx, layer in enumerate(fp32_layers):
             if hasattr(layer, "_inbound_nodes"):
@@ -236,17 +204,20 @@ class KerasAdaptor:
                         fuse_layers.append(layer)
                     else:
                         for bound_node in layer._inbound_nodes:
-                            inbound_layer = bound_node.inbound_layers
-                            if inbound_layer in self.bn_weights.keys():
-                                for bn_inbound_node in inbound_layer._inbound_nodes:
-                                    bn_inbound_layer = bn_inbound_node.inbound_layers
-                                    if bn_inbound_layer.name in self.conv_weights.keys():
-                                        new_bound_nodes.append(bn_inbound_node)
-                                    else:
-                                        if bound_node not in new_bound_nodes:
-                                            new_bound_nodes.append(bound_node)
-                            else:
-                                new_bound_nodes.append(bound_node)
+                            inbound_layers = bound_node.inbound_layers
+                            if not isinstance(inbound_layers, list):
+                                inbound_layers = [inbound_layers]
+                            for inbound_layer in inbound_layers:
+                                if inbound_layer in self.bn_weights.keys():
+                                    for bn_inbound_node in inbound_layer._inbound_nodes:
+                                        bn_inbound_layer = bn_inbound_node.inbound_layers
+                                        if bn_inbound_layer.name in self.conv_weights.keys():
+                                            new_bound_nodes.append(bn_inbound_node)
+                                        else:
+                                            if bound_node not in new_bound_nodes:
+                                                new_bound_nodes.append(bound_node)
+                                else:
+                                    new_bound_nodes.append(bound_node)
 
                         layer._inbound_nodes.clear()
                         for bound_node in new_bound_nodes:
@@ -272,7 +243,7 @@ class KerasAdaptor:
 
         return fuse_layers
 
-    def _fuse_bn(self, model):
+    def _fuse_bn(self, model):  # pragma: no cover
         """Fusing Batch Normalization."""
         model.save(self.tmp_dir)
         fuse_bn_model = tf.keras.models.load_model(self.tmp_dir)
@@ -347,28 +318,22 @@ class KerasAdaptor:
         return bn_fused_model
 
     @dump_elapsed_time("Pass quantize model")
-    def quantize(self, quant_config, model, dataloader, iteration, q_func=None):
+    def quantize(self, quant_config, model, dataloader, iteration, calib_func=None):
         """Execute the quantize process on the specified model.
 
         Args:
-            tune_cfg(dict): The user defined 'StaticQuantConfig' class.
+            quant_config(dict): The user defined 'StaticQuantConfig' class.
             model (object): The model to do quantization.
             dataloader(object): The calibration dataloader used to load quantization dataset.
             iteration(int): The iteration of calibration.
-            q_func (optional): training function for quantization aware training mode.
+            calib_func (optional): the function used for calibration, should be a substitution for calibration
+            dataloader when the built-in calibration function of INC does not work for model inference.
         """
+        assert calib_func is None, "The calibration function is not supported on Keras backend yet"
         self.query_fw_capability(model)
         converter = KerasConfigConverter(quant_config, iteration)
         tune_cfg = converter.parse_to_tune_cfg()
         self.tuning_cfg_to_fw(tune_cfg)
-
-        # just convert the input model to mixed_bfloat16
-        if self.bf16_ops and not self.quantize_config["op_wise_config"]:
-            converted_model = self.convert_bf16()
-            return converted_model
-
-        # if self.backend == "itex":
-        #     self._check_itex()
 
         logger.debug("Dump quantization configurations:")
         logger.debug(self.quantize_config)
@@ -408,15 +373,13 @@ class KerasAdaptor:
 
         return quantized_model
 
-    def _calibrate(self, model, dataloader, calib_interation):
+    def _calibrate(self, model, dataloader=None, calib_interation=None):
         """Apply calibration.
 
         Args:
-            model (tf.keras.Model): The model inserted with FakeQuant layers for calibration.
+            model(tf.keras.Model): The model inserted with FakeQuant layers for calibration.
             dataloader(object): The calibration dataloader used to load quantization dataset.
-            iteration(int): The iteration of calibration.
-            fq_output_layers (dict): A dict mapping from names of FakeQuant layers to
-                names of their output layers.
+            calib_interation(int): The iteration of calibration.
         """
         # run eagerly to fetch the numpy min/max
         results = {}
@@ -468,59 +431,6 @@ class KerasAdaptor:
         quantized_model = tf.keras.models.load_model(self.tmp_dir)
 
         return quantized_model
-
-    @dump_elapsed_time(customized_msg="Model inference")
-    def evaluate(
-        self,
-        model,
-        dataloader,
-        postprocess=None,
-        metrics=None,
-        measurer=None,
-        iteration=-1,
-        fp32_baseline=False,
-    ):
-        """The function is used to run evaluation on validation dataset.
-
-        Args:
-            model (object): The model to do calibration.
-            dataloader (generator): generate the data and labels.
-            postprocess (object, optional): process the result from the model
-            metric (object, optional): Depends on model category. Defaults to None.
-            measurer (object, optional): for precise benchmark measurement.
-            iteration(int, optional): control steps of mini-batch
-            fp32_baseline (boolean, optional): only for compare_label=False pipeline
-        """
-        # use keras object
-        keras_model = model.model
-        logger.info("Start to evaluate the Keras model.")
-        results = []
-        for idx, (inputs, labels) in enumerate(dataloader):
-            # use predict on batch
-            if measurer is not None:
-                measurer.start()
-                predictions = keras_model.predict_on_batch(inputs)
-                measurer.end()
-            else:
-                predictions = keras_model.predict_on_batch(inputs)
-
-            if self.fp32_preds_as_label:
-                self.fp32_results.append(predictions) if fp32_baseline else results.append(predictions)
-
-            if postprocess is not None:
-                predictions, labels = postprocess((predictions, labels))
-            if metrics:
-                for metric in metrics:
-                    if not hasattr(metric, "compare_label") or (
-                        hasattr(metric, "compare_label") and metric.compare_label
-                    ):
-                        metric.update(predictions, labels)
-            if idx + 1 == iteration:
-                break
-
-        acc = 0 if metrics is None else [metric.result() for metric in metrics]
-
-        return acc if not isinstance(acc, list) or len(acc) > 1 else acc[0]
 
     def query_fw_capability(self, model):
         """The function is used to return framework tuning capability.
@@ -621,7 +531,7 @@ class KerasAdaptor:
         for each_op_info in tuning_cfg["op"]:
             op_name = each_op_info[0]
 
-            if tuning_cfg["op"][each_op_info]["activation"]["dtype"] == "bf16":
+            if tuning_cfg["op"][each_op_info]["activation"]["dtype"] == "bf16":  # pragma: no cover
                 if each_op_info[1] in bf16_type:
                     bf16_ops.append(op_name)
                 continue
@@ -674,9 +584,9 @@ class KerasQuery:
 
     def _get_specified_version_cfg(self, data):
         """Get the configuration for the current runtime.
+
         If there's no matched configuration in the input yaml, we'll
         use the `default` field of yaml.
-
         Args:
             data (Yaml content): input yaml file.
 
@@ -692,31 +602,6 @@ class KerasQuery:
                 default_config = sub_data
 
         return default_config
-
-    def get_version(self):
-        """Get the current backend version information.
-
-        Returns:
-            [string]: version string.
-        """
-        return self.cur_config["version"]["name"]
-
-    def get_precisions(self):
-        """Get supported precisions for current backend.
-
-        Returns:
-            [string list]: the precisions' name.
-        """
-        return self.cur_config["precisions"]["names"]
-
-    def get_op_types(self):
-        """Get the supported op types by all precisions.
-
-        Returns:
-            [dictionary list]: A list composed of dictionary which key is precision
-            and value is the op types.
-        """
-        return self.cur_config["ops"]
 
     def get_quantization_capability(self):
         """Get the supported op types' quantization capability.
@@ -837,16 +722,13 @@ class KerasSurgery:
 
                 for out_layer_name in out_layer_names:
                     if out_layer_name not in input_layer_dict:
-                        input_layer_dict[out_layer_name] = set([layer.name])
+                        input_layer_dict[out_layer_name] = [layer.name]
                     else:
-                        input_layer_dict[out_layer_name].add(layer.name)
-
-        for key in input_layer_dict.keys():
-            input_layer_dict[key] = list(input_layer_dict[key])
+                        input_layer_dict[out_layer_name].append(layer.name)
 
         try:
             model_input = self.model.input
-        except ValueError:
+        except ValueError:  # pragma: no cover
             model_input = self.model.inputs[0]
 
         return input_layer_dict, model_input

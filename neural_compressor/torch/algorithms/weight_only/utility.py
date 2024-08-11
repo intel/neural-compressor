@@ -11,9 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-import math
-
+"""Weight-Only utility."""
 import torch
 
 from neural_compressor.torch.utils import accelerator, device_synchronize, logger
@@ -68,7 +66,23 @@ NF4 = [
     1.0,
 ]
 FP4_BNB = [-12.0, -8.0, -6.0, -4.0, -3.0, -2.0, -0.0625, 0, 0.0625, 2.0, 3.0, 4.0, 6.0, 8.0, 12.0]
-FP4_E2M1 = [-6.0, -4.0, -3.0, -2.0, -1.5, -1.0, -0.0625, 0, 0.0625, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0]
+FP4_E2M1 = [
+    -1.0,
+    -0.6666666666666666,
+    -0.5,
+    -0.3333333333333333,
+    -0.25,
+    -0.16666666666666666,
+    -0.010416666666666666,
+    0.0,
+    0.010416666666666666,
+    0.16666666666666666,
+    0.25,
+    0.3333333333333333,
+    0.5,
+    0.6666666666666666,
+    1.0,
+]
 
 # the order is the same as float list, bit value range is [-7, 7]
 # 1111 = -1, 1110 = -2, 1101= -3, ...
@@ -513,6 +527,7 @@ from functools import partial
 
 # AWQ Required, copy from neural_compressor/adaptor/torch_utils/smooth_quant.py
 def model_forward(model, dataloader, iters, device):
+    """The model forward function."""
     try:
         cnt = 0
         for idx, (input, label) in enumerate(dataloader):
@@ -532,6 +547,7 @@ def model_forward(model, dataloader, iters, device):
 # copy from neural_compressor/adaptor/torch_utils/smooth_quant.py
 # TODO: potential bug, data type
 def forward_wrapper(model, input, device=torch.device("cpu")):
+    """The forward wrapper."""
     try:
         model = model.to(device)
         input = move_input_to_device(input, device)
@@ -552,6 +568,7 @@ def forward_wrapper(model, input, device=torch.device("cpu")):
 
 # copy from neural_compressor/adaptor/torch_utils/smooth_quant.py
 def move_input_to_device(input, device=torch.device("cpu")):
+    """Move input to the spevific device."""
     if isinstance(input, dict) or isinstance(input, UserDict):
         tmp_input = {}
         for k, inp in input.items():
@@ -655,6 +672,7 @@ def get_absorb_layers(model, example_inputs, supported_layers=["Linear"], foldin
 
 # copy from neural_compressor/adaptor/torch_utils/smooth_quant.py
 def get_parent(node, all_parents=False):
+    """Get parent of node."""
     if node.inputs() is None:
         return None
     elif len(list(node.inputs())) == 0:
@@ -691,9 +709,10 @@ def get_module(model, key):
 
 # copy from neural_compressor/adaptor/torch_utils/smooth_quant.py
 class GraphTrace:
-    """"""
+    """GraphTrace."""
 
     def __init__(self):
+        """Init the GraphTrace object."""
         self.supported_torch_module_to_aten = {
             "Linear": "aten::linear",
             "Conv2d": "aten::_convolution",
@@ -722,6 +741,15 @@ class GraphTrace:
         ]  ##TODO,support more norm
 
     def trace(self, model, dummy_input):
+        """Trace a torch model.
+
+        Args:
+            model (torch.nn.module): model to be trace.
+            dummy_input : dummy input.
+
+        Returns:
+            traced model.
+        """
         traced_model = None
         optimize_numerics = False
         orig_device = str(next(model.parameters()).device)
@@ -761,6 +789,15 @@ class GraphTrace:
         return traced_model
 
     def get_nodes(self, traced_model, op_types=["Linear"]):
+        """Get nodes from traced model.
+
+        Args:
+            traced_model: traced model.
+            op_types (list, optional): . Defaults to ["Linear"].
+
+        Returns:
+            list: nodes.
+        """
         if isinstance(op_types, str):
             op_types = [op_types]
         nodes = []
@@ -773,6 +810,14 @@ class GraphTrace:
         return nodes
 
     def get_prev_absorb_layer(self, nodes):
+        """Get previous absorb layers.
+
+        Args:
+            nodes (list): target nodes.
+
+        Returns:
+            list: previous absorb layer
+        """
         prev_absorb_layer = []
         for node in nodes:
             parent = get_parent(node)
@@ -801,6 +846,14 @@ class GraphTrace:
         return prev_absorb_layer
 
     def skip_op_absorb_helper(self, parent_node):
+        """Skip op absorption.
+
+        Args:
+            parent_node : parent node.
+
+        Returns:
+            bool: True or False.
+        """
         for val_user in list(parent_node.outputs())[0].uses():
             next_node = val_user.user
             if next_node.kind() == "aten::size":
@@ -816,6 +869,14 @@ class GraphTrace:
         return True
 
     def mapping_torch_module_to_aten(self, op_types):
+        """Mapping torch module to aten.
+
+        Args:
+            op_types : op types.
+
+        Returns:
+            list: the mapping results.
+        """
         res = []
         for op in op_types:
             if op not in self.supported_torch_module_to_aten.keys():
@@ -826,11 +887,7 @@ class GraphTrace:
         return res
 
     def _check_valid_conv(self, module):
-        """Remove group conv except depthwise conv
-        :param module:
-
-        :return:
-        """
+        """Remove group conv except depthwise conv."""
         if not isinstance(module, torch.nn.Conv2d):
             return True
         if module.groups > 1:
@@ -841,6 +898,17 @@ class GraphTrace:
         return True
 
     def get_absorb_to_layer(self, model, example_input, op_types, skip_unsupported_layers=True):
+        """Get absorbed layers of a model.
+
+        Args:
+            model: torch model
+            example_input: used to trace torch model.
+            op_types: op types.
+            skip_unsupported_layers (bool, optional): unsupported layers to skip. Defaults to True.
+
+        Returns:
+            absorb to layer, no absorb layers
+        """
         traced_model = self.trace(model, example_input)
         if traced_model is None:
             return None, None
@@ -869,6 +937,16 @@ class GraphTrace:
         return absorb_to_layer, no_absorb_layers
 
     def remove_unsupported_layers(self, model, absorb_to_layer, no_absorb_layers):
+        """Remove unsupported layers from layers to be absorb.
+
+        Args:
+            model : torch model.
+            absorb_to_layer (dict): layers to be absorb.
+            no_absorb_layers (dict): unsupported layers.
+
+        Returns:
+            dict: the new layers to be absorb.
+        """
         res = {}
         for key in absorb_to_layer.keys():
             absorb_layer = get_module(model, key)
@@ -917,6 +995,7 @@ def get_example_input(dataloader, i=1):
 
     Args:
         dataloader (object): calibration dataset.
+
     Returns:
         example_inp (object).
     """
@@ -1030,10 +1109,15 @@ def get_module_input_output(
     total_values = defaultdict(defaultdict)
 
     def _save_input_output_hook(name, record_input=False, record_output=False):
-        """
-        A forward hook to save input and output values of a module
-            param name: the module name
-            return: A hook function
+        """A forward hook to save input and output values of a module.
+
+        Args:
+            name: the module name.
+            record_input (bool): to record input.
+            record_ouput (bool): to record output.
+
+        Returns:
+            A hook function
         """
 
         def _hook(module, inputs, outputs):
@@ -1091,7 +1175,11 @@ class CapturedDataloader:
             if not args:
                 yield kwargs
             elif not kwargs:
-                yield args
+                # case: tensor
+                if len(args) == 1:
+                    yield args[0]
+                else:
+                    yield args
             else:
                 yield args, kwargs
 

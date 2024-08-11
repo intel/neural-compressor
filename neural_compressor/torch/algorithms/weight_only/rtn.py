@@ -17,15 +17,25 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""RTN quantization."""
 
-
+import copy
 from collections import OrderedDict
 
 import torch
 
 from neural_compressor.torch.algorithms import Quantizer
-from neural_compressor.torch.utils import get_accelerator, is_transformers_imported, logger, set_module
+from neural_compressor.torch.utils import (
+    get_accelerator,
+    get_attr,
+    get_model_device,
+    is_transformers_imported,
+    logger,
+    set_attr,
+    set_module,
+)
 
+from .modules import INCWeightOnlyLinear
 from .utility import cast_fp8, quant_tensor, search_clip
 from .modules import INCWeightOnlyLinear
 
@@ -34,6 +44,8 @@ if is_transformers_imported():
 
 
 class RTNQuantizer(Quantizer):
+    """RTN Quantizer."""
+
     def __init__(self, quant_config: OrderedDict = {}):
         """Init a RTNQuantizer object.
 
@@ -65,6 +77,9 @@ class RTNQuantizer(Quantizer):
         quantile=1.0,
         use_full_range=False,
         use_mse_search=False,
+        use_layer_wise=False,
+        model_path="",
+        quant_lm_head=False,
         *args,
         **kwargs,
     ):
@@ -81,18 +96,23 @@ class RTNQuantizer(Quantizer):
             quantile (float, optional): percentile of clip. Defaults to 1.0.
             use_full_range (bool, optional): Choose sym range whether use -2**(bits-1).
                                         Defaults to False.
-            use_mse_search (bool, optional):  Whether search clip range.
+            use_mse_search (bool, optional):  Whether to search clip range.
                                         Defaults to True.
+            quant_lm_head (bool, optional):  Whether to quantize the lm_head layer.
+                                        Defaults to False.
 
         Returns:
             model: fake quantized torch module
         """
         weight_config = self.quant_config
         device = get_accelerator(kwargs.pop("device", "auto")).current_device_name()
+        model_device = get_model_device(model)  # return model on the same device
 
-        # Put model on device explicitly
-        # TODO: refine it later, Put module on device one by one instead of the whole model
-        model.to(device)
+        # for transformers model. If lm_head is tied from embedding, we deepcopy it.
+        if quant_lm_head and getattr(getattr(model, "config", None), "tie_word_embeddings", False):
+            for key in model._tied_weights_keys:
+                weight = get_attr(model, key)
+                set_attr(model, key, copy.deepcopy(weight))
 
         assert isinstance(model, torch.nn.Module), "only support torch module"
         if is_transformers_imported():
@@ -108,7 +128,20 @@ class RTNQuantizer(Quantizer):
             "double_quant_group_size": kwargs.get("double_quant_group_size", 256),
         }
         use_optimum_format = kwargs.get("use_optimum_format", True)
+
+        if use_layer_wise:
+            from neural_compressor.common.utils import DEFAULT_WORKSPACE
+            from neural_compressor.torch.algorithms.layer_wise.utils import get_path, load_module, register_weight_hooks
+
+            if model_path == "":
+                model_path = model.path
+            assert model_path, "model_path should not be None."
+            model_path = get_path(model_path)
+
+            register_weight_hooks(model, model_path, device=device, clean_weight=True)
+
         for name, m in model.named_modules():
+
             if not isinstance(m, supported_layers):
                 continue
             if name in weight_config:  # pragma: no cover
@@ -116,6 +149,9 @@ class RTNQuantizer(Quantizer):
                 dtype = weight_config[name].get("dtype", "int")
                 if dtype == "fp32":
                     continue
+                # Move modules to the accelerator device layer-by-layer
+                if not use_layer_wise:
+                    m.to(device)
                 ### FP8 cast part
                 if dtype in ["fp8_e5m2", "fp8_e5m2fnuz", "fp8_e4m3fn", "fp8_e4m3fnuz"]:
                     logger.debug("Cast module {} to FP8 using qdq mode, no scaling".format(name))
@@ -130,7 +166,6 @@ class RTNQuantizer(Quantizer):
                 group_dim = weight_config[name]["group_dim"]
                 use_full_range = weight_config[name]["use_full_range"]
                 use_mse_search = weight_config[name]["use_mse_search"]
-                use_layer_wise = weight_config[name]["use_layer_wise"]
                 use_optimum_format = kwargs.get("use_optimum_format", True)
                 # double quant config
                 double_quant_config = {
@@ -155,6 +190,10 @@ class RTNQuantizer(Quantizer):
                 continue
             logger.debug(f"RTN quantized module:{name, m}")
             logger.debug(log_msg)
+
+            if use_layer_wise:
+                load_module(model, name, model_path, device=device)
+
             # for only group_dim is 0 or only `transformers.Conv1D`, we need transpose weight.
             if is_transformers_imported():
                 transpose = (group_dim == 0) ^ (isinstance(m, transformers.Conv1D))
@@ -202,8 +241,17 @@ class RTNQuantizer(Quantizer):
                 device=device,
             )
             new_module.pack(int_weight, scale, zp, m.bias)
+
+            if use_layer_wise:
+                m = m.to_empty(device=torch.device("meta"))
             if name == "":
                 return new_module
             else:
                 set_module(model, name, new_module)
+            # Move modules back to the model device layer-by-layer
+            if not use_layer_wise:
+                m.to(model_device)
+                new_module.to(model_device)
+        if not use_layer_wise:
+            model.to(model_device)
         return model
