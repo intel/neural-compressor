@@ -19,6 +19,8 @@ sed -i '/neural-compressor.git/d' /intel-extension-for-transformers/tests/requir
 pip install -r /intel-extension-for-transformers/tests/requirements.txt
 # workaround
 pip install onnx==1.15.0
+echo "pip list itrex ut deps..."
+pip list
 LOG_DIR=/neural-compressor/log_dir
 mkdir -p ${LOG_DIR}
 ut_log_name=${LOG_DIR}/ut_itrex.log
