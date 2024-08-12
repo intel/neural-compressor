@@ -198,6 +198,18 @@ scaling_methods = {
             matmul_act_maxabs_pts_weight_maxabs_pts_pow2_scales,
             matmul_scales_to_mod_config,
         ),
+        "kv_cache": (
+            kv_cache_act_maxabs_pts_pow2,
+            kv_cache_scales_to_mod_config,
+        ),
+        "softmax": (
+            softmax_input_unit_output_maxabs_pts_pow2,
+            softmax_scales_to_mod_config,
+        ),
+        "fused_sdpa": (
+            fsdpa_act_maxabs_pts_pow2_weight_maxabs_pts_pow2,
+            fsdpa_scales_to_mod_config,
+        ),
     },
     "act_maxabs_pts_pow2_hw_weights_maxabs_pcs_pow2": {
         "linear": (
@@ -295,7 +307,7 @@ scaling_methods = {
         ),
         # kv_cache is pts as op in hw doesn't work in pcs
         "kv_cache": (
-            kv_cache_act_maxabs_pts_pow2_weight_opt_pcs_pow2_scales,
+            kv_cache_act_maxabs_pts_pow2,
             kv_cache_scales_to_mod_config,
         ),
         "fused_sdpa": (
