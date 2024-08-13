@@ -34,10 +34,12 @@ extensions = [
     "sphinx.ext.coverage",
     "sphinx.ext.autosummary",
     "sphinx_md",
+    "sphinx_rtd_theme",
     "autoapi.extension",
     "sphinx.ext.napoleon",
     "sphinx.ext.githubpages",
     "sphinx.ext.linkcode",
+    "sphinxcontrib.jquery",
 ]
 
 autoapi_dirs = ["../../neural_compressor"]
