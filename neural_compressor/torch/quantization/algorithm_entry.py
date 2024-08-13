@@ -159,6 +159,7 @@ def gptq_entry(
             "percdamp": quant_config.percdamp,
             "block_size": quant_config.block_size,
             "static_groups": quant_config.static_groups,
+            "true_sequential": quant_config.true_sequential,  
         }
     kwargs.update(
         {

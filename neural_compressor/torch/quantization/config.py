@@ -376,6 +376,7 @@ class GPTQConfig(TorchBaseConfig):
         percdamp: float = 0.01,
         block_size: int = 2048,
         static_groups: bool = False,
+        true_sequential: bool = False, 
         # Tuning space
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
@@ -404,6 +405,9 @@ class GPTQConfig(TorchBaseConfig):
             static_groups (bool): Whether to calculate group wise quantization parameters in advance.
                                   This option mitigate actorder's extra computational requirements.
                                   Default is False.
+            true_sequential (bool): Whether to quantize layers within a transformer block in their original order. 
+                                  This can lead to higher accuracy but slower overall quantization process.
+                                  Default is False.
             white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
                                                                  Default is DEFAULT_WHITE_LIST.
         """
@@ -428,6 +432,7 @@ class GPTQConfig(TorchBaseConfig):
         self.percdamp = percdamp
         self.block_size = block_size
         self.static_groups = static_groups
+        self.true_sequential = true_sequential 
         self.quant_lm_head = quant_lm_head
         self._post_init()  # initialize global & local configuration
 

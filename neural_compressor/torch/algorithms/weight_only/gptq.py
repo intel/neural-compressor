@@ -224,6 +224,7 @@ class RAWGPTQuantizer(object):
         self.sym_default = False
         self.act_order_default = False
         self.static_groups_default = False
+        self.true_sequential_default = False
         self.perchannel_default = True
         self.mse_default = False
         self.use_double_quant_default = False
@@ -293,6 +294,8 @@ class RAWGPTQuantizer(object):
             self.weight_config[layer_name]["sym"] = config.get("sym", self.sym_default)
             self.weight_config[layer_name]["act_order"] = config.get("act_order", self.act_order_default)
             self.weight_config[layer_name]["static_groups"] = config.get("static_groups", self.static_groups_default)
+            self.weight_config[layer_name]["true_sequential"] = config.get(
+                "true_sequential", self.true_sequential_default)
             self.weight_config[layer_name]["perchannel"] = config.get("perchannel", self.perchannel_default)
             self.weight_config[layer_name]["mse"] = config.get("mse", self.mse_default)
             self.weight_config[layer_name]["use_double_quant"] = config.get(
@@ -473,6 +476,57 @@ class RAWGPTQuantizer(object):
         else:
             self.cache_positional_arguments[0] = outs[:]
 
+    def find_true_sequential_config(self):
+        """Find true sequential config.
+
+        Returns:
+            bool: True or False.
+        """
+        for layer_name in self.weight_config:
+            if self.weight_config[layer_name].get("true_sequential", None) is not None:
+                return self.weight_config[layer_name]["true_sequential"]
+        return False
+
+    def find_lm_head_config(self):
+        """Find lm_head config.
+
+        Returns:
+            bool: True or False.
+        """
+        for layer_name in self.weight_config:
+            if self.weight_config[layer_name].get("lm_head", None) is not None:
+                return self.weight_config[layer_name]["lm_head"]
+        return False
+
+    def analyze_true_sequential(self, module, inputs=None):
+        """To obtain the depth of each linear layers in this block.
+
+        Args:
+            module (nn.module): block.
+            inputs (optional): Defaults to None.
+
+        Returns:
+            list: layers grouping into sequentials.
+        """
+        # to obtain the depth of each linear layers in this block
+        # obtain all linear layers' names
+        layers = find_layers(module)
+        layers = list(layers)
+        # group layers into sequentials
+        # case 1: query, key and value are calculated from one matrix, bloom, etc..
+        if "q" in layers[0].lower() and "k" in layers[0].lower():
+            qkv_layers = [layers[0]]
+            post_qkv_layers = layers[1:]
+        else:
+            # case 2: qkv are calculated separately.
+            qkv_layers = layers[0:3]
+            post_qkv_layers = layers[3:]
+        layers.clear()
+        layers.append(qkv_layers)
+        for layer in post_qkv_layers:
+            layers.append([layer])
+        return layers
+    
     @torch.no_grad()
     def execute_quantization(self, means=None, stds=None):
         """Run quantization."""
