@@ -351,6 +351,7 @@ class GPTQConfig(TorchBaseConfig):
         "percdamp",
         "block_size",
         "static_groups",
+        "true_sequential",
     ]
 
     def __init__(
