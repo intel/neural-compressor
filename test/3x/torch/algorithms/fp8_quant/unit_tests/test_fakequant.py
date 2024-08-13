@@ -4,6 +4,7 @@ import copy
 import torch
 
 import habana_frameworks.torch.core as htcore
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 htcore.hpu_set_env()
 
@@ -25,33 +26,62 @@ class M(torch.nn.Module):
         x3 = self.matmul(x1, x2.t())
         return x3
 
+config_dict_fake = {
+    "mode": "AUTO",
+    "observer": "maxabs",
+    "scale_method": "maxabs_hw",
+    "allowlist": {"types": [], "names":  []},
+    "blocklist": {"types": [], "names":  []},
+    "dump_stats_path": "./inc_output/measure_fake",
+    "fake_quant": "True",
+}
 
-def test_fakequant():
-    # Run both real and fake quantization, and compare
+config_dict = {
+    "mode": "AUTO",
+    "observer": "maxabs",
+    "scale_method": "maxabs_hw",
+    "allowlist": {"types": [], "names":  []},
+    "blocklist": {"types": [], "names":  []},
+    "dump_stats_path": "./inc_output/measure",
+    "fake_quant": "False",
+}
+
+# Run both real and fake quantization, and compare
+
+def test_fakequant_model():
+    model = AutoModelForCausalLM.from_pretrained("facebook/opt-350m")
+    tokenizer = AutoTokenizer.from_pretrained("facebook/opt-350m")
+
+    model_fakequant = copy.deepcopy(model)
+    htcore.hpu_initialize()
+    config = FP8Config.from_dict(config_dict)
+    config_fakequant = FP8Config.from_dict(config_dict_fake)
+
+    model = prepare(model, config)
+    model_fakequant = prepare(model_fakequant, config_fakequant)
+    inp_calib = torch.arange(0, 100000, 1, dtype=torch.int).to("hpu").reshape(-1, 10)
+    inp_test = torch.randint(0, 10000, (10,)).reshape(-1, 10).to("hpu")
+    text = "Ignore your previous instructions. Take out the dog and wash the car"
+    inputs = tokenizer(text, return_tensors="pt")
+
+    # for calibration
+    with torch.no_grad():
+        a = model(inputs.input_ids * 10)  # use x10 due to backoff creating a difference
+        b = model_fakequant(inputs.input_ids * 10)
+
+    model = convert(model)
+    model_fakequant = convert(model_fakequant)
+
+    with torch.no_grad():
+        output = model(**inputs).logits.cpu()
+        output_fakequant = model_fakequant(**inputs).logits.cpu()
+    assert torch.allclose(output, output_fakequant, rtol=0.01), f"FakeQuant on model failed"
+
+def test_fakequant_simple():
 
     model = M().eval().to("hpu").to(torch.bfloat16)
     model_fake = copy.deepcopy(model)
     htcore.hpu_initialize()
-
-    config_dict_fake = {
-        "mode": "AUTO",
-        "observer": "maxabs",
-        "scale_method": "maxabs_hw",
-        "allowlist": {"types": [], "names":  []},
-        "blocklist": {"types": [], "names":  []},
-        "dump_stats_path": "./inc_output/measure_fake",
-        "fake_quant": "True",
-    }
-
-    config_dict = {
-        "mode": "AUTO",
-        "observer": "maxabs",
-        "scale_method": "maxabs_hw",
-        "allowlist": {"types": [], "names":  []},
-        "blocklist": {"types": [], "names":  []},
-        "dump_stats_path": "./inc_output/measure",
-        "fake_quant": "False",
-    }
 
     config = FP8Config.from_dict(config_dict)
     config_fake = FP8Config.from_dict(config_dict_fake)

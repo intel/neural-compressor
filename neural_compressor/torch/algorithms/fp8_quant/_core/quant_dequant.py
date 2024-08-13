@@ -89,6 +89,7 @@ class QuantDequant(QuantDequantBase):
         # will be removed once SW-196431 is implemented
         htcore.mark_step()
         z = cast_from_fp8_fcn(y, self.hp_dtype, self.scale)
+        htcore.mark_step()
         return z
 
     def extra_repr(self) -> str:
