@@ -201,6 +201,32 @@ class TestGPTQQuant:
         out = model(self.example_inputs)[0]
         assert torch.equal(out, q_label), "use_layer_wise=True output should be same. Please double check."
 
+    def test_true_sequential(self):
+        # true_sequential=False
+        model = copy.deepcopy(self.tiny_gptj)
+        quant_config = GPTQConfig(
+            true_sequential=False,
+        )
+        model = prepare(model, quant_config)
+        run_fn(model)
+        model = convert(model)
+        out = model(self.example_inputs)[0]
+        atol_false = (out - self.label).amax()
+        # true_sequential=True
+        model = copy.deepcopy(self.tiny_gptj)
+        quant_config = GPTQConfig(
+            true_sequential=True,
+        )
+        model = prepare(model, quant_config)
+        run_fn(model)
+        model = convert(model)
+        out = model(self.example_inputs)[0]
+        atol_true = (out - self.label).amax()
+        # compare atol, this case is an ideal case.
+        assert (atol_false < atol_true
+            ), "true_sequential=True doesn't help accuracy, maybe is reasonable, please double check."
+
+
     @pytest.mark.parametrize("dtype", ["nf4", "int4"])
     @pytest.mark.parametrize("double_quant_bits", [6])
     @pytest.mark.parametrize("double_quant_group_size", [8, 256])
