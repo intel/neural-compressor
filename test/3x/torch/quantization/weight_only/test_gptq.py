@@ -223,9 +223,9 @@ class TestGPTQQuant:
         out = model(self.example_inputs)[0]
         atol_true = (out - self.label).amax()
         # compare atol, this case is an ideal case.
-        assert (atol_false < atol_true
-            ), "true_sequential=True doesn't help accuracy, maybe is reasonable, please double check."
-
+        assert (
+            atol_false < atol_true
+        ), "true_sequential=True doesn't help accuracy, maybe is reasonable, please double check."
 
     @pytest.mark.parametrize("dtype", ["nf4", "int4"])
     @pytest.mark.parametrize("double_quant_bits", [6])
