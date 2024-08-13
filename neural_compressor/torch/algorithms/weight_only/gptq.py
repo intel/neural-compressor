@@ -303,7 +303,8 @@ class RAWGPTQuantizer(object):
             self.weight_config[layer_name]["act_order"] = config.get("act_order", self.act_order_default)
             self.weight_config[layer_name]["static_groups"] = config.get("static_groups", self.static_groups_default)
             self.weight_config[layer_name]["true_sequential"] = config.get(
-                "true_sequential", self.true_sequential_default)
+                "true_sequential", self.true_sequential_default
+            )
             self.weight_config[layer_name]["perchannel"] = config.get("perchannel", self.perchannel_default)
             self.weight_config[layer_name]["mse"] = config.get("mse", self.mse_default)
             self.weight_config[layer_name]["use_double_quant"] = config.get(
@@ -523,7 +524,7 @@ class RAWGPTQuantizer(object):
         for layer in post_qkv_layers:
             layers.append([layer])
         return layers
-    
+
     @torch.no_grad()
     def execute_quantization(self, means=None, stds=None):
         """Run quantization."""
@@ -533,7 +534,7 @@ class RAWGPTQuantizer(object):
 
         # Step2: run gptq quantization in a transformer block-wise manner.
         gptq_config = {}
-        
+
         self.true_sequential = self.find_true_sequential_config()
         # automatically get true_sequential
         true_sequential_map = self.analyze_true_sequential(self.gptq_related_blocks["transformers"][0])
@@ -564,7 +565,9 @@ class RAWGPTQuantizer(object):
                     full_layer_name = self.get_full_layer_name(layer_name, block_idx)
                     # if self.weight_config.get(full_layer_name, None) == None:
                     if self.get_layer_config(full_layer_name) is None:
-                        logger.warning(f"{full_layer_name} can be quantized " + "but excluded from quantization configs.")
+                        logger.warning(
+                            f"{full_layer_name} can be quantized " + "but excluded from quantization configs."
+                        )
                     else:
                         sub_layers_to_quant[layer_name] = layer_obj
                 del sequential_layers
@@ -694,7 +697,9 @@ class RAWGPTQuantizer(object):
                     else:
                         gptq_perm = None
                     if self.use_layer_wise:
-                        state_dict = torch.load(LWQ_WORKSPACE + f"/{self.get_full_layer_name(layer_name, block_idx)}.pt")
+                        state_dict = torch.load(
+                            LWQ_WORKSPACE + f"/{self.get_full_layer_name(layer_name, block_idx)}.pt"
+                        )
                         Q = state_dict["weight"].data
                         bias = state_dict["bias"] if "bias" in state_dict.keys() else None
 
@@ -744,8 +749,7 @@ class RAWGPTQuantizer(object):
                     )
                     new_module.pack(int_weight, gptq_scale, gptq_zp, bias, gptq_perm)
                     set_module(transformer_block, layer_name, new_module)
-                
-                
+
                 del gptq_for_this_block
                 torch.cuda.empty_cache()
                 # iteratively replace the input with output, thus layerwise quantization can continue.
