@@ -55,13 +55,14 @@ def update_source_url(version, folder_name, index_file):
     with open(index_file, "w") as f:
         f.write(index_buf)
 
+
 def update_search(folder):
-    search_file_name="{}/search.html".format(folder)
+    search_file_name = "{}/search.html".format(folder)
 
     with open(search_file_name, "r") as f:
         index_buf = f.read()
-        key_str='<script src="_static/searchtools.js"></script>'
-        version_list = '''<!--[if lt IE 9]>
+        key_str = '<script src="_static/searchtools.js"></script>'
+        version_list = """<!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
     <![endif]-->
         <script src="_static/jquery.js?v=5d32c60e"></script>
@@ -70,7 +71,7 @@ def update_search(folder):
         <script src="_static/doctools.js?v=9a2dae69"></script>
         <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
-    <script src="_static/searchtools.js"></script>'''
+    <script src="_static/searchtools.js"></script>"""
         index_buf = index_buf.replace(key_str, version_list)
 
     with open(search_file_name, "w") as f:
@@ -83,6 +84,7 @@ def main(folder, version):
         update_version_link(version, folder_name, index_file)
         update_source_url(version, folder_name, index_file)
     update_search(folder)
+
 
 def help(me):
     print("python {} html_folder version".format(me))
