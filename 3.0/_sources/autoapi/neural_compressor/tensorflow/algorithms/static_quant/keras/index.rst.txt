@@ -1,0 +1,45 @@
+neural_compressor.tensorflow.algorithms.static_quant.keras
+==========================================================
+
+.. py:module:: neural_compressor.tensorflow.algorithms.static_quant.keras
+
+.. autoapi-nested-parse::
+
+   The quantization classes for Keras.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.algorithms.static_quant.keras.KerasAdaptor
+   neural_compressor.tensorflow.algorithms.static_quant.keras.KerasQuery
+   neural_compressor.tensorflow.algorithms.static_quant.keras.KerasConfigConverter
+   neural_compressor.tensorflow.algorithms.static_quant.keras.KerasSurgery
+
+
+Module Contents
+---------------
+
+.. py:class:: KerasAdaptor(framework_specific_info)
+
+   The keras class of framework adaptor layer.
+
+
+.. py:class:: KerasQuery(local_config_file=None)
+
+   Class that queries configs from yaml settings.
+
+
+.. py:class:: KerasConfigConverter(quant_config: neural_compressor.tensorflow.quantization.config.StaticQuantConfig, calib_iteration: int)
+
+   Convert `StaticQuantConfig` to the format used by static quant algo.
+
+
+.. py:class:: KerasSurgery(model)
+
+   The class that inserts FakeQuant or QDQ layers before the target layers.
+
+

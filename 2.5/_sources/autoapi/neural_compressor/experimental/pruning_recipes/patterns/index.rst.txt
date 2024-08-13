@@ -1,0 +1,21 @@
+neural_compressor.experimental.pruning_recipes.patterns
+=======================================================
+
+.. py:module:: neural_compressor.experimental.pruning_recipes.patterns
+
+.. autoapi-nested-parse::
+
+   Different patterns.
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/experimental/pruning_recipes/patterns/pattern/index
+   /autoapi/neural_compressor/experimental/pruning_recipes/patterns/tile_pattern/index
+
+

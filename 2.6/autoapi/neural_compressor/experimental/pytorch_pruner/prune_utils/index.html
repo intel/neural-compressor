@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.experimental.pytorch_pruner.prune_utils &mdash; Intel® Neural Compressor 2.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">2.6▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.experimental.pytorch_pruner.prune_utils</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/autoapi/neural_compressor/experimental/pytorch_pruner/prune_utils/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.experimental.pytorch_pruner.prune_utils">
+<span id="neural-compressor-experimental-pytorch-pruner-prune-utils"></span><h1>neural_compressor.experimental.pytorch_pruner.prune_utils<a class="headerlink" href="#module-neural_compressor.experimental.pytorch_pruner.prune_utils" title="Link to this heading"></a></h1>
+<p>Prune utils.</p>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.pytorch_pruner.prune_utils.check_config" title="neural_compressor.experimental.pytorch_pruner.prune_utils.check_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_config</span></code></a>(prune_config)</p></td>
+<td><p>Functions that check key-value is valid to run Pruning object.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.pytorch_pruner.prune_utils.reset_non_value_to_default" title="neural_compressor.experimental.pytorch_pruner.prune_utils.reset_non_value_to_default"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset_non_value_to_default</span></code></a>(obj, key, default)</p></td>
+<td><p>Functions that add up undefined configurations.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.pytorch_pruner.prune_utils.process_and_check_config" title="neural_compressor.experimental.pytorch_pruner.prune_utils.process_and_check_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">process_and_check_config</span></code></a>(val)</p></td>
+<td><p>Functions which converts a initial configuration object to a Pruning configuration.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.pytorch_pruner.prune_utils.process_config" title="neural_compressor.experimental.pytorch_pruner.prune_utils.process_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">process_config</span></code></a>(config)</p></td>
+<td><p>Obtain a config dict object from a config file.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.pytorch_pruner.prune_utils.parse_to_prune" title="neural_compressor.experimental.pytorch_pruner.prune_utils.parse_to_prune"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parse_to_prune</span></code></a>(model, config)</p></td>
+<td><p>Keep target pruned layers.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.pytorch_pruner.prune_utils.parse_not_to_prune" title="neural_compressor.experimental.pytorch_pruner.prune_utils.parse_not_to_prune"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parse_not_to_prune</span></code></a>(modules, config)</p></td>
+<td><p>Drop non pruned layers.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.prune_utils.check_config">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.pytorch_pruner.prune_utils.</span></span><span class="sig-name descname"><span class="pre">check_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prune_config</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/experimental/pytorch_pruner/prune_utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.prune_utils.check_config" title="Link to this definition"></a></dt>
+<dd><p>Functions that check key-value is valid to run Pruning object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>prune_config</strong> – A config dict object. Contains Pruning parameters and configurations.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None if everything is correct.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>AssertionError.</strong> – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.prune_utils.reset_non_value_to_default">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.pytorch_pruner.prune_utils.</span></span><span class="sig-name descname"><span class="pre">reset_non_value_to_default</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/experimental/pytorch_pruner/prune_utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.prune_utils.reset_non_value_to_default" title="Link to this definition"></a></dt>
+<dd><p>Functions that add up undefined configurations.</p>
+<p>If some configurations are not defined in the configuration, set it to a default value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> – A dict{key: value}</p></li>
+<li><p><strong>key</strong> – A string. Key in obj.</p></li>
+<li><p><strong>default</strong> – When the key is not in obj, Add key: default item in original obj.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.prune_utils.process_and_check_config">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.pytorch_pruner.prune_utils.</span></span><span class="sig-name descname"><span class="pre">process_and_check_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">val</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/experimental/pytorch_pruner/prune_utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.prune_utils.process_and_check_config" title="Link to this definition"></a></dt>
+<dd><p>Functions which converts a initial configuration object to a Pruning configuration.</p>
+<p>Copy parameters and add some non-define parameters to a new Pruning configuration object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>val</strong> – A dict directly read from a config file.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dict whose contents which are regularized for a Pruning object.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.prune_utils.process_config">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.pytorch_pruner.prune_utils.</span></span><span class="sig-name descname"><span class="pre">process_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/experimental/pytorch_pruner/prune_utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.prune_utils.process_config" title="Link to this definition"></a></dt>
+<dd><p>Obtain a config dict object from a config file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config</strong> – A string. The path to configuration file.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A config dict object.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.prune_utils.parse_to_prune">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.pytorch_pruner.prune_utils.</span></span><span class="sig-name descname"><span class="pre">parse_to_prune</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/experimental/pytorch_pruner/prune_utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.prune_utils.parse_to_prune" title="Link to this definition"></a></dt>
+<dd><p>Keep target pruned layers.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.experimental.pytorch_pruner.prune_utils.parse_not_to_prune">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.pytorch_pruner.prune_utils.</span></span><span class="sig-name descname"><span class="pre">parse_not_to_prune</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modules</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/experimental/pytorch_pruner/prune_utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.pytorch_pruner.prune_utils.parse_not_to_prune" title="Link to this definition"></a></dt>
+<dd><p>Drop non pruned layers.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8a3974efd0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

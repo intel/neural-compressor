@@ -1,0 +1,29 @@
+neural_compressor.profiling.parser.tensorflow_parser.parser
+===========================================================
+
+.. py:module:: neural_compressor.profiling.parser.tensorflow_parser.parser
+
+.. autoapi-nested-parse::
+
+   Parsers for log files.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.profiling.parser.tensorflow_parser.parser.TensorFlowProfilingParser
+
+
+Module Contents
+---------------
+
+.. py:class:: TensorFlowProfilingParser(logs: list)
+
+
+
+   Parser class is responsible for parsing profiling log files.
+
+

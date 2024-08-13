@@ -1,0 +1,37 @@
+neural_compressor.adaptor.ox_utils.operators.conv
+=================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators.conv
+
+.. autoapi-nested-parse::
+
+   Conv Operator.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.conv.ConvOperator
+   neural_compressor.adaptor.ox_utils.operators.conv.QConvOperator
+
+
+Module Contents
+---------------
+
+.. py:class:: ConvOperator(onnx_quantizer, onnx_node)
+
+
+
+   Conv Operator.
+
+
+.. py:class:: QConvOperator(onnx_node, children, initializers)
+
+
+
+   QLinearConv Operator.
+
+

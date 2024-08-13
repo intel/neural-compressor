@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Objective &mdash; Intel® Neural Compressor 2.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">2.4▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Objective</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/objective.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="objective">
+<h1>Objective<a class="headerlink" href="#objective" title="Link to this heading"></a></h1>
+<ol>
+<li><p><a class="reference external" href="#introduction">Introduction</a></p>
+<p>1.1. <a class="reference external" href="#single-objective">Single Objective</a></p>
+<p>1.2. <a class="reference external" href="#multiple-objectives">Multiple Objectives</a></p>
+</li>
+<li><p><a class="reference external" href="#objective-support-matrix">Objective Support Matrix</a></p></li>
+<li><p><a class="reference external" href="#get-start-with-objective-api">Get Started with Objective API</a></p>
+<p>3.1. <a class="reference external" href="#config-single-objective">Config Single Objective</a></p>
+<p>3.2. <a class="reference external" href="#config-multiple-objectives">Config Multiple Objectives</a></p>
+</li>
+<li><p><a class="reference external" href="#example">Example</a></p></li>
+</ol>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
+<p>In terms of evaluating the status of a specific model during tuning, we should have general objectives. Intel® Neural Compressor Objective supports code-free configuration through <code class="docutils literal notranslate"><span class="pre">neural_compressor.config.TuningCriterion</span></code>. With built-in objectives, users can compress models with different objectives easily. In special cases, users can also register their own objective classes.</p>
+<section id="single-objective">
+<h3>Single Objective<a class="headerlink" href="#single-objective" title="Link to this heading"></a></h3>
+<p>The objective supported by Intel® Neural Compressor is driven by accuracy. If users want to evaluate a specific model with other objectives, they can realize it with <code class="docutils literal notranslate"><span class="pre">objective</span></code> in a yaml file. Default value for <code class="docutils literal notranslate"><span class="pre">objective</span></code> is <code class="docutils literal notranslate"><span class="pre">performance</span></code>, and the other values are <code class="docutils literal notranslate"><span class="pre">modelsize</span></code> and <code class="docutils literal notranslate"><span class="pre">footprint</span></code>.</p>
+</section>
+<section id="multiple-objectives">
+<h3>Multiple Objectives<a class="headerlink" href="#multiple-objectives" title="Link to this heading"></a></h3>
+<p>In some cases, users want to use more than one objective to evaluate the status of a specific model and they can realize it with <code class="docutils literal notranslate"><span class="pre">multi_objectives</span></code> in a yaml file. Currently <code class="docutils literal notranslate"><span class="pre">multi_objectives</span></code> supports built-in objectives.</p>
+<p>If users use <code class="docutils literal notranslate"><span class="pre">multi_objectives</span></code> to evaluate the status of the model during tuning, Neural Compressor will return a model with the best score of <code class="docutils literal notranslate"><span class="pre">multi_objectives</span></code> and meeting <code class="docutils literal notranslate"><span class="pre">accuracy_criterion</span></code> after tuning ending.</p>
+<p>Intel® Neural Compressor will normalize the results of each objective to calculate the final weighted multi_objective score.</p>
+</section>
+</section>
+<section id="objective-support-matrix">
+<h2>Objective Support Matrix<a class="headerlink" href="#objective-support-matrix" title="Link to this heading"></a></h2>
+<p>Built-in objectives support list:</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;">Objective</th>
+<th style="text-align: left;">Usage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">accuracy</td>
+<td style="text-align: left;">Evaluate the accuracy</td>
+</tr>
+<tr>
+<td style="text-align: left;">performance</td>
+<td style="text-align: left;">Evaluate the inference time</td>
+</tr>
+<tr>
+<td style="text-align: left;">footprint</td>
+<td style="text-align: left;">Evaluate the peak size of memory blocks during inference</td>
+</tr>
+<tr>
+<td style="text-align: left;">modelsize</td>
+<td style="text-align: left;">Evaluate the model size</td>
+</tr>
+</tbody>
+</table></section>
+<section id="get-started-with-objective-api">
+<h2>Get Started with Objective API<a class="headerlink" href="#get-started-with-objective-api" title="Link to this heading"></a></h2>
+<section id="config-single-objective">
+<h3>Config Single Objective<a class="headerlink" href="#config-single-objective" title="Link to this heading"></a></h3>
+<p>Users can specify a built-in objective in <code class="docutils literal notranslate"><span class="pre">neural_compressor.config.TuningCriterion</span></code> as shown below:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">TuningCriterion</span>
+
+<span class="n">tuning_criterion</span> <span class="o">=</span> <span class="n">TuningCriterion</span><span class="p">(</span><span class="n">objective</span><span class="o">=</span><span class="s2">&quot;accuracy&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="config-multiple-objectives">
+<h3>Config Multiple Objectives<a class="headerlink" href="#config-multiple-objectives" title="Link to this heading"></a></h3>
+<p>Users can specify built-in multiple objectives in <code class="docutils literal notranslate"><span class="pre">neural_compressor.config.TuningCriterion</span></code> as shown below:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">TuningCriterion</span>
+
+<span class="n">tuning_criterion</span> <span class="o">=</span> <span class="n">TuningCriterion</span><span class="p">(</span><span class="n">objective</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;performance&quot;</span><span class="p">,</span> <span class="s2">&quot;accuracy&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="example">
+<h2>Example<a class="headerlink" href="#example" title="Link to this heading"></a></h2>
+<p>Refer to <a class="reference external" href="../neural_compressor/template/ptq.yaml">example</a> as an example.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8d97686970> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

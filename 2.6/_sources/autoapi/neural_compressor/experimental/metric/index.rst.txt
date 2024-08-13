@@ -1,0 +1,26 @@
+neural_compressor.experimental.metric
+=====================================
+
+.. py:module:: neural_compressor.experimental.metric
+
+.. autoapi-nested-parse::
+
+   Intel Neural Compressor Metric.
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/experimental/metric/bleu/index
+   /autoapi/neural_compressor/experimental/metric/bleu_util/index
+   /autoapi/neural_compressor/experimental/metric/coco_label_map/index
+   /autoapi/neural_compressor/experimental/metric/coco_tools/index
+   /autoapi/neural_compressor/experimental/metric/evaluate_squad/index
+   /autoapi/neural_compressor/experimental/metric/f1/index
+   /autoapi/neural_compressor/experimental/metric/metric/index
+
+

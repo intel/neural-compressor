@@ -1,0 +1,201 @@
+neural_compressor.template.api_doc_example
+==========================================
+
+.. py:module:: neural_compressor.template.api_doc_example
+
+.. autoapi-nested-parse::
+
+   This module is only used as reference to convert Python docstring to API document.
+
+   The created the API document is in `API Doc`_.
+
+   Usage::
+
+       $python api_doc_example.py
+
+   Example::
+
+       def fun(a):
+           return a+1
+
+       x = fun(2)
+       print(x)
+
+   .. attribute:: attribute1
+
+      Module level attribute.
+      
+      Please set 1-100 integer.
+
+      :type: int
+
+   .. todo::
+
+      * Improve the code format
+      * Add more comments
+
+   .. _API Doc:
+      https://intel.github.io/neural-compressor/latest/autoapi/neural_compressor/api_doc_example/index.html
+
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   neural_compressor.template.api_doc_example.module_debug_level1
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.template.api_doc_example.ExampleClass
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.template.api_doc_example.function1
+   neural_compressor.template.api_doc_example.function2
+   neural_compressor.template.api_doc_example.function3
+   neural_compressor.template.api_doc_example.generator1
+
+
+Module Contents
+---------------
+
+.. py:data:: module_debug_level1
+   :value: 1
+
+
+   Module debug level document.
+
+   :type: int
+
+.. py:function:: function1(param1, param2)
+
+   Example function1.
+
+   :param param1: The parameter1.
+   :type param1: str
+   :param param2: The parameter2.
+   :type param2: float
+
+   Example::
+
+       >>> python api_doc_example.py
+       >>> import os
+       ... for i in range(3)
+       ...     print(i)
+       0
+       1
+       2
+
+   :returns: The return value. True|False.
+   :rtype: bool
+
+
+.. py:function:: function2(param1: str, param2: float) -> bool
+
+   Function with PEP 484 type annotations.
+
+   :param param1: The parameter1.
+   :param param2: The parameter2.
+
+   .. rubric:: Example
+
+   Style 3::
+
+       from neural_compressor.config import MixedPrecisionConfig
+       def eval_func(model):
+           ...
+           return accuracy
+
+       conf = MixedPrecisionConfig()
+       output_model = mix_precision.fit(
+           model,
+           conf,
+           eval_func=eval_func,
+       )
+
+   :returns: The return value. True|False.
+
+
+.. py:function:: function3(param1, param2=None, *args, **kwargs)
+
+   This is an example of function3.
+
+   If ``*args`` or ``**kwargs`` are accepted,
+   they should be listed as ``*args`` and ``**kwargs``.
+
+   :param param1: The parameter1.
+   :type param1: int
+   :param param2: The parameter2.
+   :type param2: :obj:`str`, optional
+   :param \*args: Arguments list.
+   :param \*\*kwargs: Key-value dict.
+
+   :returns: The return value. True|False.
+
+             The ``Returns`` section supports any reStructuredText formatting,
+             including literal blocks::
+
+                 {
+                     'param1': param1,
+                     'param2': param2
+                 }
+   :rtype: bool
+
+   :raises AttributeError: The ``Raises`` section is a list of exceptions.
+   :raises ValueError: If `param2` is equal to `param1`.
+
+
+.. py:function:: generator1(n)
+
+   Generators have a ``Yields`` section.
+
+   :param n: range.
+   :type n: int
+
+   :Yields: *int* -- The next number in [0, `n` - 1].
+
+   Examples::
+
+       >>> print([i for i in example_generator(4)])
+       [0, 1, 2, 3]
+
+
+.. py:class:: ExampleClass(param1, param2, param3)
+
+   Example for Class.
+
+   If the class has public attributes, they may be documented here
+   in an ``Attributes`` section.
+
+   .. attribute:: attr1
+
+      Description of `attr1`.
+
+      :type: str
+
+   .. attribute:: attr2
+
+      Description of `attr2`.
+
+      :type: :obj:`int`, optional
+
+
+   .. py:attribute:: attr5
+      :value: None
+
+
+      Docstring *after* attribute, with type specified.
+
+      :type: str
+
+

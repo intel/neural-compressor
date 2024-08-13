@@ -1,0 +1,41 @@
+neural_compressor.adaptor.ox_utils.operators
+============================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators
+
+.. autoapi-nested-parse::
+
+   Operators for onnx model.
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/adaptor/ox_utils/operators/activation/index
+   /autoapi/neural_compressor/adaptor/ox_utils/operators/argmax/index
+   /autoapi/neural_compressor/adaptor/ox_utils/operators/attention/index
+   /autoapi/neural_compressor/adaptor/ox_utils/operators/binary_op/index
+   /autoapi/neural_compressor/adaptor/ox_utils/operators/concat/index
+   /autoapi/neural_compressor/adaptor/ox_utils/operators/conv/index
+   /autoapi/neural_compressor/adaptor/ox_utils/operators/direct_q8/index
+   /autoapi/neural_compressor/adaptor/ox_utils/operators/embed_layernorm/index
+   /autoapi/neural_compressor/adaptor/ox_utils/operators/gather/index
+   /autoapi/neural_compressor/adaptor/ox_utils/operators/gavgpool/index
+   /autoapi/neural_compressor/adaptor/ox_utils/operators/gemm/index
+   /autoapi/neural_compressor/adaptor/ox_utils/operators/lstm/index
+   /autoapi/neural_compressor/adaptor/ox_utils/operators/matmul/index
+   /autoapi/neural_compressor/adaptor/ox_utils/operators/maxpool/index
+   /autoapi/neural_compressor/adaptor/ox_utils/operators/norm/index
+   /autoapi/neural_compressor/adaptor/ox_utils/operators/ops/index
+   /autoapi/neural_compressor/adaptor/ox_utils/operators/pad/index
+   /autoapi/neural_compressor/adaptor/ox_utils/operators/pooling/index
+   /autoapi/neural_compressor/adaptor/ox_utils/operators/reduce/index
+   /autoapi/neural_compressor/adaptor/ox_utils/operators/resize/index
+   /autoapi/neural_compressor/adaptor/ox_utils/operators/split/index
+   /autoapi/neural_compressor/adaptor/ox_utils/operators/unary_op/index
+
+

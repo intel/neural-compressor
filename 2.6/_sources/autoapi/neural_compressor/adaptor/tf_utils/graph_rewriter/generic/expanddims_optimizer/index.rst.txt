@@ -1,0 +1,29 @@
+neural_compressor.adaptor.tf_utils.graph_rewriter.generic.expanddims_optimizer
+==============================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.expanddims_optimizer
+
+.. autoapi-nested-parse::
+
+   ExpandDims Graph Rewriter.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.expanddims_optimizer.ExpandDimsOptimizer
+
+
+Module Contents
+---------------
+
+.. py:class:: ExpandDimsOptimizer(model)
+
+
+
+   Calculate ExpandDims and remove it if its input is weight and next node is Conv2D.
+
+

@@ -1,0 +1,27 @@
+neural_compressor.adaptor.ox_utils.quantizer
+============================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.quantizer
+
+.. autoapi-nested-parse::
+
+   Quantizer for onnx models.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.quantizer.Quantizer
+
+
+Module Contents
+---------------
+
+.. py:class:: Quantizer(model, q_config, mode, static, quantization_params, op_types_to_quantize, fallback_list=['fp32'], reduce_range=None, add_qdq_pair_to_weight=False, optypes_to_exclude_output_quant=[], dedicated_qdq_pair=False, backend='CPUExecutionProvider')
+
+   Quantizer class.
+
+

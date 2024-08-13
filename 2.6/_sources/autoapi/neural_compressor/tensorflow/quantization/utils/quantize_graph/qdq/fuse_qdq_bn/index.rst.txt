@@ -1,0 +1,29 @@
+neural_compressor.tensorflow.quantization.utils.quantize_graph.qdq.fuse_qdq_bn
+==============================================================================
+
+.. py:module:: neural_compressor.tensorflow.quantization.utils.quantize_graph.qdq.fuse_qdq_bn
+
+.. autoapi-nested-parse::
+
+   Quantize FusedBatchNormV3 to int8 op.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.quantization.utils.quantize_graph.qdq.fuse_qdq_bn.FuseNodeStartWithFusedBatchNormV3
+
+
+Module Contents
+---------------
+
+.. py:class:: FuseNodeStartWithFusedBatchNormV3(**kwargs)
+
+
+
+   Quantize FusedBatchNormV3 to int8 op _QuantizedFusedBatchNorm.
+
+

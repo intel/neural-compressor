@@ -1,0 +1,29 @@
+neural_compressor.adaptor.tf_utils.graph_rewriter.generic.remove_training_nodes
+===============================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.remove_training_nodes
+
+.. autoapi-nested-parse::
+
+   Remove training nodes Graph Rewriter.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.remove_training_nodes.RemoveTrainingNodesOptimizer
+
+
+Module Contents
+---------------
+
+.. py:class:: RemoveTrainingNodesOptimizer(model, protected_nodes=[], types_to_splice=['Identity', 'CheckNumerics', 'StopGradient'])
+
+
+
+   Remove training nodes optimizer.
+
+

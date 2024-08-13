@@ -1,0 +1,27 @@
+neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_layers.quantize_layer_base
+=========================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_layers.quantize_layer_base
+
+.. autoapi-nested-parse::
+
+   QuantizeLayer Base Class.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_layers.quantize_layer_base.QuantizeLayerBase
+
+
+Module Contents
+---------------
+
+.. py:class:: QuantizeLayerBase
+
+   QuantizeLayer Base Class.
+
+

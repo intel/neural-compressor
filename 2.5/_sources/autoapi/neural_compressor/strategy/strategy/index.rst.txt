@@ -1,0 +1,54 @@
+neural_compressor.strategy.strategy
+===================================
+
+.. py:module:: neural_compressor.strategy.strategy
+
+.. autoapi-nested-parse::
+
+   The base class for tuning strategy.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.strategy.strategy.TuneStrategyMeta
+   neural_compressor.strategy.strategy.TuneStrategy
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.strategy.strategy.strategy_registry
+
+
+Module Contents
+---------------
+
+.. py:function:: strategy_registry(cls)
+
+   Class decorator used to register all TuneStrategy subclasses.
+
+   :param cls: The class of register.
+   :type cls: class
+
+   :returns: The class of register.
+   :rtype: cls
+
+
+.. py:class:: TuneStrategyMeta
+
+
+
+   Tuning strategy metaclass.
+
+
+.. py:class:: TuneStrategy(model, conf, q_dataloader=None, q_func=None, eval_func=None, eval_dataloader=None, eval_metric=None, resume=None, q_hooks=None)
+
+   Basic class for tuning strategy.
+
+

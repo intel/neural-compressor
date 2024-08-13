@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.tensorflow.utils.utility &mdash; Intel® Neural Compressor 3.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">3.0▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.tensorflow.utils.utility</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/autoapi/neural_compressor/tensorflow/utils/utility/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.tensorflow.utils.utility">
+<span id="neural-compressor-tensorflow-utils-utility"></span><h1>neural_compressor.tensorflow.utils.utility<a class="headerlink" href="#module-neural_compressor.tensorflow.utils.utility" title="Link to this heading"></a></h1>
+<p>The utility functions and classes for Tensorflow.</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.CpuInfo" title="neural_compressor.tensorflow.utils.utility.CpuInfo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CpuInfo</span></code></a></p></td>
+<td><p>Get CPU Info.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.CaptureOutputToFile" title="neural_compressor.tensorflow.utils.utility.CaptureOutputToFile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CaptureOutputToFile</span></code></a></p></td>
+<td><p>Not displayed in API Docs.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.TFSlimNetsFactory" title="neural_compressor.tensorflow.utils.utility.TFSlimNetsFactory"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TFSlimNetsFactory</span></code></a></p></td>
+<td><p>TF-Slim nets factory.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.version1_lt_version2" title="neural_compressor.tensorflow.utils.utility.version1_lt_version2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">version1_lt_version2</span></code></a>(version1, version2)</p></td>
+<td><p>Check whether version1 is less than version2.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.version1_gt_version2" title="neural_compressor.tensorflow.utils.utility.version1_gt_version2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">version1_gt_version2</span></code></a>(version1, version2)</p></td>
+<td><p>Check whether version1 is greater than version2.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.version1_eq_version2" title="neural_compressor.tensorflow.utils.utility.version1_eq_version2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">version1_eq_version2</span></code></a>(version1, version2)</p></td>
+<td><p>Check whether version1 is equal to version2.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.version1_gte_version2" title="neural_compressor.tensorflow.utils.utility.version1_gte_version2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">version1_gte_version2</span></code></a>(version1, version2)</p></td>
+<td><p>Check whether version1 is greater than version2 or is equal to it.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.version1_lte_version2" title="neural_compressor.tensorflow.utils.utility.version1_lte_version2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">version1_lte_version2</span></code></a>(version1, version2)</p></td>
+<td><p>Check whether version1 is less than version2 or is equal to it.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.register_algo" title="neural_compressor.tensorflow.utils.utility.register_algo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_algo</span></code></a>(name)</p></td>
+<td><p>Decorator function to register algorithms in the algos_mapping dictionary.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.deep_get" title="neural_compressor.tensorflow.utils.utility.deep_get"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deep_get</span></code></a>(dictionary, keys[, default])</p></td>
+<td><p>Get the dot key's item in nested dict.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.itex_installed" title="neural_compressor.tensorflow.utils.utility.itex_installed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">itex_installed</span></code></a>()</p></td>
+<td><p>Check if the Intel® Extension for TensorFlow has been installed.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.dump_elapsed_time" title="neural_compressor.tensorflow.utils.utility.dump_elapsed_time"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dump_elapsed_time</span></code></a>([customized_msg])</p></td>
+<td><p>Get the elapsed time for decorated functions.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.combine_histogram" title="neural_compressor.tensorflow.utils.utility.combine_histogram"><code class="xref py py-obj docutils literal notranslate"><span class="pre">combine_histogram</span></code></a>(old_hist, arr)</p></td>
+<td><p>Collect layer histogram for arr and combine it with old histogram.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.get_all_fp32_data" title="neural_compressor.tensorflow.utils.utility.get_all_fp32_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_all_fp32_data</span></code></a>(data)</p></td>
+<td><p>Get all the fp32 data.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.get_tensor_histogram" title="neural_compressor.tensorflow.utils.utility.get_tensor_histogram"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_tensor_histogram</span></code></a>(tensor_data[, bins])</p></td>
+<td><p>Get the histogram of the tensor data.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.singleton" title="neural_compressor.tensorflow.utils.utility.singleton"><code class="xref py py-obj docutils literal notranslate"><span class="pre">singleton</span></code></a>(cls)</p></td>
+<td><p>Not displayed in API Docs.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.disable_random" title="neural_compressor.tensorflow.utils.utility.disable_random"><code class="xref py py-obj docutils literal notranslate"><span class="pre">disable_random</span></code></a>([seed])</p></td>
+<td><p>A Decorator to disable tf random seed.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.tensorflow.utils.utility.valid_keras_format" title="neural_compressor.tensorflow.utils.utility.valid_keras_format"><code class="xref py py-obj docutils literal notranslate"><span class="pre">valid_keras_format</span></code></a>(model)</p></td>
+<td><p>Check if the input model is Sequential or Functional model.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.utility.version1_lt_version2">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.utility.</span></span><span class="sig-name descname"><span class="pre">version1_lt_version2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/tensorflow/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.utility.version1_lt_version2" title="Link to this definition"></a></dt>
+<dd><p>Check whether version1 is less than version2.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.utility.version1_gt_version2">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.utility.</span></span><span class="sig-name descname"><span class="pre">version1_gt_version2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/tensorflow/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.utility.version1_gt_version2" title="Link to this definition"></a></dt>
+<dd><p>Check whether version1 is greater than version2.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.utility.version1_eq_version2">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.utility.</span></span><span class="sig-name descname"><span class="pre">version1_eq_version2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/tensorflow/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.utility.version1_eq_version2" title="Link to this definition"></a></dt>
+<dd><p>Check whether version1 is equal to version2.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.utility.version1_gte_version2">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.utility.</span></span><span class="sig-name descname"><span class="pre">version1_gte_version2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/tensorflow/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.utility.version1_gte_version2" title="Link to this definition"></a></dt>
+<dd><p>Check whether version1 is greater than version2 or is equal to it.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.utility.version1_lte_version2">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.utility.</span></span><span class="sig-name descname"><span class="pre">version1_lte_version2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/tensorflow/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.utility.version1_lte_version2" title="Link to this definition"></a></dt>
+<dd><p>Check whether version1 is less than version2 or is equal to it.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.utility.register_algo">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.utility.</span></span><span class="sig-name descname"><span class="pre">register_algo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/tensorflow/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.utility.register_algo" title="Link to this definition"></a></dt>
+<dd><p>Decorator function to register algorithms in the algos_mapping dictionary.</p>
+<dl>
+<dt>Usage example:</dt><dd><p>&#64;register_algo(name=example_algo)
+def example_algo(model: tf.keras.Model, quant_config: StaticQuantConfig) -&gt; tf.keras.Model:</p>
+<blockquote>
+<div><p>…</p>
+</div></blockquote>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – The name under which the algorithm function will be registered.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The decorator function to be used with algorithm functions.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>decorator</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.utility.deep_get">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.utility.</span></span><span class="sig-name descname"><span class="pre">deep_get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dictionary</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/tensorflow/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.utility.deep_get" title="Link to this definition"></a></dt>
+<dd><p>Get the dot key’s item in nested dict.</p>
+<dl class="simple">
+<dt>Usage example:</dt><dd><p>person = {‘person’:{‘name’:{‘first’:’John’}}}
+deep_get(person, “person.name.first”) will output ‘John’.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dictionary</strong> (<em>dict</em>) – The dict object to get keys</p></li>
+<li><p><strong>keys</strong> (<em>dict</em>) – The deep keys</p></li>
+<li><p><strong>default</strong> (<em>object</em>) – The return item if key not exists</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the item of the deep dot keys</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>item</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.utility.itex_installed">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.utility.</span></span><span class="sig-name descname"><span class="pre">itex_installed</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/tensorflow/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.utility.itex_installed" title="Link to this definition"></a></dt>
+<dd><p>Check if the Intel® Extension for TensorFlow has been installed.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.utility.dump_elapsed_time">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.utility.</span></span><span class="sig-name descname"><span class="pre">dump_elapsed_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">customized_msg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/tensorflow/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.utility.dump_elapsed_time" title="Link to this definition"></a></dt>
+<dd><p>Get the elapsed time for decorated functions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>customized_msg</strong> (<em>string</em><em>, </em><em>optional</em>) – The parameter passed to decorator. Defaults to None.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.utility.combine_histogram">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.utility.</span></span><span class="sig-name descname"><span class="pre">combine_histogram</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">old_hist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arr</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/tensorflow/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.utility.combine_histogram" title="Link to this definition"></a></dt>
+<dd><p>Collect layer histogram for arr and combine it with old histogram.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.utility.get_all_fp32_data">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_all_fp32_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/tensorflow/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.utility.get_all_fp32_data" title="Link to this definition"></a></dt>
+<dd><p>Get all the fp32 data.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.utility.get_tensor_histogram">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_tensor_histogram</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2048</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/tensorflow/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.utility.get_tensor_histogram" title="Link to this definition"></a></dt>
+<dd><p>Get the histogram of the tensor data.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.utility.singleton">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.utility.</span></span><span class="sig-name descname"><span class="pre">singleton</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/tensorflow/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.utility.singleton" title="Link to this definition"></a></dt>
+<dd><p>Not displayed in API Docs.</p>
+<p>Singleton decorator.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.utility.disable_random">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.utility.</span></span><span class="sig-name descname"><span class="pre">disable_random</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/tensorflow/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.utility.disable_random" title="Link to this definition"></a></dt>
+<dd><p>A Decorator to disable tf random seed.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.utility.valid_keras_format">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.utility.</span></span><span class="sig-name descname"><span class="pre">valid_keras_format</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/tensorflow/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.utility.valid_keras_format" title="Link to this definition"></a></dt>
+<dd><p>Check if the input model is Sequential or Functional model.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.utility.CpuInfo">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.utility.</span></span><span class="sig-name descname"><span class="pre">CpuInfo</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/tensorflow/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.utility.CpuInfo" title="Link to this definition"></a></dt>
+<dd><p>Get CPU Info.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.utility.CaptureOutputToFile">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.utility.</span></span><span class="sig-name descname"><span class="pre">CaptureOutputToFile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tmp_file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stream</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">sys.stderr</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/tensorflow/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.utility.CaptureOutputToFile" title="Link to this definition"></a></dt>
+<dd><p>Not displayed in API Docs.</p>
+<p>Capture the output to file.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.tensorflow.utils.utility.TFSlimNetsFactory">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.tensorflow.utils.utility.</span></span><span class="sig-name descname"><span class="pre">TFSlimNetsFactory</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/tensorflow/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.tensorflow.utils.utility.TFSlimNetsFactory" title="Link to this definition"></a></dt>
+<dd><p>TF-Slim nets factory.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fef7e4beca0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

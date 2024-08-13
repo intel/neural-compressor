@@ -1,0 +1,54 @@
+neural_compressor.experimental.distillation
+===========================================
+
+.. py:module:: neural_compressor.experimental.distillation
+
+.. autoapi-nested-parse::
+
+   Distillation class.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.experimental.distillation.Distillation
+
+
+Module Contents
+---------------
+
+.. py:class:: Distillation(conf_fname_or_obj=None)
+
+
+
+   Distillation class derived from Component class.
+
+   Distillation class abstracted the pipeline of knowledge distillation,
+   transfer the knowledge of the teacher model to the student model.
+
+   :param conf_fname_or_obj: The path to the YAML configuration file or
+                             Distillation_Conf containing accuracy goal, distillation objective and related
+                             dataloaders etc.
+   :type conf_fname_or_obj: string or obj
+
+   .. attribute:: _epoch_ran
+
+      A integer indicating how much epochs ran.
+
+   .. attribute:: eval_frequency
+
+      The frequency for doing evaluation of the student model
+      in terms of epoch.
+
+   .. attribute:: best_score
+
+      The best metric of the student model in the training.
+
+   .. attribute:: best_model
+
+      The best student model found in the training.
+
+

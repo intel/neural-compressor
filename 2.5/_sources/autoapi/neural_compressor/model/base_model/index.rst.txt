@@ -1,0 +1,27 @@
+neural_compressor.model.base_model
+==================================
+
+.. py:module:: neural_compressor.model.base_model
+
+.. autoapi-nested-parse::
+
+   Base model for multiple framework backends.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.model.base_model.BaseModel
+
+
+Module Contents
+---------------
+
+.. py:class:: BaseModel(model, **kwargs)
+
+   Base class of all neural_compressor.model, will play graph role.
+
+

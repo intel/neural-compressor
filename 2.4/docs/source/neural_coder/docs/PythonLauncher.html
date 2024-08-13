@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Python Launcher &mdash; Intel® Neural Compressor 2.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../versions.html">2.4▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Python Launcher</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/docs/source/neural_coder/docs/PythonLauncher.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="python-launcher">
+<h1>Python Launcher<a class="headerlink" href="#python-launcher" title="Link to this heading"></a></h1>
+<p>Neural Coder can be used as a Python <strong>Launcher</strong>. Users can run the Python model code as it is with automatic enabling of Deep Learning optimizations by using Neural Coder’s inline Python <strong>Launcher</strong> design.</p>
+<section id="quick-start">
+<h2>Quick-Start<a class="headerlink" href="#quick-start" title="Link to this heading"></a></h2>
+<p>Example: Let’s say you are running an NLP model using <code class="docutils literal notranslate"><span class="pre">run_glue.py</span></code> from HuggingFace transformers <a class="reference external" href="https://github.com/huggingface/transformers/blob/v4.21-release/examples/pytorch/text-classification/run_glue.py">examples</a>.</p>
+<p>Pre-requisites:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="nv">transformers</span><span class="o">==</span><span class="m">4</span>.21.0<span class="w"> </span>torch<span class="w"> </span>datasets<span class="w"> </span>
+</pre></div>
+</div>
+<p>Generally we run this code with a Python command line like this:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>run_glue.py<span class="w"> </span>--model_name_or_path<span class="w"> </span>bert-base-cased<span class="w"> </span>--task_name<span class="w"> </span>mrpc<span class="w"> </span>--do_eval<span class="w"> </span>--output_dir<span class="w"> </span>result
+</pre></div>
+</div>
+<p>With Neural Coder’s <strong>Launcher</strong>, users can easily enjoy Deep Learning optimizations (e.g. default - INT8 dynamic quantization by Intel® Neural Compressor for PyTorch models) by simply adding an inline prefix</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>-m<span class="w"> </span>neural_coder
+</pre></div>
+</div>
+<p>to the Python command line, and everything else remains the same:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>neural_coder<span class="w"> </span>run_glue.py<span class="w"> </span>--model_name_or_path<span class="w"> </span>bert-base-cased<span class="w"> </span>--task_name<span class="w"> </span>mrpc<span class="w"> </span>--do_eval<span class="w"> </span>--output_dir<span class="w"> </span>result
+</pre></div>
+</div>
+<p>This will run <code class="docutils literal notranslate"><span class="pre">run_glue.py</span></code> with the Deep Learning optimization automatically enabled, while everything else (e.g. your input arguments for the code itself) remains the same as the original code. You can also check out the optimized code <code class="docutils literal notranslate"><span class="pre">run_glue_optimized.py</span></code> auto-generated by the <strong>Launcher</strong> under the same folder if you want to learn the code enabling.</p>
+<p>Note: Any modification on the optimized code <code class="docutils literal notranslate"><span class="pre">run_glue_optimized.py</span></code> will be overwritten every time you run Neural Coder <strong>Launcher</strong> on <code class="docutils literal notranslate"><span class="pre">run_glue.py</span></code>, so please make any modification on the original code <code class="docutils literal notranslate"><span class="pre">run_glue.py</span></code> instead of the optimized one. The optimized code is only saved for your reference.</p>
+</section>
+<section id="launcher-arguments-optional">
+<h2>Launcher Arguments (Optional)<a class="headerlink" href="#launcher-arguments-optional" title="Link to this heading"></a></h2>
+<p>Users can specify which Deep Learning optimization they want to conduct using <code class="docutils literal notranslate"><span class="pre">--opt</span></code> argument. The list of supported Deep Learning optimization features can be found <a class="reference external" href="SupportMatrix.html">here</a>.</p>
+<p>Note that if specifically optimizing with INT8 quantization by Intel® Neural Compressor, to choose a quantization approach (strategy), <code class="docutils literal notranslate"><span class="pre">--approach</span></code> argument can be specified with either <code class="docutils literal notranslate"><span class="pre">static</span></code>, <code class="docutils literal notranslate"><span class="pre">static_ipex</span></code> or <code class="docutils literal notranslate"><span class="pre">dynamic</span></code>. For example, to run INT8 static quantization by Intel® Neural Compressor:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>neural_coder<span class="w"> </span>--approach<span class="w"> </span>static<span class="w"> </span>run_glue.py<span class="w"> </span>--model_name_or_path<span class="w"> </span>bert-base-cased<span class="w"> </span>--task_name<span class="w"> </span>mrpc<span class="w"> </span>--do_eval<span class="w"> </span>--output_dir<span class="w"> </span>result
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8d9781b370> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

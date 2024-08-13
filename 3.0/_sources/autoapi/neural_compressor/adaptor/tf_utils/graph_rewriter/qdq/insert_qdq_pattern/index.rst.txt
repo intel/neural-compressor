@@ -1,0 +1,29 @@
+neural_compressor.adaptor.tf_utils.graph_rewriter.qdq.insert_qdq_pattern
+========================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.qdq.insert_qdq_pattern
+
+.. autoapi-nested-parse::
+
+   Insert QDQ pattern Graph Rewriter.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.qdq.insert_qdq_pattern.GenerateGraphWithQDQPattern
+
+
+Module Contents
+---------------
+
+.. py:class:: GenerateGraphWithQDQPattern(model, calibration_data, op_wise_config, fake_quant, fp32_ops, bf16_ops, quantized_nodes, device, performance_only, itex_mode, llm_weight_minmax)
+
+
+
+   Insert Q/DQ pairs before quantizable ops.
+
+

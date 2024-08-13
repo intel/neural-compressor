@@ -1,0 +1,37 @@
+neural_compressor.adaptor.ox_utils.operators.attention
+======================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators.attention
+
+.. autoapi-nested-parse::
+
+   Attention operator.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.attention.AttentionOperator
+   neural_compressor.adaptor.ox_utils.operators.attention.QAttentionOperator
+
+
+Module Contents
+---------------
+
+.. py:class:: AttentionOperator(onnx_quantizer, onnx_node)
+
+
+
+   Attention operator.
+
+
+.. py:class:: QAttentionOperator(onnx_node, children, initializers)
+
+
+
+   QAttention operator.
+
+

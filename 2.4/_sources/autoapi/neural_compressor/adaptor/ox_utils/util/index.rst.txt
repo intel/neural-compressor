@@ -1,0 +1,253 @@
+neural_compressor.adaptor.ox_utils.util
+=======================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.util
+
+.. autoapi-nested-parse::
+
+   Helper classes or functions for onnxrt adaptor.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.util.QuantType
+   neural_compressor.adaptor.ox_utils.util.ValueInfo
+   neural_compressor.adaptor.ox_utils.util.QuantizedValue
+   neural_compressor.adaptor.ox_utils.util.QuantizedInitializer
+   neural_compressor.adaptor.ox_utils.util.QuantizationMode
+   neural_compressor.adaptor.ox_utils.util.QuantizedValueType
+   neural_compressor.adaptor.ox_utils.util.QuantFormat
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.util.dtype_to_name
+   neural_compressor.adaptor.ox_utils.util.make_quant_node
+   neural_compressor.adaptor.ox_utils.util.make_dquant_node
+   neural_compressor.adaptor.ox_utils.util.is_B_transposed
+   neural_compressor.adaptor.ox_utils.util.split_shared_bias
+   neural_compressor.adaptor.ox_utils.util.float_to_float16
+   neural_compressor.adaptor.ox_utils.util.float_to_bfloat16
+   neural_compressor.adaptor.ox_utils.util.cast_tensor
+   neural_compressor.adaptor.ox_utils.util.remove_init_from_model_input
+   neural_compressor.adaptor.ox_utils.util.collate_preds
+   neural_compressor.adaptor.ox_utils.util.quantize_data_with_scale_zero
+   neural_compressor.adaptor.ox_utils.util.calculate_scale_zp
+   neural_compressor.adaptor.ox_utils.util.quantize_data
+   neural_compressor.adaptor.ox_utils.util.quantize_data_per_channel
+   neural_compressor.adaptor.ox_utils.util.dequantize_data_with_scale_zero
+   neural_compressor.adaptor.ox_utils.util.dequantize_data
+   neural_compressor.adaptor.ox_utils.util.quantize_nparray
+   neural_compressor.adaptor.ox_utils.util.attribute_to_kwarg
+   neural_compressor.adaptor.ox_utils.util.find_by_name
+   neural_compressor.adaptor.ox_utils.util.trt_env_setup
+   neural_compressor.adaptor.ox_utils.util.to_numpy
+   neural_compressor.adaptor.ox_utils.util.infer_shapes
+
+
+Module Contents
+---------------
+
+.. py:function:: dtype_to_name(dtype_mapping, dtype)
+
+   Map data type and its string representation.
+
+
+.. py:class:: QuantType
+
+
+
+   Represent QuantType value.
+
+
+.. py:function:: make_quant_node(name, inputs, outputs)
+
+   Make a QuantizeLinear node.
+
+
+.. py:function:: make_dquant_node(name, inputs, outputs, axis=None)
+
+   Make a DequantizeLinear node.
+
+
+.. py:function:: is_B_transposed(node)
+
+   Whether inuput B is transposed.
+
+
+.. py:function:: split_shared_bias(model)
+
+   Split shared tensor.
+
+
+.. py:function:: float_to_float16(tensor)
+
+   Convert float to float16.
+
+
+.. py:function:: float_to_bfloat16(tensor)
+
+   Convert float to bfloat16.
+
+
+.. py:function:: cast_tensor(tensor, dtype, is_large_model=False)
+
+   Convert tensor float to target dtype.
+
+   :param tensor: TensorProto object
+   :type tensor: TensorProto
+   :param dtype: target data type
+   :type dtype: int
+   :param is_large_model: if is large model, make tensor with raw=True
+   :type is_large_model: bool
+
+
+.. py:function:: remove_init_from_model_input(model)
+
+   Remove initializer from model input.
+
+
+.. py:function:: collate_preds(results)
+
+   Collect model outputs.
+
+
+.. py:function:: quantize_data_with_scale_zero(data, qType, scheme, scale, zero_point)
+
+   Quantize data with scale and zero point.
+
+   To pack weights, we compute a linear transformation
+       - when data type == uint8 mode, from [rmin, rmax] -> [0, 2^{b-1}] and
+       - when data type == int8, from [-m , m] -> [-(2^{b-1}-1), 2^{b-1}-1] where
+           m = max(abs(rmin), abs(rmax))
+
+   :param data: data to quantize
+   :type data: np.array
+   :param qType: data type to quantize to. Supported types UINT8 and INT8
+   :type qType: int
+   :param scheme: sym or asym quantization.
+   :type scheme: string
+   :param scale: computed scale of quantized data
+   :type scale: float
+   :param zero_point: computed zero point of quantized data
+   :type zero_point: uint8 or int8
+
+
+.. py:function:: calculate_scale_zp(rmin, rmax, quantize_range, qType, scheme)
+
+   Calculate scale and zero point.
+
+
+.. py:function:: quantize_data(data, quantize_range, qType, scheme)
+
+   Quantize data.
+
+   To pack weights, we compute a linear transformation
+       - when data type == uint8 mode, from [rmin, rmax] -> [0, 2^{b-1}] and
+       - when data type == int8, from [-m , m] -> [-(2^{b-1}-1), 2^{b-1}-1] where
+           m = max(abs(rmin), abs(rmax))
+   and add necessary intermediate nodes to transform quantized weight to full weight
+   using the equation r = S(q-z), where
+       r: real original value
+       q: quantized value
+       S: scale
+       z: zero point
+
+   :param data: data to quantize
+   :type data: array
+   :param quantize_range: list of data to weight pack.
+   :type quantize_range: list
+   :param qType: data type to quantize to. Supported types UINT8 and INT8
+   :type qType: int
+   :param scheme: sym or asym quantization.
+   :type scheme: string
+
+
+.. py:function:: quantize_data_per_channel(data, axis, quantize_range, qType, scheme)
+
+   Quantize tensor per-channel.
+
+
+.. py:function:: dequantize_data_with_scale_zero(tensor_value, scale_value, zo_value)
+
+   Dequantize tensor with scale and zero point.
+
+
+.. py:function:: dequantize_data(tensor_value, scale_value, zo_value, axis=0)
+
+   Dequantize tensor.
+
+
+.. py:class:: ValueInfo(tensor_name, dtype, new_dtype)
+
+   Represents a casted tensor info.
+
+
+.. py:class:: QuantizedValue(name, new_quantized_name, scale_name, zero_point_name, quantized_value_type, axis=None, qType=QuantType.QUInt8)
+
+   Represents a linearly quantized value (input/output/initializer).
+
+
+.. py:class:: QuantizedInitializer(name, initializer, rmins, rmaxs, zero_points, scales, data=[], quantized_data=[], axis=None, qType=QuantType.QUInt8)
+
+   Represents a linearly quantized weight input from ONNX operators.
+
+
+.. py:class:: QuantizationMode
+
+
+
+   Represent QuantizationMode value.
+
+
+.. py:class:: QuantizedValueType
+
+
+
+   Represent QuantizedValueType value.
+
+
+.. py:class:: QuantFormat
+
+
+
+   Represent QuantFormat value.
+
+
+.. py:function:: quantize_nparray(qtype, arr, scale, zero_point, low=None, high=None)
+
+   Quantize numpy array.
+
+
+.. py:function:: attribute_to_kwarg(attribute)
+
+   Convert attribute to kwarg format for use with onnx.helper.make_node.
+
+
+.. py:function:: find_by_name(name, item_list)
+
+   Helper function to find item by name in a list.
+
+
+.. py:function:: trt_env_setup(model)
+
+   Set environment variable for Tensorrt Execution Provider.
+
+
+.. py:function:: to_numpy(data)
+
+   Convert to numpy ndarrays.
+
+
+.. py:function:: infer_shapes(in_mp, int_max=2**31 - 1, auto_merge=False, guess_output_rank=False, verbose=0, base_dir='')
+
+   Symbolic shape inference.
+
+

@@ -1,0 +1,37 @@
+neural_compressor.adaptor.ox_utils.operators.embed_layernorm
+============================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators.embed_layernorm
+
+.. autoapi-nested-parse::
+
+   EmbedLayerNormalization Operator.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.embed_layernorm.EmbedLayerNormalizationOperator
+   neural_compressor.adaptor.ox_utils.operators.embed_layernorm.QEmbedLayerNormalizationOperator
+
+
+Module Contents
+---------------
+
+.. py:class:: EmbedLayerNormalizationOperator(onnx_quantizer, onnx_node)
+
+
+
+   EmbedLayerNormalization Operator.
+
+
+.. py:class:: QEmbedLayerNormalizationOperator(onnx_node, children, initializers)
+
+
+
+   QEmbedLayerNormalization Operator.
+
+

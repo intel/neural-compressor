@@ -1,0 +1,60 @@
+neural_compressor.experimental.pruning_recipes.patterns.pattern
+===============================================================
+
+.. py:module:: neural_compressor.experimental.pruning_recipes.patterns.pattern
+
+.. autoapi-nested-parse::
+
+   Pattern classes.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.experimental.pruning_recipes.patterns.pattern.PATTERNS
+   neural_compressor.experimental.pruning_recipes.patterns.pattern.PatternBase
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.experimental.pruning_recipes.patterns.pattern.pattern_registry
+
+
+Module Contents
+---------------
+
+.. py:function:: pattern_registry(pattern_type)
+
+   Class decorator used to register all Pruning Pattern subclasses.
+
+   :param cls: The class of register.
+   :type cls: class
+   :param pattern_type: The pattern registration name
+   :type pattern_type: str
+
+   :returns: The class of register.
+   :rtype: cls
+
+
+.. py:class:: PATTERNS
+
+
+
+   Class that contain all registered pattern types.
+
+   .. attribute:: patterns
+
+      A dict which stores registered Pruning Pattern subclasses.
+
+
+.. py:class:: PatternBase(mask_shape, is_contiguous=True)
+
+   Base class of pruning pattern.
+
+

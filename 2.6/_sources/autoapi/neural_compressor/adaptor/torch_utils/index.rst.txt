@@ -1,0 +1,34 @@
+neural_compressor.adaptor.torch_utils
+=====================================
+
+.. py:module:: neural_compressor.adaptor.torch_utils
+
+.. autoapi-nested-parse::
+
+   Torch utils module.
+
+
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/adaptor/torch_utils/layer_wise_quant/index
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/adaptor/torch_utils/bf16_convert/index
+   /autoapi/neural_compressor/adaptor/torch_utils/hawq_metric/index
+   /autoapi/neural_compressor/adaptor/torch_utils/model_wrapper/index
+   /autoapi/neural_compressor/adaptor/torch_utils/pattern_detector/index
+   /autoapi/neural_compressor/adaptor/torch_utils/symbolic_trace/index
+   /autoapi/neural_compressor/adaptor/torch_utils/util/index
+
+

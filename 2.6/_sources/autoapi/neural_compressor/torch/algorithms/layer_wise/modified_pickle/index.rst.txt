@@ -1,0 +1,72 @@
+neural_compressor.torch.algorithms.layer_wise.modified_pickle
+=============================================================
+
+.. py:module:: neural_compressor.torch.algorithms.layer_wise.modified_pickle
+
+.. autoapi-nested-parse::
+
+   Create portable serialized representations of Python objects.
+
+   See module copyreg for a mechanism for registering custom picklers.
+   See module pickletools source for extensive comments.
+
+   Classes:
+
+       Pickler
+       Unpickler
+
+   Functions:
+
+       dump(object, file)
+       dumps(object) -> string
+       load(file) -> object
+       loads(string) -> object
+
+   Misc variables:
+
+       __version__
+       format_version
+       compatible_formats
+
+
+
+Exceptions
+----------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.layer_wise.modified_pickle.PickleError
+   neural_compressor.torch.algorithms.layer_wise.modified_pickle.PicklingError
+   neural_compressor.torch.algorithms.layer_wise.modified_pickle.UnpicklingError
+
+
+Module Contents
+---------------
+
+.. py:exception:: PickleError
+
+
+
+   A common base class for the other pickling exceptions.
+
+
+.. py:exception:: PicklingError
+
+
+
+   This exception is raised when an unpicklable object is passed to the
+   dump() method.
+
+
+.. py:exception:: UnpicklingError
+
+
+
+   This exception is raised when there is a problem unpickling an object,
+   such as a security violation.
+
+   Note that other exceptions may also be raised during unpickling, including
+   (but not necessarily limited to) AttributeError, EOFError, ImportError,
+   and IndexError.
+
+

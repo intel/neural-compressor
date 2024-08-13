@@ -1,0 +1,43 @@
+neural_compressor.torch.algorithms.static_quant.save_load
+=========================================================
+
+.. py:module:: neural_compressor.torch.algorithms.static_quant.save_load
+
+.. autoapi-nested-parse::
+
+   Save and load the quantized model.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.static_quant.save_load.save
+   neural_compressor.torch.algorithms.static_quant.save_load.load
+
+
+Module Contents
+---------------
+
+.. py:function:: save(model, output_dir='./saved_results')
+
+   Saves the quantized model to the output path.
+
+   :param model: raw fp32 model or prepared model.
+   :type model: RecursiveScriptModule
+   :param output_dir: output path to save the quantized model.
+   :type output_dir: str, optional
+
+
+.. py:function:: load(output_dir='./saved_results')
+
+   Loads the quantized model from the output path.
+
+   :param output_dir: output path to load the quantized model.
+   :type output_dir: str, optional
+
+   :returns: A quantized model.
+
+

@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.data.datasets.bert_dataset &mdash; Intel® Neural Compressor 3.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">3.0▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.data.datasets.bert_dataset</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/autoapi/neural_compressor/data/datasets/bert_dataset/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.data.datasets.bert_dataset">
+<span id="neural-compressor-data-datasets-bert-dataset"></span><h1>neural_compressor.data.datasets.bert_dataset<a class="headerlink" href="#module-neural_compressor.data.datasets.bert_dataset" title="Link to this heading"></a></h1>
+<p>Built-in BERT datasets class for multiple framework backends.</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.bert_dataset.PytorchBertDataset" title="neural_compressor.data.datasets.bert_dataset.PytorchBertDataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PytorchBertDataset</span></code></a></p></td>
+<td><p>PyTorch dataset used for model Bert.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.bert_dataset.ONNXRTBertDataset" title="neural_compressor.data.datasets.bert_dataset.ONNXRTBertDataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ONNXRTBertDataset</span></code></a></p></td>
+<td><p>ONNXRT dataset used for model Bert.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.bert_dataset.InputFeatures" title="neural_compressor.data.datasets.bert_dataset.InputFeatures"><code class="xref py py-obj docutils literal notranslate"><span class="pre">InputFeatures</span></code></a></p></td>
+<td><p>Single set of features of data.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.bert_dataset.TensorflowBertDataset" title="neural_compressor.data.datasets.bert_dataset.TensorflowBertDataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowBertDataset</span></code></a></p></td>
+<td><p>Tensorflow dataset used for model Bert.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.bert_dataset.ParseDecodeBert" title="neural_compressor.data.datasets.bert_dataset.ParseDecodeBert"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ParseDecodeBert</span></code></a></p></td>
+<td><p>Helper function for TensorflowModelZooBertDataset.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.bert_dataset.TensorflowModelZooBertDataset" title="neural_compressor.data.datasets.bert_dataset.TensorflowModelZooBertDataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowModelZooBertDataset</span></code></a></p></td>
+<td><p>Tensorflow dataset for three-input Bert in tf record format.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.bert_dataset.load_and_cache_examples" title="neural_compressor.data.datasets.bert_dataset.load_and_cache_examples"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_and_cache_examples</span></code></a>(data_dir, model_name_or_path, ...)</p></td>
+<td><p>Load and cache the examples.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.bert_dataset.convert_examples_to_features" title="neural_compressor.data.datasets.bert_dataset.convert_examples_to_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">convert_examples_to_features</span></code></a>(examples, tokenizer[, ...])</p></td>
+<td><p>Convert examples to features.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.bert_dataset.PytorchBertDataset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.bert_dataset.</span></span><span class="sig-name descname"><span class="pre">PytorchBertDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bert'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/bert_dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.bert_dataset.PytorchBertDataset" title="Link to this definition"></a></dt>
+<dd><p>PyTorch dataset used for model Bert.</p>
+<blockquote>
+<div><p>This Dataset is to construct from the Bert TensorDataset and not a full implementation
+from yaml config. The original repo link is: <a class="reference external" href="https://github.com/huggingface/transformers">https://github.com/huggingface/transformers</a>.
+When you want use this Dataset, you should add it before you initialize your DataLoader.
+(TODO) add end to end support for easy config by yaml by adding the method of
+load examples and process method.</p>
+</div></blockquote>
+<dl>
+<dt>Args: dataset (list): list of data.</dt><dd><p>task (str): the task of the model, support “classifier”, “squad”.
+model_type (str, default=’bert’): model type, support ‘distilbert’, ‘bert’,</p>
+<blockquote>
+<div><p>‘xlnet’, ‘xlm’.</p>
+</div></blockquote>
+<p>transform (transform object, default=None):  transform to process input data.
+filter (Filter objects, default=None): filter out examples according</p>
+<blockquote>
+<div><p>to specific conditions.</p>
+</div></blockquote>
+</dd>
+</dl>
+<p>Examples:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dataset</span> <span class="o">=</span> <span class="p">[[</span>
+   <span class="p">[</span><span class="mi">101</span><span class="p">,</span><span class="mi">2043</span><span class="p">,</span><span class="mi">2001</span><span class="p">],</span>
+   <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
+   <span class="p">[[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span>
+    <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span>
+    <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]],</span>
+   <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
+   <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
+   <span class="p">[[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span>
+    <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span>
+    <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]]</span>
+<span class="p">]]</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">PytorchBertDataset</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span> <span class="n">task</span><span class="o">=</span><span class="s1">&#39;classifier&#39;</span><span class="p">,</span> <span class="n">model_type</span><span class="o">=</span><span class="s1">&#39;bert&#39;</span><span class="p">,</span>
+                             <span class="n">transform</span><span class="o">=</span><span class="n">preprocess</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.bert_dataset.ONNXRTBertDataset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.bert_dataset.</span></span><span class="sig-name descname"><span class="pre">ONNXRTBertDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_name_or_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_seq_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_lower_case</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mrpc'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bert'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/bert_dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.bert_dataset.ONNXRTBertDataset" title="Link to this definition"></a></dt>
+<dd><p>ONNXRT dataset used for model Bert.</p>
+<dl>
+<dt>Args: data_dir (str): The input data dir.</dt><dd><dl class="simple">
+<dt>model_name_or_path (str): Path to pre-trained student model or shortcut name,</dt><dd><p>selected in the list:</p>
+</dd>
+<dt>max_seq_length (int, default=128): The maximum length after tokenization.</dt><dd><p>Sequences longer than this will be truncated,
+sequences shorter will be padded.</p>
+</dd>
+</dl>
+<p>do_lower_case (bool, default=True): Whether to lowercase the input when tokenizing.
+task (str, default=mrpc): The name of the task to fine-tune.</p>
+<blockquote>
+<div><p>Choices include mrpc, qqp, qnli, rte,
+sts-b, cola, mnli, wnli.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>model_type (str, default=’bert’): model type, support ‘distilbert’, ‘bert’,</dt><dd><p>‘mobilebert’, ‘roberta’.</p>
+</dd>
+</dl>
+<p>dynamic_length (bool, default=False): Whether to use fixed sequence length.
+evaluate (bool, default=True): Whether do evaluation or training.
+transform (transform object, default=None):  transform to process input data.
+filter (Filter objects, default=None): filter out examples according</p>
+<blockquote>
+<div><p>to specific conditions.</p>
+</div></blockquote>
+</dd>
+</dl>
+<p>Examples:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dataset</span> <span class="o">=</span> <span class="n">ONNXRTBertDataset</span><span class="p">(</span><span class="n">data_dir</span><span class="o">=</span><span class="n">data_dir</span><span class="p">,</span> <span class="n">model_name_or_path</span><span class="o">=</span><span class="s1">&#39;bert-base-uncase&#39;</span><span class="p">,</span>
+                             <span class="n">transform</span><span class="o">=</span><span class="n">preprocess</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="nb">filter</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.bert_dataset.load_and_cache_examples">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.bert_dataset.</span></span><span class="sig-name descname"><span class="pre">load_and_cache_examples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_name_or_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_seq_length</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tokenizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluate</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/bert_dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.bert_dataset.load_and_cache_examples" title="Link to this definition"></a></dt>
+<dd><p>Load and cache the examples.</p>
+<p>Helper Function for ONNXRTBertDataset.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.bert_dataset.convert_examples_to_features">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.bert_dataset.</span></span><span class="sig-name descname"><span class="pre">convert_examples_to_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">examples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tokenizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'classification'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pad_token</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pad_token_segment_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask_padding_with_zero</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/bert_dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.bert_dataset.convert_examples_to_features" title="Link to this definition"></a></dt>
+<dd><p>Convert examples to features.</p>
+<p>Helper function for load_and_cache_examples.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.bert_dataset.InputFeatures">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.bert_dataset.</span></span><span class="sig-name descname"><span class="pre">InputFeatures</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/bert_dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.bert_dataset.InputFeatures" title="Link to this definition"></a></dt>
+<dd><p>Single set of features of data.</p>
+<p>Property names are the same names as the corresponding inputs to a model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_ids</strong> – Indices of input sequence tokens in the vocabulary.</p></li>
+<li><p><strong>attention_mask</strong> – Mask to avoid performing attention on padding token indices.
+Mask values selected in <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code>: Usually <code class="docutils literal notranslate"><span class="pre">1</span></code> for tokens that are NOT MASKED,
+<code class="docutils literal notranslate"><span class="pre">0</span></code> for MASKED (padded) tokens.</p></li>
+<li><p><strong>token_type_ids</strong> – (Optional) Segment token indices to indicate first and second
+portions of the inputs. Only some models use them.</p></li>
+<li><p><strong>label</strong> – (Optional) Label corresponding to the input. Int for classification problems,
+float for regression problems.</p></li>
+<li><p><strong>seq_length</strong> – (Optional) The length of input sequence before padding.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.bert_dataset.TensorflowBertDataset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.bert_dataset.</span></span><span class="sig-name descname"><span class="pre">TensorflowBertDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'squad'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bert'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/bert_dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.bert_dataset.TensorflowBertDataset" title="Link to this definition"></a></dt>
+<dd><p>Tensorflow dataset used for model Bert.</p>
+<p>This dataset supports tfrecord data, please refer to Guide to create tfrecord file first.</p>
+<dl>
+<dt>Args: root (str): path of dataset.</dt><dd><p>label_file (str): path of label file.
+task (str, default=’squad’): task type of model.
+model_type (str, default=’bert’): model type, support ‘bert’.
+transform (transform object, default=None):  transform to process input data.
+filter (Filter objects, default=None): filter out examples according</p>
+<blockquote>
+<div><p>to specific conditions</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.bert_dataset.ParseDecodeBert">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.bert_dataset.</span></span><span class="sig-name descname"><span class="pre">ParseDecodeBert</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/bert_dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.bert_dataset.ParseDecodeBert" title="Link to this definition"></a></dt>
+<dd><p>Helper function for TensorflowModelZooBertDataset.</p>
+<p>Parse the features from sample.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.bert_dataset.TensorflowModelZooBertDataset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.bert_dataset.</span></span><span class="sig-name descname"><span class="pre">TensorflowModelZooBertDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'squad'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bert'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_cores</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">28</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/bert_dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.bert_dataset.TensorflowModelZooBertDataset" title="Link to this definition"></a></dt>
+<dd><p>Tensorflow dataset for three-input Bert in tf record format.</p>
+<p>Root is a full path to tfrecord file, which contains the file name.
+Please use Resize transform when batch_size &gt; 1
+Args: root (str): path of dataset.</p>
+<blockquote>
+<div><p>label_file (str): path of label file.
+task (str, default=’squad’): task type of model.
+model_type (str, default=’bert’): model type, support ‘bert’.
+transform (transform object, default=None):  transform to process input data.
+filter (Filter objects, default=None): filter out examples according.</p>
+</div></blockquote>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fef7b624cd0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

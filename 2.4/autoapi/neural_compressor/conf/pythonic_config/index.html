@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.conf.pythonic_config &mdash; Intel® Neural Compressor 2.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../versions.html">2.4▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.conf.pythonic_config</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/neural_compressor/conf/pythonic_config/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.conf.pythonic_config">
+<span id="neural-compressor-conf-pythonic-config"></span><h1>neural_compressor.conf.pythonic_config<a class="headerlink" href="#module-neural_compressor.conf.pythonic_config" title="Link to this heading"></a></h1>
+<p>Configs for Neural Compressor 1.x.</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.conf.pythonic_config.Options" title="neural_compressor.conf.pythonic_config.Options"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Options</span></code></a></p></td>
+<td><p>Option Class for configs.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.conf.pythonic_config.AccuracyCriterion" title="neural_compressor.conf.pythonic_config.AccuracyCriterion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AccuracyCriterion</span></code></a></p></td>
+<td><p>Class of Accuracy Criterion.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.conf.pythonic_config.BenchmarkConfig" title="neural_compressor.conf.pythonic_config.BenchmarkConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BenchmarkConfig</span></code></a></p></td>
+<td><p>Config Class for Benchmark.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.conf.pythonic_config.QuantizationConfig" title="neural_compressor.conf.pythonic_config.QuantizationConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QuantizationConfig</span></code></a></p></td>
+<td><p>Basic class for quantization config. Inherited by PostTrainingQuantConfig and QuantizationAwareTrainingConfig.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.conf.pythonic_config.WeightPruningConfig" title="neural_compressor.conf.pythonic_config.WeightPruningConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WeightPruningConfig</span></code></a></p></td>
+<td><p>Config Class for Pruning. Define a single or a sequence of pruning configs.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.conf.pythonic_config.KnowledgeDistillationLossConfig" title="neural_compressor.conf.pythonic_config.KnowledgeDistillationLossConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">KnowledgeDistillationLossConfig</span></code></a></p></td>
+<td><p>Config Class for Knowledge Distillation Loss.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.conf.pythonic_config.DistillationConfig" title="neural_compressor.conf.pythonic_config.DistillationConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DistillationConfig</span></code></a></p></td>
+<td><p>Config of distillation.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.conf.pythonic_config.Options">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.conf.pythonic_config.</span></span><span class="sig-name descname"><span class="pre">Options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">random_seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1978</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workspace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">default_workspace</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resume_from</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tensorboard</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/conf/pythonic_config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.conf.pythonic_config.Options" title="Link to this definition"></a></dt>
+<dd><p>Option Class for configs.</p>
+<p>This class is used for configuring global variables. The global variable options is created with this class.
+If you want to change global variables, you should use functions from utils.utility.py:</p>
+<blockquote>
+<div><p>set_random_seed(seed: int)
+set_workspace(workspace: str)
+set_resume_from(resume_from: str)
+set_tensorboard(tensorboard: bool)</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>random_seed</strong> (<em>int</em>) – Random seed used in neural compressor.
+Default value is 1978.</p></li>
+<li><p><strong>workspace</strong> (<em>str</em>) – <p>The directory where intermediate files and tuning history file are stored.
+Default value is:</p>
+<blockquote>
+<div><p>’./nc_workspace/{}/’.format(datetime.datetime.now().strftime(‘%Y-%m-%d_%H-%M-%S’)).</p>
+</div></blockquote>
+</p></li>
+<li><p><strong>resume_from</strong> (<em>str</em>) – <p>The directory you want to resume tuning history file from.
+The tuning history was automatically saved in the workspace directory</p>
+<blockquote>
+<div><p>during the last tune process.</p>
+</div></blockquote>
+<p>Default value is None.</p>
+</p></li>
+<li><p><strong>tensorboard</strong> (<em>bool</em>) – <dl class="simple">
+<dt>This flag indicates whether to save the weights of the model and the inputs of each layer</dt><dd><p>for visual display.</p>
+</dd>
+</dl>
+<p>Default value is False.</p>
+</p></li>
+</ul>
+</dd>
+</dl>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">set_random_seed</span><span class="p">,</span> <span class="n">set_workspace</span><span class="p">,</span> <span class="n">set_resume_from</span><span class="p">,</span> <span class="n">set_tensorboard</span>
+<span class="n">set_random_seed</span><span class="p">(</span><span class="mi">2022</span><span class="p">)</span>
+<span class="n">set_workspace</span><span class="p">(</span><span class="s2">&quot;workspace_path&quot;</span><span class="p">)</span>
+<span class="n">set_resume_from</span><span class="p">(</span><span class="s2">&quot;workspace_path&quot;</span><span class="p">)</span>
+<span class="n">set_tensorboard</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.conf.pythonic_config.AccuracyCriterion">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.conf.pythonic_config.</span></span><span class="sig-name descname"><span class="pre">AccuracyCriterion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">higher_is_better</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'relative'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerable_loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/conf/pythonic_config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.conf.pythonic_config.AccuracyCriterion" title="Link to this definition"></a></dt>
+<dd><p>Class of Accuracy Criterion.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>higher_is_better</strong> (<em>bool</em><em>, </em><em>optional</em>) – This flag indicates whether the metric higher is the better.
+Default value is True.</p></li>
+<li><p><strong>criterion</strong> – (str, optional): This flag indicates whether the metric loss is ‘relative’ or ‘absolute’.
+Default value is ‘relative’.</p></li>
+<li><p><strong>tolerable_loss</strong> (<em>float</em><em>, </em><em>optional</em>) – This float indicates how much metric loss we can accept.
+Default value is 0.01.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">AccuracyCriterion</span>
+
+<span class="n">accuracy_criterion</span> <span class="o">=</span> <span class="n">AccuracyCriterion</span><span class="p">(</span>
+    <span class="n">higher_is_better</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># optional.</span>
+    <span class="n">criterion</span><span class="o">=</span><span class="s1">&#39;relative&#39;</span><span class="p">,</span>  <span class="c1"># optional. Available values are &#39;relative&#39; and &#39;absolute&#39;.</span>
+    <span class="n">tolerable_loss</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>  <span class="c1"># optional.</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.conf.pythonic_config.BenchmarkConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.conf.pythonic_config.</span></span><span class="sig-name descname"><span class="pre">BenchmarkConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warmup</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cores_per_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_of_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inter_num_of_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intra_num_of_threads</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diagnosis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/conf/pythonic_config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.conf.pythonic_config.BenchmarkConfig" title="Link to this definition"></a></dt>
+<dd><p>Config Class for Benchmark.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inputs</strong> (<em>list</em><em>, </em><em>optional</em>) – A list of strings containing the inputs of model. Default is an empty list.</p></li>
+<li><p><strong>outputs</strong> (<em>list</em><em>, </em><em>optional</em>) – A list of strings containing the outputs of model. Default is an empty list.</p></li>
+<li><p><strong>backend</strong> (<em>str</em><em>, </em><em>optional</em>) – Backend name for model execution. Supported values include: ‘default’, ‘itex’,
+‘ipex’, ‘onnxrt_trt_ep’, ‘onnxrt_cuda_ep’. Default value is ‘default’.</p></li>
+<li><p><strong>warmup</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of iterations to perform warmup before running performance tests.
+Default value is 5.</p></li>
+<li><p><strong>iteration</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of iterations to run performance tests. Default is -1.</p></li>
+<li><p><strong>cores_per_instance</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of CPU cores to use per instance. Default value is None.</p></li>
+<li><p><strong>num_of_instance</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of instances to use for performance testing.
+Default value is None.</p></li>
+<li><p><strong>inter_num_of_threads</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of threads to use for inter-thread operations.
+Default value is None.</p></li>
+<li><p><strong>intra_num_of_threads</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of threads to use for intra-thread operations.
+Default value is None.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run benchmark according to config</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.benchmark</span> <span class="kn">import</span> <span class="n">fit</span>
+
+<span class="n">conf</span> <span class="o">=</span> <span class="n">BenchmarkConfig</span><span class="p">(</span><span class="n">iteration</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">cores_per_instance</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">num_of_instance</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span>
+<span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s1">&#39;./int8.pb&#39;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">conf</span><span class="p">,</span> <span class="n">b_dataloader</span><span class="o">=</span><span class="n">eval_dataloader</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.conf.pythonic_config.QuantizationConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.conf.pythonic_config.</span></span><span class="sig-name descname"><span class="pre">QuantizationConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">approach</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'post_training_static_quant'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calibration_sampling_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[100]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_type_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_name_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strategy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'basic'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strategy_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'performance'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_trials</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">performance_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduce_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_bf16</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">accuracy_criterion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diagnosis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/conf/pythonic_config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.conf.pythonic_config.QuantizationConfig" title="Link to this definition"></a></dt>
+<dd><p>Basic class for quantization config. Inherited by PostTrainingQuantConfig and QuantizationAwareTrainingConfig.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inputs</strong> – Inputs of model, only required in tensorflow.</p></li>
+<li><p><strong>outputs</strong> – Outputs of model, only required in tensorflow.</p></li>
+<li><p><strong>backend</strong> – Backend for model execution. Support ‘default’, ‘itex’, ‘ipex’, ‘onnxrt_trt_ep’, ‘onnxrt_cuda_ep’</p></li>
+<li><p><strong>domain</strong> – Model domain. Support ‘auto’, ‘cv’, ‘object_detection’, ‘nlp’ and ‘recommendation_system’.
+Adaptor will use specific quantization settings for different domains automatically, and
+explicitly specified quantization settings will override the automatic setting.
+If users set domain as auto, automatic detection for domain will be executed.</p></li>
+<li><p><strong>recipes</strong> – <p>Recipes for quantiztaion, support list is as below.
+‘smooth_quant’: whether do smooth quant
+‘smooth_quant_args’: parameters for smooth_quant
+‘fast_bias_correction’: whether do fast bias correction
+‘weight_correction’: whether do weight correction
+‘gemm_to_matmul’: whether convert gemm to matmul and add, only valid for onnx models
+‘graph_optimization_level’: support ‘DISABLE_ALL’, ‘ENABLE_BASIC’, ‘ENABLE_EXTENDED’, ‘ENABLE_ALL’</p>
+<blockquote>
+<div><p>only valid for onnx models</p>
+</div></blockquote>
+<p>’first_conv_or_matmul_quantization’: whether quantize the first conv or matmul
+‘last_conv_or_matmul_quantization’: whether quantize the last conv or matmul
+‘pre_post_process_quantization’: whether quantize the ops in preprocess and postprocess
+‘add_qdq_pair_to_weight’: whether add QDQ pair for weights, only valid for onnxrt_trt_ep
+‘optypes_to_exclude_output_quant’: don’t quantize output of specified optypes
+‘dedicated_qdq_pair’: whether dedicate QDQ pair, only valid for onnxrt_trt_ep</p>
+</p></li>
+<li><p><strong>quant_format</strong> – Support ‘default’, ‘QDQ’ and ‘QOperator’, only required in ONNXRuntime.</p></li>
+<li><p><strong>device</strong> – Support ‘cpu’ and ‘gpu’.</p></li>
+<li><p><strong>calibration_sampling_size</strong> – Number of calibration sample.</p></li>
+<li><p><strong>op_type_dict</strong> – <p>Tuning constraints on optype-wise  for advance user to reduce tuning space.
+User can specify the quantization config by op type:
+example:
+{</p>
+<blockquote>
+<div><dl>
+<dt>’Conv’: {</dt><dd><dl class="simple">
+<dt>‘weight’: {</dt><dd><p>‘dtype’: [‘fp32’]</p>
+</dd>
+</dl>
+<p>},
+‘activation’: {</p>
+<blockquote>
+<div><p>’dtype’: [‘fp32’]</p>
+</div></blockquote>
+<p>}</p>
+</dd>
+</dl>
+<p>}</p>
+</div></blockquote>
+<p>}</p>
+</p></li>
+<li><p><strong>op_name_dict</strong> – <p>Tuning constraints on op-wise for advance user to reduce tuning space.
+User can specify the quantization config by op name:
+example:
+{</p>
+<blockquote>
+<div><dl>
+<dt>”layer1.0.conv1”: {</dt><dd><dl class="simple">
+<dt>“activation”: {</dt><dd><p>“dtype”: [“fp32”]</p>
+</dd>
+</dl>
+<p>},
+“weight”: {</p>
+<blockquote>
+<div><p>”dtype”: [“fp32”]</p>
+</div></blockquote>
+<p>}</p>
+</dd>
+</dl>
+<p>},</p>
+</div></blockquote>
+<p>}</p>
+</p></li>
+<li><p><strong>strategy</strong> – Strategy name used in tuning, Please refer to docs/source/tuning_strategies.md.</p></li>
+<li><p><strong>strategy_kwargs</strong> – Parameters for strategy, Please refer to docs/source/tuning_strategies.md.</p></li>
+<li><p><strong>objective</strong> – Objective with accuracy constraint guaranteed, support ‘performance’, ‘modelsize’, ‘footprint’.
+Please refer to docs/source/objective.md.
+Default value is ‘performance’.</p></li>
+<li><p><strong>timeout</strong> – Tuning timeout (seconds). default value is 0 which means early stop</p></li>
+<li><p><strong>max_trials</strong> – Max tune times. default value is 100. Combine with timeout field to decide when to exit</p></li>
+<li><p><strong>performance_only</strong> – Whether do evaluation</p></li>
+<li><p><strong>reduce_range</strong> – Whether use 7 bit to quantization.</p></li>
+<li><p><strong>example_inputs</strong> – Used to trace PyTorch model with torch.jit/torch.fx.</p></li>
+<li><p><strong>excluded_precisions</strong> – Precisions to be excluded, Default value is empty list.
+Neural compressor enable the mixed precision with fp32 + bf16 + int8 by default.
+If you want to disable bf16 data type, you can specify excluded_precisions = [‘bf16].</p></li>
+<li><p><strong>quant_level</strong> – Support auto, 0 and 1, 0 is conservative strategy, 1 is basic or user-specified
+strategy, auto (default) is the combination of 0 and 1.</p></li>
+<li><p><strong>accuracy_criterion</strong> – Accuracy constraint settings.</p></li>
+<li><p><strong>use_distributed_tuning</strong> – Whether use distributed tuning or not.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.conf.pythonic_config.WeightPruningConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.conf.pythonic_config.</span></span><span class="sig-name descname"><span class="pre">WeightPruningConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pruning_configs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[{}]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_sparsity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.9</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pruning_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'snip_momentum'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'4x1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excluded_op_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pruning_scope</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'global'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pruning_frequency</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_sparsity_ratio_per_op</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_sparsity_ratio_per_op</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.98</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sparsity_decay_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'exp'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pruning_op_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['Conv',</span> <span class="pre">'Linear']</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/conf/pythonic_config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.conf.pythonic_config.WeightPruningConfig" title="Link to this definition"></a></dt>
+<dd><p>Config Class for Pruning. Define a single or a sequence of pruning configs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pruning_configs</strong> (<em>list</em><em> of </em><em>dicts</em><em>, </em><em>optional</em>) – Local pruning configs only valid to linked layers.
+Parameters defined out of pruning_configs are valid for all layers.
+By defining dicts in pruning_config, users can set different pruning strategies for corresponding layers.
+Defaults to [{}].</p></li>
+<li><p><strong>target_sparsity</strong> (<em>float</em><em>, </em><em>optional</em>) – Sparsity ratio the model can reach after pruning.
+Supports a float between 0 and 1.
+Default to 0.90.</p></li>
+<li><p><strong>pruning_type</strong> (<em>str</em><em>, </em><em>optional</em>) – <p>A string define the criteria for pruning.
+Supports “magnitude”, “snip”, “snip_momentum”,</p>
+<blockquote>
+<div><p>”magnitude_progressive”, “snip_progressive”, “snip_momentum_progressive”, “pattern_lock”</p>
+</div></blockquote>
+<p>Default to “snip_momentum”, which is the most feasible pruning criteria under most situations.</p>
+</p></li>
+<li><p><strong>pattern</strong> (<em>str</em><em>, </em><em>optional</em>) – Sparsity’s structure (or unstructure) types.
+Supports “NxM” (e.g “4x1”, “8x1”), “channelx1” &amp; “1xchannel”(channel-wise), “N:M” (e.g “2:4”).
+Default to “4x1”, which can be directly processed by our kernels in ITREX.</p></li>
+<li><p><strong>op_names</strong> (<em>list</em><em> of </em><em>str</em><em>, </em><em>optional</em>) – Layers contains some specific names to be included for pruning.
+Defaults to [].</p></li>
+<li><p><strong>excluded_op_names</strong> – Layers contains some specific names to be excluded for pruning.
+Defaults to [].</p></li>
+<li><p><strong>start_step</strong> (<em>int</em><em>, </em><em>optional</em>) – The step to start pruning.
+Supports an integer.
+Default to 0.</p></li>
+<li><p><strong>end_step</strong> – (int, optional): The step to end pruning.
+Supports an integer.
+Default to 0.</p></li>
+<li><p><strong>pruning_scope</strong> (<em>str</em><em>, </em><em>optional</em>) – Determine layers’ scores should be gather together to sort
+Supports “global” and “local”.
+Default: “global”, since this leads to less accuracy loss.</p></li>
+<li><p><strong>pruning_frequency</strong> – the frequency of pruning operation.
+Supports an integer.
+Default to 1.</p></li>
+<li><p><strong>min_sparsity_ratio_per_op</strong> (<em>float</em><em>, </em><em>optional</em>) – Minimum restriction for every layer’s sparsity.
+Supports a float between 0 and 1.
+Default to 0.0.</p></li>
+<li><p><strong>max_sparsity_ratio_per_op</strong> (<em>float</em><em>, </em><em>optional</em>) – Maximum restriction for every layer’s sparsity.
+Supports a float between 0 and 1.
+Default to 0.98.</p></li>
+<li><p><strong>sparsity_decay_type</strong> (<em>str</em><em>, </em><em>optional</em>) – how to schedule the sparsity increasing methods.
+Supports “exp”, “cube”, “cube”, “linear”.
+Default to “exp”.</p></li>
+<li><p><strong>pruning_op_types</strong> (<em>list</em><em> of </em><em>str</em>) – Operator types currently support for pruning.
+Supports [‘Conv’, ‘Linear’].
+Default to [‘Conv’, ‘Linear’].</p></li>
+</ul>
+</dd>
+</dl>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">WeightPruningConfig</span>
+<span class="n">local_configs</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;pruning_scope&quot;</span><span class="p">:</span> <span class="s2">&quot;local&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;target_sparsity&quot;</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">,</span>
+        <span class="s2">&quot;op_names&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;query&quot;</span><span class="p">,</span> <span class="s2">&quot;key&quot;</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;pattern&quot;</span><span class="p">:</span> <span class="s2">&quot;channelx1&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;pruning_type&quot;</span><span class="p">:</span> <span class="s2">&quot;snip_momentum_progressive&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;target_sparsity&quot;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span>
+        <span class="s2">&quot;op_names&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;self.attention.dense&quot;</span><span class="p">],</span>
+    <span class="p">}</span>
+<span class="p">]</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">WeightPruningConfig</span><span class="p">(</span>
+    <span class="n">pruning_configs</span> <span class="o">=</span> <span class="n">local_configs</span><span class="p">,</span>
+    <span class="n">target_sparsity</span><span class="o">=</span><span class="mf">0.8</span>
+<span class="p">)</span>
+<span class="n">prune</span> <span class="o">=</span> <span class="n">Pruning</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+<span class="n">prune</span><span class="o">.</span><span class="n">update_config</span><span class="p">(</span><span class="n">start_step</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">end_step</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">prune</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.conf.pythonic_config.KnowledgeDistillationLossConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.conf.pythonic_config.</span></span><span class="sig-name descname"><span class="pre">KnowledgeDistillationLossConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">temperature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['CE',</span> <span class="pre">'CE']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.5,</span> <span class="pre">0.5]</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/conf/pythonic_config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.conf.pythonic_config.KnowledgeDistillationLossConfig" title="Link to this definition"></a></dt>
+<dd><p>Config Class for Knowledge Distillation Loss.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>temperature</strong> (<em>float</em><em>, </em><em>optional</em>) – Hyperparameters that control the entropy
+of probability distributions. Defaults to 1.0.</p></li>
+<li><p><strong>loss_types</strong> (<em>list</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – loss types, should be a list of length 2.
+First item is the loss type for student model output and groundtruth label,
+second item is the loss type for student model output and teacher model output.
+Supported types for first item are “CE”, “MSE”.
+Supported types for second item are “CE”, “MSE”, “KL”.
+Defaults to [‘CE’, ‘CE’].</p></li>
+<li><p><strong>loss_weights</strong> (<em>list</em><em>[</em><em>float</em><em>]</em><em>, </em><em>optional</em>) – loss weights, should be a list of length 2 and sum to 1.0.
+First item is the weight multiplied to the loss of student model output and groundtruth label,
+second item is the weight multiplied to the loss of student model output and teacher model output.
+Defaults to [0.5, 0.5].</p></li>
+</ul>
+</dd>
+</dl>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">DistillationConfig</span><span class="p">,</span> <span class="n">KnowledgeDistillationLossConfig</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.training</span> <span class="kn">import</span> <span class="n">prepare_compression</span>
+
+<span class="n">criterion_conf</span> <span class="o">=</span> <span class="n">KnowledgeDistillationLossConfig</span><span class="p">()</span>
+<span class="n">d_conf</span> <span class="o">=</span> <span class="n">DistillationConfig</span><span class="p">(</span><span class="n">teacher_model</span><span class="o">=</span><span class="n">teacher_model</span><span class="p">,</span> <span class="n">criterion</span><span class="o">=</span><span class="n">criterion_conf</span><span class="p">)</span>
+<span class="n">compression_manager</span> <span class="o">=</span> <span class="n">prepare_compression</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">d_conf</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">compression_manager</span><span class="o">.</span><span class="n">model</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.conf.pythonic_config.DistillationConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.conf.pythonic_config.</span></span><span class="sig-name descname"><span class="pre">DistillationConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">teacher_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">criterion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'SGD':</span> <span class="pre">{'learning_rate':</span> <span class="pre">0.0001}}</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/conf/pythonic_config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.conf.pythonic_config.DistillationConfig" title="Link to this definition"></a></dt>
+<dd><p>Config of distillation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>teacher_model</strong> (<em>Callable</em>) – Teacher model for distillation. Defaults to None.</p></li>
+<li><p><strong>features</strong> (<em>optional</em>) – Teacher features for distillation, features and teacher_model are alternative.
+Defaults to None.</p></li>
+<li><p><strong>criterion</strong> (<em>Callable</em><em>, </em><em>optional</em>) – Distillation loss configure.</p></li>
+<li><p><strong>optimizer</strong> (<em>dictionary</em><em>, </em><em>optional</em>) – Optimizer configure.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.training</span> <span class="kn">import</span> <span class="n">prepare_compression</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">DistillationConfig</span><span class="p">,</span> <span class="n">KnowledgeDistillationLossConfig</span>
+
+<span class="n">distil_loss</span> <span class="o">=</span> <span class="n">KnowledgeDistillationLossConfig</span><span class="p">()</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">DistillationConfig</span><span class="p">(</span><span class="n">teacher_model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">criterion</span><span class="o">=</span><span class="n">distil_loss</span><span class="p">)</span>
+<span class="n">criterion</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.0001</span><span class="p">)</span>
+<span class="n">compression_manager</span> <span class="o">=</span> <span class="n">prepare_compression</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">conf</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">compression_manager</span><span class="o">.</span><span class="n">model</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8d9e5722e0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

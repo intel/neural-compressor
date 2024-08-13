@@ -1,0 +1,11 @@
+neural_compressor.torch.algorithms.fp8_quant.utils.logger
+=========================================================
+
+.. py:module:: neural_compressor.torch.algorithms.fp8_quant.utils.logger
+
+.. autoapi-nested-parse::
+
+   Logger: handles logging functionalities.
+
+
+

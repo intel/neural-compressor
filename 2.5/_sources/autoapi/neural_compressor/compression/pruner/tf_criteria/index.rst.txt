@@ -1,0 +1,71 @@
+neural_compressor.compression.pruner.tf_criteria
+================================================
+
+.. py:module:: neural_compressor.compression.pruner.tf_criteria
+
+.. autoapi-nested-parse::
+
+   Tensorflow pruning criterion.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.tf_criteria.PruningCriterion
+   neural_compressor.compression.pruner.tf_criteria.MagnitudeCriterion
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.tf_criteria.register_criterion
+   neural_compressor.compression.pruner.tf_criteria.get_tf_criterion
+
+
+Module Contents
+---------------
+
+.. py:function:: register_criterion(name)
+
+   Register a criterion to the registry.
+
+
+.. py:function:: get_tf_criterion(config, modules)
+
+   Get registered criterion class.
+
+
+.. py:class:: PruningCriterion(modules, config)
+
+   Pruning base criterion.
+
+   :param config: A config dict object that includes information about pruner and pruning criterion.
+   :param modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+
+   .. attribute:: scores
+
+      A dict {"module_name": Tensor} that stores the scores of pruning modules.
+
+
+.. py:class:: MagnitudeCriterion(modules, config)
+
+
+
+   Pruning criterion.
+
+   The magnitude criterion_class is derived from PruningCriterion.
+   The magnitude value is used to score and determine if a weight is to be pruned.
+
+   :param config: A config dict object that includes information about pruner and pruning criterion.
+   :param modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+
+   .. attribute:: scores
+
+      A dict {"module_name": Tensor} that stores the scores of pruning modules.
+
+

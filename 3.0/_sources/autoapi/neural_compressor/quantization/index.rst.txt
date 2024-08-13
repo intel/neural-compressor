@@ -1,0 +1,131 @@
+neural_compressor.quantization
+==============================
+
+.. py:module:: neural_compressor.quantization
+
+.. autoapi-nested-parse::
+
+   Neural Compressor Quantization API.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.quantization.fit
+
+
+Module Contents
+---------------
+
+.. py:function:: fit(model, conf, calib_dataloader=None, calib_func=None, eval_func=None, eval_dataloader=None, eval_metric=None, **kwargs)
+
+   Quantize the model with a given configure.
+
+   :param model: For Tensorflow model, it could be a path
+                 to frozen pb,loaded graph_def object or
+                 a path to ckpt/savedmodel folder.
+                 For PyTorch model, it's torch.nn.model
+                 instance.
+                 For MXNet model, it's mxnet.symbol.Symbol
+                 or gluon.HybirdBlock instance.
+   :type model: torch.nn.Module
+   :param conf: The class of PostTrainingQuantConfig containing accuracy goal,
+                tuning objective and preferred calibration &
+                quantization tuning space etc.
+   :type conf: PostTrainingQuantConfig
+   :param calib_dataloader: Data loader for calibration, mandatory for
+                            post-training quantization. It is iterable
+                            and should yield a tuple (input, label) for
+                            calibration dataset containing label,
+                            or yield (input, _) for label-free calibration
+                            dataset. The input could be a object, list,
+                            tuple or dict, depending on user implementation,
+                            as well as it can be taken as model input.
+   :type calib_dataloader: generator
+   :param calib_func: Calibration function for post-training static
+                      quantization. It is optional.
+                      This function takes "model" as input parameter
+                      and executes entire inference process.
+   :type calib_func: function, optional
+   :param eval_func: The evaluation function provided by user.
+                     This function takes model as parameter,
+                     and evaluation dataset and metrics should be
+                     encapsulated in this function implementation
+                     and outputs a higher-is-better accuracy scalar
+                     value.
+                     The pseudo code should be something like:
+                     def eval_func(model):
+                          input, label = dataloader()
+                          output = model(input)
+                          accuracy = metric(output, label)
+                          return accuracy.
+                     The user only needs to set eval_func or
+                     eval_dataloader and eval_metric which is an alternative option
+                     to tune the model accuracy.
+   :type eval_func: function, optional
+   :param eval_dataloader: Data loader for evaluation. It is iterable
+                           and should yield a tuple of (input, label).
+                           The input could be a object, list, tuple or
+                           dict, depending on user implementation,
+                           as well as it can be taken as model input.
+                           The label should be able to take as input of
+                           supported metrics. If this parameter is
+                           not None, user needs to specify pre-defined
+                           evaluation metrics through configuration file
+                           and should set "eval_func" parameter as None.
+                           Tuner will combine model, eval_dataloader
+                           and pre-defined metrics to run evaluation
+                           process.
+   :type eval_dataloader: generator, optional
+   :param eval_metric:
+                       Set metric class or a dict of built-in metric configures,
+                                                         and neural_compressor will initialize this class when evaluation.
+
+                       1. neural_compressor have many built-in metrics,
+                          user can pass a metric configure dict to tell neural compressor what metric will be use.
+                          You also can set multi-metrics to evaluate the performance of a specific model.
+                               Single metric:
+                                   {topk: 1}
+                               Multi-metrics:
+                                   {topk: 1,
+                                    MSE: {compare_label: False},
+                                    weight: [0.5, 0.5],
+                                    higher_is_better: [True, False]
+                                   }
+   :type eval_metric: dict or obj
+   :param For the built-in metrics:
+   :param please refer to below link:
+   :param https: //github.com/intel/neural-compressor/blob/master/docs/source/metric.md#supported-built-in-metric-matrix.
+
+                 2. User also can get the built-in metrics by neural_compressor.Metric:
+                     Metric(name="topk", k=1)
+                 3. User also can set specific metric through this api. The metric class should take the outputs of
+                    the model or postprocess(if have) as inputs, neural_compressor built-in metric always
+                    take (predictions, labels) as inputs for update, and user_metric.metric_cls should be
+                    sub_class of neural_compressor.metric.BaseMetric.
+
+   Example::
+
+       # Quantization code for PTQ
+       from neural_compressor import PostTrainingQuantConfig
+       from neural_compressor import quantization
+       def eval_func(model):
+           for input, label in dataloader:
+               output = model(input)
+               metric.update(output, label)
+           accuracy = metric.result()
+           return accuracy
+
+       conf = PostTrainingQuantConfig()
+       q_model = quantization.fit(model_origin,
+                                  conf,
+                                  calib_dataloader=dataloader,
+                                  eval_func=eval_func)
+
+       # Saved quantized model in ./saved folder
+       q_model.save("./saved")
+
+

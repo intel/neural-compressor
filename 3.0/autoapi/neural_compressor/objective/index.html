@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.objective &mdash; Intel® Neural Compressor 3.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../versions.html">3.0▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.objective</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/autoapi/neural_compressor/objective/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.objective">
+<span id="neural-compressor-objective"></span><h1>neural_compressor.objective<a class="headerlink" href="#module-neural_compressor.objective" title="Link to this heading"></a></h1>
+<p>The objectives supported by neural_compressor, which is driven by accuracy.</p>
+<p>To support new objective, developers just need implement a new subclass in this file.</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.objective.Objective" title="neural_compressor.objective.Objective"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Objective</span></code></a></p></td>
+<td><p>The base class for precise benchmark supported by neural_compressor.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.objective.Accuracy" title="neural_compressor.objective.Accuracy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Accuracy</span></code></a></p></td>
+<td><p>Configuration Accuracy class.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.objective.Performance" title="neural_compressor.objective.Performance"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Performance</span></code></a></p></td>
+<td><p>Configuration Performance class.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.objective.Footprint" title="neural_compressor.objective.Footprint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Footprint</span></code></a></p></td>
+<td><p>Configuration Footprint class.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.objective.ModelSize" title="neural_compressor.objective.ModelSize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelSize</span></code></a></p></td>
+<td><p>Configuration ModelSize class.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.objective.MultiObjective" title="neural_compressor.objective.MultiObjective"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MultiObjective</span></code></a></p></td>
+<td><p>The base class for multiple benchmarks supported by neural_compressor.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.objective.objective_registry" title="neural_compressor.objective.objective_registry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">objective_registry</span></code></a>(cls)</p></td>
+<td><p>The class decorator used to register all Objective subclasses.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.objective.objective_custom_registry" title="neural_compressor.objective.objective_custom_registry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">objective_custom_registry</span></code></a>(name, obj_cls)</p></td>
+<td><p>Register a customized objective.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.objective.objective_registry">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">objective_registry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.objective_registry" title="Link to this definition"></a></dt>
+<dd><p>The class decorator used to register all Objective subclasses.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cls</strong> (<em>object</em>) – The class of register.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The class of register.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>cls (object)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.objective.objective_custom_registry">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">objective_custom_registry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj_cls</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.objective_custom_registry" title="Link to this definition"></a></dt>
+<dd><p>Register a customized objective.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">eural_compressor.objective</span> <span class="kn">import</span> <span class="n">objective_custom_registry</span>
+
+<span class="n">objective_cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">user_objective</span><span class="p">)</span>
+<span class="n">name</span> <span class="o">=</span> <span class="n">user_objective</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+<span class="n">objective_cfg</span> <span class="o">=</span> <span class="n">name</span> <span class="k">if</span> <span class="n">deep_get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">usr_cfg</span><span class="p">,</span> <span class="s2">&quot;tuning.objective&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="n">name</span><span class="p">]</span>
+<span class="n">deep_set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">usr_cfg</span><span class="p">,</span> <span class="n">user_obj_cfg</span><span class="p">,</span> <span class="n">objective_cfg</span><span class="p">)</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">usr_cfg</span> <span class="o">=</span> <span class="n">DotDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">usr_cfg</span><span class="p">)</span>
+<span class="n">objective_custom_registry</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">objective_cls</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.objective.Objective">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">Objective</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.Objective" title="Link to this definition"></a></dt>
+<dd><p>The base class for precise benchmark supported by neural_compressor.</p>
+<p>With built-in objectives, users can compress models with different objectives easily.
+In special cases, users can also register their own objective classes.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.objective.Accuracy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">Accuracy</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.Accuracy" title="Link to this definition"></a></dt>
+<dd><p>Configuration Accuracy class.</p>
+<p>Evaluate the accuracy.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.objective.Performance">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">Performance</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.Performance" title="Link to this definition"></a></dt>
+<dd><p>Configuration Performance class.</p>
+<p>Evaluate the inference time.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.objective.Footprint">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">Footprint</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.Footprint" title="Link to this definition"></a></dt>
+<dd><p>Configuration Footprint class.</p>
+<p>Evaluate the peak size of memory blocks during inference.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.objective.ModelSize">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">ModelSize</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.ModelSize" title="Link to this definition"></a></dt>
+<dd><p>Configuration ModelSize class.</p>
+<p>Evaluate the model size.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.objective.MultiObjective">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.objective.</span></span><span class="sig-name descname"><span class="pre">MultiObjective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">objectives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_criterion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric_criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[True]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj_criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_measure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/objective.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.objective.MultiObjective" title="Link to this definition"></a></dt>
+<dd><p>The base class for multiple benchmarks supported by neural_compressor.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.objective</span> <span class="kn">import</span> <span class="n">MultiObjective</span>
+<span class="n">obj</span> <span class="o">=</span> <span class="n">MultiObjective</span><span class="p">(</span>
+    <span class="n">objectives</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">,</span> <span class="s1">&#39;modelsize&#39;</span><span class="p">,</span> <span class="s1">&#39;performance&#39;</span><span class="p">],</span>
+    <span class="n">accuracy_criterion</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;relative&#39;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">},</span>
+    <span class="n">obj_criterion</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span>
+    <span class="n">obj_weight</span><span class="o">=</span><span class="p">[</span><span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fef811f1490> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intel® Neural Compressor &mdash; Intel® Neural Compressor 2.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">2.4▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Intel® Neural Compressor</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/Welcome.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div align="center"><section id="intel-neural-compressor">
+<h1>Intel® Neural Compressor<a class="headerlink" href="#intel-neural-compressor" title="Link to this heading"></a></h1>
+<p><h3> An open-source Python library supporting popular model compression techniques on all mainstream deep learning frameworks (TensorFlow, PyTorch, ONNX Runtime, and MXNet)</h3></p>
+<p><a class="reference external" href="https://github.com/intel/neural-compressor"><img alt="python" src="https://img.shields.io/badge/python-3.8%2B-blue" /></a>
+<a class="reference external" href="https://github.com/intel/neural-compressor/releases"><img alt="version" src="https://img.shields.io/badge/release-2.4-green" /></a>
+<a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/LICENSE"><img alt="license" src="https://img.shields.io/badge/license-Apache%202-blue" /></a>
+<a class="reference external" href="https://github.com/intel/neural-compressor"><img alt="coverage" src="https://img.shields.io/badge/coverage-85%25-green" /></a>
+<a class="reference external" href="https://pepy.tech/project/neural-compressor"><img alt="Downloads" src="https://static.pepy.tech/personalized-badge/neural-compressor?period=total&amp;units=international_system&amp;left_color=grey&amp;right_color=green&amp;left_text=downloads" /></a></p>
+<p><a class="reference external" href="./design.html#architecture">Architecture</a>   |   <a class="reference external" href="./design.html#workflow">Workflow</a>   |   <a class="reference external" href="./validated_model_list.html">Results</a>   |   <a class="reference external" href="./https://github.com/intel/neural-compressor/blob/master/examples/README">Examples</a>   |   <a class="reference external" href="https://intel.github.io/neural-compressor">Documentations</a></p>
+<hr class="docutils" />
+<div align="left"><p>Intel® Neural Compressor aims to provide popular model compression techniques such as quantization, pruning (sparsity), distillation, and neural architecture search on mainstream frameworks such as <a class="reference external" href="https://www.tensorflow.org/">TensorFlow</a>, <a class="reference external" href="https://pytorch.org/">PyTorch</a>, <a class="reference external" href="https://onnxruntime.ai/">ONNX Runtime</a>, and <a class="reference external" href="https://mxnet.apache.org/">MXNet</a>,
+as well as Intel extensions such as <a class="reference external" href="https://github.com/intel/intel-extension-for-tensorflow">Intel Extension for TensorFlow</a> and <a class="reference external" href="https://github.com/intel/intel-extension-for-pytorch">Intel Extension for PyTorch</a>.
+In particular, the tool provides the key features, typical examples, and open collaborations as below:</p>
+<ul class="simple">
+<li><p>Support a wide range of Intel hardware such as <a class="reference external" href="https://www.intel.com/content/www/us/en/products/details/processors/xeon/scalable.html">Intel Xeon Scalable Processors</a>, <a class="reference external" href="https://www.intel.com/content/www/us/en/products/details/processors/xeon/max-series.html">Intel Xeon CPU Max Series</a>, <a class="reference external" href="https://www.intel.com/content/www/us/en/products/details/discrete-gpus/data-center-gpu/flex-series.html">Intel Data Center GPU Flex Series</a>, and <a class="reference external" href="https://www.intel.com/content/www/us/en/products/details/discrete-gpus/data-center-gpu/max-series.html">Intel Data Center GPU Max Series</a> with extensive testing; support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testing</p></li>
+<li><p>Validate popular LLMs such as <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm">LLama2</a>, <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm">Falcon</a>, <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm">GPT-J</a>, <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm">Bloom</a>, <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm">OPT</a>, and more than 10,000 broad models such as <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/text-to-image/quantization">Stable Diffusion</a>, <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">BERT-Large</a>, and <a class="reference external" href="/examples/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx">ResNet50</a> from popular model hubs such as <a class="reference external" href="https://huggingface.co/">Hugging Face</a>, <a class="reference external" href="https://pytorch.org/vision/stable/index.html">Torch Vision</a>, and <a class="reference external" href="https://github.com/onnx/models#models">ONNX Model Zoo</a>, by leveraging zero-code optimization solution <a class="reference external" href="/neural_coder#what-do-we-offer">Neural Coder</a> and automatic [accuracy-driven]./design.html#workflow) quantization strategies</p></li>
+<li><p>Collaborate with cloud marketplaces such as <a class="reference external" href="https://console.cloud.google.com/marketplace/product/bitnami-launchpad/inc-tensorflow-intel?project=verdant-sensor-286207">Google Cloud Platform</a>, <a class="reference external" href="https://aws.amazon.com/marketplace/pp/prodview-yjyh2xmggbmga#pdp-support">Amazon Web Services</a>, and <a class="reference external" href="https://azuremarketplace.microsoft.com/en-us/marketplace/apps/bitnami.inc-tensorflow-intel">Azure</a>, software platforms such as <a class="reference external" href="https://www.intel.com/content/www/us/en/developer/articles/technical/quantize-ai-by-oneapi-analytics-on-alibaba-cloud.html">Alibaba Cloud</a>, <a class="reference external" href="https://new.qq.com/rain/a/20221202A00B9S00">Tencent TACO</a> and <a class="reference external" href="https://github.com/microsoft/Olive">Microsoft Olive</a>, and open AI ecosystem such as <a class="reference external" href="https://huggingface.co/blog/intel">Hugging Face</a>, <a class="reference external" href="https://pytorch.org/tutorials/recipes/intel_neural_compressor_for_pytorch.html">PyTorch</a>, <a class="reference external" href="https://github.com/onnx/models#models">ONNX</a>, <a class="reference external" href="https://github.com/microsoft/onnxruntime">ONNX Runtime</a>, and <a class="reference external" href="https://github.com/Lightning-AI/lightning/blob/master/docs/source-pytorch/advanced/post_training_quantization.rst">Lightning AI</a></p></li>
+</ul>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
+<section id="install-from-pypi">
+<h3>Install from pypi<a class="headerlink" href="#install-from-pypi" title="Link to this heading"></a></h3>
+<div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>neural-compressor
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>Note</strong>:
+More installation methods can be found at <a class="reference external" href="https://github.com/intel/neural-compressor/blob/maste./installation_guide.html">Installation Guide</a>. Please check out our <a class="reference external" href="https://github.com/intel/neural-compressor/blob/maste./faq.html">FAQ</a> for more details.</p>
+</div></blockquote>
+</section>
+</section>
+<section id="getting-started">
+<h2>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading"></a></h2>
+<section id="quantization-with-python-api">
+<h3>Quantization with Python API<a class="headerlink" href="#quantization-with-python-api" title="Link to this heading"></a></h3>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install Intel Neural Compressor and TensorFlow</span>
+pip<span class="w"> </span>install<span class="w"> </span>neural-compressor
+pip<span class="w"> </span>install<span class="w"> </span>tensorflow
+<span class="c1"># Prepare fp32 model</span>
+wget<span class="w"> </span>https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.data</span> <span class="kn">import</span> <span class="n">DataLoader</span><span class="p">,</span> <span class="n">Datasets</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span>
+
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">Datasets</span><span class="p">(</span><span class="s2">&quot;tensorflow&quot;</span><span class="p">)[</span><span class="s2">&quot;dummy&quot;</span><span class="p">](</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="n">dataloader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">framework</span><span class="o">=</span><span class="s2">&quot;tensorflow&quot;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">neural_compressor.quantization</span> <span class="kn">import</span> <span class="n">fit</span>
+
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;./mobilenet_v1_1.0_224_frozen.pb&quot;</span><span class="p">,</span>
+    <span class="n">conf</span><span class="o">=</span><span class="n">PostTrainingQuantConfig</span><span class="p">(),</span>
+    <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="documentation">
+<h2>Documentation<a class="headerlink" href="#documentation" title="Link to this heading"></a></h2>
+<table class="docutils">
+  <thead>
+  <tr>
+    <th colspan="8">Overview</th>
+  </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td colspan="2" align="center"><a href="./design.html#architecture">Architecture</a></td>
+      <td colspan="2" align="center"><a href="./design.html#workflow">Workflow</a></td>
+      <td colspan="2" align="center"><a href="https://github.com/intel/neural-compressor/blob/master/examples/README.md">Examples</a></td>
+      <td colspan="2" align="center"><a href="https://intel.github.io/neural-compressor/latest/docs/source/api-doc/apis.html">APIs</a></td>
+    </tr>
+  </tbody>
+  <thead>
+    <tr>
+      <th colspan="8">Python-based APIs</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+        <td colspan="2" align="center"><a href="./quantization.html">Quantization</a></td>
+        <td colspan="2" align="center"><a href="./mixed_precision.html">Advanced Mixed Precision</a></td>
+        <td colspan="2" align="center"><a href="./pruning.html">Pruning (Sparsity)</a></td>
+        <td colspan="2" align="center"><a href="./distillation.html">Distillation</a></td>
+    </tr>
+    <tr>
+        <td colspan="2" align="center"><a href="./orchestration.html">Orchestration</a></td>
+        <td colspan="2" align="center"><a href="./benchmark.html">Benchmarking</a></td>
+        <td colspan="2" align="center"><a href="./distributed.html">Distributed Compression</a></td>
+        <td colspan="2" align="center"><a href="./export.html">Model Export</a></td>
+    </tr>
+  </tbody>
+  <thead>
+    <tr>
+      <th colspan="8">Neural Coder (Zero-code Optimization)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+        <td colspan="2" align="center"><a href="./neural_coder/docs/PythonLauncher.html">Launcher</a></td>
+        <td colspan="2" align="center"><a href="./neural_coder/extensions/neural_compressor_ext_lab/README.html">JupyterLab Extension</a></td>
+        <td colspan="2" align="center"><a href="./neural_coder/extensions/neural_compressor_ext_vscode/README.html">Visual Studio Code Extension</a></td>
+        <td colspan="2" align="center"><a href="./neural_coder/docs/SupportMatrix.html">Supported Matrix</a></td>
+    </tr>
+  </tbody>
+  <thead>
+      <tr>
+        <th colspan="8">Advanced Topics</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td colspan="2" align="center"><a href="./adaptor.html">Adaptor</a></td>
+          <td colspan="2" align="center"><a href="./tuning_strategies.html">Strategy</a></td>
+          <td colspan="2" align="center"><a href="./distillation_quantization.html">Distillation for Quantization</a></td>
+          <td colspan="2" align="center"><a href="./smooth_quant.html">SmoothQuant</td>
+      </tr>
+      <tr>
+          <td colspan="4" align="center"><a href="./quantization_weight_only.html">Weight-Only Quantization (INT8/INT4/FP4/NF4) </td>
+          <td colspan="2" align="center"><a href="https://github.com/intel/neural-compressor/blob/fp8_adapto./fp8.html">FP8 Quantization </td>
+          <td colspan="2" align="center"><a href="./quantization_layer_wise.html">Layer-Wise Quantization </td>
+      </tr>
+  </tbody>
+  <thead>
+      <tr>
+        <th colspan="8">Innovations for Productivity</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td colspan="4" align="center"><a href="./neural_insights/README.html">Neural Insights</a></td>
+          <td colspan="4" align="center"><a href="./neural_solution/README.html">Neural Solution</a></td>
+      </tr>
+  </tbody>
+</table><blockquote>
+<div><p><strong>Note</strong>:
+More documentations can be found at <a class="reference external" href="https://github.com/intel/neural-compressor/blob/maste./user_guide.html">User Guide</a>.</p>
+</div></blockquote>
+</section>
+<section id="selected-publications-events">
+<h2>Selected Publications/Events<a class="headerlink" href="#selected-publications-events" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Blog by Intel: <a class="reference external" href="https://community.intel.com/t5/Blogs/Tech-Innovation/Artificial-Intelligence-AI/Effective-Weight-Only-Quantization-for-Large-Language-Models/post/1529552">Effective Weight-Only Quantization for Large Language Models with Intel® Neural Compressor</a> (Oct 2023)</p></li>
+<li><p>EMNLP’2023 (Under Review): <a class="reference external" href="https://openreview.net/forum?id=iaI8xEINAf&amp;referrer=%5BAuthor%20Console%5D">TEQ: Trainable Equivalent Transformation for Quantization of LLMs</a> (Sep 2023)</p></li>
+<li><p>arXiv: <a class="reference external" href="https://arxiv.org/abs/2309.14592">Efficient Post-training Quantization with FP8 Formats</a> (Sep 2023)</p></li>
+<li><p>arXiv: <a class="reference external" href="https://arxiv.org/abs/2309.05516">Optimize Weight Rounding via Signed Gradient Descent for the Quantization of LLMs</a> (Sep 2023)</p></li>
+<li><p>NeurIPS’2022: <a class="reference external" href="https://arxiv.org/abs/2211.07715">Fast Distilbert on CPUs</a> (Oct 2022)</p></li>
+<li><p>NeurIPS’2022: <a class="reference external" href="https://arxiv.org/abs/2210.17114">QuaLA-MiniLM: a Quantized Length Adaptive MiniLM</a> (Oct 2022)</p></li>
+</ul>
+<blockquote>
+<div><p><strong>Note</strong>:
+View <a class="reference external" href="https://github.com/intel/neural-compressor/blob/maste./publication_list.html">Full Publication List</a>.</p>
+</div></blockquote>
+</section>
+<section id="additional-content">
+<h2>Additional Content<a class="headerlink" href="#additional-content" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="./releases_info.html">Release Information</a></p></li>
+<li><p><a class="reference external" href="./CONTRIBUTING.html">Contribution Guidelines</a></p></li>
+<li><p><a class="reference external" href="./legal_information.html">Legal Information</a></p></li>
+<li><p><a class="reference external" href="SECURITY.html">Security Policy</a></p></li>
+</ul>
+</section>
+<section id="communication">
+<h2>Communication<a class="headerlink" href="#communication" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://github.com/intel/neural-compressor/issues">GitHub Issues</a>: mainly for bug reports, new feature requests, question asking, etc.</p></li>
+<li><p><a class="reference external" href="mailto:inc&#46;maintainers&#37;&#52;&#48;intel&#46;com">Email</a>: welcome to raise any interesting research ideas on model compression techniques by email for collaborations.</p></li>
+<li><p><a class="reference external" href="https://discord.com/invite/Wxk3J3ZJkU">Discord Channel</a>: join the discord channel for more flexible technical discussion.</p></li>
+<li><p>[WeChat group]./imgs/wechat_group.jpg): scan the QA code to join the technical discussion.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8d9ab43790> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

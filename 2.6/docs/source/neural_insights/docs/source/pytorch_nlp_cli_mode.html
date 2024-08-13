@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step by step example how to dump weights data for PyTorch model with Neural Insights &mdash; Intel® Neural Compressor 2.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">2.6▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Step by step example how to dump weights data for PyTorch model with Neural Insights</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/docs/source/neural_insights/docs/source/pytorch_nlp_cli_mode.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="step-by-step-example-how-to-dump-weights-data-for-pytorch-model-with-neural-insights">
+<h1>Step by step example how to dump weights data for PyTorch model with Neural Insights<a class="headerlink" href="#step-by-step-example-how-to-dump-weights-data-for-pytorch-model-with-neural-insights" title="Link to this heading"></a></h1>
+<ol class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#preparation">Preparation</a></p></li>
+<li><p><a class="reference external" href="#running-the-quantization">Running the quantization</a></p></li>
+</ol>
+</section>
+<section id="introduction">
+<h1>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h1>
+<p>In this instruction weight data will be dumped using Neural Insights. PyTorch GPT-J-6B model will be used as an example.</p>
+</section>
+<section id="preparation">
+<h1>Preparation<a class="headerlink" href="#preparation" title="Link to this heading"></a></h1>
+<section id="source">
+<h2>Source<a class="headerlink" href="#source" title="Link to this heading"></a></h2>
+<p>First you need to install Intel® Neural Compressor.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install Neural Compressor</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/intel/neural-compressor.git
+<span class="nb">cd</span><span class="w"> </span>neural-compressor<span class="w"> </span>
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt<span class="w"> </span>
+python<span class="w"> </span>setup.py<span class="w"> </span>install
+
+<span class="c1"># Install Neural Insights</span>
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>neural_insights/requirements.txt
+python<span class="w"> </span>setup.py<span class="w"> </span>install<span class="w"> </span>neural_insights
+</pre></div>
+</div>
+</section>
+<section id="requirements">
+<h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading"></a></h2>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/ptq_static/fx
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+</section>
+</section>
+<section id="running-the-quantization">
+<h1>Running the quantization<a class="headerlink" href="#running-the-quantization" title="Link to this heading"></a></h1>
+<p>Before applying quantization, modify some code in <code class="docutils literal notranslate"><span class="pre">run_clm.py</span></code> file to enable Neural Insights:</p>
+<ol class="simple">
+<li><p>Set the argument <code class="docutils literal notranslate"><span class="pre">diagnosis</span></code> to be <code class="docutils literal notranslate"><span class="pre">True</span></code> in <code class="docutils literal notranslate"><span class="pre">PostTrainingQuantConfig</span></code> so that Neural Insights will dump weights of quantizable Ops in this model.</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
+    <span class="n">accuracy_criterion</span><span class="o">=</span><span class="n">accuracy_criterion</span><span class="p">,</span>
+    <span class="n">diagnosis</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<ol class="simple">
+<li><p>Quantize the model with following command:</p></li>
+</ol>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>run_clm.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model_name_or_path<span class="w"> </span>EleutherAI/gpt-j-6B<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--dataset_name<span class="w"> </span>wikitext<span class="se">\</span>
+<span class="w">  </span>--dataset_config_name<span class="w"> </span>wikitext-2-raw-v1<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--do_train<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--do_eval<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--tune<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output_dir<span class="w"> </span>saved_results
+</pre></div>
+</div>
+<p>Results would be dumped into <code class="docutils literal notranslate"><span class="pre">nc_workspace</span></code> directory in similar structure:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>├── history.snapshot
+├── input_model.pt
+├── inspect_saved
+│   ├── fp32
+│   │   └── inspect_result.pkl
+│   └── quan
+│       └── inspect_result.pkl
+├── model_summary.txt
+└── weights_table.csv
+</pre></div>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8a3c6a2370> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

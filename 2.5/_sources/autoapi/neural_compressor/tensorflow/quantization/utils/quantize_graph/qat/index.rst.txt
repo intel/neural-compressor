@@ -1,0 +1,32 @@
+neural_compressor.tensorflow.quantization.utils.quantize_graph.qat
+==================================================================
+
+.. py:module:: neural_compressor.tensorflow.quantization.utils.quantize_graph.qat
+
+.. autoapi-nested-parse::
+
+   Tensorflow QAT Graph Quantizers.
+
+
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/tensorflow/quantization/utils/quantize_graph/qat/quantize_layers/index
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/tensorflow/quantization/utils/quantize_graph/qat/fake_quantize/index
+   /autoapi/neural_compressor/tensorflow/quantization/utils/quantize_graph/qat/quantize_config/index
+   /autoapi/neural_compressor/tensorflow/quantization/utils/quantize_graph/qat/quantize_helper/index
+   /autoapi/neural_compressor/tensorflow/quantization/utils/quantize_graph/qat/quantize_wrapper/index
+
+

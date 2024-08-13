@@ -1,0 +1,27 @@
+neural_compressor.profiling.parser.result
+=========================================
+
+.. py:module:: neural_compressor.profiling.parser.result
+
+.. autoapi-nested-parse::
+
+   Profiling Result class.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.profiling.parser.result.ProfilingResult
+
+
+Module Contents
+---------------
+
+.. py:class:: ProfilingResult(node_name: str, total_execution_time: int, accelerator_execution_time: int, cpu_execution_time: int, op_run: int, op_defined: int)
+
+   Profiling result class.
+
+

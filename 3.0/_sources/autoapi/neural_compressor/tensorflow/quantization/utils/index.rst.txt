@@ -1,0 +1,34 @@
+neural_compressor.tensorflow.quantization.utils
+===============================================
+
+.. py:module:: neural_compressor.tensorflow.quantization.utils
+
+.. autoapi-nested-parse::
+
+   The utils for TF quantization.
+
+
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/tensorflow/quantization/utils/graph_rewriter/index
+   /autoapi/neural_compressor/tensorflow/quantization/utils/quantize_graph/index
+   /autoapi/neural_compressor/tensorflow/quantization/utils/transform_graph/index
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/tensorflow/quantization/utils/graph_converter/index
+   /autoapi/neural_compressor/tensorflow/quantization/utils/graph_util/index
+   /autoapi/neural_compressor/tensorflow/quantization/utils/quantize_graph_common/index
+   /autoapi/neural_compressor/tensorflow/quantization/utils/utility/index
+
+

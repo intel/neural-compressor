@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step by step example how to debug accuracy with Neural Insights &mdash; Intel® Neural Compressor 2.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">2.6▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Step by step example how to debug accuracy with Neural Insights</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/docs/source/neural_insights/docs/source/onnx_accuracy_debug.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="step-by-step-example-how-to-debug-accuracy-with-neural-insights">
+<h1>Step by step example how to debug accuracy with Neural Insights<a class="headerlink" href="#step-by-step-example-how-to-debug-accuracy-with-neural-insights" title="Link to this heading"></a></h1>
+<ol class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#preparation">Preparation</a></p></li>
+<li><p><a class="reference external" href="#running-the-quantization">Running the quantization</a></p></li>
+<li><p><a class="reference external" href="#-analyzing-the-result-of-quantization">Analyzing the result of quantization</a></p></li>
+</ol>
+</section>
+<section id="introduction">
+<h1>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h1>
+<p>In this instruction accuracy issue will be debugged using Neural Insights. ONNX LayoutLMv3 model will be used as an example. It will be quantized and the results will be analyzed to find the cause of the accuracy loss.</p>
+</section>
+<section id="preparation">
+<h1>Preparation<a class="headerlink" href="#preparation" title="Link to this heading"></a></h1>
+<section id="requirements">
+<h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading"></a></h2>
+<p>First you need to install Intel® Neural Compressor and other requirements.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>neural-compressor<span class="w"> </span>
+pip<span class="w"> </span>install<span class="w"> </span>datasets<span class="w"> </span>transformers<span class="w"> </span>torch<span class="w"> </span>torchvision
+pip<span class="w"> </span>install<span class="w"> </span>onnx<span class="w"> </span>onnxruntime<span class="w"> </span>onnxruntime-extensions
+pip<span class="w"> </span>install<span class="w"> </span>accelerate<span class="w"> </span>seqeval<span class="w"> </span>tensorboard<span class="w"> </span>sentencepiece<span class="w"> </span>timm<span class="w"> </span>fvcore<span class="w"> </span>Pillow<span class="w"> </span>einops<span class="w"> </span>textdistance<span class="w"> </span>shapely<span class="w"> </span>protobuf<span class="w"> </span>setuptools<span class="w"> </span>optimum
+</pre></div>
+</div>
+</section>
+<section id="model">
+<h2>Model<a class="headerlink" href="#model" title="Link to this heading"></a></h2>
+<p>Get the LayoutLMv3 model from Intel® Neural Compressor <a class="reference external" href="https://github.com/intel/neural-compressor/tree/master/examples/onnxrt/nlp/huggingface_model/token_classification/layoutlmv3/quantization/ptq_static">LayoutLMv3 example</a>.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>optimum-cli<span class="w"> </span><span class="nb">export</span><span class="w"> </span>onnx<span class="w"> </span>--model<span class="w"> </span>HYPJUDY/layoutlmv3-base-finetuned-funsd<span class="w"> </span>layoutlmv3-base-finetuned-funsd-onnx/<span class="w"> </span>--task<span class="o">=</span>token-classification
+</pre></div>
+</div>
+</section>
+</section>
+<section id="running-the-quantization">
+<h1>Running the quantization<a class="headerlink" href="#running-the-quantization" title="Link to this heading"></a></h1>
+<p>Generate a quantized model.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">onnx_model</span> <span class="o">=</span> <span class="n">onnx</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">input_model</span><span class="p">)</span>
+<span class="n">calib_dataset</span> <span class="o">=</span> <span class="n">IncDataset</span><span class="p">(</span><span class="n">eval_dataset</span><span class="p">,</span> <span class="n">onnx_model</span><span class="p">)</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">approach</span><span class="o">=</span><span class="s2">&quot;static&quot;</span><span class="p">,</span> <span class="n">quant_format</span><span class="o">=</span><span class="s2">&quot;QOperator&quot;</span><span class="p">)</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+    <span class="n">onnx_model</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">framework</span><span class="o">=</span><span class="s2">&quot;onnxruntime&quot;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="n">calib_dataset</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Execute benchmark to get the F1 score of both FP32 and INT8 models and then compute the relative accuracy ratio.
+The output results indicate that the quantized model’s accuracy is noticeably poor.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">fp32</span> <span class="n">f1</span> <span class="o">=</span> <span class="mf">0.9049</span><span class="p">,</span> <span class="n">int8</span> <span class="n">f1</span> <span class="o">=</span> <span class="mf">0.2989</span><span class="p">,</span> <span class="n">accuracy</span> <span class="n">ratio</span> <span class="o">=</span> <span class="o">-</span><span class="mf">66.9631</span><span class="o">%</span>
+</pre></div>
+</div>
+</section>
+<section id="analyzing-the-result-of-quantization">
+<h1>Analyzing the result of quantization<a class="headerlink" href="#analyzing-the-result-of-quantization" title="Link to this heading"></a></h1>
+<p>In this section, the diagnosis tool is used for debugging to achieve higher INT8 model accuracy.
+We need to set <code class="docutils literal notranslate"><span class="pre">diagnosis</span></code> parameter to <code class="docutils literal notranslate"><span class="pre">True</span></code> as shown below.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
+    <span class="n">approach</span><span class="o">=</span><span class="s2">&quot;static&quot;</span><span class="p">,</span> <span class="n">quant_format</span><span class="o">=</span><span class="s2">&quot;QOperator&quot;</span><span class="p">,</span> <span class="n">quant_level</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">diagnosis</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>  <span class="c1"># set &#39;diagnosis&#39; to True</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+    <span class="n">onnx_model</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">eval_func</span><span class="o">=</span><span class="n">eval_func</span><span class="p">,</span> <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">framework</span><span class="o">=</span><span class="s2">&quot;onnxruntime&quot;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="n">calib_dataset</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The diagnosis tool will output <code class="docutils literal notranslate"><span class="pre">Activations</span> <span class="pre">summary</span></code> and <code class="docutils literal notranslate"><span class="pre">Weights</span> <span class="pre">summary</span></code> in terminal.</p>
+<p>For easy to check, here we reload them to .csv files as shown below.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="n">pd</span><span class="o">.</span><span class="n">set_option</span><span class="p">(</span><span class="s2">&quot;display.max_rows&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">set_option</span><span class="p">(</span><span class="s2">&quot;display.max_columns&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+<span class="n">subfolders</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;./nc_workspace&quot;</span> <span class="o">+</span> <span class="s2">&quot;/*/&quot;</span><span class="p">)</span>
+<span class="n">subfolders</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">subfolders</span><span class="p">:</span>
+    <span class="n">activations_table</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">subfolders</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;activations_table.csv&quot;</span><span class="p">)</span>
+    <span class="n">weights_table</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">subfolders</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;weights_table.csv&quot;</span><span class="p">)</span>
+
+    <span class="n">activations_table</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">activations_table</span><span class="p">)</span>
+    <span class="n">weights_table</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">weights_table</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Activations summary&quot;</span><span class="p">)</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">activations_table</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Weights summary&quot;</span><span class="p">)</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">weights_table</span><span class="p">)</span>
+</pre></div>
+</div>
+<section id="weights-summary">
+<h2>Weights summary<a class="headerlink" href="#weights-summary" title="Link to this heading"></a></h2>
+<p>These are the top 10 rows from weights summary table:</p>
+<p><img alt="weights_summary_onnx" src="../../../../../_images/weights_summary_onnx.jpg" /></p>
+</section>
+<section id="activations-summary">
+<h2>Activations summary<a class="headerlink" href="#activations-summary" title="Link to this heading"></a></h2>
+<p>These are the top 10 rows from activations summary table:</p>
+<p><img alt="activations_summary_onnx" src="../../../../../_images/activations_summary_onnx.jpg" /></p>
+<p>In the Activations summary table, there are some nodes showing dispersed activation data range. Therefore, we calculate the <code class="docutils literal notranslate"><span class="pre">Min-Max</span> <span class="pre">data</span> <span class="pre">range</span></code> for activations data and sort the results in descending order.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">activations_table</span><span class="p">[</span><span class="s2">&quot;Min-Max data range&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">activations_table</span><span class="p">[</span><span class="s2">&quot;Activation max&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">activations_table</span><span class="p">[</span><span class="s2">&quot;Activation min&quot;</span><span class="p">]</span>
+<span class="n">sorted_data</span> <span class="o">=</span> <span class="n">activations_table</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s2">&quot;Min-Max data range&quot;</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">display</span><span class="p">(</span><span class="n">sorted_data</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The results should look like below:</p>
+<p><img alt="min-max" src="../../../../../_images/min-max.jpg" /></p>
+<p>According to the results displayed above, it is evident that the nodes of type <code class="docutils literal notranslate"><span class="pre">/layoutlmv3/encoder/layer.\d+/output/Add</span></code> and <code class="docutils literal notranslate"><span class="pre">/layoutlmv3/encoder/layer.\d+/output/dense/MatMul</span></code> have significantly higher values for <code class="docutils literal notranslate"><span class="pre">Min-Max</span> <span class="pre">data</span> <span class="pre">range</span></code> compared to other node types. This indicates that they may have caused a loss of accuracy. Therefore, we can try to fallback these nodes.</p>
+<p>Refer to <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/docs/source/diagnosis.html">diagnosis.html</a> for more tips for diagnosis.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.utils.constant</span> <span class="kn">import</span> <span class="n">FP32</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
+    <span class="n">approach</span><span class="o">=</span><span class="s2">&quot;static&quot;</span><span class="p">,</span>
+    <span class="n">quant_format</span><span class="o">=</span><span class="s2">&quot;QOperator&quot;</span><span class="p">,</span>
+    <span class="n">op_name_dict</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;/layoutlmv3/encoder/layer.\d+/output/dense/MatMul&quot;</span><span class="p">:</span> <span class="n">FP32</span><span class="p">,</span>
+        <span class="s2">&quot;/layoutlmv3/encoder/layer.\d+/output/Add&quot;</span><span class="p">:</span> <span class="n">FP32</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+    <span class="n">onnx_model</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">framework</span><span class="o">=</span><span class="s2">&quot;onnxruntime&quot;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="n">calib_dataset</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="n">q_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">output_model</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Execute benchmark on the new quantized model again and the accuracy ratio is improved to &lt;1%.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">fp32</span> <span class="n">f1</span> <span class="o">=</span> <span class="mf">0.9049</span><span class="p">,</span> <span class="n">int8</span> <span class="n">f1</span> <span class="o">=</span> <span class="mf">0.8981</span><span class="p">,</span> <span class="n">accuracy</span> <span class="n">ratio</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.7502</span><span class="o">%</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8a3cdffac0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

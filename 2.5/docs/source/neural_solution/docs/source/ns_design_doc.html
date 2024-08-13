@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Design Doc for Optimization as a Service [WIP] &mdash; Intel® Neural Compressor 2.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">2.5▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Design Doc for Optimization as a Service [WIP]</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/docs/source/neural_solution/docs/source/ns_design_doc.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="design-doc-for-optimization-as-a-service-wip">
+<h1>Design Doc for Optimization as a Service [WIP]<a class="headerlink" href="#design-doc-for-optimization-as-a-service-wip" title="Link to this heading"></a></h1>
+<section id="contents">
+<h2>Contents<a class="headerlink" href="#contents" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="#design-doc-for-optimization-as-a-service-wip">Design Doc for Optimization as a Service [WIP]</a></p>
+<ul>
+<li><p><a class="reference external" href="#contents">Contents</a></p></li>
+<li><p><a class="reference external" href="#overview">Overview</a></p></li>
+<li><p><a class="reference external" href="#workflow-of-oaas">Workflow of OaaS</a></p></li>
+<li><p><a class="reference external" href="#class-definition-diagram">Class definition diagram</a></p></li>
+<li><p><a class="reference external" href="#extensibility">Extensibility</a></p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p>Optimization as a service(OaaS) is a platform that enables users to submit quantization tasks for their models and automatically dispatches these tasks to one or multiple nodes for accuracy-aware tuning. OaaS is designed to parallelize the tuning process in two levels: tuning and model. At the tuning level, OaaS execute the tuning process across multiple nodes for one model. At the model level, OaaS allocate free nodes to incoming requests automatically.</p>
+</section>
+<section id="workflow-of-oaas">
+<h2>Workflow of OaaS<a class="headerlink" href="#workflow-of-oaas" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>sequenceDiagram
+    participant Studio
+    participant TaskMonitor
+    participant Scheduler
+    participant Cluster
+    participant TaskLauncher
+    participant ResultMonitor
+    Par receive task
+    Studio -&gt;&gt; TaskMonitor: P1-1. Post quantization Request
+    TaskMonitor -&gt;&gt; TaskMonitor: P1-2. Add task to task DB
+    TaskMonitor -&gt;&gt; Studio: P1-3. Task received notification
+    and Schedule task
+        loop 
+            Scheduler -&gt;&gt; Scheduler: P2-1. Pop task from task DB
+            Scheduler -&gt;&gt; Cluster: P2-2. Apply for resources
+            Note over Scheduler, Cluster: the number of Nodes
+            Cluster -&gt;&gt; Cluster: P2-3. Check the status of nodes in cluster
+            Cluster -&gt;&gt; Scheduler: P2-4. Resources info
+            Note over Scheduler, Cluster: host:socket list
+            Scheduler -&gt;&gt; TaskLauncher: P2-5. Dispatch task
+        end
+    and Run task
+    TaskLauncher -&gt;&gt; TaskLauncher: P3-1. Run task
+    Note over TaskLauncher, TaskLauncher: mpirun -np 4 -hostfile hostfile python main.py
+    TaskLauncher -&gt;&gt; TaskLauncher: P3-2. Wait task to finish...
+    TaskLauncher -&gt;&gt; Cluster: P3-3. Free resource
+    TaskLauncher -&gt;&gt; ResultMonitor: P3-4. Report the Acc and Perf
+    ResultMonitor -&gt;&gt; Studio: P3-5. Post result to Studio
+    and Query task status
+    Studio -&gt;&gt; ResultMonitor: P4-1. Query the status of the submitted task
+    ResultMonitor -&gt;&gt; Studio: P4-2. Post the status of queried task
+    End
+</pre></div>
+</div>
+<p>The optimization process is divided into four parts, each executed in separate threads.</p>
+<ul class="simple">
+<li><p>Part 1. Posting new quantization task. (P1-1 -&gt; P1-2 -&gt; P1-3)</p></li>
+<li><p>Part 2. Resource allocation and scheduling. (P2-1 -&gt; P2-2 -&gt; P2-3 -&gt; P2-4 -&gt; P2-5)</p></li>
+<li><p>Part 3. Task execution and reporting. (P3-1 -&gt; P3-2 -&gt; P3-3 -&gt; P3-4 -&gt; P3-5)</p></li>
+<li><p>Part 4. Updating the status. (P4-1 -&gt; P4-2)</p></li>
+</ul>
+</section>
+<section id="class-definition-diagram">
+<h2>Class definition diagram<a class="headerlink" href="#class-definition-diagram" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>classDiagram
+
+
+
+TaskDB &quot;1&quot; --&gt; &quot;*&quot; Task
+TaskMonitor --&gt; TaskDB
+ResultMonitor  --&gt;  TaskDB
+Scheduler --&gt; TaskDB
+Scheduler --&gt; Cluster
+
+
+class Task{
+	+ status
+	+ get_status()
+	+ update_status()
+}
+
+class TaskDB{
+   - task_collections
+   + append_task()
+   + get_all_pending_tasks()
+   + update_task_status()
+}
+class TaskMonitor{
+    - task_db
+    + wait_new_task()
+}
+class Scheduler{
+    - task_db
+    - cluster
+    + schedule_tasks()
+    + dispatch_task()
+    + launch_task()
+}
+
+class ResultMonitor{
+	- task_db
+    + query_task_status()
+}
+class Cluster{
+    - node_list
+    + free()
+    + reserve_resource()
+    + get_node_status()
+}
+</pre></div>
+</div>
+</section>
+<section id="extensibility">
+<h2>Extensibility<a class="headerlink" href="#extensibility" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>The service can be deployed on various resource pool, including a set of worker nodes, such as a local cluster or cloud cluster (AWS and GCP).</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f81cad8ee50> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

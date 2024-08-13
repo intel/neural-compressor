@@ -1,0 +1,29 @@
+neural_compressor.adaptor.tf_utils.graph_rewriter.generic.grappler_pass
+=======================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.grappler_pass
+
+.. autoapi-nested-parse::
+
+   Tensorflow Grappler Graph Rewriter.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.grappler_pass.GrapplerOptimizer
+
+
+Module Contents
+---------------
+
+.. py:class:: GrapplerOptimizer(model, input_output_names, opt_cfg)
+
+
+
+   A python wrapper that leverages the built-in tensorflow grappler API to optimize the graph.
+
+

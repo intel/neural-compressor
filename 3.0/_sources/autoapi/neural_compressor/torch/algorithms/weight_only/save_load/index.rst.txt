@@ -1,0 +1,79 @@
+neural_compressor.torch.algorithms.weight_only.save_load
+========================================================
+
+.. py:module:: neural_compressor.torch.algorithms.weight_only.save_load
+
+.. autoapi-nested-parse::
+
+   WOQ save and load.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.save_load.WOQModelLoader
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.save_load.save
+   neural_compressor.torch.algorithms.weight_only.save_load.load
+
+
+Module Contents
+---------------
+
+.. py:function:: save(model, output_dir='./saved_results')
+
+   Save the quantized model and config to the output path.
+
+   :param model: raw fp32 model or prepared model.
+   :type model: torch.nn.module
+   :param output_dir: output path to save.
+   :type output_dir: str, optional
+
+
+.. py:function:: load(model_name_or_path, original_model=None, format=LoadFormat.DEFAULT, device='cpu', **kwargs)
+
+   Load quantized weight-only quantization model.
+
+   1. Load INC weight-only quantized model in local.
+       from neural_compressor.torch.quantization import load
+       load(model_name_or_path="saved_results", original_model=fp32_model, format="default", device="cpu")
+
+   2. Load HuggingFace weight-only quantized model, including GPTQ models and
+      upstreamed INC quantized models in HF model hub.
+       from neural_compressor.torch.quantization import load
+       load(model_name_or_path=model_name_or_path, format="huggingface", device="cpu")
+
+   :param model_name_or_path: torch checkpoint directory or hugginface model_name_or_path.
+                              If 'format' is set to 'huggingface', it means the huggingface model_name_or_path.
+                              If 'format' is set to 'default', it means the 'checkpoint_dir'.
+                              Parameter should not be None. it coworks with 'original_model' parameter to load INC
+                              weight-only quantized model in local.
+   :type model_name_or_path: str
+   :param original_model: original model before quantization.
+                          Needed if 'format' is set to 'default'. Defaults to None.
+   :type original_model: torch.nn.module, optional
+   :param format: 'defult' for loading INC weight-only quantized model.
+                  'huggingface' for loading huggingface WOQ causal language model. Defaults to "default".
+   :type format: str, optional
+   :param kwargs: remaining dictionary of keyword arguments for loading huggingface models.
+                  will be passed to the huggingface model's `__init__` method, such as 'trust_remote_code', 'revision'.
+   :type kwargs: remaining dictionary of keyword arguments, optional
+
+   :returns: quantized model
+   :rtype: torch.nn.Module
+
+
+.. py:class:: WOQModelLoader(model_name_or_path, original_model=None, format=LoadFormat.DEFAULT, device='cpu', **kwargs)
+
+   WOQ Model Loader.
+
+

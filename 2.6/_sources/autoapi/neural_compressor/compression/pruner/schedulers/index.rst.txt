@@ -1,0 +1,107 @@
+neural_compressor.compression.pruner.schedulers
+===============================================
+
+.. py:module:: neural_compressor.compression.pruner.schedulers
+
+.. autoapi-nested-parse::
+
+   Scheduler module.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.schedulers.PruningScheduler
+   neural_compressor.compression.pruner.schedulers.OneshotScheduler
+   neural_compressor.compression.pruner.schedulers.IterativeScheduler
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.schedulers.register_scheduler
+   neural_compressor.compression.pruner.schedulers.get_scheduler
+
+
+Module Contents
+---------------
+
+.. py:function:: register_scheduler(name)
+
+   Class decorator used to register a Scheduler subclass to the registry.
+
+   Decorator function used before a Scheduler subclass.
+   Make sure that the Scheduler class decorated by this function can be registered in SCHEDULERS.
+
+   :param cls: The class of register.
+   :type cls: class
+   :param name: A string that defines the scheduler type.
+
+   :returns: The class of register.
+   :rtype: cls
+
+
+.. py:function:: get_scheduler(config)
+
+   Get registered scheduler class.
+
+   Get a scheduler object from SCHEDULERS.
+
+   :param config: A config dict object that contains the scheduler information.
+
+   :returns: A Scheduler object.
+
+
+.. py:class:: PruningScheduler(config)
+
+   Pruning Scheduler.
+
+   The class which defines a sparsity changing process during pruning.
+   Mainly contains two types:
+       1. iterative scheduler. Prune the model from dense to target sparsity gradually.
+       2. one-shot scheduler. Prune the model in a single step and reach the target sparsity.
+
+   :param config: A config dict object that contains the scheduler information.
+
+   .. attribute:: config
+
+      A config dict object that contains the scheduler information.
+
+
+.. py:class:: OneshotScheduler(config)
+
+
+
+   Pruning Scheduler.
+
+   A Scheduler class derived from Scheduler.
+   Prune the model to target sparsity once.
+
+   :param config: A config dict object that contains the scheduler information.
+
+   .. attribute:: Inherit from parent class Scheduler.
+
+      
+
+
+.. py:class:: IterativeScheduler(config)
+
+
+
+   Pruning Scheduler.
+
+   A Scheduler class derived from Scheduler.
+   Prune the model from dense to target sparsity in several steps.
+
+   :param config: A config dict object that contains the scheduler information.
+
+   .. attribute:: Inherit from parent class Scheduler.
+
+      
+
+

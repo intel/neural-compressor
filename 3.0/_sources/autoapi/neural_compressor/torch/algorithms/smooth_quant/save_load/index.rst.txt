@@ -1,0 +1,37 @@
+neural_compressor.torch.algorithms.smooth_quant.save_load
+=========================================================
+
+.. py:module:: neural_compressor.torch.algorithms.smooth_quant.save_load
+
+.. autoapi-nested-parse::
+
+   Save and load the quantized model.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.smooth_quant.save_load.recover_model_from_json
+
+
+Module Contents
+---------------
+
+.. py:function:: recover_model_from_json(model, json_file_path, example_inputs)
+
+   Recover ipex model from JSON file.
+
+   :param model: fp32 model need to do quantization.
+   :type model: object
+   :param json_file_path: configuration JSON file for ipex.
+   :type json_file_path: json
+   :param example_inputs: example inputs that will be passed to the ipex function.
+   :type example_inputs: tuple or torch.Tensor or dict
+
+   :returns: quantized model
+   :rtype: model (object)
+
+

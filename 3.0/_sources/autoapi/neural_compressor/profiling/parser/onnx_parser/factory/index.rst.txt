@@ -1,0 +1,27 @@
+neural_compressor.profiling.parser.onnx_parser.factory
+======================================================
+
+.. py:module:: neural_compressor.profiling.parser.onnx_parser.factory
+
+.. autoapi-nested-parse::
+
+   Parser class factory.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.profiling.parser.onnx_parser.factory.OnnxrtParserFactory
+
+
+Module Contents
+---------------
+
+.. py:class:: OnnxrtParserFactory
+
+   Parser factory.
+
+

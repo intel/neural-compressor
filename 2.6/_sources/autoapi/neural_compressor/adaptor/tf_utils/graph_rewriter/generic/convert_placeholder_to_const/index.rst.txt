@@ -1,0 +1,29 @@
+neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_placeholder_to_const
+======================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_placeholder_to_const
+
+.. autoapi-nested-parse::
+
+   Convert placeholder to const Graph Rewriter.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_placeholder_to_const.ConvertPlaceholderToConst
+
+
+Module Contents
+---------------
+
+.. py:class:: ConvertPlaceholderToConst(model)
+
+
+
+   Convert placeholder to const for removing training nodes.
+
+

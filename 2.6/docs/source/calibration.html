@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calibration Algorithms in Quantization &mdash; Intel® Neural Compressor 2.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">2.6▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Calibration Algorithms in Quantization</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/calibration.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="calibration-algorithms-in-quantization">
+<h1>Calibration Algorithms in Quantization<a class="headerlink" href="#calibration-algorithms-in-quantization" title="Link to this heading"></a></h1>
+<ol class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#calibration-algorithms">Calibration Algorithms</a></p></li>
+<li><p><a class="reference external" href="#support-matrix">Support Matrix</a></p></li>
+</ol>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
+<p>Quantization proves beneficial in terms of reducing the memory and computational requirements of the model. Uniform quantization transforms the input value $x ∈ [β, α]$ to lie within $[−2^{b−1}, 2^{b−1} − 1]$, where $[β, α]$ is the range of real values chosen for quantization and $b$ is the bit-width of the signed integer representation. Calibration is the process of determining the $α$ and $β$ for model weights and activations. Refer to this <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/docs/source/quantization.html#quantization-fundamentals">link</a> for more quantization fundamentals</p>
+</section>
+<section id="calibration-algorithms">
+<h2>Calibration Algorithms<a class="headerlink" href="#calibration-algorithms" title="Link to this heading"></a></h2>
+<p>Currently, Intel® Neural Compressor supports three popular calibration algorithms:</p>
+<ul class="simple">
+<li><p>MinMax: This method gets the maximum and minimum of input values as $α$ and $β$ [^1]. It preserves the entire range and is the simplest approach.</p></li>
+<li><p>Entropy: This method minimizes the KL divergence to reduce the information loss between full-precision and quantized data [^2]. Its primary focus is on preserving essential information.</p></li>
+<li><p>Percentile: This method only considers a specific percentage of values for calculating the range, ignoring the remainder which may contain outliers [^3]. It enhances resolution by excluding extreme values but still retaining noteworthy data.</p></li>
+</ul>
+</section>
+<section id="support-matrix">
+<h2>Support Matrix<a class="headerlink" href="#support-matrix" title="Link to this heading"></a></h2>
+<table>
+<thead>
+  <tr>
+    <th rowspan="2">Framework</th>
+    <th colspan="2">Supported calibration algorithm</th>
+  </tr>
+  <tr>
+    <th>weight</th>
+    <th>activation</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>Pytorch</td>
+    <td>minmax</td>
+    <td>minmax, kl</td>
+  </tr>
+  <tr>
+    <td>Tensorflow</td>
+    <td>minmax</td>
+    <td>minmax, kl</td>
+  </tr>
+  <tr>
+    <td>MXNet</td>
+    <td>minmax</td>
+    <td>minmax, kl</td>
+  </tr>
+  <tr>
+    <td>OnnxRuntime</td>
+    <td>minmax</td>
+    <td>minmax, kl, percentile</td>
+  </tr>
+</tbody>
+</table><blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">kl</span></code> is used to represent the Entropy calibration algorithm in Intel® Neural Compressor.</p>
+</div></blockquote>
+<p>The calibration algorithm is one of the tuning items utilized by Intel® Neural Compressor auto-tuning. The accuracy-aware tuning process will select an appropriate algorithm. Please refer to <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/docs/source/tuning_strategies.html#tuning-space">tuning_strategies.html</a> for more details.</p>
+</section>
+<section id="reference">
+<h2>Reference<a class="headerlink" href="#reference" title="Link to this heading"></a></h2>
+<p>[^1]: Vanhoucke, Vincent, Andrew Senior, and Mark Z. Mao. “Improving the speed of neural networks on CPUs.” (2011).</p>
+<p>[^2]: Szymon Migacz. “Nvidia 8-bit inference width tensorrt.” (2017).</p>
+<p>[^3]: McKinstry, Jeffrey L., et al. “Discovering low-precision networks close to full-precision networks for efficient embedded inference.” arXiv preprint arXiv:1809.04191 (2018).</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8a36a67d00> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

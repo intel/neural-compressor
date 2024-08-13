@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>INC Coding Conventions &mdash; Intel® Neural Compressor 2.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">2.6▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">INC Coding Conventions</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/coding_style.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="inc-coding-conventions">
+<h1>INC Coding Conventions<a class="headerlink" href="#inc-coding-conventions" title="Link to this heading"></a></h1>
+<p>(Mostly for Version 3 and later)</p>
+<section id="background">
+<h2>Background<a class="headerlink" href="#background" title="Link to this heading"></a></h2>
+<p>To improve the quality and maintainability of INC code, we summarized some common coding standards and conventions.</p>
+<p>There are many style guides, and they may conflict with each other. To avoid overly arguing formatting, we make decisions based on the following priorities:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://google.github.io/styleguide/pyguide.html#s3.8-comments-and-docstrings">Google Python Style</a>, <a class="reference external" href="https://peps.python.org/pep-0008/">PEP 8</a></p></li>
+<li><p>Framework Style</p></li>
+<li><p>INC Internal Style</p></li>
+<li><p>Sub-module specific Style</p></li>
+</ul>
+</section>
+<section id="rules">
+<h2>Rules<a class="headerlink" href="#rules" title="Link to this heading"></a></h2>
+<blockquote>
+<div><p>Note: The sub-tile naming is following <a class="reference external" href="https://google.github.io/styleguide/pyguide.html#s3.8-comments-and-docstrings">Google Python Style</a> and <a class="reference external" href="https://peps.python.org/pep-0008/">PEP 8</a>. See the relevant section for more details.</p>
+</div></blockquote>
+<section id="imports">
+<h3>Imports<a class="headerlink" href="#imports" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Recommend</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="kn">from</span> <span class="nn">x</span> <span class="kn">import</span> <span class="n">py</span>
+<span class="kn">from</span> <span class="nn">x</span> <span class="kn">import</span> <span class="n">y</span> <span class="k">as</span> <span class="n">z</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Not recommend</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sub_module</span> <span class="kn">import</span> <span class="o">*</span>  <span class="c1"># May lead to namespace pollution</span>
+<span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">sys</span>  <span class="c1"># Import on separate lines</span>
+<span class="kn">from</span> <span class="nn">subprocess</span> <span class="kn">import</span> <span class="n">Popen</span>  <span class="c1"># Use import statements for packages and modules only, `Popen` is a class</span>
+<span class="kn">from</span> <span class="nn">subprocess</span> <span class="kn">import</span> <span class="n">PIPE</span>  <span class="c1"># Use import statements for packages and modules only, `Popen` is a constant</span>
+</pre></div>
+</div>
+</section>
+<section id="strings">
+<h3>Strings<a class="headerlink" href="#strings" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Recommend</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">long_string</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;This is fine if your use case can accept</span>
+<span class="s2">    extraneous leading spaces.&quot;&quot;&quot;</span>
+
+<span class="n">long_string</span> <span class="o">=</span> <span class="s2">&quot;And this is fine if you cannot accept</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="s2">&quot;extraneous leading spaces.&quot;</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Not recommend</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;This is fine if your use case can accept&quot;</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;extraneous leading spaces.&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="logger">
+<h3>Logger<a class="headerlink" href="#logger" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Recommend</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.common</span> <span class="kn">import</span> <span class="n">logger</span>
+
+<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Current TensorFlow Version is: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>  <span class="c1"># Use a pattern-string (with %-placeholders)</span>
+
+<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Current $PAGER is: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;PAGER&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">))</span>  <span class="c1"># Better readability</span>
+
+<span class="c1"># Handle long string</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+    <span class="s2">&quot;All tuning options for the current strategy have been tried. </span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="s2">&quot;If the quantized model does not seem to work well, it might be worth considering other strategies.&quot;</span>
+<span class="p">)</span>
+
+<span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+    <span class="s2">&quot;This is a long string, this is a long string,&quot;</span>
+    <span class="s2">&quot;override the user config&#39;s smooth quant alpha into the best alpha(</span><span class="si">%.4f</span><span class="s2">) found in pre-strategy.&quot;</span><span class="p">,</span>
+    <span class="mf">0.65421</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Not recommend</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Current TensorFlow Version is: </span><span class="si">{</span><span class="n">tf</span><span class="o">.</span><span class="n">__version__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># Use f-string</span>
+
+<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Current $PAGER is:&quot;</span><span class="p">)</span>  <span class="c1"># One sentence in two lines</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;PAGER&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
+<section id="type-annotations">
+<h3>Type Annotations<a class="headerlink" href="#type-annotations" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Recommend</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">register_config</span><span class="p">(</span><span class="n">framework_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">algo_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">priority</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span> <span class="o">...</span>
+
+
+<span class="n">eval_result</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+<span class="c1"># Declare aliases of complex types</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TypeAlias</span>
+
+<span class="n">_LossAndGradient</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span>
+<span class="n">ComplexTFMap</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">_LossAndGradient</span><span class="p">]</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Not recommend</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">xx_func</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">OrderedDict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]]:</span> <span class="c1"># Can&#39;t improve the readability</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>VS Code Extensions:</p>
+<ul>
+<li><p><a class="reference external" href="https://marketplace.visualstudio.com/items?itemName=ms-python.python">python</a></p></li>
+<li><p><a class="reference external" href="https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-pylance">pylance</a></p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="comments">
+<h3>Comments<a class="headerlink" href="#comments" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Recommend</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">CheeseShopAddress</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The address of a cheese shop.</span>
+
+<span class="sd">    ...</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+<span class="k">class</span> <span class="nc">OutOfCheeseError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;No more cheese is available.&quot;&quot;&quot;</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Not recommend</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">CheeseShopAddress</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class that describes the address of a cheese shop.</span>
+
+<span class="sd">    ...</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+<span class="k">class</span> <span class="nc">OutOfCheeseError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when no more cheese is available.&quot;&quot;&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="todo-comments">
+<h3>TODO Comments<a class="headerlink" href="#todo-comments" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Recommend</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># TODO: crbug.com/192795 - Investigate cpufreq optimizations.</span>
+
+<span class="c1"># * Important information</span>
+<span class="c1"># ? Need decision</span>
+<span class="c1"># ! Deprecated method, do not use</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p>A <code class="docutils literal notranslate"><span class="pre">TODO</span></code> comment begins with the word <code class="docutils literal notranslate"><span class="pre">TODO:</span></code> for facilitate searching.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>VS Code Extension:
+<a class="reference external" href="https://marketplace.visualstudio.com/items?itemName=aaron-bond.better-comments">Better Comments</a></p></li>
+</ul>
+</section>
+<section id="public-and-internal-interfaces">
+<h3>Public and Internal Interfaces<a class="headerlink" href="#public-and-internal-interfaces" title="Link to this heading"></a></h3>
+<p>Use <code class="docutils literal notranslate"><span class="pre">__all__</span></code> to help the developer and user know the supported interface and components.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;options&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;register_config&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;get_all_config_set_from_config_registry&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;BaseConfig&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ComposableConfig&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="folder-structure">
+<h2>Folder structure<a class="headerlink" href="#folder-structure" title="Link to this heading"></a></h2>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>├──<span class="w"> </span>fwk_name
+│<span class="w">   </span>├──<span class="w"> </span>__init__.py
+│<span class="w">   </span>├──<span class="w"> </span>quantization
+│<span class="w">   </span>│<span class="w">   </span>├──<span class="w"> </span>algorithm_entry.py
+│<span class="w">   </span>│<span class="w">   </span>├──<span class="w"> </span>autotune.py
+│<span class="w">   </span>│<span class="w">   </span>├──<span class="w"> </span>config.py
+│<span class="w">   </span>│<span class="w">   </span>├──<span class="w"> </span>__init__.py
+│<span class="w">   </span>│<span class="w">   </span>└──<span class="w"> </span>quantize.py
+│<span class="w">   </span>├──<span class="w"> </span>algorithms
+│<span class="w">   </span>│<span class="w">   </span>├──<span class="w"> </span>__init__.py
+│<span class="w">   </span>│<span class="w">   </span>├──<span class="w"> </span>smooth_quant
+│<span class="w">   </span>│<span class="w">   </span>│<span class="w">   </span>├──<span class="w"> </span>__init__.py
+│<span class="w">   </span>│<span class="w">   </span>│<span class="w">   </span>├──<span class="w"> </span>smooth_quant.py
+│<span class="w">   </span>│<span class="w">   </span>│<span class="w">   </span>└──<span class="w"> </span>utility.py
+│<span class="w">   </span>│<span class="w">   </span>├──<span class="w"> </span>static_quant
+│<span class="w">   </span>│<span class="w">   </span>│<span class="w">   </span>├──<span class="w"> </span>__init__.py
+│<span class="w">   </span>│<span class="w">   </span>│<span class="w">   </span>├──<span class="w"> </span>static_quant.py
+│<span class="w">   </span>│<span class="w">   </span>│<span class="w">   </span>└──<span class="w"> </span>utility.py
+│<span class="w">   </span>│<span class="w">   </span>└──<span class="w"> </span>weight_only
+│<span class="w">   </span>│<span class="w">       </span>├──<span class="w"> </span>gptq.py
+│<span class="w">   </span>│<span class="w">       </span>├──<span class="w"> </span>__init__.py
+│<span class="w">   </span>│<span class="w">       </span>└──<span class="w"> </span>rtn.py
+│<span class="w">   </span>└──<span class="w"> </span>utils
+│<span class="w">       </span>├──<span class="w"> </span>constants.py
+│<span class="w">       </span>├──<span class="w"> </span>__init__.py
+│<span class="w">       </span>└──<span class="w"> </span>utility.py
+└──<span class="w"> </span>__init__.py
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># * Note: some code snippets about register algorithm entry</span>
+<span class="c1"># filepath: neural_compressor/fwk_name/quantization/algorithm_entry.py</span>
+<span class="nd">@register_algo</span><span class="p">(</span><span class="n">RTN</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">rtn_algo_entry</span><span class="p">()</span>
+    <span class="kn">from</span> <span class="nn">neural_compressor.fwk_name.algorithms</span> <span class="kn">import</span> <span class="n">rtn</span>
+    <span class="o">...</span>
+
+<span class="nd">@register_algo</span><span class="p">(</span><span class="n">SMOOTH_QUANT</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">smooth_quant_entry</span><span class="p">():</span>
+    <span class="kn">from</span> <span class="nn">neural_compressor.fwk_name.algorithms</span> <span class="kn">import</span> <span class="n">smooth_quant</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+</section>
+<section id="recommend-vs-code-settings-json">
+<h2>Recommend VS Code <code class="docutils literal notranslate"><span class="pre">settings.json</span></code><a class="headerlink" href="#recommend-vs-code-settings-json" title="Link to this heading"></a></h2>
+<p>To keep the coding style consistent, we suggest you replace <code class="docutils literal notranslate"><span class="pre">.vscode/settings.json</span></code> with <code class="docutils literal notranslate"><span class="pre">neural-compressor/.vscode/settings_recommended.json</span></code>.</p>
+</section>
+<section id="reference">
+<h2>Reference<a class="headerlink" href="#reference" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://google.github.io/styleguide/pyguide.html#s3.8-comments-and-docstrings">Google Python Style</a></p></li>
+<li><p><a class="reference external" href="https://peps.python.org/pep-0008/">PEP 8</a></p></li>
+<li><p><a class="reference external" href="https://github.com/pytorch/pytorch">PyTorch</a></p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8a3cdcca30> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

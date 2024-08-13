@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.model.tensorflow_model &mdash; Intel® Neural Compressor 2.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../versions.html">2.6▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.model.tensorflow_model</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/neural_compressor/model/tensorflow_model/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.model.tensorflow_model">
+<span id="neural-compressor-model-tensorflow-model"></span><h1>neural_compressor.model.tensorflow_model<a class="headerlink" href="#module-neural_compressor.model.tensorflow_model" title="Link to this heading"></a></h1>
+<p>Class for Tensorflow model.</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel" title="neural_compressor.model.tensorflow_model.TensorflowBaseModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowBaseModel</span></code></a></p></td>
+<td><p>Build Tensorflow Base Model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.TensorflowSavedModelModel" title="neural_compressor.model.tensorflow_model.TensorflowSavedModelModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowSavedModelModel</span></code></a></p></td>
+<td><p>Build Tensorflow saved model.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.TensorflowLLMModel" title="neural_compressor.model.tensorflow_model.TensorflowLLMModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowLLMModel</span></code></a></p></td>
+<td><p>The class Tensorflow saved model whose GraphDef exceeding maximum protobuf size of 2GB.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.TensorflowQATModel" title="neural_compressor.model.tensorflow_model.TensorflowQATModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowQATModel</span></code></a></p></td>
+<td><p>Build Tensorflow QAT model.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.TensorflowCheckpointModel" title="neural_compressor.model.tensorflow_model.TensorflowCheckpointModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowCheckpointModel</span></code></a></p></td>
+<td><p>Build Tensorflow checkpoint model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.TensorflowModel" title="neural_compressor.model.tensorflow_model.TensorflowModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowModel</span></code></a></p></td>
+<td><p>A wrapper to construct a Tensorflow Model.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.get_model_type" title="neural_compressor.model.tensorflow_model.get_model_type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_model_type</span></code></a>(model)</p></td>
+<td><p>Get Tensorflow mode type.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.validate_graph_node" title="neural_compressor.model.tensorflow_model.validate_graph_node"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_graph_node</span></code></a>(graph_def, node_names)</p></td>
+<td><p>Validate nodes exist in the graph_def.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.validate_and_inference_input_output" title="neural_compressor.model.tensorflow_model.validate_and_inference_input_output"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_and_inference_input_output</span></code></a>(graph_def, ...)</p></td>
+<td><p>Validate and inference the input and output tensor names of graph_def.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.graph_session" title="neural_compressor.model.tensorflow_model.graph_session"><code class="xref py py-obj docutils literal notranslate"><span class="pre">graph_session</span></code></a>(model, input_tensor_names, ...)</p></td>
+<td><p>Helper to build session with tf.compat.v1.Graph.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.graph_def_session" title="neural_compressor.model.tensorflow_model.graph_def_session"><code class="xref py py-obj docutils literal notranslate"><span class="pre">graph_def_session</span></code></a>(model, input_tensor_names, ...)</p></td>
+<td><p>Build session with tf.compat.v1.GraphDef.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.frozen_pb_session" title="neural_compressor.model.tensorflow_model.frozen_pb_session"><code class="xref py py-obj docutils literal notranslate"><span class="pre">frozen_pb_session</span></code></a>(model, input_tensor_names, ...)</p></td>
+<td><p>Build session with frozen pb.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.load_saved_model" title="neural_compressor.model.tensorflow_model.load_saved_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_saved_model</span></code></a>(model, saved_model_tags, ...)</p></td>
+<td><p>Load graph_def from saved model with the default serving signature key.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.try_loading_keras" title="neural_compressor.model.tensorflow_model.try_loading_keras"><code class="xref py py-obj docutils literal notranslate"><span class="pre">try_loading_keras</span></code></a>(model, input_tensor_names, ...)</p></td>
+<td><p>Try different ways of loading keras models.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.keras_session" title="neural_compressor.model.tensorflow_model.keras_session"><code class="xref py py-obj docutils literal notranslate"><span class="pre">keras_session</span></code></a>(model, input_tensor_names, ...)</p></td>
+<td><p>Build session with keras model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.slim_session" title="neural_compressor.model.tensorflow_model.slim_session"><code class="xref py py-obj docutils literal notranslate"><span class="pre">slim_session</span></code></a>(model, input_tensor_names, ...)</p></td>
+<td><p>Build session with slim model.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.checkpoint_session" title="neural_compressor.model.tensorflow_model.checkpoint_session"><code class="xref py py-obj docutils literal notranslate"><span class="pre">checkpoint_session</span></code></a>(model, input_tensor_names, ...)</p></td>
+<td><p>Build session with ckpt model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.estimator_session" title="neural_compressor.model.tensorflow_model.estimator_session"><code class="xref py py-obj docutils literal notranslate"><span class="pre">estimator_session</span></code></a>(model, input_tensor_names, ...)</p></td>
+<td><p>Build session with estimator model.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.model.tensorflow_model.saved_model_session" title="neural_compressor.model.tensorflow_model.saved_model_session"><code class="xref py py-obj docutils literal notranslate"><span class="pre">saved_model_session</span></code></a>(model, input_tensor_names, ...)</p></td>
+<td><p>Build session with saved model.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.get_model_type">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">get_model_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.get_model_type" title="Link to this definition"></a></dt>
+<dd><p>Get Tensorflow mode type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> (<em>string</em><em> or </em><em>model object</em>) – model path or model object.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>model type</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.validate_graph_node">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">validate_graph_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph_def</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_names</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.validate_graph_node" title="Link to this definition"></a></dt>
+<dd><p>Validate nodes exist in the graph_def.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph_def</strong> (<em>tf.compat.v1.GraphDef</em>) – tf.compat.v1.GraphDef object.</p></li>
+<li><p><strong>node_names</strong> (<em>list</em><em> of </em><em>string</em>) – node names to be validated.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.validate_and_inference_input_output">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">validate_and_inference_input_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph_def</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.validate_and_inference_input_output" title="Link to this definition"></a></dt>
+<dd><p>Validate and inference the input and output tensor names of graph_def.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph_def</strong> (<em>tf.compat.v1.GraphDef</em>) – tf.compat.v1.GraphDef object.</p></li>
+<li><p><strong>input_tensor_names</strong> (<em>list</em><em> of </em><em>string</em>) – input_tensor_names of graph_def.</p></li>
+<li><p><strong>output_tensor_names</strong> (<em>list</em><em> of </em><em>string</em>) – output_tensor_names of graph_def.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>validated input_tensor_names.
+output_tensor_names (list of string): validated output_tensor_names.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>input_tensor_names (list of string)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.graph_session">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">graph_session</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.graph_session" title="Link to this definition"></a></dt>
+<dd><p>Helper to build session with tf.compat.v1.Graph.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>tf.compat.v1.Graph</em>) – tf.compat.v1.Graph object.</p></li>
+<li><p><strong>input_tensor_names</strong> (<em>list</em><em> of </em><em>string</em>) – input_tensor_names of model.</p></li>
+<li><p><strong>output_tensor_names</strong> (<em>list</em><em> of </em><em>string</em>) – output_tensor_names of model.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tf.compat.v1.Session object.
+input_tensor_names (list of string): validated input_tensor_names.
+output_tensor_names (list of string): validated output_tensor_names.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>sess (tf.compat.v1.Session)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.graph_def_session">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">graph_def_session</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.graph_def_session" title="Link to this definition"></a></dt>
+<dd><p>Build session with tf.compat.v1.GraphDef.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>tf.compat.v1.GraphDef</em>) – tf.compat.v1.GraphDef object.</p></li>
+<li><p><strong>input_tensor_names</strong> (<em>list</em><em> of </em><em>string</em>) – input_tensor_names of model.</p></li>
+<li><p><strong>output_tensor_names</strong> (<em>list</em><em> of </em><em>string</em>) – output_tensor_names of model.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tf.compat.v1.Session object
+input_tensor_names (list of string): validated input_tensor_names
+output_tensor_names (list of string): validated output_tensor_names</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>sess (tf.compat.v1.Session)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.frozen_pb_session">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">frozen_pb_session</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.frozen_pb_session" title="Link to this definition"></a></dt>
+<dd><p>Build session with frozen pb.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>string</em>) – model path.</p></li>
+<li><p><strong>input_tensor_names</strong> (<em>list</em><em> of </em><em>string</em>) – input_tensor_names of model.</p></li>
+<li><p><strong>output_tensor_names</strong> (<em>list</em><em> of </em><em>string</em>) – output_tensor_names of model.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tf.compat.v1.Session object.
+input_tensor_names (list of string): validated input_tensor_names.
+output_tensor_names (list of string): validated output_tensor_names.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>sess (tf.compat.v1.Session)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.load_saved_model">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">load_saved_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saved_model_tags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.load_saved_model" title="Link to this definition"></a></dt>
+<dd><p>Load graph_def from saved model with the default serving signature key.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> – Directory of the SavedModel.</p></li>
+<li><p><strong>saved_model_tags</strong> – Set of tags identifying the MetaGraphDef within the
+SavedModel to analyze.</p></li>
+<li><p><strong>input_tensor_names</strong> (<em>list</em><em> of </em><em>string</em>) – input_tensor_names of model.</p></li>
+<li><p><strong>output_tensor_names</strong> (<em>list</em><em> of </em><em>string</em>) – output_tensor_names of model.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The loaded GraphDef.
+input_tensors: List of input tensors.
+output_tensors: List of output tensors.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>graph_def</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.try_loading_keras">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">try_loading_keras</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.try_loading_keras" title="Link to this definition"></a></dt>
+<dd><p>Try different ways of loading keras models.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>string</em><em> or </em><em>tf.keras.Model</em>) – model path or tf.keras.Model object.</p></li>
+<li><p><strong>input_tensor_names</strong> (<em>list</em><em> of </em><em>string</em>) – input tensor names of the model.</p></li>
+<li><p><strong>output_tensor_names</strong> (<em>list</em><em> of </em><em>string</em>) – output tensor names of the model.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tf.compat.v1.Session object.
+input_names (list of string): validated input names.
+output_names (list of string): validated output names.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>graph_def (tf.compat.v1.Session)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.keras_session">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">keras_session</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.keras_session" title="Link to this definition"></a></dt>
+<dd><p>Build session with keras model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>string</em><em> or </em><em>tf.keras.Model</em>) – model path or tf.keras.Model object.</p></li>
+<li><p><strong>input_tensor_names</strong> (<em>list</em><em> of </em><em>string</em>) – input_tensor_names of model.</p></li>
+<li><p><strong>output_tensor_names</strong> (<em>list</em><em> of </em><em>string</em>) – output_tensor_names of model.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tf.compat.v1.Session object.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>sess (tf.compat.v1.Session)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.slim_session">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">slim_session</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.slim_session" title="Link to this definition"></a></dt>
+<dd><p>Build session with slim model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>string</em>) – model path.</p></li>
+<li><p><strong>input_tensor_names</strong> (<em>list</em><em> of </em><em>string</em>) – input_tensor_names of model.</p></li>
+<li><p><strong>output_tensor_names</strong> (<em>list</em><em> of </em><em>string</em>) – output_tensor_names of model.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tf.compat.v1.Session object.
+input_tensor_names (list of string): validated input_tensor_names.
+output_tensor_names (list of string): validated output_tensor_names.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>sess (tf.compat.v1.Session)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.checkpoint_session">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">checkpoint_session</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.checkpoint_session" title="Link to this definition"></a></dt>
+<dd><p>Build session with ckpt model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>string</em>) – model path.</p></li>
+<li><p><strong>input_tensor_names</strong> (<em>list</em><em> of </em><em>string</em>) – input_tensor_names of model.</p></li>
+<li><p><strong>output_tensor_names</strong> (<em>list</em><em> of </em><em>string</em>) – validated output_tensor_names of model.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tf.compat.v1.Session object.
+input_tensor_names (list of string): validated input_tensor_names.
+output_tensor_names (list of string): validated output_tensor_names.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>sess (tf.compat.v1.Session)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.estimator_session">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">estimator_session</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.estimator_session" title="Link to this definition"></a></dt>
+<dd><p>Build session with estimator model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>tf.estimator.Estimator</em>) – tf.estimator.Estimator object.</p></li>
+<li><p><strong>input_tensor_names</strong> (<em>list</em><em> of </em><em>string</em>) – input_tensor_names of model.</p></li>
+<li><p><strong>output_tensor_names</strong> (<em>list</em><em> of </em><em>string</em>) – output_tensor_names of model.</p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – other required parameters, like input_fn.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tf.compat.v1.Session object.
+input_tensor_names (list of string): validated input_tensor_names.
+output_tensor_names (list of string): validated output_tensor_names.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>sess (tf.compat.v1.Session)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.saved_model_session">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">saved_model_session</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.saved_model_session" title="Link to this definition"></a></dt>
+<dd><p>Build session with saved model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>string</em>) – model path.</p></li>
+<li><p><strong>input_tensor_names</strong> (<em>list</em><em> of </em><em>string</em>) – input_tensor_names of model.</p></li>
+<li><p><strong>output_tensor_names</strong> (<em>list</em><em> of </em><em>string</em>) – output_tensor_names of model.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tf.compat.v1.Session object.
+input_tensor_names (list of string): validated input_tensor_names.
+output_tensor_names (list of string): validated output_tensor_names.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>sess (tf.compat.v1.Session)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowBaseModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">TensorflowBaseModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowBaseModel" title="Link to this definition"></a></dt>
+<dd><p>Build Tensorflow Base Model.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowSavedModelModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">TensorflowSavedModelModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowSavedModelModel" title="Link to this definition"></a></dt>
+<dd><p>Build Tensorflow saved model.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowLLMModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">TensorflowLLMModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowLLMModel" title="Link to this definition"></a></dt>
+<dd><p>The class Tensorflow saved model whose GraphDef exceeding maximum protobuf size of 2GB.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowQATModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">TensorflowQATModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowQATModel" title="Link to this definition"></a></dt>
+<dd><p>Build Tensorflow QAT model.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowCheckpointModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">TensorflowCheckpointModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowCheckpointModel" title="Link to this definition"></a></dt>
+<dd><p>Build Tensorflow checkpoint model.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.model.tensorflow_model.TensorflowModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.model.tensorflow_model.</span></span><span class="sig-name descname"><span class="pre">TensorflowModel</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/model/tensorflow_model.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.model.tensorflow_model.TensorflowModel" title="Link to this definition"></a></dt>
+<dd><p>A wrapper to construct a Tensorflow Model.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8a39d41220> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

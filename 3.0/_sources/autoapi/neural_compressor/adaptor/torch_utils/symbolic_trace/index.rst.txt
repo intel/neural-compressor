@@ -1,0 +1,49 @@
+neural_compressor.adaptor.torch_utils.symbolic_trace
+====================================================
+
+.. py:module:: neural_compressor.adaptor.torch_utils.symbolic_trace
+
+.. autoapi-nested-parse::
+
+   Symbolic Trace for Torch Utils.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.torch_utils.symbolic_trace.trace_and_fuse_sub_graph
+   neural_compressor.adaptor.torch_utils.symbolic_trace.symbolic_trace
+
+
+Module Contents
+---------------
+
+.. py:function:: trace_and_fuse_sub_graph(model, prefix, is_qat)
+
+   Trace and fuse subgraph of the model.
+
+   :param model: the input model.
+   :type model: object
+   :param prefix: prefix of op name.
+   :type prefix: str
+   :param is_qat: if is qat.
+   :type is_qat: bool
+
+   :returns: model (object).
+
+
+.. py:function:: symbolic_trace(model, is_qat=False)
+
+   Trace the model.
+
+   :param model: the input model.
+   :type model: object
+   :param is_qat: if is qat.
+   :type is_qat: bool
+
+   :returns: traced_model (object).
+
+

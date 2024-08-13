@@ -1,0 +1,38 @@
+neural_compressor.adaptor.tf_utils
+==================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils
+
+.. autoapi-nested-parse::
+
+   Tensorflow Adaptor Utils.
+
+
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/index
+   /autoapi/neural_compressor/adaptor/tf_utils/quantize_graph/index
+   /autoapi/neural_compressor/adaptor/tf_utils/transform_graph/index
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_converter/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_converter_without_calib/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_util/index
+   /autoapi/neural_compressor/adaptor/tf_utils/quantize_graph_common/index
+   /autoapi/neural_compressor/adaptor/tf_utils/smooth_quant_calibration/index
+   /autoapi/neural_compressor/adaptor/tf_utils/smooth_quant_scaler/index
+   /autoapi/neural_compressor/adaptor/tf_utils/tf2onnx_converter/index
+   /autoapi/neural_compressor/adaptor/tf_utils/util/index
+
+

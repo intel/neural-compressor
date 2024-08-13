@@ -1,0 +1,53 @@
+neural_compressor.profiling.profiler.tensorflow_profiler.utils
+==============================================================
+
+.. py:module:: neural_compressor.profiling.profiler.tensorflow_profiler.utils
+
+.. autoapi-nested-parse::
+
+   Tensorflow profiler utils.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.profiling.profiler.tensorflow_profiler.utils.delete_assign
+   neural_compressor.profiling.profiler.tensorflow_profiler.utils.create_tf_config
+   neural_compressor.profiling.profiler.tensorflow_profiler.utils.set_eager_execution
+
+
+Module Contents
+---------------
+
+.. py:function:: delete_assign(graph_def: Any) -> Any
+
+   Modify graph nodes.
+
+   :param graph_def: TensorFlow GraphDef
+
+   Returns:
+
+
+.. py:function:: create_tf_config(tf_module: Any, intra_num_of_threads: int, inter_num_of_threads: int) -> Any
+
+   Create tensorflow config.
+
+   :param tf_module: tensorflow module
+   :param intra_num_of_threads: number of threads used within an individual op for parallelism
+   :param inter_num_of_threads: number of threads used for parallelism between independent operations
+
+   :returns: TensorFlow ConfigProto object
+
+
+.. py:function:: set_eager_execution(input_graph: str) -> None
+
+   Set eager execution as required by model.
+
+   :param input_graph: path to tensorflow model
+
+   :returns: None
+
+

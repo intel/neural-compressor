@@ -1,0 +1,35 @@
+neural_compressor.torch.algorithms.weight_only.hqq.core
+=======================================================
+
+.. py:module:: neural_compressor.torch.algorithms.weight_only.hqq.core
+
+.. autoapi-nested-parse::
+
+   The HQQ modules.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.hqq.core.HQQTensorHandle
+   neural_compressor.torch.algorithms.weight_only.hqq.core.HQQLinear
+
+
+Module Contents
+---------------
+
+.. py:class:: HQQTensorHandle
+
+   HQQ Tensor Handle to quantize and dequantize the tensor.
+
+
+.. py:class:: HQQLinear(in_features: int, out_features: int, bias: bool = True, q_weight: neural_compressor.torch.algorithms.weight_only.hqq.qtensor.QTensor = None, device=None, dtype=None)
+
+
+
+   HQQ Linear module.
+
+

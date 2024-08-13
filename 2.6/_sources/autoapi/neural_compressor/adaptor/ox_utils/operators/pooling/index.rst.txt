@@ -1,0 +1,37 @@
+neural_compressor.adaptor.ox_utils.operators.pooling
+====================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators.pooling
+
+.. autoapi-nested-parse::
+
+   AveragePool Operator.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.pooling.PoolOperator
+   neural_compressor.adaptor.ox_utils.operators.pooling.QPoolOperator
+
+
+Module Contents
+---------------
+
+.. py:class:: PoolOperator(onnx_quantizer, onnx_node)
+
+
+
+   AveragePool Operator.
+
+
+.. py:class:: QPoolOperator(onnx_node, children, initializers)
+
+
+
+   QLinearAveragePool Operator.
+
+

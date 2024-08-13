@@ -1,0 +1,50 @@
+neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_helper
+=====================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_helper
+
+.. autoapi-nested-parse::
+
+   QAT Quantize Helper Class.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_helper.init_quantize_config
+   neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_helper.qat_clone_function
+
+
+Module Contents
+---------------
+
+.. py:function:: init_quantize_config(model, quantize_recipe=None)
+
+   Initialize quantization config at the beginning of QAT process.
+
+   :param model_name: Special pre-optimized model name.
+   :type model_name: string
+   :param quantize_recipe: A dict that decide whether given layers should be quantized.
+   :type quantize_recipe: dict
+
+   :returns:
+
+             QuantizeConfig instance used to decide whether a specific layer
+                                      should be quantized.
+   :rtype: config (QuantizeConfig)
+
+
+.. py:function:: qat_clone_function(layer)
+
+   Wrap or leave given layer based on quantize config object parameters.
+
+   :param layer: input Keras layer
+   :type layer: tf.keras.layers.Layer
+
+   :returns: layer wrapped by QuantizeWrapper class.
+   :rtype: wrapped_layer (QuantizeWrapper)
+
+

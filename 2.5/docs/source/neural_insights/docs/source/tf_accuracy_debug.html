@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step by step example how to debug accuracy with Neural Insights &mdash; Intel® Neural Compressor 2.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">2.5▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Step by step example how to debug accuracy with Neural Insights</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/docs/source/neural_insights/docs/source/tf_accuracy_debug.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="step-by-step-example-how-to-debug-accuracy-with-neural-insights">
+<h1>Step by step example how to debug accuracy with Neural Insights<a class="headerlink" href="#step-by-step-example-how-to-debug-accuracy-with-neural-insights" title="Link to this heading"></a></h1>
+<ol class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#preparation">Preparation</a></p></li>
+<li><p><a class="reference external" href="#running-the-quantization">Running the quantization</a></p></li>
+<li><p><a class="reference external" href="#-analyzing-the-result-of-quantization">Analyzing the result of quantization</a></p></li>
+<li><p><a class="reference external" href="#-analyzing-weight-histograms">Analyzing weight histograms</a></p></li>
+</ol>
+</section>
+<section id="introduction">
+<h1>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h1>
+<p>In this instruction accuracy issue will be debugged using Neural Insights. TensorFlow Inception_v3 model will be used as an example. It will be quantized and the results will be analyzed to find the cause of the accuracy loss.</p>
+</section>
+<section id="preparation">
+<h1>Preparation<a class="headerlink" href="#preparation" title="Link to this heading"></a></h1>
+<section id="source">
+<h2>Source<a class="headerlink" href="#source" title="Link to this heading"></a></h2>
+<p>First you need to install Intel® Neural Compressor.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install Neural Compressor</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/intel/neural-compressor.git
+<span class="nb">cd</span><span class="w"> </span>neural-compressor<span class="w"> </span>
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt<span class="w"> </span>
+python<span class="w"> </span>setup.py<span class="w"> </span>install
+
+<span class="c1"># Install Neural Insights</span>
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>neural_insights/requirements.txt
+python<span class="w"> </span>setup.py<span class="w"> </span>install<span class="w"> </span>neural_insights
+</pre></div>
+</div>
+</section>
+<section id="requirements">
+<h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading"></a></h2>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>examples/tensorflow/image_recognition/tensorflow_models/inception_v3/quantization/ptq
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+</section>
+<section id="model">
+<h2>Model<a class="headerlink" href="#model" title="Link to this heading"></a></h2>
+<p>Download pre-trained PB model file.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>wget<span class="w"> </span>https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/inceptionv3_fp32_pretrained_model.pb
+</pre></div>
+</div>
+</section>
+<section id="prepare-the-dataset">
+<h2>Prepare the dataset<a class="headerlink" href="#prepare-the-dataset" title="Link to this heading"></a></h2>
+<p>Download dataset from ImageNet and process the data to TensorFlow Record format.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>examples/tensorflow/image_recognition/tensorflow_models/
+bash<span class="w"> </span>prepare_dataset.sh<span class="w"> </span>--output_dir<span class="o">=</span>./inception_v3/quantization/ptq/data<span class="w"> </span>--raw_dir<span class="o">=</span>/PATH/TO/img_raw/val/<span class="w"> </span>--subset<span class="o">=</span>validation
+bash<span class="w"> </span>prepare_dataset.sh<span class="w"> </span>--output_dir<span class="o">=</span>./inception_v3/quantization/ptq/data<span class="w"> </span>--raw_dir<span class="o">=</span>/PATH/TO/img_raw/train/<span class="w"> </span>--subset<span class="o">=</span>train
+</pre></div>
+</div>
+</section>
+</section>
+<section id="running-the-quantization">
+<h1>Running the quantization<a class="headerlink" href="#running-the-quantization" title="Link to this heading"></a></h1>
+<p>Before applying quantization, modify some code to enable Neural Insights:</p>
+<ol class="simple">
+<li><p>Set the argument <code class="docutils literal notranslate"><span class="pre">diagnosis</span></code> to be <code class="docutils literal notranslate"><span class="pre">True</span></code> in <code class="docutils literal notranslate"><span class="pre">PostTrainingQuantConfig</span></code> so that Neural Insights will dump weights and activations of quantizable Ops in this model.</p></li>
+<li><p>Delete the <code class="docutils literal notranslate"><span class="pre">op_name_dict</span></code> argument because that’s the answer of our investigation.</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">calibration_sampling_size</span><span class="o">=</span><span class="p">[</span><span class="mi">50</span><span class="p">,</span> <span class="mi">100</span><span class="p">],</span> <span class="n">diagnosis</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<ol class="simple">
+<li><p>Quantize the model with following command:</p></li>
+</ol>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_tuning.sh<span class="w"> </span>--input_model<span class="o">=</span>/PATH/TO/inceptionv3_fp32_pretrained_model.pb<span class="w"> </span>--output_model<span class="o">=</span>./nc_inception_v3.pb<span class="w"> </span>--dataset_location<span class="o">=</span>/path/to/ImageNet/
+</pre></div>
+</div>
+<p>The accuracy of this model will decrease a lot if all Ops are quantized to int8 as default strategy:</p>
+<p><img alt="accuracy_decrease" src="../../../../../_images/accuracy_decrease.png" /></p>
+</section>
+<section id="analyzing-the-result-of-quantization">
+<h1>Analyzing the result of quantization<a class="headerlink" href="#analyzing-the-result-of-quantization" title="Link to this heading"></a></h1>
+<p>Then, if you run quantization, you will find the following table:</p>
+<p><img alt="activations_summary" src="../../../../../_images/activations_summary.png" /></p>
+<p>The MSE (Mean Square Error) of the Ops’ activation are listed from high to low, there are also min-max values.
+Usually, MSE can be referred as one of a typical indexes leading to accuracy loss.</p>
+<p><img alt="ops_weights" src="../../../../../_images/ops_weights.png" /></p>
+<p>There are also relevant information about Ops’ weights.
+Often Op with highest MSE will cause the highest accuracy loss, but it is not always the case.</p>
+<p>Experiment with disabling the quantization of some of the Ops with top 5 highest MSE in both tables is not satisfactory, as results show in this example:</p>
+<p><img alt="tune_result" src="../../../../../_images/tune_result.png" /></p>
+<p>Then weights histograms can be analyzed to find the reason of the accuracy loss.</p>
+</section>
+<section id="analyzing-weight-histograms">
+<h1>Analyzing weight histograms<a class="headerlink" href="#analyzing-weight-histograms" title="Link to this heading"></a></h1>
+<section id="open-neural-insights">
+<h2>Open Neural Insights<a class="headerlink" href="#open-neural-insights" title="Link to this heading"></a></h2>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>neural_insights
+</pre></div>
+</div>
+<p>Then you will get a webpage address with Neural insights GUI mode. You can find there histograms of weights and activations.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Neural</span> <span class="n">Insights</span> <span class="n">Server</span> <span class="n">started</span><span class="o">.</span>
+<span class="n">Open</span> <span class="n">address</span> <span class="p">[</span><span class="o">...</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>The weights of Ops are usually distributed in one spike like the following graph:</p>
+<p><img alt="weights_histograms" src="../../../../../_images/weights_histograms.png" /></p>
+<p>When you click on the Op in the Op list, you can get weight and activation histograms at the bottom of the page.
+One of the weights histograms looks different than the examples above.</p>
+<p><img alt="weights_histogram" src="../../../../../_images/weights_histogram.png" /></p>
+<p>As is shown in the chart, the distribution of weights often concentrates in a small range of min-max values, when the accuracy loss of an Op is tolerable. But in this Op the min-max values of weights are significantly high (range is bigger than [-20, 20]) because of some outliers. The values near zero point, which are the majority, will be mapped to a very small range in int8, leading to a huge accuracy loss. Besides, since the min-max values vary in different channels, the accuracy will decrease without using channel-wise quantization.</p>
+<p>Therefore, you can disable this Op:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">op_name_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;v0/cg/conv0/conv2d/Conv2D&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;activation&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;fp32&quot;</span><span class="p">]}}}</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">calibration_sampling_size</span><span class="o">=</span><span class="p">[</span><span class="mi">50</span><span class="p">,</span> <span class="mi">100</span><span class="p">],</span> <span class="n">op_name_dict</span><span class="o">=</span><span class="n">op_name_dict</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>After running quantization again, you can see that accuracy result has increased. The Op that caused accuracy loss was found.</p>
+<p><img alt="tune_result2" src="../../../../../_images/tune_result2.png" /></p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f81cadfd730> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,33 @@
+neural_compressor.experimental.strategy.mse_v2
+==============================================
+
+.. py:module:: neural_compressor.experimental.strategy.mse_v2
+
+.. autoapi-nested-parse::
+
+   The MSE_V2 tuning strategy.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.experimental.strategy.mse_v2.MSE_V2TuneStrategy
+
+
+Module Contents
+---------------
+
+.. py:class:: MSE_V2TuneStrategy(model, conf, q_dataloader=None, q_func=None, eval_dataloader=None, eval_func=None, resume=None, q_hooks=None)
+
+
+
+   The `mse_v2` tuning strategy.
+
+   MSE_v2 is a strategy with a two stages fallback and revert fallback.
+   Note that, only tensorflow framework and pytorch FX backend is currently supported for mse_v2
+   tuning strategy.
+
+

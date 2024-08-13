@@ -1,0 +1,29 @@
+neural_compressor.adaptor.ox_utils.operators.lstm
+=================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators.lstm
+
+.. autoapi-nested-parse::
+
+   LSTM Operator.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.lstm.LSTMOperator
+
+
+Module Contents
+---------------
+
+.. py:class:: LSTMOperator(onnx_quantizer, onnx_node)
+
+
+
+   LSTM Operator.
+
+

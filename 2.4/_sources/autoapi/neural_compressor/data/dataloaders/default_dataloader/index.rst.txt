@@ -1,0 +1,42 @@
+neural_compressor.data.dataloaders.default_dataloader
+=====================================================
+
+.. py:module:: neural_compressor.data.dataloaders.default_dataloader
+
+.. autoapi-nested-parse::
+
+   Default dataloader for multiple framework backends.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.data.dataloaders.default_dataloader.DefaultDataLoader
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.data.dataloaders.default_dataloader.default_collate
+
+
+Module Contents
+---------------
+
+.. py:function:: default_collate(batch)
+
+   Merge data with outer dimension batch size.
+
+
+.. py:class:: DefaultDataLoader(dataset, batch_size=1, last_batch='rollover', collate_fn=None, sampler=None, batch_sampler=None, num_workers=0, pin_memory=False, shuffle=False, distributed=False)
+
+
+
+   DefaultDataLoader for multiple framework backends.
+
+

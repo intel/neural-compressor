@@ -1,0 +1,43 @@
+neural_compressor.compression.pruner.patterns.mha
+=================================================
+
+.. py:module:: neural_compressor.compression.pruner.patterns.mha
+
+.. autoapi-nested-parse::
+
+   MHA patterns.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.patterns.mha.PatternMHA
+
+
+Module Contents
+---------------
+
+.. py:class:: PatternMHA(config, modules=None)
+
+
+
+   Pruning Pattern.
+
+   A Pattern class derived from BasePattern. In this pattern, we calculate head masks for a MHA module
+   For more info of this pattern, please refer to :
+   https://github.com/intel/neural-compressor/blob/master/docs/sparsity.md
+
+   :param config: A config dict object that contains the pattern information.
+
+   .. attribute:: N
+
+      The number of elements to be pruned in a weight sequence.
+
+   .. attribute:: M
+
+      The size of the weight sequence.
+
+

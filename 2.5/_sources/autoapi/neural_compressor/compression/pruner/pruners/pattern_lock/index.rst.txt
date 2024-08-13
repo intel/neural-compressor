@@ -1,0 +1,40 @@
+neural_compressor.compression.pruner.pruners.pattern_lock
+=========================================================
+
+.. py:module:: neural_compressor.compression.pruner.pruners.pattern_lock
+
+.. autoapi-nested-parse::
+
+   Pattern lock pruner.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.pruners.pattern_lock.PytorchPatternLockPruner
+
+
+Module Contents
+---------------
+
+.. py:class:: PytorchPatternLockPruner(config, modules)
+
+
+
+   Pruning Pruner.
+
+   A Pruner class derived from BasePruner.
+   In this pruner, original model's sparsity pattern will be fixed while training.
+   This pruner is useful when a user trains a sparse model without changing its original structure.
+
+   :param modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+   :param config: A config dict object that contains the pruner information.
+
+   .. attribute:: Inherit from parent class Pruner.
+
+      
+
+

@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.adaptor.tf_utils.util &mdash; Intel® Neural Compressor 2.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">2.4▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.adaptor.tf_utils.util</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/autoapi/neural_compressor/adaptor/tf_utils/util/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.adaptor.tf_utils.util">
+<span id="neural-compressor-adaptor-tf-utils-util"></span><h1>neural_compressor.adaptor.tf_utils.util<a class="headerlink" href="#module-neural_compressor.adaptor.tf_utils.util" title="Link to this heading"></a></h1>
+<p>Tensorflow Utils Helper functions.</p>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.version1_lt_version2" title="neural_compressor.adaptor.tf_utils.util.version1_lt_version2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">version1_lt_version2</span></code></a>(version1, version2)</p></td>
+<td><p>Check if version1 is less than version2.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.version1_gt_version2" title="neural_compressor.adaptor.tf_utils.util.version1_gt_version2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">version1_gt_version2</span></code></a>(version1, version2)</p></td>
+<td><p>Check if version1 is greater than version2.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.version1_eq_version2" title="neural_compressor.adaptor.tf_utils.util.version1_eq_version2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">version1_eq_version2</span></code></a>(version1, version2)</p></td>
+<td><p>Check if version1 is equal to version2.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.version1_gte_version2" title="neural_compressor.adaptor.tf_utils.util.version1_gte_version2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">version1_gte_version2</span></code></a>(version1, version2)</p></td>
+<td><p>Check if version1 is greater than or equal to version2.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.version1_lte_version2" title="neural_compressor.adaptor.tf_utils.util.version1_lte_version2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">version1_lte_version2</span></code></a>(version1, version2)</p></td>
+<td><p>Check if version1 is less than or equal to version2.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.disable_random" title="neural_compressor.adaptor.tf_utils.util.disable_random"><code class="xref py py-obj docutils literal notranslate"><span class="pre">disable_random</span></code></a>([seed])</p></td>
+<td><p>A Decorator to disable tf random seed.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.read_graph" title="neural_compressor.adaptor.tf_utils.util.read_graph"><code class="xref py py-obj docutils literal notranslate"><span class="pre">read_graph</span></code></a>(in_graph[, in_graph_is_binary])</p></td>
+<td><p>Reads input graph file as GraphDef.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.write_graph" title="neural_compressor.adaptor.tf_utils.util.write_graph"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_graph</span></code></a>(out_graph_def, out_graph_file)</p></td>
+<td><p>Write output graphDef to file.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.is_ckpt_format" title="neural_compressor.adaptor.tf_utils.util.is_ckpt_format"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_ckpt_format</span></code></a>(model_path)</p></td>
+<td><p>Check the model_path format is ckpt or not.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.is_saved_model_format" title="neural_compressor.adaptor.tf_utils.util.is_saved_model_format"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_saved_model_format</span></code></a>(model_path)</p></td>
+<td><p>Check the model_path format is saved_model or not.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.get_estimator_graph" title="neural_compressor.adaptor.tf_utils.util.get_estimator_graph"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_estimator_graph</span></code></a>(estimator, input_fn)</p></td>
+<td><p>Get the graph of the estimator.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.get_tensor_by_name" title="neural_compressor.adaptor.tf_utils.util.get_tensor_by_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_tensor_by_name</span></code></a>(graph, name[, try_cnt])</p></td>
+<td><p>Get the tensor by name.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.iterator_sess_run" title="neural_compressor.adaptor.tf_utils.util.iterator_sess_run"><code class="xref py py-obj docutils literal notranslate"><span class="pre">iterator_sess_run</span></code></a>(sess, iter_op, feed_dict, output_tensor)</p></td>
+<td><p>Run the graph that have iterator integrated in the graph.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.collate_tf_preds" title="neural_compressor.adaptor.tf_utils.util.collate_tf_preds"><code class="xref py py-obj docutils literal notranslate"><span class="pre">collate_tf_preds</span></code></a>(results)</p></td>
+<td><p>Collate the prediction results.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.get_input_output_node_names" title="neural_compressor.adaptor.tf_utils.util.get_input_output_node_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_input_output_node_names</span></code></a>(graph_def)</p></td>
+<td><p>Get the input node name and output node name of the graph_def.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.fix_ref_type_of_graph_def" title="neural_compressor.adaptor.tf_utils.util.fix_ref_type_of_graph_def"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fix_ref_type_of_graph_def</span></code></a>(graph_def)</p></td>
+<td><p>Fix ref type of the graph_def.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.strip_unused_nodes" title="neural_compressor.adaptor.tf_utils.util.strip_unused_nodes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">strip_unused_nodes</span></code></a>(graph_def, input_node_names, ...)</p></td>
+<td><p>Strip unused nodes of the graph_def.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.strip_equivalent_nodes" title="neural_compressor.adaptor.tf_utils.util.strip_equivalent_nodes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">strip_equivalent_nodes</span></code></a>(graph_def, output_node_names)</p></td>
+<td><p>Strip nodes with the same input and attr.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.get_graph_def" title="neural_compressor.adaptor.tf_utils.util.get_graph_def"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_graph_def</span></code></a>(model[, outputs, auto_input_output])</p></td>
+<td><p>Get the model's graph_def.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.get_model_input_shape" title="neural_compressor.adaptor.tf_utils.util.get_model_input_shape"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_model_input_shape</span></code></a>(model)</p></td>
+<td><p>Get the input shape of the input model.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.get_tensor_val_from_graph_node" title="neural_compressor.adaptor.tf_utils.util.get_tensor_val_from_graph_node"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_tensor_val_from_graph_node</span></code></a>(...)</p></td>
+<td><p>Get the tensor value for given node name.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.int8_node_name_reverse" title="neural_compressor.adaptor.tf_utils.util.int8_node_name_reverse"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int8_node_name_reverse</span></code></a>(node)</p></td>
+<td><p>Reverse int8 node name.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.tf_diagnosis_helper" title="neural_compressor.adaptor.tf_utils.util.tf_diagnosis_helper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tf_diagnosis_helper</span></code></a>(fp32_model, quan_model, tune_cfg, ...)</p></td>
+<td><p>Tensorflow diagnosis helper function.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.generate_feed_dict" title="neural_compressor.adaptor.tf_utils.util.generate_feed_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_feed_dict</span></code></a>(input_tensor, inputs)</p></td>
+<td><p>Generate feed dict helper function.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.get_weight_from_input_tensor" title="neural_compressor.adaptor.tf_utils.util.get_weight_from_input_tensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_weight_from_input_tensor</span></code></a>(model, ...)</p></td>
+<td><p>Extracts weight tensors and their associated nodes from a smooth quant node's input tensor.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.apply_inlining" title="neural_compressor.adaptor.tf_utils.util.apply_inlining"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_inlining</span></code></a>(func)</p></td>
+<td><p>Apply an inlining optimization to the function's graph definition.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.construct_function_from_graph_def" title="neural_compressor.adaptor.tf_utils.util.construct_function_from_graph_def"><code class="xref py py-obj docutils literal notranslate"><span class="pre">construct_function_from_graph_def</span></code></a>(func, graph_def[, ...])</p></td>
+<td><p>Rebuild function from graph_def.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.parse_saved_model" title="neural_compressor.adaptor.tf_utils.util.parse_saved_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parse_saved_model</span></code></a>(model[, freeze, input_tensor_names, ...])</p></td>
+<td><p>Parse a input saved_model.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.tf_utils.util.reconstruct_saved_model" title="neural_compressor.adaptor.tf_utils.util.reconstruct_saved_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reconstruct_saved_model</span></code></a>(graph_def, func, frozen_func, ...)</p></td>
+<td><p>Reconstruct a saved_model.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.version1_lt_version2">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">version1_lt_version2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.version1_lt_version2" title="Link to this definition"></a></dt>
+<dd><p>Check if version1 is less than version2.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.version1_gt_version2">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">version1_gt_version2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.version1_gt_version2" title="Link to this definition"></a></dt>
+<dd><p>Check if version1 is greater than version2.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.version1_eq_version2">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">version1_eq_version2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.version1_eq_version2" title="Link to this definition"></a></dt>
+<dd><p>Check if version1 is equal to version2.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.version1_gte_version2">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">version1_gte_version2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.version1_gte_version2" title="Link to this definition"></a></dt>
+<dd><p>Check if version1 is greater than or equal to version2.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.version1_lte_version2">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">version1_lte_version2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version2</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.version1_lte_version2" title="Link to this definition"></a></dt>
+<dd><p>Check if version1 is less than or equal to version2.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.disable_random">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">disable_random</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.disable_random" title="Link to this definition"></a></dt>
+<dd><p>A Decorator to disable tf random seed.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.read_graph">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">read_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_graph_is_binary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.read_graph" title="Link to this definition"></a></dt>
+<dd><p>Reads input graph file as GraphDef.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_graph</strong> – input graph file.</p></li>
+<li><p><strong>in_graph_is_binary</strong> – whether input graph is binary, default True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>input graphDef.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.write_graph">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">write_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_graph_def</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_graph_file</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.write_graph" title="Link to this definition"></a></dt>
+<dd><p>Write output graphDef to file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>out_graph_def</strong> – output graphDef.</p></li>
+<li><p><strong>out_graph_file</strong> – path to output graph file.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.is_ckpt_format">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">is_ckpt_format</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_path</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.is_ckpt_format" title="Link to this definition"></a></dt>
+<dd><p>Check the model_path format is ckpt or not.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model_path</strong> (<em>string</em>) – the model folder path</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>return the ckpt prefix if the model_path contains ckpt format data else None.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.is_saved_model_format">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">is_saved_model_format</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_path</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.is_saved_model_format" title="Link to this definition"></a></dt>
+<dd><p>Check the model_path format is saved_model or not.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model_path</strong> (<em>string</em>) – the model folder path</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>return True if the model_path contains saved_model format else False.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.get_estimator_graph">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">get_estimator_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">estimator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_fn</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.get_estimator_graph" title="Link to this definition"></a></dt>
+<dd><p>Get the graph of the estimator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>estimator</strong> – tf estimator model</p></li>
+<li><p><strong>input_fn</strong> – input function</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>graph</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.get_tensor_by_name">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">get_tensor_by_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">try_cnt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.get_tensor_by_name" title="Link to this definition"></a></dt>
+<dd><p>Get the tensor by name.</p>
+<p>Considering the ‘import’ scope when model may be imported more then once,
+handle naming format like both name:0 and name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph</strong> (<em>tf.compat.v1.GraphDef</em>) – the model to get name from</p></li>
+<li><p><strong>name</strong> (<em>string</em>) – tensor of tensor_name:0 or tensor_name without suffixes</p></li>
+<li><p><strong>try_cnt</strong> – the times to add ‘import/’ to find  tensor</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tensor got by name.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.iterator_sess_run">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">iterator_sess_run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sess</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iter_op</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feed_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">measurer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.iterator_sess_run" title="Link to this definition"></a></dt>
+<dd><p>Run the graph that have iterator integrated in the graph.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sess</strong> (<em>tf.compat.v1.Session</em>) – the model sess to run the graph</p></li>
+<li><p><strong>iter_op</strong> (<a class="reference internal" href="../../ox_utils/operators/ops/index.html#neural_compressor.adaptor.ox_utils.operators.ops.Operator" title="neural_compressor.adaptor.ox_utils.operators.ops.Operator"><em>Operator</em></a>) – the MakeIterator op</p></li>
+<li><p><strong>feed_dict</strong> (<em>dict</em>) – the feeds to initialize a new iterator</p></li>
+<li><p><strong>output_tensor</strong> (<em>list</em>) – the output tensors</p></li>
+<li><p><strong>iteration</strong> (<em>int</em>) – iterations to run, when -1 set, run to end of iterator</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the results of the predictions</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>preds</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.collate_tf_preds">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">collate_tf_preds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">results</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.collate_tf_preds" title="Link to this definition"></a></dt>
+<dd><p>Collate the prediction results.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.get_input_output_node_names">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">get_input_output_node_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph_def</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.get_input_output_node_names" title="Link to this definition"></a></dt>
+<dd><p>Get the input node name and output node name of the graph_def.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.fix_ref_type_of_graph_def">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">fix_ref_type_of_graph_def</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph_def</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.fix_ref_type_of_graph_def" title="Link to this definition"></a></dt>
+<dd><p>Fix ref type of the graph_def.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.strip_unused_nodes">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">strip_unused_nodes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph_def</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_node_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_node_names</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.strip_unused_nodes" title="Link to this definition"></a></dt>
+<dd><p>Strip unused nodes of the graph_def.</p>
+<p>The strip_unused_nodes pass is from tensorflow/python/tools/strip_unused_lib.py
+of official tensorflow r1.15 branch</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.strip_equivalent_nodes">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">strip_equivalent_nodes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph_def</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_node_names</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.strip_equivalent_nodes" title="Link to this definition"></a></dt>
+<dd><p>Strip nodes with the same input and attr.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.get_graph_def">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">get_graph_def</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auto_input_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.get_graph_def" title="Link to this definition"></a></dt>
+<dd><p>Get the model’s graph_def.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.get_model_input_shape">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">get_model_input_shape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.get_model_input_shape" title="Link to this definition"></a></dt>
+<dd><p>Get the input shape of the input model.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.get_tensor_val_from_graph_node">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">get_tensor_val_from_graph_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph_node_name_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">node_name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.get_tensor_val_from_graph_node" title="Link to this definition"></a></dt>
+<dd><p>Get the tensor value for given node name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph_node_name_mapping</strong> – key: node name, val: node</p></li>
+<li><p><strong>node_name</strong> – query node</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>numpy array</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tensor_val</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.int8_node_name_reverse">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">int8_node_name_reverse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.int8_node_name_reverse" title="Link to this definition"></a></dt>
+<dd><p>Reverse int8 node name.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.tf_diagnosis_helper">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">tf_diagnosis_helper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp32_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quan_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tune_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.tf_diagnosis_helper" title="Link to this definition"></a></dt>
+<dd><p>Tensorflow diagnosis helper function.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.generate_feed_dict">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">generate_feed_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.generate_feed_dict" title="Link to this definition"></a></dt>
+<dd><p>Generate feed dict helper function.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.get_weight_from_input_tensor">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">get_weight_from_input_tensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_types</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.get_weight_from_input_tensor" title="Link to this definition"></a></dt>
+<dd><p>Extracts weight tensors and their associated nodes from a smooth quant node’s input tensor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> – A TensorFlow model containing a <cite>graph_def</cite> attribute.</p></li>
+<li><p><strong>input_tensor_names</strong> – A list of input tensor names to search for weight tensors.</p></li>
+<li><p><strong>op_types</strong> – A list of operation types to search for when looking for weight tensors.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><dl class="simple">
+<dt>sq_weight_tensors: A dictionary mapping each input tensor name</dt><dd><p>to a dict of its associated weight tensors with weight name.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>sq_weights_nodes: A dictionary mapping each input tensor name</dt><dd><p>to a dict of its associated weight nodes with weight name.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A tuple of two dictionaries</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.apply_inlining">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">apply_inlining</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.apply_inlining" title="Link to this definition"></a></dt>
+<dd><p>Apply an inlining optimization to the function’s graph definition.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>func</strong> – A concrete function get from saved_model.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The optimized graph in graph_def format.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>new_graph_def</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.construct_function_from_graph_def">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">construct_function_from_graph_def</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph_def</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frozen_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.construct_function_from_graph_def" title="Link to this definition"></a></dt>
+<dd><p>Rebuild function from graph_def.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>func</strong> – The original concrete function get from saved_model.</p></li>
+<li><p><strong>graph_def</strong> – The optimized graph after applying inlining optimization.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The reconstructed function.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>new_func</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.parse_saved_model">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">parse_saved_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freeze</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_tensor_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.parse_saved_model" title="Link to this definition"></a></dt>
+<dd><p>Parse a input saved_model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> (<em>string</em><em> or </em><em>AutoTrackable object</em>) – The input saved_model.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The graph_def parsed from saved_model.
+_saved_model: TF AutoTrackable object loaded from saved_model.
+func: The concrete function get from saved_model.
+frozen_func: The reconstructed function from inlining optimized graph.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>graph_def</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.tf_utils.util.reconstruct_saved_model">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.tf_utils.util.</span></span><span class="sig-name descname"><span class="pre">reconstruct_saved_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph_def</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frozen_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trackable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/tf_utils/util.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.tf_utils.util.reconstruct_saved_model" title="Link to this definition"></a></dt>
+<dd><p>Reconstruct a saved_model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph_def</strong> – The input graph_def.</p></li>
+<li><p><strong>func</strong> – The concrete function get from the original saved_model.</p></li>
+<li><p><strong>frozen_func</strong> – The reconstructed function from inlining optimized graph.</p></li>
+<li><p><strong>trackable</strong> – TF AutoTrackable object loaded from the original saved_model.</p></li>
+<li><p><strong>path</strong> – The destination path to save the reconstructed saved_model.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8d9f820460> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

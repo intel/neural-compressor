@@ -1,0 +1,11 @@
+neural_compressor.adaptor.torch_utils.autoround.model_wrapper
+=============================================================
+
+.. py:module:: neural_compressor.adaptor.torch_utils.autoround.model_wrapper
+
+.. autoapi-nested-parse::
+
+   Torch.nn.Module Class Definition.
+
+
+

@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Framework YAML Configuration Files &mdash; Intel® Neural Compressor 2.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">2.6▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Framework YAML Configuration Files</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/framework_yaml.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="framework-yaml-configuration-files">
+<h1>Framework YAML Configuration Files<a class="headerlink" href="#framework-yaml-configuration-files" title="Link to this heading"></a></h1>
+<ol class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#supported-feature-matrix">Supported Feature Matrix</a></p></li>
+<li><p><a class="reference external" href="#get-started-with-framework-yaml-files">Get Started with Framework YAML Files</a></p></li>
+</ol>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
+<p>Intel® Neural Compressor uses YAML files for quick
+and user-friendly configurations. There are two types of YAML files -
+user YAML files and framework YAML files, which are used in
+running user cases and setting up framework capabilities, respectively.</p>
+<p>Here, we introduce the framework YAML file, which describes the behavior of
+a specific framework. There is a corresponding framework YAML file for each framework supported by
+Intel® Neural Compressor - TensorFlow
+, Intel® Extension for TensorFlow*, PyTorch, Intel® Extension for PyTorch*, ONNX Runtime, and MXNet.</p>
+<blockquote>
+<div><p><strong>Note</strong>: Before diving to the details, we recommend that the end users do NOT make modifications
+unless they have clear requirements that can only be met by modifying the attributes.</p>
+</div></blockquote>
+</section>
+<section id="supported-feature-matrix">
+<h2>Supported Feature Matrix<a class="headerlink" href="#supported-feature-matrix" title="Link to this heading"></a></h2>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Framework</th>
+<th style="text-align: center;">YAML Configuration Files</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TensorFlow</td>
+<td style="text-align: center;">&#10004;</td>
+</tr>
+<tr>
+<td>PyTorch</td>
+<td style="text-align: center;">&#10004;</td>
+</tr>
+<tr>
+<td>ONNX</td>
+<td style="text-align: center;">&#10004;</td>
+</tr>
+<tr>
+<td>MXNet</td>
+<td style="text-align: center;">&#10004;</td>
+</tr>
+</tbody>
+</table></section>
+<section id="get-started-with-framework-yaml-files">
+<h2>Get started with Framework YAML Files<a class="headerlink" href="#get-started-with-framework-yaml-files" title="Link to this heading"></a></h2>
+<p>For the purpose of framework setup, let’s take a look at a tensorflow framework YAML file;
+other framework YAML files follow same syntax. A framework YAML file specifies following
+information and capabilities for current runtime framework. Let’s go through
+them one by one:</p>
+<ul class="simple">
+<li><p><em><strong>version</strong></em>: This specifies the supported versions.</p></li>
+</ul>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="nt">version</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;2.1.0&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;2.2.0&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;2.3.0&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;2.4.0&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;2.5.0&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;2.6.0&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;2.6.1&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;2.6.2&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;2.7.0&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;2.8.0&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;1.15.0-up1&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;1.15.0-up2&#39;</span><span class="p p-Indicator">]</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><em><strong>precisions</strong></em>: This defines the supported precisions of specific versions.</p></li>
+</ul>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="nt">precisions</span><span class="p">:</span><span class="w"> </span>
+<span class="w">    </span><span class="nt">names</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">int8, uint8, bf16, fp32</span>
+<span class="w">    </span><span class="nt">valid_mixed_precisions</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><em><strong>op</strong></em>: This defines a list of valid OP types for each precision.</p></li>
+</ul>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="nt">ops</span><span class="p">:</span><span class="w"> </span>
+<span class="w">    </span><span class="nt">int8</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;Conv2D&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;MatMul&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;ConcatV2&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;MaxPool&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;AvgPool&#39;</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">uint8</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;Conv2D&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;DepthwiseConv2dNative&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;MatMul&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;ConcatV2&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;MaxPool&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;AvgPool&#39;</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">bf16</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;Conv2D&#39;</span><span class="p p-Indicator">]</span><span class="w">  </span>
+<span class="w">    </span><span class="nt">fp32</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;*&#39;</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># &#39;*&#39; means all op types</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><em><strong>capabilities</strong></em>: This defines the quantization ability of specific ops, such as
+granularity, scheme, and algorithm. The activation assumes that input and output activations
+share the same data type by default, which is based on op semantics defined by
+frameworks.</p></li>
+</ul>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="nt">capabilities</span><span class="p">:</span><span class="w"> </span>
+<span class="w">    </span><span class="nt">int8</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span>
+<span class="w">          </span><span class="s">&#39;Conv2D&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">{</span>
+<span class="w">            </span><span class="s">&#39;weight&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">{</span>
+<span class="w">                        </span><span class="s">&#39;dtype&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;int8&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;fp32&#39;</span><span class="p p-Indicator">],</span>
+<span class="w">                        </span><span class="s">&#39;scheme&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;sym&#39;</span><span class="p p-Indicator">],</span>
+<span class="w">                        </span><span class="s">&#39;granularity&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;per_channel&#39;</span><span class="p p-Indicator">,</span><span class="s">&#39;per_tensor&#39;</span><span class="p p-Indicator">],</span>
+<span class="w">                        </span><span class="s">&#39;algorithm&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;minmax&#39;</span><span class="p p-Indicator">]</span>
+<span class="w">                        </span><span class="p p-Indicator">},</span>
+<span class="w">            </span><span class="s">&#39;activation&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">{</span>
+<span class="w">                        </span><span class="s">&#39;dtype&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;int8&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;fp32&#39;</span><span class="p p-Indicator">],</span>
+<span class="w">                        </span><span class="s">&#39;scheme&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;sym&#39;</span><span class="p p-Indicator">],</span>
+<span class="w">                        </span><span class="s">&#39;granularity&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;per_tensor&#39;</span><span class="p p-Indicator">],</span>
+<span class="w">                        </span><span class="s">&#39;algorithm&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;minmax&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;kl&#39;</span><span class="p p-Indicator">]</span>
+<span class="w">                        </span><span class="p p-Indicator">}</span>
+<span class="w">                    </span><span class="p p-Indicator">},</span>
+<span class="w">          </span><span class="s">&#39;MatMul&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">{</span>
+<span class="w">            </span><span class="s">&#39;weight&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">{</span>
+<span class="w">                        </span><span class="s">&#39;dtype&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;int8&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;fp32&#39;</span><span class="p p-Indicator">],</span>
+<span class="w">                        </span><span class="s">&#39;scheme&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;sym&#39;</span><span class="p p-Indicator">],</span>
+<span class="w">                        </span><span class="s">&#39;granularity&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;per_tensor&#39;</span><span class="p p-Indicator">],</span>
+<span class="w">                        </span><span class="s">&#39;algorithm&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;minmax&#39;</span><span class="p p-Indicator">]</span>
+<span class="w">                        </span><span class="p p-Indicator">},</span>
+<span class="w">            </span><span class="s">&#39;activation&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">{</span>
+<span class="w">                        </span><span class="s">&#39;dtype&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;int8&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;fp32&#39;</span><span class="p p-Indicator">],</span>
+<span class="w">                        </span><span class="s">&#39;scheme&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;asym&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;sym&#39;</span><span class="p p-Indicator">],</span>
+<span class="w">                        </span><span class="s">&#39;granularity&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;per_tensor&#39;</span><span class="p p-Indicator">],</span>
+<span class="w">                        </span><span class="s">&#39;algorithm&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;minmax&#39;</span><span class="p p-Indicator">]</span>
+<span class="w">                        </span><span class="p p-Indicator">}</span>
+<span class="w">                    </span><span class="p p-Indicator">},</span>
+<span class="w">          </span><span class="s">&#39;default&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">{</span>
+<span class="w">            </span><span class="s">&#39;activation&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">{</span>
+<span class="w">                        </span><span class="s">&#39;dtype&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;uint8&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;fp32&#39;</span><span class="p p-Indicator">],</span>
+<span class="w">                        </span><span class="s">&#39;algorithm&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;minmax&#39;</span><span class="p p-Indicator">],</span>
+<span class="w">                        </span><span class="s">&#39;scheme&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;sym&#39;</span><span class="p p-Indicator">],</span>
+<span class="w">                        </span><span class="s">&#39;granularity&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;per_tensor&#39;</span><span class="p p-Indicator">]</span>
+<span class="w">                        </span><span class="p p-Indicator">}</span>
+<span class="w">                    </span><span class="p p-Indicator">},</span>
+<span class="w">          </span><span class="p p-Indicator">}</span>
+
+<span class="w">    </span><span class="nt">uint8</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span>
+<span class="w">          </span><span class="s">&#39;Conv2D&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">{</span>
+<span class="w">            </span><span class="s">&#39;weight&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">{</span>
+<span class="w">                        </span><span class="s">&#39;dtype&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;int8&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;fp32&#39;</span><span class="p p-Indicator">],</span>
+<span class="w">                        </span><span class="s">&#39;scheme&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;sym&#39;</span><span class="p p-Indicator">],</span>
+<span class="w">                        </span><span class="s">&#39;granularity&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;per_channel&#39;</span><span class="p p-Indicator">,</span><span class="s">&#39;per_tensor&#39;</span><span class="p p-Indicator">],</span>
+<span class="w">                        </span><span class="s">&#39;algorithm&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;minmax&#39;</span><span class="p p-Indicator">]</span>
+<span class="w">                        </span><span class="p p-Indicator">},</span>
+<span class="w">            </span><span class="s">&#39;activation&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">{</span>
+<span class="w">                        </span><span class="s">&#39;dtype&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;uint8&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;fp32&#39;</span><span class="p p-Indicator">],</span>
+<span class="w">                        </span><span class="s">&#39;scheme&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;sym&#39;</span><span class="p p-Indicator">],</span>
+<span class="w">                        </span><span class="s">&#39;granularity&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;per_tensor&#39;</span><span class="p p-Indicator">],</span>
+<span class="w">                        </span><span class="s">&#39;algorithm&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;minmax&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;kl&#39;</span><span class="p p-Indicator">]</span>
+<span class="w">                        </span><span class="p p-Indicator">}</span>
+<span class="w">                    </span><span class="p p-Indicator">},</span>
+<span class="w">          </span><span class="s">&#39;MatMul&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">{</span>
+<span class="w">            </span><span class="s">&#39;weight&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">{</span>
+<span class="w">                        </span><span class="s">&#39;dtype&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;int8&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;fp32&#39;</span><span class="p p-Indicator">],</span>
+<span class="w">                        </span><span class="s">&#39;scheme&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;sym&#39;</span><span class="p p-Indicator">],</span>
+<span class="w">                        </span><span class="s">&#39;granularity&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;per_tensor&#39;</span><span class="p p-Indicator">],</span>
+<span class="w">                        </span><span class="s">&#39;algorithm&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;minmax&#39;</span><span class="p p-Indicator">]</span>
+<span class="w">                        </span><span class="p p-Indicator">},</span>
+<span class="w">            </span><span class="s">&#39;activation&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">{</span>
+<span class="w">                        </span><span class="s">&#39;dtype&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;uint8&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;fp32&#39;</span><span class="p p-Indicator">],</span>
+<span class="w">                        </span><span class="s">&#39;scheme&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;asym&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;sym&#39;</span><span class="p p-Indicator">],</span>
+<span class="w">                        </span><span class="s">&#39;granularity&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;per_tensor&#39;</span><span class="p p-Indicator">],</span>
+<span class="w">                        </span><span class="s">&#39;algorithm&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;minmax&#39;</span><span class="p p-Indicator">]</span>
+<span class="w">                        </span><span class="p p-Indicator">}</span>
+<span class="w">                    </span><span class="p p-Indicator">},</span>
+<span class="w">          </span><span class="s">&#39;default&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">{</span>
+<span class="w">            </span><span class="s">&#39;activation&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">{</span>
+<span class="w">                        </span><span class="s">&#39;dtype&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;uint8&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;fp32&#39;</span><span class="p p-Indicator">],</span>
+<span class="w">                        </span><span class="s">&#39;algorithm&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;minmax&#39;</span><span class="p p-Indicator">],</span>
+<span class="w">                        </span><span class="s">&#39;scheme&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;sym&#39;</span><span class="p p-Indicator">],</span>
+<span class="w">                        </span><span class="s">&#39;granularity&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;per_tensor&#39;</span><span class="p p-Indicator">]</span>
+<span class="w">                        </span><span class="p p-Indicator">}</span>
+<span class="w">                    </span><span class="p p-Indicator">},</span>
+<span class="w">          </span><span class="p p-Indicator">}</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><em><strong>patterns</strong></em>: This defines the supported fusion sequence for each op.</p></li>
+</ul>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="nt">patterns</span><span class="p">:</span><span class="w"> </span>
+<span class="w">    </span><span class="nt">fp32</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="w"> </span>
+<span class="w">        </span><span class="s">&#39;Conv2D</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">Add</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">Relu&#39;</span><span class="p p-Indicator">,</span>
+<span class="w">        </span><span class="s">&#39;Conv2D</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">Add</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">Relu6&#39;</span><span class="p p-Indicator">,</span>
+<span class="w">        </span><span class="s">&#39;Conv2D</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">Relu&#39;</span><span class="p p-Indicator">,</span>
+<span class="w">        </span><span class="s">&#39;Conv2D</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">Relu6&#39;</span><span class="p p-Indicator">,</span>
+<span class="w">        </span><span class="s">&#39;Conv2D</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">BiasAdd&#39;</span>
+<span class="w">        </span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">int8</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span>
+<span class="w">        </span><span class="s">&#39;Conv2D</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">BiasAdd&#39;</span><span class="p p-Indicator">,</span>
+<span class="w">        </span><span class="s">&#39;Conv2D</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">BiasAdd</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">Relu&#39;</span><span class="p p-Indicator">,</span>
+<span class="w">        </span><span class="s">&#39;Conv2D</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">BiasAdd</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">Relu6&#39;</span>
+<span class="w">        </span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">uint8</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span>
+<span class="w">        </span><span class="s">&#39;Conv2D</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">BiasAdd</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">AddN</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">Relu&#39;</span><span class="p p-Indicator">,</span>
+<span class="w">        </span><span class="s">&#39;Conv2D</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">BiasAdd</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">AddN</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">Relu6&#39;</span><span class="p p-Indicator">,</span>
+<span class="w">        </span><span class="s">&#39;Conv2D</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">BiasAdd</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">AddV2</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">Relu&#39;</span><span class="p p-Indicator">,</span>
+<span class="w">        </span><span class="s">&#39;Conv2D</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">BiasAdd</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">AddV2</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">Relu6&#39;</span><span class="p p-Indicator">,</span>
+<span class="w">        </span><span class="s">&#39;Conv2D</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">BiasAdd</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">Add</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">Relu&#39;</span><span class="p p-Indicator">,</span>
+<span class="w">        </span><span class="s">&#39;Conv2D</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">BiasAdd</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">Add</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">Relu6&#39;</span><span class="p p-Indicator">,</span>
+<span class="w">        </span><span class="s">&#39;Conv2D</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">BiasAdd</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">Relu&#39;</span><span class="p p-Indicator">,</span>
+<span class="w">        </span><span class="s">&#39;Conv2D</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">BiasAdd</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">Relu6&#39;</span><span class="p p-Indicator">,</span>
+<span class="w">        </span><span class="s">&#39;Conv2D</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">Add</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">Relu&#39;</span><span class="p p-Indicator">,</span>
+<span class="w">        </span><span class="s">&#39;Conv2D</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">Add</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">Relu6&#39;</span><span class="p p-Indicator">,</span>
+<span class="w">        </span><span class="s">&#39;Conv2D</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">Relu&#39;</span><span class="p p-Indicator">,</span>
+<span class="w">        </span><span class="s">&#39;Conv2D</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">Relu6&#39;</span><span class="p p-Indicator">,</span>
+<span class="w">        </span><span class="s">&#39;Conv2D</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">BiasAdd&#39;</span><span class="p p-Indicator">,</span>
+<span class="w">        </span><span class="s">&#39;DepthwiseConv2dNative</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">BiasAdd</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">Relu6&#39;</span><span class="p p-Indicator">,</span>
+<span class="w">        </span><span class="s">&#39;DepthwiseConv2dNative</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">BiasAdd</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">Relu&#39;</span><span class="p p-Indicator">,</span>
+<span class="w">        </span><span class="s">&#39;DepthwiseConv2dNative</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">Add</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">Relu6&#39;</span><span class="p p-Indicator">,</span>
+<span class="w">        </span><span class="s">&#39;DepthwiseConv2dNative</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">BiasAdd&#39;</span><span class="p p-Indicator">,</span>
+<span class="w">        </span><span class="s">&#39;MatMul</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">BiasAdd</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">Relu&#39;</span><span class="p p-Indicator">,</span>
+<span class="w">        </span><span class="s">&#39;MatMul</span><span class="nv"> </span><span class="s">+</span><span class="nv"> </span><span class="s">BiasAdd&#39;</span><span class="p p-Indicator">,</span>
+<span class="w">  </span><span class="p p-Indicator">]</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><em><strong>grappler_optimization</strong></em>: This defines the grappler optimization.</p></li>
+</ul>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="nt">grappler_optimization</span><span class="p">:</span><span class="w"> </span>
+<span class="w">    </span><span class="nt">pruning</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span><span class="w">                                    </span><span class="c1"># optional. grappler pruning optimizer,default value is True.</span>
+<span class="w">    </span><span class="nt">shape</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span><span class="w">                                      </span><span class="c1"># optional. grappler shape optimizer,default value is True.</span>
+<span class="w">    </span><span class="nt">constfold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">False</span><span class="w">                                 </span><span class="c1"># optional. grappler constant folding optimizer, default value is True.</span>
+<span class="w">    </span><span class="nt">arithmetic</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">False</span><span class="w">                                </span><span class="c1"># optional. grappler arithmetic optimizer,default value is False.</span>
+<span class="w">    </span><span class="nt">dependency</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span><span class="w">                                 </span><span class="c1"># optional. grappler dependency optimizer,default value is True.</span>
+<span class="w">    </span><span class="nt">debug_stripper</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span><span class="w">                             </span><span class="c1"># optional. grappler debug_stripper optimizer,default value is True.</span>
+<span class="w">    </span><span class="nt">loop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span><span class="w">                                       </span><span class="c1"># optional. grappler loop optimizer,default value is True.</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8a3ccb9130> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

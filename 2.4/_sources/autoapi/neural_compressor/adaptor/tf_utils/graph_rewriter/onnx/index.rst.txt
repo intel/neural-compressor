@@ -1,0 +1,23 @@
+neural_compressor.adaptor.tf_utils.graph_rewriter.onnx
+======================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.onnx
+
+.. autoapi-nested-parse::
+
+   Tensorflow model export to ONNX model Graph Rewriters.
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/onnx/onnx_graph/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/onnx/onnx_node/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/onnx/onnx_schema/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/onnx/tf2onnx_utils/index
+
+

@@ -1,0 +1,67 @@
+neural_compressor.utils.load_huggingface
+========================================
+
+.. py:module:: neural_compressor.utils.load_huggingface
+
+.. autoapi-nested-parse::
+
+   Huggingface Loader: provides access to Huggingface pretrained models.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.utils.load_huggingface.OptimizedModel
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.utils.load_huggingface.save_for_huggingface_upstream
+   neural_compressor.utils.load_huggingface.export_compressed_model
+
+
+Module Contents
+---------------
+
+.. py:class:: OptimizedModel(*args, **kwargs)
+
+   The class provides a method from_pretrained to access Huggingface models.
+
+
+.. py:function:: save_for_huggingface_upstream(model, tokenizer, output_dir)
+
+   Save the model and tokenizer in the output directory.
+
+
+.. py:function:: export_compressed_model(model, saved_dir=None, use_optimum_format=True, enable_full_range=False, compression_dtype=torch.int32, compression_dim=1, scale_dtype=torch.float32, device='cpu')
+
+   Support get compressed model from saved_dir.
+
+   :param model: origin fp32 model.
+   :type model: torch.nn.Module
+   :param saved_dir: the dir path of compression info. Defaults to None.
+   :type saved_dir: _type_, optional
+   :param use_optimum_format: whether use HuggingFace format. Defaults to True.
+   :type use_optimum_format: bool, optional
+   :param enable_full_range: Whether to leverage the full compression range
+                             under symmetric quantization. Defaults to False.
+   :type enable_full_range: bool, optional
+   :param compression_dtype: The target dtype after comoression.
+                             Defaults to torch.int32.
+   :type compression_dtype: torch.Tensor, optional
+   :param compression_dim: Select from [0, 1], 0 is output channel,
+                           1 is input channel. Defaults to 1.
+   :type compression_dim: int, optional
+   :param scale_dtype: Use float32 or float16.
+                       Defaults to torch.float32.
+   :type scale_dtype: torch.Tensor, optional
+   :param device: choose device for compression. Defaults to cpu.
+   :type device: str, optional
+
+

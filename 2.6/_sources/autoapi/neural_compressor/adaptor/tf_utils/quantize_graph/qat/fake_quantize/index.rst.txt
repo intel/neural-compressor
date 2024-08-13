@@ -1,0 +1,37 @@
+neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize
+===================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize
+
+.. autoapi-nested-parse::
+
+   QAT Fake Quantize Graph Class.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize.FakeQuantizeBase
+   neural_compressor.adaptor.tf_utils.quantize_graph.qat.fake_quantize.FakeQuantize
+
+
+Module Contents
+---------------
+
+.. py:class:: FakeQuantizeBase
+
+
+
+   ABC interface class for applying fake quantization by insert qdq.
+
+
+.. py:class:: FakeQuantize(per_channel=False, num_bits=8, channel_axis=-1, symmetric=True, narrow_range=True)
+
+
+
+   The class that applies fake quantization.
+
+

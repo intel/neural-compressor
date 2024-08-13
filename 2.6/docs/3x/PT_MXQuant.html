@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Microscaling Quantization &mdash; Intel® Neural Compressor 2.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">2.6▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../source/user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Microscaling Quantization</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/3x/PT_MXQuant.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="microscaling-quantization">
+<h1>Microscaling Quantization<a class="headerlink" href="#microscaling-quantization" title="Link to this heading"></a></h1>
+<ol class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#get-start-with-microscaling-quantization-api">Get Started with Microscaling Quantization API</a></p></li>
+<li><p><a class="reference external" href="#examples">Examples</a></p></li>
+<li><p><a class="reference external" href="#reference">Reference</a></p></li>
+</ol>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
+<p>Numerous breakthroughs have emerged across various fields, such as text analysis, language translation and chatbot technologies, fueled by the development of large language models (LLMs). Nevertheless, their increasing power comes with the challenge of explosive growth in parameters, posing obstacles for practical use. To balance memory limits and accuracy preservation for AI models, the Microscaling (MX) specification was promoted from the well-known Microsoft Floating Point (MSFP) data type [1, 2]:</p>
+<table>
+  <tr>
+    <th>Format Name</th>
+    <th>Element Data type</th>
+    <th>Element Bits</th>
+    <th>Scaling Block Size</th>
+    <th>Scale Data Type</th> 
+    <th>Scale Bits</th>
+  </tr>
+  <tr>
+    <td rowspan="2">MXFP8</td>
+    <td>FP8 (E5M2)</td>
+    <td rowspan="2">8</td>
+    <td rowspan="2">32</td>
+    <td rowspan="2">E8M0</td>
+    <td rowspan="2">8</td>
+  </tr>
+  <tr>
+    <td>FP8 (E4M3)</td>
+  </tr>
+  <tr>
+    <td rowspan="2">MXFP6</td>
+    <td>FP6 (E3M2)</td>
+    <td rowspan="2">6</td>
+    <td rowspan="2">32</td>
+    <td rowspan="2">E8M0</td>
+    <td rowspan="2">8</td>
+  </tr>
+  <tr>
+    <td>FP6 (E2M3)</td>
+  </tr>
+  <tr>
+    <td>MXFP4</td>
+    <td>FP4 (E2M1)</td>
+    <td>4</td>
+    <td>32</td>
+    <td>E8M0</td> 
+    <td>8</td>
+  </tr>
+  <tr>
+    <td>MXINT8</td>
+    <td>INT8</td>
+    <td>8</td>
+    <td>32</td>
+    <td>E8M0</td> 
+    <td>8</td>
+  </tr>
+</table><p>At an equivalent accuracy level, the MX data type demonstrates the ability to occupy a smaller area and incur lower energy costs for multiply-accumulate compared to other conventional data types on the same silicon [1].</p>
+<p>Neural Compressor seamlessly applies the MX data type to post-training quantization, offering meticulously crafted recipes to empower users to quantize LLMs without sacrificing accuracy. The workflow is shown as below.</p>
+<a target="_blank" href="./imgs/mx_workflow.png" text-align:left>
+    <left> 
+        <img src="./imgs/mx_workflow.png" alt="Workflow of MX Quant (source [3])" height=120> 
+    </left>
+</a><p>The memory and computational limits of LLMs are more severe than other general neural networks, so our exploration focuses on LLMs first. The following table shows the basic MX quantization recipes in Neural Compressor and enumerates distinctions among various data types. The MX data type replaces general float scale with powers of two to be more hardware-friendly. It adapts a granularity falling between per-channel and per-tensor to balance accuracy and memory consumption.</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th></th>
+<th>MX Format</th>
+<th>INT8</th>
+<th>FP8</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Scale</td>
+<td>$2^{exp}$</td>
+<td>$\frac{MAX}{amax}$</td>
+<td>$\frac{MAX}{amax}$</td>
+</tr>
+<tr>
+<td>Zero point</td>
+<td>0 (None)</td>
+<td>$2^{bits - 1}$ or $-min * scale$</td>
+<td>0 (None)</td>
+</tr>
+<tr>
+<td>Granularity</td>
+<td>per-block (default blocksize is 32)</td>
+<td>per-channel or per-tensor</td>
+<td>per-channel or per-tensor</td>
+</tr>
+</tbody>
+</table><p>The exponent (exp) is equal to torch.floor(torch.log2(amax)), MAX is the representation range of the data type, amax is the max absolute value of per-block tensor, and rmin is the minimum value of the per-block tensor.</p>
+</section>
+<section id="get-started-with-microscaling-quantization-api">
+<h2>Get Started with Microscaling Quantization API<a class="headerlink" href="#get-started-with-microscaling-quantization-api" title="Link to this heading"></a></h2>
+<p>To get a model quantized with Microscaling Data Types, users can use the Microscaling Quantization API as follows.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.torch.quantization</span> <span class="kn">import</span> <span class="n">MXQuantConfig</span><span class="p">,</span> <span class="n">prepare</span><span class="p">,</span> <span class="n">convert</span>
+
+<span class="n">quant_config</span> <span class="o">=</span> <span class="n">MXQuantConfig</span><span class="p">(</span><span class="n">w_dtype</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">w_dtype</span><span class="p">,</span> <span class="n">act_dtype</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">act_dtype</span><span class="p">,</span> <span class="n">weight_only</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">woq</span><span class="p">)</span>
+<span class="n">user_model</span> <span class="o">=</span> <span class="n">prepare</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">user_model</span><span class="p">,</span> <span class="n">quant_config</span><span class="o">=</span><span class="n">quant_config</span><span class="p">)</span>
+<span class="n">user_model</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">user_model</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>PyTorch <a class="reference external" href="/examples/3.x_api/pytorch/nlp/huggingface_models/language-modeling/quantization/mx_quant">huggingface models</a></p></li>
+</ul>
+</section>
+<section id="reference">
+<h2>Reference<a class="headerlink" href="#reference" title="Link to this heading"></a></h2>
+<p>[1]: Darvish Rouhani, Bita, et al. “Pushing the limits of narrow precision inferencing at cloud scale with microsoft floating point.” Advances in neural information processing systems 33 (2020): 10271-10281</p>
+<p>[2]: OCP Microscaling Formats (MX) Specification</p>
+<p>[3]: Rouhani, Bita Darvish, et al. “Microscaling Data Formats for Deep Learning.” arXiv preprint arXiv:2310.10537 (2023).</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8a380f4490> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Distillation for Quantization &mdash; Intel® Neural Compressor 2.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">2.6▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Distillation for Quantization</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/distillation_quantization.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="distillation-for-quantization">
+<h1>Distillation for Quantization<a class="headerlink" href="#distillation-for-quantization" title="Link to this heading"></a></h1>
+<ol class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#distillation-for-quantization-support-matrix">Distillation for Quantization Support Matrix</a></p></li>
+<li><p><a class="reference external" href="#get-started-with-api">Get Started with Distillation for Quantization API</a></p></li>
+<li><p><a class="reference external" href="#examples">Examples</a></p></li>
+</ol>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
+<p>Distillation and quantization are both promising methods to reduce the computational and memory footprint that huge transformer-based networks require. Quantization refers to a process of reducing the bit precision for both activations and weights. Distillation method transfers knowledge from a heavy teacher model to a light one (student) and it could be used as a performance-booster in lower-bits quantizations. Quantization-aware training recovers accuracy degradation from representation loss in the retraining process and typically provides better performance compared to post-training quantization.<br />Intel provides a quantization-aware training (QAT) method that incorporates a novel layer-by-layer knowledge distillation step for INT8 quantization pipelines.</p>
+</section>
+<section id="distillation-for-quantization-support-matrix">
+<h2>Distillation for Quantization Support Matrix<a class="headerlink" href="#distillation-for-quantization-support-matrix" title="Link to this heading"></a></h2>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th><strong>Algorithm</strong></th>
+<th style="text-align: center;"><strong>PyTorch</strong></th>
+<th style="text-align: center;"><strong>TensorFlow</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Distillation for Quantization</td>
+<td style="text-align: center;">&#10004;</td>
+<td style="text-align: center;">&#10006;</td>
+</tr>
+</tbody>
+</table></section>
+<section id="get-started-with-distillation-for-quantization-api">
+<h2>Get Started with Distillation for Quantization API<a class="headerlink" href="#get-started-with-distillation-for-quantization-api" title="Link to this heading"></a></h2>
+<p>User can pass the customized training/evaluation functions to <code class="docutils literal notranslate"><span class="pre">Distillation</span></code> for quantization tasks. In this case, distillation process can be done by pre-defined hooks in Neural Compressor. Users could place those hooks inside the quantization training function.</p>
+<p>Neural Compressor defines several hooks for user pass</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">on_train_begin</span><span class="p">()</span> <span class="p">:</span> <span class="n">Hook</span> <span class="n">executed</span> <span class="n">before</span> <span class="n">training</span> <span class="n">begins</span>
+<span class="n">on_after_compute_loss</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">student_output</span><span class="p">,</span> <span class="n">student_loss</span><span class="p">)</span> <span class="p">:</span> <span class="n">Hook</span> <span class="n">executed</span> <span class="n">after</span> <span class="n">each</span> <span class="n">batch</span> <span class="n">inference</span> <span class="n">of</span> <span class="n">student</span> <span class="n">model</span>
+<span class="n">on_epoch_end</span><span class="p">()</span> <span class="p">:</span> <span class="n">Hook</span> <span class="n">executed</span> <span class="n">at</span> <span class="n">each</span> <span class="n">epoch</span> <span class="n">end</span>
+</pre></div>
+</div>
+<p>Following section illustrates how to use hooks in user pass-in training function:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">training_func_for_nc</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_train_begin</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
+        <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_epoch_begin</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dataloader</span><span class="p">):</span>
+            <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_step_begin</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="o">......</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">loss</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_after_compute_loss</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">loss</span><span class="p">)</span>
+            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+            <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_before_optimizer_step</span><span class="p">()</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+            <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_step_end</span><span class="p">()</span>
+        <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_epoch_end</span><span class="p">()</span>
+    <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_train_end</span><span class="p">()</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+<p>In this case, the launcher code is like the following:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">common</span><span class="p">,</span> <span class="n">Distillation</span><span class="p">,</span> <span class="n">Quantization</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">DistillationConfig</span><span class="p">,</span> <span class="n">KnowledgeDistillationLossConfig</span>
+<span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">QuantizationAwareTrainingConfig</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.training</span> <span class="kn">import</span> <span class="n">prepare_compression</span>
+
+<span class="n">combs</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">distillation_criterion</span> <span class="o">=</span> <span class="n">KnowledgeDistillationLossConfig</span><span class="p">()</span>
+<span class="n">d_conf</span> <span class="o">=</span> <span class="n">DistillationConfig</span><span class="p">(</span><span class="n">teacher_model</span><span class="o">=</span><span class="n">teacher_model</span><span class="p">,</span> <span class="n">criterion</span><span class="o">=</span><span class="n">distillation_criterion</span><span class="p">)</span>
+<span class="n">combs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d_conf</span><span class="p">)</span>
+<span class="n">q_conf</span> <span class="o">=</span> <span class="n">QuantizationAwareTrainingConfig</span><span class="p">()</span>
+<span class="n">combs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">q_conf</span><span class="p">)</span>
+<span class="n">compression_manager</span> <span class="o">=</span> <span class="n">prepare_compression</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">combs</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">compression_manager</span><span class="o">.</span><span class="n">model</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">training_func_for_nc</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="n">eval_func</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
+<p>For examples of distillation for quantization, please refer to <a class="reference external" href="../../examples/pytorch/nlp/huggingface_models/text-classification/optimization_pipeline/distillation_for_quantization/fx/README.html">distillation-for-quantization examples</a></p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8a3c3914f0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

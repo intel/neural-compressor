@@ -1,0 +1,81 @@
+neural_compressor.experimental.strategy.utils.tuning_sampler
+============================================================
+
+.. py:module:: neural_compressor.experimental.strategy.utils.tuning_sampler
+
+.. autoapi-nested-parse::
+
+   Tuning sampler.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.experimental.strategy.utils.tuning_sampler.TuningSamplerRegistry
+   neural_compressor.experimental.strategy.utils.tuning_sampler.TuningOrder
+   neural_compressor.experimental.strategy.utils.tuning_sampler.TuningSampler
+   neural_compressor.experimental.strategy.utils.tuning_sampler.ModelWiseTuningSampler
+   neural_compressor.experimental.strategy.utils.tuning_sampler.OpTypeWiseTuningSampler
+   neural_compressor.experimental.strategy.utils.tuning_sampler.OpWiseTuningSampler
+   neural_compressor.experimental.strategy.utils.tuning_sampler.FallbackTuningSampler
+   neural_compressor.experimental.strategy.utils.tuning_sampler.SmoothQuantSampler
+
+
+Module Contents
+---------------
+
+.. py:class:: TuningSamplerRegistry
+
+   Class decorator used to register all TuningSampler subclasses.
+
+
+.. py:class:: TuningOrder
+
+   Not displayed in API Docs.
+
+
+.. py:class:: TuningSampler(tuning_space: neural_compressor.experimental.strategy.utils.tuning_space.TuningSpace, tuning_order_lst: List[TuningOrder], initial_op_tuning_cfg: Dict, kwargs: Dict = {})
+
+   Not displayed in API Docs.
+
+   Basic class of tuning sampler.
+
+
+.. py:class:: ModelWiseTuningSampler(tuning_space: neural_compressor.experimental.strategy.utils.tuning_space.TuningSpace, tuning_items_priority: List[str], tuning_order_lst: List[TuningOrder], op_dtype_dict: Dict[tuple, str], initial_op_tuning_cfg: Dict[tuple, neural_compressor.experimental.strategy.utils.tuning_structs.OpTuningConfig])
+
+
+
+   Not displayed in API Docs.
+
+
+.. py:class:: OpTypeWiseTuningSampler(tuning_space: neural_compressor.experimental.strategy.utils.tuning_space.TuningSpace, tuning_items_priority: List[str], tuning_order_lst: List[TuningOrder], op_dtype_dict: Dict[tuple, str], initial_op_tuning_cfg: Dict[tuple, neural_compressor.experimental.strategy.utils.tuning_structs.OpTuningConfig])
+
+
+
+   Not displayed in API Docs.
+
+
+.. py:class:: OpWiseTuningSampler(tuning_space: neural_compressor.experimental.strategy.utils.tuning_space.TuningSpace, tuning_items_priority: List[str], tuning_order_lst: List[TuningOrder], op_dtype_dict: Dict[tuple, str], initial_op_tuning_cfg: Dict)
+
+
+
+   Not displayed in API Docs.
+
+
+.. py:class:: FallbackTuningSampler(tuning_space: neural_compressor.experimental.strategy.utils.tuning_space.TuningSpace, tuning_order_lst: List[TuningOrder], initial_op_tuning_cfg: Dict[tuple, Any], op_dtypes: Dict[str, str], accumulate: bool, skip_first: bool = True)
+
+
+
+   Not displayed in API Docs.
+
+
+.. py:class:: SmoothQuantSampler(tuning_space: neural_compressor.experimental.strategy.utils.tuning_space.TuningSpace, tuning_order_lst: List[TuningOrder], initial_op_tuning_cfg: Dict, kwargs: Dict = {})
+
+
+
+   Sampler for the hyperparameter tuning of smooth quantization.
+
+

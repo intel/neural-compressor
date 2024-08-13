@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.adaptor.torch_utils.layer_wise_quant.torch_load &mdash; Intel® Neural Compressor 3.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../versions.html">3.0▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.adaptor.torch_utils.layer_wise_quant.torch_load</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../_sources/autoapi/neural_compressor/adaptor/torch_utils/layer_wise_quant/torch_load/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.adaptor.torch_utils.layer_wise_quant.torch_load">
+<span id="neural-compressor-adaptor-torch-utils-layer-wise-quant-torch-load"></span><h1>neural_compressor.adaptor.torch_utils.layer_wise_quant.torch_load<a class="headerlink" href="#module-neural_compressor.adaptor.torch_utils.layer_wise_quant.torch_load" title="Link to this heading"></a></h1>
+<p>Load one specify tensor from a bin file.</p>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.layer_wise_quant.torch_load.load" title="neural_compressor.adaptor.torch_utils.layer_wise_quant.torch_load.load"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load</span></code></a>(→ Any)</p></td>
+<td><p>Load(f, map_location=None, pickle_module=pickle, <a href="#id1"><span class="problematic" id="id2">*</span></a>, weights_only=False, <a href="#id3"><span class="problematic" id="id4">**</span></a>pickle_load_args)</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.layer_wise_quant.torch_load.load">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.layer_wise_quant.torch_load.</span></span><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">FILE_LIKE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tensor_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_location</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">MAP_LOCATION</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pickle_module</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_only</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">pickle_load_args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/adaptor/torch_utils/layer_wise_quant/torch_load.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.layer_wise_quant.torch_load.load" title="Link to this definition"></a></dt>
+<dd><p>Load(f, map_location=None, pickle_module=pickle, <a href="#id5"><span class="problematic" id="id6">*</span></a>, weights_only=False, <a href="#id7"><span class="problematic" id="id8">**</span></a>pickle_load_args)</p>
+<p>Loads an object saved with <code class="xref py py-func docutils literal notranslate"><span class="pre">torch.save()</span></code> from a file.</p>
+<p><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.load()</span></code> uses Python’s unpickling facilities but treats storages,
+which underlie tensors, specially. They are first deserialized on the
+CPU and are then moved to the device they were saved from. If this fails
+(e.g. because the run time system doesn’t have certain devices), an exception
+is raised. However, storages can be dynamically remapped to an alternative
+set of devices using the <code class="xref py py-attr docutils literal notranslate"><span class="pre">map_location</span></code> argument.</p>
+<p>If <code class="xref py py-attr docutils literal notranslate"><span class="pre">map_location</span></code> is a callable, it will be called once for each serialized
+storage with two arguments: storage and location. The storage argument
+will be the initial deserialization of the storage, residing on the CPU.
+Each serialized storage has a location tag associated with it which
+identifies the device it was saved from, and this tag is the second
+argument passed to <code class="xref py py-attr docutils literal notranslate"><span class="pre">map_location</span></code>. The builtin location tags are <code class="docutils literal notranslate"><span class="pre">'cpu'</span></code>
+for CPU tensors and <code class="docutils literal notranslate"><span class="pre">'cuda:device_id'</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">'cuda:2'</span></code>) for CUDA tensors.
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">map_location</span></code> should return either <code class="docutils literal notranslate"><span class="pre">None</span></code> or a storage. If
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">map_location</span></code> returns a storage, it will be used as the final deserialized
+object, already moved to the right device. Otherwise, <code class="xref py py-func docutils literal notranslate"><span class="pre">torch.load()</span></code> will
+fall back to the default behavior, as if <code class="xref py py-attr docutils literal notranslate"><span class="pre">map_location</span></code> wasn’t specified.</p>
+<p>If <code class="xref py py-attr docutils literal notranslate"><span class="pre">map_location</span></code> is a <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.device</span></code> object or a string containing
+a device tag, it indicates the location where all tensors should be loaded.</p>
+<p>Otherwise, if <code class="xref py py-attr docutils literal notranslate"><span class="pre">map_location</span></code> is a dict, it will be used to remap location tags
+appearing in the file (keys), to ones that specify where to put the
+storages (values).</p>
+<p>User extensions can register their own location tags and tagging and
+deserialization methods using <code class="xref py py-func docutils literal notranslate"><span class="pre">torch.serialization.register_package()</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>f</strong> – a file-like object (has to implement <code class="xref py py-meth docutils literal notranslate"><span class="pre">read()</span></code>, <code class="xref py py-meth docutils literal notranslate"><span class="pre">readline()</span></code>, <code class="xref py py-meth docutils literal notranslate"><span class="pre">tell()</span></code>, and <code class="xref py py-meth docutils literal notranslate"><span class="pre">seek()</span></code>),
+or a string or os.PathLike object containing a file name</p></li>
+<li><p><strong>map_location</strong> – a function, <code class="xref py py-class docutils literal notranslate"><span class="pre">torch.device</span></code>, string or a dict specifying how to remap storage
+locations</p></li>
+<li><p><strong>pickle_module</strong> – module used for unpickling metadata and objects (has to
+match the <code class="xref py py-attr docutils literal notranslate"><span class="pre">pickle_module</span></code> used to serialize file)</p></li>
+<li><p><strong>weights_only</strong> – Indicates whether unpickler should be restricted to
+loading only tensors, primitive types and dictionaries</p></li>
+<li><p><strong>pickle_load_args</strong> – (Python 3 only) optional keyword arguments passed over to
+<code class="xref py py-func docutils literal notranslate"><span class="pre">pickle_module.load()</span></code> and <code class="xref py py-func docutils literal notranslate"><span class="pre">pickle_module.Unpickler()</span></code>, e.g.,
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">errors=...</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><code class="xref py py-func docutils literal notranslate"><span class="pre">torch.load()</span></code> unless <cite>weights_only</cite> parameter is set to <cite>True</cite>,
+uses <code class="docutils literal notranslate"><span class="pre">pickle</span></code> module implicitly, which is known to be insecure.
+It is possible to construct malicious pickle data which will execute arbitrary code
+during unpickling. Never load data that could have come from an untrusted
+source in an unsafe mode, or that could have been tampered with. <strong>Only load data you trust</strong>.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When you call <code class="xref py py-func docutils literal notranslate"><span class="pre">torch.load()</span></code> on a file which contains GPU tensors, those tensors
+will be loaded to GPU by default. You can call <code class="docutils literal notranslate"><span class="pre">torch.load(..,</span> <span class="pre">map_location='cpu')</span></code>
+and then <code class="xref py py-meth docutils literal notranslate"><span class="pre">load_state_dict()</span></code> to avoid GPU RAM surge when loading a model checkpoint.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>By default, we decode byte strings as <code class="docutils literal notranslate"><span class="pre">utf-8</span></code>.  This is to avoid a common error
+case <code class="docutils literal notranslate"><span class="pre">UnicodeDecodeError:</span> <span class="pre">'ascii'</span> <span class="pre">codec</span> <span class="pre">can't</span> <span class="pre">decode</span> <span class="pre">byte</span> <span class="pre">0x...</span></code>
+when loading files saved by Python 2 in Python 3.  If this default
+is incorrect, you may use an extra <code class="xref py py-attr docutils literal notranslate"><span class="pre">encoding</span></code> keyword argument to specify how
+these objects should be loaded, e.g., <code class="xref py py-attr docutils literal notranslate"><span class="pre">encoding='latin1'</span></code> decodes them
+to strings using <code class="docutils literal notranslate"><span class="pre">latin1</span></code> encoding, and <code class="xref py py-attr docutils literal notranslate"><span class="pre">encoding='bytes'</span></code> keeps them
+as byte arrays which can be decoded later with <code class="docutils literal notranslate"><span class="pre">byte_array.decode(...)</span></code>.</p>
+</div>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># xdoctest: +SKIP(&quot;undefined filepaths&quot;)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;tensors.pt&#39;</span><span class="p">)</span>
+<span class="go"># Load all tensors onto the CPU</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;tensors.pt&#39;</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s1">&#39;cpu&#39;</span><span class="p">))</span>
+<span class="go"># Load all tensors onto the CPU, using a function</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;tensors.pt&#39;</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="k">lambda</span> <span class="n">storage</span><span class="p">,</span> <span class="n">loc</span><span class="p">:</span> <span class="n">storage</span><span class="p">)</span>
+<span class="go"># Load all tensors onto GPU 1</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;tensors.pt&#39;</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="k">lambda</span> <span class="n">storage</span><span class="p">,</span> <span class="n">loc</span><span class="p">:</span> <span class="n">storage</span><span class="o">.</span><span class="n">cuda</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+<span class="go"># Map tensors from GPU 1 to GPU 0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;tensors.pt&#39;</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;cuda:1&#39;</span><span class="p">:</span> <span class="s1">&#39;cuda:0&#39;</span><span class="p">})</span>
+<span class="go"># Load tensor from io.BytesIO object</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;tensor.pt&#39;</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">buffer</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span>
+<span class="go"># Load a module with &#39;ascii&#39; encoding for unpickling</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;module.pt&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;ascii&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fef8187d310> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

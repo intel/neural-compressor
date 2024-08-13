@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PyTorch Weight Only Quantization &mdash; Intel® Neural Compressor 2.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">2.6▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../source/user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">PyTorch Weight Only Quantization</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/3x/PT_WeightOnlyQuant.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="pytorch-weight-only-quantization">
+<h1>PyTorch Weight Only Quantization<a class="headerlink" href="#pytorch-weight-only-quantization" title="Link to this heading"></a></h1>
+<ul class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#supported-matrix">Supported Matrix</a></p></li>
+<li><p><a class="reference external" href="#usage">Usage</a></p>
+<ul>
+<li><p><a class="reference external" href="#get-started">Get Started</a></p>
+<ul>
+<li><p><a class="reference external" href="#common-arguments">Common arguments</a></p></li>
+<li><p><a class="reference external" href="#rtn">RTN</a></p></li>
+<li><p><a class="reference external" href="#gptq">GPTQ</a></p></li>
+<li><p><a class="reference external" href="#autoround">AutoRound</a></p></li>
+<li><p><a class="reference external" href="#awq">AWQ</a></p></li>
+<li><p><a class="reference external" href="#teq">TEQ</a></p></li>
+<li><p><a class="reference external" href="#hqq">HQQ</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#specify-quantization-rules">Specify Quantization Rules</a></p></li>
+<li><p><a class="reference external" href="#saving-and-loading">Saving and Loading</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#examples">Examples</a></p></li>
+</ul>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
+<p>As large language models (LLMs) become more prevalent, there is a growing need for new and improved quantization methods that can meet the computational demands of these modern architectures while maintaining the accuracy.  Compared to normal quantization like W8A8,  weight only quantization is probably a better trade-off to balance the performance and the accuracy, since we will see below that the bottleneck of deploying LLMs is the memory bandwidth and normally weight only quantization could lead to better accuracy.</p>
+<p>Model inference: Roughly speaking , two key steps are required to get the model’s result. The first one is moving the model from the memory to the cache piece by piece, in which, memory bandwidth $B$ and parameter count $P$ are the key factors, theoretically the time cost is  $P*4 /B$. The second one is  computation, in which, the device’s computation capacity  $C$  measured in FLOPS and the forward FLOPs $F$ play the key roles, theoretically the cost is $F/C$.</p>
+<p>Text generation:  The most famous application of LLMs is text generation, which predicts the next token/word  based on the inputs/context. To generate a sequence of texts, we need to predict them one by one. In this scenario,  $F\approx P$  if some operations like bmm are ignored and past key values have been saved. However, the  $C/B$ of the modern device could be to <strong>100X,</strong> that makes the memory bandwidth as the bottleneck in this scenario.</p>
+<p>Besides, as mentioned in many papers[1][2], activation quantization is the main reason to cause the accuracy drop. So for text generation task,  weight only quantization is a preferred option in most cases.</p>
+<p>Theoretically, round-to-nearest (RTN) is the most straightforward way to quantize weight using scale maps. However, when the number of bits is small (e.g. 3), the MSE loss is larger than expected. A group size is introduced to reduce elements using the same scale to improve accuracy.</p>
+</section>
+<section id="supported-matrix">
+<h2>Supported Matrix<a class="headerlink" href="#supported-matrix" title="Link to this heading"></a></h2>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Algorithms/Backend</th>
+<th>PyTorch eager mode</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RTN</td>
+<td>&#10004;</td>
+</tr>
+<tr>
+<td>GPTQ</td>
+<td>&#10004;</td>
+</tr>
+<tr>
+<td>AutoRound</td>
+<td>&#10004;</td>
+</tr>
+<tr>
+<td>AWQ</td>
+<td>&#10004;</td>
+</tr>
+<tr>
+<td>TEQ</td>
+<td>&#10004;</td>
+</tr>
+<tr>
+<td>HQQ</td>
+<td>&#10004;</td>
+</tr>
+<tr>
+<td>&gt; <strong>RTN:</strong> A quantification method that we can think of very intuitively. It does not require additional datasets and is a very fast quantization method. Generally speaking, RTN will convert the weight into a uniformly distributed integer data type, but some algorithms, such as Qlora, propose a non-uniform NF4 data type and prove its theoretical optimality.</td>
+<td></td>
+</tr>
+</tbody>
+</table><blockquote>
+<div><p><strong>GPTQ:</strong> A new one-shot weight quantization method based on approximate second-order information, that is both highly-accurate and highly efficient[4]. The weights of each column are updated based on the fixed-scale pseudo-quantization error and the inverse of the Hessian matrix calculated from the activations. The updated columns sharing the same scale may generate a new max/min value, so the scale needs to be saved for restoration.</p>
+</div></blockquote>
+<blockquote>
+<div><p><strong>AutoRound:</strong> AutoRound is an advanced weight-only quantization algorithm for low-bits LLM inference. It’s tailored for a wide range of models and consistently delivers noticeable improvements, often significantly outperforming SignRound[5] with the cost of more tuning time for quantization.</p>
+</div></blockquote>
+<blockquote>
+<div><p><strong>AWQ:</strong> Proved that protecting only 1% of salient weights can greatly reduce quantization error. the salient weight channels are selected by observing the distribution of activation and weight per channel. The salient weights are also quantized after multiplying a big scale factor before quantization for preserving.</p>
+</div></blockquote>
+<blockquote>
+<div><p><strong>TEQ:</strong> A trainable equivalent transformation that preserves the FP32 precision in weight-only quantization. It is inspired by AWQ while providing a new solution to search for the optimal per-channel scaling factor between activations and weights.</p>
+</div></blockquote>
+<blockquote>
+<div><p><strong>HQQ:</strong> The HQQ[6] method focuses specifically on minimizing errors in the weights rather than the layer activation. Additionally, by incorporating a sparsity-promoting loss, such as the $l_{p&lt;1}$-norm, we effectively model outliers through a hyper-Laplacian distribution. This distribution more accurately captures the heavy-tailed nature of outlier errors compared to the squared error, resulting in a more nuanced representation of error distribution.</p>
+</div></blockquote>
+</section>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
+<section id="get-started">
+<h3>Get Started<a class="headerlink" href="#get-started" title="Link to this heading"></a></h3>
+<p>WeightOnlyQuant quantization for PyTorch is using prepare and convert <a class="reference external" href="./PyTorch.html#quantization-apis">APIs</a>.</p>
+<section id="common-arguments">
+<h4>Common arguments<a class="headerlink" href="#common-arguments" title="Link to this heading"></a></h4>
+<p>| Config | Capability |
+|—|—|
+| dtype (str)| [’int’, ‘nf4’, ‘fp4’] |
+| bits (int)| [1, …, 8] |
+| group_size (int)| [-1, 1, …, $C_{in}$] |
+| use_sym (bool)| [True, False] |
+|               use_double_quant (bool)       |  [True, False]                           |
+|               double_quant_dtype (str)      |  [’int’]                      |
+|               double_quant_bits (int)       |  [1, …, bits] |
+|               double_quant_use_sym (bool)   |  [True, False] |
+|               double_quant_group_size (int) |  [-1, 1, …, $C_{in}$]                           |</p>
+<p>Notes:</p>
+<ul class="simple">
+<li><p><em>group_size = -1</em> refers to <strong>per output channel quantization</strong>. Taking a linear layer (input channel = $C_{in}$, output channel = $C_{out}$) for instance, when <em>group size = -1</em>, quantization will calculate total $C_{out}$ quantization parameters. Otherwise, when <em>group_size = gs</em> quantization parameters are calculate with every $gs$ elements along with the input channel, leading to total $C_{out} \times (C_{in} / gs)$ quantization parameters.</p></li>
+<li><p>4-bit NormalFloat(NF4) is proposed in QLoRA[7]. ‘fp4’ includes <a class="reference external" href="../../neural_compressor/adaptor/torch_utils/weight_only.py#L37">fp4_e2m1</a> and <a class="reference external" href="https://github.com/TimDettmers/bitsandbytes/blob/18e827d666fa2b70a12d539ccedc17aa51b2c97c/bitsandbytes/functional.py#L735">fp4_e2m1_bnb</a>. By default, fp4 refers to fp4_e2m1_bnb.</p></li>
+<li><p>Only RTN and GPTQ support double quant.</p></li>
+</ul>
+</section>
+<section id="rtn">
+<h4>RTN<a class="headerlink" href="#rtn" title="Link to this heading"></a></h4>
+<p>|  rtn_args  | comments |                                 default value                            |
+|———-|————-|——————————————————————-|
+|               group_dim (int)       |  Dimension for grouping                                 |  1      |
+|               use_full_range (bool) |  Enables full range for activations                     |  False  |
+|               use_mse_search (bool) |  Enables mean squared error (MSE)   search              |  False  |
+|               use_layer_wise (bool) |  Enables quantize model per layer                       |  False |
+|               model_path (str)      |  Model path that is used to load   state_dict per layer |                    |</p>
+<blockquote>
+<div><p><strong>Notes:</strong> <code class="docutils literal notranslate"><span class="pre">model_path</span></code> is only used when use_layer_wise=True. <code class="docutils literal notranslate"><span class="pre">layer-wise</span></code> is stay-tuned.</p>
+</div></blockquote>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Quantization code</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.torch.quantization</span> <span class="kn">import</span> <span class="n">prepare</span><span class="p">,</span> <span class="n">convert</span><span class="p">,</span> <span class="n">RTNConfig</span>
+
+<span class="n">quant_config</span> <span class="o">=</span> <span class="n">RTNConfig</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prepare</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">quant_config</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="gptq">
+<h4>GPTQ<a class="headerlink" href="#gptq" title="Link to this heading"></a></h4>
+<p>|  gptq_args  | comments |      default value                                                       |
+|———-|————-|——————————————————————-|
+|               use_mse_search (bool)   |  Enables mean squared error (MSE) search                                                                                                   |  False
+|               use_layer_wise (bool)   |  Enables quantize model per layer                                                                                                          |  False |
+|               model_path (str)        |  Model path that is used to load   state_dict per layer                                                                                    |                    |
+|               use_double_quant (bool) |  Enables double quantization                                                                                                               |  False  |
+|               act_order (bool)        |  Whether to sort Hessian’s diagonal   values to rearrange channel-wise quantization order                                                  |  False  |
+|               percdamp (float)        |  Percentage of Hessian’s diagonal   values’ average, which will be added to Hessian’s diagonal to increase   numerical stability           |  0.01.  |
+|               block_size (int)        |  Execute GPTQ quantization per   block, block shape = [C_out, block_size]                                                                  |  128     |
+|               static_groups (bool)    |  Whether to calculate group wise   quantization parameters in advance. This option mitigate actorder’s extra   computational requirements. |  False.  |</p>
+<blockquote>
+<div><p><strong>Note:</strong> <code class="docutils literal notranslate"><span class="pre">model_path</span></code> is only used when use_layer_wise=True. <code class="docutils literal notranslate"><span class="pre">layer-wise</span></code> is stay-tuned.</p>
+</div></blockquote>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Quantization code</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.torch.quantization</span> <span class="kn">import</span> <span class="n">prepare</span><span class="p">,</span> <span class="n">convert</span><span class="p">,</span> <span class="n">GPTQConfig</span>
+
+<span class="n">quant_config</span> <span class="o">=</span> <span class="n">GPTQConfig</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prepare</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">quant_config</span><span class="p">)</span>
+<span class="n">run_fn</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>  <span class="c1"># calibration</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="autoround">
+<h4>AutoRound<a class="headerlink" href="#autoround" title="Link to this heading"></a></h4>
+<p>|  autoround_args  | comments |      default value                                                       |
+|———-|————-|——————————————————————-|
+|             enable_full_range (bool)        |  Whether to enable full range   quantization                                               | False
+|             batch_size (int)                |  Batch size for training                                                                   | 8         |
+|             lr_scheduler                    |  The learning rate scheduler to be   used                                                  |     None                 |
+|             enable_quanted_input (bool)     |  Whether to use quantized input   data                                                     | True      |
+|             enable_minmax_tuning (bool)     |  Whether to enable min-max   tuning                                                        | True      |
+|             lr (float)                      |  The learning rate                                                                         | 0         |
+|             minmax_lr (float)               |  The learning rate for min-max   tuning                                                    | None      |
+|             low_gpu_mem_usage (bool)        |  Whether to use low GPU memory                                                             | True      |
+|             iters (int)                     |  Number of iterations                                                                      | 200       |
+|             seqlen (int)                    |  Length of the sequence                                                                    | 2048      |
+|             n_samples (int)                 |  Number of samples                                                                         | 512       |
+|             sampler (str)                   |  The sampling method                                                                       | “rand”    |
+|             seed (int)                      |  The random seed                                                                           | 42        |
+|             n_blocks (int)                  |  Number of blocks                                                                          | 1         |
+|             gradient_accumulate_steps (int) |  Number of gradient accumulation   steps                                                   | 1         |
+|             not_use_best_mse (bool)         |  Whether to use mean squared   error                                                       | False     |
+|             dynamic_max_gap (int)           |  The dynamic maximum gap                                                                   | -1        |
+|             scale_dtype (str)               | The data type of quantization scale to be used, different kernels have   different choices | “float16” |</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Quantization code</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.torch.quantization</span> <span class="kn">import</span> <span class="n">prepare</span><span class="p">,</span> <span class="n">convert</span><span class="p">,</span> <span class="n">AutoRoundConfig</span>
+
+<span class="n">quant_config</span> <span class="o">=</span> <span class="n">AutoRoundConfig</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prepare</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">quant_config</span><span class="p">)</span>
+<span class="n">run_fn</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>  <span class="c1"># calibration</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="awq">
+<h4>AWQ<a class="headerlink" href="#awq" title="Link to this heading"></a></h4>
+<p>|  awq_args  | comments |      default value                                                       |
+|———-|————-|——————————————————————-|
+|               group_dim (int)                |  Dimension for grouping                                                           |  1       |
+|               use_full_range (bool)          |  Enables full range for activations                                               |  False   |
+|               use_mse_search (bool)          |  Enables mean squared error (MSE)   search                                        |  False   |
+|               use_layer_wise (bool)          |  Enables quantize model per layer                                                 |  False   |
+|               use_auto_scale (bool)          |  Enables best scales search based   on activation distribution                    |  True    |
+|               use_auto_clip (bool)           |   Enables clip range search                                                       |  True    |
+|               folding(bool)                  |  Allow insert mul before linear   when the scale cannot be absorbed by last layer |   False. |</p>
+<blockquote>
+<div><p><strong>Notes:</strong> <code class="docutils literal notranslate"><span class="pre">layer-wise</span></code> is stay-tuned.</p>
+</div></blockquote>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Quantization code</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.torch.quantization</span> <span class="kn">import</span> <span class="n">prepare</span><span class="p">,</span> <span class="n">convert</span><span class="p">,</span> <span class="n">AWQConfig</span>
+
+<span class="n">quant_config</span> <span class="o">=</span> <span class="n">AWQConfig</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prepare</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">quant_config</span><span class="p">,</span> <span class="n">example_inputs</span><span class="o">=</span><span class="n">example_inputs</span><span class="p">)</span>
+<span class="n">run_fn</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>  <span class="c1"># calibration</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="teq">
+<h4>TEQ<a class="headerlink" href="#teq" title="Link to this heading"></a></h4>
+<p>|  teq_args  | comments |      default value                                                       |
+|———-|————-|——————————————————————-|
+|               group_dim (int)         |  Dimension for grouping                                                           |  1     |
+|               use_full_range (bool)   |  Enables full range for activations                                               |  False |
+|               use_mse_search (bool)   |  Enables mean squared error (MSE)   search                                        |  False |
+|               use_layer_wise (bool)   |  Enables quantize model per layer                                                 |  False |
+|               use_double_quant (bool) |  Enables double quantization                                                      |  False |
+|               folding(bool)           |  Allow insert mul before linear   when the scale cannot be absorbed by last layer |  False |</p>
+<blockquote>
+<div><p><strong>Notes:</strong> <code class="docutils literal notranslate"><span class="pre">layer-wise</span></code> is stay-tuned.</p>
+</div></blockquote>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Quantization code</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.torch.quantization</span> <span class="kn">import</span> <span class="n">prepare</span><span class="p">,</span> <span class="n">convert</span><span class="p">,</span> <span class="n">TEQConfig</span>
+
+<span class="n">quant_config</span> <span class="o">=</span> <span class="n">TEQConfig</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prepare</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">quant_config</span><span class="p">,</span> <span class="n">example_inputs</span><span class="o">=</span><span class="n">example_inputs</span><span class="p">)</span>
+<span class="n">train_fn</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>  <span class="c1"># calibration</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="hqq">
+<h4>HQQ<a class="headerlink" href="#hqq" title="Link to this heading"></a></h4>
+<p>|  hqq_args  | comments |      default value                                                       |
+|———-|————-|——————————————————————-|
+|           quant_zero (bool)            | Whether to quantize zero point         | True  |
+|         quant_scale:   (bool)          | Whether to quantize scale: point       | False |
+|           scale_quant_group_size (int) | The group size for quantizing scale    | 128   |
+|         skip_lm_head   (bool)          | Whether to skip for quantizing lm_head | True  |</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Quantization code</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.torch.quantization</span> <span class="kn">import</span> <span class="n">prepare</span><span class="p">,</span> <span class="n">convert</span><span class="p">,</span> <span class="n">HQQConfig</span>
+
+<span class="n">quant_config</span> <span class="o">=</span> <span class="n">HQQConfig</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prepare</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">quant_config</span><span class="p">)</span>
+<span class="n">run_fn</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>  <span class="c1"># calibration</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="specify-quantization-rules">
+<h3>Specify Quantization Rules<a class="headerlink" href="#specify-quantization-rules" title="Link to this heading"></a></h3>
+<p>Intel(R) Neural Compressor support specify quantization rules by operator name or operator type. Users can set <code class="docutils literal notranslate"><span class="pre">local</span></code> in dict or use <code class="docutils literal notranslate"><span class="pre">set_local</span></code> method of config class to achieve the above purpose.</p>
+<ol class="simple">
+<li><p>Example of setting <code class="docutils literal notranslate"><span class="pre">local</span></code> from a dict</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">quant_config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;rtn&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;global&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;bits&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+            <span class="s2">&quot;group_size&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+            <span class="s2">&quot;use_sym&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;local&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;lm_head&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="s2">&quot;fp32&quot;</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">},</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<ol class="simple">
+<li><p>Example of using <code class="docutils literal notranslate"><span class="pre">set_local</span></code></p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">quant_config</span> <span class="o">=</span> <span class="n">RTNConfig</span><span class="p">()</span>
+<span class="n">lm_head_config</span> <span class="o">=</span> <span class="n">RTNConfig</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;fp32&quot;</span><span class="p">)</span>
+<span class="n">quant_config</span><span class="o">.</span><span class="n">set_local</span><span class="p">(</span><span class="s2">&quot;lm_head&quot;</span><span class="p">,</span> <span class="n">lm_head_config</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="saving-and-loading">
+<h3>Saving and Loading<a class="headerlink" href="#saving-and-loading" title="Link to this heading"></a></h3>
+<p>The saved_results folder contains two files: quantized_model.pt and qconfig.json, and the generated model is a quantized model. The quantitative model will include WeightOnlyLinear. To support low memory inference, Intel(R) Neural Compressor implemented WeightOnlyLinear, a torch.nn.Module, to compress the fake quantized fp32 model. Since torch does not provide flexible data type storage, WeightOnlyLinear combines low bits data into a long date type, such as torch.int8 and torch.int32. Low bits data includes weights and zero points. When using WeightOnlyLinear for inference, it will restore the compressed data to float32 and run torch linear function.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Quantization code</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.torch.quantization</span> <span class="kn">import</span> <span class="n">prepare</span><span class="p">,</span> <span class="n">convert</span><span class="p">,</span> <span class="n">RTNConfig</span>
+
+<span class="n">quant_config</span> <span class="o">=</span> <span class="n">RTNConfig</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prepare</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">quant_config</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+<span class="c1"># save</span>
+<span class="n">model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;saved_results&quot;</span><span class="p">)</span>
+
+<span class="c1"># load</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.torch.quantization</span> <span class="kn">import</span> <span class="n">load</span>
+
+<span class="n">orig_model</span> <span class="o">=</span> <span class="n">YOURMODEL</span><span class="p">()</span>
+<span class="n">loaded_model</span> <span class="o">=</span> <span class="n">load</span><span class="p">(</span>
+    <span class="s2">&quot;saved_results&quot;</span><span class="p">,</span> <span class="n">original_model</span><span class="o">=</span><span class="n">orig_model</span>
+<span class="p">)</span>  <span class="c1"># Please note that the original_model parameter passes the original model.</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
+<p>Users can also refer to <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/examples/3.x_api/pytorch/nlp/huggingface_models/language-modeling/quantization/weight_only">examples</a> on how to quantize a  model with WeightOnlyQuant.</p>
+</section>
+<section id="reference">
+<h2>Reference<a class="headerlink" href="#reference" title="Link to this heading"></a></h2>
+<p>[1]. Xiao, Guangxuan, et al. “Smoothquant: Accurate and efficient post-training quantization for large language models.” arXiv preprint arXiv:2211.10438 (2022).</p>
+<p>[2]. Wei, Xiuying, et al. “Outlier suppression: Pushing the limit of low-bit transformer language models.” arXiv preprint arXiv:2209.13325 (2022).</p>
+<p>[3]. Lin, Ji, et al. “AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration.” arXiv preprint arXiv:2306.00978 (2023).</p>
+<p>[4]. Frantar, Elias, et al. “Gptq: Accurate post-training quantization for generative pre-trained transformers.” arXiv preprint arXiv:2210.17323 (2022).</p>
+<p>[5]. Cheng, Wenhua, et al. “Optimize Weight Rounding via Signed Gradient Descent for the Quantization of LLMs” arXiv preprint arXiv:2309.05516 (2023).</p>
+<p>[6]. Badri, Hicham and Shaji, Appu. “Half-Quadratic Quantization of Large Machine Learning Models.” [Online] Available: https://mobiusml.github.io/hqq_blog/ (2023).</p>
+<p>[7]. Dettmers, Tim, et al. “Qlora: Efficient finetuning of quantized llms.” arXiv preprint arXiv:2305.14314 (2023).</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8a38182ee0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

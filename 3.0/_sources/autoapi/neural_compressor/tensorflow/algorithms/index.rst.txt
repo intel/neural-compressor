@@ -1,0 +1,21 @@
+neural_compressor.tensorflow.algorithms
+=======================================
+
+.. py:module:: neural_compressor.tensorflow.algorithms
+
+.. autoapi-nested-parse::
+
+   Initialize all algorithms.
+
+
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/tensorflow/algorithms/smoother/index
+   /autoapi/neural_compressor/tensorflow/algorithms/static_quant/index
+
+

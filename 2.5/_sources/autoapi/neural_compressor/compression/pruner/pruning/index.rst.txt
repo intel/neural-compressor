@@ -1,0 +1,143 @@
+neural_compressor.compression.pruner.pruning
+============================================
+
+.. py:module:: neural_compressor.compression.pruner.pruning
+
+.. autoapi-nested-parse::
+
+   Pruning.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.pruning.BasePruning
+   neural_compressor.compression.pruner.pruning.BasicPruning
+   neural_compressor.compression.pruner.pruning.SparseGPTPruning
+   neural_compressor.compression.pruner.pruning.RetrainFreePruning
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.pruning.register_pruning
+
+
+Module Contents
+---------------
+
+.. py:function:: register_pruning(name)
+
+   Class decorator to register a pruning subclass to the registry.
+
+   Decorator function used before a pruner subclass.
+   Make sure that the pruning class decorated by this function can be registered in PRUNINGS.
+
+   :param cls: The subclass of register.
+   :type cls: class
+   :param name: A string. Define the pruning type.
+
+   :returns: The class of register.
+   :rtype: cls
+
+
+.. py:class:: BasePruning(config, model, opt=None)
+
+   Pruning.
+
+   The main class to do pruning; it contains at least one Pruner object.
+
+   :param config: a string representing the path to a config file. For config file template, please refer to
+                  https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/pytorch_pruner/eager/
+
+   .. attribute:: model
+
+      The model object to prune.
+
+   .. attribute:: config_file_path
+
+      A string representing the path to a config file.
+
+   .. attribute:: pruners
+
+      A list. A list of Pruner objects.
+
+   .. attribute:: pruner_info
+
+      A config dict object that contains pruners' information.
+
+
+.. py:class:: BasicPruning(config, model, opt=None)
+
+
+
+   Pruning.
+
+   The main class to do pruning; it contains at least one Pruner object.
+
+   :param config: a string representing the path to a config file. For config file template, please refer to
+                  https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/pytorch_pruner/eager/
+
+   .. attribute:: model
+
+      The model object to prune.
+
+   .. attribute:: config_file_path
+
+      A string representing the path to a config file.
+
+   .. attribute:: pruners
+
+      A list. A list of Pruner objects.
+
+   .. attribute:: pruner_info
+
+      A config dict object that contains pruners' information.
+
+
+.. py:class:: SparseGPTPruning(config, model, dataloader, framework='pytorch', device=None)
+
+
+
+   SparseGPT Pruning
+   The SparseGPT pruning_class is derived from BasePruning.
+
+   :param config: A config dict object that contains the pruner information.
+   :param model: The model that need to be pruned.
+   :param dataloader: Processed datasets, which is necessary for sparseGPT pruning.
+   :param device: available device of pruning.
+
+
+.. py:class:: RetrainFreePruning(config, model, dataloader=None, loss_func=None, framework='pytorch')
+
+
+
+   Pruning.
+
+   The main class to do pruning; it contains at least one Pruner object.
+
+   :param config: a string representing the path to a config file. For config file template, please refer to
+                  https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/pytorch_pruner/eager/
+
+   .. attribute:: model
+
+      The model object to prune.
+
+   .. attribute:: config_file_path
+
+      A string representing the path to a config file.
+
+   .. attribute:: pruners
+
+      A list. A list of Pruner objects.
+
+   .. attribute:: pruner_info
+
+      A config dict object that contains pruners' information.
+
+

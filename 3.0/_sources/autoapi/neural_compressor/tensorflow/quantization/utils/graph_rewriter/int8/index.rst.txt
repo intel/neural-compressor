@@ -1,0 +1,29 @@
+neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8
+===================================================================
+
+.. py:module:: neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8
+
+.. autoapi-nested-parse::
+
+   Tensorflow INT8 Graph Rewriters.
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/tensorflow/quantization/utils/graph_rewriter/int8/freeze_fake_quant/index
+   /autoapi/neural_compressor/tensorflow/quantization/utils/graph_rewriter/int8/freeze_value/index
+   /autoapi/neural_compressor/tensorflow/quantization/utils/graph_rewriter/int8/fuse_conv_redundant_dequantize/index
+   /autoapi/neural_compressor/tensorflow/quantization/utils/graph_rewriter/int8/fuse_conv_requantize/index
+   /autoapi/neural_compressor/tensorflow/quantization/utils/graph_rewriter/int8/fuse_matmul_redundant_dequantize/index
+   /autoapi/neural_compressor/tensorflow/quantization/utils/graph_rewriter/int8/fuse_matmul_requantize/index
+   /autoapi/neural_compressor/tensorflow/quantization/utils/graph_rewriter/int8/meta_op_optimizer/index
+   /autoapi/neural_compressor/tensorflow/quantization/utils/graph_rewriter/int8/post_hostconst_converter/index
+   /autoapi/neural_compressor/tensorflow/quantization/utils/graph_rewriter/int8/post_quantized_op_cse/index
+   /autoapi/neural_compressor/tensorflow/quantization/utils/graph_rewriter/int8/scale_propagation/index
+
+

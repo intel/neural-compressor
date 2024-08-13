@@ -1,0 +1,29 @@
+neural_compressor.adaptor.tf_utils.quantize_graph.qdq.optimize_qdq
+==================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qdq.optimize_qdq
+
+.. autoapi-nested-parse::
+
+   Fuse the DQ + OP + Q fusion pattern, convert fp32 op to int8.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.quantize_graph.qdq.optimize_qdq.OptimizeQDQGraph
+
+
+Module Contents
+---------------
+
+.. py:class:: OptimizeQDQGraph(input_graph, input_node_names, output_node_names, op_wise_config, op_wise_sequences, device, fake_quant=False, new_api=False, performance_only=False, itex_mode=False)
+
+
+
+   Apply the fusion DQ + OP + Q pattern.
+
+

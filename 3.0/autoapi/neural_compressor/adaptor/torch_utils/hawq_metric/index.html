@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.adaptor.torch_utils.hawq_metric &mdash; Intel® Neural Compressor 3.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">3.0▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.adaptor.torch_utils.hawq_metric</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/autoapi/neural_compressor/adaptor/torch_utils/hawq_metric/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.adaptor.torch_utils.hawq_metric">
+<span id="neural-compressor-adaptor-torch-utils-hawq-metric"></span><h1>neural_compressor.adaptor.torch_utils.hawq_metric<a class="headerlink" href="#module-neural_compressor.adaptor.torch_utils.hawq_metric" title="Link to this heading"></a></h1>
+<p>Torch Utils for Hessian Aware Weighted Quantization.</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.hawq_metric.Node_collector" title="neural_compressor.adaptor.torch_utils.hawq_metric.Node_collector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Node_collector</span></code></a></p></td>
+<td><p>Define Collector based on hook, which is used to record the intermediate result.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.hawq_metric.HessianTrace" title="neural_compressor.adaptor.torch_utils.hawq_metric.HessianTrace"><code class="xref py py-obj docutils literal notranslate"><span class="pre">HessianTrace</span></code></a></p></td>
+<td><p>HessianTrace Class.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.hawq_metric.compare_weights" title="neural_compressor.adaptor.torch_utils.hawq_metric.compare_weights"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compare_weights</span></code></a>(→ Dict[str, Dict[str, torch.Tensor]])</p></td>
+<td><p>Compare the weights of the float module with its corresponding quantized module.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.torch_utils.hawq_metric.hawq_top" title="neural_compressor.adaptor.torch_utils.hawq_metric.hawq_top"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hawq_top</span></code></a>(fp32_model, q_model, dataloader, criterion, ...)</p></td>
+<td><p>Enable hawq on an HessianTrace object and returns op list.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.hawq_metric.Node_collector">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.hawq_metric.</span></span><span class="sig-name descname"><span class="pre">Node_collector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/adaptor/torch_utils/hawq_metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.hawq_metric.Node_collector" title="Link to this definition"></a></dt>
+<dd><p>Define Collector based on hook, which is used to record the intermediate result.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.hawq_metric.HessianTrace">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.hawq_metric.</span></span><span class="sig-name descname"><span class="pre">HessianTrace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/adaptor/torch_utils/hawq_metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.hawq_metric.HessianTrace" title="Link to this definition"></a></dt>
+<dd><p>HessianTrace Class.</p>
+<p>Please refer to Yao, Zhewei, et al. “Pyhessian: Neural networks through the lens of the hessian.”
+2020 IEEE international conference on big data (Big data). IEEE, 2020.
+Dong, Zhen, et al. “Hawq-v2: Hessian aware trace-weighted quantization of neural networks.”
+Advances in neural information processing systems 33 (2020): 18518-18529.
+<a class="reference external" href="https://github.com/openvinotoolkit/nncf/blob/develop/nncf/torch/quantization/hessian_trace.py">https://github.com/openvinotoolkit/nncf/blob/develop/nncf/torch/quantization/hessian_trace.py</a></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.hawq_metric.compare_weights">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.hawq_metric.</span></span><span class="sig-name descname"><span class="pre">compare_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">float_dict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantized_dict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/adaptor/torch_utils/hawq_metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.hawq_metric.compare_weights" title="Link to this definition"></a></dt>
+<dd><p>Compare the weights of the float module with its corresponding quantized module.</p>
+<p>Returns a dict with key corresponding to module names and each entry being
+a dictionary with two keys ‘float’ and ‘quantized’, containing the float and
+quantized weights. This dict can be used to compare and compute the quantization
+error of the weights of float and quantized models.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">wt_compare_dict</span> <span class="o">=</span> <span class="n">compare_weights</span><span class="p">(</span>
+    <span class="n">float_model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">(),</span> <span class="n">qmodel</span><span class="o">.</span><span class="n">state_dict</span><span class="p">())</span>
+<span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">wt_compare_dict</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="n">key</span><span class="p">,</span>
+        <span class="n">compute_error</span><span class="p">(</span>
+            <span class="n">wt_compare_dict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;float&#39;</span><span class="p">],</span>
+            <span class="n">wt_compare_dict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;quantized&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dequantize</span><span class="p">()</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>float_dict</strong> – state dict of the float model.</p></li>
+<li><p><strong>quantized_dict</strong> – state dict of the quantized model.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict with key corresponding to module names and each entry being
+a dictionary with two keys ‘float’ and ‘quantized’, containing the float and
+quantized weights.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>weight_dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.torch_utils.hawq_metric.hawq_top">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.torch_utils.hawq_metric.</span></span><span class="sig-name descname"><span class="pre">hawq_top</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp32_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">criterion</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_act</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/adaptor/torch_utils/hawq_metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.torch_utils.hawq_metric.hawq_top" title="Link to this definition"></a></dt>
+<dd><p>Enable hawq on an HessianTrace object and returns op list.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fef81af0c40> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

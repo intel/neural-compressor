@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Welcome to your VS Code Extension &mdash; Intel® Neural Compressor 2.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">2.6▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Welcome to your VS Code Extension</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/docs/source/neural_coder/extensions/neural_compressor_ext_vscode/vsc-extension-quickstart.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="welcome-to-your-vs-code-extension">
+<h1>Welcome to your VS Code Extension<a class="headerlink" href="#welcome-to-your-vs-code-extension" title="Link to this heading"></a></h1>
+<section id="what-s-in-the-folder">
+<h2>What’s in the folder<a class="headerlink" href="#what-s-in-the-folder" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>This folder contains all of the files necessary for your extension.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">package.json</span></code> - this is the manifest file in which you declare your extension and command.</p>
+<ul>
+<li><p>The sample plugin registers a command and defines its title and command name. With this information VS Code can show the command in the command palette. It doesn’t yet need to load the plugin.</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">src/extension.ts</span></code> - this is the main file where you will provide the implementation of your command.</p>
+<ul>
+<li><p>The file exports one function, <code class="docutils literal notranslate"><span class="pre">activate</span></code>, which is called the very first time your extension is activated (in this case by executing the command). Inside the <code class="docutils literal notranslate"><span class="pre">activate</span></code> function we call <code class="docutils literal notranslate"><span class="pre">registerCommand</span></code>.</p></li>
+<li><p>We pass the function containing the implementation of the command as the second parameter to <code class="docutils literal notranslate"><span class="pre">registerCommand</span></code>.</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="setup">
+<h2>Setup<a class="headerlink" href="#setup" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>install the recommended extensions (amodio.tsl-problem-matcher and dbaeumer.vscode-eslint)</p></li>
+</ul>
+</section>
+<section id="get-up-and-running-straight-away">
+<h2>Get up and running straight away<a class="headerlink" href="#get-up-and-running-straight-away" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Press <code class="docutils literal notranslate"><span class="pre">F5</span></code> to open a new window with your extension loaded.</p></li>
+<li><p>Run your command from the command palette by pressing (<code class="docutils literal notranslate"><span class="pre">Ctrl+Shift+P</span></code> or <code class="docutils literal notranslate"><span class="pre">.html+Shift+P</span></code> on Mac) and typing <code class="docutils literal notranslate"><span class="pre">Hello</span> <span class="pre">World</span></code>.</p></li>
+<li><p>Set breakpoints in your code inside <code class="docutils literal notranslate"><span class="pre">src/extension.ts</span></code> to debug your extension.</p></li>
+<li><p>Find output from your extension in the debug console.</p></li>
+</ul>
+</section>
+<section id="make-changes">
+<h2>Make changes<a class="headerlink" href="#make-changes" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>You can relaunch the extension from the debug toolbar after changing code in <code class="docutils literal notranslate"><span class="pre">src/extension.ts</span></code>.</p></li>
+<li><p>You can also reload (<code class="docutils literal notranslate"><span class="pre">Ctrl+R</span></code> or <code class="docutils literal notranslate"><span class="pre">.html+R</span></code> on Mac) the VS Code window with your extension to load your changes.</p></li>
+</ul>
+</section>
+<section id="explore-the-api">
+<h2>Explore the API<a class="headerlink" href="#explore-the-api" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>You can open the full set of our API when you open the file <code class="docutils literal notranslate"><span class="pre">node_modules/&#64;types/vscode/index.d.ts</span></code>.</p></li>
+</ul>
+</section>
+<section id="run-tests">
+<h2>Run tests<a class="headerlink" href="#run-tests" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Open the debug viewlet (<code class="docutils literal notranslate"><span class="pre">Ctrl+Shift+D</span></code> or <code class="docutils literal notranslate"><span class="pre">.html+Shift+D</span></code> on Mac) and from the launch configuration dropdown pick <code class="docutils literal notranslate"><span class="pre">Extension</span> <span class="pre">Tests</span></code>.</p></li>
+<li><p>Press <code class="docutils literal notranslate"><span class="pre">F5</span></code> to run the tests in a new window with your extension loaded.</p></li>
+<li><p>See the output of the test result in the debug console.</p></li>
+<li><p>Make changes to <code class="docutils literal notranslate"><span class="pre">src/test/suite/extension.test.ts</span></code> or create new test files inside the <code class="docutils literal notranslate"><span class="pre">test/suite</span></code> folder.</p>
+<ul>
+<li><p>The provided test runner will only consider files matching the name pattern <code class="docutils literal notranslate"><span class="pre">**.test.ts</span></code>.</p></li>
+<li><p>You can create folders inside the <code class="docutils literal notranslate"><span class="pre">test</span></code> folder to structure your tests any way you want.</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="go-further">
+<h2>Go further<a class="headerlink" href="#go-further" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Reduce the extension size and improve the startup time by <a class="reference external" href="https://code.visualstudio.com/api/working-with-extensions/bundling-extension">bundling your extension</a>.</p></li>
+<li><p><a class="reference external" href="https://code.visualstudio.com/api/working-with-extensions/publishing-extension">Publish your extension</a> on the VS Code extension marketplace.</p></li>
+<li><p>Automate builds by setting up <a class="reference external" href="https://code.visualstudio.com/api/working-with-extensions/continuous-integration">Continuous Integration</a>.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8a3c8b6520> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

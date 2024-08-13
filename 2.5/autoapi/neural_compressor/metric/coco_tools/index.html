@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.metric.coco_tools &mdash; Intel® Neural Compressor 2.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../versions.html">2.5▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.metric.coco_tools</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/neural_compressor/metric/coco_tools/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.metric.coco_tools">
+<span id="neural-compressor-metric-coco-tools"></span><h1>neural_compressor.metric.coco_tools<a class="headerlink" href="#module-neural_compressor.metric.coco_tools" title="Link to this heading"></a></h1>
+<p>Wrappers for third party pycocotools to be used within object_detection.</p>
+<p>Note that nothing in this file is tensorflow related and thus cannot
+be called directly as a slim metric, for example.</p>
+<p>TODO(jonathanhuang): wrap as a slim metric in metrics.py</p>
+<p>Usage example: given a set of images with ids in the list image_ids
+and corresponding lists of numpy arrays encoding groundtruth (boxes and classes)
+and detections (boxes, scores and classes), where elements of each list
+correspond to detections/annotations of a single image,
+then evaluation (in multi-class mode) can be invoked as follows:</p>
+<blockquote>
+<div><dl class="simple">
+<dt>groundtruth_dict = coco_tools.ExportGroundtruthToCOCO(</dt><dd><p>image_ids, groundtruth_boxes_list, groundtruth_classes_list,
+max_num_classes, output_path=None)</p>
+</dd>
+<dt>detections_list = coco_tools.ExportDetectionsToCOCO(</dt><dd><p>image_ids, detection_boxes_list, detection_scores_list,
+detection_classes_list, output_path=None)</p>
+</dd>
+</dl>
+<p>groundtruth = coco_tools.COCOWrapper(groundtruth_dict)
+detections = groundtruth.LoadAnnotations(detections_list)
+evaluator = coco_tools.COCOEvalWrapper(groundtruth, detections,</p>
+<blockquote>
+<div><p>agnostic_mode=False)</p>
+</div></blockquote>
+<p>metrics = evaluator.ComputeMetrics()</p>
+</div></blockquote>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.metric.coco_tools.COCOWrapper" title="neural_compressor.metric.coco_tools.COCOWrapper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">COCOWrapper</span></code></a></p></td>
+<td><p>Wrapper for the pycocotools COCO class.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.metric.coco_tools.COCOEvalWrapper" title="neural_compressor.metric.coco_tools.COCOEvalWrapper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">COCOEvalWrapper</span></code></a></p></td>
+<td><p>Wrapper for the pycocotools COCOeval class.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.metric.coco_tools.ExportSingleImageGroundtruthToCoco" title="neural_compressor.metric.coco_tools.ExportSingleImageGroundtruthToCoco"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ExportSingleImageGroundtruthToCoco</span></code></a>(→ list)</p></td>
+<td><p>Export groundtruth of a single image to COCO format.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.metric.coco_tools.ExportSingleImageDetectionBoxesToCoco" title="neural_compressor.metric.coco_tools.ExportSingleImageDetectionBoxesToCoco"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ExportSingleImageDetectionBoxesToCoco</span></code></a>(→ list)</p></td>
+<td><p>Export detections of a single image to COCO format.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.metric.coco_tools.ExportSingleImageDetectionMasksToCoco" title="neural_compressor.metric.coco_tools.ExportSingleImageDetectionMasksToCoco"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ExportSingleImageDetectionMasksToCoco</span></code></a>(→ list)</p></td>
+<td><p>Export detection masks of a single image to COCO format.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.metric.coco_tools.COCOWrapper">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.metric.coco_tools.</span></span><span class="sig-name descname"><span class="pre">COCOWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">detection_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'bbox'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/metric/coco_tools.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.metric.coco_tools.COCOWrapper" title="Link to this definition"></a></dt>
+<dd><p>Wrapper for the pycocotools COCO class.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.metric.coco_tools.COCOWrapper.dataset">
+<span class="sig-name descname"><span class="pre">dataset</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/metric/coco_tools.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.metric.coco_tools.COCOWrapper.dataset" title="Link to this definition"></a></dt>
+<dd><p>a dictionary holding bounding box annotations in the COCO format.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.metric.coco_tools.COCOWrapper.detection_type">
+<span class="sig-name descname"><span class="pre">detection_type</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/metric/coco_tools.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.metric.coco_tools.COCOWrapper.detection_type" title="Link to this definition"></a></dt>
+<dd><p>type of detections being wrapped. Can be one of [‘bbox’,
+‘segmentation’]</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.metric.coco_tools.COCOEvalWrapper">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.metric.coco_tools.</span></span><span class="sig-name descname"><span class="pre">COCOEvalWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">groundtruth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pycocotools.coco.COCO</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">detections</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pycocotools.coco.COCO</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">agnostic_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iou_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'bbox'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iou_thrs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/metric/coco_tools.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.metric.coco_tools.COCOEvalWrapper" title="Link to this definition"></a></dt>
+<dd><p>Wrapper for the pycocotools COCOeval class.</p>
+<p>To evaluate, create two objects (groundtruth_dict and detections_list)
+using the conventions listed at <a class="reference external" href="http://mscoco.org/dataset/#format">http://mscoco.org/dataset/#format</a>.
+Then call evaluation as follows:</p>
+<blockquote>
+<div><p>groundtruth = coco_tools.COCOWrapper(groundtruth_dict)
+detections = groundtruth.LoadAnnotations(detections_list)
+evaluator = coco_tools.COCOEvalWrapper(groundtruth, detections,</p>
+<blockquote>
+<div><p>agnostic_mode=False)</p>
+</div></blockquote>
+<p>metrics = evaluator.ComputeMetrics()</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.metric.coco_tools.ExportSingleImageGroundtruthToCoco">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.metric.coco_tools.</span></span><span class="sig-name descname"><span class="pre">ExportSingleImageGroundtruthToCoco</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">next_annotation_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">category_id_set</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groundtruth_boxes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groundtruth_classes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groundtruth_masks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.array</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groundtruth_is_crowd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.array</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/metric/coco_tools.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.metric.coco_tools.ExportSingleImageGroundtruthToCoco" title="Link to this definition"></a></dt>
+<dd><p>Export groundtruth of a single image to COCO format.</p>
+<p>This function converts groundtruth detection annotations represented as numpy
+arrays to dictionaries that can be ingested by the COCO evaluation API. Note
+that the image_ids provided here must match the ones given to
+ExportSingleImageDetectionsToCoco. We assume that boxes and classes are in
+correspondence - that is: groundtruth_boxes[i, :], and
+groundtruth_classes[i] are associated with the same groundtruth annotation.</p>
+<p>In the exported result, “area” fields are always set to the area of the
+groundtruth bounding box.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image_id</strong> – a unique image identifier either of type integer or string.</p></li>
+<li><p><strong>next_annotation_id</strong> – integer specifying the first id to use for the
+groundtruth annotations. All annotations are assigned a continuous integer
+id starting from this value.</p></li>
+<li><p><strong>category_id_set</strong> – A set of valid class ids. Groundtruth with classes not in
+category_id_set are dropped.</p></li>
+<li><p><strong>groundtruth_boxes</strong> – numpy array (float32) with shape [num_gt_boxes, 4]</p></li>
+<li><p><strong>groundtruth_classes</strong> – numpy array (int) with shape [num_gt_boxes]</p></li>
+<li><p><strong>groundtruth_masks</strong> – optional uint8 numpy array of shape [num_detections,
+image_height, image_width] containing detection_masks.</p></li>
+<li><p><strong>groundtruth_is_crowd</strong> – optional numpy array (int) with shape [num_gt_boxes]
+indicating whether groundtruth boxes are crowd.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of groundtruth annotations for a single image in the COCO format.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – if (1) groundtruth_boxes and groundtruth_classes do not have the
+right lengths or (2) if each of the elements inside these lists do not
+have the correct shapes or (3) if image_ids are not integers</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.metric.coco_tools.ExportSingleImageDetectionBoxesToCoco">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.metric.coco_tools.</span></span><span class="sig-name descname"><span class="pre">ExportSingleImageDetectionBoxesToCoco</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">category_id_set</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Set</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">detection_boxes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">detection_scores</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">detection_classes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/metric/coco_tools.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.metric.coco_tools.ExportSingleImageDetectionBoxesToCoco" title="Link to this definition"></a></dt>
+<dd><p>Export detections of a single image to COCO format.</p>
+<p>This function converts detections represented as numpy arrays to dictionaries
+that can be ingested by the COCO evaluation API. Note that the image_ids
+provided here must match the ones given to the
+ExporSingleImageDetectionBoxesToCoco. We assume that boxes, and classes are in
+correspondence - that is: boxes[i, :], and classes[i]
+are associated with the same groundtruth annotation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image_id</strong> – unique image identifier either of type integer or string.</p></li>
+<li><p><strong>category_id_set</strong> – A set of valid class ids. Detections with classes not in
+category_id_set are dropped.</p></li>
+<li><p><strong>detection_boxes</strong> – float numpy array of shape [num_detections, 4] containing
+detection boxes.</p></li>
+<li><p><strong>detection_scores</strong> – float numpy array of shape [num_detections] containing
+scored for the detection boxes.</p></li>
+<li><p><strong>detection_classes</strong> – integer numpy array of shape [num_detections] containing
+the classes for detection boxes.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of detection annotations for a single image in the COCO format.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ValueError</strong> – if (1) detection_boxes, detection_scores and detection_classes</p></li>
+<li><p><strong>do not have the right lengths</strong><strong> or </strong><strong>(</strong><strong>2</strong><strong>) </strong><strong>if each</strong><strong> of </strong><strong>the elements inside these</strong> – </p></li>
+<li><p><strong>lists do not have the correct shapes</strong><strong> or </strong><strong>(</strong><strong>3</strong><strong>) </strong><strong>if image_ids are not integers.</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.metric.coco_tools.ExportSingleImageDetectionMasksToCoco">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.metric.coco_tools.</span></span><span class="sig-name descname"><span class="pre">ExportSingleImageDetectionMasksToCoco</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">category_id_set</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Set</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">detection_masks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">detection_scores</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">detection_classes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/metric/coco_tools.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.metric.coco_tools.ExportSingleImageDetectionMasksToCoco" title="Link to this definition"></a></dt>
+<dd><p>Export detection masks of a single image to COCO format.</p>
+<p>This function converts detections represented as numpy arrays to dictionaries
+that can be ingested by the COCO evaluation API. We assume that
+detection_masks, detection_scores, and detection_classes are in correspondence
+- that is: detection_masks[i, :], detection_classes[i] and detection_scores[i]</p>
+<blockquote>
+<div><p>are associated with the same annotation.</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image_id</strong> – unique image identifier either of type integer or string.</p></li>
+<li><p><strong>category_id_set</strong> – A set of valid class ids. Detections with classes not in</p></li>
+<li><p><strong>dropped.</strong> (<em>category_id_set are</em>)</p></li>
+<li><p><strong>detection_masks</strong> – uint8 numpy array of shape [num_detections, image_height,</p></li>
+<li><p><strong>detection_masks.</strong> (<em>image_width</em><em>] </em><em>containing</em>)</p></li>
+<li><p><strong>detection_scores</strong> – float numpy array of shape [num_detections] containing</p></li>
+<li><p><strong>masks.</strong> (<em>the classes for detection</em>)</p></li>
+<li><p><strong>detection_classes</strong> – integer numpy array of shape [num_detections] containing</p></li>
+<li><p><strong>masks.</strong></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of detection mask annotations for a single image in the COCO format.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ValueError</strong> – if (1) detection_masks, detection_scores and detection_classes</p></li>
+<li><p><strong>do not have the right lengths</strong><strong> or </strong><strong>(</strong><strong>2</strong><strong>) </strong><strong>if each</strong><strong> of </strong><strong>the elements inside these</strong> – </p></li>
+<li><p><strong>lists do not have the correct shapes</strong><strong> or </strong><strong>(</strong><strong>3</strong><strong>) </strong><strong>if image_ids are not integers.</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f81c8f62430> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

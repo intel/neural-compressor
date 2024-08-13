@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TensorBoard &mdash; Intel® Neural Compressor 2.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">2.6▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">TensorBoard</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/tensorboard.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="tensorboard">
+<h1>TensorBoard<a class="headerlink" href="#tensorboard" title="Link to this heading"></a></h1>
+<ol class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#supported-feature-matrix">Supported Feature Matrix</a></p></li>
+<li><p><a class="reference external" href="#get-started-with-tensorboard">Get Started with Tensorboard</a></p></li>
+<li><p><a class="reference external" href="#examples">Examples</a></p></li>
+</ol>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
+<p>TensorBoard is a suite of web applications that provide measurements and visualizations used to inspect and understand your machine learning workflow for <a class="reference external" href="https://github.com/tensorflow/tensorboard">TensorFlow TensorBoard</a> and <a class="reference external" href="https://github.com/pytorch/pytorch/tree/master/torch/utils/tensorboard">PyTorch TensorBoard</a>. Intel® Neural Compressor performs accuracy-driven quantization; the tuning process quantizes the tensor and performs graph transformation and optimization to achieve optimal performance under accuracy requirement. If you want to observe the behaviors of the optimizations, or if you want to discover why an accuracy target cannot be met, TensorBoard can provide you with some valuable information. You can inspect the graph and tensor after each tuning run. If a model cannot meet accuracy requirements, you can analyze the comparison of FP32 and the INT8 tensor histogram.</p>
+<p>We collect the TensorBoard event summary during evaluation. The first time is on the baseline FP32 model and later on at the end of each tuning runs are based on the quantized model. The TensorBoard log directory is named baseline_acc_<accuracy> and tune_<runs><em>acc</em><accuracy>, to indicate the stage and accuracy of the data that is generated. Users can select their data of interest to observe with TensorBoard.</p>
+</section>
+<section id="supported-feature-matrix">
+<h2>Supported Feature Matrix<a class="headerlink" href="#supported-feature-matrix" title="Link to this heading"></a></h2>
+<p>| Optimized Framework | Tensorboard Support |
+|———————|:——————-:|
+| PyTorch             |       ✔      |
+| TensorFlow          |       ✔      |</p>
+</section>
+<section id="get-started-with-tensorboard">
+<h2>Get Started with TensorBoard<a class="headerlink" href="#get-started-with-tensorboard" title="Link to this heading"></a></h2>
+<section id="pytorch-tensorboard">
+<h3>PyTorch TensorBoard<a class="headerlink" href="#pytorch-tensorboard" title="Link to this heading"></a></h3>
+<p>PyTorch TensorBoard implementation includes three steps:</p>
+<ul class="simple">
+<li><p>Before evaluation in the _pre_eval_hook() where instruments observers are placed in the model.</p></li>
+<li><p>During evaluation where observers collect tensor information in a dict data structure.</p></li>
+<li><p>After evaluation where the graph and tensor information is dumped with the TensorBoard summary writer in _post_eval_hook().</p></li>
+</ul>
+<p>The detailed algorithm can be described by the Pseudo code:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
+<span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">,</span> <span class="n">postprocess</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> \
+                 <span class="n">metric</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">measurer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">iteration</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">tensorboard</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="c1"># The tensorboard summary is collected in the evaluation function of adaptor</span>
+
+    <span class="k">if</span> <span class="n">tensorboard</span><span class="p">:</span>
+         <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pre_eval_hook</span><span class="p">(</span><span class="n">model</span><span class="p">)</span> 
+    <span class="c1">#evaluation code</span>
+    <span class="o">....</span>
+    <span class="n">acc</span> <span class="o">=</span> <span class="n">metric</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>     
+    <span class="k">if</span> <span class="n">tensorboard</span><span class="p">:</span> 
+         <span class="bp">self</span><span class="o">.</span><span class="n">_post_eval_hook</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">accuracy</span><span class="o">=</span><span class="n">acc</span><span class="p">,</span> <span class="nb">input</span><span class="o">=</span><span class="nb">input</span><span class="p">)</span> 
+
+<span class="k">def</span> <span class="nf">_pre_eval_hook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+<span class="c1"># Insert observer submodule into each module in whitelist in order to collect tensor information</span>
+
+   <span class="k">class</span> <span class="nc">_RecordingObserver</span><span class="p">(</span><span class="n">ABC</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+   <span class="c1"># Define the Observer class </span>
+
+        <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="c1"># Record the tensor information in a dict structure</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_tensors_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">current_iter</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span> 
+
+        <span class="nd">@torch</span><span class="o">.</span><span class="n">jit</span><span class="o">.</span><span class="n">export</span>
+        <span class="k">def</span> <span class="nf">get_tensor_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_tensors_dict</span>
+
+   <span class="k">def</span> <span class="nf">_observer_forward_hook</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
+        <span class="c1">#Forward hook that calls observer on the output</span>
+        <span class="k">return</span> <span class="n">module</span><span class="o">.</span><span class="n">activation_post_process</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+
+   <span class="k">def</span> <span class="nf">_add_observer_</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">op_list</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span> 
+
+        <span class="c1">#Add observer for each child module</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">named_children</span><span class="p">():</span>
+            <span class="n">_add_observer_</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">op_list</span><span class="p">,</span> <span class="n">op_name</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">module</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">leaf</span><span class="p">:</span>
+           <span class="n">module</span><span class="o">.</span><span class="n">add_module</span><span class="p">(</span>
+                    <span class="s1">&#39;activation_post_process&#39;</span><span class="p">,</span>
+                    <span class="n">module</span><span class="o">.</span><span class="n">qconfig</span><span class="o">.</span><span class="n">activation</span><span class="p">())</span>
+                <span class="n">module</span><span class="o">.</span><span class="n">register_forward_hook</span><span class="p">(</span><span class="n">_observer_forward_hook</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">_post_eval_hook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span><span class="p">):</span>
+   <span class="c1"># Dump tensor and graph information with TensorBoard summary writer</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dump_times</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+       <span class="n">writer</span> <span class="o">=</span> <span class="n">SummaryWriter</span><span class="p">(</span><span class="s1">&#39;runs/eval/baseline&#39;</span> <span class="o">+</span>
+                             <span class="s1">&#39;_acc&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">accuracy</span><span class="p">),</span> <span class="n">model</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+       <span class="n">writer</span> <span class="o">=</span> <span class="n">SummaryWriter</span><span class="p">(</span><span class="s1">&#39;runs/eval/tune_&#39;</span> <span class="o">+</span>
+                                  <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dump_times</span><span class="p">)</span> <span class="o">+</span>
+                                  <span class="s1">&#39;_acc&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">accuracy</span><span class="p">),</span> <span class="n">model</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">args</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s1">&#39;input&#39;</span> <span class="ow">in</span> <span class="n">args</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">dump_times</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+       <span class="n">writer</span><span class="o">.</span><span class="n">add_graph</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">])</span>
+
+    <span class="kn">from</span> <span class="nn">torch.quantization</span> <span class="kn">import</span> <span class="n">get_observer_dict</span>
+    <span class="n">get_observer_dict</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">observer_dict</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">observer_dict</span><span class="p">:</span>
+        <span class="o">......</span>
+        <span class="n">op_name</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;.activation_post_process&quot;</span><span class="p">)</span>
+        <span class="n">summary</span><span class="p">[</span><span class="n">op_name</span> <span class="o">+</span> <span class="s2">&quot;.output&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">observer_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">get_tensor_value</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="nb">iter</span> <span class="ow">in</span> <span class="n">summary</span><span class="p">[</span><span class="n">op_name</span> <span class="o">+</span> <span class="s2">&quot;.output&quot;</span><span class="p">]:</span>
+            <span class="c1">#Record output tensor, for fused op only record the parent op output </span>
+            <span class="o">......</span>
+            <span class="k">if</span> <span class="n">summary</span><span class="p">[</span><span class="n">op_name</span> <span class="o">+</span> <span class="s2">&quot;.output&quot;</span><span class="p">][</span><span class="nb">iter</span><span class="p">]</span><span class="o">.</span><span class="n">is_quantized</span><span class="p">:</span>
+                  <span class="n">writer</span><span class="o">.</span><span class="n">add_histogram</span><span class="p">(</span>
+                        <span class="n">op</span> <span class="o">+</span> <span class="s2">&quot;/Output/int8&quot;</span><span class="p">,</span>
+                        <span class="n">torch</span><span class="o">.</span><span class="n">dequantize</span><span class="p">(</span><span class="n">summary</span><span class="p">[</span><span class="n">op_name</span> <span class="o">+</span>
+                                                 <span class="s2">&quot;.output&quot;</span><span class="p">][</span><span class="nb">iter</span><span class="p">]))</span>
+            <span class="k">else</span><span class="p">:</span>
+                  <span class="n">writer</span><span class="o">.</span><span class="n">add_histogram</span><span class="p">(</span>
+                        <span class="n">op</span> <span class="o">+</span> <span class="s2">&quot;/Output/fp32&quot;</span><span class="p">,</span>
+                        <span class="n">summary</span><span class="p">[</span><span class="n">op_name</span> <span class="o">+</span> <span class="s2">&quot;.output&quot;</span><span class="p">][</span><span class="nb">iter</span><span class="p">])</span>
+
+        <span class="n">state_dict</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">state_dict</span><span class="p">:</span>
+            <span class="c1"># Record weight tensor, fused child tensorBoard tag will be merge </span>
+            <span class="k">if</span> <span class="n">state_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">is_quantized</span><span class="p">:</span>
+                <span class="n">writer</span><span class="o">.</span><span class="n">add_histogram</span><span class="p">(</span><span class="n">op</span> <span class="o">+</span> <span class="s2">&quot;/int8&quot;</span><span class="p">,</span>
+                                     <span class="n">torch</span><span class="o">.</span><span class="n">dequantize</span><span class="p">(</span><span class="n">state_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">writer</span><span class="o">.</span><span class="n">add_histogram</span><span class="p">(</span><span class="n">op</span> <span class="o">+</span> <span class="s2">&quot;/fp32&quot;</span><span class="p">,</span> <span class="n">state_dict</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+</pre></div>
+</div>
+<section id="usage">
+<h4>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h4>
+<ol>
+<li><p>Add “tensorboard: true” in the yaml file.</p></li>
+<li><p>Run quantization tuning; a “./runs” folder is generated in the working folder.</p></li>
+<li><p>Start tensorboard:</p>
+<p><code class="docutils literal notranslate"><span class="pre">shell</span> <span class="pre">tensorboard</span> <span class="pre">--bind_all</span> <span class="pre">--logdir_spec</span> <span class="pre">baseline:./runs/eval/tune_0_acc0.80,tune_1:././runs/eval/tune_1_acc0.79</span>&#160;&#160; </code></p>
+</li>
+</ol>
+</section>
+</section>
+<section id="tensorflow-tensorboard">
+<h3>TensorFlow Tensorboard<a class="headerlink" href="#tensorflow-tensorboard" title="Link to this heading"></a></h3>
+<p>TensorFlow TensorBoard implementation includes four steps:</p>
+<ol class="simple">
+<li><p>Before evaluation where we create the TensorBoard summary write and write graph, collect FP32 and node names for inspection, and dump the histogram of weights and bias tensor directly from graph_def.</p></li>
+<li><p>Run get_tensor_by_name_with_import() where we get data output tensors.</p></li>
+<li><p>Run session.run() to predict and get the inference result of the output tensor list collected in the previous step.</p></li>
+<li><p>Enumerate the output tensor and write the histogram.</p></li>
+</ol>
+<p>See the <a class="reference external" href="https://github.com/intel/neural-compressor/tree/master/neural_compressor/adaptor/tensorflow.py">tensorflow.py</a> evaluate() function for details.</p>
+<section id="id1">
+<h4>Usage<a class="headerlink" href="#id1" title="Link to this heading"></a></h4>
+<ol>
+<li><p>Add “tensorboard: true” in the yaml file.</p></li>
+<li><p>Run quantization tuning; a “./runs” folder is generated in the working folder. For example:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>ls<span class="w"> </span>./runs/eval<span class="w">  </span>
+baseline_acc_0.776<span class="w">  </span>tune_1_acc_0.095<span class="w"> </span>
+</pre></div>
+</div>
+<p>The baseline_acc_0.776 folder contains the FP32 event log and 0.776 is the FP32 accuracy. tune_1_acc_0.095 contains the evaluation event log of the first run of tuning.</p>
+</li>
+<li><p>Start tensorboard:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>tensorboard<span class="w"> </span>--bind_all<span class="w"> </span>--logdir_spec<span class="w"> </span>baseline:./runs_v3/eval/baseline_acc_0.776/,tune_1:./runs_v3/eval/tune_1_acc_0.095/<span class="w"> </span>
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+</section>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
+<section id="pytorch-examples">
+<h3>PyTorch Examples<a class="headerlink" href="#pytorch-examples" title="Link to this heading"></a></h3>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="w">  </span>examples/pytorch/eager/image_recognition/imagenet/cpu/ptq/run_tuning_dump_tensor.sh<span class="w"> </span>
+</pre></div>
+</div>
+</section>
+<section id="tensorflow-examples">
+<h3>TensorFlow Examples<a class="headerlink" href="#tensorflow-examples" title="Link to this heading"></a></h3>
+<ol>
+<li><p>Add “tensorboard: true” into examples/tensorflow/image_recognition/inceptionv3.yaml. In order to demonstrate the usage of TensorBoard, remove the following lines which are added to skip the quantization of ‘v0/cg/conv0/conv2d/Conv2D’ to avoid a known limitation.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="w">   </span><span class="nt">op_wise</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span>
+<span class="w">            </span><span class="s">&#39;v0/cg/conv0/conv2d/Conv2D&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">{</span>
+<span class="w">              </span><span class="s">&#39;activation&#39;</span><span class="p p-Indicator">:</span><span class="w">  </span><span class="p p-Indicator">{</span><span class="s">&#39;dtype&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;fp32&#39;</span><span class="p p-Indicator">]},</span>
+<span class="w">            </span><span class="p p-Indicator">}</span>
+<span class="w">          </span><span class="p p-Indicator">}</span>
+</pre></div>
+</div>
+</li>
+<li><p>Run tuning:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--topology<span class="o">=</span>inception_v3<span class="w"> </span>--dataset_location<span class="o">=</span>&lt;imagenet&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">         </span>--input_model<span class="o">=</span>./inceptionv3_fp32_pretrained_model.pb<span class="w"> </span>--output_model<span class="o">=</span>./nc_inceptionv3.pb<span class="w">  </span>--config<span class="o">=</span>./inceptionv3_dump_tensor.yaml<span class="w"> </span>
+</pre></div>
+</div>
+</li>
+<li><p>Start TensorBoard</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>tensorboard<span class="w"> </span>--bind_all<span class="w"> </span>--logdir_spec<span class="w"> </span>baseline:./runs_v3/eval/baseline_acc_0.776/,tune_1:./runs_v3/eval/tune_1_acc_0.095/
+</pre></div>
+</div>
+</li>
+<li><p>In order to find the reason why tune_1 got such poor accuracy, we can observe the TensorBoard.</p></li>
+</ol>
+<ul class="simple">
+<li><p>From the <strong>GRAPHS</strong> tab, select “baseline/.” in the “Run” box and find the first ‘Conv2d’ op after ‘input’ op. The op name is “v0/cg/conv0/Relu”:</p></li>
+</ul>
+<p><img alt="TensorBoard Baseline" src="../../_images/tensorboard_baseline_v0_cg_conv0.png" /></p>
+<ul class="simple">
+<li><p>From the <strong>GRAPHS</strong> tab, select “tune_1/.” in the “Run” box and find the first ‘Conv2d’ op after ‘input’ op. The tensor name is ‘v0/cg/conv0/conv2d/Conv2D_eightbit_requantize’:</p></li>
+</ul>
+<p><img alt="TensorBoard Tuning" src="../../_images/tensorboard_tune_1_v0_cg_conv0.png" /></p>
+<ul class="simple">
+<li><p>Switch to the <strong>HISTOGRAMS</strong> tab. Click the ‘v0/cg/conv0’ op name in the search box. TensorBoard groups the tensors with the same op name together so you can compare the tensor of baseline ‘v0/cg/conv0/Relu’ with the tensor of tune_1 ‘v0/cg/conv0/conv2d/Conv2D_eightbit_requantize_int8.output’. Note that the tensor name can be changed after quantization, so group the tensor by op name and compare. From the chart below, we can see that the histogram of the first conv2d output tensor are different. This is due to a known TensorFlow issue. After filtering the ‘v0/cg/conv0/conv2d/Conv2D’ op by adding “op_wise” in the yaml file, the issue disappears.</p></li>
+</ul>
+<p><img alt="TensorBoard Histogram" src="../../_images/tensorboard_v0_cg_conv0_histogram.png" /></p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8a3cc56430> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

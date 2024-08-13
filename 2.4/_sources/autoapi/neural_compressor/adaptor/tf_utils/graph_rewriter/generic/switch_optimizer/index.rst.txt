@@ -1,0 +1,29 @@
+neural_compressor.adaptor.tf_utils.graph_rewriter.generic.switch_optimizer
+==========================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.switch_optimizer
+
+.. autoapi-nested-parse::
+
+   Switch Graph Rewriter.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.switch_optimizer.SwitchOptimizer
+
+
+Module Contents
+---------------
+
+.. py:class:: SwitchOptimizer(model)
+
+
+
+   Remove switch op if the input condition is true.
+
+

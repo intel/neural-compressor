@@ -1,0 +1,42 @@
+neural_compressor.experimental.common.model
+===========================================
+
+.. py:module:: neural_compressor.experimental.common.model
+
+.. autoapi-nested-parse::
+
+   Common Model just collects the information to construct a Model.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.experimental.common.model.Model
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.experimental.common.model.set_backend
+
+
+Module Contents
+---------------
+
+.. py:class:: Model
+
+
+
+   A wrapper of the information needed to construct a Model.
+
+
+.. py:function:: set_backend(backend: str)
+
+   Set backed from configure file.
+
+

@@ -1,0 +1,33 @@
+neural_compressor.adaptor.tf_utils.graph_rewriter
+=================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter
+
+.. autoapi-nested-parse::
+
+   Tensorflow Graph Rewriters.
+
+
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/bf16/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/int8/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/onnx/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/qdq/index
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/graph_base/index
+
+

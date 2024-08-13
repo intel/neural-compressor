@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.experimental.metric.metric &mdash; Intel® Neural Compressor 2.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">2.5▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.experimental.metric.metric</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/autoapi/neural_compressor/experimental/metric/metric/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.experimental.metric.metric">
+<span id="neural-compressor-experimental-metric-metric"></span><h1>neural_compressor.experimental.metric.metric<a class="headerlink" href="#module-neural_compressor.experimental.metric.metric" title="Link to this heading"></a></h1>
+<p>Neural Compressor metrics.</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowMetrics" title="neural_compressor.experimental.metric.metric.TensorflowMetrics"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowMetrics</span></code></a></p></td>
+<td><p>Tensorflow metrics collection.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.metric.PyTorchMetrics" title="neural_compressor.experimental.metric.metric.PyTorchMetrics"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchMetrics</span></code></a></p></td>
+<td><p>PyTorch metrics collection.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MXNetMetrics" title="neural_compressor.experimental.metric.metric.MXNetMetrics"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MXNetMetrics</span></code></a></p></td>
+<td><p>MXNet metrics collection.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.metric.ONNXRTQLMetrics" title="neural_compressor.experimental.metric.metric.ONNXRTQLMetrics"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ONNXRTQLMetrics</span></code></a></p></td>
+<td><p>ONNXRT QLinear metrics collection.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.metric.ONNXRTITMetrics" title="neural_compressor.experimental.metric.metric.ONNXRTITMetrics"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ONNXRTITMetrics</span></code></a></p></td>
+<td><p>ONNXRT Integer metrics collection.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.metric.METRICS" title="neural_compressor.experimental.metric.metric.METRICS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">METRICS</span></code></a></p></td>
+<td><p>Intel Neural Compressor Metrics.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.metric.BaseMetric" title="neural_compressor.experimental.metric.metric.BaseMetric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseMetric</span></code></a></p></td>
+<td><p>The base class of Metric.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.metric.WrapPyTorchMetric" title="neural_compressor.experimental.metric.metric.WrapPyTorchMetric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WrapPyTorchMetric</span></code></a></p></td>
+<td><p>The wrapper of Metric class for PyTorch.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.metric.WrapMXNetMetric" title="neural_compressor.experimental.metric.metric.WrapMXNetMetric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WrapMXNetMetric</span></code></a></p></td>
+<td><p>The wrapper of Metric class for MXNet.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.metric.WrapONNXRTMetric" title="neural_compressor.experimental.metric.metric.WrapONNXRTMetric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WrapONNXRTMetric</span></code></a></p></td>
+<td><p>The wrapper of Metric class for ONNXRT.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.metric.F1" title="neural_compressor.experimental.metric.metric.F1"><code class="xref py py-obj docutils literal notranslate"><span class="pre">F1</span></code></a></p></td>
+<td><p>F1 score of a binary classification problem.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.metric.Accuracy" title="neural_compressor.experimental.metric.metric.Accuracy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Accuracy</span></code></a></p></td>
+<td><p>The Accuracy for the classification tasks.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.metric.PyTorchLoss" title="neural_compressor.experimental.metric.metric.PyTorchLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchLoss</span></code></a></p></td>
+<td><p>A dummy PyTorch Metric.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.metric.Loss" title="neural_compressor.experimental.metric.metric.Loss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Loss</span></code></a></p></td>
+<td><p>A dummy Metric.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MAE" title="neural_compressor.experimental.metric.metric.MAE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MAE</span></code></a></p></td>
+<td><p>Computes Mean Absolute Error (MAE) loss.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.metric.RMSE" title="neural_compressor.experimental.metric.metric.RMSE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RMSE</span></code></a></p></td>
+<td><p>Computes Root Mean Squared Error (RMSE) loss.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.metric.MSE" title="neural_compressor.experimental.metric.metric.MSE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MSE</span></code></a></p></td>
+<td><p>Computes Mean Squared Error (MSE) loss.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowTopK" title="neural_compressor.experimental.metric.metric.TensorflowTopK"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowTopK</span></code></a></p></td>
+<td><p>Compute Top-k Accuracy classification score for Tensorflow model.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.metric.GeneralTopK" title="neural_compressor.experimental.metric.metric.GeneralTopK"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GeneralTopK</span></code></a></p></td>
+<td><p>Compute Top-k Accuracy classification score.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.metric.COCOmAPv2" title="neural_compressor.experimental.metric.metric.COCOmAPv2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">COCOmAPv2</span></code></a></p></td>
+<td><p>Compute mean average precision of the detection task.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowMAP" title="neural_compressor.experimental.metric.metric.TensorflowMAP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowMAP</span></code></a></p></td>
+<td><p>Computes mean average precision.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowCOCOMAP" title="neural_compressor.experimental.metric.metric.TensorflowCOCOMAP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowCOCOMAP</span></code></a></p></td>
+<td><p>Computes mean average precision using algorithm in COCO.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.metric.TensorflowVOCMAP" title="neural_compressor.experimental.metric.metric.TensorflowVOCMAP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowVOCMAP</span></code></a></p></td>
+<td><p>Computes mean average precision using algorithm in VOC.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.metric.SquadF1" title="neural_compressor.experimental.metric.metric.SquadF1"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SquadF1</span></code></a></p></td>
+<td><p>Evaluate for v1.1 of the SQuAD dataset.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.metric.mIOU" title="neural_compressor.experimental.metric.metric.mIOU"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mIOU</span></code></a></p></td>
+<td><p>Compute the mean IOU(Intersection over Union) score.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.metric.ONNXRTGLUE" title="neural_compressor.experimental.metric.metric.ONNXRTGLUE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ONNXRTGLUE</span></code></a></p></td>
+<td><p>Compute the GLUE score.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.metric.ROC" title="neural_compressor.experimental.metric.metric.ROC"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ROC</span></code></a></p></td>
+<td><p>Computes ROC score.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.experimental.metric.metric.metric_registry" title="neural_compressor.experimental.metric.metric.metric_registry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">metric_registry</span></code></a>(metric_type, framework)</p></td>
+<td><p>Decorate for registering all Metric subclasses.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.TensorflowMetrics">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.metric.</span></span><span class="sig-name descname"><span class="pre">TensorflowMetrics</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.TensorflowMetrics" title="Link to this definition"></a></dt>
+<dd><p>Tensorflow metrics collection.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.TensorflowMetrics.metrics">
+<span class="sig-name descname"><span class="pre">metrics</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.TensorflowMetrics.metrics" title="Link to this definition"></a></dt>
+<dd><p>A dict to maintain all metrics for Tensorflow model.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.PyTorchMetrics">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.metric.</span></span><span class="sig-name descname"><span class="pre">PyTorchMetrics</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.PyTorchMetrics" title="Link to this definition"></a></dt>
+<dd><p>PyTorch metrics collection.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.PyTorchMetrics.metrics">
+<span class="sig-name descname"><span class="pre">metrics</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.PyTorchMetrics.metrics" title="Link to this definition"></a></dt>
+<dd><p>A dict to maintain all metrics for PyTorch model.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.MXNetMetrics">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.metric.</span></span><span class="sig-name descname"><span class="pre">MXNetMetrics</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.MXNetMetrics" title="Link to this definition"></a></dt>
+<dd><p>MXNet metrics collection.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.MXNetMetrics.metrics">
+<span class="sig-name descname"><span class="pre">metrics</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.MXNetMetrics.metrics" title="Link to this definition"></a></dt>
+<dd><p>A dict to maintain all metrics for MXNet model.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.ONNXRTQLMetrics">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.metric.</span></span><span class="sig-name descname"><span class="pre">ONNXRTQLMetrics</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.ONNXRTQLMetrics" title="Link to this definition"></a></dt>
+<dd><p>ONNXRT QLinear metrics collection.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.ONNXRTQLMetrics.metrics">
+<span class="sig-name descname"><span class="pre">metrics</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.ONNXRTQLMetrics.metrics" title="Link to this definition"></a></dt>
+<dd><p>A dict to maintain all metrics for ONNXRT QLinear model.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.ONNXRTITMetrics">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.metric.</span></span><span class="sig-name descname"><span class="pre">ONNXRTITMetrics</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.ONNXRTITMetrics" title="Link to this definition"></a></dt>
+<dd><p>ONNXRT Integer metrics collection.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.ONNXRTITMetrics.metrics">
+<span class="sig-name descname"><span class="pre">metrics</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.ONNXRTITMetrics.metrics" title="Link to this definition"></a></dt>
+<dd><p>A dict to maintain all metrics for ONNXRT Integer model.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.METRICS">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.metric.</span></span><span class="sig-name descname"><span class="pre">METRICS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">framework</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.METRICS" title="Link to this definition"></a></dt>
+<dd><p>Intel Neural Compressor Metrics.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.METRICS.metrics">
+<span class="sig-name descname"><span class="pre">metrics</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.METRICS.metrics" title="Link to this definition"></a></dt>
+<dd><p>The collection of registered metrics for the specified framework.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.metric_registry">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.metric.</span></span><span class="sig-name descname"><span class="pre">metric_registry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metric_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">framework</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.metric_registry" title="Link to this definition"></a></dt>
+<dd><p>Decorate for registering all Metric subclasses.</p>
+<p>The cross-framework metric is supported by specifying the framework param
+as one of tensorflow, pytorch, mxnet, onnxrt.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>metric_type</strong> – The metric type.</p></li>
+<li><p><strong>framework</strong> – The framework name.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The function to register metric class.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>decorator_metric</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.BaseMetric">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.metric.</span></span><span class="sig-name descname"><span class="pre">BaseMetric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metric</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">single_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hvd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.BaseMetric" title="Link to this definition"></a></dt>
+<dd><p>The base class of Metric.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.WrapPyTorchMetric">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.metric.</span></span><span class="sig-name descname"><span class="pre">WrapPyTorchMetric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metric</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">single_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hvd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.WrapPyTorchMetric" title="Link to this definition"></a></dt>
+<dd><p>The wrapper of Metric class for PyTorch.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.WrapMXNetMetric">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.metric.</span></span><span class="sig-name descname"><span class="pre">WrapMXNetMetric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metric</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">single_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hvd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.WrapMXNetMetric" title="Link to this definition"></a></dt>
+<dd><p>The wrapper of Metric class for MXNet.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.WrapONNXRTMetric">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.metric.</span></span><span class="sig-name descname"><span class="pre">WrapONNXRTMetric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metric</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">single_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hvd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.WrapONNXRTMetric" title="Link to this definition"></a></dt>
+<dd><p>The wrapper of Metric class for ONNXRT.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.F1">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.metric.</span></span><span class="sig-name descname"><span class="pre">F1</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.F1" title="Link to this definition"></a></dt>
+<dd><p>F1 score of a binary classification problem.</p>
+<p>The F1 score is the harmonic mean of the precision and recall.
+It can be computed with the equation:
+F1 = 2 * (precision * recall) / (precision + recall)</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.Accuracy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.metric.</span></span><span class="sig-name descname"><span class="pre">Accuracy</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.Accuracy" title="Link to this definition"></a></dt>
+<dd><p>The Accuracy for the classification tasks.</p>
+<p>The accuracy score is the proportion of the total number of predictions
+that were correct classified.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.Accuracy.pred_list">
+<span class="sig-name descname"><span class="pre">pred_list</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.Accuracy.pred_list" title="Link to this definition"></a></dt>
+<dd><p>List of prediction to score.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.Accuracy.label_list">
+<span class="sig-name descname"><span class="pre">label_list</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.Accuracy.label_list" title="Link to this definition"></a></dt>
+<dd><p>List of labels to score.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.Accuracy.sample">
+<span class="sig-name descname"><span class="pre">sample</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.Accuracy.sample" title="Link to this definition"></a></dt>
+<dd><p>The total number of samples.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.PyTorchLoss">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.metric.</span></span><span class="sig-name descname"><span class="pre">PyTorchLoss</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.PyTorchLoss" title="Link to this definition"></a></dt>
+<dd><p>A dummy PyTorch Metric.</p>
+<p>A dummy metric that computes the average of predictions and prints it directly.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.Loss">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.metric.</span></span><span class="sig-name descname"><span class="pre">Loss</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.Loss" title="Link to this definition"></a></dt>
+<dd><p>A dummy Metric.</p>
+<p>A dummy metric that computes the average of predictions and prints it directly.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.Loss.sample">
+<span class="sig-name descname"><span class="pre">sample</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.Loss.sample" title="Link to this definition"></a></dt>
+<dd><p>The number of samples.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.Loss.sum">
+<span class="sig-name descname"><span class="pre">sum</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.Loss.sum" title="Link to this definition"></a></dt>
+<dd><p>The sum of prediction.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.MAE">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.metric.</span></span><span class="sig-name descname"><span class="pre">MAE</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">compare_label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.MAE" title="Link to this definition"></a></dt>
+<dd><p>Computes Mean Absolute Error (MAE) loss.</p>
+<p>Mean Absolute Error (MAE) is the mean of the magnitude of
+difference between the predicted and actual numeric values.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.MAE.pred_list">
+<span class="sig-name descname"><span class="pre">pred_list</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.MAE.pred_list" title="Link to this definition"></a></dt>
+<dd><p>List of prediction to score.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.MAE.label_list">
+<span class="sig-name descname"><span class="pre">label_list</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.MAE.label_list" title="Link to this definition"></a></dt>
+<dd><p>List of references corresponding to the prediction result.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.MAE.compare_label">
+<span class="sig-name descname"><span class="pre">compare_label</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.MAE.compare_label" title="Link to this definition"></a></dt>
+<dd><p>Whether to compare label. False if there are no
+labels and will use FP32 preds as labels.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.RMSE">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.metric.</span></span><span class="sig-name descname"><span class="pre">RMSE</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">compare_label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.RMSE" title="Link to this definition"></a></dt>
+<dd><p>Computes Root Mean Squared Error (RMSE) loss.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.RMSE.mse">
+<span class="sig-name descname"><span class="pre">mse</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.RMSE.mse" title="Link to this definition"></a></dt>
+<dd><p>The instance of MSE Metric.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.MSE">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.metric.</span></span><span class="sig-name descname"><span class="pre">MSE</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">compare_label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.MSE" title="Link to this definition"></a></dt>
+<dd><p>Computes Mean Squared Error (MSE) loss.</p>
+<p>Mean Squared Error(MSE) represents the average of the squares of errors.
+For example, the average squared difference between the estimated values
+and the actual values.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.MSE.pred_list">
+<span class="sig-name descname"><span class="pre">pred_list</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.MSE.pred_list" title="Link to this definition"></a></dt>
+<dd><p>List of prediction to score.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.MSE.label_list">
+<span class="sig-name descname"><span class="pre">label_list</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.MSE.label_list" title="Link to this definition"></a></dt>
+<dd><p>List of references corresponding to the prediction result.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.MSE.compare_label">
+<span class="sig-name descname"><span class="pre">compare_label</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.MSE.compare_label" title="Link to this definition"></a></dt>
+<dd><p>Whether to compare label. False if there are no labels
+and will use FP32 preds as labels.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.TensorflowTopK">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.metric.</span></span><span class="sig-name descname"><span class="pre">TensorflowTopK</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.TensorflowTopK" title="Link to this definition"></a></dt>
+<dd><p>Compute Top-k Accuracy classification score for Tensorflow model.</p>
+<p>This metric computes the number of times where the correct label is among
+the top k labels predicted.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.TensorflowTopK.k">
+<span class="sig-name descname"><span class="pre">k</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.TensorflowTopK.k" title="Link to this definition"></a></dt>
+<dd><p>The number of most likely outcomes considered to find the correct label.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.TensorflowTopK.num_correct">
+<span class="sig-name descname"><span class="pre">num_correct</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.TensorflowTopK.num_correct" title="Link to this definition"></a></dt>
+<dd><p>The number of predictions that were correct classified.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.TensorflowTopK.num_sample">
+<span class="sig-name descname"><span class="pre">num_sample</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.TensorflowTopK.num_sample" title="Link to this definition"></a></dt>
+<dd><p>The total number of predictions.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.GeneralTopK">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.metric.</span></span><span class="sig-name descname"><span class="pre">GeneralTopK</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.GeneralTopK" title="Link to this definition"></a></dt>
+<dd><p>Compute Top-k Accuracy classification score.</p>
+<p>This metric computes the number of times where the correct label is among
+the top k labels predicted.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.GeneralTopK.k">
+<span class="sig-name descname"><span class="pre">k</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.GeneralTopK.k" title="Link to this definition"></a></dt>
+<dd><p>The number of most likely outcomes considered to find the correct label.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.GeneralTopK.num_correct">
+<span class="sig-name descname"><span class="pre">num_correct</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.GeneralTopK.num_correct" title="Link to this definition"></a></dt>
+<dd><p>The number of predictions that were correct classified.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.GeneralTopK.num_sample">
+<span class="sig-name descname"><span class="pre">num_sample</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.GeneralTopK.num_sample" title="Link to this definition"></a></dt>
+<dd><p>The total number of predictions.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.COCOmAPv2">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.metric.</span></span><span class="sig-name descname"><span class="pre">COCOmAPv2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">anno_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iou_thrs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'0.5:0.05:0.95'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">101</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'DetectionBoxes_Precision/mAP'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_index_mapping</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'num_detections':</span> <span class="pre">-1,</span> <span class="pre">'boxes':</span> <span class="pre">0,</span> <span class="pre">'scores':</span> <span class="pre">1,</span> <span class="pre">'classes':</span> <span class="pre">2}</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.COCOmAPv2" title="Link to this definition"></a></dt>
+<dd><p>Compute mean average precision of the detection task.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.TensorflowMAP">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.metric.</span></span><span class="sig-name descname"><span class="pre">TensorflowMAP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">anno_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iou_thrs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'DetectionBoxes_Precision/mAP'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.TensorflowMAP" title="Link to this definition"></a></dt>
+<dd><p>Computes mean average precision.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.TensorflowCOCOMAP">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.metric.</span></span><span class="sig-name descname"><span class="pre">TensorflowCOCOMAP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">anno_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iou_thrs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'DetectionBoxes_Precision/mAP'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.TensorflowCOCOMAP" title="Link to this definition"></a></dt>
+<dd><p>Computes mean average precision using algorithm in COCO.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.TensorflowVOCMAP">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.metric.</span></span><span class="sig-name descname"><span class="pre">TensorflowVOCMAP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">anno_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iou_thrs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'DetectionBoxes_Precision/mAP'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.TensorflowVOCMAP" title="Link to this definition"></a></dt>
+<dd><p>Computes mean average precision using algorithm in VOC.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.SquadF1">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.metric.</span></span><span class="sig-name descname"><span class="pre">SquadF1</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.SquadF1" title="Link to this definition"></a></dt>
+<dd><p>Evaluate for v1.1 of the SQuAD dataset.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.mIOU">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.metric.</span></span><span class="sig-name descname"><span class="pre">mIOU</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_classes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">21</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.mIOU" title="Link to this definition"></a></dt>
+<dd><p>Compute the mean IOU(Intersection over Union) score.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.ONNXRTGLUE">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.metric.</span></span><span class="sig-name descname"><span class="pre">ONNXRTGLUE</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mrpc'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.ONNXRTGLUE" title="Link to this definition"></a></dt>
+<dd><p>Compute the GLUE score.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.experimental.metric.metric.ROC">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.experimental.metric.metric.</span></span><span class="sig-name descname"><span class="pre">ROC</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'dlrm'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/experimental/metric/metric.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.experimental.metric.metric.ROC" title="Link to this definition"></a></dt>
+<dd><p>Computes ROC score.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f81c6523520> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

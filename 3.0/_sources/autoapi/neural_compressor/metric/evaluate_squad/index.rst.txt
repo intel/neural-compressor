@@ -1,0 +1,75 @@
+neural_compressor.metric.evaluate_squad
+=======================================
+
+.. py:module:: neural_compressor.metric.evaluate_squad
+
+.. autoapi-nested-parse::
+
+   Official evaluation script for v1.1 of the SQuAD dataset.
+
+   From https://github.com/allenai/bi-att-flow/blob/master/squad/evaluate-v1.1.py
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.metric.evaluate_squad.f1_score
+   neural_compressor.metric.evaluate_squad.metric_max_over_ground_truths
+   neural_compressor.metric.evaluate_squad.exact_match_score
+   neural_compressor.metric.evaluate_squad.evaluate
+
+
+Module Contents
+---------------
+
+.. py:function:: f1_score(prediction, ground_truth)
+
+   Calculate the F1 score of the prediction and the ground_truth.
+
+   :param prediction: The predicted result.
+   :param ground_truth: The ground truth.
+
+   :returns: The F1 score of prediction. Float point number.
+
+
+.. py:function:: metric_max_over_ground_truths(metric_fn, prediction, ground_truths)
+
+   Calculate the max metric for each ground truth.
+
+   For each answer in ground_truths, evaluate the metric of prediction with
+   this answer, and return the max metric.
+
+   :param metric_fn: The function to calculate the metric.
+   :param prediction: The prediction result.
+   :param ground_truths: A list of correct answers.
+
+   :returns: The max metric. Float point number.
+
+
+.. py:function:: exact_match_score(prediction, ground_truth)
+
+   Compute the exact match score between prediction and ground truth.
+
+   :param prediction: The result of predictions to be evaluated.
+   :param ground_truth: The ground truth.
+
+   :returns: The exact match score.
+
+
+.. py:function:: evaluate(dataset, predictions)
+
+   Evaluate the average F1 score and the exact match score for Question-Answering results.
+
+   :param dataset: The dataset to evaluate the prediction. A list instance of articles.
+                   An article contains a list of paragraphs, a paragraph contains a list of
+                   question-and-answers (qas), and a question-and-answer contains an id, a question,
+                   and a list of correct answers. For example:
+   :param predictions: The result of predictions to be evaluated. A dict mapping the id of
+                       a question to the predicted answer of the question.
+
+   :returns: The F1 score and the exact match score.
+
+

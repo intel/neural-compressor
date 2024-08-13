@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>User YAML Configuration Files &mdash; Intel® Neural Compressor 2.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">2.5▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">User YAML Configuration Files</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/user_yaml.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="user-yaml-configuration-files">
+<h1>User YAML Configuration Files<a class="headerlink" href="#user-yaml-configuration-files" title="Link to this heading"></a></h1>
+<ol class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#supported-feature-matrix">Supported Feature Matrix</a></p></li>
+<li><p><a class="reference external" href="#get-started-with-user-yaml-files">Get Started with User YAML Files</a></p></li>
+</ol>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
+<p>Intel® Neural Compressor uses YAML files for quick
+and user-friendly configurations. There are two types of YAML files -
+user YAML files and framework YAML files, which are used in
+running user cases and setting up framework capabilities, respectively.</p>
+<p>First, let’s take a look at a user YAML file, It defines the model, tuning
+strategies, tuning calibrations and evaluations, and performance benchmarking
+of the passing model vs. original model.</p>
+</section>
+<section id="supported-feature-matrix">
+<h2>Supported Feature Matrix<a class="headerlink" href="#supported-feature-matrix" title="Link to this heading"></a></h2>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Optimization Techniques</th>
+<th style="text-align: center;">YAML Configuration Files</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Quantization</td>
+<td style="text-align: center;">&#10004;</td>
+</tr>
+<tr>
+<td>Pruning</td>
+<td style="text-align: center;">&#10004;</td>
+</tr>
+<tr>
+<td>Distillation</td>
+<td style="text-align: center;">&#10004;</td>
+</tr>
+</tbody>
+</table></section>
+<section id="get-started-with-user-yaml-files">
+<h2>Get started with User YAML Files<a class="headerlink" href="#get-started-with-user-yaml-files" title="Link to this heading"></a></h2>
+<p>A complete user YAML file is organized logically into several sections:</p>
+<ul class="simple">
+<li><p><em><strong>model</strong></em>: The model specifications define a user model’s name, inputs, outputs and framework.</p></li>
+</ul>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">model</span><span class="p">:</span><span class="w">                                               </span><span class="c1"># mandatory. used to specify model specific information.</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mobilenet_v1</span><span class="w"> </span>
+<span class="w">  </span><span class="nt">framework</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tensorflow</span><span class="w">                              </span><span class="c1"># mandatory. supported values are tensorflow, pytorch, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.</span>
+<span class="w">  </span><span class="nt">inputs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">image_tensor</span><span class="w">                               </span><span class="c1"># optional. inputs field is only required in tensorflow.</span>
+<span class="w">  </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">num_detections,detection_boxes,detection_scores,detection_classes</span><span class="w"> </span><span class="c1"># optional. outputs field is only required in tensorflow.</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><em><strong>quantization</strong></em>: The quantization specifications define quantization tuning space and related calibrations. To calibrate, users can
+specify <em>sampling_size</em> (optional) and use the subsection <em>dataloader</em> to specify
+the dataset location using <em>root</em> and transformation using <em>transform</em>. To
+implement tuning space constraints, users can use the subsection <em>model_wise</em> and <em>op_wise</em> for specific configurations.</p></li>
+</ul>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">quantization</span><span class="p">:</span><span class="w">                                        </span><span class="c1"># optional. tuning constraints on model-wise for advance user to reduce tuning space.</span>
+<span class="w">  </span><span class="nt">calibration</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">sampling_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span><span class="w">                                </span><span class="c1"># optional. default value is 100. used to set how many samples should be used in calibration.</span>
+<span class="w">    </span><span class="nt">dataloader</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">ImageRecord</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">root</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/imagenet/</span><span class="w">                   </span><span class="c1"># NOTE: modify to calibration dataset location if needed</span>
+<span class="w">      </span><span class="nt">transform</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">BilinearImagenet</span><span class="p">:</span><span class="w"> </span>
+<span class="w">          </span><span class="nt">height</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">224</span>
+<span class="w">          </span><span class="nt">width</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">224</span>
+<span class="w">  </span><span class="nt">model_wise</span><span class="p">:</span><span class="w">                                        </span><span class="c1"># optional. tuning constraints on model-wise for advance user to reduce tuning space.</span>
+<span class="w">    </span><span class="nt">weight</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">granularity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">per_channel</span>
+<span class="w">      </span><span class="nt">scheme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">asym</span>
+<span class="w">      </span><span class="nt">dtype</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">int8</span>
+<span class="w">      </span><span class="nt">algorithm</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">minmax</span>
+<span class="w">    </span><span class="nt">activation</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">granularity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">per_tensor</span>
+<span class="w">      </span><span class="nt">scheme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">asym</span>
+<span class="w">      </span><span class="nt">dtype</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">int8, fp32</span>
+<span class="w">      </span><span class="nt">algorithm</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">minmax, kl</span>
+<span class="w">  </span><span class="nt">op_wise</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="w">                                         </span><span class="c1"># optional. tuning constraints on op-wise for advance user to reduce tuning space. </span>
+<span class="w">         </span><span class="s">&#39;conv1&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">{</span>
+<span class="w">           </span><span class="s">&#39;activation&#39;</span><span class="p p-Indicator">:</span><span class="w">  </span><span class="p p-Indicator">{</span><span class="s">&#39;dtype&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;uint8&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;fp32&#39;</span><span class="p p-Indicator">],</span><span class="w"> </span>
+<span class="w">                           </span><span class="s">&#39;algorithm&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;minmax&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;kl&#39;</span><span class="p p-Indicator">],</span><span class="w"> </span>
+<span class="w">                           </span><span class="s">&#39;scheme&#39;</span><span class="p p-Indicator">:[</span><span class="s">&#39;sym&#39;</span><span class="p p-Indicator">]},</span>
+<span class="w">           </span><span class="s">&#39;weight&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="s">&#39;dtype&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;int8&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;fp32&#39;</span><span class="p p-Indicator">],</span><span class="w"> </span>
+<span class="w">                      </span><span class="s">&#39;algorithm&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;minmax&#39;</span><span class="p p-Indicator">]}</span>
+<span class="w">         </span><span class="p p-Indicator">}</span>
+<span class="w">       </span><span class="p p-Indicator">}</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><em><strong>pruning</strong></em>: The pruning specifications define pruning tuning space. To define the training behavior, uses can
+use the subsection <em>train</em> to specify the training hyper-parameters and the training dataloader.
+To define the pruning approach, users can use the subsection <em>approach</em> to specify
+pruning target, choose the type of pruning algorithm, and the way to apply it
+during training process.</p></li>
+</ul>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">pruning</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">train</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">dataloader</span><span class="p">:</span>
+<span class="w">      </span><span class="l l-Scalar l-Scalar-Plain">...</span><span class="w"> </span>
+<span class="w">    </span><span class="nt">epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">40</span>
+<span class="w">    </span><span class="nt">optimizer</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">Adam</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">learning_rate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1e-06</span>
+<span class="w">        </span><span class="nt">beta_1</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.9</span>
+<span class="w">        </span><span class="nt">beta_2</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.999</span>
+<span class="w">        </span><span class="nt">epsilon</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1e-07</span>
+<span class="w">    </span><span class="nt">criterion</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">SparseCategoricalCrossentropy</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">reduction</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sum_over_batch_size</span>
+<span class="w">        </span><span class="nt">from_logits</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">False</span>
+<span class="w">  </span><span class="nt">approach</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">weight_compression</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">initial_sparsity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span>
+<span class="w">      </span><span class="nt">target_sparsity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.54</span>
+<span class="w">      </span><span class="nt">start_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="w">      </span><span class="nt">end_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">19</span>
+<span class="w">      </span><span class="nt">pruners</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="kt">!Pruner</span>
+<span class="w">            </span><span class="nt">start_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="w">            </span><span class="nt">end_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">19</span>
+<span class="w">            </span><span class="nt">prune_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">basic_magnitude</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><em><strong>distillation</strong></em>: The distillation specifications define distillation’s tuning
+space. Similar to pruning, to define the training behavior, users can use the
+subsection <em>train</em> to specify the training hyper-parameters and the training
+dataloader and it is optional if users implement <em>train_func</em> and set the attribute
+of distillation instance to <em>train_func</em>. For criterion, Intel® Neural Compressor provides a built-in
+knowledge distillation loss class to calculate distillation loss.</p></li>
+</ul>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">distillation</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">train</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">start_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="w">    </span><span class="nt">end_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">90</span>
+<span class="w">    </span><span class="nt">iteration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1000</span>
+<span class="w">    </span><span class="nt">frequency</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">dataloader</span><span class="p">:</span>
+<span class="w">      </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+<span class="w">    </span><span class="nt">optimizer</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">SGD</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">learning_rate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.001</span><span class="w">  </span>
+<span class="w">        </span><span class="nt">momentum</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1</span>
+<span class="w">        </span><span class="nt">nesterov</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span>
+<span class="w">        </span><span class="nt">weight_decay</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.001</span>
+<span class="w">    </span><span class="nt">criterion</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">KnowledgeDistillationLoss</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">temperature</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+<span class="w">        </span><span class="nt">loss_types</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;CE&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;CE&#39;</span><span class="p p-Indicator">]</span>
+<span class="w">        </span><span class="nt">loss_weights</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.5</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.5</span><span class="p p-Indicator">]</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><em><strong>evaluation</strong></em>: The evaluation specifications define the dataloader and metric for accuracy evaluation as well as dataloader
+and configurations for performance benchmarking.</p></li>
+</ul>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">evaluation</span><span class="p">:</span><span class="w">                                          </span><span class="c1"># optional. required if user doesn&#39;t provide eval_func in neural_compressor.Quantization.</span>
+<span class="w">  </span><span class="nt">accuracy</span><span class="p">:</span><span class="w">                                          </span>
+<span class="w">    </span><span class="nt">metric</span><span class="p">:</span>
+<span class="w">      </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+<span class="w">    </span><span class="nt">dataloader</span><span class="p">:</span>
+<span class="w">      </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><em><strong>tuning</strong></em>: The tuning specifications define overall tuning targets. Users can
+use <em>accuracy_criterion</em> to specify the target of accuracy loss percentage and use
+<em>exit_policy</em> to specify the tuning timeout in seconds. The random
+seed can be specified using <em>random_seed</em>.</p></li>
+</ul>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">tuning</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">accuracy_criterion</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">relative</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.01</span><span class="w">                                  </span><span class="c1"># the tuning target of accuracy loss percentage: 1%</span>
+<span class="w">    </span><span class="nt">higher_is_better</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span>
+<span class="w">  </span><span class="nt">exit_policy</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w">                                      </span><span class="c1"># tuning timeout (seconds), 0 means early stop</span>
+<span class="w">  </span><span class="nt">random_seed</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">9527</span><span class="w">                                 </span><span class="c1"># random seed</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f81ca8aa610> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

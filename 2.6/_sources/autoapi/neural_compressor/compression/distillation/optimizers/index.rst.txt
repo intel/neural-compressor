@@ -1,0 +1,112 @@
+neural_compressor.compression.distillation.optimizers
+=====================================================
+
+.. py:module:: neural_compressor.compression.distillation.optimizers
+
+.. autoapi-nested-parse::
+
+   Intel Neural Compressor built-in Optimizers on multiple framework backends.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.compression.distillation.optimizers.TensorflowOptimizers
+   neural_compressor.compression.distillation.optimizers.PyTorchOptimizers
+   neural_compressor.compression.distillation.optimizers.Optimizers
+   neural_compressor.compression.distillation.optimizers.TensorFlowSGD
+   neural_compressor.compression.distillation.optimizers.TensorFlowAdamW
+   neural_compressor.compression.distillation.optimizers.TensorFlowAdam
+   neural_compressor.compression.distillation.optimizers.PyTorchSGD
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.compression.distillation.optimizers.optimizer_registry
+
+
+Module Contents
+---------------
+
+.. py:class:: TensorflowOptimizers
+
+
+
+   Class to get all registered TensorFlow Optimizers once only.
+
+
+.. py:class:: PyTorchOptimizers
+
+
+
+   Class to get all registered PyTorch Optimizers once only.
+
+
+.. py:class:: Optimizers(framework)
+
+
+
+   Main entry to get the specific type of optimizer.
+
+
+.. py:function:: optimizer_registry(optimizer_type, framework)
+
+   Class decorator used to register all Optimizer subclasses.
+
+      Cross framework optimizer is supported by add param as framework='tensorflow, pytorch'
+
+   :param optimizer_type: The string of supported criterion.
+   :type optimizer_type: str
+   :param framework: The string of supported framework.
+   :type framework: str
+
+   :returns: The class of register.
+   :rtype: cls
+
+
+.. py:class:: TensorFlowSGD(param_dict)
+
+
+
+   TensorFlow keras SGD optimizer.
+
+   :param param_dict: The dict of parameters setting by user for SGD optimizer
+   :type param_dict: dict
+
+
+.. py:class:: TensorFlowAdamW(param_dict)
+
+
+
+   tensorflow_addons AdamW optimizer.
+
+   :param param_dict: The dict of parameters setting by user for AdamW optimizer
+   :type param_dict: dict
+
+
+.. py:class:: TensorFlowAdam(param_dict)
+
+
+
+   Tensorflow Adam optimizer.
+
+   :param param_dict: The dict of parameters setting by user for Adam optimizer
+   :type param_dict: dict
+
+
+.. py:class:: PyTorchSGD(param_dict)
+
+
+
+   PyTorch SGD optimizer.
+
+   :param param_dict: The dict of parameters setting by user for SGD optimizer
+   :type param_dict: dict
+
+

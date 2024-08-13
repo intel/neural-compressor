@@ -1,0 +1,243 @@
+neural_compressor.compression.pruner.pruners.base
+=================================================
+
+.. py:module:: neural_compressor.compression.pruner.pruners.base
+
+.. autoapi-nested-parse::
+
+   Base pruner.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.pruners.base.BasePruner
+   neural_compressor.compression.pruner.pruners.base.PytorchBasePruner
+   neural_compressor.compression.pruner.pruners.base.KerasBasePruner
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.pruners.base.register_pruner
+
+
+Module Contents
+---------------
+
+.. py:function:: register_pruner(name)
+
+   Class decorator to register a Pruner subclass to the registry.
+
+   Decorator function used before a Pattern subclass.
+   Make sure that the Pruner class decorated by this function can be registered in PRUNERS.
+
+   :param cls: The subclass of register.
+   :type cls: class
+   :param name: A string. Define the pruner type.
+
+   :returns: The class of register.
+   :rtype: cls
+
+
+.. py:class:: BasePruner(config, modules, framework='pytorch')
+
+   Pruning Pruner.
+
+   The class which executes pruning process.
+
+   :param modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+   :param config: A config dict object that contains the pruner information.
+
+   .. attribute:: modules
+
+      A dict {"module_name": Tensor} that stores the pruning modules' weights.
+
+   .. attribute:: config
+
+      A config dict object that contains the pruner information.
+
+   .. attribute:: masks
+
+      A dict {"module_name": Tensor} that stores the masks for modules' weights.
+
+   .. attribute:: scores
+
+      A dict {"module_name": Tensor} that stores the score for modules' weights,
+      which are used to determine what parts to be pruned by a criterion.
+
+   .. attribute:: pattern
+
+      A Pattern object defined in ./patterns.py
+
+   .. attribute:: scheduler
+
+      A scheduler object defined in ./scheduler.py
+
+   .. attribute:: current_sparsity_ratio
+
+      A float representing the current model's sparsity ratio; it is initialized to be zero.
+
+   .. attribute:: global_step
+
+      An integer representing the total steps the model has run.
+
+   .. attribute:: start_step
+
+      An integer representing when to trigger pruning process.
+
+   .. attribute:: end_step
+
+      An integer representing when to end pruning process.
+
+   .. attribute:: pruning_frequency
+
+      An integer representing the pruning frequency; it is valid when iterative
+      pruning is enabled.
+
+   .. attribute:: target_sparsity_ratio
+
+      A float showing the final sparsity after pruning.
+
+   .. attribute:: max_sparsity_ratio_per_op
+
+      A float showing the maximum sparsity ratio for every module.
+
+
+.. py:class:: PytorchBasePruner(config, modules)
+
+
+
+   Pruning Pruner.
+
+   The class which executes pruning process.
+
+   :param modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+   :param config: A config dict object that contains the pruner information.
+
+   .. attribute:: modules
+
+      A dict {"module_name": Tensor} that stores the pruning modules' weights.
+
+   .. attribute:: config
+
+      A config dict object that contains the pruner information.
+
+   .. attribute:: masks
+
+      A dict {"module_name": Tensor} that stores the masks for modules' weights.
+
+   .. attribute:: scores
+
+      A dict {"module_name": Tensor} that stores the score for modules' weights,
+      which are used to determine what parts to be pruned by a criterion.
+
+   .. attribute:: pattern
+
+      A Pattern object defined in ./patterns.py
+
+   .. attribute:: scheduler
+
+      A scheduler object defined in ./scheduler.py
+
+   .. attribute:: current_sparsity_ratio
+
+      A float representing the current model's sparsity ratio; it is initialized to be zero.
+
+   .. attribute:: global_step
+
+      An integer representing the total steps the model has run.
+
+   .. attribute:: start_step
+
+      An integer representing when to trigger pruning process.
+
+   .. attribute:: end_step
+
+      An integer representing when to end pruning process.
+
+   .. attribute:: pruning_frequency
+
+      An integer representing the pruning frequency; it is valid when iterative
+      pruning is enabled.
+
+   .. attribute:: target_sparsity_ratio
+
+      A float showing the final sparsity after pruning.
+
+   .. attribute:: max_sparsity_ratio_per_op
+
+      A float showing the maximum sparsity ratio for every module.
+
+
+.. py:class:: KerasBasePruner(config, modules)
+
+
+
+   Pruning Pruner.
+
+   The class which executes pruning process.
+
+   :param modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+   :param config: A config dict object that contains the pruner information.
+
+   .. attribute:: modules
+
+      A dict {"module_name": Tensor} that stores the pruning modules' weights.
+
+   .. attribute:: config
+
+      A config dict object that contains the pruner information.
+
+   .. attribute:: masks
+
+      A dict {"module_name": Tensor} that stores the masks for modules' weights.
+
+   .. attribute:: scores
+
+      A dict {"module_name": Tensor} that stores the score for modules' weights,
+      which are used to determine what parts to be pruned by a criterion.
+
+   .. attribute:: pattern
+
+      A Pattern object defined in ./patterns.py
+
+   .. attribute:: scheduler
+
+      A scheduler object defined in ./scheduler.py
+
+   .. attribute:: current_sparsity_ratio
+
+      A float representing the current model's sparsity ratio; it is initialized to be zero.
+
+   .. attribute:: global_step
+
+      An integer representing the total steps the model has run.
+
+   .. attribute:: start_step
+
+      An integer representing when to trigger pruning process.
+
+   .. attribute:: end_step
+
+      An integer representing when to end pruning process.
+
+   .. attribute:: pruning_frequency
+
+      An integer representing the pruning frequency; it is valid when iterative
+      pruning is enabled.
+
+   .. attribute:: target_sparsity_ratio
+
+      A float showing the final sparsity after pruning.
+
+   .. attribute:: max_sparsity_ratio_per_op
+
+      A float showing the maximum sparsity ratio for every module.
+
+

@@ -1,0 +1,33 @@
+neural_compressor.tensorflow.quantization.autotune
+==================================================
+
+.. py:module:: neural_compressor.tensorflow.quantization.autotune
+
+.. autoapi-nested-parse::
+
+   Intel Neural Compressor Tensorflow quantization AutoTune API.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.quantization.autotune.get_all_config_set
+   neural_compressor.tensorflow.quantization.autotune.autotune
+
+
+Module Contents
+---------------
+
+.. py:function:: get_all_config_set() -> Union[neural_compressor.common.base_config.BaseConfig, List[neural_compressor.common.base_config.BaseConfig]]
+
+   Get all config set.
+
+
+.. py:function:: autotune(model: Union[str, tensorflow.keras.Model, neural_compressor.tensorflow.utils.BaseModel], tune_config: neural_compressor.common.base_tuning.TuningConfig, eval_fn: Callable, eval_args: Optional[Tuple[Any]] = None, calib_dataloader: Callable = None, calib_iteration: int = 100, calib_func: Callable = None) -> Optional[neural_compressor.tensorflow.utils.BaseModel]
+
+   The main entry of auto-tune.
+
+

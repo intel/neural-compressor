@@ -1,0 +1,33 @@
+neural_compressor.utils.weights_details
+=======================================
+
+.. py:module:: neural_compressor.utils.weights_details
+
+.. autoapi-nested-parse::
+
+   The Weights details class.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.utils.weights_details.WeightsDetails
+   neural_compressor.utils.weights_details.WeightsStatistics
+
+
+Module Contents
+---------------
+
+.. py:class:: WeightsDetails(op_name: str, input_tensor_data, optimized_tensor_data)
+
+   Weights details class.
+
+
+.. py:class:: WeightsStatistics(tensor_data)
+
+   Weights statistics class.
+
+

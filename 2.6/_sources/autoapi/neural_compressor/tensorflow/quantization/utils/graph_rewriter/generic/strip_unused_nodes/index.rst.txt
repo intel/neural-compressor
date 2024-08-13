@@ -1,0 +1,29 @@
+neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.strip_unused_nodes
+=========================================================================================
+
+.. py:module:: neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.strip_unused_nodes
+
+.. autoapi-nested-parse::
+
+   Strip unused nodes Graph Rewriter.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.strip_unused_nodes.StripUnusedNodesOptimizer
+
+
+Module Contents
+---------------
+
+.. py:class:: StripUnusedNodesOptimizer(model, input_node_names, output_node_names)
+
+
+
+   Remove the unused nodes in the graph.
+
+

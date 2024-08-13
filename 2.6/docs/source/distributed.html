@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Distributed Training and Inference (Evaluation) &mdash; Intel® Neural Compressor 2.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">2.6▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Distributed Training and Inference (Evaluation)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/distributed.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="distributed-training-and-inference-evaluation">
+<h1>Distributed Training and Inference (Evaluation)<a class="headerlink" href="#distributed-training-and-inference-evaluation" title="Link to this heading"></a></h1>
+<ol>
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#supported-feature-matrix">Supported Feature Matrix</a></p></li>
+<li><p><a class="reference external" href="#get-started-with-distributed-training-and-inference-api">Get Started with Distributed Training and Inference API</a></p>
+<p>3.1. <a class="reference external" href="#option-1-pure-yaml-configuration">Option 1: Pure Yaml Configuration</a></p>
+<p>3.2. <a class="reference external" href="#option-2-user-defined-training-function">Option 2: User Defined Training Function</a></p>
+<p>3.3. <a class="reference external" href="#horovodrun-execution">Horovodrun Execution</a></p>
+<p>3.4. <a class="reference external" href="#security">Security</a></p>
+</li>
+<li><p><a class="reference external" href="#examples">Examples</a></p>
+<p>4.1. <a class="reference external" href="#pytorch-examples">Pytorch Examples</a></p>
+<p>4.2. <a class="reference external" href="#tensorflow-examples">Tensorflow Examples</a></p>
+</li>
+</ol>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
+<p>Neural Compressor uses <a class="reference external" href="https://github.com/horovod/horovod">horovod</a> for distributed training.</p>
+<p>Please check horovod installation documentation and use following commands to install horovod:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">horovod</span>
+</pre></div>
+</div>
+</section>
+<section id="supported-feature-matrix">
+<h2>Supported Feature Matrix<a class="headerlink" href="#supported-feature-matrix" title="Link to this heading"></a></h2>
+<p>Distributed training and inference are supported in PyTorch and TensorFlow currently.</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Framework</th>
+<th>Type</th>
+<th style="text-align: center;">Distributed Support</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PyTorch</td>
+<td>QAT</td>
+<td style="text-align: center;">&#10004;</td>
+</tr>
+<tr>
+<td>PyTorch</td>
+<td>PTQ</td>
+<td style="text-align: center;">&#10004;</td>
+</tr>
+<tr>
+<td>TensorFlow</td>
+<td>PTQ</td>
+<td style="text-align: center;">&#10004;</td>
+</tr>
+<tr>
+<td>Keras</td>
+<td>Pruning</td>
+<td style="text-align: center;">&#10004;</td>
+</tr>
+</tbody>
+</table></section>
+<section id="get-started-with-distributed-training-and-inference-api">
+<h2>Get Started with Distributed Training and Inference API<a class="headerlink" href="#get-started-with-distributed-training-and-inference-api" title="Link to this heading"></a></h2>
+<p>To enable distributed training or inference, the steps are:</p>
+<ol class="simple">
+<li><p>Setting up distributed training or inference scripts. We have 2 options here:</p>
+<ul class="simple">
+<li><p>Option 1: Enable distributed training or inference with pure yaml configuration. In this case, Neural Compressor builtin training function is used.</p></li>
+<li><p>Option 2: Pass the user defined training function to Neural Compressor. In this case, please follow the horovod documentation and below example to know how to write such training function with horovod on different frameworks.</p></li>
+</ul>
+</li>
+<li><p>use horovodrun to execute your program.</p></li>
+</ol>
+<section id="option-1-pure-yaml-configuration">
+<h3>Option 1: Pure Yaml Configuration<a class="headerlink" href="#option-1-pure-yaml-configuration" title="Link to this heading"></a></h3>
+<p>To enable distributed training in Neural Compressor, user only need to add a field: <code class="docutils literal notranslate"><span class="pre">Distributed:</span> <span class="pre">True</span></code> in dataloader configuration:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dataloader</span><span class="p">:</span>
+  <span class="n">batch_size</span><span class="p">:</span> <span class="mi">256</span>
+  <span class="n">distributed</span><span class="p">:</span> <span class="kc">True</span>
+  <span class="n">dataset</span><span class="p">:</span>
+    <span class="n">ImageFolder</span><span class="p">:</span>
+      <span class="n">root</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">dataset</span>
+</pre></div>
+</div>
+<p>In user’s code, pass the yaml file to Neural Compressor components, in which it constructs the real dataloader for the distributed training or inference. The example codes are as following. (TensorFlow 1.x additionally needs to enable Eager execution):</p>
+<p>Do quantization based on distributed training/inference</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># import tensorflow as tf                      (Only TensorFlow 1.x needs)</span>
+<span class="c1"># tf.compat.v1.enable_eager_execution()        (Only TensorFlow 1.x needs)</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Quantization</span><span class="p">,</span> <span class="n">common</span>
+<span class="n">quantizer</span> <span class="o">=</span> <span class="n">Quantization</span><span class="p">(</span><span class="s2">&quot;yaml_file_path&quot;</span><span class="p">)</span>
+<span class="n">quantizer</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantizer</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>                          <span class="c1"># q_model -&gt; quantized low-precision model </span>
+</pre></div>
+</div>
+<p>Only do model accuracy evaluation based on distributed inference</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># import tensorflow as tf                      (Only TensorFlow 1.x needs)</span>
+<span class="c1"># tf.compat.v1.enable_eager_execution()        (Only TensorFlow 1.x needs)</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Quantization</span><span class="p">,</span> <span class="n">common</span>
+<span class="n">quantizer</span> <span class="o">=</span> <span class="n">Quantization</span><span class="p">(</span><span class="s2">&quot;yaml_file_path&quot;</span><span class="p">)</span>
+<span class="n">quantizer</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span> 
+<span class="n">quantizer</span><span class="o">.</span><span class="n">pre_process</span><span class="p">()</span>                        <span class="c1"># If you simply want to do model evaluation with no need quantization, you should preprocess the quantizer before evaluation.</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">quantizer</span><span class="o">.</span><span class="n">strategy</span><span class="o">.</span><span class="n">evaluation_result</span>  <span class="c1"># result -&gt; (accuracy, evaluation_time_cost)</span>
+</pre></div>
+</div>
+</section>
+<section id="option-2-user-defined-training-function">
+<h3>Option 2: User Defined Training Function<a class="headerlink" href="#option-2-user-defined-training-function" title="Link to this heading"></a></h3>
+<p>Neural Compressor supports User defined PyTorch training function for distributed training which requires user to modify training script following horovod requirements. We provide a MNIST example to show how to do that and following are the steps for PyTorch.</p>
+<ul class="simple">
+<li><p>Partition dataset via DistributedSampler:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">train_sampler</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">distributed</span><span class="o">.</span><span class="n">DistributedSampler</span><span class="p">(</span>
+    <span class="n">train_dataset</span><span class="p">,</span> <span class="n">num_replicas</span><span class="o">=</span><span class="n">hvd</span><span class="o">.</span><span class="n">size</span><span class="p">(),</span> <span class="n">rank</span><span class="o">=</span><span class="n">hvd</span><span class="o">.</span><span class="n">rank</span><span class="p">())</span>
+<span class="n">train_loader</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">train_dataset</span><span class="p">,</span><span class="o">**</span><span class="n">train_kwargs</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="n">train_sampler</span><span class="p">)</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Wrap Optimizer:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">Adadelta</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">lr</span> <span class="o">*</span> <span class="n">hvd</span><span class="o">.</span><span class="n">size</span><span class="p">())</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">hvd</span><span class="o">.</span><span class="n">DistributedOptimizer</span><span class="p">(</span><span class="n">optimizer</span><span class="p">,</span> <span class="n">named_parameters</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">())</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Broadcast parameters to processes from rank 0:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">hvd</span><span class="o">.</span><span class="n">broadcast_parameters</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">(),</span> <span class="n">root_rank</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">hvd</span><span class="o">.</span><span class="n">broadcast_optimizer_state</span><span class="p">(</span><span class="n">optimizer</span><span class="p">,</span> <span class="n">root_rank</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Prepare training function:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">train_loader</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">):</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">epochs</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">train_loader</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">set_epoch</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">batch_idx</span><span class="p">,</span> <span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">train_loader</span><span class="p">):</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">nll_loss</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">batch_idx</span> <span class="o">%</span> <span class="n">args</span><span class="o">.</span><span class="n">log_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Train Epoch: </span><span class="si">{}</span><span class="s1"> [</span><span class="si">{}</span><span class="s1">/</span><span class="si">{}</span><span class="s1"> (</span><span class="si">{:.0f}</span><span class="s1">%)]</span><span class="se">\t</span><span class="s1">Loss: </span><span class="si">{:.6f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">epoch</span><span class="p">,</span> <span class="n">batch_idx</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_loader</span><span class="o">.</span><span class="n">sampler</span><span class="p">),</span>
+                    <span class="mf">100.</span> <span class="o">*</span> <span class="n">batch_idx</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_loader</span><span class="o">.</span><span class="n">sampler</span><span class="p">),</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">()))</span>
+                <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">dry_run</span><span class="p">:</span>
+                    <span class="k">break</span>
+
+<span class="k">def</span> <span class="nf">train_func</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">train</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">train_loader</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Use user defined training function in Neural Compressor:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Component</span><span class="p">,</span> <span class="n">common</span>
+<span class="n">component</span> <span class="o">=</span> <span class="n">Component</span><span class="p">(</span><span class="n">yaml_file</span><span class="p">)</span>
+<span class="n">component</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+<span class="n">component</span><span class="o">.</span><span class="n">train_func</span> <span class="o">=</span> <span class="n">train_func</span>
+<span class="n">component</span><span class="o">.</span><span class="n">eval_func</span> <span class="o">=</span> <span class="n">test_func</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">component</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="horovodrun-execution">
+<h3>Horovodrun Execution<a class="headerlink" href="#horovodrun-execution" title="Link to this heading"></a></h3>
+<p>User needs to use horovodrun to execute distributed training. For more usage, please refer to <a class="reference external" href="https://horovod.readthedocs.io/en/stable/running_include.html">horovod documentation</a>.</p>
+<p>Following command specified the number of processes and hosts to do distributed training.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">horovodrun</span> <span class="o">-</span><span class="n">np</span> <span class="o">&lt;</span><span class="n">num_of_processes</span><span class="o">&gt;</span> <span class="o">-</span><span class="n">H</span> <span class="o">&lt;</span><span class="n">hosts</span><span class="o">&gt;</span> <span class="n">python</span> <span class="n">example</span><span class="o">.</span><span class="n">py</span>
+</pre></div>
+</div>
+<p>For example, the following command means that two processes will be assigned to the two nodes ‘node-001’ and ‘node-002’. The two processes will execute ‘example.py’ at the same time. One process is executed on node ‘node-001’ and one process is executed on node ‘node-002’.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">horovodrun</span> <span class="o">-</span><span class="n">np</span> <span class="mi">2</span> <span class="o">-</span><span class="n">H</span> <span class="n">node</span><span class="o">-</span><span class="mi">001</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="n">node</span><span class="o">-</span><span class="mi">002</span><span class="p">:</span><span class="mi">1</span> <span class="n">python</span> <span class="n">example</span><span class="o">.</span><span class="n">py</span>
+</pre></div>
+</div>
+</section>
+<section id="security">
+<h3>Security<a class="headerlink" href="#security" title="Link to this heading"></a></h3>
+<p>Horovodrun requires user set up SSH on all hosts without any prompts. To do distributed training with Neural Compressor, user needs to ensure the SSH setting on all hosts.</p>
+</section>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
+<section id="pytorch-examples">
+<h3>PyTorch Examples:<a class="headerlink" href="#pytorch-examples" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>PyTorch example-1: MNIST</p>
+<ul>
+<li><p>Please follow this README.html exactly：<a class="reference external" href="../../examples/pytorch/image_recognition/mnist">MNIST</a></p></li>
+</ul>
+</li>
+<li><p>PyTorch example-2: QAT (Quantization Aware Training)</p>
+<ul>
+<li><p>Please follow this README.html exactly：<a class="reference external" href="../../examples/pytorch/image_recognition/torchvision_models/quantization/qat/eager/distributed">QAT</a></p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="tensorflow-examples">
+<h3>TensorFlow Examples:<a class="headerlink" href="#tensorflow-examples" title="Link to this heading"></a></h3>
+<ul>
+<li><p>TensorFlow example-1: ‘ResNet50 V1.0’ PTQ (Post Training Quantization) with distributed inference</p>
+<ul>
+<li><p>Step-1: Please cd (change directory) to the <a class="reference external" href="../../examples/tensorflow/image_recognition">TensorFlow Image Recognition Example</a> and follow the readme to run PTQ, ensure that PTQ of ‘ResNet50 V1.0’ can be successfully executed.</p></li>
+<li><p>Step-2: We only need to modify the <a class="reference external" href="../../examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq/resnet50_v1.yaml">resnet50_v1.yaml</a>, add a line ‘distributed: True’ in the ‘evaluation’ field.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># only need to modify the resnet50_v1.yaml, add a line &#39;distributed: True&#39;</span>
+<span class="o">......</span>
+<span class="o">......</span>
+<span class="n">evaluation</span><span class="p">:</span>                                          <span class="c1"># optional. required if user doesn&#39;t provide eval_func in neural_compressor.Quantization.</span>
+  <span class="n">accuracy</span><span class="p">:</span>                                          <span class="c1"># optional. required if user doesn&#39;t provide eval_func in neural_compressor.Quantization.</span>
+    <span class="n">metric</span><span class="p">:</span>
+      <span class="n">topk</span><span class="p">:</span> <span class="mi">1</span>                                        <span class="c1"># built-in metrics are topk, map, f1, allow user to register new metric.</span>
+    <span class="n">dataloader</span><span class="p">:</span>
+      <span class="n">batch_size</span><span class="p">:</span> <span class="mi">32</span>
+      <span class="n">distributed</span><span class="p">:</span> <span class="kc">True</span>                              <span class="c1"># add a line &#39;distributed: True&#39;</span>
+      <span class="n">dataset</span><span class="p">:</span>
+        <span class="n">ImageRecord</span><span class="p">:</span>
+          <span class="n">root</span><span class="p">:</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">evaluation</span><span class="o">/</span><span class="n">dataset</span>          <span class="c1"># NOTE: modify to evaluation dataset location if needed</span>
+      <span class="n">transform</span><span class="p">:</span>
+        <span class="n">ResizeCropImagenet</span><span class="p">:</span> 
+          <span class="n">height</span><span class="p">:</span> <span class="mi">224</span>
+          <span class="n">width</span><span class="p">:</span> <span class="mi">224</span>
+<span class="o">......</span>
+<span class="o">......</span>
+</pre></div>
+</div>
+</li>
+<li><p>Step-3: Execute ‘main.py’ with horovodrun as following command, it will realize PTQ based on two-node tow-process distributed inference. Please replace these fields according to your actual situation: ‘your_node1_name’, ‘your_node2_name’, ‘/PATH/TO/’. (Note that if you use TensorFlow 1.x now, you need to add a line ‘tf.compat.v1.enable_eager_execution()’ into ‘main.py’ to enable Eager execution.)</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">horovodrun</span> <span class="o">-</span><span class="n">np</span> <span class="mi">2</span> <span class="o">-</span><span class="n">H</span> <span class="n">your_node1_name</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="n">your_node2_name</span><span class="p">:</span><span class="mi">1</span> <span class="n">python</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">tune</span> <span class="o">--</span><span class="n">config</span><span class="o">=</span><span class="n">resnet50_v1</span><span class="o">.</span><span class="n">yaml</span> <span class="o">--</span><span class="nb">input</span><span class="o">-</span><span class="n">graph</span><span class="o">=/</span><span class="n">PATH</span><span class="o">/</span><span class="n">TO</span><span class="o">/</span><span class="n">resnet50_fp32_pretrained_model</span><span class="o">.</span><span class="n">pb</span> <span class="o">--</span><span class="n">output</span><span class="o">-</span><span class="n">graph</span><span class="o">=./</span><span class="n">nc_resnet50_v1</span><span class="o">.</span><span class="n">pb</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</li>
+<li><p>TensorFlow example-2: ‘resnet_v2’ pruning on Keras backend with distributed training and inference</p>
+<ul class="simple">
+<li><p>Please follow this README.html exactly：<a class="reference external" href="../../examples/tensorflow/image_recognition/resnet_v2">Pruning</a></p></li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8a3cddd8e0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,31 @@
+neural_compressor.adaptor.tf_utils.graph_rewriter.qdq.share_qdq_y_pattern
+=========================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.qdq.share_qdq_y_pattern
+
+.. autoapi-nested-parse::
+
+   Share QDQ for ITEX Y pattern Graph Rewriter.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.qdq.share_qdq_y_pattern.ShareQDQForItexYPatternOptimizer
+
+
+Module Contents
+---------------
+
+.. py:class:: ShareQDQForItexYPatternOptimizer(model)
+
+
+
+   Insert Q/DQ op before one input of Add to enable Conv/MatMul + BiasAdd + Add + Relu fusion for ITEX.
+
+   Only 1 Q/DQ before Add op need to be inserted. Insert 2 Q/DQ breaks the ITEX fusion pattern.
+
+

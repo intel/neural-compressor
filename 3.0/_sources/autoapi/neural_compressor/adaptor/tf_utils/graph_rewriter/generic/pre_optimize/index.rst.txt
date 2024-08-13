@@ -1,0 +1,27 @@
+neural_compressor.adaptor.tf_utils.graph_rewriter.generic.pre_optimize
+======================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.pre_optimize
+
+.. autoapi-nested-parse::
+
+   Pre Optimization Entrance.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.pre_optimize.PreOptimization
+
+
+Module Contents
+---------------
+
+.. py:class:: PreOptimization(model, new_api, device)
+
+   Pre optimization for the FP32 models.
+
+

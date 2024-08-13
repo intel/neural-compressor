@@ -1,0 +1,29 @@
+neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_deconv
+=====================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_deconv
+
+.. autoapi-nested-parse::
+
+   Quantize Conv2DBackpropInput and Conv3DBackpropInputV2.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.quantize_graph.qdq.fuse_qdq_deconv.FuseNodeStartWithDeconv2d
+
+
+Module Contents
+---------------
+
+.. py:class:: FuseNodeStartWithDeconv2d(**kwargs)
+
+
+
+   Quantize Conv2DBackpropInput and Conv3DBackpropInputV2 and apply the fusion.
+
+

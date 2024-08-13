@@ -1,0 +1,29 @@
+neural_compressor.common.utils.constants
+========================================
+
+.. py:module:: neural_compressor.common.utils.constants
+
+.. autoapi-nested-parse::
+
+   All frameworks-agnostic constants.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.common.utils.constants.Mode
+
+
+Module Contents
+---------------
+
+.. py:class:: Mode
+
+
+
+   Enumeration class representing different modes of the quantizer execution.
+
+

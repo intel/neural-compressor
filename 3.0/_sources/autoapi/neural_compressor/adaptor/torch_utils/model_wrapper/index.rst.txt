@@ -1,0 +1,45 @@
+neural_compressor.adaptor.torch_utils.model_wrapper
+===================================================
+
+.. py:module:: neural_compressor.adaptor.torch_utils.model_wrapper
+
+.. autoapi-nested-parse::
+
+   Torch.nn.Module Class Definition.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.torch_utils.model_wrapper.FakeAffineTensorQuantFunction
+   neural_compressor.adaptor.torch_utils.model_wrapper.TEQLinearFakeQuant
+   neural_compressor.adaptor.torch_utils.model_wrapper.MulLinear
+
+
+Module Contents
+---------------
+
+.. py:class:: FakeAffineTensorQuantFunction
+
+
+
+   Fake version of affine quantization.
+
+
+.. py:class:: TEQLinearFakeQuant(orig_layer, alpha=None, num_bits=4, group_size=-1, scheme='asym')
+
+
+
+   Wrapper quantization linear.
+
+
+.. py:class:: MulLinear(module, input_scale=None)
+
+
+
+   Linear wrapper to apply scale to input.
+
+

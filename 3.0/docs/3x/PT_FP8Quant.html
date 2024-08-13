@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FP8 Quantization &mdash; Intel® Neural Compressor 3.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">3.0▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">FP8 Quantization</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/3x/PT_FP8Quant.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="fp8-quantization">
+<h1>FP8 Quantization<a class="headerlink" href="#fp8-quantization" title="Link to this heading"></a></h1>
+<ol class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#supported-parameters">Supported Parameters</a></p></li>
+<li><p><a class="reference external" href="#get-start-with-fp8-quantization">Get Start with FP8 Quantization</a></p></li>
+<li><p><a class="reference external" href="#examples">Examples</a></p></li>
+</ol>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
+<p>Float point 8 (FP8) is a promising data type for low precision quantization which provides a data distribution that is completely different from INT8 and it’s shown as below.</p>
+<div align="center">
+    <img src="./imgs/fp8_dtype.png" height="250"/>
+</div><p>Intel Gaudi2, also known as HPU, provides this data type capability for low precision quantization, which includes <code class="docutils literal notranslate"><span class="pre">E4M3</span></code> and <code class="docutils literal notranslate"><span class="pre">E5M2</span></code>. For more information about these two data type, please refer to <a class="reference external" href="https://arxiv.org/abs/2209.05433">link</a>.</p>
+<p>Intel Neural Compressor provides general quantization APIs to leverage HPU FP8 capability. with simple  with lower memory usage and lower compute cost, 8 bit model</p>
+</section>
+<section id="supported-parameters">
+<h2>Supported Parameters<a class="headerlink" href="#supported-parameters" title="Link to this heading"></a></h2>
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;}
+.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg .tg-fymr{border-color:inherit;font-weight:bold;text-align:left;vertical-align:top}
+.tg .tg-0pky{border-color:inherit;text-align:left;vertical-align:top}
+</style><table class="tg"><thead>
+  <tr>
+    <th class="tg-fymr">Attribute</th>
+    <th class="tg-fymr">Description</th>
+    <th class="tg-fymr">Values</th>
+  </tr></thead>
+<tbody>
+  <tr>
+    <td class="tg-0pky">fp8_config</td>
+    <td class="tg-0pky">The target data type of FP8 quantization.</td>
+    <td class="tg-0pky">E4M3 (default) - As Fig. 2<br>E5M2 - As Fig. 1.</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">hp_dtype</td>
+    <td class="tg-0pky">The high precision data type of non-FP8 operators.</td>
+    <td class="tg-0pky">bf16 (default) - torch.bfloat16<br>fp16 - torch.float16.<br>fp32 - torch.float32.</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">observer</td>
+    <td class="tg-0pky">The observer to measure the statistics.</td>
+    <td class="tg-0pky">maxabs (default), saves all tensors to files.</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">allowlist</td>
+    <td class="tg-0pky">List of nn.Module names or types to quantize. When setting an empty list, all the supported modules will be quantized by default. See Supported Modules. Not setting the list at all is not recommended as it will set the allowlist to these modules only: torch.nn.Linear, torch.nn.Conv2d, and BMM.</td>
+    <td class="tg-0pky">Default = {'names': [], 'types': <span title=["Matmul","Linear","FalconLinear","KVCache","Conv2d","LoRACompatibleLinear","LoRACompatibleConv","Softmax","ModuleFusedSDPA","LinearLayer","LinearAllreduce","ScopedLinearAllReduce","LmHeadLinearAllreduce"]>FP8_WHITE_LIST}</span></td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">blocklist</td>
+    <td class="tg-0pky">List of nn.Module names or types not to quantize. Defaults to empty list, so you may omit it from the config file.</td>
+    <td class="tg-0pky">Default = {'names': [], 'types': ()}</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">mode</td>
+    <td class="tg-0pky">The mode, measure or quantize, to run HQT with.</td>
+    <td class="tg-0pky">MEASURE - Measure statistics of all modules and emit the results to dump_stats_path.<br>QUANTIZE - Quantize and run the model according to the provided measurements.<br>AUTO (default) - Select from [MEASURE, QUANTIZE] automatically.</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">dump_stats_path</td>
+    <td class="tg-0pky">The path to save and load the measurements. The path is created up until the level before last "/". The string after the last / will be used as prefix to all the measurement files that will be created.</td>
+    <td class="tg-0pky">Default = "./hqt_output/measure"</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">scale_method</td>
+    <td class="tg-0pky">The method for calculating the scale from the measurement.</td>
+    <td class="tg-0pky">- without_scale - Convert to/from FP8 without scaling.<br>- unit_scale - Always use scale of 1.<br>- maxabs_hw (default) - Scale is calculated to stretch/compress the maxabs measurement to the full-scale of FP8 and then aligned to the corresponding HW accelerated scale.<br>- maxabs_pow2 - Scale is calculated to stretch/compress the maxabs measurement to the full-scale of FP8 and then rounded to the power of 2.<br>- maxabs_hw_opt_weight - Scale of model params (weights) is chosen as the scale that provides minimal mean-square-error between quantized and non-quantized weights, from all possible HW accelerated scales. Scale of activations is calculated the same as maxabs_hw.<br>- act_maxabs_pow2_weights_pcs_opt_pow2 - Scale of model params (weights) is calculated per-channel of the params tensor. The scale per-channel is calculated the same as maxabs_hw_opt_weight. Scale of activations is calculated the same as maxabs_pow2.<br>- act_maxabs_hw_weights_pcs_maxabs_pow2 - Scale of model params (weights) is calculated per-channel of the params tensor. The scale per-channel is calculated the same as maxabs_pow2. Scale of activations is calculated the same as maxabs_hw.</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">measure_exclude</td>
+    <td class="tg-0pky">If this attribute is not defined, the default is OUTPUT. Since most models do not require measuring output tensors, you can exclude it to speed up the measurement process.</td>
+    <td class="tg-0pky">NONE - All tensors are measured.<br>OUTPUT (default) - Excludes measurement of output tensors.</td>
+  </tr>
+</tbody></table></section>
+<section id="get-start-with-fp8-quantization">
+<h2>Get Start with FP8 Quantization<a class="headerlink" href="#get-start-with-fp8-quantization" title="Link to this heading"></a></h2>
+<section id="demo-usage">
+<h3>Demo Usage<a class="headerlink" href="#demo-usage" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.torch.quantization</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FP8Config</span><span class="p">,</span>
+    <span class="n">prepare</span><span class="p">,</span>
+    <span class="n">convert</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">import</span> <span class="nn">torchvision.models</span> <span class="k">as</span> <span class="nn">models</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">resnet18</span><span class="p">()</span>
+<span class="n">qconfig</span> <span class="o">=</span> <span class="n">FP8Config</span><span class="p">(</span><span class="n">fp8_config</span><span class="o">=</span><span class="s2">&quot;E4M3&quot;</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prepare</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">qconfig</span><span class="p">)</span>
+<span class="c1"># customer defined calibration</span>
+<span class="n">calib_func</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Task</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Computer Vision (CV)</td>
+<td><a href="../../examples/3.x_api/pytorch/cv/fp8_quant/">Link</a></td>
+</tr>
+<tr>
+<td>Large Language Model (LLM)</td>
+<td><a href="https://github.com/HabanaAI/optimum-habana-fork/tree/habana-main/examples/text-generation#running-with-fp8">Link</a></td>
+</tr>
+</tbody>
+</table><blockquote>
+<div><p>Note: For LLM, Optimum-habana provides higher performance based on modified modeling files, so here the Link of LLM goes to Optimum-habana, which utilize Intel Neural Compressor for FP8 quantization internally.</p>
+</div></blockquote>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fef7c405d90> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

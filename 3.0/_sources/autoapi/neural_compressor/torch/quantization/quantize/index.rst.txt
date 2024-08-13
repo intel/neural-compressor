@@ -1,0 +1,89 @@
+neural_compressor.torch.quantization.quantize
+=============================================
+
+.. py:module:: neural_compressor.torch.quantization.quantize
+
+.. autoapi-nested-parse::
+
+   Intel Neural Compressor Pytorch quantization base API.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.quantization.quantize.need_apply
+   neural_compressor.torch.quantization.quantize.quantize
+   neural_compressor.torch.quantization.quantize.prepare
+   neural_compressor.torch.quantization.quantize.convert
+   neural_compressor.torch.quantization.quantize.finalize_calibration
+
+
+Module Contents
+---------------
+
+.. py:function:: need_apply(configs_mapping: Dict[Tuple[str, callable], neural_compressor.common.base_config.BaseConfig], algo_name)
+
+   Check whether to apply this algorithm according to configs_mapping.
+
+   :param configs_mapping: configs mapping
+   :type configs_mapping: Dict[Tuple[str, callable], BaseConfig]
+   :param algo_name: algo name
+   :type algo_name: str
+
+   :returns: True or False.
+   :rtype: Bool
+
+
+.. py:function:: quantize(model: torch.nn.Module, quant_config: neural_compressor.common.base_config.BaseConfig, run_fn: Callable = None, run_args: Any = None, inplace: bool = True, example_inputs: Any = None) -> torch.nn.Module
+
+   The main entry to quantize model with static mode.
+
+   :param model: a float model to be quantized.
+   :param quant_config: a quantization configuration.
+   :param run_fn: a calibration function for calibrating the model. Defaults to None.
+   :param run_args: positional arguments for `run_fn`. Defaults to None.
+   :param example_inputs: used to trace torch model.
+
+   :returns: The quantized model.
+
+
+.. py:function:: prepare(model: torch.nn.Module, quant_config: neural_compressor.common.base_config.BaseConfig, inplace: bool = True, example_inputs: Any = None)
+
+   Prepare the model for calibration.
+
+   Insert observers into the model so that it can monitor the input and output tensors during calibration.
+
+   :param model: origin model
+   :type model: torch.nn.Module
+   :param quant_config: path to quantization config
+   :type quant_config: BaseConfig
+   :param inplace: It will change the given model in-place if True.
+   :type inplace: bool, optional
+   :param example_inputs: used to trace torch model.
+   :type example_inputs: tensor/tuple/dict, optional
+
+   :returns: prepared and calibrated module.
+
+
+.. py:function:: convert(model: torch.nn.Module, quant_config: neural_compressor.common.base_config.BaseConfig = None, inplace: bool = True)
+
+   Convert the prepared model to a quantized model.
+
+   :param model: the prepared model
+   :type model: torch.nn.Module
+   :param quant_config: path to quantization config
+   :type quant_config: BaseConfig, optional
+   :param inplace: It will change the given model in-place if True.
+   :type inplace: bool, optional
+
+   :returns: The quantized model.
+
+
+.. py:function:: finalize_calibration(model)
+
+   Generate and save calibration info.
+
+

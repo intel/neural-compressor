@@ -1,0 +1,48 @@
+neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_schema
+==================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_schema
+
+.. autoapi-nested-parse::
+
+   ONNX Operator Schemas for Tensorflow model converting to ONNX model.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_schema.OnnxOpSchema
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_schema.get_schema
+   neural_compressor.adaptor.tf_utils.graph_rewriter.onnx.onnx_schema.get_max_supported_opset_version
+
+
+Module Contents
+---------------
+
+.. py:class:: OnnxOpSchema(name, domain, since_version, attributes)
+
+
+
+   Wrapper for Onnx schema.
+
+
+.. py:function:: get_schema(name, max_inclusive_opset_version, domain=None)
+
+   Get schema by name within specific version.
+
+
+.. py:function:: get_max_supported_opset_version(domain=None)
+
+   Get max supported opset version by current onnx package given a domain.
+
+

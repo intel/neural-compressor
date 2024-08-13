@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pythonic Style Access for Configurations &mdash; Intel® Neural Compressor 2.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">2.4▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Pythonic Style Access for Configurations</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/pythonic_style.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="pythonic-style-access-for-configurations">
+<h1>Pythonic Style Access for Configurations<a class="headerlink" href="#pythonic-style-access-for-configurations" title="Link to this heading"></a></h1>
+<ol class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#supported-feature-matrix">Supported Feature Matrix</a></p></li>
+<li><p><a class="reference external" href="#get-started-with-pythonic-api-for-configurations">Get Started with Pythonic API for Configurations</a></p></li>
+</ol>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
+<p>To meet the variety of needs arising from various circumstances, INC now provides a
+pythonic style access - Pythonic API - for same purpose of either user or framework configurations.</p>
+<p>The Pythonic API for Configuration allows users to specify configurations
+directly in their python codes without referring to
+a separate YAML file. While we support both simultaneously,
+the Pythonic API for Configurations has several advantages over YAML files,
+which one can tell from usages in the context below. Hence, we recommend
+users to use the Pythonic API for Configurations moving forward.</p>
+</section>
+<section id="supported-feature-matrix">
+<h2>Supported Feature Matrix<a class="headerlink" href="#supported-feature-matrix" title="Link to this heading"></a></h2>
+<section id="pythonic-api-for-user-configurations">
+<h3>Pythonic API for User Configurations<a class="headerlink" href="#pythonic-api-for-user-configurations" title="Link to this heading"></a></h3>
+<p>| Optimization Techniques | Pythonic API |
+|————————-|:————:|
+| Quantization            |   ✔   |
+| Pruning                 |   ✔   |
+| Distillation            |   ✔   |
+| NAS                     |   ✔   |</p>
+</section>
+<section id="pythonic-api-for-framework-configurations">
+<h3>Pythonic API for Framework Configurations<a class="headerlink" href="#pythonic-api-for-framework-configurations" title="Link to this heading"></a></h3>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Framework</th>
+<th style="text-align: center;">Pythonic API</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TensorFlow</td>
+<td style="text-align: center;">&#10004;</td>
+</tr>
+<tr>
+<td>PyTorch</td>
+<td style="text-align: center;">&#10004;</td>
+</tr>
+<tr>
+<td>ONNX</td>
+<td style="text-align: center;">&#10004;</td>
+</tr>
+<tr>
+<td>MXNet</td>
+<td style="text-align: center;">&#10004;</td>
+</tr>
+</tbody>
+</table></section>
+</section>
+<section id="get-started-with-pythonic-api-for-configurations">
+<h2>Get Started with Pythonic API for Configurations<a class="headerlink" href="#get-started-with-pythonic-api-for-configurations" title="Link to this heading"></a></h2>
+<section id="id1">
+<h3>Pythonic API for User Configurations<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<p>Now, let’s go through the Pythonic API for Configurations in the order of
+sections similar as in user YAML files.</p>
+<section id="quantization">
+<h4>Quantization<a class="headerlink" href="#quantization" title="Link to this heading"></a></h4>
+<p>To specify quantization configurations, users can use the following
+Pythonic API step by step.</p>
+<ul class="simple">
+<li><p>First, load the <em><strong>config</strong></em> module</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">config</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Next, assign values to the attributes of <em>config.quantization</em> to use specific configurations, and pass the config to <em>Quantization</em> API.</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">inputs</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;image&quot;</span><span class="p">]</span>  <span class="c1"># list of str</span>
+<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">outputs</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;out&quot;</span><span class="p">]</span>  <span class="c1"># list of str</span>
+<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">backend</span> <span class="o">=</span> <span class="s2">&quot;onnxrt_integerops&quot;</span>  <span class="c1"># support tensorflow, tensorflow_itex, pytorch, pytorch_ipex, pytorch_fx, onnxrt_qlinearops, onnxrt_integerops, onnxrt_qdq, onnxrt_qoperator, mxnet</span>
+<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">approach</span> <span class="o">=</span> <span class="s2">&quot;post_training_dynamic_quant&quot;</span>  <span class="c1"># support post_training_static_quant, post_training_dynamic_quant, quant_aware_training</span>
+<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cpu&quot;</span>  <span class="c1"># support cpu, gpu</span>
+<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">op_type_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Conv&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;weight&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;fp32&quot;</span><span class="p">]},</span> <span class="s2">&quot;activation&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;fp32&quot;</span><span class="p">]}}}</span>  <span class="c1"># dict</span>
+<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">strategy</span> <span class="o">=</span> <span class="s2">&quot;mse&quot;</span>  <span class="c1"># support basic, mse, bayesian, random, exhaustive</span>
+<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">objective</span> <span class="o">=</span> <span class="s2">&quot;accuracy&quot;</span>  <span class="c1"># support performance, accuracy, modelsize, footprint</span>
+<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">timeout</span> <span class="o">=</span> <span class="mi">100</span>  <span class="c1"># int, default is 0</span>
+<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">accuracy_criterion</span><span class="o">.</span><span class="n">relative</span> <span class="o">=</span> <span class="mf">0.5</span>  <span class="c1"># float, default is 0.01</span>
+<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">reduce_range</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="kc">False</span>  <span class="c1"># bool. default value depends on hardware, True if cpu supports VNNI instruction, otherwise is False</span>
+<span class="p">)</span>
+<span class="n">config</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">use_bf16</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># bool</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Quantization</span>
+
+<span class="n">quantizer</span> <span class="o">=</span> <span class="n">Quantization</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="distillation">
+<h4>Distillation<a class="headerlink" href="#distillation" title="Link to this heading"></a></h4>
+<p>To specify distillation configurations, users can assign values to
+the corresponding attributes.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">config</span>
+
+<span class="n">config</span><span class="o">.</span><span class="n">distillation</span><span class="o">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;SGD&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;learning_rate&quot;</span><span class="p">:</span> <span class="mf">0.0001</span><span class="p">}}</span>
+
+<span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Distillation</span>
+
+<span class="n">distiller</span> <span class="o">=</span> <span class="n">Distillation</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="pruning">
+<h4>Pruning<a class="headerlink" href="#pruning" title="Link to this heading"></a></h4>
+<p>To specify pruning configurations, users can assign values to the corresponding attributes.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">config</span>
+
+<span class="n">config</span><span class="o">.</span><span class="n">pruning</span><span class="o">.</span><span class="n">weight_compression</span><span class="o">.</span><span class="n">initial_sparsity</span> <span class="o">=</span> <span class="mf">0.0</span>
+<span class="n">config</span><span class="o">.</span><span class="n">pruning</span><span class="o">.</span><span class="n">weight_compression</span><span class="o">.</span><span class="n">target_sparsity</span> <span class="o">=</span> <span class="mf">0.9</span>
+<span class="n">config</span><span class="o">.</span><span class="n">pruning</span><span class="o">.</span><span class="n">weight_compression</span><span class="o">.</span><span class="n">max_sparsity_ratio_per_layer</span> <span class="o">=</span> <span class="mf">0.98</span>
+<span class="n">config</span><span class="o">.</span><span class="n">pruning</span><span class="o">.</span><span class="n">weight_compression</span><span class="o">.</span><span class="n">prune_type</span> <span class="o">=</span> <span class="s2">&quot;basic_magnitude&quot;</span>
+<span class="n">config</span><span class="o">.</span><span class="n">pruning</span><span class="o">.</span><span class="n">weight_compression</span><span class="o">.</span><span class="n">start_epoch</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">config</span><span class="o">.</span><span class="n">pruning</span><span class="o">.</span><span class="n">weight_compression</span><span class="o">.</span><span class="n">end_epoch</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">config</span><span class="o">.</span><span class="n">pruning</span><span class="o">.</span><span class="n">weight_compression</span><span class="o">.</span><span class="n">start_step</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">config</span><span class="o">.</span><span class="n">pruning</span><span class="o">.</span><span class="n">weight_compression</span><span class="o">.</span><span class="n">end_step</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">config</span><span class="o">.</span><span class="n">pruning</span><span class="o">.</span><span class="n">weight_compression</span><span class="o">.</span><span class="n">update_frequency</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="n">config</span><span class="o">.</span><span class="n">pruning</span><span class="o">.</span><span class="n">weight_compression</span><span class="o">.</span><span class="n">update_frequency_on_step</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">config</span><span class="o">.</span><span class="n">pruning</span><span class="o">.</span><span class="n">weight_compression</span><span class="o">.</span><span class="n">prune_domain</span> <span class="o">=</span> <span class="s2">&quot;global&quot;</span>
+<span class="n">config</span><span class="o">.</span><span class="n">pruning</span><span class="o">.</span><span class="n">weight_compression</span><span class="o">.</span><span class="n">pattern</span> <span class="o">=</span> <span class="s2">&quot;tile_pattern_1x1&quot;</span>
+
+<span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Pruning</span>
+
+<span class="n">prune</span> <span class="o">=</span> <span class="n">Pruning</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="nas">
+<h4>NAS<a class="headerlink" href="#nas" title="Link to this heading"></a></h4>
+<p>To specify nas configurations, users can assign values to the
+corresponding attributes.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">config</span>
+
+<span class="n">config</span><span class="o">.</span><span class="n">nas</span><span class="o">.</span><span class="n">approach</span> <span class="o">=</span> <span class="s2">&quot;dynas&quot;</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">NAS</span>
+
+<span class="n">nas</span> <span class="o">=</span> <span class="n">NAS</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="benchmark">
+<h4>Benchmark<a class="headerlink" href="#benchmark" title="Link to this heading"></a></h4>
+<p>To specify benchmark configurations, users can assign values to the
+corresponding attributes.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">config</span>
+
+<span class="n">config</span><span class="o">.</span><span class="n">benchmark</span><span class="o">.</span><span class="n">warmup</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">config</span><span class="o">.</span><span class="n">benchmark</span><span class="o">.</span><span class="n">iteration</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">config</span><span class="o">.</span><span class="n">benchmark</span><span class="o">.</span><span class="n">cores_per_instance</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">config</span><span class="o">.</span><span class="n">benchmark</span><span class="o">.</span><span class="n">num_of_instance</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">config</span><span class="o">.</span><span class="n">benchmark</span><span class="o">.</span><span class="n">inter_num_of_threads</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">config</span><span class="o">.</span><span class="n">benchmark</span><span class="o">.</span><span class="n">intra_num_of_threads</span> <span class="o">=</span> <span class="mi">10</span>
+
+<span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Benchmark</span>
+
+<span class="n">benchmark</span> <span class="o">=</span> <span class="n">Benchmark</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id2">
+<h3>Pythonic API for Framework Configurations<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<p>Now, let’s go through the Pythonic API for Configurations in setting up similar framework
+capabilities as in YAML files. Users can specify a framework’s (eg. ONNX Runtime) capability by
+assigning values to corresponding attributes.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span><span class="o">.</span><span class="n">onnxruntime</span><span class="o">.</span><span class="n">precisions</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;int8&quot;</span><span class="p">,</span> <span class="s2">&quot;uint8&quot;</span><span class="p">]</span>
+<span class="n">config</span><span class="o">.</span><span class="n">onnxruntime</span><span class="o">.</span><span class="n">graph_optimization_level</span> <span class="o">=</span> <span class="s2">&quot;DISABLE_ALL&quot;</span>  <span class="c1"># only onnxruntime has graph_optimization_level attribute</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8d975f1340> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

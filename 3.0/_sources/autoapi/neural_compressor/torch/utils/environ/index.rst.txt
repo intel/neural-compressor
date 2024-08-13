@@ -1,0 +1,78 @@
+neural_compressor.torch.utils.environ
+=====================================
+
+.. py:module:: neural_compressor.torch.utils.environ
+
+.. autoapi-nested-parse::
+
+   Intel Neural Compressor PyTorch environment check.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.utils.environ.is_ipex_imported
+   neural_compressor.torch.utils.environ.is_transformers_imported
+   neural_compressor.torch.utils.environ.is_package_available
+   neural_compressor.torch.utils.environ.is_hpex_available
+   neural_compressor.torch.utils.environ.is_ipex_available
+   neural_compressor.torch.utils.environ.get_ipex_version
+   neural_compressor.torch.utils.environ.get_torch_version
+   neural_compressor.torch.utils.environ.get_accelerator
+   neural_compressor.torch.utils.environ.device_synchronize
+
+
+Module Contents
+---------------
+
+.. py:function:: is_ipex_imported() -> bool
+
+   Check whether intel_extension_for_pytorch is imported.
+
+
+.. py:function:: is_transformers_imported() -> bool
+
+   Check whether transformers is imported.
+
+
+.. py:function:: is_package_available(package_name)
+
+   Check if the package exists in the environment without importing.
+
+   :param package_name: package name
+   :type package_name: str
+
+
+.. py:function:: is_hpex_available()
+
+   Returns whether hpex is available.
+
+
+.. py:function:: is_ipex_available()
+
+   Return whether ipex is available.
+
+
+.. py:function:: get_ipex_version()
+
+   Return ipex version if ipex exists.
+
+
+.. py:function:: get_torch_version()
+
+   Return torch version if ipex exists.
+
+
+.. py:function:: get_accelerator(device_name='auto')
+
+   Return the recommended accelerator based on device priority.
+
+
+.. py:function:: device_synchronize(raw_func)
+
+   Function decorator that calls accelerated.synchronize before and after a function call.
+
+

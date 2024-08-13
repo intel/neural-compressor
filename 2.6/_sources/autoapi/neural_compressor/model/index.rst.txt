@@ -1,0 +1,27 @@
+neural_compressor.model
+=======================
+
+.. py:module:: neural_compressor.model
+
+.. autoapi-nested-parse::
+
+   Built-in model for multiple framework backends.
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/model/base_model/index
+   /autoapi/neural_compressor/model/keras_model/index
+   /autoapi/neural_compressor/model/model/index
+   /autoapi/neural_compressor/model/mxnet_model/index
+   /autoapi/neural_compressor/model/nets_factory/index
+   /autoapi/neural_compressor/model/onnx_model/index
+   /autoapi/neural_compressor/model/tensorflow_model/index
+   /autoapi/neural_compressor/model/torch_model/index
+
+

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Neural Coder &mdash; Intel® Neural Compressor 2.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">2.6▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Neural Coder</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/docs/source/neural_coder/extensions/neural_compressor_ext_vscode/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="neural-coder">
+<h1>Neural Coder<a class="headerlink" href="#neural-coder" title="Link to this heading"></a></h1>
+<p>Neural Coder, a novel component under <strong>Intel® Neural Compressor</strong> to further simplify the deployment of DL models via <strong>one-click</strong> automated code changes for device compatibility and optimization enabling, has also enabled its extension service in VS Code to further simplify the usage for general programmers that use VS Code as a daily application.</p>
+<p align="center">
+  <br />
+  <a title="Learn more about Neural Coder." href="#"><img width="500px" src="./images/readme/logo.png" alt="Neural Coder Logo" /></a>
+</p><p><a class="reference external" href="https://marketplace.visualstudio.com/items?itemName=IntelNeuralCompressor.neural-coder-ext-vscode">Neural Coder</a> is an <a class="reference external" href="https://github.com/intel/neural-compressor/tree/master/neural_coder">open-source</a> extension for <a class="reference external" href="https://code.visualstudio.com">Visual Studio Code</a>.</p>
+</section>
+<section id="background-introduction">
+<h1>Background Introduction<a class="headerlink" href="#background-introduction" title="Link to this heading"></a></h1>
+<section id="intel-neural-compressor">
+<h2>Intel® Neural Compressor<a class="headerlink" href="#intel-neural-compressor" title="Link to this heading"></a></h2>
+<p>Intel® Neural Compressor is an open-source Python library for model compression that reduces the model size and increases DL inference performance on CPUs or GPUs. It supports post-training static and dynamic quantization of PyTorch models. It supports automatic accuracy-driven tuning strategies for users to easily generate quantized model. The users can easily apply static, dynamic and aware-training quantization approaches while giving an expected accuracy criteria.</p>
+</section>
+<section id="id1">
+<h2>Neural Coder<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<p>Neural Coder is a novel component under Intel® Neural Compressor to further simplify the deployment of DL models via one-click automated code changes for device compatibility and optimization enabling. Subsequently, Neural Coder can perform automated benchmark on all optimization approaches and evaluate for the best out-of-box optimized performance. Neural Coder uses static program analysis and heuristics to help users take advantage of Intel DL Boost and hardware features to improve performance. This one-click enabling boosts developer productivity while making it easier to take advantage of acceleration.</p>
+</section>
+<section id="neural-coder-extension-in-vscode">
+<h2>Neural Coder Extension in VSCode<a class="headerlink" href="#neural-coder-extension-in-vscode" title="Link to this heading"></a></h2>
+<p>VS Code users can leverage Neural Coder’s extension to perform <strong>automatic quantization and benchmark evaluation</strong> for Deep Learning models.</p>
+ <p align="center">
+  <img src="./images/readme/USAGE.gif" alt="Neural coder Usage" />
+</p></section>
+</section>
+<section id="neural-coder-extension-usage">
+<h1>Neural Coder Extension Usage<a class="headerlink" href="#neural-coder-extension-usage" title="Link to this heading"></a></h1>
+<p>We provide here a detailed step-by-step guide on using Neural Coder extension in VS Code:</p>
+ <p align="center">
+  <img src="./images/readme/CONFIG.gif" alt="Neural coder Config" />
+</p><section id="open">
+<h2>1. Open<a class="headerlink" href="#open" title="Link to this heading"></a></h2>
+<p>Open VS Code Extension and link to a remote Linux-based server via SSH since Neural Coder requires a Linux-based environment.</p>
+<p align="center">
+<img width="150px"  src="./images/readme/connectSSH.png" alt="VS Code connects to a remote Linux server" />
+</p><blockquote>
+<div><p>If you’re using VS Code on a Linux-based machine, then this step is not needed.</p>
+</div></blockquote>
+</section>
+<section id="search">
+<h2>2. Search<a class="headerlink" href="#search" title="Link to this heading"></a></h2>
+<p>Search for Neural Coder extension in VS Code extension market:</p>
+<p>Simply enter “Neural Coder” in the search box of the extension market to find the extension package.</p>
+<p>You will be able to find the icon below, and then just click “Install”. (Note: The extension installation location should be a SSH remote server to which you are connected, assuming your VS Code is Windows-based.)</p>
+<p align="center">
+<img width="400px" src="./images/readme/search.png" alt="Search for Neural Coder in VSCode extension market" />
+</p>
+Once the installation is done, it will display that the extension is installed and enabled on your machine, and you're also able to disable it or uninstall it in case you need to.
+<p align="center">
+<img  width="400px"  src="./images/readme/install.png" alt="Neural Coder extension has been successfully installed and enabled" />
+</p></section>
+<section id="setting">
+<h2>3. Setting<a class="headerlink" href="#setting" title="Link to this heading"></a></h2>
+<p>Click the “Extension Settings” tab of the setting button on the right and fill in the path of Python you want to run.</p>
+<ul class="simple">
+<li><p>Click the “Extension Settings” tab</p></li>
+</ul>
+<p align="center">
+<img  width="400px"  src="./images/readme/clickSetting.png" alt="Click Extension SettingsPython Path for Neural Coder" />
+</p><ul class="simple">
+<li><p>fill in the path</p></li>
+</ul>
+<p align="center">
+<img  width="400px"  src="./images/readme/settingPath.png" alt="Click Extension SettingsPython Path for Neural Coder" />
+</p></section>
+<section id="icon">
+<h2>4. Icon<a class="headerlink" href="#icon" title="Link to this heading"></a></h2>
+<p>Open your code for the Deep Learning model that you want to quantize and evaluate.</p>
+<p>You can see a new icon appear to the upper right, and also a left sidebars for the purpose of displaying operation history.
+Hover over and see that it’s a Neural Coder’s icon.</p>
+<ul class="simple">
+<li><p>The icon of Neural Coder extension</p></li>
+</ul>
+<p align="center">
+<img  width="400px"  src="./images/readme/topRight.png" alt="Click Extension SettingsPython Path for Neural Coder" />
+</p><ul class="simple">
+<li><p>The history panel of Neural Coder</p></li>
+</ul>
+<p align="center">
+<img  width="200px"  src="./images/readme/leftIcon.png" alt="Click Extension SettingsPython Path for Neural Coder" />
+</p></section>
+<section id="optimization-quantization">
+<h2>5. optimization (quantization)<a class="headerlink" href="#optimization-quantization" title="Link to this heading"></a></h2>
+<p>Click the Neural Coder button at the top right and select the optimization (quantization) you want to conduct on your Deep Learning code.</p>
+<section id="enable">
+<h3>5.1 Enable<a class="headerlink" href="#enable" title="Link to this heading"></a></h3>
+<p>Select “INC Enable INT8 (Static)”, “INC Enable INT8 (Dynamic)”, or “INC Enable BF16”</p>
+<p align="center">
+<img  width="400px"  src="./images/readme/clickEnable.png" alt="Select 'INC Enable'" />
+</p><p>Wait for the progress bar. You will see that the quantization has been enabled into your Deep Learning code:</p>
+<p align="center">
+<img  width="400px"  src="./images/readme/autoEnabling.png" alt="Auto-Enabling of Quantization via VS Code Neural Coder extension (e.g. HuggingFace model)" />
+</p><p>The history of Neural Coder enabling that you have conducted will appear in the history panel, in the form of patch files, and you can easily track back to see how the quantization enabling is done by Neural Coder for your code at a specific time point:</p>
+<ul class="simple">
+<li><p>The history of Neural Coder enabling that you have conducted</p></li>
+</ul>
+<p align="center">
+<img  width="400px"  src="./images/readme/enableHistory.png" alt="The history of Neural Coder enabling that you have conducted" />
+</p><ul class="simple">
+<li><p>A specific Neural Coder enabling as a patch file</p></li>
+</ul>
+<p align="center">
+<img  width="400px"  src="./images/readme/historyDetail.png" alt="A specific Neural Coder enabling as a patch file" />
+</p></section>
+<section id="auto">
+<h3>5.2 Auto<a class="headerlink" href="#auto" title="Link to this heading"></a></h3>
+<p>Select “INC Auto Enable Benchmark”</p>
+<p align="center">
+<img  width="400px"  src="./images/readme/clickAuto.png" alt="Select 'INC Auto'" />
+</p>
+Enter the Python code execution parameters (argparse) for the current code:
+<p align="center">
+<img  width="400px" src="./images/readme/params.png" alt="Enter your Python code execution parameters" />
+</p>
+An "Output" panel will pop up below, displaying the enabling and benchmark results for the current Deep Learning code:
+<p align="center">
+<img  width="400px" src="./images/readme/outPut.png" alt="Result output" />
+</p>
+The "Auto" section in the history panel keeps the patch file (.diff) for each optimization within this benchmark execution:
+<p align="center">
+<img  width="400px" src="./images/readme/auto.png" alt="Patch files for all optimizations in this benchmark" />
+</p>
+Also click to view patch result:
+<p align="center">
+<img  width="400px"  src="./images/readme/content.png" alt="Content in the patch file" />
+</p></section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8a3ccc8610> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,39 @@
+neural_compressor.strategy
+==========================
+
+.. py:module:: neural_compressor.strategy
+
+.. autoapi-nested-parse::
+
+   Intel Neural Compressor Strategy.
+
+
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/strategy/utils/index
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/strategy/auto/index
+   /autoapi/neural_compressor/strategy/auto_mixed_precision/index
+   /autoapi/neural_compressor/strategy/basic/index
+   /autoapi/neural_compressor/strategy/bayesian/index
+   /autoapi/neural_compressor/strategy/conservative/index
+   /autoapi/neural_compressor/strategy/exhaustive/index
+   /autoapi/neural_compressor/strategy/hawq_v2/index
+   /autoapi/neural_compressor/strategy/mse/index
+   /autoapi/neural_compressor/strategy/mse_v2/index
+   /autoapi/neural_compressor/strategy/random/index
+   /autoapi/neural_compressor/strategy/strategy/index
+
+

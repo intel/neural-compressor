@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.torch.algorithms.weight_only.utility &mdash; Intel® Neural Compressor 3.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../versions.html">3.0▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.torch.algorithms.weight_only.utility</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../_sources/autoapi/neural_compressor/torch/algorithms/weight_only/utility/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.torch.algorithms.weight_only.utility">
+<span id="neural-compressor-torch-algorithms-weight-only-utility"></span><h1>neural_compressor.torch.algorithms.weight_only.utility<a class="headerlink" href="#module-neural_compressor.torch.algorithms.weight_only.utility" title="Link to this heading"></a></h1>
+<p>Weight-Only utility.</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.utility.GraphTrace" title="neural_compressor.torch.algorithms.weight_only.utility.GraphTrace"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GraphTrace</span></code></a></p></td>
+<td><p>GraphTrace.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.utility.quantize_4bit" title="neural_compressor.torch.algorithms.weight_only.utility.quantize_4bit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quantize_4bit</span></code></a>(tensor[, quantile, dtype, return_int])</p></td>
+<td><p>Quantize tensor to NF4/FP4 data type.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.utility.qdq_weight_asym" title="neural_compressor.torch.algorithms.weight_only.utility.qdq_weight_asym"><code class="xref py py-obj docutils literal notranslate"><span class="pre">qdq_weight_asym</span></code></a>(weight[, bits, quantile, return_int])</p></td>
+<td><p>Quant and dequant tensor with asym schema.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.utility.qdq_weight_sym" title="neural_compressor.torch.algorithms.weight_only.utility.qdq_weight_sym"><code class="xref py py-obj docutils literal notranslate"><span class="pre">qdq_weight_sym</span></code></a>(weight[, bits, quantile, return_int, ...])</p></td>
+<td><p>Quant and dequant tensor with sym schema.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.utility.qdq_weight_actor" title="neural_compressor.torch.algorithms.weight_only.utility.qdq_weight_actor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">qdq_weight_actor</span></code></a>(weight, bits, scheme[, quantile, ...])</p></td>
+<td><p>Quant and dequant tensor per channel. It is an in-place op.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.utility.quant_tensor" title="neural_compressor.torch.algorithms.weight_only.utility.quant_tensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quant_tensor</span></code></a>(weight[, bits, group_size, scheme, ...])</p></td>
+<td><p>Quant and dequant tensor with group size. It's an in-place function.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.utility.search_clip" title="neural_compressor.torch.algorithms.weight_only.utility.search_clip"><code class="xref py py-obj docutils literal notranslate"><span class="pre">search_clip</span></code></a>(m[, bits, group_size, scheme, dtype, ...])</p></td>
+<td><p>Search best clip range of each linear in current block. It's not an in-place function.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.utility.quant_weight_w_scale" title="neural_compressor.torch.algorithms.weight_only.utility.quant_weight_w_scale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quant_weight_w_scale</span></code></a>(weight, scale[, zp, group_size, ...])</p></td>
+<td><p>Quant and dequant tensor with group size. It's an in-place function.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.utility.model_forward" title="neural_compressor.torch.algorithms.weight_only.utility.model_forward"><code class="xref py py-obj docutils literal notranslate"><span class="pre">model_forward</span></code></a>(model, dataloader, iters, device)</p></td>
+<td><p>The model forward function.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.utility.forward_wrapper" title="neural_compressor.torch.algorithms.weight_only.utility.forward_wrapper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">forward_wrapper</span></code></a>(model, input[, device])</p></td>
+<td><p>The forward wrapper.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.utility.move_input_to_device" title="neural_compressor.torch.algorithms.weight_only.utility.move_input_to_device"><code class="xref py py-obj docutils literal notranslate"><span class="pre">move_input_to_device</span></code></a>(input[, device])</p></td>
+<td><p>Move input to the spevific device.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.utility.set_module" title="neural_compressor.torch.algorithms.weight_only.utility.set_module"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_module</span></code></a>(model, key, new_module)</p></td>
+<td><p>Set new module into model by key name.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.utility.fetch_module" title="neural_compressor.torch.algorithms.weight_only.utility.fetch_module"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_module</span></code></a>(model, op_name)</p></td>
+<td><p>Get module with a given op name.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.utility.get_absorb_layers" title="neural_compressor.torch.algorithms.weight_only.utility.get_absorb_layers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_absorb_layers</span></code></a>(model, example_inputs[, ...])</p></td>
+<td><p>Get absorb_to_layer and no_absorb_layer.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.utility.get_parent" title="neural_compressor.torch.algorithms.weight_only.utility.get_parent"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_parent</span></code></a>(node[, all_parents])</p></td>
+<td><p>Get parent of node.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.utility.get_module" title="neural_compressor.torch.algorithms.weight_only.utility.get_module"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_module</span></code></a>(model, key)</p></td>
+<td><p>Get module from model by key name.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.utility.get_block_prefix" title="neural_compressor.torch.algorithms.weight_only.utility.get_block_prefix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_block_prefix</span></code></a>(model)</p></td>
+<td><p>Get prefix and number of blocks.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.utility.replace_forward" title="neural_compressor.torch.algorithms.weight_only.utility.replace_forward"><code class="xref py py-obj docutils literal notranslate"><span class="pre">replace_forward</span></code></a>(model)</p></td>
+<td><p>Replace forward to get the input args and kwargs of first block for AWQ algorithm.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.utility.recover_forward" title="neural_compressor.torch.algorithms.weight_only.utility.recover_forward"><code class="xref py py-obj docutils literal notranslate"><span class="pre">recover_forward</span></code></a>(model)</p></td>
+<td><p>Recover model and block forward for AWQ algorithm.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.weight_only.utility.get_module_input_output" title="neural_compressor.torch.algorithms.weight_only.utility.get_module_input_output"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_module_input_output</span></code></a>(model[, module_hook_config, ...])</p></td>
+<td><p>A help function to get input and output tensor of modules in module_name_list.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.utility.quantize_4bit">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.utility.</span></span><span class="sig-name descname"><span class="pre">quantize_4bit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'nf4'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_int</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/weight_only/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.utility.quantize_4bit" title="Link to this definition"></a></dt>
+<dd><p>Quantize tensor to NF4/FP4 data type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tensor</strong> – input tensor</p></li>
+<li><p><strong>quantile</strong> (<em>float</em><em>, </em><em>optional</em>) – percentile of clip. Defaults to 1.0.</p></li>
+<li><p><strong>dtype</strong> (<em>str</em><em>, </em><em>optional</em>) – data type. Defaults to ‘nf4’.</p></li>
+<li><p><strong>return_int</strong> (<em>bool</em><em>, </em><em>optional</em>) – whether return int data. Defaults to False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>fake quantized tensor</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>q_tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.utility.qdq_weight_asym">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.utility.</span></span><span class="sig-name descname"><span class="pre">qdq_weight_asym</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weight</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_int</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/weight_only/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.utility.qdq_weight_asym" title="Link to this definition"></a></dt>
+<dd><p>Quant and dequant tensor with asym schema.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>weight</strong> – input weight</p></li>
+<li><p><strong>bits</strong> (<em>int</em><em>, </em><em>optional</em>) – bits. Defaults to 4.</p></li>
+<li><p><strong>quantile</strong> (<em>float</em><em>, </em><em>optional</em>) – percentile of clip. Defaults to 1.0.</p></li>
+<li><p><strong>return_int</strong> (<em>bool</em><em>, </em><em>optional</em>) – Choose return fp32 or int8/uint8 data.
+Defaults to False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>qdq weight</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>output</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.utility.qdq_weight_sym">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.utility.</span></span><span class="sig-name descname"><span class="pre">qdq_weight_sym</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weight</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_int</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">full_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/weight_only/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.utility.qdq_weight_sym" title="Link to this definition"></a></dt>
+<dd><p>Quant and dequant tensor with sym schema.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>weight</strong> – input weight</p></li>
+<li><p><strong>bits</strong> (<em>int</em><em>, </em><em>optional</em>) – bits. Defaults to 4.</p></li>
+<li><p><strong>quantile</strong> (<em>float</em><em>, </em><em>optional</em>) – percentile of clip. Defaults to 1.0.</p></li>
+<li><p><strong>return_int</strong> (<em>bool</em><em>, </em><em>optional</em>) – Choose return fp32 or int8/uint8 data.
+Defaults to False.</p></li>
+<li><p><strong>full_range</strong> (<em>bool</em><em>, </em><em>optional</em>) – <p>Choose sym range whether use -2**(bits-1).
+For example: 4 bit</p>
+<blockquote>
+<div><p>scale = amax / 8 if full_range else amax / 7
+If True, scale = -scale if abs(min)&gt; abs(max) else scale
+Defaults to False.</p>
+</div></blockquote>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>qdq weight</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>output</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.utility.qdq_weight_actor">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.utility.</span></span><span class="sig-name descname"><span class="pre">qdq_weight_actor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weight</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'int'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_int</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">full_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/weight_only/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.utility.qdq_weight_actor" title="Link to this definition"></a></dt>
+<dd><p>Quant and dequant tensor per channel. It is an in-place op.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>weight</strong> – input weight</p></li>
+<li><p><strong>bits</strong> (<em>int</em><em>, </em><em>optional</em>) – bits. Defaults to 4.</p></li>
+<li><p><strong>quantile</strong> (<em>float</em><em>, </em><em>optional</em>) – percentile of clip. Defaults to 1.0.</p></li>
+<li><p><strong>dtype</strong> (<em>str</em><em>, </em><em>optional</em>) – select from int, nf4, fp4. Defaults to int.</p></li>
+<li><p><strong>return_int</strong> (<em>bool</em><em>, </em><em>optional</em>) – Choose return fp32 or int8/uint8 data.
+Defaults to False.</p></li>
+<li><p><strong>full_range</strong> (<em>bool</em><em>, </em><em>optional</em>) – Choose sym range whether use -2**(bits-1).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>qdq weight</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>output</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.utility.quant_tensor">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.utility.</span></span><span class="sig-name descname"><span class="pre">quant_tensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weight</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'asym'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'int'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_int</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">full_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/weight_only/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.utility.quant_tensor" title="Link to this definition"></a></dt>
+<dd><p>Quant and dequant tensor with group size. It’s an in-place function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>weight</strong> – input weight</p></li>
+<li><p><strong>bits</strong> (<em>int</em><em>, </em><em>optional</em>) – bits. Defaults to 4.</p></li>
+<li><p><strong>group_size</strong> (<em>int</em><em>, </em><em>optional</em>) – how many elements share one scale/zp. Defaults to -1.</p></li>
+<li><p><strong>scheme</strong> (<em>str</em><em>, </em><em>optional</em>) – sym or asym. Defaults to “asym”.</p></li>
+<li><p><strong>quantile</strong> (<em>float</em><em>, </em><em>optional</em>) – percentile of clip. Defaults to 1.0.</p></li>
+<li><p><strong>dtype</strong> (<em>str</em><em>, </em><em>optional</em>) – select from int, nf4, fp4. Defaults to int.</p></li>
+<li><p><strong>return_int</strong> (<em>bool</em><em>, </em><em>optional</em>) – Choose return fp32 or int8/uint8 data.
+Defaults to False.</p></li>
+<li><p><strong>full_range</strong> (<em>bool</em><em>, </em><em>optional</em>) – Choose sym range whether use -2**(bits-1).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>qdq weight.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>output</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.utility.search_clip">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.utility.</span></span><span class="sig-name descname"><span class="pre">search_clip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'asym'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'int'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_full_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/weight_only/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.utility.search_clip" title="Link to this definition"></a></dt>
+<dd><p>Search best clip range of each linear in current block. It’s not an in-place function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>m</strong> (<em>torch.nn.Module</em>) – torch module.</p></li>
+<li><p><strong>bits</strong> (<em>int</em><em>, </em><em>optional</em>) – num bits.</p></li>
+<li><p><strong>group_size</strong> (<em>int</em><em>, </em><em>optional</em>) – how many elements share one scale/zp.</p></li>
+<li><p><strong>scheme</strong> (<em>str</em><em>, </em><em>optional</em>) – sym or asym.</p></li>
+<li><p><strong>dtype</strong> (<em>str</em><em>, </em><em>optional</em>) – select from int, nf4, fp4. Defaults to int.</p></li>
+<li><p><strong>enable_full_range</strong> (<em>bool</em><em>, </em><em>optional</em>) – Choose sym range whether use -2**(bits-1).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>best percentile of clip</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>best_clip_ratio (float)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.utility.quant_weight_w_scale">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.utility.</span></span><span class="sig-name descname"><span class="pre">quant_weight_w_scale</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weight</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'int'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/weight_only/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.utility.quant_weight_w_scale" title="Link to this definition"></a></dt>
+<dd><p>Quant and dequant tensor with group size. It’s an in-place function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>weight</strong> – input weight</p></li>
+<li><p><strong>scale</strong> – scale</p></li>
+<li><p><strong>zp</strong> – zero point</p></li>
+<li><p><strong>group_size</strong> (<em>int</em><em>, </em><em>optional</em>) – how many elements share one scale/zp. Defaults to -1.</p></li>
+<li><p><strong>dtype</strong> – data type, for NF4 FP4</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>int weight.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>output</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.utility.model_forward">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.utility.</span></span><span class="sig-name descname"><span class="pre">model_forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/weight_only/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.utility.model_forward" title="Link to this definition"></a></dt>
+<dd><p>The model forward function.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.utility.forward_wrapper">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.utility.</span></span><span class="sig-name descname"><span class="pre">forward_wrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.device('cpu')</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/weight_only/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.utility.forward_wrapper" title="Link to this definition"></a></dt>
+<dd><p>The forward wrapper.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.utility.move_input_to_device">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.utility.</span></span><span class="sig-name descname"><span class="pre">move_input_to_device</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.device('cpu')</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/weight_only/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.utility.move_input_to_device" title="Link to this definition"></a></dt>
+<dd><p>Move input to the spevific device.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.utility.set_module">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.utility.</span></span><span class="sig-name descname"><span class="pre">set_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_module</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/weight_only/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.utility.set_module" title="Link to this definition"></a></dt>
+<dd><p>Set new module into model by key name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>torch.nn.Module</em>) – original model</p></li>
+<li><p><strong>key</strong> (<em>str</em>) – module name to be replaced</p></li>
+<li><p><strong>new_module</strong> (<em>torch.nn.Module</em>) – new module to be inserted</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.utility.fetch_module">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.utility.</span></span><span class="sig-name descname"><span class="pre">fetch_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/weight_only/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.utility.fetch_module" title="Link to this definition"></a></dt>
+<dd><p>Get module with a given op name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>object</em>) – the input model.</p></li>
+<li><p><strong>op_name</strong> (<em>str</em>) – name of op.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>module (object).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.utility.get_absorb_layers">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.utility.</span></span><span class="sig-name descname"><span class="pre">get_absorb_layers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supported_layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['Linear']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/weight_only/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.utility.get_absorb_layers" title="Link to this definition"></a></dt>
+<dd><p>Get absorb_to_layer and no_absorb_layer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>torch.nn.Module</em>) – input model</p></li>
+<li><p><strong>example_inputs</strong> – example_inputs</p></li>
+<li><p><strong>supported_layers</strong> (<em>list</em><em>, </em><em>optional</em>) – supported_layers. Defaults to [‘Linear’].</p></li>
+<li><p><strong>folding</strong> (<em>bool</em><em>, </em><em>optional</em>) – whether allow self-absorption. Defaults to False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict of absorb_to_layer. eg. {absorb, [absorbed_1, xx]}
+no_absorb_layers: list of no_absorb_layers</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>absorb_to_layer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.utility.get_parent">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.utility.</span></span><span class="sig-name descname"><span class="pre">get_parent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_parents</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/weight_only/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.utility.get_parent" title="Link to this definition"></a></dt>
+<dd><p>Get parent of node.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.utility.get_module">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.utility.</span></span><span class="sig-name descname"><span class="pre">get_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/weight_only/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.utility.get_module" title="Link to this definition"></a></dt>
+<dd><p>Get module from model by key name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>torch.nn.Module</em>) – original model</p></li>
+<li><p><strong>key</strong> (<em>str</em>) – module name to be replaced</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.utility.GraphTrace">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.utility.</span></span><span class="sig-name descname"><span class="pre">GraphTrace</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/weight_only/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.utility.GraphTrace" title="Link to this definition"></a></dt>
+<dd><p>GraphTrace.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.utility.get_block_prefix">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.utility.</span></span><span class="sig-name descname"><span class="pre">get_block_prefix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/weight_only/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.utility.get_block_prefix" title="Link to this definition"></a></dt>
+<dd><p>Get prefix and number of blocks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> (<em>torch.nn.Module</em>) – input model</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>block_list name in model
+block_num(int): number of block in block_list</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>block_prefix(str)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.utility.replace_forward">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.utility.</span></span><span class="sig-name descname"><span class="pre">replace_forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/weight_only/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.utility.replace_forward" title="Link to this definition"></a></dt>
+<dd><p>Replace forward to get the input args and kwargs of first block for AWQ algorithm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> (<em>torch.nn.Module</em>) – input model.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – to avoid inference of rest parts in model.</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>model with replaced forward.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>torch.nn.Module</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.utility.recover_forward">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.utility.</span></span><span class="sig-name descname"><span class="pre">recover_forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/weight_only/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.utility.recover_forward" title="Link to this definition"></a></dt>
+<dd><p>Recover model and block forward for AWQ algorithm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> (<em>torch.nn.Module</em>) – input model.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>model with recovered forward.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.nn.Module</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.weight_only.utility.get_module_input_output">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.weight_only.utility.</span></span><span class="sig-name descname"><span class="pre">get_module_input_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module_hook_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calib_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/weight_only/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.weight_only.utility.get_module_input_output" title="Link to this definition"></a></dt>
+<dd><p>A help function to get input and output tensor of modules in module_name_list.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> – torch model.</p></li>
+<li><p><strong>module_hook_config</strong> (<em>dict</em><em>, </em><em>optional</em>) – <p>required module name for input/output. Defaults to {}.
+For example:</p>
+<blockquote>
+<div><dl class="simple">
+<dt>module_hook_config = {</dt><dd><p>‘fc1’: [‘output’],
+‘fc2’: [‘input’, ‘output’]</p>
+</dd>
+</dl>
+<p>}</p>
+</div></blockquote>
+</p></li>
+<li><p><strong>dataloader</strong> – dataloader for model input.</p></li>
+<li><p><strong>iters</strong> – iterations for inference.</p></li>
+<li><p><strong>calib_func</strong> – a custom inference function to replace dataloader and iters.</p></li>
+<li><p><strong>input_func</strong> – preprocess input for less memory usage</p></li>
+<li><p><strong>output_func</strong> – preprocess output for less memory usage</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl>
+<dt>recorded input_values, output_values.</dt><dd><dl>
+<dt>for example:</dt><dd><dl class="simple">
+<dt>{‘fc1’:</dt><dd><p>{‘input’: [], ‘output’: []},</p>
+</dd>
+</dl>
+<p>}</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>total_values</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fef7d3e6f10> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

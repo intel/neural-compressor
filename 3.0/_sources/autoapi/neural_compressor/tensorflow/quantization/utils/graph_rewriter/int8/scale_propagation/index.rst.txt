@@ -1,0 +1,29 @@
+neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.scale_propagation
+=====================================================================================
+
+.. py:module:: neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.scale_propagation
+
+.. autoapi-nested-parse::
+
+   Scale propagation Graph Rewriter.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.scale_propagation.ScaleProPagationTransformer
+
+
+Module Contents
+---------------
+
+.. py:class:: ScaleProPagationTransformer(model, direction='Up')
+
+
+
+   Scale propagation converter.
+
+

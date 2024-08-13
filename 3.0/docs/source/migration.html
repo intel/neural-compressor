@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Code Migration from Intel Neural Compressor 1.X to Intel Neural Compressor 2.X &mdash; Intel® Neural Compressor 3.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">3.0▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Code Migration from Intel Neural Compressor 1.X to Intel Neural Compressor 2.X</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/migration.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="code-migration-from-intel-neural-compressor-1-x-to-intel-neural-compressor-2-x">
+<h1>Code Migration from Intel Neural Compressor 1.X to Intel Neural Compressor 2.X<a class="headerlink" href="#code-migration-from-intel-neural-compressor-1-x-to-intel-neural-compressor-2-x" title="Link to this heading"></a></h1>
+<p>Intel Neural Compressor is a powerful open-source Python library that runs on Intel CPUs and GPUs, which delivers unified interfaces across multiple deep-learning frameworks for popular network compression technologies such as quantization, pruning, and knowledge distillation. We conduct several changes to our old APIs based on Intel Neural Compressor 1.X to make it more user-friendly and convenient for using. Just some simple steps could upgrade your code from Intel Neural Compressor 1.X to Intel Neural Compressor 2.X.</p>
+<blockquote>
+<div><p>It should be noted that we will stop to support Intel Neural Compressor 1.X in the future.</p>
+</div></blockquote>
+<ol class="simple">
+<li><p><a class="reference external" href="#model-quantization">Quantization</a></p></li>
+<li><p><a class="reference external" href="#pruning">Pruning</a></p></li>
+<li><p><a class="reference external" href="#distillation">Distillation</a></p></li>
+<li><p><a class="reference external" href="#mix-precision">Mix-Precision</a></p></li>
+<li><p><a class="reference external" href="#orchestration">Orchestration</a></p></li>
+<li><p><a class="reference external" href="#benchmark">Benchmark</a></p></li>
+<li><p><a class="reference external" href="#examples">Examples</a></p></li>
+</ol>
+<section id="model-quantization">
+<h2>Model Quantization<a class="headerlink" href="#model-quantization" title="Link to this heading"></a></h2>
+<p>Model Quantization is a very popular deep learning model optimization technique designed for improving the speed of model inference, which is a fundamental function in Intel Neural Compressor. There are two model quantization methods, Quantization Aware Training (QAT) and Post-training Quantization (PTQ). Our tool has provided comprehensive supports for these two kinds of model quantization methods in both Intel Neural Compressor 1.X and Intel Neural Compressor 2.X.</p>
+<section id="post-training-quantization">
+<h3>Post-training Quantization<a class="headerlink" href="#post-training-quantization" title="Link to this heading"></a></h3>
+<p>Post-training Quantization is the most easy way to quantize the model from FP32 into INT8 format offline.</p>
+<p><strong>Quantization with Intel Neural Compressor 1.X</strong></p>
+<p>In Intel Neural Compressor 1.X, we resort to a <code class="docutils literal notranslate"><span class="pre">conf.yaml</span></code> to inject the config of the quantization settings.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># main.py</span>
+
+<span class="c1"># Basic settings of the model and the experimental settings for GLUE tasks.</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelForSequenceClassification</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name_or_path</span><span class="p">)</span>
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name_or_path</span><span class="p">)</span>
+<span class="n">val_dataset</span> <span class="o">=</span> <span class="o">...</span>
+<span class="n">val_dataloader</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Dataloader</span><span class="p">(</span>
+    <span class="n">val_dataset</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span>
+    <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">num_workers</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">workers</span><span class="p">,</span>
+    <span class="n">ping_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">eval_func</span><span class="p">(</span><span class="n">model</span><span class="p">):</span> <span class="o">...</span>
+
+
+<span class="c1"># Quantization code</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Quantization</span><span class="p">,</span> <span class="n">common</span>
+
+<span class="n">calib_dataloader</span> <span class="o">=</span> <span class="n">eval_dataloader</span>
+<span class="n">quantizer</span> <span class="o">=</span> <span class="n">Quantization</span><span class="p">(</span><span class="s2">&quot;conf.yaml&quot;</span><span class="p">)</span>
+<span class="n">quantizer</span><span class="o">.</span><span class="n">eval_func</span> <span class="o">=</span> <span class="n">eval_func</span>
+<span class="n">quantizer</span><span class="o">.</span><span class="n">calib_dataloader</span> <span class="o">=</span> <span class="n">calib_dataloader</span>
+<span class="n">quantizer</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">Model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">quantizer</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+
+<span class="kn">from</span> <span class="nn">neural_compressor.utils.load_huggingface</span> <span class="kn">import</span> <span class="n">save_for_huggingface_upstream</span>
+
+<span class="n">save_for_huggingface_upstream</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We formulate the <code class="docutils literal notranslate"><span class="pre">conf.yaml</span></code> as in (https://github.com/intel/neural-compressor/blob/master/neural_compressor/template/ptq.yaml)</p>
+<p><strong>Quantization with Intel Neural Compressor 2.X</strong></p>
+<p>In Intel Neural Compressor 2.X, we integrate the <code class="docutils literal notranslate"><span class="pre">conf.yaml</span></code> into <code class="docutils literal notranslate"><span class="pre">main.py</span></code> to save the user’s effort to write the <code class="docutils literal notranslate"><span class="pre">conf.yaml</span></code>, that most of config information could be set via the <code class="docutils literal notranslate"><span class="pre">PostTrainingQuantConfig</span></code>. The corresponding information should be written as follows (Note: the corresponding names of the parameters in 1.X yaml file are attached in the comment.),</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span><span class="p">,</span> <span class="n">TuningCriterion</span><span class="p">,</span> <span class="n">AccuracyCriterion</span>
+
+<span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
+    <span class="c1">## model: this parameter does not need to specially be defined;</span>
+    <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;default&quot;</span><span class="p">,</span>  <span class="c1"># framework: set as &quot;default&quot; when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as &quot;ipex&quot; when framework was pytorch_ipex, mxnet is currently unsupported;</span>
+    <span class="n">inputs</span><span class="o">=</span><span class="s2">&quot;image_tensor&quot;</span><span class="p">,</span>  <span class="c1"># input: same as in the conf.yaml;</span>
+    <span class="n">outputs</span><span class="o">=</span><span class="s2">&quot;num_detections,detection_boxes,detection_scores,detection_classes&quot;</span><span class="p">,</span>  <span class="c1"># output: same as in the conf.yaml;</span>
+    <span class="n">device</span><span class="o">=</span><span class="s2">&quot;cpu&quot;</span><span class="p">,</span>  <span class="c1"># device: same as in the conf.yaml;</span>
+    <span class="n">approach</span><span class="o">=</span><span class="s2">&quot;static&quot;</span><span class="p">,</span>  <span class="c1"># approach: set as &quot;static&quot; when approach was &quot;post_training_static_quant&quot;. Set as &quot;dynamic&quot; when approach was &quot;post_training_dynamic_quant&quot;;</span>
+    <span class="c1">## recipes: this parameter does not need to specially be defined;</span>
+    <span class="n">calibration_sampling_size</span><span class="o">=</span><span class="p">[</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">2000</span><span class="p">],</span>  <span class="c1"># sampling_size: same as in the conf.yaml;</span>
+    <span class="c1">## transform: this parameter does not need to specially be defined;</span>
+    <span class="c1">## model_wise: this parameter does not need to specially be defined;</span>
+    <span class="n">op_name_dict</span><span class="o">=</span><span class="n">op_dict</span><span class="p">,</span>  <span class="c1"># op_wise: same as in the conf.yaml;</span>
+    <span class="c1">## evaluation: these parameters do not need to specially be defined;</span>
+    <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;basic&quot;</span><span class="p">,</span>  <span class="c1"># tuning.strategy.name: same as in the conf.yaml;</span>
+    <span class="c1">## tuning.strategy.sigopt_api_token, tuning.strategy.sigopt_project_id and tuning.strategy.sigopt_experiment_name do not need to specially defined;</span>
+    <span class="n">objective</span><span class="o">=</span><span class="s2">&quot;performance&quot;</span><span class="p">,</span>  <span class="c1"># tuning.objective: same as in the conf.yaml;</span>
+    <span class="n">performance_only</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># tuning.performance_only: same as in the conf.yaml;</span>
+    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">tuning_criterion</span><span class="p">,</span>
+    <span class="n">accuracy_criterion</span><span class="o">=</span><span class="n">accuracy_criterion</span><span class="p">,</span>
+    <span class="c1">## tuning.random_seed and tuning.tensorboard: these parameters do not need to specially be defined;</span>
+<span class="p">)</span>
+
+<span class="n">accuracy_criterion</span> <span class="o">=</span> <span class="n">AccuracyCriterion</span><span class="p">(</span>
+    <span class="n">tolerable_loss</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>  <span class="c1"># relative: same as in the conf.yaml;</span>
+<span class="p">)</span>
+<span class="n">tuning_criterion</span> <span class="o">=</span> <span class="n">TuningCriterion</span><span class="p">(</span>
+    <span class="n">timeout</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>  <span class="c1"># timeout: same as in the conf.yaml;</span>
+    <span class="n">max_trials</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>  <span class="c1"># max_trials: same as in the conf.yaml;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Following is a simple demo about how to quantize the model with PTQ in Intel Neural Compressor 2.X.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Basic settings of the model and the experimental settings for GLUE tasks.</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelForSequenceClassification</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name_or_path</span><span class="p">)</span>
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name_or_path</span><span class="p">)</span>
+<span class="n">val_dataset</span> <span class="o">=</span> <span class="o">...</span>
+<span class="n">val_dataloader</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Dataloader</span><span class="p">(</span>
+    <span class="n">val_dataset</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span>
+    <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">num_workers</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">workers</span><span class="p">,</span>
+    <span class="n">ping_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">eval_func</span><span class="p">(</span><span class="n">model</span><span class="p">):</span> <span class="o">...</span>
+
+
+<span class="c1"># Quantization code</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.quantization</span> <span class="kn">import</span> <span class="n">fit</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span><span class="p">,</span> <span class="n">TuningCriterion</span>
+
+<span class="n">tuning_criterion</span> <span class="o">=</span> <span class="n">TuningCriterion</span><span class="p">(</span><span class="n">max_trials</span><span class="o">=</span><span class="mi">600</span><span class="p">)</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">approach</span><span class="o">=</span><span class="s2">&quot;static&quot;</span><span class="p">,</span> <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">tuning_criterion</span><span class="p">)</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">conf</span><span class="o">=</span><span class="n">conf</span><span class="p">,</span> <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">eval_dataloader</span><span class="p">,</span> <span class="n">eval_func</span><span class="o">=</span><span class="n">eval_func</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.utils.load_huggingface</span> <span class="kn">import</span> <span class="n">save_for_huggingface_upstream</span>
+
+<span class="n">save_for_huggingface_upstream</span><span class="p">(</span><span class="n">q_model</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">training_args</span><span class="o">.</span><span class="n">output_dir</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="quantization-aware-training">
+<h3>Quantization Aware Training<a class="headerlink" href="#quantization-aware-training" title="Link to this heading"></a></h3>
+<p>Quantization aware training emulates inference-time quantization in the forward pass of the training process by inserting <code class="docutils literal notranslate"><span class="pre">fake</span> <span class="pre">quant</span></code> ops before those quantizable ops. With <code class="docutils literal notranslate"><span class="pre">quantization</span> <span class="pre">aware</span> <span class="pre">training</span></code>, all weights and activations are <code class="docutils literal notranslate"><span class="pre">fake</span> <span class="pre">quantized</span></code> during both the forward and backward passes of training.</p>
+<p><strong>Quantization with Intel Neural Compressor 1.X</strong></p>
+<p>In Intel Neural Compressor 1.X, the difference between the QAT and PTQ is that we need to define the <code class="docutils literal notranslate"><span class="pre">train_func</span></code> in QAT to emulate the training process. The code is compiled as follows,</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># main.py</span>
+
+<span class="c1"># Basic settings of the model and the experimental settings for GLUE tasks.</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelForSequenceClassification</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name_or_path</span><span class="p">)</span>
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name_or_path</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">eval_func</span><span class="p">(</span><span class="n">model</span><span class="p">):</span> <span class="o">...</span>
+
+
+<span class="k">def</span> <span class="nf">train_func</span><span class="p">(</span><span class="n">model</span><span class="p">):</span> <span class="o">...</span>
+
+
+<span class="n">trainer</span> <span class="o">=</span> <span class="n">Trainer</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+
+<span class="c1"># Quantization code</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Quantization</span><span class="p">,</span> <span class="n">common</span>
+
+<span class="n">quantizer</span> <span class="o">=</span> <span class="n">Quantization</span><span class="p">(</span><span class="s2">&quot;conf.yaml&quot;</span><span class="p">)</span>
+<span class="n">quantizer</span><span class="o">.</span><span class="n">eval_func</span> <span class="o">=</span> <span class="n">eval_func</span>
+<span class="n">quantizer</span><span class="o">.</span><span class="n">q_func</span> <span class="o">=</span> <span class="n">train_func</span>
+<span class="n">quantizer</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">Model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">quantizer</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+
+<span class="kn">from</span> <span class="nn">neural_compressor.utils.load_huggingface</span> <span class="kn">import</span> <span class="n">save_for_huggingface_upstream</span>
+
+<span class="n">save_for_huggingface_upstream</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Similar to PTQ, it requires a <code class="docutils literal notranslate"><span class="pre">conf.yaml</span></code> (https://github.com/intel/neural-compressor/blob/master/neural_compressor/template/qat.yaml) to define the quantization configuration in Intel Neural Compressor 1.X.</p>
+<p><strong>Quantization with Intel Neural Compressor 2.X</strong></p>
+<p>In Intel Neural Compressor 2.X, this <code class="docutils literal notranslate"><span class="pre">conf.yaml</span></code> is set via the <code class="docutils literal notranslate"><span class="pre">QuantizationAwareTrainingConfig</span></code>. The corresponding information should be written as follows (Note: the corresponding names of the parameters in 1.X yaml file are attached in the comment.)，</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">QuantizationAwareTrainingConfig</span>
+
+<span class="n">QuantizationAwareTrainingConfig</span><span class="p">(</span>
+    <span class="c1">## model: this parameter does not need to specially be defined;</span>
+    <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;default&quot;</span><span class="p">,</span>  <span class="c1"># framework: set as &quot;default&quot; when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as &quot;ipex&quot; when framework was pytorch_ipex, mxnet is currently unsupported;</span>
+    <span class="n">inputs</span><span class="o">=</span><span class="s2">&quot;image_tensor&quot;</span><span class="p">,</span>  <span class="c1"># input: same as in the conf.yaml;</span>
+    <span class="n">outputs</span><span class="o">=</span><span class="s2">&quot;num_detections,detection_boxes,detection_scores,detection_classes&quot;</span><span class="p">,</span>  <span class="c1"># output: same as in the conf.yaml;</span>
+    <span class="n">device</span><span class="o">=</span><span class="s2">&quot;cpu&quot;</span><span class="p">,</span>  <span class="c1"># device: same as in the conf.yaml;</span>
+    <span class="c1">## approach: this parameter does not need to specially be defined;</span>
+    <span class="c1">## train: these parameters do not need to specially be defined;</span>
+    <span class="c1">## model_wise: this parameter does not need to specially be defined;</span>
+    <span class="n">op_name_dict</span><span class="o">=</span><span class="n">op_dict</span><span class="p">,</span>  <span class="c1"># op_wise: same as in the conf.yaml;</span>
+    <span class="c1">## evaluation: these parameters do not need to specially be defined;</span>
+    <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;basic&quot;</span><span class="p">,</span>  <span class="c1"># tuning.strategy.name: same as in the conf.yaml;</span>
+    <span class="c1">## tuning.strategy.sigopt_api_token, tuning.strategy.sigopt_project_id and tuning.strategy.sigopt_experiment_name do not need to specially defined;</span>
+    <span class="n">relative</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>  <span class="c1"># relative: same as in the conf.yaml;</span>
+    <span class="n">timeout</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>  <span class="c1"># timeout: same as in the conf.yaml;</span>
+    <span class="n">max_trials</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>  <span class="c1"># max_trials: same as in the conf.yaml;</span>
+    <span class="n">objective</span><span class="o">=</span><span class="s2">&quot;performance&quot;</span><span class="p">,</span>  <span class="c1"># tuning.objective: same as in the conf.yaml;</span>
+    <span class="n">performance_only</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># tuning.performance_only: same as in the conf.yaml;</span>
+    <span class="c1">## tuning.random_seed and tuning.tensorboard: these parameters do not need to specially be defined;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>In Intel Neural Compressor 2.X, we introduce a <code class="docutils literal notranslate"><span class="pre">compression</span> <span class="pre">manager</span></code>  to control the training process. It requires to insert a pair of hook <code class="docutils literal notranslate"><span class="pre">callbacks.on_train_begin</span></code> and <code class="docutils literal notranslate"><span class="pre">callbacks.on_train_end</span></code> at the begin of the training and the end of the training. Thus, the quantization code is updated as:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># main.py</span>
+
+<span class="c1"># Basic settings of the model and the experimental settings for GLUE tasks.</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelForSequenceClassification</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name_or_path</span><span class="p">)</span>
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name_or_path</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">eval_func</span><span class="p">(</span><span class="n">model</span><span class="p">):</span> <span class="o">...</span>
+
+
+<span class="k">def</span> <span class="nf">train_func</span><span class="p">(</span><span class="n">model</span><span class="p">):</span> <span class="o">...</span>
+
+
+<span class="n">trainer</span> <span class="o">=</span> <span class="n">Trainer</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+
+<span class="c1"># Quantization code</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.training</span> <span class="kn">import</span> <span class="n">prepare_compression</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">QuantizationAwareTrainingConfig</span>
+
+<span class="n">conf</span> <span class="o">=</span> <span class="n">QuantizationAwareTrainingConfig</span><span class="p">()</span>
+<span class="n">compression_manager</span> <span class="o">=</span> <span class="n">prepare_compression</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">conf</span><span class="p">)</span>
+<span class="n">compression_manager</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">on_train_begin</span><span class="p">()</span>
+<span class="n">trainer</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+<span class="n">compression_manager</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">on_train_end</span><span class="p">()</span>
+
+<span class="kn">from</span> <span class="nn">neural_compressor.utils.load_huggingface</span> <span class="kn">import</span> <span class="n">save_for_huggingface_upstream</span>
+
+<span class="n">save_for_huggingface_upstream</span><span class="p">(</span><span class="n">compression_manager</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">training_args</span><span class="o">.</span><span class="n">output_dir</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="pruning">
+<h2>Pruning<a class="headerlink" href="#pruning" title="Link to this heading"></a></h2>
+<p>Neural network pruning (briefly known as pruning or sparsity) is one of the most promising model compression techniques. It removes the least important parameters in the network and achieves compact architectures with minimal accuracy drop and maximal inference acceleration.</p>
+<p><strong>Pruning with Intel Neural Compressor 1.X</strong></p>
+<p>In Intel Neural Compressor 1.X, the Pruning config is still defined by an extra <code class="docutils literal notranslate"><span class="pre">conf.yaml</span></code>. The pruning code should be written as:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Pruning</span><span class="p">,</span> <span class="n">common</span>
+
+<span class="n">prune</span> <span class="o">=</span> <span class="n">Pruning</span><span class="p">(</span><span class="s2">&quot;conf.yaml&quot;</span><span class="p">)</span>
+<span class="n">prune</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+<span class="n">prune</span><span class="o">.</span><span class="n">train_func</span> <span class="o">=</span> <span class="n">pruning_func</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prune</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">conf.yaml</span></code> is written as (https://github.com/intel/neural-compressor/blob/master/neural_compressor/template/pruning.yaml).</p>
+<p>The pruning code requires the user to insert a series of pre-defined hooks in the training function to activate the pruning with Intel Neural Compressor. The pre-defined hooks are listed as follows,</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">on_epoch_begin</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span> <span class="p">:</span> <span class="n">Hook</span> <span class="n">executed</span> <span class="n">at</span> <span class="n">each</span> <span class="n">epoch</span> <span class="n">beginning</span>
+<span class="n">on_step_begin</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span> <span class="p">:</span> <span class="n">Hook</span> <span class="n">executed</span> <span class="n">at</span> <span class="n">each</span> <span class="n">batch</span> <span class="n">beginning</span>
+<span class="n">on_step_end</span><span class="p">()</span> <span class="p">:</span> <span class="n">Hook</span> <span class="n">executed</span> <span class="n">at</span> <span class="n">each</span> <span class="n">batch</span> <span class="n">end</span>
+<span class="n">on_epoch_end</span><span class="p">()</span> <span class="p">:</span> <span class="n">Hook</span> <span class="n">executed</span> <span class="n">at</span> <span class="n">each</span> <span class="n">epoch</span> <span class="n">end</span>
+<span class="n">on_before_optimizer_step</span><span class="p">()</span> <span class="p">:</span> <span class="n">Hook</span> <span class="n">executed</span> <span class="n">after</span> <span class="n">gradients</span> <span class="n">calculated</span> <span class="ow">and</span> <span class="n">before</span> <span class="n">backward</span>
+</pre></div>
+</div>
+<p>Following is an example to show how we use the hooks in the training function,</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">pruning_func</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">num_train_epochs</span><span class="p">)):</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+        <span class="n">prune</span><span class="o">.</span><span class="n">on_epoch_begin</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">step</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">train_dataloader</span><span class="p">):</span>
+            <span class="n">prune</span><span class="o">.</span><span class="n">on_step_begin</span><span class="p">(</span><span class="n">step</span><span class="p">)</span>
+            <span class="n">batch</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">device</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">)</span>
+            <span class="n">inputs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;input_ids&quot;</span><span class="p">:</span> <span class="n">batch</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;attention_mask&quot;</span><span class="p">:</span> <span class="n">batch</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;labels&quot;</span><span class="p">:</span> <span class="n">batch</span><span class="p">[</span><span class="mi">3</span><span class="p">]}</span>
+            <span class="c1"># inputs[&#39;token_type_ids&#39;] = batch[2]</span>
+            <span class="n">outputs</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="o">**</span><span class="n">inputs</span><span class="p">)</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># model outputs are always tuple in transformers (see doc)</span>
+
+            <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">n_gpu</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">loss</span> <span class="o">=</span> <span class="n">loss</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>  <span class="c1"># mean() to average on multi-gpu parallel training</span>
+            <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">gradient_accumulation_steps</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">loss</span> <span class="o">=</span> <span class="n">loss</span> <span class="o">/</span> <span class="n">args</span><span class="o">.</span><span class="n">gradient_accumulation_steps</span>
+
+            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">clip_grad_norm_</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">args</span><span class="o">.</span><span class="n">max_grad_norm</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">step</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">args</span><span class="o">.</span><span class="n">gradient_accumulation_steps</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">prune</span><span class="o">.</span><span class="n">on_before_optimizer_step</span><span class="p">()</span>
+                <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+                <span class="n">scheduler</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>  <span class="c1"># Update learning rate schedule</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+
+            <span class="n">prune</span><span class="o">.</span><span class="n">on_step_end</span><span class="p">()</span>
+
+
+<span class="o">...</span>
+</pre></div>
+</div>
+<p><strong>Pruning with Intel Neural Compressor 2.X</strong></p>
+<p>In Intel Neural Compressor 2.X, the training process is activated by a <code class="docutils literal notranslate"><span class="pre">compression</span> <span class="pre">manager</span></code>. And the configuration information is included in the <code class="docutils literal notranslate"><span class="pre">WeightPruningConfig</span></code>. The corresponding config should be set via (Note: the corresponding names of the parameters in 1.X yaml file are attached in the comment.):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">WeightPruningConfig</span>
+
+<span class="n">WeightPruningConfig</span><span class="p">(</span>
+  <span class="c1">## model, device: these parameters do not need to specially be defined;</span>
+  <span class="n">start_step</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>             <span class="c1"># start_epoch: same as in the conf.yaml;</span>
+  <span class="n">end_step</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>              <span class="c1"># end_epoch: same as in the conf.yaml;</span>
+  <span class="n">pruning_frequency</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>      <span class="c1"># frequency: same as in the conf.yaml;        </span>
+  <span class="c1">## dataloader, criterion, optimizer: these parameters do not need to specially be defined;</span>
+  <span class="n">target_sparsity</span><span class="o">=</span><span class="mf">0.97</span><span class="p">,</span>      <span class="c1"># target_sparsity: same as in the conf.yaml;     </span>
+  <span class="n">pruning_configs</span><span class="p">:</span> <span class="p">[</span><span class="n">pruning_config</span><span class="p">]</span> <span class="c1"># Pruner: same as in the conf.yaml;           </span>
+  <span class="c1">## evaluation and tuning: these parameters do not need to specially be defined;</span>
+<span class="p">)</span>       
+</pre></div>
+</div>
+<p>We also need to replace the hooks in the training code. The newly defined hooks are included in <code class="docutils literal notranslate"><span class="pre">compression</span> <span class="pre">manager</span></code> and listed as follows,</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">on_train_begin</span><span class="p">()</span> <span class="p">:</span> <span class="n">Execute</span> <span class="n">at</span> <span class="n">the</span> <span class="n">beginning</span> <span class="n">of</span> <span class="n">training</span> <span class="n">phase</span><span class="o">.</span>
+<span class="n">on_epoch_begin</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span> <span class="p">:</span> <span class="n">Execute</span> <span class="n">at</span> <span class="n">the</span> <span class="n">beginning</span> <span class="n">of</span> <span class="n">each</span> <span class="n">epoch</span><span class="o">.</span>
+<span class="n">on_step_begin</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span> <span class="p">:</span> <span class="n">Execute</span> <span class="n">at</span> <span class="n">the</span> <span class="n">beginning</span> <span class="n">of</span> <span class="n">each</span> <span class="n">batch</span><span class="o">.</span>
+<span class="n">on_step_end</span><span class="p">()</span> <span class="p">:</span> <span class="n">Execute</span> <span class="n">at</span> <span class="n">the</span> <span class="n">end</span> <span class="n">of</span> <span class="n">each</span> <span class="n">batch</span><span class="o">.</span>
+<span class="n">on_epoch_end</span><span class="p">()</span> <span class="p">:</span> <span class="n">Execute</span> <span class="n">at</span> <span class="n">the</span> <span class="n">end</span> <span class="n">of</span> <span class="n">each</span> <span class="n">epoch</span><span class="o">.</span>
+<span class="n">on_before_optimizer_step</span><span class="p">()</span> <span class="p">:</span> <span class="n">Execute</span> <span class="n">before</span> <span class="n">optimization</span> <span class="n">step</span><span class="o">.</span>
+<span class="n">on_after_optimizer_step</span><span class="p">()</span> <span class="p">:</span> <span class="n">Execute</span> <span class="n">after</span> <span class="n">optimization</span> <span class="n">step</span><span class="o">.</span>
+<span class="n">on_train_end</span><span class="p">()</span> <span class="p">:</span> <span class="n">Execute</span> <span class="n">at</span> <span class="n">the</span> <span class="n">ending</span> <span class="n">of</span> <span class="n">training</span> <span class="n">phase</span><span class="o">.</span>
+</pre></div>
+</div>
+<p>The final Pruning code is updated as follows,</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="p">{</span>  <span class="c1">## pruner</span>
+    <span class="s2">&quot;target_sparsity&quot;</span><span class="p">:</span> <span class="mf">0.9</span><span class="p">,</span>  <span class="c1"># Target sparsity ratio of modules.</span>
+    <span class="s2">&quot;pruning_type&quot;</span><span class="p">:</span> <span class="s2">&quot;snip_momentum&quot;</span><span class="p">,</span>  <span class="c1"># Default pruning type.</span>
+    <span class="s2">&quot;pattern&quot;</span><span class="p">:</span> <span class="s2">&quot;4x1&quot;</span><span class="p">,</span>  <span class="c1"># Default pruning pattern.</span>
+    <span class="s2">&quot;op_names&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;layer1.*&quot;</span><span class="p">],</span>  <span class="c1"># A list of modules that would be pruned.</span>
+    <span class="s2">&quot;excluded_op_names&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;layer3.*&quot;</span><span class="p">],</span>  <span class="c1"># A list of modules that would not be pruned.</span>
+    <span class="s2">&quot;start_step&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>  <span class="c1"># Step at which to begin pruning.</span>
+    <span class="s2">&quot;end_step&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>  <span class="c1"># Step at which to end pruning.</span>
+    <span class="s2">&quot;pruning_scope&quot;</span><span class="p">:</span> <span class="s2">&quot;global&quot;</span><span class="p">,</span>  <span class="c1"># Default pruning scope.</span>
+    <span class="s2">&quot;pruning_frequency&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># Frequency of applying pruning.</span>
+    <span class="s2">&quot;min_sparsity_ratio_per_op&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>  <span class="c1"># Minimum sparsity ratio of each module.</span>
+    <span class="s2">&quot;max_sparsity_ratio_per_op&quot;</span><span class="p">:</span> <span class="mf">0.98</span><span class="p">,</span>  <span class="c1"># Maximum sparsity ratio of each module.</span>
+    <span class="s2">&quot;sparsity_decay_type&quot;</span><span class="p">:</span> <span class="s2">&quot;exp&quot;</span><span class="p">,</span>  <span class="c1"># Function applied to control pruning rate.</span>
+    <span class="s2">&quot;pruning_op_types&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Conv&quot;</span><span class="p">,</span> <span class="s2">&quot;Linear&quot;</span><span class="p">],</span>  <span class="c1"># Types of op that would be pruned.</span>
+<span class="p">}</span>
+
+<span class="kn">from</span> <span class="nn">neural_compressor.training</span> <span class="kn">import</span> <span class="n">prepare_compression</span><span class="p">,</span> <span class="n">WeightPruningConfig</span>
+
+<span class="c1">##setting configs</span>
+<span class="n">pruning_configs</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">&quot;op_names&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;layer1.*&quot;</span><span class="p">],</span> <span class="s2">&quot;pattern&quot;</span><span class="p">:</span> <span class="s2">&quot;4x1&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;op_names&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;layer2.*&quot;</span><span class="p">],</span> <span class="s2">&quot;pattern&quot;</span><span class="p">:</span> <span class="s2">&quot;1x1&quot;</span><span class="p">,</span> <span class="s2">&quot;target_sparsity&quot;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">},</span>
+<span class="p">]</span>
+<span class="n">configs</span> <span class="o">=</span> <span class="n">WeightPruningConfig</span><span class="p">(</span>
+    <span class="n">pruning_configs</span><span class="o">=</span><span class="n">pruning_configs</span><span class="p">,</span>
+    <span class="n">target_sparsity</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">target_sparsity</span><span class="p">,</span>
+    <span class="n">pattern</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">pattern</span><span class="p">,</span>
+    <span class="n">pruning_frequency</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">pruning_frequency</span><span class="p">,</span>
+    <span class="n">start_step</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">start_step</span><span class="p">,</span>
+    <span class="n">end_step</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">end_step</span><span class="p">,</span>
+    <span class="n">pruning_type</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">pruning_type</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">compression_manager</span> <span class="o">=</span> <span class="n">prepare_compression</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">confs</span><span class="o">=</span><span class="n">configs</span><span class="p">)</span>
+<span class="n">compression_manager</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">on_train_begin</span><span class="p">()</span>  <span class="c1">## insert hook</span>
+<span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_train_epochs</span><span class="p">):</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">step</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">train_dataloader</span><span class="p">):</span>
+        <span class="n">compression_manager</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">on_step_begin</span><span class="p">(</span><span class="n">step</span><span class="p">)</span>  <span class="c1">## insert hook</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="o">**</span><span class="n">batch</span><span class="p">)</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">outputs</span><span class="o">.</span><span class="n">loss</span>
+        <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+        <span class="n">compression_manager</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">on_before_optimizer_step</span><span class="p">()</span>  <span class="c1">## insert hook</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        <span class="n">compression_manager</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">on_after_optimizer_step</span><span class="p">()</span>  <span class="c1">## insert hook</span>
+        <span class="n">lr_scheduler</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+<span class="o">...</span>
+<span class="n">compression_manager</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">on_train_end</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="distillation">
+<h2>Distillation<a class="headerlink" href="#distillation" title="Link to this heading"></a></h2>
+<p>Distillation is one of popular approaches of network compression, which transfers knowledge from a large model to a smaller one without loss of validity. As smaller models are less expensive to evaluate, they can be deployed on less powerful hardware (such as a mobile device).</p>
+<p><strong>Distillation with Intel Neural Compressor 1.X</strong></p>
+<p>Intel Neural Compressor distillation API is defined under <code class="docutils literal notranslate"><span class="pre">neural_compressor.experimental.Distillation</span></code>, which takes a user yaml file <code class="docutils literal notranslate"><span class="pre">conf.yaml</span></code> as input.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="nt">distillation</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">train</span><span class="p">:</span><span class="w">                    </span><span class="c1"># optional. No need if user implements `train_func` and pass to `train_func` attribute of pruning instance.</span>
+<span class="w">        </span><span class="nt">start_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="w">        </span><span class="nt">end_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">        </span><span class="nt">iteration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
+<span class="w">        </span>
+<span class="w">        </span><span class="nt">dataloader</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">256</span>
+<span class="w">        </span><span class="nt">criterion</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">KnowledgeDistillationLoss</span><span class="p">:</span>
+<span class="w">              </span><span class="nt">temperature</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+<span class="w">              </span><span class="nt">loss_types</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;CE&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;KL&#39;</span><span class="p p-Indicator">]</span>
+<span class="w">              </span><span class="nt">loss_weights</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.5</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.5</span><span class="p p-Indicator">]</span>
+<span class="w">        </span><span class="nt">optimizer</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">SGD</span><span class="p">:</span>
+<span class="w">              </span><span class="nt">learning_rate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1</span>
+<span class="w">              </span><span class="nt">momentum</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.9</span>
+<span class="w">              </span><span class="nt">weight_decay</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0004</span>
+<span class="w">              </span><span class="nt">nesterov</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">False</span>
+<span class="w">    </span><span class="nt">evaluation</span><span class="p">:</span><span class="w">                              </span><span class="c1"># optional. required if user doesn&#39;t provide eval_func in neural_compressor.Quantization.</span>
+<span class="w">    </span><span class="nt">accuracy</span><span class="p">:</span><span class="w">                              </span><span class="c1"># optional. required if user doesn&#39;t provide eval_func in neural_compressor.Quantization.</span>
+<span class="w">        </span><span class="nt">metric</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">topk</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span><span class="w">                            </span><span class="c1"># built-in metrics are topk, map, f1, allow user to register new metric.</span>
+<span class="w">        </span><span class="nt">dataloader</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">256</span>
+<span class="w">        </span><span class="nt">dataset</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">ImageFolder</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">root</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/imagenet/val</span>
+<span class="w">        </span><span class="nt">transform</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">RandomResizedCrop</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">224</span>
+<span class="w">            </span><span class="nt">RandomHorizontalFlip</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">ToTensor</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">Normalize</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">mean</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.485</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.456</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.406</span><span class="p p-Indicator">]</span>
+<span class="w">            </span><span class="nt">std</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.229</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.224</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.225</span><span class="p p-Indicator">]</span><span class="w"> </span>
+</pre></div>
+</div>
+<p>We insert a series of pre-defined hooks to activate the training process of distillation,</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">train_func</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="n">distiller</span><span class="o">.</span><span class="n">on_train_begin</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">nepoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+        <span class="n">cnt</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">loss_sum</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">iter_bar</span> <span class="o">=</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">train_dataloader</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Iter (loss=X.XXX)&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">iter_bar</span><span class="p">:</span>
+            <span class="n">teacher_logits</span><span class="p">,</span> <span class="n">input_ids</span><span class="p">,</span> <span class="n">segment_ids</span><span class="p">,</span> <span class="n">input_mask</span><span class="p">,</span> <span class="n">target</span> <span class="o">=</span> <span class="n">batch</span>
+            <span class="n">cnt</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">input_ids</span><span class="p">,</span> <span class="n">segment_ids</span><span class="p">,</span> <span class="n">input_mask</span><span class="p">)</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">distiller</span><span class="o">.</span><span class="n">on_after_compute_loss</span><span class="p">(</span>
+                <span class="p">{</span><span class="s2">&quot;input_ids&quot;</span><span class="p">:</span> <span class="n">input_ids</span><span class="p">,</span> <span class="s2">&quot;segment_ids&quot;</span><span class="p">:</span> <span class="n">segment_ids</span><span class="p">,</span> <span class="s2">&quot;input_mask&quot;</span><span class="p">:</span> <span class="n">input_mask</span><span class="p">},</span>
+                <span class="n">output</span><span class="p">,</span>
+                <span class="n">loss</span><span class="p">,</span>
+                <span class="n">teacher_logits</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">cnt</span> <span class="o">&gt;=</span> <span class="n">iters</span><span class="p">:</span>
+                <span class="k">break</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Average Loss: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">loss_sum</span> <span class="o">/</span> <span class="n">cnt</span><span class="p">))</span>
+        <span class="n">distiller</span><span class="o">.</span><span class="n">on_epoch_end</span><span class="p">()</span>
+
+
+<span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Distillation</span><span class="p">,</span> <span class="n">common</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.experimental.common.criterion</span> <span class="kn">import</span> <span class="n">PyTorchKnowledgeDistillationLoss</span>
+
+<span class="n">distiller</span> <span class="o">=</span> <span class="n">Distillation</span><span class="p">(</span><span class="n">conf</span><span class="o">.</span><span class="n">yaml</span><span class="p">)</span>
+<span class="n">distiller</span><span class="o">.</span><span class="n">student_model</span> <span class="o">=</span> <span class="n">model</span>
+<span class="n">distiller</span><span class="o">.</span><span class="n">teacher_model</span> <span class="o">=</span> <span class="n">teacher</span>
+<span class="n">distiller</span><span class="o">.</span><span class="n">criterion</span> <span class="o">=</span> <span class="n">PyTorchKnowledgeDistillationLoss</span><span class="p">()</span>
+<span class="n">distiller</span><span class="o">.</span><span class="n">train_func</span> <span class="o">=</span> <span class="n">train_func</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">distiller</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+</pre></div>
+</div>
+<p><strong>Distillation with Intel Neural Compressor 2.X</strong></p>
+<p>The new distillation API also introduce <code class="docutils literal notranslate"><span class="pre">compression</span> <span class="pre">manager</span></code> to conduct the training process. We continuously use the hooks in <code class="docutils literal notranslate"><span class="pre">compression</span> <span class="pre">manager</span></code> to activate the distillation process. We replace the <code class="docutils literal notranslate"><span class="pre">conf.yaml</span></code> with <code class="docutils literal notranslate"><span class="pre">DistillationConfig</span></code> API and clean the unnecessary parameters (Note: the corresponding names of the parameters in 1.X yaml file are attached in the comment.). The dataloader is directly inputted via <code class="docutils literal notranslate"><span class="pre">train_fun</span></code>. The updated code is shown as follows,</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">DistillationConfig</span>
+
+<span class="n">DistillationConfig</span><span class="p">(</span>
+    <span class="n">criterion</span><span class="o">=</span><span class="n">KnowledgeDistillationLoss</span><span class="p">,</span>  <span class="c1"># criterion: same as in the conf.yaml;</span>
+    <span class="n">optimizer</span><span class="o">=</span><span class="n">SGD</span><span class="p">,</span>  <span class="c1"># optimizer: same as in the conf.yaml;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The newly updated distillation code is shown as follows,</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">training_func</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">):</span>
+    <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_train_begin</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
+        <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_epoch_begin</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dataloader</span><span class="p">):</span>
+            <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_step_begin</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="o">......</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="o">......</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_after_compute_loss</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">loss</span><span class="p">)</span>
+            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+            <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_before_optimizer_step</span><span class="p">()</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+            <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_step_end</span><span class="p">()</span>
+        <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_epoch_end</span><span class="p">()</span>
+    <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_train_end</span><span class="p">()</span>
+
+<span class="kn">from</span> <span class="nn">neural_compressor.training</span> <span class="kn">import</span> <span class="n">prepare_compression</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">DistillationConfig</span><span class="p">,</span> <span class="n">SelfKnowledgeDistillationLossConfig</span>
+
+<span class="n">distil_loss</span> <span class="o">=</span> <span class="n">SelfKnowledgeDistillationLossConfig</span><span class="p">()</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">DistillationConfig</span><span class="p">(</span><span class="n">teacher_model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">criterion</span><span class="o">=</span><span class="n">distil_loss</span><span class="p">)</span>
+<span class="n">criterion</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.0001</span><span class="p">)</span>
+<span class="n">compression_manager</span> <span class="o">=</span> <span class="n">prepare_compression</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">conf</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">compression_manager</span><span class="o">.</span><span class="n">model</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">training_func</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">)</span>
+<span class="n">eval_func</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="mix-precision">
+<h2>Mix Precision<a class="headerlink" href="#mix-precision" title="Link to this heading"></a></h2>
+<p>The recent growth of Deep Learning has driven the development of more complex models that require significantly more compute and memory capabilities. Mixed precision training and inference using low precision formats have been developed to reduce compute and bandwidth requirements. Intel Neural Compressor supports BF16 + FP32 mixed precision conversion by MixedPrecision API</p>
+<p><strong>Mix Precision with Intel Neural Compressor 1.X</strong></p>
+<p>The user can add dataloader and metric in <code class="docutils literal notranslate"><span class="pre">conf.yaml</span></code> to execute evaluation.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">MixedPrecision</span><span class="p">,</span> <span class="n">common</span>
+
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">()</span>
+<span class="n">converter</span> <span class="o">=</span> <span class="n">MixedPrecision</span><span class="p">(</span><span class="s2">&quot;conf.yaml&quot;</span><span class="p">)</span>
+<span class="n">converter</span><span class="o">.</span><span class="n">metric</span> <span class="o">=</span> <span class="n">Metric</span><span class="p">()</span>
+<span class="n">converter</span><span class="o">.</span><span class="n">precisions</span> <span class="o">=</span> <span class="s2">&quot;bf16&quot;</span>
+<span class="n">converter</span><span class="o">.</span><span class="n">eval_dataloader</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+<span class="n">converter</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="s2">&quot;./model.pb&quot;</span>
+<span class="n">output_model</span> <span class="o">=</span> <span class="n">converter</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The configuration <code class="docutils literal notranslate"><span class="pre">conf.yaml</span></code> should be,</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">model</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">resnet50_v1</span>
+<span class="w">  </span><span class="nt">framework</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tensorflow</span>
+<span class="w">  </span><span class="nt">inputs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">image_tensor</span>
+<span class="w">  </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">num_detections,detection_boxes,detection_scores,detection_classes</span>
+
+<span class="nt">device</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cpu</span>
+
+<span class="nt">mixed_precision</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">precisions</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;bf16&#39;</span><span class="w">  </span>
+
+<span class="nt">evaluation</span><span class="p">:</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+
+<span class="nt">tuning</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">accuracy_criterion</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">relative</span><span class="p">:</span><span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">0.01</span><span class="w">                                  </span><span class="c1"># optional. default value is relative, other value is absolute. this example allows relative accuracy loss: 1%.</span>
+<span class="w">  </span><span class="nt">objective</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">performance</span><span class="w">                             </span><span class="c1"># optional. objective with accuracy constraint guaranteed. default value is performance. other values are modelsize and footprint.</span>
+
+<span class="w">  </span><span class="nt">exit_policy</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w">                                       </span><span class="c1"># optional. tuning timeout (seconds). default value is 0 which means early stop. combine with max_trials field to decide when to exit.</span>
+<span class="w">    </span><span class="nt">max_trials</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span><span class="w">                                  </span><span class="c1"># optional. max tune times. default value is 100. combine with timeout field to decide when to exit.</span>
+<span class="w">    </span><span class="nt">performance_only</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">False</span><span class="w">                          </span><span class="c1"># optional. max tune times. default value is False which means only generate fully quantized model.</span>
+<span class="w">  </span><span class="nt">random_seed</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">9527</span><span class="w">                                  </span><span class="c1"># optional. random seed for deterministic tuning.</span>
+</pre></div>
+</div>
+<p><strong>Mix Precision with Intel Neural Compressor 2.X</strong></p>
+<p>In 2.X version, we integrate the config information in <code class="docutils literal notranslate"><span class="pre">MixedPrecisionConfig</span></code>, leading to the updates in the code as follows (Note: the corresponding names of the parameters in 1.X yaml file are attached in the comment.),</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">MixedPrecisionConfig</span><span class="p">,</span> <span class="n">TuningCriterion</span><span class="p">,</span> <span class="n">AccuracyCriterion</span>
+
+<span class="n">MixedPrecisionConfig</span><span class="p">(</span>
+    <span class="c1">## model: this parameter does not need to specially be defined;</span>
+    <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;default&quot;</span><span class="p">,</span>  <span class="c1"># framework: set as &quot;default&quot; when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as &quot;ipex&quot; when framework was pytorch_ipex, mxnet is currently unsupported;</span>
+    <span class="n">inputs</span><span class="o">=</span><span class="s2">&quot;image_tensor&quot;</span><span class="p">,</span>  <span class="c1"># input: same as in the conf.yaml;</span>
+    <span class="n">outputs</span><span class="o">=</span><span class="s2">&quot;num_detections,detection_boxes,detection_scores,detection_classes&quot;</span><span class="p">,</span>  <span class="c1"># output: same as in the conf.yaml;</span>
+    <span class="n">device</span><span class="o">=</span><span class="s2">&quot;cpu&quot;</span><span class="p">,</span>  <span class="c1"># device: same as in the conf.yaml;</span>
+    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">tuning_criterion</span><span class="p">,</span>
+    <span class="n">accuracy_criterion</span><span class="o">=</span><span class="n">accuracy_criterion</span><span class="p">,</span>
+    <span class="c1">## tuning.random_seed and tuning.tensorboard: these parameters do not need to specially be defined;</span>
+<span class="p">)</span>
+
+<span class="n">accuracy_criterion</span> <span class="o">=</span> <span class="n">AccuracyCriterion</span><span class="p">(</span>
+    <span class="n">tolerable_loss</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>  <span class="c1"># relative: same as in the conf.yaml;</span>
+<span class="p">)</span>
+<span class="n">tuning_criterion</span> <span class="o">=</span> <span class="n">TuningCriterion</span><span class="p">(</span>
+    <span class="n">timeout</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>  <span class="c1"># timeout: same as in the conf.yaml;</span>
+    <span class="n">max_trials</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>  <span class="c1"># max_trials: same as in the conf.yaml;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The update demo is shown as follows,</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">mix_precision</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">MixedPrecisionConfig</span>
+
+<span class="n">conf</span> <span class="o">=</span> <span class="n">MixedPrecisionConfig</span><span class="p">()</span>
+
+<span class="n">converted_model</span> <span class="o">=</span> <span class="n">mix_precision</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">conf</span><span class="p">)</span>
+<span class="n">converted_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;./path/to/save/&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="orchestration">
+<h2>Orchestration<a class="headerlink" href="#orchestration" title="Link to this heading"></a></h2>
+<p>Intel Neural Compressor supports arbitrary meaningful combinations of supported optimization methods under one-shot or multi-shot, such as pruning during quantization-aware training, or pruning and then post-training quantization, pruning and then distillation and then quantization.</p>
+<p><strong>Orchestration with Intel Neural Compressor 1.X</strong></p>
+<p>Intel Neural Compressor 1.X mainly relies on a <code class="docutils literal notranslate"><span class="pre">Scheduler</span></code> class to automatically pipeline execute model optimization with one shot or multiple shots way.</p>
+<p>Following is an example how to set the <code class="docutils literal notranslate"><span class="pre">Scheduler</span></code> for Orchestration process. If the user wants to execute the pruning and quantization-aware training with one-shot way,</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Quantization</span><span class="p">,</span> <span class="n">Pruning</span><span class="p">,</span> <span class="n">Scheduler</span>
+
+<span class="n">prune</span> <span class="o">=</span> <span class="n">Pruning</span><span class="p">(</span><span class="n">prune_conf</span><span class="o">.</span><span class="n">yaml</span><span class="p">)</span>
+<span class="n">quantizer</span> <span class="o">=</span> <span class="n">Quantization</span><span class="p">(</span><span class="n">quantization_aware_training_conf</span><span class="o">.</span><span class="n">yaml</span><span class="p">)</span>
+<span class="n">scheduler</span> <span class="o">=</span> <span class="n">Scheduler</span><span class="p">()</span>
+<span class="n">scheduler</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+<span class="n">combination</span> <span class="o">=</span> <span class="n">scheduler</span><span class="o">.</span><span class="n">combine</span><span class="p">(</span><span class="n">prune</span><span class="p">,</span> <span class="n">quantizer</span><span class="p">)</span>
+<span class="n">scheduler</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">combination</span><span class="p">)</span>
+<span class="n">opt_model</span> <span class="o">=</span> <span class="n">scheduler</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The user needs to write the <code class="docutils literal notranslate"><span class="pre">prune_conf.yaml</span></code> and the <code class="docutils literal notranslate"><span class="pre">quantization_aware_training_conf.yaml</span></code> as aforementioned to configure the experimental settings.</p>
+<p><strong>Orchestration with Intel Neural Compressor 2.X</strong></p>
+<p>Intel Neural Compressor 2.X introduces <code class="docutils literal notranslate"><span class="pre">compression</span> <span class="pre">manager</span></code> to schedule the training process. The <code class="docutils literal notranslate"><span class="pre">conf.yaml</span></code> should follows in the previous sessions to set the configuration information. It also requires to inset the hooks from <code class="docutils literal notranslate"><span class="pre">compression</span> <span class="pre">manager</span></code> to control the training flow. Therefore, the code should be updated as,</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.training</span> <span class="kn">import</span> <span class="n">prepare_compression</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">DistillationConfig</span><span class="p">,</span> <span class="n">KnowledgeDistillationLossConfig</span><span class="p">,</span> <span class="n">WeightPruningConfig</span>
+<span class="n">distillation_criterion</span> <span class="o">=</span> <span class="n">KnowledgeDistillationLossConfig</span><span class="p">()</span>
+<span class="n">d_conf</span> <span class="o">=</span> <span class="n">DistillationConfig</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">distillation_criterion</span><span class="p">)</span>
+<span class="n">p_conf</span> <span class="o">=</span> <span class="n">WeightPruningConfig</span><span class="p">()</span>
+<span class="n">compression_manager</span> <span class="o">=</span> <span class="n">prepare_compression</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">confs</span><span class="o">=</span><span class="p">[</span><span class="n">d_conf</span><span class="p">,</span> <span class="n">p_conf</span><span class="p">])</span>
+
+<span class="n">compression_manager</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">on_train_begin</span><span class="p">()</span>
+<span class="n">train_loop</span><span class="p">:</span>
+    <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_train_begin</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
+        <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_epoch_begin</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dataloader</span><span class="p">):</span>
+            <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_step_begin</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="o">......</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="o">......</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_after_compute_loss</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">loss</span><span class="p">)</span>
+            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+            <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_before_optimizer_step</span><span class="p">()</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+            <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_step_end</span><span class="p">()</span>
+        <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_epoch_end</span><span class="p">()</span>
+    <span class="n">compression_manager</span><span class="o">.</span><span class="n">on_train_end</span><span class="p">()</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;./path/to/save&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="benchmark">
+<h2>Benchmark<a class="headerlink" href="#benchmark" title="Link to this heading"></a></h2>
+<p>The benchmarking feature of Neural Compressor is used to measure the model performance with the objective settings. The user can get the performance of the models between the float32 model and the quantized low precision model in a same scenario.</p>
+<p><strong>Benchmark with Intel Neural Compressor 1.X</strong></p>
+<p>In Intel Neural Compressor 1.X requires the user to define the experimental settings for low precision model and FP32 model with a <code class="docutils literal notranslate"><span class="pre">conf.yaml</span></code>.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+
+<span class="nt">model</span><span class="p">:</span><span class="w">                                               </span><span class="c1"># mandatory. used to specify model specific information.</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ssd_mobilenet_v1</span><span class="w">                             </span><span class="c1"># mandatory. the model name.</span>
+<span class="w">  </span><span class="nt">framework</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tensorflow</span><span class="w">                              </span><span class="c1"># mandatory. supported values are tensorflow, pytorch, pytorch_fx, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.</span>
+<span class="w">  </span><span class="nt">inputs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">image_tensor</span><span class="w">                               </span><span class="c1"># optional. inputs and outputs fields are only required in tensorflow.</span>
+<span class="w">  </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">num_detections,detection_boxes,detection_scores,detection_classes</span>
+
+<span class="nt">device</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cpu</span><span class="w">                                          </span><span class="c1"># optional. default value is cpu. other value is gpu.</span>
+
+<span class="nt">evaluation</span><span class="p">:</span><span class="w">                                          </span><span class="c1"># optional. used to config evaluation process.</span>
+<span class="w">  </span><span class="nt">performance</span><span class="p">:</span><span class="w">                                       </span><span class="c1"># optional. used to benchmark performance of passing model.</span>
+<span class="w">    </span><span class="nt">warmup</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">    </span><span class="nt">iteration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
+<span class="w">    </span><span class="nt">configs</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">cores_per_instance</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="w">      </span><span class="nt">num_of_instance</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">7</span>
+<span class="w">      </span><span class="nt">inter_num_of_threads</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">      </span><span class="nt">intra_num_of_threads</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="w">    </span><span class="nt">dataloader</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">dummy</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">shape</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[[</span><span class="nv">128</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">3</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">224</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">224</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">128</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1</span><span class="p p-Indicator">]]</span>
+</pre></div>
+</div>
+<p>And then, the user can get the accuracy with,</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">()</span>  <span class="c1">#  dataset class that implement __getitem__ method or __iter__ method</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Benchmark</span><span class="p">,</span> <span class="n">common</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.conf.config</span> <span class="kn">import</span> <span class="n">BenchmarkConf</span>
+
+<span class="n">conf</span> <span class="o">=</span> <span class="n">BenchmarkConf</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">yaml</span><span class="p">)</span>
+<span class="n">evaluator</span> <span class="o">=</span> <span class="n">Benchmark</span><span class="p">(</span><span class="n">conf</span><span class="p">)</span>
+<span class="n">evaluator</span><span class="o">.</span><span class="n">dataloader</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)</span>
+<span class="c1"># user can also register postprocess and metric, this is optional</span>
+<span class="n">evaluator</span><span class="o">.</span><span class="n">postprocess</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">Postprocess</span><span class="p">(</span><span class="n">postprocess_cls</span><span class="p">)</span>
+<span class="n">evaluator</span><span class="o">.</span><span class="n">metric</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">Metric</span><span class="p">(</span><span class="n">metric_cls</span><span class="p">)</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">evaluator</span><span class="p">()</span>
+</pre></div>
+</div>
+<p><strong>Benchmark with Intel Neural Compressor 2.X</strong></p>
+<p>In Intel Neural Compressor 2.X, we optimize the code to make it simple and clear for the user. We replace <code class="docutils literal notranslate"><span class="pre">conf.yaml</span></code> with <code class="docutils literal notranslate"><span class="pre">BenchmarkConfig</span></code>. The corresponding information should be defined as (Note: the corresponding names of the parameters in 1.X yaml file are attached in the comment.):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">BenchmarkConfig</span>
+
+<span class="n">BenchmarkConfig</span><span class="p">(</span>
+    <span class="c1">## model: this parameter does not need to specially be defined;</span>
+    <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;default&quot;</span><span class="p">,</span>  <span class="c1"># framework: set as &quot;default&quot; when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as &quot;ipex&quot; when framework was pytorch_ipex, mxnet is currently unsupported;</span>
+    <span class="n">inputs</span><span class="o">=</span><span class="s2">&quot;image_tensor&quot;</span><span class="p">,</span>  <span class="c1"># input: same as in the conf.yaml;</span>
+    <span class="n">outputs</span><span class="o">=</span><span class="s2">&quot;num_detections,detection_boxes,detection_scores,detection_classes&quot;</span><span class="p">,</span>  <span class="c1"># output: same as in the conf.yaml;</span>
+    <span class="n">device</span><span class="o">=</span><span class="s2">&quot;cpu&quot;</span><span class="p">,</span>  <span class="c1"># device: same as in the conf.yaml;</span>
+    <span class="n">warmup</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>  <span class="c1"># warmup: same as in the conf.yaml;</span>
+    <span class="n">iteration</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>  <span class="c1"># iteration: same as in the conf.yaml;</span>
+    <span class="n">cores_per_instance</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>  <span class="c1"># cores_per_instance: same as in the conf.yaml;</span>
+    <span class="n">num_of_instance</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span>  <span class="c1"># num_of_instance: same as in the conf.yaml;</span>
+    <span class="n">inter_num_of_threads</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># inter_num_of_threads: same as in the conf.yaml;</span>
+    <span class="n">intra_num_of_threads</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>  <span class="c1"># intra_num_of_threads: same as in the conf.yaml;</span>
+    <span class="c1">## dataloader: this parameter does not need to specially be defined;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The new example in Intel Neural Compressor 2.X should be updated as,</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">BenchmarkConfig</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.benchmark</span> <span class="kn">import</span> <span class="n">fit</span>
+
+<span class="n">conf</span> <span class="o">=</span> <span class="n">BenchmarkConfig</span><span class="p">(</span><span class="n">warmup</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">iteration</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">cores_per_instance</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">num_of_instance</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span>
+<span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;./int8.pb&quot;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">conf</span><span class="p">,</span> <span class="n">b_dataloader</span><span class="o">=</span><span class="n">eval_dataloader</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
+<p>User could refer to <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/examples/README.html">examples</a> for more details about the migration from Intel Neural Compressor 1.X to Intel Neural Compressor 2.X.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fef786b12b0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,34 @@
+neural_compressor.onnxrt.algorithms.smoother.core
+=================================================
+
+.. py:module:: neural_compressor.onnxrt.algorithms.smoother.core
+
+.. autoapi-nested-parse::
+
+   Smoother for onnxrt.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.onnxrt.algorithms.smoother.core.Smoother
+
+
+Module Contents
+---------------
+
+.. py:class:: Smoother(model: Union[onnx.ModelProto, neural_compressor.onnxrt.utils.onnx_model.ONNXModel, pathlib.Path, str], dataloader: neural_compressor.onnxrt.quantization.calibrate.CalibrationDataReader, providers: List[str] = ['CPUExecutionProvider'])
+
+   Fake input channel quantization.
+
+   For more details please refer to:
+   [1] SmoothQuant: Accurate and Efficient
+   Post-Training Quantization for Large Language Models
+   [2] SPIQ: Data-Free Per-Channel Static Input Quantization
+   We only support inplace mode which means the model weights will be changed,
+   you can call recover function to recover the weights if needed.
+
+

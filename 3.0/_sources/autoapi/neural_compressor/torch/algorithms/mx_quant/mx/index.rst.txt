@@ -1,0 +1,37 @@
+neural_compressor.torch.algorithms.mx_quant.mx
+==============================================
+
+.. py:module:: neural_compressor.torch.algorithms.mx_quant.mx
+
+.. autoapi-nested-parse::
+
+   MX quantization.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.mx_quant.mx.MXLinear
+   neural_compressor.torch.algorithms.mx_quant.mx.MXQuantizer
+
+
+Module Contents
+---------------
+
+.. py:class:: MXLinear(in_features, out_features, bias=False, mx_specs=None, name=None)
+
+
+
+   Linear for MX data type.
+
+
+.. py:class:: MXQuantizer(quant_config: collections.OrderedDict = {})
+
+
+
+   Quantizer of MX data type.
+
+

@@ -1,0 +1,56 @@
+neural_compressor.tensorflow.keras.layers.pool2d
+================================================
+
+.. py:module:: neural_compressor.tensorflow.keras.layers.pool2d
+
+.. autoapi-nested-parse::
+
+   Initialize custom pool2d layers for Keras quantization.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.keras.layers.pool2d.QAvgPool2D
+   neural_compressor.tensorflow.keras.layers.pool2d.QMaxPool2D
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.keras.layers.pool2d.initialize_int8_avgpool
+   neural_compressor.tensorflow.keras.layers.pool2d.initialize_int8_maxpool
+
+
+Module Contents
+---------------
+
+.. py:class:: QAvgPool2D(name, pool_size=(2, 2), strides=None, padding='valid', data_format=None, act_min_value=None, act_max_value=None, weight_min_value=None, weight_max_value=None, granularity='per_tensor', quant_status='calib', quant_mode='SCALED', quant_T='s8', quant_round_mode='HALF_AWAY_FROM_ZERO', quant_narrow_range=False, quant_axis=None, **kwargs)
+
+
+
+   The custom quantized AveragePooling2D layer.
+
+
+.. py:class:: QMaxPool2D(name, pool_size=(2, 2), strides=None, padding='valid', data_format=None, act_min_value=None, act_max_value=None, weight_min_value=None, weight_max_value=None, granularity='per_tensor', quant_status='calib', quant_mode='SCALED', quant_T='s8', quant_round_mode='HALF_AWAY_FROM_ZERO', quant_narrow_range=False, quant_axis=None, **kwargs)
+
+
+
+   The custom quantized MaxPooling2D layer.
+
+
+.. py:function:: initialize_int8_avgpool(fp32_layer, q_config)
+
+   Initialize int8 avgpool.
+
+
+.. py:function:: initialize_int8_maxpool(fp32_layer, q_config)
+
+   Initialize int8 maxpool.
+
+

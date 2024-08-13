@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.torch.algorithms.smooth_quant.utility &mdash; Intel® Neural Compressor 3.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../versions.html">3.0▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.torch.algorithms.smooth_quant.utility</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../_sources/autoapi/neural_compressor/torch/algorithms/smooth_quant/utility/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.torch.algorithms.smooth_quant.utility">
+<span id="neural-compressor-torch-algorithms-smooth-quant-utility"></span><h1>neural_compressor.torch.algorithms.smooth_quant.utility<a class="headerlink" href="#module-neural_compressor.torch.algorithms.smooth_quant.utility" title="Link to this heading"></a></h1>
+<p>Utility functions for Smooth quantization.</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.Calibration" title="neural_compressor.torch.algorithms.smooth_quant.utility.Calibration"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Calibration</span></code></a></p></td>
+<td><p>Calibration class.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.GraphTrace" title="neural_compressor.torch.algorithms.smooth_quant.utility.GraphTrace"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GraphTrace</span></code></a></p></td>
+<td><p>GraphTrace Class.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.AutoAlpha" title="neural_compressor.torch.algorithms.smooth_quant.utility.AutoAlpha"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AutoAlpha</span></code></a></p></td>
+<td><p>AutoAlpha Class.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.TorchSmoothQuant" title="neural_compressor.torch.algorithms.smooth_quant.utility.TorchSmoothQuant"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TorchSmoothQuant</span></code></a></p></td>
+<td><p>Fake input channel quantization.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.SQLinearWrapper" title="neural_compressor.torch.algorithms.smooth_quant.utility.SQLinearWrapper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SQLinearWrapper</span></code></a></p></td>
+<td><p>SQLinearWrapper Class.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.WrapperLayer" title="neural_compressor.torch.algorithms.smooth_quant.utility.WrapperLayer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WrapperLayer</span></code></a></p></td>
+<td><p>WrapperLayer Class.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.get_quantizable_ops_recursively" title="neural_compressor.torch.algorithms.smooth_quant.utility.get_quantizable_ops_recursively"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_quantizable_ops_recursively</span></code></a>(model, example_inputs, ...)</p></td>
+<td><p>Get all quantizable ops from model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.check_cfg_and_qconfig" title="neural_compressor.torch.algorithms.smooth_quant.utility.check_cfg_and_qconfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_cfg_and_qconfig</span></code></a>(tune_cfg, cfgs, ...[, alpha, ...])</p></td>
+<td><p>Check configs and quantization configs.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.cfg_to_qconfig" title="neural_compressor.torch.algorithms.smooth_quant.utility.cfg_to_qconfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cfg_to_qconfig</span></code></a>(tune_cfg, cfgs, op_infos_from_cfgs, ...)</p></td>
+<td><p>Check configs and quantization configs.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.dump_model_op_stats" title="neural_compressor.torch.algorithms.smooth_quant.utility.dump_model_op_stats"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dump_model_op_stats</span></code></a>(user_cfg)</p></td>
+<td><p>This is a function to dump quantizable ops of model to user.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.get_parent" title="neural_compressor.torch.algorithms.smooth_quant.utility.get_parent"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_parent</span></code></a>(node[, all_parents])</p></td>
+<td><p>Get the parent node(s) of a given node.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.get_module" title="neural_compressor.torch.algorithms.smooth_quant.utility.get_module"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_module</span></code></a>(model, key)</p></td>
+<td><p>Get module from model by key name.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.set_module" title="neural_compressor.torch.algorithms.smooth_quant.utility.set_module"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_module</span></code></a>(model, key, new_module)</p></td>
+<td><p>Set new module into model by key name.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.update_sq_scale" title="neural_compressor.torch.algorithms.smooth_quant.utility.update_sq_scale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_sq_scale</span></code></a>(ipex_config_path, smoothquant_scale_info)</p></td>
+<td><p>Update ipex_config.json with smoothquant scale info generated by our algorithm.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.enough_memo_store_scale" title="neural_compressor.torch.algorithms.smooth_quant.utility.enough_memo_store_scale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">enough_memo_store_scale</span></code></a>(device, need_space)</p></td>
+<td><p>Check if there is enough memory available to store a specified amount of data.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.move_input_to_device" title="neural_compressor.torch.algorithms.smooth_quant.utility.move_input_to_device"><code class="xref py py-obj docutils literal notranslate"><span class="pre">move_input_to_device</span></code></a>(input[, device])</p></td>
+<td><p>Move the input data to the specified device.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.forward_wrapper" title="neural_compressor.torch.algorithms.smooth_quant.utility.forward_wrapper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">forward_wrapper</span></code></a>(model, input[, device])</p></td>
+<td><p>Apply the model to the input data on the specified device.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.model_forward" title="neural_compressor.torch.algorithms.smooth_quant.utility.model_forward"><code class="xref py py-obj docutils literal notranslate"><span class="pre">model_forward</span></code></a>(model, dataloader, iters, device)</p></td>
+<td><p>Run the model on data from the dataloader for a specified number of iterations.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.build_captured_dataloader" title="neural_compressor.torch.algorithms.smooth_quant.utility.build_captured_dataloader"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_captured_dataloader</span></code></a>(model, run_fn[, calib_num])</p></td>
+<td><p>Build a dataloader that captures input data and keyword arguments used in forward passes of the model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.cal_scale" title="neural_compressor.torch.algorithms.smooth_quant.utility.cal_scale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cal_scale</span></code></a>(input_max_abs, weights, alpha[, weight_max_lb])</p></td>
+<td><p>Calculate the scaling factor for weights based on the input max values and weight magnitudes.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.model_forward_per_sample" title="neural_compressor.torch.algorithms.smooth_quant.utility.model_forward_per_sample"><code class="xref py py-obj docutils literal notranslate"><span class="pre">model_forward_per_sample</span></code></a>(model, sample, device)</p></td>
+<td><p>Perform a forward pass of the model on a single sample.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.quant_dequant_w_v1" title="neural_compressor.torch.algorithms.smooth_quant.utility.quant_dequant_w_v1"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quant_dequant_w_v1</span></code></a>(m[, num_bits, scheme])</p></td>
+<td><p>Quantize and dequantize the weights of a layer.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.quant_dequant_x_v1" title="neural_compressor.torch.algorithms.smooth_quant.utility.quant_dequant_x_v1"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quant_dequant_x_v1</span></code></a>(x[, min_x, max_x, num_bits])</p></td>
+<td><p>Quantize and dequantize a tensor.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.reshape_scale_as_weight" title="neural_compressor.torch.algorithms.smooth_quant.utility.reshape_scale_as_weight"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reshape_scale_as_weight</span></code></a>(layer, scale)</p></td>
+<td><p>Reshape the scale for weight input channel, depthwise output channel.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.reshape_in_channel_to_last" title="neural_compressor.torch.algorithms.smooth_quant.utility.reshape_in_channel_to_last"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reshape_in_channel_to_last</span></code></a>(layer_name, model)</p></td>
+<td><p>Move the input channel to the last dimension.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.reshape_scale_as_input" title="neural_compressor.torch.algorithms.smooth_quant.utility.reshape_scale_as_input"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reshape_scale_as_input</span></code></a>(layer, scale)</p></td>
+<td><p>Reshape the scale for input feature in channel.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.smooth_quant.utility.register_autotune" title="neural_compressor.torch.algorithms.smooth_quant.utility.register_autotune"><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_autotune</span></code></a>(name)</p></td>
+<td><p>Class decorator to register a SmoothQuant auto-tune subclass.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.smooth_quant.utility.get_quantizable_ops_recursively">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.smooth_quant.utility.</span></span><span class="sig-name descname"><span class="pre">get_quantizable_ops_recursively</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">act_algo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/smooth_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.smooth_quant.utility.get_quantizable_ops_recursively" title="Link to this definition"></a></dt>
+<dd><p>Get all quantizable ops from model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>object</em>) – input model</p></li>
+<li><p><strong>example_inputs</strong> (<em>dict</em><em>|</em><em>list</em><em>|</em><em>tuple</em><em>|</em><em>torch.Tensor</em>) – used to trace torch model.</p></li>
+<li><p><strong>alpha</strong> (<em>float</em><em>|</em><em>str</em>) – smoothquant alpha.</p></li>
+<li><p><strong>act_algo</strong> (<em>str</em>) – activation algorithm, minmax or kl.</p></li>
+<li><p><strong>inplace</strong> (<em>bool</em>) – whether to carry out model transformations in-place. Defaults to True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>list of tuples of op_name and op_type.
+cfgs (dict): dict of configuration.
+op_infos_from_cfgs (dict): op infos from configs.
+output_tensor_ids_op_name (dict): dictionary of output tensor op names.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>quantizable_ops (list)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.smooth_quant.utility.check_cfg_and_qconfig">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.smooth_quant.utility.</span></span><span class="sig-name descname"><span class="pre">check_cfg_and_qconfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tune_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cfgs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_infos_from_cfgs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_ids_op_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth_quant</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/smooth_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.smooth_quant.utility.check_cfg_and_qconfig" title="Link to this definition"></a></dt>
+<dd><p>Check configs and quantization configs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tune_cfg</strong> (<em>dict</em>) – dictionary of quantization configuration.</p></li>
+<li><p><strong>cfgs</strong> (<em>dict</em>) – the input configs.</p></li>
+<li><p><strong>op_infos_from_cfgs</strong> (<em>dict</em>) – op infos from configs.</p></li>
+<li><p><strong>output_tensor_ids_op_name</strong> (<em>dict</em>) – dictionary of output tensor op names.</p></li>
+<li><p><strong>alpha</strong> (<em>float</em>) – Value to balance input and weight quantization error,
+between 0 and 1, default is 0.5.</p></li>
+<li><p><strong>smooth_quant</strong> (<em>bool</em><em>, </em><em>optional</em>) – whether to use smooth quant.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>cfgs (dict).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.smooth_quant.utility.cfg_to_qconfig">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.smooth_quant.utility.</span></span><span class="sig-name descname"><span class="pre">cfg_to_qconfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tune_cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cfgs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_infos_from_cfgs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_tensor_id_op_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smooth_quant</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/smooth_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.smooth_quant.utility.cfg_to_qconfig" title="Link to this definition"></a></dt>
+<dd><p>Check configs and quantization configs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>user_cfg</strong> (<em>dict</em>) – quantization configuration for ops.</p></li>
+<li><p><strong>cfgs</strong> (<em>dict</em>) – configs loaded from ipex config path.</p></li>
+<li><p><strong>op_infos_from_cfgs</strong> (<em>dict</em>) – dict containing configs that have been parsed for each op.</p></li>
+<li><p><strong>output_tensor_ids_op_name</strong> (<em>dict</em>) – dict containing op names corresponding to ‘op_infos_from_cfgs’.</p></li>
+<li><p><strong>alpha</strong> (<em>float</em>) – Value to balance input and weight quantization error,
+between 0 and 1, default is 0.5.</p></li>
+<li><p><strong>smooth_quant</strong> (<em>bool</em><em>, </em><em>optional</em>) – whether to use smooth quant.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>updated configs.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>cfgs (dict)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.smooth_quant.utility.dump_model_op_stats">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.smooth_quant.utility.</span></span><span class="sig-name descname"><span class="pre">dump_model_op_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user_cfg</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/smooth_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.smooth_quant.utility.dump_model_op_stats" title="Link to this definition"></a></dt>
+<dd><p>This is a function to dump quantizable ops of model to user.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>user_cfg</strong> (<em>dict</em>) – quantization config.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.smooth_quant.utility.get_parent">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.smooth_quant.utility.</span></span><span class="sig-name descname"><span class="pre">get_parent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_parents</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/smooth_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.smooth_quant.utility.get_parent" title="Link to this definition"></a></dt>
+<dd><p>Get the parent node(s) of a given node.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>node</strong> (<em>Node</em>) – The node whose parent(s) are to be retrieved.</p></li>
+<li><p><strong>all_parents</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to return all parents or just the first one. Defaults to False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>The parent node if <cite>all_parents</cite> is False, otherwise a list of all parent nodes.</dt><dd><p>Returns None if no parents are found.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.smooth_quant.utility.get_module">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.smooth_quant.utility.</span></span><span class="sig-name descname"><span class="pre">get_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/smooth_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.smooth_quant.utility.get_module" title="Link to this definition"></a></dt>
+<dd><p>Get module from model by key name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>torch.nn.Module</em>) – original model</p></li>
+<li><p><strong>key</strong> (<em>str</em>) – module name to be replaced</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.smooth_quant.utility.set_module">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.smooth_quant.utility.</span></span><span class="sig-name descname"><span class="pre">set_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_module</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/smooth_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.smooth_quant.utility.set_module" title="Link to this definition"></a></dt>
+<dd><p>Set new module into model by key name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>torch.nn.Module</em>) – original model</p></li>
+<li><p><strong>key</strong> (<em>str</em>) – module name to be replaced</p></li>
+<li><p><strong>new_module</strong> (<em>torch.nn.Module</em>) – new module to be inserted</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.smooth_quant.utility.update_sq_scale">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.smooth_quant.utility.</span></span><span class="sig-name descname"><span class="pre">update_sq_scale</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ipex_config_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smoothquant_scale_info</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/smooth_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.smooth_quant.utility.update_sq_scale" title="Link to this definition"></a></dt>
+<dd><p>Update ipex_config.json with smoothquant scale info generated by our algorithm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ipex_config_path</strong> (<em>str</em>) – a path to temporary ipex_config.json file.</p></li>
+<li><p><strong>smoothquant_scale_info</strong> (<em>dict</em>) – a dict contains smoothquant scale info.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.smooth_quant.utility.enough_memo_store_scale">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.smooth_quant.utility.</span></span><span class="sig-name descname"><span class="pre">enough_memo_store_scale</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">need_space</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/smooth_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.smooth_quant.utility.enough_memo_store_scale" title="Link to this definition"></a></dt>
+<dd><p>Check if there is enough memory available to store a specified amount of data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>device</strong> (<em>str</em>) – The device type (‘cuda’ for GPU or ‘cpu’ for CPU).</p></li>
+<li><p><strong>need_space</strong> (<em>int</em>) – The amount of memory needed, in bytes.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if there is enough memory available, False otherwise.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.smooth_quant.utility.move_input_to_device">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.smooth_quant.utility.</span></span><span class="sig-name descname"><span class="pre">move_input_to_device</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.device('cpu')</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/smooth_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.smooth_quant.utility.move_input_to_device" title="Link to this definition"></a></dt>
+<dd><p>Move the input data to the specified device.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input</strong> (<em>dict</em><em>, </em><em>list</em><em>, </em><em>tuple</em><em>, or </em><em>torch.Tensor</em>) – The input data to be moved.
+Can be a dictionary, list, tuple, or a tensor.</p></li>
+<li><p><strong>device</strong> (<em>torch.device</em><em>, </em><em>optional</em>) – The device to which the input should be moved.
+Defaults to CPU.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>The input data moved to the specified device,</dt><dd><p>with the same type as the input (dict, list, tuple, or tensor).</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.smooth_quant.utility.forward_wrapper">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.smooth_quant.utility.</span></span><span class="sig-name descname"><span class="pre">forward_wrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.device('cpu')</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/smooth_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.smooth_quant.utility.forward_wrapper" title="Link to this definition"></a></dt>
+<dd><p>Apply the model to the input data on the specified device.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>torch.nn.Module</em>) – The model to be applied.</p></li>
+<li><p><strong>input</strong> (<em>dict</em><em>, </em><em>list</em><em>, </em><em>tuple</em><em>, or </em><em>zip</em>) – The input data to be fed to the model.
+Can be a dictionary, list, tuple, or a zip of arguments and keyword arguments.</p></li>
+<li><p><strong>device</strong> (<em>torch.device</em><em>, </em><em>optional</em>) – The device on which the model and input should be located.
+Defaults to CPU.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The output of the model after applying it to the input data.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>Exception</strong> – Logs warnings if there are issues with moving the model or input to the device.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.smooth_quant.utility.model_forward">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.smooth_quant.utility.</span></span><span class="sig-name descname"><span class="pre">model_forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/smooth_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.smooth_quant.utility.model_forward" title="Link to this definition"></a></dt>
+<dd><p>Run the model on data from the dataloader for a specified number of iterations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>torch.nn.Module</em>) – The model to be used for forward passes.</p></li>
+<li><p><strong>dataloader</strong> (<a class="reference internal" href="../../../../data/dataloaders/dataloader/index.html#neural_compressor.data.dataloaders.dataloader.DataLoader" title="neural_compressor.data.dataloaders.dataloader.DataLoader"><em>DataLoader</em></a>) – The dataloader providing the input data and labels.</p></li>
+<li><p><strong>iters</strong> (<em>int</em>) – The maximum number of iterations to run.
+If -1, run until the dataloader is exhausted.</p></li>
+<li><p><strong>device</strong> (<em>torch.device</em>) – The device on which the model and data are located.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>Exception</strong> – Handles exceptions during the forward pass and retries if needed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.smooth_quant.utility.build_captured_dataloader">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.smooth_quant.utility.</span></span><span class="sig-name descname"><span class="pre">build_captured_dataloader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calib_num</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/smooth_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.smooth_quant.utility.build_captured_dataloader" title="Link to this definition"></a></dt>
+<dd><p>Build a dataloader that captures input data and keyword arguments used in forward passes of the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>torch.nn.Module</em>) – The model whose inputs will be captured.</p></li>
+<li><p><strong>run_fn</strong> (<em>function</em>) – A function to run the model, which will use the InputCaptureModule to collect inputs.</p></li>
+<li><p><strong>calib_num</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of inputs to capture for calibration. If None, capture all inputs.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The original model.
+CapturedDataloader: A dataloader with the captured inputs and keyword arguments.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.nn.Module</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.smooth_quant.utility.cal_scale">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.smooth_quant.utility.</span></span><span class="sig-name descname"><span class="pre">cal_scale</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_max_abs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_max_lb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-05</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/smooth_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.smooth_quant.utility.cal_scale" title="Link to this definition"></a></dt>
+<dd><p>Calculate the scaling factor for weights based on the input max values and weight magnitudes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_max_abs</strong> (<em>Tensor</em>) – The maximum absolute values of the inputs.</p></li>
+<li><p><strong>weights</strong> (<em>list</em><em> of </em><em>Tensor</em>) – The list of weight tensors to be concatenated and processed.</p></li>
+<li><p><strong>alpha</strong> (<em>float</em>) – A parameter to balance the scaling between inputs and weights.</p></li>
+<li><p><strong>weight_max_lb</strong> (<em>float</em><em>, </em><em>optional</em>) – The lower bound for weight magnitudes to avoid division by zero.
+Defaults to 1e-5.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The calculated scaling factors for the weights.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.smooth_quant.utility.model_forward_per_sample">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.smooth_quant.utility.</span></span><span class="sig-name descname"><span class="pre">model_forward_per_sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/smooth_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.smooth_quant.utility.model_forward_per_sample" title="Link to this definition"></a></dt>
+<dd><p>Perform a forward pass of the model on a single sample.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>torch.nn.Module</em>) – The model to be applied.</p></li>
+<li><p><strong>sample</strong> (<em>Tensor</em><em> or </em><em>tuple</em>) – The input sample or a tuple of inputs to be passed to the model.</p></li>
+<li><p><strong>device</strong> (<em>torch.device</em>) – The device on which the model and input sample are located.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The output of the model after applying it to the sample.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Exception</strong> – Handles exceptions during the forward pass and retries if needed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.smooth_quant.utility.quant_dequant_w_v1">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.smooth_quant.utility.</span></span><span class="sig-name descname"><span class="pre">quant_dequant_w_v1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sym'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/smooth_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.smooth_quant.utility.quant_dequant_w_v1" title="Link to this definition"></a></dt>
+<dd><p>Quantize and dequantize the weights of a layer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>m</strong> (<em>torch.nn.Module</em>) – The layer whose weights are to be quantized and dequantized.
+Supports torch.nn.Linear and torch.nn.Conv2d.</p></li>
+<li><p><strong>num_bits</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of bits for quantization.
+Defaults to 8.</p></li>
+<li><p><strong>scheme</strong> (<em>str</em><em>, </em><em>optional</em>) – The quantization scheme to use.
+Can be “sym” for symmetric or “asym” for asymmetric quantization. Defaults to “sym”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The quantized and dequantized weights of the layer.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Warning</strong> – Logs a warning if the layer type is not supported.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.smooth_quant.utility.quant_dequant_x_v1">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.smooth_quant.utility.</span></span><span class="sig-name descname"><span class="pre">quant_dequant_x_v1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/smooth_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.smooth_quant.utility.quant_dequant_x_v1" title="Link to this definition"></a></dt>
+<dd><p>Quantize and dequantize a tensor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>Tensor</em>) – The input tensor to be quantized and dequantized.</p></li>
+<li><p><strong>min_x</strong> (<em>Tensor</em><em>, </em><em>optional</em>) – The minimum value of the input tensor.
+If None, it will be computed from x. Defaults to None.</p></li>
+<li><p><strong>max_x</strong> (<em>Tensor</em><em>, </em><em>optional</em>) – The maximum value of the input tensor.
+If None, it will be computed from x. Defaults to None.</p></li>
+<li><p><strong>num_bits</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of bits for quantization. Defaults to 8.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The quantized and dequantized tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>None</strong> – No specific exceptions are raised, but input values are clipped to avoid invalid operations.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.smooth_quant.utility.reshape_scale_as_weight">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.smooth_quant.utility.</span></span><span class="sig-name descname"><span class="pre">reshape_scale_as_weight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/smooth_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.smooth_quant.utility.reshape_scale_as_weight" title="Link to this definition"></a></dt>
+<dd><p>Reshape the scale for weight input channel, depthwise output channel.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layer</strong> (<em>torch.nn.Module</em>) – Torch module.</p></li>
+<li><p><strong>scale</strong> (<em>Tensor</em>) – Original scale.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Reshaped scale.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.smooth_quant.utility.reshape_in_channel_to_last">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.smooth_quant.utility.</span></span><span class="sig-name descname"><span class="pre">reshape_in_channel_to_last</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/smooth_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.smooth_quant.utility.reshape_in_channel_to_last" title="Link to this definition"></a></dt>
+<dd><p>Move the input channel to the last dimension.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>layer_name</strong> (<em>str</em>) – Layer name.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The reshaped weight.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.smooth_quant.utility.reshape_scale_as_input">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.smooth_quant.utility.</span></span><span class="sig-name descname"><span class="pre">reshape_scale_as_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/smooth_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.smooth_quant.utility.reshape_scale_as_input" title="Link to this definition"></a></dt>
+<dd><p>Reshape the scale for input feature in channel.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layer</strong> (<em>torch.nn.Module</em>) – Torch module.</p></li>
+<li><p><strong>scale</strong> (<em>Tensor</em>) – Original scale.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Reshaped scale.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.smooth_quant.utility.register_autotune">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.smooth_quant.utility.</span></span><span class="sig-name descname"><span class="pre">register_autotune</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/smooth_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.smooth_quant.utility.register_autotune" title="Link to this definition"></a></dt>
+<dd><p>Class decorator to register a SmoothQuant auto-tune subclass.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The class of register.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>type</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.smooth_quant.utility.Calibration">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.smooth_quant.utility.</span></span><span class="sig-name descname"><span class="pre">Calibration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/smooth_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.smooth_quant.utility.Calibration" title="Link to this definition"></a></dt>
+<dd><p>Calibration class.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.smooth_quant.utility.GraphTrace">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.smooth_quant.utility.</span></span><span class="sig-name descname"><span class="pre">GraphTrace</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/smooth_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.smooth_quant.utility.GraphTrace" title="Link to this definition"></a></dt>
+<dd><p>GraphTrace Class.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.smooth_quant.utility.AutoAlpha">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.smooth_quant.utility.</span></span><span class="sig-name descname"><span class="pre">AutoAlpha</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">absorb_to_layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_types</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_clip</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.7</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha_step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shared_criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_blockwise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">32</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/smooth_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.smooth_quant.utility.AutoAlpha" title="Link to this definition"></a></dt>
+<dd><p>AutoAlpha Class.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.smooth_quant.utility.TorchSmoothQuant">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.smooth_quant.utility.</span></span><span class="sig-name descname"><span class="pre">TorchSmoothQuant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">example_inputs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">traced_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_sharing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">record_max_info</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/smooth_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.smooth_quant.utility.TorchSmoothQuant" title="Link to this definition"></a></dt>
+<dd><p>Fake input channel quantization.</p>
+<p>For more details please refer to:
+[1] SmoothQuant: Accurate and Efficient
+Post-Training Quantization for Large Language Models
+[2] SPIQ: Data-Free Per-Channel Static Input Quantization
+Currently, we only handle the layers whose smooth scale could be absorbed, we will support other layers later.
+We only support inplace mode which means the model weights will be changed, you can call recover function
+to recover the weights if needed</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.smooth_quant.utility.SQLinearWrapper">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.smooth_quant.utility.</span></span><span class="sig-name descname"><span class="pre">SQLinearWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_minmax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.quint8</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/smooth_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.smooth_quant.utility.SQLinearWrapper" title="Link to this definition"></a></dt>
+<dd><p>SQLinearWrapper Class.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.smooth_quant.utility.WrapperLayer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.smooth_quant.utility.</span></span><span class="sig-name descname"><span class="pre">WrapperLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_q_input</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/algorithms/smooth_quant/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.smooth_quant.utility.WrapperLayer" title="Link to this definition"></a></dt>
+<dd><p>WrapperLayer Class.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fef7db28d60> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

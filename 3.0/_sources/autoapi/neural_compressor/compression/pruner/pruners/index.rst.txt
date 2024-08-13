@@ -1,0 +1,57 @@
+neural_compressor.compression.pruner.pruners
+============================================
+
+.. py:module:: neural_compressor.compression.pruner.pruners
+
+.. autoapi-nested-parse::
+
+   Pruning patterns.
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/compression/pruner/pruners/base/index
+   /autoapi/neural_compressor/compression/pruner/pruners/basic/index
+   /autoapi/neural_compressor/compression/pruner/pruners/block_mask/index
+   /autoapi/neural_compressor/compression/pruner/pruners/mha/index
+   /autoapi/neural_compressor/compression/pruner/pruners/pattern_lock/index
+   /autoapi/neural_compressor/compression/pruner/pruners/progressive/index
+   /autoapi/neural_compressor/compression/pruner/pruners/retrain_free/index
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.pruners.parse_valid_pruner_types
+   neural_compressor.compression.pruner.pruners.get_pruner
+
+
+Package Contents
+----------------
+
+.. py:function:: parse_valid_pruner_types()
+
+   Get all valid pruner names.
+
+
+.. py:function:: get_pruner(config, modules, framework='pytorch')
+
+   Get registered pruner class.
+
+   Get a Pruner object from PRUNERS.
+
+   :param modules: A dict {"module_name": Tensor} that stores the pruning modules' weights.
+   :param config: A config dict object that contains the pruner information.
+
+   :returns: A Pruner object.
+
+   Raises: AssertionError: Currently only support pruners that have been registered in PRUNERS.
+
+

@@ -1,0 +1,37 @@
+neural_compressor.adaptor.ox_utils.operators.reduce
+===================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators.reduce
+
+.. autoapi-nested-parse::
+
+   Reduce Operator.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.reduce.ReduceOperator
+   neural_compressor.adaptor.ox_utils.operators.reduce.ReduceMinMaxOperator
+
+
+Module Contents
+---------------
+
+.. py:class:: ReduceOperator(onnx_quantizer, onnx_node)
+
+
+
+   Reduce Operator.
+
+
+.. py:class:: ReduceMinMaxOperator(onnx_quantizer, onnx_node)
+
+
+
+   ReduceMin and ReduceMax Operator.
+
+

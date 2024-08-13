@@ -1,0 +1,33 @@
+neural_compressor.profiling.profiler.onnxrt_profiler.utils
+==========================================================
+
+.. py:module:: neural_compressor.profiling.profiler.onnxrt_profiler.utils
+
+.. autoapi-nested-parse::
+
+   ONNX profiler utils.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.profiling.profiler.onnxrt_profiler.utils.create_onnx_config
+
+
+Module Contents
+---------------
+
+.. py:function:: create_onnx_config(ort: Any, intra_num_of_threads: int, inter_num_of_threads: int) -> Any
+
+   Create tensorflow config.
+
+   :param ort: onnxruntime library
+   :param intra_num_of_threads: number of threads used within an individual op for parallelism
+   :param inter_num_of_threads: number of threads used for parallelism between independent operations
+
+   :returns: ONNX SessionOptions object
+
+

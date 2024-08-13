@@ -1,0 +1,46 @@
+neural_compressor.torch.algorithms.pt2e_quant.save_load
+=======================================================
+
+.. py:module:: neural_compressor.torch.algorithms.pt2e_quant.save_load
+
+.. autoapi-nested-parse::
+
+   Save and load the quantized model.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.pt2e_quant.save_load.save
+   neural_compressor.torch.algorithms.pt2e_quant.save_load.load
+
+
+Module Contents
+---------------
+
+.. py:function:: save(model, example_inputs, output_dir='./saved_results')
+
+   Save the quantized model and its configuration.
+
+   :param model: The quantized model to be saved.
+   :type model: torch.nn.Module
+   :param example_inputs: Example inputs used for tracing the model.
+   :type example_inputs: torch.Tensor or tuple of torch.Tensor
+   :param output_dir: The directory where the saved results will be stored. Defaults to "./saved_results".
+   :type output_dir: str, optional
+
+
+.. py:function:: load(output_dir='./saved_results')
+
+   Load a quantized model from the specified output directory.
+
+   :param output_dir: The directory where the quantized model is saved. Defaults to "./saved_results".
+   :type output_dir: str
+
+   :returns: The loaded quantized model.
+   :rtype: torch.nn.Module
+
+

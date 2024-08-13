@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>An end-to-end example: quantize a Hugging Face model with Neural Solution &mdash; Intel® Neural Compressor 2.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">2.6▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">An end-to-end example: quantize a Hugging Face model with Neural Solution</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/docs/source/neural_solution/examples/hf_models/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="an-end-to-end-example-quantize-a-hugging-face-model-with-neural-solution">
+<h1>An end-to-end example: quantize a Hugging Face model with Neural Solution<a class="headerlink" href="#an-end-to-end-example-quantize-a-hugging-face-model-with-neural-solution" title="Link to this heading"></a></h1>
+<p>In this example, we show how to quantize a Hugging Face model with Neural Solution.</p>
+<section id="objective">
+<h2>Objective<a class="headerlink" href="#objective" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Demonstrate how to start the Neural Solution Service.</p></li>
+<li><p>Demonstrate how to prepare an optimization task request and submit it to Neural Solution Service.</p></li>
+<li><p>Demonstrate how to query the status of the task and fetch the optimization result.</p></li>
+<li><p>Demonstrate how to query and manage the resource of the cluster.</p></li>
+</ul>
+</section>
+<section id="start-the-neural-solution-service">
+<h2>Start the Neural Solution Service<a class="headerlink" href="#start-the-neural-solution-service" title="Link to this heading"></a></h2>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Activate your environment</span>
+conda<span class="w"> </span>activate<span class="w"> </span>ENV
+
+<span class="c1"># Start neural solution service with default configuration, log will be saved in the &quot;serve_log&quot; folder.</span>
+neural_solution<span class="w"> </span>start
+
+<span class="c1"># Start neural solution service with custom configuration</span>
+neural_solution<span class="w"> </span>start<span class="w"> </span>--task_monitor_port<span class="o">=</span><span class="m">22222</span><span class="w"> </span>--result_monitor_port<span class="o">=</span><span class="m">33333</span><span class="w"> </span>--restful_api_port<span class="o">=</span><span class="m">8001</span>
+
+<span class="c1"># Stop neural solution service with default configuration</span>
+neural_solution<span class="w"> </span>stop
+
+<span class="c1"># Help Manual</span>
+neural_solution<span class="w"> </span>-h
+<span class="c1"># Help output</span>
+
+usage:<span class="w"> </span>neural_solution<span class="w"> </span><span class="o">{</span>start,stop,cluster<span class="o">}</span><span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>--hostfile<span class="w"> </span>HOSTFILE<span class="o">]</span><span class="w"> </span><span class="o">[</span>--restful_api_port<span class="w"> </span>RESTFUL_API_PORT<span class="o">]</span><span class="w"> </span><span class="o">[</span>--grpc_api_port<span class="w"> </span>GRPC_API_PORT<span class="o">]</span>
+<span class="w">                   </span><span class="o">[</span>--result_monitor_port<span class="w"> </span>RESULT_MONITOR_PORT<span class="o">]</span><span class="w"> </span><span class="o">[</span>--task_monitor_port<span class="w"> </span>TASK_MONITOR_PORT<span class="o">]</span><span class="w"> </span><span class="o">[</span>--api_type<span class="w"> </span>API_TYPE<span class="o">]</span>
+<span class="w">                   </span><span class="o">[</span>--workspace<span class="w"> </span>WORKSPACE<span class="o">]</span><span class="w"> </span><span class="o">[</span>--conda_env<span class="w"> </span>CONDA_ENV<span class="o">]</span><span class="w"> </span><span class="o">[</span>--upload_path<span class="w"> </span>UPLOAD_PATH<span class="o">]</span><span class="w"> </span><span class="o">[</span>--query<span class="o">]</span><span class="w"> </span><span class="o">[</span>--join<span class="w"> </span>JOIN<span class="o">]</span><span class="w"> </span><span class="o">[</span>--remove<span class="w"> </span>REMOVE<span class="o">]</span>
+
+Neural<span class="w"> </span>Solution
+
+positional<span class="w"> </span>arguments:
+<span class="w">  </span><span class="o">{</span>start,stop,cluster<span class="o">}</span><span class="w">  </span>start/stop/management<span class="w"> </span>service
+
+optional<span class="w"> </span>arguments:
+<span class="w">  </span>-h,<span class="w"> </span>--help<span class="w">            </span>show<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span>
+<span class="w">  </span>--hostfile<span class="w"> </span>HOSTFILE<span class="w">   </span>start<span class="w"> </span>backend<span class="w"> </span>serve<span class="w"> </span>host<span class="w"> </span>file<span class="w"> </span>which<span class="w"> </span>contains<span class="w"> </span>all<span class="w"> </span>available<span class="w"> </span>nodes
+<span class="w">  </span>--restful_api_port<span class="w"> </span>RESTFUL_API_PORT
+<span class="w">                        </span>start<span class="w"> </span>restful<span class="w"> </span>serve<span class="w"> </span>with<span class="w"> </span><span class="o">{</span>restful_api_port<span class="o">}</span>,<span class="w"> </span>default<span class="w"> </span><span class="m">8000</span>
+<span class="w">  </span>--grpc_api_port<span class="w"> </span>GRPC_API_PORT
+<span class="w">                        </span>start<span class="w"> </span>gRPC<span class="w"> </span>with<span class="w"> </span><span class="o">{</span>restful_api_port<span class="o">}</span>,<span class="w"> </span>default<span class="w"> </span><span class="m">8000</span>
+<span class="w">  </span>--result_monitor_port<span class="w"> </span>RESULT_MONITOR_PORT
+<span class="w">                        </span>start<span class="w"> </span>serve<span class="w"> </span><span class="k">for</span><span class="w"> </span>result<span class="w"> </span>monitor<span class="w"> </span>at<span class="w"> </span><span class="o">{</span>result_monitor_port<span class="o">}</span>,<span class="w"> </span>default<span class="w"> </span><span class="m">3333</span>
+<span class="w">  </span>--task_monitor_port<span class="w"> </span>TASK_MONITOR_PORT
+<span class="w">                        </span>start<span class="w"> </span>serve<span class="w"> </span><span class="k">for</span><span class="w"> </span>task<span class="w"> </span>monitor<span class="w"> </span>at<span class="w"> </span><span class="o">{</span>task_monitor_port<span class="o">}</span>,<span class="w"> </span>default<span class="w"> </span><span class="m">2222</span>
+<span class="w">  </span>--api_type<span class="w"> </span>API_TYPE<span class="w">   </span>start<span class="w"> </span>web<span class="w"> </span>serve<span class="w"> </span>with<span class="w"> </span>all/grpc/restful,<span class="w"> </span>default<span class="w"> </span>all
+<span class="w">  </span>--workspace<span class="w"> </span>WORKSPACE
+<span class="w">                        </span>neural<span class="w"> </span>solution<span class="w"> </span>workspace,<span class="w"> </span>default<span class="w"> </span><span class="s2">&quot;./ns_workspace&quot;</span>
+<span class="w">  </span>--conda_env<span class="w"> </span>CONDA_ENV
+<span class="w">                        </span>specify<span class="w"> </span>the<span class="w"> </span>running<span class="w"> </span>environment<span class="w"> </span><span class="k">for</span><span class="w"> </span>the<span class="w"> </span>task
+<span class="w">  </span>--upload_path<span class="w"> </span>UPLOAD_PATH
+<span class="w">                        </span>specify<span class="w"> </span>the<span class="w"> </span>file<span class="w"> </span>path<span class="w"> </span><span class="k">for</span><span class="w"> </span>the<span class="w"> </span>tasks
+<span class="w">  </span>--query<span class="w">               </span><span class="o">[</span>cluster<span class="w"> </span>parameter<span class="o">]</span><span class="w"> </span>query<span class="w"> </span>cluster<span class="w"> </span>information
+<span class="w">  </span>--join<span class="w"> </span>JOIN<span class="w">           </span><span class="o">[</span>cluster<span class="w"> </span>parameter<span class="o">]</span><span class="w"> </span>add<span class="w"> </span>new<span class="w"> </span>node<span class="w"> </span>into<span class="w"> </span>cluster
+<span class="w">  </span>--remove<span class="w"> </span>REMOVE<span class="w">       </span><span class="o">[</span>cluster<span class="w"> </span>parameter<span class="o">]</span><span class="w"> </span>remove<span class="w"> </span>&lt;node-id&gt;<span class="w"> </span>from<span class="w"> </span>cluster
+</pre></div>
+</div>
+</section>
+<section id="submit-optimization-task">
+<h2>Submit optimization task<a class="headerlink" href="#submit-optimization-task" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Step 1: Prepare the json file includes request content. In this example, we have created request that quantize a <a class="reference external" href="https://github.com/huggingface/transformers/tree/v4.21-release/examples/pytorch/text-classification">Text classification model</a> from Hugging Face.</p></li>
+</ul>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="o">[</span>user@server<span class="w"> </span>hf_model<span class="o">]</span>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>path/to/neural_solution/examples/hf_model
+<span class="o">[</span>user@server<span class="w"> </span>hf_model<span class="o">]</span>$<span class="w"> </span>cat<span class="w"> </span>task_request.json
+<span class="o">{</span>
+<span class="w">    </span><span class="s2">&quot;script_url&quot;</span>:<span class="w"> </span><span class="s2">&quot;https://github.com/huggingface/transformers/blob/v4.21-release/examples/pytorch/text-classification/run_glue.py&quot;</span>,
+<span class="w">    </span><span class="s2">&quot;optimized&quot;</span>:<span class="w"> </span><span class="s2">&quot;False&quot;</span>,
+<span class="w">    </span><span class="s2">&quot;arguments&quot;</span>:<span class="w"> </span><span class="o">[</span>
+<span class="w">        </span><span class="s2">&quot;--model_name_or_path=bert-base-cased&quot;</span>,<span class="w"> </span><span class="s2">&quot;--task_name=mrpc&quot;</span>,<span class="w"> </span><span class="s2">&quot;--do_eval&quot;</span>,<span class="w"> </span><span class="s2">&quot;--output_dir=result&quot;</span>
+<span class="w">    </span><span class="o">]</span>,
+<span class="w">    </span><span class="s2">&quot;approach&quot;</span>:<span class="w"> </span><span class="s2">&quot;static&quot;</span>,
+<span class="w">    </span><span class="s2">&quot;requirements&quot;</span>:<span class="w"> </span><span class="o">[]</span>,
+<span class="w">    </span><span class="s2">&quot;workers&quot;</span>:<span class="w"> </span><span class="m">1</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Step 2: Submit the task request to service, and it will return the submit status and task id for future use.</p></li>
+</ul>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="o">[</span>user@server<span class="w"> </span>hf_model<span class="o">]</span>$<span class="w"> </span>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span>--data<span class="w"> </span>@./task.json<span class="w">  </span>http://localhost:8000/task/submit/
+
+<span class="c1"># response if submit successfully</span>
+<span class="o">{</span>
+<span class="w">    </span><span class="s2">&quot;status&quot;</span>:<span class="w"> </span><span class="s2">&quot;successfully&quot;</span>,
+<span class="w">    </span><span class="s2">&quot;task_id&quot;</span>:<span class="w"> </span><span class="s2">&quot;cdf419910f9b4d2a8320d0e420ac1d0a&quot;</span>,
+<span class="w">    </span><span class="s2">&quot;msg&quot;</span>:<span class="w"> </span><span class="s2">&quot;Task submitted successfully&quot;</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</section>
+<section id="query-optimization-result">
+<h2>Query optimization result<a class="headerlink" href="#query-optimization-result" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Query the task status and result according to the <code class="docutils literal notranslate"><span class="pre">task_id</span></code>.</p></li>
+</ul>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="o">[</span>user@server<span class="w"> </span>hf_model<span class="o">]</span>$<span class="w"> </span>curl<span class="w">  </span>-X<span class="w"> </span>GET<span class="w">  </span>http://localhost:8000/task/status/<span class="o">{</span>task_id<span class="o">}</span>
+
+<span class="c1"># return the task status</span>
+<span class="o">{</span>
+<span class="w">    </span><span class="s2">&quot;status&quot;</span>:<span class="w"> </span><span class="s2">&quot;done&quot;</span>,
+<span class="w">    </span><span class="s2">&quot;optimized_result&quot;</span>:<span class="w"> </span><span class="o">{</span>
+<span class="w">        </span><span class="s2">&quot;optimization time (seconds)&quot;</span>:<span class="w"> </span><span class="s2">&quot;58.15&quot;</span>,
+<span class="w">        </span><span class="s2">&quot;accuracy&quot;</span>:<span class="w"> </span><span class="s2">&quot;0.3162&quot;</span>,
+<span class="w">        </span><span class="s2">&quot;duration (seconds)&quot;</span>:<span class="w"> </span><span class="s2">&quot;4.6488&quot;</span>
+<span class="w">    </span><span class="o">}</span>,
+<span class="w">    </span><span class="s2">&quot;result_path&quot;</span>:<span class="w"> </span><span class="s2">&quot;http://localhost:8000/download/7602cd63d4c849e7a686a8165a77f69d&quot;</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+</section>
+<section id="download-optimized-model">
+<h2>Download optimized model<a class="headerlink" href="#download-optimized-model" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Download the optimized model according to the <code class="docutils literal notranslate"><span class="pre">task_id</span></code>.</p></li>
+</ul>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="o">[</span>user@server<span class="w"> </span>tf_example1<span class="o">]</span>$<span class="w"> </span>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w">  </span>http://localhost:8000/download/<span class="o">{</span>task_id<span class="o">}</span><span class="w"> </span>--output<span class="w"> </span>quantized_model.zip
+<span class="c1"># download quantized_model.zip</span>
+</pre></div>
+</div>
+</section>
+<section id="manage-resource">
+<h2>Manage resource<a class="headerlink" href="#manage-resource" title="Link to this heading"></a></h2>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># query cluster information</span>
+neural_solution<span class="w"> </span>cluster<span class="w"> </span>--query
+
+<span class="c1"># add new node into cluster</span>
+<span class="c1"># parameter: &quot;&lt;node1&gt; &lt;number_of_sockets&gt; &lt;number_of_threads&gt;;&lt;node2&gt; &lt;number_of_sockets&gt; &lt;number_of_threads&gt;&quot;</span>
+neural_solution<span class="w"> </span>cluster<span class="w"> </span>--join<span class="w"> </span><span class="s2">&quot;host1 2 20; host2 5 20&quot;</span>
+
+<span class="c1"># remove node from cluster according to id</span>
+neural_solution<span class="w"> </span>cluster<span class="w"> </span>--remove<span class="w"> </span>&lt;node-id&gt;
+</pre></div>
+</div>
+</section>
+<section id="stop-the-service">
+<h2>Stop the service<a class="headerlink" href="#stop-the-service" title="Link to this heading"></a></h2>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>neural_solution<span class="w"> </span>stop
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8a3c978af0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

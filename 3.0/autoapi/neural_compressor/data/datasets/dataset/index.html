@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.data.datasets.dataset &mdash; Intel® Neural Compressor 3.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">3.0▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.data.datasets.dataset</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/autoapi/neural_compressor/data/datasets/dataset/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.data.datasets.dataset">
+<span id="neural-compressor-data-datasets-dataset"></span><h1>neural_compressor.data.datasets.dataset<a class="headerlink" href="#module-neural_compressor.data.datasets.dataset" title="Link to this heading"></a></h1>
+<p>This is the base class for each framework.</p>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.framework_datasets" title="neural_compressor.data.datasets.dataset.framework_datasets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">framework_datasets</span></code></a></p></td>
+<td><p>The datasets supported by neural_compressor, it's model specific and can be configured by yaml file.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.TensorflowDatasets" title="neural_compressor.data.datasets.dataset.TensorflowDatasets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowDatasets</span></code></a></p></td>
+<td><p>The base class of Tensorflow datasets class.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.PyTorchDatasets" title="neural_compressor.data.datasets.dataset.PyTorchDatasets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PyTorchDatasets</span></code></a></p></td>
+<td><p>The base class of PyTorch datasets class.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.MXNetDatasets" title="neural_compressor.data.datasets.dataset.MXNetDatasets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MXNetDatasets</span></code></a></p></td>
+<td><p>The base class of MXNet datasets class.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.ONNXRTQLDatasets" title="neural_compressor.data.datasets.dataset.ONNXRTQLDatasets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ONNXRTQLDatasets</span></code></a></p></td>
+<td><p>The base class of ONNXRT QLinear datasets class.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.ONNXRTITDatasets" title="neural_compressor.data.datasets.dataset.ONNXRTITDatasets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ONNXRTITDatasets</span></code></a></p></td>
+<td><p>The base class of ONNXRT IT datasets class.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.PytorchMxnetWrapDataset" title="neural_compressor.data.datasets.dataset.PytorchMxnetWrapDataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PytorchMxnetWrapDataset</span></code></a></p></td>
+<td><p>The base class for PyTorch and MXNet frameworks.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.PytorchMxnetWrapFunction" title="neural_compressor.data.datasets.dataset.PytorchMxnetWrapFunction"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PytorchMxnetWrapFunction</span></code></a></p></td>
+<td><p>The Helper class for PytorchMxnetWrapDataset.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.Datasets" title="neural_compressor.data.datasets.dataset.Datasets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Datasets</span></code></a></p></td>
+<td><p>A base class for all framework datasets.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.Dataset" title="neural_compressor.data.datasets.dataset.Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Dataset</span></code></a></p></td>
+<td><p>The base class of dataset.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.IterableDataset" title="neural_compressor.data.datasets.dataset.IterableDataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IterableDataset</span></code></a></p></td>
+<td><p>An iterable Dataset.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.CIFAR10" title="neural_compressor.data.datasets.dataset.CIFAR10"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CIFAR10</span></code></a></p></td>
+<td><p>The CIFAR10 and CIFAR100 database.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.PytorchCIFAR10" title="neural_compressor.data.datasets.dataset.PytorchCIFAR10"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PytorchCIFAR10</span></code></a></p></td>
+<td><p>The PyTorch datasets for CIFAR10.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.MXNetCIFAR10" title="neural_compressor.data.datasets.dataset.MXNetCIFAR10"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MXNetCIFAR10</span></code></a></p></td>
+<td><p>The MXNet datasets for CIFAR10.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.TensorflowCIFAR10" title="neural_compressor.data.datasets.dataset.TensorflowCIFAR10"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowCIFAR10</span></code></a></p></td>
+<td><p>The Tensorflow datasets for CIFAR10.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.CIFAR100" title="neural_compressor.data.datasets.dataset.CIFAR100"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CIFAR100</span></code></a></p></td>
+<td><p>CIFAR100 database.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.PytorchCIFAR100" title="neural_compressor.data.datasets.dataset.PytorchCIFAR100"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PytorchCIFAR100</span></code></a></p></td>
+<td><p>The PyTorch datasets for CIFAR100.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.MXNetCIFAR100" title="neural_compressor.data.datasets.dataset.MXNetCIFAR100"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MXNetCIFAR100</span></code></a></p></td>
+<td><p>The MXNet datasets for CIFAR100.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.TensorflowCIFAR100" title="neural_compressor.data.datasets.dataset.TensorflowCIFAR100"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowCIFAR100</span></code></a></p></td>
+<td><p>The Tensorflow datasets for CIFAR100.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.MNIST" title="neural_compressor.data.datasets.dataset.MNIST"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MNIST</span></code></a></p></td>
+<td><p>Modified National Institute of Standards and Technology database and FashionMNIST database.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.PytorchMNIST" title="neural_compressor.data.datasets.dataset.PytorchMNIST"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PytorchMNIST</span></code></a></p></td>
+<td><p>The PyTorch datasets for MNIST.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.MXNetMNIST" title="neural_compressor.data.datasets.dataset.MXNetMNIST"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MXNetMNIST</span></code></a></p></td>
+<td><p>The MXNet datasets for MNIST.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.TensorflowMNIST" title="neural_compressor.data.datasets.dataset.TensorflowMNIST"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowMNIST</span></code></a></p></td>
+<td><p>The Tensorflow datasets for MNIST.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.FashionMNIST" title="neural_compressor.data.datasets.dataset.FashionMNIST"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FashionMNIST</span></code></a></p></td>
+<td><p>FashionMNIST database.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.PytorchFashionMNIST" title="neural_compressor.data.datasets.dataset.PytorchFashionMNIST"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PytorchFashionMNIST</span></code></a></p></td>
+<td><p>The PyTorch datasets for FashionMNIST.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.MXNetFashionMNIST" title="neural_compressor.data.datasets.dataset.MXNetFashionMNIST"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MXNetFashionMNIST</span></code></a></p></td>
+<td><p>The MXNet Dataset for FashionMNIST.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.TensorflowFashionMNIST" title="neural_compressor.data.datasets.dataset.TensorflowFashionMNIST"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowFashionMNIST</span></code></a></p></td>
+<td><p>The Tensorflow Dataset for FashionMNIST.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.ImageFolder" title="neural_compressor.data.datasets.dataset.ImageFolder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ImageFolder</span></code></a></p></td>
+<td><p>The base class for ImageFolder.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.MXNetImageFolder" title="neural_compressor.data.datasets.dataset.MXNetImageFolder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MXNetImageFolder</span></code></a></p></td>
+<td><p>The MXNet Dataset for image folder.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.Tensorflow" title="neural_compressor.data.datasets.dataset.Tensorflow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Tensorflow</span></code></a></p></td>
+<td><p>The Tensorflow Dataset for image folder.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.TensorflowTFRecordDataset" title="neural_compressor.data.datasets.dataset.TensorflowTFRecordDataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowTFRecordDataset</span></code></a></p></td>
+<td><p>The Tensorflow TFRecord Dataset.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.TensorflowImageRecord" title="neural_compressor.data.datasets.dataset.TensorflowImageRecord"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowImageRecord</span></code></a></p></td>
+<td><p>Tensorflow imageNet database in tf record format.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.TensorflowVOCRecord" title="neural_compressor.data.datasets.dataset.TensorflowVOCRecord"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TensorflowVOCRecord</span></code></a></p></td>
+<td><p>The Tensorflow PASCAL VOC 2012 database in tf record format.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.dataset_registry" title="neural_compressor.data.datasets.dataset.dataset_registry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dataset_registry</span></code></a>(dataset_type, framework[, dataset_format])</p></td>
+<td><p>Register dataset subclasses.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.download_url" title="neural_compressor.data.datasets.dataset.download_url"><code class="xref py py-obj docutils literal notranslate"><span class="pre">download_url</span></code></a>(url, root[, filename, md5])</p></td>
+<td><p>Download from url.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.gen_bar_updater" title="neural_compressor.data.datasets.dataset.gen_bar_updater"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gen_bar_updater</span></code></a>()</p></td>
+<td><p>Generate progress bar.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.check_integrity" title="neural_compressor.data.datasets.dataset.check_integrity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_integrity</span></code></a>(fpath, md5)</p></td>
+<td><p>Check MD5 checksum.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.data.datasets.dataset.calculate_md5" title="neural_compressor.data.datasets.dataset.calculate_md5"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calculate_md5</span></code></a>(fpath[, chunk_size])</p></td>
+<td><p>Generate MD5 checksum for a file.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.TensorflowDatasets">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">TensorflowDatasets</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.TensorflowDatasets" title="Link to this definition"></a></dt>
+<dd><p>The base class of Tensorflow datasets class.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.PyTorchDatasets">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">PyTorchDatasets</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.PyTorchDatasets" title="Link to this definition"></a></dt>
+<dd><p>The base class of PyTorch datasets class.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.MXNetDatasets">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">MXNetDatasets</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.MXNetDatasets" title="Link to this definition"></a></dt>
+<dd><p>The base class of MXNet datasets class.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.ONNXRTQLDatasets">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">ONNXRTQLDatasets</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.ONNXRTQLDatasets" title="Link to this definition"></a></dt>
+<dd><p>The base class of ONNXRT QLinear datasets class.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.ONNXRTITDatasets">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">ONNXRTITDatasets</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.ONNXRTITDatasets" title="Link to this definition"></a></dt>
+<dd><p>The base class of ONNXRT IT datasets class.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.PytorchMxnetWrapDataset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">PytorchMxnetWrapDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">datafunc</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.PytorchMxnetWrapDataset" title="Link to this definition"></a></dt>
+<dd><p>The base class for PyTorch and MXNet frameworks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>datafunc</strong> – The datasets class of PyTorch or MXNet.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.PytorchMxnetWrapFunction">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">PytorchMxnetWrapFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.PytorchMxnetWrapFunction" title="Link to this definition"></a></dt>
+<dd><p>The Helper class for PytorchMxnetWrapDataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<em>datasets class</em>) – The datasets class of PyTorch or MXNet.</p></li>
+<li><p><strong>transform</strong> (<em>transform object</em>) – transform to process input data.</p></li>
+<li><p><strong>filter</strong> (<em>Filter objects</em>) – filter out examples according to specific
+conditions.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.framework_datasets">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">framework_datasets</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.framework_datasets" title="Link to this definition"></a></dt>
+<dd><p>The datasets supported by neural_compressor, it’s model specific and can be configured by yaml file.</p>
+<p>User could add new datasets by implementing new Dataset subclass under this directory.
+The naming convention of new dataset subclass should be something like ImageClassifier, user
+could choose this dataset by setting “imageclassifier” string in tuning.strategy field of yaml.</p>
+<p>Datasets variable is used to store all implemented Dataset subclasses to support
+model specific dataset.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.Datasets">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">Datasets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">framework</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.Datasets" title="Link to this definition"></a></dt>
+<dd><p>A base class for all framework datasets.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>framework</strong> (<em>str</em>) – framework name, like:”tensorflow”, “tensorflow_itex”, “keras”,
+“mxnet”, “onnxrt_qdq”, “onnxrt_qlinearops”, “onnxrt_integerops”,
+“pytorch”, “pytorch_ipex”, “pytorch_fx”, “onnxruntime”.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.dataset_registry">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">dataset_registry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">framework</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.dataset_registry" title="Link to this definition"></a></dt>
+<dd><p>Register dataset subclasses.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cls</strong> (<em>class</em>) – The class of register.</p></li>
+<li><p><strong>dataset_type</strong> (<em>str</em>) – The dataset registration name</p></li>
+<li><p><strong>framework</strong> (<em>str</em>) – support 3 framework including ‘tensorflow’, ‘pytorch’, ‘mxnet’</p></li>
+<li><p><strong>data_format</strong> (<em>str</em>) – The format dataset saved, eg ‘raw_image’, ‘tfrecord’</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The class of register.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>cls</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.Dataset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">Dataset</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.Dataset" title="Link to this definition"></a></dt>
+<dd><p>The base class of dataset.</p>
+<p>Subclass datasets should overwrite two methods:
+<cite>__getitem__</cite> for indexing to data sample and <a href="#id1"><span class="problematic" id="id2">`</span></a>__len__`for the size of the dataset</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.IterableDataset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">IterableDataset</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.IterableDataset" title="Link to this definition"></a></dt>
+<dd><p>An iterable Dataset.</p>
+<p>Subclass iterable dataset should also implement a method:
+<cite>__iter__</cite> for iterating over the samples of the dataset.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.download_url">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">download_url</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">md5</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.download_url" title="Link to this definition"></a></dt>
+<dd><p>Download from url.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>url</strong> (<em>str</em>) – the address to download from.</p></li>
+<li><p><strong>root</strong> (<em>str</em>) – the path for saving.</p></li>
+<li><p><strong>filename</strong> (<em>str</em>) – the file name for saving.</p></li>
+<li><p><strong>md5</strong> (<em>str</em>) – the md5 string.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.gen_bar_updater">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">gen_bar_updater</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.gen_bar_updater" title="Link to this definition"></a></dt>
+<dd><p>Generate progress bar.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.check_integrity">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">check_integrity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fpath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">md5</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.check_integrity" title="Link to this definition"></a></dt>
+<dd><p>Check MD5 checksum.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.calculate_md5">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">calculate_md5</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fpath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunk_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1024</span> <span class="pre">*</span> <span class="pre">1024</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.calculate_md5" title="Link to this definition"></a></dt>
+<dd><p>Generate MD5 checksum for a file.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.CIFAR10">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">CIFAR10</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">download</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.CIFAR10" title="Link to this definition"></a></dt>
+<dd><p>The CIFAR10 and CIFAR100 database.</p>
+<dl class="simple">
+<dt>For CIFAR10: If download is True, it will download dataset to root/ and extract it</dt><dd><p>automatically, otherwise user can download file from
+<a class="reference external" href="https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz">https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz</a> manually to
+root/ and extract it.</p>
+</dd>
+<dt>For CIFAR100: If download is True, it will download dataset to root/ and extract it</dt><dd><p>automatically, otherwise user can download file from
+<a class="reference external" href="https://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz">https://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz</a> manually to
+root/ and extract it.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>root</strong> (<em>str</em>) – Root directory of dataset.</p></li>
+<li><p><strong>train</strong> (<em>bool</em><em>, </em><em>default=False</em>) – If True, creates dataset from train subset,
+otherwise from validation subset.</p></li>
+<li><p><strong>transform</strong> (<em>transform object</em><em>, </em><em>default=None</em>) – transform to process input data.</p></li>
+<li><p><strong>filter</strong> (<em>Filter objects</em><em>, </em><em>default=None</em>) – filter out examples according to specific
+conditions.</p></li>
+<li><p><strong>download</strong> (<em>bool</em><em>, </em><em>default=True</em>) – If true, downloads the dataset from the internet
+and puts it in root directory. If dataset is already
+downloaded, it is not downloaded again.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.PytorchCIFAR10">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">PytorchCIFAR10</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">download</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.PytorchCIFAR10" title="Link to this definition"></a></dt>
+<dd><p>The PyTorch datasets for CIFAR10.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.MXNetCIFAR10">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">MXNetCIFAR10</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">download</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.MXNetCIFAR10" title="Link to this definition"></a></dt>
+<dd><p>The MXNet datasets for CIFAR10.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.TensorflowCIFAR10">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">TensorflowCIFAR10</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">download</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.TensorflowCIFAR10" title="Link to this definition"></a></dt>
+<dd><p>The Tensorflow datasets for CIFAR10.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.CIFAR100">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">CIFAR100</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">download</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.CIFAR100" title="Link to this definition"></a></dt>
+<dd><p>CIFAR100 database.</p>
+<dl class="simple">
+<dt>For CIFAR100: If download is True, it will download dataset to root/ and extract it</dt><dd><p>automatically, otherwise user can download file from
+<a class="reference external" href="https://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz">https://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz</a> manually to
+root/ and extract it.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>root</strong> (<em>str</em>) – Root directory of dataset.</p></li>
+<li><p><strong>train</strong> (<em>bool</em><em>, </em><em>default=False</em>) – If True, creates dataset from train subset,
+otherwise from validation subset.</p></li>
+<li><p><strong>transform</strong> (<em>transform object</em><em>, </em><em>default=None</em>) – transform to process input data.</p></li>
+<li><p><strong>filter</strong> (<em>Filter objects</em><em>, </em><em>default=None</em>) – filter out examples according to specific
+conditions.</p></li>
+<li><p><strong>download</strong> (<em>bool</em><em>, </em><em>default=True</em>) – If true, downloads the dataset from the internet
+and puts it in root directory. If dataset is already
+downloaded, it is not downloaded again.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.PytorchCIFAR100">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">PytorchCIFAR100</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">download</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.PytorchCIFAR100" title="Link to this definition"></a></dt>
+<dd><p>The PyTorch datasets for CIFAR100.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.MXNetCIFAR100">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">MXNetCIFAR100</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">download</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.MXNetCIFAR100" title="Link to this definition"></a></dt>
+<dd><p>The MXNet datasets for CIFAR100.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.TensorflowCIFAR100">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">TensorflowCIFAR100</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">download</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.TensorflowCIFAR100" title="Link to this definition"></a></dt>
+<dd><p>The Tensorflow datasets for CIFAR100.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.MNIST">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">MNIST</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">download</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.MNIST" title="Link to this definition"></a></dt>
+<dd><p>Modified National Institute of Standards and Technology database and FashionMNIST database.</p>
+<dl class="simple">
+<dt>For MNIST: If download is True, it will download dataset to root/MNIST/, otherwise user</dt><dd><p>should put mnist.npz under root/MNIST/ manually.</p>
+</dd>
+<dt>For FashionMNIST: If download is True, it will download dataset to root/FashionMNIST/,</dt><dd><p>otherwise user should put train-labels-idx1-ubyte.gz,
+train-images-idx3-ubyte.gz, t10k-labels-idx1-ubyte.gz
+and t10k-images-idx3-ubyte.gz under root/FashionMNIST/ manually.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>root</strong> (<em>str</em>) – Root directory of dataset.</p></li>
+<li><p><strong>train</strong> (<em>bool</em><em>, </em><em>default=False</em>) – If True, creates dataset from train subset,
+otherwise from validation subset.</p></li>
+<li><p><strong>transform</strong> (<em>transform object</em><em>, </em><em>default=None</em>) – transform to process input data.</p></li>
+<li><p><strong>filter</strong> (<em>Filter objects</em><em>, </em><em>default=None</em>) – filter out examples according to specific
+conditions.</p></li>
+<li><p><strong>download</strong> (<em>bool</em><em>, </em><em>default=True</em>) – If true, downloads the dataset from the internet
+and puts it in root directory. If dataset is already
+downloaded, it is not downloaded again.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.PytorchMNIST">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">PytorchMNIST</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">download</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.PytorchMNIST" title="Link to this definition"></a></dt>
+<dd><p>The PyTorch datasets for MNIST.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.MXNetMNIST">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">MXNetMNIST</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">download</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.MXNetMNIST" title="Link to this definition"></a></dt>
+<dd><p>The MXNet datasets for MNIST.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.TensorflowMNIST">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">TensorflowMNIST</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">download</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.TensorflowMNIST" title="Link to this definition"></a></dt>
+<dd><p>The Tensorflow datasets for MNIST.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.FashionMNIST">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">FashionMNIST</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">download</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.FashionMNIST" title="Link to this definition"></a></dt>
+<dd><p>FashionMNIST database.</p>
+<dl class="simple">
+<dt>For FashionMNIST: If download is True, it will download dataset to root/FashionMNIST/,</dt><dd><p>otherwise user should put train-labels-idx1-ubyte.gz,
+train-images-idx3-ubyte.gz, t10k-labels-idx1-ubyte.gz
+and t10k-images-idx3-ubyte.gz under root/FashionMNIST/ manually.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>root</strong> (<em>str</em>) – Root directory of dataset.</p></li>
+<li><p><strong>train</strong> (<em>bool</em><em>, </em><em>default=False</em>) – If True, creates dataset from train subset,
+otherwise from validation subset.</p></li>
+<li><p><strong>transform</strong> (<em>transform object</em><em>, </em><em>default=None</em>) – transform to process input data.</p></li>
+<li><p><strong>filter</strong> (<em>Filter objects</em><em>, </em><em>default=None</em>) – filter out examples according to specific
+conditions.</p></li>
+<li><p><strong>download</strong> (<em>bool</em><em>, </em><em>default=True</em>) – If true, downloads the dataset from the internet
+and puts it in root directory. If dataset is already
+downloaded, it is not downloaded again.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.PytorchFashionMNIST">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">PytorchFashionMNIST</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">download</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.PytorchFashionMNIST" title="Link to this definition"></a></dt>
+<dd><p>The PyTorch datasets for FashionMNIST.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.MXNetFashionMNIST">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">MXNetFashionMNIST</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">download</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.MXNetFashionMNIST" title="Link to this definition"></a></dt>
+<dd><p>The MXNet Dataset for FashionMNIST.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.TensorflowFashionMNIST">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">TensorflowFashionMNIST</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">download</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.TensorflowFashionMNIST" title="Link to this definition"></a></dt>
+<dd><p>The Tensorflow Dataset for FashionMNIST.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.ImageFolder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">ImageFolder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.ImageFolder" title="Link to this definition"></a></dt>
+<dd><p>The base class for ImageFolder.</p>
+<p>Expects the data folder to contain subfolders representing the classes to which
+its images belong.</p>
+<dl class="simple">
+<dt>Please arrange data in this way:</dt><dd><p>root/class_1/xxx.png
+root/class_1/xxy.png
+root/class_1/xxz.png
+…
+root/class_n/123.png
+root/class_n/nsdf3.png
+root/class_n/<a href="#id5"><span class="problematic" id="id6">asd932_</span></a>.png</p>
+</dd>
+</dl>
+<p>Please put images of different categories into different folders.</p>
+<dl>
+<dt>Args: root (str): Root directory of dataset.</dt><dd><p>transform (transform object, default=None):  transform to process input data.
+filter (Filter objects, default=None): filter out examples according to specific</p>
+<blockquote>
+<div><p>conditions.</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.MXNetImageFolder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">MXNetImageFolder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.MXNetImageFolder" title="Link to this definition"></a></dt>
+<dd><p>The MXNet Dataset for image folder.</p>
+<p>Expects the data folder to contain subfolders representing the classes to which
+its images belong.</p>
+<dl class="simple">
+<dt>Please arrange data in this way:</dt><dd><p>root/class_1/xxx.png
+root/class_1/xxy.png
+root/class_1/xxz.png
+…
+root/class_n/123.png
+root/class_n/nsdf3.png
+root/class_n/<a href="#id7"><span class="problematic" id="id8">asd932_</span></a>.png</p>
+</dd>
+</dl>
+<p>Please put images of different categories into different folders.</p>
+<dl>
+<dt>Args: root (str): Root directory of dataset.</dt><dd><p>transform (transform object, default=None):  transform to process input data.
+filter (Filter objects, default=None): filter out examples according to specific</p>
+<blockquote>
+<div><p>conditions.</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.Tensorflow">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">Tensorflow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.Tensorflow" title="Link to this definition"></a></dt>
+<dd><p>The Tensorflow Dataset for image folder.</p>
+<p>Expects the data folder to contain subfolders representing the classes to which
+its images belong.</p>
+<dl class="simple">
+<dt>Please arrange data in this way:</dt><dd><p>root/class_1/xxx.png
+root/class_1/xxy.png
+root/class_1/xxz.png
+…
+root/class_n/123.png
+root/class_n/nsdf3.png
+root/class_n/<a href="#id9"><span class="problematic" id="id10">asd932_</span></a>.png</p>
+</dd>
+</dl>
+<p>Please put images of different categories into different folders.</p>
+<dl>
+<dt>Args: root (str): Root directory of dataset.</dt><dd><p>transform (transform object, default=None):  transform to process input data.
+filter (Filter objects, default=None): filter out examples according to specific</p>
+<blockquote>
+<div><p>conditions.</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.TensorflowTFRecordDataset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">TensorflowTFRecordDataset</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.TensorflowTFRecordDataset" title="Link to this definition"></a></dt>
+<dd><p>The Tensorflow TFRecord Dataset.</p>
+<p>Root is a full path to tfrecord file, which contains the file name.</p>
+<dl>
+<dt>Args: root (str): filename of dataset.</dt><dd><p>transform (transform object, default=None):  transform to process input data.
+filter (Filter objects, default=None): filter out examples according</p>
+<blockquote>
+<div><p>to specific conditions.</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.TensorflowImageRecord">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">TensorflowImageRecord</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.TensorflowImageRecord" title="Link to this definition"></a></dt>
+<dd><p>Tensorflow imageNet database in tf record format.</p>
+<dl class="simple">
+<dt>Please arrange data in this way:</dt><dd><p>root/validation-000-of-100
+root/validation-001-of-100
+…
+root/validation-099-of-100</p>
+</dd>
+</dl>
+<p>The file name needs to follow this pattern: ‘* - * -of- <a href="#id3"><span class="problematic" id="id4">*</span></a>’</p>
+<dl>
+<dt>Args: root (str): Root directory of dataset.</dt><dd><p>transform (transform object, default=None):  transform to process input data.
+filter (Filter objects, default=None): filter out examples according</p>
+<blockquote>
+<div><p>to specific conditions.</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.data.datasets.dataset.TensorflowVOCRecord">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.data.datasets.dataset.</span></span><span class="sig-name descname"><span class="pre">TensorflowVOCRecord</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/data/datasets/dataset.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.data.datasets.dataset.TensorflowVOCRecord" title="Link to this definition"></a></dt>
+<dd><p>The Tensorflow PASCAL VOC 2012 database in tf record format.</p>
+<dl class="simple">
+<dt>Please arrange data in this way:</dt><dd><p>root/val-00000-of-00004.tfrecord
+root/val-00001-of-00004.tfrecord
+…
+root/val-00003-of-00004.tfrecord</p>
+</dd>
+</dl>
+<p>The file name needs to follow this pattern: ‘val-<em>-of-</em>’</p>
+<dl>
+<dt>Args: root (str): Root directory of dataset.</dt><dd><p>transform (transform object, default=None):  transform to process input data.
+filter (Filter objects, default=None): filter out examples according</p>
+<blockquote>
+<div><p>to specific conditions.</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fef7ff1fa60> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

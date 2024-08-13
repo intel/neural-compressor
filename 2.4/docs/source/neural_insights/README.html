@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Neural Insights &mdash; Intel® Neural Compressor 2.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../versions.html">2.4▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Neural Insights</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/docs/source/neural_insights/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div align="center"><section id="neural-insights">
+<h1>Neural Insights<a class="headerlink" href="#neural-insights" title="Link to this heading"></a></h1>
+</div><p>Neural Insights is a web application for easier use of Intel® Neural Compressor <a class="reference external" href="/docs/source/diagnosis.html">diagnosis</a> feature.
+It provides the capability to show the model graph, histograms of weights and activations, quantization configs, etc.
+The workflow shows the relationship of Neural Insights and diagnosis.
+<img alt="workflow" src="../../../_images/workflow.jpg" /></p>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
+<p>Installation of Neural Insights is possible in one of following ways:</p>
+<section id="install-from-pypi">
+<h3>Install from pypi<a class="headerlink" href="#install-from-pypi" title="Link to this heading"></a></h3>
+<div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>neural-insights
+</pre></div>
+</div>
+</section>
+<section id="install-from-source">
+<h3>Install from Source<a class="headerlink" href="#install-from-source" title="Link to this heading"></a></h3>
+<div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install Neural Compressor</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/intel/neural-compressor.git
+<span class="nb">cd</span><span class="w"> </span>neural-compressor<span class="w"> </span>
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt<span class="w"> </span>
+python<span class="w"> </span>setup.py<span class="w"> </span>install
+
+<span class="c1"># Install Neural Insights</span>
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>neural_insights/requirements.txt
+python<span class="w"> </span>setup.py<span class="w"> </span>install<span class="w"> </span>neural_insights
+</pre></div>
+</div>
+</section>
+</section>
+<section id="getting-started">
+<h2>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading"></a></h2>
+<section id="start-the-neural-insights">
+<h3>Start the Neural Insights<a class="headerlink" href="#start-the-neural-insights" title="Link to this heading"></a></h3>
+<p>To start the Neural Insights server execute <code class="docutils literal notranslate"><span class="pre">neural_insights</span></code> command:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>neural_insights
+</pre></div>
+</div>
+<p>The server generates a self-signed TLS certificate and prints instruction how to access the Web UI.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Neural Insights Server started.
+
+Open address https://10.11.12.13:5000/?token=338174d13706855fc6924cec7b3a8ae8
+</pre></div>
+</div>
+<p>Server generated certificate is not trusted by your web browser, you will need to accept usage of such certificate.</p>
+<p>You might also use additional parameters and settings:</p>
+<ul>
+<li><p>Neural Insights listens on port 5000.
+Make sure that port 5000 is accessible to your browser (you might need to open it in your firewall),
+or specify different port that is already opened, for example 8080:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>neural_insights<span class="w"> </span>-p<span class="w"> </span><span class="m">8080</span>
+</pre></div>
+</div>
+</li>
+<li><p>To start the Neural Insights server with your own TLS certificate add <code class="docutils literal notranslate"><span class="pre">--cert</span></code> and <code class="docutils literal notranslate"><span class="pre">--key</span></code> parameters:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>neural_insights<span class="w"> </span>--cert<span class="w"> </span>path_to_cert.crt<span class="w"> </span>--key<span class="w"> </span>path_to_private_key.key
+</pre></div>
+</div>
+</li>
+<li><p>To start the Neural Insights server without TLS encryption use <code class="docutils literal notranslate"><span class="pre">--allow-insecure-connections</span></code> parameter:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>neural_insights<span class="w"> </span>--allow-insecure-connections
+</pre></div>
+</div>
+<p>This enables access to the server from any machine in your local network (or the whole Internet if your server is exposed to it).</p>
+<p>You are forfeiting security, confidentiality and integrity of all client-server communication. Your server is exposed to external threats.</p>
+</li>
+</ul>
+</section>
+<section id="quantization-with-python-api">
+<h3>Quantization with Python API<a class="headerlink" href="#quantization-with-python-api" title="Link to this heading"></a></h3>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install Intel Neural Compressor and TensorFlow</span>
+pip<span class="w"> </span>install<span class="w"> </span>neural-compressor
+pip<span class="w"> </span>install<span class="w"> </span>neural-insights
+pip<span class="w"> </span>install<span class="w"> </span>tensorflow
+<span class="c1"># Prepare fp32 model</span>
+wget<span class="w"> </span>https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/mobilenet_v1_1.0_224_frozen.pb
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">Metric</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.data</span> <span class="kn">import</span> <span class="n">DataLoader</span>
+<span class="kn">from</span> <span class="nn">neural_compressor.data</span> <span class="kn">import</span> <span class="n">Datasets</span>
+
+<span class="n">top1</span> <span class="o">=</span> <span class="n">Metric</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;topk&quot;</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">Datasets</span><span class="p">(</span><span class="s2">&quot;tensorflow&quot;</span><span class="p">)[</span><span class="s2">&quot;dummy&quot;</span><span class="p">](</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="n">dataloader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">framework</span><span class="o">=</span><span class="s2">&quot;tensorflow&quot;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">neural_compressor.quantization</span> <span class="kn">import</span> <span class="n">fit</span>
+
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;./mobilenet_v1_1.0_224_frozen.pb&quot;</span><span class="p">,</span>
+    <span class="n">conf</span><span class="o">=</span><span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">diagnosis</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">,</span>
+    <span class="n">eval_dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">,</span>
+    <span class="n">eval_metric</span><span class="o">=</span><span class="n">top1</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>When the quantization is started, the workload should appear on the Neural Insights page and successively, new information should be available while quantization is in progress (such as weights distribution and accuracy data).</p>
+<blockquote>
+<div><p>Note that above example uses dummy data which is used to describe usage of Neural Insights. For diagnosis purposes you should use real dataset specific for your use case.</p>
+</div></blockquote>
+</section>
+</section>
+<section id="tensor-dump-examples">
+<h2>Tensor dump examples<a class="headerlink" href="#tensor-dump-examples" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="docs/source/pytorch_nlp_cli_mode.html">Step by step example how to dump weights data for PyTorch model with Neural Insights</a></p></li>
+</ul>
+</section>
+<section id="step-by-step-diagnosis-example">
+<h2>Step by Step Diagnosis Example<a class="headerlink" href="#step-by-step-diagnosis-example" title="Link to this heading"></a></h2>
+<p>Refer to <a class="reference external" href="https://github.com/intel/neural-compressor/tree/master/neural_insights/docs/source/tf_accuracy_debug.html">Step by Step Diagnosis Example with TensorFlow</a> and <a class="reference external" href="https://github.com/intel/neural-compressor/tree/master/neural_insights/docs/source/onnx_accuracy_debug.html">Step by Step Diagnosis Example with ONNXRT</a> to get started with some basic quantization accuracy diagnostic skills.</p>
+</section>
+<section id="research-collaborations">
+<h2>Research Collaborations<a class="headerlink" href="#research-collaborations" title="Link to this heading"></a></h2>
+<p>Welcome to raise any interesting research ideas on model compression techniques and feel free to reach us (inc.maintainers&#64;intel.com). Look forward to our collaborations on Neural Insights!</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8d976b6fd0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

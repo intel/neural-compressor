@@ -1,0 +1,80 @@
+neural_compressor.compression.pruner.model_slim.weight_slim
+===========================================================
+
+.. py:module:: neural_compressor.compression.pruner.model_slim.weight_slim
+
+.. autoapi-nested-parse::
+
+   Weight Squeezer.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.model_slim.weight_slim.PostCompressionUtils
+   neural_compressor.compression.pruner.model_slim.weight_slim.LinearCompression
+   neural_compressor.compression.pruner.model_slim.weight_slim.LinearCompressionIterator
+
+
+Module Contents
+---------------
+
+.. py:class:: PostCompressionUtils
+
+
+
+   Operations library related to weight compression.
+
+
+.. py:class:: LinearCompression(root_linear, target_linears)
+
+
+
+   Class which automatically compresses two consecutive linear layers.
+
+   For two consecutive linear layer, when the second layer's input channel is pruned,
+   then the first layer's output channel can also be pruned,
+   while the second layer's output hidden state value is identical.
+   for example, two consecutive linears have following structure.
+   x = layer_1(input)
+   x = act_fn(x)
+   x = layer_2(x)
+
+   :param layer_1: the first Linear layer.
+   :type layer_1: torch.nn.Linear
+   :param layer_2: the second Linear layer.
+   :type layer_2: torch.nn.Linear
+
+   .. attribute:: layer_1
+
+      the first Linear layer.
+
+      :type: torch.nn.Linear
+
+   .. attribute:: layer_2
+
+      the second Linear layer.
+
+      :type: torch.nn.Linear
+
+   .. attribute:: device
+
+      the device of layers' weights.
+
+
+.. py:class:: LinearCompressionIterator(linear_patterns)
+
+
+
+   Pruner of a sequence of consecutive linear patterns.
+
+   .. attribute:: linear_patterns
+
+      a iterable object of consecutive linear patterns.
+
+      :type: dict/list
+
+

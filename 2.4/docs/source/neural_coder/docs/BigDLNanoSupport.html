@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BigDL Nano Support &mdash; Intel® Neural Compressor 2.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../versions.html">2.4▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">BigDL Nano Support</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/docs/source/neural_coder/docs/BigDLNanoSupport.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="bigdl-nano-support">
+<h1>BigDL Nano Support<a class="headerlink" href="#bigdl-nano-support" title="Link to this heading"></a></h1>
+<p>Neural Coder collaborates with <a class="reference external" href="https://bigdl.readthedocs.io/en/latest/doc/Nano/Overview/nano.html">BigDL-Nano</a>, a Python library that automatically applies modern CPU optimizations, to further democratize ease-of-use BigDL-Nano APIs as a <strong>no-code</strong> solution for PyTorch Deep Learning programmers.</p>
+<section id="example">
+<h2>Example<a class="headerlink" href="#example" title="Link to this heading"></a></h2>
+<p>For instance, to perform BF16 + Channels Last optimizations with BigDL-Nano API using Neural Coder on the <a class="reference external" href="../examples/nano/resnet18.py">example code</a> and run this code with the enabled optimizations, users can simply execute this command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">neural_coder</span> <span class="o">-</span><span class="n">o</span> <span class="n">nano_bf16_channels_last</span> <span class="o">../</span><span class="n">examples</span><span class="o">/</span><span class="n">nano</span><span class="o">/</span><span class="n">resnet18</span><span class="o">.</span><span class="n">py</span>
+</pre></div>
+</div>
+<p>The alias for each optimization set is documented in the below Support Matrix. Note that you need to <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">bigdl</span></code> first following <a class="reference external" href="https://github.com/intel-analytics/BigDL#installing">BigDL-Nano documentation</a>.</p>
+</section>
+<section id="support-matrix">
+<h2>Support Matrix<a class="headerlink" href="#support-matrix" title="Link to this heading"></a></h2>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Optimization Set</th>
+<th>API Alias</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BF16 + Channels Last</td>
+<td><code>nano_bf16_channels_last</code></td>
+</tr>
+<tr>
+<td>BF16 + IPEX + Channels Last</td>
+<td><code>nano_bf16_ipex_channels_last</code></td>
+</tr>
+<tr>
+<td>BF16 + IPEX</td>
+<td><code>nano_bf16_ipex</code></td>
+</tr>
+<tr>
+<td>BF16</td>
+<td><code>nano_bf16</code></td>
+</tr>
+<tr>
+<td>Channels Last</td>
+<td><code>nano_fp32_channels_last</code></td>
+</tr>
+<tr>
+<td>IPEX + Channels Last</td>
+<td><code>nano_fp32_ipex_channels_last</code></td>
+</tr>
+<tr>
+<td>IPEX</td>
+<td><code>nano_fp32_ipex</code></td>
+</tr>
+<tr>
+<td>Convert CUDA TO GPU</td>
+<td><code>nano_gpu_to_cpu</code></td>
+</tr>
+<tr>
+<td>INT8</td>
+<td><code>nano_int8</code></td>
+</tr>
+<tr>
+<td>JIT + BF16 + Channels Last</td>
+<td><code>nano_jit_bf16_channels_last</code></td>
+</tr>
+<tr>
+<td>JIT + BF16 + IPEX + Channels Last</td>
+<td><code>nano_jit_bf16_ipex_channels_last</code></td>
+</tr>
+<tr>
+<td>JIT + BF16 + IPEX</td>
+<td><code>nano_jit_bf16_ipex</code></td>
+</tr>
+<tr>
+<td>JIT + BF16</td>
+<td><code>nano_jit_bf16</code></td>
+</tr>
+<tr>
+<td>JIT + Channels Last</td>
+<td><code>nano_jit_fp32_channels_last</code></td>
+</tr>
+<tr>
+<td>JIT + IPEX + Channels Last</td>
+<td><code>nano_jit_fp32_ipex_channels_last</code></td>
+</tr>
+<tr>
+<td>JIT + IPEX</td>
+<td><code>nano_jit_fp32_ipex</code></td>
+</tr>
+<tr>
+<td>JIT</td>
+<td><code>nano_jit_fp32</code></td>
+</tr>
+<tr>
+<td>ONNX Runtime</td>
+<td><code>nano_onnxruntime_fp32</code></td>
+</tr>
+<tr>
+<td>ONNX Runtime + INT8</td>
+<td><code>nano_onnxruntime_int8_qlinear</code></td>
+</tr>
+<tr>
+<td>OpenVINO</td>
+<td><code>nano_openvino_fp32</code></td>
+</tr>
+<tr>
+<td>OpenVINO + INT8</td>
+<td><code>nano_openvino_int8</code></td>
+</tr>
+</tbody>
+</table></section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8d9788faf0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

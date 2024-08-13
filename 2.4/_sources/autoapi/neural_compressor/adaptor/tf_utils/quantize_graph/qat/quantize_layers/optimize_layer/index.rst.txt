@@ -1,0 +1,27 @@
+neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_layers.optimize_layer
+====================================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_layers.optimize_layer
+
+.. autoapi-nested-parse::
+
+   Optimize layer config.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.quantize_graph.qat.quantize_layers.optimize_layer.config_quantizable_layers
+
+
+Module Contents
+---------------
+
+.. py:function:: config_quantizable_layers(model)
+
+   Configure the quantizable layers.
+
+

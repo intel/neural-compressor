@@ -1,0 +1,23 @@
+neural_compressor.torch.quantization
+====================================
+
+.. py:module:: neural_compressor.torch.quantization
+
+.. autoapi-nested-parse::
+
+   Intel Neural Compressor PyTorch quantization API.
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/torch/quantization/algorithm_entry/index
+   /autoapi/neural_compressor/torch/quantization/config/index
+   /autoapi/neural_compressor/torch/quantization/load_entry/index
+   /autoapi/neural_compressor/torch/quantization/quantize/index
+
+

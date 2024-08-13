@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.compression.pruner.model_slim.pattern_analyzer &mdash; Intel® Neural Compressor 2.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../versions.html">2.5▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.compression.pruner.model_slim.pattern_analyzer</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../_sources/autoapi/neural_compressor/compression/pruner/model_slim/pattern_analyzer/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.compression.pruner.model_slim.pattern_analyzer">
+<span id="neural-compressor-compression-pruner-model-slim-pattern-analyzer"></span><h1>neural_compressor.compression.pruner.model_slim.pattern_analyzer<a class="headerlink" href="#module-neural_compressor.compression.pruner.model_slim.pattern_analyzer" title="Link to this heading"></a></h1>
+<p>Analyze.</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.RecipeSearcher" title="neural_compressor.compression.pruner.model_slim.pattern_analyzer.RecipeSearcher"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RecipeSearcher</span></code></a></p></td>
+<td><p>Searcher class which searches patterns with a pre-defined recipe.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.JitBasicSearcher" title="neural_compressor.compression.pruner.model_slim.pattern_analyzer.JitBasicSearcher"><code class="xref py py-obj docutils literal notranslate"><span class="pre">JitBasicSearcher</span></code></a></p></td>
+<td><p>Static graph searcher class which searches patterns with PyTorch static graph and its input/output information.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.Linear2LinearSearcher" title="neural_compressor.compression.pruner.model_slim.pattern_analyzer.Linear2LinearSearcher"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Linear2LinearSearcher</span></code></a></p></td>
+<td><p>Static graph searcher for consecutive linear layers.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.SelfMHASearcher" title="neural_compressor.compression.pruner.model_slim.pattern_analyzer.SelfMHASearcher"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SelfMHASearcher</span></code></a></p></td>
+<td><p>Static graph searcher for multi-head attention modules.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcher" title="neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcher"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ClassifierHeadSearcher</span></code></a></p></td>
+<td><p>Static graph searcher for multi-head attention modules.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcherTF" title="neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcherTF"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ClassifierHeadSearcherTF</span></code></a></p></td>
+<td><p>Static graph searcher for multi-head attention modules.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.get_attributes" title="neural_compressor.compression.pruner.model_slim.pattern_analyzer.get_attributes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_attributes</span></code></a>(module, attrs)</p></td>
+<td><p>Get a multi-level descent module of module.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.get_common_module" title="neural_compressor.compression.pruner.model_slim.pattern_analyzer.get_common_module"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_common_module</span></code></a>(layer1, layer2)</p></td>
+<td><p>Get the module which contains layer1 and layer2 (nearest father nodes)</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.print_iterables" title="neural_compressor.compression.pruner.model_slim.pattern_analyzer.print_iterables"><code class="xref py py-obj docutils literal notranslate"><span class="pre">print_iterables</span></code></a>(data_iters)</p></td>
+<td><p>Print the auto slim logs.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.get_attributes">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.model_slim.pattern_analyzer.</span></span><span class="sig-name descname"><span class="pre">get_attributes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attrs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.get_attributes" title="Link to this definition"></a></dt>
+<dd><p>Get a multi-level descent module of module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> (<em>torch.nn.Module</em>) – The torch module.</p></li>
+<li><p><strong>attrs</strong> (<em>str</em>) – The attributes’ calling path.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The target attribute of the module.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>attr</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.get_common_module">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.model_slim.pattern_analyzer.</span></span><span class="sig-name descname"><span class="pre">get_common_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.get_common_module" title="Link to this definition"></a></dt>
+<dd><p>Get the module which contains layer1 and layer2 (nearest father nodes)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.print_iterables">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.model_slim.pattern_analyzer.</span></span><span class="sig-name descname"><span class="pre">print_iterables</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_iters</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.print_iterables" title="Link to this definition"></a></dt>
+<dd><p>Print the auto slim logs.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.RecipeSearcher">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.model_slim.pattern_analyzer.</span></span><span class="sig-name descname"><span class="pre">RecipeSearcher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recipe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.RecipeSearcher" title="Link to this definition"></a></dt>
+<dd><p>Searcher class which searches patterns with a pre-defined recipe.</p>
+<p>A Recipe is a dict type data which contains the root module’s name and
+its sub-modules’ levelwise calling way.
+For example, for the self-attention module in Huggingface bert-model,
+if we want to obtain its linear ops (query, key, value and output),
+the recipe should be like:
+recipe_samples = {</p>
+<blockquote>
+<div><p>‘BertAttention’: [“self.query”, “self.key”, “self.value”, “output.dense”]</p>
+</div></blockquote>
+<p>}</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>torch.nn.Module</em>) – The PyTorch model for searching.</p></li>
+<li><p><strong>recipe</strong> (<em>dict</em>) – A dict containing information of the searching pattern.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.RecipeSearcher.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.RecipeSearcher.model" title="Link to this definition"></a></dt>
+<dd><p>The PyTorch model for searching.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.RecipeSearcher.recipe">
+<span class="sig-name descname"><span class="pre">recipe</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.RecipeSearcher.recipe" title="Link to this definition"></a></dt>
+<dd><p>A dict containing information of the searching pattern.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.RecipeSearcher.targets">
+<span class="sig-name descname"><span class="pre">targets</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.RecipeSearcher.targets" title="Link to this definition"></a></dt>
+<dd><p>The basic module’s name which contains searching pattern.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.RecipeSearcher.searching_results">
+<span class="sig-name descname"><span class="pre">searching_results</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.RecipeSearcher.searching_results" title="Link to this definition"></a></dt>
+<dd><p>The list/dict which store matched patterns.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.JitBasicSearcher">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.model_slim.pattern_analyzer.</span></span><span class="sig-name descname"><span class="pre">JitBasicSearcher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">placeholder_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">placeholder_dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.JitBasicSearcher" title="Link to this definition"></a></dt>
+<dd><p>Static graph searcher class which searches patterns with PyTorch static graph and its input/output information.</p>
+<p>By converting a PyTorch Model into a static version using torch.jit.trace()/script(),
+we can trace some special pattern in the model and optimize them automatically.
+This class provide some basic functions for jit searcher
+Including generating dummy inputs, generating static graph, analyzing static graph.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> (<em>torch.nn.Module</em>) – The PyTorch model for searching.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.JitBasicSearcher.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.JitBasicSearcher.model" title="Link to this definition"></a></dt>
+<dd><p>The PyTorch model for searching.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.JitBasicSearcher.device">
+<span class="sig-name descname"><span class="pre">device</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.JitBasicSearcher.device" title="Link to this definition"></a></dt>
+<dd><p>The model’s current device type.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.JitBasicSearcher.static_graph">
+<span class="sig-name descname"><span class="pre">static_graph</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.JitBasicSearcher.static_graph" title="Link to this definition"></a></dt>
+<dd><p>The static graph of original model.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.JitBasicSearcher.flatten_static_graph">
+<span class="sig-name descname"><span class="pre">flatten_static_graph</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.JitBasicSearcher.flatten_static_graph" title="Link to this definition"></a></dt>
+<dd><p>A list of string with the model’s static graph inference details.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.JitBasicSearcher.target_layers">
+<span class="sig-name descname"><span class="pre">target_layers</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.JitBasicSearcher.target_layers" title="Link to this definition"></a></dt>
+<dd><p>The layer types the searcher will extract.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.JitBasicSearcher.searching_results">
+<span class="sig-name descname"><span class="pre">searching_results</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.JitBasicSearcher.searching_results" title="Link to this definition"></a></dt>
+<dd><p>The list/dict which store matched patterns.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.Linear2LinearSearcher">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.model_slim.pattern_analyzer.</span></span><span class="sig-name descname"><span class="pre">Linear2LinearSearcher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">placeholder_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">placeholder_dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.Linear2LinearSearcher" title="Link to this definition"></a></dt>
+<dd><p>Static graph searcher for consecutive linear layers.</p>
+<p>Use the static graph to detect some special pattern in a module, there is no need for user to define layer name.
+Automatically search linear layers which can be optimized.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> (<em>torch.nn.Module</em>) – The PyTorch model for searching.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.Linear2LinearSearcher.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.Linear2LinearSearcher.model" title="Link to this definition"></a></dt>
+<dd><p>The PyTorch model for searching.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.Linear2LinearSearcher.device">
+<span class="sig-name descname"><span class="pre">device</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.Linear2LinearSearcher.device" title="Link to this definition"></a></dt>
+<dd><p>The model’s current device type.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.Linear2LinearSearcher.static_graph">
+<span class="sig-name descname"><span class="pre">static_graph</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.Linear2LinearSearcher.static_graph" title="Link to this definition"></a></dt>
+<dd><p>The static graph of original model.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.Linear2LinearSearcher.flatten_static_graph">
+<span class="sig-name descname"><span class="pre">flatten_static_graph</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.Linear2LinearSearcher.flatten_static_graph" title="Link to this definition"></a></dt>
+<dd><p>A list of string with the model’s static graph inference details.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.Linear2LinearSearcher.target_layers">
+<span class="sig-name descname"><span class="pre">target_layers</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.Linear2LinearSearcher.target_layers" title="Link to this definition"></a></dt>
+<dd><p>The layer types the searcher will extract.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.Linear2LinearSearcher.searching_results">
+<span class="sig-name descname"><span class="pre">searching_results</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.Linear2LinearSearcher.searching_results" title="Link to this definition"></a></dt>
+<dd><p>The list/dict which store matched patterns.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.Linear2LinearSearcher.target_op_lut">
+<span class="sig-name descname"><span class="pre">target_op_lut</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.Linear2LinearSearcher.target_op_lut" title="Link to this definition"></a></dt>
+<dd><p>a lookup table for target operators and their corresponding jit codes.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.Linear2LinearSearcher.current_pattern">
+<span class="sig-name descname"><span class="pre">current_pattern</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.Linear2LinearSearcher.current_pattern" title="Link to this definition"></a></dt>
+<dd><p>a searching path to store searching status.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.SelfMHASearcher">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.model_slim.pattern_analyzer.</span></span><span class="sig-name descname"><span class="pre">SelfMHASearcher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">placeholder_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">placeholder_dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.SelfMHASearcher" title="Link to this definition"></a></dt>
+<dd><p>Static graph searcher for multi-head attention modules.</p>
+<p>Use the static graph to detect some special pattern in a module, there is no need for user to define layer name.
+Automatically search multi-head attention modules which can be optimized.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> (<em>torch.nn.Module</em>) – The PyTorch model for searching.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.SelfMHASearcher.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.SelfMHASearcher.model" title="Link to this definition"></a></dt>
+<dd><p>The PyTorch model for searching.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.SelfMHASearcher.device">
+<span class="sig-name descname"><span class="pre">device</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.SelfMHASearcher.device" title="Link to this definition"></a></dt>
+<dd><p>The model’s current device type.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.SelfMHASearcher.static_graph">
+<span class="sig-name descname"><span class="pre">static_graph</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.SelfMHASearcher.static_graph" title="Link to this definition"></a></dt>
+<dd><p>The static graph of original model.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.SelfMHASearcher.flatten_static_graph">
+<span class="sig-name descname"><span class="pre">flatten_static_graph</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.SelfMHASearcher.flatten_static_graph" title="Link to this definition"></a></dt>
+<dd><p>A list of string with the model’s static graph inference details.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcher">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.model_slim.pattern_analyzer.</span></span><span class="sig-name descname"><span class="pre">ClassifierHeadSearcher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcher" title="Link to this definition"></a></dt>
+<dd><p>Static graph searcher for multi-head attention modules.</p>
+<p>Use the static graph to detect final classifier head in a module, there is no need for user to define layer name.
+Automatically search multi-head attention modules which can be optimized.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> (<em>torch.nn.Module</em>) – The PyTorch model for searching.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcher.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcher.model" title="Link to this definition"></a></dt>
+<dd><p>The PyTorch model for searching.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcher.device">
+<span class="sig-name descname"><span class="pre">device</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcher.device" title="Link to this definition"></a></dt>
+<dd><p>The model’s current device type.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcher.static_graph">
+<span class="sig-name descname"><span class="pre">static_graph</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcher.static_graph" title="Link to this definition"></a></dt>
+<dd><p>The static graph of original model.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcher.flatten_static_graph">
+<span class="sig-name descname"><span class="pre">flatten_static_graph</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcher.flatten_static_graph" title="Link to this definition"></a></dt>
+<dd><p>A list of string with the model’s static graph inference details.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcherTF">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.model_slim.pattern_analyzer.</span></span><span class="sig-name descname"><span class="pre">ClassifierHeadSearcherTF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcherTF" title="Link to this definition"></a></dt>
+<dd><p>Static graph searcher for multi-head attention modules.</p>
+<p>Use the static graph to detect final classifier head in a module, there is no need for user to define layer name.
+Automatically search multi-head attention modules which can be optimized.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> (<em>tf.keras.Model</em>) – The Keras model for searching.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcherTF.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcherTF.model" title="Link to this definition"></a></dt>
+<dd><p>The Keras model for searching.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcherTF.device">
+<span class="sig-name descname"><span class="pre">device</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcherTF.device" title="Link to this definition"></a></dt>
+<dd><p>The model’s current device type.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcherTF.static_graph">
+<span class="sig-name descname"><span class="pre">static_graph</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcherTF.static_graph" title="Link to this definition"></a></dt>
+<dd><p>The static graph of original model.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcherTF.flatten_static_graph">
+<span class="sig-name descname"><span class="pre">flatten_static_graph</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.5/neural_compressor/compression/pruner/model_slim/pattern_analyzer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.model_slim.pattern_analyzer.ClassifierHeadSearcherTF.flatten_static_graph" title="Link to this definition"></a></dt>
+<dd><p>A list of string with the model’s static graph inference details.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f81c67f1910> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

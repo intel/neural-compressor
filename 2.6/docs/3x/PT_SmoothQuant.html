@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PyTorch Smooth Quantization &mdash; Intel® Neural Compressor 2.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">2.6▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../source/user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">PyTorch Smooth Quantization</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/3x/PT_SmoothQuant.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="pytorch-smooth-quantization">
+<h1>PyTorch Smooth Quantization<a class="headerlink" href="#pytorch-smooth-quantization" title="Link to this heading"></a></h1>
+<ol class="simple">
+<li><p><a class="reference external" href="#Introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#Usage">Usage</a></p></li>
+<li><p><a class="reference external" href="#Validated-Models">Validated Models</a></p></li>
+<li><p><a class="reference external" href="#Supported-Framework-Matrix">Supported Framework Matrix</a></p></li>
+</ol>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
+<p>Quantization is a common compression operation to reduce memory and accelerate inference by converting the floating point matrix to an integer matrix. For large language models (LLMs) with gigantic parameters, the systematic outliers make quantification of activations difficult.  <a class="reference external" href="https://arxiv.org/abs/2211.10438">SmoothQuant</a>, a training free post-training quantization (PTQ) solution, offline migrates this difficulty from activations to weights with a mathematically equivalent transformation.</p>
+</section>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
+<section id="fixed-alpha">
+<h3>Fixed Alpha<a class="headerlink" href="#fixed-alpha" title="Link to this heading"></a></h3>
+<p>To set a fixed alpha for the entire model, users can follow this example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.torch.quantization</span> <span class="kn">import</span> <span class="n">SmoothQuantConfig</span><span class="p">,</span> <span class="n">convert</span><span class="p">,</span> <span class="n">prepare</span>
+
+
+<span class="k">def</span> <span class="nf">run_fn</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="n">model</span><span class="p">(</span><span class="n">example_inputs</span><span class="p">)</span>
+
+
+<span class="n">quant_config</span> <span class="o">=</span> <span class="n">SmoothQuantConfig</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">prepared_model</span> <span class="o">=</span> <span class="n">prepare</span><span class="p">(</span><span class="n">fp32_model</span><span class="p">,</span> <span class="n">quant_config</span><span class="o">=</span><span class="n">quant_config</span><span class="p">,</span> <span class="n">example_inputs</span><span class="o">=</span><span class="n">example_inputs</span><span class="p">)</span>
+<span class="n">run_fn</span><span class="p">(</span><span class="n">prepared_model</span><span class="p">)</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="n">prepared_model</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">SmoothQuantConfig</span></code> description:</p>
+<p><code class="docutils literal notranslate"><span class="pre">alpha</span></code>: a smooth factor to calculate the conversion per-channel scale and balance the quantization difficulty of activation and weight. Float value, default is 0.5.</p>
+<blockquote>
+<div><p><strong>Note:</strong> Alpha=”auto” and alpha auto-tuning was supported in old API, please stay tuned for the new API’s support for auto alpha.</p>
+</div></blockquote>
+</section>
+<section id="specify-quantization-rules">
+<h3>Specify Quantization Rules<a class="headerlink" href="#specify-quantization-rules" title="Link to this heading"></a></h3>
+<p>Intel(R) Neural Compressor support specify quantization rules by operator type for Smooth Quantization. Users can use <code class="docutils literal notranslate"><span class="pre">set_local</span></code> to fallback op type in <code class="docutils literal notranslate"><span class="pre">SmoothQuantConfig</span></code> to achieve the above purpose.</p>
+<p>Here we don’t quantize <code class="docutils literal notranslate"><span class="pre">Linear</span></code> layers.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># fallback by op_type</span>
+<span class="n">quant_config</span><span class="o">.</span><span class="n">set_local</span><span class="p">(</span><span class="s2">&quot;Linear&quot;</span><span class="p">,</span> <span class="n">SmoothQuantConfig</span><span class="p">(</span><span class="n">w_dtype</span><span class="o">=</span><span class="s2">&quot;fp32&quot;</span><span class="p">,</span> <span class="n">act_dtype</span><span class="o">=</span><span class="s2">&quot;fp32&quot;</span><span class="p">))</span>
+<span class="n">prepared_model</span> <span class="o">=</span> <span class="n">prepare</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">quant_config</span><span class="o">=</span><span class="n">quant_config</span><span class="p">,</span> <span class="n">example_inputs</span><span class="o">=</span><span class="n">example_inputs</span><span class="p">)</span>
+<span class="n">run_fn</span><span class="p">(</span><span class="n">prepared_model</span><span class="p">)</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="n">prepared_model</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>To get more information, please refer to <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/examples/3.x_api/pytorch/nlp/huggingface_models/language-modeling/quantization/smooth_quant">examples</a>.</p>
+</section>
+</section>
+<section id="validated-models">
+<h2>Validated Models<a class="headerlink" href="#validated-models" title="Link to this heading"></a></h2>
+<p>Neural Compressor: 2.1</p>
+<p>IPEX (Intel Extension for PyTorch): 2.0/2.1</p>
+<p>Dataset: lambada_openai</p>
+<p>Task: text-generation provided by <a class="reference external" href="https://github.com/intel/intel-extension-for-transformers/tree/main/examples/huggingface/pytorch/text-generation/quantization">ITREX</a></p>
+<p>alpha [0.4, 0.6] is sweet spot region in SmoothQuant paper.</p>
+<p>A list of models that achieved a &lt;1% accuracy drop is shown below.</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: center;">Model/Last token accuracy</th>
+<th style="text-align: center;">FP32 Accuracy</th>
+<th style="text-align: center;">INT8 (w/ SmoothQuant)</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">bigscience/bloom-560m</td>
+<td style="text-align: center;">0.354</td>
+<td style="text-align: center;">0.3542</td>
+<td>alpha=0.5, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">bigscience/bloom-1b7</td>
+<td style="text-align: center;">0.4634</td>
+<td style="text-align: center;">0.4936</td>
+<td>alpha=0.5, Ipex 2.0</td>
+</tr>
+<tr>
+<td style="text-align: center;">bigscience/bloom-3b</td>
+<td style="text-align: center;">0.518</td>
+<td style="text-align: center;">0.5185</td>
+<td>alpha=0.8, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">bigscience/bloom-7b1</td>
+<td style="text-align: center;">0.5764</td>
+<td style="text-align: center;">0.5977</td>
+<td>alpha=0.5, Ipex 2.0</td>
+</tr>
+<tr>
+<td style="text-align: center;">bigscience/bloomz-560m</td>
+<td style="text-align: center;">0.3947</td>
+<td style="text-align: center;">0.3930</td>
+<td>alpha=0.8, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">bigscience/bloomz-1b7</td>
+<td style="text-align: center;">0.4828</td>
+<td style="text-align: center;">0.4906</td>
+<td>alpha=0.5, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">bigscience/bloomz-3b</td>
+<td style="text-align: center;">0.5018</td>
+<td style="text-align: center;">0.4980</td>
+<td>alpha=0.5, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">bigscience/bloomz-7b1</td>
+<td style="text-align: center;">0.5593</td>
+<td style="text-align: center;">0.5552</td>
+<td>alpha=0.5, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">facebook/opt-125m</td>
+<td style="text-align: center;">0.379</td>
+<td style="text-align: center;">0.3757</td>
+<td>alpha=0.5, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">facebook/opt-350m</td>
+<td style="text-align: center;">0.4516</td>
+<td style="text-align: center;">0.4533</td>
+<td>alpha=0.8, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">facebook/opt-1.3b</td>
+<td style="text-align: center;">0.5789</td>
+<td style="text-align: center;">0.5742</td>
+<td>alpha=0.8, Ipex 2.0</td>
+</tr>
+<tr>
+<td style="text-align: center;">facebook/opt-2.7b</td>
+<td style="text-align: center;">0.6365</td>
+<td style="text-align: center;">0.6404</td>
+<td>alpha=0.5, Ipex 2.0</td>
+</tr>
+<tr>
+<td style="text-align: center;">facebook/opt-6.7b</td>
+<td style="text-align: center;">0.6769</td>
+<td style="text-align: center;">0.6804</td>
+<td>alpha=0.5, Ipex 2.0</td>
+</tr>
+<tr>
+<td style="text-align: center;">facebook/opt-13b</td>
+<td style="text-align: center;">0.6872</td>
+<td style="text-align: center;">0.6814</td>
+<td>alpha=0.5, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">facebook/opt-30b</td>
+<td style="text-align: center;">0.7149</td>
+<td style="text-align: center;">0.7128</td>
+<td>alpha=0.5, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">facebook/opt-66b</td>
+<td style="text-align: center;">0.7398</td>
+<td style="text-align: center;">0.7326</td>
+<td>alpha=0.5, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">LLaMa-7b</td>
+<td style="text-align: center;">0.7361</td>
+<td style="text-align: center;">0.7357</td>
+<td>alpha=0.8, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">LLaMa-13b</td>
+<td style="text-align: center;">0.7627</td>
+<td style="text-align: center;">0.7590</td>
+<td>alpha=0.7, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">LLaMa-30b</td>
+<td style="text-align: center;">0.7759</td>
+<td style="text-align: center;">0.7840</td>
+<td>alpha=0.7, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">LLaMa-65b</td>
+<td style="text-align: center;">0.7908</td>
+<td style="text-align: center;">0.7957</td>
+<td>alpha=0.9, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">EleutherAI/gpt-j-6B*</td>
+<td style="text-align: center;">0.6831</td>
+<td style="text-align: center;">0.6821</td>
+<td>alpha=1.0, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">MBZUAI/LaMini-GPT-124m</td>
+<td style="text-align: center;">0.3804</td>
+<td style="text-align: center;">0.3887</td>
+<td>alpha=0.5, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">MBZUAI/LaMini-GPT-774m</td>
+<td style="text-align: center;">0.5048</td>
+<td style="text-align: center;">0.5057</td>
+<td>alpha=0.5, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">MBZUAI/LaMini-GPT-1.5b</td>
+<td style="text-align: center;">0.5443</td>
+<td style="text-align: center;">0.5436</td>
+<td>alpha=0.5, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">mosaicml/mpt-7b-chat</td>
+<td style="text-align: center;">0.655</td>
+<td style="text-align: center;">0.6499</td>
+<td>alpha=0.7, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">stabilityai/stablelm-base-alpha-3b</td>
+<td style="text-align: center;">0.4172</td>
+<td style="text-align: center;">0.4149</td>
+<td>alpha=0.6, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">togethercomputer/RedPajama-INCITE-Base-3B-v1</td>
+<td style="text-align: center;">0.6542</td>
+<td style="text-align: center;">0.6735</td>
+<td>alpha=0.5, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">togethercomputer/RedPajama-INCITE-Chat-3B-v1*</td>
+<td style="text-align: center;">0.6718</td>
+<td style="text-align: center;">0.6740</td>
+<td>alpha=0.5, Ipex 2.0</td>
+</tr>
+<tr>
+<td style="text-align: center;">togethercomputer/RedPajama-INCITE-Instruct-3B-v1*</td>
+<td style="text-align: center;">0.6569</td>
+<td style="text-align: center;">0.6621</td>
+<td>alpha=0.5, Ipex 2.0</td>
+</tr>
+<tr>
+<td style="text-align: center;">togethercomputer/RedPajama-INCITE-Base-7B-v0.1*</td>
+<td style="text-align: center;">0.7143</td>
+<td style="text-align: center;">0.7221</td>
+<td>alpha=0.5, Ipex 2.0</td>
+</tr>
+<tr>
+<td style="text-align: center;">togethercomputer/RedPajama-INCITE-Instruct-7B-v0.1*</td>
+<td style="text-align: center;">0.6895</td>
+<td style="text-align: center;">0.6953</td>
+<td>alpha=0.5, Ipex 2.0</td>
+</tr>
+<tr>
+<td style="text-align: center;">databricks/dolly-v1-6b*</td>
+<td style="text-align: center;">0.6866</td>
+<td style="text-align: center;">0.6895</td>
+<td>alpha=0.8, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">databricks/dolly-v2-3b*</td>
+<td style="text-align: center;">0.6297</td>
+<td style="text-align: center;">0.6247</td>
+<td>alpha=0.5, Ipex 2.1</td>
+</tr>
+<tr>
+<td style="text-align: center;">tiiuae/falcon-7b-instruct</td>
+<td style="text-align: center;">0.6437</td>
+<td style="text-align: center;">0.6392</td>
+<td>alpha=0.7, Pytorch</td>
+</tr>
+</tbody>
+</table><p>Please refer to the step-by-step <a class="reference external" href="../../examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm/ipex/README.html">instruction</a> for details.</p>
+<p>Please note that for models with asterisk(*), we have set all add ops to FP32 during quantization step to achieve desirable results.</p>
+</section>
+<section id="supported-framework-matrix">
+<h2>Supported Framework Matrix<a class="headerlink" href="#supported-framework-matrix" title="Link to this heading"></a></h2>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: center;">Framework</th>
+<th>Alpha</th>
+<th>Folding</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">PyTorch</td>
+<td>[0-1]</td>
+<td>False</td>
+</tr>
+<tr>
+<td style="text-align: center;">IPEX</td>
+<td>[0-1]</td>
+<td>True / False(Version&gt;2.1)</td>
+</tr>
+</tbody>
+</table></section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8a3c263790> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

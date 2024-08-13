@@ -1,0 +1,36 @@
+neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.convert_layout
+=====================================================================================
+
+.. py:module:: neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.convert_layout
+
+.. autoapi-nested-parse::
+
+   Convert Layout Graph Rewriter.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.convert_layout.ConvertLayoutOptimizer
+
+
+Module Contents
+---------------
+
+.. py:class:: ConvertLayoutOptimizer(model, outputs)
+
+
+
+   The layout conversion optimizer, convert NCHW to NHWC format.
+
+   It is executed only when NCHW node exists and tensorflow version is 2.4.0 and above.
+
+   Args: model: input graph_def
+         outputs: output name list
+
+   Return: converted graph_def
+
+

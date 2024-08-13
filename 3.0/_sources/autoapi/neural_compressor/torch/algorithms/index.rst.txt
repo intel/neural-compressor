@@ -1,0 +1,35 @@
+neural_compressor.torch.algorithms
+==================================
+
+.. py:module:: neural_compressor.torch.algorithms
+
+.. autoapi-nested-parse::
+
+   Intel Neural Compressor PyTorch algorithms.
+
+
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/torch/algorithms/layer_wise/index
+   /autoapi/neural_compressor/torch/algorithms/mixed_precision/index
+   /autoapi/neural_compressor/torch/algorithms/mx_quant/index
+   /autoapi/neural_compressor/torch/algorithms/pt2e_quant/index
+   /autoapi/neural_compressor/torch/algorithms/smooth_quant/index
+   /autoapi/neural_compressor/torch/algorithms/static_quant/index
+   /autoapi/neural_compressor/torch/algorithms/weight_only/index
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/torch/algorithms/base_algorithm/index
+
+

@@ -1,0 +1,29 @@
+neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm
+=========================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm
+
+.. autoapi-nested-parse::
+
+   Folding BatchNorm Graph Rewriter.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fold_batch_norm.FoldBatchNormNodesOptimizer
+
+
+Module Contents
+---------------
+
+.. py:class:: FoldBatchNormNodesOptimizer(model)
+
+
+
+   Folding BatchNorm nodes into Conv.
+
+

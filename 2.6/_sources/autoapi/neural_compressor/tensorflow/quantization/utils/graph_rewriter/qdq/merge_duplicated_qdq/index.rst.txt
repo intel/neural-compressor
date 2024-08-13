@@ -1,0 +1,29 @@
+neural_compressor.tensorflow.quantization.utils.graph_rewriter.qdq.merge_duplicated_qdq
+=======================================================================================
+
+.. py:module:: neural_compressor.tensorflow.quantization.utils.graph_rewriter.qdq.merge_duplicated_qdq
+
+.. autoapi-nested-parse::
+
+   Merge duplicated QDQ patterns Graph Rewriter.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.quantization.utils.graph_rewriter.qdq.merge_duplicated_qdq.MergeDuplicatedQDQOptimizer
+
+
+Module Contents
+---------------
+
+.. py:class:: MergeDuplicatedQDQOptimizer(model)
+
+
+
+   Merge duplicated QDQ patterns.
+
+

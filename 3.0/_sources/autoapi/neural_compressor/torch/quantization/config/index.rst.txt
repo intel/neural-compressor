@@ -1,0 +1,310 @@
+neural_compressor.torch.quantization.config
+===========================================
+
+.. py:module:: neural_compressor.torch.quantization.config
+
+.. autoapi-nested-parse::
+
+   Intel Neural Compressor Pytorch quantization config API.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.quantization.config.OperatorConfig
+   neural_compressor.torch.quantization.config.TorchBaseConfig
+   neural_compressor.torch.quantization.config.RTNConfig
+   neural_compressor.torch.quantization.config.GPTQConfig
+   neural_compressor.torch.quantization.config.AWQConfig
+   neural_compressor.torch.quantization.config.TEQConfig
+   neural_compressor.torch.quantization.config.AutoRoundConfig
+   neural_compressor.torch.quantization.config.MXQuantConfig
+   neural_compressor.torch.quantization.config.DynamicQuantConfig
+   neural_compressor.torch.quantization.config.StaticQuantConfig
+   neural_compressor.torch.quantization.config.SmoothQuantConfig
+   neural_compressor.torch.quantization.config.HQQConfig
+   neural_compressor.torch.quantization.config.FP8Config
+   neural_compressor.torch.quantization.config.MixedPrecisionConfig
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.quantization.config.get_default_rtn_config
+   neural_compressor.torch.quantization.config.get_default_double_quant_config
+   neural_compressor.torch.quantization.config.get_default_gptq_config
+   neural_compressor.torch.quantization.config.get_default_awq_config
+   neural_compressor.torch.quantization.config.get_default_teq_config
+   neural_compressor.torch.quantization.config.get_default_AutoRound_config
+   neural_compressor.torch.quantization.config.get_default_mx_config
+   neural_compressor.torch.quantization.config.get_default_dynamic_config
+   neural_compressor.torch.quantization.config.get_default_static_config
+   neural_compressor.torch.quantization.config.get_default_sq_config
+   neural_compressor.torch.quantization.config.get_default_hqq_config
+   neural_compressor.torch.quantization.config.get_default_fp8_config
+   neural_compressor.torch.quantization.config.get_default_fp8_config_set
+   neural_compressor.torch.quantization.config.get_default_mixed_precision_config
+   neural_compressor.torch.quantization.config.get_default_mixed_precision_config_set
+   neural_compressor.torch.quantization.config.get_all_registered_configs
+   neural_compressor.torch.quantization.config.get_woq_tuning_config
+
+
+Module Contents
+---------------
+
+.. py:class:: OperatorConfig
+
+
+
+   OperatorConfig.
+
+
+.. py:class:: TorchBaseConfig(white_list: Optional[List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
+
+
+
+   Base config class for torch backend.
+
+
+.. py:class:: RTNConfig(dtype: str = 'int', bits: int = 4, use_sym: bool = True, group_size: int = 32, group_dim: int = 1, use_full_range: bool = False, use_mse_search: bool = False, use_layer_wise: bool = False, model_path: str = '', use_double_quant: bool = False, double_quant_dtype: str = 'int', double_quant_bits: int = 8, double_quant_use_sym: bool = False, double_quant_group_size: int = 256, quant_lm_head: bool = False, white_list: Optional[List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
+
+
+
+   Config class for round-to-nearest weight-only quantization.
+
+
+.. py:function:: get_default_rtn_config(processor_type: Optional[Union[str, neural_compressor.torch.utils.ProcessorType]] = None) -> RTNConfig
+
+   Get the default configuration of RTN.
+
+   :param processor_type: The user-specified processor type.
+                          Defaults to None.
+   :type processor_type: Optional[Union[str, torch_utils.ProcessorType]], optional
+
+   :returns: RTNConfig
+   :rtype: RTNConfig
+
+
+.. py:function:: get_default_double_quant_config(type='BNB_NF4')
+
+   Get the default configuration of double quant.
+
+   :param type: double quant type. Defaults to "BNB_NF4".
+   :type type: str, optional
+
+   :returns: double quant config.
+   :rtype: dict
+
+
+.. py:class:: GPTQConfig(dtype: str = 'int', bits: int = 4, use_sym: bool = True, group_size: int = 32, use_mse_search: bool = False, use_layer_wise: bool = False, model_path: str = '', use_double_quant: bool = False, double_quant_dtype: str = 'int', double_quant_bits: int = 8, double_quant_use_sym: bool = False, double_quant_group_size: int = 256, quant_lm_head: bool = False, act_order: bool = False, percdamp: float = 0.01, block_size: int = 2048, static_groups: bool = False, white_list: Optional[List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
+
+
+
+   Config class for GPTQ.
+
+   GPTQ: Accurate Post-Training Quantization for Generative Pre-trained Transformers.
+   https://arxiv.org/abs/2210.17323
+
+
+.. py:function:: get_default_gptq_config(processor_type: Optional[Union[str, neural_compressor.torch.utils.ProcessorType]] = None) -> GPTQConfig
+
+   Get the default configuration of GPTQ.
+
+   :param processor_type: The user-specified processor type.
+                          Defaults to None.
+   :type processor_type: Optional[Union[str, torch_utils.ProcessorType]], optional
+
+   :returns: GPTQConfig
+   :rtype: GPTQConfig
+
+
+.. py:class:: AWQConfig(dtype: str = 'int', bits: int = 4, use_sym: bool = True, group_size: int = 32, group_dim: int = 1, use_full_range: bool = False, use_mse_search: bool = False, use_layer_wise: bool = False, model_path: str = '', use_double_quant: bool = False, double_quant_dtype: str = 'int', double_quant_bits: int = 8, double_quant_use_sym: bool = True, double_quant_group_size: int = 256, quant_lm_head: bool = False, use_auto_scale: bool = True, use_auto_clip: bool = True, folding: bool = False, white_list: Optional[List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST, absorb_layer_dict: dict = {})
+
+
+
+   Config class for AWQ.
+
+   AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration.
+   https://arxiv.org/abs/2306.00978
+
+
+.. py:function:: get_default_awq_config() -> AWQConfig
+
+   Generate the default awq config.
+
+   :returns: the default awq config.
+
+
+.. py:class:: TEQConfig(dtype: str = 'int', bits: int = 4, use_sym: bool = True, group_size: int = 32, group_dim: int = 1, use_full_range: bool = False, use_mse_search: bool = False, use_layer_wise: bool = False, use_double_quant: bool = False, double_quant_dtype: str = 'int', double_quant_bits: int = 8, double_quant_use_sym: bool = True, double_quant_group_size: int = 256, quant_lm_head: bool = False, absorb_to_layer: dict = {}, folding: bool = True, white_list: Optional[List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
+
+
+
+   Config class for TEQ.
+
+   TEQ: Activation-aware Weight Quantization for LLM Compression and Acceleration.
+   https://arxiv.org/abs/2306.00978
+
+
+.. py:function:: get_default_teq_config() -> TEQConfig
+
+   Generate the default teq config.
+
+   :returns: the default teq config.
+
+
+.. py:class:: AutoRoundConfig(dtype: str = 'int', bits: int = 4, use_sym: bool = False, group_size: int = 128, act_bits: int = 32, act_group_size: int = None, act_sym: bool = None, act_dynamic: bool = True, enable_full_range: bool = False, batch_size: int = 8, lr_scheduler=None, enable_quanted_input: bool = True, enable_minmax_tuning: bool = True, lr: float = None, minmax_lr: float = None, low_gpu_mem_usage: bool = False, iters: int = 200, seqlen: int = 2048, nsamples: int = 128, sampler: str = 'rand', seed: int = 42, nblocks: int = 1, gradient_accumulate_steps: int = 1, not_use_best_mse: bool = False, dynamic_max_gap: int = -1, scale_dtype: str = 'fp16', use_layer_wise: bool = False, quant_block_list: list = None, white_list: Optional[List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
+
+
+
+   Config class for AUTOROUND.
+
+   AUTOROUND: Optimize Weight Rounding via Signed Gradient Descent for the Quantization of LLMs.
+   https://arxiv.org/abs/2309.05516
+   code: https://github.com/intel/auto-round
+
+
+.. py:function:: get_default_AutoRound_config(processor_type: Optional[Union[str, neural_compressor.torch.utils.ProcessorType]] = None) -> RTNConfig
+
+   Get the default configuration of AutoRound.
+
+   :param processor_type: The user-specified processor type.
+                          Defaults to None.
+   :type processor_type: Optional[Union[str, torch_utils.ProcessorType]], optional
+
+   :returns: AutoRoundConfig
+   :rtype: AutoRoundConfig
+
+
+.. py:class:: MXQuantConfig(w_dtype: str = 'int8', act_dtype: str = 'int8', out_dtype: str = 'bfloat16', blocksize: int = 32, round_method: str = 'nearest', weight_only: bool = False, white_list: Optional[List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
+
+
+
+   Config class for MX quantization.
+
+
+.. py:function:: get_default_mx_config() -> MXQuantConfig
+
+   Generate the default mx config.
+
+   :returns: the default rtn config.
+
+
+.. py:class:: DynamicQuantConfig(w_dtype: str = 'int8', w_sym: bool = True, w_granularity: str = 'per_tensor', w_algo: str = 'minmax', act_dtype: str = 'uint8', act_sym: bool = False, act_granularity: str = 'per_tensor', act_algo: str = 'kl', white_list: Optional[List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
+
+
+
+   Config class for dynamic quantization.
+
+
+.. py:function:: get_default_dynamic_config() -> DynamicQuantConfig
+
+   Generate the default dynamic quant config.
+
+   :returns: the default dynamic quant config.
+
+
+.. py:class:: StaticQuantConfig(w_dtype: str = 'int8', w_sym: bool = True, w_granularity: str = 'per_channel', w_algo: str = 'minmax', act_dtype: str = 'uint8', act_sym: bool = False, act_granularity: str = 'per_tensor', act_algo: str = 'minmax', excluded_precisions: list = [], white_list: Optional[List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST, model_info: Optional[List[Tuple[str, Callable]]] = None)
+
+
+
+   Config class for static quantization.
+
+
+.. py:function:: get_default_static_config() -> StaticQuantConfig
+
+   Generate the default static quant config.
+
+   :returns: the default static quant config.
+
+
+.. py:class:: SmoothQuantConfig(w_dtype: str = 'int8', w_sym: bool = True, w_granularity: str = 'per_channel', w_algo: str = 'minmax', act_dtype: str = 'uint8', act_sym: bool = False, act_granularity: str = 'per_tensor', act_algo: str = 'minmax', excluded_precisions: list = [], alpha: float = 0.5, folding: bool = False, scale_sharing: bool = False, init_alpha: float = 0.5, alpha_min: float = 0.0, alpha_max: float = 1.0, alpha_step: float = 0.1, shared_criterion: str = 'max', do_blockwise: bool = False, auto_alpha_args: dict = None, white_list: Optional[List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
+
+
+
+   Config class for smooth quantization.
+
+
+.. py:function:: get_default_sq_config() -> SmoothQuantConfig
+
+   Generate the default smoothquant config.
+
+   :returns: the default smoothquant config.
+
+
+.. py:class:: HQQConfig(dtype: str = 'int', bits: int = 4, group_size: int = 64, quant_zero: bool = True, quant_scale: bool = False, scale_quant_group_size: int = 128, quant_lm_head: bool = False, white_list: Optional[List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
+
+
+
+   Configuration class for Half-Quadratic Quantization (HQQ).
+
+   HQQ is a quantization algorithm that reduces the precision of weights and activations in neural networks.
+   For more details, refer to the blog: https://mobiusml.github.io/hqq_blog/
+   and the code: https://github.com/mobiusml/hqq
+
+
+.. py:function:: get_default_hqq_config() -> HQQConfig
+
+   Generate the default HQQ config.
+
+   :returns: the default HQQ config.
+
+
+.. py:class:: FP8Config(dump_stats_path: str = './hqt_output/measure', fp8_config: str = 'E4M3', hp_dtype: str = 'bf16', blocklist: dict = {'names': [], 'types': ()}, allowlist: dict = {'names': [], 'types': FP8_WHITE_LIST}, mode: str = 'AUTO', scale_method: str = 'maxabs_hw', scale_params: dict = {}, observer: str = 'maxabs', mod_dict: dict = {}, measure_exclude: str = 'OUTPUT', **kwargs)
+
+
+
+   Config class for FP8 quantization.
+
+
+.. py:function:: get_default_fp8_config() -> FP8Config
+
+   Generate the default fp8 config.
+
+   :returns: the default fp8 config.
+
+
+.. py:function:: get_default_fp8_config_set() -> FP8Config
+
+   Generate the default fp8 config set.
+
+   :returns: the default fp8 config.
+
+
+.. py:class:: MixedPrecisionConfig(dtype: Union[str, List[str]] = 'fp16', white_list: Optional[List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
+
+
+
+   Config class for mixed-precision.
+
+
+.. py:function:: get_default_mixed_precision_config() -> MixedPrecisionConfig
+
+   Generate the default mixed-precision config.
+
+   :returns: the default mixed-precision config.
+
+
+.. py:function:: get_default_mixed_precision_config_set() -> MixedPrecisionConfig
+
+   Generate the default mixed-precision config set.
+
+   :returns: the default mixed-precision config.
+
+
+.. py:function:: get_all_registered_configs() -> Dict[str, neural_compressor.common.base_config.BaseConfig]
+
+   Get all registered configs.
+
+
+.. py:function:: get_woq_tuning_config() -> list
+
+   Generate the config set for WOQ tuning.
+
+   :returns: the list of WOQ quant config.
+
+

@@ -1,0 +1,51 @@
+neural_compressor.adaptor.tf_utils.graph_rewriter.generic
+=========================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic
+
+.. autoapi-nested-parse::
+
+   Tensorflow Generic Graph Rewriters.
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/convert_add_to_biasadd/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/convert_layout/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/convert_leakyrelu/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/convert_nan_to_random/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/convert_placeholder_to_const/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/dilated_contraction/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/dummy_biasadd/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/expanddims_optimizer/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/fetch_weight_from_reshape/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/fold_batch_norm/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/fold_constant/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/fuse_biasadd_add/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/fuse_column_wise_mul/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/fuse_conv_with_math/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/fuse_decomposed_bn/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/fuse_decomposed_in/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/fuse_gelu/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/fuse_layer_norm/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/fuse_pad_with_conv/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/fuse_pad_with_fp32_conv/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/fuse_reshape_transpose/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/graph_cse_optimizer/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/grappler_pass/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/insert_print_node/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/move_squeeze_after_relu/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/pre_optimize/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/remove_training_nodes/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/rename_batch_norm/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/split_shared_input/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/strip_equivalent_nodes/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/strip_unused_nodes/index
+   /autoapi/neural_compressor/adaptor/tf_utils/graph_rewriter/generic/switch_optimizer/index
+
+

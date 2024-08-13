@@ -1,0 +1,133 @@
+neural_compressor.common.utils.utility
+======================================
+
+.. py:module:: neural_compressor.common.utils.utility
+
+.. autoapi-nested-parse::
+
+   The utility of common module.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.common.utils.utility.LazyImport
+   neural_compressor.common.utils.utility.CpuInfo
+   neural_compressor.common.utils.utility.ProcessorType
+   neural_compressor.common.utils.utility.Statistics
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.common.utils.utility.singleton
+   neural_compressor.common.utils.utility.dump_elapsed_time
+   neural_compressor.common.utils.utility.set_random_seed
+   neural_compressor.common.utils.utility.set_workspace
+   neural_compressor.common.utils.utility.get_workspace
+   neural_compressor.common.utils.utility.set_resume_from
+   neural_compressor.common.utils.utility.set_tensorboard
+   neural_compressor.common.utils.utility.log_process
+   neural_compressor.common.utils.utility.call_counter
+   neural_compressor.common.utils.utility.detect_processor_type_based_on_hw
+
+
+Module Contents
+---------------
+
+.. py:function:: singleton(cls)
+
+   Singleton decorator.
+
+
+.. py:class:: LazyImport(module_name)
+
+
+
+   Lazy import python module till use.
+
+
+.. py:class:: CpuInfo
+
+
+
+   Get CPU Info.
+
+
+.. py:function:: dump_elapsed_time(customized_msg='')
+
+   Get the elapsed time for decorated functions.
+
+   :param customized_msg: The parameter passed to decorator. Defaults to None.
+   :type customized_msg: string, optional
+
+
+.. py:function:: set_random_seed(seed: int)
+
+   Set the random seed in config.
+
+
+.. py:function:: set_workspace(workspace: str)
+
+   Set the workspace in config.
+
+
+.. py:function:: get_workspace()
+
+   Get the workspace in config.
+
+
+.. py:function:: set_resume_from(resume_from: str)
+
+   Set the resume_from in config.
+
+
+.. py:function:: set_tensorboard(tensorboard: bool)
+
+   Set the tensorboard in config.
+
+
+.. py:function:: log_process(mode=Mode.QUANTIZE)
+
+   Decorator function that logs the stage of process.
+
+   :param mode: The mode of the process.
+   :type mode: Mode
+
+   :returns: The decorated function.
+
+
+.. py:function:: call_counter(func)
+
+   A decorator that keeps track of the number of times a function is called.
+
+   :param func: The function to be decorated.
+
+   :returns: The decorated function.
+
+
+.. py:class:: ProcessorType
+
+
+
+   The processor type.
+
+
+.. py:function:: detect_processor_type_based_on_hw()
+
+   Detects the processor type based on the hardware configuration.
+
+   :returns: The detected processor type (Server or Client).
+   :rtype: ProcessorType
+
+
+.. py:class:: Statistics(data, header, field_names, output_handle=logger.info)
+
+   The statistics printer.
+
+

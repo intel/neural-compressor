@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Benchmark &mdash; Intel® Neural Compressor 3.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../versions.html">3.0▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Benchmark</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/docs/source/3x/benchmark.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="benchmark">
+<h1>Benchmark<a class="headerlink" href="#benchmark" title="Link to this heading"></a></h1>
+<ol class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#supported-matrix">Supported Matrix</a></p></li>
+<li><p><a class="reference external" href="#usage">Usage</a></p></li>
+</ol>
+</section>
+<section id="introduction">
+<h1>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h1>
+<p>Intel Neural Compressor provides a command <code class="docutils literal notranslate"><span class="pre">incbench</span></code> to launch the Intel CPU performance benchmark.</p>
+<p>To get the peak performance on Intel Xeon CPU, we should avoid crossing NUMA node in one instance.
+Therefore, by default, <code class="docutils literal notranslate"><span class="pre">incbench</span></code> will trigger 1 instance on the first NUMA node.</p>
+</section>
+<section id="supported-matrix">
+<h1>Supported Matrix<a class="headerlink" href="#supported-matrix" title="Link to this heading"></a></h1>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: center;">Platform</th>
+<th style="text-align: center;">Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">Linux</td>
+<td style="text-align: center;">&#10004;</td>
+</tr>
+<tr>
+<td style="text-align: center;">Windows</td>
+<td style="text-align: center;">&#10004;</td>
+</tr>
+</tbody>
+</table></section>
+<section id="usage">
+<h1>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h1>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: center;">Parameters</th>
+<th style="text-align: center;">Default</th>
+<th style="text-align: center;">comments</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">num_instances</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">Number of instances</td>
+</tr>
+<tr>
+<td style="text-align: center;">num_cores_per_instance</td>
+<td style="text-align: center;">None</td>
+<td style="text-align: center;">Number of cores in each instance</td>
+</tr>
+<tr>
+<td style="text-align: center;">C, cores</td>
+<td style="text-align: center;">0-${num_cores_on_NUMA-1}</td>
+<td style="text-align: center;">decides the visible core range</td>
+</tr>
+<tr>
+<td style="text-align: center;">cross_memory</td>
+<td style="text-align: center;">False</td>
+<td style="text-align: center;">whether to allocate memory cross NUMA</td>
+</tr>
+</tbody>
+</table><blockquote>
+<div><p>Note: cross_memory is set to True only when memory is insufficient.</p>
+</div></blockquote>
+<section id="general-use-cases">
+<h2>General Use Cases<a class="headerlink" href="#general-use-cases" title="Link to this heading"></a></h2>
+<ol class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">incbench</span> <span class="pre">main.py</span></code>: run 1 instance on NUMA:0.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">incbench</span> <span class="pre">--num_i</span> <span class="pre">2</span> <span class="pre">main.py</span></code>: run 2 instances on NUMA:0.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">incbench</span> <span class="pre">--num_c</span> <span class="pre">2</span> <span class="pre">main.py</span></code>: run multi-instances with 2 cores per instance on NUMA:0.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">incbench</span> <span class="pre">-C</span> <span class="pre">24-47</span> <span class="pre">main.py</span></code>: run 1 instance on COREs:24-47.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">incbench</span> <span class="pre">-C</span> <span class="pre">24-47</span> <span class="pre">--num_c</span> <span class="pre">4</span> <span class="pre">main.py</span></code>: run multi-instances with 4 COREs per instance on COREs:24-47.</p></li>
+</ol>
+<blockquote>
+<div><p>Note:
+&gt; - <code class="docutils literal notranslate"><span class="pre">num_i</span></code> works the same as <code class="docutils literal notranslate"><span class="pre">num_instances</span></code>
+&gt; - <code class="docutils literal notranslate"><span class="pre">num_c</span></code> works the same as <code class="docutils literal notranslate"><span class="pre">num_cores_per_instance</span></code></p>
+</div></blockquote>
+</section>
+<section id="dump-throughput-and-latency-summary">
+<h2>Dump Throughput and Latency Summary<a class="headerlink" href="#dump-throughput-and-latency-summary" title="Link to this heading"></a></h2>
+<p>To merge benchmark results from multi-instances, “incbench” automatically checks log file messages for “throughput” and “latency” information matching the following patterns.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">throughput_pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;[T,t]hroughput:\s*([0-9]*\.?[0-9]+)\s*([a-zA-Z/]*)&quot;</span>
+<span class="n">latency_pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;[L,l]atency:\s*([0-9]*\.?[0-9]+)\s*([a-zA-Z/]*)&quot;</span>
+</pre></div>
+</div>
+<section id="demo-usage">
+<h3>Demo usage<a class="headerlink" href="#demo-usage" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Throughput: </span><span class="si">{:.3f}</span><span class="s2"> samples/sec&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">throughput</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Latency: </span><span class="si">{:.3f}</span><span class="s2"> ms&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">latency</span> <span class="o">*</span> <span class="mi">10</span><span class="o">**</span><span class="mi">3</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fef7c4c9fd0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

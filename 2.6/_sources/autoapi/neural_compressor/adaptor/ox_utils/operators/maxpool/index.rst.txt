@@ -1,0 +1,37 @@
+neural_compressor.adaptor.ox_utils.operators.maxpool
+====================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators.maxpool
+
+.. autoapi-nested-parse::
+
+   MaxPool Operator.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.maxpool.MaxPoolOperator
+   neural_compressor.adaptor.ox_utils.operators.maxpool.QMaxPoolOperator
+
+
+Module Contents
+---------------
+
+.. py:class:: MaxPoolOperator(onnx_quantizer, onnx_node)
+
+
+
+   MaxPool Operator.
+
+
+.. py:class:: QMaxPoolOperator(onnx_node, children, initializers)
+
+
+
+   QMaxPool Operator.
+
+

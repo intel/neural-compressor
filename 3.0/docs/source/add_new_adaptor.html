@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How to Add An Adaptor &mdash; Intel® Neural Compressor 3.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">3.0▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">How to Add An Adaptor</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/add_new_adaptor.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="how-to-add-an-adaptor">
+<h1>How to Add An Adaptor<a class="headerlink" href="#how-to-add-an-adaptor" title="Link to this heading"></a></h1>
+<ul class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#api-list-that-need-to-implement">API List that Need to Implement</a></p></li>
+<li><p><a class="reference external" href="#design-the-framework-yaml">Design the framework YAML</a></p></li>
+<li><p><a class="reference external" href="#add-query-fw-capability-api-to-adaptor">Add query_fw_capability API to Adaptor</a></p></li>
+<li><p><a class="reference external" href="#add-quantize-api-according-to-tune-cfg">Add quantize API according to tune cfg</a></p></li>
+</ul>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
+<p>Intel® Neural Compressor builds the low-precision inference solution on popular deep learning frameworks such as TensorFlow, PyTorch, MXNet, Keras and ONNX Runtime. The adaptor layer is the bridge between the tuning strategy and vanilla framework quantization APIs, each framework has own adaptor. The users can add new adaptor to set strategy capabilities.</p>
+<p>The document outlines the process of adding support for a new adaptor, in Intel® Neural Compressor with minimal changes. It provides instructions and code examples for implementation of a new adaptor. By following the steps outlined in the document, users can extend Intel® Neural Compressor’s functionality to accommodate new adaptor and incorporate it into quantization workflows.</p>
+<p>The quantizable operator behavior and it’s tuning scope is defined in specific framework YAML file. The adaptor will parse this file and give the quantization capability to the Strategy object. Then Strategy will build tuning space of the specific graph/model and generate different tuning configuration from the tuning space to adaptor.</p>
+<p>The diagram below illustrates all the relevant steps of how adaptor is invoked, with additional details provided for each annotated step.</p>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>  sequenceDiagram
+  	autonumber
+  	autonumber
+    Adaptor -&gt;&gt; Adaptor: Design the framework YAML
+    Strategy -&gt;&gt; Adaptor: use query_framework_capability to get the capability of the model
+    Adaptor -&gt;&gt; Adaptor: Parse the framework YAML and get quantization capability
+    Adaptor -&gt;&gt; Strategy: Send the capability including &#39;opwise&#39; and &#39;optypewise&#39; ability
+    Strategy -&gt;&gt; Strategy: Build tuning space
+    loop Traverse tuning space
+    	Strategy-&gt;&gt; Adaptor: generate next tuning cfg
+        Adaptor -&gt;&gt; Adaptor: calibrate and quantize model based on tuning config
+
+    end
+</pre></div>
+</div>
+<p>❶ Design the framework YAML, inherit QueryBackendCapability class to parse the framework yaml.<br />❷ Utilizes adaptor.query_fw_capability to query the framework’s capabilities.<br />❸ Parse the framework YAML and get quantization capability.<br />❹ Send the capability including ‘opwise’ and ‘optypewise’ ability to Strategy.<br />❺ Build the tuning space in Strategy.<br />❻ Generates the tuning configurations for each operators of the model using the tuning space constructed in the previous step, specifying the desired tuning process.<br />❼ Invokes the specific kernels for the calibration and quantization based on the tuning configuration.</p>
+</section>
+<section id="api-list-that-need-to-implement">
+<h2>API List that Need to Implement<a class="headerlink" href="#api-list-that-need-to-implement" title="Link to this heading"></a></h2>
+<p>These APIs are necessary to add a new adapter. Here are the parameter types and functionality descriptions of these APIs. The following chapters will introduce the specific implementation and data format of these APIs in detail.</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;">API</th>
+<th style="text-align: left;">Parameters</th>
+<th style="text-align: left;">Output</th>
+<th style="text-align: left;">Usage</th>
+<th style="text-align: left;">Comments</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">query_fw_capability(self, model)</td>
+<td style="text-align: left;"><strong>model</strong> (object): A INC model object to query quantization tuning capability.</td>
+<td style="text-align: left;">output format: <br> {'opwise': {(node_name, node_op): [{'weight': {'dtype': ...#int8/fp32 or other data type}, 'activation': {'dtype': ...#int8/fp32 or other data type}}, ...]},<br> 'optypewise':{node_op: [{'weight': {'dtype': ...#int8/fp32 or other data type}, 'activation': {'dtype': ...#int8/fp32}}], ...}}</td>
+<td style="text-align: left;">The function is used to return framework tuning capability.</td>
+<td style="text-align: left;">Confirm the the data format output by the function must meet the requirements</td>
+</tr>
+<tr>
+<td style="text-align: left;">quantize(self, tune_cfg, model, dataloader, q_func=None)</td>
+<td style="text-align: left;"><strong>tune_cfg</strong> (dict): the chosen tuning configuration.<br> <strong>model</strong> (object): The model to do quantization.<br><strong>dataloader</strong> (object): The dataloader used to load quantization dataset. <strong>q_func</strong>(optional): training function for quantization aware training mode.</td>
+<td style="text-align: left;">output quantized model object</td>
+<td style="text-align: left;">This function use the dataloader to generate the data required by the model, and then insert Quantize/Dequantize operator into the quantizable op required in the tune_config and generate the model for calibration, after calibration, generate the final quantized model according to the obtained data range from calibration</td>
+<td style="text-align: left;"></td>
+</tr>
+</tbody>
+</table></section>
+<section id="design-the-framework-yaml">
+<h2>Design the framework YAML<a class="headerlink" href="#design-the-framework-yaml" title="Link to this heading"></a></h2>
+<p>To enable accuracy-aware tuning with a specific framework, we should define the <a class="reference external" href="./framework_yaml.html">framework YAML</a> which unifies the configuration format for quantization and provides a description for the capabilities of the specific framework.</p>
+<blockquote>
+<div><p><strong>Note</strong>: You should refer to <a class="reference external" href="./framework_yaml.html">framework_yaml.html</a> to define the framework specific YAML.</p>
+</div></blockquote>
+</section>
+<section id="add-query-fw-capability-to-adaptor">
+<h2>Add query_fw_capability to Adaptor<a class="headerlink" href="#add-query-fw-capability-to-adaptor" title="Link to this heading"></a></h2>
+<p>Each framework adaptor should implement the <code class="docutils literal notranslate"><span class="pre">query_fw_capability</span></code> function, this function will only be invoked once and will loop over the graph/model for the quantizable operators and collect each operator’s opwise details and optypewise capability. You should return a standard dict of the input model’s tuning capability. The format is like below:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">capability</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;opwise&#39;</span><span class="p">:</span> <span class="p">{(</span><span class="s1">&#39;conv2d&#39;</span><span class="p">,</span> <span class="s1">&#39;Conv2D&#39;</span><span class="p">):</span> <span class="p">[</span><span class="n">int8_conv_config</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;weight&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="s1">&#39;bf16&#39;</span><span class="p">},</span> <span class="s1">&#39;activation&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="s1">&#39;bf16&#39;</span><span class="p">}},</span> <span class="p">{</span><span class="s1">&#39;weight&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="s1">&#39;fp32&#39;</span><span class="p">},</span> <span class="s1">&#39;activation&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="s1">&#39;fp32&#39;</span><span class="p">}}],</span> <span class="o">...</span> <span class="p">}</span><span class="c1"># all quantizable opwise key-value pair with key tuple: (node_name, node_op)}</span>
+    <span class="s1">&#39;optypewise&#39;</span><span class="p">:</span> <span class="n">optype_wise_ability</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The int8_conv_config is like below, it’s parsed from the framework YAML.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">int8_conv_config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;weight&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="s2">&quot;int8&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;algorithm&quot;</span><span class="p">:</span> <span class="s2">&quot;minmax&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;granularity&quot;</span><span class="p">:</span> <span class="s2">&quot;per_channel&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;scheme&quot;</span><span class="p">:</span> <span class="s2">&quot;sym&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;activation&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="s2">&quot;int8&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;quant_mode&quot;</span><span class="p">:</span> <span class="s2">&quot;static&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;algorithm&quot;</span><span class="p">:</span> <span class="s2">&quot;kl&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;granularity&quot;</span><span class="p">:</span> <span class="s2">&quot;per_tensor&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;scheme&quot;</span><span class="p">:</span> <span class="s2">&quot;sym&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">optype_wise_ability</span></code> example config is like below.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">optype_wise_ability</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;Conv2D&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;weight&#39;</span><span class="p">:</span> <span class="p">{</span>
+               <span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="s1">&#39;int8&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;algorithm&#39;</span><span class="p">:</span> <span class="s1">&#39;minmax&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;granularity&#39;</span><span class="p">:</span> <span class="s1">&#39;per_channel&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;scheme&#39;</span><span class="p">:</span> <span class="s1">&#39;sym&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;activation&#39;</span><span class="p">:</span> <span class="p">{</span>
+               <span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="s1">&#39;int8&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;quant_mode&#39;</span><span class="p">:</span> <span class="s1">&#39;static&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;algorithm&#39;</span><span class="p">:</span> <span class="s1">&#39;kl&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;granularity&#39;</span><span class="p">:</span> <span class="s1">&#39;per_tensor&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;scheme&#39;</span><span class="p">:</span> <span class="s1">&#39;sym&#39;</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">},</span>
+    <span class="o">...</span> <span class="c1">#all optype wise ability</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>After the work above, we have implement the <code class="docutils literal notranslate"><span class="pre">query_fw_capability</span></code> API and get the tuning capability dict for the Strategy object. Then the Strategy object will fetch tuning configuration and give to the quantize API to get the quantized model.</p>
+</section>
+<section id="add-quantize-api-according-to-tune-cfg">
+<h2>Add quantize API according to tune_cfg<a class="headerlink" href="#add-quantize-api-according-to-tune-cfg" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">quantize</span></code> function is used to perform quantization for post-training quantization and quantization-aware training. Quantization processing includes calibration and conversion processing for post-training quantization, while for quantization-aware training, it includes training and conversion processing.</p>
+<p>The first work of <code class="docutils literal notranslate"><span class="pre">quantize</span></code> function is to invoke <code class="docutils literal notranslate"><span class="pre">tuning_cfg_to_fw</span></code> to generate the self.quantize_config. The self.quantize_config is a dict including the quantization information. Its format is like below</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="bp">self</span><span class="o">.</span><span class="n">quantize_config</span>  <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;device&#39;</span><span class="p">:</span> <span class="s1">&#39;CPU&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;calib_iteration&#39;</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span>
+    <span class="s1">&#39;advance&#39;</span><span class="p">:</span> <span class="p">{},</span>
+    <span class="s1">&#39;op_wise_config&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;conv2d&#39;</span><span class="p">:</span> <span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;minmax&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="mi">8</span><span class="p">),</span>
+        <span class="c1"># ....</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>As the Strategy object will decide which operator to quantize or not, some quantizable operators may not be in the <code class="docutils literal notranslate"><span class="pre">tune_cfg</span></code>. Only dispatched operators will be set to the <code class="docutils literal notranslate"><span class="pre">op_wise_config</span></code> in <code class="docutils literal notranslate"><span class="pre">self.quantize_config</span></code>. <code class="docutils literal notranslate"><span class="pre">op_wise_config</span></code> is a dict with format like</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">op_wise_config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">op_name</span><span class="p">:</span> <span class="p">(</span><span class="n">is_perchannel</span><span class="p">,</span> 
+              <span class="n">algorithm</span><span class="p">,</span> 
+              <span class="n">is_asymmetric</span><span class="p">,</span> 
+              <span class="n">weight_bit</span><span class="p">)</span>
+<span class="p">}</span> 
+</pre></div>
+</div>
+<p>You can also set bf16_ops in <code class="docutils literal notranslate"><span class="pre">tuning_cfg_to_fw</span></code> and the <code class="docutils literal notranslate"><span class="pre">self.bf16_ops</span></code> will be converted in <code class="docutils literal notranslate"><span class="pre">convert_bf16</span></code> function.</p>
+<p>After got the <code class="docutils literal notranslate"><span class="pre">self.quantize_config</span></code>, we can prepare to quantize the model. It usually have three steps.</p>
+<section id="prepare-calibration-model-from-fp32-graph">
+<h3>Prepare calibration model from fp32 graph<a class="headerlink" href="#prepare-calibration-model-from-fp32-graph" title="Link to this heading"></a></h3>
+<p>The calibration process needs to collect the activation and weight during inference. After collection, a reasonable data range is calculated for subsequent data type conversion. You should to prepare the calibration model in the quantize API.</p>
+</section>
+<section id="run-sampling-iterations-of-the-fp32-graph-to-calibrate-quantizable-operators">
+<h3>Run sampling iterations of the fp32 graph to calibrate quantizable operators.<a class="headerlink" href="#run-sampling-iterations-of-the-fp32-graph-to-calibrate-quantizable-operators" title="Link to this heading"></a></h3>
+<p>When we get the calib_model, We should run calibration on this model and collect the fp32 activation data. In this step, we will use the dataloader and forward the model.</p>
+</section>
+<section id="calculate-the-data-range-and-generate-quantized-model">
+<h3>Calculate the data range and generate quantized model<a class="headerlink" href="#calculate-the-data-range-and-generate-quantized-model" title="Link to this heading"></a></h3>
+<p>Calibration data can only approximate the data distribution of the entire dataset, larger sampling size means a more complete approximation of the data distribution, but it will also introduce some outliers, which will cause the data range obtained to be somewhat distorted.</p>
+<p>You can use different algorithms to make the data range more in line with the real data distribution. After applying these algorithms, we obtained the data distribution range of each operator. At this time, you can generate the quantized model.</p>
+<p>This quantized model can be evaluated. If the evaluation meets the set metric goal, the entire quantization process will be over. Otherwise, a new tuning configuration will be generated until a quantized model that meets the metric requirements.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fef7884ce20> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

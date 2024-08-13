@@ -1,0 +1,163 @@
+neural_compressor.experimental.export.torch2onnx
+================================================
+
+.. py:module:: neural_compressor.experimental.export.torch2onnx
+
+.. autoapi-nested-parse::
+
+   Helper functions to export model from PyTorch/TensorFlow to ONNX.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.experimental.export.torch2onnx.get_node_mapping
+   neural_compressor.experimental.export.torch2onnx.get_quantizable_onnx_ops
+   neural_compressor.experimental.export.torch2onnx.dynamic_quant_export
+   neural_compressor.experimental.export.torch2onnx.static_quant_export
+   neural_compressor.experimental.export.torch2onnx.torch_to_fp32_onnx
+   neural_compressor.experimental.export.torch2onnx.torch_to_int8_onnx
+
+
+Module Contents
+---------------
+
+.. py:function:: get_node_mapping(fp32_model, fp32_onnx_path)
+
+   Get PyTorch module and ONNX node mapping.
+
+   :param fp32_model: quantization configuration from PyTorch.
+   :type fp32_model: torch.nn.Module
+   :param fp32_onnx_path: path to fp32 onnx model.
+   :type fp32_onnx_path: str
+
+   :returns: op mapping from PyTorch to ONNX.
+   :rtype: module_node_mapping
+
+
+.. py:function:: get_quantizable_onnx_ops(int8_model, module_node_mapping)
+
+   Get quantizable onnx ops.
+
+   :param int8_model: PyTorch int8 model.
+   :type int8_model: torch.nn.Module
+   :param module_node_mapping: op mapping from PyTorch to ONNX.
+   :type module_node_mapping: dict
+
+   :returns: all onnx node that should be quantized.
+   :rtype: quantize_nodes
+
+
+.. py:function:: dynamic_quant_export(pt_fp32_model, pt_int8_model, save_path, example_inputs, q_config, opset_version, dynamic_axes, input_names, output_names, weight_type)
+
+   Export dynamic quantized model.
+
+   :param pt_fp32_model: PyTorch FP32 model.
+   :type pt_fp32_model: torch.nn.module
+   :param pt_int8_model: PyTorch INT8 model.
+   :type pt_int8_model: torch.nn.module
+   :param save_path: save path of ONNX model.
+   :type save_path: str
+   :param example_inputs: used to trace torch model.
+   :type example_inputs: dict|list|tuple|torch.Tensor
+   :param q_config: containing quantization configuration.
+   :type q_config: dict
+   :param opset_version: opset version. Defaults to 14.
+   :type opset_version: int, optional
+   :param dynamic_axes: dynamic axes. Defaults to
+                        {"input": {0: "batch_size"}, "output": {0: "batch_size"}}.
+   :type dynamic_axes: dict, optional
+   :param input_names: input names. Defaults to None.
+   :type input_names: dict, optional
+   :param output_names: output names. Defaults to None.
+   :type output_names: dict, optional
+   :param weight_type: data types of weight of ONNX model
+                       (only needed for exporting dynamic quantized model). Defaults to 'S8'.
+   :type weight_type: str, optional
+
+
+.. py:function:: static_quant_export(pt_int8_model, save_path, example_inputs, q_config, opset_version, dynamic_axes, input_names, output_names, quant_format)
+
+   Export static quantized model.
+
+   :param pt_int8_model: PyTorch INT8 model.
+   :type pt_int8_model: torch.nn.module
+   :param save_path: save path of ONNX model.
+   :type save_path: str
+   :param example_inputs: used to trace torch model.
+   :type example_inputs: dict|list|tuple|torch.Tensor
+   :param q_config: containing quantization configuration.
+   :type q_config: dict
+   :param opset_version: opset version. Defaults to 14.
+   :type opset_version: int, optional
+   :param dynamic_axes: dynamic axes. Defaults to
+                        {"input": {0: "batch_size"}, "output": {0: "batch_size"}}.
+   :type dynamic_axes: dict, optional
+   :param input_names: input names. Defaults to None.
+   :type input_names: dict, optional
+   :param output_names: output names. Defaults to None.
+   :type output_names: dict, optional
+   :param quant_format: _quantization format of ONNX model. Defaults to 'QDQ'.
+   :type quant_format: str, optional
+
+
+.. py:function:: torch_to_fp32_onnx(pt_fp32_model, save_path, example_inputs, opset_version=14, dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}, input_names=None, output_names=None, do_constant_folding=True, verbose=True)
+
+   Export FP32 PyTorch model into FP32 ONNX model.
+
+   :param pt_fp32_model: PyTorch FP32 model.
+   :type pt_fp32_model: torch.nn.module
+   :param save_path: save path of ONNX model.
+   :type save_path: str
+   :param example_inputs: used to trace torch model.
+   :type example_inputs: dict|list|tuple|torch.Tensor
+   :param opset_version: opset version. Defaults to 14.
+   :type opset_version: int, optional
+   :param dynamic_axes: dynamic axes. Defaults to
+                        {"input": {0: "batch_size"}, "output": {0: "batch_size"}}.
+   :type dynamic_axes: dict, optional
+   :param input_names: input names. Defaults to None.
+   :type input_names: dict, optional
+   :param output_names: output names. Defaults to None.
+   :type output_names: dict, optional
+   :param do_constant_folding: do constant folding or not. Defaults to True.
+   :type do_constant_folding: bool, optional
+   :param verbose: dump verbose or not. Defaults to True.
+   :type verbose: bool, optional
+
+
+.. py:function:: torch_to_int8_onnx(pt_fp32_model, pt_int8_model, save_path, example_inputs, q_config, opset_version=14, dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}, input_names=None, output_names=None, quant_format: str = 'QDQ', weight_type: str = 'S8', verbose=True)
+
+   Export INT8 PyTorch model into INT8 ONNX model.
+
+   :param pt_fp32_model: PyTorch FP32 model.
+   :type pt_fp32_model: torch.nn.module
+   :param pt_int8_model: PyTorch INT8 model.
+   :type pt_int8_model: torch.nn.module
+   :param save_path: save path of ONNX model.
+   :type save_path: str
+   :param example_inputs: used to trace torch model.
+   :type example_inputs: dict|list|tuple|torch.Tensor
+   :param q_config: containing quantization configuration.
+   :type q_config: dict
+   :param opset_version: opset version. Defaults to 14.
+   :type opset_version: int, optional
+   :param dynamic_axes: dynamic axes. Defaults to
+                        {"input": {0: "batch_size"}, "output": {0: "batch_size"}}.
+   :type dynamic_axes: dict, optional
+   :param input_names: input names. Defaults to None.
+   :type input_names: dict, optional
+   :param output_names: output names. Defaults to None.
+   :type output_names: dict, optional
+   :param quant_format: _quantization format of ONNX model. Defaults to 'QDQ'.
+   :type quant_format: str, optional
+   :param weight_type: data types of weight of ONNX model
+                       (only needed for exporting dynamic quantized model). Defaults to 'S8'.
+   :type weight_type: str, optional
+   :param verbose: dump verbose or not. Defaults to True.
+   :type verbose: bool, optional
+
+

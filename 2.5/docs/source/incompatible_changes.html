@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Incompatible changes between v1.2 and v1.1 &mdash; Intel® Neural Compressor 2.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">2.5▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Incompatible changes between v1.2 and v1.1</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/incompatible_changes.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="incompatible-changes-between-v1-2-and-v1-1">
+<h1>Incompatible changes between v1.2 and v1.1<a class="headerlink" href="#incompatible-changes-between-v1-2-and-v1-1" title="Link to this heading"></a></h1>
+<section id="user-facing-apis">
+<h2>User-facing APIs<a class="headerlink" href="#user-facing-apis" title="Link to this heading"></a></h2>
+<p>The user-facing APIs are changed between v1.2 and v1.1. The major changes are:</p>
+<ol class="simple">
+<li><p>v1.2 abstracts <code class="docutils literal notranslate"><span class="pre">neural_compressor.common.Model</span></code> concept to cover those cases whose weight and graph files are stored separately.</p></li>
+<li><p>v1.2 unifies the calling style by setting model, calibration dataloader, evaluation dataloader, and metric through <code class="docutils literal notranslate"><span class="pre">quantizer</span></code> attributes rather than passing as function inputs.</p></li>
+</ol>
+<p>Refer to below examples for details.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># user facing API example in v1.1</span>
+<span class="n">quantizer</span> <span class="o">=</span> <span class="n">Quantization</span><span class="p">(</span><span class="s2">&quot;/path/to/user.yaml&quot;</span><span class="p">)</span>
+<span class="n">ds</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">(</span><span class="s2">&quot;/path/to/dataset&quot;</span><span class="p">)</span>
+<span class="n">dataloader</span> <span class="o">=</span> <span class="n">quantizer</span><span class="o">.</span><span class="n">dataloader</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">quantizer</span><span class="o">.</span><span class="n">metric</span><span class="p">(</span><span class="s2">&quot;metric&quot;</span><span class="p">,</span> <span class="n">metric</span><span class="p">)</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantizer</span><span class="p">(</span>
+    <span class="s2">&quot;/path/to/model&quot;</span><span class="p">,</span>
+    <span class="n">q_dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">,</span>
+    <span class="n">eval_dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="o">...</span>  <span class="c1"># user to write framework specific code to save q_model</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># user facing API example in v1.2</span>
+<span class="n">quantizer</span> <span class="o">=</span> <span class="n">Quantization</span><span class="p">(</span><span class="n">conf</span><span class="o">.</span><span class="n">yaml</span><span class="p">)</span>
+<span class="n">quantizer</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="s2">&quot;/path/to/model&quot;</span>
+<span class="n">dl</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">(</span><span class="s2">&quot;/path/to/dataset&quot;</span><span class="p">)</span>
+<span class="n">quantizer</span><span class="o">.</span><span class="n">calib_dataloader</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">dl</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
+<span class="n">quantizer</span><span class="o">.</span><span class="n">eval_dataloader</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">dl</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
+<span class="n">quantizer</span><span class="o">.</span><span class="n">metric</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">Metric</span><span class="p">(</span><span class="n">custom_metric</span><span class="p">)</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantizer</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+<span class="n">q_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;/path/to/output/dir&quot;</span><span class="p">)</span>  <span class="c1"># explicitly call to save q_model</span>
+</pre></div>
+</div>
+</section>
+<section id="built-in-transform-dataset-metric-apis">
+<h2>Built-in transform/dataset/metric APIs<a class="headerlink" href="#built-in-transform-dataset-metric-apis" title="Link to this heading"></a></h2>
+<p>v1.2 refines Neural Compressor built-in transform/dataset/metric to unify APIs cross different framework backends.</p>
+<p>Refer to <a class="reference external" href="./dataset.html">dataset</a>, <a class="reference external" href="./transform.html">transform</a>, and <a class="reference external" href="./metric.html">metric</a> to learn how to use them in yaml or code.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f81c7c86e50> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

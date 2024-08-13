@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Supported Optimization Features &mdash; Intel® Neural Compressor 2.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../versions.html">2.5▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Supported Optimization Features</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/docs/source/neural_coder/docs/SupportMatrix.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="supported-optimization-features">
+<h1>Supported Optimization Features<a class="headerlink" href="#supported-optimization-features" title="Link to this heading"></a></h1>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Category</th>
+<th>Optimization</th>
+<th>API Alias</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PyTorch</td>
+<td><a href="https://pytorch.org/docs/stable/amp.html">Mixed Precision</a></td>
+<td><code>pytorch_amp</code></td>
+</tr>
+<tr>
+<td>PyTorch</td>
+<td><a href="https://pytorch.org/tutorials/intermediate/memory_format_tutorial.html">Channels Last</a></td>
+<td><code>pytorch_channels_last</code></td>
+</tr>
+<tr>
+<td>PyTorch</td>
+<td><a href="https://pytorch.org/docs/stable/jit.html">JIT (Just-In-Time) Script/Trace</a> &amp; <a href="https://pytorch.org/docs/stable/generated/torch.jit.optimize_for_inference.html">optimize_for_inference</a></td>
+<td><code>pytorch_jit_script</code>, <code>pytorch_jit_trace</code>, <code>pytorch_jit_script_ofi</code>, <code>pytorch_jit_trace_ofi</code></td>
+</tr>
+<tr>
+<td>PyTorch</td>
+<td>JIT with <a href="https://github.com/pytorch/torchdynamo">TorchDynamo</a></td>
+<td><code>pytorch_torchdynamo_jit_script</code>, <code>pytorch_torchdynamo_jit_trace</code>, <code>pytorch_torchdynamo_jit_script_ofi</code>, <code>pytorch_torchdynamo_jit_trace_ofi</code></td>
+</tr>
+<tr>
+<td>PyTorch</td>
+<td><a href="https://github.com/intel/neural-compressor/blob/master/docs/source/mixed_precision.html">Intel Neural Compressor (INC) Mixed Precision</a></td>
+<td><code>pytorch_inc_bf16</code></td>
+</tr>
+<tr>
+<td>PyTorch</td>
+<td><a href="https://github.com/intel/neural-compressor/blob/master/docs/source/quantization.html#supported-feature-matrix">INC INT8 Static Quantization (FX/IPEX)</a></td>
+<td><code>pytorch_inc_static_quant_fx</code>, <code>pytorch_inc_static_quant_ipex</code>, <code>pytorch_inc_static_quant_ipex_xpu</code></td>
+</tr>
+<tr>
+<td>PyTorch</td>
+<td><a href="https://github.com/intel/neural-compressor/blob/master/docs/source/quantization.html#supported-feature-matrix">INC INT8 Dynamic Quantization</a></td>
+<td><code>pytorch_inc_dynamic_quant</code></td>
+</tr>
+<tr>
+<td>PyTorch</td>
+<td><a href="https://github.com/intel/intel-extension-for-pytorch">Intel Extension for PyTorch (FP32, BF16, INT8 Static/Dynamic Quantization)</a></td>
+<td><code>pytorch_ipex_fp32</code>, <code>pytorch_ipex_bf16</code>, <code>pytorch_ipex_int8_static_quant</code>, <code>pytorch_ipex_int8_dynamic_quant</code></td>
+</tr>
+<tr>
+<td>PyTorch</td>
+<td><a href="https://github.com/alibaba/BladeDISC">Alibaba Blade-DISC</a></td>
+<td><code>pytorch_aliblade</code></td>
+</tr>
+<tr>
+<td>PyTorch Lightning</td>
+<td><a href="https://pytorch-lightning.readthedocs.io/en/latest/guides/speed.html">Mixed Precision</a></td>
+<td><code>pytorch_lightning_bf16_cpu</code></td>
+</tr>
+<tr>
+<td>TensorFlow</td>
+<td><a href="https://www.intel.com/content/www/us/en/developer/articles/guide/getting-started-with-automixedprecisionmkl.html">Mixed Precision</a></td>
+<td><code>tensorflow_amp</code></td>
+</tr>
+<tr>
+<td>Keras</td>
+<td><a href="https://www.tensorflow.org/guide/mixed_precision">Mixed Precision</a></td>
+<td><code>keras_amp</code></td>
+</tr>
+<tr>
+<td>TensorFlow/Keras Model</td>
+<td><a href="https://github.com/intel/neural-compressor/blob/master/docs/source/quantization.html#supported-feature-matrix">INC Quantization</a></td>
+<td><code>tensorflow_inc</code></td>
+</tr>
+<tr>
+<td>Keras Script</td>
+<td><a href="https://github.com/intel/neural-compressor/tree/master/examples/keras/mnist">INC Quantization</a></td>
+<td><code>keras_inc</code></td>
+</tr>
+<tr>
+<td>ONNX Runtime</td>
+<td><a href="https://github.com/intel/neural-compressor/blob/master/docs/source/quantization.html#supported-feature-matrix">INC Static Quantization (QLinear)</a></td>
+<td><code>onnx_inc_static_quant_qlinear</code></td>
+</tr>
+<tr>
+<td>ONNX Runtime</td>
+<td><a href="https://github.com/intel/neural-compressor/blob/master/docs/source/quantization.html#supported-feature-matrix">INC Static Quantization (QDQ)</a></td>
+<td><code>onnx_inc_static_quant_qdq</code></td>
+</tr>
+<tr>
+<td>ONNX Runtime</td>
+<td><a href="https://github.com/intel/neural-compressor/blob/master/docs/source/quantization.html#supported-feature-matrix">INC Dynamic Quantization</a></td>
+<td><code>onnx_inc_dynamic_quant</code></td>
+</tr>
+<tr>
+<td><a href="https://huggingface.co/docs/optimum/intel/index">HuggingFace Optimum-Intel</a></td>
+<td>INC Quantization</td>
+<td><code>pytorch_inc_huggingface_optimum_static</code>, <code>pytorch_inc_huggingface_optimum_dynamic</code></td>
+</tr>
+<tr>
+<td><a href="https://github.com/intel/intel-extension-for-transformers/">Intel Extension for Transformers</a></td>
+<td>INC Quantization</td>
+<td><code>intel_extension_for_transformers</code></td>
+</tr>
+<tr>
+<td><a href="https://bigdl.readthedocs.io/en/latest/doc/PythonAPI/Nano/pytorch.html#bigdl-nano-pytorch-inferenceoptimizer">BigDL Nano</a></td>
+<td><a href="./BigDLNanoSupport.html">Optimization List</a></td>
+<td><code>nano_</code> + <a href="./BigDLNanoSupport.html">specific alias</a></td>
+</tr>
+<tr>
+<td>Auto-Detect</td>
+<td><a href="https://github.com/intel/neural-compressor">INC Quantization</a></td>
+<td><code>inc_auto</code></td>
+</tr>
+</tbody>
+</table></section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f81caea48b0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

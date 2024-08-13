@@ -1,0 +1,60 @@
+neural_compressor.adaptor.tf_utils.smooth_quant_calibration
+===========================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.smooth_quant_calibration
+
+.. autoapi-nested-parse::
+
+   Tensorflow model calibration process for Smooth Quantization.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.smooth_quant_calibration.SmoothQuantCalibration
+   neural_compressor.adaptor.tf_utils.smooth_quant_calibration.SmoothQuantCalibrationLLM
+
+
+Module Contents
+---------------
+
+.. py:class:: SmoothQuantCalibration(model, dataloader, iterations, op_types, percentile)
+
+   A class for performing smooth quantization calibration on a Tensorflow model.
+
+   :param model: The Tensorflow wrapper model to be calibrated.
+   :type model: Model
+   :param dataloader: The data loader for the calibration dataset.
+   :type dataloader: DataLoader
+   :param iterations: The number of iterations to run the calibration process.
+   :type iterations: int
+   :param op_types: The types of operations to be quantized.
+   :type op_types: List[str]
+   :param percentile: The percentile of calibration to remove outliers.
+   :type percentile: float
+
+
+.. py:class:: SmoothQuantCalibrationLLM(model_path, dataloader, iterations, op_types, percentile, temp_path, weight_name_mapping)
+
+
+
+   A class for performing smooth quantization calibration on a Tensorflow LLM model.
+
+   :param model: A path to the original Tensorflow model.
+   :type model: str
+   :param iterations: The number of iterations to run the calibration process.
+   :type iterations: int
+   :param op_types: The types of operations to be quantized.
+   :type op_types: List[str]
+   :param percentile: The percentile of calibration to remove outliers.
+   :type percentile: float
+   :param eval_func: The function to inference the model.
+   :type eval_func: function
+   :param temp_path: The temporary path to store median model.
+   :type temp_path: str
+   :param weight_name_mapping (): A function that convert weight tensor name in autotrackable to node name in graph_def
+
+

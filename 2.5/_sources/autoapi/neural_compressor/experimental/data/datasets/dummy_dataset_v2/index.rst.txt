@@ -1,0 +1,43 @@
+neural_compressor.experimental.data.datasets.dummy_dataset_v2
+=============================================================
+
+.. py:module:: neural_compressor.experimental.data.datasets.dummy_dataset_v2
+
+.. autoapi-nested-parse::
+
+   Dummy dataset for dummy_v2/sparse_dummy_v2 data generation on multiple framework backends.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.experimental.data.datasets.dummy_dataset_v2.DummyDataset
+   neural_compressor.experimental.data.datasets.dummy_dataset_v2.SparseDummyDataset
+
+
+Module Contents
+---------------
+
+.. py:class:: DummyDataset(input_shape, label_shape=None, low=-128.0, high=127.0, dtype='float32', transform=None, filter=None)
+
+
+
+   Dataset used for dummy_v2 data generation.
+
+   This Dataset is to construct a dataset from a input shape and label shape.
+   The value range is calculated from: low * stand_normal(0, 1) + high.
+
+
+.. py:class:: SparseDummyDataset(dense_shape, label_shape=None, sparse_ratio=0.5, low=-128.0, high=127.0, dtype='float32', transform=None, filter=None)
+
+
+
+   Dataset used for sparse_dummy_v2 data generation.
+
+   This Dataset is to construct a dataset from a input shape and label shape.
+   The value range is calculated from: low * stand_normal(0, 1) + high.
+
+

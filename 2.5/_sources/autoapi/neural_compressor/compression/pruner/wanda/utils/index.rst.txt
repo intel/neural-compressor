@@ -1,0 +1,37 @@
+neural_compressor.compression.pruner.wanda.utils
+================================================
+
+.. py:module:: neural_compressor.compression.pruner.wanda.utils
+
+.. autoapi-nested-parse::
+
+   Wanda utils.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.wanda.utils.find_layers
+
+
+Module Contents
+---------------
+
+.. py:function:: find_layers(module, op_types=['Linear', 'Conv1D'], name='')
+
+   Recursively find the layers of a certain type in a module.
+
+   :param module: PyTorch module.
+   :type module: nn.Module
+   :param layers: List of layer types to find.
+   :type layers: list
+   :param name: Name of the module.
+   :type name: str
+
+   :returns: Dictionary of layers of the given type(s) within the module.
+   :rtype: dict
+
+

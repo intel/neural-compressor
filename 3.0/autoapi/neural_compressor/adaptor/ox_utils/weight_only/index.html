@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.adaptor.ox_utils.weight_only &mdash; Intel® Neural Compressor 3.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">3.0▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.adaptor.ox_utils.weight_only</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/autoapi/neural_compressor/adaptor/ox_utils/weight_only/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.adaptor.ox_utils.weight_only">
+<span id="neural-compressor-adaptor-ox-utils-weight-only"></span><h1>neural_compressor.adaptor.ox_utils.weight_only<a class="headerlink" href="#module-neural_compressor.adaptor.ox_utils.weight_only" title="Link to this heading"></a></h1>
+<p>WeightOnly for onnxrt adaptor.</p>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.get_blob_size" title="neural_compressor.adaptor.ox_utils.weight_only.get_blob_size"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_blob_size</span></code></a>(group_size, has_zp)</p></td>
+<td><p>Get blob_size.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.make_matmul_weight_only_node" title="neural_compressor.adaptor.ox_utils.weight_only.make_matmul_weight_only_node"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_matmul_weight_only_node</span></code></a>(node, weight_shape, ...)</p></td>
+<td><p>Build MatMulFpQ4 node.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.quant_tensor" title="neural_compressor.adaptor.ox_utils.weight_only.quant_tensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quant_tensor</span></code></a>(data[, num_bits, group_size, scheme, ...])</p></td>
+<td><p>Quantize tensor per group.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.qdq_tensor" title="neural_compressor.adaptor.ox_utils.weight_only.qdq_tensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">qdq_tensor</span></code></a>(data[, num_bits, group_size, scheme, ...])</p></td>
+<td><p>Quant dequant tensor per group.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.pad_tensor" title="neural_compressor.adaptor.ox_utils.weight_only.pad_tensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pad_tensor</span></code></a>(weight, group_size, k_blocks)</p></td>
+<td><p>Pad tensor rowi so that it can be is divisible by group_size.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.rtn_quantize" title="neural_compressor.adaptor.ox_utils.weight_only.rtn_quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rtn_quantize</span></code></a>(model[, weight_config, num_bits, ...])</p></td>
+<td><p>Quant the model with round to nearst method.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.get_weight_scale" title="neural_compressor.adaptor.ox_utils.weight_only.get_weight_scale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_weight_scale</span></code></a>(weight, group_size)</p></td>
+<td><p>Get the scale of weight.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.apply_awq_scale" title="neural_compressor.adaptor.ox_utils.weight_only.apply_awq_scale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_awq_scale</span></code></a>(model, weight_config, absorb_pairs, ...)</p></td>
+<td><p>Apply scale for salient weight.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.apply_awq_clip" title="neural_compressor.adaptor.ox_utils.weight_only.apply_awq_clip"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_awq_clip</span></code></a>(model, weight_config, absorb_pairs, ...)</p></td>
+<td><p>Apply clip for weight by checking mse.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.prepare_inputs" title="neural_compressor.adaptor.ox_utils.weight_only.prepare_inputs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">prepare_inputs</span></code></a>(model, n_samples, dataloader, providers)</p></td>
+<td><p>Prepare inputs for weight only quantization.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.awq_quantize" title="neural_compressor.adaptor.ox_utils.weight_only.awq_quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">awq_quantize</span></code></a>(model, dataloader[, weight_config, ...])</p></td>
+<td><p>Quant the model with Activation-aware Weight quantization(AWQ) method.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.gptq" title="neural_compressor.adaptor.ox_utils.weight_only.gptq"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gptq</span></code></a>(W, H[, num_bits, group_size, scheme, blocksize, ...])</p></td>
+<td><p>Quant the weight with GPTQ method.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.weight_only.gptq_quantize" title="neural_compressor.adaptor.ox_utils.weight_only.gptq_quantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gptq_quantize</span></code></a>(model, dataloader[, weight_config, ...])</p></td>
+<td><p>Quant the model with GPTQ method.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.weight_only.get_blob_size">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.weight_only.</span></span><span class="sig-name descname"><span class="pre">get_blob_size</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">group_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">has_zp</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/adaptor/ox_utils/weight_only.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.weight_only.get_blob_size" title="Link to this definition"></a></dt>
+<dd><p>Get blob_size.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>group_size</strong> (<em>int</em>) – how many elements share one scale/zp</p></li>
+<li><p><strong>has_zp</strong> (<em>bool</em>) – whether zero_point is None</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.weight_only.make_matmul_weight_only_node">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.weight_only.</span></span><span class="sig-name descname"><span class="pre">make_matmul_weight_only_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_blocks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_weight</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zero_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/adaptor/ox_utils/weight_only.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.weight_only.make_matmul_weight_only_node" title="Link to this definition"></a></dt>
+<dd><p>Build MatMulFpQ4 node.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>node</strong> – original matmul node</p></li>
+<li><p><strong>weight_shape</strong> – original weight shape</p></li>
+<li><p><strong>num_bits</strong> (<em>int</em>) – num_bits</p></li>
+<li><p><strong>group_size</strong> (<em>int</em>) – how many elements share one scale/zp</p></li>
+<li><p><strong>k_blocks</strong> (<em>int</em>) – block number</p></li>
+<li><p><strong>q_weight</strong> (<em>array</em>) – quantized weight</p></li>
+<li><p><strong>scale</strong> (<em>array</em>) – scale</p></li>
+<li><p><strong>zero_point</strong> (<em>array</em>) – zero point</p></li>
+<li><p><strong>accuracy_level</strong> (<em>int</em>) – accuracy level. Support 0 (unset), 1(fp32 compute type of jblas kernel),
+2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
+4 (int8 compute type of jblas kernel)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MatMulFpQ4 or MatMulNBits node
+new_inits: initializers of the new node</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>matmul_weight_only_node</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.weight_only.quant_tensor">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.weight_only.</span></span><span class="sig-name descname"><span class="pre">quant_tensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'asym'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'int'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/adaptor/ox_utils/weight_only.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.weight_only.quant_tensor" title="Link to this definition"></a></dt>
+<dd><p>Quantize tensor per group.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> – input weight</p></li>
+<li><p><strong>num_bits</strong> (<em>int</em><em>, </em><em>optional</em>) – num_bits. Defaults to 4.</p></li>
+<li><p><strong>group_size</strong> (<em>int</em><em>, </em><em>optional</em>) – how many elements share one scale/zp. Defaults to 4.</p></li>
+<li><p><strong>scheme</strong> (<em>str</em><em>, </em><em>optional</em>) – quantization scheme. Defaults to “asym”.</p></li>
+<li><p><strong>dtype</strong> (<em>str</em><em>, </em><em>optional</em>) – data type. Defaults to “int”.</p></li>
+<li><p><strong>ratio</strong> (<em>float</em><em>, </em><em>optional</em>) – percentile of clip. Defaults to 1.0.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>quantized weight
+scale: scale
+zero_point: zero point</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>output</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.weight_only.qdq_tensor">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.weight_only.</span></span><span class="sig-name descname"><span class="pre">qdq_tensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'asym'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'int'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/adaptor/ox_utils/weight_only.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.weight_only.qdq_tensor" title="Link to this definition"></a></dt>
+<dd><p>Quant dequant tensor per group.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> – input weight</p></li>
+<li><p><strong>num_bits</strong> (<em>int</em><em>, </em><em>optional</em>) – num_bits. Defaults to 4.</p></li>
+<li><p><strong>group_size</strong> (<em>int</em><em>, </em><em>optional</em>) – how many elements share one scale/zp. Defaults to 4.</p></li>
+<li><p><strong>scheme</strong> (<em>str</em><em>, </em><em>optional</em>) – quantization scheme. Defaults to “asym”.</p></li>
+<li><p><strong>dtype</strong> (<em>str</em><em>, </em><em>optional</em>) – data type. Defaults to “int”.</p></li>
+<li><p><strong>ratio</strong> (<em>float</em><em>, </em><em>optional</em>) – percentile of clip. Defaults to 1.0.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>quant-dequant weight</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>output</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.weight_only.pad_tensor">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.weight_only.</span></span><span class="sig-name descname"><span class="pre">pad_tensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weight</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_blocks</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/adaptor/ox_utils/weight_only.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.weight_only.pad_tensor" title="Link to this definition"></a></dt>
+<dd><p>Pad tensor rowi so that it can be is divisible by group_size.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>weight</strong> (<em>array</em>) – weight</p></li>
+<li><p><strong>group_size</strong> (<em>int</em>) – how many elements share one scale/zp</p></li>
+<li><p><strong>k_blocks</strong> (<em>int</em>) – the number of block</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>paded weight</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>weight</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.weight_only.rtn_quantize">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.weight_only.</span></span><span class="sig-name descname"><span class="pre">rtn_quantize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'asym'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ratios</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">providers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['CPUExecutionProvider']</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/adaptor/ox_utils/weight_only.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.weight_only.rtn_quantize" title="Link to this definition"></a></dt>
+<dd><p>Quant the model with round to nearst method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>ModelProto</em><em> or </em><a class="reference internal" href="../../../model/onnx_model/index.html#neural_compressor.model.onnx_model.ONNXModel" title="neural_compressor.model.onnx_model.ONNXModel"><em>ONNXModel</em></a>) – onnx model</p></li>
+<li><p><strong>weight_config</strong> (<em>dict</em>) – <p>quantization config
+For example,
+weight_config = {</p>
+<blockquote>
+<div><dl>
+<dt>’fc2’:</dt><dd><dl class="simple">
+<dt>{</dt><dd><p>‘bits’: 4,
+‘group_size’: 32,
+‘scheme’: ‘sym’,
+‘algorithm’: ‘RTN’</p>
+</dd>
+</dl>
+<p>}</p>
+</dd>
+</dl>
+</div></blockquote>
+<p>}</p>
+</p></li>
+<li><p><strong>num_bits</strong> (<em>int</em><em>, </em><em>optional</em>) – num_bits. Default is 4.</p></li>
+<li><p><strong>group_size</strong> (<em>int</em><em>, </em><em>optional</em>) – how many elements share one scale/zp. Default is 32.</p></li>
+<li><p><strong>scheme</strong> (<em>str</em><em>, </em><em>optional</em>) – sym or asym. Defaults to “asym”.</p></li>
+<li><p><strong>ratios</strong> (<em>dict</em><em>, </em><em>optional</em>) – percentile of clip. Defaults to {}.</p></li>
+<li><p><strong>accuracy_level</strong> (<em>int</em>) – accuracy level. Support 0 (unset), 1(fp32 compute type of jblas kernel),
+2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
+4 (int8 compute type of jblas kernel)</p></li>
+<li><p><strong>providers</strong> (<em>list</em>) – providers to use</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>fake quantized ONNXModel</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>model</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.weight_only.get_weight_scale">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.weight_only.</span></span><span class="sig-name descname"><span class="pre">get_weight_scale</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weight</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/adaptor/ox_utils/weight_only.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.weight_only.get_weight_scale" title="Link to this definition"></a></dt>
+<dd><p>Get the scale of weight.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.weight_only.apply_awq_scale">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.weight_only.</span></span><span class="sig-name descname"><span class="pre">apply_awq_scale</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">absorb_pairs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dicts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/adaptor/ox_utils/weight_only.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.weight_only.apply_awq_scale" title="Link to this definition"></a></dt>
+<dd><p>Apply scale for salient weight.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.weight_only.apply_awq_clip">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.weight_only.</span></span><span class="sig-name descname"><span class="pre">apply_awq_clip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">absorb_pairs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dicts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/adaptor/ox_utils/weight_only.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.weight_only.apply_awq_clip" title="Link to this definition"></a></dt>
+<dd><p>Apply clip for weight by checking mse.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.weight_only.prepare_inputs">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.weight_only.</span></span><span class="sig-name descname"><span class="pre">prepare_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">providers</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/adaptor/ox_utils/weight_only.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.weight_only.prepare_inputs" title="Link to this definition"></a></dt>
+<dd><p>Prepare inputs for weight only quantization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>ModelProto</em><em> or </em><a class="reference internal" href="../../../model/onnx_model/index.html#neural_compressor.model.onnx_model.ONNXModel" title="neural_compressor.model.onnx_model.ONNXModel"><em>ONNXModel</em></a>) – onnx model</p></li>
+<li><p><strong>n_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – calibration sample number. -1 means all samples.</p></li>
+<li><p><strong>dataloader</strong> (<em>object</em>) – dataloader for calibration.</p></li>
+<li><p><strong>providers</strong> (<em>list</em>) – providers to use</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>prepared inputs.
+so: session options</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>inputs</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.weight_only.awq_quantize">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.weight_only.</span></span><span class="sig-name descname"><span class="pre">awq_quantize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'asym'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_auto_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_mse_search</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">providers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['CPUExecutionProvider']</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/adaptor/ox_utils/weight_only.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.weight_only.awq_quantize" title="Link to this definition"></a></dt>
+<dd><p>Quant the model with Activation-aware Weight quantization(AWQ) method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>ModelProto</em><em> or </em><a class="reference internal" href="../../../model/onnx_model/index.html#neural_compressor.model.onnx_model.ONNXModel" title="neural_compressor.model.onnx_model.ONNXModel"><em>ONNXModel</em></a>) – onnx model</p></li>
+<li><p><strong>dataloader</strong> (<em>object</em>) – dataloader for calibration.</p></li>
+<li><p><strong>weight_config</strong> (<em>dict</em>) – <p>quantization config
+For example,
+weight_config = {</p>
+<blockquote>
+<div><dl>
+<dt>’fc2’:</dt><dd><dl class="simple">
+<dt>{</dt><dd><p>‘bits’: 4,
+‘group_size’: 32,
+‘scheme’: ‘sym’,
+‘algorithm’: ‘AWQ’</p>
+</dd>
+</dl>
+<p>}</p>
+</dd>
+</dl>
+</div></blockquote>
+<p>}</p>
+</p></li>
+<li><p><strong>num_bits</strong> (<em>int</em><em>, </em><em>optional</em>) – num_bits. Default is 4.</p></li>
+<li><p><strong>group_size</strong> (<em>int</em><em>, </em><em>optional</em>) – how many elements share one scale/zp. Default is 32.</p></li>
+<li><p><strong>scheme</strong> (<em>str</em><em>, </em><em>optional</em>) – sym or asym. Defaults to “asym”.</p></li>
+<li><p><strong>n_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – calibration sample number.</p></li>
+<li><p><strong>enable_auto_scale</strong> (<em>bool</em><em>, </em><em>optional</em>) – whether enable scale for salient weight. Defaults to True.</p></li>
+<li><p><strong>enable_mse_search</strong> (<em>bool</em><em>, </em><em>optional</em>) – whether enable clip for weight by checking mse. Defaults to True.</p></li>
+<li><p><strong>accuracy_level</strong> (<em>int</em>) – accuracy level. Support 0 (unset), 1(fp32 compute type of jblas kernel),
+2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
+4 (int8 compute type of jblas kernel)</p></li>
+<li><p><strong>providers</strong> (<em>list</em>) – providers to use</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>fake quantized ONNXModel</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>model</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.weight_only.gptq">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.weight_only.</span></span><span class="sig-name descname"><span class="pre">gptq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">W</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">H</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'asym'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blocksize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">percdamp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">actorder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mse</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">perchannel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/adaptor/ox_utils/weight_only.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.weight_only.gptq" title="Link to this definition"></a></dt>
+<dd><p>Quant the weight with GPTQ method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>W</strong> (<em>array</em>) – weight.</p></li>
+<li><p><strong>H</strong> (<em>array</em>) – Hessian matrix.</p></li>
+<li><p><strong>num_bits</strong> (<em>int</em><em>, </em><em>optional</em>) – num_bits. Default is 4.</p></li>
+<li><p><strong>group_size</strong> (<em>int</em><em>, </em><em>optional</em>) – how many elements share one scale/zp. Default is 32.</p></li>
+<li><p><strong>scheme</strong> (<em>str</em><em>, </em><em>optional</em>) – sym or asym. Defaults to “asym”.</p></li>
+<li><p><strong>blocksize</strong> (<em>int</em><em>, </em><em>optional</em>) – blocksize to quantize weight.</p></li>
+<li><p><strong>percdamp</strong> (<em>float</em><em>, </em><em>optional</em>) – percent of the average Hessian diagonal to use for dampening.</p></li>
+<li><p><strong>actorder</strong> (<em>bool</em><em>, </em><em>optional</em>) – whether rearrange Hessian matrix considering the diag’s value.</p></li>
+<li><p><strong>mse</strong> (<em>bool</em><em>, </em><em>optional</em>) – whether get scale and zero point with mse error.</p></li>
+<li><p><strong>perchannel</strong> (<em>bool</em><em>, </em><em>optional</em>) – whether quantize weight per-channel.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>fake quantized weight</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Q</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.weight_only.gptq_quantize">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.weight_only.</span></span><span class="sig-name descname"><span class="pre">gptq_quantize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_bits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'asym'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">percdamp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blocksize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">actorder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mse</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">perchannel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accuracy_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">providers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['CPUExecutionProvider']</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/adaptor/ox_utils/weight_only.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.weight_only.gptq_quantize" title="Link to this definition"></a></dt>
+<dd><p>Quant the model with GPTQ method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>ModelProto</em><em> or </em><a class="reference internal" href="../../../model/onnx_model/index.html#neural_compressor.model.onnx_model.ONNXModel" title="neural_compressor.model.onnx_model.ONNXModel"><em>ONNXModel</em></a>) – onnx model</p></li>
+<li><p><strong>dataloader</strong> (<em>object</em>) – dataloader for calibration.</p></li>
+<li><p><strong>weight_config</strong> (<em>dict</em>) – <p>quantization config
+For example,
+weight_config = {</p>
+<blockquote>
+<div><dl>
+<dt>’fc2’:</dt><dd><dl class="simple">
+<dt>{</dt><dd><p>‘bits’: 4,
+‘group_size’: 32,
+‘scheme’: ‘sym’,
+‘algorithm’: ‘GPTQ’</p>
+</dd>
+</dl>
+<p>}</p>
+</dd>
+</dl>
+</div></blockquote>
+<p>}</p>
+</p></li>
+<li><p><strong>num_bits</strong> (<em>int</em><em>, </em><em>optional</em>) – num_bits. Default is 4.</p></li>
+<li><p><strong>group_size</strong> (<em>int</em><em>, </em><em>optional</em>) – how many elements share one scale/zp. Default is 32.</p></li>
+<li><p><strong>scheme</strong> (<em>str</em><em>, </em><em>optional</em>) – sym or asym. Defaults to “asym”.</p></li>
+<li><p><strong>n_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – calibration sample number.</p></li>
+<li><p><strong>percdamp</strong> (<em>float</em><em>, </em><em>optional</em>) – percent of the average Hessian diagonal to use for dampening.</p></li>
+<li><p><strong>blocksize</strong> (<em>int</em><em>, </em><em>optional</em>) – blocksize to quantize weight.</p></li>
+<li><p><strong>actorder</strong> (<em>bool</em><em>, </em><em>optional</em>) – whether rearrange Hessian matrix considering the diag’s value.</p></li>
+<li><p><strong>mse</strong> (<em>bool</em><em>, </em><em>optional</em>) – whether get scale and zero point with mse error.</p></li>
+<li><p><strong>perchannel</strong> (<em>bool</em><em>, </em><em>optional</em>) – whether quantize weight per-channel.</p></li>
+<li><p><strong>accuracy_level</strong> (<em>int</em>) – accuracy level. Support 0 (unset), 1(fp32 compute type of jblas kernel),
+2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
+4 (int8 compute type of jblas kernel)</p></li>
+<li><p><strong>providers</strong> (<em>list</em>) – providers to use</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>fake quantized ONNXModel</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>model</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fef8422faf0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

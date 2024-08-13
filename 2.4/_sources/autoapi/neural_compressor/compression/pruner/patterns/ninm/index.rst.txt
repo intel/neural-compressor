@@ -1,0 +1,43 @@
+neural_compressor.compression.pruner.patterns.ninm
+==================================================
+
+.. py:module:: neural_compressor.compression.pruner.patterns.ninm
+
+.. autoapi-nested-parse::
+
+   N:M patterns.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.patterns.ninm.PytorchPatternNInM
+
+
+Module Contents
+---------------
+
+.. py:class:: PytorchPatternNInM(config, modules)
+
+
+
+   Pruning Pattern.
+
+   A Pattern class derived from Pattern. In this pattern, N out of every M continuous weights will be pruned.
+   For more info of this pattern, please refer to :
+   https://github.com/intel/neural-compressor/blob/master/docs/sparsity.md
+
+   :param config: A config dict object that contains the pattern information.
+
+   .. attribute:: N
+
+      The number of elements to be pruned in a weight sequence.
+
+   .. attribute:: M
+
+      The size of the weight sequence.
+
+

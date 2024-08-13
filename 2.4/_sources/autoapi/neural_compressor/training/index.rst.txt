@@ -1,0 +1,184 @@
+neural_compressor.training
+==========================
+
+.. py:module:: neural_compressor.training
+
+.. autoapi-nested-parse::
+
+   The configuration of the training loop.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.training.CompressionManager
+   neural_compressor.training.CallBacks
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.training.fit
+   neural_compressor.training.prepare_compression
+
+
+Module Contents
+---------------
+
+.. py:class:: CompressionManager(model: Callable, confs: Union[Callable, List], **kwargs)
+
+   CompressionManager is used in train loop for what user want to deal with additional.
+
+   :param model: A model to be compressed.
+   :param confs: The instance of QuantizationAwareTrainingConfig, PruningConfig and distillationConfig, or a list of
+                 config for orchestration optimization.
+
+   Examples::
+
+       import neural_compressor.training.prepare_compression
+       compression_manager = prepare_compression(model, confs)
+       compression_manager.callbacks.on_train_begin()
+       model = compression_manager.model
+       # train_loop:
+       for epoch in range(epochs):
+           compression_manager.callbacks.on_epoch_begin(epoch)
+           for i, (batch, label) in enumerate(dataloader):
+               compression_manager.callbacks.on_step_begin(i)
+               ......
+               output = model(batch)
+               loss = ......
+               loss = compression_manager.callbacks.on_after_compute_loss(batch, output, loss)
+               loss.backward()
+               compression_manager.callbacks.on_before_optimizer_step()
+               optimizer.step()
+               compression_manager.callbacks.on_step_end()
+           compression_manager.callbacks.on_epoch_end()
+       compression_manager.callbacks.on_train_end()
+       compression_manager.save("path_to_save")
+
+
+.. py:function:: fit(compression_manager, train_func, eval_func=None, eval_dataloader=None, eval_metric=None, **kwargs)
+
+   Compress the model with accuracy tuning for quantization.
+
+   :param compression_manager: The Compression manager contains the model and
+                               callbacks.
+   :type compression_manager: CompressionManager
+   :param train_func: Training function for quantization aware training. It is optional.
+                      This function takes "model" as input parameter
+                      and executes entire inference process. If this
+                      parameter specified.
+   :type train_func: function, optional
+   :param eval_func: The evaluation function provided by user.
+                     This function takes model as parameter,
+                     and evaluation dataset and metrics should be
+                     encapsulated in this function implementation
+                     and outputs a higher-is-better accuracy scalar
+                     value.
+                     The pseudo code should be something like:
+                     def eval_func(model):
+                          input, label = dataloader()
+                          output = model(input)
+                          accuracy = metric(output, label)
+                          return accuracy
+   :type eval_func: function, optional
+   :param eval_dataloader: Data loader for evaluation. It is iterable
+                           and should yield a tuple of (input, label).
+                           The input could be a object, list, tuple or
+                           dict, depending on user implementation,
+                           as well as it can be taken as model input.
+                           The label should be able to take as input of
+                           supported metrics. If this parameter is
+                           not None, user needs to specify pre-defined
+                           evaluation metrics object and should set "eval_func" parameter as None.
+                           Tuner will combine model, eval_dataloader
+                           and pre-defined metrics to run evaluation
+                           process.
+   :type eval_dataloader: generator, optional
+   :param eval_metric: Set metric class or a dict of built-in metric configures,
+                       and neural_compressor will initialize this class when evaluation.
+   :type eval_metric: dict or obj
+
+   :returns: A optimized model.
+
+   Examples::
+
+       from neural_compressor.training import fit, prepare_compression
+
+       compression_manager = prepare_compression(conf, model)
+
+       def train_func(model):
+           compression_manager.callbacks.on_train_begin()
+           for epoch in range(epochs):
+               compression_manager.callbacks.on_epoch_begin(epoch)
+               for i, (batch, label) in enumerate(dataloader):
+                   compression_manager.callbacks.on_step_begin(i)
+                   ......
+                   output = model(batch)
+                   loss = ......
+                   loss = compression_manager.callbacks.on_after_compute_loss(batch, output, loss)
+                   loss.backward()
+                   compression_manager.callbacks.on_before_optimizer_step()
+                   optimizer.step()
+                   compression_manager.callbacks.on_step_end()
+               compression_manager.callbacks.on_epoch_end()
+           compression_manager.callbacks.on_train_end()
+           return model
+
+       def eval_func(model):
+           for i, (batch, label) in enumerate(dataloader):
+               output = model(batch)
+               # compute metric
+               metric = top1(output, label)
+           return metric.results()
+
+       model = fit(compression_manager, train_func=train_func, eval_func=eval_func)
+
+
+.. py:function:: prepare_compression(model: Callable, confs: Union[Callable, List], **kwargs)
+
+   Summary.
+
+   :param model: The model to optimize.
+   :type model: Callable, optional
+   :param confs: The instance of QuantizationAwareTrainingConfig,
+                 PruningConfig and distillationConfig, or a list of
+                 config for orchestration optimization.
+   :type confs: Union[Callable, List]
+
+   :returns: An object of CompressionManager.
+
+   Examples::
+
+       from neural_compressor.training import prepare_compression
+
+       compression_manager = prepare_compression(conf, model)
+       model = compression_manager.model
+       # train_loop:
+       compression_manager.callbacks.on_train_begin()
+       for epoch in range(epochs):
+           compression_manager.callbacks.on_epoch_begin(epoch)
+           for i, (batch, label) in enumerate(dataloader):
+               compression_manager.callbacks.on_step_begin(i)
+               ......
+               output = model(batch)
+               loss = ......
+               loss = compression_manager.callbacks.on_after_compute_loss(batch, output, loss)
+               loss.backward()
+               compression_manager.callbacks.on_before_optimizer_step()
+               optimizer.step()
+               compression_manager.callbacks.on_step_end()
+           compression_manager.callbacks.on_epoch_end()
+       compression_manager.callbacks.on_train_end()
+
+
+.. py:class:: CallBacks(callbacks_list)
+
+   Define the basic command for the training loop.
+
+

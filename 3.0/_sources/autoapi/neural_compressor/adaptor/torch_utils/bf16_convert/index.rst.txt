@@ -1,0 +1,50 @@
+neural_compressor.adaptor.torch_utils.bf16_convert
+==================================================
+
+.. py:module:: neural_compressor.adaptor.torch_utils.bf16_convert
+
+.. autoapi-nested-parse::
+
+   Bf16 Convert for Torch Utils.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.torch_utils.bf16_convert.BF16ModuleWrapper
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.torch_utils.bf16_convert.Convert
+
+
+Module Contents
+---------------
+
+.. py:class:: BF16ModuleWrapper(module)
+
+
+
+   BF16Module Wrapper Class.
+
+
+.. py:function:: Convert(model, tune_cfg)
+
+   Convert to bf16 model.
+
+   :param model: the input model.
+   :type model: object
+   :param tune_cfg: dictionary of quantization configuration.
+   :type tune_cfg: dict
+
+   :returns: model with mixed precision.
+   :rtype: mixed_precision_model (object)
+
+

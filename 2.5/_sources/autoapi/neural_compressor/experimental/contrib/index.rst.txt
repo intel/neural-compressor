@@ -1,0 +1,20 @@
+neural_compressor.experimental.contrib
+======================================
+
+.. py:module:: neural_compressor.experimental.contrib
+
+.. autoapi-nested-parse::
+
+   Built-in strategy for multiple framework backends.
+
+
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/experimental/contrib/strategy/index
+
+

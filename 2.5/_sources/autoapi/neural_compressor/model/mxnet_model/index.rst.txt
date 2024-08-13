@@ -1,0 +1,29 @@
+neural_compressor.model.mxnet_model
+===================================
+
+.. py:module:: neural_compressor.model.mxnet_model
+
+.. autoapi-nested-parse::
+
+   Class for MXNet model.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.model.mxnet_model.MXNetModel
+
+
+Module Contents
+---------------
+
+.. py:class:: MXNetModel(model, **kwargs)
+
+
+
+   Build MXNet model.
+
+

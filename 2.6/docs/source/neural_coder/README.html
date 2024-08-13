@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Neural Coder &mdash; Intel® Neural Compressor 2.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../versions.html">2.6▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Neural Coder</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/docs/source/neural_coder/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="neural-coder">
+<h1>Neural Coder<a class="headerlink" href="#neural-coder" title="Link to this heading"></a></h1>
+<section id="what-do-we-offer">
+<h2>What do we offer?<a class="headerlink" href="#what-do-we-offer" title="Link to this heading"></a></h2>
+<p>Neural Coder is a novel component under Intel® Neural Compressor to further simplify the deployment of deep learning models via one-click automated code changes for device switch (e.g., CUDA to CPU) and optimization enabling. Subsequently, Neural Coder can also perform automated benchmark on all applicable optimization sets acquired from the automated enabling, and evaluate for the best out-of-box performance.</p>
+<p>Neural Coder leverages static program analysis techniques and heuristic optimization rules to simplify the usage of various Deep Learning optimization APIs for increasing computation efficiency of AI models and improving user experience for general AI customers. We demonstrate great improvement of developer productivity and aim to facilitate enhanced Deep Learning acceleration adoption via this toolkit.</p>
+<p>Neural Coder helps you code Deep Learning optimizations automatically into your scripts. For example, to apply</p>
+<ul class="simple">
+<li><p>Automatic Mixed Precision (torch.cpu.amp.autocast)</p></li>
+<li><p>JIT Script computation graph transformation (torch.jit.script)</p></li>
+<li><p>Channels Last memory format transformation (torch.channels_last)</p></li>
+</ul>
+<p>simultaneously on below PyTorch evaluation code, we generate the optimized code in one-click by detecting the correct position to insert the correct API code lines:</p>
+<div class="highlight-diff notranslate"><div class="highlight"><pre><span></span><span class="w"> </span> import torch
+<span class="w"> </span> import torchvision.models as models
+<span class="w"> </span> my_model = models.resnet50(pretrained=True)
+<span class="gi">+ import torch</span>
+<span class="gi">+ with torch.no_grad():</span>
+<span class="gi">+     my_model = my_model.to(memory_format=torch.channels_last)</span>
+<span class="gi">+ import torch</span>
+<span class="gi">+ with torch.no_grad():</span>
+<span class="gi">+     my_model.eval()</span>
+<span class="gi">+     my_model = torch.jit.script(my_model)</span>
+<span class="gi">+     my_model = torch.jit.freeze(my_model)</span>
+<span class="w"> </span> my_model.eval()
+<span class="w"> </span> batch_size = 112
+<span class="w"> </span> input = torch.rand(batch_size, 3, 224, 224)
+<span class="w"> </span> with torch.no_grad():
+<span class="gi">+     import torch</span>
+<span class="gi">+     with torch.cpu.amp.autocast(enabled=True, dtype=torch.bfloat16):</span>
+<span class="w"> </span>         my_model(input)
+</pre></div>
+</div>
+</section>
+<section id="getting-started">
+<h2>Getting Started!<a class="headerlink" href="#getting-started" title="Link to this heading"></a></h2>
+<p>There are currently 3 ways to use Neural Coder for automatic quantization enabling and benchmark.</p>
+<section id="jupyter-lab-extension">
+<h3>Jupyter Lab Extension<a class="headerlink" href="#jupyter-lab-extension" title="Link to this heading"></a></h3>
+<p>We offer Neural Coder as an extension plugin in Jupyter Lab. This enables users to utilize Neural Coder while writing their Deep Learning models in Jupyter Lab coding platform. Users can simply search for <code class="docutils literal notranslate"><span class="pre">jupyter-lab-neural-compressor</span></code> in the Extension Manager in JupyterLab and install Neural Coder with one click. For more details, please refer to this <a class="reference external" href="extensions/neural_compressor_ext_lab/README.html">guide</a>.</p>
+<p><a class="reference external" href="https://aws.amazon.com/sagemaker/">AWS Amazon SageMaker</a> users can also use Neural Coder as an extension following this <a class="reference external" href="docs/AWSSageMakerSupport.html">guide</a>.</p>
+</section>
+<section id="python-launcher">
+<h3>Python Launcher<a class="headerlink" href="#python-launcher" title="Link to this heading"></a></h3>
+<p>Neural Coder can be used as a Python Launcher. Users can run the Python Deep Learning model code as it is with automatic enabling of optimizations by simply adding an inline prefix <code class="docutils literal notranslate"><span class="pre">-m</span> <span class="pre">neural_coder</span></code> to the Python command line. For more details, please refer to this <a class="reference external" href="docs/PythonLauncher.html">guide</a>.</p>
+</section>
+<section id="python-api">
+<h3>Python API<a class="headerlink" href="#python-api" title="Link to this heading"></a></h3>
+<p>There are 3 user-facing APIs for Neural Coder: enable, bench and superbench. For more details, please refer to this <a class="reference external" href="docs/PythonAPI.html">guide</a>. We have provided a <a class="reference external" href="docs/SupportMatrix.html">list</a> of supported Deep Learning optimization features. Specifically for quantization, we provide an auto-quantization API that helps automatically enable quantization on Deep Learning models and automatically evaluates for the best performance on the model with no manual coding needed. Supported features include Post-Training Static Quantization, Post-Training Dynamic Quantization, and Mixed Precision. For more details, please refer to this <a class="reference external" href="docs/Quantization.html">guide</a>.</p>
+</section>
+</section>
+<section id="contact">
+<h2>Contact<a class="headerlink" href="#contact" title="Link to this heading"></a></h2>
+<p>Please contact us at <a class="reference external" href="mailto:inc&#46;maintainers&#37;&#52;&#48;intel&#46;com">inc<span>&#46;</span>maintainers<span>&#64;</span>intel<span>&#46;</span>com</a> for any Neural Coder related question.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8a3cdccd90> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,69 @@
+neural_compressor.compression.pruner.pruners.mha
+================================================
+
+.. py:module:: neural_compressor.compression.pruner.pruners.mha
+
+.. autoapi-nested-parse::
+
+   Mha pruner.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.pruners.mha.PythonMultiheadAttentionPruner
+
+
+Module Contents
+---------------
+
+.. py:class:: PythonMultiheadAttentionPruner(config, mha_modules)
+
+
+
+   Pruning Pruner.
+
+   In this pruner, We apply pruning for multi-head attentions.
+   multi-head attention pruning means remove partial QKV layers and their corresponding feedward layers simultaneously.
+
+   :param mha_modules: A List
+   :param [:
+             {
+                 'qkv_name': ['query_layer_name', 'key_layer_name', 'value_layer_name'],
+                 'ffn_name': ['attention_ffn_name'],
+                 'mha_name': ['mha_name'] (keep not change),
+                 'qkv_module': [torch.nn.Linear, torch.nn.Linear, torch.nn.Linear],
+                 'ffn_module': [torch.nn.Linear],
+                 'mha_module': [torch.nn.Module] (keep not change),
+             }
+             ...
+   :param ]:
+   :param that stores the pruning mha modules.:
+   :param config: A config dict object that contains the pruner information.
+
+   .. attribute:: mha_compressions
+
+      a Dict. (key: MHA module name; value: MHACompression object in .model_slim.weight_slim)
+      Main object to hook critical attributes for mha pruning and modify these attributes.
+
+   .. attribute:: linear_layers
+
+      a Dict. {key: linear layer name; value: torch.nn.Linear object.}
+      Store independent linear layer look-up table, which used by criterion object.
+      linear_layers length should be 4x of mha_compression because one mha_compression hooks 4 linear layers:
+      query, key, value and subsequent ffn layer.
+
+   .. attribute:: head_masks
+
+      A dict. {key: MHA module name; value: torch.Tensor(1, mha_head_size)}
+      Similar to Huggingface built-in head_mask attribute.
+
+   .. attribute:: mha_scores
+
+      A dict. {key: MHA module name; value: torch.Tensor(1, mha_head_size)}
+      Store scores for different heads.
+
+

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.common.utils.utility &mdash; Intel® Neural Compressor 3.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">3.0▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.common.utils.utility</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/autoapi/neural_compressor/common/utils/utility/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.common.utils.utility">
+<span id="neural-compressor-common-utils-utility"></span><h1>neural_compressor.common.utils.utility<a class="headerlink" href="#module-neural_compressor.common.utils.utility" title="Link to this heading"></a></h1>
+<p>The utility of common module.</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.common.utils.utility.LazyImport" title="neural_compressor.common.utils.utility.LazyImport"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LazyImport</span></code></a></p></td>
+<td><p>Lazy import python module till use.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.common.utils.utility.CpuInfo" title="neural_compressor.common.utils.utility.CpuInfo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CpuInfo</span></code></a></p></td>
+<td><p>Get CPU Info.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.common.utils.utility.ProcessorType" title="neural_compressor.common.utils.utility.ProcessorType"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ProcessorType</span></code></a></p></td>
+<td><p>The processor type.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.common.utils.utility.Statistics" title="neural_compressor.common.utils.utility.Statistics"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Statistics</span></code></a></p></td>
+<td><p>The statistics printer.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.common.utils.utility.singleton" title="neural_compressor.common.utils.utility.singleton"><code class="xref py py-obj docutils literal notranslate"><span class="pre">singleton</span></code></a>(cls)</p></td>
+<td><p>Singleton decorator.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.common.utils.utility.dump_elapsed_time" title="neural_compressor.common.utils.utility.dump_elapsed_time"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dump_elapsed_time</span></code></a>([customized_msg])</p></td>
+<td><p>Get the elapsed time for decorated functions.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.common.utils.utility.set_random_seed" title="neural_compressor.common.utils.utility.set_random_seed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_random_seed</span></code></a>(seed)</p></td>
+<td><p>Set the random seed in config.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.common.utils.utility.set_workspace" title="neural_compressor.common.utils.utility.set_workspace"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_workspace</span></code></a>(workspace)</p></td>
+<td><p>Set the workspace in config.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.common.utils.utility.get_workspace" title="neural_compressor.common.utils.utility.get_workspace"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_workspace</span></code></a>()</p></td>
+<td><p>Get the workspace in config.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.common.utils.utility.set_resume_from" title="neural_compressor.common.utils.utility.set_resume_from"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_resume_from</span></code></a>(resume_from)</p></td>
+<td><p>Set the resume_from in config.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.common.utils.utility.set_tensorboard" title="neural_compressor.common.utils.utility.set_tensorboard"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_tensorboard</span></code></a>(tensorboard)</p></td>
+<td><p>Set the tensorboard in config.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.common.utils.utility.log_process" title="neural_compressor.common.utils.utility.log_process"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_process</span></code></a>([mode])</p></td>
+<td><p>Decorator function that logs the stage of process.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.common.utils.utility.call_counter" title="neural_compressor.common.utils.utility.call_counter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">call_counter</span></code></a>(func)</p></td>
+<td><p>A decorator that keeps track of the number of times a function is called.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.common.utils.utility.detect_processor_type_based_on_hw" title="neural_compressor.common.utils.utility.detect_processor_type_based_on_hw"><code class="xref py py-obj docutils literal notranslate"><span class="pre">detect_processor_type_based_on_hw</span></code></a>()</p></td>
+<td><p>Detects the processor type based on the hardware configuration.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.common.utils.utility.singleton">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.utils.utility.</span></span><span class="sig-name descname"><span class="pre">singleton</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/common/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.utils.utility.singleton" title="Link to this definition"></a></dt>
+<dd><p>Singleton decorator.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.common.utils.utility.LazyImport">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.common.utils.utility.</span></span><span class="sig-name descname"><span class="pre">LazyImport</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module_name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/common/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.utils.utility.LazyImport" title="Link to this definition"></a></dt>
+<dd><p>Lazy import python module till use.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.common.utils.utility.CpuInfo">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.common.utils.utility.</span></span><span class="sig-name descname"><span class="pre">CpuInfo</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/common/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.utils.utility.CpuInfo" title="Link to this definition"></a></dt>
+<dd><p>Get CPU Info.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.common.utils.utility.dump_elapsed_time">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.utils.utility.</span></span><span class="sig-name descname"><span class="pre">dump_elapsed_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">customized_msg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/common/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.utils.utility.dump_elapsed_time" title="Link to this definition"></a></dt>
+<dd><p>Get the elapsed time for decorated functions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>customized_msg</strong> (<em>string</em><em>, </em><em>optional</em>) – The parameter passed to decorator. Defaults to None.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.common.utils.utility.set_random_seed">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.utils.utility.</span></span><span class="sig-name descname"><span class="pre">set_random_seed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/common/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.utils.utility.set_random_seed" title="Link to this definition"></a></dt>
+<dd><p>Set the random seed in config.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.common.utils.utility.set_workspace">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.utils.utility.</span></span><span class="sig-name descname"><span class="pre">set_workspace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">workspace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/common/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.utils.utility.set_workspace" title="Link to this definition"></a></dt>
+<dd><p>Set the workspace in config.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.common.utils.utility.get_workspace">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_workspace</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/common/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.utils.utility.get_workspace" title="Link to this definition"></a></dt>
+<dd><p>Get the workspace in config.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.common.utils.utility.set_resume_from">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.utils.utility.</span></span><span class="sig-name descname"><span class="pre">set_resume_from</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">resume_from</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/common/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.utils.utility.set_resume_from" title="Link to this definition"></a></dt>
+<dd><p>Set the resume_from in config.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.common.utils.utility.set_tensorboard">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.utils.utility.</span></span><span class="sig-name descname"><span class="pre">set_tensorboard</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensorboard</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/common/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.utils.utility.set_tensorboard" title="Link to this definition"></a></dt>
+<dd><p>Set the tensorboard in config.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.common.utils.utility.log_process">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.utils.utility.</span></span><span class="sig-name descname"><span class="pre">log_process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Mode.QUANTIZE</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/common/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.utils.utility.log_process" title="Link to this definition"></a></dt>
+<dd><p>Decorator function that logs the stage of process.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mode</strong> (<a class="reference internal" href="../constants/index.html#neural_compressor.common.utils.constants.Mode" title="neural_compressor.common.utils.constants.Mode"><em>Mode</em></a>) – The mode of the process.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The decorated function.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.common.utils.utility.call_counter">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.utils.utility.</span></span><span class="sig-name descname"><span class="pre">call_counter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/common/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.utils.utility.call_counter" title="Link to this definition"></a></dt>
+<dd><p>A decorator that keeps track of the number of times a function is called.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>func</strong> – The function to be decorated.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The decorated function.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.common.utils.utility.ProcessorType">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.common.utils.utility.</span></span><span class="sig-name descname"><span class="pre">ProcessorType</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/common/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.utils.utility.ProcessorType" title="Link to this definition"></a></dt>
+<dd><p>The processor type.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.common.utils.utility.detect_processor_type_based_on_hw">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.utils.utility.</span></span><span class="sig-name descname"><span class="pre">detect_processor_type_based_on_hw</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/common/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.utils.utility.detect_processor_type_based_on_hw" title="Link to this definition"></a></dt>
+<dd><p>Detects the processor type based on the hardware configuration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The detected processor type (Server or Client).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#neural_compressor.common.utils.utility.ProcessorType" title="neural_compressor.common.utils.utility.ProcessorType">ProcessorType</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.common.utils.utility.Statistics">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.common.utils.utility.</span></span><span class="sig-name descname"><span class="pre">Statistics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_handle</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">logger.info</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/common/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.utils.utility.Statistics" title="Link to this definition"></a></dt>
+<dd><p>The statistics printer.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fef81325550> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

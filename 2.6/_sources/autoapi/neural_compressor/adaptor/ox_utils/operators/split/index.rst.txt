@@ -1,0 +1,37 @@
+neural_compressor.adaptor.ox_utils.operators.split
+==================================================
+
+.. py:module:: neural_compressor.adaptor.ox_utils.operators.split
+
+.. autoapi-nested-parse::
+
+   Split Operator.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.ox_utils.operators.split.SplitOperator
+   neural_compressor.adaptor.ox_utils.operators.split.QSplitOperator
+
+
+Module Contents
+---------------
+
+.. py:class:: SplitOperator(onnx_quantizer, onnx_node)
+
+
+
+   Split Operator.
+
+
+.. py:class:: QSplitOperator(onnx_node, children, initializers)
+
+
+
+   QSplit Operator.
+
+

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contribution Guidelines &mdash; Intel® Neural Compressor 2.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">2.5▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Contribution Guidelines</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/CONTRIBUTING.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="contribution-guidelines">
+<h1>Contribution Guidelines<a class="headerlink" href="#contribution-guidelines" title="Link to this heading"></a></h1>
+<ol class="simple">
+<li><p><a class="reference external" href="#create-pull-request">Create Pull Request</a></p></li>
+<li><p><a class="reference external" href="#pull-request-checklist">Pull Request Checklist</a></p></li>
+<li><p><a class="reference external" href="#pull-request-template">Pull Request Template</a></p></li>
+<li><p><a class="reference external" href="#pull-request-acceptance-criteria">Pull Request Acceptance Criteria</a></p></li>
+<li><p><a class="reference external" href="#pull-request-status-checks-overview">Pull Request Status Checks Overview</a></p></li>
+<li><p><a class="reference external" href="#support">Support</a></p></li>
+<li><p><a class="reference external" href="#contributor-covenant-code-of-conduct">Contributor Covenant Code of Conduct</a></p></li>
+</ol>
+<section id="create-pull-request">
+<h2>Create Pull Request<a class="headerlink" href="#create-pull-request" title="Link to this heading"></a></h2>
+<p>If you have improvements to Intel® Neural Compressor, send your pull requests for
+<a class="reference external" href="https://github.com/intel/neural-compressor/pulls">review</a>.
+If you are new to GitHub, view the pull request <a class="reference external" href="https://help.github.com/articles/using-pull-requests/">How To</a>.</p>
+<section id="step-by-step-guidelines">
+<h3>Step-by-Step guidelines<a class="headerlink" href="#step-by-step-guidelines" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Star this repository using the button <code class="docutils literal notranslate"><span class="pre">Star</span></code> in the top right corner.</p></li>
+<li><p>Fork this Repository using the button <code class="docutils literal notranslate"><span class="pre">Fork</span></code> in the top right corner.</p></li>
+<li><p>Clone your forked repository to your pc.
+<code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">clone</span> <span class="pre">&quot;url</span> <span class="pre">to</span> <span class="pre">your</span> <span class="pre">repo&quot;</span></code></p></li>
+<li><p>Create a new branch for your modifications.
+<code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">checkout</span> <span class="pre">-b</span> <span class="pre">new-branch</span></code></p></li>
+<li><p>Add your files with <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">add</span> <span class="pre">-A</span></code>, commit <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">commit</span> <span class="pre">-s</span> <span class="pre">-m</span> <span class="pre">&quot;This</span> <span class="pre">is</span> <span class="pre">my</span> <span class="pre">commit</span> <span class="pre">message&quot;</span></code> and push <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">push</span> <span class="pre">origin</span> <span class="pre">new-branch</span></code>.</p></li>
+<li><p>Create a <a class="reference external" href="https://github.com/intel/neural-compressor/pulls">pull request</a>.</p></li>
+</ul>
+</section>
+</section>
+<section id="pull-request-checklist">
+<h2>Pull Request Checklist<a class="headerlink" href="#pull-request-checklist" title="Link to this heading"></a></h2>
+<p>Before sending your pull requests, follow the information below:</p>
+<ul class="simple">
+<li><p>Changes are consistent with the <a class="reference external" href="./coding_style.html">coding conventions</a>.</p></li>
+<li><p>Add unit tests in <a class="reference external" href="https://github.com/intel/neural-compressor/tree/master/test">Unit Tests</a> to cover the code you would like to contribute.</p></li>
+<li><p>Intel® Neural Compressor has adopted the <a class="reference external" href="https://en.wikipedia.org/wiki/Developer_Certificate_of_Origin">Developer Certificate of Origin</a>, you must agree to the terms of Developer Certificate of Origin by signing off each of your commits with <code class="docutils literal notranslate"><span class="pre">-s</span></code>, e.g. <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">commit</span> <span class="pre">-s</span> <span class="pre">-m</span> <span class="pre">'This</span> <span class="pre">is</span> <span class="pre">my</span> <span class="pre">commit</span> <span class="pre">message'</span></code>.</p></li>
+</ul>
+</section>
+<section id="pull-request-template">
+<h2>Pull Request Template<a class="headerlink" href="#pull-request-template" title="Link to this heading"></a></h2>
+<p>See <a class="reference external" href="/.github/pull_request_template.html">PR template</a></p>
+</section>
+<section id="pull-request-acceptance-criteria">
+<h2>Pull Request Acceptance Criteria<a class="headerlink" href="#pull-request-acceptance-criteria" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>At least two approvals from reviewers</p></li>
+<li><p>All detected status checks pass</p></li>
+<li><p>All conversations solved</p></li>
+<li><p>Third-party dependency license compatible</p></li>
+</ul>
+</section>
+<section id="pull-request-status-checks-overview">
+<h2>Pull Request Status Checks Overview<a class="headerlink" href="#pull-request-status-checks-overview" title="Link to this heading"></a></h2>
+<p>Intel® Neural Compressor use <a class="reference external" href="https://learn.microsoft.com/en-us/azure/devops/pipelines/?view=azure-devops">Azure DevOps</a> for CI test.
+And generally use <a class="reference external" href="https://azure.microsoft.com/en-us/pricing/purchase-options/pay-as-you-go">Azure Cloud Instance</a> to deploy pipelines, e.g. Standard E16s v5.
+|     Test Name                 |     Test Scope                                |     Test Pass Criteria    |
+|——————————-|———————————————–|—————————|
+|     Code Scan                 |     Pylint/Bandit/CopyRight/DocStyle/SpellCheck       |     PASS          |
+|     <a class="reference external" href="https://github.com/apps/dco/">DCO</a>     |     Use <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">commit</span> <span class="pre">-s</span></code> to sign off     |     PASS          |
+|     Unit Test                 |     Pytest scripts under <a class="reference external" href="/test">test</a>                |      PASS (No failure, No core dump, No segmentation fault, No coverage drop)      |
+|     Model Test                |     Pytorch + TensorFlow + ONNX Runtime + MXNet         |      PASS (Functionality pass, FP32/INT8 No performance regression)       |</p>
+</section>
+<section id="support">
+<h2>Support<a class="headerlink" href="#support" title="Link to this heading"></a></h2>
+<p>Submit your questions, feature requests, and bug reports to the
+<a class="reference external" href="https://github.com/intel/neural-compressor/issues">GitHub issues</a> page. You may also reach out to <a class="reference external" href="mailto:inc&#46;maintainers&#37;&#52;&#48;intel&#46;com">Maintainers</a>.</p>
+</section>
+<section id="contributor-covenant-code-of-conduct">
+<h2>Contributor Covenant Code of Conduct<a class="headerlink" href="#contributor-covenant-code-of-conduct" title="Link to this heading"></a></h2>
+<p>This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the <a class="reference external" href="./CODE_OF_CONDUCT.html">Contributor Covenant Code of Conduct</a>.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f81c8b43700> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

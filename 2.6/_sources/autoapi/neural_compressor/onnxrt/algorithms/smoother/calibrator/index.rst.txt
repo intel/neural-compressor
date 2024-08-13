@@ -1,0 +1,27 @@
+neural_compressor.onnxrt.algorithms.smoother.calibrator
+=======================================================
+
+.. py:module:: neural_compressor.onnxrt.algorithms.smoother.calibrator
+
+.. autoapi-nested-parse::
+
+   Calibration for smooth quant.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.onnxrt.algorithms.smoother.calibrator.Calibrator
+
+
+Module Contents
+---------------
+
+.. py:class:: Calibrator(model: neural_compressor.onnxrt.utils.onnx_model.ONNXModel, dataloader: neural_compressor.onnxrt.quantization.calibrate.CalibrationDataReader, iterations: List[int] = [], providers: List[str] = ['CPUExecutionProvider'], **kwargs)
+
+   Dump information for smooth quant.
+
+

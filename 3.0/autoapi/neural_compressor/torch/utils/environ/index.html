@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.torch.utils.environ &mdash; Intel® Neural Compressor 3.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">3.0▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.torch.utils.environ</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/autoapi/neural_compressor/torch/utils/environ/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.torch.utils.environ">
+<span id="neural-compressor-torch-utils-environ"></span><h1>neural_compressor.torch.utils.environ<a class="headerlink" href="#module-neural_compressor.torch.utils.environ" title="Link to this heading"></a></h1>
+<p>Intel Neural Compressor PyTorch environment check.</p>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.environ.is_ipex_imported" title="neural_compressor.torch.utils.environ.is_ipex_imported"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_ipex_imported</span></code></a>(→ bool)</p></td>
+<td><p>Check whether intel_extension_for_pytorch is imported.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.environ.is_transformers_imported" title="neural_compressor.torch.utils.environ.is_transformers_imported"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_transformers_imported</span></code></a>(→ bool)</p></td>
+<td><p>Check whether transformers is imported.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.environ.is_package_available" title="neural_compressor.torch.utils.environ.is_package_available"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_package_available</span></code></a>(package_name)</p></td>
+<td><p>Check if the package exists in the environment without importing.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.environ.is_hpex_available" title="neural_compressor.torch.utils.environ.is_hpex_available"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_hpex_available</span></code></a>()</p></td>
+<td><p>Returns whether hpex is available.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.environ.is_ipex_available" title="neural_compressor.torch.utils.environ.is_ipex_available"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_ipex_available</span></code></a>()</p></td>
+<td><p>Return whether ipex is available.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.environ.get_ipex_version" title="neural_compressor.torch.utils.environ.get_ipex_version"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_ipex_version</span></code></a>()</p></td>
+<td><p>Return ipex version if ipex exists.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.environ.get_torch_version" title="neural_compressor.torch.utils.environ.get_torch_version"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_torch_version</span></code></a>()</p></td>
+<td><p>Return torch version if ipex exists.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.environ.get_accelerator" title="neural_compressor.torch.utils.environ.get_accelerator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_accelerator</span></code></a>([device_name])</p></td>
+<td><p>Return the recommended accelerator based on device priority.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.environ.device_synchronize" title="neural_compressor.torch.utils.environ.device_synchronize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">device_synchronize</span></code></a>(raw_func)</p></td>
+<td><p>Function decorator that calls accelerated.synchronize before and after a function call.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.environ.is_ipex_imported">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.environ.</span></span><span class="sig-name descname"><span class="pre">is_ipex_imported</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/utils/environ.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.environ.is_ipex_imported" title="Link to this definition"></a></dt>
+<dd><p>Check whether intel_extension_for_pytorch is imported.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.environ.is_transformers_imported">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.environ.</span></span><span class="sig-name descname"><span class="pre">is_transformers_imported</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/utils/environ.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.environ.is_transformers_imported" title="Link to this definition"></a></dt>
+<dd><p>Check whether transformers is imported.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.environ.is_package_available">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.environ.</span></span><span class="sig-name descname"><span class="pre">is_package_available</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">package_name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/utils/environ.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.environ.is_package_available" title="Link to this definition"></a></dt>
+<dd><p>Check if the package exists in the environment without importing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>package_name</strong> (<em>str</em>) – package name</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.environ.is_hpex_available">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.environ.</span></span><span class="sig-name descname"><span class="pre">is_hpex_available</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/utils/environ.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.environ.is_hpex_available" title="Link to this definition"></a></dt>
+<dd><p>Returns whether hpex is available.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.environ.is_ipex_available">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.environ.</span></span><span class="sig-name descname"><span class="pre">is_ipex_available</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/utils/environ.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.environ.is_ipex_available" title="Link to this definition"></a></dt>
+<dd><p>Return whether ipex is available.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.environ.get_ipex_version">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.environ.</span></span><span class="sig-name descname"><span class="pre">get_ipex_version</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/utils/environ.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.environ.get_ipex_version" title="Link to this definition"></a></dt>
+<dd><p>Return ipex version if ipex exists.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.environ.get_torch_version">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.environ.</span></span><span class="sig-name descname"><span class="pre">get_torch_version</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/utils/environ.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.environ.get_torch_version" title="Link to this definition"></a></dt>
+<dd><p>Return torch version if ipex exists.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.environ.get_accelerator">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.environ.</span></span><span class="sig-name descname"><span class="pre">get_accelerator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/utils/environ.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.environ.get_accelerator" title="Link to this definition"></a></dt>
+<dd><p>Return the recommended accelerator based on device priority.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.environ.device_synchronize">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.environ.</span></span><span class="sig-name descname"><span class="pre">device_synchronize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw_func</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/torch/utils/environ.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.environ.device_synchronize" title="Link to this definition"></a></dt>
+<dd><p>Function decorator that calls accelerated.synchronize before and after a function call.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fef7cd489d0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

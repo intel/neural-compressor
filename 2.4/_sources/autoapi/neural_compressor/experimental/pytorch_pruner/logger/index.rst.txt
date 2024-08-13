@@ -1,0 +1,11 @@
+neural_compressor.experimental.pytorch_pruner.logger
+====================================================
+
+.. py:module:: neural_compressor.experimental.pytorch_pruner.logger
+
+.. autoapi-nested-parse::
+
+   Logger module.
+
+
+

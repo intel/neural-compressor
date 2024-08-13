@@ -1,0 +1,53 @@
+neural_compressor.adaptor.tf_utils.graph_rewriter.int8.fuse_matmul_requantize
+=============================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.int8.fuse_matmul_requantize
+
+.. autoapi-nested-parse::
+
+   Fuse QuantizedMatMul with Requantize/Dequantize Graph Rewriter.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.int8.fuse_matmul_requantize.FuseMatMulRequantizeDequantizeTransformer
+   neural_compressor.adaptor.tf_utils.graph_rewriter.int8.fuse_matmul_requantize.FuseMatMulRequantizeTransformer
+   neural_compressor.adaptor.tf_utils.graph_rewriter.int8.fuse_matmul_requantize.FuseMatMulRequantizeDequantizeNewAPITransformer
+   neural_compressor.adaptor.tf_utils.graph_rewriter.int8.fuse_matmul_requantize.FuseMatMulRequantizeNewAPITransformer
+
+
+Module Contents
+---------------
+
+.. py:class:: FuseMatMulRequantizeDequantizeTransformer(model, device='cpu')
+
+
+
+   Fuse QuantizedMatMul + Requantize + Dequantize into QuantizedMatMulWithBiasAndDequantize.
+
+
+.. py:class:: FuseMatMulRequantizeTransformer(model, device='cpu')
+
+
+
+   Fuse Quantized MatMul Op with the successor Requantize Op.
+
+
+.. py:class:: FuseMatMulRequantizeDequantizeNewAPITransformer(model, device='cpu')
+
+
+
+   Fuse _QuantizedMatMul + Requantize + Dequantize into _QuantizedMatMul.
+
+
+.. py:class:: FuseMatMulRequantizeNewAPITransformer(model, device='cpu')
+
+
+
+   Fuse newAPI Quantized MatMul Op with the successor Requantize Op.
+
+

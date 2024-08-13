@@ -1,0 +1,39 @@
+neural_compressor.experimental.nas.basic_nas
+============================================
+
+.. py:module:: neural_compressor.experimental.nas.basic_nas
+
+.. autoapi-nested-parse::
+
+   Basic NAS approach class.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.experimental.nas.basic_nas.BasicNAS
+
+
+Module Contents
+---------------
+
+.. py:class:: BasicNAS(conf_fname_or_obj, search_space=None, model_builder=None)
+
+
+
+   Basic NAS approach.
+
+   Defining the pipeline for basic NAS approach.
+
+   :param conf_fname: The path to the YAML configuration file.
+   :type conf_fname: string
+   :param search_space: A dictionary for defining the search space.
+   :type search_space: dict
+   :param model_builder: A function to build model instance with the specified
+                         model architecture parameters.
+   :type model_builder: function obj
+
+

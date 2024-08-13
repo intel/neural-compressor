@@ -1,0 +1,27 @@
+neural_compressor.tensorflow.algorithms.smoother.core
+=====================================================
+
+.. py:module:: neural_compressor.tensorflow.algorithms.smoother.core
+
+.. autoapi-nested-parse::
+
+   The core components of sq.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.algorithms.smoother.core.SmoothQuant
+
+
+Module Contents
+---------------
+
+.. py:class:: SmoothQuant(config: neural_compressor.tensorflow.quantization.config.SmoothQuantConfig, calib_dataloader: Callable = None, calib_iteration: int = 1, calib_func: Callable = None)
+
+   The class that performs smooth quantization.
+
+

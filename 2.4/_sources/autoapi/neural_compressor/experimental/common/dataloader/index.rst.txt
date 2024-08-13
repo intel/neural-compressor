@@ -1,0 +1,35 @@
+neural_compressor.experimental.common.dataloader
+================================================
+
+.. py:module:: neural_compressor.experimental.common.dataloader
+
+.. autoapi-nested-parse::
+
+   Common DataLoader just collects the information to construct a dataloader.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.experimental.common.dataloader.DataLoader
+
+
+Module Contents
+---------------
+
+.. py:class:: DataLoader(dataset, batch_size=1, collate_fn=None, last_batch='rollover', sampler=None, batch_sampler=None, num_workers=0, pin_memory=False, shuffle=False, distributed=False)
+
+
+
+   A wrapper of the information needed to construct a dataloader.
+
+   This class can't yield batched data and only in this Quantization/Benchmark
+   object's setter method a 'real' calib_dataloader will be created, the reason
+   is we have to know the framework info and only after the Quantization/Benchmark
+   object created then framework information can be known. Future we will support
+   creating iterable dataloader from neural_compressor.experimental.common.DataLoader
+
+

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.common.base_tuning &mdash; Intel® Neural Compressor 3.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../versions.html">3.0▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.common.base_tuning</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/neural_compressor/common/base_tuning/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.common.base_tuning">
+<span id="neural-compressor-common-base-tuning"></span><h1>neural_compressor.common.base_tuning<a class="headerlink" href="#module-neural_compressor.common.base_tuning" title="Link to this heading"></a></h1>
+<p>The auto-tune module.</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.common.base_tuning.EvaluationFuncWrapper" title="neural_compressor.common.base_tuning.EvaluationFuncWrapper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EvaluationFuncWrapper</span></code></a></p></td>
+<td><p>Evaluation function wrapper.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.common.base_tuning.Evaluator" title="neural_compressor.common.base_tuning.Evaluator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Evaluator</span></code></a></p></td>
+<td><p>Evaluator is a collection of evaluation functions.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.common.base_tuning.ConfigSet" title="neural_compressor.common.base_tuning.ConfigSet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ConfigSet</span></code></a></p></td>
+<td><p>A class representing a set of configurations.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.common.base_tuning.Sampler" title="neural_compressor.common.base_tuning.Sampler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Sampler</span></code></a></p></td>
+<td><p>Base class for samplers.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.common.base_tuning.SequentialSampler" title="neural_compressor.common.base_tuning.SequentialSampler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SequentialSampler</span></code></a></p></td>
+<td><p>Samples elements sequentially, always in the same order.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.common.base_tuning.ConfigLoader" title="neural_compressor.common.base_tuning.ConfigLoader"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ConfigLoader</span></code></a></p></td>
+<td><p>ConfigLoader is a generator that yields configs from a config set.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.common.base_tuning.TuningConfig" title="neural_compressor.common.base_tuning.TuningConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TuningConfig</span></code></a></p></td>
+<td><p>Config for auto tuning pipeline.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.common.base_tuning.TuningMonitor" title="neural_compressor.common.base_tuning.TuningMonitor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TuningMonitor</span></code></a></p></td>
+<td><p>The tuning monitor class for auto-tuning.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.common.base_tuning.init_tuning" title="neural_compressor.common.base_tuning.init_tuning"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init_tuning</span></code></a>(→ Tuple[ConfigLoader, ...)</p></td>
+<td><p>Initializes the tuning process.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.common.base_tuning.EvaluationFuncWrapper">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.common.base_tuning.</span></span><span class="sig-name descname"><span class="pre">EvaluationFuncWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eval_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eval_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/common/base_tuning.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.base_tuning.EvaluationFuncWrapper" title="Link to this definition"></a></dt>
+<dd><p>Evaluation function wrapper.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.common.base_tuning.Evaluator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.common.base_tuning.</span></span><span class="sig-name descname"><span class="pre">Evaluator</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/common/base_tuning.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.base_tuning.Evaluator" title="Link to this definition"></a></dt>
+<dd><p>Evaluator is a collection of evaluation functions.</p>
+<p>Note: will deprecate this class in the future.</p>
+<p class="rubric">Examples</p>
+<dl class="simple">
+<dt>def eval_acc(model):</dt><dd><p>…</p>
+</dd>
+<dt>def eval_perf(molde):</dt><dd><p>…</p>
+</dd>
+</dl>
+<p># Usage
+user_eval_fns1 = eval_acc
+user_eval_fns2 = {“eval_fn”: eval_acc}
+user_eval_fns3 = {“eval_fn”: eval_acc, “weight”: 1.0, “name”: “accuracy”}
+user_eval_fns4 = [</p>
+<blockquote>
+<div><p>{“eval_fn”: eval_acc, “weight”: 0.5},
+{“eval_fn”: eval_perf, “weight”: 0.5, “name”: “accuracy”},
+]</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.common.base_tuning.ConfigSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.common.base_tuning.</span></span><span class="sig-name descname"><span class="pre">ConfigSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../base_config/index.html#neural_compressor.common.base_config.BaseConfig" title="neural_compressor.common.base_config.BaseConfig"><span class="pre">neural_compressor.common.base_config.BaseConfig</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/common/base_tuning.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.base_tuning.ConfigSet" title="Link to this definition"></a></dt>
+<dd><p>A class representing a set of configurations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config_list</strong> (<em>List</em><em>[</em><a class="reference internal" href="../base_config/index.html#neural_compressor.common.base_config.BaseConfig" title="neural_compressor.common.base_config.BaseConfig"><em>BaseConfig</em></a><em>]</em>) – A list of BaseConfig objects.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.common.base_tuning.ConfigSet.config_list">
+<span class="sig-name descname"><span class="pre">config_list</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/common/base_tuning.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.base_tuning.ConfigSet.config_list" title="Link to this definition"></a></dt>
+<dd><p>The list of BaseConfig objects.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[<a class="reference internal" href="../base_config/index.html#neural_compressor.common.base_config.BaseConfig" title="neural_compressor.common.base_config.BaseConfig">BaseConfig</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.common.base_tuning.Sampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.common.base_tuning.</span></span><span class="sig-name descname"><span class="pre">Sampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#neural_compressor.common.base_tuning.ConfigSet" title="neural_compressor.common.base_tuning.ConfigSet"><span class="pre">ConfigSet</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/common/base_tuning.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.base_tuning.Sampler" title="Link to this definition"></a></dt>
+<dd><p>Base class for samplers.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.common.base_tuning.SequentialSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.common.base_tuning.</span></span><span class="sig-name descname"><span class="pre">SequentialSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sized</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/common/base_tuning.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.base_tuning.SequentialSampler" title="Link to this definition"></a></dt>
+<dd><p>Samples elements sequentially, always in the same order.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config_source</strong> (<em>_ConfigSet</em>) – config set to sample from</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.common.base_tuning.ConfigLoader">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.common.base_tuning.</span></span><span class="sig-name descname"><span class="pre">ConfigLoader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_set</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#neural_compressor.common.base_tuning.ConfigSet" title="neural_compressor.common.base_tuning.ConfigSet"><span class="pre">ConfigSet</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#neural_compressor.common.base_tuning.Sampler" title="neural_compressor.common.base_tuning.Sampler"><span class="pre">Sampler</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">default_sampler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_verified_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/common/base_tuning.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.base_tuning.ConfigLoader" title="Link to this definition"></a></dt>
+<dd><p>ConfigLoader is a generator that yields configs from a config set.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.common.base_tuning.TuningConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.common.base_tuning.</span></span><span class="sig-name descname"><span class="pre">TuningConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_set</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../base_config/index.html#neural_compressor.common.base_config.BaseConfig" title="neural_compressor.common.base_config.BaseConfig"><span class="pre">neural_compressor.common.base_config.BaseConfig</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../base_config/index.html#neural_compressor.common.base_config.BaseConfig" title="neural_compressor.common.base_config.BaseConfig"><span class="pre">neural_compressor.common.base_config.BaseConfig</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#neural_compressor.common.base_tuning.Sampler" title="neural_compressor.common.base_tuning.Sampler"><span class="pre">Sampler</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">default_sampler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerable_loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_trials</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/common/base_tuning.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.base_tuning.TuningConfig" title="Link to this definition"></a></dt>
+<dd><p>Config for auto tuning pipeline.</p>
+<p class="rubric">Examples</p>
+<p>from neural_compressor.torch.quantization import TuningConfig
+tune_config = TuningConfig(</p>
+<blockquote>
+<div><p>config_set=[config1, config2, …],
+max_trials=3,
+tolerable_loss=0.01)</p>
+</div></blockquote>
+<dl>
+<dt>The tuning process stops when either of the following conditions is met:</dt><dd><ol class="arabic simple">
+<li><p>The number of trials reaches the maximum trials.</p></li>
+<li><p>The metric loss is within the tolerable loss.</p></li>
+</ol>
+</dd>
+<dt>For condition 2), we calculate the metric loss as follows:</dt><dd><p>relative_loss = (fp32_baseline - eval_result_of_q_model) / fp32_baseline
+If relative_loss &lt;= tolerable_loss, we stop the tuning process.
+For example:</p>
+<blockquote>
+<div><p>tolerable_loss = 0.01
+fp32_baseline = 100
+eval_result_of_q_model = 99
+relative_loss = (100 - 99) / 100 = 0.01
+The metric loss is within the tolerable loss, so the tuning process is stopped.</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.common.base_tuning.TuningMonitor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.common.base_tuning.</span></span><span class="sig-name descname"><span class="pre">TuningMonitor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tuning_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#neural_compressor.common.base_tuning.TuningConfig" title="neural_compressor.common.base_tuning.TuningConfig"><span class="pre">TuningConfig</span></a></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/common/base_tuning.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.base_tuning.TuningMonitor" title="Link to this definition"></a></dt>
+<dd><p>The tuning monitor class for auto-tuning.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.common.base_tuning.init_tuning">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.base_tuning.</span></span><span class="sig-name descname"><span class="pre">init_tuning</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tuning_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#neural_compressor.common.base_tuning.TuningConfig" title="neural_compressor.common.base_tuning.TuningConfig"><span class="pre">TuningConfig</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#neural_compressor.common.base_tuning.ConfigLoader" title="neural_compressor.common.base_tuning.ConfigLoader"><span class="pre">ConfigLoader</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">neural_compressor.common.utils.TuningLogger</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#neural_compressor.common.base_tuning.TuningMonitor" title="neural_compressor.common.base_tuning.TuningMonitor"><span class="pre">TuningMonitor</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.0/neural_compressor/common/base_tuning.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.base_tuning.init_tuning" title="Link to this definition"></a></dt>
+<dd><p>Initializes the tuning process.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tuning_config</strong> (<a class="reference internal" href="#neural_compressor.common.base_tuning.TuningConfig" title="neural_compressor.common.base_tuning.TuningConfig"><em>TuningConfig</em></a>) – The configuration for the tuning process.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fef7b69cca0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,29 @@
+neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu
+==============================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu
+
+.. autoapi-nested-parse::
+
+   Convert fp32 op to int8 and fuse the pattern.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.quantize_graph.quantize_graph_for_intel_cpu.QuantizeGraphForIntel
+
+
+Module Contents
+---------------
+
+.. py:class:: QuantizeGraphForIntel(input_graph, input_node_names, output_node_names, op_wise_config, op_wise_sequences, device, fake_quant=False, new_api=False, performance_only=False, itex_mode=False)
+
+
+
+   Quantize the graph.
+
+

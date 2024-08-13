@@ -1,0 +1,21 @@
+neural_compressor.torch.algorithms.mx_quant
+===========================================
+
+.. py:module:: neural_compressor.torch.algorithms.mx_quant
+
+.. autoapi-nested-parse::
+
+   MX quantization.
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/torch/algorithms/mx_quant/mx/index
+   /autoapi/neural_compressor/torch/algorithms/mx_quant/utils/index
+
+

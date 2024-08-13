@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dataset &mdash; Intel® Neural Compressor 2.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">2.5▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Dataset</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/dataset.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="dataset">
+<h1>Dataset<a class="headerlink" href="#dataset" title="Link to this heading"></a></h1>
+<ol class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#supported-framework-dataset-matrix">Supported Framework Dataset Matrix</a></p></li>
+<li><p><a class="reference external" href="#get-start-with-dataset-api">Get start with Dataset API</a></p></li>
+<li><p><a class="reference external" href="#examples">Examples</a></p></li>
+</ol>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
+<p>To adapt to its internal dataloader API, Intel® Neural Compressor implements some built-in datasets.</p>
+<p>A dataset is a container which holds all data that can be used by the dataloader, and have the ability to be fetched by index or created as an iterator. One can implement a specific dataset by inheriting from the Dataset class by implementing <code class="docutils literal notranslate"><span class="pre">__iter__</span></code> method or <code class="docutils literal notranslate"><span class="pre">__getitem__</span></code> method, while implementing <code class="docutils literal notranslate"><span class="pre">__getitem__</span></code> method, <code class="docutils literal notranslate"><span class="pre">__len__</span></code> method is recommended.</p>
+<p>Users can use Neural Compressor built-in dataset objects as well as register their own datasets.</p>
+</section>
+<section id="supported-framework-dataset-matrix">
+<h2>Supported Framework Dataset Matrix<a class="headerlink" href="#supported-framework-dataset-matrix" title="Link to this heading"></a></h2>
+<section id="tensorflow">
+<h3>TensorFlow<a class="headerlink" href="#tensorflow" title="Link to this heading"></a></h3>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;">Dataset</th>
+<th style="text-align: left;">Parameters</th>
+<th style="text-align: left;">Comments</th>
+<th style="text-align: left;">Usage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">MNIST(root, train, transform, filter, download)</td>
+<td style="text-align: left;"><strong>root</strong> (str): Root directory of dataset <br> <strong>train</strong> (bool, default=False): If True, creates dataset from train subset, otherwise from validation subset <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions <br> <strong>download</strong> (bool, default=True): If true, downloads the dataset from the internet and puts it in root directory. If dataset is already downloaded, it is not downloaded again.</td>
+<td style="text-align: left;">If download is True, it will download dataset to root/MNIST/, otherwise user should put mnist.npz under root/MNIST/ manually.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; MNIST: <br> &ensp;&ensp;&ensp;&ensp; root: /path/to/root <br> &ensp;&ensp;&ensp;&ensp; train: False <br> &ensp;&ensp;&ensp;&ensp; download: True <br> (transform and filter are not set in the range of dataset) <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['MNIST'] (root=root, train=False, transform=transform, filter=None, download=True)</td>
+</tr>
+<tr>
+<td style="text-align: left;">FashionMNIST(root, train, transform, filter, download)</td>
+<td style="text-align: left;"><strong>root</strong> (str): Root directory of dataset <br> <strong>train</strong>(bool, default=False): If True, creates dataset from train subset, otherwise from validation subset <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions <br> <strong>download</strong> (bool, default=True): If true, downloads the dataset from the internet and puts it in root directory. If dataset is already downloaded, it is not downloaded again.</td>
+<td style="text-align: left;">If download is True, it will download dataset to root/FashionMNIST/, otherwise user should put train-labels-idx1-ubyte.gz, train-images-idx3-ubyte.gz, t10k-labels-idx1-ubyte.gz and t10k-images-idx3-ubyte.gz under root/FashionMNIST/ manually.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; FashionMNIST: <br> &ensp;&ensp;&ensp;&ensp; root: /path/to/root <br> &ensp;&ensp;&ensp;&ensp; train: False <br> &ensp;&ensp;&ensp;&ensp; download: True <br> (transform and filter are not set in the range of dataset) <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['FashionMNIST'] (root=root, train=False, transform=transform, filter=None, download=True)</td>
+</tr>
+<tr>
+<td style="text-align: left;">CIFAR10(root, train, transform, filter, download)</td>
+<td style="text-align: left;"><strong>root</strong> (str): Root directory of dataset <br> <strong>train</strong> (bool, default=False): If True, creates dataset from train subset, otherwise from validation subset <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions <br> <strong>download</strong> (bool, default=True): If true, downloads the dataset from the internet and puts it in root directory. If dataset is already downloaded, it is not downloaded again.</td>
+<td style="text-align: left;">If download is True, it will download dataset to root/ and extract it automatically, otherwise user can download file from https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz manually to root/ and extract it.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; CIFAR10: <br> &ensp;&ensp;&ensp;&ensp; root: /path/to/root <br> &ensp;&ensp;&ensp;&ensp; train: False <br> &ensp;&ensp;&ensp;&ensp; download: True <br> (transform and filter are not set in the range of dataset) <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['CIFAR10'] (root=root, train=False, transform=transform, filter=None, download=True)</td>
+</tr>
+<tr>
+<td style="text-align: left;">CIFAR100(root, train, transform, filter, download)</td>
+<td style="text-align: left;"><strong>root</strong> (str): Root directory of dataset <br> <strong>train</strong> (bool, default=False): If True, creates dataset from train subset, otherwise from validation subset <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions <br> <strong>download</strong> (bool, default=True): If true, downloads the dataset from the internet and puts it in root directory. If dataset is already downloaded, it is not downloaded again.</td>
+<td style="text-align: left;">If download is True, it will download dataset to root/ and extract it automatically, otherwise user can download file from https://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz manually to root/ and extract it.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; CIFAR100: <br> &ensp;&ensp;&ensp;&ensp; root: /path/to/root <br> &ensp;&ensp;&ensp;&ensp; train: False <br> &ensp;&ensp;&ensp;&ensp; download: True <br> (transform and filter are not set in the range of dataset) <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['CIFAR100'] (root=root, train=False, transform=transform, filter=None, download=True)</td>
+</tr>
+<tr>
+<td style="text-align: left;">ImageRecord(root, transform, filter)</td>
+<td style="text-align: left;"><strong>root</strong> (str): Root directory of dataset <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions</td>
+<td style="text-align: left;">Please arrange data in this way: <br> root/validation-000-of-100 <br> root/validation-001-of-100 <br> ... <br> root/validation-099-of-100 <br> The file name needs to follow this pattern: '<em> - * -of- </em>'</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; ImageRecord: <br> &ensp;&ensp;&ensp;&ensp; root: /path/to/root <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['ImageRecord'] (root=root, transform=transform, filter=None) <br></td>
+</tr>
+<tr>
+<td style="text-align: left;">ImageFolder(root, transform, filter)</td>
+<td style="text-align: left;"><strong>root</strong> (str): Root directory of dataset <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions</td>
+<td style="text-align: left;">Please arrange data in this way: <br> root/class_1/xxx.png <br> root/class_1/xxy.png <br> root/class_1/xxz.png <br> ... <br> root/class_n/123.png <br> root/class_n/nsdf3.png <br> root/class_n/asd932_.png <br> Please put images of different categories into different folders.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; ImageFolder: <br> &ensp;&ensp;&ensp;&ensp; root: /path/to/root <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['ImageFolder'] (root=root,transform=transform, filter=None)</td>
+</tr>
+<tr>
+<td style="text-align: left;">ImagenetRaw(data_path, image_list, transform, filter)</td>
+<td style="text-align: left;"><strong>data_path</strong> (str): Root directory of dataset <br> <strong>image_list</strong> (str): data file, record image_names and their labels <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions</td>
+<td style="text-align: left;">Please arrange data in this way: <br> data_path/img1.jpg <br> data_path/img2.jpg <br> ... <br> data_path/imgx.jpg <br> dataset will read name and label of each image from image_list file, if user set image_list to None, it will read from data_path/val_map.txt automatically.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; ImagenetRaw: <br> &ensp;&ensp;&ensp;&ensp; data_path: /path/to/image <br> &ensp;&ensp;&ensp;&ensp; image_list: /path/to/label <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['ImagenetRaw'] (data_path, image_list, transform=transform, filter=None)</td>
+</tr>
+<tr>
+<td style="text-align: left;">COCORecord(root, num_cores, transform, filter)</td>
+<td style="text-align: left;"><strong>root</strong> (str): Root directory of dataset <br> <strong>num_cores</strong> (int, default=28):The number of input Datasets to interleave from in parallel <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions</td>
+<td style="text-align: left;">Root is a full path to tfrecord file, which contains the file name. <br> <strong>Please use Resize transform when batch_size &gt; 1</strong></td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; COCORecord: <br> &ensp;&ensp;&ensp;&ensp; root: /path/to/tfrecord <br> &ensp;&ensp;&ensp;&ensp; num_cores: 28 <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['COCORecord'] (root, num_cores=28, transform=transform, filter=None)</td>
+</tr>
+<tr>
+<td style="text-align: left;">COCORaw(root, img_dir, anno_dir, transform, filter)</td>
+<td style="text-align: left;"><strong>root</strong> (str): Root directory of dataset <br> <strong>img_dir</strong> (str, default='val2017'): image file directory <br> <strong>anno_dir</strong> (str, default='annotations/instances_val2017.json'): annotation file directory <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions</td>
+<td style="text-align: left;">Please arrange data in this way: <br> /root/img_dir/1.jpg <br> /root/img_dir/2.jpg <br> ... <br> /root/img_dir/n.jpg <br> /root/anno_dir <br> <strong>Please use Resize transform when batch_size &gt; 1</strong></td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; COCORaw: <br> &ensp;&ensp;&ensp;&ensp; root: /path/to/root <br> &ensp;&ensp;&ensp;&ensp; img_dir: /path/to/image <br> &ensp;&ensp;&ensp;&ensp; anno_dir: /path/to/annotation <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['COCORaw'] (root, img_dir, anno_dir, transform=transform, filter=None) <br> If anno_dir is not set, the dataset will use default label map</td>
+</tr>
+<tr>
+<td style="text-align: left;">COCONpy(root, npy_dir, anno_dir)</td>
+<td style="text-align: left;"><strong>root</strong> (str): Root directory of dataset <br> <strong>npy_dir</strong> (str, default='val2017'): npy file directory <br> <strong>anno_dir</strong> (str, default='annotations/instances_val2017.json'): annotation file directory</td>
+<td style="text-align: left;">Please arrange data in this way: <br> /root/npy_dir/1.jpg.npy <br> /root/npy_dir/2.jpg.npy <br> ... <br> /root/npy_dir/n.jpg.npy <br> /root/anno_dir <br> <strong>Please use Resize transform when batch_size &gt; 1</strong></td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; COCORaw: <br> &ensp;&ensp;&ensp;&ensp; root: /path/to/root <br> &ensp;&ensp;&ensp;&ensp; npy_dir: /path/to/npy <br> &ensp;&ensp;&ensp;&ensp; anno_dir: /path/to/annotation <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['COCONpy'] (root, npy_dir, anno_dir) <br> If anno_dir is not set, the dataset will use default label map</td>
+</tr>
+<tr>
+<td style="text-align: left;">dummy(shape, low, high, dtype, label, transform, filter)</td>
+<td style="text-align: left;"><strong>shape</strong> (list or tuple):shape of total samples, the first dimension should be the sample count of the dataset. support create multi shape tensors, use list of tuples for each tuple in the list, will create a such size tensor. <br> <strong>low</strong> (list or float, default=-128.):low out the tensor value range from[0, 1] to [0, low] or [low, 0] if low &lt; 0, if float, will implement all tensors with same low value. <br> <strong>high</strong> (list or float, default=127.):high the tensor value by add all tensor element value high. If list, length of list should be same with shape list <br> <strong>dtype</strong> (list or str, default='float32'):support multi tensor dtype setting. If list, length of list should be same with shape list, if str, all tensors will use same dtype. dtype support 'float32', 'float16', 'uint8', 'int8', 'int32', 'int64', 'bool' <br> <strong>label</strong> (bool, default=True):whether to return 0 as label <br> <strong>transform</strong> (transform object, default=None): dummy dataset does not need transform. If transform is not None, it will ignore it. <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions</td>
+<td style="text-align: left;">This dataset is to construct a dataset from a specific shape, the value range is calculated from: low * stand_normal(0, 1) + high.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; dummy: <br> &ensp;&ensp;&ensp;&ensp; shape: [3, 224, 224, 3] <br> &ensp;&ensp;&ensp;&ensp; low: 0.0 <br> &ensp;&ensp;&ensp;&ensp; high: 127.0 <br> &ensp;&ensp;&ensp;&ensp; dtype: float32 <br> &ensp;&ensp;&ensp;&ensp; label: True <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['dummy'] (shape, low, high, dtype, label, transform=None, filter=None)</td>
+</tr>
+<tr>
+<td style="text-align: left;">dummy_v2(input_shape, label_shape, low, high, dtype, transform, filter)</td>
+<td style="text-align: left;"><strong>input_shape</strong> (list or tuple):create single or multi input tensors list represent the sample shape of the dataset, eg and image size should be represented as (224, 224, 3), tuple contains multiple list and represent multi input tensors. <br> <strong>label_shape</strong> (list or tuple):create single or multi label tensors list represent the sample shape of the label, eg and label size should be represented as (1,), tuple contains multiple list and represent multi label tensors. In yaml usage, it offers (1,) as the default value. <br> <strong>low</strong> (list or float, default=-128.):low out the tensor value range from[0, 1] to [0, low] or [low, 0] if low &lt; 0, if float, will implement all tensors with same low value. <br> <strong>high</strong> (list or float, default=127.):high the tensor value by add all tensor element value high. If list, length of list should be same with shape list <br> <strong>dtype</strong> (list or str, default='float32'):support multi tensor dtype setting. If list, length of list should be same with shape list, if str, all tensors will use same dtype. dtype support 'float32', 'float16', 'uint8', 'int8', 'int32', 'int64', 'bool' <br>  <strong>transform</strong> (transform object, default=None): dummy dataset does not need transform. If transform is not None, it will ignore it. <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions</td>
+<td style="text-align: left;">This dataset is to construct a dataset from a specific shape, the value range is calculated from: low * stand_normal(0, 1) + high.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; dummy_v2: <br> &ensp;&ensp;&ensp;&ensp; input_shape: [224, 224, 3] <br> &ensp;&ensp;&ensp;&ensp; label_shape: [1] <br> &ensp;&ensp;&ensp;&ensp; low: 0.0 <br> &ensp;&ensp;&ensp;&ensp; high: 127.0 <br> &ensp;&ensp;&ensp;&ensp; dtype: float32 <br> <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['dummy_v2'] (input_shape, low, high, dtype, transform=None, filter=None)</td>
+</tr>
+<tr>
+<td style="text-align: left;">style_transfer(content_folder, style_folder, crop_ratio, resize_shape, image_format, transform, filter)</td>
+<td style="text-align: left;"><strong>content_folder</strong> (str):Root directory of content images <br> <strong>style_folder</strong> (str):Root directory of style images <br> <strong>crop_ratio</strong> (float, default=0.1):cropped ratio to each side <br> <strong>resize_shape</strong> (tuple, default=(256, 256)):target size of image <br> <strong>image_format</strong> (str, default='jpg'): target image format <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions</td>
+<td style="text-align: left;">Dataset used for style transfer task. This Dataset is to construct a dataset from two specific image holders representing content image folder and style image folder.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; style_transfer: <br> &ensp;&ensp;&ensp;&ensp; content_folder: /path/to/content_folder <br> &ensp;&ensp;&ensp;&ensp; style_folder: /path/to/style_folder <br> &ensp;&ensp;&ensp;&ensp; crop_ratio: 0.1 <br> &ensp;&ensp;&ensp;&ensp; resize_shape: [256, 256] <br> &ensp;&ensp;&ensp;&ensp; image_format: 'jpg' <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['style_transfer'] (content_folder, style_folder, crop_ratio, resize_shape, image_format, transform=transform, filter=None)</td>
+</tr>
+<tr>
+<td style="text-align: left;">TFRecordDataset(root, transform, filter)</td>
+<td style="text-align: left;"><strong>root</strong> (str): filename of dataset <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions</td>
+<td style="text-align: left;">Root is a full path to tfrecord file, which contains the file name.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; TFRecordDataset: <br> &ensp;&ensp;&ensp;&ensp; root: /path/to/tfrecord <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['TFRecordDataset'] (root, transform=transform)</td>
+</tr>
+<tr>
+<td style="text-align: left;">bert(root, label_file, task, transform, filter)</td>
+<td style="text-align: left;"><strong>root</strong> (str): path of dataset <br> <strong>label_file</strong> (str): path of label file <br> <strong>task</strong> (str, default='squad'): task type of model <br> <strong>model_type</strong> (str, default='bert'): model type, support 'bert'.<br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions</td>
+<td style="text-align: left;">This dataset supports tfrecord data, please refer to <a href="../examples/tensorflow/nlp/bert_large_squad/quantization/ptq/README.html">Guide</a> to create tfrecord file first.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; bert: <br> &ensp;&ensp;&ensp;&ensp; root: /path/to/root <br> &ensp;&ensp;&ensp;&ensp; label_file: /path/to/label_file  <br> &ensp;&ensp;&ensp;&ensp; task: squad <br> &ensp;&ensp;&ensp;&ensp; model_type: bert <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['bert'] (root, label_file, transform=transform)</td>
+</tr>
+<tr>
+<td style="text-align: left;">sparse_dummy_v2(dense_shape, label_shape, sparse_ratio, low, high, dtype, transform, filter)</td>
+<td style="text-align: left;"><strong>dense_shape</strong> (list or tuple):create single or multi sparse tensors, tuple represent the sample shape of the dataset, eg and image size should be represented as (224, 224, 3), tuple contains multiple list and represent multi input tensors. <br> <strong>label_shape</strong> (list or tuple):create single or multi label tensors list represent the sample shape of the label, eg and label size should be represented as (1,), tuple contains multiple list and represent multi label tensors. In yaml usage, it offers (1,) as the default value. <br> <strong>sparse_ratio</strong> (float, default=0.5): the ratio of sparsity, support [0, 1]. <br> <strong>low</strong> (list or float, default=-128.):low out the tensor value range from[0, 1] to [0, low] or [low, 0] if low &lt; 0, if float, will implement all tensors with same low value. <br> <strong>high</strong> (list or float, default=127.):high the tensor value by add all tensor element value high. If list, length of list should be same with shape list <br> <strong>dtype</strong> (list or str, default='float32'):support multi tensor dtype setting. If list, length of list should be same with shape list, if str, all tensors will use same dtype. dtype support 'float32', 'float16', 'uint8', 'int8', 'int32', 'int64', 'bool' <br>  <strong>transform</strong> (transform object, default=None): dummy dataset does not need transform. If transform is not None, it will ignore it. <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions</td>
+<td style="text-align: left;">This dataset is to construct a dataset from a specific shape, the value range is calculated from: low * stand_normal(0, 1) + high.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; sparse_dummy_v2: <br> &ensp;&ensp;&ensp;&ensp; dense_shape: [224, 224, 3] <br> &ensp;&ensp;&ensp;&ensp; label_shape: [1] <br> &ensp;&ensp;&ensp;&ensp; sparse_ratio: 0.5 <br> &ensp;&ensp;&ensp;&ensp; low: 0.0 <br> &ensp;&ensp;&ensp;&ensp; high: 127.0 <br> &ensp;&ensp;&ensp;&ensp; dtype: float32 <br> <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['sparse_dummy_v2'] (dense_shape, label_shape, sparse_ratio, low, high, dtype, transform=None, filter=None)</td>
+</tr>
+</tbody>
+</table></section>
+<section id="pytorch">
+<h3>PyTorch<a class="headerlink" href="#pytorch" title="Link to this heading"></a></h3>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;">Dataset</th>
+<th style="text-align: left;">Parameters</th>
+<th style="text-align: left;">Comments</th>
+<th style="text-align: left;">Usage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">MNIST(root, train, transform, filter, download)</td>
+<td style="text-align: left;"><strong>root</strong> (str): Root directory of dataset <br> <strong>train</strong> (bool, default=False): If True, creates dataset from train subset, otherwise from validation subset <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions <br> <strong>download</strong> (bool, default=True): If true, downloads the dataset from the internet and puts it in root directory. If dataset is already downloaded, it is not downloaded again.</td>
+<td style="text-align: left;">If download is True, it will download dataset to root/MNIST/, otherwise user should put mnist.npz under root/MNIST/ manually.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; MNIST: <br> &ensp;&ensp;&ensp;&ensp; root: /path/to/root <br> &ensp;&ensp;&ensp;&ensp; train: False <br> &ensp;&ensp;&ensp;&ensp; download: True <br> (transform and filter are not set in the range of dataset) <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['MNIST'] (root=root, train=False, transform=transform, filter=None, download=True)</td>
+</tr>
+<tr>
+<td style="text-align: left;">FashionMNIST(root, train, transform, filter, download)</td>
+<td style="text-align: left;"><strong>root</strong> (str): Root directory of dataset <br> <strong>train</strong>(bool, default=False): If True, creates dataset from train subset, otherwise from validation subset <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions <br> <strong>download</strong> (bool, default=True): If true, downloads the dataset from the internet and puts it in root directory. If dataset is already downloaded, it is not downloaded again.</td>
+<td style="text-align: left;">If download is True, it will download dataset to root/FashionMNIST/, otherwise user should put train-labels-idx1-ubyte.gz, train-images-idx3-ubyte.gz, t10k-labels-idx1-ubyte.gz and t10k-images-idx3-ubyte.gz under root/FashionMNIST/ manually.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; FashionMNIST: <br> &ensp;&ensp;&ensp;&ensp; root: /path/to/root <br> &ensp;&ensp;&ensp;&ensp; train: False <br> &ensp;&ensp;&ensp;&ensp; download: True <br> (transform and filter are not set in the range of dataset) <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['FashionMNIST'] (root=root, train=False, transform=transform, filter=None, download=True)</td>
+</tr>
+<tr>
+<td style="text-align: left;">CIFAR10(root, train, transform, filter, download)</td>
+<td style="text-align: left;"><strong>root</strong> (str): Root directory of dataset <br> <strong>train</strong> (bool, default=False): If True, creates dataset from train subset, otherwise from validation subset <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions <br> <strong>download</strong> (bool, default=True): If true, downloads the dataset from the internet and puts it in root directory. If dataset is already downloaded, it is not downloaded again.</td>
+<td style="text-align: left;">If download is True, it will download dataset to root/ and extract it automatically, otherwise user can download file from https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz manually to root/ and extract it.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; CIFAR10: <br> &ensp;&ensp;&ensp;&ensp; root: /path/to/root <br> &ensp;&ensp;&ensp;&ensp; train: False <br> &ensp;&ensp;&ensp;&ensp; download: True <br> (transform and filter are not set in the range of dataset) <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['CIFAR10'] (root=root, train=False, transform=transform, filter=None, download=True)</td>
+</tr>
+<tr>
+<td style="text-align: left;">CIFAR100(root, train, transform, filter, download)</td>
+<td style="text-align: left;"><strong>root</strong> (str): Root directory of dataset <br> <strong>train</strong> (bool, default=False): If True, creates dataset from train subset, otherwise from validation subset <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions <br> <strong>download</strong> (bool, default=True): If true, downloads the dataset from the internet and puts it in root directory. If dataset is already downloaded, it is not downloaded again.</td>
+<td style="text-align: left;">If download is True, it will download dataset to root/ and extract it automatically, otherwise user can download file from https://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz manually to root/ and extract it.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; CIFAR100: <br> &ensp;&ensp;&ensp;&ensp; root: /path/to/root <br> &ensp;&ensp;&ensp;&ensp; train: False <br> &ensp;&ensp;&ensp;&ensp; download: True <br> (transform and filter are not set in the range of dataset) <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['CIFAR100'] (root=root, train=False, transform=transform, filter=None, download=True)</td>
+</tr>
+<tr>
+<td style="text-align: left;">ImageFolder(root, transform, filter)</td>
+<td style="text-align: left;"><strong>root</strong> (str): Root directory of dataset <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions</td>
+<td style="text-align: left;">Please arrange data in this way: <br> root/class_1/xxx.png <br> root/class_1/xxy.png <br> root/class_1/xxz.png <br> ... <br> root/class_n/123.png <br> root/class_n/nsdf3.png <br> root/class_n/asd932_.png <br> Please put images of different categories into different folders.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; ImageFolder: <br> &ensp;&ensp;&ensp;&ensp; root: /path/to/root <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['ImageFolder'] (root=root,transform=transform, filter=None)</td>
+</tr>
+<tr>
+<td style="text-align: left;">ImagenetRaw(data_path, image_list, transform, filter)</td>
+<td style="text-align: left;"><strong>data_path</strong> (str): Root directory of dataset <br> <strong>image_list</strong> (str): data file, record image_names and their labels <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions</td>
+<td style="text-align: left;">Please arrange data in this way: <br> data_path/img1.jpg <br> data_path/img2.jpg <br> ... <br> data_path/imgx.jpg <br> dataset will read name and label of each image from image_list file, if user set image_list to None, it will read from data_path/val_map.txt automatically.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; ImagenetRaw: <br> &ensp;&ensp;&ensp;&ensp; data_path: /path/to/image <br> &ensp;&ensp;&ensp;&ensp; image_list: /path/to/label <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['ImagenetRaw'] (data_path, image_list, transform=transform, filter=None)</td>
+</tr>
+<tr>
+<td style="text-align: left;">COCORaw(root, img_dir, anno_dir, transform, filter)</td>
+<td style="text-align: left;"><strong>root</strong> (str): Root directory of dataset <br> <strong>img_dir</strong> (str, default='val2017'): image file directory <br> <strong>anno_dir</strong> (str, default='annotations/instances_val2017.json'): annotation file directory <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions</td>
+<td style="text-align: left;">Please arrange data in this way: <br> /root/img_dir/1.jpg <br> /root/img_dir/2.jpg <br> ... <br> /root/img_dir/n.jpg <br> /root/anno_dir <br> <strong>Please use Resize transform when batch_size&gt;1</strong></td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; COCORaw: <br> &ensp;&ensp;&ensp;&ensp; root: /path/to/root <br> &ensp;&ensp;&ensp;&ensp; img_dir: /path/to/image <br> &ensp;&ensp;&ensp;&ensp; anno_dir: /path/to/annotation <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['COCORaw'] (root, img_dir, anno_dir, transform=transform, filter=None) <br> If anno_dir is not set, the dataset will use default label map</td>
+</tr>
+<tr>
+<td style="text-align: left;">dummy(shape, low, high, dtype, label, transform, filter)</td>
+<td style="text-align: left;"><strong>shape</strong> (list or tuple):shape of total samples, the first dimension should be the sample count of the dataset. support create multi shape tensors, use list of tuples for each tuple in the list, will create a such size tensor. <br> <strong>low</strong> (list or float, default=-128.):low out the tensor value range from[0, 1] to [0, low] or [low, 0] if low &lt; 0, if float, will implement all tensors with same low value. <br> <strong>high</strong> (list or float, default=127.):high the tensor value by add all tensor element value high. If list, length of list should be same with shape list <br> <strong>dtype</strong> (list or str, default='float32'):support multi tensor dtype setting. If list, length of list should be same with shape list, if str, all tensors will use same dtype. dtype support 'float32', 'float16', 'uint8', 'int8', 'int32', 'int64', 'bool' <br> <strong>label</strong> (bool, default=True):whether to return 0 as label <br> <strong>transform</strong> (transform object, default=None): dummy dataset does not need transform. If transform is not None, it will ignore it. <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions</td>
+<td style="text-align: left;">This dataset is to construct a dataset from a specific shape, the value range is calculated from: low * stand_normal(0, 1) + high.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; dummy: <br> &ensp;&ensp;&ensp;&ensp; shape: [3, 224, 224, 3] <br> &ensp;&ensp;&ensp;&ensp; low: 0.0 <br> &ensp;&ensp;&ensp;&ensp; high: 127.0 <br> &ensp;&ensp;&ensp;&ensp; dtype: float32 <br> &ensp;&ensp;&ensp;&ensp; label: True <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['dummy'] (shape, low, high, dtype, label, transform=None, filter=None)</td>
+</tr>
+<tr>
+<td style="text-align: left;">dummy_v2(input_shape, label_shape, low, high, dtype, transform, filter)</td>
+<td style="text-align: left;"><strong>input_shape</strong> (list or tuple):create single or multi input tensors list represent the sample shape of the dataset, eg and image size should be represented as (224, 224, 3), tuple contains multiple list and represent multi input tensors. <br> <strong>label_shape</strong> (list or tuple):create single or multi label tensors list represent the sample shape of the label, eg and label size should be represented as (1,), tuple contains multiple list and represent multi label tensors. In yaml usage, it offers (1,) as the default value. <br> <strong>low</strong> (list or float, default=-128.):low out the tensor value range from[0, 1] to [0, low] or [low, 0] if low &lt; 0, if float, will implement all tensors with same low value. <br> <strong>high</strong> (list or float, default=127.):high the tensor value by add all tensor element value high. If list, length of list should be same with shape list <br> <strong>dtype</strong> (list or str, default='float32'):support multi tensor dtype setting. If list, length of list should be same with shape list, if str, all tensors will use same dtype. dtype support 'float32', 'float16', 'uint8', 'int8', 'int32', 'int64', 'bool' <br>  <strong>transform</strong> (transform object, default=None): dummy dataset does not need transform. If transform is not None, it will ignore it. <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions</td>
+<td style="text-align: left;">This dataset is to construct a dataset from a specific shape, the value range is calculated from: low * stand_normal(0, 1) + high.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; dummy_v2: <br> &ensp;&ensp;&ensp;&ensp; input_shape: [224, 224, 3] <br> &ensp;&ensp;&ensp;&ensp; label_shape: [1] <br> &ensp;&ensp;&ensp;&ensp; low: 0.0 <br> &ensp;&ensp;&ensp;&ensp; high: 127.0 <br> &ensp;&ensp;&ensp;&ensp; dtype: float32 <br> <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['dummy_v2'] (input_shape, low, high, dtype, transform=None, filter=None)</td>
+</tr>
+<tr>
+<td style="text-align: left;">bert(dataset, task, model_type, transform, filter)</td>
+<td style="text-align: left;"><strong>dataset</strong> (list): list of data <br> <strong>task</strong> (str): the task of the model, support "classifier", "squad" <br> <strong>model_type</strong> (str, default='bert'): model type, support 'distilbert', 'bert', 'xlnet', 'xlm' <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions</td>
+<td style="text-align: left;">This Dataset is to construct from the Bert TensorDataset and not a full implementation from yaml config. The original repo link is: https://github.com/huggingface/transformers. When you want use this Dataset, you should add it before you initialize your DataLoader.</td>
+<td style="text-align: left;"><strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['bert'] (dataset, task, model_type, transform=transform, filter=None) <br> Now not support yaml implementation</td>
+</tr>
+<tr>
+<td style="text-align: left;">sparse_dummy_v2(dense_shape, label_shape, sparse_ratio, low, high, dtype, transform, filter)</td>
+<td style="text-align: left;"><strong>dense_shape</strong> (list or tuple):create single or multi sparse tensors, tuple represent the sample shape of the dataset, eg and image size should be represented as (224, 224, 3), tuple contains multiple list and represent multi input tensors. <br> <strong>label_shape</strong> (list or tuple):create single or multi label tensors list represent the sample shape of the label, eg and label size should be represented as (1,), tuple contains multiple list and represent multi label tensors. In yaml usage, it offers (1,) as the default value. <br> <strong>sparse_ratio</strong> (float, default=0.5): the ratio of sparsity, support [0, 1]. <br> <strong>low</strong> (list or float, default=-128.):low out the tensor value range from[0, 1] to [0, low] or [low, 0] if low &lt; 0, if float, will implement all tensors with same low value. <br> <strong>high</strong> (list or float, default=127.):high the tensor value by add all tensor element value high. If list, length of list should be same with shape list <br> <strong>dtype</strong> (list or str, default='float32'):support multi tensor dtype setting. If list, length of list should be same with shape list, if str, all tensors will use same dtype. dtype support 'float32', 'float16', 'uint8', 'int8', 'int32', 'int64', 'bool' <br>  <strong>transform</strong> (transform object, default=None): dummy dataset does not need transform. If transform is not None, it will ignore it. <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions</td>
+<td style="text-align: left;">This dataset is to construct a dataset from a specific shape, the value range is calculated from: low * stand_normal(0, 1) + high.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; sparse_dummy_v2: <br> &ensp;&ensp;&ensp;&ensp; dense_shape: [224, 224, 3] <br> &ensp;&ensp;&ensp;&ensp; label_shape: [1] <br> &ensp;&ensp;&ensp;&ensp; sparse_ratio: 0.5 <br> &ensp;&ensp;&ensp;&ensp; low: 0.0 <br> &ensp;&ensp;&ensp;&ensp; high: 127.0 <br> &ensp;&ensp;&ensp;&ensp; dtype: float32 <br> <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['sparse_dummy_v2'] (dense_shape, label_shape, sparse_ratio, low, high, dtype, transform=None, filter=None)</td>
+</tr>
+</tbody>
+</table></section>
+<section id="mxnet">
+<h3>MXNet<a class="headerlink" href="#mxnet" title="Link to this heading"></a></h3>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;">Dataset</th>
+<th style="text-align: left;">Parameters</th>
+<th style="text-align: left;">Comments</th>
+<th style="text-align: left;">Usage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">MNIST(root, train, transform, filter, download)</td>
+<td style="text-align: left;"><strong>root</strong> (str): Root directory of dataset <br> <strong>train</strong> (bool, default=False): If True, creates dataset from train subset, otherwise from validation subset <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions <br> <strong>download</strong> (bool, default=True): If true, downloads the dataset from the internet and puts it in root directory. If dataset is already downloaded, it is not downloaded again.</td>
+<td style="text-align: left;">If download is True, it will download dataset to root/MNIST/, otherwise user should put mnist.npz under root/MNIST/ manually.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; MNIST: <br> &ensp;&ensp;&ensp;&ensp; root: /path/to/root <br> &ensp;&ensp;&ensp;&ensp; train: False <br> &ensp;&ensp;&ensp;&ensp; download: True <br> (transform and filter are not set in the range of dataset) <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['MNIST'] (root=root, train=False, transform=transform, filter=None, download=True)</td>
+</tr>
+<tr>
+<td style="text-align: left;">FashionMNIST(root, train, transform, filter, download)</td>
+<td style="text-align: left;"><strong>root</strong> (str): Root directory of dataset <br> <strong>train</strong>(bool, default=False): If True, creates dataset from train subset, otherwise from validation subset <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions <br> <strong>download</strong> (bool, default=True): If true, downloads the dataset from the internet and puts it in root directory. If dataset is already downloaded, it is not downloaded again.</td>
+<td style="text-align: left;">If download is True, it will download dataset to root/FashionMNIST/, otherwise user should put train-labels-idx1-ubyte.gz, train-images-idx3-ubyte.gz, t10k-labels-idx1-ubyte.gz and t10k-images-idx3-ubyte.gz under root/FashionMNIST/ manually.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; FashionMNIST: <br> &ensp;&ensp;&ensp;&ensp; root: /path/to/root <br> &ensp;&ensp;&ensp;&ensp; train: False <br> &ensp;&ensp;&ensp;&ensp; download: True <br> (transform and filter are not set in the range of dataset) <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['FashionMNIST'] (root=root, train=False, transform=transform, filter=None, download=True)</td>
+</tr>
+<tr>
+<td style="text-align: left;">CIFAR10(root, train, transform, filter, download)</td>
+<td style="text-align: left;"><strong>root</strong> (str): Root directory of dataset <br> <strong>train</strong> (bool, default=False): If True, creates dataset from train subset, otherwise from validation subset <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions <br> <strong>download</strong> (bool, default=True): If true, downloads the dataset from the internet and puts it in root directory. If dataset is already downloaded, it is not downloaded again.</td>
+<td style="text-align: left;">If download is True, it will download dataset to root/ and extract it automatically, otherwise user can download file from https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz manually to root/ and extract it.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; CIFAR10: <br> &ensp;&ensp;&ensp;&ensp; root: /path/to/root <br> &ensp;&ensp;&ensp;&ensp; train: False <br> &ensp;&ensp;&ensp;&ensp; download: True <br> (transform and filter are not set in the range of dataset) <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['CIFAR10'] (root=root, train=False, transform=transform, filter=None, download=True)</td>
+</tr>
+<tr>
+<td style="text-align: left;">CIFAR100(root, train, transform, filter, download)</td>
+<td style="text-align: left;"><strong>root</strong> (str): Root directory of dataset <br> <strong>train</strong> (bool, default=False): If True, creates dataset from train subset, otherwise from validation subset <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions <br> <strong>download</strong> (bool, default=True): If true, downloads the dataset from the internet and puts it in root directory. If dataset is already downloaded, it is not downloaded again.</td>
+<td style="text-align: left;">If download is True, it will download dataset to root/ and extract it automatically, otherwise user can download file from https://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz manually to root/ and extract it.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; CIFAR100: <br> &ensp;&ensp;&ensp;&ensp; root: /path/to/root <br> &ensp;&ensp;&ensp;&ensp; train: False <br> &ensp;&ensp;&ensp;&ensp; download: True <br> (transform and filter are not set in the range of dataset) <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['CIFAR100'] (root=root, train=False, transform=transform, filter=None, download=True)</td>
+</tr>
+<tr>
+<td style="text-align: left;">ImageFolder(root, transform, filter)</td>
+<td style="text-align: left;"><strong>root</strong> (str): Root directory of dataset <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions</td>
+<td style="text-align: left;">Please arrange data in this way: <br> root/class_1/xxx.png <br> root/class_1/xxy.png <br> root/class_1/xxz.png <br> ... <br> root/class_n/123.png <br> root/class_n/nsdf3.png <br> root/class_n/asd932_.png <br> Please put images of different categories into different folders.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; ImageFolder: <br> &ensp;&ensp;&ensp;&ensp; root: /path/to/root <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['ImageFolder'] (root=root,transform=transform, filter=None)</td>
+</tr>
+<tr>
+<td style="text-align: left;">ImagenetRaw(data_path, image_list, transform, filter)</td>
+<td style="text-align: left;"><strong>data_path</strong> (str): Root directory of dataset <br> <strong>image_list</strong> (str): data file, record image_names and their labels <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions</td>
+<td style="text-align: left;">Please arrange data in this way: <br> data_path/img1.jpg <br> data_path/img2.jpg <br> ... <br> data_path/imgx.jpg <br> dataset will read name and label of each image from image_list file, if user set image_list to None, it will read from data_path/val_map.txt automatically.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; ImagenetRaw: <br> &ensp;&ensp;&ensp;&ensp; data_path: /path/to/image <br> &ensp;&ensp;&ensp;&ensp; image_list: /path/to/label <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['ImagenetRaw'] (data_path, image_list, transform=transform, filter=None)</td>
+</tr>
+<tr>
+<td style="text-align: left;">COCORaw(root, img_dir, anno_dir, transform, filter)</td>
+<td style="text-align: left;"><strong>root</strong> (str): Root directory of dataset <br> <strong>img_dir</strong> (str, default='val2017'): image file directory <br> <strong>anno_dir</strong> (str, default='annotations/instances_val2017.json'): annotation file directory <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions</td>
+<td style="text-align: left;">Please arrange data in this way: <br> /root/img_dir/1.jpg <br> /root/img_dir/2.jpg <br> ... <br> /root/img_dir/n.jpg <br> /root/anno_dir <br> <strong>Please use Resize transform when batch_size &gt; 1</strong></td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; COCORaw: <br> &ensp;&ensp;&ensp;&ensp; root: /path/to/root <br> &ensp;&ensp;&ensp;&ensp; img_dir: /path/to/image <br> &ensp;&ensp;&ensp;&ensp; anno_dir: /path/to/annotation <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['COCORaw'] (root, img_dir, anno_dir, transform=transform, filter=None) <br> If anno_dir is not set, the dataset will use default label map</td>
+</tr>
+<tr>
+<td style="text-align: left;">dummy(shape, low, high, dtype, label, transform, filter)</td>
+<td style="text-align: left;"><strong>shape</strong> (list or tuple):shape of total samples, the first dimension should be the sample count of the dataset. support create multi shape tensors, use list of tuples for each tuple in the list, will create a such size tensor. <br> <strong>low</strong> (list or float, default=-128.):low out the tensor value range from[0, 1] to [0, low] or [low, 0] if low &lt; 0, if float, will implement all tensors with same low value. <br> <strong>high</strong> (list or float, default=127.):high the tensor value by add all tensor element value high. If list, length of list should be same with shape list <br> <strong>dtype</strong> (list or str, default='float32'):support multi tensor dtype setting. If list, length of list should be same with shape list, if str, all tensors will use same dtype. dtype support 'float32', 'float16', 'uint8', 'int8', 'int32', 'int64', 'bool' <br> <strong>label</strong> (bool, default=True):whether to return 0 as label <br> <strong>transform</strong> (transform object, default=None): dummy dataset does not need transform. If transform is not None, it will ignore it. <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions</td>
+<td style="text-align: left;">This dataset is to construct a dataset from a specific shape, the value range is calculated from: low * stand_normal(0, 1) + high.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; dummy: <br> &ensp;&ensp;&ensp;&ensp; shape: [3, 224, 224, 3] <br> &ensp;&ensp;&ensp;&ensp; low: 0.0 <br> &ensp;&ensp;&ensp;&ensp; high: 127.0 <br> &ensp;&ensp;&ensp;&ensp; dtype: float32 <br> &ensp;&ensp;&ensp;&ensp; label: True <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['dummy'] (shape, low, high, dtype, label, transform=None, filter=None)</td>
+</tr>
+<tr>
+<td style="text-align: left;">dummy_v2(input_shape, label_shape, low, high, dtype, transform, filter)</td>
+<td style="text-align: left;"><strong>input_shape</strong> (list or tuple):create single or multi input tensors list represent the sample shape of the dataset, eg and image size should be represented as (224, 224, 3), tuple contains multiple list and represent multi input tensors. <br> <strong>label_shape</strong> (list or tuple):create single or multi label tensors list represent the sample shape of the label, eg and label size should be represented as (1,), tuple contains multiple list and represent multi label tensors. In yaml usage, it offers (1,) as the default value. <br> <strong>low</strong> (list or float, default=-128.):low out the tensor value range from[0, 1] to [0, low] or [low, 0] if low &lt; 0, if float, will implement all tensors with same low value. <br> <strong>high</strong> (list or float, default=127.):high the tensor value by add all tensor element value high. If list, length of list should be same with shape list <br> <strong>dtype</strong> (list or str, default='float32'):support multi tensor dtype setting. If list, length of list should be same with shape list, if str, all tensors will use same dtype. dtype support 'float32', 'float16', 'uint8', 'int8', 'int32', 'int64', 'bool' <br>  <strong>transform</strong> (transform object, default=None): dummy dataset does not need transform. If transform is not None, it will ignore it. <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions</td>
+<td style="text-align: left;">This dataset is to construct a dataset from a specific shape, the value range is calculated from: low * stand_normal(0, 1) + high.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; dummy_v2: <br> &ensp;&ensp;&ensp;&ensp; input_shape: [224, 224, 3] <br> &ensp;&ensp;&ensp;&ensp; label_shape: [1] <br> &ensp;&ensp;&ensp;&ensp; low: 0.0 <br> &ensp;&ensp;&ensp;&ensp; high: 127.0 <br> &ensp;&ensp;&ensp;&ensp; dtype: float32 <br> <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['dummy_v2'] (input_shape, low, high, dtype, transform=None, filter=None)</td>
+</tr>
+<tr>
+<td style="text-align: left;">sparse_dummy_v2(dense_shape, label_shape, sparse_ratio, low, high, dtype, transform, filter)</td>
+<td style="text-align: left;"><strong>dense_shape</strong> (list or tuple):create single or multi sparse tensors, tuple represent the sample shape of the dataset, eg and image size should be represented as (224, 224, 3), tuple contains multiple list and represent multi input tensors. <br> <strong>label_shape</strong> (list or tuple):create single or multi label tensors list represent the sample shape of the label, eg and label size should be represented as (1,), tuple contains multiple list and represent multi label tensors. In yaml usage, it offers (1,) as the default value. <br> <strong>sparse_ratio</strong> (float, default=0.5): the ratio of sparsity, support [0, 1]. <br> <strong>low</strong> (list or float, default=-128.):low out the tensor value range from[0, 1] to [0, low] or [low, 0] if low &lt; 0, if float, will implement all tensors with same low value. <br> <strong>high</strong> (list or float, default=127.):high the tensor value by add all tensor element value high. If list, length of list should be same with shape list <br> <strong>dtype</strong> (list or str, default='float32'):support multi tensor dtype setting. If list, length of list should be same with shape list, if str, all tensors will use same dtype. dtype support 'float32', 'float16', 'uint8', 'int8', 'int32', 'int64', 'bool' <br>  <strong>transform</strong> (transform object, default=None): dummy dataset does not need transform. If transform is not None, it will ignore it. <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions</td>
+<td style="text-align: left;">This dataset is to construct a dataset from a specific shape, the value range is calculated from: low * stand_normal(0, 1) + high.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; sparse_dummy_v2: <br> &ensp;&ensp;&ensp;&ensp; dense_shape: [224, 224, 3] <br> &ensp;&ensp;&ensp;&ensp; label_shape: [1] <br> &ensp;&ensp;&ensp;&ensp; sparse_ratio: 0.5 <br> &ensp;&ensp;&ensp;&ensp; low: 0.0 <br> &ensp;&ensp;&ensp;&ensp; high: 127.0 <br> &ensp;&ensp;&ensp;&ensp; dtype: float32 <br> <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['sparse_dummy_v2'] (dense_shape, label_shape, sparse_ratio, low, high, dtype, transform=None, filter=None)</td>
+</tr>
+</tbody>
+</table></section>
+<section id="onnxrt">
+<h3>ONNXRT<a class="headerlink" href="#onnxrt" title="Link to this heading"></a></h3>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;">Dataset</th>
+<th style="text-align: left;">Parameters</th>
+<th style="text-align: left;">Comments</th>
+<th style="text-align: left;">Usage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">MNIST(root, train, transform, filter, download)</td>
+<td style="text-align: left;"><strong>root</strong> (str): Root directory of dataset <br> <strong>train</strong> (bool, default=False): If True, creates dataset from train subset, otherwise from validation subset <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions <br> <strong>download</strong> (bool, default=True): If true, downloads the dataset from the internet and puts it in root directory. If dataset is already downloaded, it is not downloaded again.</td>
+<td style="text-align: left;">If download is True, it will download dataset to root/MNIST/, otherwise user should put mnist.npz under root/MNIST/ manually.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; MNIST: <br> &ensp;&ensp;&ensp;&ensp; root: /path/to/root <br> &ensp;&ensp;&ensp;&ensp; train: False <br> &ensp;&ensp;&ensp;&ensp; download: True <br> (transform and filter are not set in the range of dataset) <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['MNIST'] (root=root, train=False, transform=transform, filter=None, download=True)</td>
+</tr>
+<tr>
+<td style="text-align: left;">FashionMNIST(root, train, transform, filter, download)</td>
+<td style="text-align: left;"><strong>root</strong> (str): Root directory of dataset <br> <strong>train</strong>(bool, default=False): If True, creates dataset from train subset, otherwise from validation subset <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions <br> <strong>download</strong> (bool, default=True): If true, downloads the dataset from the internet and puts it in root directory. If dataset is already downloaded, it is not downloaded again.</td>
+<td style="text-align: left;">If download is True, it will download dataset to root/FashionMNIST/, otherwise user should put train-labels-idx1-ubyte.gz, train-images-idx3-ubyte.gz, t10k-labels-idx1-ubyte.gz and t10k-images-idx3-ubyte.gz under root/FashionMNIST/ manually.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; FashionMNIST: <br> &ensp;&ensp;&ensp;&ensp; root: /path/to/root <br> &ensp;&ensp;&ensp;&ensp; train: False <br> &ensp;&ensp;&ensp;&ensp; download: True <br> (transform and filter are not set in the range of dataset) <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['FashionMNIST'] (root=root, train=False, transform=transform, filter=None, download=True)</td>
+</tr>
+<tr>
+<td style="text-align: left;">CIFAR10(root, train, transform, filter, download)</td>
+<td style="text-align: left;"><strong>root</strong> (str): Root directory of dataset <br> <strong>train</strong> (bool, default=False): If True, creates dataset from train subset, otherwise from validation subset <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions <br> <strong>download</strong> (bool, default=True): If true, downloads the dataset from the internet and puts it in root directory. If dataset is already downloaded, it is not downloaded again.</td>
+<td style="text-align: left;">If download is True, it will download dataset to root/ and extract it automatically, otherwise user can download file from https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz manually to root/ and extract it.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; CIFAR10: <br> &ensp;&ensp;&ensp;&ensp; root: /path/to/root <br> &ensp;&ensp;&ensp;&ensp; train: False <br> &ensp;&ensp;&ensp;&ensp; download: True <br> (transform and filter are not set in the range of dataset) <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['CIFAR10'] (root=root, train=False, transform=transform, filter=None, download=True)</td>
+</tr>
+<tr>
+<td style="text-align: left;">CIFAR100(root, train, transform, filter, download)</td>
+<td style="text-align: left;"><strong>root</strong> (str): Root directory of dataset <br> <strong>train</strong> (bool, default=False): If True, creates dataset from train subset, otherwise from validation subset <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions <br> <strong>download</strong> (bool, default=True): If true, downloads the dataset from the internet and puts it in root directory. If dataset is already downloaded, it is not downloaded again.</td>
+<td style="text-align: left;">If download is True, it will download dataset to root/ and extract it automatically, otherwise user can download file from https://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz manually to root/ and extract it.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; CIFAR100: <br> &ensp;&ensp;&ensp;&ensp; root: /path/to/root <br> &ensp;&ensp;&ensp;&ensp; train: False <br> &ensp;&ensp;&ensp;&ensp; download: True <br> (transform and filter are not set in the range of dataset) <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['CIFAR100'] (root=root, train=False, transform=transform, filter=None, download=True)</td>
+</tr>
+<tr>
+<td style="text-align: left;">ImageFolder(root, transform, filter)</td>
+<td style="text-align: left;"><strong>root</strong> (str): Root directory of dataset <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions</td>
+<td style="text-align: left;">Please arrange data in this way: <br> root/class_1/xxx.png <br> root/class_1/xxy.png <br> root/class_1/xxz.png <br> ... <br> root/class_n/123.png <br> root/class_n/nsdf3.png <br> root/class_n/asd932_.png <br> Please put images of different categories into different folders.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; ImageFolder: <br> &ensp;&ensp;&ensp;&ensp; root: /path/to/root <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['ImageFolder'] (root=root,transform=transform, filter=None)</td>
+</tr>
+<tr>
+<td style="text-align: left;">ImagenetRaw(data_path, image_list, transform, filter)</td>
+<td style="text-align: left;"><strong>data_path</strong> (str): Root directory of dataset <br> <strong>image_list</strong> (str): data file, record image_names and their labels <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions</td>
+<td style="text-align: left;">Please arrange data in this way: <br> data_path/img1.jpg <br> data_path/img2.jpg <br> ... <br> data_path/imgx.jpg <br> dataset will read name and label of each image from image_list file, if user set image_list to None, it will read from data_path/val_map.txt automatically.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; ImagenetRaw: <br> &ensp;&ensp;&ensp;&ensp; data_path: /path/to/image <br> &ensp;&ensp;&ensp;&ensp; image_list: /path/to/label <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['ImagenetRaw'] (data_path, image_list, transform=transform, filter=None)</td>
+</tr>
+<tr>
+<td style="text-align: left;">COCORaw(root, img_dir, anno_dir, transform, filter)</td>
+<td style="text-align: left;"><strong>root</strong> (str): Root directory of dataset <br> <strong>img_dir</strong> (str, default='val2017'): image file directory <br> <strong>anno_dir</strong> (str, default='annotations/instances_val2017.json'): annotation file directory <br> <strong>transform</strong> (transform object, default=None):  transform to process input data <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions</td>
+<td style="text-align: left;">Please arrange data in this way: <br> /root/img_dir/1.jpg <br> /root/img_dir/2.jpg <br> ... <br> /root/img_dir/n.jpg <br> /root/anno_dir <br> <strong>*Please use Resize transform when batch_size &gt; 1</strong></td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; COCORaw: <br> &ensp;&ensp;&ensp;&ensp; root: /path/to/root <br> &ensp;&ensp;&ensp;&ensp; img_dir: /path/to/image <br> &ensp;&ensp;&ensp;&ensp; anno_dir: /path/to/annotation <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['COCORaw'] (root, img_dir, anno_dir, transform=transform, filter=None) <br> If anno_dir is not set, the dataset will use default label map</td>
+</tr>
+<tr>
+<td style="text-align: left;">dummy(shape, low, high, dtype, label, transform, filter)</td>
+<td style="text-align: left;"><strong>shape</strong> (list or tuple):shape of total samples, the first dimension should be the sample count of the dataset. support create multi shape tensors, use list of tuples for each tuple in the list, will create a such size tensor. <br> <strong>low</strong> (list or float, default=-128.):low out the tensor value range from[0, 1] to [0, low] or [low, 0] if low &lt; 0, if float, will implement all tensors with same low value. <br> <strong>high</strong> (list or float, default=127.):high the tensor value by add all tensor element value high. If list, length of list should be same with shape list <br> <strong>dtype</strong> (list or str, default='float32'):support multi tensor dtype setting. If list, length of list should be same with shape list, if str, all tensors will use same dtype. dtype support 'float32', 'float16', 'uint8', 'int8', 'int32', 'int64', 'bool' <br> <strong>label</strong> (bool, default=True):whether to return 0 as label <br> <strong>transform</strong> (transform object, default=None): dummy dataset does not need transform. If transform is not None, it will ignore it. <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions</td>
+<td style="text-align: left;">This dataset is to construct a dataset from a specific shape, the value range is calculated from: low * stand_normal(0, 1) + high.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; dummy: <br> &ensp;&ensp;&ensp;&ensp; shape: [3, 224, 224, 3] <br> &ensp;&ensp;&ensp;&ensp; low: 0.0 <br> &ensp;&ensp;&ensp;&ensp; high: 127.0 <br> &ensp;&ensp;&ensp;&ensp; dtype: float32 <br> &ensp;&ensp;&ensp;&ensp; label: True <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['dummy'] (shape, low, high, dtype, label, transform=None, filter=None)</td>
+</tr>
+<tr>
+<td style="text-align: left;">dummy_v2(input_shape, label_shape, low, high, dtype, transform, filter)</td>
+<td style="text-align: left;"><strong>input_shape</strong> (list or tuple):create single or multi input tensors list represent the sample shape of the dataset, eg and image size should be represented as (224, 224, 3), tuple contains multiple list and represent multi input tensors. <br> <strong>label_shape</strong> (list or tuple):create single or multi label tensors list represent the sample shape of the label, eg and label size should be represented as (1,), tuple contains multiple list and represent multi label tensors. In yaml usage, it offers (1,) as the default value. <br> <strong>low</strong> (list or float, default=-128.):low out the tensor value range from[0, 1] to [0, low] or [low, 0] if low &lt; 0, if float, will implement all tensors with same low value. <br> <strong>high</strong> (list or float, default=127.):high the tensor value by add all tensor element value high. If list, length of list should be same with shape list <br> <strong>dtype</strong> (list or str, default='float32'):support multi tensor dtype setting. If list, length of list should be same with shape list, if str, all tensors will use same dtype. dtype support 'float32', 'float16', 'uint8', 'int8', 'int32', 'int64', 'bool' <br>  <strong>transform</strong> (transform object, default=None): dummy dataset does not need transform. If transform is not None, it will ignore it. <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions</td>
+<td style="text-align: left;">This dataset is to construct a dataset from a specific shape, the value range is calculated from: low * stand_normal(0, 1) + high.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; dummy_v2: <br> &ensp;&ensp;&ensp;&ensp; input_shape: [224, 224, 3] <br> &ensp;&ensp;&ensp;&ensp; label_shape: [1] <br> &ensp;&ensp;&ensp;&ensp; low: 0.0 <br> &ensp;&ensp;&ensp;&ensp; high: 127.0 <br> &ensp;&ensp;&ensp;&ensp; dtype: float32 <br> <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['dummy_v2'] (input_shape, low, high, dtype, transform=None, filter=None)</td>
+</tr>
+<tr>
+<td style="text-align: left;">GLUE(data_dir, model_name_or_path, max_seq_length, do_lower_case, task, model_type, dynamic_length, evaluate, transform, filter)</td>
+<td style="text-align: left;"><strong>data_dir</strong> (str): The input data dir <br> <strong>model_name_or_path</strong> (str):  Path to pre-trained student model or shortcut name,  <br> <strong>max_seq_length</strong> (int, default=128): The maximum total input sequence length after tokenization. Sequences longer than this will be truncated, sequences shorter will be padded. <br> <strong>do_lower_case</strong> (bool, default=True): Whether or not to lowercase the input. <br> <strong>task</strong> (bool, default=True): The name of the task to fine-tune. Choices include mrpc, qqp, qnli, rte, sts-b, cola, mnli, wnli. <br> <strong>model_type</strong> (str, default='bert'): model type, support 'distilbert', 'bert', 'mobilebert', 'roberta'. <br> <strong>dynamic_length</strong> (bool, default=False): Whether to use fixed sequence length. <br> <strong>evaluate</strong> (bool, default=True): Whether do evaluation or training. <br> <strong>transform</strong> (bool, default=True): If true, <br> <strong>filter</strong> (bool, default=True): If true,</td>
+<td style="text-align: left;">Refer to <a href="/examples/onnxrt/language_translation/bert">this example</a> on how to prepare dataset</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; bert: <br> &ensp;&ensp;&ensp;&ensp; data_dir: False <br> &ensp;&ensp;&ensp;&ensp; model_name_or_path: True <br> (transform and filter are not set in the range of dataset) <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['bert'] (data_dir='/path/to/data/', model_name_or_path='bert-base-uncased', max_seq_length=128, task='mrpc', model_type='bert', dynamic_length=True, transform=None, filter=None)</td>
+</tr>
+<tr>
+<td style="text-align: left;">sparse_dummy_v2(dense_shape, label_shape, sparse_ratio, low, high, dtype, transform, filter)</td>
+<td style="text-align: left;"><strong>dense_shape</strong> (list or tuple):create single or multi sparse tensors, tuple represent the sample shape of the dataset, eg and image size should be represented as (224, 224, 3), tuple contains multiple list and represent multi input tensors. <br> <strong>label_shape</strong> (list or tuple):create single or multi label tensors list represent the sample shape of the label, eg and label size should be represented as (1,), tuple contains multiple list and represent multi label tensors. In yaml usage, it offers (1,) as the default value. <br> <strong>sparse_ratio</strong> (float, default=0.5): the ratio of sparsity, support [0, 1]. <br> <strong>low</strong> (list or float, default=-128.):low out the tensor value range from[0, 1] to [0, low] or [low, 0] if low &lt; 0, if float, will implement all tensors with same low value. <br> <strong>high</strong> (list or float, default=127.):high the tensor value by add all tensor element value high. If list, length of list should be same with shape list <br> <strong>dtype</strong> (list or str, default='float32'):support multi tensor dtype setting. If list, length of list should be same with shape list, if str, all tensors will use same dtype. dtype support 'float32', 'float16', 'uint8', 'int8', 'int32', 'int64', 'bool' <br>  <strong>transform</strong> (transform object, default=None): dummy dataset does not need transform. If transform is not None, it will ignore it. <br> <strong>filter</strong> (Filter objects, default=None): filter out examples according to specific conditions</td>
+<td style="text-align: left;">This dataset is to construct a dataset from a specific shape, the value range is calculated from: low * stand_normal(0, 1) + high.</td>
+<td style="text-align: left;"><strong>In yaml file:</strong> <br> dataset: <br> &ensp;&ensp; sparse_dummy_v2: <br> &ensp;&ensp;&ensp;&ensp; dense_shape: [224, 224, 3] <br> &ensp;&ensp;&ensp;&ensp; label_shape: [1] <br> &ensp;&ensp;&ensp;&ensp; sparse_ratio: 0.5 <br> &ensp;&ensp;&ensp;&ensp; low: 0.0 <br> &ensp;&ensp;&ensp;&ensp; high: 127.0 <br> &ensp;&ensp;&ensp;&ensp; dtype: float32 <br> <br> <strong>In user code:</strong> <br> from neural_compressor.data import Datasets <br> datasets = Datasets(framework) <br> dataset = datasets['sparse_dummy_v2'] (dense_shape, label_shape, sparse_ratio, low, high, dtype, transform=None, filter=None)</td>
+</tr>
+</tbody>
+</table></section>
+</section>
+<section id="get-start-with-dataset-api">
+<h2>Get start with Dataset API<a class="headerlink" href="#get-start-with-dataset-api" title="Link to this heading"></a></h2>
+<section id="config-dataloader-in-a-yaml-file">
+<h3>Config dataloader in a yaml file<a class="headerlink" href="#config-dataloader-in-a-yaml-file" title="Link to this heading"></a></h3>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">quantization</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">approach</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">post_training_static_quant</span>
+<span class="w">  </span><span class="nt">calibration</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">dataloader</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">COCORaw</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">root</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/calibration/dataset</span>
+<span class="w">      </span><span class="nt">filter</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">LabelBalance</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">      </span><span class="nt">transform</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">Resize</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">300</span>
+
+<span class="nt">evaluation</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">accuracy</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">metric</span><span class="p">:</span><span class="w"> </span>
+<span class="w">      </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+<span class="w">    </span><span class="nt">dataloader</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">16</span>
+<span class="w">      </span><span class="nt">dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">COCORaw</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">root</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/path/to/evaluation/dataset</span>
+<span class="w">      </span><span class="nt">transform</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">Resize</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">300</span>
+<span class="w">  </span><span class="nt">performance</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">dataloader</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">16</span>
+<span class="w">      </span><span class="nt">dataset</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">dummy_v2</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">input_shape</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">224</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">224</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">3</span><span class="p p-Indicator">]</span><span class="w"> </span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="user-specific-dataset">
+<h2>User-specific dataset<a class="headerlink" href="#user-specific-dataset" title="Link to this heading"></a></h2>
+<p>Users can register their own datasets as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Dataset</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="c1"># init code here</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+        <span class="c1"># use idx to get data and label</span>
+        <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">label</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span>
+</pre></div>
+</div>
+<p>After defining the dataset class, pass it to the quantizer:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.experimental</span> <span class="kn">import</span> <span class="n">Quantization</span><span class="p">,</span> <span class="n">common</span>
+
+<span class="n">quantizer</span> <span class="o">=</span> <span class="n">Quantization</span><span class="p">(</span><span class="n">yaml_file</span><span class="p">)</span>
+<span class="n">quantizer</span><span class="o">.</span><span class="n">calib_dataloader</span> <span class="o">=</span> <span class="n">common</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">(</span>
+    <span class="n">dataset</span>
+<span class="p">)</span>  <span class="c1"># user can pass more optional args to dataloader such as batch_size and collate_fn</span>
+<span class="n">quantizer</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">graph</span>
+<span class="n">quantizer</span><span class="o">.</span><span class="n">eval_func</span> <span class="o">=</span> <span class="n">eval_func</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantizer</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Refer to this <a class="reference external" href="https://github.com/intel/neural-compressor/tree/v1.14.2/examples/onnxrt/object_detection/onnx_model_zoo/DUC/quantization/ptq">example</a> to learn how to define a customised dataset.</p></li>
+<li><p>Refer to this <a class="reference external" href="/examples/helloworld/tf_example6">HelloWorld example</a> to learn how to configure a built-in dataset.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f81c7d68340> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

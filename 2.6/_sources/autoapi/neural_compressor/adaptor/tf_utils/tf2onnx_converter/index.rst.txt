@@ -1,0 +1,27 @@
+neural_compressor.adaptor.tf_utils.tf2onnx_converter
+====================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.tf2onnx_converter
+
+.. autoapi-nested-parse::
+
+   Tensorflow QDQ model convert to ONNX QDQ model.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.tf2onnx_converter.TensorflowQDQToOnnxQDQConverter
+
+
+Module Contents
+---------------
+
+.. py:class:: TensorflowQDQToOnnxQDQConverter(model, input_names, output_names, shape_override, inputs_as_nchw=None, opset_version=utils.DEFAULT_OPSET_VERSION)
+
+   Convert tensorflow QDQ graph to ONNX QDQ graph.
+
+

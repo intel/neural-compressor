@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.compression.pruner.criteria &mdash; Intel® Neural Compressor 2.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">2.6▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.compression.pruner.criteria</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/autoapi/neural_compressor/compression/pruner/criteria/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.compression.pruner.criteria">
+<span id="neural-compressor-compression-pruner-criteria"></span><h1>neural_compressor.compression.pruner.criteria<a class="headerlink" href="#module-neural_compressor.compression.pruner.criteria" title="Link to this heading"></a></h1>
+<p>Pruning criterion.</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.criteria.PruningCriterion" title="neural_compressor.compression.pruner.criteria.PruningCriterion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PruningCriterion</span></code></a></p></td>
+<td><p>Pruning base criterion.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.criteria.MagnitudeCriterion" title="neural_compressor.compression.pruner.criteria.MagnitudeCriterion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MagnitudeCriterion</span></code></a></p></td>
+<td><p>Pruning criterion.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.criteria.GradientCriterion" title="neural_compressor.compression.pruner.criteria.GradientCriterion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GradientCriterion</span></code></a></p></td>
+<td><p>Pruning criterion.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.criteria.SnipCriterion" title="neural_compressor.compression.pruner.criteria.SnipCriterion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SnipCriterion</span></code></a></p></td>
+<td><p>Pruning criterion.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.criteria.SnipMomentumCriterion" title="neural_compressor.compression.pruner.criteria.SnipMomentumCriterion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SnipMomentumCriterion</span></code></a></p></td>
+<td><p>Pruning criterion.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.criteria.BlockMaskCriterion" title="neural_compressor.compression.pruner.criteria.BlockMaskCriterion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BlockMaskCriterion</span></code></a></p></td>
+<td><p>Pruning criterion.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.criteria.RetrainFreeCriterion" title="neural_compressor.compression.pruner.criteria.RetrainFreeCriterion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RetrainFreeCriterion</span></code></a></p></td>
+<td><p>Pruning criterion.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.criteria.register_criterion" title="neural_compressor.compression.pruner.criteria.register_criterion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_criterion</span></code></a>(name)</p></td>
+<td><p>Register a criterion to the registry.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.compression.pruner.criteria.get_criterion" title="neural_compressor.compression.pruner.criteria.get_criterion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_criterion</span></code></a>(config, modules, pattern[, masks])</p></td>
+<td><p>Get registered criterion class.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.criteria.register_criterion">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.criteria.</span></span><span class="sig-name descname"><span class="pre">register_criterion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/compression/pruner/criteria.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.criteria.register_criterion" title="Link to this definition"></a></dt>
+<dd><p>Register a criterion to the registry.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.criteria.get_criterion">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.criteria.</span></span><span class="sig-name descname"><span class="pre">get_criterion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modules</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">masks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/compression/pruner/criteria.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.criteria.get_criterion" title="Link to this definition"></a></dt>
+<dd><p>Get registered criterion class.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.criteria.PruningCriterion">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.criteria.</span></span><span class="sig-name descname"><span class="pre">PruningCriterion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modules</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/compression/pruner/criteria.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.criteria.PruningCriterion" title="Link to this definition"></a></dt>
+<dd><p>Pruning base criterion.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> – A config dict object that includes information about pruner and pruning criterion.</p></li>
+<li><p><strong>modules</strong> – A dict {“module_name”: Tensor} that stores the pruning modules’ weights.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.criteria.PruningCriterion.scores">
+<span class="sig-name descname"><span class="pre">scores</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/compression/pruner/criteria.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.criteria.PruningCriterion.scores" title="Link to this definition"></a></dt>
+<dd><p>A dict {“module_name”: Tensor} that stores the scores of pruning modules.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.criteria.MagnitudeCriterion">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.criteria.</span></span><span class="sig-name descname"><span class="pre">MagnitudeCriterion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modules</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/compression/pruner/criteria.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.criteria.MagnitudeCriterion" title="Link to this definition"></a></dt>
+<dd><p>Pruning criterion.</p>
+<p>The magnitude criterion_class is derived from PruningCriterion.
+The magnitude value is used to score and determine if a weight is to be pruned.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> – A config dict object that includes information about pruner and pruning criterion.</p></li>
+<li><p><strong>modules</strong> – A dict {“module_name”: Tensor} that stores the pruning modules’ weights.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.criteria.MagnitudeCriterion.scores">
+<span class="sig-name descname"><span class="pre">scores</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/compression/pruner/criteria.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.criteria.MagnitudeCriterion.scores" title="Link to this definition"></a></dt>
+<dd><p>A dict {“module_name”: Tensor} that stores the scores of pruning modules.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.criteria.GradientCriterion">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.criteria.</span></span><span class="sig-name descname"><span class="pre">GradientCriterion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modules</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/compression/pruner/criteria.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.criteria.GradientCriterion" title="Link to this definition"></a></dt>
+<dd><p>Pruning criterion.</p>
+<p>The gradient criterion_class is derived from PruningCriterion.
+The absolute value of gradient is used to score and determine if a weight is to be pruned.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> – A config dict object that includes information about pruner and pruning criterion.</p></li>
+<li><p><strong>modules</strong> – A dict {“module_name”: Tensor} that stores the pruning modules’ weights.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.criteria.GradientCriterion.scores">
+<span class="sig-name descname"><span class="pre">scores</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/compression/pruner/criteria.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.criteria.GradientCriterion.scores" title="Link to this definition"></a></dt>
+<dd><p>A dict {“module_name”: Tensor} that stores the scores of pruning modules.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.criteria.SnipCriterion">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.criteria.</span></span><span class="sig-name descname"><span class="pre">SnipCriterion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modules</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/compression/pruner/criteria.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.criteria.SnipCriterion" title="Link to this definition"></a></dt>
+<dd><p>Pruning criterion.</p>
+<p>The snip criterion_class is derived from PruningCriterion.
+The product of magnitude and gradient is used to score and determine if a weight is to be pruned.
+Please refer to SNIP: Single-shot Network Pruning based on Connection Sensitivity.
+(<a class="reference external" href="https://arxiv.org/abs/1810.02340">https://arxiv.org/abs/1810.02340</a>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> – A config dict object that includes information about pruner and pruning criterion.</p></li>
+<li><p><strong>modules</strong> – A dict {“module_name”: Tensor} that stores the pruning modules’ weights.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.criteria.SnipCriterion.scores">
+<span class="sig-name descname"><span class="pre">scores</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/compression/pruner/criteria.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.criteria.SnipCriterion.scores" title="Link to this definition"></a></dt>
+<dd><p>A dict {“module_name”: Tensor} that stores the scores of pruning modules.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.criteria.SnipMomentumCriterion">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.criteria.</span></span><span class="sig-name descname"><span class="pre">SnipMomentumCriterion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modules</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/compression/pruner/criteria.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.criteria.SnipMomentumCriterion" title="Link to this definition"></a></dt>
+<dd><p>Pruning criterion.</p>
+<p>The snip_momentum criterion_class is derived from PruningCriterion.
+A momentum mechanism is used to calculate snip score, which determines if a weight is to be pruned.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> – A config dict object that includes information about pruner and pruning criterion.</p></li>
+<li><p><strong>modules</strong> – A dict {“module_name”: Tensor} that stores the pruning modules’ weights.</p></li>
+<li><p><strong>alpha</strong> – A parameter that determines how much of the snip score is preserved from last pruning step.</p></li>
+<li><p><strong>beta</strong> – A parameter that determines how much of the snip score is updated at the current step.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.criteria.SnipMomentumCriterion.scores">
+<span class="sig-name descname"><span class="pre">scores</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/compression/pruner/criteria.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.criteria.SnipMomentumCriterion.scores" title="Link to this definition"></a></dt>
+<dd><p>A dict {“module_name”: Tensor} that stores the scores of pruning modules.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.criteria.BlockMaskCriterion">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.criteria.</span></span><span class="sig-name descname"><span class="pre">BlockMaskCriterion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modules</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">masks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.9</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/compression/pruner/criteria.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.criteria.BlockMaskCriterion" title="Link to this definition"></a></dt>
+<dd><p>Pruning criterion.</p>
+<p>The block_mask criterion_class is derived from PruningCriterion.
+A momentum mechanism is used to calculate snip score, which determines if a block of weights is to be pruned.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> – A config dict object that includes information about pruner and pruning criterion.</p></li>
+<li><p><strong>modules</strong> – A dict {“module_name”: Tensor} that stores the pruning modules’ weights.</p></li>
+<li><p><strong>alpha</strong> – A parameter that determines how much of the snip score is preserved from last pruning step.</p></li>
+<li><p><strong>beta</strong> – A parameter that determines how much of the snip score is updated at the current step.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.criteria.BlockMaskCriterion.scores">
+<span class="sig-name descname"><span class="pre">scores</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/compression/pruner/criteria.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.criteria.BlockMaskCriterion.scores" title="Link to this definition"></a></dt>
+<dd><p>A dict {“module_name”: Tensor} that stores the scores of pruning modules.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.criteria.RetrainFreeCriterion">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.compression.pruner.criteria.</span></span><span class="sig-name descname"><span class="pre">RetrainFreeCriterion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modules</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">masks</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/compression/pruner/criteria.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.criteria.RetrainFreeCriterion" title="Link to this definition"></a></dt>
+<dd><p>Pruning criterion.</p>
+<p>The retrain_free criterion_class is derived from PruningCriterion.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> – A config dict object that includes information about pruner and pruning criterion.</p></li>
+<li><p><strong>modules</strong> – A dict {“module_name”: Tensor} that stores the pruning modules’ weights.</p></li>
+<li><p><strong>alpha</strong> – A parameter that determines how much of the snip score is preserved from last pruning step.</p></li>
+<li><p><strong>beta</strong> – A parameter that determines how much of the snip score is updated at the current step.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.compression.pruner.criteria.RetrainFreeCriterion.scores">
+<span class="sig-name descname"><span class="pre">scores</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.6/neural_compressor/compression/pruner/criteria.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.compression.pruner.criteria.RetrainFreeCriterion.scores" title="Link to this definition"></a></dt>
+<dd><p>A dict {“module_name”: Tensor} that stores the scores of pruning modules.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8a3d3429d0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

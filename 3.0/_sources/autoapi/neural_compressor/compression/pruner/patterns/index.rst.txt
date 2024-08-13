@@ -1,0 +1,48 @@
+neural_compressor.compression.pruner.patterns
+=============================================
+
+.. py:module:: neural_compressor.compression.pruner.patterns
+
+.. autoapi-nested-parse::
+
+   Pruners.
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/compression/pruner/patterns/base/index
+   /autoapi/neural_compressor/compression/pruner/patterns/mha/index
+   /autoapi/neural_compressor/compression/pruner/patterns/ninm/index
+   /autoapi/neural_compressor/compression/pruner/patterns/nxm/index
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.compression.pruner.patterns.get_pattern
+
+
+Package Contents
+----------------
+
+.. py:function:: get_pattern(config, modules, framework='pytorch')
+
+   Get registered pattern class.
+
+   Get a Pattern object from PATTERNS.
+
+   :param config: A config dict object that contains the pattern information.
+   :param modules: Torch neural network modules to be pruned with the pattern.
+
+   :returns: A Pattern object.
+
+   :raises AssertionError: Currently only support patterns which have been registered in PATTERNS.
+
+

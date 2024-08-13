@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How to Support New Data Type, Like Int4, with a Few Line Changes &mdash; Intel® Neural Compressor 3.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">3.0▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">How to Support New Data Type, Like Int4, with a Few Line Changes</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/add_new_data_type.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="how-to-support-new-data-type-like-int4-with-a-few-line-changes">
+<h1>How to Support New Data Type, Like Int4, with a Few Line Changes<a class="headerlink" href="#how-to-support-new-data-type-like-int4-with-a-few-line-changes" title="Link to this heading"></a></h1>
+<ul class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#define-the-quantization-ability-of-the-specific-operator">Define the Quantization Ability of the Specific Operator</a></p></li>
+<li><p><a class="reference external" href="#invoke-the-operator-kernel-according-to-the-tuning-configuration">Invoke the Operator Kernel According to the Tuning Configuration</a></p></li>
+<li><p><a class="reference external" href="#use-the-new-data-type">Use the New Data Type</a></p></li>
+<li><p><a class="reference external" href="#summary">Summary</a></p></li>
+</ul>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
+<p>To enable accuracy-aware tuning with various frameworks, Intel® Neural Compressor introduced the <a class="reference external" href="./framework_yaml.html">framework YAML</a> which unifies the configuration format for quantization and provides a description for the capabilities of specific framework. Before explaining how to add a new data type, let’s first introduce the overall process, from defining the operator behavior in YAML to invoking it by the adaptor. The diagram below illustrates all the relevant steps, with additional details provided for each annotated step.</p>
+<blockquote>
+<div><p>Note: The <code class="docutils literal notranslate"><span class="pre">adaptor</span></code> is a layer that abstracts various frameworks supported by Intel® Neural Compressor.</p>
+</div></blockquote>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>  sequenceDiagram
+  	autonumber
+    Strategy -&gt;&gt; Adaptor: query framework capability
+    Adaptor -&gt;&gt; Strategy: Parse the framework YAML and return capability
+    Strategy -&gt;&gt; Strategy: Build tuning space
+    loop Traverse tuning space
+    	Strategy-&gt;&gt; Adaptor: generate next tuning cfg
+        Adaptor -&gt;&gt; Adaptor: calibrate and quantize model based on tuning config
+
+    end
+</pre></div>
+</div>
+<ol class="simple">
+<li><p><strong>Strategy</strong>: Drives the overall tuning process and utilizes <code class="docutils literal notranslate"><span class="pre">adaptor.query_fw_capability</span></code> to query the framework’s capabilities.</p></li>
+<li><p><strong>Adaptor</strong>: Parses the framework YAML, filters some corner cases, and constructs the framework capability. This includes the capabilities of each operator and other model-related information.</p></li>
+<li><p><strong>Strategy</strong>: Constructs the tuning space based on the framework capability and initiates the tuning process.</p></li>
+<li><p><strong>Strategy</strong>: Generates the tuning configurations for each operators of the model using the tuning space constructed in the previous step, specifying the desired tuning process.</p></li>
+<li><p><strong>Adaptor</strong>: Invokes the specific kernels for the calibration and quantization based on the tuning configuration.</p></li>
+</ol>
+<p>The following section provides an example of extending the PyTorch <code class="docutils literal notranslate"><span class="pre">Conv2d</span></code> operator to include support for 4-bit quantization.</p>
+</section>
+<section id="define-the-quantization-ability-of-the-specific-operator">
+<h2>Define the Quantization Ability of the Specific Operator<a class="headerlink" href="#define-the-quantization-ability-of-the-specific-operator" title="Link to this heading"></a></h2>
+<p>The first step in adding a new data type for specific operator to Intel® Neural Compressor is to extend the capabilities of operator and include it to the framework YAML.
+The capabilities should include the quantized data types and quantization schemes of activation and weight(if applicable). The following table describes the detail of each filed:</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Field name</th>
+<th>Options</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data Type (<code>dtype</code>)</td>
+<td><code>uint4</code>, <code>int4</code></td>
+<td>The quantization data type being added. It use 4-bit as example, where <code>uint4</code> represents an unsigned 4-bit integer and <code>int4</code> represents a signed 4-bit integer.</td>
+</tr>
+<tr>
+<td>Quantization (<code>scheme</code>)</td>
+<td><code>sym</code>, <code>asym</code></td>
+<td>The quantization scheme used for the new data type. <code>sym</code> represents symmetric quantization, <code>asym</code> represents asymmetric quantization.</td>
+</tr>
+<tr>
+<td>Quantization Granularity (<code>granularity</code>)</td>
+<td><code>per_channel</code>, <code>per_tensor</code></td>
+<td>The granularity at which quantization is applied. <code>per_channel</code> represents that the quantization is applied independently per channel, <code>per_tensor</code> represents that the quantization is applied to the entire tensor as a whole.</td>
+</tr>
+<tr>
+<td>Calibration Algorithm (<code>algorithm</code>)</td>
+<td><code>minmax</code>, <code>kl</code></td>
+<td>The calibration algorithm used for the new data type. <code>minmax</code> represents the minimum-maximum algorithm, <code>kl</code> represents the Kullback-Leibler divergence algorithm.</td>
+</tr>
+</tbody>
+</table><p>To add  4-bit quantization for <code class="docutils literal notranslate"><span class="pre">Conv2d</span></code> in the PyTorch backend. We can modify the <code class="docutils literal notranslate"><span class="pre">neural_compressor/adaptor/pytorch_cpu.yaml</span></code> as follows:</p>
+<div class="highlight-diff notranslate"><div class="highlight"><pre><span></span><span class="w"> </span> ...
+<span class="w"> </span> fp32: [&#39;*&#39;] # `*` means all op types.
+
+
+<span class="gi">+    int4: {</span>
+<span class="gi">+        &#39;static&#39;: {</span>
+<span class="gi">+            &#39;Conv2d&#39;: {</span>
+<span class="gi">+                &#39;weight&#39;: {</span>
+<span class="gi">+                    &#39;dtype&#39;: [&#39;int4&#39;],</span>
+<span class="gi">+                    &#39;scheme&#39;: [&#39;sym&#39;],</span>
+<span class="gi">+                    &#39;granularity&#39;: [&#39;per_channel&#39;],</span>
+<span class="gi">+                    &#39;algorithm&#39;: [&#39;minmax&#39;]},</span>
+<span class="gi">+                &#39;activation&#39;: {</span>
+<span class="gi">+                    &#39;dtype&#39;: [&#39;uint4&#39;],</span>
+<span class="gi">+                    &#39;scheme&#39;: [&#39;sym&#39;],</span>
+<span class="gi">+                    &#39;granularity&#39;: [&#39;per_tensor&#39;],</span>
+<span class="gi">+                    &#39;algorithm&#39;: [&#39;minmax&#39;]},</span>
+<span class="gi">+            },</span>
+<span class="gi">+        }</span>
+<span class="gi">+    }</span>
+
+<span class="w"> </span> int8: &amp;1_11_capabilities {
+<span class="w"> </span>   &#39;static&#39;: &amp;cap_s8_1_11 {
+<span class="w"> </span>         &#39;Conv1d&#39;: &amp;cap_s8_1_11_Conv1d {
+<span class="w"> </span> ...
+</pre></div>
+</div>
+<p>The code states that the PyTorch Conv2d Operator has the ability to quantize weights to int4 using the <code class="docutils literal notranslate"><span class="pre">torch.per_channel_symmetric</span></code> quantization scheme, with the supported calibration algorithm being <code class="docutils literal notranslate"><span class="pre">minmax</span></code>. Additionally, the operator can quantize activations to <code class="docutils literal notranslate"><span class="pre">uint4</span></code> using the <code class="docutils literal notranslate"><span class="pre">torch.per_tensor_symmetric</span></code> quantization scheme, with the supported calibration algorithm also being <code class="docutils literal notranslate"><span class="pre">minmax</span></code>.</p>
+</section>
+<section id="invoke-the-operator-kernel-according-to-the-tuning-configuration">
+<h2>Invoke the Operator Kernel According to the Tuning Configuration<a class="headerlink" href="#invoke-the-operator-kernel-according-to-the-tuning-configuration" title="Link to this heading"></a></h2>
+<p>One of the tuning configurations generated by the strategy for <code class="docutils literal notranslate"><span class="pre">Conv2d</span></code> looks like as following:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
+<span class="n">tune_cfg</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;op&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="p">(</span><span class="s1">&#39;conv&#39;</span><span class="p">,</span> <span class="s1">&#39;Conv2d&#39;</span><span class="p">):</span> <span class="p">{</span>
+            <span class="s1">&#39;weight&#39;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="s1">&#39;int4&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;algorithm&#39;</span><span class="p">:</span> <span class="s1">&#39;minmax&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;granularity&#39;</span><span class="p">:</span> <span class="s1">&#39;per_channel&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;scheme&#39;</span><span class="p">:</span> <span class="s1">&#39;sym&#39;</span>
+            <span class="p">},</span>
+            <span class="s1">&#39;activation&#39;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="s1">&#39;uint4&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;quant_mode&#39;</span><span class="p">:</span> <span class="s1">&#39;static&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;algorithm&#39;</span><span class="p">:</span> <span class="s1">&#39;kl&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;granularity&#39;</span><span class="p">:</span> <span class="s1">&#39;per_tensor&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;scheme&#39;</span><span class="p">:</span> <span class="s1">&#39;sym&#39;</span>
+            <span class="p">}</span>
+        <span class="p">},</span>
+</pre></div>
+</div>
+<p>Now, we can invoke the specified kernel according to the above configurations in the adaptor’s <code class="docutils literal notranslate"><span class="pre">quantize</span></code> function. Due to PyTorch currently not having native support for quantization with 4-bit for <code class="docutils literal notranslate"><span class="pre">Conv2d</span></code>, we simulate it numerically by specifying the value ranges of a given data type in the observer. We have implemented it with the following <a class="reference external" href="https://github.com/intel/neural-compressor/blob/ad907ab2506514c862f8d79e2109e7407310ceee/neural_compressor/adaptor/pytorch.py#L497-L502">code</a>:</p>
+<div class="highlight-diff notranslate"><div class="highlight"><pre><span></span><span class="w"> </span>   return observer.with_args(qscheme=qscheme,
+<span class="w"> </span>                             dtype=torch_dtype,
+<span class="w"> </span>                             reduce_range=(REDUCE_RANGE and scheme == &#39;asym&#39;),
+<span class="gi">+                              quant_min=quant_min,</span>
+<span class="gi">+                              quant_max=quant_max</span>
+<span class="w"> </span>           )
+</pre></div>
+</div>
+<blockquote>
+<div><p>Note: For PyTorch backend, this simulation only supports N-bit quantization, where N is an integer between 1 and 7.</p>
+</div></blockquote>
+</section>
+<section id="use-the-new-data-type">
+<h2>Use the New Data Type<a class="headerlink" href="#use-the-new-data-type" title="Link to this heading"></a></h2>
+<p>Once the new data type has been added to Intel® Neural Compressor, it can be used in the same way as any other data type within the framework. Below is an example of specifying that all <code class="docutils literal notranslate"><span class="pre">Conv2d</span></code> operators should utilize 4-bit quantization:”</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span>
+
+<span class="n">op_type_dict</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;Conv2d&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;weight&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;int4&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;activation&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;uint4&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">op_type_dict</span><span class="o">=</span><span class="n">op_type_dict</span><span class="p">)</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+<p>With this code, all <code class="docutils literal notranslate"><span class="pre">Conv2d</span></code> operators will be quantized to 4-bit, with weight using <code class="docutils literal notranslate"><span class="pre">int4</span></code> and activation using <code class="docutils literal notranslate"><span class="pre">uint4</span></code>.</p>
+</section>
+<section id="summary">
+<h2>Summary<a class="headerlink" href="#summary" title="Link to this heading"></a></h2>
+<p>The document outlines the process of adding support for a new data type, such as int4, in Intel® Neural Compressor with minimal changes. It provides instructions and code examples for defining the data type’s quantization capabilities, invoking the operator kernel, and using the new data type within the framework. By following the steps outlined in the document, users can extend Intel® Neural Compressor’s functionality to accommodate new data types and incorporate them into their quantization workflows.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fef7cf4d400> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

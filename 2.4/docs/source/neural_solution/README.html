@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>What’s Neural Solution? &mdash; Intel® Neural Compressor 2.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../versions.html">2.4▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">What’s Neural Solution?</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/docs/source/neural_solution/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="what-s-neural-solution">
+<h1>What’s Neural Solution?<a class="headerlink" href="#what-s-neural-solution" title="Link to this heading"></a></h1>
+<p>Neural Solution is a flexible and easy to use tool that brings the capabilities of Intel® Neural Compressor as a service. With Neural Solution, Users can effortlessly submit optimization tasks through the RESTful/gRPC APIs. Neural Solution automatically dispatches these tasks to one or multiple nodes, streamlining the entire process.</p>
+</section>
+<section id="why-neural-solution">
+<h1>Why Neural Solution?<a class="headerlink" href="#why-neural-solution" title="Link to this heading"></a></h1>
+<ul class="simple">
+<li><p>Task Parallelism: Neural Solution automatically schedules the optimization task queue by coordinating available resources and allows execution of multiple optimization tasks simultaneously.</p></li>
+<li><p>Tuning Parallelism: Neural Solution accelerates the optimization process by seamlessly parallelizing the tuning across multiple nodes.</p></li>
+<li><p>APIs Support: Neural Solution supports both RESTful and gRPC APIs, enabling users to conveniently submit optimization tasks.</p></li>
+<li><p>Code Less: When working with Hugging Face models, Neural Solution seamlessly integrates the functionality of the <a class="reference external" href="https://github.com/intel/neural-compressor/tree/master/neural_coder">Neural Coder</a>, eliminating the need for any code modifications during the optimization process.</p></li>
+</ul>
+</section>
+<section id="how-does-neural-solution-work">
+<h1>How does Neural Solution Work?<a class="headerlink" href="#how-does-neural-solution-work" title="Link to this heading"></a></h1>
+<p><img alt="NS-OaaS-Intro" src="../../../_images/NS-OaaS-Intro.png" /></p>
+</section>
+<section id="get-started">
+<h1>Get Started<a class="headerlink" href="#get-started" title="Link to this heading"></a></h1>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
+<section id="prerequisites">
+<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Install <a class="reference external" href="https://docs.anaconda.com/free/anaconda/install/">Anaconda</a></p></li>
+<li><p>Install <a class="reference external" href="https://www.open-mpi.org/faq/?category=building#easy-build">Open MPI</a></p></li>
+<li><p>Python 3.8 or later</p></li>
+</ul>
+<p>There are two ways to install the neural solution:</p>
+</section>
+<section id="method-1-using-pip">
+<h3>Method 1. Using pip:<a class="headerlink" href="#method-1-using-pip" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">neural</span><span class="o">-</span><span class="n">solution</span>
+</pre></div>
+</div>
+</section>
+<section id="method-2-building-from-source">
+<h3>Method 2. Building from source:<a class="headerlink" href="#method-2-building-from-source" title="Link to this heading"></a></h3>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># get source code</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/intel/neural-compressor
+<span class="nb">cd</span><span class="w"> </span>neural-compressor
+
+<span class="c1"># install neural compressor</span>
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+python<span class="w"> </span>setup.py<span class="w"> </span>install
+
+<span class="c1"># install neural solution</span>
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>neural_solution/requirements.txt
+python<span class="w"> </span>setup.py<span class="w"> </span>neural_solution<span class="w"> </span>install
+</pre></div>
+</div>
+</section>
+</section>
+<section id="end-to-end-examples">
+<h2>End-to-end examples<a class="headerlink" href="#end-to-end-examples" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="./examples/hf_models/README.html">Quantizing a Hugging Face model</a></p></li>
+<li><p><a class="reference external" href="./examples/custom_models_optimized/tf_example1/README.html">Quantizing a custom model</a></p></li>
+</ul>
+</section>
+<section id="learn-more">
+<h2>Learn More<a class="headerlink" href="#learn-more" title="Link to this heading"></a></h2>
+<!-- TODO more docs(Install details, API and so on...) --><ul class="simple">
+<li><p>The Architecture documents</p></li>
+<li><p><a class="reference external" href="./docs/source/description_api.html">APIs Reference</a></p></li>
+</ul>
+</section>
+</section>
+<section id="contact">
+<h1>Contact<a class="headerlink" href="#contact" title="Link to this heading"></a></h1>
+<p>Please contact us at <a class="reference external" href="mailto:inc&#46;maintainers&#37;&#52;&#48;intel&#46;com">inc<span>&#46;</span>maintainers<span>&#64;</span>intel<span>&#46;</span>com</a> for any Neural Solution related question.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8d976d6160> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

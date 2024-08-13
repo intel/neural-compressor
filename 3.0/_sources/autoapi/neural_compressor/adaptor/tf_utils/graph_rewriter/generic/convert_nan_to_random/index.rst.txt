@@ -1,0 +1,29 @@
+neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_nan_to_random
+===============================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_nan_to_random
+
+.. autoapi-nested-parse::
+
+   Convert NAN to random Graph Rewriter.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.convert_nan_to_random.ConvertNanToRandom
+
+
+Module Contents
+---------------
+
+.. py:class:: ConvertNanToRandom(model)
+
+
+
+   Convert Const node which value consists of NAN to random data.
+
+

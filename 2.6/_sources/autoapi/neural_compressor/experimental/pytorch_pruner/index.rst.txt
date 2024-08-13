@@ -1,0 +1,25 @@
+neural_compressor.experimental.pytorch_pruner
+=============================================
+
+.. py:module:: neural_compressor.experimental.pytorch_pruner
+
+.. autoapi-nested-parse::
+
+   PyTorch Pruner module.
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/experimental/pytorch_pruner/logger/index
+   /autoapi/neural_compressor/experimental/pytorch_pruner/patterns/index
+   /autoapi/neural_compressor/experimental/pytorch_pruner/prune_utils/index
+   /autoapi/neural_compressor/experimental/pytorch_pruner/pruner/index
+   /autoapi/neural_compressor/experimental/pytorch_pruner/pruning/index
+   /autoapi/neural_compressor/experimental/pytorch_pruner/scheduler/index
+
+

@@ -1,0 +1,11 @@
+neural_compressor.torch.algorithms.weight_only.hqq.quant_api
+============================================================
+
+.. py:module:: neural_compressor.torch.algorithms.weight_only.hqq.quant_api
+
+.. autoapi-nested-parse::
+
+   HQQ quantization APIs.
+
+
+

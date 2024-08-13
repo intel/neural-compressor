@@ -1,0 +1,53 @@
+neural_compressor.tensorflow.algorithms.static_quant.tensorflow
+===============================================================
+
+.. py:module:: neural_compressor.tensorflow.algorithms.static_quant.tensorflow
+
+.. autoapi-nested-parse::
+
+   Tensorflow Adaptor Classes.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.algorithms.static_quant.tensorflow.TensorFlowAdaptor
+   neural_compressor.tensorflow.algorithms.static_quant.tensorflow.Tensorflow_ITEXAdaptor
+   neural_compressor.tensorflow.algorithms.static_quant.tensorflow.TensorFlowConfig
+   neural_compressor.tensorflow.algorithms.static_quant.tensorflow.TensorflowQuery
+   neural_compressor.tensorflow.algorithms.static_quant.tensorflow.TensorflowConfigConverter
+
+
+Module Contents
+---------------
+
+.. py:class:: TensorFlowAdaptor(framework_specific_info)
+
+   Adaptor Layer for stock tensorflow and spr-base.
+
+
+.. py:class:: Tensorflow_ITEXAdaptor(framework_specific_info)
+
+
+
+   Tensorflow ITEX Adaptor Class.
+
+
+.. py:class:: TensorFlowConfig(precisions=None)
+
+   Base config class for TensorFlow.
+
+
+.. py:class:: TensorflowQuery(local_config_file=None, performance_only=False, itex_mode=False, quant_mode='static')
+
+   Tensorflow Query Capability Class.
+
+
+.. py:class:: TensorflowConfigConverter(quant_config: neural_compressor.tensorflow.quantization.config.StaticQuantConfig, capability: Dict)
+
+   Convert `StaticQuantConfig` to the format used by static quant algo.
+
+

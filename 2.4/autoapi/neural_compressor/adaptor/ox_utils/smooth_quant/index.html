@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.adaptor.ox_utils.smooth_quant &mdash; Intel® Neural Compressor 2.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">2.4▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.adaptor.ox_utils.smooth_quant</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/autoapi/neural_compressor/adaptor/ox_utils/smooth_quant/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.adaptor.ox_utils.smooth_quant">
+<span id="neural-compressor-adaptor-ox-utils-smooth-quant"></span><h1>neural_compressor.adaptor.ox_utils.smooth_quant<a class="headerlink" href="#module-neural_compressor.adaptor.ox_utils.smooth_quant" title="Link to this heading"></a></h1>
+<p>SmoothQuant for onnxrt adaptor.</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.smooth_quant.ORTSmoothQuant" title="neural_compressor.adaptor.ox_utils.smooth_quant.ORTSmoothQuant"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ORTSmoothQuant</span></code></a></p></td>
+<td><p>Fake input channel quantization.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.smooth_quant.get_quant_dequant_output" title="neural_compressor.adaptor.ox_utils.smooth_quant.get_quant_dequant_output"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_quant_dequant_output</span></code></a>(model, input_data, ...)</p></td>
+<td><p>Get loss between fp32 output and QDQ output.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.smooth_quant.make_sub_graph" title="neural_compressor.adaptor.ox_utils.smooth_quant.make_sub_graph"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_sub_graph</span></code></a>(node, inits, input_data, output_data, ...)</p></td>
+<td><p>Build a model with the specific node.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.adaptor.ox_utils.smooth_quant.quant_dequant_data" title="neural_compressor.adaptor.ox_utils.smooth_quant.quant_dequant_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quant_dequant_data</span></code></a>(data[, reduce_range, qType, scheme])</p></td>
+<td><p>Quantize and then dequantize data.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.smooth_quant.get_quant_dequant_output">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.smooth_quant.</span></span><span class="sig-name descname"><span class="pre">get_quant_dequant_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduce_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/ox_utils/smooth_quant.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.smooth_quant.get_quant_dequant_output" title="Link to this definition"></a></dt>
+<dd><p>Get loss between fp32 output and QDQ output.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>object</em>) – model</p></li>
+<li><p><strong>input_data</strong> (<em>numpy.ndarray</em>) – fp32 input</p></li>
+<li><p><strong>output_data</strong> (<em>numpy.ndarray</em>) – fp32 output</p></li>
+<li><p><strong>reduce_range</strong> (<em>bool</em>) – use 7 bit or not</p></li>
+<li><p><strong>backend</strong> (<em>str</em>) – execution provider</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.smooth_quant.make_sub_graph">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.smooth_quant.</span></span><span class="sig-name descname"><span class="pre">make_sub_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduce_range</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ir_version</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/ox_utils/smooth_quant.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.smooth_quant.make_sub_graph" title="Link to this definition"></a></dt>
+<dd><p>Build a model with the specific node.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>node</strong> (<em>object</em>) – node</p></li>
+<li><p><strong>inits</strong> (<em>list</em>) – initializer inputs of this node</p></li>
+<li><p><strong>input_data</strong> (<em>numpy.ndarray</em>) – fp32 input</p></li>
+<li><p><strong>output_data</strong> (<em>numpy.ndarray</em>) – fp32 output</p></li>
+<li><p><strong>reduce_range</strong> (<em>bool</em>) – use 7 bit or not</p></li>
+<li><p><strong>opset</strong> (<em>object</em>) – opset of the model</p></li>
+<li><p><strong>ir_version</strong> (<em>object</em>) – ir_version of the model</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.smooth_quant.quant_dequant_data">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.smooth_quant.</span></span><span class="sig-name descname"><span class="pre">quant_dequant_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduce_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qType</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sym'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/ox_utils/smooth_quant.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.smooth_quant.quant_dequant_data" title="Link to this definition"></a></dt>
+<dd><p>Quantize and then dequantize data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>numpy.ndarray</em>) – target data</p></li>
+<li><p><strong>reduce_range</strong> (<em>bool</em>) – use 7 bit or not</p></li>
+<li><p><strong>qType</strong> (<em>int</em>) – data type</p></li>
+<li><p><strong>scheme</strong> (<em>str</em>) – sym or asym quantization</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.adaptor.ox_utils.smooth_quant.ORTSmoothQuant">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.adaptor.ox_utils.smooth_quant.</span></span><span class="sig-name descname"><span class="pre">ORTSmoothQuant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reduce_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'CPUExecutionProvider'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v2.4/neural_compressor/adaptor/ox_utils/smooth_quant.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.adaptor.ox_utils.smooth_quant.ORTSmoothQuant" title="Link to this definition"></a></dt>
+<dd><p>Fake input channel quantization.</p>
+<p>For more details please refer to:
+[1] SmoothQuant: Accurate and Efficient
+Post-Training Quantization for Large Language Models
+[2] SPIQ: Data-Free Per-Channel Static Input Quantization
+We only support inplace mode which means the model weights will be changed,
+you can call recover function to recover the weights if needed.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8da053c520> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

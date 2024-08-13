@@ -1,0 +1,86 @@
+neural_compressor.adaptor.torch_utils.layer_wise_quant.utils
+============================================================
+
+.. py:module:: neural_compressor.adaptor.torch_utils.layer_wise_quant.utils
+
+.. autoapi-nested-parse::
+
+   Utils for layer wise quantization.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.torch_utils.layer_wise_quant.utils.get_module
+   neural_compressor.adaptor.torch_utils.layer_wise_quant.utils.get_children
+   neural_compressor.adaptor.torch_utils.layer_wise_quant.utils.get_named_children
+   neural_compressor.adaptor.torch_utils.layer_wise_quant.utils.dowload_hf_model
+   neural_compressor.adaptor.torch_utils.layer_wise_quant.utils.load_empty_model
+   neural_compressor.adaptor.torch_utils.layer_wise_quant.utils.get_super_module_by_name
+   neural_compressor.adaptor.torch_utils.layer_wise_quant.utils.update_module
+   neural_compressor.adaptor.torch_utils.layer_wise_quant.utils.load_layer_wise_quantized_model
+   neural_compressor.adaptor.torch_utils.layer_wise_quant.utils.load_tensor_from_shard
+   neural_compressor.adaptor.torch_utils.layer_wise_quant.utils.load_tensor
+
+
+Module Contents
+---------------
+
+.. py:function:: get_module(model, key)
+
+   Get module from model by key name.
+
+   :param model: original model
+   :type model: torch.nn.Module
+   :param key: module name to be replaced
+   :type key: str
+
+
+.. py:function:: get_children(model)
+
+   Get all the children of given model.
+
+
+.. py:function:: get_named_children(model, pre=[])
+
+   Get all the name and children of given model.
+
+
+.. py:function:: dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None)
+
+   Download hugging face model from hf hub.
+
+
+.. py:function:: load_empty_model(pretrained_model_name_or_path, cls=AutoModelForCausalLM, **kwargs)
+
+   Load a empty model.
+
+
+.. py:function:: get_super_module_by_name(model, module_name)
+
+   Get the father module with given name of child module.
+
+
+.. py:function:: update_module(model, module_name, new_module)
+
+   Update module.
+
+
+.. py:function:: load_layer_wise_quantized_model(path)
+
+   Load layer wise quantized model.
+
+
+.. py:function:: load_tensor_from_shard(pretrained_model_name_or_path, tensor_name, prefix=None)
+
+   Load tensor from shard.
+
+
+.. py:function:: load_tensor(path, tensor_name=None, prefix=None)
+
+   Load a tensor from bin file with given tensor name.
+
+

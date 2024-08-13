@@ -1,0 +1,32 @@
+neural_compressor.experimental.mixed_precision
+==============================================
+
+.. py:module:: neural_compressor.experimental.mixed_precision
+
+.. autoapi-nested-parse::
+
+   Class for low precision model generation across multiple framework backends.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.experimental.mixed_precision.MixedPrecision
+
+
+Module Contents
+---------------
+
+.. py:class:: MixedPrecision(conf_fname_or_obj=None)
+
+
+
+   Class used for generating low precision model.
+
+   MixedPrecision class automatically generates low precision model across various DL
+   frameworks including tensorflow, pytorch and onnxruntime.
+
+

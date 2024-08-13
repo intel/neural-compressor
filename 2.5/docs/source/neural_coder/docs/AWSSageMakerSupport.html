@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AWS Amazon SageMaker Support &mdash; Intel® Neural Compressor 2.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../versions.html">2.5▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">AWS Amazon SageMaker Support</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/docs/source/neural_coder/docs/AWSSageMakerSupport.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="aws-amazon-sagemaker-support">
+<h1>AWS Amazon SageMaker Support<a class="headerlink" href="#aws-amazon-sagemaker-support" title="Link to this heading"></a></h1>
+<p><a class="reference external" href="https://aws.amazon.com/sagemaker/">AWS Amazon SageMaker</a> users can easily enjoy the productivity boost brought by Neural Coder by one-click installing <a class="reference external" href="https://www.npmjs.com/package/jupyter-lab-neural-compressor">Neural Coder Jupyter Lab extension</a> in either <strong>SageMaker Studio</strong> or <strong>SageMaker Notebook instance</strong>.</p>
+<section id="start-jupyter-lab-3">
+<h2>Start Jupyter Lab 3<a class="headerlink" href="#start-jupyter-lab-3" title="Link to this heading"></a></h2>
+<p><a class="reference external" href="https://www.npmjs.com/package/jupyter-lab-neural-compressor">Neural Coder Jupyter extension</a> requires Jupyter Lab 3. Using Jupyter Lab 1 will cause installation error. To start Jupyter Lab 3, please check the following:</p>
+<section id="for-sagemaker-studio">
+<h3>For SageMaker Studio<a class="headerlink" href="#for-sagemaker-studio" title="Link to this heading"></a></h3>
+<img src="https://user-images.githubusercontent.com/86637189/206102264-20ebbce8-21ee-4de0-90fb-5fe0e78ade62.png" alt="SageMaker Studio Jupyter Lab 3" width="50%" height="50%"></section>
+<section id="for-sagemaker-notebook-instance">
+<h3>For SageMaker Notebook instance<a class="headerlink" href="#for-sagemaker-notebook-instance" title="Link to this heading"></a></h3>
+<img src="https://user-images.githubusercontent.com/86637189/206102316-4440648c-1a93-4efe-bc54-c9b1deeb43a0.png" alt="SageMaker Notebook instance Jupyter Lab 3" width="25%" height="25%"></section>
+</section>
+<section id="installation-guide">
+<h2>Installation Guide<a class="headerlink" href="#installation-guide" title="Link to this heading"></a></h2>
+<p>For both cases, the installation process is exactly the same, which is by <strong>searching <code class="docutils literal notranslate"><span class="pre">neural-compressor</span></code> in the Extension Manager</strong>.</p>
+<ol class="simple">
+<li><p>Search and Install</p></li>
+</ol>
+<img src="https://user-images.githubusercontent.com/86637189/206103447-cd813091-0452-4a35-a3dd-72a06b44de47.png" alt="SageMaker Notebook instance Jupyter Lab 3" width="25%" height="25%"><ol class="simple">
+<li><p>Rebuild</p></li>
+</ol>
+<img src="https://user-images.githubusercontent.com/86637189/206103467-72a64766-fe77-419d-b08d-8a7ccdb5b2d0.png" alt="SageMaker Notebook instance Jupyter Lab 3" width="25%" height="25%"><ol class="simple">
+<li><p>Save and Reload</p></li>
+</ol>
+<img src="https://user-images.githubusercontent.com/86637189/206103484-cf5fd2bb-588c-4623-aa7f-576f1ceba507.png" alt="SageMaker Notebook instance Jupyter Lab 3" width="25%" height="25%"><ol class="simple">
+<li><p>Done!</p></li>
+</ol>
+<img src="https://user-images.githubusercontent.com/86637189/206103909-3b29f616-64dc-4b48-89a9-31175beba142.png" alt="SageMaker Notebook instance Jupyter Lab 3" width="75%" height="75%"></section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f81ca875130> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

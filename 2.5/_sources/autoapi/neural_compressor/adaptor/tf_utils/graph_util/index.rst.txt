@@ -1,0 +1,37 @@
+neural_compressor.adaptor.tf_utils.graph_util
+=============================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_util
+
+.. autoapi-nested-parse::
+
+   Tensorflow Graph Utils Helper Classes.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_util.GraphAnalyzer
+   neural_compressor.adaptor.tf_utils.graph_util.GraphRewriterHelper
+
+
+Module Contents
+---------------
+
+.. py:class:: GraphAnalyzer(extend_engine=None)
+
+   Tensorflow Graph Analyzer class which implemented under singleton mode.
+
+   This class provides the following API:
+   * Analyze the graph
+   * Analyze the input/output node names of the specified graph
+
+
+.. py:class:: GraphRewriterHelper
+
+   Encapsulates the graph operation into one class.
+
+

@@ -1,0 +1,387 @@
+neural_compressor.adaptor.mxnet_utils.util
+==========================================
+
+.. py:module:: neural_compressor.adaptor.mxnet_utils.util
+
+.. autoapi-nested-parse::
+
+   Mxnet util module.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.mxnet_utils.util.OpType
+   neural_compressor.adaptor.mxnet_utils.util.DataLoaderWrap
+   neural_compressor.adaptor.mxnet_utils.util.DataIterLoader
+   neural_compressor.adaptor.mxnet_utils.util.CollectorBase
+   neural_compressor.adaptor.mxnet_utils.util.CalibCollector
+   neural_compressor.adaptor.mxnet_utils.util.TensorCollector
+   neural_compressor.adaptor.mxnet_utils.util.NameCollector
+   neural_compressor.adaptor.mxnet_utils.util.CalibData
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.mxnet_utils.util.isiterable
+   neural_compressor.adaptor.mxnet_utils.util.ensure_list
+   neural_compressor.adaptor.mxnet_utils.util.check_mx_version
+   neural_compressor.adaptor.mxnet_utils.util.combine_capabilities
+   neural_compressor.adaptor.mxnet_utils.util.make_nc_model
+   neural_compressor.adaptor.mxnet_utils.util.fuse
+   neural_compressor.adaptor.mxnet_utils.util.get_framework_name
+   neural_compressor.adaptor.mxnet_utils.util.prepare_model_data
+   neural_compressor.adaptor.mxnet_utils.util.prepare_model
+   neural_compressor.adaptor.mxnet_utils.util.create_data_example
+   neural_compressor.adaptor.mxnet_utils.util.prepare_dataloader
+   neural_compressor.adaptor.mxnet_utils.util.ndarray_to_device
+   neural_compressor.adaptor.mxnet_utils.util.is_model_quantized
+   neural_compressor.adaptor.mxnet_utils.util.query_quantizable_nodes
+   neural_compressor.adaptor.mxnet_utils.util.quantize_sym_model
+   neural_compressor.adaptor.mxnet_utils.util.run_forward
+   neural_compressor.adaptor.mxnet_utils.util.make_symbol_block
+   neural_compressor.adaptor.mxnet_utils.util.make_module
+   neural_compressor.adaptor.mxnet_utils.util.parse_tune_config
+   neural_compressor.adaptor.mxnet_utils.util.distribute_calib_tensors
+   neural_compressor.adaptor.mxnet_utils.util.calib_model
+   neural_compressor.adaptor.mxnet_utils.util.amp_convert
+
+
+Module Contents
+---------------
+
+.. py:class:: OpType
+
+
+
+   Enum op types.
+
+
+.. py:function:: isiterable(obj) -> bool
+
+   Checks whether object is iterable.
+
+   :param obj: object to check.
+
+   :returns: True if object is iterable, else False.
+   :rtype: boolean
+
+
+.. py:function:: ensure_list(x)
+
+   Ensures that object is a list.
+
+   :param x: input.
+
+   :returns: x if x is list, else [x].
+   :rtype: list
+
+
+.. py:function:: check_mx_version(version)
+
+   Checks MXNet version.
+
+   :param version: version to check.
+   :type version: str
+
+   :returns: True if mx.__version__ >= version, else False.
+   :rtype: boolean
+
+
+.. py:function:: combine_capabilities(current, new)
+
+   Combine capabilities.
+
+   :param current: current capabilities.
+   :type current: dict
+   :param new: new capabilities.
+   :type new: dict
+
+   :returns: contains all capabilities.
+   :rtype: dict
+
+
+.. py:function:: make_nc_model(target, sym_model, ctx, input_desc)
+
+   Converts a symbolic model to an Neural Compressor model.
+
+   :param target: target model type to return.
+   :type target: object
+   :param sym_model: symbol model (symnet, args, auxs).
+   :type sym_model: tuple
+   :param input_desc: model input data description.
+   :type input_desc: list
+
+   :returns: converted neural_compressor model
+   :rtype: NCModel
+
+
+.. py:function:: fuse(sym_model, ctx)
+
+   Fuse the supplied model.
+
+   :param sym_model: symbol model (symnet, args, auxs).
+   :type sym_model: tuple
+
+   :returns: fused symbol model (symnet, args, auxs).
+   :rtype: tuple
+
+
+.. py:function:: get_framework_name(ctx)
+
+   Get the framework name by version.
+
+   :param ctx: mxnet context object.
+   :type ctx: object
+
+   :returns: framework name.
+   :rtype: str
+
+
+.. py:function:: prepare_model_data(nc_model, ctx, data_x)
+
+   Prepares sym_model and dataloader needed for quantization, calibration or running.
+
+   :param nc_model: model to prepare.
+   :type nc_model: object
+   :param data_x: data iterator/loader to prepare.
+   :type data_x: object
+
+   :returns: symbol model (symnet, args, auxs) and DataLoaderWrap.
+   :rtype: tuple
+
+
+.. py:function:: prepare_model(nc_model, ctx, input_desc)
+
+   Prepare model.
+
+   :param nc_model: model to prepare.
+   :type nc_model: object
+   :param ctx: mxnet context object.
+   :type ctx: object
+   :param input_desc: input list of mxnet data types.
+   :type input_desc: list
+
+   :returns: mxnet model (symnet, args, auxs).
+   :rtype: object
+
+
+.. py:function:: create_data_example(ctx, input_desc)
+
+   Create data example by mxnet input description and ctx.
+
+   :param ctx: mxnet context object.
+   :type ctx: object
+   :param input_desc: input list of mxnet data types.
+   :type input_desc: list
+
+   :returns: data example.
+   :rtype: list
+
+
+.. py:function:: prepare_dataloader(nc_model, ctx, data_x)
+
+   Prepare dataloader.
+
+   :param nc_model: model to prepare.
+   :type nc_model: object
+   :param ctx: mxnet context object.
+   :type ctx: object
+   :param data_x: mxnet io iterable object or dataloader object.
+   :type data_x: object
+
+   :returns: dataloader.
+   :rtype: object
+
+
+.. py:function:: ndarray_to_device(ndarray, device)
+
+   Ndarray to device.
+
+   :param ndarray: model to prepare.
+   :type ndarray: ndarray
+   :param device: mxnet device object.
+   :type device: object
+
+   :returns: ndarray on the device.
+   :rtype: ndarray
+
+
+.. py:function:: is_model_quantized(sym_model)
+
+   Checks whether the model is quantized.
+
+   :param sym_model: symbol model (symnet, args, auxs).
+   :type sym_model: tuple
+
+   :returns: True if model is quantized, else False.
+   :rtype: boolean
+
+
+.. py:function:: query_quantizable_nodes(sym_model, ctx, dataloader)
+
+   Query quantizable nodes of the given model.
+
+   :param sym_model: symbol model (symnet, args, auxs) to query.
+   :type sym_model: tuple
+
+   :returns: quantizable nodes of the given model.
+             dict: tensor to node mapping.
+   :rtype: list
+
+
+.. py:function:: quantize_sym_model(sym_model, ctx, qconfig)
+
+   Quantizes the symbolic model according to the configuration.
+
+   :param sym_model: symbol model (symnet, args, auxs).
+   :type sym_model: tuple
+   :param qconfig: quantization configuration.
+   :type qconfig: dict
+
+   :returns: Symbol model (symnet, args, auxs) and list of tensors for calibration.
+   :rtype: tuple
+
+
+.. py:function:: run_forward(sym_model, ctx, dataloader, b_filter, collector=None, pre_batch=None, post_batch=None)
+
+   Run forward propagation on the model.
+
+   :param sym_model: symbol model (symnet, args, auxs).
+   :type sym_model: tuple
+   :param dataloader: data loader.
+   :type dataloader: DataLoaderWrap
+   :param b_filter: filter on which batches to run inference on.
+   :type b_filter: generator
+   :param collector: collects information during inference.
+   :type collector: object
+   :param pre_batch: function to call prior to batch inference.
+   :param post_batch: function to call after batch inference.
+
+   :returns: batch count.
+   :rtype: int
+
+
+.. py:function:: make_symbol_block(sym_model, ctx, input_desc)
+
+   Convert a symbol model to gluon SymbolBlock.
+
+   :param sym_model: symbol model (symnet, args, auxs).
+   :type sym_model: tuple
+   :param input_desc: model input data description.
+   :type input_desc: list
+
+   :returns: SymbolBlock model.
+   :rtype: mx.gluon.SymbolBlock
+
+
+.. py:function:: make_module(sym_model, ctx, input_desc)
+
+   Convert a symbol model to Module.
+
+   :param sym_model: symbol model (symnet, args, auxs).
+   :type sym_model: tuple
+   :param input_desc: model input data description.
+   :type input_desc: list
+
+   :returns: Module model.
+   :rtype: mx.module.Module
+
+
+.. py:function:: parse_tune_config(tune_cfg, quantizable_nodes)
+
+   Convert the strategy config to MXNet quantization config.
+
+   :param tune_cfg: tune config from neural_compressor strategy.
+   :type tune_cfg: dict
+   :param quantizable_nodes: quantizable nodes in the model.
+   :type quantizable_nodes: list
+
+   :returns: quantization configuration.
+             dict: calibration configuration.
+   :rtype: dict
+
+
+.. py:function:: distribute_calib_tensors(calib_tensors, calib_cfg, tensor_to_node)
+
+   Distributes the tensors for calibration, depending on the algorithm set in the configuration of their nodes.
+
+   :param calib_tensors: tensors to distribute.
+   :param calib_cfg: calibration configuration.
+   :type calib_cfg: dict
+   :param tensor_to_node: tensor to node mapping.
+   :type tensor_to_node: dict
+
+   :returns: kl tensors and minmax tensors.
+   :rtype: tuple
+
+
+.. py:function:: calib_model(qsym_model, calib_data, calib_cfg)
+
+   Calibrate the quantized symbol model using data gathered by the collector.
+
+   :param qsym_model: quantized symbol model (symnet, args, auxs).
+   :type qsym_model: tuple
+   :param calib_data: data needed for calibration (thresholds).
+   :type calib_data: CalibData
+   :param calib_cfg: calibration configuration.
+   :type calib_cfg: dict
+
+   :returns: quantized calibrated symbol model (symnet, args, auxs).
+   :rtype: tuple
+
+
+.. py:function:: amp_convert(sym_model, input_desc, amp_cfg)
+
+   Convert model to support amp.
+
+
+.. py:class:: DataLoaderWrap(dataloader, input_desc)
+
+   DataLoader Wrap.
+
+
+.. py:class:: DataIterLoader(data_iter)
+
+   DataIterLoader.
+
+
+.. py:class:: CollectorBase
+
+   Collector Base class.
+
+
+.. py:class:: CalibCollector(include_tensors_kl, include_tensors_minmax, num_bins=8001)
+
+
+
+   Collect the calibration thresholds depending on the algorithm set.
+
+
+.. py:class:: TensorCollector(include_nodes, qtensor_to_tensor, tensor_to_node)
+
+
+
+   Tensors collector.
+
+   Builds up qtensor_to_tensor mapping.
+
+
+.. py:class:: NameCollector
+
+
+
+   Name collector.
+
+
+.. py:class:: CalibData(cache_kl={}, cache_minmax={}, tensors_kl=[], tensors_minmax=[])
+
+   Calibration data class.
+
+

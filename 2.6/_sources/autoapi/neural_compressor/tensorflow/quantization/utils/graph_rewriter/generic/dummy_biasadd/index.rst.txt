@@ -1,0 +1,29 @@
+neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.dummy_biasadd
+====================================================================================
+
+.. py:module:: neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.dummy_biasadd
+
+.. autoapi-nested-parse::
+
+   Inject dummy BiasAdd Graph Rewriter.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.dummy_biasadd.InjectDummyBiasAddOptimizer
+
+
+Module Contents
+---------------
+
+.. py:class:: InjectDummyBiasAddOptimizer(model, outputs)
+
+
+
+   Inject dummy BiasAdd for MatMul, Conv2D for pattern fusion.
+
+

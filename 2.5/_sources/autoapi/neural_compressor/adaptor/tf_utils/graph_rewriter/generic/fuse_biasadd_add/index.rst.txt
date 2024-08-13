@@ -1,0 +1,29 @@
+neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_biasadd_add
+==========================================================================
+
+.. py:module:: neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_biasadd_add
+
+.. autoapi-nested-parse::
+
+   Fuse BiasAdd and Add Graph Rewriter.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.adaptor.tf_utils.graph_rewriter.generic.fuse_biasadd_add.FuseBiasAddAndAddOptimizer
+
+
+Module Contents
+---------------
+
+.. py:class:: FuseBiasAddAndAddOptimizer(model)
+
+
+
+   Fuse Biasadd + Add into BiasAdd when the second input of Add is const node.
+
+
