@@ -604,7 +604,7 @@ class AWQConfig(TorchBaseConfig):
             double_quant_bits (int): Number of bits used to represent double_quant scale, default is 4.
             double_quant_use_sym (bool): Indicates whether double_quant scale are symmetric, default is True.
             double_quant_group_size (int): Size of double_quant groups, default is 32.
-            quant_lm_head (bool): Indicates whether quantize the lm_head layer in transformers。 Default is False.
+            quant_lm_head (bool): Indicates whether quantize the lm_head layer in transformer, default is False.
             use_auto_scale (bool): Enables best scales search based on activation distribution, default is True.
             use_auto_clip (bool):  Enables clip range search. Defaults to True.
             folding(bool): Allow insert mul before linear when the scale cannot be absorbed by last layer,

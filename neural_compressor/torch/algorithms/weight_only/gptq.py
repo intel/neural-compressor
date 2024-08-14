@@ -213,6 +213,7 @@ class RAWGPTQuantizer(object):
             dataloader: an iterable containing calibration datasets, contains (inputs, targets)
             use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
             model_path (str): Model path that is used to load state_dict per layer.
+            quant_lm_head (bool): Indicates whether quantize the lm_head layer in transformers. Defaults to False.
             device (str): cpu or cuda.
         """
         # model
