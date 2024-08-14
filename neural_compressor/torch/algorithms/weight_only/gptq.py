@@ -795,9 +795,7 @@ class RAWGPTQuantizer(object):
 
                 gptq_post_block[layer_name] = GPTQ(sub_layers[layer_name], W, self.device)
                 # gptq_for_this_block[layer_name].quantizer = Quantizer()
-                gptq_post_block[layer_name].quantizer.configure(
-                    weight_config_this_layer
-                )
+                gptq_post_block[layer_name].quantizer.configure(weight_config_this_layer)
             # generate the gptq quantizer
             handles = []  # register handles which add inputs and outputs to gptq object
             for layer_name in sub_layers:
@@ -860,7 +858,7 @@ class RAWGPTQuantizer(object):
                     # save perm for restoring the weights, but only when static_groups is not enabled.
                     gptq_config[full_layer_name]["perm"] = gptq_post_block[full_layer_name].perm
                 gptq_post_block[layer_name].free()
-            
+
             # 2.7.2 lm_head: export to compressed model
             for layer_name in sub_layers:
                 full_layer_name = self.gptq_related_blocks["transformers_post"]["name"]
@@ -874,17 +872,17 @@ class RAWGPTQuantizer(object):
                     gptq_perm = gptq_config[full_layer_name]["perm"]
                 else:
                     gptq_perm = None
-                if self.use_layer_wise: # pragma: no cover
-                    state_dict = torch.load(
-                        LWQ_WORKSPACE + f"/{full_layer_name}.pt"
-                    )
+                if self.use_layer_wise:  # pragma: no cover
+                    state_dict = torch.load(LWQ_WORKSPACE + f"/{full_layer_name}.pt")
                     Q = state_dict["weight"].data
                     bias = state_dict["bias"] if "bias" in state_dict.keys() else None
                 else:
                     Q = sub_layers[layer_name].weight.data
                 if weight_config_this_layer["act_order"]:
                     Q.copy_(Q[:, gptq_perm])
-                if is_transformers_imported() and isinstance(sub_layers[layer_name], transformers.Conv1D): # pragma: no cover
+                if is_transformers_imported() and isinstance(
+                    sub_layers[layer_name], transformers.Conv1D
+                ):  # pragma: no cover
                     Q = Q.t_().contiguous()
                 from .utility import quant_weight_w_scale
 
@@ -903,14 +901,16 @@ class RAWGPTQuantizer(object):
                 if isinstance(sub_layers[layer_name], torch.nn.Linear):
                     in_features = sub_layers[layer_name].in_features
                     out_features = sub_layers[layer_name].out_features
-                elif is_transformers_imported() and isinstance(sub_layers[layer_name], transformers.Conv1D): # pragma: no cover
+                elif is_transformers_imported() and isinstance(
+                    sub_layers[layer_name], transformers.Conv1D
+                ):  # pragma: no cover
                     in_features = sub_layers[layer_name].weight.shape[0]
                     out_features = sub_layers[layer_name].weight.shape[1]
                     int_weight = sub_layers[layer_name].weight.t_().contiguous()
                     scale = scale.t_().contiguous()
                     zp = zp.t_().contiguous() if zp is not None else zp
 
-                if not self.use_layer_wise: # pragma: no cover
+                if not self.use_layer_wise:  # pragma: no cover
                     bias = sub_layers[layer_name].bias
 
                 new_module = INCWeightOnlyLinear(
