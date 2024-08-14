@@ -412,7 +412,6 @@ class GPTQConfig(TorchBaseConfig):
             white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
                                                                  Default is DEFAULT_WHITE_LIST.
         """
-        assert not quant_lm_head, "GPTQ doesn't support lm_head quantization currently, it's coming soon!"
         super().__init__(white_list=white_list)
         self.dtype = dtype
         self.bits = bits
