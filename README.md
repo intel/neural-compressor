@@ -147,7 +147,7 @@ Intel Neural Compressor will convert the model format from auto-gptq to hpu form
     </tr>
     <tr>
         <td colspan="2" align="center"><a href="./docs/source/3x/PT_WeightOnlyQuant.md">Weight-Only Quantization</a></td>
-        <td colspan="2" align="center"><a href="./docs/3x/PT_FP8Quant.md">FP8 Quantization</a></td>
+        <td colspan="2" align="center"><a href="./docs/source/3x/PT_FP8Quant.md">FP8 Quantization</a></td>
         <td colspan="2" align="center"><a href="./docs/source/3x/PT_MXQuant.md">MX Quantization</a></td>
         <td colspan="2" align="center"><a href="./docs/source/3x/PT_MixedPrecision.md">Mixed Precision</a></td>
     </tr>
