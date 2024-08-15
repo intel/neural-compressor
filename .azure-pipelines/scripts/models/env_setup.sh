@@ -51,6 +51,7 @@ SCRIPTS_PATH="/neural-compressor/.azure-pipelines/scripts/models"
 log_dir="/neural-compressor/.azure-pipelines/scripts/models"
 if [[ "${inc_new_api}" == "3x"* ]]; then
     WORK_SOURCE_DIR="/neural-compressor/examples/3.x_api/${framework}"
+    pip install git+https://github.com/intel/intel-extension-for-transformers.git
 else
     WORK_SOURCE_DIR="/neural-compressor/examples/${framework}"
 fi
