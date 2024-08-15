@@ -101,7 +101,7 @@ function run_benchmark {
     elif [ "${topology}" = "opt_125m_woq_autoround_int4" ]; then
         model_name_or_path="facebook/opt-125m"
     fi
-    
+
     if [[ ${mode} == "accuracy" ]]; then
         python -u run_clm_no_trainer.py \
             --model ${model_name_or_path} \
@@ -118,6 +118,8 @@ function run_benchmark {
     else
         echo "Error: No such mode: ${mode}"
         exit 1
+    fi
+        
 }
 
 main "$@"
