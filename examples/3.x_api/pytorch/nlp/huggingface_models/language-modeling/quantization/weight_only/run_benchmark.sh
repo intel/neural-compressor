@@ -85,7 +85,7 @@ function run_benchmark {
     elif [ "${topology}" = "gpt_j_woq_rtn_int4" ]; then
         model_name_or_path="EleutherAI/gpt-j-6b"
     elif [ "${topology}" = "gpt_j_woq_rtn_int4_dq_bnb" ]; then
-        model_name_or_path="EleutherAI/gpt-j-6b""
+        model_name_or_path="EleutherAI/gpt-j-6b"
     elif [ "${topology}" = "gpt_j_woq_rtn_int4_dq_ggml" ]; then
         model_name_or_path="EleutherAI/gpt-j-6b"
     elif [ "${topology}" = "gpt_j_woq_gptq_int4" ]; then
