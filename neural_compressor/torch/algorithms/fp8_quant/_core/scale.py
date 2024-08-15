@@ -124,7 +124,7 @@ def get_config(
             layer_type = mod_dict[mod_type_str].type
             if mname not in scales:
                 logger.debug("Calculating scales for layer %s", mname)
-                if mname not in measurement:
+                if top_level_config.cfg["use_stats_files"] and mname not in measurement:
                     if mod_dict[mod_type_str].should_measure:
                         qconfig[UNMEASURED_MODELS].append(mname)
                     logger.debug(
@@ -133,7 +133,7 @@ def get_config(
                     )
                     continue
 
-                layer_measure = measurement[mname]  # ModuleConfig() of measurements
+                layer_measure = measurement.get(mname, None)  # ModuleConfig() of measurements
                 scales[mname] = method[layer_type][0](mod, layer_measure, params)  # ModuleConfig() of scales
                 if scales_file is not None:
                     scales_obj[mname] = ModuleConfig(
@@ -163,11 +163,18 @@ def get_config(
 
 scaling_methods = {
     "unit_scale": {
-        "linear": (linear_unit_scale_scales, linear_scales_to_mod_config),
-        "matmul": (matmul_unit_scale_scales, matmul_scales_to_mod_config),
-        "softmax": (softmax_unit_scale_scales, softmax_scales_to_mod_config),
-        "kv_cache": (kv_cache_unit_scale_scales, kv_cache_scales_to_mod_config),
-        "fused_sdpa": (fsdpa_unit_scale_scales, fsdpa_scales_to_mod_config),
+        "linear": (linear_single_scale_scales, linear_scales_to_mod_config),
+        "matmul": (matmul_single_scale_scales, matmul_scales_to_mod_config),
+        "softmax": (softmax_single_scale_scales, softmax_scales_to_mod_config),
+        "kv_cache": (kv_cache_single_scale_scales, kv_cache_scales_to_mod_config),
+        "fused_sdpa": (fsdpa_single_scale_scales, fsdpa_scales_to_mod_config),
+    },
+    "hw_aligned_single_scale": {
+        "linear": (linear_hw_aligned_single_scale_scales, linear_scales_to_mod_config),
+        "matmul": (matmul_hw_aligned_single_scale_scales, matmul_scales_to_mod_config),
+        "softmax": (softmax_hw_aligned_single_scale_scales, softmax_scales_to_mod_config),
+        "kv_cache": (kv_cache_hw_aligned_single_scale_scales, kv_cache_scales_to_mod_config),
+        "fused_sdpa": (fsdpa_hw_aligned_single_scale_scales, fsdpa_scales_to_mod_config),
     },
     "act_maxabs_pts_weight_maxabs_pts_pow2_hw": {
         "linear": (
@@ -352,6 +359,8 @@ scaling_methods = {
 scale_method_mapping = {
     (ScaleMethod.UNIT_SCALE, "maxabs"): "unit_scale",
     (ScaleMethod.UNIT_SCALE, "maxabs_per_channel"): "unit_scale",
+    (ScaleMethod.HW_ALIGNED_SINGLE_SCALE, "maxabs"): "hw_aligned_single_scale",
+    (ScaleMethod.HW_ALIGNED_SINGLE_SCALE, "maxabs_per_channel"): "hw_aligned_single_scale",
     (ScaleMethod.MAXABS_HW, "maxabs"): "act_maxabs_pts_weight_maxabs_pts_pow2_hw",
     (ScaleMethod.MAXABS_POW2, "maxabs"): "act_maxabs_pts_weight_maxabs_pts_pow2",
     (ScaleMethod.MAXABS_HW_OPT_WEIGHT, "maxabs"): "act_maxabs_pts_weight_opt_pts_hw",
@@ -400,6 +409,7 @@ scale_method_mapping = {
 
 scaling_params = {
     "unit_scale": {},
+    "hw_aligned_single_scale": {},
     "act_maxabs_pts_weight_maxabs_pts_pow2_hw": {
         "input_backoff": 0.25,
         "weight_backoff": 0.5,

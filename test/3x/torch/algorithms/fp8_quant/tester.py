@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import itertools
 import logging
-import os.path
+import os
 import random
 import typing
 from dataclasses import dataclass
@@ -11,6 +11,14 @@ import torch
 from neural_compressor.torch.algorithms.fp8_quant._core.common import mod_default_dict
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import Fp8cfg, QuantMode, ScaleMethod
 
+# TODO [SW-196641]: fix the following issues:
+SCALE_METHODS_SEGFAULT = [ScaleMethod.ACT_MAXABS_HW_WEIGHTS_PCS_OPT_POW2, ScaleMethod.ACT_MAXABS_POW2_WEIGHTS_PCS_OPT_POW2, ScaleMethod.MAXABS_HW_OPT_WEIGHT, ScaleMethod.MAXABS_POW2_OPT_WEIGHT]
+SCALE_METHODS_KEY_ERROR = [ScaleMethod.MAX, ScaleMethod.SMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2, ScaleMethod.WEAKSMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2, ScaleMethod.SMOOTHQUANT_OPT]
+SCALE_METHODS_COMPILATION_ERROR = [ScaleMethod.ACT_MAXABS_HW_WEIGHTS_PCS_MAXABS_POW2, ScaleMethod.ACT_MAXABS_POW2_WEIGHTS_PCS_MAXABS_POW2]
+SCALE_METHODS_QUANT_ONLY = [ScaleMethod.UNIT_SCALE, ScaleMethod.HW_ALIGNED_SINGLE_SCALE]
+
+QUANT_MODES_DEFAULT = [QuantMode.MEASURE, QuantMode.QUANTIZE]
+QUANT_MODES_QUANT_ONLY = [QuantMode.QUANTIZE]
 
 @dataclass
 class TestVector:
@@ -50,6 +58,7 @@ def run_accuracy_test(
     measure_vectors: typing.Optional[typing.Iterable[TestVector]] = None,
     test_vectors: typing.Iterable[TestVector],
     seed: typing.Optional[int] = None,
+    quant_modes: typing.Iterable[list] = QUANT_MODES_DEFAULT,
 ):
     """Run both the reference and the quantized versions of this module,
     and compare the outputs on every test vector.
@@ -78,7 +87,7 @@ def run_accuracy_test(
     if measure_vectors is None:
         measure_vectors, test_vectors = itertools.tee(test_vectors)
 
-    for mode in [QuantMode.MEASURE, QuantMode.QUANTIZE]:
+    for mode in quant_modes:
         import neural_compressor.torch.algorithms.fp8_quant.prepare_quant.prepare_model as prepare_model
 
         reference_model = WrapModel(module_class, seed, *module_args, **module_kwargs)
@@ -169,12 +178,16 @@ class WrapModel(torch.nn.Module):
         return any(module._get_name() == module_name for module in self.modules())
 
 
-TEST_ONLY_OUTPUT_DIRECTORY = "habana_quantization_toolkit/tests/output/"
+dir_path = os.path.dirname(os.path.realpath(__file__))
+TEST_ONLY_OUTPUT_DIRECTORY = f"{dir_path}/test/3x/torch/algorithms/fp8_quant/output/"
 
 
-def get_test_unique_dump_path():
+def get_test_unique_dump_path(scale_method: ScaleMethod):
     # This is a unique id of the test including the parameters, thanks to pytest.
     # TODO: make sure this globally-ever unique (probably add global init timestamp)
+    if scale_method in SCALE_METHODS_QUANT_ONLY:
+        # Quant only scale methods don't require measurement
+        return ''
     unique_test_id = os.environ.get("PYTEST_CURRENT_TEST")
     return os.path.join(TEST_ONLY_OUTPUT_DIRECTORY, unique_test_id)
 
@@ -199,6 +212,6 @@ def _get_test_only_config(
             "observer": "maxabs",
             "fp8_config": str(lp_dtype).replace("torch.float8_", "")[:4],
             "scale_method": scale_method.name,
-            "dump_stats_path": get_test_unique_dump_path(),
+            "dump_stats_path": get_test_unique_dump_path(scale_method),
         }
     )
