@@ -284,7 +284,7 @@ class MaxAbsObserver:
         self.state = torch.zeros((1, 1), device="hpu", dtype=config["hp_dtype"])
 
     def update_state(self, x):
-        self.state.copy_(torch.maximum(torch.max(torch.abs(x)), self.state))
+        self.state.copy_(torch.maximum(torch.max(torch.abs(x)).detach(), self.state))
 
     def measure(self, x):
         self.update_state(x)
