@@ -96,8 +96,8 @@ if [[ "${fwk_ver}" != "latest" ]]; then
             pip install intel-tensorflow==${fwk_ver}
         fi
     elif [[ "${framework}" == "pytorch" ]]; then
-        pip install torch==${fwk_ver} -f https://download.pytorch.org/whl/torch_stable.html
-        pip install torchvision==${torch_vision_ver} -f https://download.pytorch.org/whl/torch_stable.html
+        pip install torch==${fwk_ver} -f https://download.pytorch.org/whl/cpu
+        pip install torchvision==${torch_vision_ver} -f https://download.pytorch.org/whl/cpu
     elif [[ "${framework}" == "onnxrt" ]]; then
         pip install onnx==1.15.0
         pip install onnxruntime==${fwk_ver}
