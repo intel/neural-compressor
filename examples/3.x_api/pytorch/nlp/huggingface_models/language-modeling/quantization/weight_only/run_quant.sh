@@ -85,6 +85,13 @@ function run_tuning {
         model_name_or_path="EleutherAI/gpt-j-6b"
         extra_cmd=$extra_cmd" --woq_algo GPTQ --woq_bits 4 --woq_group_size 128 --woq_scheme asym --woq_use_mse_search --gptq_use_max_length"
         extra_cmd=$extra_cmd" --double_quant_type GGML_TYPE_Q4_K"
+    elif [ "${topology}" = "gpt_j_woq_awq_int4" ]; then
+        model_name_or_path="EleutherAI/gpt-j-6b"
+        extra_cmd=$extra_cmd" --woq_algo AWQ --woq_bits 4 --calib_iters 128"
+        extra_cmd=$extra_cmd" --double_quant_type GGML_TYPE_Q4_K"
+    elif [ "${topology}" = "opt_125m_woq_awq_int4" ]; then
+        model_name_or_path="facebook/opt-125m"
+        extra_cmd=$extra_cmd" --woq_algo AWQ --woq_bits 4 ---calib_iters 128"
     fi
 
     python -u run_clm_no_trainer.py \

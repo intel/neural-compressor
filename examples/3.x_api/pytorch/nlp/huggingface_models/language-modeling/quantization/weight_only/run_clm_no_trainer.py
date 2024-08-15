@@ -77,6 +77,15 @@ parser.add_argument('--gptq_max_seq_length', type=int, default=2048,
                     help='Calibration dataset sequence max length, '
                         'this should align with your model config, '
                         'and your dataset builder args: args.pad_max_length')
+# =============AWQ configs====================
+parser.add_argument("--use_auto_scale", action="store_true",
+                    help="Enables best scales search based on activation distribution.")
+parser.add_argument("--use_auto_clip", action="store_true",
+                    help="Enables clip range searchc.")
+parser.add_argument("--folding", action="store_true",
+                    help="Allow insert mul before linear when the scale cannot be absorbed by last layer.")
+parser.add_argument('--absorb_layer_dict', type=dict, default={},
+                    help="The layer dict that scale can be absorbed.")
 
 # =============DoubleQuant configs====================
 parser.add_argument("--double_quant_type",
@@ -223,9 +232,14 @@ if args.quantize:
         shuffle=False,
         collate_fn=calib_evaluator.collate_batch,
     )
+    def calib_func(prepared_model):
+        for i, calib_input in enumerate(calib_dataloader):
+            if i > args.calib_iters:
+                break
+            prepared_model(calib_input[0])
 
     # 3.x api
-    from neural_compressor.torch.quantization import RTNConfig, GPTQConfig, prepare, convert, quantize
+    from neural_compressor.torch.quantization import RTNConfig, GPTQConfig, AWQConfig, prepare, convert
     from neural_compressor.torch.utils import get_double_quant_config_dict
     weight_sym = True if args.woq_scheme == "sym" else False
     if args.double_quant_type is not None:
@@ -311,6 +325,25 @@ if args.quantize:
         user_model = prepare(model=user_model, quant_config=quant_config)
         run_fn_for_gptq(user_model, dataloader_for_calibration)
         user_model = convert(user_model)
+    elif args.woq_algo == "AWQ":
+        quant_config = AWQConfig(
+            dtype=args.woq_dtype,
+            bits=args.woq_bits,
+            use_sym=weight_sym,
+            group_size=args.woq_group_size,
+            group_dim=args.woq_group_dim,
+            use_auto_scale=args.use_auto_scale,
+            use_auto_clip=args.use_auto_clip,
+            folding=args.folding,
+            absorb_layer_dict=args.absorb_layer_dict,
+        )
+        example_inputs = torch.ones([1, args.pad_max_length], dtype=torch.long)
+        run_fn = calib_func
+        user_model = prepare(model=user_model, quant_config=quant_config, example_inputs=example_inputs)
+        run_fn(user_model)
+        user_model = convert(user_model)
+            
+        
 
     user_model.save(args.output_dir)
 
