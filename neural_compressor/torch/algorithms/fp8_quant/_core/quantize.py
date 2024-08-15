@@ -64,7 +64,7 @@ def quantize_params(mod, mod_extra_config):
         mod_extra_config (ModuleExtraConfig): The quantization config object with the information how to quantize the inputs/outputs.
     """
     for param_name in mod_extra_config.params:
-        quantizer = mod_extra_config.params[param_name]
+        quantizer = mod_extra_config.params[param_name][0]
         param = getattr(mod, param_name)
         quantized_param = quantizer(param.to("hpu"))
         delattr(mod, param_name)
@@ -120,7 +120,7 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method, scal
                                                                 scales_file_format,
                                                                 scales_obj, scaling_method,
                                                                 scale_config, save_file)
-                if config.cfg["fake_quant"] == False and mod_default_dict[mod_type_str].should_measure_and_quant:
+                if not config.cfg["fake_quant"] and mod_default_dict[mod_type_str].should_measure_and_quant:
                     quantize_params(mod, mod_extra_config)
                 patch_module(mod, mod_extra_config, mod_default_dict)
                 patched_modules.append(name)
