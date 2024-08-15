@@ -1,7 +1,7 @@
 {
     "mode": "QUANTIZE",
     "observer": "maxabs",
-    "scale_method": "unit_scale",
+    "scale_method": "hw_aligned_single_scale",
     "allowlist": {
         "types": [],
         "names": []

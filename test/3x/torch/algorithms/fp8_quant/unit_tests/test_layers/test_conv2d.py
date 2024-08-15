@@ -3,7 +3,7 @@ import typing
 import pytest
 import torch
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import ScaleMethod
-from ...tester import run_accuracy_test, TestVector
+from ...tester import *
 
 
 def get_test_vectors(*, dtype: torch.dtype, C_in: int, H: int, W: int) -> typing.Iterable[TestVector]:
@@ -13,9 +13,20 @@ def get_test_vectors(*, dtype: torch.dtype, C_in: int, H: int, W: int) -> typing
     )
 
 
-@pytest.mark.parametrize("hp_dtype", [torch.bfloat16, torch.float32])
-@pytest.mark.parametrize("lp_dtype", [torch.float8_e4m3fn])
-def test_conv2d_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype):
+@pytest.mark.parametrize("hp_dtype", [torch.bfloat16, torch.float32], ids=["bf16", "fp32"])
+@pytest.mark.parametrize("lp_dtype", [torch.float8_e4m3fn], ids=["fp8_e4m3fn"])
+@pytest.mark.parametrize("scale_method", ScaleMethod)
+def test_conv2d_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype, scale_method: ScaleMethod):
+    # TODO [SW-196641]: fix the following issues:
+    if scale_method in SCALE_METHODS_SEGFAULT:
+        pytest.skip("Not supported")
+    if scale_method in SCALE_METHODS_KEY_ERROR:
+        pytest.xfail("KeyError")
+    if scale_method in SCALE_METHODS_COMPILATION_ERROR:
+        pytest.xfail("Graph compile error")
+    quant_modes = QUANT_MODES_DEFAULT
+    if scale_method in SCALE_METHODS_QUANT_ONLY:
+        quant_modes = QUANT_MODES_QUANT_ONLY
     C_in = 1
     C_out = 1
     K = 3
@@ -34,6 +45,7 @@ def test_conv2d_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype):
             "dtype": hp_dtype,
         },
         lp_dtype=lp_dtype,
-        scale_method=ScaleMethod.MAXABS_HW,
+        scale_method=scale_method,
         test_vectors=get_test_vectors(dtype=hp_dtype, C_in=C_in, H=H, W=W),
+        quant_modes=quant_modes,
     )

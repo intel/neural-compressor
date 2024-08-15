@@ -58,17 +58,18 @@ class HpDtype(Enum):
 class ScaleMethod(Enum):
     MAX = 1
     UNIT_SCALE = 2
-    MAXABS_HW = 3
-    MAXABS_POW2 = 4
-    SMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2 = 5
-    WEAKSMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2 = 6
-    ACT_MAXABS_HW_WEIGHTS_PCS_MAXABS_POW2 = 7
-    ACT_MAXABS_HW_WEIGHTS_PCS_OPT_POW2 = 8
-    ACT_MAXABS_POW2_WEIGHTS_PCS_MAXABS_POW2 = 9
-    ACT_MAXABS_POW2_WEIGHTS_PCS_OPT_POW2 = 10
-    SMOOTHQUANT_OPT = 11
-    MAXABS_HW_OPT_WEIGHT = 12
-    MAXABS_POW2_OPT_WEIGHT = 13
+    HW_ALIGNED_SINGLE_SCALE = 3
+    MAXABS_HW = 4
+    MAXABS_POW2 = 5
+    SMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2 = 6
+    WEAKSMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2 = 7
+    ACT_MAXABS_HW_WEIGHTS_PCS_MAXABS_POW2 = 8
+    ACT_MAXABS_HW_WEIGHTS_PCS_OPT_POW2 = 9
+    ACT_MAXABS_POW2_WEIGHTS_PCS_MAXABS_POW2 = 10
+    ACT_MAXABS_POW2_WEIGHTS_PCS_OPT_POW2 = 11
+    SMOOTHQUANT_OPT = 12
+    MAXABS_HW_OPT_WEIGHT = 13
+    MAXABS_POW2_OPT_WEIGHT = 14
 
 class TrueFalse(Enum):
     TRUE = True
@@ -88,6 +89,7 @@ _config_to_enum = {
 
 
 _configs_that_use_enum_value = ["fp8_config", "hp_dtype", "ignore_modules_wo_measures", "recalc_scales", "fake_quant"]
+_scale_methods_quant_only = [ScaleMethod.UNIT_SCALE, ScaleMethod.HW_ALIGNED_SINGLE_SCALE]
 
 
 def get_hqt_config(mod) -> Fp8cfg:
@@ -169,52 +171,58 @@ class Fp8cfg:
             local_rank if local_rank >= 0 and custom_config.get("seperate_measure_files", True) else None
         )
 
-        base_name = measured_global_config["dump_stats_path"].split("/")[-1]
-        folder_name = measured_global_config["dump_stats_path"][: -(len(base_name))]
-        measured_global_config["dump_stats_base_path"] = folder_name
-        os.makedirs(folder_name, exist_ok=True)
-        worker_st = (
-            ""
-            if measured_global_config["local_rank"] is None
-            else "_" + str(measured_global_config["local_rank"]) + "_" + str(measured_global_config["world_size"])
-        )
-        measured_global_config["shape_file"] = measured_global_config["dump_stats_path"] + "_hooks_shape" + worker_st
-        measured_global_config["scale_file"] = (
-            measured_global_config["dump_stats_path"]
-            + "_hooks_"
-            + measured_global_config["observer"]
-            + "_"
-            + measured_global_config["scale_method"].name
-            + worker_st
-        )
-        if (measured_global_config["mode"] == QuantMode.MEASURE) or (
-            measured_global_config["mode"] == QuantMode.QUANTIZE
-        ):
-            measured_global_config["measure_file"] = (
-                measured_global_config["dump_stats_path"] + "_hooks_" + measured_global_config["observer"] + worker_st
+        scale_method = measured_global_config["scale_method"]
+        if measured_global_config.get("dump_stats_path","") == "" and scale_method in _scale_methods_quant_only:
+            logger.debug(f"dump_stats_path is not set, scale_method is {scale_method}, so stats files won't be used")
+            measured_global_config["use_stats_files"] = False
+        else:
+            measured_global_config["use_stats_files"] = True
+            base_name = measured_global_config["dump_stats_path"].split("/")[-1]
+            folder_name = measured_global_config["dump_stats_path"][: -(len(base_name))]
+            measured_global_config["dump_stats_base_path"] = folder_name
+            os.makedirs(folder_name, exist_ok=True)
+            worker_st = (
+                ""
+                if measured_global_config["local_rank"] is None
+                else "_" + str(measured_global_config["local_rank"]) + "_" + str(measured_global_config["world_size"])
             )
-        # measured_global_config['dump_stats_path'] += '_hooks_.json'
+            measured_global_config["shape_file"] = measured_global_config["dump_stats_path"] + "_hooks_shape" + worker_st
+            measured_global_config["scale_file"] = (
+                measured_global_config["dump_stats_path"]
+                + "_hooks_"
+                + measured_global_config["observer"]
+                + "_"
+                + scale_method.name
+                + worker_st
+            )
+            if (measured_global_config["mode"] == QuantMode.MEASURE) or (
+                measured_global_config["mode"] == QuantMode.QUANTIZE
+            ):
+                measured_global_config["measure_file"] = (
+                    measured_global_config["dump_stats_path"] + "_hooks_" + measured_global_config["observer"] + worker_st
+                )
+            # measured_global_config['dump_stats_path'] += '_hooks_.json'
 
-        logger.debug("HQT Paths:")
-        logger.debug("base_name='%s'", base_name)
-        logger.debug("folder_name='%s'", folder_name)
-        logger.debug(
-            "measured_global_config['shape_file']='%s'",
-            measured_global_config["shape_file"],
-        )
-        logger.debug(
-            "measured_global_config['scale_file']='%s'",
-            measured_global_config["scale_file"],
-        )
-        if "measure_file" in measured_global_config.keys():
+            logger.debug("HQT Paths:")
+            logger.debug("base_name='%s'", base_name)
+            logger.debug("folder_name='%s'", folder_name)
             logger.debug(
-                "measured_global_config['measure_file']='%s'",
-                measured_global_config["measure_file"],
+                "measured_global_config['shape_file']='%s'",
+                measured_global_config["shape_file"],
             )
-        logger.debug(
-            "measured_global_config['dump_stats_path']='%s'",
-            measured_global_config["dump_stats_path"],
-        )
+            logger.debug(
+                "measured_global_config['scale_file']='%s'",
+                measured_global_config["scale_file"],
+            )
+            if "measure_file" in measured_global_config.keys():
+                logger.debug(
+                    "measured_global_config['measure_file']='%s'",
+                    measured_global_config["measure_file"],
+                )
+            logger.debug(
+                "measured_global_config['dump_stats_path']='%s'",
+                measured_global_config["dump_stats_path"],
+            )
 
         return Fp8cfg(cfg=measured_global_config)
 

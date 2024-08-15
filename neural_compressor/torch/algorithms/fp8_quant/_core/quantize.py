@@ -124,7 +124,12 @@ def quantize(model, mod_list):
     generate_model_info(model)
     hp_dtype = config.cfg["hp_dtype"]
     lp_dtype = config.cfg["fp8_config"]
-    measurement = load_measurements(model, config.cfg["measure_file"])
+    measurement = {}
+    scale_file = None
+    use_stats_files = config.cfg["use_stats_files"]
+    if use_stats_files:
+        measurement = load_measurements(model, config.cfg["measure_file"])
+        scale_file = config.cfg["scale_file"]
     # FIXME make sure this takes unit_scale or measured scale, from Configs
     scaling_method_name = scale_method_mapping[(config.cfg["scale_method"], config.cfg["observer"])]
     scaling_method = scaling_methods[scaling_method_name]
@@ -137,7 +142,7 @@ def quantize(model, mod_list):
         mod_default_dict,
         scaling_method,
         params,
-        config.cfg["scale_file"],
+        scale_file,
         mod_list,
     )
     prepare_model(model, qconfig, mod_list, hp_dtype=hp_dtype)
