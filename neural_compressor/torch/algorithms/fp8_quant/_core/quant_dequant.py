@@ -33,9 +33,7 @@ class QuantDequantBase(nn.Module):
         super(QuantDequantBase, self).__init__()
         self.lp_dtype = lp_dtype
         self.hp_dtype = hp_dtype
-        self.scale_format = ScaleFormat.CONST
-        if "scale_format" in kwargs:
-            self.scale_format = kwargs["scale_format"]
+        self.scale_format = kwargs.get("scale_format", ScaleFormat.CONST)
 
     @abstractmethod
     def forward(self, *args, **kwargs):

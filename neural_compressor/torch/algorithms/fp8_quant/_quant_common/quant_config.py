@@ -95,12 +95,13 @@ _config_to_enum = {
     "scale_method": ScaleMethod,
     "recalc_scales": TrueFalse,
     "ignore_modules_wo_measures": TrueFalse,
+    "use_qdq": TrueFalse,
     "fake_quant": TrueFalse,
     "scale_format": ScaleFormat,
 }
 
 
-_configs_that_use_enum_value = ["fp8_config", "hp_dtype", "ignore_modules_wo_measures", "recalc_scales", "fake_quant"]
+_configs_that_use_enum_value = ["fp8_config", "hp_dtype", "ignore_modules_wo_measures", "recalc_scales", "fake_quant", "use_qdq"]
 _scale_methods_quant_only = [ScaleMethod.UNIT_SCALE, ScaleMethod.HW_ALIGNED_SINGLE_SCALE]
 _pcq_scale_methods = [
     ScaleMethod.SMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2,
@@ -166,7 +167,8 @@ class Fp8cfg:
                 "types": (),
             },  # types and names to be quantized. Allowlist by names is not yet implemented
             "mode": QuantMode.QUANTIZE,  # Quantize or Measure
-            "fake_quant": False,  # Fake or Real Quant
+            "fake_quant": False, # Fake or Real Quant, fake_quant only works for linear(PatchedLinear) and matmul(PatchedMatmul), usually used for training.
+            "use_qdq": False, # QDQ or Real Quant, QDQ works for operators in helper_modules.py, usually used for inference.
             "scale_method": ScaleMethod.MAXABS_HW,  # Method to quantize with
             "scale_params": {},  # scaling parameters that are different then the default ones
             "observer": "maxabs",  # Supported ['shape', 'maxabs', 'maxabs_per_channel', 'save']
@@ -219,9 +221,9 @@ class Fp8cfg:
                 measured_global_config["scale_format"] = ScaleFormat.CONST
                 logger.warning(f"Cannot use 'scale_format = SCALAR' when using PCQ (Per Channel Quantization, "
                                f"e.g. {scale_method}) value for 'scale_method'. Reduced to 'CONST'.")
-            if measured_global_config["fake_quant"]:
+            if measured_global_config["fake_quant"] or measured_global_config["use_qdq"]:
                 measured_global_config["scale_format"] = ScaleFormat.CONST
-                logger.warning(f"Cannot use 'scale_format = SCALAR' when using fake_quant. Reduced to 'CONST'.")
+                logger.warning(f"Cannot use 'scale_format = SCALAR' when using fake_quant or use_qdq. Reduced to 'CONST'.")
         quant_mode = measured_global_config["mode"]
         if scale_method in _scale_methods_quant_only:
             if quant_mode == QuantMode.QUANTIZE:

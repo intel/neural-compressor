@@ -23,39 +23,61 @@ from .quant_dequant import *
 from .scale_methods import *
 
 
-def matmul_scales_to_mod_config(mod, scales, params):
+def init_mod_config(mod, scales, params):
     scales_inv = invert_scales(scales)
-    format = get_hqt_config(mod).cfg["scale_format"]
+    scale_format = get_hqt_config(mod).cfg["scale_format"]
+    use_qdq = get_hqt_config(mod).cfg["use_qdq"]
+    fake_quant = get_hqt_config(mod).cfg["fake_quant"]
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    input_config = [QuantInput(s_inv, lp_dtype, hp_dtype, scale_format=format) for s_inv in scales_inv.inputs]
+    return scales_inv, scale_format, use_qdq, fake_quant, lp_dtype, hp_dtype
+
+
+def init_input_config(scales_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant):
+    if use_qdq or fake_quant:
+        input_config = [QuantDequant(s_inv, lp_dtype, hp_dtype, scale_format=scale_format) for s_inv in scales_inv.inputs]
+    else:
+        input_config = [QuantInput(s_inv, lp_dtype, hp_dtype, scale_format=scale_format) for s_inv in scales_inv.inputs]
+    return input_config
+
+
+def init_weight_config(scales, scales_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant):
+    if use_qdq:
+        # to ensure the weights to be loaded to the device in fp8
+        weight_config = [QuantInput(scales_inv, lp_dtype, hp_dtype, scale_format=scale_format),
+                         DequantOutput(scales, lp_dtype, hp_dtype, scale_format=scale_format)]
+    elif fake_quant:
+        weight_config = [QuantDequant(scales_inv, lp_dtype, hp_dtype, scale_format=scale_format)]
+    else:
+        weight_config = [QuantInput(scales_inv, lp_dtype, hp_dtype, scale_format=scale_format)]
+    return weight_config
+
+
+def matmul_scales_to_mod_config(mod, scales, params):
+    scales_inv, scale_format, use_qdq, fake_quant, lp_dtype, hp_dtype = init_mod_config(mod, scales, params)
+    input_config = init_input_config(scales_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant)
     # outputs as bf16, and descaled in gemm under PatchedMatmul, so no need to work here
-    output_config = [QuantDequantNone(lp_dtype, hp_dtype, scale_format=format)]
+    output_config = [QuantDequantNone(lp_dtype, hp_dtype, scale_format=scale_format)]
     config = ModuleConfig(input_config, output_config, {})
     return config
 
 
 def fsdpa_scales_to_mod_config(mod, scales, params):
-    scales_inv = invert_scales(scales)
-    format = get_hqt_config(mod).cfg["scale_format"]
-    lp_dtype = params["lp_dtype"]
-    hp_dtype = params["hp_dtype"]
-    input_config = [QuantInput(s_inv, lp_dtype, hp_dtype, scale_format=format) for s_inv in scales_inv.inputs]
-    output_config = [DequantOutput(scales.outputs[0], lp_dtype, hp_dtype, scale_format=format)]
+    scales_inv, scale_format, use_qdq, fake_quant, lp_dtype, hp_dtype = init_mod_config(mod, scales, params)
+    input_config = init_input_config(scales_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant)
+    output_config = [DequantOutput(scales.outputs[0], lp_dtype, hp_dtype, scale_format=scale_format)]
     config = ModuleConfig(input_config, output_config, {})
     return config
 
 
 def linear_scales_to_mod_config(mod, scales, params):
-    scales_inv = invert_scales(scales)
-    format = get_hqt_config(mod).cfg["scale_format"]
-    lp_dtype = params["lp_dtype"]
-    hp_dtype = params["hp_dtype"]
-    input_config = [QuantInput(scales_inv.inputs[0], lp_dtype, hp_dtype, scale_format=format)]
+    scales_inv, scale_format, use_qdq, fake_quant, lp_dtype, hp_dtype = init_mod_config(mod, scales, params)
+    input_config = init_input_config(scales_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant)
     # outputs as bf16, and descaled in gemm under PatchedLinear, so no need to work here
-    output_config = [QuantDequantNone(lp_dtype, hp_dtype, scale_format=format)]
+    output_config = [QuantDequantNone(lp_dtype, hp_dtype, scale_format=scale_format)]
+
     if isinstance(scales_inv.params["weight"], (torch.Tensor, float)):
-        weight_config = QuantInput(scales_inv.params["weight"], lp_dtype, hp_dtype, scale_format=format)
+        weight_config = init_weight_config(scales.params["weight"], scales_inv.params["weight"], lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant)
     elif isinstance(scales_inv.params["weight"], dict):
         weight_scale_inv_out_ch = scales_inv.params["weight"][0]
         weight_scale_inv_in_ch = scales_inv.params["weight"][1]
@@ -67,14 +89,14 @@ def linear_scales_to_mod_config(mod, scales, params):
         else:
             # TODO SW-169781: Handle here scalar weight for PCQ
             raise TypeError(f"Unknown weight scales type: {type(weight_scale_inv_out_ch)}.")
-        weight_config = QuantInput(scale_inv, lp_dtype, hp_dtype)
+        weight_config = init_weight_config(scales, scale_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant)
     else:
         logger.error("Unknown weight scales format.")
     params_config = {"weight": weight_config}
     if hasattr(mod, "bias") and (getattr(mod, "bias") is not None):
         # In PatchedLinear the bias is added to the output of gemm.
         # The output is expected to be descaled and in bf16, so we don't need to touch the bias.
-        bias_config = QuantDequantNone(lp_dtype, hp_dtype)
+        bias_config = [QuantDequantNone(lp_dtype, hp_dtype)]
         params_config.update({"bias": bias_config})
     config = ModuleConfig(input_config, output_config, params_config)
     return config
@@ -82,21 +104,16 @@ def linear_scales_to_mod_config(mod, scales, params):
 
 def kv_cache_scales_to_mod_config(mod, scales, params):
     # how quant/dequant will be applied on layer tensors
-    scales_inv = invert_scales(scales)
-    format = get_hqt_config(mod).cfg["scale_format"]
-    lp_dtype = params["lp_dtype"]
-    hp_dtype = params["hp_dtype"]
-    input_config = [QuantInput(scales_inv.inputs[0], lp_dtype, hp_dtype, scale_format=format)]
-    output_config = [DequantOutput(scales.outputs[0], lp_dtype, hp_dtype, scale_format=format)]
+    scales_inv, scale_format, use_qdq, fake_quant, lp_dtype, hp_dtype = init_mod_config(mod, scales, params)
+    input_config = init_input_config(scales_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant)
+    output_config = [DequantOutput(scales.outputs[0], lp_dtype, hp_dtype, scale_format=scale_format)]
     config = ModuleConfig(input_config, output_config)
     return config
 
 
 def softmax_scales_to_mod_config(mod, scales, params):
-    format = get_hqt_config(mod).cfg["scale_format"]
-    lp_dtype = params["lp_dtype"]
-    hp_dtype = params["hp_dtype"]
-    output_config = [DequantOutput(scales.outputs[0], lp_dtype, hp_dtype, scale_format=format)]
+    scales_inv, scale_format, use_qdq, fake_quant, lp_dtype, hp_dtype = init_mod_config(mod, scales, params)
+    output_config = [DequantOutput(scales.outputs[0], lp_dtype, hp_dtype, scale_format=scale_format)]
     return ModuleConfig(None, output_config)
 
 
