@@ -52,7 +52,7 @@ parser.add_argument("--tasks", default="lambada_openai,hellaswag,winogrande,piqa
                     type=str, help="tasks for accuracy validation")
 parser.add_argument("--peft_model_id", type=str, default=None, help="model_name_or_path of peft model")
 # ============WeightOnly configs===============
-parser.add_argument("--woq_algo", default="RTN", choices=['RTN', 'AWQ', 'TEQ', 'GPTQ'],
+parser.add_argument("--woq_algo", default="RTN", choices=['RTN', 'AWQ', 'TEQ', 'GPTQ', 'AutoRound'],
                     help="Weight-only parameter.")
 parser.add_argument("--woq_bits", type=int, default=8)
 parser.add_argument("--woq_dtype", type=str, default="int")
@@ -86,6 +86,26 @@ parser.add_argument("--folding", action="store_true",
                     help="Allow insert mul before linear when the scale cannot be absorbed by last layer.")
 parser.add_argument('--absorb_layer_dict', type=dict, default={},
                     help="The layer dict that scale can be absorbed.")
+# ============AUTOROUND configs==============
+parser.add_argument(
+    "--lr",
+    type=float,
+    default=None,
+    help="learning rate, if None, it will be set to 1.0/iters automatically",
+)
+parser.add_argument(
+    "--minmax_lr",
+    type=float,
+    default=None,
+    help="minmax learning rate, if None,it will beset to be the same with lr",
+)
+parser.add_argument("--autoround_iters", default=200, type=int, help="num iters for autoround calibration.")
+parser.add_argument("--autoround_nsamples", default=128, type=int, help="num samples for autoround calibration.")
+parser.add_argument(
+    "--disable_quanted_input",
+    action="store_true",
+    help="whether to use the output of quantized block to tune the next block",
+)
 
 # =============DoubleQuant configs====================
 parser.add_argument("--double_quant_type",
@@ -239,7 +259,14 @@ if args.quantize:
             prepared_model(calib_input[0])
 
     # 3.x api
-    from neural_compressor.torch.quantization import RTNConfig, GPTQConfig, AWQConfig, prepare, convert
+    from neural_compressor.torch.quantization import (
+        RTNConfig,
+        GPTQConfig,
+        AWQConfig,
+        AutoRoundConfig,
+        prepare,
+        convert
+    )
     from neural_compressor.torch.utils import get_double_quant_config_dict
     weight_sym = True if args.woq_scheme == "sym" else False
     if args.double_quant_type is not None:
@@ -342,7 +369,41 @@ if args.quantize:
         user_model = prepare(model=user_model, quant_config=quant_config, example_inputs=example_inputs)
         run_fn(user_model)
         user_model = convert(user_model)
-            
+    elif args.woq_algo == "AutoRound":
+        quant_config = AutoRoundConfig(
+                dtype=args.woq_dtype,
+                bits=args.woq_bits,
+                use_sym=weight_sym,
+                group_size=args.woq_group_size,
+                enable_quanted_input=not args.disable_quanted_input,
+                lr=args.lr,
+                minmax_lr=args.minmax_lr,
+                seqlen=args.pad_max_length,
+                nsamples=args.autoround_nsamples,
+                iters=args.autoround_iters,
+            )
+        quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
+        from neural_compressor.torch.algorithms.weight_only.autoround import get_dataloader
+        dataloader = get_dataloader(tokenizer=tokenizer,
+                                                seqlen=args.pad_max_length,
+                                                dataset_name=datasets,
+                                                seed=args.seed,
+                                                bs=args.batch_size,
+                                                nsamples=args.autoround_nsamples)
+        @torch.no_grad()
+        def run_fn_for_autoround(model, dataloader):
+            for data in dataloader:
+                if isinstance(data, tuple) or isinstance(data, list):
+                    model(*data)
+                elif isinstance(data, dict):
+                    model(**data)
+                else:
+                    model(data)
+        run_fn = run_fn_for_autoround
+        run_args = (dataloader,)
+        user_model = prepare(model=user_model, quant_config=quant_config)
+        run_fn(user_model, *run_args)
+        user_model = convert(user_model)
         
 
     user_model.save(args.output_dir)
