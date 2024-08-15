@@ -1808,6 +1808,7 @@ class FP8Config(TorchBaseConfig):
         mod_dict: dict = {},
         measure_exclude: str = "OUTPUT",
         fake_quant: bool = False,
+        use_qdq: bool = False,
         scale_format: str = "scalar",
         **kwargs,
     ):
@@ -1825,8 +1826,8 @@ class FP8Config(TorchBaseConfig):
             observer (str, optional): Params of scales. Defaults to "maxabs".
             mod_dict (dict, optional): The dict of modules to quantize. Defaults to {}.
             measure_exclude (str, optional): Select INPUT/OUTPUT to be exculded by measurement. Defaults to "OUTPUT".
-            fake_quant (bool, optional): Whether to use fake quantization. Defaults to False.
-            scale_format (str, optional): Select the expression type of scale value, which may impact the performance. Defaults to const.
+            fake_quant (bool, optional): whether to execute fake quantization, a little bit different with use_qdq, used for training. Defaults to False.
+            use_qdq (bool, optional): whether to execute Q/DQ quantization. Defaults to False.
         """
         super().__init__()
         self.dump_stats_path = dump_stats_path
@@ -1841,6 +1842,7 @@ class FP8Config(TorchBaseConfig):
         self.mod_dict = mod_dict
         self._json_file = None
         self.fake_quant = str(fake_quant)
+        self.use_qdq = str(use_qdq)
         self.scale_format = scale_format
 
     @property
