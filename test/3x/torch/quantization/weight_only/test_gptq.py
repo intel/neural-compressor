@@ -182,7 +182,8 @@ class TestGPTQQuant:
         # compare atol, this case is an ideal case.
         assert atol_false > atol_true, "act_order=True doesn't help accuracy, maybe is reasonable, please double check."
 
-    def test_layer_wise(self, quant_lm_head=False):
+    @pytest.mark.parametrize("quant_lm_head", [False, True])
+    def test_layer_wise(self, quant_lm_head):
         model = copy.deepcopy(self.tiny_gptj)
         quant_config = GPTQConfig(quant_lm_head=quant_lm_head)
         model = prepare(model, quant_config)
@@ -203,11 +204,13 @@ class TestGPTQQuant:
         run_fn(model)
         model = convert(model)
         out = model(self.example_inputs)[0]
+
+        # remove lwq tmp directory
+        from neural_compressor.torch.algorithms.layer_wise.utils import LWQ_WORKSPACE
+        shutil.rmtree(LWQ_WORKSPACE, ignore_errors=True)
         assert torch.equal(
             out, q_label
         ), f"use_layer_wise=True and quant_lm_head={quant_lm_head} output should be same. Please double check."
-        if not quant_lm_head:
-            self.test_layer_wise(quant_lm_head=True)  # Avoid errors raised by @pytest.mark.parametrize
 
     def test_true_sequential(self):
         # true_sequential=False
