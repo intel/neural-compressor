@@ -182,6 +182,7 @@ class TestGPTQQuant:
         atol_true = (out - self.label).amax()
         # compare atol, this case is an ideal case.
         assert atol_false > atol_true, "act_order=True doesn't help accuracy, maybe is reasonable, please double check."
+
     @pytest.mark.parametrize("quant_lm_head", [False, True])
     def test_layer_wise(self, quant_lm_head):
         model = copy.deepcopy(self.tiny_gptj)
@@ -205,6 +206,7 @@ class TestGPTQQuant:
         model = convert(model)
         out = model(self.example_inputs)[0]
         from neural_compressor.torch.algorithms.layer_wise.utils import LWQ_WORKSPACE
+
         print("...", LWQ_WORKSPACE)
         assert torch.equal(
             out, q_label
