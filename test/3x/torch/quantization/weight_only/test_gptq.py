@@ -207,6 +207,7 @@ class TestGPTQQuant:
 
         # remove lwq tmp directory
         from neural_compressor.torch.algorithms.layer_wise.utils import LWQ_WORKSPACE
+
         shutil.rmtree(LWQ_WORKSPACE, ignore_errors=True)
         assert torch.equal(
             out, q_label
