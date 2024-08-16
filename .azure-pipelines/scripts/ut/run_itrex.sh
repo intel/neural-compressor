@@ -18,7 +18,8 @@ bash /intel-extension-for-transformers/.github/workflows/script/install_binary.s
 sed -i '/neural-compressor.git/d' /intel-extension-for-transformers/tests/requirements.txt
 pip install -r /intel-extension-for-transformers/tests/requirements.txt
 # workaround
-pip install onnx==1.15.0
+pip install onnx==1.16.0
+pip install onnxruntime==1.18.0
 echo "pip list itrex ut deps..."
 pip list
 LOG_DIR=/neural-compressor/log_dir
