@@ -42,6 +42,7 @@ class TestGPTQQuant:
 
     def teardown_class(self):
         shutil.rmtree("saved_results", ignore_errors=True)
+        shutil.rmtree("nc_workspace", ignore_errors=True)
 
     @pytest.mark.skipif(device == "cpu", reason="no available accelerator")
     def test_auto_host2device(self):
@@ -181,33 +182,33 @@ class TestGPTQQuant:
         atol_true = (out - self.label).amax()
         # compare atol, this case is an ideal case.
         assert atol_false > atol_true, "act_order=True doesn't help accuracy, maybe is reasonable, please double check."
+    @pytest.mark.parametrize("quant_lm_head", [False, True])
+    def test_layer_wise(self, quant_lm_head):
+        model = copy.deepcopy(self.tiny_gptj)
+        quant_config = GPTQConfig(quant_lm_head=quant_lm_head)
+        model = prepare(model, quant_config)
+        run_fn(model)
+        model = convert(model)
+        q_label = model(self.example_inputs)[0]
 
-    # def test_layer_wise(self, quant_lm_head=False):
-    #     model = copy.deepcopy(self.tiny_gptj)
-    #     quant_config = GPTQConfig(quant_lm_head=quant_lm_head)
-    #     model = prepare(model, quant_config)
-    #     run_fn(model)
-    #     model = convert(model)
-    #     q_label = model(self.example_inputs)[0]
+        from neural_compressor.torch import load_empty_model
 
-    #     from neural_compressor.torch import load_empty_model
+        model = load_empty_model("hf-internal-testing/tiny-random-GPTJForCausalLM")
 
-    #     model = load_empty_model("hf-internal-testing/tiny-random-GPTJForCausalLM")
-
-    #     quant_config = GPTQConfig(
-    #         use_layer_wise=True,
-    #         quant_lm_head=quant_lm_head,
-    #         model_path="hf-internal-testing/tiny-random-GPTJForCausalLM",
-    #     )
-    #     model = prepare(model, quant_config)
-    #     run_fn(model)
-    #     model = convert(model)
-    #     out = model(self.example_inputs)[0]
-    #     assert torch.equal(
-    #         out, q_label
-    #     ), f"use_layer_wise=True and quant_lm_head={quant_lm_head} output should be same. Please double check."
-    #     if not quant_lm_head:
-    #         self.test_layer_wise(quant_lm_head=True)  # Avoid errors raised by @pytest.mark.parametrize
+        quant_config = GPTQConfig(
+            use_layer_wise=True,
+            quant_lm_head=quant_lm_head,
+            model_path="hf-internal-testing/tiny-random-GPTJForCausalLM",
+        )
+        model = prepare(model, quant_config)
+        run_fn(model)
+        model = convert(model)
+        out = model(self.example_inputs)[0]
+        from neural_compressor.torch.algorithms.layer_wise.utils import LWQ_WORKSPACE
+        print("...", LWQ_WORKSPACE)
+        assert torch.equal(
+            out, q_label
+        ), f"use_layer_wise=True and quant_lm_head={quant_lm_head} output should be same. Please double check."
 
     def test_true_sequential(self):
         # true_sequential=False
