@@ -175,6 +175,15 @@ class TestRTNQuant:
 
     def test_layer_wise(self):
         print("test PR CI layer wise gap")
+        # use_layer_wise=False
+        model = copy.deepcopy(self.tiny_gptj)
+        quant_config = RTNConfig(
+            use_layer_wise=False,
+        )
+        model = prepare(model, quant_config)
+        model = convert(model)
+        out0 = model(self.example_inputs)[0]
+        
         from neural_compressor.torch import load_empty_model
 
         model = load_empty_model("hf-internal-testing/tiny-random-GPTJForCausalLM")
@@ -183,8 +192,8 @@ class TestRTNQuant:
         )
         model = prepare(model, quant_config)
         model = convert(model)
-        out = model(self.example_inputs)[0]
-        assert torch.equal(out, self.q_label), "use_layer_wise=True output should be same. Please double check."
+        out1 = model(self.example_inputs)[0]
+        assert torch.equal(out1, out0), "use_layer_wise=True output should be same. Please double check."
 
     @pytest.mark.parametrize(
         "dtype",

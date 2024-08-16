@@ -177,6 +177,8 @@ class RTNQuantizer(Quantizer):
                 if dtype != "int" and "int" in dtype:
                     bits = int(dtype.lstrip("int"))
                     dtype = "int"
+            else:
+                continue
             log_msg = (
                 f"RTN quantization config: bits={bits}, group_size={group_size}, "
                 + f"scheme={scheme}, quantile={quantile}"
