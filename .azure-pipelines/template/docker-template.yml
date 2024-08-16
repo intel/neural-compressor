@@ -42,6 +42,7 @@ steps:
       - checkout: self
         clean: true
         displayName: "Checkout out Repo"
+        fetchDepth: 0
 
   - ${{ if eq(parameters.dockerConfigName, 'gitCloneDockerConfig') }}:
       - script: |

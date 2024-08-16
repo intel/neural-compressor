@@ -4,9 +4,9 @@ test_case="run basic pt pruning"
 echo "${test_case}"
 
 echo "specify fwk version..."
-export pytorch_version='2.3.0+cpu'
+export pytorch_version='2.4.0+cpu'
 export torchvision_version='0.18.0+cpu'
-export ipex_version='2.3.0+cpu'
+export ipex_version='2.4.0+cpu'
 
 echo "set up UT env..."
 bash /neural-compressor/.azure-pipelines/scripts/ut/env_setup.sh "${test_case}"
