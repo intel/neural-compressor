@@ -71,7 +71,7 @@ pip install "neural-compressor>=2.3" "transformers>=4.34.0" torch torchvision
 ```
 After successfully installing these packages, try your first quantization program.
 
-### [FP8 Quantization](./examples/3.x_api/pytorch/cv/fp8_quant/)
+### [FP8 Quantization](./docs/source/3x/PT_FP8Quant.md)
 Following example code demonstrates FP8 Quantization, it is supported by Intel Gaudi2 AI Accelerator. 
 
 To try on Intel Gaudi2, docker image with Gaudi Software Stack is recommended, please refer to following script for environment setup. More details can be found in [Gaudi Guide](https://docs.habana.ai/en/latest/Installation_Guide/Bare_Metal_Fresh_OS.html#launch-docker-image-that-was-built).
@@ -147,7 +147,7 @@ Intel Neural Compressor will convert the model format from auto-gptq to hpu form
     </tr>
     <tr>
         <td colspan="2" align="center"><a href="./docs/source/3x/PT_WeightOnlyQuant.md">Weight-Only Quantization</a></td>
-        <td colspan="2" align="center"><a href="./docs/3x/PT_FP8Quant.md">FP8 Quantization</a></td>
+        <td colspan="2" align="center"><a href="./docs/source/3x/PT_FP8Quant.md">FP8 Quantization</a></td>
         <td colspan="2" align="center"><a href="./docs/source/3x/PT_MXQuant.md">MX Quantization</a></td>
         <td colspan="2" align="center"><a href="./docs/source/3x/PT_MixedPrecision.md">Mixed Precision</a></td>
     </tr>

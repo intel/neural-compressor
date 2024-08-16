@@ -176,16 +176,21 @@ def load(output_dir="./saved_results", model=None):
     <td class="tg-9wq8"><a href="PT_SmoothQuant.md">link</a></td>
   </tr>
   <tr>
-    <td class="tg-9wq8" rowspan="2">Static Quantization</td>
-    <td class="tg-9wq8" rowspan="2"><a href=https://pytorch.org/docs/master/quantization.html#post-training-static-quantization>Post-traning Static Quantization</a></td>
-    <td class="tg-9wq8">intel-extension-for-pytorch</td>
+    <td class="tg-9wq8" rowspan="3">Static Quantization</td>
+    <td class="tg-9wq8" rowspan="3"><a href=https://pytorch.org/docs/master/quantization.html#post-training-static-quantization>Post-traning Static Quantization</a></td>
+    <td class="tg-9wq8">intel-extension-for-pytorch (INT8)</td>
     <td class="tg-9wq8">&#10004</td>
     <td class="tg-9wq8"><a href="PT_StaticQuant.md">link</a></td>
   </tr>
   <tr>
-    <td class="tg-9wq8"><a href=https://pytorch.org/docs/stable/torch.compiler_deepdive.html>TorchDynamo</a></td>
+    <td class="tg-9wq8"><a href=https://pytorch.org/docs/stable/torch.compiler_deepdive.html>TorchDynamo (INT8)</a></td>
     <td class="tg-9wq8">&#10004</td>
     <td class="tg-9wq8"><a href="PT_StaticQuant.md">link</a></td>
+  <tr>
+    <td class="tg-9wq8"><a href=https://docs.habana.ai/en/latest/index.html>Intel Gaudi AI accelerator (FP8)</a></td>
+    <td class="tg-9wq8">&#10004</td>
+    <td class="tg-9wq8"><a href="PT_FP8Quant.md">link</a></td>
+  </tr>
   </tr>
   <tr>
     <td class="tg-9wq8">Dynamic Quantization</td>
