@@ -204,7 +204,7 @@ class TestGPTQQuant:
         run_fn(model)
         model = convert(model)
         out = model(self.example_inputs)[0]
-        
+
         # remove lwq tmp directory
         from neural_compressor.torch.algorithms.layer_wise.utils import LWQ_WORKSPACE
         shutil.rmtree(LWQ_WORKSPACE, ignore_errors=True)
