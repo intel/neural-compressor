@@ -83,9 +83,9 @@ parser.add_argument("--use_auto_scale", action="store_true",
 parser.add_argument("--use_auto_clip", action="store_true",
                     help="Enables clip range searchc.")
 parser.add_argument("--folding", action="store_true",
-                    help="Allow insert mul before linear when the scale cannot be absorbed by last layer.")
+                    help="Allow insert mul before linear when the scale cannot be absorbed by last layer for TEQ/AWQ.")
 parser.add_argument('--absorb_layer_dict', type=dict, default={},
-                    help="The layer dict that scale can be absorbed.")
+                    help="The layer dict that scale can be absorbed for TEQ/AWQ.")
 # ============AUTOROUND configs==============
 parser.add_argument(
     "--lr",
@@ -264,6 +264,7 @@ if args.quantize:
         GPTQConfig,
         AWQConfig,
         AutoRoundConfig,
+        TEQConfig,
         prepare,
         convert
     )
@@ -369,6 +370,20 @@ if args.quantize:
         user_model = prepare(model=user_model, quant_config=quant_config, example_inputs=example_inputs)
         run_fn(user_model)
         user_model = convert(user_model)
+    elif args.woq_algo == "TEQ":
+        quant_config = TEQConfig(
+            dtype=args.woq_dtype,
+            bits=args.woq_bits,
+            use_sym=weight_sym,
+            group_size=args.woq_group_size,
+            group_dim=args.woq_group_dim,
+            folding=args.folding,
+        )
+        example_inputs = torch.ones([1, args.pad_max_length], dtype=torch.long)
+        run_fn = calib_func
+        user_model = prepare(model=user_model, quant_config=quant_config, example_inputs=example_inputs)
+        run_fn(user_model)
+        user_model = convert(user_model)
     elif args.woq_algo == "AutoRound":
         quant_config = AutoRoundConfig(
                 dtype=args.woq_dtype,
@@ -404,6 +419,7 @@ if args.quantize:
         user_model = prepare(model=user_model, quant_config=quant_config)
         run_fn(user_model, *run_args)
         user_model = convert(user_model)
+    
         
 
     user_model.save(args.output_dir)
