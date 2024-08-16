@@ -181,11 +181,7 @@ class TestGPTQQuant:
         atol_true = (out - self.label).amax()
         # compare atol, this case is an ideal case.
         assert atol_false > atol_true, "act_order=True doesn't help accuracy, maybe is reasonable, please double check."
-<<<<<<< HEAD
-    
-=======
 
->>>>>>> 7a7e88288fc6c4451ebcd01cddad19339eaf3a0f
     @pytest.mark.parametrize("quant_lm_head", [False, True])
     def test_layer_wise(self, quant_lm_head):
         model = copy.deepcopy(self.tiny_gptj)
