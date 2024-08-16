@@ -182,7 +182,7 @@ class TestGPTQQuant:
         # compare atol, this case is an ideal case.
         assert atol_false > atol_true, "act_order=True doesn't help accuracy, maybe is reasonable, please double check."
 <<<<<<< HEAD
-    
+
 =======
 
 >>>>>>> 7a7e88288fc6c4451ebcd01cddad19339eaf3a0f
@@ -208,7 +208,7 @@ class TestGPTQQuant:
         run_fn(model)
         model = convert(model)
         out = model(self.example_inputs)[0]
-        
+
         # remove lwq tmp directory
         from neural_compressor.torch.algorithms.layer_wise.utils import LWQ_WORKSPACE
         shutil.rmtree(LWQ_WORKSPACE, ignore_errors=True)
