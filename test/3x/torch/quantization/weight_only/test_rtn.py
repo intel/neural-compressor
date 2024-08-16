@@ -183,7 +183,7 @@ class TestRTNQuant:
         model = prepare(model, quant_config)
         model = convert(model)
         out0 = model(self.example_inputs)[0]
-        
+
         from neural_compressor.torch import load_empty_model
 
         model = load_empty_model("hf-internal-testing/tiny-random-GPTJForCausalLM")
