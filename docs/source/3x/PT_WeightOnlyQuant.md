@@ -111,9 +111,10 @@ model = convert(model)
 |               model_path (str)        |  Model path that is used to load   state_dict per layer                                                                                    |                    |
 |               use_double_quant (bool) |  Enables double quantization                                                                                                               |  False  |
 |               act_order (bool)        |  Whether to sort Hessian's diagonal   values to rearrange channel-wise quantization order                                                  |  False  |
-|               percdamp (float)        |  Percentage of Hessian's diagonal   values' average, which will be added to Hessian's diagonal to increase   numerical stability           |  0.01.  |
+|               percdamp (float)        |  Percentage of Hessian's diagonal   values' average, which will be added to Hessian's diagonal to increase   numerical stability           |  0.01  |
 |               block_size (int)        |  Execute GPTQ quantization per   block, block shape = [C_out, block_size]                                                                  |  128     |
-|               static_groups (bool)    |  Whether to calculate group wise   quantization parameters in advance. This option mitigate actorder's extra   computational requirements. |  False.  |
+|               static_groups (bool)    |  Whether to calculate group wise   quantization parameters in advance. This option mitigate actorder's extra   computational requirements. |  False  |
+|               true_sequential (bool)    |  Whether to quantize layers within a transformer block in their original order. This can lead to higher accuracy but slower overall quantization process. |  False  |
 > **Note:** `model_path` is only used when use_layer_wise=True. `layer-wise` is stay-tuned.
 
 ``` python

@@ -182,9 +182,10 @@ class TestGPTQQuant:
         # compare atol, this case is an ideal case.
         assert atol_false > atol_true, "act_order=True doesn't help accuracy, maybe is reasonable, please double check."
 
-    def test_layer_wise(self):
+    @pytest.mark.parametrize("quant_lm_head", [False, True])
+    def test_layer_wise(self, quant_lm_head):
         model = copy.deepcopy(self.tiny_gptj)
-        quant_config = GPTQConfig()
+        quant_config = GPTQConfig(quant_lm_head=quant_lm_head)
         model = prepare(model, quant_config)
         run_fn(model)
         model = convert(model)
@@ -194,12 +195,76 @@ class TestGPTQQuant:
 
         model = load_empty_model("hf-internal-testing/tiny-random-GPTJForCausalLM")
 
-        quant_config = GPTQConfig(use_layer_wise=True, model_path="hf-internal-testing/tiny-random-GPTJForCausalLM")
+        quant_config = GPTQConfig(
+            use_layer_wise=True,
+            quant_lm_head=quant_lm_head,
+            model_path="hf-internal-testing/tiny-random-GPTJForCausalLM",
+        )
         model = prepare(model, quant_config)
         run_fn(model)
         model = convert(model)
         out = model(self.example_inputs)[0]
-        assert torch.equal(out, q_label), "use_layer_wise=True output should be same. Please double check."
+
+        # remove lwq tmp directory
+        from neural_compressor.torch.algorithms.layer_wise.utils import LWQ_WORKSPACE
+
+        shutil.rmtree(LWQ_WORKSPACE, ignore_errors=True)
+        assert torch.equal(
+            out, q_label
+        ), f"use_layer_wise=True and quant_lm_head={quant_lm_head} output should be same. Please double check."
+
+    def test_true_sequential(self):
+        # true_sequential=False
+        model = copy.deepcopy(self.tiny_gptj)
+        quant_config = GPTQConfig(
+            true_sequential=False,
+        )
+        model = prepare(model, quant_config)
+        run_fn(model)
+        model = convert(model)
+        out = model(self.example_inputs)[0]
+        atol_false = (out - self.label).amax()
+        # true_sequential=True
+        model = copy.deepcopy(self.tiny_gptj)
+        quant_config = GPTQConfig(
+            true_sequential=True,
+        )
+        model = prepare(model, quant_config)
+        run_fn(model)
+        model = convert(model)
+        out = model(self.example_inputs)[0]
+        atol_true = (out - self.label).amax()
+        # compare atol, this case is an ideal case.
+        assert (
+            atol_false < atol_true
+        ), "true_sequential=True doesn't help accuracy, maybe is reasonable, please double check."
+
+    def test_quant_lm_head(self):
+        # quant_lm_head=False
+        model = copy.deepcopy(self.tiny_gptj)
+        quant_config = GPTQConfig(
+            quant_lm_head=False,
+        )
+        model = prepare(model, quant_config)
+        run_fn(model)
+        model = convert(model)
+        out = model(self.example_inputs)[0]
+        atol_false = (out - self.label).amax()
+        # quant_lm_head=True
+        model = copy.deepcopy(self.tiny_gptj)
+        quant_config = GPTQConfig(
+            quant_lm_head=True,
+        )
+        model = prepare(model, quant_config)
+        run_fn(model)
+        model = convert(model)
+        out = model(self.example_inputs)[0]
+        atol_true = (out - self.label).amax()
+        # compare atol, this case is an ideal case.
+        assert (
+            atol_false < atol_true
+        ), "quant_lm_head=True doesn't help accuracy, maybe is reasonable, please double check."
+        assert get_woq_linear_num(model, "INCWeightOnlyLinear") == 31, "Incorrect number of INCWeightOnlyLinear modules"
 
     @pytest.mark.parametrize("dtype", ["nf4", "int4"])
     @pytest.mark.parametrize("double_quant_bits", [6])
