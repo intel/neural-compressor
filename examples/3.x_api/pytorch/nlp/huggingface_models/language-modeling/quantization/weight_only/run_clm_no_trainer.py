@@ -223,7 +223,9 @@ def get_user_model():
         revision=args.revision,
     )
     tokenizer = AutoTokenizer.from_pretrained(args.model)
-    # user_model = user_model.float()
+    user_model = user_model.float()
+    if args.woq_algo == 'AutoRound':
+        user_model.to(torch.float32)
 
     # Set model's seq_len when GPTQ calibration is enabled.
     if args.woq_algo == 'GPTQ':
