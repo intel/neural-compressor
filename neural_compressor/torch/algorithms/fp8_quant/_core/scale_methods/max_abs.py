@@ -23,7 +23,7 @@ def linear_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales(mod, measurement, par
     device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    fullscale = MAX_RANGE[lp_dtype]
+    fullscale = get_fullscale(lp_dtype, device)
     input_backoff = params["input_backoff"]
     weight_backoff = params["weight_backoff"]
     input_scale = calc_maxabs_scale(
@@ -47,7 +47,7 @@ def linear_act_maxabs_pts_weight_maxabs_pts_pow2_scales(mod, measurement, params
     device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    fullscale = MAX_RANGE[lp_dtype]
+    fullscale = get_fullscale(lp_dtype, device)
     input_backoff = params["input_backoff"]
     weight_backoff = params["weight_backoff"]
     input_scale = calc_maxabs_scale(
@@ -71,7 +71,7 @@ def matmul_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales(mod, measurement, par
     device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    fullscale = MAX_RANGE[lp_dtype]
+    fullscale = get_fullscale(lp_dtype, device)
     input_backoff = params["input_backoff"]
     input_scale = [
         calc_maxabs_scale(
@@ -91,7 +91,7 @@ def matmul_act_maxabs_pts_weight_maxabs_pts_pow2_scales(mod, measurement, params
     device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    fullscale = MAX_RANGE[lp_dtype]
+    fullscale = get_fullscale(lp_dtype, device)
     input_backoff = params["input_backoff"]
     input_scale = [
         calc_maxabs_scale(
@@ -111,7 +111,7 @@ def fsdpa_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales(mod, measurement, para
     device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    fullscale = MAX_RANGE[lp_dtype]
+    fullscale = get_fullscale(lp_dtype, device)
     input_backoff = params["input_backoff"]
     input_scale = [
         calc_maxabs_scale(
@@ -142,7 +142,7 @@ def fsdpa_act_maxabs_pts_pow2_weight_maxabs_pts_pow2(mod, measurement, params):
     device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    fullscale = MAX_RANGE[lp_dtype]
+    fullscale = get_fullscale(lp_dtype, device)
     input_backoff = params["input_backoff"]
     input_scale = [
         calc_maxabs_scale(
@@ -173,7 +173,7 @@ def fsdpa_act_maxabs_pts_weight_maxabs_pts_pow2_scales(mod, measurement, params)
     device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    fullscale = MAX_RANGE[lp_dtype]
+    fullscale = get_fullscale(lp_dtype, device)
     input_backoff = params["input_backoff"]
     input_scale = [
         calc_maxabs_scale(
@@ -207,7 +207,7 @@ def linear_act_maxabs_pts_weight_opt_pts_pow2_scales(mod, measurement, params):
     device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    fullscale = MAX_RANGE[lp_dtype]
+    fullscale = get_fullscale(lp_dtype, device)
     scales = params["weight_scales"]
     input_backoff = params["input_backoff"]
     weight_backoff = params["weight_backoff"]
@@ -228,7 +228,7 @@ def linear_act_maxabs_pts_weight_opt_pts_hw_scales(mod, measurement, params):
     device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    fullscale = MAX_RANGE[lp_dtype]
+    fullscale = get_fullscale(lp_dtype, device)
     scales = params["weight_scales"]
     input_backoff = params["input_backoff"]
     weight_backoff = params["weight_backoff"]
@@ -250,7 +250,7 @@ def kv_cache_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales(mod, measurement, p
     device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    fullscale = MAX_RANGE[lp_dtype]
+    fullscale = get_fullscale(lp_dtype, device)
     input_backoff = params["input_backoff"]
     input_scale = calc_maxabs_scale(
         torch.tensor(measurement.inputs[0], dtype=hp_dtype, device=device).max(),
@@ -267,7 +267,7 @@ def kv_cache_act_maxabs_pts_pow2(mod, measurement, params):
     device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    fullscale = MAX_RANGE[lp_dtype]
+    fullscale = get_fullscale(lp_dtype, device)
     input_backoff = params["input_backoff"]
     input_scale = calc_maxabs_scale(
         torch.tensor(measurement.inputs[0], dtype=hp_dtype, device=device).max(),
@@ -284,7 +284,7 @@ def softmax_input_unit_output_maxabs_pts_hw_scales(mod, measurement, params):
     device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    fullscale = MAX_RANGE[lp_dtype]
+    fullscale = get_fullscale(lp_dtype, device)
     input_backoff = params["input_backoff"]
     output_scale = calc_maxabs_scale(
         torch.tensor(measurement.outputs[0], dtype=hp_dtype, device=device).max(),
@@ -299,7 +299,7 @@ def softmax_input_unit_output_maxabs_pts_pow2(mod, measurement, params):
     device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    fullscale = MAX_RANGE[lp_dtype]
+    fullscale = get_fullscale(lp_dtype, device)
     input_backoff = params["input_backoff"]
     output_scale = calc_maxabs_scale(
         torch.tensor(measurement.outputs[0], dtype=hp_dtype, device=device).max(),
@@ -314,7 +314,7 @@ def linear_act_maxabs_pts_pow2_hw_weights_maxabs_pcs_pow2_scales(mod, measuremen
     device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    fullscale = MAX_RANGE[lp_dtype]
+    fullscale = get_fullscale(lp_dtype, device)
     input_backoff = params["input_backoff"]
     weight_backoff = params["weight_backoff"]
     input_scale = calc_maxabs_scale(
@@ -345,7 +345,7 @@ def linear_act_maxabs_pts_pow2_weights_maxabs_pcs_pow2_scales(mod, measurement, 
     device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    fullscale = MAX_RANGE[lp_dtype]
+    fullscale = get_fullscale(lp_dtype, device)
     input_backoff = params["input_backoff"]
     weight_backoff = params["weight_backoff"]
     input_scale = calc_maxabs_scale(
@@ -377,7 +377,7 @@ def linear_act_maxabs_pts_pow2_hw_weights_opt_pcs_pow2_scales(mod, measurement, 
     device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    fullscale = MAX_RANGE[lp_dtype]
+    fullscale = get_fullscale(lp_dtype, device)
     input_backoff = params["input_backoff"]
     weight_backoff = params["weight_backoff"]
     weight_scales = params["weight_scales"]
@@ -418,7 +418,7 @@ def linear_act_maxabs_pts_pow2_weights_opt_pcs_pow2_scales(mod, measurement, par
     device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    fullscale = MAX_RANGE[lp_dtype]
+    fullscale = get_fullscale(lp_dtype, device)
     input_backoff = params["input_backoff"]
     weight_backoff = params["weight_backoff"]
     weight_scales = params["weight_scales"]
