@@ -23,7 +23,7 @@ def linear_smoothquant_weights_opt_pow2_scales(mod, measurement, params):
     device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    fullscale = MAX_RANGE[lp_dtype]
+    fullscale = get_fullscale(lp_dtype, device)
     input_backoff = params["input_backoff"]
     weight_backoff = params["weight_backoff"]
     alpha = params["alpha"]
@@ -60,7 +60,7 @@ def linear_smoothquant_weights_maxabs_pow2_scales(mod, measurement, params):
     device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    fullscale = MAX_RANGE[lp_dtype]
+    fullscale = get_fullscale(lp_dtype, device)
     input_backoff = params["input_backoff"]
     weight_backoff = params["weight_backoff"]
     alpha = params["alpha"]
@@ -92,7 +92,7 @@ def linear_weaksmoothquant_weights_maxabs_pow2_scales(mod, measurement, params):
     device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    fullscale = MAX_RANGE[lp_dtype]
+    fullscale = get_fullscale(lp_dtype, device)
     input_backoff = params["input_backoff"]
     weight_backoff = params["weight_backoff"]
     alpha = params["alpha"]
