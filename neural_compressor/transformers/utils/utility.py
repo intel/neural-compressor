@@ -19,7 +19,6 @@
 import argparse
 import os
 
-from intel_extension_for_transformers.tools.utils import is_ipex_available
 
 from neural_compressor.common.utils import CpuInfo, LazyImport, logger
 
@@ -35,56 +34,6 @@ QUANT_CONFIG = "quantize_config.json"
 SPARSITY_CONFIG = "sparsity_config.json"
 SAFE_WEIGHTS_NAME = "model.safetensors"
 SAFE_WEIGHTS_INDEX_NAME = "model.safetensors.index.json"
-
-if is_ipex_available():
-    import intel_extension_for_pytorch as ipex
-torch = LazyImport("torch")
-
-
-def distributed_init(
-    backend="gloo",
-    world_size=1,
-    rank=-1,
-    init_method=None,
-    master_addr="127.0.0.1",
-    master_port="12345",
-):
-    """Init the distribute environment."""
-    rank = int(os.environ.get("RANK", rank))
-    world_size = int(os.environ.get("WORLD_SIZE", world_size))
-    if init_method is None:
-        master_addr = os.environ.get("MASTER_ADDR", master_addr)
-        master_port = os.environ.get("MASTER_PORT", master_port)
-        init_method = "env://{addr}:{port}".format(addr=master_addr, port=master_port)
-    torch.distributed.init_process_group(backend, init_method=init_method, world_size=world_size, rank=rank)
-
-
-def remove_label(input):
-    if "labels" in input:  # for GLUE
-        input.pop("labels")
-    elif "start_positions" in input and "end_positions" in input:  # for SQuAD
-        # pragma: no cover
-        input.pop("start_positions")
-        input.pop("end_positions")
-    return input
-
-
-def _build_inc_dataloader(dataloader):
-    # transformer issue #1
-    # for transformers 4.31.0: accelerate dataloader
-    # *** ValueError: batch_size attribute should not be set
-    # after DataLoaderShard is initialized
-    class INCDataLoader:
-        __iter__ = dataloader.__iter__
-        __len__ = dataloader.__len__
-
-        def __init__(self) -> None:
-            self.dataloader = dataloader
-            self.batch_size = dataloader.total_batch_size
-            self.dataset = dataloader.dataset
-
-    return INCDataLoader()
-
 
 """Utility."""
 
@@ -167,3 +116,56 @@ def get_device_type():
     else:
         device = "cpu"
     return device
+# utility
+
+
+if is_ipex_available():
+    import intel_extension_for_pytorch as ipex
+torch = LazyImport("torch")
+
+
+def distributed_init(
+    backend="gloo",
+    world_size=1,
+    rank=-1,
+    init_method=None,
+    master_addr="127.0.0.1",
+    master_port="12345",
+):
+    """Init the distribute environment."""
+    rank = int(os.environ.get("RANK", rank))
+    world_size = int(os.environ.get("WORLD_SIZE", world_size))
+    if init_method is None:
+        master_addr = os.environ.get("MASTER_ADDR", master_addr)
+        master_port = os.environ.get("MASTER_PORT", master_port)
+        init_method = "env://{addr}:{port}".format(addr=master_addr, port=master_port)
+    torch.distributed.init_process_group(backend, init_method=init_method, world_size=world_size, rank=rank)
+
+
+def remove_label(input):
+    if "labels" in input:  # for GLUE
+        input.pop("labels")
+    elif "start_positions" in input and "end_positions" in input:  # for SQuAD
+        # pragma: no cover
+        input.pop("start_positions")
+        input.pop("end_positions")
+    return input
+
+
+def _build_inc_dataloader(dataloader):
+    # transformer issue #1
+    # for transformers 4.31.0: accelerate dataloader
+    # *** ValueError: batch_size attribute should not be set
+    # after DataLoaderShard is initialized
+    class INCDataLoader:
+        __iter__ = dataloader.__iter__
+        __len__ = dataloader.__len__
+
+        def __init__(self) -> None:
+            self.dataloader = dataloader
+            self.batch_size = dataloader.total_batch_size
+            self.dataset = dataloader.dataset
+
+    return INCDataLoader()
+
+
