@@ -86,15 +86,10 @@ class INCQuantizationConfigMixin(QuantizationConfig):
         if self.scale_dtype is not None and self.scale_dtype not in [
             "fp32",
             "bf16",
-<<<<<<< Updated upstream
-        ]:
-            raise ValueError("scale_dtype must be a string in 'fp32', 'bf16' ")
-=======
             "fp16"]:
             raise ValueError(
                 "scale_dtype must be a string in 'fp32', 'bf16' "
             )
->>>>>>> Stashed changes
         elif self.scale_dtype is None:
             self.scale_dtype = "fp32"
 
