@@ -658,7 +658,7 @@ def convert_to_quantized_model(model, config, device="cpu"):
         # INC attribute conflicted with transformers when use nf4/int8 training.
         del model.is_quantized
         # TODO replace_linear
-        # q_model = replace_linear(model, None, None, config, device=device)
+        q_model = replace_linear(model, None, None, config, device=device)
         q_model = model
         
         if orig_dtype != torch.float32:
