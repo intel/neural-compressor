@@ -267,7 +267,7 @@ Deep Learning</a></td>
 
 3. How to specify an Accelerator?
 
-    > Neural Compressor provides automatically accelerator detection, which includes HPU, XPU, CUDA and CPU.
+    > Neural Compressor provides automatic accelerator detection, including HPU, XPU, CUDA, and CPU.
 
     > The automatically detected accelerator may not be suitable for some special cases, such as poor performance, memory limitations. Therefore, Neural Compressor extends an environment variable `INC_FORCE_DEVICE` to override the automatically detected device settings for convenience.
 
