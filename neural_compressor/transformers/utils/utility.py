@@ -18,8 +18,8 @@
 
 import argparse
 import os
-from neural_compressor.utils import logger
-from neural_compressor.utils.utility import LazyImport, CpuInfo
+from neural_compressor.common.utils import logger
+from neural_compressor.common.utils import LazyImport, CpuInfo
 from intel_extension_for_transformers.tools.utils import is_ipex_available
 
 
