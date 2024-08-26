@@ -15,26 +15,32 @@
 """Intel Neural Compressor Transformers-like Config."""
 
 import os
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import transformers
 
-from typing import Any, Dict, List, Optional, Tuple, Union
 from neural_compressor.utils import logger
 from neural_compressor.utils.utility import LazyImport
+
 torch = LazyImport("torch")
 
 QUANT_CONFIG = "quantize_config.json"
 
 if transformers.__version__ >= "4.32.0":
     from transformers.utils.quantization_config import QuantizationConfigMixin
+
     QuantizationConfig = QuantizationConfigMixin
 else:
     from transformers import PretrainedConfig
+
     QuantizationConfig = PretrainedConfig
 from enum import Enum
+
 
 class QuantizationMethod(str, Enum):
     GPTQ = "gptq"
     RTN = "rtn"
+
 
 class INCQuantizationConfigMixin(QuantizationConfig):
     """Mixin class for quantization config."""
@@ -57,9 +63,7 @@ class INCQuantizationConfigMixin(QuantizationConfig):
                 to_remove.append(key)
 
         # Remove all the attributes that were updated, without modifying the input dict
-        unused_kwargs = {
-            key: value for key, value in kwargs.items() if key not in to_remove
-        }
+        unused_kwargs = {key: value for key, value in kwargs.items() if key not in to_remove}
         return unused_kwargs
 
     def post_init_cpu(self):
@@ -77,18 +81,13 @@ class INCQuantizationConfigMixin(QuantizationConfig):
         if self.bits is None:
             self.bits = 4
         elif self.bits is not None and self.bits not in [4, 8]:
-            raise ValueError(
-                f"Only support quantization to [4, 8] bits but found {self.bits}"
-            )
-
+            raise ValueError(f"Only support quantization to [4, 8] bits but found {self.bits}")
 
         if self.scale_dtype is not None and self.scale_dtype not in [
             "fp32",
             "bf16",
         ]:
-            raise ValueError(
-                "scale_dtype must be a string in 'fp32', 'bf16' "
-            )
+            raise ValueError("scale_dtype must be a string in 'fp32', 'bf16' ")
         elif self.scale_dtype is None:
             self.scale_dtype = "fp32"
 
@@ -111,9 +110,7 @@ class INCQuantizationConfigMixin(QuantizationConfig):
         if self.bits is None:
             self.bits = 4
         elif self.bits not in [4]:
-            raise ValueError(
-                f"Only support quantization to [4] bits but found {self.bits}"
-            )
+            raise ValueError(f"Only support quantization to [4] bits but found {self.bits}")
 
         if self.weight_dtype is None:
             self.weight_dtype = "int4_fullrange"
@@ -122,9 +119,7 @@ class INCQuantizationConfigMixin(QuantizationConfig):
         elif self.weight_dtype not in [
             "int4_fullrange",
         ]:
-            raise ValueError(
-                f"weight_dtype must be a string in 'int4_fullrange', but get {self.weight_dtype}."
-            )
+            raise ValueError(f"weight_dtype must be a string in 'int4_fullrange', but get {self.weight_dtype}.")
 
         if self.scale_dtype is not None and self.scale_dtype not in ["fp16"]:
             raise ValueError("scale_dtype must be a string in 'fp16'")
@@ -135,14 +130,9 @@ class INCQuantizationConfigMixin(QuantizationConfig):
             raise ValueError("group_size must be a int")
 
         if self.scheme not in ["sym"]:
-            raise ValueError(
-                "scheme: {} is not support, only support 'sym' now!".format(self.scheme)
-            )
+            raise ValueError("scheme: {} is not support, only support 'sym' now!".format(self.scheme))
 
-
-    def to_json_file(
-        self, json_file_path: Union[str, os.PathLike], use_diff: bool = True
-    ):
+    def to_json_file(self, json_file_path: Union[str, os.PathLike], use_diff: bool = True):
         """Save this instance to a JSON file.
 
         Args:
@@ -224,9 +214,7 @@ class INCQuantizationConfigMixin(QuantizationConfig):
                 Additional key word arguments passed along to the [`~utils.PushToHubMixin.push_to_hub`] method.
         """
         if os.path.isfile(save_directory):
-            raise AssertionError(
-                f"Provided path ({save_directory}) should be a directory, not a file"
-            )
+            raise AssertionError(f"Provided path ({save_directory}) should be a directory, not a file")
 
         os.makedirs(save_directory, exist_ok=True)
 
@@ -256,9 +244,8 @@ class INCQuantizationConfigMixin(QuantizationConfig):
         cls, pretrained_model_name_or_path: Union[str, os.PathLike], **kwargs
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         cf = kwargs.pop("_configuration_file", QUANT_CONFIG)
-        return super().get_config_dict(
-            pretrained_model_name_or_path, _configuration_file=cf, **kwargs
-        )
+        return super().get_config_dict(pretrained_model_name_or_path, _configuration_file=cf, **kwargs)
+
 
 class RtnConfig(INCQuantizationConfigMixin):
     def __init__(
@@ -274,7 +261,7 @@ class RtnConfig(INCQuantizationConfigMixin):
         self.quant_method = QuantizationMethod.RTN
         self.bits = bits
         self.compute_dtype = compute_dtype
-        self.weight_dtype = "int4" if self.bits==4 else "int8"
+        self.weight_dtype = "int4" if self.bits == 4 else "int8"
         self.scale_dtype = scale_dtype
         self.group_size = group_size
         self.use_layer_wise = use_layer_wise
@@ -283,8 +270,9 @@ class RtnConfig(INCQuantizationConfigMixin):
 
         # "transformer.output_layer" for chatglm series model.
         # "embed_out" for dolly v2 series model.
-        self.modules_to_not_convert = kwargs.get("modules_to_not_convert",
-                                                ["lm_head", "transformer.output_layer", "embed_out"])
+        self.modules_to_not_convert = kwargs.get(
+            "modules_to_not_convert", ["lm_head", "transformer.output_layer", "embed_out"]
+        )
         self.device = kwargs.get("device", "auto")
 
     def to_diff_dict(self) -> Dict[str, Any]:
@@ -307,6 +295,7 @@ class RtnConfig(INCQuantizationConfigMixin):
                 serializable_config_dict[key] = value
 
         return serializable_config_dict
+
 
 class GPTQConfig(INCQuantizationConfigMixin):
     def __init__(
@@ -337,7 +326,7 @@ class GPTQConfig(INCQuantizationConfigMixin):
         self.dataset = dataset
         self.batch_size = batch_size
         self.compute_dtype = compute_dtype
-        self.weight_dtype =  "int4" if self.bits==4 else "int8"
+        self.weight_dtype = "int4" if self.bits == 4 else "int8"
         self.scale_dtype = scale_dtype
         self.sym = sym
         self.blocksize = blocksize
@@ -350,8 +339,9 @@ class GPTQConfig(INCQuantizationConfigMixin):
         self.true_sequential = true_sequential
         self.use_layer_wise = use_layer_wise
         self.seq_len = seq_len
-        self.modules_to_not_convert = kwargs.get("modules_to_not_convert",
-                                                ["lm_head", "transformer.output_layer", "embed_out"])
+        self.modules_to_not_convert = kwargs.get(
+            "modules_to_not_convert", ["lm_head", "transformer.output_layer", "embed_out"]
+        )
         self.device = kwargs.get("device", "auto")
         self.scheme = "sym" if self.sym else "asym"
 
@@ -371,9 +361,7 @@ class GPTQConfig(INCQuantizationConfigMixin):
         r"""Safety checker that arguments are correct."""
 
         if self.bits not in [4, 8]:
-            raise ValueError(
-                f"Only support quantization to [4, 8] bits but found {self.bits}"
-            )
+            raise ValueError(f"Only support quantization to [4, 8] bits but found {self.bits}")
 
         if not (0 < self.damp_percent < 1):
             raise ValueError("damp_percent must between 0 and 1.")
@@ -398,4 +386,3 @@ class GPTQConfig(INCQuantizationConfigMixin):
                 serializable_config_dict[key] = value
 
         return serializable_config_dict
-
