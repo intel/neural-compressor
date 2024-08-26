@@ -41,27 +41,28 @@ from typing import Union
 import torch
 import transformers
 from accelerate import init_empty_weights
-
 from transformers import AutoConfig
 from transformers.configuration_utils import PretrainedConfig
 from transformers.modeling_utils import load_state_dict
-from transformers.utils import has_file,  is_safetensors_available
-from neural_compressor.transformers.quantization.utils import save_low_bit, replace_linear
-from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
-
-from ..quantization.utils import (
-    convert_dtype_torch2str,
-    replace_linear,
+from transformers.utils import (
+    SAFE_WEIGHTS_INDEX_NAME,
+    SAFE_WEIGHTS_NAME,
+    WEIGHTS_INDEX_NAME,
+    WEIGHTS_NAME,
+    has_file,
+    is_safetensors_available,
 )
-from neural_compressor.transformers import GPTQConfig, RtnConfig
-from neural_compressor.utils.utility import LazyImport, CpuInfo
-from neural_compressor.utils import logger
-from neural_compressor.torch.utils import is_ipex_available
-from transformers.utils import SAFE_WEIGHTS_INDEX_NAME, SAFE_WEIGHTS_NAME, WEIGHTS_INDEX_NAME, WEIGHTS_NAME
 
+from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
+from neural_compressor.torch.utils import is_ipex_available
+from neural_compressor.transformers import GPTQConfig, RtnConfig
+from neural_compressor.transformers.quantization.utils import replace_linear, save_low_bit
+from neural_compressor.utils import logger
+from neural_compressor.utils.utility import CpuInfo, LazyImport
+
+from ..quantization.utils import convert_dtype_torch2str, replace_linear
 
 torch = LazyImport("torch")
-
 
 
 def build_woq_model(model, quantization_config):
@@ -523,9 +524,7 @@ class _BaseQBitsAutoModelClass:
             else:
                 logger.warning("bits number only supports 4, 8.")
                 quantization_config.weight_dtype = "int4"
-                logger.warning(
-                    "int4 weight_dtype is used, please change the config.json if you don't want to use it."
-                )
+                logger.warning("int4 weight_dtype is used, please change the config.json if you don't want to use it.")
         else:
             if quantization_config.weight_dtype not in [
                 "int4_fullrange",
@@ -553,7 +552,6 @@ class _BaseQBitsAutoModelClass:
             model = model_class(config, *model_args, **kwargs)
 
         model = build_woq_model(model, quantization_config)
-
 
         if is_sharded:
             loaded_state_dict_keys = sharded_metadata["all_checkpoint_keys"]

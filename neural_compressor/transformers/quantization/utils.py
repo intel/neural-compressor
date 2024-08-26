@@ -18,26 +18,25 @@ import gc
 import logging
 import math
 import os
+
 <<<<<<< Updated upstream
 
 from accelerate import init_empty_weights
 from datasets import load_dataset
+
 =======
-import types
 import json
+import types
 
 from datasets import load_dataset
+
 from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
-from neural_compressor.torch.quantization import (
-    GPTQConfig,
-    RTNConfig,
-    convert,
-    prepare,
-)
-from neural_compressor.utils.utility import LazyImport, CpuInfo
+from neural_compressor.torch.quantization import GPTQConfig, RTNConfig, convert, prepare
+from neural_compressor.utils.utility import CpuInfo, LazyImport
+
 >>>>>>> Stashed changes
 from transformers import AutoTokenizer
-from transformers.utils import SAFE_WEIGHTS_NAME, WEIGHTS_NAME 
+from transformers.utils import SAFE_WEIGHTS_NAME, WEIGHTS_NAME
 
 from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear as WeightOnlyLinear
 from neural_compressor.torch.quantization import GPTQConfig, RTNConfig, convert, prepare
@@ -298,9 +297,7 @@ def _replace_linear(
                     or device == "auto"
 >>>>>>> Stashed changes
                 ):
-                    from intel_extension_for_pytorch.nn.modules import (
-                        WeightOnlyQuantizedLinear as ipex_linear,
-                    )
+                    from intel_extension_for_pytorch.nn.modules import WeightOnlyQuantizedLinear as ipex_linear
                     from intel_extension_for_pytorch.utils.weight_only_quantization import (
                         _convert_optimum_format_to_desired,
                     )
@@ -355,8 +352,9 @@ def _replace_linear(
                     )
 
                 elif device == "xpu" or device == torch.device("xpu"):
-                    from intel_extension_for_pytorch.nn.utils._quantize_convert import \
-                        WeightOnlyQuantizedLinear as ipex_linear # pylint: disable=E0401
+                    from intel_extension_for_pytorch.nn.utils._quantize_convert import (
+                        WeightOnlyQuantizedLinear as ipex_linear,  # pylint: disable=E0401
+                    )
                     model._modules[name] = ipex_linear(
                         in_features,
                         out_features,
