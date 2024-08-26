@@ -16,11 +16,5 @@
 # limitations under the License.
 """Utils for optimization."""
 
-from .config import (
-    RtnConfig,
-    AwqConfig,
-    TeqConfig,
-    GPTQConfig,
-    AutoRoundConfig
-)
+from .config import RtnConfig, AwqConfig, TeqConfig, GPTQConfig, AutoRoundConfig
 from .utility import LazyImport, logger, CpuInfo

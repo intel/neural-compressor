@@ -16,13 +16,12 @@
 # limitations under the License.
 """Config: provide config classes for optimization processes."""
 
-import yaml
 from enum import Enum
-
-from neural_compressor.utils.utility import DotDict
-
 from typing import List, Union
 from xmlrpc.client import boolean
 
+import yaml
+
+from neural_compressor.utils.utility import DotDict
 
 WEIGHTS_NAME = "pytorch_model.bin"

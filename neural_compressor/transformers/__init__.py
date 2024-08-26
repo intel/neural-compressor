@@ -18,7 +18,6 @@
 
 from .config import (
     WEIGHTS_NAME,
-
 )
 
 from .utils import (
