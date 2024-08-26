@@ -269,7 +269,7 @@ Deep Learning</a></td>
 
     > Neural Compressor provides automatic accelerator detection, including HPU, XPU, CUDA, and CPU.
 
-    > The automatically detected accelerator may not be suitable for some special cases, such as poor performance, memory limitations. Therefore, Neural Compressor extends an environment variable `INC_FORCE_DEVICE` to override the automatically detected device settings for convenience.
+    > The automatically detected accelerator may not be suitable for some special cases, such as poor performance, memory limitations. In such situations, users can override the detected accelerator by setting the environment variable `INC_FORCE_DEVICE`.
 
     > Usage:
 
