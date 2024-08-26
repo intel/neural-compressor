@@ -86,8 +86,15 @@ class INCQuantizationConfigMixin(QuantizationConfig):
         if self.scale_dtype is not None and self.scale_dtype not in [
             "fp32",
             "bf16",
+<<<<<<< Updated upstream
         ]:
             raise ValueError("scale_dtype must be a string in 'fp32', 'bf16' ")
+=======
+            "fp16"]:
+            raise ValueError(
+                "scale_dtype must be a string in 'fp32', 'bf16' "
+            )
+>>>>>>> Stashed changes
         elif self.scale_dtype is None:
             self.scale_dtype = "fp32"
 
@@ -274,7 +281,10 @@ class RtnConfig(INCQuantizationConfigMixin):
             "modules_to_not_convert", ["lm_head", "transformer.output_layer", "embed_out"]
         )
         self.device = kwargs.get("device", "auto")
-
+        if self.use_layer_wise:
+            self.model_path = kwargs("model_path", None)
+            if self.model_path is None:
+                raise AssertionError("model_path is necessary if you would like to use_layer_wise for weight only quantization.")
     def to_diff_dict(self) -> Dict[str, Any]:
         """Removes all attributes from config which correspond to the default config attributes
         for better readability and serializes to a Python dictionary.
@@ -344,6 +354,10 @@ class GPTQConfig(INCQuantizationConfigMixin):
         )
         self.device = kwargs.get("device", "auto")
         self.scheme = "sym" if self.sym else "asym"
+        if self.use_layer_wise:
+            self.model_path = kwargs("model_path", None)
+            if self.model_path is None:
+                raise AssertionError("model_path is necessary if you would like to use_layer_wise for weight only quantization.")
 
         if isinstance(compute_dtype, torch.dtype):
             self.compute_dtype = compute_dtype
