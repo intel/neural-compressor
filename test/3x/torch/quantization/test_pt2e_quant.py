@@ -98,7 +98,10 @@ class TestPT2EQuantization:
         return exported_model, example_inputs
 
     @pytest.mark.skipif(get_torch_version() <= TORCH_VERSION_2_2_2, reason="Requires torch>=2.3.0")
-    def test_quantize_simple_model(self, force_not_import_ipex):
+    @pytest.mark.parametrize("granularity", ["per_tensor", "per_channel"])
+    def test_quantize_simple_model(self, granularity, force_not_import_ipex):
+        from neural_compressor.torch.quantization import StaticQuantConfig
+
         model, example_inputs = self.build_simple_torch_model_and_example_inputs()
         float_model_output = model(*example_inputs)
         quant_config = None
@@ -107,7 +110,7 @@ class TestPT2EQuantization:
             for i in range(4):
                 model(*example_inputs)
 
-        quant_config = get_default_static_config()
+        quant_config = StaticQuantConfig(w_granularity=granularity)
         q_model = quantize(model=model, quant_config=quant_config, run_fn=calib_fn)
         from torch._inductor import config
 
