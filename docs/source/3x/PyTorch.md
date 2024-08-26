@@ -265,7 +265,7 @@ Deep Learning</a></td>
     quant_config.set_local("Conv1d", RTNConfig(dtype="fp32"))  # For Conv1d layers, do not quantize them.
     ```
 
-3. How to specify an Accelerator?
+3. How to specify an accelerator?
 
     > Neural Compressor provides automatic accelerator detection, including HPU, XPU, CUDA, and CPU.
 
