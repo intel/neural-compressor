@@ -245,7 +245,7 @@ Deep Learning</a></td>
     </table>
 
 2. How to set different configuration for specific op_name or op_type?
-    > INC extends a `set_local` method based on the global configuration object to set custom configuration.
+    > Neural Compressor extends a `set_local` method based on the global configuration object to set custom configuration.
 
     ```python
     def set_local(self, operator_name_or_list: Union[List, str, Callable], config: BaseConfig) -> BaseConfig:
@@ -263,4 +263,16 @@ Deep Learning</a></td>
     quant_config = RTNConfig()  # Initialize global configuration with default bits=4
     quant_config.set_local(".*mlp.*", RTNConfig(bits=8))  # For layers with "mlp" in their names, set bits=8
     quant_config.set_local("Conv1d", RTNConfig(dtype="fp32"))  # For Conv1d layers, do not quantize them.
+    ```
+
+3. How to specify an Accelerator?
+
+    > Neural Compressor provides automatically accelerator detection, which includes HPU, XPU, CUDA and CPU.
+
+    > The automatically detected accelerator may not be suitable for some special cases, such as poor performance, memory limitations. Therefore, Neural Compressor extends an environment variable `INC_FORCE_DEVICE` to override the automatically detected device settings for convenience.
+
+    > Usage:
+
+    ```bash
+    export INC_FORCE_DEVICE=cpu
     ```
