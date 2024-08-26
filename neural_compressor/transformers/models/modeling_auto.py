@@ -38,7 +38,6 @@ import types
 from threading import Thread
 from typing import Union
 
-import torch
 import transformers
 from accelerate import init_empty_weights
 from transformers import AutoConfig
@@ -56,11 +55,9 @@ from transformers.utils import (
 from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
 from neural_compressor.torch.utils import is_ipex_available
 from neural_compressor.transformers import GPTQConfig, RtnConfig
-from neural_compressor.transformers.quantization.utils import replace_linear, save_low_bit
+from neural_compressor.transformers.quantization.utils import convert_dtype_torch2str, replace_linear, save_low_bit
 from neural_compressor.utils import logger
 from neural_compressor.utils.utility import CpuInfo, LazyImport
-
-from ..quantization.utils import convert_dtype_torch2str, replace_linear
 
 torch = LazyImport("torch")
 
