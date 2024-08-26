@@ -17,5 +17,4 @@
 """Modeling class."""
 
 
-from .modeling_auto import (AutoModel, AutoModelForCausalLM,
-                            AutoModelForSeq2SeqLM)
+from .modeling_auto import AutoModel, AutoModelForCausalLM, AutoModelForSeq2SeqLM

@@ -18,10 +18,10 @@
 
 import argparse
 import os
-from neural_compressor.common.utils import logger
-from neural_compressor.common.utils import LazyImport, CpuInfo
+
 from intel_extension_for_transformers.tools.utils import is_ipex_available
 
+from neural_compressor.common.utils import CpuInfo, LazyImport, logger
 
 CONFIG_NAME = "best_configure.yaml"
 ENGINE_MODEL_NAME = "model.bin"
@@ -40,6 +40,7 @@ if is_ipex_available():
     import intel_extension_for_pytorch as ipex
 torch = LazyImport("torch")
 
+
 def distributed_init(
     backend="gloo",
     world_size=1,
@@ -55,9 +56,7 @@ def distributed_init(
         master_addr = os.environ.get("MASTER_ADDR", master_addr)
         master_port = os.environ.get("MASTER_PORT", master_port)
         init_method = "env://{addr}:{port}".format(addr=master_addr, port=master_port)
-    torch.distributed.init_process_group(
-        backend, init_method=init_method, world_size=world_size, rank=rank
-    )
+    torch.distributed.init_process_group(backend, init_method=init_method, world_size=world_size, rank=rank)
 
 
 def remove_label(input):
@@ -86,12 +85,15 @@ def _build_inc_dataloader(dataloader):
 
     return INCDataLoader()
 
+
 """Utility."""
 
 import importlib
 import sys
-import torch
 import warnings
+
+import torch
+
 if sys.version_info < (3, 8):
     import importlib_metadata
 else:
@@ -99,16 +101,21 @@ else:
 
 try:
     import habana_frameworks.torch.hpu as hthpu
+
     is_hpu_available = True
 except ImportError:
     is_hpu_available = False
 
+
 def supported_gpus():
-    return ['flex', 'max', 'arc']
+    return ["flex", "max", "arc"]
+
 
 def is_intel_gpu_available():
     import intel_extension_for_pytorch as ipex
+
     return hasattr(torch, "xpu") and torch.xpu.is_available()
+
 
 _ipex_available = importlib.util.find_spec("intel_extension_for_pytorch") is not None
 _ipex_version = "N/A"
@@ -118,8 +125,10 @@ if _ipex_available:
     except importlib_metadata.PackageNotFoundError:
         _ipex_available = False
 
+
 def is_ipex_available():
     return _ipex_available
+
 
 _autoround_available = importlib.util.find_spec("auto_round") is not None
 _autoround_version = "N/A"
@@ -129,8 +138,10 @@ if _autoround_available:
     except importlib_metadata.PackageNotFoundError:
         _autoround_available = False
 
+
 def is_autoround_available():
     return _autoround_available
+
 
 _neural_compressor_available = importlib.util.find_spec("neural_compressor") is not None
 _neural_compressor_version = "N/A"
@@ -140,8 +151,11 @@ if _neural_compressor_available:
         _neural_compressor_version = importlib_metadata.version("neural_compressor")
     except importlib_metadata.PackageNotFoundError:
         _neural_compressor_available = False
+
+
 def is_neural_compressor_avaliable():
     return _neural_compressor_available
+
 
 def get_device_type():
     if torch.cuda.is_available():

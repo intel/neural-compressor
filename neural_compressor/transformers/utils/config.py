@@ -30,8 +30,6 @@ from .utility import QUANT_CONFIG, SPARSITY_CONFIG, LazyImport, logger
 torch = LazyImport("torch")
 
 
-
-
 if transformers.__version__ >= "4.32.0":
     from transformers.utils.quantization_config import QuantizationConfigMixin
 
@@ -48,7 +46,6 @@ class QuantizationMethod(str, Enum):
     RTN = "rtn"
     AUTOROUND = "autoround"
     TEQ = "teq"
-
 
 
 class ITREXQuantizationConfigMixin(QuantizationConfig):
@@ -72,9 +69,7 @@ class ITREXQuantizationConfigMixin(QuantizationConfig):
                 to_remove.append(key)
 
         # Remove all the attributes that were updated, without modifying the input dict
-        unused_kwargs = {
-            key: value for key, value in kwargs.items() if key not in to_remove
-        }
+        unused_kwargs = {key: value for key, value in kwargs.items() if key not in to_remove}
         return unused_kwargs
 
     def post_init_cpu(self):
@@ -92,9 +87,7 @@ class ITREXQuantizationConfigMixin(QuantizationConfig):
         if self.bits is None:
             self.bits = 4
         elif self.bits is not None and self.bits not in [4, 8]:
-            raise ValueError(
-                f"Only support quantization to [4, 8] bits but found {self.bits}"
-            )
+            raise ValueError(f"Only support quantization to [4, 8] bits but found {self.bits}")
 
         if self.weight_dtype == "int4":
             self.weight_dtype = "int4_clip"
@@ -109,15 +102,11 @@ class ITREXQuantizationConfigMixin(QuantizationConfig):
             "fp4_e2m1",
         ]:
             self.weight_dtype = "int4_clip"
-            logger.warning(
-                "int4_clip weight_type is used due to bits is 4 but weight_dtype is not set."
-            )
+            logger.warning("int4_clip weight_type is used due to bits is 4 but weight_dtype is not set.")
 
         if self.bits == 8 and self.weight_dtype not in ["int8", "fp8_e5m2", "fp8_e4m3"]:
             self.weight_dtype = "int8"
-            logger.warning(
-                "int8 weight_type is used due to bits is 8 but weight_dtype is not set."
-            )
+            logger.warning("int8 weight_type is used due to bits is 8 but weight_dtype is not set.")
 
         if self.weight_dtype not in [
             "int8",
@@ -128,9 +117,9 @@ class ITREXQuantizationConfigMixin(QuantizationConfig):
             "fp8_e4m3",
         ]:
             raise ValueError(
-                f"weight_dtype must be a string in "
-                f"'int8', 'int4', 'int4_clip', 'nf4', 'fp4', 'fp4_e2m1', "
-                f"'fp8', 'fp8_e5m2, fp8_e4m3'"
+                "weight_dtype must be a string in "
+                "'int8', 'int4', 'int4_clip', 'nf4', 'fp4', 'fp4_e2m1', "
+                "'fp8', 'fp8_e5m2, fp8_e4m3'"
             )
 
         if self.scale_dtype is not None and self.scale_dtype not in [
@@ -187,9 +176,7 @@ class ITREXQuantizationConfigMixin(QuantizationConfig):
         if self.bits is None:
             self.bits = 4
         elif self.bits not in [4]:
-            raise ValueError(
-                f"Only support quantization to [4] bits but found {self.bits}"
-            )
+            raise ValueError(f"Only support quantization to [4] bits but found {self.bits}")
 
         if self.weight_dtype is None:
             self.weight_dtype = "int4_fullrange"
@@ -198,9 +185,7 @@ class ITREXQuantizationConfigMixin(QuantizationConfig):
         elif self.weight_dtype not in [
             "int4_fullrange",
         ]:
-            raise ValueError(
-                f"weight_dtype must be a string in 'int4_fullrange', but get {self.weight_dtype}."
-            )
+            raise ValueError(f"weight_dtype must be a string in 'int4_fullrange', but get {self.weight_dtype}.")
 
         if self.scale_dtype is not None and self.scale_dtype not in ["fp16"]:
             raise ValueError("scale_dtype must be a string in 'fp16'")
@@ -220,9 +205,7 @@ class ITREXQuantizationConfigMixin(QuantizationConfig):
             raise ValueError("group_size must be a int")
 
         if self.scheme not in ["sym"]:
-            raise ValueError(
-                "scheme: {} is not support, only support 'sym' now!".format(self.scheme)
-            )
+            raise ValueError("scheme: {} is not support, only support 'sym' now!".format(self.scheme))
         self.use_neural_speed = False
 
     def post_init_runtime(self):
@@ -253,18 +236,12 @@ class ITREXQuantizationConfigMixin(QuantizationConfig):
             self.compute_dtype = "fp32"
         else:
             if self.compute_dtype not in runtime_supported_compute_dtype:
-                raise ValueError(
-                    "compute_dtype must be in {}.".format(
-                        runtime_supported_compute_dtype
-                    )
-                )
+                raise ValueError("compute_dtype must be in {}.".format(runtime_supported_compute_dtype))
 
         if self.bits is None:
             self.bits = 4
         elif self.bits not in [4, 8]:
-            raise ValueError(
-                f"Only support quantization to [4, 8] bits but found {self.bits}"
-            )
+            raise ValueError(f"Only support quantization to [4, 8] bits but found {self.bits}")
 
         if self.weight_dtype is None:
             self.weight_dtype = "int4"
@@ -278,71 +255,45 @@ class ITREXQuantizationConfigMixin(QuantizationConfig):
             self.weight_dtype = "fp4_e2m1"
         else:
             if self.weight_dtype not in runtime_supported_weight_dtype:
-                raise ValueError(
-                    "weight_dtype must be in {}.".format(runtime_supported_weight_dtype)
-                )
+                raise ValueError("weight_dtype must be in {}.".format(runtime_supported_weight_dtype))
 
         if self.bits == 4 and self.weight_dtype not in ["int4", "nf4", "fp4_e2m1"]:
             self.weight_dtype = "int4"
-            print(
-                "int4 weight_type is used due to bits is 4 but weight_dtype is not set."
-            )
+            print("int4 weight_type is used due to bits is 4 but weight_dtype is not set.")
 
         if self.bits == 8 and self.weight_dtype not in ["int8", "fp8_e5m2", "fp8_e4m3"]:
             self.weight_dtype = "int8"
-            print(
-                "int8 weight_type is used due to bits is 8 but weight_dtype is not set."
-            )
+            print("int8 weight_type is used due to bits is 8 but weight_dtype is not set.")
 
         if self.scale_dtype is None:
             self.scale_dtype = "fp32"
         else:
             if self.scale_dtype not in runtime_supported_scale_dtype:
-                raise ValueError(
-                    "scale_dtype must be in {}.".format(runtime_supported_scale_dtype)
-                )
+                raise ValueError("scale_dtype must be in {}.".format(runtime_supported_scale_dtype))
 
         if self.group_size not in runtime_supported_group_size:
-            raise ValueError(
-                "group_size must be an integer in {}.".format(
-                    runtime_supported_group_size
-                )
-            )
+            raise ValueError("group_size must be an integer in {}.".format(runtime_supported_group_size))
 
         if self.weight_dtype[:3] in ["fp8", "fp4", "nf4"]:
             if self.compute_dtype in ["int8"]:
-                print(
-                    "WARNING: int8 compute dtype is not be supported in float quant types! "
-                    "Fall back to fp32."
-                )
+                print("WARNING: int8 compute dtype is not be supported in float quant types! " "Fall back to fp32.")
                 self.compute_dtype = "fp32"
             if self.scheme in ["asym"]:
-                print(
-                    "WARNING: asym alg is not be supported in float quant types! "
-                    "Fall back to sym."
-                )
+                print("WARNING: asym alg is not be supported in float quant types! " "Fall back to sym.")
                 self.scheme = "sym"
             if self.scale_dtype in ["fp8"] and self.weight_dtype[:3] not in ["fp8"]:
-                print(
-                    "WARNING: fp8 scale is only be supported in fp8 weight type. "
-                    "Fall back to fp32."
-                )
+                print("WARNING: fp8 scale is only be supported in fp8 weight type. " "Fall back to fp32.")
                 self.scale_dtype = "fp32"
             if self.weight_dtype[:3] == "fp8" and self.scale_dtype not in [
                 "fp8",
                 "fp32",
             ]:
-                print(
-                    "WARNING: fp8 weight type only supports fp8 / fp32 scale now."
-                    " Fall back to fp8."
-                )
+                print("WARNING: fp8 weight type only supports fp8 / fp32 scale now." " Fall back to fp8.")
                 self.scale_dtype = "fp8"
 
         self.use_neural_speed = True
 
-    def to_json_file(
-        self, json_file_path: Union[str, os.PathLike], use_diff: bool = True
-    ):
+    def to_json_file(self, json_file_path: Union[str, os.PathLike], use_diff: bool = True):
         """Save this instance to a JSON file.
 
         Args:
@@ -426,9 +377,7 @@ class ITREXQuantizationConfigMixin(QuantizationConfig):
                 Additional key word arguments passed along to the [`~utils.PushToHubMixin.push_to_hub`] method.
         """
         if os.path.isfile(save_directory):
-            raise AssertionError(
-                f"Provided path ({save_directory}) should be a directory, not a file"
-            )
+            raise AssertionError(f"Provided path ({save_directory}) should be a directory, not a file")
 
         os.makedirs(save_directory, exist_ok=True)
 
@@ -458,9 +407,7 @@ class ITREXQuantizationConfigMixin(QuantizationConfig):
         cls, pretrained_model_name_or_path: Union[str, os.PathLike], **kwargs
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         cf = kwargs.pop("_configuration_file", QUANT_CONFIG)
-        return super().get_config_dict(
-            pretrained_model_name_or_path, _configuration_file=cf, **kwargs
-        )
+        return super().get_config_dict(pretrained_model_name_or_path, _configuration_file=cf, **kwargs)
 
 
 class RtnConfig(ITREXQuantizationConfigMixin):
@@ -505,8 +452,9 @@ class RtnConfig(ITREXQuantizationConfigMixin):
         self.double_quant_group_size = double_quant_group_size
         # "transformer.output_layer" for chatglm series model.
         # "embed_out" for dolly v2 series model.
-        self.llm_int8_skip_modules = kwargs.get("llm_int8_skip_modules",
-                                                ["lm_head", "transformer.output_layer", "embed_out"])
+        self.llm_int8_skip_modules = kwargs.get(
+            "llm_int8_skip_modules", ["lm_head", "transformer.output_layer", "embed_out"]
+        )
         self.use_ggml = use_ggml
         self.use_quant = use_quant
         self.use_neural_speed = use_neural_speed
@@ -533,6 +481,7 @@ class RtnConfig(ITREXQuantizationConfigMixin):
                 serializable_config_dict[key] = value
 
         return serializable_config_dict
+
 
 class GPTQConfig(ITREXQuantizationConfigMixin):
     def __init__(
@@ -563,9 +512,7 @@ class GPTQConfig(ITREXQuantizationConfigMixin):
         **kwargs,
     ):
 
-        from intel_extension_for_transformers.transformers.llm.quantization.utils import (
-            convert_dtype_torch2str,
-        )
+        from intel_extension_for_transformers.transformers.llm.quantization.utils import convert_dtype_torch2str
 
         self.quant_method = QuantizationMethod.GPTQ
         self.bits = bits
@@ -588,8 +535,9 @@ class GPTQConfig(ITREXQuantizationConfigMixin):
         self.true_sequential = true_sequential
         self.layer_wise = layer_wise
         self.seq_len = seq_len
-        self.llm_int8_skip_modules = kwargs.get("llm_int8_skip_modules",
-                                                ["lm_head", "transformer.output_layer", "embed_out"])
+        self.llm_int8_skip_modules = kwargs.get(
+            "llm_int8_skip_modules", ["lm_head", "transformer.output_layer", "embed_out"]
+        )
         self.use_ggml = use_ggml
         self.use_quant = use_quant
         self.use_neural_speed = use_neural_speed
@@ -607,9 +555,7 @@ class GPTQConfig(ITREXQuantizationConfigMixin):
             self.scale_dtype = scale_dtype
 
         if isinstance(double_quant_scale_dtype, torch.dtype):
-            self.double_quant_scale_dtype = convert_dtype_torch2str(
-                double_quant_scale_dtype
-            )
+            self.double_quant_scale_dtype = convert_dtype_torch2str(double_quant_scale_dtype)
         else:
             self.double_quant_scale_dtype = double_quant_scale_dtype
         self.use_ipex = kwargs.pop("use_ipex", True)
@@ -619,9 +565,7 @@ class GPTQConfig(ITREXQuantizationConfigMixin):
         r"""Safety checker that arguments are correct."""
 
         if self.bits not in [4, 8]:
-            raise ValueError(
-                f"Only support quantization to [4, 8] bits but found {self.bits}"
-            )
+            raise ValueError(f"Only support quantization to [4, 8] bits but found {self.bits}")
 
         if not (0 < self.damp_percent < 1):
             raise ValueError("damp_percent must between 0 and 1.")
@@ -687,8 +631,9 @@ class AwqConfig(ITREXQuantizationConfigMixin):
         self.seq_len = seq_len
         self.use_double_quant = use_double_quant
         self.double_quant_scale_dtype = double_quant_scale_dtype
-        self.llm_int8_skip_modules = kwargs.get("llm_int8_skip_modules",
-                                                ["lm_head", "transformer.output_layer", "embed_out"])
+        self.llm_int8_skip_modules = kwargs.get(
+            "llm_int8_skip_modules", ["lm_head", "transformer.output_layer", "embed_out"]
+        )
         self.use_ggml = use_ggml
         self.use_quant = use_quant
         self.use_neural_speed = use_neural_speed
@@ -757,8 +702,9 @@ class TeqConfig(ITREXQuantizationConfigMixin):
         self.seq_len = seq_len
         self.use_double_quant = use_double_quant
         self.double_quant_scale_dtype = double_quant_scale_dtype
-        self.llm_int8_skip_modules = kwargs.get("llm_int8_skip_modules",
-                                                ["lm_head", "transformer.output_layer", "embed_out"])
+        self.llm_int8_skip_modules = kwargs.get(
+            "llm_int8_skip_modules", ["lm_head", "transformer.output_layer", "embed_out"]
+        )
         self.use_ggml = use_ggml
         self.use_neural_speed = use_neural_speed
         self.device = kwargs.get("device", "auto")
@@ -812,9 +758,7 @@ class AutoRoundConfig(ITREXQuantizationConfigMixin):
         **kwargs,
     ):
 
-        from intel_extension_for_transformers.transformers.llm.quantization.utils import (
-            convert_dtype_torch2str,
-        )
+        from intel_extension_for_transformers.transformers.llm.quantization.utils import convert_dtype_torch2str
 
         self.quant_method = QuantizationMethod.AUTOROUND
         self.bits = bits
@@ -834,8 +778,9 @@ class AutoRoundConfig(ITREXQuantizationConfigMixin):
         self.iters = iters
         self.seq_len = seq_len
         self.quant_lm_head = quant_lm_head
-        self.llm_int8_skip_modules = kwargs.get("llm_int8_skip_modules",
-                                                ["lm_head", "transformer.output_layer", "embed_out"])
+        self.llm_int8_skip_modules = kwargs.get(
+            "llm_int8_skip_modules", ["lm_head", "transformer.output_layer", "embed_out"]
+        )
         if self.quant_lm_head:
             self.llm_int8_skip_modules = []
         self.use_ggml = use_ggml
@@ -846,8 +791,10 @@ class AutoRoundConfig(ITREXQuantizationConfigMixin):
         if iters is not None:
             self.calib_iters = iters
             if calib_iters is not None:
-                logger.info("cannot be set simultaneously for 'iters' and 'calib_iters', "
-                            "we will use 'iters' as calibration iterations!")
+                logger.info(
+                    "cannot be set simultaneously for 'iters' and 'calib_iters', "
+                    "we will use 'iters' as calibration iterations!"
+                )
         else:
             self.calib_iters = 200 if calib_iters is None else calib_iters
         self.scheme = "sym" if self.sym else "asym"
@@ -862,9 +809,7 @@ class AutoRoundConfig(ITREXQuantizationConfigMixin):
             self.scale_dtype = scale_dtype
 
         if isinstance(double_quant_scale_dtype, torch.dtype):
-            self.double_quant_scale_dtype = convert_dtype_torch2str(
-                double_quant_scale_dtype
-            )
+            self.double_quant_scale_dtype = convert_dtype_torch2str(double_quant_scale_dtype)
         else:
             self.double_quant_scale_dtype = double_quant_scale_dtype
         self.use_ipex = kwargs.pop("use_ipex", True)
