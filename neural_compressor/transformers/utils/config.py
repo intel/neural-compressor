@@ -511,7 +511,7 @@ class RtnConfig(ITREXQuantizationConfigMixin):
         self.use_quant = use_quant
         self.use_neural_speed = use_neural_speed
         self.device = kwargs.get("device", "auto")
-        self.use_ipex = kwargs.pop("use_ipex", False)
+        self.use_ipex = kwargs.pop("use_ipex", True)
 
     def to_diff_dict(self) -> Dict[str, Any]:
         """Removes all attributes from config which correspond to the default config attributes
@@ -612,7 +612,7 @@ class GPTQConfig(ITREXQuantizationConfigMixin):
             )
         else:
             self.double_quant_scale_dtype = double_quant_scale_dtype
-        self.use_ipex = kwargs.pop("use_ipex", False)
+        self.use_ipex = kwargs.pop("use_ipex", True)
         self.post_init_gptq()
 
     def post_init_gptq(self):
@@ -696,7 +696,7 @@ class AwqConfig(ITREXQuantizationConfigMixin):
         self.scheme = "asym" if self.zero_point else "sym"
         self.sym = True if not self.zero_point else False
         self.batch_size = kwargs.pop("batch_size", 8)
-        self.use_ipex = kwargs.pop("use_ipex", False)
+        self.use_ipex = kwargs.pop("use_ipex", True)
 
     def to_diff_dict(self) -> Dict[str, Any]:
         """Removes all attributes from config which correspond to the default config attributes
@@ -763,7 +763,7 @@ class TeqConfig(ITREXQuantizationConfigMixin):
         self.use_neural_speed = use_neural_speed
         self.device = kwargs.get("device", "auto")
         self.batch_size = kwargs.pop("batch_size", 8)
-        self.use_ipex = kwargs.pop("use_ipex", False)
+        self.use_ipex = kwargs.pop("use_ipex", True)
 
     def to_diff_dict(self) -> Dict[str, Any]:
         """Removes all attributes from config which correspond to the default config attributes
@@ -867,7 +867,7 @@ class AutoRoundConfig(ITREXQuantizationConfigMixin):
             )
         else:
             self.double_quant_scale_dtype = double_quant_scale_dtype
-        self.use_ipex = kwargs.pop("use_ipex", False)
+        self.use_ipex = kwargs.pop("use_ipex", True)
 
     def to_diff_dict(self) -> Dict[str, Any]:
         """Removes all attributes from config which correspond to the default config attributes
