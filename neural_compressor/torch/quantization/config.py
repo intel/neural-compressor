@@ -1790,7 +1790,7 @@ class FP8Config(TorchBaseConfig):
         self.observer = observer
         self.mod_dict = mod_dict
         self._json_file = None
-        self.fake_quant = fake_quant
+        self.fake_quant = str(fake_quant)
 
     @property
     def measure(self):
