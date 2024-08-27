@@ -170,10 +170,13 @@ def _replace_linear(
                         qweight=qweight,
                         scales=scales,
                         zero_points=qzeros,
-                        bias=(module.bias if hasattr(module, "bias") else None),
+                        # bias=(module.bias if (hasattr(module, "bias") and not torch.all(module.bias.eq(0))) else None),
+                        bias=(module.bias.float() if hasattr(module, "bias") else None),
                         group_size=quantization_config.group_size,
                         g_idx=(module.g_idx if hasattr(module, "g_idx") else None),
                     )
+                    # print(current_key_name)
+                    # print(module.bias.float())
 
                 elif device == "xpu" or device == torch.device("xpu"):
                     from intel_extension_for_pytorch.nn.utils._quantize_convert import (
@@ -403,41 +406,84 @@ def convert_to_quantized_model(model, config, device="cpu"):
     return q_model.to(device)
 
 
-# def save_linear_parameters(model, save_directory):
+def pack_tensor_with_torch(raw_tensor, bits, compression_dtype=torch.int32):
+    """Pack the tensor with torch.
 
-#     weights_file = os.path.join(
-#         os.path.abspath(os.path.expanduser(save_directory)), WEIGHTS_NAME
-#     )
-#     linear_parameters = {}
-#     from intel_extension_for_pytorch.nn.modules import (
-#         WeightOnlyQuantizedLinear as ipex_cpu_linear,
-#     )
+    Args:
+        raw_tensor (tensor): raw tensor.
 
-#     for name, module in model.named_modules():
-#         if isinstance(module, ipex_cpu_linear):
-#             linear_parameters[name + ".qweight"] = (
-#                 module._op_context.to_public(
-#                     module._op_context.get_weight()
-#                 ).contiguous()
-#             )
-#             linear_parameters[name + ".scales"] = (
-#                 module._op_context.get_scales().contiguous()
-#             )
-#             linear_parameters[name + ".qzeros"] = (
-#                 module._op_context.get_zero_points().contiguous()
-#             )
-#             if module._op_context.get_bias() is not None:
-#                 linear_parameters[name + ".bias"] = (
-#                     module._op_context.get_bias().contiguous()
-#                 )
-#             if module._op_context.get_g_idx() is not None:
-#                 linear_parameters[name + ".g_idx"] = (
-#                     module._op_context.get_g_idx().contiguous()
-#                 )
+    Returns:
+        tensor: packed tensor.
+    """
+    n_pack = 32 // bits
+    target_len = math.ceil(raw_tensor.shape[1] / n_pack)
+    packed_tensor = torch.zeros(raw_tensor.shape[0], target_len, dtype=compression_dtype).to(raw_tensor.device)
+    mask = torch.tensor(2**bits - 1, dtype=compression_dtype).to(raw_tensor.device)
+    for j in range(packed_tensor.shape[1]):
+        start = n_pack * j
+        end = n_pack * (j + 1)
+        tmp = raw_tensor[:, start:end].type(compression_dtype)
+        tmp &= mask
+        for e in range(tmp.shape[1]):
+            tmp[:, e] = tmp[:, e] << (bits * e)
+            packed_tensor[:, j] |= tmp[:, e]
 
-#     others_parameters = model.state_dict()
-#     linear_parameters.update(others_parameters)
-#     torch.save(linear_parameters, weights_file)
+    return packed_tensor
+
+
+def convert_to_GPTQ_checkpoints(model, quantization_config):
+    from intel_extension_for_pytorch.nn.modules import WeightOnlyQuantizedLinear as ipex_cpu_linear
+
+    from neural_compressor.adaptor.torch_utils.util import set_module
+    from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
+
+    dtype = "int4" if quantization_config.bits == 4 else "int8"
+    bits = quantization_config.bits
+    group_size = quantization_config.group_size
+    zp = False if quantization_config.sym else True
+    scale_dtype = quantization_config.scale_dtype
+    desc_act = (True if hasattr(quantization_config, "desc_act") else False,)
+
+    for name, module in model.named_modules():
+        if isinstance(module, ipex_cpu_linear):
+            in_features = module.in_features
+            out_features = module.out_features
+            new_module = INCWeightOnlyLinear(
+                in_features,
+                out_features,
+                dtype=dtype,
+                bits=bits,
+                group_size=group_size,
+                zp=zp,
+                bias=True if hasattr(module, "bias") else False,
+                scale_dtype=scale_dtype,
+                g_idx=desc_act,
+                use_optimum_format=True,
+            )
+
+            new_module.bits = 8
+            new_module.n_pack = 32 // 8
+            qweight = (
+                new_module.pack_tensor_with_numpy(module._op_context.to_public(module._op_context.get_weight()))
+                .t()
+                .contiguous()
+            )
+            new_module.bits = bits
+            new_module.n_pack = 32 // bits
+            scales = module._op_context.get_scales().t().contiguous()
+            bias = module._op_context.get_bias()
+            qzeros = new_module.pack_tensor_with_numpy(module._op_context.get_zero_points().t()).contiguous()
+            g_idx = module._op_context.get_g_idx()
+
+            new_module.qweight = qweight
+            new_module.scales = scales
+            new_module.qzeros = qzeros
+            if g_idx is not None:
+                new_module.g_idx = g_idx.contiguous()
+            if bias is not None:
+                new_module.bias = bias.contiguous()
+            set_module(model, name, new_module)
+    return model
 
 
 def save_low_bit(self, save_directory: Union[str, os.PathLike], push_to_hub: bool = False, **kwargs):
@@ -452,10 +498,9 @@ def save_low_bit(self, save_directory: Union[str, os.PathLike], push_to_hub: boo
     # use transformers original `save_pretrained` function
     del self.save_pretrained
 
+    if self.device == "cpu" or self.device == torch.device("cpu") or self.device == "auto":
+        convert_to_GPTQ_checkpoints(self, self.quantization_config)
     self.save_pretrained(save_directory=save_directory, push_to_hub=push_to_hub, **kwargs)
-
-    # if self.device == "cpu" or self.device == torch.device("cpu") or  self.device == "auto":
-    #     save_linear_parameters(self, save_directory)
     self.save_pretrained = types.MethodType(save_low_bit, self)
     # We conveniently save all the keys of the model to have them on hand,
     # so that when using 'low_cpumem load',

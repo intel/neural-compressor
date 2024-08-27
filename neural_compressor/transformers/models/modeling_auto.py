@@ -31,12 +31,8 @@
 # limitations under the License.
 
 import copy
-import json
 import os
-import re
 import types
-from threading import Thread
-from typing import Union
 
 import transformers
 from accelerate import init_empty_weights
@@ -52,8 +48,8 @@ from transformers.utils import (
     is_safetensors_available,
 )
 
+from neural_compressor.adaptor.torch_utils.util import set_module
 from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
-from neural_compressor.torch.utils import is_ipex_available
 from neural_compressor.transformers import GPTQConfig, RtnConfig
 from neural_compressor.transformers.quantization.utils import convert_dtype_torch2str, replace_linear, save_low_bit
 from neural_compressor.utils import logger
@@ -63,8 +59,6 @@ torch = LazyImport("torch")
 
 
 def build_woq_model(model, quantization_config):
-    from neural_compressor.adaptor.torch_utils.util import set_module
-
     bits = quantization_config.bits
     for n, m in model.named_modules():
         if n in quantization_config.modules_to_not_convert:
@@ -560,70 +554,6 @@ class _BaseQBitsAutoModelClass:
         # restore default dtype
         if dtype_orig is not None:
             torch.set_default_dtype(dtype_orig)
-
-        if is_ipex_available():
-            model = replace_linear(
-                model,
-                quantization_config=quantization_config,
-                device="cpu" if device_map == "auto" else device_map,
-                empty_weights=True,
-            )
-            # if (device_map == "cpu" or device_map == torch.device("cpu")):
-            #     import intel_extension_for_pytorch as ipex
-            #     from intel_extension_for_pytorch.nn.modules import WeightOnlyQuantizedLinear as ipex_linear
-
-            #     def replace_ipex_cpu_woq_linear(model, current_name=[]):
-            #         for name, module in model.named_children():
-            #             current_name.append(name)
-            #             if isinstance(module, INCWeightOnlyLinear):
-            #                 weight_dtype = {
-            #                     4: ipex.quantization.WoqWeightDtype.INT4,
-            #                     8: ipex.quantization.WoqWeightDtype.INT8,
-            #                 }
-            #                 compute_dtype = {
-            #                     "fp32": ipex.quantization.WoqLowpMode.NONE,  # follow the activation datatype.
-            #                     "bf16": ipex.quantization.WoqLowpMode.BF16,
-            #                     "fp16": ipex.quantization.WoqLowpMode.FP16,
-            #                     "int8": ipex.quantization.WoqLowpMode.INT8,
-            #                 }
-
-            #                 ipex_qconfig_mapping = ipex.quantization.get_weight_only_quant_qconfig_mapping(
-            #                     weight_dtype=weight_dtype[quantization_config.bits],
-            #                     lowp_mode=compute_dtype[quantization_config.compute_dtype],
-            #                     act_quant_mode=ipex.quantization.WoqActQuantMode.PER_IC_BLOCK,
-            #                     group_size=quantization_config.group_size,
-            #                 )
-            #                 tmp_linear = torch.nn.Linear(
-            #                     module.in_features,
-            #                     module.out_features,
-            #                     True if hasattr(module, "bias") else False,
-            #                 )
-            #                 tmp_linear.qconfig = ipex_qconfig_mapping.global_qconfig
-            #                 target_linear = ipex_linear.from_float_and_int4_weight(
-            #                     mod=tmp_linear,
-            #                     qweight=state_dict.pop(".".join(current_name) + ".qweight"),
-            #                     scales=state_dict.pop(".".join(current_name) + ".scales"),
-            #                     zero_points=state_dict.pop(".".join(current_name) + ".qzeros"),
-            #                     bias=(
-            #                         state_dict.pop(".".join(current_name) + ".bias")
-            #                         if ".".join(current_name) + ".bias" in state_dict
-            #                         else None
-            #                     ),
-            #                     group_size=quantization_config.group_size,
-            #                     g_idx=(
-            #                         state_dict.pop(".".join(current_name) + ".g_idx")
-            #                         if ".".join(current_name) + ".g_idx" in state_dict
-            #                         else None
-            #                     ),
-            #                 )
-            #                 setattr(model, name, target_linear)
-            #             else:
-            #                 replace_ipex_cpu_woq_linear(module, current_name)
-            #             current_name.pop()
-
-            #     replace_ipex_cpu_woq_linear(model)
-            #     model.load_state_dict(state_dict, strict=False, assign=True)
-            # else:
             (
                 model,
                 missing_keys,
@@ -645,6 +575,7 @@ class _BaseQBitsAutoModelClass:
                 dtype=torch_dtype,
                 keep_in_fp32_modules=[],
             )
+
         else:
             raise AssertionError("Please install intel_extension_for_pytorch.")
 
@@ -654,12 +585,12 @@ class _BaseQBitsAutoModelClass:
         # Set model in evaluation mode to deactivate DropOut modules by default
         model.eval()
 
-        # model = replace_linear(
-        #     model,
-        #     quantization_config=quantization_config,
-        #     device="cpu" if device_map == "auto" else device_map,
-        #     empty_weights=True,
-        # )
+        model = replace_linear(
+            model,
+            quantization_config=quantization_config,
+            device="cpu" if device_map == "auto" else device_map,
+            empty_weights=True,
+        )
 
         if (not use_xpu and torch_dtype == torch.float16) or (
             not use_xpu and not CpuInfo().bf16 and torch_dtype == torch.bfloat16
