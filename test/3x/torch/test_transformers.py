@@ -1,10 +1,14 @@
-import unittest
-import torch
-import pytest
 import shutil
-from transformers import AutoTokenizer
+import unittest
+
+import pytest
+import torch
 from optimum.intel import INCModelForCausalLM
+from transformers import AutoTokenizer
+
 from neural_compressor.transformers import GPTQConfig, RtnConfig
+
+
 class TestQuantizationConfig(unittest.TestCase):
     @classmethod
     def setUpClass(self):
@@ -17,10 +21,9 @@ class TestQuantizationConfig(unittest.TestCase):
     def tearDownClass(self):
         shutil.rmtree("tmp_gptq")
         shutil.rmtree("tmp_rtn")
+
     def test_gptq(self):
-        quantization_config = GPTQConfig(
-            bits=4, sym=True, damp_percent=0.01,desc_act=True
-        )
+        quantization_config = GPTQConfig(bits=4, sym=True, damp_percent=0.01, desc_act=True)
         user_model = INCModelForCausalLM.from_pretrained(self.model_name, quantization_config=quantization_config)
         output = user_model(self.input_ids)
         user_model.save_pretrained("tmp_gptq")
