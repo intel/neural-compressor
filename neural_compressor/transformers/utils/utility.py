@@ -19,7 +19,6 @@
 import argparse
 import os
 
-
 from neural_compressor.common.utils import CpuInfo, LazyImport, logger
 
 CONFIG_NAME = "best_configure.yaml"
@@ -34,7 +33,6 @@ QUANT_CONFIG = "quantize_config.json"
 SPARSITY_CONFIG = "sparsity_config.json"
 SAFE_WEIGHTS_NAME = "model.safetensors"
 SAFE_WEIGHTS_INDEX_NAME = "model.safetensors.index.json"
-
 """Utility."""
 
 import importlib
@@ -116,6 +114,8 @@ def get_device_type():
     else:
         device = "cpu"
     return device
+
+
 # utility
 
 
@@ -167,5 +167,3 @@ def _build_inc_dataloader(dataloader):
             self.dataset = dataloader.dataset
 
     return INCDataLoader()
-
-
