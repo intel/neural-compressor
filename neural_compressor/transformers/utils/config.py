@@ -161,8 +161,6 @@ class ITREXQuantizationConfigMixin(QuantizationConfig):
                 "please use sym scheme"
             )
 
-        
-
     def post_init_xpu(self):
         r"""
         Safety checker that arguments are correct - also replaces some NoneType arguments with their default values.
@@ -206,7 +204,6 @@ class ITREXQuantizationConfigMixin(QuantizationConfig):
 
         if self.scheme not in ["sym"]:
             raise ValueError("scheme: {} is not support, only support 'sym' now!".format(self.scheme))
-        
 
     def post_init_runtime(self):
         r"""
@@ -290,7 +287,6 @@ class ITREXQuantizationConfigMixin(QuantizationConfig):
             ]:
                 print("WARNING: fp8 weight type only supports fp8 / fp32 scale now." " Fall back to fp8.")
                 self.scale_dtype = "fp8"
-
 
     def to_json_file(self, json_file_path: Union[str, os.PathLike], use_diff: bool = True):
         """Save this instance to a JSON file.
