@@ -31,9 +31,7 @@ np.random.seed(seed)
 torch.manual_seed(seed)
 
 
-def summarization_evaluate(
-    model, tokenizer_name=None, task="cnn_dailymail", batch_size=1, limit=None
-):
+def summarization_evaluate(model, tokenizer_name=None, task="cnn_dailymail", batch_size=1, limit=None):
     generate_kwargs = {
         "max_new_tokens": 128,
         "min_new_tokens": 30,
@@ -41,9 +39,7 @@ def summarization_evaluate(
         "early_stopping": True,
     }
     metric = evaluate.load("rouge")
-    val_dataset = CNNDAILYMAIL(
-        tokenizer_name, device="cpu", calib=False, num_samples=limit
-    )
+    val_dataset = CNNDAILYMAIL(tokenizer_name, device="cpu", calib=False, num_samples=limit)
     sources = val_dataset.sources
     targets = val_dataset.targets
     tokenizer = val_dataset.tokenizer
@@ -63,9 +59,7 @@ def summarization_evaluate(
             input_ids = input_batch.input_ids
             input_lens = input_ids.shape[-1]
             t0 = time.time()
-            out_tokens = model.generate(
-                **input_batch, **generate_kwargs, pad_token_id=tokenizer.pad_token_id
-            )
+            out_tokens = model.generate(**input_batch, **generate_kwargs, pad_token_id=tokenizer.pad_token_id)
             t1 = time.time()
             print("Inference time: {}".format(round(t1 - t0, 3)))
             print("Seq len: {}".format(input_lens))

@@ -15,16 +15,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import fnmatch
+import json
 import os
 import random
 import re
 import time
-import numpy as np
-import json
-import fnmatch
-from accelerate import Accelerator
-import torch
+
 import bigcode_eval  # pylint: disable=E0611, E0401
+import numpy as np
+import torch
+from accelerate import Accelerator
 from bigcode_eval.arguments import EvalArguments  # pylint: disable=E0611, E0401
 from bigcode_eval.evaluator import Evaluator  # pylint: disable=E0611, E0401
 from bigcode_eval.tasks import ALL_TASKS  # pylint: disable=E0611, E0401
@@ -49,8 +50,8 @@ def evaluate(
 ):
     """Instantiate and evaluate a model on a list of tasks."""
     try:
-        import transformers
         import datasets
+        import transformers
 
         transformers.logging.set_verbosity_error()
         datasets.logging.set_verbosity_error()
@@ -84,9 +85,7 @@ def evaluate(
 
     evaluator = Evaluator(accelerator, model, tokenizer, args)
 
-    if args.load_generations_intermediate_paths and len(
-        args.load_generations_intermediate_paths
-    ) != len(task_names):
+    if args.load_generations_intermediate_paths and len(args.load_generations_intermediate_paths) != len(task_names):
         raise ValueError(
             "If passing --load_generations_intermediate_paths, \
             must pass equal number of files as number of tasks"
@@ -103,13 +102,9 @@ def evaluate(
         if args.generation_only:
             if accelerator.is_main_process:
                 print("generation mode only")
-            generations, references = evaluator.generate_text(
-                task, intermediate_generations=intermediate_generations
-            )
+            generations, references = evaluator.generate_text(task, intermediate_generations=intermediate_generations)
             if accelerator.is_main_process:
-                save_generations_path = (
-                    f"{os.path.splitext(args.save_generations_path)[0]}_{task}.json"
-                )
+                save_generations_path = f"{os.path.splitext(args.save_generations_path)[0]}_{task}.json"
                 save_references_path = f"references_{task}.json"
                 evaluator.save_json_files(
                     generations,
@@ -118,9 +113,7 @@ def evaluate(
                     save_references_path,
                 )
         else:
-            results[task] = evaluator.evaluate(
-                task, intermediate_generations=intermediate_generations
-            )
+            results[task] = evaluator.evaluate(task, intermediate_generations=intermediate_generations)
 
     # Save all args to config
     results["config"] = vars(args)
