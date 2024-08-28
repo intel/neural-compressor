@@ -48,7 +48,6 @@ transformers = LazyImport("transformers")
 transformers_configuration_utils = LazyImport("transformers.configuration_utils")
 
 
-
 def build_woq_model(model, quantization_config):
     bits = quantization_config.bits
     for n, m in model.named_modules():
@@ -125,19 +124,28 @@ class _BaseQBitsAutoModelClass:
         from accelerate.big_modeling import init_empty_weights
         from transformers.dynamic_module_utils import get_class_from_dynamic_module, resolve_trust_remote_code
         from transformers.generation.configuration_utils import GenerationConfig
-        from transformers.modeling_utils import _add_variant, get_checkpoint_shard_files, no_init_weights
+        from transformers.modeling_utils import (
+            _add_variant,
+            get_checkpoint_shard_files,
+            load_state_dict,
+            no_init_weights,
+        )
         from transformers.models.auto.auto_factory import _get_model_class
         from transformers.models.auto.configuration_auto import AutoConfig
-        from transformers.utils import ContextManagers, cached_file, download_url, extract_commit_hash, is_remote_url
-        from transformers.modeling_utils import load_state_dict
         from transformers.utils import (
             SAFE_WEIGHTS_INDEX_NAME,
             SAFE_WEIGHTS_NAME,
             WEIGHTS_INDEX_NAME,
             WEIGHTS_NAME,
+            ContextManagers,
+            cached_file,
+            download_url,
+            extract_commit_hash,
             has_file,
+            is_remote_url,
             is_safetensors_available,
         )
+
         # Autofactory
         kwargs_orig = copy.deepcopy(kwargs)
         # modules_to_not_convert = kwargs.pop("modules_to_not_convert", None)
