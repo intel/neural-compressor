@@ -31,9 +31,9 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import transformers
+from datasets import load_dataset
 from tqdm import tqdm
 from transformers import AutoTokenizer
-from datasets import load_dataset
 
 nltk.download("punkt", quiet=False)
 random.seed(9973)
@@ -70,21 +70,15 @@ class DataCollatorForSupervisedDataset(object):
         self.tokenizer = tokenizer
 
     def __call__(self, instances: Sequence[Dict]) -> Dict[str, torch.Tensor]:
-        input_ids, labels = tuple(
-            [instance[key] for instance in instances] for key in ("input_ids", "labels")
-        )
+        input_ids, labels = tuple([instance[key] for instance in instances] for key in ("input_ids", "labels"))
         input_ids = torch.nn.utils.rnn.pad_sequence(
             input_ids, batch_first=True, padding_value=self.tokenizer.pad_token_id
         )
-        labels = torch.nn.utils.rnn.pad_sequence(
-            labels, batch_first=True, padding_value=IGNORE_INDEX
-        )
+        labels = torch.nn.utils.rnn.pad_sequence(labels, batch_first=True, padding_value=IGNORE_INDEX)
         return (input_ids, labels)
 
 
-def _tokenize_fn(
-    strings: Sequence[str], tokenizer: transformers.PreTrainedTokenizer
-) -> Dict:
+def _tokenize_fn(strings: Sequence[str], tokenizer: transformers.PreTrainedTokenizer) -> Dict:
     """Tokenize a list of strings."""
     tokenized_list = [
         tokenizer(
@@ -98,8 +92,7 @@ def _tokenize_fn(
     ]
     input_ids = labels = [tokenized.input_ids[0] for tokenized in tokenized_list]
     input_ids_lens = labels_lens = [
-        tokenized.input_ids.ne(tokenizer.pad_token_id).sum().item()
-        for tokenized in tokenized_list
+        tokenized.input_ids.ne(tokenizer.pad_token_id).sum().item() for tokenized in tokenized_list
     ]
     return dict(
         input_ids=input_ids,
@@ -116,9 +109,7 @@ def preprocess(
 ) -> Dict:
     """Preprocess the data by tokenizing."""
     examples = [s + t for s, t in zip(sources, targets)]
-    examples_tokenized, sources_tokenized = [
-        _tokenize_fn(strings, tokenizer) for strings in (examples, sources)
-    ]
+    examples_tokenized, sources_tokenized = [_tokenize_fn(strings, tokenizer) for strings in (examples, sources)]
     input_ids = examples_tokenized["input_ids"]
     labels = copy.deepcopy(input_ids)
     for label, source_len in zip(labels, sources_tokenized["input_ids_lens"]):
@@ -146,7 +137,7 @@ class CNNDAILYMAIL(object):
         self.calib = calib
 
     def wrap(self, example):
-        example['instruction'] = 'Summarize the following news article:'
+        example["instruction"] = "Summarize the following news article:"
         return example
 
     def load_dataset(self):
