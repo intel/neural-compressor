@@ -161,7 +161,7 @@ class ITREXQuantizationConfigMixin(QuantizationConfig):
                 "please use sym scheme"
             )
 
-        self.use_neural_speed = False
+        
 
     def post_init_xpu(self):
         r"""
@@ -206,7 +206,7 @@ class ITREXQuantizationConfigMixin(QuantizationConfig):
 
         if self.scheme not in ["sym"]:
             raise ValueError("scheme: {} is not support, only support 'sym' now!".format(self.scheme))
-        self.use_neural_speed = False
+        
 
     def post_init_runtime(self):
         r"""
@@ -291,7 +291,6 @@ class ITREXQuantizationConfigMixin(QuantizationConfig):
                 print("WARNING: fp8 weight type only supports fp8 / fp32 scale now." " Fall back to fp8.")
                 self.scale_dtype = "fp8"
 
-        self.use_neural_speed = True
 
     def to_json_file(self, json_file_path: Union[str, os.PathLike], use_diff: bool = True):
         """Save this instance to a JSON file.
@@ -321,7 +320,6 @@ class ITREXQuantizationConfigMixin(QuantizationConfig):
             "scheme",
             "tokenizer",
             "use_ggml",
-            "use_neural_speed",
             "use_quant",
             "layer_wise",
             "blocksize",
@@ -430,7 +428,6 @@ class RtnConfig(ITREXQuantizationConfigMixin):
         layer_wise: bool = False,
         use_ggml: bool = False,
         use_quant: bool = True,
-        use_neural_speed: bool = False,
         **kwargs,
     ):
         self.quant_method = QuantizationMethod.RTN
@@ -457,7 +454,6 @@ class RtnConfig(ITREXQuantizationConfigMixin):
         )
         self.use_ggml = use_ggml
         self.use_quant = use_quant
-        self.use_neural_speed = use_neural_speed
         self.device = kwargs.get("device", "auto")
         self.use_ipex = kwargs.pop("use_ipex", False)
 
@@ -508,7 +504,6 @@ class GPTQConfig(ITREXQuantizationConfigMixin):
         layer_wise: bool = False,
         use_ggml: bool = False,
         use_quant: bool = True,
-        use_neural_speed: bool = False,
         **kwargs,
     ):
 
@@ -540,7 +535,6 @@ class GPTQConfig(ITREXQuantizationConfigMixin):
         )
         self.use_ggml = use_ggml
         self.use_quant = use_quant
-        self.use_neural_speed = use_neural_speed
         self.device = kwargs.get("device", "auto")
         self.scheme = "sym" if self.sym else "asym"
 
@@ -612,7 +606,6 @@ class AwqConfig(ITREXQuantizationConfigMixin):
         zero_point: bool = True,
         use_ggml: bool = False,
         use_quant: bool = True,
-        use_neural_speed: bool = False,
         **kwargs,
     ):
         self.quant_method = QuantizationMethod.AWQ
@@ -636,7 +629,6 @@ class AwqConfig(ITREXQuantizationConfigMixin):
         )
         self.use_ggml = use_ggml
         self.use_quant = use_quant
-        self.use_neural_speed = use_neural_speed
         self.device = kwargs.get("device", "auto")
         self.scheme = "asym" if self.zero_point else "sym"
         self.sym = True if not self.zero_point else False
@@ -683,7 +675,6 @@ class TeqConfig(ITREXQuantizationConfigMixin):
         double_quant_scale_dtype=None,  # reserve for double quant
         sym: bool = True,
         use_ggml: bool = False,
-        use_neural_speed: bool = False,
         **kwargs,
     ):
         self.quant_method = QuantizationMethod.TEQ
@@ -706,7 +697,6 @@ class TeqConfig(ITREXQuantizationConfigMixin):
             "llm_int8_skip_modules", ["lm_head", "transformer.output_layer", "embed_out"]
         )
         self.use_ggml = use_ggml
-        self.use_neural_speed = use_neural_speed
         self.device = kwargs.get("device", "auto")
         self.batch_size = kwargs.pop("batch_size", 8)
         self.use_ipex = kwargs.pop("use_ipex", False)
@@ -754,7 +744,6 @@ class AutoRoundConfig(ITREXQuantizationConfigMixin):
         iters: int = 200,
         quant_lm_head: bool = False,
         use_ggml: bool = False,
-        use_neural_speed: bool = False,
         **kwargs,
     ):
 
@@ -784,7 +773,6 @@ class AutoRoundConfig(ITREXQuantizationConfigMixin):
         if self.quant_lm_head:
             self.llm_int8_skip_modules = []
         self.use_ggml = use_ggml
-        self.use_neural_speed = use_neural_speed
         self.batch_size = kwargs.pop("batch_size", 8)
         self.device = kwargs.get("device", "auto")
         calib_iters = kwargs.get("calib_iters", None)
