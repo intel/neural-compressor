@@ -518,7 +518,6 @@ class HFLM(TemplateLM):
 
                 self._model = AutoModelForCausalLM.from_pretrained(
                     pretrained,
-                    use_neural_speed=True,
                     trust_remote_code=trust_remote_code,
                 )
             elif self.model_format == "onnx" and self.AUTO_MODEL_CLASS == transformers.AutoModelForCausalLM:
@@ -692,7 +691,6 @@ class HFLM(TemplateLM):
                 if pretrained == "Muennighoff/tiny-random-bert":
                     self._model = None
                 else:
-                    model_kwargs["use_neural_speed"] = False
                     self._model = self.AUTO_MODEL_CLASS.from_pretrained(
                         pretrained,
                         revision=revision,
