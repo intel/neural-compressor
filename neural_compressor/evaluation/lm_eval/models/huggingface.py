@@ -25,7 +25,6 @@ import torch
 import torch.nn.functional as F
 import transformers
 from accelerate import Accelerator, DistributedType, InitProcessGroupKwargs, find_executable_batch_size
-from neural_compressor.transformers import AutoModel, AutoModelForCausalLM, AutoModelForSeq2SeqLM
 from lm_eval import utils
 from lm_eval.api.instance import Instance
 from lm_eval.api.model import TemplateLM
@@ -40,22 +39,7 @@ from transformers.models.auto.modeling_auto import (
     MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING_NAMES,
 )
 
-from lm_eval import utils
-from lm_eval.api.instance import Instance
-from lm_eval.api.model import TemplateLM
-from lm_eval.models.utils import (
-    Collator,
-    clear_torch_cache,
-    get_dtype,
-    pad_and_concat,
-    stop_sequences_criteria,
-)
-from neural_compressor.transformers import (
-    AutoModelForCausalLM,
-    AutoModelForSeq2SeqLM,
-    AutoModel,
-)
-from packaging.version import Version
+from neural_compressor.transformers import AutoModel, AutoModelForCausalLM, AutoModelForSeq2SeqLM
 
 eval_logger = utils.eval_logger
 
@@ -526,12 +510,8 @@ class HFLM(TemplateLM):
             if transformers.__version__ >= "4.30.0":
                 if model_kwargs.get("load_in_4bit", None):
                     if model_kwargs.get("bnb_4bit_compute_dtype", None):
-                        model_kwargs["bnb_4bit_compute_dtype"] = get_dtype(
-                            model_kwargs["bnb_4bit_compute_dtype"]
-                        )
-            from neural_compressor.transformers import (
-                AutoModelForCausalLM,
-            )
+                        model_kwargs["bnb_4bit_compute_dtype"] = get_dtype(model_kwargs["bnb_4bit_compute_dtype"])
+            from neural_compressor.transformers import AutoModelForCausalLM
 
             if self.model_format == "neural_speed":
                 from transformers import AutoTokenizer, TextStreamer
