@@ -22,11 +22,8 @@ import os
 import types
 
 from datasets import load_dataset
-from transformers import AutoTokenizer
-from transformers.utils import SAFE_WEIGHTS_NAME, WEIGHTS_NAME
 
 from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
-from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear as WeightOnlyLinear
 from neural_compressor.torch.quantization import GPTQConfig, RTNConfig, convert, prepare
 from neural_compressor.torch.utils import is_ipex_available
 from neural_compressor.utils.utility import CpuInfo, LazyImport
@@ -162,21 +159,21 @@ def _replace_linear(
                     tmp_linear = torch.nn.Linear(
                         in_features,
                         out_features,
-                        True if hasattr(module, "bias") else False,
+                        True if hasattr(module, "bias") and module.bias is not None else False,
                     )
+                    if tmp_linear.bias is not None and module.bias is not None:
+                        tmp_linear.bias = torch.nn.Parameter(module.bias.float())
+
                     tmp_linear.qconfig = ipex_qconfig_mapping.global_qconfig
                     model._modules[name] = ipex_linear.from_float_and_int4_weight(
                         mod=tmp_linear,
                         qweight=qweight,
                         scales=scales,
                         zero_points=qzeros,
-                        # bias=(module.bias if (hasattr(module, "bias") and not torch.all(module.bias.eq(0))) else None),
-                        bias=(module.bias.float() if hasattr(module, "bias") else None),
+                        bias=(module.bias.float() if hasattr(module, "bias") and module.bias is not None else None),
                         group_size=quantization_config.group_size,
                         g_idx=(module.g_idx if hasattr(module, "g_idx") else None),
                     )
-                    # print(current_key_name)
-                    # print(module.bias.float())
 
                 elif device == "xpu" or device == torch.device("xpu"):
                     from intel_extension_for_pytorch.nn.utils._quantize_convert import (
@@ -363,7 +360,7 @@ def convert_to_quantized_model(model, config, device="cpu"):
             bits=config.bits,
             use_sym=config.sym,
             group_size=config.group_size,
-            use_layer_wise=config.layer_wise,
+            use_layer_wise=config.use_layer_wise,
             act_order=config.desc_act,
             percdamp=config.damp_percent,
             block_size=config.blocksize,
@@ -472,7 +469,9 @@ def convert_to_GPTQ_checkpoints(model, quantization_config):
             new_module.n_pack = 32 // bits
             scales = module._op_context.get_scales().t().contiguous()
             bias = module._op_context.get_bias()
-            qzeros = new_module.pack_tensor_with_numpy(module._op_context.get_zero_points().t()).contiguous()
+            qzeros = new_module.pack_tensor_with_numpy(
+                module._op_context.get_zero_points().t().to(torch.uint8) - 1
+            ).contiguous()
             g_idx = module._op_context.get_g_idx()
 
             new_module.qweight = qweight
@@ -482,6 +481,7 @@ def convert_to_GPTQ_checkpoints(model, quantization_config):
                 new_module.g_idx = g_idx.contiguous()
             if bias is not None:
                 new_module.bias = bias.contiguous()
+
             set_module(model, name, new_module)
     return model
 
