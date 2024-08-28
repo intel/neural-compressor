@@ -39,8 +39,8 @@ from typing import Union
 import numpy as np
 
 from lm_eval import utils
-from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluator
-from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval.evaluator import(
+from neural_compressor.evaluation.lm_eval import evaluator
+from neural_compressor.evaluation.lm_eval.evaluator import(
     request_caching_arg_to_dict
 )
 from lm_eval.loggers import WandbLogger

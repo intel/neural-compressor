@@ -49,7 +49,7 @@ from lm_eval.models.utils import (
     pad_and_concat,
     stop_sequences_criteria,
 )
-from intel_extension_for_transformers.transformers import (
+from neural_compressor.transformers import (
     AutoModelForCausalLM,
     AutoModelForSeq2SeqLM,
     AutoModel,
@@ -90,8 +90,8 @@ def _get_accelerate_args(
 
 class HFLM(TemplateLM):
     """An abstracted Huggingface model class. Enables usage with both models of
-    `intel_extension_for_transformers.transformers.AutoModelForCausalLM` and
-    `intel_extension_for_transformers.transformers.AutoModelForSeq2SeqLM` classes.
+    `neural_compressor.transformers.AutoModelForCausalLM` and
+    `neural_compressor.transformers.AutoModelForSeq2SeqLM` classes.
 
     Supports data-parallel multi-GPU with HF Accelerate.
     """
@@ -558,7 +558,7 @@ class HFLM(TemplateLM):
                         model_kwargs["bnb_4bit_compute_dtype"] = get_dtype(
                             model_kwargs["bnb_4bit_compute_dtype"]
                         )
-            from intel_extension_for_transformers.transformers import (
+            from neural_compressor.transformers import (
                 AutoModelForCausalLM,
             )
 
@@ -981,10 +981,10 @@ class HFLM(TemplateLM):
             [batch, sequence_ctx]. the size of sequence may vary from call to call
         :param attn_mask: torch.Tensor, optional
             A torch tensor of shape [batch, (sequence_ctx + sequence_cont)]. Only passed
-            (and must be passed) if self.AUTO_MODEL_CLASS is intel_extension_for_transformers
+            (and must be passed) if self.AUTO_MODEL_CLASS is neural_compressor
         :param labels: torch.Tensor, optional
             A torch tensor of shape [batch, (sequence_ctx + sequence_cont)]. Only passed
-            (and must be passed) if self.AUTO_MODEL_CLASS is intel_extension_for_transformers.
+            (and must be passed) if self.AUTO_MODEL_CLASS is neural_compressor.
             .transformers.AutoModelForSeq2SeqLM
         :return
             A torch tensor of shape [batch, sequence, vocab] with the
