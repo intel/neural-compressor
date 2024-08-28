@@ -25,7 +25,6 @@ from .config import (
     QuantizationAwareTrainingConfig,
     MixedPrecisionConfig,
 )
-from .transformers import GPTQConfig, RtnConfig
 from .contrib import *
 from .model import *
 from .metric import *
