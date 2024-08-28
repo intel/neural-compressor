@@ -17,12 +17,11 @@
 import os
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-import transformers
-
 from neural_compressor.utils import logger
 from neural_compressor.utils.utility import LazyImport
 
 torch = LazyImport("torch")
+transformers = LazyImport("transformers")
 
 QUANT_CONFIG = "quantize_config.json"
 

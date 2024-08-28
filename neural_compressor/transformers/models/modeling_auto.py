@@ -34,19 +34,7 @@ import copy
 import os
 import types
 
-import transformers
 from accelerate import init_empty_weights
-from transformers import AutoConfig
-from transformers.configuration_utils import PretrainedConfig
-from transformers.modeling_utils import load_state_dict
-from transformers.utils import (
-    SAFE_WEIGHTS_INDEX_NAME,
-    SAFE_WEIGHTS_NAME,
-    WEIGHTS_INDEX_NAME,
-    WEIGHTS_NAME,
-    has_file,
-    is_safetensors_available,
-)
 
 from neural_compressor.adaptor.torch_utils.util import set_module
 from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
@@ -56,6 +44,9 @@ from neural_compressor.utils import logger
 from neural_compressor.utils.utility import CpuInfo, LazyImport
 
 torch = LazyImport("torch")
+transformers = LazyImport("transformers")
+transformers_configuration_utils = LazyImport("transformers.configuration_utils")
+
 
 
 def build_woq_model(model, quantization_config):
@@ -92,8 +83,8 @@ class _BaseQBitsAutoModelClass:
     @classmethod
     def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
         config = kwargs.pop("config", None)
-        if not isinstance(config, PretrainedConfig):
-            config, _ = AutoConfig.from_pretrained(
+        if not isinstance(config, transformers_configuration_utils.PretrainedConfig):
+            config, _ = transformers.AutoConfig.from_pretrained(
                 pretrained_model_name_or_path,
                 return_unused_kwargs=True,
                 **kwargs,
@@ -138,7 +129,15 @@ class _BaseQBitsAutoModelClass:
         from transformers.models.auto.auto_factory import _get_model_class
         from transformers.models.auto.configuration_auto import AutoConfig
         from transformers.utils import ContextManagers, cached_file, download_url, extract_commit_hash, is_remote_url
-
+        from transformers.modeling_utils import load_state_dict
+        from transformers.utils import (
+            SAFE_WEIGHTS_INDEX_NAME,
+            SAFE_WEIGHTS_NAME,
+            WEIGHTS_INDEX_NAME,
+            WEIGHTS_NAME,
+            has_file,
+            is_safetensors_available,
+        )
         # Autofactory
         kwargs_orig = copy.deepcopy(kwargs)
         # modules_to_not_convert = kwargs.pop("modules_to_not_convert", None)
@@ -206,7 +205,7 @@ class _BaseQBitsAutoModelClass:
         assert quantization_config is not None, "Detect this model is not a low-bit model."
 
         if commit_hash is None:
-            if not isinstance(config, PretrainedConfig):
+            if not isinstance(config, transformers_configuration_utils.PretrainedConfig):
                 # We make a call to the config file first (which may be absent)
                 # to get the commit hash as soon as possible.
                 resolved_config_file = cached_file(
