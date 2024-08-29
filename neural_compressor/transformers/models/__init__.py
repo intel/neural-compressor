@@ -12,4 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .modeling_auto import _BaseQBitsAutoModelClass
+from .modeling_auto import _BaseINCAutoModelClass

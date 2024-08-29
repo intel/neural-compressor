@@ -330,6 +330,10 @@ def convert_to_quantized_model(model, config, device="cpu"):
         import intel_extension_for_pytorch
 
         assert hasattr(torch, "xpu") and torch.xpu.is_available(), "There is no xpu device in this system!"
+        os.environ["FORCE_DEVICE"] = "cpu"
+        logger.info(
+            "Set the environment variable FORCE_DEVICE='cpu' to ensure the quantization process occurs on the CPU."
+        )
 
     orig_dtype = torch.float32
     for param in model.parameters():
@@ -401,31 +405,6 @@ def convert_to_quantized_model(model, config, device="cpu"):
         q_model.to(dtype=orig_dtype)
 
     return q_model.to(device)
-
-
-def pack_tensor_with_torch(raw_tensor, bits, compression_dtype=torch.int32):
-    """Pack the tensor with torch.
-
-    Args:
-        raw_tensor (tensor): raw tensor.
-
-    Returns:
-        tensor: packed tensor.
-    """
-    n_pack = 32 // bits
-    target_len = math.ceil(raw_tensor.shape[1] / n_pack)
-    packed_tensor = torch.zeros(raw_tensor.shape[0], target_len, dtype=compression_dtype).to(raw_tensor.device)
-    mask = torch.tensor(2**bits - 1, dtype=compression_dtype).to(raw_tensor.device)
-    for j in range(packed_tensor.shape[1]):
-        start = n_pack * j
-        end = n_pack * (j + 1)
-        tmp = raw_tensor[:, start:end].type(compression_dtype)
-        tmp &= mask
-        for e in range(tmp.shape[1]):
-            tmp[:, e] = tmp[:, e] << (bits * e)
-            packed_tensor[:, j] |= tmp[:, e]
-
-    return packed_tensor
 
 
 def convert_to_GPTQ_checkpoints(model, quantization_config):

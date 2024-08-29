@@ -76,7 +76,7 @@ def build_woq_model(model, quantization_config):
     return model
 
 
-class _BaseQBitsAutoModelClass:
+class _BaseINCAutoModelClass:
     ORIG_MODEL = None
 
     @classmethod
@@ -632,13 +632,13 @@ class _BaseQBitsAutoModelClass:
         return model
 
 
-class AutoModelForCausalLM(_BaseQBitsAutoModelClass):
+class AutoModelForCausalLM(_BaseINCAutoModelClass):
     ORIG_MODEL = transformers.AutoModelForCausalLM
 
 
-class AutoModel(_BaseQBitsAutoModelClass):
+class AutoModel(_BaseINCAutoModelClass):
     ORIG_MODEL = transformers.AutoModel
 
 
-class AutoModelForSeq2SeqLM(_BaseQBitsAutoModelClass):
+class AutoModelForSeq2SeqLM(_BaseINCAutoModelClass):
     ORIG_MODEL = transformers.AutoModelForSeq2SeqLM
