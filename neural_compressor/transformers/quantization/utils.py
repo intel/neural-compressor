@@ -229,7 +229,6 @@ def _replace_linear(
                 model._modules[name].requires_grad_(False)
 
             if device == "xpu" or device == torch.device("xpu"):
-
                 if not hasattr(module, "qweight"):
                     n_pack = 32 // quantization_config.bits
 
@@ -343,10 +342,9 @@ def convert_to_quantized_model(model, config, device="cpu"):
         break
 
     # mapping to INC config
+    dtype = "int4" if config.weight_dtype == "int4_fullrange" else config.weight_dtype
     if config.quant_method.value == "rtn":
-        quant_config = RTNConfig(
-            dtype=config.weight_dtype, bits=config.bits, use_sym=config.sym, group_size=config.group_size
-        )
+        quant_config = RTNConfig(dtype=dtype, bits=config.bits, use_sym=config.sym, group_size=config.group_size)
         if config.use_layer_wise:
             quant_config.user_layer_wise = config.use_layer_wise
             quant_config.model_path = config.model_path
@@ -360,7 +358,7 @@ def convert_to_quantized_model(model, config, device="cpu"):
     elif config.quant_method.value == "gptq":
         model.seqlen = config.seq_len
         quant_config = GPTQConfig(
-            dtype=config.weight_dtype,
+            dtype=dtype,
             bits=config.bits,
             use_sym=config.sym,
             group_size=config.group_size,
@@ -399,6 +397,7 @@ def convert_to_quantized_model(model, config, device="cpu"):
         logger.warning("The recommended ipex version is higher than 2.3.10 for xpu device.")
 
     model.eval()
+
     q_model = replace_linear(model, None, None, config, device=device)
 
     if orig_dtype != torch.float32:
@@ -477,8 +476,18 @@ def save_low_bit(self, save_directory: Union[str, os.PathLike], push_to_hub: boo
     # use transformers original `save_pretrained` function
     del self.save_pretrained
 
-    if self.device == "cpu" or self.device == torch.device("cpu") or self.device == "auto":
+    if self.device == "cpu" or self.device == torch.device("cpu"):
         convert_to_GPTQ_checkpoints(self, self.quantization_config)
+    if self.device == "xpu" or (isinstance(self.device, torch.device) and self.device.type == "xpu"):
+        from intel_extension_for_pytorch.nn.utils._quantize_convert import WeightOnlyQuantizedLinear
+
+        for name, module in self.named_modules():
+            if isinstance(module, WeightOnlyQuantizedLinear):
+                if module.weight_transposed:
+                    module.qweight.data = module.qweight.t_().contiguous()
+                    module.scales.data = module.scales.t_().contiguous()
+                    module.weight_transposed = False
+
     self.save_pretrained(save_directory=save_directory, push_to_hub=push_to_hub, **kwargs)
     self.save_pretrained = types.MethodType(save_low_bit, self)
     # We conveniently save all the keys of the model to have them on hand,

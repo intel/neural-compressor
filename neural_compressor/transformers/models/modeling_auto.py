@@ -35,6 +35,7 @@ import os
 import types
 
 from accelerate import init_empty_weights
+from accelerate.utils import is_xpu_available
 
 from neural_compressor.adaptor.torch_utils.util import set_module
 from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
@@ -168,7 +169,7 @@ class _BaseINCAutoModelClass:
         revision = kwargs.pop("revision", "main")
         commit_hash = kwargs.pop("_commit_hash", None)
         _fast_init = kwargs.pop("_fast_init", True)
-        device_map = kwargs.pop("device_map", "auto")
+        device_map = kwargs.pop("device_map", "xpu" if is_xpu_available() else "cpu")
         use_safetensors = kwargs.pop("use_safetensors", None)
         kwarg_attn_imp = kwargs.pop("attn_implementation", None)
 
@@ -210,6 +211,7 @@ class _BaseINCAutoModelClass:
             quantization_config = RtnConfig.from_dict(quantization_config)
         elif quantization_config["quant_method"] == "gptq":
             quantization_config = GPTQConfig.from_dict(quantization_config)
+
         assert quantization_config is not None, "Detect this model is not a low-bit model."
 
         if commit_hash is None:
@@ -501,47 +503,27 @@ class _BaseINCAutoModelClass:
             logger.warning("fp32 scale_dtype is used, please change the config.json if you don't want to use it.")
 
         # weight dtype is higher priority than bits in config.json when both existed.
-        if quantization_config.weight_dtype is None:
-            if quantization_config.bits == 4:
-                if use_xpu:
-                    quantization_config.weight_dtype = "int4_fullrange"
-                else:
-                    quantization_config.weight_dtype = "int4"
-                logger.info(
-                    "{} quantization weight_dtype is used due to bits is 4 in config.json.".format(
-                        quantization_config.weight_dtype
-                    )
-                )
-            elif quantization_config.bits == 8:
-                quantization_config.weight_dtype = "int8"
-                logger.info(
-                    "{} quantization weight_dtype is used due to bits is 8 in config.json.".format(
-                        quantization_config.weight_dtype
-                    )
-                )
+        if quantization_config.bits == 4:
+            if use_xpu:
+                quantization_config.weight_dtype = "int4_fullrange"
             else:
-                logger.warning("bits number only supports 4, 8.")
                 quantization_config.weight_dtype = "int4"
-                logger.warning("int4 weight_dtype is used, please change the config.json if you don't want to use it.")
-        else:
-            if quantization_config.weight_dtype not in [
-                "int4_fullrange",
-                "int4",
-                "int8",
-                "fp8_e5m2",
-                "fp8_e4m3",
-                "nf4",
-                "fp4_e2m1_bnb",
-                "fp4_e2m1",
-            ]:
-                logger.warning("Please provide the correct bits number or weight_dtype in config.json.")
-                raise ValueError(
-                    "weight_dtype must be a string in "
-                    "'int8', 'int4', 'int4_fullrange', 'int4', 'nf4', "
-                    "'fp4', 'fp4_e2m1', 'fp8', 'fp8_e5m2, fp8_e4m3'"
+            logger.info(
+                "{} quantization weight_dtype is used due to bits is 4 in config.json.".format(
+                    quantization_config.weight_dtype
                 )
-            else:
-                logger.info("{} quantization weight_dtype is used.".format(quantization_config.weight_dtype))
+            )
+        elif quantization_config.bits == 8:
+            quantization_config.weight_dtype = "int8"
+            logger.info(
+                "{} quantization weight_dtype is used due to bits is 8 in config.json.".format(
+                    quantization_config.weight_dtype
+                )
+            )
+        else:
+            logger.warning("bits number only supports 4, 8.")
+            quantization_config.weight_dtype = "int4"
+            logger.warning("int4 weight_dtype is used, please change the config.json if you don't want to use it.")
 
         init_contexts = [no_init_weights(_enable=_fast_init)]
         init_contexts.append(init_empty_weights())
@@ -561,30 +543,27 @@ class _BaseINCAutoModelClass:
         # restore default dtype
         if dtype_orig is not None:
             torch.set_default_dtype(dtype_orig)
-            (
-                model,
-                missing_keys,
-                unexpected_keys,
-                mismatched_keys,
-                offload_index,
-                error_msgs,
-            ) = model_class._load_pretrained_model(
-                model,
-                None,
-                loaded_state_dict_keys,  # XXX: rename?
-                resolved_archive_file,
-                pretrained_model_name_or_path,
-                sharded_metadata=sharded_metadata,
-                _fast_init=_fast_init,
-                low_cpu_mem_usage=True,
-                offload_folder=offload_folder,
-                offload_state_dict=offload_state_dict,
-                dtype=torch_dtype,
-                keep_in_fp32_modules=[],
-            )
-
-        else:
-            raise AssertionError("Please install intel_extension_for_pytorch.")
+        (
+            model,
+            missing_keys,
+            unexpected_keys,
+            mismatched_keys,
+            offload_index,
+            error_msgs,
+        ) = model_class._load_pretrained_model(
+            model,
+            None,
+            loaded_state_dict_keys,  # XXX: rename?
+            resolved_archive_file,
+            pretrained_model_name_or_path,
+            sharded_metadata=sharded_metadata,
+            _fast_init=_fast_init,
+            low_cpu_mem_usage=True,
+            offload_folder=offload_folder,
+            offload_state_dict=offload_state_dict,
+            dtype=torch_dtype,
+            keep_in_fp32_modules=[],
+        )
 
         # make sure token embedding weights are still tied if needed
         model.tie_weights()
