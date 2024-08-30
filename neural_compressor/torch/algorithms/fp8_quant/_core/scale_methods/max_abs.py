@@ -19,9 +19,8 @@ from ..common import *
 from ..fp_utils import *
 
 
-def linear_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales(mod, measurement, params):
+def linear_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales(mod, measurement, params, device = torch.device("hpu")):
     config = get_hqt_config(mod).cfg
-    device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
     device_type = _get_device_type()
@@ -44,9 +43,8 @@ def linear_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales(mod, measurement, par
     return ModuleConfig((input_scale,), (output_scale,), {"weight": weight_scale})
 
 
-def linear_act_maxabs_pts_weight_maxabs_pts_pow2_scales(mod, measurement, params):
+def linear_act_maxabs_pts_weight_maxabs_pts_pow2_scales(mod, measurement, params, device = torch.device("hpu")):
     config = get_hqt_config(mod).cfg
-    device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
     device_type = _get_device_type()
@@ -69,9 +67,8 @@ def linear_act_maxabs_pts_weight_maxabs_pts_pow2_scales(mod, measurement, params
     return ModuleConfig((input_scale,), (output_scale,), {"weight": weight_scale})
 
 
-def matmul_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales(mod, measurement, params):
+def matmul_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales(mod, measurement, params, device = torch.device("hpu")):
     config = get_hqt_config(mod).cfg
-    device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
     device_type = _get_device_type()
@@ -90,9 +87,8 @@ def matmul_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales(mod, measurement, par
     return ModuleConfig(input_scale, output_scale, {})
 
 
-def matmul_act_maxabs_pts_weight_maxabs_pts_pow2_scales(mod, measurement, params):
+def matmul_act_maxabs_pts_weight_maxabs_pts_pow2_scales(mod, measurement, params, device = torch.device("hpu")):
     config = get_hqt_config(mod).cfg
-    device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
     device_type = _get_device_type()
@@ -111,9 +107,8 @@ def matmul_act_maxabs_pts_weight_maxabs_pts_pow2_scales(mod, measurement, params
     return ModuleConfig(input_scale, output_scale, {})
 
 
-def fsdpa_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales(mod, measurement, params):
+def fsdpa_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales(mod, measurement, params, device = torch.device("hpu")):
     config = get_hqt_config(mod).cfg
-    device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
     device_type = _get_device_type()
@@ -144,9 +139,7 @@ def fsdpa_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales(mod, measurement, para
     output_scale = [scale_to_pow2_hw(output_scale, device_type=config["device_type"])]
     return ModuleConfig(input_scale, output_scale, {})
 
-
-def fsdpa_act_maxabs_pts_pow2_weight_maxabs_pts_pow2(mod, measurement, params):
-    device = torch.device("hpu")
+def fsdpa_act_maxabs_pts_pow2_weight_maxabs_pts_pow2(mod, measurement, params, device = torch.device("hpu")):
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
     device_type = _get_device_type()
@@ -177,9 +170,7 @@ def fsdpa_act_maxabs_pts_pow2_weight_maxabs_pts_pow2(mod, measurement, params):
     output_scale = [scale_to_pow2(output_scale)]
     return ModuleConfig(input_scale, output_scale, {})
 
-
-def fsdpa_act_maxabs_pts_weight_maxabs_pts_pow2_scales(mod, measurement, params):
-    device = torch.device("hpu")
+def fsdpa_act_maxabs_pts_weight_maxabs_pts_pow2_scales(mod, measurement, params, device = torch.device("hpu")):
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
     device_type = _get_device_type()
@@ -212,9 +203,8 @@ def fsdpa_act_maxabs_pts_weight_maxabs_pts_pow2_scales(mod, measurement, params)
     return ModuleConfig(input_scale, output_scale, {})
 
 
-def linear_act_maxabs_pts_weight_opt_pts_pow2_scales(mod, measurement, params):
+def linear_act_maxabs_pts_weight_opt_pts_pow2_scales(mod, measurement, params, device = torch.device("hpu")):
     config = get_hqt_config(mod).cfg
-    device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
     device_type = _get_device_type()
@@ -234,9 +224,8 @@ def linear_act_maxabs_pts_weight_opt_pts_pow2_scales(mod, measurement, params):
     return ModuleConfig((input_scale,), (output_scale,), {"weight": weight_scale})
 
 
-def linear_act_maxabs_pts_weight_opt_pts_hw_scales(mod, measurement, params):
+def linear_act_maxabs_pts_weight_opt_pts_hw_scales(mod, measurement, params, device = torch.device("hpu")):
     config = get_hqt_config(mod).cfg
-    device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
     device_type = _get_device_type()
@@ -256,10 +245,9 @@ def linear_act_maxabs_pts_weight_opt_pts_hw_scales(mod, measurement, params):
     return ModuleConfig((input_scale,), (output_scale,), {"weight": weight_scale})
 
 
-def kv_cache_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales(mod, measurement, params):
+def kv_cache_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales(mod, measurement, params, device = torch.device("hpu")):
     config = get_hqt_config(mod).cfg
     # calc the scale per layer tensor
-    device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
     device_type = _get_device_type()
@@ -275,9 +263,8 @@ def kv_cache_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales(mod, measurement, p
     return ModuleConfig(input_scale_list, output_scale, {})
 
 
-def kv_cache_act_maxabs_pts_pow2(mod, measurement, params):
+def kv_cache_act_maxabs_pts_pow2(mod, measurement, params, device = torch.device("hpu")):
     # calc the scale per layer tensor
-    device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
     device_type = _get_device_type()
@@ -293,9 +280,8 @@ def kv_cache_act_maxabs_pts_pow2(mod, measurement, params):
     return ModuleConfig(input_scale_list, output_scale, {})
 
 
-def softmax_input_unit_output_maxabs_pts_hw_scales(mod, measurement, params):
+def softmax_input_unit_output_maxabs_pts_hw_scales(mod, measurement, params, device = torch.device("hpu")):
     config = get_hqt_config(mod).cfg
-    device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
     device_type = _get_device_type()
@@ -309,10 +295,8 @@ def softmax_input_unit_output_maxabs_pts_hw_scales(mod, measurement, params):
     output_scale = [scale_to_pow2_hw(output_scale, device_type=config["device_type"])]
     return ModuleConfig((), output_scale, {})
 
-
-def softmax_input_unit_output_maxabs_pts_pow2(mod, measurement, params):
+def softmax_input_unit_output_maxabs_pts_pow2(mod, measurement, params, device = torch.device("hpu")):
     config = get_hqt_config(mod).cfg
-    device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
     device_type = _get_device_type()
@@ -326,10 +310,8 @@ def softmax_input_unit_output_maxabs_pts_pow2(mod, measurement, params):
     output_scale = [scale_to_pow2(output_scale)]
     return ModuleConfig((), output_scale, {})
 
-
-def linear_act_maxabs_pts_pow2_hw_weights_maxabs_pcs_pow2_scales(mod, measurement, params):
+def linear_act_maxabs_pts_pow2_hw_weights_maxabs_pcs_pow2_scales(mod, measurement, params, device = torch.device("hpu")):
     config = get_hqt_config(mod).cfg
-    device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
     device_type = _get_device_type()
@@ -360,8 +342,7 @@ def linear_act_maxabs_pts_pow2_hw_weights_maxabs_pcs_pow2_scales(mod, measuremen
     )
 
 
-def linear_act_maxabs_pts_pow2_weights_maxabs_pcs_pow2_scales(mod, measurement, params):
-    device = torch.device("hpu")
+def linear_act_maxabs_pts_pow2_weights_maxabs_pcs_pow2_scales(mod, measurement, params, device = torch.device("hpu")):
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
     device_type = _get_device_type()
@@ -392,9 +373,8 @@ def linear_act_maxabs_pts_pow2_weights_maxabs_pcs_pow2_scales(mod, measurement, 
     )
 
 
-def linear_act_maxabs_pts_pow2_hw_weights_opt_pcs_pow2_scales(mod, measurement, params):
+def linear_act_maxabs_pts_pow2_hw_weights_opt_pcs_pow2_scales(mod, measurement, params, device = torch.device("hpu")):
     config = get_hqt_config(mod).cfg
-    device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
     device_type = _get_device_type()
@@ -435,8 +415,7 @@ def linear_act_maxabs_pts_pow2_hw_weights_opt_pcs_pow2_scales(mod, measurement, 
     )
 
 
-def linear_act_maxabs_pts_pow2_weights_opt_pcs_pow2_scales(mod, measurement, params):
-    device = torch.device("hpu")
+def linear_act_maxabs_pts_pow2_weights_opt_pcs_pow2_scales(mod, measurement, params, device = torch.device("hpu")):
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
     device_type = _get_device_type()

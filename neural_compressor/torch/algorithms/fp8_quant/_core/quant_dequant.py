@@ -15,8 +15,8 @@
 from abc import abstractmethod
 
 import habana_frameworks.torch.core as htcore
-import torch
-import torch.nn as nn
+from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
+cur_accelerator = auto_detect_accelerator()
 
 from .._core.scale_handler import create_scale_tensor
 from .._quant_common.quant_config import ScaleFormat
@@ -91,9 +91,10 @@ class QuantDequant(QuantDequantBase):
         y = cast_to_fp8_fcn(x, self.lp_dtype, self.scale_inv)
         # mark_step is needed so fuser won't remove 2 consecutive casts.
         # will be removed once SW-196431 is implemented
-        htcore.mark_step()
+        # Call cur_accelerator.synchronize() which will call mark_step() as well
+        cur_accelerator.synchronize()
         z = cast_from_fp8_fcn(y, self.hp_dtype, self.scale)
-        htcore.mark_step()
+        cur_accelerator.synchronize()
         return z
 
     def extra_repr(self) -> str:
