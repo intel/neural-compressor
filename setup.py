@@ -68,6 +68,8 @@ PKG_INSTALL_CFG = {
                 "neural_compressor.common.*",
                 "neural_compressor.torch",
                 "neural_compressor.torch.*",
+                "neural_compressor.transformers",
+                "neural_compressor.transformers.*",
             ],
         ),
         "install_requires": fetch_requirements("requirements_pt.txt"),
