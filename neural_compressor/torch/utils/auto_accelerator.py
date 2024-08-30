@@ -31,6 +31,7 @@ from typing import Any, Callable, List
 import torch
 
 from neural_compressor.common.utils import LazyImport, logger
+from functools import lru_cache
 
 htcore = LazyImport("habana_frameworks.torch.core")
 
@@ -149,9 +150,6 @@ class Auto_Accelerator(ABC):  # pragma: no cover
         """Synchronize the accelerator."""
         pass
 
-    def mark_step(self):
-        """Trigger graph to run."""
-        pass
 
 
 @register_accelerator(name="cpu", priority=PRIORITY_CPU)
@@ -359,6 +357,8 @@ class HPU_Accelerator(Auto_Accelerator):  # pragma: no cover
 
     def synchronize(self):
         """Synchronizes the 'hpu' device."""
+        logger.debug("Calling `htcore.mark_step()` and `torch.hpu.synchronize()`.")
+        htcore.mark_step()
         return torch.hpu.synchronize()
 
     def set_device(self, device_index):
@@ -387,11 +387,8 @@ class HPU_Accelerator(Auto_Accelerator):  # pragma: no cover
         except Exception as e:
             logger.warning(e)
 
-    def mark_step(self):
-        """Trigger graph to run."""
-        return htcore.mark_step()
 
-
+@lru_cache()
 def auto_detect_accelerator(device_name="auto") -> Auto_Accelerator:
     """Automatically detects and selects the appropriate accelerator.
 

@@ -17,6 +17,8 @@ import habana_frameworks.torch.core as htcore
 import habana_frameworks.torch.utils.experimental as htexp
 from .common import ModuleConfig
 from .quant_dequant import cast_to_fp8_fcn, cast_fcn, descale_fcn, scale_fcn
+from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
+cur_accelerator = auto_detect_accelerator()
 
 GAUDI2 = htexp.synDeviceType.synDeviceGaudi2
 GAUDI3 = htexp.synDeviceType.synDeviceGaudi3
@@ -141,13 +143,13 @@ def mmse_scale_multi(x, ref_scale, scales, lp_dtype, hp_dtype):
         xscales = rs * sv
         y = scale_fcn(x, xscales)
         y = cast_to_fp8_fcn(y, lp_dtype)
-        htcore.mark_step()  # we are measuring the error so we want to avoid fusion of the converts
+        cur_accelerator.synchronize()  # we are measuring the error so we want to avoid fusion of the converts
         y = cast_fcn(y, hp_dtype)
         y = descale_fcn(y, xscales)
         err = torch.sum((x - y) ** 2, dim=sum_axis)
         opt_scale = torch.where(err < opt_err, sv, opt_scale)
         opt_err = torch.where(err < opt_err, err, opt_err)
-        htcore.mark_step()
+        cur_accelerator.synchronize()
     return opt_scale * ref_scale
 
 
@@ -159,13 +161,13 @@ def mmse_scale(x, scales, lp_dtype, hp_dtype):
     for s in scales:
         y = scale_fcn(x, s)
         y = cast_to_fp8_fcn(y, lp_dtype)
-        htcore.mark_step()  # we are measuring the error so we want to avoid fusion of the converts
+        cur_accelerator.synchronize()  # we are measuring the error so we want to avoid fusion of the converts
         y = cast_fcn(y, hp_dtype)
         y = descale_fcn(y, s)
         err = torch.norm(x - y)
         opt_scale = torch.where(err <= opt_err, s, opt_scale)
         opt_err = torch.where(err <= opt_err, err, opt_err)
-        htcore.mark_step()
+        cur_accelerator.synchronize()
     return opt_scale
 
 

@@ -537,7 +537,7 @@ class RAWGPTQuantizer(object):
             for j in range(batch_num):
                 cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                 cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
-                accelerator.mark_step()
+                accelerator.synchronize()
                 out = transformer_block(*cache_positional_batch, **cache_keyword_batch)
                 out = self.track_hidden_states(out)
             self.cache_key_arguments["batch_num"] = batch_num
@@ -557,7 +557,7 @@ class RAWGPTQuantizer(object):
                     W = load_value(self.model, full_layer_name + ".weight", self.model_path)
                 else:
                     W = sub_layers[layer_name].weight.data.clone()
-                accelerator.mark_step()
+                accelerator.synchronize()
                 if "hpu" in self.device:
                     W = W.to("cpu")
                 scale, zp, Q = gptq_for_this_block[layer_name].fasterquant(
