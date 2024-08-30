@@ -23,9 +23,9 @@ from ..utils.logger import logger
 from .common import generate_model_info, mod_default_dict, parent_child_mod_dict, \
                     save_scales, load_scales
 from .measure import load_measurements
-from .scale import scale_method_mapping, scaling_methods, \
-                   convert_scales_to_tensors_dict, load_layer_scales
-
+from .scale import scale_method_mapping, scaling_methods, convert_scales_to_tensors_dict, load_layer_scales
+from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
+cur_accelerator = auto_detect_accelerator()
 
 def patch_module(mod, qconfig, mod_dict, patched_mod=None):
     """Replaces the module with patched module according to mod_dict.
@@ -66,12 +66,12 @@ def quantize_params(mod, mod_extra_config):
     for param_name in mod_extra_config.params:
         quantizer = mod_extra_config.params[param_name][0]
         param = getattr(mod, param_name)
-        quantized_param = quantizer(param.to("hpu"))
+        quantized_param = quantizer(param.to(cur_accelerator.name()))
         delattr(mod, param_name)
         setattr(mod, param_name, nn.Parameter(quantized_param))
         quantized_param = getattr(mod, param_name)
         quantized_param.requires_grad_(False)
-        htcore.mark_step()
+        cur_accelerator.synchronize()
 
 
 def prepare_model(model, mod_list, measurement, scale_file, scaling_method, scale_config):
@@ -132,8 +132,8 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method, scal
     logger.debug("Patched module types: %s", patched_module_types)
     logger.debug("Patched modules: %s", patched_modules)
     logger.debug("Total patched modules: %d", len(patched_modules))
-    model = model.to("hpu")
-    htcore.mark_step()
+    model = model.to(cur_accelerator.name())
+    cur_accelerator.synchronize()
 
 
 def quantize(model, mod_list):
