@@ -644,7 +644,7 @@ class RAWGPTQuantizer(object):
                         W = load_value(self.model, full_layer_name + ".weight", self.model_path, self.device)
                     else:
                         W = sequential_layers[layer_name].weight.data.clone()
-                    accelerator.mark_step()
+                    accelerator.synchronize()
                     if "hpu" in self.device:
                         W = W.to("cpu")
                     scale, zp, Q = gptq_for_this_block[layer_name].fasterquant(

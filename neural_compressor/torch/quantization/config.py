@@ -1780,18 +1780,11 @@ def get_default_hqq_config() -> HQQConfig:
 
 ######################## FP8 Quant Config ###############################
 
-if is_hpex_available():
-    from ..algorithms.fp8_quant._core.common import mod_default_dict
-
-    FP8_WHITE_LIST = list(mod_default_dict.keys())
-else:
-    FP8_WHITE_LIST = list()
-
+from ..algorithms.fp8_quant._core.common import get_white_list
 
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=FP8_QUANT)
 class FP8Config(TorchBaseConfig):
     """Config class for FP8 quantization."""
-
     name = FP8_QUANT
 
     def __init__(
@@ -1800,7 +1793,7 @@ class FP8Config(TorchBaseConfig):
         fp8_config: str = "E4M3",
         hp_dtype: str = "bf16",
         blocklist: dict = {"names": [], "types": ()},
-        allowlist: dict = {"names": [], "types": FP8_WHITE_LIST},
+        allowlist: dict = {"names": [], "types": get_white_list()},
         mode: str = "AUTO",
         scale_method: str = "maxabs_hw",
         scale_params: dict = {},
@@ -1935,8 +1928,8 @@ class FP8Config(TorchBaseConfig):
         filter_result = []
         for op_name, module in model.named_modules():
             if (
-                module.__class__.__name__ in FP8_WHITE_LIST
-                or module.__class__.__name__.split("Patched")[-1] in FP8_WHITE_LIST
+                module.__class__.__name__ in get_white_list()
+                or module.__class__.__name__.split("Patched")[-1] in get_white_list()
             ):
                 pair = (op_name, module.__class__.__name__)
                 filter_result.append(pair)

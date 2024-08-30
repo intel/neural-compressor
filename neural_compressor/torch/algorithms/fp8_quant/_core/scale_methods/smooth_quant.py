@@ -20,8 +20,7 @@ from ..common import *
 from ..fp_utils import *
 
 
-def linear_smoothquant_weights_opt_pow2_scales(mod, measurement, params):
-    device = torch.device("hpu")
+def linear_smoothquant_weights_opt_pow2_scales(mod, measurement, params, device = torch.device("hpu")):
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
     device_type = _get_device_type()
@@ -58,8 +57,7 @@ def linear_smoothquant_weights_opt_pow2_scales(mod, measurement, params):
     )
 
 
-def linear_smoothquant_weights_maxabs_pow2_scales(mod, measurement, params):
-    device = torch.device("hpu")
+def linear_smoothquant_weights_maxabs_pow2_scales(mod, measurement, params, device = torch.device("hpu")):
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
     device_type = _get_device_type()
@@ -91,8 +89,7 @@ def linear_smoothquant_weights_maxabs_pow2_scales(mod, measurement, params):
     )
 
 
-def linear_weaksmoothquant_weights_maxabs_pow2_scales(mod, measurement, params):
-    device = torch.device("hpu")
+def linear_weaksmoothquant_weights_maxabs_pow2_scales(mod, measurement, params, device = torch.device("hpu")):
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
     device_type = _get_device_type()
