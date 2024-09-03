@@ -930,12 +930,7 @@ class RAWGPTQuantizer(object):
 
         logger.info("Quantization done")
         # self.model.config.use_cache = self.use_cache
-
-        # obtain model (all weight only quantization API function should return)
-        for k, v in gptq_config.items():
-            for m, n in v.items():
-                gptq_config[k][m] = n.tolist()
-        return self.model, gptq_config
+        return self.model
 
 
 class GPTQ:
@@ -1379,9 +1374,8 @@ class GPTQuantizer(INCQuantizer):
         self.gptq_quantizer.model = model
         self.gptq_quantizer.remove_prepare_for_calibration()
 
-        q_model, gptq_config = self.gptq_quantizer.execute_quantization()
+        q_model = self.gptq_quantizer.execute_quantization()
         if not self.gptq_quantizer.use_layer_wise:
             q_model = q_model.to(self.model_device)
-        q_model.gptq_config = gptq_config
         logger.info("GPTQ quantizing done.")
         return q_model

@@ -53,11 +53,6 @@ def save(model, output_dir="./saved_results"):
     # saving process
     save_config_mapping(model.qconfig, qconfig_file_path)
 
-    if hasattr(model, "gptq_config") and model.gptq_config:
-        gptq_config_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), "gptq_config.json")
-        with open(gptq_config_path, "w") as f:
-            json.dump(model.gptq_config, f, indent=4)
-
     # MethodType 'save' not in state_dict
     del model.save
     torch.save(model.state_dict(), qmodel_weight_file_path)
