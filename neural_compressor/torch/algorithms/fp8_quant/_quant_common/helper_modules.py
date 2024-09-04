@@ -241,7 +241,7 @@ class PatchedLinear(nn.Module):
         super().__init__()
         set_attrs_from_orig_model(self, mod, mod_extra_config)
         init_linear(self, mod_extra_config)
-        if self.fake_quant:
+        if self.fake_quant and self.quantization_mode == QuantMode.QUANTIZE:
             self.forward = self.forward_fakequant
             # override quantization to quant-dequant
             mec = self._mod_extra_config.inputs[0]

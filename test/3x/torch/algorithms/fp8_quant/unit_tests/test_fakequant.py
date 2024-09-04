@@ -47,7 +47,6 @@ config_dict = {
 }
 
 # Run both real and fake quantization, and compare
-@pytest.mark.skip(reason="[SW-198749] test_fake_quant not passing locally and in CI")
 def test_fakequant_model():
     model = AutoModelForCausalLM.from_pretrained("facebook/opt-350m")
     tokenizer = AutoTokenizer.from_pretrained("facebook/opt-350m")
@@ -77,7 +76,6 @@ def test_fakequant_model():
         output_fakequant = model_fakequant(**inputs).logits.cpu()
     assert torch.allclose(output, output_fakequant, rtol=0.01), f"FakeQuant on model failed"
 
-@pytest.mark.skip(reason="[SW-198749] test_fake_quant not passing locally and in CI")
 def test_fakequant_simple():
 
     model = M().eval().to("hpu").to(torch.bfloat16)
