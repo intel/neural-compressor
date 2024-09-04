@@ -17,6 +17,8 @@ import torch
 from abc import abstractmethod
 import habana_frameworks.torch.core as htcore
 
+from .._core.scale_handler import create_scale_tensor
+from .._quant_common.quant_config import ScaleFormat
 
 descale_fcn = lambda x, scale: torch.mul(x, scale)
 scale_fcn = lambda x, scale: torch.div(x, scale)
@@ -27,9 +29,12 @@ cast_from_fp8_fcn = lambda x, dtype, scale=None: torch.ops.hpu.cast_from_fp8(x, 
 
 class QuantDequantBase(nn.Module):
     def __init__(self, lp_dtype, hp_dtype="", *args, **kwargs):
-        super(QuantDequantBase, self).__init__(*args, **kwargs)
+        super(QuantDequantBase, self).__init__()
         self.lp_dtype = lp_dtype
         self.hp_dtype = hp_dtype
+        self.scale_format = ScaleFormat.CONST
+        if "scale_format" in kwargs:
+            self.scale_format = kwargs["scale_format"]
 
     @abstractmethod
     def forward(self, *args, **kwargs):
@@ -54,7 +59,7 @@ class QuantDequantNone(QuantDequantBase):
 class QuantInput(QuantDequantBase):
     def __init__(self, scale_inv, lp_dtype, hp_dtype, *args, **kwargs):
         super(QuantInput, self).__init__(lp_dtype, hp_dtype, *args, **kwargs)
-        self.scale_inv = nn.Parameter(scale_inv)
+        self.scale_inv = create_scale_tensor(scale_inv, self.scale_format)
 
     def forward(self, x):
         return cast_to_fp8_fcn(x, self.lp_dtype, self.scale_inv)
@@ -67,7 +72,7 @@ class QuantInput(QuantDequantBase):
 class DequantOutput(QuantDequantBase):
     def __init__(self, scale, lp_dtype, hp_dtype, *args, **kwargs):
         super(DequantOutput, self).__init__(lp_dtype, hp_dtype, *args, **kwargs)
-        self.scale = nn.Parameter(scale)
+        self.scale = create_scale_tensor(scale, self.scale_format)
 
     def forward(self, x):
         return cast_from_fp8_fcn(x, self.hp_dtype, self.scale)
@@ -80,8 +85,8 @@ class DequantOutput(QuantDequantBase):
 class QuantDequant(QuantDequantBase):
     def __init__(self, scale_inv, lp_dtype, hp_dtype, *args, **kwargs):
         super(QuantDequant, self).__init__(lp_dtype, hp_dtype, *args, **kwargs)
-        self.scale_inv = nn.Parameter(scale_inv)
-        self.scale = nn.Parameter(1 / scale_inv)
+        self.scale_inv = create_scale_tensor(scale_inv, self.scale_format)
+        self.scale = create_scale_tensor(1 / scale_inv, self.scale_format)
 
     def forward(self, x, *args, **kwargs):
         y = cast_to_fp8_fcn(x, self.lp_dtype, self.scale_inv)

@@ -15,7 +15,7 @@
 import numpy as np
 import torch
 
-from .._quant_common.quant_config import ScaleMethod, set_hqt_config
+from .._quant_common.quant_config import ScaleMethod, set_hqt_config, get_hqt_config
 from ..utils.logger import logger
 from .common import *
 from .fp_utils import *
@@ -25,34 +25,38 @@ from .scale_methods import *
 
 def matmul_scales_to_mod_config(mod, scales, params):
     scales_inv = invert_scales(scales)
+    format = get_hqt_config(mod).cfg["scale_format"]
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    input_config = [QuantInput(s_inv, lp_dtype, hp_dtype) for s_inv in scales_inv.inputs]
+    input_config = [QuantInput(s_inv, lp_dtype, hp_dtype, scale_format=format)
+                    for s_inv in scales_inv.inputs]
     # outputs as bf16, and descaled in gemm under PatchedMatmul, so no need to work here
-    output_config = [QuantDequantNone(lp_dtype, hp_dtype)]
+    output_config = [QuantDequantNone(lp_dtype, hp_dtype, scale_format=format)]
     config = ModuleConfig(input_config, output_config, {})
     return config
 
 
 def fsdpa_scales_to_mod_config(mod, scales, params):
     scales_inv = invert_scales(scales)
+    format = get_hqt_config(mod).cfg["scale_format"]
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    input_config = [QuantInput(s_inv, lp_dtype, hp_dtype) for s_inv in scales_inv.inputs]
-    output_config = [DequantOutput(scales.outputs[0], lp_dtype, hp_dtype)]
+    input_config = [QuantInput(s_inv, lp_dtype, hp_dtype, scale_format=format) for s_inv in scales_inv.inputs]
+    output_config = [DequantOutput(scales.outputs[0], lp_dtype, hp_dtype, scale_format=format)]
     config = ModuleConfig(input_config, output_config, {})
     return config
 
 
 def linear_scales_to_mod_config(mod, scales, params):
     scales_inv = invert_scales(scales)
+    format = get_hqt_config(mod).cfg["scale_format"]
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    input_config = [QuantInput(scales_inv.inputs[0], lp_dtype, hp_dtype)]
+    input_config = [QuantInput(scales_inv.inputs[0], lp_dtype, hp_dtype, scale_format=format)]
     # outputs as bf16, and descaled in gemm under PatchedLinear, so no need to work here
-    output_config = [QuantDequantNone(lp_dtype, hp_dtype)]
+    output_config = [QuantDequantNone(lp_dtype, hp_dtype, scale_format=format)]
     if isinstance(scales_inv.params["weight"], (torch.Tensor, float)):
-        weight_config = QuantInput(scales_inv.params["weight"], lp_dtype, hp_dtype)
+        weight_config = QuantInput(scales_inv.params["weight"], lp_dtype, hp_dtype, scale_format=format)
     elif isinstance(scales_inv.params["weight"], dict):
         weight_scale_inv_out_ch = scales_inv.params["weight"][0]
         weight_scale_inv_in_ch = scales_inv.params["weight"][1]
@@ -80,18 +84,20 @@ def linear_scales_to_mod_config(mod, scales, params):
 def kv_cache_scales_to_mod_config(mod, scales, params):
     # how quant/dequant will be applied on layer tensors
     scales_inv = invert_scales(scales)
+    format = get_hqt_config(mod).cfg["scale_format"]
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    input_config = [QuantInput(scales_inv.inputs[0], lp_dtype, hp_dtype)]
-    output_config = [DequantOutput(scales.outputs[0], lp_dtype, hp_dtype)]
+    input_config = [QuantInput(scales_inv.inputs[0], lp_dtype, hp_dtype, scale_format=format)]
+    output_config = [DequantOutput(scales.outputs[0], lp_dtype, hp_dtype, scale_format=format)]
     config = ModuleConfig(input_config, output_config)
     return config
 
 
 def softmax_scales_to_mod_config(mod, scales, params):
+    format = get_hqt_config(mod).cfg["scale_format"]
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    output_config = [DequantOutput(scales.outputs[0], lp_dtype, hp_dtype)]
+    output_config = [DequantOutput(scales.outputs[0], lp_dtype, hp_dtype, scale_format=format)]
     return ModuleConfig(None, output_config)
 
 
