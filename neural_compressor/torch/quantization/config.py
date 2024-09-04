@@ -1760,6 +1760,7 @@ class FP8Config(TorchBaseConfig):
         mod_dict: dict = {},
         measure_exclude: str = "OUTPUT",
         fake_quant: bool = False,
+        scale_format: str = "const",
         **kwargs,
     ):
         """Initializing FP8Config.
@@ -1791,6 +1792,7 @@ class FP8Config(TorchBaseConfig):
         self.mod_dict = mod_dict
         self._json_file = None
         self.fake_quant = str(fake_quant)
+        self.scale_format = scale_format
 
     @property
     def measure(self):

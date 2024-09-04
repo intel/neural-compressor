@@ -75,6 +75,9 @@ class TrueFalse(Enum):
     TRUE = True
     FALSE = False
 
+class ScaleFormat(Enum):
+    CONST = 1 # scales is const and persistent tensor
+    SCALAR = 2 # scales is non-const, non-persistent tensor with data ptr, used for low BS performance optimization
 
 _config_to_enum = {
     "mode": QuantMode,
@@ -84,13 +87,13 @@ _config_to_enum = {
     "scale_method": ScaleMethod,
     "recalc_scales": TrueFalse,
     "ignore_modules_wo_measures": TrueFalse,
-    "fake_quant": TrueFalse
+    "fake_quant": TrueFalse,
+    "scale_format": ScaleFormat
 }
 
 
 _configs_that_use_enum_value = ["fp8_config", "hp_dtype", "ignore_modules_wo_measures", "recalc_scales", "fake_quant"]
 _scale_methods_quant_only = [ScaleMethod.UNIT_SCALE, ScaleMethod.HW_ALIGNED_SINGLE_SCALE]
-
 
 def get_hqt_config(mod) -> Fp8cfg:
     return mod.__hqt_config__
@@ -138,6 +141,7 @@ class Fp8cfg:
             "device_type": htexp._get_device_type(),  # Determines device type: Gaudi2, Gaudi3...
             "measure_exclude": MeasureExclude.OUTPUT,
             "recalc_scales": False,
+            "scale_format": ScaleFormat.CONST
         }
         # assert measured_global_config['allowlist']['names'] == [''], "Allowlist names not yet implemented"
 

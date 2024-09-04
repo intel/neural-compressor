@@ -15,8 +15,9 @@
 import torch
 import torch.nn as nn
 
-from .quant_config import QuantMode, get_hqt_config
+from .quant_config import QuantMode, get_hqt_config, ScaleFormat
 from .._core.quant_dequant import QuantDequant as qdq
+from .._core.scale_handler import create_scale_tensor
 
 try:  # backwards compatibility for 1.16
     from habana_frameworks.torch.hpex.kernels import fp8_fused_sdpa
@@ -124,6 +125,7 @@ def set_attrs_from_orig_model(cls_instance, mod, mod_extra_config, *func_names):
     cls_instance._mod_extra_config = mod_extra_config
     cls_instance.quantization_mode = config.cfg["mode"]
     cls_instance.fake_quant = config.cfg["fake_quant"]
+    cls_instance.scale_format = config.cfg["scale_format"]
     # store original module in order to invoke its functions during measurements.
     # this may be omitted of torch remove the related validation from dynamo. see SW-187731.
     cls_instance.__dict__["orig_mod"] = mod
@@ -166,8 +168,8 @@ class PatchedMatmul(nn.Module):
                 self.forward = self.forward_quant
                 self.quant_input_0 = self._mod_extra_config.inputs[0]
                 self.quant_input_1 = self._mod_extra_config.inputs[1]
-                self.scale_input = nn.Parameter(mod_extra_config.scale.inputs[0])
-                self.scale_other = nn.Parameter(mod_extra_config.scale.inputs[1])
+                self.scale_input = create_scale_tensor(mod_extra_config.scale.inputs[0], self.scale_format)
+                self.scale_other = create_scale_tensor(mod_extra_config.scale.inputs[1], self.scale_format)
             else:
                 self.forward = self.forward_fakequant
 
@@ -221,9 +223,9 @@ def init_linear(instance, mod_extra_config):
         instance.quant_input = instance._mod_extra_config.inputs[0]
         instance.quant_output = instance._mod_extra_config.outputs[0]
         instance.weight = nn.Parameter(instance.weight.t().contiguous())
-        instance.scale_input = nn.Parameter(mod_extra_config.scale.inputs[0])
+        instance.scale_input = create_scale_tensor(mod_extra_config.scale.inputs[0], instance.scale_format)
         if isinstance(mod_extra_config.scale.params["weight"], (torch.Tensor, float)):
-            instance.scale_weight = nn.Parameter(mod_extra_config.scale.params["weight"])
+            instance.scale_weight = create_scale_tensor(mod_extra_config.scale.params["weight"], instance.scale_format)
         elif isinstance(mod_extra_config.scale.params["weight"], dict):
             # PCQ weight is calculated with actual weight [0] and ones [1]
             instance.scale_weight = nn.Parameter(mod_extra_config.scale.params["weight"][0])
@@ -649,8 +651,8 @@ class PatchedConv2d(nn.Conv2d):
         set_attrs_from_orig_model(self, mod, mod_extra_config)
         if self.quantization_mode == QuantMode.QUANTIZE:
             self.quant_input = self._mod_extra_config.inputs[0]
-            self.scale_input = nn.Parameter(mod_extra_config.scale.inputs[0])
-            self.scale_weight = nn.Parameter(mod_extra_config.scale.params["weight"])
+            self.scale_input = create_scale_tensor(mod_extra_config.scale.inputs[0], self.scale_format)
+            self.scale_weight = create_scale_tensor(mod_extra_config.scale.params["weight"], self.scale_format)
         elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
             self.forward = self.forward_measure
 
@@ -690,9 +692,9 @@ class PatchedSoftmax(nn.Module):
         set_attrs_from_orig_model(self, mod, mod_extra_config)
         if self.quantization_mode == QuantMode.QUANTIZE:
             self.quant_output = self._mod_extra_config.outputs[0]
-            # input scale is 1 assuming the input to SM is descaled because we are using HW supported scales
-            self.scale_input = nn.Parameter(torch.Tensor([1.0]))
-            self.scale_output = nn.Parameter(torch.Tensor([1 / mod_extra_config.scale.outputs[0]]))
+            self.scale_input = create_scale_tensor(torch.Tensor([1.0]), self.scale_format)
+            self.scale_output = create_scale_tensor(torch.Tensor([1 / mod_extra_config.scale.outputs[0]]),
+                                                    self.scale_format)
         elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
             self.forward = self.forward_measure
 
@@ -754,8 +756,8 @@ class PatchedLoRACompatibleConv(nn.Conv2d):
         set_attrs_from_orig_model(self, mod, mod_extra_config)
         if self.quantization_mode == QuantMode.QUANTIZE:
             self.quant_input = self._mod_extra_config.inputs[0]
-            self.scale_input = nn.Parameter(mod_extra_config.scale.inputs[0])
-            self.scale_weight = nn.Parameter(mod_extra_config.scale.params["weight"])
+            self.scale_input = create_scale_tensor(mod_extra_config.scale.inputs[0], self.scale_format)
+            self.scale_weight = create_scale_tensor(mod_extra_config.scale.params["weight"], self.scale_format)
         elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
             self.forward = self.forward_measure
 
@@ -808,12 +810,16 @@ class PatchedModuleFusedSDPA(nn.Module):
             self.quant_k = self._mod_extra_config.inputs[1]
             self.quant_v = self._mod_extra_config.inputs[2]
             self.dequant_output = self._mod_extra_config.outputs[0]
-            self.scale_q = nn.Parameter(mod_extra_config.scale.inputs[0].type(torch.float32))
-            self.scale_k = nn.Parameter(mod_extra_config.scale.inputs[1].type(torch.float32))
-            self.scale_v = nn.Parameter(mod_extra_config.scale.inputs[2].type(torch.float32))
-            self.descale_amax = nn.Parameter(mod_extra_config.scale.inputs[3].type(torch.float32))
-            self.scale_output = nn.Parameter(1 / mod_extra_config.scale.outputs[0].type(torch.float32))
-            self.scale_amax = nn.Parameter(1 / self.descale_amax)
+            # fsdpa currently doesn't support scalar scales so scale format is always const.
+            # should be fixed once SW-199793 is done
+            self.scale_q = create_scale_tensor(mod_extra_config.scale.inputs[0].type(torch.float32), ScaleFormat.CONST)
+            self.scale_k = create_scale_tensor(mod_extra_config.scale.inputs[1].type(torch.float32), ScaleFormat.CONST)
+            self.scale_v = create_scale_tensor(mod_extra_config.scale.inputs[2].type(torch.float32), ScaleFormat.CONST)
+            self.descale_amax = create_scale_tensor(mod_extra_config.scale.inputs[3].type(torch.float32),
+                                                    ScaleFormat.CONST)
+            self.scale_output = create_scale_tensor(1 / mod_extra_config.scale.outputs[0].type(torch.float32),
+                                                    ScaleFormat.CONST)
+            self.scale_amax = create_scale_tensor(1 / self.descale_amax, ScaleFormat.CONST)
         elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
             self.forward = self.forward_measure
 
