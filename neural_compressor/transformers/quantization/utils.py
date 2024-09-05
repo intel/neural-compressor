@@ -129,6 +129,7 @@ def _replace_linear(
     empty_weights=False,
 ):
     """Private method that wraps the recursion for module replacement.
+
     Returns the converted model and a boolean that indicates if the conversion has been successfully or not.
     """
     for name, module in model.named_children():
@@ -259,7 +260,7 @@ def _replace_linear(
                     None if module.bias is None else module.bias.data,
                 )
                 is_removed = True
-        
+
         if not is_removed and len(list(module.children())) > 0:  # pylint: disable=E1101
             _, is_replaced = _replace_linear(
                 module,

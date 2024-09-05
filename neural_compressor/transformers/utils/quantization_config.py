@@ -397,7 +397,7 @@ class GPTQConfig(INCQuantizationConfigMixin):
                 serializable_config_dict[key] = value
 
         return serializable_config_dict
-    
+
 
 class AwqConfig(INCQuantizationConfigMixin):
     def __init__(
