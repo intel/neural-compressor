@@ -775,8 +775,7 @@ class _BaseINCAutoModelClass:
             ]:
                 logger.warning("Please provide the correct bits number or weight_dtype in config.json.")
                 raise ValueError(
-                    "weight_dtype must be a string in "
-                    "'int8', 'int4', 'int4_fullrange', 'int4_clip', 'nf4', "
+                    "weight_dtype must be a string in " "'int8', 'int4', 'int4_fullrange', 'int4_clip', 'nf4', "
                 )
             else:
                 logger.info("{} quantization weight_dtype is used.".format(quantization_config.weight_dtype))
@@ -788,7 +787,7 @@ class _BaseINCAutoModelClass:
             model = model_class(config, *model_args, **kwargs)
 
         model = build_woq_model(model, quantization_config)
-        
+
         if is_sharded:
             loaded_state_dict_keys = sharded_metadata["all_checkpoint_keys"]
         else:
