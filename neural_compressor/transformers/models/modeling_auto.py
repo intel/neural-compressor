@@ -116,6 +116,7 @@ def convert_model_to_public(model):
     elif model.quantization_config.use_ipex:
         pass
 
+
 def save_low_bit(self, save_directory: Union[str, os.PathLike], push_to_hub: bool = False, **kwargs):
 
     assert hasattr(self, "quantization_config"), "Detected this model is not a low-bit model."
@@ -289,7 +290,6 @@ class _BaseINCAutoModelClass:
                     logger.error("Saved low bit model loading failed, please check your model.")
                     exit(0)
 
-      
         if isinstance(
             quantization_config,
             (RtnConfig, AwqConfig, TeqConfig, GPTQConfig, AutoRoundConfig),
