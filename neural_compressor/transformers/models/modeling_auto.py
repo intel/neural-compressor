@@ -50,7 +50,7 @@ from transformers.modeling_utils import load_state_dict
 from transformers.utils import has_file, is_accelerate_available, is_safetensors_available
 
 from neural_compressor.model.torch_model import PyTorchFXModel
-from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear as WeightOnlyLinear
+from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
 from neural_compressor.transformers.utils.utility import (
     _neural_compressor_version,
     is_intel_gpu_available,
@@ -78,7 +78,7 @@ def build_woq_model(model, quantization_config):
 
     weight_dtype = quantization_config.weight_dtype
     for n, m in model.named_modules():
-        if n in quantization_config.llm_int8_skip_modules:
+        if n in quantization_config.modules_to_not_convert:
             continue
         if isinstance(m, torch.nn.Linear):
             zp = getattr(
@@ -89,7 +89,7 @@ def build_woq_model(model, quantization_config):
             dtype = "int4" if weight_dtype == "int4_clip" else weight_dtype
             use_optimum_format = False if weight_dtype in ["nf4", "fp4", "fp4_e2m1"] else True
             with init_empty_weights():
-                new_module = WeightOnlyLinear(
+                new_module = INCWeightOnlyLinear(
                     m.in_features,
                     m.out_features,
                     dtype=dtype,
@@ -717,17 +717,6 @@ class _BaseINCAutoModelClass:
             q_model = load(weights_file, model, dataloader=None)
             del model
             return q_model
-        if quantization_config.quant_method in ["sq"]:
-            print("Loading SmoothQuant model from: ", pretrained_model_name_or_path)
-            from intel_extension_for_transformers.transformers.llm.quantization.sq_utils import TSModelCausalLMForITREX
-
-            q_model = torch.jit.load(os.path.join(pretrained_model_name_or_path, "quantized_model.pt"))
-            origin_model_type = config.model_type
-            if origin_model_type in ["chatglm", "qwen", "baichuan"]:
-                config.model_type = "qwen2"
-            q_model = TSModelCausalLMForITREX(q_model, config=config)
-            q_model.config.model_type = origin_model_type
-            return q_model
         dtype_orig = None
         if torch_dtype is not None:
             if isinstance(torch_dtype, str):
@@ -824,6 +813,8 @@ class _BaseINCAutoModelClass:
 
         init_contexts = [no_init_weights(_enable=_fast_init)]
         init_contexts.append(init_empty_weights())
+        
+        model = build_woq_model(model, quantization_config)
 
         with ContextManagers(init_contexts):
             model = model_class(config, *model_args, **kwargs)
@@ -839,83 +830,27 @@ class _BaseINCAutoModelClass:
         if dtype_orig is not None:
             torch.set_default_dtype(dtype_orig)
 
-        if is_ipex_available() and quantization_config.use_ipex:
-            import intel_extension_for_pytorch as ipex
-            from intel_extension_for_pytorch.nn.modules import WeightOnlyQuantizedLinear as ipex_linear
-
-            def replace_ipex_cpu_woq_linear(model, current_name=[]):
-                for name, module in model.named_children():
-                    current_name.append(name)
-                    if isinstance(module, WeightOnlyLinear):
-                        weight_dtype = {
-                            4: ipex.quantization.WoqWeightDtype.INT4,
-                            8: ipex.quantization.WoqWeightDtype.INT8,
-                        }
-                        compute_dtype = {
-                            "fp32": ipex.quantization.WoqLowpMode.NONE,  # follow the activation datatype.
-                            "bf16": ipex.quantization.WoqLowpMode.BF16,
-                            "fp16": ipex.quantization.WoqLowpMode.FP16,
-                            "int8": ipex.quantization.WoqLowpMode.INT8,
-                        }
-
-                        ipex_qconfig_mapping = ipex.quantization.get_weight_only_quant_qconfig_mapping(
-                            weight_dtype=weight_dtype[quantization_config.bits],
-                            lowp_mode=compute_dtype[quantization_config.compute_dtype],
-                            act_quant_mode=ipex.quantization.WoqActQuantMode.PER_IC_BLOCK,
-                            group_size=quantization_config.group_size,
-                        )
-                        tmp_linear = torch.nn.Linear(
-                            module.in_features,
-                            module.out_features,
-                            True if hasattr(module, "bias") else False,
-                        )
-                        tmp_linear.qconfig = ipex_qconfig_mapping.global_qconfig
-                        target_linear = ipex_linear.from_float_and_int4_weight(
-                            mod=tmp_linear,
-                            qweight=state_dict.pop(".".join(current_name) + ".ipex_weight"),
-                            scales=state_dict.pop(".".join(current_name) + ".ipex_scales"),
-                            zero_points=state_dict.pop(".".join(current_name) + ".ipex_zeros"),
-                            bias=(
-                                state_dict.pop(".".join(current_name) + ".ipex_bias")
-                                if ".".join(current_name) + ".ipex_bias" in state_dict
-                                else None
-                            ),
-                            group_size=quantization_config.group_size,
-                            g_idx=(
-                                state_dict.pop(".".join(current_name) + ".ipex_g_idx")
-                                if ".".join(current_name) + ".ipex_g_idx" in state_dict
-                                else None
-                            ),
-                        )
-                        setattr(model, name, target_linear)
-                    else:
-                        replace_ipex_cpu_woq_linear(module, current_name)
-                    current_name.pop()
-
-            replace_ipex_cpu_woq_linear(model)
-            model.load_state_dict(state_dict, strict=False, assign=True)
-        else:
-            (
-                model,
-                missing_keys,
-                unexpected_keys,
-                mismatched_keys,
-                offload_index,
-                error_msgs,
-            ) = model_class._load_pretrained_model(
-                model,
-                None,
-                loaded_state_dict_keys,  # XXX: rename?
-                resolved_archive_file,
-                pretrained_model_name_or_path,
-                sharded_metadata=sharded_metadata,
-                _fast_init=_fast_init,
-                low_cpu_mem_usage=True,
-                offload_folder=offload_folder,
-                offload_state_dict=offload_state_dict,
-                dtype=torch_dtype,
-                keep_in_fp32_modules=[],
-            )
+        (
+            model,
+            missing_keys,
+            unexpected_keys,
+            mismatched_keys,
+            offload_index,
+            error_msgs,
+        ) = model_class._load_pretrained_model(
+            model,
+            None,
+            loaded_state_dict_keys,  # XXX: rename?
+            resolved_archive_file,
+            pretrained_model_name_or_path,
+            sharded_metadata=sharded_metadata,
+            _fast_init=_fast_init,
+            low_cpu_mem_usage=True,
+            offload_folder=offload_folder,
+            offload_state_dict=offload_state_dict,
+            dtype=torch_dtype,
+            keep_in_fp32_modules=[],
+        )
 
         # make sure token embedding weights are still tied if needed
         model.tie_weights()
@@ -923,20 +858,13 @@ class _BaseINCAutoModelClass:
         # Set model in evaluation mode to deactivate DropOut modules by default
         model.eval()
 
-        if (
-            quantization_config.weight_dtype
-            not in [
-                "fp8_e5m2",
-                "fp8_e4m3",
-            ]
-            and not quantization_config.use_ipex
-        ):
-            model = replace_linear(
-                model,
-                quantization_config=quantization_config,
-                device="cpu" if device_map == "auto" else device_map,
-                empty_weights=True,
-            )
+        
+        model = replace_linear(
+            model,
+            quantization_config=quantization_config,
+            device="cpu" if device_map == "auto" else device_map,
+            empty_weights=True,
+        )
 
         if (not use_xpu and torch_dtype == torch.float16) or (
             not use_xpu and not CpuInfo().bf16 and torch_dtype == torch.bfloat16
