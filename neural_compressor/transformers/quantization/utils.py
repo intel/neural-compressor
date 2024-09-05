@@ -25,7 +25,7 @@ from accelerate import init_empty_weights
 from datasets import load_dataset
 from transformers import AutoTokenizer
 
-from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear as WeightOnlyLinear
+from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
 from neural_compressor.torch.quantization import (
     AutoRoundConfig,
     AWQConfig,
@@ -130,8 +130,42 @@ def replace_linear(
         # output_layer is chatglm last layer name
         # embed_out is dolly_v2 last layer name
         modules_to_not_convert = []
-    if quantization_config.llm_int8_skip_modules:
+    if quantization_config.modules_to_not_convert:
         modules_to_not_convert.extend(quantization_config.llm_int8_skip_modules)
+        modules_to_not_convert = list(set(modules_to_not_convert))
+    model, is_replaced = _replace_linear(
+        model,
+        modules_to_not_convert,
+        current_key_name,
+        quantization_config,
+        device=device,
+        empty_weights=empty_weights,
+    )
+
+    if not is_replaced:
+        logger.warning(
+            "You are loading your model in 8bit or 4bit but no linear modules were found in your model."
+            " Please double check your model architecture, or submit an issue on github if you think this is"
+            " a bug."
+        )
+
+    return model
+
+
+def replace_linear(
+    model,
+    modules_to_not_convert=None,
+    current_key_name=None,
+    quantization_config=None,
+    device="cpu",
+    empty_weights=False,
+):
+    if modules_to_not_convert is None:
+        # output_layer is chatglm last layer name
+        # embed_out is dolly_v2 last layer name
+        modules_to_not_convert = []
+    if quantization_config.modules_to_not_convert:
+        modules_to_not_convert.extend(quantization_config.modules_to_not_convert)
         modules_to_not_convert = list(set(modules_to_not_convert))
     model, is_replaced = _replace_linear(
         model,
@@ -162,7 +196,6 @@ def _replace_linear(
     empty_weights=False,
 ):
     """Private method that wraps the recursion for module replacement.
-
     Returns the converted model and a boolean that indicates if the conversion has been successfully or not.
     """
     for name, module in model.named_children():
@@ -170,187 +203,129 @@ def _replace_linear(
             current_key_name = []
         current_key_name.append(name)
         is_removed = False
-        use_optimum_format = getattr(module, "use_optimum_format", False) or quantization_config.weight_dtype not in [
-            "fp8_e5m2",
-            "fp8_e4m3",
-            "int4_fullrange",
-        ]
-
         if (
             isinstance(module, torch.nn.Linear)
-            or isinstance(module, WeightOnlyLinear)
-            or (is_autoround_available() and isinstance(module, auto_round_woqlinear))
+            or isinstance(module, INCWeightOnlyLinear)
             or (is_ipex_available() and isinstance(module, ipex.nn.utils._weight_prepack._IPEXLinear))
         ) and (name not in modules_to_not_convert):
             # Check if the current key is not in the `modules_to_not_convert`
             if not any(key in ".".join(current_key_name) for key in modules_to_not_convert):
-                with init_empty_weights():
-                    in_features = module.in_features
-                    out_features = module.out_features
-                    if device == "cpu" or device == torch.device("cpu") or device == "auto":
-                        if is_ipex_available() and quantization_config.use_ipex:
-                            from intel_extension_for_pytorch.nn.modules import WeightOnlyQuantizedLinear as ipex_linear
-                            from intel_extension_for_pytorch.utils.weight_only_quantization import (
-                                _convert_optimum_format_to_desired,
-                            )
-
-                            qweight, scales, qzeros = _convert_optimum_format_to_desired(
-                                module.qweight, module.scales, module.qzeros
-                            )
-
-                            weight_dtype = {
-                                4: ipex.quantization.WoqWeightDtype.INT4,
-                                8: ipex.quantization.WoqWeightDtype.INT8,
-                            }
-                            compute_dtype = {
-                                "fp32": ipex.quantization.WoqLowpMode.NONE,  # follow the activation datatype.
-                                "bf16": ipex.quantization.WoqLowpMode.BF16,
-                                "fp16": ipex.quantization.WoqLowpMode.FP16,
-                                "int8": ipex.quantization.WoqLowpMode.INT8,
-                            }
-
-                            ipex_qconfig_mapping = ipex.quantization.get_weight_only_quant_qconfig_mapping(
-                                weight_dtype=weight_dtype[quantization_config.bits],
-                                lowp_mode=compute_dtype[quantization_config.compute_dtype],
-                                act_quant_mode=ipex.quantization.WoqActQuantMode.PER_IC_BLOCK,
-                                group_size=quantization_config.group_size,
-                            )
-                            tmp_linear = torch.nn.Linear(
-                                in_features,
-                                out_features,
-                                True if hasattr(module, "bias") else False,
-                            )
-                            tmp_linear.qconfig = ipex_qconfig_mapping.global_qconfig
-                            model._modules[name] = ipex_linear.from_float_and_int4_weight(
-                                mod=tmp_linear,
-                                qweight=qweight,
-                                scales=scales,
-                                zero_points=qzeros,
-                                bias=(module.bias if hasattr(module, "bias") else None),
-                                group_size=quantization_config.group_size,
-                                g_idx=(module.g_idx if hasattr(module, "g_idx") else None),
-                            )
-                    elif device == "xpu" or device == torch.device("xpu"):
-                        from intel_extension_for_pytorch.nn.utils._quantize_convert import (
-                            WeightOnlyQuantizedLinear as ipex_linear,  # pylint: disable=E0401
-                        )
-
-                        model._modules[name] = ipex_linear(
-                            in_features,
-                            out_features,
-                            module.bias is not None,
-                            compute_dtype=quantization_config.compute_dtype,
-                            compress_statistics=False,
-                            weight_dtype=quantization_config.weight_dtype,
-                            scale_dtype=quantization_config.scale_dtype,
-                            blocksize=quantization_config.group_size,
-                            scheme=quantization_config.scheme,
-                            compression_dtype=getattr(
-                                module, "compression_dtype", torch.int8 if _ipex_version < "2.3.10" else torch.int32
-                            ),
-                            compression_dim=getattr(module, "compression_dim", 0 if _ipex_version < "2.3.10" else 1),
-                            device=device,
-                            use_optimum_format=getattr(
-                                module, "use_optimum_format", False if _ipex_version < "2.3.10" else True
-                            ),
-                        )
-                        if quantization_config.quant_method.value == "gptq":
-                            g_idx = getattr(
-                                module,
-                                "g_idx",
-                                torch.zeros(in_features, dtype=torch.int32).to(device),
-                            )
-                        else:
-                            g_idx = None
-                        model._modules[name].set_scales_zps_gidx(
-                            (
-                                module.scales
-                                if hasattr(module, "scales")
-                                else (
-                                    torch.ones(
-                                        (
-                                            out_features,
-                                            math.ceil(in_features / quantization_config.group_size),
-                                        ),
-                                        dtype=convert_dtype_str2torch(quantization_config.compute_dtype),
-                                        device=torch.device(device),
-                                    )
-                                    if _ipex_version < "2.3.10"
-                                    else torch.ones(
-                                        (
-                                            math.ceil(in_features / quantization_config.group_size),
-                                            out_features,
-                                        ),
-                                        dtype=convert_dtype_str2torch(quantization_config.compute_dtype),
-                                        device=torch.device(device),
-                                    )
-                                )
-                            ),
-                            module.qzeros if hasattr(module, "qzeros") else None,
-                            g_idx,
-                        )
-                    else:
-                        raise Exception("{} device Unsupported weight only quantization!".format(device))
-
-                    is_replaced = True
-                    # Store the module class in case we need to transpose the weight later
-                    model._modules[name].source_cls = type(module)
-                    # Force requires grad to False to avoid unexpected errors
-                    model._modules[name].requires_grad_(False)
-                if quantization_config.use_ipex:
-                    pass
-                elif device == "cpu" or device == torch.device("cpu") or device == "auto":
-                    if quantization_config.weight_dtype in [
-                        "fp8_e5m2",
-                        "fp8_e4m3",
-                    ]:
-                        model._modules[name].set_fp_weights_bias(
-                            module.weight.data,
-                            None if module.bias is None else module.bias.data,
-                        )
-                    else:
-                        if quantization_config.weight_dtype in ["int4", "int4_clip", "int8"]:
-                            int_weight, scales, zeros = unpack_weight(
-                                module.qweight,
-                                module.scales,
-                                module.qzeros if hasattr(module, "qzeros") else None,
-                                quantization_config,
-                            )
-                            int_weight = int_weight.view(-1, int_weight.shape[-1])
-                        else:
-                            int_weight = module.unpack_tensor_with_numpy(module.qweight)
-                            scales = module.scales
-                            zeros = module.qzeros if hasattr(module, "qzeros") else None
-
-                        model._modules[name].set_weights_bias(
-                            int_weight,
-                            scales,
-                            zeros,
-                            module.g_idx if hasattr(module, "g_idx") else None,
-                            quantization_config,
-                            bias=None if module.bias is None else module.bias.data,
-                        )
-                else:
-                    if not hasattr(module, "qweight"):
-                        n_pack = (8 if _ipex_version < "2.3.10" else 32) // DTYPE_BITS_MAPPING[
-                            quantization_config.weight_dtype
-                        ]
-                        weight = torch.zeros(
-                            (
-                                (math.ceil(out_features / n_pack), in_features)
-                                if _ipex_version < "2.3.10"
-                                else (math.ceil(in_features / n_pack), out_features)
-                            ),
-                            dtype=torch.int8 if _ipex_version < "2.3.10" else torch.int32,
-                            device=torch.device(device),
-                        )
-                    model._modules[name].set_weights_bias(
-                        module.qweight.data if hasattr(module, "qweight") else weight,
-                        None if module.bias is None else module.bias.data,
+                in_features = module.in_features
+                out_features = module.out_features
+                if device == "cpu" or device == torch.device("cpu") or device == "auto":
+                    from intel_extension_for_pytorch.nn.modules import WeightOnlyQuantizedLinear as ipex_linear
+                    from intel_extension_for_pytorch.utils.weight_only_quantization import (
+                        _convert_optimum_format_to_desired,
                     )
-                    del module
-                    gc.collect()
-                    is_removed = True
+
+                    qweight = module.qweight
+                    scales = module.scales
+                    qzeros = module.qzeros
+
+                    qweight, scales, qzeros = _convert_optimum_format_to_desired(qweight, scales, qzeros)
+                    weight_dtype = {
+                        4: ipex.quantization.WoqWeightDtype.INT4,
+                        8: ipex.quantization.WoqWeightDtype.INT8,
+                    }
+                    compute_dtype = {
+                        "fp32": ipex.quantization.WoqLowpMode.NONE,  # follow the activation datatype.
+                        "bf16": ipex.quantization.WoqLowpMode.BF16,
+                        "fp16": ipex.quantization.WoqLowpMode.FP16,
+                        "int8": ipex.quantization.WoqLowpMode.INT8,
+                    }
+
+                    ipex_qconfig_mapping = ipex.quantization.get_weight_only_quant_qconfig_mapping(
+                        weight_dtype=weight_dtype[quantization_config.bits],
+                        lowp_mode=compute_dtype[quantization_config.compute_dtype],
+                        act_quant_mode=ipex.quantization.WoqActQuantMode.PER_IC_BLOCK,
+                        group_size=quantization_config.group_size,
+                    )
+                    tmp_linear = torch.nn.Linear(
+                        in_features,
+                        out_features,
+                        True if hasattr(module, "bias") and module.bias is not None else False,
+                    )
+                    if tmp_linear.bias is not None and module.bias is not None:
+                        tmp_linear.bias = torch.nn.Parameter(module.bias.float())
+
+                    tmp_linear.qconfig = ipex_qconfig_mapping.global_qconfig
+                    model._modules[name] = ipex_linear.from_float_and_int4_weight(
+                        mod=tmp_linear,
+                        qweight=qweight,
+                        scales=scales,
+                        zero_points=qzeros,
+                        bias=(module.bias.float() if hasattr(module, "bias") and module.bias is not None else None),
+                        group_size=quantization_config.group_size,
+                        g_idx=(module.g_idx if hasattr(module, "g_idx") else None),
+                    )
+
+                elif device == "xpu" or device == torch.device("xpu"):
+                    from intel_extension_for_pytorch.nn.utils._quantize_convert import (
+                        WeightOnlyQuantizedLinear as ipex_linear,  # pylint: disable=E0401
+                    )
+
+                    model._modules[name] = ipex_linear(
+                        in_features,
+                        out_features,
+                        module.bias is not None,
+                        compute_dtype=quantization_config.compute_dtype,
+                        compress_statistics=False,
+                        weight_dtype=quantization_config.weight_dtype,
+                        scale_dtype=quantization_config.scale_dtype,
+                        blocksize=quantization_config.group_size,
+                        scheme=quantization_config.scheme,
+                        compression_dtype=getattr(module, "compression_dtype", torch.int32),
+                        compression_dim=getattr(module, "compression_dim", 1),
+                        device=device,
+                        use_optimum_format=getattr(module, "use_optimum_format", True),
+                    )
+                    if quantization_config.quant_method.value == "gptq":
+                        g_idx = getattr(
+                            module,
+                            "g_idx",
+                            torch.zeros(in_features, dtype=torch.int32).to(device),
+                        )
+                    else:
+                        g_idx = None
+                    model._modules[name].set_scales_zps_gidx(
+                        (
+                            module.scales
+                            if hasattr(module, "scales")
+                            else torch.ones(
+                                (
+                                    math.ceil(in_features / quantization_config.group_size),
+                                    out_features,
+                                ),
+                                dtype=convert_dtype_str2torch(quantization_config.compute_dtype),
+                                device=torch.device(device),
+                            )
+                        ),
+                        module.qzeros if hasattr(module, "qzeros") else None,
+                        g_idx,
+                    )
+                else:
+                    raise Exception("{} device Unsupported weight only quantization!".format(device))
+
+                is_replaced = True
+                # Store the module class in case we need to transpose the weight later
+                model._modules[name].source_cls = type(module)
+                # Force requires grad to False to avoid unexpected errors
+                model._modules[name].requires_grad_(False)
+
+            if device == "xpu" or device == torch.device("xpu"):
+                if not hasattr(module, "qweight"):
+                    n_pack = 32 // quantization_config.bits
+
+                    weight = torch.zeros(
+                        (math.ceil(in_features / n_pack), out_features),
+                        dtype=torch.int32,
+                        device=torch.device(device),
+                    )
+                model._modules[name].set_weights_bias(
+                    module.qweight.data if hasattr(module, "qweight") else weight,
+                    None if module.bias is None else module.bias.data,
+                )
+                is_removed = True
 
         if not is_removed and len(list(module.children())) > 0:  # pylint: disable=E1101
             _, is_replaced = _replace_linear(
@@ -484,8 +459,8 @@ def convert_to_quantized_model(model, config, device="cpu"):
                 group_size=config.group_size,
                 use_layer_wise=config.layer_wise,
             )
-            if config.llm_int8_skip_modules != []:
-                for module in config.llm_int8_skip_modules:
+            if config.modules_to_not_convert != []:
+                for module in config.modules_to_not_convert:
                     module_name = ".*" + module
                     quant_config.set_local(module_name, RTNConfig(dtype="fp32"))
             logger.info(f"Do RTN algorithm with config {quant_config}")
@@ -502,8 +477,8 @@ def convert_to_quantized_model(model, config, device="cpu"):
                 use_auto_clip=config.auto_clip,
                 folding=True,
             )
-            if config.llm_int8_skip_modules != []:
-                for module in config.llm_int8_skip_modules:
+            if config.modules_to_not_convert != []:
+                for module in config.modules_to_not_convert:
                     module_name = ".*" + module
                     quant_config.set_local(module_name, AWQConfig(dtype="fp32"))
             logger.info(f"Do AWQ algorithm with config {quant_config}")
@@ -529,8 +504,8 @@ def convert_to_quantized_model(model, config, device="cpu"):
                 use_layer_wise=config.layer_wise,
                 absorb_to_layer=config.absorb_to_layer,
             )
-            if config.llm_int8_skip_modules != []:
-                for module in config.llm_int8_skip_modules:
+            if config.modules_to_not_convert != []:
+                for module in config.modules_to_not_convert:
                     module_name = ".*" + module
                     quant_config.set_local(module_name, TEQConfig(dtype="fp32"))
             logger.info(f"Do TEQ algorithm with config {quant_config}")
@@ -562,8 +537,8 @@ def convert_to_quantized_model(model, config, device="cpu"):
                 static_groups=config.static_groups,
                 use_mse_search=config.use_mse_search,
             )
-            if config.llm_int8_skip_modules != []:
-                for module in config.llm_int8_skip_modules:
+            if config.modules_to_not_convert != []:
+                for module in config.modules_to_not_convert:
                     module_name = ".*" + module
                     quant_config.set_local(module_name, GPTQConfig(dtype="fp32"))
             logger.info(f"Do GPTQ algorithm with config {quant_config}")
@@ -593,8 +568,8 @@ def convert_to_quantized_model(model, config, device="cpu"):
                 iters=config.iters,
                 scale_dtype=config.scale_dtype,
             )
-            if config.llm_int8_skip_modules != []:
-                for module in config.llm_int8_skip_modules:
+            if config.modules_to_not_convert != []:
+                for module in config.modules_to_not_convert:
                     module_name = ".*" + module
                     quant_config.set_local(module_name, AutoRoundConfig(dtype="fp32"))
             logger.info(f"Do AutoRound algorithm with config {quant_config}")

@@ -271,7 +271,7 @@ def save_low_bit(self, save_directory: Union[str, os.PathLike], push_to_hub: boo
     self.quantization_config.save_pretrained(save_directory, **kwargs)
 
 
-class _BaseQBitsAutoModelClass:
+class _BaseINCAutoModelClass:
     ORIG_MODEL = None
     model_type_list = [
         "llama",
@@ -574,14 +574,6 @@ class _BaseQBitsAutoModelClass:
             quantization_config = GPTQConfig.from_dict(quantization_config)
         elif quantization_config["quant_method"] == "autoround":
             quantization_config = AutoRoundConfig.from_dict(quantization_config)
-        elif quantization_config["quant_method"] == "static":
-            quantization_config = StaticQuantConfig.from_dict(quantization_config)
-        elif quantization_config["quant_method"] == "dynamic":
-            quantization_config = DynamicQuantConfig.from_dict(quantization_config)
-        elif quantization_config["quant_method"] == "qat":
-            quantization_config = QuantAwareTrainingConfig.from_dict(quantization_config)
-        elif quantization_config["quant_method"] == "sq":
-            quantization_config = SmoothQuantConfig.from_dict(quantization_config)
         assert quantization_config is not None, "Detect this model is not a low-bit model."
 
         if commit_hash is None:
@@ -1114,13 +1106,13 @@ class _BaseQBitsAutoModelClass:
         return model
 
 
-class AutoModelForCausalLM(_BaseQBitsAutoModelClass):
+class AutoModelForCausalLM(_BaseINCAutoModelClass):
     ORIG_MODEL = transformers.AutoModelForCausalLM
 
 
-class AutoModel(_BaseQBitsAutoModelClass):
+class AutoModel(_BaseINCAutoModelClass):
     ORIG_MODEL = transformers.AutoModel
 
 
-class AutoModelForSeq2SeqLM(_BaseQBitsAutoModelClass):
+class AutoModelForSeq2SeqLM(_BaseINCAutoModelClass):
     ORIG_MODEL = transformers.AutoModelForSeq2SeqLM

@@ -48,7 +48,7 @@ class QuantizationMethod(str, Enum):
     TEQ = "teq"
 
 
-class ITREXQuantizationConfigMixin(QuantizationConfig):
+class INCQuantizationConfigMixin(QuantizationConfig):
     """Mixin class for quantization config."""
 
     def update(self, **kwargs):
@@ -404,7 +404,7 @@ class ITREXQuantizationConfigMixin(QuantizationConfig):
         return super().get_config_dict(pretrained_model_name_or_path, _configuration_file=cf, **kwargs)
 
 
-class RtnConfig(ITREXQuantizationConfigMixin):
+class RtnConfig(INCQuantizationConfigMixin):
     def __init__(
         self,
         bits: int = 4,
@@ -445,8 +445,8 @@ class RtnConfig(ITREXQuantizationConfigMixin):
         self.double_quant_group_size = double_quant_group_size
         # "transformer.output_layer" for chatglm series model.
         # "embed_out" for dolly v2 series model.
-        self.llm_int8_skip_modules = kwargs.get(
-            "llm_int8_skip_modules", ["lm_head", "transformer.output_layer", "embed_out"]
+        self.modules_to_not_convert = kwargs.get(
+            "modules_to_not_convert", ["lm_head", "transformer.output_layer", "embed_out"]
         )
         self.use_ggml = use_ggml
         self.use_quant = use_quant
@@ -475,7 +475,7 @@ class RtnConfig(ITREXQuantizationConfigMixin):
         return serializable_config_dict
 
 
-class GPTQConfig(ITREXQuantizationConfigMixin):
+class GPTQConfig(INCQuantizationConfigMixin):
     def __init__(
         self,
         bits: int = 4,
@@ -526,8 +526,8 @@ class GPTQConfig(ITREXQuantizationConfigMixin):
         self.true_sequential = true_sequential
         self.layer_wise = layer_wise
         self.seq_len = seq_len
-        self.llm_int8_skip_modules = kwargs.get(
-            "llm_int8_skip_modules", ["lm_head", "transformer.output_layer", "embed_out"]
+        self.modules_to_not_convert = kwargs.get(
+            "modules_to_not_convert", ["lm_head", "transformer.output_layer", "embed_out"]
         )
         self.use_ggml = use_ggml
         self.use_quant = use_quant
@@ -582,7 +582,7 @@ class GPTQConfig(ITREXQuantizationConfigMixin):
         return serializable_config_dict
 
 
-class AwqConfig(ITREXQuantizationConfigMixin):
+class AwqConfig(INCQuantizationConfigMixin):
     def __init__(
         self,
         bits: int = 8,
@@ -620,8 +620,8 @@ class AwqConfig(ITREXQuantizationConfigMixin):
         self.seq_len = seq_len
         self.use_double_quant = use_double_quant
         self.double_quant_scale_dtype = double_quant_scale_dtype
-        self.llm_int8_skip_modules = kwargs.get(
-            "llm_int8_skip_modules", ["lm_head", "transformer.output_layer", "embed_out"]
+        self.modules_to_not_convert = kwargs.get(
+            "modules_to_not_convert", ["lm_head", "transformer.output_layer", "embed_out"]
         )
         self.use_ggml = use_ggml
         self.use_quant = use_quant
@@ -653,7 +653,7 @@ class AwqConfig(ITREXQuantizationConfigMixin):
         return serializable_config_dict
 
 
-class TeqConfig(ITREXQuantizationConfigMixin):
+class TeqConfig(INCQuantizationConfigMixin):
     def __init__(
         self,
         bits: int = 8,
@@ -689,8 +689,8 @@ class TeqConfig(ITREXQuantizationConfigMixin):
         self.seq_len = seq_len
         self.use_double_quant = use_double_quant
         self.double_quant_scale_dtype = double_quant_scale_dtype
-        self.llm_int8_skip_modules = kwargs.get(
-            "llm_int8_skip_modules", ["lm_head", "transformer.output_layer", "embed_out"]
+        self.modules_to_not_convert = kwargs.get(
+            "modules_to_not_convert", ["lm_head", "transformer.output_layer", "embed_out"]
         )
         self.use_ggml = use_ggml
         self.device = kwargs.get("device", "auto")
@@ -719,7 +719,7 @@ class TeqConfig(ITREXQuantizationConfigMixin):
         return serializable_config_dict
 
 
-class AutoRoundConfig(ITREXQuantizationConfigMixin):
+class AutoRoundConfig(INCQuantizationConfigMixin):
     def __init__(
         self,
         bits: int = 4,
@@ -763,11 +763,11 @@ class AutoRoundConfig(ITREXQuantizationConfigMixin):
         self.iters = iters
         self.seq_len = seq_len
         self.quant_lm_head = quant_lm_head
-        self.llm_int8_skip_modules = kwargs.get(
-            "llm_int8_skip_modules", ["lm_head", "transformer.output_layer", "embed_out"]
+        self.modules_to_not_convert = kwargs.get(
+            "modules_to_not_convert", ["lm_head", "transformer.output_layer", "embed_out"]
         )
         if self.quant_lm_head:
-            self.llm_int8_skip_modules = []
+            self.modules_to_not_convert = []
         self.use_ggml = use_ggml
         self.batch_size = kwargs.pop("batch_size", 8)
         self.device = kwargs.get("device", "auto")
