@@ -11,7 +11,5 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Utils for optimization."""
 
-from .quantization_config import RtnConfig, AwqConfig, TeqConfig, GPTQConfig, AutoRoundConfig
-from .utility import LazyImport, logger, CpuInfo
+from .utils import convert_to_quantized_model, save_low_bit

@@ -1,49 +1,45 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#
 # Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#    http://www.apache.org/licenses/LICENSE-2.0
+#   http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Configs for intel extension for transformers."""
+"""Intel Neural Compressor Transformers-like Config."""
 
-import copy
-import json
 import os
-from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-import transformers
-from transformers import BitsAndBytesConfig, PretrainedConfig
-
-from .utility import QUANT_CONFIG, SPARSITY_CONFIG, LazyImport, logger
+from neural_compressor.utils import logger
+from neural_compressor.utils.utility import LazyImport
 
 torch = LazyImport("torch")
+transformers = LazyImport("transformers")
 
+QUANT_CONFIG = "quantize_config.json"
 
 if transformers.__version__ >= "4.32.0":
     from transformers.utils.quantization_config import QuantizationConfigMixin
 
     QuantizationConfig = QuantizationConfigMixin
 else:
+    from transformers import PretrainedConfig
+
     QuantizationConfig = PretrainedConfig
 from enum import Enum
 
 
 class QuantizationMethod(str, Enum):
-    BITS_AND_BYTES = "bitsandbytes"
     GPTQ = "gptq"
-    AWQ = "awq"
     RTN = "rtn"
+    AWQ = "awq"
     AUTOROUND = "autoround"
     TEQ = "teq"
 
@@ -89,77 +85,16 @@ class INCQuantizationConfigMixin(QuantizationConfig):
         elif self.bits is not None and self.bits not in [4, 8]:
             raise ValueError(f"Only support quantization to [4, 8] bits but found {self.bits}")
 
-        if self.weight_dtype == "int4":
-            self.weight_dtype = "int4_clip"
-        elif self.weight_dtype == "fp8":
-            self.weight_dtype == "fp8_e4m3"
-        elif self.weight_dtype == "fp4":
-            self.weight_dtype = "fp4_e2m1"
-
-        if self.bits == 4 and self.weight_dtype not in [
-            "int4_clip",
-            "nf4",
-            "fp4_e2m1",
-        ]:
-            self.weight_dtype = "int4_clip"
-            logger.warning("int4_clip weight_type is used due to bits is 4 but weight_dtype is not set.")
-
-        if self.bits == 8 and self.weight_dtype not in ["int8", "fp8_e5m2", "fp8_e4m3"]:
-            self.weight_dtype = "int8"
-            logger.warning("int8 weight_type is used due to bits is 8 but weight_dtype is not set.")
-
-        if self.weight_dtype not in [
-            "int8",
-            "int4_clip",
-            "nf4",
-            "fp4_e2m1",
-            "fp8_e5m2",
-            "fp8_e4m3",
-        ]:
-            raise ValueError(
-                "weight_dtype must be a string in "
-                "'int8', 'int4', 'int4_clip', 'nf4', 'fp4', 'fp4_e2m1', "
-                "'fp8', 'fp8_e5m2, fp8_e4m3'"
-            )
-
-        if self.scale_dtype is not None and self.scale_dtype not in [
-            "fp32",
-            "fp8_e8m0",
-            "bf16",
-        ]:
-            raise ValueError(
-                "scale_dtype must be a string in 'fp32', 'fp8_e8m0', 'bf16' "
-                "and fp8_e8m0 only used for weight_dtype 'fp8_e5m2', 'fp8_e4m3'"
-            )
+        if self.scale_dtype is not None and self.scale_dtype not in ["fp32", "bf16", "fp16"]:
+            raise ValueError("scale_dtype must be a string in 'fp32', 'bf16' ")
         elif self.scale_dtype is None:
             self.scale_dtype = "fp32"
-
-        if not isinstance(self.use_double_quant, bool):
-            raise ValueError("use_double_quant must be a boolean")
-
-        if self.use_double_quant and not isinstance(self.double_quant_dtype, str):
-            raise ValueError("double_quant_dtype must be a string")
-
-        if self.use_double_quant and not isinstance(self.scale_dtype, str):
-            raise ValueError("scale_dtype must be a string")
 
         if not isinstance(self.group_size, int):
             raise ValueError("group_size must be a int")
 
         if not isinstance(self.scheme, str):
             raise ValueError("scheme must be a string")
-
-        if self.scheme == "asym" and (
-            (self.compute_dtype == "int8" and self.weight_dtype == "int8")
-            or self.weight_dtype.startswith("fp")
-            or self.weight_dtype.startswith("nf")
-            or self.scale_dtype != "fp32"
-        ):
-            raise ValueError(
-                "WeightOnlyQuantization doesn't support asym with "
-                "compute_dtype int8 or weight_dtype float or scale_dtype non-fp32 now, "
-                "please use sym scheme"
-            )
 
     def post_init_xpu(self):
         r"""
@@ -190,103 +125,11 @@ class INCQuantizationConfigMixin(QuantizationConfig):
         elif self.scale_dtype is None:
             self.scale_dtype = "fp16"
 
-        if not isinstance(self.use_double_quant, bool):
-            raise ValueError("use_double_quant must be a boolean")
-
-        if self.use_double_quant and not isinstance(self.double_quant_dtype, str):
-            raise ValueError("double_quant_dtype must be a string")
-
-        if self.use_double_quant and not isinstance(self.scale_dtype, str):
-            raise ValueError("scale_dtype must be a string")
-
         if not isinstance(self.group_size, int):
             raise ValueError("group_size must be a int")
 
         if self.scheme not in ["sym"]:
             raise ValueError("scheme: {} is not support, only support 'sym' now!".format(self.scheme))
-
-    def post_init_runtime(self):
-        r"""
-        Safety checker that arguments are correct - also replaces some NoneType arguments with their default values.
-        """
-
-        # MX-compliant format
-        # https://arxiv.org/abs/2310.10537
-        runtime_supported_compute_dtype = ["fp32", "fp16", "bf16", "int8"]
-        runtime_supported_weight_dtype = [
-            "int4",
-            "int4_clip",  # int4_clip will merge to int4 in next release.
-            "int4_fullrange",  # int4_fullrange will merge to int4 in next release.
-            "int8",
-            "fp8",
-            "fp8_e5m2",
-            "fp8_e4m3",
-            "fp4",
-            "fp4_e2m1",
-            "nf4",
-        ]
-        runtime_supported_scale_dtype = ["fp32", "bf16", "fp8"]
-        runtime_supported_group_size = [-1, 32, 128]
-        runtime_supported_scheme = ["sym", "asym"]
-
-        if self.compute_dtype is None:
-            self.compute_dtype = "fp32"
-        else:
-            if self.compute_dtype not in runtime_supported_compute_dtype:
-                raise ValueError("compute_dtype must be in {}.".format(runtime_supported_compute_dtype))
-
-        if self.bits is None:
-            self.bits = 4
-        elif self.bits not in [4, 8]:
-            raise ValueError(f"Only support quantization to [4, 8] bits but found {self.bits}")
-
-        if self.weight_dtype is None:
-            self.weight_dtype = "int4"
-        elif self.weight_dtype == "int4_clip":
-            self.weight_dtype = "int4"
-        elif self.weight_dtype == "int4_fullrange":
-            self.weight_dtype = "int4"
-        elif self.weight_dtype == "fp8":
-            self.weight_dtype = "fp8_e4m3"
-        elif self.weight_dtype == "fp4":
-            self.weight_dtype = "fp4_e2m1"
-        else:
-            if self.weight_dtype not in runtime_supported_weight_dtype:
-                raise ValueError("weight_dtype must be in {}.".format(runtime_supported_weight_dtype))
-
-        if self.bits == 4 and self.weight_dtype not in ["int4", "nf4", "fp4_e2m1"]:
-            self.weight_dtype = "int4"
-            print("int4 weight_type is used due to bits is 4 but weight_dtype is not set.")
-
-        if self.bits == 8 and self.weight_dtype not in ["int8", "fp8_e5m2", "fp8_e4m3"]:
-            self.weight_dtype = "int8"
-            print("int8 weight_type is used due to bits is 8 but weight_dtype is not set.")
-
-        if self.scale_dtype is None:
-            self.scale_dtype = "fp32"
-        else:
-            if self.scale_dtype not in runtime_supported_scale_dtype:
-                raise ValueError("scale_dtype must be in {}.".format(runtime_supported_scale_dtype))
-
-        if self.group_size not in runtime_supported_group_size:
-            raise ValueError("group_size must be an integer in {}.".format(runtime_supported_group_size))
-
-        if self.weight_dtype[:3] in ["fp8", "fp4", "nf4"]:
-            if self.compute_dtype in ["int8"]:
-                print("WARNING: int8 compute dtype is not be supported in float quant types! " "Fall back to fp32.")
-                self.compute_dtype = "fp32"
-            if self.scheme in ["asym"]:
-                print("WARNING: asym alg is not be supported in float quant types! " "Fall back to sym.")
-                self.scheme = "sym"
-            if self.scale_dtype in ["fp8"] and self.weight_dtype[:3] not in ["fp8"]:
-                print("WARNING: fp8 scale is only be supported in fp8 weight type. " "Fall back to fp32.")
-                self.scale_dtype = "fp32"
-            if self.weight_dtype[:3] == "fp8" and self.scale_dtype not in [
-                "fp8",
-                "fp32",
-            ]:
-                print("WARNING: fp8 weight type only supports fp8 / fp32 scale now." " Fall back to fp8.")
-                self.scale_dtype = "fp8"
 
     def to_json_file(self, json_file_path: Union[str, os.PathLike], use_diff: bool = True):
         """Save this instance to a JSON file.
@@ -316,6 +159,7 @@ class INCQuantizationConfigMixin(QuantizationConfig):
             "scheme",
             "tokenizer",
             "use_ggml",
+            "use_neural_speed",
             "use_quant",
             "layer_wise",
             "blocksize",
@@ -348,8 +192,6 @@ class INCQuantizationConfigMixin(QuantizationConfig):
         for parameter in remove_parameters:
             if hasattr(self, parameter):
                 delattr(self, parameter)
-        if self.quant_method.value == "awq":
-            delattr(self, "sym")
 
     def save_pretrained(
         self,
@@ -409,49 +251,34 @@ class RtnConfig(INCQuantizationConfigMixin):
         self,
         bits: int = 4,
         group_size: int = 32,
-        group_dim: int = 1,
         compute_dtype: Any = None,
-        weight_dtype: Any = None,
         scale_dtype: Any = None,
-        use_full_range: bool = False,
-        mse_range: bool = False,
-        use_double_quant: bool = False,
-        double_quant_dtype: str = "int",
-        double_quant_bits: int = 8,
-        double_quant_use_sym: bool = False,
-        double_quant_group_size: int = 256,
         sym: bool = True,
-        layer_wise: bool = False,
-        use_ggml: bool = False,
-        use_quant: bool = True,
+        use_layer_wise: bool = False,
         **kwargs,
     ):
         self.quant_method = QuantizationMethod.RTN
         self.bits = bits
-        self.use_full_range = use_full_range
-        self.mse_range = mse_range
         self.compute_dtype = compute_dtype
-        self.weight_dtype = weight_dtype
+        self.weight_dtype = "int4" if self.bits == 4 else "int8"
         self.scale_dtype = scale_dtype
         self.group_size = group_size
-        self.group_dim = group_dim
-        self.layer_wise = layer_wise
+        self.use_layer_wise = use_layer_wise
         self.sym = sym
         self.scheme = "sym" if self.sym else "asym"
-        self.use_double_quant = use_double_quant
-        self.double_quant_dtype = double_quant_dtype
-        self.double_quant_bits = double_quant_bits
-        self.double_quant_use_sym = double_quant_use_sym
-        self.double_quant_group_size = double_quant_group_size
+
         # "transformer.output_layer" for chatglm series model.
         # "embed_out" for dolly v2 series model.
         self.modules_to_not_convert = kwargs.get(
             "modules_to_not_convert", ["lm_head", "transformer.output_layer", "embed_out"]
         )
-        self.use_ggml = use_ggml
-        self.use_quant = use_quant
         self.device = kwargs.get("device", "auto")
-        self.use_ipex = kwargs.pop("use_ipex", False)
+        if self.use_layer_wise:
+            self.model_path = kwargs("model_path", None)
+            if self.model_path is None:
+                raise AssertionError(
+                    "model_path is necessary if you would like to use_layer_wise for weight only quantization."
+                )
 
     def to_diff_dict(self) -> Dict[str, Any]:
         """Removes all attributes from config which correspond to the default config attributes
@@ -484,10 +311,7 @@ class GPTQConfig(INCQuantizationConfigMixin):
         batch_size: int = 8,
         group_size: int = 32,
         compute_dtype: Any = None,
-        weight_dtype: Any = None,
         scale_dtype: Any = None,
-        use_double_quant=False,
-        double_quant_scale_dtype=None,  # reserve for double quant
         sym: bool = True,
         blocksize: int = 128,
         damp_percent: float = 0.1,
@@ -497,13 +321,9 @@ class GPTQConfig(INCQuantizationConfigMixin):
         static_groups: bool = False,
         use_mse_search: bool = False,
         true_sequential: bool = False,
-        layer_wise: bool = False,
-        use_ggml: bool = False,
-        use_quant: bool = True,
+        use_layer_wise: bool = False,
         **kwargs,
     ):
-
-        from intel_extension_for_transformers.transformers.llm.quantization.utils import convert_dtype_torch2str
 
         self.quant_method = QuantizationMethod.GPTQ
         self.bits = bits
@@ -511,11 +331,9 @@ class GPTQConfig(INCQuantizationConfigMixin):
         self.dataset = dataset
         self.batch_size = batch_size
         self.compute_dtype = compute_dtype
-        self.weight_dtype = weight_dtype
+        self.weight_dtype = "int4" if self.bits == 4 else "int8"
         self.scale_dtype = scale_dtype
         self.sym = sym
-        self.use_double_quant = use_double_quant
-        self.double_quant_scale_dtype = double_quant_scale_dtype
         self.blocksize = blocksize
         self.n_samples = n_samples
         self.group_size = group_size
@@ -524,31 +342,30 @@ class GPTQConfig(INCQuantizationConfigMixin):
         self.static_groups = static_groups
         self.use_mse_search = use_mse_search
         self.true_sequential = true_sequential
-        self.layer_wise = layer_wise
+        self.use_layer_wise = use_layer_wise
         self.seq_len = seq_len
         self.modules_to_not_convert = kwargs.get(
             "modules_to_not_convert", ["lm_head", "transformer.output_layer", "embed_out"]
         )
-        self.use_ggml = use_ggml
-        self.use_quant = use_quant
         self.device = kwargs.get("device", "auto")
         self.scheme = "sym" if self.sym else "asym"
+        if self.use_layer_wise:
+            self.model_path = kwargs("model_path", None)
+            if self.model_path is None:
+                raise AssertionError(
+                    "model_path is necessary if you would like to use_layer_wise for weight only quantization."
+                )
 
         if isinstance(compute_dtype, torch.dtype):
-            self.compute_dtype = convert_dtype_torch2str(compute_dtype)
+            self.compute_dtype = compute_dtype
         else:
             self.compute_dtype = compute_dtype
 
         if isinstance(scale_dtype, torch.dtype):
-            self.scale_dtype = convert_dtype_torch2str(scale_dtype)
+            self.scale_dtype = scale_dtype
         else:
             self.scale_dtype = scale_dtype
 
-        if isinstance(double_quant_scale_dtype, torch.dtype):
-            self.double_quant_scale_dtype = convert_dtype_torch2str(double_quant_scale_dtype)
-        else:
-            self.double_quant_scale_dtype = double_quant_scale_dtype
-        self.use_ipex = kwargs.pop("use_ipex", False)
         self.post_init_gptq()
 
     def post_init_gptq(self):
@@ -580,7 +397,7 @@ class GPTQConfig(INCQuantizationConfigMixin):
                 serializable_config_dict[key] = value
 
         return serializable_config_dict
-
+    
 
 class AwqConfig(INCQuantizationConfigMixin):
     def __init__(
