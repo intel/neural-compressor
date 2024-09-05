@@ -813,7 +813,7 @@ class _BaseINCAutoModelClass:
 
         init_contexts = [no_init_weights(_enable=_fast_init)]
         init_contexts.append(init_empty_weights())
-        
+
         model = build_woq_model(model, quantization_config)
 
         with ContextManagers(init_contexts):
@@ -858,7 +858,6 @@ class _BaseINCAutoModelClass:
         # Set model in evaluation mode to deactivate DropOut modules by default
         model.eval()
 
-        
         model = replace_linear(
             model,
             quantization_config=quantization_config,
