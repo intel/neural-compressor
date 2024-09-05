@@ -517,20 +517,6 @@ class _BaseINCAutoModelClass:
                         subfolder,
                         _add_variant(WEIGHTS_NAME, variant),
                     )
-                # only for inc sq
-                elif os.path.isfile(
-                    os.path.join(
-                        pretrained_model_name_or_path,
-                        subfolder,
-                        _add_variant("quantized_model.pt", variant),
-                    )
-                ):
-                    # Load from a PyTorch checkpoint
-                    archive_file = os.path.join(
-                        pretrained_model_name_or_path,
-                        subfolder,
-                        _add_variant("quantized_model.pt", variant),
-                    )
                 elif os.path.isfile(
                     os.path.join(
                         pretrained_model_name_or_path,
@@ -785,17 +771,12 @@ class _BaseINCAutoModelClass:
                 "int4_fullrange",
                 "int4_clip",
                 "int8",
-                "fp8_e5m2",
-                "fp8_e4m3",
                 "nf4",
-                "fp4_e2m1_bnb",
-                "fp4_e2m1",
             ]:
                 logger.warning("Please provide the correct bits number or weight_dtype in config.json.")
                 raise ValueError(
                     "weight_dtype must be a string in "
                     "'int8', 'int4', 'int4_fullrange', 'int4_clip', 'nf4', "
-                    "'fp4', 'fp4_e2m1', 'fp8', 'fp8_e5m2, fp8_e4m3'"
                 )
             else:
                 logger.info("{} quantization weight_dtype is used.".format(quantization_config.weight_dtype))
@@ -803,11 +784,11 @@ class _BaseINCAutoModelClass:
         init_contexts = [no_init_weights(_enable=_fast_init)]
         init_contexts.append(init_empty_weights())
 
-        model = build_woq_model(model, quantization_config)
-
         with ContextManagers(init_contexts):
             model = model_class(config, *model_args, **kwargs)
 
+        model = build_woq_model(model, quantization_config)
+        
         if is_sharded:
             loaded_state_dict_keys = sharded_metadata["all_checkpoint_keys"]
         else:
