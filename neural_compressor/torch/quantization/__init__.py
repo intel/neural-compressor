@@ -22,6 +22,7 @@ from neural_compressor.torch.quantization.config import (
     get_default_gptq_config,
     AWQConfig,
     get_default_awq_config,
+    INT8StaticQuantConfig,
     StaticQuantConfig,
     get_default_static_config,
     SmoothQuantConfig,
