@@ -19,7 +19,6 @@ import os
 
 import numpy as np
 import torch
-import fcntl
 
 from .._quant_common.helper_modules import *
 from .._quant_common.quant_config import get_hqt_config
@@ -107,34 +106,6 @@ def load_npz(fname):
     return d["arr_0"].item()
 
 
-class ProcessSafeReaderLock:
-    def __init__(self, file_path):
-        self.file_path = file_path
-        
-    def __enter__(self):
-        self.lock = open(self.file_path + ".lock", 'w')
-        fcntl.flock(self.lock, fcntl.LOCK_SH)  # Shared lock for reading
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        fcntl.flock(self.lock, fcntl.LOCK_UN)  # Unlock the file
-        self.lock.close()
-
-
-class ProcessSafeWriterLock:
-    def __init__(self, file_path):
-        self.file_path = file_path
-
-    def __enter__(self):
-        self.lock = open(self.file_path + ".lock", 'w')
-        fcntl.flock(self.lock, fcntl.LOCK_EX)  # Exclusive lock for writing
-        return self
-
-    def __exit__(self, *args):
-        fcntl.flock(self.lock, fcntl.LOCK_UN)  # Unlock the file
-        self.lock.close()
-
-
 def save_file(model, d, source_format, fname, mode):
     config = get_hqt_config(model)
     logger.debug("Saving %s file: %s", mode, fname)
@@ -147,11 +118,10 @@ def save_file(model, d, source_format, fname, mode):
         "Mode": mode,
         "Nodes": dc,
     }
-    with ProcessSafeWriterLock(fname):
-        try:
-            file_functions[ext]['save'](df, fname)
-        except:
-            pass
+    try:
+        file_functions[ext]['save'](df, fname)
+    except:
+        pass
 
 
 def load_file(fname, target_format, fail_on_file_not_exist):
@@ -160,8 +130,7 @@ def load_file(fname, target_format, fail_on_file_not_exist):
     source_format = file_functions[ext]['format']
     d = {}
     if os.path.isfile(fname):
-        with ProcessSafeReaderLock(fname):
-            d = file_functions[ext]['load'](fname)
+        d = file_functions[ext]['load'](fname)
     elif fail_on_file_not_exist:
         raise FileNotFoundError(f"Failed to load file {fname}")
     if "Nodes" in d:
