@@ -368,7 +368,6 @@ def convert_to_quantized_model(model, config, device="cpu"):
             block_size=config.blocksize,
             static_groups=config.static_groups,
             use_mse_search=config.use_mse_search,
-            true_sequential=config.true_sequential,
         )
         if config.use_layer_wise:
             quant_config.user_layer_wise = config.use_layer_wise
