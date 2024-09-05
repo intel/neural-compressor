@@ -706,17 +706,6 @@ class _BaseINCAutoModelClass:
         #    - we assume all floating dtype weights are of the same dtype
         # we also may have config.torch_dtype available, but we won't rely on it till v5
         # Pretrained Model
-        if quantization_config.quant_method in ["static", "dynamic", "qat"]:
-            model = model_class(config, *model_args, **kwargs)
-            from neural_compressor.utils.pytorch import load
-
-            weights_file = os.path.join(
-                os.path.abspath(os.path.expanduser(pretrained_model_name_or_path)),
-                WEIGHTS_NAME,
-            )
-            q_model = load(weights_file, model, dataloader=None)
-            del model
-            return q_model
         dtype_orig = None
         if torch_dtype is not None:
             if isinstance(torch_dtype, str):
