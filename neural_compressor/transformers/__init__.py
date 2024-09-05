@@ -25,7 +25,7 @@ from .utils import (
     AutoRoundConfig,
 )
 from .utils.utility import LazyImport
-from .modeling import (
+from .models import (
     AutoModelForCausalLM,
     AutoModel,
     AutoModelForSeq2SeqLM,
