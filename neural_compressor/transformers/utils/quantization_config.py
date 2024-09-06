@@ -274,7 +274,6 @@ class RtnConfig(INCQuantizationConfigMixin):
             "modules_to_not_convert", ["lm_head", "transformer.output_layer", "embed_out"]
         )
         self.device = kwargs.get("device", "auto")
-            
 
     def to_diff_dict(self) -> Dict[str, Any]:
         """Removes all attributes from config which correspond to the default config attributes
