@@ -161,7 +161,7 @@ class INCQuantizationConfigMixin(QuantizationConfig):
             "use_ggml",
             "use_neural_speed",
             "use_quant",
-            "layer_wise",
+            "use_layer_wise",
             "blocksize",
             "nsamples",
             "max_input_length",
@@ -274,11 +274,13 @@ class RtnConfig(INCQuantizationConfigMixin):
         )
         self.device = kwargs.get("device", "auto")
         if self.use_layer_wise:
-            self.model_path = kwargs("model_path", None)
+            self.model_path = kwargs.get("model_path", "")
             if self.model_path is None:
                 raise AssertionError(
                     "model_path is necessary if you would like to use_layer_wise for weight only quantization."
                 )
+        else:
+            self.model_path = kwargs.get("model_path", "")
 
     def to_diff_dict(self) -> Dict[str, Any]:
         """Removes all attributes from config which correspond to the default config attributes
@@ -409,7 +411,7 @@ class AwqConfig(INCQuantizationConfigMixin):
         compute_dtype: Any = None,
         weight_dtype: Any = None,
         scale_dtype: Any = None,
-        layer_wise: bool = False,
+        use_layer_wise: bool = False,
         n_samples: int = 128,
         seq_len: int = 2048,
         auto_scale: bool = True,
@@ -432,7 +434,7 @@ class AwqConfig(INCQuantizationConfigMixin):
         self.zero_point = zero_point
         self.auto_scale = auto_scale
         self.auto_clip = auto_clip
-        self.layer_wise = layer_wise
+        self.use_layer_wise = use_layer_wise
         self.n_samples = n_samples
         self.seq_len = seq_len
         self.use_double_quant = use_double_quant
@@ -480,7 +482,7 @@ class TeqConfig(INCQuantizationConfigMixin):
         compute_dtype: Any = None,
         weight_dtype: Any = None,
         scale_dtype: Any = None,
-        layer_wise: bool = False,
+        use_layer_wise: bool = False,
         absorb_to_layer: dict = {},
         n_samples: int = 128,
         seq_len: int = 2048,
@@ -501,7 +503,7 @@ class TeqConfig(INCQuantizationConfigMixin):
         self.absorb_to_layer = absorb_to_layer
         self.sym = sym
         self.scheme = "sym" if self.sym else "asym"
-        self.layer_wise = layer_wise
+        self.use_layer_wise = use_layer_wise
         self.n_samples = n_samples
         self.seq_len = seq_len
         self.use_double_quant = use_double_quant

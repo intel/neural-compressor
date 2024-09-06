@@ -383,10 +383,15 @@ def convert_to_quantized_model(model, config, device="cpu"):
     # mapping to INC config
     dtype = "int4" if config.weight_dtype == "int4_fullrange" else config.weight_dtype
     if config.quant_method.value == "rtn":
-        quant_config = RTNConfig(dtype=dtype, bits=config.bits, use_sym=config.sym, group_size=config.group_size)
-        if config.use_layer_wise:
-            quant_config.user_layer_wise = config.use_layer_wise
-            quant_config.model_path = config.model_path
+        import neural_compressor.torch.utils as torch_utils
+        process_type = torch_utils.get_processor_type_from_user_config()
+        if process_type == torch_utils.ProcessorType.Client:
+            config.use_layer_wise = True
+        quant_config = RTNConfig(dtype=dtype, bits=config.bits, use_sym=config.sym, 
+                                 group_size=config.group_size, 
+                                 use_layer_wise= config.use_layer_wise,
+                                 model_path = config.model_path)
+        breakpoint()
         if config.modules_to_not_convert != []:
             for module in config.modules_to_not_convert:
                 module_name = ".*" + module
@@ -435,7 +440,7 @@ def convert_to_quantized_model(model, config, device="cpu"):
             bits=config.bits,
             use_sym=config.sym,
             group_size=config.group_size,
-            use_layer_wise=config.layer_wise,
+            use_layer_wise=config.use_layer_wise,
             use_auto_scale=config.auto_scale,
             use_auto_clip=config.auto_clip,
             folding=True,
@@ -464,7 +469,7 @@ def convert_to_quantized_model(model, config, device="cpu"):
             bits=config.bits,
             use_sym=config.sym,
             group_size=config.group_size,
-            use_layer_wise=config.layer_wise,
+            use_layer_wise=config.use_layer_wise,
             absorb_to_layer=config.absorb_to_layer,
         )
         if config.modules_to_not_convert != []:
