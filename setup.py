@@ -60,8 +60,8 @@ PKG_INSTALL_CFG = {
         },
     },
     # 3.x pt binary build config, pip install neural-compressor-pt, install 3.x PyTorch API.
-    "neural_compressor_3x_pt": {
-        "project_name": "neural_compressor_3x_pt",
+    "neural_compressor_pt": {
+        "project_name": "neural_compressor_pt",
         "include_packages": find_packages(
             include=[
                 "neural_compressor.common",
@@ -100,7 +100,7 @@ if __name__ == "__main__":
 
     if "pt" in sys.argv:
         sys.argv.remove("pt")
-        cfg_key = "neural_compressor_3x_pt"
+        cfg_key = "neural_compressor_pt"
 
     if "tf" in sys.argv:
         sys.argv.remove("tf")
