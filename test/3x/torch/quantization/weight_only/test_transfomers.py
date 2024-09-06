@@ -1,8 +1,8 @@
 from math import isclose
 
 import pytest
-from transformers import AutoTokenizer
 import torch
+from transformers import AutoTokenizer
 
 
 class TestTansformersLikeAPI:
@@ -30,27 +30,24 @@ class TestTansformersLikeAPI:
             quantization_config=woq_config,
         )
         woq_model.eval()
-        
+
         output = woq_model(dummy_input)[0]
         assert torch.allclose(output, label, atol=0.1), "Accuracy gap atol > 0.1 is unexpected."
         assert isclose(float(output[0][0][0]), 0.17786270380020142, rel_tol=1e-04)
 
         # AWQ
-        woq_config = AwqConfig(bits=4, zero_point=False, n_samples=5, batch_size=1, seq_len=512, 
-                               group_size=16,tokenizer=tokenizer)
-
-        woq_model = AutoModelForCausalLM.from_pretrained(
-            model_name_or_path, quantization_config=woq_config
+        woq_config = AwqConfig(
+            bits=4, zero_point=False, n_samples=5, batch_size=1, seq_len=512, group_size=16, tokenizer=tokenizer
         )
+
+        woq_model = AutoModelForCausalLM.from_pretrained(model_name_or_path, quantization_config=woq_config)
         woq_model.eval()
         output = woq_model(dummy_input)
         assert isclose(float(output[0][0][0][0]), 0.19592927396297455, rel_tol=1e-04)
 
         # TEQ
         woq_config = TeqConfig(bits=4, n_samples=5, batch_size=1, seq_len=512, group_size=16, tokenizer=tokenizer)
-        woq_model = AutoModelForCausalLM.from_pretrained(
-            model_name_or_path, quantization_config=woq_config
-        )
+        woq_model = AutoModelForCausalLM.from_pretrained(model_name_or_path, quantization_config=woq_config)
         woq_model.eval()
         output = woq_model(dummy_input)
         assert isclose(float(output[0][0][0][0]), 0.17786270380020142, rel_tol=1e-04)
@@ -69,9 +66,7 @@ class TestTansformersLikeAPI:
             batch_size=1,
             group_size=16,
         )
-        woq_model = AutoModelForCausalLM.from_pretrained(
-            model_name_or_path, quantization_config=woq_config
-        )
+        woq_model = AutoModelForCausalLM.from_pretrained(model_name_or_path, quantization_config=woq_config)
         woq_model.eval()
         output = woq_model(dummy_input)
         assert isclose(float(output[0][0][0][0]), 0.17234990000724792, rel_tol=1e-04)
@@ -80,9 +75,7 @@ class TestTansformersLikeAPI:
         woq_config = AutoRoundConfig(
             bits=4, weight_dtype="int4_clip", n_samples=128, seq_len=32, iters=5, group_size=16, tokenizer=tokenizer
         )
-        woq_model = AutoModelForCausalLM.from_pretrained(
-            model_name_or_path, quantization_config=woq_config
-        )
+        woq_model = AutoModelForCausalLM.from_pretrained(model_name_or_path, quantization_config=woq_config)
         woq_model.eval()
         output = woq_model(dummy_input)
         assert isclose(float(output[0][0][0][0]), 0.18400897085666656, rel_tol=1e-04)
