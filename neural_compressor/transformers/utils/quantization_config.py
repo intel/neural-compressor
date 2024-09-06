@@ -426,7 +426,7 @@ class AwqConfig(INCQuantizationConfigMixin):
         self.tokenizer = tokenizer
         self.dataset = dataset
         self.compute_dtype = compute_dtype
-        self.weight_dtype = weight_dtype
+        self.weight_dtype = "int4" if self.bits == 4 else "int8"
         self.scale_dtype = scale_dtype
         self.group_size = group_size
         self.zero_point = zero_point
@@ -495,7 +495,7 @@ class TeqConfig(INCQuantizationConfigMixin):
         self.tokenizer = tokenizer
         self.dataset = dataset
         self.compute_dtype = compute_dtype
-        self.weight_dtype = weight_dtype
+        self.weight_dtype = "int4" if self.bits == 4 else "int8"
         self.scale_dtype = scale_dtype
         self.group_size = group_size
         self.absorb_to_layer = absorb_to_layer
@@ -567,7 +567,7 @@ class AutoRoundConfig(INCQuantizationConfigMixin):
         self.tokenizer = tokenizer
         self.dataset = dataset
         self.compute_dtype = compute_dtype
-        self.weight_dtype = weight_dtype
+        self.weight_dtype = "int4" if self.bits == 4 else "int8"
         self.scale_dtype = scale_dtype
         self.sym = sym
         self.use_double_quant = use_double_quant
