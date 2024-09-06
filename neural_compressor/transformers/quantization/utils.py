@@ -382,16 +382,15 @@ def convert_to_quantized_model(model, config, device="cpu"):
 
     # mapping to INC config
     dtype = "int4" if config.weight_dtype == "int4_fullrange" else config.weight_dtype
+    import neural_compressor.torch.utils as torch_utils
+    process_type = torch_utils.get_processor_type_from_user_config()
+    if process_type == torch_utils.ProcessorType.Client:
+        config.use_layer_wise = True
     if config.quant_method.value == "rtn":
-        import neural_compressor.torch.utils as torch_utils
-        process_type = torch_utils.get_processor_type_from_user_config()
-        if process_type == torch_utils.ProcessorType.Client:
-            config.use_layer_wise = True
         quant_config = RTNConfig(dtype=dtype, bits=config.bits, use_sym=config.sym, 
                                  group_size=config.group_size, 
-                                 use_layer_wise= config.use_layer_wise,
-                                 model_path = config.model_path)
-        breakpoint()
+                                 use_layer_wise=config.use_layer_wise,
+                                 model_path=config.model_path)
         if config.modules_to_not_convert != []:
             for module in config.modules_to_not_convert:
                 module_name = ".*" + module
@@ -407,6 +406,7 @@ def convert_to_quantized_model(model, config, device="cpu"):
             use_sym=config.sym,
             group_size=config.group_size,
             use_layer_wise=config.use_layer_wise,
+            model_path=config.model_path,
             act_order=config.desc_act,
             percdamp=config.damp_percent,
             block_size=config.blocksize,
@@ -414,9 +414,6 @@ def convert_to_quantized_model(model, config, device="cpu"):
             use_mse_search=config.use_mse_search,
             true_sequential=config.true_sequential,
         )
-        if config.use_layer_wise:
-            quant_config.user_layer_wise = config.use_layer_wise
-            quant_config.model_path = config.model_path
         if config.modules_to_not_convert != []:
             for module in config.modules_to_not_convert:
                 module_name = ".*" + module
@@ -503,6 +500,8 @@ def convert_to_quantized_model(model, config, device="cpu"):
             nsamples=config.n_samples,
             iters=config.iters,
             scale_dtype=config.scale_dtype,
+            use_layer_wise=config.use_layer_wise,
+            model_path=config.model_path,
         )
         if config.modules_to_not_convert != []:
             for module in config.modules_to_not_convert:

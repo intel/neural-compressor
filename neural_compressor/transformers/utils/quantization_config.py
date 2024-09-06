@@ -264,6 +264,7 @@ class RtnConfig(INCQuantizationConfigMixin):
         self.scale_dtype = scale_dtype
         self.group_size = group_size
         self.use_layer_wise = use_layer_wise
+        self.model_path = kwargs.get("model_path", "")
         self.sym = sym
         self.scheme = "sym" if self.sym else "asym"
 
@@ -273,14 +274,7 @@ class RtnConfig(INCQuantizationConfigMixin):
             "modules_to_not_convert", ["lm_head", "transformer.output_layer", "embed_out"]
         )
         self.device = kwargs.get("device", "auto")
-        if self.use_layer_wise:
-            self.model_path = kwargs.get("model_path", "")
-            if self.model_path is None:
-                raise AssertionError(
-                    "model_path is necessary if you would like to use_layer_wise for weight only quantization."
-                )
-        else:
-            self.model_path = kwargs.get("model_path", "")
+            
 
     def to_diff_dict(self) -> Dict[str, Any]:
         """Removes all attributes from config which correspond to the default config attributes
@@ -345,18 +339,13 @@ class GPTQConfig(INCQuantizationConfigMixin):
         self.use_mse_search = use_mse_search
         self.true_sequential = true_sequential
         self.use_layer_wise = use_layer_wise
+        self.model_path = kwargs.get("model_path", "")
         self.seq_len = seq_len
         self.modules_to_not_convert = kwargs.get(
             "modules_to_not_convert", ["lm_head", "transformer.output_layer", "embed_out"]
         )
         self.device = kwargs.get("device", "auto")
         self.scheme = "sym" if self.sym else "asym"
-        if self.use_layer_wise:
-            self.model_path = kwargs("model_path", None)
-            if self.model_path is None:
-                raise AssertionError(
-                    "model_path is necessary if you would like to use_layer_wise for weight only quantization."
-                )
 
         if isinstance(compute_dtype, torch.dtype):
             self.compute_dtype = compute_dtype
@@ -559,6 +548,7 @@ class AutoRoundConfig(INCQuantizationConfigMixin):
         iters: int = 200,
         quant_lm_head: bool = False,
         use_ggml: bool = False,
+        use_layer_wise: bool = False,
         **kwargs,
     ):
 
@@ -616,6 +606,8 @@ class AutoRoundConfig(INCQuantizationConfigMixin):
         else:
             self.double_quant_scale_dtype = double_quant_scale_dtype
         self.use_ipex = kwargs.pop("use_ipex", False)
+        self.use_layer_wise = use_layer_wise
+        self.model_path = kwargs.get("model_path", "")
 
     def to_diff_dict(self) -> Dict[str, Any]:
         """Removes all attributes from config which correspond to the default config attributes
