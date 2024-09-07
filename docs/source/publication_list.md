@@ -1,4 +1,4 @@
-Full Publications/Events (82)
+Full Publications/Events (84)
 ==========
 ## 2024 (5)
 * Blog on Medium: [Quantization on Intel Gaudi Series AI Accelerators](https://medium.com/intel-analytics-software/intel-neural-compressor-v3-0-a-quantization-tool-across-intel-hardware-9856adee6f11) (Aug 2024)
