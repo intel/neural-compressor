@@ -60,9 +60,11 @@ def prepare_model(model):
     mod_list = []
     for name, mod in model.named_modules():
         mod_type = mod.__class__.__name__
-        if (
-            (mod_type in allowlist_tuple)
-            and (is_substr(config.cfg["allowlist"]["names"], name) or len(config.cfg["allowlist"]["names"]) == 0)
+        if ((mod_type in allowlist_tuple)
+            and (
+                ((mod_type in config.cfg["allowlist"]["types"]) or (is_substr(config.cfg["allowlist"]["names"], name))) 
+             or ((len(config.cfg["allowlist"]["names"]) == 0) and len(config.cfg["allowlist"]["types"]) == 0)
+            )
             and (not is_substr(config.cfg["blocklist"]["names"], name))
         ):
             mod_list.append(name)
