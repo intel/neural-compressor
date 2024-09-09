@@ -175,9 +175,9 @@ class PatchedMatmul(nn.Module):
 
                 # override quantization to quant-dequant
                 mec = self._mod_extra_config.inputs[0]
-                self.quant_input_0 = qdq(mec.scale_inv, mec.lp_dtype, mec.hp_dtype)
+                self.quant_input_0 = qdq(mec.scale_inv, mec.lp_dtype, mec.hp_dtype, scale_format=self.scale_format)
                 mec = self._mod_extra_config.inputs[1]
-                self.quant_input_1 = qdq(mec.scale_inv, mec.lp_dtype, mec.hp_dtype)
+                self.quant_input_1 = qdq(mec.scale_inv, mec.lp_dtype, mec.hp_dtype, scale_format=self.scale_format)
 
         elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
             self.forward = self.forward_measure
@@ -247,9 +247,9 @@ class PatchedLinear(nn.Module):
             self.forward = self.forward_fakequant
             # override quantization to quant-dequant
             mec = self._mod_extra_config.inputs[0]
-            self.quant_input = qdq(mec.scale_inv, mec.lp_dtype, mec.hp_dtype)
-            mec = self._mod_extra_config.params["weight"]
-            self.quant_weights = qdq(mec.scale_inv, mec.lp_dtype, mec.hp_dtype)
+            self.quant_input = qdq(mec.scale_inv, mec.lp_dtype, mec.hp_dtype, scale_format=self.scale_format)
+            mec = self._mod_extra_config.params['weight']
+            self.quant_weights = qdq(mec.scale_inv, mec.lp_dtype, mec.hp_dtype, scale_format=self.scale_format)
 
     def forward_fakequant(self, input):
         qweight = self.quant_weights(
