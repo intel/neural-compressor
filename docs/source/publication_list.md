@@ -1,6 +1,8 @@
-Full Publications/Events (82)
+Full Publications/Events (84)
 ==========
-## 2024 (3)
+## 2024 (5)
+* Blog on Medium: [Quantization on Intel Gaudi Series AI Accelerators](https://medium.com/intel-analytics-software/intel-neural-compressor-v3-0-a-quantization-tool-across-intel-hardware-9856adee6f11) (Aug 2024)
+* Blog on Medium: [Accelerating Qwen2 Models with Intel Extension for Transformers](https://medium.com/intel-analytics-software/accelerating-qwen2-models-with-intel-extension-for-transformers-99403de82f68) (June 2024)
 * Blog by Intel: [Neural Compressor: Boosting AI Model Efficiency](https://community.intel.com/t5/Blogs/Tech-Innovation/Artificial-Intelligence-AI/Neural-Compressor-Boosting-AI-Model-Efficiency/post/1604740) (June 2024) 
 * Blog by Intel: [Optimization of Intel AI Solutions for Alibaba Cloud’s Qwen2 Large Language Models](https://www.intel.com/content/www/us/en/developer/articles/technical/intel-ai-solutions-accelerate-alibaba-qwen2-llms.html) (June 2024)
 * Blog by Intel: [Accelerate Meta* Llama 3 with Intel AI Solutions](https://www.intel.com/content/www/us/en/developer/articles/technical/accelerate-meta-llama3-with-intel-ai-solutions.html) (Apr 2024)
