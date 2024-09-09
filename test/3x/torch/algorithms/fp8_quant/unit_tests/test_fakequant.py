@@ -1,5 +1,3 @@
-import typing
-import pytest
 import copy
 import torch
 
@@ -8,10 +6,11 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 htcore.hpu_set_env()
 
-from neural_compressor.torch.quantization import FP8Config, convert, finalize_calibration, prepare
+from neural_compressor.torch.quantization import FP8Config, convert, prepare
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import Matmul
 
 torch.manual_seed(1)
+
 
 class M(torch.nn.Module):
     def __init__(self) -> None:
@@ -26,12 +25,14 @@ class M(torch.nn.Module):
         x3 = self.matmul(x1, x2.t())
         return x3
 
+
 config_dict_fake = {
     "mode": "AUTO",
     "observer": "maxabs",
     "scale_method": "maxabs_hw",
-    "allowlist": {"types": [], "names":  []},
-    "blocklist": {"types": [], "names":  []},
+    "scale_format": "CONST",  # TODO: remove 'scale_format' key-value after SW-202697 is solved
+    "allowlist": {"types": [], "names": []},
+    "blocklist": {"types": [], "names": []},
     "dump_stats_path": "./inc_output/measure_fake",
     "fake_quant": "True",
 }
@@ -40,11 +41,13 @@ config_dict = {
     "mode": "AUTO",
     "observer": "maxabs",
     "scale_method": "maxabs_hw",
-    "allowlist": {"types": [], "names":  []},
-    "blocklist": {"types": [], "names":  []},
+    "scale_format": "CONST",  # TODO: remove 'scale_format' key-value after SW-202697 is solved
+    "allowlist": {"types": [], "names": []},
+    "blocklist": {"types": [], "names": []},
     "dump_stats_path": "./inc_output/measure",
     "fake_quant": "False",
 }
+
 
 # Run both real and fake quantization, and compare
 def test_fakequant_model():
@@ -76,8 +79,8 @@ def test_fakequant_model():
         output_fakequant = model_fakequant(**inputs).logits.cpu()
     assert torch.allclose(output, output_fakequant, rtol=0.01), f"FakeQuant on model failed"
 
-def test_fakequant_simple():
 
+def test_fakequant_simple():
     model = M().eval().to("hpu").to(torch.bfloat16)
     model_fake = copy.deepcopy(model)
     htcore.hpu_initialize()
@@ -103,5 +106,3 @@ def test_fakequant_simple():
         output = model(inp_test).cpu()
         output_fake = model_fake(inp_test).cpu()
     assert torch.allclose(output, output_fake, rtol=0.01), f"FakeQuant failed"
-
-

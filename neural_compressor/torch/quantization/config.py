@@ -1754,7 +1754,7 @@ class FP8Config(BaseConfig):
         mod_dict: dict = {},
         measure_exclude: str = "OUTPUT",
         fake_quant: bool = False,
-        scale_format: str = "const",
+        scale_format: str = "scalar",
         **kwargs,
     ):
         """Initializing FP8Config.

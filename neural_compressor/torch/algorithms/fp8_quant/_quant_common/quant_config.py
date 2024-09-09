@@ -94,6 +94,14 @@ _config_to_enum = {
 
 _configs_that_use_enum_value = ["fp8_config", "hp_dtype", "ignore_modules_wo_measures", "recalc_scales", "fake_quant"]
 _scale_methods_quant_only = [ScaleMethod.UNIT_SCALE, ScaleMethod.HW_ALIGNED_SINGLE_SCALE]
+_pcq_scale_methods = [
+    ScaleMethod.SMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2,
+    ScaleMethod.WEAKSMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2,
+    ScaleMethod.ACT_MAXABS_HW_WEIGHTS_PCS_MAXABS_POW2,
+    ScaleMethod.ACT_MAXABS_HW_WEIGHTS_PCS_OPT_POW2,
+    ScaleMethod.ACT_MAXABS_POW2_WEIGHTS_PCS_MAXABS_POW2,
+    ScaleMethod.ACT_MAXABS_POW2_WEIGHTS_PCS_OPT_POW2,
+]
 
 def get_hqt_config(mod) -> Fp8cfg:
     return mod.__hqt_config__
@@ -141,7 +149,7 @@ class Fp8cfg:
             "device_type": htexp._get_device_type(),  # Determines device type: Gaudi2, Gaudi3...
             "measure_exclude": MeasureExclude.OUTPUT,
             "recalc_scales": False,
-            "scale_format": ScaleFormat.CONST
+            "scale_format": ScaleFormat.SCALAR
         }
         # assert measured_global_config['allowlist']['names'] == [''], "Allowlist names not yet implemented"
 
@@ -176,6 +184,14 @@ class Fp8cfg:
         )
 
         scale_method = measured_global_config["scale_method"]
+        if measured_global_config["scale_format"] == ScaleFormat.SCALAR:
+            if scale_method in _pcq_scale_methods:
+                measured_global_config["scale_format"] = ScaleFormat.CONST
+                logger.warning(f"Cannot use 'scale_format = SCALAR' when using PCQ (Per Channel Quantization, "
+                               f"e.g. {scale_method}) value for 'scale_method'. Reduced to 'CONST'.")
+            if measured_global_config["fake_quant"]:
+                measured_global_config["scale_format"] = ScaleFormat.CONST
+                logger.warning(f"Cannot use 'scale_format = SCALAR' when using fake_quant. Reduced to 'CONST'.")
         quant_mode = measured_global_config["mode"]
         if scale_method in _scale_methods_quant_only:
             if quant_mode == QuantMode.QUANTIZE:
