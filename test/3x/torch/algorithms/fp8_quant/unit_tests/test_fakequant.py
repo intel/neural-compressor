@@ -9,8 +9,8 @@ from ..test_utils import is_gaudi3
 
 htcore.hpu_set_env()
 
+from neural_compressor.torch.quantization import FP8Config, convert, prepare
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import Matmul
-from neural_compressor.torch.quantization import FP8Config, convert, finalize_calibration, prepare
 
 torch.manual_seed(1)
 
@@ -33,6 +33,7 @@ config_dict_fake = {
     "mode": "AUTO",
     "observer": "maxabs",
     "scale_method": "maxabs_hw",
+    "scale_format": "CONST",  # TODO: remove 'scale_format' key-value after SW-202697 is solved
     "allowlist": {"types": [], "names": []},
     "blocklist": {"types": [], "names": []},
     "dump_stats_path": "./inc_output/measure_fake",
@@ -43,6 +44,7 @@ config_dict = {
     "mode": "AUTO",
     "observer": "maxabs",
     "scale_method": "maxabs_hw",
+    "scale_format": "CONST",  # TODO: remove 'scale_format' key-value after SW-202697 is solved
     "allowlist": {"types": [], "names": []},
     "blocklist": {"types": [], "names": []},
     "dump_stats_path": "./inc_output/measure",
@@ -83,8 +85,8 @@ def test_fakequant_model():
     assert torch.allclose(output, output_fakequant, rtol=0.01), "FakeQuant on model failed"
 
 
-def test_fakequant_simple():
 
+def test_fakequant_simple():
     model = M().eval().to("hpu").to(torch.bfloat16)
     model_fake = copy.deepcopy(model)
     htcore.hpu_initialize()
@@ -109,4 +111,4 @@ def test_fakequant_simple():
     with torch.no_grad():
         output = model(inp_test).cpu()
         output_fake = model_fake(inp_test).cpu()
-    assert torch.allclose(output, output_fake, rtol=0.01), "FakeQuant failed"
+    assert torch.allclose(output, output_fake, rtol=0.01), f"FakeQuant failed"
