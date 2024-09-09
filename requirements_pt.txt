@@ -1,5 +1,4 @@
 numpy==1.23.5
-peft==0.11.1
 prettytable==3.9.0
 psutil==6.0.0
 py-cpuinfo==9.0.0
