@@ -129,7 +129,7 @@ class Fp8cfg:
             },  # types and names to be quantized. Allowlist by names is not yet implemented
             "mode": QuantMode.QUANTIZE,  # Quantize or Measure
             "fake_quant": False, # Fake or Real Quant
-            "scale_method": ScaleMethod.UNIT_SCALE,  # Method to quantize with
+            "scale_method": ScaleMethod.MAXABS_HW,  # Method to quantize with
             "scale_params": {},  # scaling parameters that are different then the default ones
             "observer": "maxabs",  # Supported ['shape', 'maxabs', 'maxabs_per_channel', 'save']
             "mod_dict": {},
@@ -176,9 +176,14 @@ class Fp8cfg:
         )
 
         scale_method = measured_global_config["scale_method"]
-        if measured_global_config.get("dump_stats_path","") == "" and scale_method in _scale_methods_quant_only:
-            logger.debug(f"dump_stats_path is not set, scale_method is {scale_method}, so stats files won't be used")
-            measured_global_config["use_stats_files"] = False
+        quant_mode = measured_global_config["mode"]
+        if scale_method in _scale_methods_quant_only:
+            if quant_mode == QuantMode.QUANTIZE:
+                logger.debug(f"Quantization mode is quant, scale_method is {scale_method}, so stats files won't be used")
+                measured_global_config["use_stats_files"] = False
+            else:
+                raise ValueError(f"Quantization mode is {quant_mode}, scale_method is {scale_method} (quant only). Unexpected behavior. "
+                                  "This scale method doesn't require measurements.")
         else:
             measured_global_config["use_stats_files"] = True
             base_name = measured_global_config["dump_stats_path"].split("/")[-1]
@@ -199,8 +204,8 @@ class Fp8cfg:
                 + scale_method.name
                 + worker_st
             )
-            if (measured_global_config["mode"] == QuantMode.MEASURE) or (
-                measured_global_config["mode"] == QuantMode.QUANTIZE
+            if (quant_mode == QuantMode.MEASURE) or (
+                quant_mode == QuantMode.QUANTIZE
             ):
                 measured_global_config["measure_file"] = (
                     measured_global_config["dump_stats_path"] + "_hooks_" + measured_global_config["observer"] + worker_st
