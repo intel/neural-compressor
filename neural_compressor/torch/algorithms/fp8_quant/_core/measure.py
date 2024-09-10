@@ -90,7 +90,7 @@ def prepare_model(model, mod_list=None):
     """
     config = get_hqt_config(model).cfg
     observer_class = observer_types[config["observer"]]
-    if (config["shape_file"] is not None) and (observer_class != ShapeObserver):
+    if (config.get("shape_file", None) is not None) and (observer_class != ShapeObserver):
         shapes_fname = config["shape_file"] + ".json"
         d_shapes = load_file(shapes_fname, ShapeList, False)
     else:

@@ -185,9 +185,6 @@ TEST_ONLY_OUTPUT_DIRECTORY = f"{dir_path}/test/3x/torch/algorithms/fp8_quant/out
 def get_test_unique_dump_path(scale_method: ScaleMethod):
     # This is a unique id of the test including the parameters, thanks to pytest.
     # TODO: make sure this globally-ever unique (probably add global init timestamp)
-    if scale_method in SCALE_METHODS_QUANT_ONLY:
-        # Quant only scale methods don't require measurement
-        return ''
     unique_test_id = os.environ.get("PYTEST_CURRENT_TEST")
     return os.path.join(TEST_ONLY_OUTPUT_DIRECTORY, unique_test_id)
 
