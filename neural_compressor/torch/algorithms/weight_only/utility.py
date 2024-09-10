@@ -1411,3 +1411,32 @@ def pack_from_tensors(
     qzeros = torch.from_numpy(qzeros)
 
     return qweight, qzeros
+
+
+def repack_awq_to_optimum_format(
+    awq_qweight: torch.Tensor,
+    awq_qzeros: torch.Tensor,
+    awq_scales: torch.Tensor,
+    bits: int,
+    group_size: int,
+):
+    """
+    Args:
+        awq_qweight (`torch.LongTensor`):
+            Expected shape: (in_features, out_features // (32 // bits))
+        awq_qzeros (`torch.LongTensor`):
+            Expected shape: (in_features // group_size, out_features // (32 // bits))
+        awq_scales (`torch.LongTensor`):
+            Expected shape: (in_features // group_size, out_features)
+
+    Returns:
+        qweight (`torch.LongTensor`):
+            With shape (in_features // (32 // bits), out_features)
+        qzeros (`torch.LongTensor`):
+            With shape (in_features // group_size, out_features // (32 // bits))
+        scales (`torch.LongTensor`):
+            Expected shape: (in_features // group_size, out_features)
+    """
+    unpack_qweight, unpack_qzeros = unpack_awq(awq_qweight, awq_qzeros, awq_scales, bits, group_size)
+    qweight, qzeros = pack_from_tensors(unpack_qweight, unpack_qzeros, awq_scales)
+    return qweight, qzeros, awq_scales
