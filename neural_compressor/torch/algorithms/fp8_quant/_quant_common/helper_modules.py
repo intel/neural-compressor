@@ -304,7 +304,7 @@ class PatchedMoeMatmul(nn.Module):
         set_attrs_from_orig_model(self, mod, mod_extra_config)
         init_linear(self, mod_extra_config)
         if (self.quantization_mode == QuantMode.MEASURE):
-            setattr(mod, "weight", mod.weight.t().contiguous())
+            mod.weight = mod.weight.t()
 
     # The calc method is called by the vllm-mixtral MoE gate layer
     # we patch it so that during quantized inference run it will use
