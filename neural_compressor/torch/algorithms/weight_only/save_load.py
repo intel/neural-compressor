@@ -221,13 +221,15 @@ class WOQModelLoader:
 
         # get model class and config
         model_class, config = self._get_model_class_and_config()
-        quantization_config = config.quantization_config if hasattr(config, "quantization_config") else None
-        if "backend" in quantization_config and "auto_round" in quantization_config["backend"]:
+        self.quantization_config = \
+            config.quantization_config  if hasattr(config, "quantization_config") else None
+        if "backend" in self.quantization_config and "auto_round" in self.quantization_config["backend"]:
             # load autoround format quantized model
             from auto_round import AutoRoundConfig
 
             model = model_class.from_pretrained(self.model_name_or_path)
             return model
+        
         # get loaded state_dict
         self.loaded_state_dict = self._get_loaded_state_dict(config)
         self.loaded_state_dict_keys = list(set(self.loaded_state_dict.keys()))
