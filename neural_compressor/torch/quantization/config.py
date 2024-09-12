@@ -974,6 +974,7 @@ class AutoRoundConfig(TorchBaseConfig):
               have different choices.
             use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
             quant_block_list (list): A list whose elements are list of block's layer names to be quantized.
+            export_format (str, optional): The format used for exporting the quantized model. Defaults to "itrex".
             white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
               Default is DEFAULT_WHITE_LIST.
         """

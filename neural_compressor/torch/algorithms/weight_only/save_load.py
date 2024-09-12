@@ -46,6 +46,11 @@ def save(model, output_dir="./saved_results", format="default", **kwargs):
     Args:
         model (torch.nn.module): raw fp32 model or prepared model.
         output_dir (str, optional): output path to save.
+        format (str, optional): The format in which to save the model. Options include "default" and "huggingface". Defaults to "default".
+        kwargs: Additional arguments for specific formats. For example:
+            - safe_serialization (bool): Whether to use safe serialization when saving (only applicable for 'huggingface' format). Defaults to True.
+            - tokenizer (Tokenizer, optional): The tokenizer to be saved along with the model (only applicable for 'huggingface' format).
+            - max_shard_size (str, optional): The maximum size for each shard (only applicable for 'huggingface' format). Defaults to "5GB".
     """
     os.makedirs(output_dir, exist_ok=True)
     if format == "huggingface":

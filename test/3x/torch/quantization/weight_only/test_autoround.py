@@ -26,6 +26,7 @@ try:
     auto_gptq_installed = True
 except ImportError:
     auto_round_installed = False
+    auto_gptq_installed = False
 
 
 @torch.no_grad()
