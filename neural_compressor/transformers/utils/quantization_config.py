@@ -566,7 +566,7 @@ class AutoRoundConfig(INCQuantizationConfigMixin):
         **kwargs,
     ):
 
-        from intel_extension_for_transformers.transformers.llm.quantization.utils import convert_dtype_torch2str
+        from neural_compressor.transformers.quantization.utils import convert_dtype_torch2str
 
         self.quant_method = QuantizationMethod.AUTOROUND
         self.bits = bits
