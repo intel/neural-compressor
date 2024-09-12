@@ -62,6 +62,7 @@ from ..quantization.utils import (
     convert_dtype_torch2str,
     convert_to_quantized_model,
     replace_linear,
+    save_low_bit,
 )
 from ..utils import AutoRoundConfig, AwqConfig, GPTQConfig, LazyImport, RtnConfig, TeqConfig, logger
 from ..utils.utility import SAFE_WEIGHTS_INDEX_NAME, SAFE_WEIGHTS_NAME, WEIGHTS_INDEX_NAME, WEIGHTS_NAME, CpuInfo
