@@ -33,7 +33,6 @@ from neural_compressor.torch.quantization import (
     TEQConfig,
     convert,
     prepare,
-    quantize,
 )
 from neural_compressor.transformers.utils.utility import _ipex_version, is_autoround_available, is_ipex_available
 from neural_compressor.utils.utility import LazyImport

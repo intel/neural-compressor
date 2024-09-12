@@ -159,7 +159,6 @@ class INCQuantizationConfigMixin(QuantizationConfig):
             "scheme",
             "tokenizer",
             "use_ggml",
-            "use_neural_speed",
             "use_quant",
             "use_layer_wise",
             "blocksize",

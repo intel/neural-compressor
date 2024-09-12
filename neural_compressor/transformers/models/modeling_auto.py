@@ -103,117 +103,8 @@ def build_woq_model(model, quantization_config):
             set_module(model, n, new_module)
     return model
 
-
-def convert_model_to_public(model):
-    # reorder weight and scales if they have been transposed
-    if model.device == "xpu" or (isinstance(model.device, torch.device) and model.device.type == "xpu"):
-        for name, module in model.named_modules():
-            if isinstance(module, WeightOnlyQuantizedLinear) and not module.use_optimum_format:
-                if module.weight_transposed:
-                    module.qweight.data = module.qweight.t_().contiguous()
-                    module.scales.data = module.scales.t_().contiguous()
-                    module.weight_transposed = False
-
-
-def save_low_bit(self, save_directory: Union[str, os.PathLike], push_to_hub: bool = False, **kwargs):
-
-    assert hasattr(self, "quantization_config"), "Detected this model is not a low-bit model."
-
-    if os.path.isfile(save_directory):
-        logger.error(f"Provided path ({save_directory}) should be a directory, not a file")
-        return
-    if isinstance(self, PyTorchFXModel):
-        self.quantization_config.save_pretrained(save_directory, **kwargs)
-        self.model.config.quantization_config = self.quantization_config
-        self.model.config.save_pretrained(save_directory)
-        weights_file = os.path.join(os.path.abspath(os.path.expanduser(save_directory)), WEIGHTS_NAME)
-        torch.save(self.quantized_state_dict(), weights_file)
-        return
-
-    convert_model_to_public(self)
-    os.makedirs(save_directory, exist_ok=True)
-    # use transformers original `save_pretrained` function
-    del self.save_pretrained
-
-    self.save_pretrained(save_directory=save_directory, push_to_hub=push_to_hub, **kwargs)
-
-    self.save_pretrained = types.MethodType(save_low_bit, self)
-    # We conveniently save all the keys of the model to have them on hand,
-    # so that when using 'low_cpumem load',
-    # it's not necessary to load the entire model to extract its keys
-    # and we can avoid gc not triggered potentially.
-    all_checkpoint_keys = {"all_checkpoint_keys": list(self.state_dict().keys())}
-    json_file_path = os.path.join(save_directory, "all_checkpoint_keys.json")
-    with open(json_file_path, "w") as json_file:
-        json.dump(all_checkpoint_keys, json_file)
-    if push_to_hub:
-        use_auth_token = kwargs.pop("use_auth_token", None)
-
-        if use_auth_token is not None:
-            logger.warning.warn(
-                "The `use_auth_token` argument is deprecated and will be removed in v5 of Transformers.",
-                FutureWarning,
-            )
-            if token is not None:
-                raise ValueError(
-                    "`token` and `use_auth_token` are both specified. Please set only the argument `token`."
-                )
-            token = use_auth_token
-
-        if token is not None:
-            kwargs["token"] = token
-        commit_message = kwargs.pop("commit_message", None)
-        repo_id = kwargs.pop("repo_id", save_directory.split(os.path.sep)[-1])
-        repo_id = self._create_repo(repo_id, **kwargs)
-        files_timestamps = self._get_files_timestamps(save_directory)
-        self._upload_modified_files(
-            save_directory,
-            repo_id,
-            files_timestamps,
-            commit_message=commit_message,
-            token=kwargs.get("token"),
-        )
-    self.quantization_config.save_pretrained(save_directory, **kwargs)
-
-
 class _BaseINCAutoModelClass:
     ORIG_MODEL = None
-    model_type_list = [
-        "llama",
-        "gptj",
-        "mpt",
-        "opt",
-        "gptneox",
-        "dolly",
-        "polyglot",
-        "starcoder",
-        "falcon",
-        "bloom",
-        "chatglm2",
-        "chatglm",
-        "baichuan",
-        "mistral",
-        "qwen",
-        "phi",
-        "whisper",
-        "qwen2",
-        "gemma",
-        "phi3",
-        "tinyllama",
-    ]
-
-    model_type_list_for_gptq = [
-        "llama",
-        "gptj",
-        "mpt",
-        "falcon",
-        "chatglm2",
-        "chatglm",
-        "baichuan",
-        "mistral",
-        "qwen",
-        "phi",
-    ]
 
     @classmethod
     def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
@@ -227,16 +118,11 @@ class _BaseINCAutoModelClass:
 
         quantization_config = kwargs.pop("quantization_config", None)
         if not isinstance(config, PretrainedConfig):
-            if model_hub == "modelscope":
-                import modelscope  # pylint: disable=E0401
-
-                config = modelscope.AutoConfig.from_pretrained(pretrained_model_name_or_path, trust_remote_code=True)
-            else:
-                config, _ = AutoConfig.from_pretrained(
-                    pretrained_model_name_or_path,
-                    return_unused_kwargs=True,
-                    **kwargs,
-                )
+            config, _ = AutoConfig.from_pretrained(
+                pretrained_model_name_or_path,
+                return_unused_kwargs=True,
+                **kwargs,
+            )
 
         if hasattr(config, "quantization_config"):
             if config.quantization_config is None:
