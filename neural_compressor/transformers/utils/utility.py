@@ -21,7 +21,6 @@ import os
 
 from neural_compressor.common.utils import CpuInfo, LazyImport, logger
 
-
 WEIGHTS_NAME = "pytorch_model.bin"
 WEIGHTS_INDEX_NAME = "pytorch_model.bin.index.json"
 QUANT_CONFIG = "quantize_config.json"
