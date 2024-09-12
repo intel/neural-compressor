@@ -82,7 +82,7 @@ def build_woq_model(model, quantization_config):
                 not getattr(quantization_config, "sym", False),
             )
             use_optimum_format = True
-            
+
             with init_empty_weights():
                 new_module = INCWeightOnlyLinear(
                     m.in_features,
