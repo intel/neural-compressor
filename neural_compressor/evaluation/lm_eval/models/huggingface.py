@@ -513,14 +513,7 @@ class HFLM(TemplateLM):
                         model_kwargs["bnb_4bit_compute_dtype"] = get_dtype(model_kwargs["bnb_4bit_compute_dtype"])
             from neural_compressor.transformers import AutoModelForCausalLM
 
-            if self.model_format == "neural_speed":
-                from transformers import AutoTokenizer, TextStreamer
-
-                self._model = AutoModelForCausalLM.from_pretrained(
-                    pretrained,
-                    trust_remote_code=trust_remote_code,
-                )
-            elif self.model_format == "onnx" and self.AUTO_MODEL_CLASS == transformers.AutoModelForCausalLM:
+            if self.model_format == "onnx" and self.AUTO_MODEL_CLASS == transformers.AutoModelForCausalLM:
                 if (
                     not os.path.exists(os.path.join(pretrained, "decoder_model.onnx"))
                     and not os.path.exists(os.path.join(pretrained, "decoder_with_past_model.onnx"))
@@ -829,9 +822,7 @@ class HFLM(TemplateLM):
     def tok_encode(self, string: str, left_truncate_len=None, add_special_tokens=None) -> List[int]:
         """"""
         if add_special_tokens is None:
-            if self.model_format == "neural_speed":
-                add_special_tokens = True
-            elif self.AUTO_MODEL_CLASS == transformers.AutoModelForCausalLM:
+            if self.AUTO_MODEL_CLASS == transformers.AutoModelForCausalLM:
                 add_special_tokens = False or self.add_bos_token
             elif self.AUTO_MODEL_CLASS == transformers.AutoModelForSeq2SeqLM:
                 # TODO: investigate best practices for enc-dec models + special tokens
@@ -931,10 +922,7 @@ class HFLM(TemplateLM):
                     input_bs, input_len = inps.shape
                     bos = torch.tensor([64790, 64792]).repeat(input_bs, 1)
                     inps = torch.cat((bos, inps), 1)
-                if self.model_format == "neural_speed":
-                    out = self.model(inps, reinit=True, logits_all=True, ignore_padding=True)
-                    output = torch.from_numpy(out)
-                elif self.model_format == "onnx":
+                if self.model_format == "onnx":
                     inputs_names = [input.name for input in self.model.model.get_inputs()]
                     if "position_ids" in inputs_names:
                         # model is exported with optimum >= 1.14.0 with new input 'position_ids'
