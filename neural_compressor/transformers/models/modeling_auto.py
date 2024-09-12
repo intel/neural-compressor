@@ -103,6 +103,7 @@ def build_woq_model(model, quantization_config):
             set_module(model, n, new_module)
     return model
 
+
 class _BaseINCAutoModelClass:
     ORIG_MODEL = None
 
