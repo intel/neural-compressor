@@ -506,7 +506,6 @@ def convert_to_quantized_model(model, config, device="cpu"):
             iters=config.iters,
             scale_dtype=config.scale_dtype,
             use_layer_wise=config.use_layer_wise,
-            model_path=config.model_path,
         )
         if config.modules_to_not_convert != []:
             for module in config.modules_to_not_convert:
