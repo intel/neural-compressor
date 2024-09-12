@@ -92,7 +92,7 @@ def build_woq_model(model, quantization_config):
                 new_module = INCWeightOnlyLinear(
                     m.in_features,
                     m.out_features,
-                    dtype="int4" if dtype==4 else "int8",
+                    dtype="int4" if dtype == 4 else "int8",
                     bits=quantization_config.bits,
                     group_size=quantization_config.group_size,
                     zp=zp,
@@ -713,7 +713,7 @@ class _BaseINCAutoModelClass:
             logger.warning("fp32 scale_dtype is used, please change the config.json if you don't want to use it.")
 
         # weight dtype is higher priority than bits in config.json when both existed.
-        
+
         if quantization_config.bits == 4:
             if use_xpu:
                 quantization_config.weight_dtype = "int4_fullrange"
@@ -734,10 +734,8 @@ class _BaseINCAutoModelClass:
         else:
             logger.warning("bits number only supports 4, 8.")
             quantization_config.weight_dtype = "int4_clip"
-            logger.warning(
-                "int4_clip weight_dtype is used, please change the config.json if you don't want to use it."
-            )
-        
+            logger.warning("int4_clip weight_dtype is used, please change the config.json if you don't want to use it.")
+
         init_contexts = [no_init_weights(_enable=_fast_init)]
         init_contexts.append(init_empty_weights())
 
