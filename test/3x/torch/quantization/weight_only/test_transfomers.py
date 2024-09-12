@@ -1,28 +1,28 @@
+import shutil
 from math import isclose
 
 import pytest
-import shutil
 import torch
 from transformers import AutoTokenizer
+
 from neural_compressor.transformers import (
-            AutoModelForCausalLM,
-            AutoRoundConfig,
-            AwqConfig,
-            GPTQConfig,
-            RtnConfig,
-            TeqConfig,
-        )
+    AutoModelForCausalLM,
+    AutoRoundConfig,
+    AwqConfig,
+    GPTQConfig,
+    RtnConfig,
+    TeqConfig,
+)
+
 
 class TestTansformersLikeAPI:
     def setup_class(self):
         self.model_name_or_path = "hf-internal-testing/tiny-random-gptj"
-    
-    
+
     def teardown_class(self):
         shutil.rmtree("nc_workspace", ignore_errors=True)
         shutil.rmtree("transformers_tmp", ignore_errors=True)
 
-    
     def test_quantization_for_llm(self):
         model_name_or_path = self.model_name_or_path
         tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
@@ -102,14 +102,12 @@ class TestTansformersLikeAPI:
             quantization_config=woq_config,
         )
         woq_output = woq_model(dummy_input)[0]
-        
+
         # save
         output_dir = "./transformers_tmp"
-        woq_model.save_pretrained(output_dir)        
-        
+        woq_model.save_pretrained(output_dir)
+
         # load
-        loaded_model =  AutoModelForCausalLM.from_pretrained(output_dir)
+        loaded_model = AutoModelForCausalLM.from_pretrained(output_dir)
         loaded_output = loaded_model(dummy_input)[0]
         assert torch.equal(woq_output, loaded_output), "loaded output should be same. Please double check."
-
-        
