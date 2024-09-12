@@ -49,7 +49,6 @@ from transformers.configuration_utils import PretrainedConfig
 from transformers.modeling_utils import load_state_dict
 from transformers.utils import has_file, is_accelerate_available, is_safetensors_available
 
-
 from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
 from neural_compressor.torch.utils import set_module
 from neural_compressor.transformers.utils.utility import is_intel_gpu_available, is_ipex_available
