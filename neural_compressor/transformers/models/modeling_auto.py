@@ -74,9 +74,7 @@ torch = LazyImport("torch")
 
 
 def build_woq_model(model, quantization_config):
-    from neural_compressor.adaptor.torch_utils.util import set_module
-
-    weight_dtype = quantization_config.weight_dtype
+    bits = quantization_config.bits
     for n, m in model.named_modules():
         if n in quantization_config.modules_to_not_convert:
             continue
@@ -86,13 +84,13 @@ def build_woq_model(model, quantization_config):
                 "zero_point",
                 not getattr(quantization_config, "sym", False),
             )
-            dtype = "int4" if weight_dtype == "int4_clip" else weight_dtype
-            use_optimum_format = False if weight_dtype in ["nf4", "fp4", "fp4_e2m1"] else True
+            use_optimum_format = True
+            
             with init_empty_weights():
                 new_module = INCWeightOnlyLinear(
                     m.in_features,
                     m.out_features,
-                    dtype="int4" if dtype == 4 else "int8",
+                    dtype="int4" if bits == 4 else "int8",
                     bits=quantization_config.bits,
                     group_size=quantization_config.group_size,
                     zp=zp,
