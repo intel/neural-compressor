@@ -92,7 +92,7 @@ def build_woq_model(model, quantization_config):
                 new_module = INCWeightOnlyLinear(
                     m.in_features,
                     m.out_features,
-                    dtype=dtype,
+                    dtype="int4" if dtype==4 else "int8",
                     bits=quantization_config.bits,
                     group_size=quantization_config.group_size,
                     zp=zp,
@@ -113,8 +113,6 @@ def convert_model_to_public(model):
                     module.qweight.data = module.qweight.t_().contiguous()
                     module.scales.data = module.scales.t_().contiguous()
                     module.weight_transposed = False
-    elif model.quantization_config.use_ipex:
-        pass
 
 
 def save_low_bit(self, save_directory: Union[str, os.PathLike], push_to_hub: bool = False, **kwargs):
@@ -139,33 +137,6 @@ def save_low_bit(self, save_directory: Union[str, os.PathLike], push_to_hub: boo
 
     self.save_pretrained(save_directory=save_directory, push_to_hub=push_to_hub, **kwargs)
 
-    if self.quantization_config.use_ipex:
-
-        def save_linear_parameters(model, save_directory):
-            # only can save to pytorch model.bin due to ipex.
-            weights_file = os.path.join(os.path.abspath(os.path.expanduser(save_directory)), SAFE_WEIGHTS_NAME)
-            os.remove(weights_file)
-            weights_file = os.path.join(os.path.abspath(os.path.expanduser(save_directory)), WEIGHTS_NAME)
-            linear_parameters = {}
-            from intel_extension_for_pytorch.nn.modules import WeightOnlyQuantizedLinear as ipex_cpu_linear
-
-            for name, module in model.named_modules():
-                if isinstance(module, ipex_cpu_linear):
-                    linear_parameters[name + ".ipex_scales"] = module._op_context.get_scales().contiguous()
-                    linear_parameters[name + ".ipex_weight"] = module._op_context.to_public(
-                        module._op_context.get_weight()
-                    ).contiguous()
-                    linear_parameters[name + ".ipex_zeros"] = module._op_context.get_zero_points().contiguous()
-                    if module._op_context.get_bias() is not None:
-                        linear_parameters[name + ".ipex_bias"] = module._op_context.get_bias().contiguous()
-                    if module._op_context.get_g_idx() is not None:
-                        linear_parameters[name + ".ipex_g_idx"] = module._op_context.get_g_idx().contiguous()
-            others_parameters = model.state_dict()
-            linear_parameters.update(others_parameters)
-
-            torch.save(linear_parameters, weights_file)
-
-        save_linear_parameters(self, save_directory)
     self.save_pretrained = types.MethodType(save_low_bit, self)
     # We conveniently save all the keys of the model to have them on hand,
     # so that when using 'low_cpumem load',
@@ -742,44 +713,31 @@ class _BaseINCAutoModelClass:
             logger.warning("fp32 scale_dtype is used, please change the config.json if you don't want to use it.")
 
         # weight dtype is higher priority than bits in config.json when both existed.
-        if quantization_config.weight_dtype is None:
-            if quantization_config.bits == 4:
-                if use_xpu:
-                    quantization_config.weight_dtype = "int4_fullrange"
-                else:
-                    quantization_config.weight_dtype = "int4_clip"
-                logger.info(
-                    "{} quantization weight_dtype is used due to bits is 4 in config.json.".format(
-                        quantization_config.weight_dtype
-                    )
-                )
-            elif quantization_config.bits == 8:
-                quantization_config.weight_dtype = "int8"
-                logger.info(
-                    "{} quantization weight_dtype is used due to bits is 8 in config.json.".format(
-                        quantization_config.weight_dtype
-                    )
-                )
+        
+        if quantization_config.bits == 4:
+            if use_xpu:
+                quantization_config.weight_dtype = "int4_fullrange"
             else:
-                logger.warning("bits number only supports 4, 8.")
                 quantization_config.weight_dtype = "int4_clip"
-                logger.warning(
-                    "int4_clip weight_dtype is used, please change the config.json if you don't want to use it."
+            logger.info(
+                "{} quantization weight_dtype is used due to bits is 4 in config.json.".format(
+                    quantization_config.weight_dtype
                 )
+            )
+        elif quantization_config.bits == 8:
+            quantization_config.weight_dtype = "int8"
+            logger.info(
+                "{} quantization weight_dtype is used due to bits is 8 in config.json.".format(
+                    quantization_config.weight_dtype
+                )
+            )
         else:
-            if quantization_config.weight_dtype not in [
-                "int4_fullrange",
-                "int4_clip",
-                "int8",
-                "nf4",
-            ]:
-                logger.warning("Please provide the correct bits number or weight_dtype in config.json.")
-                raise ValueError(
-                    "weight_dtype must be a string in " "'int8', 'int4', 'int4_fullrange', 'int4_clip', 'nf4', "
-                )
-            else:
-                logger.info("{} quantization weight_dtype is used.".format(quantization_config.weight_dtype))
-
+            logger.warning("bits number only supports 4, 8.")
+            quantization_config.weight_dtype = "int4_clip"
+            logger.warning(
+                "int4_clip weight_dtype is used, please change the config.json if you don't want to use it."
+            )
+        
         init_contexts = [no_init_weights(_enable=_fast_init)]
         init_contexts.append(init_empty_weights())
 

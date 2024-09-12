@@ -24,6 +24,7 @@ parser.add_argument(
     "--max_new_tokens", default=32, type=int, help="output max new tokens"
 )
 parser.add_argument("--output_dir", nargs="?", default="./saved_results")
+parser.add_argument("--quant_lm_head", action="store_true",  help="whether to quant the lm_head layer in transformers")
 # ============Benchmark configs==============
 parser.add_argument("--benchmark", action="store_true")
 parser.add_argument("--benchmark_iters", default=100, type=int, help="num iters for benchmark")
@@ -155,11 +156,6 @@ parser.add_argument(
     action="store_true",
     help="whether to use the output of quantized block to tune the next block",
 )
-parser.add_argument(
-    "--quant_lm_head",
-    action="store_true",
-    help="whether to quant the lm head layer",
-)
 
 # ============BitsAndBytes configs==============
 parser.add_argument("--bitsandbytes", action="store_true")
@@ -218,6 +214,7 @@ if args.woq:
             scale_dtype=args.scale_dtype,
             weight_dtype=args.weight_dtype,
             layer_wise=args.layer_wise,
+            quant_lm_head = args.quant_lm_head,
         )
     elif args.woq_algo == "Awq":
         quantization_config = AwqConfig(
@@ -232,6 +229,7 @@ if args.woq:
             compute_dtype=args.compute_dtype,
             scale_dtype=args.scale_dtype,
             weight_dtype=args.weight_dtype,
+            quant_lm_head = args.quant_lm_head,
         )
     elif args.woq_algo == "Teq":
         quantization_config = TeqConfig(
@@ -246,6 +244,7 @@ if args.woq:
             compute_dtype=args.compute_dtype,
             scale_dtype=args.scale_dtype,
             weight_dtype=args.weight_dtype,
+            quant_lm_head = args.quant_lm_head,
         )
     elif args.woq_algo == "GPTQ":
         quantization_config = GPTQConfig(
@@ -267,6 +266,7 @@ if args.woq:
             weight_dtype=args.weight_dtype,
             layer_wise=args.layer_wise,
             true_sequential=args.true_sequential,
+            quant_lm_head = args.quant_lm_head,
         )
     elif args.woq_algo == "AutoRound":
         quantization_config = AutoRoundConfig(
