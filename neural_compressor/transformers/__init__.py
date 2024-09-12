@@ -12,11 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-from .config import (
-    WEIGHTS_NAME,
-)
-
 from .utils import (
     RtnConfig,
     AwqConfig,

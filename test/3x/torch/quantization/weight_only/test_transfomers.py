@@ -1,15 +1,10 @@
 from math import isclose
 
 import pytest
+import shutil
 import torch
 from transformers import AutoTokenizer
-
-
-class TestTansformersLikeAPI:
-    def test_quantization_for_llm(self):
-        model_name_or_path = "hf-internal-testing/tiny-random-gptj"
-        tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
-        from neural_compressor.transformers import (
+from neural_compressor.transformers import (
             AutoModelForCausalLM,
             AutoRoundConfig,
             AwqConfig,
@@ -17,6 +12,20 @@ class TestTansformersLikeAPI:
             RtnConfig,
             TeqConfig,
         )
+
+class TestTansformersLikeAPI:
+    def setup_class(self):
+        self.model_name_or_path = "hf-internal-testing/tiny-random-gptj"
+    
+    
+    def teardown_class(self):
+        shutil.rmtree("nc_workspace", ignore_errors=True)
+        shutil.rmtree("transformers_tmp", ignore_errors=True)
+
+    
+    def test_quantization_for_llm(self):
+        model_name_or_path = self.model_name_or_path
+        tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
 
         fp32_model = AutoModelForCausalLM.from_pretrained(model_name_or_path)
         dummy_input = fp32_model.dummy_inputs["input_ids"]
@@ -79,3 +88,28 @@ class TestTansformersLikeAPI:
         woq_model.eval()
         output = woq_model(dummy_input)
         assert isclose(float(output[0][0][0][0]), 0.18400897085666656, rel_tol=1e-04)
+
+    def test_save_load(self):
+        model_name_or_path = self.model_name_or_path
+
+        fp32_model = AutoModelForCausalLM.from_pretrained(model_name_or_path)
+        dummy_input = fp32_model.dummy_inputs["input_ids"]
+
+        # RTN
+        woq_config = RtnConfig(bits=4, group_size=16)
+        woq_model = AutoModelForCausalLM.from_pretrained(
+            model_name_or_path,
+            quantization_config=woq_config,
+        )
+        woq_output = woq_model(dummy_input)[0]
+        
+        # save
+        output_dir = "./transformers_tmp"
+        woq_model.save_pretrained(output_dir)        
+        
+        # load
+        loaded_model =  AutoModelForCausalLM.from_pretrained(output_dir)
+        loaded_output = loaded_model(dummy_input)[0]
+        assert torch.equal(woq_output, loaded_output), "loaded output should be same. Please double check."
+
+        
