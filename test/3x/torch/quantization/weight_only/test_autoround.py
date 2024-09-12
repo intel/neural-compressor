@@ -1,11 +1,9 @@
 import copy
 import shutil
-
 import pytest
 import torch
 import transformers
 from packaging.version import Version
-
 from neural_compressor.torch.quantization import (
     AutoRoundConfig,
     convert,
@@ -21,8 +19,11 @@ from neural_compressor.torch.algorithms.weight_only.autoround import get_dataloa
 try:
     import auto_round
     from auto_round.export.export_to_itrex.model_wrapper import WeightOnlyLinear
+    from auto_gptq.nn_modules.qlinear.qlinear_triton import QuantLinear
+
 
     auto_round_installed = True
+    auto_gptq_installed = True
 except ImportError:
     auto_round_installed = False
 
@@ -40,6 +41,7 @@ def run_fn(model, dataloader):
 
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
 class TestAutoRound:
+    @classmethod     
     def setup_class(self):
         self.gptj = transformers.AutoModelForCausalLM.from_pretrained(
             "hf-internal-testing/tiny-random-GPTJForCausalLM",
@@ -51,7 +53,8 @@ class TestAutoRound:
         )
         self.dataloader = get_dataloader(tokenizer, 32, dataset_name="NeelNanda/pile-10k", seed=42, bs=8, nsamples=10)
         self.label = self.gptj(self.inp)[0]
-
+        
+    @classmethod    
     def teardown_class(self):
         shutil.rmtree("saved_results", ignore_errors=True)
 
@@ -143,6 +146,7 @@ class TestAutoRound:
             loaded_model.transformer.h[0].attn.k_proj, INCWeightOnlyLinear
         ), "loading compressed model failed."
 
+
     def test_conv1d(self):
         input = torch.randn(1, 32)
         from transformers import GPT2Model, GPT2Tokenizer
@@ -159,3 +163,20 @@ class TestAutoRound:
         out2 = q_model(**encoded_input)[0]
         assert torch.allclose(out2, out1, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
         assert isinstance(q_model.h[0].attn.c_attn, WeightOnlyLinear), "loading compressed model failed."
+        
+        
+    @pytest.mark.skipif(not auto_gptq_installed, reason="auto_gptq module is not installed")
+    def test_autoround_format_export(self):
+        from neural_compressor.torch.quantization import load
+        gpt_j_model = copy.deepcopy(self.gptj)
+        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, scale_dtype="fp32", export_format="auto_round:gptq")
+        logger.info(f"Test AutoRound with config {quant_config}")
+        model = prepare(model=gpt_j_model, quant_config=quant_config)
+        run_fn(model, self.dataloader)
+        q_model = convert(model)
+        out = q_model(self.inp)[0]
+        assert torch.allclose(out, self.label, atol=1e-1)
+        assert isinstance(q_model.transformer.h[0].attn.k_proj, QuantLinear), "packing model failed."
+        q_model.save(output_dir="saved_results_tiny-random-GPTJForCausalLM", format="huggingface")
+        loaded_model = load("saved_results_tiny-random-GPTJForCausalLM", format="huggingface", trust_remote_code=True)
+
