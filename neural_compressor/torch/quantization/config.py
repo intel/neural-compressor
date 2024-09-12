@@ -939,7 +939,7 @@ class AutoRoundConfig(TorchBaseConfig):
         scale_dtype: str = "fp16",
         use_layer_wise: bool = False,
         quant_block_list: list = None,
-        export_format: str = "itrex", 
+        export_format: str = "itrex",
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init AUTOROUND weight-only quantization config.
@@ -2060,4 +2060,3 @@ def get_woq_tuning_config() -> list:
     GPTQ_G32ASYM = GPTQConfig(use_sym=False, group_size=32)
     AWQ_G32ASYM = AWQConfig(use_sym=False, group_size=32)
     return [RTN_G32ASYM, AUTO_ROUND_CONFIG, GPTQ_G32ASYM, AWQ_G32ASYM]
-
