@@ -28,6 +28,7 @@ parser.add_argument(
     "--num_beams", default=1, type=int, help="number of beams"
 )
 parser.add_argument("--output_dir", nargs="?", default="./saved_results")
+parser.add_argument("--quant_lm_head", action="store_true",  help="whether to quant the lm_head layer in transformers")
 # ============Benchmark configs==============
 parser.add_argument("--benchmark", action="store_true")
 parser.add_argument("--benchmark_batch_size", default=1, type=int,
@@ -114,11 +115,6 @@ parser.add_argument(
     action="store_true",
     help="whether to use the output of quantized block to tune the next block",
 )
-parser.add_argument(
-    "--quant_lm_head",
-    action="store_true",
-    help="whether to quant the lm head layer",
-)
 # =======================================
 args = parser.parse_args()
 torch_dtype = convert_dtype_str2torch(args.compute_dtype)
@@ -158,6 +154,7 @@ if args.woq:
             scale_dtype=args.compute_dtype,
             weight_dtype=args.weight_dtype,
             batch_size=args.batch_size,
+            quant_lm_head=args.quant_lm_head,
         )
     elif args.woq_algo.lower() == "autoround":
         quantization_config = AutoRoundConfig(
@@ -175,12 +172,12 @@ if args.woq:
             lr=args.lr,
             minmax_lr=args.minmax_lr,
             disable_quanted_input=args.disable_quanted_input,
-            quant_lm_head = args.quant_lm_head,
+            quant_lm_head=args.quant_lm_head,
         )
     elif args.woq_algo.lower() == "rtn":
         quantization_config = RtnConfig(
             compute_dtype=args.compute_dtype, weight_dtype=args.weight_dtype,
-            group_size=args.group_size, scale_dtype=args.compute_dtype
+            group_size=args.group_size, scale_dtype=args.compute_dtype, quant_lm_head=args.quant_lm_head,
         ) #default is A16W4G16
 
 # get model

@@ -395,6 +395,7 @@ def convert_to_quantized_model(model, config, device="cpu"):
             group_size=config.group_size,
             use_layer_wise=config.use_layer_wise,
             model_path=config.model_path,
+            quant_lm_head=config.quant_lm_head,
         )
         if config.modules_to_not_convert != []:
             for module in config.modules_to_not_convert:
@@ -418,6 +419,7 @@ def convert_to_quantized_model(model, config, device="cpu"):
             static_groups=config.static_groups,
             use_mse_search=config.use_mse_search,
             true_sequential=config.true_sequential,
+            quant_lm_head=config.quant_lm_head,
         )
         if config.modules_to_not_convert != []:
             for module in config.modules_to_not_convert:
@@ -446,6 +448,7 @@ def convert_to_quantized_model(model, config, device="cpu"):
             use_auto_scale=config.auto_scale,
             use_auto_clip=config.auto_clip,
             folding=True,
+            quant_lm_head=config.quant_lm_head,
         )
         if config.modules_to_not_convert != []:
             for module in config.modules_to_not_convert:
@@ -473,6 +476,7 @@ def convert_to_quantized_model(model, config, device="cpu"):
             group_size=config.group_size,
             use_layer_wise=config.use_layer_wise,
             absorb_to_layer=config.absorb_to_layer,
+            quant_lm_head=config.quant_lm_head,
         )
         if config.modules_to_not_convert != []:
             for module in config.modules_to_not_convert:

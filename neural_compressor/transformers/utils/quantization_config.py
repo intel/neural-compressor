@@ -255,6 +255,7 @@ class RtnConfig(INCQuantizationConfigMixin):
         scale_dtype: Any = None,
         sym: bool = True,
         use_layer_wise: bool = False,
+        quant_lm_head: bool = False,
         **kwargs,
     ):
         self.quant_method = QuantizationMethod.RTN
@@ -270,9 +271,12 @@ class RtnConfig(INCQuantizationConfigMixin):
 
         # "transformer.output_layer" for chatglm series model.
         # "embed_out" for dolly v2 series model.
+        self.quant_lm_head = quant_lm_head
         self.modules_to_not_convert = kwargs.get(
             "modules_to_not_convert", ["lm_head", "transformer.output_layer", "embed_out"]
         )
+        if self.quant_lm_head:
+            self.modules_to_not_convert = []
         self.device = kwargs.get("device", "auto")
 
     def to_diff_dict(self) -> Dict[str, Any]:
@@ -317,6 +321,7 @@ class GPTQConfig(INCQuantizationConfigMixin):
         use_mse_search: bool = False,
         true_sequential: bool = False,
         use_layer_wise: bool = False,
+        quant_lm_head: bool = False,
         **kwargs,
     ):
 
@@ -340,9 +345,12 @@ class GPTQConfig(INCQuantizationConfigMixin):
         self.use_layer_wise = use_layer_wise
         self.model_path = kwargs.get("model_path", "")
         self.seq_len = seq_len
+        self.quant_lm_head = quant_lm_head
         self.modules_to_not_convert = kwargs.get(
             "modules_to_not_convert", ["lm_head", "transformer.output_layer", "embed_out"]
         )
+        if self.quant_lm_head:
+            self.modules_to_not_convert = []
         self.device = kwargs.get("device", "auto")
         self.scheme = "sym" if self.sym else "asym"
 
@@ -409,6 +417,7 @@ class AwqConfig(INCQuantizationConfigMixin):
         zero_point: bool = True,
         use_ggml: bool = False,
         use_quant: bool = True,
+        quant_lm_head: bool = False,
         **kwargs,
     ):
         self.quant_method = QuantizationMethod.AWQ
@@ -427,9 +436,12 @@ class AwqConfig(INCQuantizationConfigMixin):
         self.seq_len = seq_len
         self.use_double_quant = use_double_quant
         self.double_quant_scale_dtype = double_quant_scale_dtype
+        self.quant_lm_head = quant_lm_head
         self.modules_to_not_convert = kwargs.get(
             "modules_to_not_convert", ["lm_head", "transformer.output_layer", "embed_out"]
         )
+        if self.quant_lm_head:
+            self.modules_to_not_convert = []
         self.use_ggml = use_ggml
         self.use_quant = use_quant
         self.device = kwargs.get("device", "auto")
@@ -478,6 +490,7 @@ class TeqConfig(INCQuantizationConfigMixin):
         double_quant_scale_dtype=None,  # reserve for double quant
         sym: bool = True,
         use_ggml: bool = False,
+        quant_lm_head: bool = False,
         **kwargs,
     ):
         self.quant_method = QuantizationMethod.TEQ
@@ -496,9 +509,12 @@ class TeqConfig(INCQuantizationConfigMixin):
         self.seq_len = seq_len
         self.use_double_quant = use_double_quant
         self.double_quant_scale_dtype = double_quant_scale_dtype
+        self.quant_lm_head = quant_lm_head
         self.modules_to_not_convert = kwargs.get(
             "modules_to_not_convert", ["lm_head", "transformer.output_layer", "embed_out"]
         )
+        if self.quant_lm_head:
+            self.modules_to_not_convert = []
         self.use_ggml = use_ggml
         self.device = kwargs.get("device", "auto")
         self.batch_size = kwargs.pop("batch_size", 8)
@@ -545,9 +561,9 @@ class AutoRoundConfig(INCQuantizationConfigMixin):
         n_samples: int = 128,
         seq_len: int = 2048,
         iters: int = 200,
-        quant_lm_head: bool = False,
         use_ggml: bool = False,
         use_layer_wise: bool = False,
+        quant_lm_head: bool = False,
         **kwargs,
     ):
 

@@ -214,7 +214,7 @@ if args.woq:
             scale_dtype=args.scale_dtype,
             weight_dtype=args.weight_dtype,
             layer_wise=args.layer_wise,
-            quant_lm_head = args.quant_lm_head,
+            quant_lm_head=args.quant_lm_head,
         )
     elif args.woq_algo == "Awq":
         quantization_config = AwqConfig(
@@ -229,7 +229,7 @@ if args.woq:
             compute_dtype=args.compute_dtype,
             scale_dtype=args.scale_dtype,
             weight_dtype=args.weight_dtype,
-            quant_lm_head = args.quant_lm_head,
+            quant_lm_head=args.quant_lm_head,
         )
     elif args.woq_algo == "Teq":
         quantization_config = TeqConfig(
@@ -244,7 +244,7 @@ if args.woq:
             compute_dtype=args.compute_dtype,
             scale_dtype=args.scale_dtype,
             weight_dtype=args.weight_dtype,
-            quant_lm_head = args.quant_lm_head,
+            quant_lm_head=args.quant_lm_head,
         )
     elif args.woq_algo == "GPTQ":
         quantization_config = GPTQConfig(
@@ -266,7 +266,7 @@ if args.woq:
             weight_dtype=args.weight_dtype,
             layer_wise=args.layer_wise,
             true_sequential=args.true_sequential,
-            quant_lm_head = args.quant_lm_head,
+            quant_lm_head=args.quant_lm_head,
         )
     elif args.woq_algo == "AutoRound":
         quantization_config = AutoRoundConfig(
@@ -284,16 +284,10 @@ if args.woq:
             lr=args.lr,
             minmax_lr=args.minmax_lr,
             disable_quanted_input=args.disable_quanted_input,
-            quant_lm_head = args.quant_lm_head,
+            quant_lm_head=args.quant_lm_head,
         )
     else:
         assert False, "Please set the correct '--woq_algo'"
-# bitsandbytes
-elif args.bitsandbytes:
-    quantization_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_quant_type="nf4",
-    )
 else:
     print("The quantization_config is None.")
 
