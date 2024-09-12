@@ -52,7 +52,6 @@ from transformers.utils import has_file, is_accelerate_available, is_safetensors
 from neural_compressor.model.torch_model import PyTorchFXModel
 from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
 from neural_compressor.transformers.utils.utility import (
-    _neural_compressor_version,
     is_intel_gpu_available,
     is_ipex_available,
 )
