@@ -468,7 +468,6 @@ class TeqConfig(INCQuantizationConfigMixin):
         weight_dtype: Any = None,
         scale_dtype: Any = None,
         use_layer_wise: bool = False,
-        absorb_to_layer: dict = {},
         n_samples: int = 128,
         seq_len: int = 2048,
         sym: bool = True,
@@ -483,7 +482,6 @@ class TeqConfig(INCQuantizationConfigMixin):
         self.weight_dtype = "int4" if self.bits == 4 else "int8"
         self.scale_dtype = scale_dtype
         self.group_size = group_size
-        self.absorb_to_layer = absorb_to_layer
         self.sym = sym
         self.scheme = "sym" if self.sym else "asym"
         self.use_layer_wise = use_layer_wise
