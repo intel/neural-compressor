@@ -115,7 +115,7 @@ Pytorch and Intel-extension-for-pytorch version for intel GPU > 2.1 are required
 
 ```bash
 pip install -r requirements_GPU.txt
-pip install transformers==4.40.2
+pip install transformers==4.38.1 # llama use 4.38.1
 source /opt/intel/oneapi/setvars.sh
 git clone https://github.com/intel/intel-extension-for-pytorch.git ipex-gpu
 cd ipex-gpu

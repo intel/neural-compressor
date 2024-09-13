@@ -91,7 +91,6 @@ class _BaseINCAutoModelClass:
         use_xpu = True if device_map == torch.device("xpu") or device_map == "xpu" else False
 
         config = kwargs.pop("config", None)
-        model_hub = kwargs.pop("model_hub", "huggingface")
 
         quantization_config = kwargs.pop("quantization_config", None)
         if not isinstance(config, PretrainedConfig):
