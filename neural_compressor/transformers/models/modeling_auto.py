@@ -86,7 +86,7 @@ class _BaseINCAutoModelClass:
     @classmethod
     def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
 
-        device_map = kwargs.get("device_map", "cpu")
+        device_map = kwargs.get("device_map", "xpu" if is_xpu_available() else "cpu")
         use_cpu = True if device_map == torch.device("cpu") or device_map == "cpu" else False
         use_xpu = True if device_map == torch.device("xpu") or device_map == "xpu" else False
 
