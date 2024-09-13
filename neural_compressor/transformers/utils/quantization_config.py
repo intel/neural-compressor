@@ -243,7 +243,7 @@ class INCQuantizationConfigMixin(QuantizationConfig):
 class RtnConfig(INCQuantizationConfigMixin):
     def __init__(
         self,
-        bits: int = 8,
+        bits: int = 4,
         group_size: int = 32,
         compute_dtype: Any = None,
         scale_dtype: Any = None,
@@ -298,7 +298,7 @@ class RtnConfig(INCQuantizationConfigMixin):
 class GPTQConfig(INCQuantizationConfigMixin):
     def __init__(
         self,
-        bits: int = 8,
+        bits: int = 4,
         tokenizer: Any = None,
         dataset: str = "NeelNanda/pile-10k",
         batch_size: int = 8,
@@ -394,7 +394,7 @@ class GPTQConfig(INCQuantizationConfigMixin):
 class AwqConfig(INCQuantizationConfigMixin):
     def __init__(
         self,
-        bits: int = 8,
+        bits: int = 4,
         tokenizer: Any = None,
         dataset: str = "NeelNanda/pile-10k",
         group_size: int = 32,
@@ -462,7 +462,7 @@ class AwqConfig(INCQuantizationConfigMixin):
 class TeqConfig(INCQuantizationConfigMixin):
     def __init__(
         self,
-        bits: int = 8,
+        bits: int = 4,
         tokenizer: Any = None,
         dataset: str = "NeelNanda/pile-10k",
         group_size: int = 32,
@@ -525,7 +525,7 @@ class TeqConfig(INCQuantizationConfigMixin):
 class AutoRoundConfig(INCQuantizationConfigMixin):
     def __init__(
         self,
-        bits: int = 8,
+        bits: int = 4,
         tokenizer: Any = None,
         dataset: str = "NeelNanda/pile-10k",
         group_size: int = 128,
