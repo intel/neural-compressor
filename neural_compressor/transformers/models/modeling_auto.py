@@ -60,14 +60,13 @@ from ..quantization.utils import (
     replace_linear,
     save_low_bit,
 )
-from ..utils import AutoRoundConfig, AwqConfig, GPTQConfig, LazyImport, RtnConfig, TeqConfig, logger
+from ..utils import AutoRoundConfig, AwqConfig, GPTQConfig, RtnConfig, TeqConfig, logger
 from ..utils.utility import SAFE_WEIGHTS_INDEX_NAME, SAFE_WEIGHTS_NAME, WEIGHTS_INDEX_NAME, WEIGHTS_NAME, CpuInfo
 
 if is_ipex_available() and is_intel_gpu_available():
     # pylint: disable=E0401
     from intel_extension_for_pytorch.nn.utils._quantize_convert import WeightOnlyQuantizedLinear
 
-torch = LazyImport("torch")
 
 
 def build_woq_model(model, quantization_config):
