@@ -50,31 +50,24 @@ parser.add_argument(
 parser.add_argument(
     "--bits",
     type=int,
-    default=8,
+    default=4,
     choices=[4, 8],
 )
 parser.add_argument(
     "--weight_dtype",
     type=str,
-    default="int8",
+    default="int4",
     choices=[
         "int8",
-        "int4",  # int4 == int4_clip
-        "int4_clip",
-        "fp4",  # fp4 == fp4_e2m1
-        "fp4_e2m1_bnb",
-        "fp4_e2m1",
+        "int4",
         "nf4",
-        "fp8",  # fp8 == fp8_e4m3
-        "fp8_e5m2",
-        "fp8_e4m3",
     ],
 )
 parser.add_argument(
     "--scale_dtype",
     type=str,
     default="fp32",
-    choices=["fp32", "bf16", "fp8"],
+    choices=["fp32", "bf16"],
 )
 parser.add_argument(
     "--compute_dtype",

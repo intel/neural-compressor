@@ -15,13 +15,11 @@
 """Intel Neural Compressor model convert."""
 
 import json
-import logging
 import math
 import os
 import types
 
 from datasets import load_dataset
-from transformers import AutoTokenizer
 
 from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
 from neural_compressor.torch.quantization import (
@@ -29,31 +27,21 @@ from neural_compressor.torch.quantization import (
     AWQConfig,
     GPTQConfig,
     RTNConfig,
-    SmoothQuantConfig,
     TEQConfig,
     convert,
     prepare,
 )
-from neural_compressor.transformers.utils.utility import _ipex_version, is_autoround_available, is_ipex_available
-from neural_compressor.utils.utility import LazyImport
+from neural_compressor.torch.utils import is_ipex_available
+from neural_compressor.common.utils import LazyImport, logger
 
-from ..utils import CpuInfo
+from neural_compressor.common.utils import logger, LazyImport
 
 if is_ipex_available():
     import intel_extension_for_pytorch as ipex
 
-if is_autoround_available():
-    from auto_round.export.export_to_itrex.model_wrapper import (
-        WeightOnlyLinear as auto_round_woqlinear,  # pylint: disable=E0401
-    )
-
-    from neural_compressor.torch.algorithms.weight_only.autoround import get_dataloader as get_autoround_dataloader
 from typing import Union
 
 torch = LazyImport("torch")
-
-
-logger = logging.getLogger(__name__)
 
 
 def convert_dtype_str2torch(str_dtype):
@@ -515,10 +503,11 @@ def convert_to_quantized_model(model, config, device="cpu"):
                 module_name = ".*" + module
                 quant_config.set_local(module_name, AutoRoundConfig(dtype="fp32"))
         logger.info(f"Do AutoRound algorithm with config {quant_config}")
+        from neural_compressor.torch.algorithms.weight_only.autoround import get_dataloader as get_autoround_dataloader
         dataloader = get_autoround_dataloader(
             tokenizer=config.tokenizer,
             seqlen=config.seq_len,
-            dataset_name="NeelNanda/pile-10k",
+            dataset_name=config.dataset,
             seed=42,
             bs=config.batch_size,
             nsamples=config.n_samples,

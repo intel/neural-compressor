@@ -14,4 +14,3 @@
 """Utils for optimization."""
 
 from .quantization_config import RtnConfig, AwqConfig, TeqConfig, GPTQConfig, AutoRoundConfig
-from .utility import LazyImport, logger, CpuInfo

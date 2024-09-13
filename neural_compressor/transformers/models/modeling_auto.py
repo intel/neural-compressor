@@ -31,41 +31,28 @@
 # limitations under the License.
 
 import copy
-import json
 import os
-import re
 import types
-from threading import Thread
-from typing import Union
 
 import torch
-import torch.nn.functional as F
 import transformers
 from accelerate import init_empty_weights
-from huggingface_hub import hf_hub_download
-from packaging import version
 from transformers import AutoConfig
 from transformers.configuration_utils import PretrainedConfig
 from transformers.modeling_utils import load_state_dict
-from transformers.utils import has_file, is_accelerate_available, is_safetensors_available
+from transformers.utils import has_file, is_safetensors_available
 
 from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
 from neural_compressor.torch.utils import set_module
-from neural_compressor.transformers.utils.utility import is_intel_gpu_available, is_ipex_available
+from neural_compressor.common.utils import CpuInfo, logger
 
 from ..quantization.utils import (
-    convert_dtype_str2torch,
     convert_dtype_torch2str,
     convert_to_quantized_model,
     replace_linear,
     save_low_bit,
 )
-from ..utils import AutoRoundConfig, AwqConfig, GPTQConfig, RtnConfig, TeqConfig, logger
-from ..utils.utility import SAFE_WEIGHTS_INDEX_NAME, SAFE_WEIGHTS_NAME, WEIGHTS_INDEX_NAME, WEIGHTS_NAME, CpuInfo
-
-if is_ipex_available() and is_intel_gpu_available():
-    # pylint: disable=E0401
-    from intel_extension_for_pytorch.nn.utils._quantize_convert import WeightOnlyQuantizedLinear
+from ..utils import AutoRoundConfig, AwqConfig, GPTQConfig, RtnConfig, TeqConfig
 
 
 def build_woq_model(model, quantization_config):
@@ -231,7 +218,19 @@ class _BaseINCAutoModelClass:
         from transformers.modeling_utils import _add_variant, get_checkpoint_shard_files, no_init_weights
         from transformers.models.auto.auto_factory import _get_model_class
         from transformers.models.auto.configuration_auto import AutoConfig
-        from transformers.utils import ContextManagers, cached_file, download_url, extract_commit_hash, is_remote_url
+        from transformers.utils import (
+            SAFE_WEIGHTS_INDEX_NAME,
+            SAFE_WEIGHTS_NAME,
+            WEIGHTS_INDEX_NAME,
+            WEIGHTS_NAME,
+            ContextManagers,
+            cached_file,
+            download_url,
+            extract_commit_hash,
+            has_file,
+            is_remote_url,
+            is_safetensors_available,
+        )
 
         # Autofactory
         kwargs_orig = copy.deepcopy(kwargs)
@@ -598,7 +597,7 @@ class _BaseINCAutoModelClass:
             if use_xpu:
                 quantization_config.weight_dtype = "int4_fullrange"
             else:
-                quantization_config.weight_dtype = "int4_clip"
+                quantization_config.weight_dtype = "int4"
             logger.info(
                 "{} quantization weight_dtype is used due to bits is 4 in config.json.".format(
                     quantization_config.weight_dtype
@@ -613,8 +612,8 @@ class _BaseINCAutoModelClass:
             )
         else:
             logger.warning("bits number only supports 4, 8.")
-            quantization_config.weight_dtype = "int4_clip"
-            logger.warning("int4_clip weight_dtype is used, please change the config.json if you don't want to use it.")
+            quantization_config.weight_dtype = "int4"
+            logger.warning("int4 weight_dtype is used, please change the config.json if you don't want to use it.")
 
         init_contexts = [no_init_weights(_enable=_fast_init)]
         init_contexts.append(init_empty_weights())

@@ -19,7 +19,6 @@ from .utils import (
     GPTQConfig,
     AutoRoundConfig,
 )
-from .utils.utility import LazyImport
 from .models import (
     AutoModelForCausalLM,
     AutoModel,

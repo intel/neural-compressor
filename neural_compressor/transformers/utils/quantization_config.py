@@ -15,10 +15,9 @@
 """Intel Neural Compressor Transformers-like Config."""
 
 import os
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Tuple, Union
 
-from neural_compressor.utils import logger
-from neural_compressor.utils.utility import LazyImport
+from neural_compressor.common.utils import logger, LazyImport
 
 torch = LazyImport("torch")
 transformers = LazyImport("transformers")
@@ -153,13 +152,9 @@ class INCQuantizationConfigMixin(QuantizationConfig):
             "calib_func",
             "calib_iters",
             "calib_len",
-            "double_quant_scale_dtype",
-            "use_double_quant",
             "mse_range",
             "scheme",
             "tokenizer",
-            "use_ggml",
-            "use_quant",
             "use_layer_wise",
             "blocksize",
             "nsamples",
@@ -248,7 +243,7 @@ class INCQuantizationConfigMixin(QuantizationConfig):
 class RtnConfig(INCQuantizationConfigMixin):
     def __init__(
         self,
-        bits: int = 4,
+        bits: int = 8,
         group_size: int = 32,
         compute_dtype: Any = None,
         scale_dtype: Any = None,
@@ -303,7 +298,7 @@ class RtnConfig(INCQuantizationConfigMixin):
 class GPTQConfig(INCQuantizationConfigMixin):
     def __init__(
         self,
-        bits: int = 4,
+        bits: int = 8,
         tokenizer: Any = None,
         dataset: str = "NeelNanda/pile-10k",
         batch_size: int = 8,
@@ -411,11 +406,7 @@ class AwqConfig(INCQuantizationConfigMixin):
         seq_len: int = 2048,
         auto_scale: bool = True,
         auto_clip: bool = True,
-        use_double_quant=False,
-        double_quant_scale_dtype=None,  # reserve for double quant
         zero_point: bool = True,
-        use_ggml: bool = False,
-        use_quant: bool = True,
         quant_lm_head: bool = False,
         **kwargs,
     ):
@@ -433,21 +424,16 @@ class AwqConfig(INCQuantizationConfigMixin):
         self.use_layer_wise = use_layer_wise
         self.n_samples = n_samples
         self.seq_len = seq_len
-        self.use_double_quant = use_double_quant
-        self.double_quant_scale_dtype = double_quant_scale_dtype
         self.quant_lm_head = quant_lm_head
         self.modules_to_not_convert = kwargs.get(
             "modules_to_not_convert", ["lm_head", "transformer.output_layer", "embed_out"]
         )
         if self.quant_lm_head:
             self.modules_to_not_convert = []
-        self.use_ggml = use_ggml
-        self.use_quant = use_quant
         self.device = kwargs.get("device", "auto")
         self.scheme = "asym" if self.zero_point else "sym"
         self.sym = True if not self.zero_point else False
         self.batch_size = kwargs.pop("batch_size", 8)
-        self.use_ipex = kwargs.pop("use_ipex", False)
 
     def to_diff_dict(self) -> Dict[str, Any]:
         """Removes all attributes from config which correspond to the default config attributes
@@ -485,10 +471,7 @@ class TeqConfig(INCQuantizationConfigMixin):
         absorb_to_layer: dict = {},
         n_samples: int = 128,
         seq_len: int = 2048,
-        use_double_quant=False,
-        double_quant_scale_dtype=None,  # reserve for double quant
         sym: bool = True,
-        use_ggml: bool = False,
         quant_lm_head: bool = False,
         **kwargs,
     ):
@@ -506,18 +489,14 @@ class TeqConfig(INCQuantizationConfigMixin):
         self.use_layer_wise = use_layer_wise
         self.n_samples = n_samples
         self.seq_len = seq_len
-        self.use_double_quant = use_double_quant
-        self.double_quant_scale_dtype = double_quant_scale_dtype
         self.quant_lm_head = quant_lm_head
         self.modules_to_not_convert = kwargs.get(
             "modules_to_not_convert", ["lm_head", "transformer.output_layer", "embed_out"]
         )
         if self.quant_lm_head:
             self.modules_to_not_convert = []
-        self.use_ggml = use_ggml
         self.device = kwargs.get("device", "auto")
         self.batch_size = kwargs.pop("batch_size", 8)
-        self.use_ipex = kwargs.pop("use_ipex", False)
 
     def to_diff_dict(self) -> Dict[str, Any]:
         """Removes all attributes from config which correspond to the default config attributes
@@ -544,15 +523,13 @@ class TeqConfig(INCQuantizationConfigMixin):
 class AutoRoundConfig(INCQuantizationConfigMixin):
     def __init__(
         self,
-        bits: int = 4,
+        bits: int = 8,
         tokenizer: Any = None,
         dataset: str = "NeelNanda/pile-10k",
         group_size: int = 128,
         compute_dtype: Any = None,
         weight_dtype: Any = None,
         scale_dtype: Any = None,
-        use_double_quant=False,
-        double_quant_scale_dtype=None,  # reserve for double quant
         sym: bool = False,
         lr: float = None,
         minmax_lr: float = None,
@@ -560,7 +537,6 @@ class AutoRoundConfig(INCQuantizationConfigMixin):
         n_samples: int = 128,
         seq_len: int = 2048,
         iters: int = 200,
-        use_ggml: bool = False,
         use_layer_wise: bool = False,
         quant_lm_head: bool = False,
         **kwargs,
@@ -576,8 +552,6 @@ class AutoRoundConfig(INCQuantizationConfigMixin):
         self.weight_dtype = "int4" if self.bits == 4 else "int8"
         self.scale_dtype = scale_dtype
         self.sym = sym
-        self.use_double_quant = use_double_quant
-        self.double_quant_scale_dtype = double_quant_scale_dtype
         self.n_samples = n_samples
         self.group_size = group_size
         self.lr = lr
@@ -591,7 +565,6 @@ class AutoRoundConfig(INCQuantizationConfigMixin):
         )
         if self.quant_lm_head:
             self.modules_to_not_convert = []
-        self.use_ggml = use_ggml
         self.batch_size = kwargs.pop("batch_size", 8)
         self.device = kwargs.get("device", "auto")
         calib_iters = kwargs.get("calib_iters", None)
@@ -614,12 +587,6 @@ class AutoRoundConfig(INCQuantizationConfigMixin):
             self.scale_dtype = convert_dtype_torch2str(scale_dtype)
         else:
             self.scale_dtype = scale_dtype
-
-        if isinstance(double_quant_scale_dtype, torch.dtype):
-            self.double_quant_scale_dtype = convert_dtype_torch2str(double_quant_scale_dtype)
-        else:
-            self.double_quant_scale_dtype = double_quant_scale_dtype
-        self.use_ipex = kwargs.pop("use_ipex", False)
         self.use_layer_wise = use_layer_wise
         self.model_path = kwargs.get("model_path", "")
 
