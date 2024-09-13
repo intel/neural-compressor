@@ -21,6 +21,7 @@ import types
 
 from datasets import load_dataset
 
+from neural_compressor.common.utils import LazyImport, logger
 from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
 from neural_compressor.torch.quantization import (
     AutoRoundConfig,
@@ -32,9 +33,6 @@ from neural_compressor.torch.quantization import (
     prepare,
 )
 from neural_compressor.torch.utils import is_ipex_available
-from neural_compressor.common.utils import LazyImport, logger
-
-from neural_compressor.common.utils import logger, LazyImport
 
 if is_ipex_available():
     import intel_extension_for_pytorch as ipex
@@ -504,6 +502,7 @@ def convert_to_quantized_model(model, config, device="cpu"):
                 quant_config.set_local(module_name, AutoRoundConfig(dtype="fp32"))
         logger.info(f"Do AutoRound algorithm with config {quant_config}")
         from neural_compressor.torch.algorithms.weight_only.autoround import get_dataloader as get_autoround_dataloader
+
         dataloader = get_autoround_dataloader(
             tokenizer=config.tokenizer,
             seqlen=config.seq_len,

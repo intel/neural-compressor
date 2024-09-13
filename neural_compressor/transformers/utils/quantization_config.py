@@ -17,7 +17,7 @@
 import os
 from typing import Any, Dict, Tuple, Union
 
-from neural_compressor.common.utils import logger, LazyImport
+from neural_compressor.common.utils import LazyImport, logger
 
 torch = LazyImport("torch")
 transformers = LazyImport("transformers")
