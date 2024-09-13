@@ -6,7 +6,7 @@ protobuf
 sentencepiece != 0.1.92
 --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/
 torch==2.3.110
-transformers==4.38.1
+transformers #llama use 4.38.1
 bitsandbytes  #baichuan
 transformers_stream_generator
 tiktoken  #qwen
