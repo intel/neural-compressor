@@ -68,7 +68,6 @@ if is_ipex_available() and is_intel_gpu_available():
     from intel_extension_for_pytorch.nn.utils._quantize_convert import WeightOnlyQuantizedLinear
 
 
-
 def build_woq_model(model, quantization_config):
     bits = quantization_config.bits
     for n, m in model.named_modules():
