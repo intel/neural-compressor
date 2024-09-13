@@ -37,22 +37,17 @@ import types
 import torch
 import transformers
 from accelerate import init_empty_weights
+from accelerate.utils import is_xpu_available
 from transformers import AutoConfig
 from transformers.configuration_utils import PretrainedConfig
 from transformers.modeling_utils import load_state_dict
 from transformers.utils import has_file, is_safetensors_available
-from accelerate.utils import is_xpu_available
 
+from neural_compressor.common.utils import CpuInfo, logger
 from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
 from neural_compressor.torch.utils import set_module
-from neural_compressor.common.utils import CpuInfo, logger
 
-from ..quantization.utils import (
-    convert_dtype_torch2str,
-    convert_to_quantized_model,
-    replace_linear,
-    save_low_bit,
-)
+from ..quantization.utils import convert_dtype_torch2str, convert_to_quantized_model, replace_linear, save_low_bit
 from ..utils import AutoRoundConfig, AwqConfig, GPTQConfig, RtnConfig, TeqConfig
 
 
@@ -228,9 +223,7 @@ class _BaseINCAutoModelClass:
             cached_file,
             download_url,
             extract_commit_hash,
-            has_file,
             is_remote_url,
-            is_safetensors_available,
         )
 
         # Autofactory
