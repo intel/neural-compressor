@@ -12,4 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .utils.quantization_config import GPTQConfig, RtnConfig
+from .utils import (
+    RtnConfig,
+    AwqConfig,
+    TeqConfig,
+    GPTQConfig,
+    AutoRoundConfig,
+)
+from .models import (
+    AutoModelForCausalLM,
+    AutoModel,
+    AutoModelForSeq2SeqLM,
+)

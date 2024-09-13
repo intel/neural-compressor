@@ -14,19 +14,25 @@
 # limitations under the License.
 """Intel Neural Compressor model convert."""
 
-import gc
 import json
-import logging
 import math
 import os
 import types
 
 from datasets import load_dataset
 
+from neural_compressor.common.utils import LazyImport, logger
 from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
-from neural_compressor.torch.quantization import GPTQConfig, RTNConfig, convert, prepare
+from neural_compressor.torch.quantization import (
+    AutoRoundConfig,
+    AWQConfig,
+    GPTQConfig,
+    RTNConfig,
+    TEQConfig,
+    convert,
+    prepare,
+)
 from neural_compressor.torch.utils import is_ipex_available
-from neural_compressor.utils.utility import CpuInfo, LazyImport
 
 if is_ipex_available():
     import intel_extension_for_pytorch as ipex
@@ -34,9 +40,6 @@ if is_ipex_available():
 from typing import Union
 
 torch = LazyImport("torch")
-
-
-logger = logging.getLogger(__name__)
 
 
 def convert_dtype_str2torch(str_dtype):
@@ -241,8 +244,6 @@ def _replace_linear(
                     module.qweight.data if hasattr(module, "qweight") else weight,
                     None if module.bias is None else module.bias.data,
                 )
-                del module
-                gc.collect()
                 is_removed = True
 
         if not is_removed and len(list(module.children())) > 0:  # pylint: disable=E1101
@@ -271,12 +272,24 @@ def default_run_fn(model, tokenizer, dataset, max_length=512, n_samples=100, bat
         exit(0)
 
     def tokenize_function(examples):
+        if algo == "teq":
+            if tokenizer.pad_token is None:
+                tokenizer.pad_token = tokenizer.eos_token
         if "prompt" in examples:
-            example = tokenizer(examples["prompt"])
+            if algo == "teq":
+                example = tokenizer(examples["prompt"], padding="max_length", max_length=max_length)
+            else:
+                example = tokenizer(examples["prompt"])
         elif "code" in examples:
-            example = tokenizer(examples["code"])
+            if algo == "teq":
+                example = tokenizer(examples["code"], padding="max_length", max_length=max_length)
+            else:
+                example = tokenizer(examples["code"])
         elif "text" in examples:
-            example = tokenizer(examples["text"])
+            if algo == "teq":
+                example = tokenizer(examples["text"], padding="max_length", max_length=max_length)
+            else:
+                example = tokenizer(examples["text"])
         else:
             logger.error(
                 "Please check dataset prompt identifier," + " NeelNanda/pile-10k is default used calibration dataset."
@@ -324,6 +337,17 @@ def default_run_fn(model, tokenizer, dataset, max_length=512, n_samples=100, bat
             pass
 
 
+@torch.no_grad()
+def run_fn_for_autoround(model, dataloader):
+    for data in dataloader:
+        if isinstance(data, tuple) or isinstance(data, list):
+            model(*data)
+        elif isinstance(data, dict):
+            model(**data)
+        else:
+            model(data)
+
+
 def convert_to_quantized_model(model, config, device="cpu"):
     if device == "xpu" or device == torch.device("xpu"):
         import intel_extension_for_pytorch
@@ -343,11 +367,21 @@ def convert_to_quantized_model(model, config, device="cpu"):
 
     # mapping to INC config
     dtype = "int4" if config.weight_dtype == "int4_fullrange" else config.weight_dtype
+    import neural_compressor.torch.utils as torch_utils
+
+    process_type = torch_utils.get_processor_type_from_user_config()
+    if process_type == torch_utils.ProcessorType.Client:
+        config.use_layer_wise = True
     if config.quant_method.value == "rtn":
-        quant_config = RTNConfig(dtype=dtype, bits=config.bits, use_sym=config.sym, group_size=config.group_size)
-        if config.use_layer_wise:
-            quant_config.user_layer_wise = config.use_layer_wise
-            quant_config.model_path = config.model_path
+        quant_config = RTNConfig(
+            dtype=dtype,
+            bits=config.bits,
+            use_sym=config.sym,
+            group_size=config.group_size,
+            use_layer_wise=config.use_layer_wise,
+            model_path=config.model_path,
+            quant_lm_head=config.quant_lm_head,
+        )
         if config.modules_to_not_convert != []:
             for module in config.modules_to_not_convert:
                 module_name = ".*" + module
@@ -363,16 +397,15 @@ def convert_to_quantized_model(model, config, device="cpu"):
             use_sym=config.sym,
             group_size=config.group_size,
             use_layer_wise=config.use_layer_wise,
+            model_path=config.model_path,
             act_order=config.desc_act,
             percdamp=config.damp_percent,
             block_size=config.blocksize,
             static_groups=config.static_groups,
             use_mse_search=config.use_mse_search,
             true_sequential=config.true_sequential,
+            quant_lm_head=config.quant_lm_head,
         )
-        if config.use_layer_wise:
-            quant_config.user_layer_wise = config.use_layer_wise
-            quant_config.model_path = config.model_path
         if config.modules_to_not_convert != []:
             for module in config.modules_to_not_convert:
                 module_name = ".*" + module
@@ -390,8 +423,102 @@ def convert_to_quantized_model(model, config, device="cpu"):
         model = prepare(model=model, quant_config=quant_config)
         run_fn(model, *run_args)
         model = convert(model)
+    elif config.quant_method.value == "awq":
+        quant_config = AWQConfig(
+            dtype=dtype,
+            bits=config.bits,
+            use_sym=config.sym,
+            group_size=config.group_size,
+            use_layer_wise=config.use_layer_wise,
+            use_auto_scale=config.auto_scale,
+            use_auto_clip=config.auto_clip,
+            folding=True,
+            absorb_layer_dict=config.absorb_layer_dict,
+            quant_lm_head=config.quant_lm_head,
+        )
+        if config.modules_to_not_convert != []:
+            for module in config.modules_to_not_convert:
+                module_name = ".*" + module
+                quant_config.set_local(module_name, AWQConfig(dtype="fp32"))
+        logger.info(f"Do AWQ algorithm with config {quant_config}")
+        run_fn = default_run_fn
+        run_args = (
+            config.tokenizer,
+            config.dataset,
+            config.seq_len,  # max_length
+            config.n_samples,  # n_samples
+            config.batch_size,  # batch_size
+            config.quant_method.value,  # algo
+        )
+        example_inputs = torch.ones([1, 512], dtype=torch.long).to(device)
+        model = prepare(model=model, quant_config=quant_config, example_inputs=example_inputs)
+        run_fn(model, *run_args)
+        model = convert(model)
+    elif config.quant_method.value == "teq":
+        quant_config = TEQConfig(
+            dtype=dtype,
+            bits=config.bits,
+            use_sym=config.sym,
+            group_size=config.group_size,
+            use_layer_wise=config.use_layer_wise,
+            quant_lm_head=config.quant_lm_head,
+            absorb_to_layer=config.absorb_layer_dict,
+        )
+        if config.modules_to_not_convert != []:
+            for module in config.modules_to_not_convert:
+                module_name = ".*" + module
+                quant_config.set_local(module_name, TEQConfig(dtype="fp32"))
+        logger.info(f"Do TEQ algorithm with config {quant_config}")
+        run_fn = default_run_fn
+        run_args = (
+            config.tokenizer,
+            config.dataset,
+            config.seq_len,  # max_length
+            config.n_samples,  # n_samples
+            config.batch_size,  # batch_size
+            config.quant_method.value,  # algo
+        )
+        example_inputs = torch.ones([1, 512], dtype=torch.long).to(device)
+        model = prepare(model=model, quant_config=quant_config, example_inputs=example_inputs)
+        run_fn(model, *run_args)
+        model = convert(model)
+    elif config.quant_method.value == "autoround":
+        quant_config = AutoRoundConfig(
+            dtype=dtype,
+            bits=config.bits,
+            use_sym=config.sym,
+            group_size=config.group_size,
+            enable_quanted_input=not config.disable_quanted_input,
+            lr=config.lr,
+            minmax_lr=config.minmax_lr,
+            seqlen=config.seq_len,
+            nsamples=config.n_samples,
+            iters=config.iters,
+            scale_dtype=config.scale_dtype,
+            use_layer_wise=config.use_layer_wise,
+        )
+        if config.modules_to_not_convert != []:
+            for module in config.modules_to_not_convert:
+                module_name = ".*" + module
+                quant_config.set_local(module_name, AutoRoundConfig(dtype="fp32"))
+        logger.info(f"Do AutoRound algorithm with config {quant_config}")
+        from neural_compressor.torch.algorithms.weight_only.autoround import get_dataloader as get_autoround_dataloader
+
+        dataloader = get_autoround_dataloader(
+            tokenizer=config.tokenizer,
+            seqlen=config.seq_len,
+            dataset_name=config.dataset,
+            seed=42,
+            bs=config.batch_size,
+            nsamples=config.n_samples,
+        )
+        run_fn = run_fn_for_autoround
+        run_args = (dataloader,)
+        model = prepare(model=model, quant_config=quant_config)
+        run_fn(model, *run_args)
+        model = convert(model)
     else:
-        assert False, "The Supported algorithm are RTN, GPTQ."
+        assert False, "The Supported algorithm are RTN, AWQ, TEQ, GPTQ, AUTOROUND"
 
     if device == "xpu" or device == torch.device("xpu"):
         logger.warning("The recommended ipex version is higher than 2.3.10 for xpu device.")
