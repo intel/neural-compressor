@@ -527,14 +527,14 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
 
     def pack_tensor(self, raw_tensor):
         """Pack tensor."""
-        if "cuda" in raw_tensor.device.type or "hpu" in raw_tensor.device.type:
+        if "cuda" in raw_tensor.device.type:
             return self.pack_tensor_with_torch(raw_tensor)
         else:
             return self.pack_tensor_with_numpy(raw_tensor)
 
     def unpack_tensor(self, packed_tensor):
         """Unpack tensor."""
-        if "cuda" in packed_tensor.device.type or "hpu" in packed_tensor.device.type:
+        if "cuda" in packed_tensor.device.type:
             return self.unpack_tensor_with_torch(packed_tensor)
         else:
             return self.unpack_tensor_with_numpy(packed_tensor)

@@ -1047,7 +1047,10 @@ class GPTQ:
         Q = torch.zeros_like(W)
 
         damp = percdamp * torch.mean(torch.diag(H))
-        diag = torch.arange(self.columns, device=self.device)
+        if "hpu" in self.device:
+            diag = torch.arange(self.columns, device='cpu')
+        else:
+            diag = torch.arange(self.columns, device=self.device)
         H[diag, diag] += damp  # add a average value of
         H = torch.linalg.cholesky(H)
         H = torch.cholesky_inverse(H)
