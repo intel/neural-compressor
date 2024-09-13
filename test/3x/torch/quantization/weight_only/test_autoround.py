@@ -20,13 +20,16 @@ from neural_compressor.torch.algorithms.weight_only.autoround import get_dataloa
 
 try:
     import auto_round
-    from auto_gptq.nn_modules.qlinear.qlinear_triton import QuantLinear
     from auto_round.export.export_to_itrex.model_wrapper import WeightOnlyLinear
 
     auto_round_installed = True
-    auto_gptq_installed = True
 except ImportError:
     auto_round_installed = False
+    
+try:
+    from auto_gptq.nn_modules.qlinear.qlinear_triton import QuantLinear
+    auto_gptq_installed = True
+except ImportError:
     auto_gptq_installed = False
 
 
@@ -43,7 +46,6 @@ def run_fn(model, dataloader):
 
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
 class TestAutoRound:
-    @classmethod
     def setup_class(self):
         self.gptj = transformers.AutoModelForCausalLM.from_pretrained(
             "hf-internal-testing/tiny-random-GPTJForCausalLM",
@@ -56,9 +58,9 @@ class TestAutoRound:
         self.dataloader = get_dataloader(tokenizer, 32, dataset_name="NeelNanda/pile-10k", seed=42, bs=8, nsamples=10)
         self.label = self.gptj(self.inp)[0]
 
-    @classmethod
     def teardown_class(self):
         shutil.rmtree("saved_results", ignore_errors=True)
+        shutil.rmtree("saved_results_tiny-random-GPTJForCausalLM", ignore_errors=True)
 
     def setup_method(self, method):
         logger.info(f"Running TestAutoRound test: {method.__name__}")
