@@ -387,35 +387,6 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
 
         return fp32_weight.to(scales.device)
 
-    def forward(self, input):
-        if not hasattr(self, "weight"):
-            weight = self.recover()
-            device = self.scales.device
-            if weight.dtype == torch.float16 and device.type == "cpu":
-                weight = weight.float()
-                self.bias = self.bias.float() if self.bias is not None else None
-        if True:  # keep reusing self.weight due to recover is too slow.
-            if not hasattr(self, "weight"):
-                self.weight = weight
-            input = input.type(self.weight.dtype)
-            logger.debug(f"Calculating {self}")
-            return F.linear(input, self.weight, self.bias)
-        else:
-            input = input.type(weight.dtype)
-            return F.linear(input, weight, self.bias)
-
-    def pack_tensor(self, raw_tensor):
-        if "cuda" in self.device:
-            return self.pack_tensor_with_torch(raw_tensor)
-        else:
-            return self.pack_tensor_with_numpy(raw_tensor)
-
-    def unpack_tensor(self, packed_tensor):
-        if "cuda" in self.device:
-            return self.unpack_tensor_with_torch(packed_tensor)
-        else:
-            return self.unpack_tensor_with_numpy(packed_tensor)
-
     def pack_tensor_with_torch(self, raw_tensor):
         """Pack the tensor with torch.
 
@@ -556,14 +527,14 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
 
     def pack_tensor(self, raw_tensor):
         """Pack tensor."""
-        if "cuda" in raw_tensor.device.type or "hpu" in raw_tensor.device.type:
+        if "cuda" in raw_tensor.device.type:
             return self.pack_tensor_with_torch(raw_tensor)
         else:
             return self.pack_tensor_with_numpy(raw_tensor)
 
     def unpack_tensor(self, packed_tensor):
         """Unpack tensor."""
-        if "cuda" in packed_tensor.device.type or "hpu" in packed_tensor.device.type:
+        if "cuda" in packed_tensor.device.type:
             return self.unpack_tensor_with_torch(packed_tensor)
         else:
             return self.unpack_tensor_with_numpy(packed_tensor)
