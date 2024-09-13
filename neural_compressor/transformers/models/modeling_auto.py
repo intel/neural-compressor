@@ -41,6 +41,7 @@ from transformers import AutoConfig
 from transformers.configuration_utils import PretrainedConfig
 from transformers.modeling_utils import load_state_dict
 from transformers.utils import has_file, is_safetensors_available
+from accelerate.utils import is_xpu_available
 
 from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
 from neural_compressor.torch.utils import set_module
@@ -254,7 +255,7 @@ class _BaseINCAutoModelClass:
         revision = kwargs.pop("revision", "main")
         commit_hash = kwargs.pop("_commit_hash", None)
         _fast_init = kwargs.pop("_fast_init", True)
-        device_map = kwargs.pop("device_map", "auto")
+        device_map = kwargs.pop("device_map", "xpu" if is_xpu_available() else "cpu")
         use_safetensors = kwargs.pop("use_safetensors", None)
         kwarg_attn_imp = kwargs.pop("attn_implementation", None)
 
