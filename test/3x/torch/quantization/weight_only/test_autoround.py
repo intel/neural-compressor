@@ -25,9 +25,10 @@ try:
     auto_round_installed = True
 except ImportError:
     auto_round_installed = False
-    
+
 try:
     from auto_gptq.nn_modules.qlinear.qlinear_triton import QuantLinear
+
     auto_gptq_installed = True
 except ImportError:
     auto_gptq_installed = False
