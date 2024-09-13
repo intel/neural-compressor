@@ -68,7 +68,7 @@ class TestHQQ:
     @pytest.fixture
     def force_use_cpu(self, monkeypatch):
         # Force use CPU
-        monkeypatch.setenv("FORCE_DEVICE", "cpu")
+        monkeypatch.setenv("INC_TARGET_DEVICE", "cpu")
 
     @pytest.fixture
     def force_not_half(self, monkeypatch):
@@ -194,7 +194,7 @@ class TestHQQ:
         if device_name == "cuda" and not torch.cuda.is_available():
             pytest.skip("Skipping CUDA test because cuda is not available")
         if device_name == "cpu":
-            os.environ["FORCE_DEVICE"] = "cpu"
+            os.environ["INC_TARGET_DEVICE"] = "cpu"
             hqq_global_option.use_half = False
 
         _common_hqq_test(
