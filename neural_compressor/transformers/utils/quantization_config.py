@@ -407,6 +407,7 @@ class AwqConfig(INCQuantizationConfigMixin):
         auto_scale: bool = True,
         auto_clip: bool = True,
         zero_point: bool = True,
+        absorb_layer_dict: dict = {},
         quant_lm_head: bool = False,
         **kwargs,
     ):
@@ -424,6 +425,7 @@ class AwqConfig(INCQuantizationConfigMixin):
         self.use_layer_wise = use_layer_wise
         self.n_samples = n_samples
         self.seq_len = seq_len
+        self.absorb_layer_dict = absorb_layer_dict
         self.quant_lm_head = quant_lm_head
         self.modules_to_not_convert = kwargs.get(
             "modules_to_not_convert", ["lm_head", "transformer.output_layer", "embed_out"]
@@ -471,6 +473,7 @@ class TeqConfig(INCQuantizationConfigMixin):
         n_samples: int = 128,
         seq_len: int = 2048,
         sym: bool = True,
+        absorb_layer_dict: dict = {},
         quant_lm_head: bool = False,
         **kwargs,
     ):
@@ -487,6 +490,7 @@ class TeqConfig(INCQuantizationConfigMixin):
         self.use_layer_wise = use_layer_wise
         self.n_samples = n_samples
         self.seq_len = seq_len
+        self.absorb_layer_dict = absorb_layer_dict
         self.quant_lm_head = quant_lm_head
         self.modules_to_not_convert = kwargs.get(
             "modules_to_not_convert", ["lm_head", "transformer.output_layer", "embed_out"]

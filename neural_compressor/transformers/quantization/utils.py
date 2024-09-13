@@ -433,6 +433,7 @@ def convert_to_quantized_model(model, config, device="cpu"):
             use_auto_scale=config.auto_scale,
             use_auto_clip=config.auto_clip,
             folding=True,
+            absorb_layer_dict=config.absorb_layer_dict,
             quant_lm_head=config.quant_lm_head,
         )
         if config.modules_to_not_convert != []:
@@ -461,6 +462,7 @@ def convert_to_quantized_model(model, config, device="cpu"):
             group_size=config.group_size,
             use_layer_wise=config.use_layer_wise,
             quant_lm_head=config.quant_lm_head,
+            absorb_to_layer=config.absorb_layer_dict,
         )
         if config.modules_to_not_convert != []:
             for module in config.modules_to_not_convert:
