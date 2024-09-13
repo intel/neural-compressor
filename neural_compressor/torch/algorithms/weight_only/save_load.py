@@ -53,7 +53,7 @@ def save(model, output_dir="./saved_results", format=LoadFormat.DEFAULT, **kwarg
             - max_shard_size (str, optional): The maximum size for each shard (only applicable for 'huggingface' format). Defaults to "5GB".
     """
     os.makedirs(output_dir, exist_ok=True)
-    if format == "huggingface":
+    if format == LoadFormat.HUGGINGFACE:
         config = model.config
         quantization_config = config.quantization_config if hasattr(config, "quantization_config") else None
         if "backend" in quantization_config and "auto_round" in quantization_config["backend"]:
@@ -225,7 +225,6 @@ class WOQModelLoader:
         if "backend" in self.quantization_config and "auto_round" in self.quantization_config["backend"]:
             # load autoround format quantized model
             from auto_round import AutoRoundConfig
-
             model = model_class.from_pretrained(self.model_name_or_path)
             return model
 
