@@ -225,6 +225,7 @@ class WOQModelLoader:
         if "backend" in self.quantization_config and "auto_round" in self.quantization_config["backend"]:
             # load autoround format quantized model
             from auto_round import AutoRoundConfig
+
             model = model_class.from_pretrained(self.model_name_or_path)
             return model
 
