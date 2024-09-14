@@ -1,13 +1,13 @@
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2023 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+#    http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,19 +34,21 @@ import copy
 import os
 import types
 
+import torch
+import transformers
 from accelerate import init_empty_weights
 from accelerate.utils import is_xpu_available
+from transformers import AutoConfig
+from transformers.configuration_utils import PretrainedConfig
+from transformers.modeling_utils import load_state_dict
+from transformers.utils import has_file, is_safetensors_available
 
-from neural_compressor.adaptor.torch_utils.util import set_module
+from neural_compressor.common.utils import CpuInfo, logger
 from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
-from neural_compressor.transformers import GPTQConfig, RtnConfig
-from neural_compressor.transformers.quantization.utils import convert_dtype_torch2str, replace_linear, save_low_bit
-from neural_compressor.utils import logger
-from neural_compressor.utils.utility import CpuInfo, LazyImport
+from neural_compressor.torch.utils import set_module
 
-torch = LazyImport("torch")
-transformers = LazyImport("transformers")
-transformers_configuration_utils = LazyImport("transformers.configuration_utils")
+from ..quantization.utils import convert_dtype_torch2str, convert_to_quantized_model, replace_linear, save_low_bit
+from ..utils import AutoRoundConfig, AwqConfig, GPTQConfig, RtnConfig, TeqConfig
 
 
 def build_woq_model(model, quantization_config):
@@ -61,6 +63,7 @@ def build_woq_model(model, quantization_config):
                 not getattr(quantization_config, "sym", False),
             )
             use_optimum_format = True
+
             with init_empty_weights():
                 new_module = INCWeightOnlyLinear(
                     m.in_features,
@@ -82,9 +85,16 @@ class _BaseINCAutoModelClass:
 
     @classmethod
     def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
+
+        device_map = kwargs.get("device_map", "xpu" if is_xpu_available() else "cpu")
+        use_cpu = True if device_map == torch.device("cpu") or device_map == "cpu" else False
+        use_xpu = True if device_map == torch.device("xpu") or device_map == "xpu" else False
+
         config = kwargs.pop("config", None)
-        if not isinstance(config, transformers_configuration_utils.PretrainedConfig):
-            config, _ = transformers.AutoConfig.from_pretrained(
+
+        quantization_config = kwargs.pop("quantization_config", None)
+        if not isinstance(config, PretrainedConfig):
+            config, _ = AutoConfig.from_pretrained(
                 pretrained_model_name_or_path,
                 return_unused_kwargs=True,
                 **kwargs,
@@ -113,6 +123,81 @@ class _BaseINCAutoModelClass:
                     logger.error("Saved low bit model loading failed, please check your model.")
                     exit(0)
 
+        if isinstance(
+            quantization_config,
+            (RtnConfig, AwqConfig, TeqConfig, GPTQConfig, AutoRoundConfig),
+        ):
+            logger.info("Applying Weight Only Quantization.")
+            if use_xpu:
+                # TODO: if low_cpu_mem_uasge is True, gptj will have accuracy issue on CPU device.
+                kwargs["low_cpu_mem_usage"] = True
+                kwargs["device_map"] = "cpu"
+                try:
+                    model = cls.ORIG_MODEL.from_pretrained(
+                        pretrained_model_name_or_path,
+                        *model_args,
+                        config=config,
+                        **kwargs,
+                    )
+                    model.config.update({"low_cpu_mem_usage": True})
+                except NotImplementedError:
+                    logger.info(
+                        "Failed to load models with `low_cpu_mem_usage` specified, "
+                        "will fall to traditional load method with higher memory consumption."
+                    )
+                    kwargs["low_cpu_mem_usage"] = False
+                    config.torchscript = True if quantization_config.quant_method.value in ["teq", "awq"] else False
+                    model = cls.ORIG_MODEL.from_pretrained(
+                        pretrained_model_name_or_path,
+                        *model_args,
+                        config=config,
+                        **kwargs,
+                    )
+                    model.config.update({"low_cpu_mem_usage": False})
+                    quantization_config.post_init_xpu()
+            else:
+                kwargs["low_cpu_mem_usage"] = True
+                config.torchscript = True if quantization_config.quant_method.value in ["teq", "awq"] else False
+                model = cls.ORIG_MODEL.from_pretrained(
+                    pretrained_model_name_or_path,
+                    *model_args,
+                    config=config,
+                    **kwargs,
+                )
+                model.config.update({"low_cpu_mem_usage": True})
+                quantization_config.post_init_cpu()
+            model.eval()
+
+            if use_xpu:
+                import intel_extension_for_pytorch
+
+                assert hasattr(torch, "xpu") and torch.xpu.is_available(), "There is no xpu device in this system!"
+                quantization_config.update(**{"device": "xpu"})
+                quantization_config.post_init_xpu()
+            if (
+                not torch.cuda.is_available() or device_map == "cpu" or device_map == torch.device("cpu")
+            ) and model.config.model_type == "chatglm":
+                model = model.float()
+            model = convert_to_quantized_model(model, quantization_config, device=device_map)
+            quantization_config.remove_redundant_parameters()
+            model.config.quantization_config = quantization_config
+        else:
+            model = cls.ORIG_MODEL.from_pretrained(pretrained_model_name_or_path, *model_args, config=config, **kwargs)
+            if (
+                not torch.cuda.is_available() or device_map == "cpu" or device_map == torch.device("cpu")
+            ) and model.config.model_type == "chatglm":
+                model = model.float()
+
+            model.eval()
+
+        # add quantization_config and save_low_bit to pretrained model dynamically
+        model.device_map = device_map
+        model.quantization_config = quantization_config
+
+        model.save_pretrained = types.MethodType(save_low_bit, model)
+        logger.info("WeightOnlyQuant done.")
+        return model
+
     @classmethod
     def load_low_bit(cls, pretrained_model_name_or_path, *model_args, **kwargs):
         """Load a low bit optimized model (including INT4, INT5 and INT8) from a saved ckpt.
@@ -125,12 +210,7 @@ class _BaseINCAutoModelClass:
         from accelerate.big_modeling import init_empty_weights
         from transformers.dynamic_module_utils import get_class_from_dynamic_module, resolve_trust_remote_code
         from transformers.generation.configuration_utils import GenerationConfig
-        from transformers.modeling_utils import (
-            _add_variant,
-            get_checkpoint_shard_files,
-            load_state_dict,
-            no_init_weights,
-        )
+        from transformers.modeling_utils import _add_variant, get_checkpoint_shard_files, no_init_weights
         from transformers.models.auto.auto_factory import _get_model_class
         from transformers.models.auto.configuration_auto import AutoConfig
         from transformers.utils import (
@@ -142,9 +222,7 @@ class _BaseINCAutoModelClass:
             cached_file,
             download_url,
             extract_commit_hash,
-            has_file,
             is_remote_url,
-            is_safetensors_available,
         )
 
         # Autofactory
@@ -209,13 +287,18 @@ class _BaseINCAutoModelClass:
 
         if quantization_config["quant_method"] == "rtn":
             quantization_config = RtnConfig.from_dict(quantization_config)
+        elif quantization_config["quant_method"] == "awq":
+            quantization_config = AwqConfig.from_dict(quantization_config)
+        elif quantization_config["quant_method"] == "teq":
+            quantization_config = TeqConfig.from_dict(quantization_config)
         elif quantization_config["quant_method"] == "gptq":
             quantization_config = GPTQConfig.from_dict(quantization_config)
-
+        elif quantization_config["quant_method"] == "autoround":
+            quantization_config = AutoRoundConfig.from_dict(quantization_config)
         assert quantization_config is not None, "Detect this model is not a low-bit model."
 
         if commit_hash is None:
-            if not isinstance(config, transformers_configuration_utils.PretrainedConfig):
+            if not isinstance(config, PretrainedConfig):
                 # We make a call to the config file first (which may be absent)
                 # to get the commit hash as soon as possible.
                 resolved_config_file = cached_file(
@@ -452,7 +535,6 @@ class _BaseINCAutoModelClass:
         #    - we assume all floating dtype weights are of the same dtype
         # we also may have config.torch_dtype available, but we won't rely on it till v5
         # Pretrained Model
-
         dtype_orig = None
         if torch_dtype is not None:
             if isinstance(torch_dtype, str):
@@ -503,6 +585,7 @@ class _BaseINCAutoModelClass:
             logger.warning("fp32 scale_dtype is used, please change the config.json if you don't want to use it.")
 
         # weight dtype is higher priority than bits in config.json when both existed.
+
         if quantization_config.bits == 4:
             if use_xpu:
                 quantization_config.weight_dtype = "int4_fullrange"
@@ -543,6 +626,7 @@ class _BaseINCAutoModelClass:
         # restore default dtype
         if dtype_orig is not None:
             torch.set_default_dtype(dtype_orig)
+
         (
             model,
             missing_keys,
