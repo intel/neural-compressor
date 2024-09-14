@@ -163,6 +163,7 @@ class TestAutoRound:
 
     def test_autoround_format_export(self):
         from neural_compressor.torch.quantization import load
+
         # from auto_gptq.nn_modules.qlinear.qlinear_triton import QuantLinear
 
         gpt_j_model = copy.deepcopy(self.gptj)
