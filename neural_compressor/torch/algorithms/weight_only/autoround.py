@@ -154,6 +154,7 @@ class AutoRoundQuantizer(Quantizer):
         self.act_dynamic = act_dynamic
         self.low_cpu_mem_usage = low_cpu_mem_usage
         self.export_format = export_format
+
     def prepare(self, model: torch.nn.Module, *args, **kwargs):
         """Prepares a given model for quantization.
 
@@ -212,9 +213,9 @@ class AutoRoundQuantizer(Quantizer):
         )
         model, weight_config = rounder.quantize()
         model.autoround_config = weight_config
-        if 'itrex' in self.export_format:
+        if "itrex" in self.export_format:
             model = pack_model(model, weight_config, device=self.device, inplace=True)
-        else: # pylint: disable=E0401
+        else:  # pylint: disable=E0401
             model = rounder.save_quantized(output_dir=None, format=self.export_format, device=self.device, inplace=True)
 
         return model
@@ -243,5 +244,3 @@ def get_dataloader(tokenizer, seqlen, dataset_name="NeelNanda/pile-10k", seed=42
         tokenizer, seqlen, dataset_name="NeelNanda/pile-10k", seed=seed, bs=bs, nsamples=nsamples
     )
     return dataloader
-
-
