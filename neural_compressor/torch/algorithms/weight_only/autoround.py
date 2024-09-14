@@ -215,7 +215,7 @@ class AutoRoundQuantizer(Quantizer):
         model.autoround_config = weight_config
         if "itrex" in self.export_format:
             model = pack_model(model, weight_config, device=self.device, inplace=True)
-        else: # pragma: no cover
+        else:  # pragma: no cover
             model = rounder.save_quantized(output_dir=None, format=self.export_format, device=self.device, inplace=True)
 
         return model
