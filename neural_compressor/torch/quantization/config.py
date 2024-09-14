@@ -939,6 +939,7 @@ class AutoRoundConfig(TorchBaseConfig):
         scale_dtype: str = "fp16",
         use_layer_wise: bool = False,
         quant_block_list: list = None,
+        export_format: str = "itrex",
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init AUTOROUND weight-only quantization config.
@@ -973,6 +974,7 @@ class AutoRoundConfig(TorchBaseConfig):
               have different choices.
             use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
             quant_block_list (list): A list whose elements are list of block's layer names to be quantized.
+            export_format (str, optional): The format used for exporting the quantized model. Defaults to "itrex".
             white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
               Default is DEFAULT_WHITE_LIST.
         """
@@ -1005,6 +1007,7 @@ class AutoRoundConfig(TorchBaseConfig):
         self.scale_dtype = scale_dtype
         self.use_layer_wise = use_layer_wise
         self.quant_block_list = quant_block_list
+        self.export_format = export_format
         self._post_init()
 
     @classmethod

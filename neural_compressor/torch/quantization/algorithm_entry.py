@@ -609,6 +609,7 @@ def autoround_quantize_entry(
             scale_dtype = quant_config.scale_dtype
             quant_block_list = quant_config.quant_block_list
             low_cpu_mem_usage = quant_config.use_layer_wise
+            export_format = quant_config.export_format
 
     kwargs.pop("example_inputs")
 
@@ -636,6 +637,7 @@ def autoround_quantize_entry(
         scale_dtype=scale_dtype,
         quant_block_list=quant_block_list,
         low_cpu_mem_usage=low_cpu_mem_usage,
+        export_format=export_format,
     )
     model = quantizer.execute(model=model, mode=mode, *args, **kwargs)
     model.qconfig = configs_mapping
