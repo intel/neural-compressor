@@ -1,9 +1,11 @@
 import copy
 import shutil
+
 import pytest
 import torch
 import transformers
 from packaging.version import Version
+
 from neural_compressor.torch.quantization import (
     AutoRoundConfig,
     convert,
@@ -38,7 +40,7 @@ def run_fn(model, dataloader):
 
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
 class TestAutoRound:
-    @classmethod     
+    @classmethod
     def setup_class(self):
         self.gptj = transformers.AutoModelForCausalLM.from_pretrained(
             "hf-internal-testing/tiny-random-GPTJForCausalLM",
@@ -50,8 +52,8 @@ class TestAutoRound:
         )
         self.dataloader = get_dataloader(tokenizer, 32, dataset_name="NeelNanda/pile-10k", seed=42, bs=8, nsamples=10)
         self.label = self.gptj(self.inp)[0]
-        
-    @classmethod    
+
+    @classmethod
     def teardown_class(self):
         shutil.rmtree("saved_results", ignore_errors=True)
 
@@ -142,7 +144,6 @@ class TestAutoRound:
         assert isinstance(
             loaded_model.transformer.h[0].attn.k_proj, INCWeightOnlyLinear
         ), "loading compressed model failed."
-
 
     def test_conv1d(self):
         input = torch.randn(1, 32)
