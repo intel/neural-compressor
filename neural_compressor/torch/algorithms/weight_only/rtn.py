@@ -179,6 +179,8 @@ class RTNQuantizer(Quantizer):
                     bits = int(dtype.lstrip("int"))
                     dtype = "int"
             else:
+                if use_layer_wise and isinstance(m, torch.nn.Module):
+                    load_module(model, name, model_path, device=device)
                 continue
             log_msg = (
                 f"RTN quantization config: bits={bits}, group_size={group_size}, "
