@@ -53,10 +53,10 @@ def save(model, output_dir="./saved_results", format=LoadFormat.DEFAULT, **kwarg
             - max_shard_size (str, optional): The maximum size for each shard (only applicable for 'huggingface' format). Defaults to "5GB".
     """
     os.makedirs(output_dir, exist_ok=True)
-    if format == LoadFormat.HUGGINGFACE:
+    if format == LoadFormat.HUGGINGFACE: # pylint: disable=E0401
         config = model.config
         quantization_config = config.quantization_config if hasattr(config, "quantization_config") else None
-        if "backend" in quantization_config and "auto_round" in quantization_config["backend"]:
+        if "backend" in quantization_config and 'auto_round' in quantization_config['backend']:
             safe_serialization = kwargs.get("safe_serialization", True)
             tokenizer = kwargs.get("tokenizer", None)
             max_shard_size = kwargs.get("max_shard_size", "5GB")
@@ -65,7 +65,7 @@ def save(model, output_dir="./saved_results", format=LoadFormat.DEFAULT, **kwarg
             del model.save
             model.save_pretrained(output_dir, max_shard_size=max_shard_size, safe_serialization=safe_serialization)
             return
-
+    
     qmodel_weight_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), WEIGHT_NAME)
     qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), QCONFIG_NAME)
     # saving process
@@ -140,7 +140,7 @@ class WOQModelLoader:
         """
         if self.format == LoadFormat.HUGGINGFACE:
             assert self.model_name_or_path is not None, "'model_name_or_path' can't be None."
-
+            
             model = self.load_hf_format_woq_model()
             logger.info("Loading HuggingFace weight-only quantization model successfully.")
         elif self.format == LoadFormat.DEFAULT:
@@ -213,7 +213,7 @@ class WOQModelLoader:
         """
         # check required package
         from neural_compressor.torch.utils import is_package_available
-
+        
         if not is_package_available("transformers"):
             raise ImportError("Loading huggingface model requires transformers: `pip install transformers`")
         if not is_package_available("accelerate"):
@@ -221,14 +221,12 @@ class WOQModelLoader:
 
         # get model class and config
         model_class, config = self._get_model_class_and_config()
-        self.quantization_config = config.quantization_config if hasattr(config, "quantization_config") else None
-        if "backend" in self.quantization_config and "auto_round" in self.quantization_config["backend"]:
+        quantization_config = config.quantization_config if hasattr(config, "quantization_config") else None
+        if "backend" in quantization_config and 'auto_round' in quantization_config['backend']: # pylint: disable=E0401
             # load autoround format quantized model
             from auto_round import AutoRoundConfig
-
             model = model_class.from_pretrained(self.model_name_or_path)
             return model
-
         # get loaded state_dict
         self.loaded_state_dict = self._get_loaded_state_dict(config)
         self.loaded_state_dict_keys = list(set(self.loaded_state_dict.keys()))
@@ -890,3 +888,4 @@ class WOQModelLoader:
                 if os.path.exists(os.path.join(self._model_local_dir, HPU_WEIGHT_NAME)):
                     return True
         return False
+
