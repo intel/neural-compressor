@@ -140,8 +140,9 @@ class RTNQuantizer(Quantizer):
             register_weight_hooks(model, model_path, device=device, clean_weight=True)
 
         for name, m in model.named_modules():
-
             if not isinstance(m, supported_layers):
+                if use_layer_wise and isinstance(m, torch.nn.Module):
+                    load_module(model, name, model_path, device=device)
                 continue
             if name in weight_config:  # pragma: no cover
                 # initialize op configuration

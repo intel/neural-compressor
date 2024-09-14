@@ -525,6 +525,7 @@ def convert_to_quantized_model(model, config, device="cpu"):
 
     model.eval()
 
+    breakpoint()
     q_model = replace_linear(model, None, None, config, device=device)
 
     if orig_dtype != torch.float32:
