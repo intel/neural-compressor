@@ -161,8 +161,7 @@ class TestAutoRound:
         out2 = q_model(**encoded_input)[0]
         assert torch.allclose(out2, out1, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
         assert isinstance(q_model.h[0].attn.c_attn, WeightOnlyLinear), "loading compressed model failed."
-        
-        
+
     # def test_autoround_format_export(self):
     #     from neural_compressor.torch.quantization import load
     #     from auto_gptq.nn_modules.qlinear.qlinear_triton import QuantLinear
@@ -177,4 +176,3 @@ class TestAutoRound:
     #     assert isinstance(q_model.transformer.h[0].attn.k_proj, QuantLinear), "packing model failed."
     #     q_model.save(output_dir="saved_results_tiny-random-GPTJForCausalLM", format="huggingface")
     #     loaded_model = load("saved_results_tiny-random-GPTJForCausalLM", format="huggingface", trust_remote_code=True)
-
