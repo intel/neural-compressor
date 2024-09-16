@@ -53,7 +53,7 @@ class Softmax(nn.Module):
     def __init__(self):
         super().__init__()
 
-    def forward(self, x, dim=None):
+    def forward(self, x, dim=None, invAttnHead=None):
         return torch.softmax(x, dim)
 
 
@@ -690,6 +690,7 @@ class PatchedSoftmax(nn.Module):
     def __init__(self, mod, mod_extra_config, *args, **kwargs):
         super().__init__()
         set_attrs_from_orig_model(self, mod, mod_extra_config)
+        self.scale_format = ScaleFormat.CONST
         if self.quantization_mode == QuantMode.QUANTIZE:
             self.quant_output = self._mod_extra_config.outputs[0]
             self.scale_input = create_scale_tensor(torch.Tensor([1.0]), self.scale_format)
