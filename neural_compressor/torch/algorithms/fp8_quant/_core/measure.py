@@ -139,7 +139,7 @@ def register_patched_measure_modules(model, mod_list, observer_class, d_shapes=N
                     skip_outputs_measurements,
                     (d_shapes[name] if ((d_shapes is not None) and (name in d_shapes)) else None),
                     params,
-                ) if mod_default_dict[mod_type_str].should_measure else None
+                ) if mod_default_dict[mod_type_str].should_measure_and_quant else None
                 pmod = patch_module_measure(mod, mod_extra_config, mod_default_dict)
                 if pmod._mod_extra_config:
                     for param_name in pmod._mod_extra_config.params:
