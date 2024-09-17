@@ -32,10 +32,12 @@ UNMEASURED_MODELS = "UnmeasuredModels"
 
 
 class ModuleInfo:
-    def __init__(self, type, patched_module, should_measure=True):
+    def __init__(self, type, patched_module, should_measure_and_quant=True):
         self.type = type
         self.patched_module = patched_module
-        self.should_measure = should_measure
+        # when should_measure_and_quant is False, we just patch the module (replace it with costumized patchedModule)
+        # but we do not quant or measure its params and inputs/outputs (for example: FusedMoE -> PatchedMixtralMoE)
+        self.should_measure_and_quant = should_measure_and_quant
 
 
 class ModuleConfig:
