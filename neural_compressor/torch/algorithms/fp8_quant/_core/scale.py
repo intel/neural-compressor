@@ -130,7 +130,7 @@ def get_config(
             if mname not in scales:
                 logger.debug("Calculating scales for layer %s", mname)
                 if top_level_config.cfg["use_stats_files"] and mname not in measurement:
-                    if mod_dict[mod_type_str].should_measure:
+                    if mod_dict[mod_type_str].should_measure_and_quant:
                         qconfig[UNMEASURED_MODELS].append(mname)
                     logger.debug(
                         "Layer '%s' has no measurements therefore it can't be quantized.",
@@ -243,6 +243,10 @@ scaling_methods = {
             fsdpa_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales,
             fsdpa_scales_to_mod_config,
         ),
+        "softmax": (
+            softmax_input_unit_output_maxabs_pts_pow2,
+            softmax_scales_to_mod_config,
+        ),
     },
     "act_maxabs_pts_weight_opt_pts_pow2": {
         "linear": (
@@ -252,6 +256,10 @@ scaling_methods = {
         "matmul": (
             matmul_act_maxabs_pts_weight_maxabs_pts_pow2_scales,
             matmul_scales_to_mod_config,
+        ),
+        "softmax": (
+            softmax_input_unit_output_maxabs_pts_pow2,
+            softmax_scales_to_mod_config,
         ),
     },
     "act_maxabs_pts_weight_opt_pts_hw": {
@@ -270,6 +278,10 @@ scaling_methods = {
         "fused_sdpa": (
             fsdpa_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales,
             fsdpa_scales_to_mod_config,
+        ),
+        "softmax": (
+            softmax_input_unit_output_maxabs_pts_hw_scales,
+            softmax_scales_to_mod_config,
         ),
     },
     "act_maxabs_pts_pow2_hw_weights_opt_pcs_pow2": {
@@ -290,6 +302,10 @@ scaling_methods = {
             fsdpa_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales,
             fsdpa_scales_to_mod_config,
         ),
+        "softmax": (
+            softmax_input_unit_output_maxabs_pts_hw_scales,
+            softmax_scales_to_mod_config,
+        ),
     },
     "act_maxabs_pts_pow2_weights_maxabs_pcs_pow2": {
         "linear": (
@@ -309,6 +325,10 @@ scaling_methods = {
             fsdpa_act_maxabs_pts_weight_maxabs_pts_pow2_scales,
             fsdpa_scales_to_mod_config,
         ),
+        "softmax": (
+            softmax_input_unit_output_maxabs_pts_pow2,
+            softmax_scales_to_mod_config,
+        ),
     },
     "act_maxabs_pts_pow2_weights_opt_pcs_pow2": {
         "linear": (
@@ -327,6 +347,10 @@ scaling_methods = {
         "fused_sdpa": (
             fsdpa_act_maxabs_pts_weight_maxabs_pts_pow2_scales,
             fsdpa_scales_to_mod_config,
+        ),
+        "softmax": (
+            softmax_input_unit_output_maxabs_pts_pow2,
+            softmax_scales_to_mod_config,
         ),
     },
     "smoothquant_weights_opt_pow2": {
