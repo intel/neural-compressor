@@ -18,6 +18,9 @@ from neural_compressor.transformers import (
 class TestTansformersLikeAPI:
     def setup_class(self):
         self.model_name_or_path = "hf-internal-testing/tiny-random-gptj"
+        self.autoawq_model = "casperhansen/opt-125m-awq"
+        self.prompt = "One day, the little girl"
+        self.generate_kwargs = dict(do_sample=False, temperature=0.9, num_beams=4)
 
     def teardown_class(self):
         shutil.rmtree("nc_workspace", ignore_errors=True)
@@ -111,3 +114,13 @@ class TestTansformersLikeAPI:
         loaded_model = AutoModelForCausalLM.from_pretrained(output_dir)
         loaded_output = loaded_model(dummy_input)[0]
         assert torch.equal(woq_output, loaded_output), "loaded output should be same. Please double check."
+
+    def test_loading_autoawq_model(self):
+        user_model = AutoModelForCausalLM.from_pretrained(self.autoawq_model)
+        tokenizer = AutoTokenizer.from_pretrained(self.autoawq_model)
+        input_ids = tokenizer(self.prompt, return_tensors="pt")["input_ids"]
+        self.generate_kwargs = dict(do_sample=False, temperature=0.9, num_beams=4)
+        gen_ids = user_model.generate(input_ids, **self.generate_kwargs)
+        gen_text = tokenizer.batch_decode(gen_ids, skip_special_tokens=True)
+        target_text = ["One day, the little girl in the back of my mind will ask me if I'm a"]
+        assert gen_text == target_text, "loading autoawq quantized model failed."

@@ -1438,5 +1438,5 @@ def repack_awq_to_optimum_format(
             Expected shape: (in_features // group_size, out_features)
     """
     unpack_qweight, unpack_qzeros = unpack_awq(awq_qweight, awq_qzeros, awq_scales, bits, group_size)
-    qweight, qzeros = pack_from_tensors(unpack_qweight, unpack_qzeros, awq_scales)
+    qweight, qzeros = pack_from_tensors(unpack_qweight, unpack_qzeros, awq_scales, bits, group_size)
     return qweight, qzeros, awq_scales

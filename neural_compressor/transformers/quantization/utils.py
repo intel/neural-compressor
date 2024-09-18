@@ -23,6 +23,7 @@ from datasets import load_dataset
 
 from neural_compressor.common.utils import LazyImport, logger
 from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
+from neural_compressor.torch.algorithms.weight_only.utility import repack_awq_to_optimum_format
 from neural_compressor.torch.quantization import (
     AutoRoundConfig,
     AWQConfig,
@@ -654,3 +655,40 @@ def save_low_bit(self, save_directory: Union[str, os.PathLike], push_to_hub: boo
             token=kwargs.get("token"),
         )
     self.quantization_config.save_pretrained(save_directory, **kwargs)
+
+
+def repack_awq_and_load_state_dict(
+    model, resolved_archive_file, loaded_state_dict_keys, quantization_config, is_sharded
+):
+    from transformers.modeling_utils import load_state_dict
+
+    bits = quantization_config.bits
+    group_size = quantization_config.group_size
+
+    state_dict = {}
+    if isinstance(resolved_archive_file, str):
+        resolved_archive_file = [resolved_archive_file]
+    assert isinstance(resolved_archive_file, list), "Please check if the loading weight is shared."
+    for shard_file in resolved_archive_file:
+        assert shard_file.endswith("safetensors"), "Please check the loading weight saved format."
+        state_dict.update(load_state_dict(shard_file))
+        assert len(state_dict.keys()) > 0, "Please check the state_dict loading."
+    for name, module in model.named_modules():
+        if isinstance(module, INCWeightOnlyLinear):
+            assert name + ".qweight" in loaded_state_dict_keys, f"Please check the state_dict key { name + '.qweight'}"
+            assert name + ".qzeros" in loaded_state_dict_keys, f"Please check the state_dict key {name + '.qzeros'}"
+            assert name + ".scales" in loaded_state_dict_keys, f"Please check the state_dict key { name + '.scales'}"
+            if name + ".scales" in loaded_state_dict_keys:
+                awq_qweight = state_dict[name + ".qweight"]
+                awq_qzeros = state_dict[name + ".qzeros"]
+                awq_scales = state_dict[name + ".scales"]
+                qweight, qzeros, awq_scales = repack_awq_to_optimum_format(
+                    awq_qweight, awq_qzeros, awq_scales, bits, group_size
+                )
+                state_dict[name + ".qweight"] = qweight
+                state_dict[name + ".qzeros"] = qzeros
+                state_dict[name + ".scales"] = awq_scales
+
+    model.load_state_dict(state_dict, strict=False, assign=True)
+
+    return model
