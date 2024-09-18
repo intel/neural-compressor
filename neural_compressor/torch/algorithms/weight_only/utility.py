@@ -1233,6 +1233,10 @@ def convert_dtype_str2torch(str_dtype):
 
 # ref reverse reorder from AutoAWQ https://github.com/AutoGPTQ/AutoGPTQ/blob/v0.7.1/auto_gptq/modeling/_utils.py#L491
 def awq_reverse_reorder_int_tensor(int_tensor, bits: int):
+    """Awq tensor convert tool.
+
+    Reverse_reorder_int_tensor
+    """
     assert bits == 4
 
     int_tensor = int_tensor.T.contiguous()
@@ -1265,7 +1269,8 @@ def unpack_awq(
     bits: int,
     group_size: int,
 ):
-    """
+    """Unpack awq format to actual values.
+
     Args:
         awq_qweight (`torch.LongTensor`):
             Expected shape: (in_features, out_features // (32 // bits))
@@ -1336,7 +1341,8 @@ def pack_from_tensors(
     bits: int,
     group_size: int,
 ):
-    """
+    """Pack the tensor to optimum format.
+
     Args:
         unpacked_qweight (`torch.LongTensor`):
             Expected shape: (in_features, out_features)
@@ -1420,7 +1426,8 @@ def repack_awq_to_optimum_format(
     bits: int,
     group_size: int,
 ):
-    """
+    """The function to repack_awq_to_optimum_format.
+
     Args:
         awq_qweight (`torch.LongTensor`):
             Expected shape: (in_features, out_features // (32 // bits))
