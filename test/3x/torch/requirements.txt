@@ -1,4 +1,4 @@
-auto_round @ git+https://github.com/intel/auto-round.git@e24b9074af6cdb099e31c92eb81b7f5e9a4a244e
+auto_round @ git+https://github.com/intel/auto-round.git@5dd16fc34a974a8c2f5a4288ce72e61ec3b1410f
 expecttest
 intel_extension_for_pytorch
 numpy

@@ -61,6 +61,7 @@ class AutoRoundQuantizer(Quantizer):
         act_sym: bool = None,
         act_dynamic: bool = True,
         low_cpu_mem_usage: bool = False,
+        export_format: str = "itrex",
         **kwargs,
     ):
         """Init a AutQRoundQuantizer object.
@@ -152,6 +153,7 @@ class AutoRoundQuantizer(Quantizer):
         self.act_sym = act_sym
         self.act_dynamic = act_dynamic
         self.low_cpu_mem_usage = low_cpu_mem_usage
+        self.export_format = export_format
 
     def prepare(self, model: torch.nn.Module, *args, **kwargs):
         """Prepares a given model for quantization.
@@ -211,7 +213,11 @@ class AutoRoundQuantizer(Quantizer):
         )
         model, weight_config = rounder.quantize()
         model.autoround_config = weight_config
-        model = pack_model(model, weight_config, device=self.device, inplace=True)
+        if "itrex" in self.export_format:
+            model = pack_model(model, weight_config, device=self.device, inplace=True)
+        else:  # pragma: no cover
+            model = rounder.save_quantized(output_dir=None, format=self.export_format, device=self.device, inplace=True)
+
         return model
 
 
