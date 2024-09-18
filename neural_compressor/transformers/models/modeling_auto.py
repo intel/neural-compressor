@@ -629,26 +629,20 @@ class _BaseINCAutoModelClass:
                 quantization_config.modules_to_not_convert += ["lm_head", "transformer.output_layer", "embed_out"]
         model = build_woq_model(model, quantization_config)
 
+        if is_sharded:
+            loaded_state_dict_keys = sharded_metadata["all_checkpoint_keys"]
+        else:
+            state_dict = load_state_dict(resolved_archive_file)
+            loaded_state_dict_keys = list(state_dict.keys())
         # restore default dtype
         if dtype_orig is not None:
             torch.set_default_dtype(dtype_orig)
 
         if quantization_config.quant_method.value == "awq" and quantization_config.backend != "inc":
-            if is_sharded:
-                loaded_state_dict_keys = sharded_metadata["all_checkpoint_keys"]
-            else:
-                state_dict = load_state_dict(resolved_archive_file)
-                loaded_state_dict_keys = list(state_dict.keys())
             model = repack_awq_and_load_state_dict(
                 model, resolved_archive_file, loaded_state_dict_keys, quantization_config, is_sharded
             )
         else:
-            if is_sharded:
-                loaded_state_dict_keys = sharded_metadata["all_checkpoint_keys"]
-            else:
-                # Time to load the checkpoint
-                state_dict = load_state_dict(resolved_archive_file)
-                loaded_state_dict_keys = list(state_dict.keys())
             (
                 model,
                 missing_keys,
