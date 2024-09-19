@@ -140,9 +140,10 @@ class RTNQuantizer(Quantizer):
             register_weight_hooks(model, model_path, device=device, clean_weight=True)
 
         for name, m in model.named_modules():
+        
+            if use_layer_wise:
+                load_module(model, name, model_path, device=device)
             if not isinstance(m, supported_layers):
-                if use_layer_wise and isinstance(m, torch.nn.Module):
-                    load_module(model, name, model_path, device=device)
                 continue
             if name in weight_config:  # pragma: no cover
                 # initialize op configuration
@@ -179,8 +180,6 @@ class RTNQuantizer(Quantizer):
                     bits = int(dtype.lstrip("int"))
                     dtype = "int"
             else:
-                if use_layer_wise and isinstance(m, torch.nn.Module):
-                    load_module(model, name, model_path, device=device)
                 continue
             log_msg = (
                 f"RTN quantization config: bits={bits}, group_size={group_size}, "
@@ -194,9 +193,6 @@ class RTNQuantizer(Quantizer):
                 continue
             logger.debug(f"RTN quantized module:{name, m}")
             logger.debug(log_msg)
-
-            if use_layer_wise:
-                load_module(model, name, model_path, device=device)
 
             # for only group_dim is 0 or only `transformers.Conv1D`, we need transpose weight.
             if is_transformers_imported():
