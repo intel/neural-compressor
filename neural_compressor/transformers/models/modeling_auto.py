@@ -47,7 +47,13 @@ from neural_compressor.common.utils import CpuInfo, logger
 from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
 from neural_compressor.torch.utils import set_module
 
-from ..quantization.utils import convert_dtype_torch2str, convert_to_quantized_model, replace_linear, save_low_bit
+from ..quantization.utils import (
+    convert_dtype_torch2str,
+    convert_to_quantized_model,
+    repack_awq_and_load_state_dict,
+    replace_linear,
+    save_low_bit,
+)
 from ..utils import AutoRoundConfig, AwqConfig, GPTQConfig, RtnConfig, TeqConfig
 
 
@@ -179,6 +185,8 @@ class _BaseINCAutoModelClass:
             ) and model.config.model_type == "chatglm":
                 model = model.float()
             model = convert_to_quantized_model(model, quantization_config, device=device_map)
+            if isinstance(quantization_config, AwqConfig):
+                quantization_config.backend = "inc"
             quantization_config.remove_redundant_parameters()
             model.config.quantization_config = quantization_config
         else:
@@ -295,6 +303,7 @@ class _BaseINCAutoModelClass:
             quantization_config = GPTQConfig.from_dict(quantization_config)
         elif quantization_config["quant_method"] == "autoround":
             quantization_config = AutoRoundConfig.from_dict(quantization_config)
+
         assert quantization_config is not None, "Detect this model is not a low-bit model."
 
         if commit_hash is None:
@@ -613,41 +622,48 @@ class _BaseINCAutoModelClass:
 
         with ContextManagers(init_contexts):
             model = model_class(config, *model_args, **kwargs)
-
+        if quantization_config.quant_method.value == "awq" and quantization_config.backend != "inc":
+            if quantization_config.modules_to_not_convert is None:
+                quantization_config.modules_to_not_convert = ["lm_head", "transformer.output_layer", "embed_out"]
+            else:
+                quantization_config.modules_to_not_convert += ["lm_head", "transformer.output_layer", "embed_out"]
         model = build_woq_model(model, quantization_config)
 
         if is_sharded:
             loaded_state_dict_keys = sharded_metadata["all_checkpoint_keys"]
         else:
-            # Time to load the checkpoint
             state_dict = load_state_dict(resolved_archive_file)
             loaded_state_dict_keys = list(state_dict.keys())
-
         # restore default dtype
         if dtype_orig is not None:
             torch.set_default_dtype(dtype_orig)
 
-        (
-            model,
-            missing_keys,
-            unexpected_keys,
-            mismatched_keys,
-            offload_index,
-            error_msgs,
-        ) = model_class._load_pretrained_model(
-            model,
-            None,
-            loaded_state_dict_keys,  # XXX: rename?
-            resolved_archive_file,
-            pretrained_model_name_or_path,
-            sharded_metadata=sharded_metadata,
-            _fast_init=_fast_init,
-            low_cpu_mem_usage=True,
-            offload_folder=offload_folder,
-            offload_state_dict=offload_state_dict,
-            dtype=torch_dtype,
-            keep_in_fp32_modules=[],
-        )
+        if quantization_config.quant_method.value == "awq" and quantization_config.backend != "inc":
+            model = repack_awq_and_load_state_dict(
+                model, resolved_archive_file, loaded_state_dict_keys, quantization_config, is_sharded
+            )
+        else:
+            (
+                model,
+                missing_keys,
+                unexpected_keys,
+                mismatched_keys,
+                offload_index,
+                error_msgs,
+            ) = model_class._load_pretrained_model(
+                model,
+                None,
+                loaded_state_dict_keys,  # XXX: rename?
+                resolved_archive_file,
+                pretrained_model_name_or_path,
+                sharded_metadata=sharded_metadata,
+                _fast_init=_fast_init,
+                low_cpu_mem_usage=True,
+                offload_folder=offload_folder,
+                offload_state_dict=offload_state_dict,
+                dtype=torch_dtype,
+                keep_in_fp32_modules=[],
+            )
 
         # make sure token embedding weights are still tied if needed
         model.tie_weights()
