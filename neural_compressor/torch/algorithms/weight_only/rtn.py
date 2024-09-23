@@ -130,14 +130,12 @@ class RTNQuantizer(Quantizer):
 
         if use_layer_wise:
             from neural_compressor.common.utils import DEFAULT_WORKSPACE
-            from neural_compressor.torch.algorithms.layer_wise.utils import get_path, load_module, register_weight_hooks
+            from neural_compressor.torch.algorithms.layer_wise.utils import get_path, load_module
 
             if model_path == "":
                 model_path = model.path
             assert model_path, "model_path should not be None."
             model_path = get_path(model_path)
-
-            register_weight_hooks(model, model_path, device=device, clean_weight=True)
 
         for name, m in model.named_modules():
         
