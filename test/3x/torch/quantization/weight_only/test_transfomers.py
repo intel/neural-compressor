@@ -114,7 +114,7 @@ class TestTansformersLikeAPI:
         loaded_model = AutoModelForCausalLM.from_pretrained(output_dir)
         loaded_output = loaded_model(dummy_input)[0]
         assert torch.equal(woq_output, loaded_output), "loaded output should be same. Please double check."
-        
+
     def test_use_layer_wise(self):
         model_name_or_path = self.model_name_or_path
 
