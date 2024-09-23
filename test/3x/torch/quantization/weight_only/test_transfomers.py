@@ -138,7 +138,7 @@ class TestTansformersLikeAPI:
         loaded_model = AutoModelForCausalLM.from_pretrained(output_dir)
         loaded_output = loaded_model(dummy_input)[0]
         assert torch.equal(woq_output, loaded_output), "loaded output should be same. Please double check."
-        
+
         # use_layer_wise=False
         woq_config = RtnConfig(bits=4, group_size=16, use_layer_wise=False)
         woq_model = AutoModelForCausalLM.from_pretrained(
