@@ -138,7 +138,7 @@ class RTNQuantizer(Quantizer):
             model_path = get_path(model_path)
 
         for name, m in model.named_modules():
-        
+
             if use_layer_wise:
                 load_module(model, name, model_path, device=device)
             if not isinstance(m, supported_layers):
