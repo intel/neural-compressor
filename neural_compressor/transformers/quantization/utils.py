@@ -367,11 +367,6 @@ def convert_to_quantized_model(model, config, device="cpu"):
 
     # mapping to INC config
     dtype = "int4" if config.weight_dtype == "int4_fullrange" else config.weight_dtype
-    import neural_compressor.torch.utils as torch_utils
-
-    process_type = torch_utils.get_processor_type_from_user_config()
-    if process_type == torch_utils.ProcessorType.Client:
-        config.use_layer_wise = True
     if config.quant_method.value == "rtn":
         quant_config = RTNConfig(
             dtype=dtype,
