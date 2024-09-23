@@ -409,6 +409,7 @@ class AwqConfig(INCQuantizationConfigMixin):
         zero_point: bool = True,
         absorb_layer_dict: dict = {},
         quant_lm_head: bool = False,
+        backend: str = None,
         **kwargs,
     ):
         self.quant_method = QuantizationMethod.AWQ
@@ -427,6 +428,7 @@ class AwqConfig(INCQuantizationConfigMixin):
         self.seq_len = seq_len
         self.absorb_layer_dict = absorb_layer_dict
         self.quant_lm_head = quant_lm_head
+        self.backend = backend
         self.modules_to_not_convert = kwargs.get(
             "modules_to_not_convert", ["lm_head", "transformer.output_layer", "embed_out"]
         )
