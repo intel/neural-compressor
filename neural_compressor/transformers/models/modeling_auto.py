@@ -139,8 +139,8 @@ class _BaseINCAutoModelClass:
 
                 process_type = torch_utils.get_processor_type_from_user_config()
                 if process_type == torch_utils.ProcessorType.Client:
-                    quantization_config.use_layer_wise = True 
-            
+                    quantization_config.use_layer_wise = True
+
                 if quantization_config.use_layer_wise:
                     from neural_compressor.torch import load_empty_model
 
