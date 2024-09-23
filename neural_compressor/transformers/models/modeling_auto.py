@@ -128,10 +128,11 @@ class _BaseINCAutoModelClass:
             (RtnConfig, AwqConfig, TeqConfig, GPTQConfig, AutoRoundConfig),
         ):
             logger.info("Applying Weight Only Quantization.")
-            breakpoint()
             if hasattr(quantization_config, "use_layer_wise") and quantization_config.use_layer_wise:
                 from neural_compressor.torch import load_empty_model
                 model = load_empty_model(pretrained_model_name_or_path)
+                if use_cpu:
+                    quantization_config.post_init_cpu()
             elif use_xpu:
                 # TODO: if low_cpu_mem_uasge is True, gptj will have accuracy issue on CPU device.
                 kwargs["low_cpu_mem_usage"] = True

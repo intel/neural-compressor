@@ -152,7 +152,6 @@ def _replace_linear(
                         "fp16": ipex.quantization.WoqLowpMode.FP16,
                         "int8": ipex.quantization.WoqLowpMode.INT8,
                     }
-
                     ipex_qconfig_mapping = ipex.quantization.get_weight_only_quant_qconfig_mapping(
                         weight_dtype=weight_dtype[quantization_config.bits],
                         lowp_mode=compute_dtype[quantization_config.compute_dtype],
@@ -525,7 +524,6 @@ def convert_to_quantized_model(model, config, device="cpu"):
 
     model.eval()
 
-    breakpoint()
     q_model = replace_linear(model, None, None, config, device=device)
 
     if orig_dtype != torch.float32:
