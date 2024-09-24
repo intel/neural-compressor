@@ -846,11 +846,11 @@ class WOQModelLoader:
 
         if self.format == LoadFormat.HUGGINGFACE:
             filename = os.path.join(self._model_local_dir, HPU_SAFE_WEIGHTS_NAME)
-            save_file({k: v.cpu() for k, v in model.state_dict().items()}, filename=filename, metadata={"format": "pt"})
+            save_file({k: v for k, v in model.state_dict().items()}, filename=filename, metadata={"format": "pt"})
             logger.debug(f"Save hpu format tensor to {filename}")
         elif self.format == LoadFormat.DEFAULT:
             qmodel_weight_file_path = os.path.join(self._model_local_dir, HPU_WEIGHT_NAME)
-            torch.save({k: v.cpu() for k, v in model.state_dict().items()}, qmodel_weight_file_path)
+            torch.save({k: v for k, v in model.state_dict().items()}, qmodel_weight_file_path)
             logger.debug(f"Save hpu format tensor to {qmodel_weight_file_path}")
 
     def _use_hpu_module(self):  # pragma: no cover
