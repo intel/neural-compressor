@@ -117,6 +117,26 @@ def _get_enum_from_string(EnumClass, str, key):
             f"Invalid '{key}' value in custom config ('{str}'). Enter one of {[m.name for m in EnumClass]}")
     return EnumClass[str.upper()]
 
+def _validate_dump_path(dump_stats_path):
+    dirname = os.path.dirname(dump_stats_path)
+    basename = os.path.basename(dump_stats_path)
+    if not os.access(dirname, os.W_OK):  # checks if the directory is not writable
+        raise ValueError(f"Measurements dump directory '{dirname}' is non-writable")
+    files_to_backup = [fname for fname in os.listdir(dirname) if fname.startswith(basename)]
+    if files_to_backup:
+        from datetime import datetime
+        backup_dirname = f"{basename}_backup_{datetime.now().strftime('%d-%m_%H:%M:%S')}"
+        try:
+            os.mkdir(f"{dirname}/{backup_dirname}")
+        except FileExistsError:
+            pass
+        for fname in files_to_backup:
+            try:
+                os.rename(f"{dirname}/{fname}", f"{dirname}/{backup_dirname}/{fname}")
+            except FileNotFoundError:
+                pass
+
+
 
 @dataclass
 class Fp8cfg:
@@ -202,8 +222,8 @@ class Fp8cfg:
                                   "This scale method doesn't require measurements.")
         else:
             measured_global_config["use_stats_files"] = True
-            base_name = measured_global_config["dump_stats_path"].split("/")[-1]
-            folder_name = measured_global_config["dump_stats_path"][: -(len(base_name))]
+            base_name = os.path.basename(measured_global_config["dump_stats_path"])
+            folder_name = os.path.dirname(measured_global_config["dump_stats_path"])
             measured_global_config["dump_stats_base_path"] = folder_name
             os.makedirs(folder_name, exist_ok=True)
             worker_st = (
@@ -248,6 +268,9 @@ class Fp8cfg:
                 "measured_global_config['dump_stats_path']='%s'",
                 measured_global_config["dump_stats_path"],
             )
+
+        if measured_global_config["mode"] == QuantMode.MEASURE:
+            _validate_dump_path(measured_global_config["dump_stats_path"])
 
         return Fp8cfg(cfg=measured_global_config)
 
