@@ -183,7 +183,9 @@ class WOQModelLoader:
         model = self._build_woq_model()
 
         # load remaining pretrained weight to weight-only quantization model
-        model.load_state_dict(self.loaded_state_dict, assign=True, strict=False)
+        is_meta_device = hasattr(self.original_model, "device") and self.original_model.device.type == 'meta'
+        if is_meta_device:
+            model.load_state_dict(self.loaded_state_dict, assign=True, strict=False)
 
         # save hpu format tensor to local directory
         if self._should_save_hpu_format_tensor:
