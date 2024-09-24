@@ -225,7 +225,7 @@ def _replace_linear(
                     )
                     if not hasattr(module, "qweight"):
                         n_pack = 32 // quantization_config.bits
-    
+
                         weight = torch.zeros(
                             (math.ceil(in_features / n_pack), out_features),
                             dtype=torch.int32,
