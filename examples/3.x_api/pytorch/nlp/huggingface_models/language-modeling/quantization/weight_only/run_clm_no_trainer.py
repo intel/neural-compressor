@@ -12,6 +12,7 @@ import datasets
 from torch.nn.functional import pad
 from torch.utils.data import DataLoader
 from transformers import AutoModelForCausalLM, AutoConfig, AutoTokenizer
+from neural_compressor.torch.utils import is_hpex_available
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -339,7 +340,7 @@ if args.accuracy:
         tokenizer=tokenizer,
         batch_size=args.batch_size,
         tasks=args.tasks,
-        device="cpu",
+        device="hpu" if is_hpex_available() else "cpu",
     )
     results = evaluate(eval_args)
     for task_name in args.tasks.split(","):
@@ -363,7 +364,7 @@ if args.performance:
         batch_size=args.batch_size,
         tasks=args.tasks,
         limit=samples,
-        device="cpu",
+        device="hpu" if is_hpex_available() else "cpu",
     )
     start = time.time()
     results = evaluate(eval_args)
