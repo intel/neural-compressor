@@ -18,7 +18,7 @@ import habana_frameworks.torch.core as htcore
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 cur_accelerator = auto_detect_accelerator()
 
-from .._core.scale_handler import create_scale_tensor
+from .._core.scale_handler import create_scale_tensor, get_scale_dtype
 from .._quant_common.quant_config import ScaleFormat
 
 descale_fcn = lambda x, scale: torch.mul(x, scale)
@@ -65,7 +65,8 @@ class QuantInput(QuantDequantBase):
 
     def extra_repr(self) -> str:
         repr = super(QuantInput, self).extra_repr()
-        return f"{repr}, scale_inv dtype={self.scale_inv.dtype}"
+        dtype = get_scale_dtype(self.scale_inv)
+        return f"{repr}, scale_inv dtype={dtype}"
 
 
 class DequantOutput(QuantDequantBase):
@@ -78,7 +79,8 @@ class DequantOutput(QuantDequantBase):
 
     def extra_repr(self) -> str:
         repr = super(DequantOutput, self).extra_repr()
-        return f"{repr}, scale dtype={self.scale.dtype}"
+        dtype = get_scale_dtype(self.scale)
+        return f"{repr}, scale dtype={dtype}"
 
 
 class QuantDequant(QuantDequantBase):
