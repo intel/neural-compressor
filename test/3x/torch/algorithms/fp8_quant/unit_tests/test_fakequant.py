@@ -1,10 +1,11 @@
 import copy
-import typing
 
 import habana_frameworks.torch.core as htcore
 import pytest
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
+
+from ..test_utils import is_gaudi3
 
 htcore.hpu_set_env()
 
@@ -50,6 +51,8 @@ config_dict = {
 
 
 # Run both real and fake quantization, and compare
+# TODO: SW-203453 fix test in Gaudi3
+@pytest.mark.skipif(is_gaudi3(), reason="SW-203453")
 def test_fakequant_model():
     model = AutoModelForCausalLM.from_pretrained("facebook/opt-350m")
     tokenizer = AutoTokenizer.from_pretrained("facebook/opt-350m")

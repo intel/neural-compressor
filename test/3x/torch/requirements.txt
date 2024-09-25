@@ -1,4 +1,5 @@
 auto_round @ git+https://github.com/intel/auto-round.git@5dd16fc34a974a8c2f5a4288ce72e61ec3b1410f
+deepspeed
 expecttest
 intel_extension_for_pytorch
 numpy
