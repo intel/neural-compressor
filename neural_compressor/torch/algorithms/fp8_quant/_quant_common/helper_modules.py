@@ -16,8 +16,7 @@ import torch
 import torch.nn as nn
 
 from .._core.quant_dequant import QuantDequant as qdq
-from .._core.scale_handler import create_scale_tensor
-from .quant_config import QuantMode, ScaleFormat, get_hqt_config
+from .._core.scale_handler import create_scale_tensor, get_scale_dtype
 
 try:  # backwards compatibility for 1.16
     from habana_frameworks.torch.hpex.kernels import fp8_fused_sdpa
@@ -142,7 +141,10 @@ def get_current_repr(cls_instance, *member_names):
         for name in member_names:
             if not first_name:
                 curr_repr += ", "
-            curr_repr += f"{name} dtype={getattr(cls_instance, name).dtype}"
+            cur_attr = getattr(cls_instance, name)
+            # currently, only scale is called here.
+            dtype = get_scale_dtype(cur_attr)
+            curr_repr += f"{name} dtype={dtype}"
             first_name = False
     return curr_repr
 
