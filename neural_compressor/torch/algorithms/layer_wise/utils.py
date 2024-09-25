@@ -257,8 +257,6 @@ def load_module(model, module_name, path, device="cpu"):
         path (str): path to load state_dict per layer.
         device (str, optional): module device. Defaults to "cpu".
     """
-    if module_name == "":
-        return
     module = get_module(model, module_name)
     for n, p in module.named_parameters():
         param_name = module_name + "." + n
