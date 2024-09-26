@@ -340,3 +340,229 @@ def load_empty_model(pretrained_model_name_or_path, cls=None, **kwargs):
     model.eval()
     model.path = pretrained_model_name_or_path
     return model
+
+
+
+import torch
+import transformers
+
+
+def get_module(module, key):
+    """Get module from model by key name.
+
+    Args:
+        module (torch.nn.Module): original model
+        key (str): module name to be replaced
+    """
+    name_list = key.split(".")
+    for name in name_list:
+        module = getattr(module, name, None)
+    return module
+
+
+def get_layer_names_in_block(model, supported_types=[torch.nn.Linear,
+                                                     transformers.modeling_utils.Conv1D], quant_block_list=None):
+    """Retrieves the names of layers within each block of the model.
+
+    Returns:
+        list: A list of strings, where each string is the name of a layer
+              within a block of the model.
+    """
+    for n, m in model.named_modules():
+        if isinstance(m, tuple(supported_types)):
+            m.tmp_name = n
+    layers_in_block = []
+    if bool(quant_block_list):
+        all_blocks = quant_block_list
+    else:
+        all_blocks = get_block_names(model)
+    for block_names in all_blocks:
+        for block_name in block_names:
+            block = get_module(model, block_name)
+            for n, m in block.named_modules():
+                if hasattr(m, "tmp_name"):
+                    layers_in_block.append(m.tmp_name)
+    for n, m in model.named_modules():
+        if hasattr(m, "tmp_name"):
+            delattr(m, "tmp_name")
+    return layers_in_block
+
+
+def to_dtype(input, dtype=torch.float32):
+    """Moves input data to the specified data type.
+
+    Args:
+    input: The input data to be moved.
+    dtype: The target data type.
+
+    Returns:
+    The input data on the specified data type.
+    """
+    if input is None:
+        return None
+    if isinstance(input, torch.Tensor):
+        return input.to(dtype)
+    if isinstance(input, dict) or isinstance(input, UserDict):
+        for inp in input.keys():
+            input[inp] = to_dtype(input[inp], dtype)
+
+    elif isinstance(input, list) or isinstance(input, tuple):
+        if len(input) == 0:
+            return input
+        input_res = []
+        for inp in input:
+            input_res.append(to_dtype(inp, dtype))
+        if isinstance(input, tuple):
+            input_res = tuple(input_res)
+        input = input_res
+
+    return input
+
+# for VLM usage
+def to_device(input, device=torch.device("cpu")):
+    """Moves input data to the specified device.
+
+    Args:
+    input: The input data to be moved.
+    device: The target device.
+
+    Returns:
+    The input data on the specified device.
+    """
+    if input is None:
+        return None
+    if isinstance(input, torch.Tensor):
+        return input.to(device)
+    if isinstance(input, dict) or isinstance(input, UserDict):
+        for inp in input.keys():
+            input[inp] = to_device(input[inp], device)
+
+    elif isinstance(input, list) or isinstance(input, tuple):
+        if len(input) == 0:
+            return input
+        input_res = []
+        for inp in input:
+            input_res.append(to_device(inp, device))
+        if isinstance(input, tuple):
+            input_res = tuple(input_res)
+        input = input_res
+
+    return input
+
+
+def validate_modules(module_names):
+    """
+    Test a list of modules' validity.
+
+    Args:
+    modules (list of str): List of strings to be validated.
+
+    Returns:
+    bool: True if all modules have equal length or not dependent, otherwise False.
+    """
+    if not bool(module_names):  # pragma: no cover
+        raise ValueError(f"Empty modules")
+    if len(module_names) < 2:
+        return True
+    split_modules = [s.split('.') for s, _ in module_names]
+    lengths = [len(parts) for parts in split_modules]
+    if len(set(lengths)) == 1:  # pragma: no cover
+        return True
+    max_length = max(lengths)
+    min_length = min(lengths)
+    longest_module = next(s for s in split_modules if len(s) == max_length)
+    shortest_module = next(s for s in split_modules if len(s) == min_length)
+    shortest_module = '.'.join(shortest_module)
+    longest_module = '.'.join(longest_module)
+    # Check if the shortest name is a substring of the longest name
+    if shortest_module in longest_module:  # pragma: no cover
+        raise ValueError(f"Invalid modules, at least two modules detected" \
+                         " as dependent, {shortest_module} and {longest_module}")
+    return True
+
+
+def get_multimodal_block_names(model, quant_vision=False):
+    """Get the multimodal model block names for transformers-like networks.
+
+    Args:
+    model: The model.
+
+    Returns:
+    block_names: A list whose elements are list of block's layer names
+    """
+    block_names = []
+    target_modules = []
+    Vison_blocks_tuple = ("vision", "visual",)
+    for n, m in model.named_modules():
+        if hasattr(type(m), "__name__") and "ModuleList" in type(m).__name__:
+            if quant_vision or all(key not in n.lower() for key in (Vison_blocks_tuple)):
+                target_modules.append((n, m))
+    validate_modules(target_modules)
+    for i, target_m in enumerate(target_modules):
+        block_names.append([])
+        for n, m in target_m[1].named_children():
+            block_names[i].append(target_m[0] + "." + n)
+    return block_names
+
+
+def detect_device(device=None):
+    def is_valid_digit(s):
+        try:
+            num = int(s)
+            return 0 <= num
+        except:
+            return False
+
+    dev_idx = None
+    if is_valid_digit(device):
+        dev_idx = int(device)
+        device = "auto"
+    if device is None or device == "auto":
+        if torch.cuda.is_available():
+            device = torch.device("cuda")
+            print("Using GPU device")
+        elif is_optimum_habana_available():  # pragma: no cover
+            device = torch.device("hpu")
+            print("Using HPU device")
+        # Use CPU as a fallback
+        else:
+            device = torch.device("cpu")
+            print("Using CPU device")
+        if dev_idx is not None and str(device) != "cpu":
+            device = str(device) + f":{dev_idx}"
+        return str(device)
+    elif isinstance(device, torch.device):
+        device = str(device)
+    return device
+
+
+def run_fn_for_vlm_autoround(model, dataloader, seqlen=512, nsamples=512):
+    device = model.orig_model.device
+    total_cnt = 0
+    for org_data in dataloader:
+        if isinstance(org_data, torch.Tensor):
+            input_ids = org_data.to(device)
+            data = input_ids
+        elif isinstance(org_data, tuple) or isinstance(org_data, list):
+                data = org_data
+                input_ids = data[0]
+        else:
+            data = {}
+            for key in org_data.keys():
+                data[key] = to_device(org_data[key], device)
+                if key == 'images':
+                    data[key] = to_dtype(org_data[key], model.orig_model.dtype)
+            input_ids = data["input_ids"]
+        if input_ids.shape[-1] < seqlen:
+            continue
+        
+        if isinstance(data, tuple) or isinstance(data, list):
+            model(*data)
+        elif isinstance(data, dict):
+            model(**data)
+        else:
+            model(data)
+        total_cnt += input_ids.shape[0] if len(input_ids.shape) > 1 else 1
+        if total_cnt >= nsamples:
+            break
+
