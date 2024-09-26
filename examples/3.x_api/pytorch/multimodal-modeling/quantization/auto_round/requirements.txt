@@ -1,0 +1,14 @@
+transformers
+torch
+tiktoken
+transformers_stream_generator
+peft
+sentencepiece
+einops
+accelerate
+datasets
+protobuf
+auto-gptq
+openpyxl
+wandb
+py-cpuinfo
