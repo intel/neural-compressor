@@ -15,6 +15,7 @@
 
 
 import enum
+from collections import UserDict
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import psutil
@@ -30,8 +31,6 @@ from neural_compressor.common.utils import (
     detect_processor_type_based_on_hw,
     logger,
 )
-import transformers
-from collections import UserDict
 
 OP_NAME_AND_TYPE_TUPLE_TYPE: TypeAlias = Tuple[str, Union[torch.nn.Module, Callable]]
 
@@ -49,8 +48,7 @@ QCONFIG_NAME = "qconfig.json"
 
 
 def is_optimum_habana_available():
-    """
-    Checks if the Optimum Habana module is available for use with the transformers library.
+    """Checks if the Optimum Habana module is available for use with the transformers library.
 
     This function checks two conditions:
     1. If the `optimum` package is available using `transformers.utils.import_utils.is_optimum_available`.
