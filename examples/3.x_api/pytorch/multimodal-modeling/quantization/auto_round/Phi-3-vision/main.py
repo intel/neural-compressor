@@ -4,9 +4,9 @@ import argparse
 parser = argparse.ArgumentParser()
 import torch
 import os
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
-os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
-torch.use_deterministic_algorithms(True, warn_only=True)
+# os.environ["TOKENIZERS_PARALLELISM"] = "false"
+# os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+# torch.use_deterministic_algorithms(True, warn_only=True)
 import copy
 from PIL import Image
 import json
@@ -26,8 +26,6 @@ DEFAULT_IMAGE_TOKEN = "<|image_1|>"
 IMAGE_TOKEN_INDEX = -200
 IGNORE_INDEX = -100
 from neural_compressor.torch.utils.utility import (get_multimodal_block_names,
-                                                    to_device,
-                                                    to_dtype,
                                                     get_layer_names_in_block,
                                                     detect_device,
                                                     run_fn_for_vlm_autoround
@@ -170,8 +168,7 @@ def create_data_loader(dataset, batch_size=1, data_collator=None):
 if __name__ == '__main__':
 
     parser.add_argument(
-        "--model_name", default="microsoft/Phi-3-vision-128k-instruct"
-    )
+        "--model_name", default="microsoft/Phi-3-vision-128k-instruct")
     
     parser.add_argument("--quantize", action="store_true")
     
@@ -391,7 +388,6 @@ if __name__ == '__main__':
                     
         if not args.quant_lm_head:
                 quant_config.set_local(lm_head_layer_name, AutoRoundConfig(dtype="fp32"))
-                # layer_config[lm_head_layer_name] = {"bits": args.bits}
                 transformers_version = [int(item) for item in transformers.__version__.split('.')[:2]]
                 if transformers_version[0] == 4 and transformers_version[1] < 38:
                     error_message = "Please upgrade transformers>=4.38.0 to support lm-head quantization."
@@ -402,7 +398,6 @@ if __name__ == '__main__':
         run_fn_for_vlm_autoround(user_model, *run_args)
         user_model = convert(user_model)
 
-        # user_model.save(args.output_dir, format="huggingface")
         from neural_compressor.torch.utils import (LoadFormat,)
         user_model.save(args.output_dir, format=LoadFormat.HUGGINGFACE, safe_serialization=False)
         if tokenizer is not None:
@@ -426,5 +421,6 @@ if __name__ == '__main__':
     #                         batch_size=args.eval_bs, user_model=user_model)
     #     from lm_eval.utils import make_table
     #     print(make_table(res))
+
 
 

@@ -1,12 +1,11 @@
 import argparse
-# import sys
 parser = argparse.ArgumentParser()
 import torch
 import os
 import transformers
-
-os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
-torch.use_deterministic_algorithms(True, warn_only=True)
+# # os.environ["TOKENIZERS_PARALLELISM"] = "false"
+# os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+# torch.use_deterministic_algorithms(True, warn_only=True)
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoModel
 from transformers import set_seed
 
@@ -21,8 +20,6 @@ from llava.mm_utils import get_model_name_from_path
 from llava.train.train import preprocess, preprocess_multimodal, DataCollatorForSupervisedDataset
 from llava.model.builder import load_pretrained_model
 from neural_compressor.torch.utils.utility import (get_multimodal_block_names,
-                                                    to_device,
-                                                    to_dtype,
                                                     get_layer_names_in_block,
                                                     detect_device,
                                                     run_fn_for_vlm_autoround
@@ -247,8 +244,6 @@ if __name__ == '__main__':
             model_name = model_name[:-1]
         print(model_name, flush=True)
 
-        from auto_round.utils import detect_device
-
         device_str = detect_device(args.device)
         torch_dtype = "auto"
         torch_device = torch.device(device_str)
@@ -334,7 +329,6 @@ if __name__ == '__main__':
                     
         if not args.quant_lm_head:
                 quant_config.set_local(lm_head_layer_name, AutoRoundConfig(dtype="fp32"))
-                # layer_config[lm_head_layer_name] = {"bits": args.bits}
                 transformers_version = [int(item) for item in transformers.__version__.split('.')[:2]]
                 if transformers_version[0] == 4 and transformers_version[1] < 38:
                     error_message = "Please upgrade transformers>=4.38.0 to support lm-head quantization."
@@ -364,9 +358,6 @@ if __name__ == '__main__':
         model = model.to(torch_device)
         model_path = args.model_name
         model_name = get_model_name_from_path(model_path)
-        # torch_dtype = "auto"
-        # tokenizer, model, image_processor, _ = load_pretrained_model(model_path, model_base=None, model_name=model_name,
-        #         torch_dtype=torch_dtype)
         from mm_evaluation import TextVQAEvaluator
         evaluator = TextVQAEvaluator(
             model,
@@ -379,6 +370,7 @@ if __name__ == '__main__':
         )
         evaluator.run_evaluate(result_file = args.eval_result_file)
         evaluator.calculate_accuracy(result_file = args.eval_result_file)
+
 
 
 

@@ -1,6 +1,4 @@
 import argparse
-# import sys
-# sys.path.insert(0, '../../..')
 parser = argparse.ArgumentParser()
 import torch
 import os
@@ -25,8 +23,6 @@ OLD_IMAGE_TOKEN = '<image>'
 DEFAULT_IM_START_TOKEN = '<img>'
 DEFAULT_IM_END_TOKEN = '</img>'
 from neural_compressor.torch.utils.utility import (get_multimodal_block_names,
-                                                    to_device,
-                                                    to_dtype,
                                                     get_layer_names_in_block,
                                                     detect_device,
                                                     run_fn_for_vlm_autoround
@@ -487,14 +483,12 @@ if __name__ == '__main__':
         run_fn_for_vlm_autoround(user_model, *run_args)
         user_model = convert(user_model)
 
-        # user_model.save(args.output_dir, format="huggingface")
         from neural_compressor.torch.utils import (LoadFormat,)
         user_model.save(args.output_dir, format=LoadFormat.HUGGINGFACE)
         if tokenizer is not None:
             tokenizer.save_pretrained(args.output_dir)
 
-    if args.accuracy:  ## TODO
-        # model = model.half()
+    if args.accuracy:
         model_name = args.model_name
         device_str = detect_device(args.device)
         torch_device = torch.device(device_str)
@@ -522,5 +516,6 @@ if __name__ == '__main__':
                     batch_size=args.eval_bs,
                     device=str(torch_device)
                 )
+
 
 
