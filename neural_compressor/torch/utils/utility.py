@@ -30,6 +30,8 @@ from neural_compressor.common.utils import (
     logger,
 )
 import transformers
+from collections import UserDict
+
 
 OP_NAME_AND_TYPE_TUPLE_TYPE: TypeAlias = Tuple[str, Union[torch.nn.Module, Callable]]
 
@@ -44,6 +46,22 @@ HPU_SAFE_WEIGHTS_NAME = "hpu_model.safetensors"
 WEIGHT_NAME = "quantized_weight.pt"
 HPU_WEIGHT_NAME = "quantized_hpu_weight.pt"
 QCONFIG_NAME = "qconfig.json"
+
+
+def is_optimum_habana_available():
+    """
+    Checks if the Optimum Habana module is available for use with the transformers library.
+
+    This function checks two conditions:
+    1. If the `optimum` package is available using `transformers.utils.import_utils.is_optimum_available`.
+    2. If the `optimum.habana` module can be found using `importlib.util.find_spec`.
+
+    Returns:
+        bool: True if Optimum Habana is available, False otherwise.
+    """
+    from transformers.utils.import_utils import is_optimum_available
+
+    return is_optimum_available() and importlib.util.find_spec("optimum.habana") is not None
 
 
 def register_algo(name):
@@ -414,6 +432,7 @@ def to_dtype(input, dtype=torch.float32):
 
     return input
 
+
 # for VLM usage
 def to_device(input, device=torch.device("cpu")):
     """Moves input data to the specified device.
@@ -444,6 +463,28 @@ def to_device(input, device=torch.device("cpu")):
         input = input_res
 
     return input
+
+
+def get_block_names(model):
+    """Get the block names for transformers-like networks.
+
+    Args:
+    model: The model.
+
+    Returns:
+    block_names: A list whose elements are list of block's layer names
+    """
+    block_names = []
+    target_modules = []
+    for n, m in model.named_modules():
+        if hasattr(type(m), "__name__") and "ModuleList" in type(m).__name__:
+            target_modules.append((n, m))
+            break  ## only find the first modulelist, may be not robust
+    for i, target_m in enumerate(target_modules):
+        block_names.append([])
+        for n, m in target_m[1].named_children():
+            block_names[i].append(target_m[0] + "." + n)
+    return block_names
 
 
 def validate_modules(module_names):
