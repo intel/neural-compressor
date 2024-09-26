@@ -15,12 +15,10 @@
 
 
 import enum
-from collections import UserDict
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import psutil
 import torch
-import transformers
 from typing_extensions import TypeAlias
 
 from neural_compressor.common.utils import (
@@ -31,6 +29,9 @@ from neural_compressor.common.utils import (
     detect_processor_type_based_on_hw,
     logger,
 )
+import transformers
+from collections import UserDict
+import importlib
 
 OP_NAME_AND_TYPE_TUPLE_TYPE: TypeAlias = Tuple[str, Union[torch.nn.Module, Callable]]
 
@@ -48,7 +49,8 @@ QCONFIG_NAME = "qconfig.json"
 
 
 def is_optimum_habana_available():
-    """Checks if the Optimum Habana module is available for use with the transformers library.
+    """
+    Checks if the Optimum Habana module is available for use with the transformers library.
 
     This function checks two conditions:
     1. If the `optimum` package is available using `transformers.utils.import_utils.is_optimum_available`.
@@ -372,9 +374,8 @@ def get_module(module, key):
     return module
 
 
-def get_layer_names_in_block(
-    model, supported_types=[torch.nn.Linear, transformers.modeling_utils.Conv1D], quant_block_list=None
-):
+def get_layer_names_in_block(model, supported_types=[torch.nn.Linear,
+                                                     transformers.modeling_utils.Conv1D], quant_block_list=None):
     """Retrieves the names of layers within each block of the model.
 
     Returns:
@@ -487,7 +488,8 @@ def get_block_names(model):
 
 
 def validate_modules(module_names):
-    """Test a list of modules' validity.
+    """
+    Test a list of modules' validity.
 
     Args:
     modules (list of str): List of strings to be validated.
@@ -496,10 +498,10 @@ def validate_modules(module_names):
     bool: True if all modules have equal length or not dependent, otherwise False.
     """
     if not bool(module_names):  # pragma: no cover
-        raise ValueError("Empty modules")
+        raise ValueError(f"Empty modules")
     if len(module_names) < 2:
         return True
-    split_modules = [s.split(".") for s, _ in module_names]
+    split_modules = [s.split('.') for s, _ in module_names]
     lengths = [len(parts) for parts in split_modules]
     if len(set(lengths)) == 1:  # pragma: no cover
         return True
@@ -507,13 +509,12 @@ def validate_modules(module_names):
     min_length = min(lengths)
     longest_module = next(s for s in split_modules if len(s) == max_length)
     shortest_module = next(s for s in split_modules if len(s) == min_length)
-    shortest_module = ".".join(shortest_module)
-    longest_module = ".".join(longest_module)
+    shortest_module = '.'.join(shortest_module)
+    longest_module = '.'.join(longest_module)
     # Check if the shortest name is a substring of the longest name
     if shortest_module in longest_module:  # pragma: no cover
-        raise ValueError(
-            "Invalid modules, at least two modules detected" " as dependent, {shortest_module} and {longest_module}"
-        )
+        raise ValueError(f"Invalid modules, at least two modules detected" \
+                         " as dependent, {shortest_module} and {longest_module}")
     return True
 
 
@@ -528,10 +529,7 @@ def get_multimodal_block_names(model, quant_vision=False):
     """
     block_names = []
     target_modules = []
-    Vison_blocks_tuple = (
-        "vision",
-        "visual",
-    )
+    Vison_blocks_tuple = ("vision", "visual",)
     for n, m in model.named_modules():
         if hasattr(type(m), "__name__") and "ModuleList" in type(m).__name__:
             if quant_vision or all(key not in n.lower() for key in (Vison_blocks_tuple)):
@@ -545,19 +543,19 @@ def get_multimodal_block_names(model, quant_vision=False):
 
 
 def detect_device(device=None):
-    """Detects the device to use for model execution (GPU, HPU, or CPU).
+    """
+    Detects the device to use for model execution (GPU, HPU, or CPU).
 
     Args:
-        device (str, int, torch.device, optional):
+        device (str, int, torch.device, optional): 
             - If a string ('cuda', 'cpu', or 'hpu') or torch.device is provided, that device is selected.
             - If an integer is provided, it treats it as a GPU device index.
-            - If None or 'auto', it automatically selects 'cuda' if available, 'hpu' if Habana is available,
+            - If None or 'auto', it automatically selects 'cuda' if available, 'hpu' if Habana is available, 
               or falls back to 'cpu'.
 
     Returns:
         str: The selected device in string format ('cuda:X', 'hpu', or 'cpu').
     """
-
     def is_valid_digit(s):
         try:
             num = int(s)
@@ -589,7 +587,8 @@ def detect_device(device=None):
 
 
 def run_fn_for_vlm_autoround(model, dataloader, seqlen=512, nsamples=512):
-    """Runs a model on a provided dataset with automatic device detection for vector-language models.
+    """
+    Runs a model on a provided dataset with automatic device detection for vector-language models.
 
     Args:
         model: The model to run.
@@ -607,18 +606,18 @@ def run_fn_for_vlm_autoround(model, dataloader, seqlen=512, nsamples=512):
             input_ids = org_data.to(device)
             data = input_ids
         elif isinstance(org_data, tuple) or isinstance(org_data, list):
-            data = org_data
-            input_ids = data[0]
+                data = org_data
+                input_ids = data[0]
         else:
             data = {}
             for key in org_data.keys():
                 data[key] = to_device(org_data[key], device)
-                if key == "images":
+                if key == 'images':
                     data[key] = to_dtype(org_data[key], model.orig_model.dtype)
             input_ids = data["input_ids"]
         if input_ids.shape[-1] < seqlen:
             continue
-
+        
         if isinstance(data, tuple) or isinstance(data, list):
             model(*data)
         elif isinstance(data, dict):
@@ -628,3 +627,4 @@ def run_fn_for_vlm_autoround(model, dataloader, seqlen=512, nsamples=512):
         total_cnt += input_ids.shape[0] if len(input_ids.shape) > 1 else 1
         if total_cnt >= nsamples:
             break
+
