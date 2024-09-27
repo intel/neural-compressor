@@ -6,7 +6,6 @@ import torch
 from transformers import AutoConfig, AutoTokenizer
 from transformers.generation import GenerationConfig
 import intel_extension_for_pytorch as ipex
-# from intel_extension_for_transformers.transformers.llm.utils.generation import _beam_search, _greedy_search
 from neural_compressor.transformers import AutoModelForCausalLM, AutoRoundConfig, RtnConfig, GPTQConfig
 from neural_compressor.transformers.quantization.utils import convert_dtype_str2torch
 from transformers.utils import check_min_version
@@ -189,7 +188,6 @@ if quantization_config is not None:
                                                       torch_dtype=torch.float16,
                                                       )
 elif args.load_in_4bit or args.load_in_8bit:
-    # CPU device usage is provided by intel-extension-for-transformers.
     user_model = AutoModelForCausalLM.from_pretrained(args.model,
                                                       device_map=args.device,
                                                       load_in_4bit=args.load_in_4bit,
