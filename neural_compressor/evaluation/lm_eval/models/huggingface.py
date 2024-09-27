@@ -115,11 +115,12 @@ class HFLM(TemplateLM):
         # PEFT and quantization options
         peft: Optional[str] = None,
         autogptq: Optional[Union[bool, str]] = False,
+        pad_to_buckets: Optional[Union[bool]] = False,
         model_format: Optional[str] = "torch",
         **kwargs,
     ) -> None:
         super().__init__()
-
+        self.pad_to_buckets = pad_to_buckets
         self.model_format = model_format
         # optionally: take in an already-initialized transformers.PreTrainedModel
         if not isinstance(pretrained, str):
@@ -166,7 +167,9 @@ class HFLM(TemplateLM):
             if not (parallelize or accelerator.num_processes > 1):
                 # use user-passed device
                 device_list = set(
-                    ["cuda", "cpu", "xpu"] + [f"cuda:{i}" for i in range(torch.cuda.device_count())] + ["mps", "mps:0"]
+                    ["cuda", "cpu", "xpu", "hpu"]
+                    + [f"cuda:{i}" for i in range(torch.cuda.device_count())]
+                    + ["mps", "mps:0"]
                 )
                 if device and device in device_list:
                     self._device = torch.device(device)
@@ -511,7 +514,6 @@ class HFLM(TemplateLM):
                 if model_kwargs.get("load_in_4bit", None):
                     if model_kwargs.get("bnb_4bit_compute_dtype", None):
                         model_kwargs["bnb_4bit_compute_dtype"] = get_dtype(model_kwargs["bnb_4bit_compute_dtype"])
-            from neural_compressor.transformers import AutoModelForCausalLM
 
             if self.model_format == "onnx" and self.AUTO_MODEL_CLASS == transformers.AutoModelForCausalLM:
                 if (
@@ -938,11 +940,20 @@ class HFLM(TemplateLM):
                     else:
                         output = self.model(inps, torch.ones(inps.shape, dtype=torch.int64)).logits
                 else:
+                    if self.pad_to_buckets:  # use buckets to pad inputs
+                        bs, seq_length = inps.shape
+                        padding_length = 0
+                        buckets = [64, 128, 256, 512, 1024, 2048, 4096, 8192]
+                        bucket_length = [b for b in buckets if b >= seq_length][0]
+                        padding_length = bucket_length - seq_length
+                        inps = F.pad(inps, (0, padding_length), value=self.model.config.pad_token_id)
                     output = self.model(inps)
                     if isinstance(output, tuple):
                         output = output[0]
                     else:
                         output = output.logits
+                    if self.pad_to_buckets and padding_length != 0:  # use buckets to pad inputs
+                        output = output[:, :-padding_length, :]
                 return output
 
     def _model_generate(self, context, max_length, stop, **generation_kwargs):

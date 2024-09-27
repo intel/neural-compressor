@@ -36,16 +36,24 @@ from functools import partial
 from pathlib import Path
 from typing import Union
 
+import lm_eval
 import numpy as np
-from lm_eval import utils
+from lm_eval import evaluator, utils
 from lm_eval.loggers import WandbLogger
 from lm_eval.tasks import TaskManager
 from lm_eval.utils import make_table, simple_parse_args_string
 
-from neural_compressor.evaluation.lm_eval import evaluator
-from neural_compressor.evaluation.lm_eval.evaluator import request_caching_arg_to_dict
-
 DEFAULT_RESULTS_FILE = "results.json"
+
+
+def request_caching_arg_to_dict(cache_requests: str) -> dict:
+    request_caching_args = {
+        "cache_requests": cache_requests in {"true", "refresh"},
+        "rewrite_requests_cache": cache_requests == "refresh",
+        "delete_requests_cache": cache_requests == "delete",
+    }
+
+    return request_caching_args
 
 
 def _handle_non_serializable(o):
@@ -143,8 +151,57 @@ def cli_evaluate(args) -> None:
 
     request_caching_args = request_caching_arg_to_dict(cache_requests=args.cache_requests)
 
+    ### update model with user_model ###
+    if args.model_args is None:
+        args.model_args = ""
+    # replace HFLM.
+    from .models.huggingface import HFLM
+
+    lm_eval.api.registry.MODEL_REGISTRY["hf-auto"] = HFLM
+    lm_eval.api.registry.MODEL_REGISTRY["hf"] = HFLM
+    lm_eval.api.registry.MODEL_REGISTRY["huggingface"] = HFLM
+
+    if args.user_model is not None:
+        # use tiny model to built lm.
+        print(
+            "We use 'pretrained=Muennighoff/tiny-random-bert'"
+            + "to build `LM` instance, the actually run model is user_model you passed."
+        )
+        lm = lm_eval.api.registry.get_model(args.model).create_from_arg_string(
+            "pretrained=Muennighoff/tiny-random-bert",
+            {
+                "batch_size": args.batch_size,
+                "max_batch_size": args.max_batch_size,
+                "device": args.device,
+            },
+        )
+        lm._model = args.user_model
+        if args.tokenizer is not None:
+            lm.tokenizer = args.tokenizer
+        else:
+            assert False, "Please provide tokenizer in evaluation function"
+    elif isinstance(args.model_args, dict):
+        lm = lm_eval.api.registry.get_model(args.model).create_from_arg_obj(
+            args.model_args,
+            {
+                "batch_size": args.batch_size,
+                "max_batch_size": args.max_batch_size,
+                "device": args.device,
+            },
+        )
+    else:
+        lm = lm_eval.api.registry.get_model(args.model).create_from_arg_string(
+            args.model_args,
+            {
+                "batch_size": args.batch_size,
+                "max_batch_size": args.max_batch_size,
+                "device": args.device,
+            },
+        )
+    lm.pad_to_buckets = args.pad_to_buckets
+
     results = evaluator.simple_evaluate(
-        model=args.model,
+        model=lm,
         model_args=args.model_args,
         tasks=task_names,
         num_fewshot=args.num_fewshot,
@@ -163,8 +220,6 @@ def cli_evaluate(args) -> None:
         random_seed=args.seed[0],
         numpy_random_seed=args.seed[1],
         torch_random_seed=args.seed[2],
-        user_model=args.user_model,  # to validate the model in memory,
-        tokenizer=args.tokenizer,  # to use tokenizer in mem,
         **request_caching_args,
     )
 
