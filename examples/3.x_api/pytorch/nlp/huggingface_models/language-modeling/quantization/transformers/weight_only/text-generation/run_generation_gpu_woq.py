@@ -326,7 +326,7 @@ if args.accuracy:
                         user_model = user_model,
                         tasks = args.tasks,
                         device = args.device,
-                        batch_size = args.eval_batch_size
+                        batch_size = args.eval_batch_size,
                         trust_remote_code = args.trust_remote_code)
     results = evaluate(args)
     for task_name in args.tasks.split(","):
