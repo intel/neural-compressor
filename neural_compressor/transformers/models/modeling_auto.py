@@ -180,9 +180,7 @@ class _BaseINCAutoModelClass:
                 assert hasattr(torch, "xpu") and torch.xpu.is_available(), "There is no xpu device in this system!"
                 quantization_config.update(**{"device": "xpu"})
                 quantization_config.post_init_xpu()
-            if (
-                not torch.cuda.is_available() or device_map == "cpu" or device_map == torch.device("cpu")
-            ) and model.config.model_type == "chatglm":
+            if (device_map == "cpu" or device_map == torch.device("cpu")) and model.config.model_type == "chatglm":
                 model = model.float()
             model = convert_to_quantized_model(model, quantization_config, device=device_map)
             if isinstance(quantization_config, AwqConfig):

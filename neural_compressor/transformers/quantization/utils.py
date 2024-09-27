@@ -223,29 +223,27 @@ def _replace_linear(
                         module.qzeros if hasattr(module, "qzeros") else None,
                         g_idx,
                     )
+                    if not hasattr(module, "qweight"):
+                        n_pack = 32 // quantization_config.bits
+
+                        weight = torch.zeros(
+                            (math.ceil(in_features / n_pack), out_features),
+                            dtype=torch.int32,
+                            device=torch.device(device),
+                        )
+                    model._modules[name].set_weights_bias(
+                        module.qweight.data if hasattr(module, "qweight") else weight,
+                        None if module.bias is None else module.bias.data,
+                    )
                 else:
                     raise Exception("{} device Unsupported weight only quantization!".format(device))
 
                 is_replaced = True
+                is_removed = True
                 # Store the module class in case we need to transpose the weight later
                 model._modules[name].source_cls = type(module)
                 # Force requires grad to False to avoid unexpected errors
                 model._modules[name].requires_grad_(False)
-
-            if device == "xpu" or device == torch.device("xpu"):
-                if not hasattr(module, "qweight"):
-                    n_pack = 32 // quantization_config.bits
-
-                    weight = torch.zeros(
-                        (math.ceil(in_features / n_pack), out_features),
-                        dtype=torch.int32,
-                        device=torch.device(device),
-                    )
-                model._modules[name].set_weights_bias(
-                    module.qweight.data if hasattr(module, "qweight") else weight,
-                    None if module.bias is None else module.bias.data,
-                )
-                is_removed = True
 
         if not is_removed and len(list(module.children())) > 0:  # pylint: disable=E1101
             _, is_replaced = _replace_linear(
