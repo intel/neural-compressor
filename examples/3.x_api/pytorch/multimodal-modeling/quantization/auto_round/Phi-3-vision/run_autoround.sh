@@ -6,6 +6,7 @@ CUDA_VISIBLE_DEVICES=$device \
 python3 main.py \
 --model_name=$model_name \
 --nsamples 512 \
+--quantize \
 --image_folder /PATH/TO/coco/images/train2017 \
 --question_file /PATH/TO/llava_v1_5_mix665k.json \
 --output_dir "./tmp_autoround"

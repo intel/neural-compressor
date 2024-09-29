@@ -12,6 +12,7 @@ python3 main.py \
 --iters 200 \
 --seqlen 512 \
 --disable_quanted_input \
+--quantize \
 --image_folder /path/to/coco/images/train2017/ \
 --question_file /path/to/Qwen-VL_mix665k.json \
 --output_dir "./tmp_autoround"

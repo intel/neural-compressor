@@ -9,6 +9,7 @@ python3 main.py \
 --group_size 128 \
 --iters 200 \
 --seqlen 512 \
+--quantize \
 --image_folder /path/to/coco/images/train2017/ \
 --question_file /path/to/LLaVA-Instruct-150K/llava_v1_5_mix665k.json \
 --eval-question-file /path/to/textvqa/llava_textvqa_val_v051_ocr.jsonl \
