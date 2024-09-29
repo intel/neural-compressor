@@ -14,5 +14,5 @@ wandb
 py-cpuinfo
 Pillow
 torchvision
-lm-eval==0.4.4
+# lm-eval==0.4.4
 setuptools==70.0.0
