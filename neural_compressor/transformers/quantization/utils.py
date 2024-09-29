@@ -527,7 +527,8 @@ def convert_to_quantized_model(model, config, device="cpu"):
 
     if config.use_layer_wise and not (q_model.device == device or q_model.device.type == device):
         logger.warning(
-            "Do not convert device to avoid out of memory. Recommend using saved quantized model to inference.")
+            "Do not convert device to avoid out of memory. Recommend using saved quantized model to inference."
+        )
         return q_model
 
     return q_model.to(device)
