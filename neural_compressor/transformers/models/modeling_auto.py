@@ -144,7 +144,7 @@ class _BaseINCAutoModelClass:
 
             if hasattr(quantization_config, "use_layer_wise") and quantization_config.use_layer_wise:
                 from neural_compressor.torch import load_empty_model
-                
+
                 trust_remote_code = kwargs.pop("trust_remote_code", None)
                 model = load_empty_model(pretrained_model_name_or_path, trust_remote_code=trust_remote_code)
                 if use_cpu:
