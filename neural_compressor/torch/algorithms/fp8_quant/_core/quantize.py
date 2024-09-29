@@ -15,13 +15,16 @@
 import habana_frameworks.torch.core as htcore
 import torch
 import torch.nn as nn
+import numpy as np
 
 from .._quant_common.helper_modules import PatchedUnmeasuredModule
-from .._quant_common.quant_config import get_hqt_config
+from .._quant_common.quant_config import get_hqt_config, set_hqt_config
 from ..utils.logger import logger
-from .common import UNMEASURED_MODELS, generate_model_info, mod_default_dict, parent_child_mod_dict
+from .common import generate_model_info, mod_default_dict, parent_child_mod_dict, \
+                    save_scales, load_scales
 from .measure import load_measurements
-from .scale import get_config, scale_method_mapping, scaling_methods
+from .scale import scale_method_mapping, scaling_methods, \
+                   convert_scales_to_tensors_dict, load_layer_scales
 
 
 def patch_module(mod, qconfig, mod_dict, patched_mod=None):
@@ -71,41 +74,61 @@ def quantize_params(mod, mod_extra_config):
         htcore.mark_step()
 
 
-def prepare_model(model, qconfig, mod_list, hp_dtype=torch.float):
-    """Replaces the model submodules according to the mod_list with patched quantization modules.
+def prepare_model(model, mod_list, measurement, scale_file, scaling_method, scale_config):
+    """Calculates scales according to the scaling method and config.
+    Replaces the model submodules according to the mod_list with patched quantization modules.
     Configures patched modules with the quantization/dequantization methods to apply on their input and output tensors.
     Quantizes the model parameters as they are static.
 
     Args:
         model (nn.module): The model to quantize.
-        qconfig (dict): Dict that maps between patched module and its quantization info.
         mod_list (list): The specific submodules that will be quantized in the model.
+        measurement (dict): The measurements of the model.
+        scale_file (str): The file containing the scales.
+        scaling_method (str): The scaling method to use.
+        scale_config (dict): The scaling configuration.
     """
     config = get_hqt_config(model)
+    recalc_scales = config.cfg["recalc_scales"]
+    scales_file_format = np.ndarray
+    scales_obj = (
+        load_scales(scale_file + ".npz", scales_file_format)
+        if (scale_file is not None) and not recalc_scales
+        else {}
+    )
+    scales = convert_scales_to_tensors_dict(scales_obj, scales_file_format, scale_config["hp_dtype"])
+    save_file = False
     patched_modules = []
     patched_module_types = set()
     with torch.no_grad():
         for name, mod in model.named_modules():
-            if name in qconfig[UNMEASURED_MODELS]:
-                if not config.cfg["ignore_modules_wo_measures"]:
-                    patch_module(mod, None, None, PatchedUnmeasuredModule(name))
-                else:
-                    logger.debug("Module %s was not quantized.", name)
-                continue
+            mod_type_str = mod.__class__.__name__
+            if name in mod_list and name not in scales and config.cfg["use_stats_files"] and name not in measurement:
+                if mod_default_dict[mod_type_str].should_measure_and_quant:
+                    if not config.cfg["ignore_modules_wo_measures"]:
+                        patch_module(mod, None, None, PatchedUnmeasuredModule(name))
+                    else:
+                        logger.debug("Module %s was not quantized.", name)
+                    continue
             # When offloading weight to disk, need to transfer the weight from disk to cpu using hf_hook
             apply_hf_hook(mod)
-            mod_name = mod.__class__.__name__
             if name in mod_list:
-                if name in qconfig:
-                    mod_extra_config = qconfig[name]
-                    if config.cfg["fake_quant"] == False and mod_default_dict[mod_name].should_measure_and_quant:
-                        quantize_params(mod, mod_extra_config)
-                else:
-                    # patched module without measure/quant
-                    mod_extra_config = None
+                set_hqt_config(mod, config)  # set config in the module, as it consumed by the patched module
+                mod_extra_config, save_file = load_layer_scales(mod, name, config,
+                                                                mod_type_str, measurement,
+                                                                scales, scale_file,
+                                                                scales_file_format,
+                                                                scales_obj, scaling_method,
+                                                                scale_config, save_file)
+                if config.cfg["fake_quant"] == False and mod_default_dict[mod_type_str].should_measure_and_quant:
+                    quantize_params(mod, mod_extra_config)
                 patch_module(mod, mod_extra_config, mod_default_dict)
                 patched_modules.append(name)
                 patched_module_types.add(type(mod))
+                logger.debug("Patched module name: %s", name)
+    if save_file: # cache calculated scales
+        save_scales(model, scales_obj, scales_file_format, scale_file + ".npz")
+        save_scales(model, scales_obj, scales_file_format, scale_file + ".json")
     logger.debug("Patched module types: %s", patched_module_types)
     logger.debug("Patched modules: %s", patched_modules)
     logger.debug("Total patched modules: %d", len(patched_modules))
@@ -133,16 +156,7 @@ def quantize(model, mod_list):
     # FIXME make sure this takes unit_scale or measured scale, from Configs
     scaling_method_name = scale_method_mapping[(config.cfg["scale_method"], config.cfg["observer"])]
     scaling_method = scaling_methods[scaling_method_name]
-    params = config.cfg["scale_params"]
-    params["hp_dtype"] = hp_dtype
-    params["lp_dtype"] = lp_dtype
-    qconfig = get_config(
-        model,
-        measurement,
-        mod_default_dict,
-        scaling_method,
-        params,
-        scale_file,
-        mod_list,
-    )
-    prepare_model(model, qconfig, mod_list, hp_dtype=hp_dtype)
+    scale_config = config.cfg["scale_params"]
+    scale_config["hp_dtype"] = hp_dtype
+    scale_config["lp_dtype"] = lp_dtype
+    prepare_model(model, mod_list, measurement, scale_file, scaling_method, scale_config)
