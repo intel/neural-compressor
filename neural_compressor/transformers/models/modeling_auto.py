@@ -144,8 +144,17 @@ class _BaseINCAutoModelClass:
 
             if hasattr(quantization_config, "use_layer_wise") and quantization_config.use_layer_wise:
                 from neural_compressor.torch import load_empty_model
+                from transformers.dynamic_module_utils import  resolve_trust_remote_code
                 
-                trust_remote_code = kwargs.pop("trust_remote_code", None)
+                has_remote_code = hasattr(config, "auto_map") and cls.ORIG_MODEL.__name__ in config.auto_map
+                has_local_code = type(config) in cls.ORIG_MODEL._model_mapping.keys()
+                trust_remote_code = resolve_trust_remote_code(
+                    trust_remote_code,
+                    pretrained_model_name_or_path,
+                    has_local_code,
+                    has_remote_code,
+                )
+                
                 model = load_empty_model(pretrained_model_name_or_path, trust_remote_code=trust_remote_code)
                 if use_cpu:
                     quantization_config.post_init_cpu()
