@@ -101,71 +101,36 @@ def softmax_scales_to_mod_config(mod, scales, params):
     return ModuleConfig(None, output_config)
 
 
-def get_config(
-    model,
-    measurement,
-    mod_dict,
-    method,
-    params,
-    scales_file=None,
-    mod_list=None,
-):
-    with torch.no_grad():
-        top_level_config = get_hqt_config(model)
-        recalc_scales = top_level_config.cfg["recalc_scales"]
-        qconfig = {UNMEASURED_MODELS: []}
-        scales_file_format = np.ndarray  # file_functions[os.path.splitext(scales_file)[1]][0]
-        scales_obj = (
-            load_scales(scales_file + ".npz", scales_file_format)
-            if (scales_file is not None) and not recalc_scales
-            else {}
-        )
-        scales = convert_scales_to_tensors_dict(scales_obj, scales_file_format, params["hp_dtype"])
-        model_dict = dict(model.named_modules())
-        save_file = False
-        for mname in mod_list:
-            mod = model_dict[mname]
-            set_hqt_config(mod, top_level_config)  # set config in the module, as it consumed by the patched module
-            mod_type_str = mod.__class__.__name__
-            layer_type = mod_dict[mod_type_str].type
-            if mname not in scales:
-                logger.debug("Calculating scales for layer %s", mname)
-                if top_level_config.cfg["use_stats_files"] and mname not in measurement:
-                    if mod_dict[mod_type_str].should_measure_and_quant:
-                        qconfig[UNMEASURED_MODELS].append(mname)
-                    logger.debug(
-                        "Layer '%s' has no measurements therefore it can't be quantized.",
-                        mname,
-                    )
-                    continue
-
-                layer_measure = measurement.get(mname, None)  # ModuleConfig() of measurements
-                scales[mname] = method[layer_type][0](mod, layer_measure, params)  # ModuleConfig() of scales
-                if scales_file is not None:
-                    scales_obj[mname] = ModuleConfig(
-                        **format_functions_rec((torch.Tensor, scales_file_format))(scales[mname].__dict__)
-                    )
-                    save_file = True
-
-            logger.debug(
-                "Preparing quantization functions for layer %s layer_type=%s",
-                mname,
-                layer_type,
-            )
-            mod_config = method[layer_type][1](mod, scales[mname], params)  # ModuleConfig() of QuantDequant
-            mod_extra_config = ModuleExtraConfig(
+def load_layer_scales(mod, mod_name, config, mod_type_str, measurement, scales, scale_file,
+                      scales_file_format, scales_obj, scaling_method, scale_config, save_file):
+    module_type = mod_default_dict[mod_type_str].type
+    logger.debug(
+        "Preparing quantization functions for module %s module_type=%s",
+        mod_name,
+        module_type,
+    )
+    mod_extra_config = None
+    if mod_name in scales or not config.cfg["use_stats_files"] or mod_name in measurement:
+        if mod_name not in scales:
+            logger.debug("Calculating scales for module %s", mod_name)
+            layer_measure = measurement.get(mod_name, None)  # ModuleConfig of measurements
+            # calculates scales for current module according to scalling_methods
+            scales[mod_name] = scaling_method[module_type][0](mod, layer_measure, scale_config)  # ModuleConfig of scales
+            if scale_file is not None:
+                scales_obj[mod_name] = ModuleConfig(
+                    **format_functions_rec((torch.Tensor, scales_file_format))(scales[mod_name].__dict__)
+                )
+                save_file = True
+        # calculates QuantDequant config for current module according to scalling_methods
+        mod_config = scaling_method[module_type][1](mod, scales[mod_name], scale_config)  # ModuleConfig of QuantDequant
+        mod_extra_config = ModuleExtraConfig(
                 mod_config.inputs,
                 mod_config.outputs,
                 mod_config.params,
-                scales[mname],
-                params,
-            )
-            qconfig[mname] = mod_extra_config
-        if save_file and scales_file is not None:
-            save_scales(model, scales_obj, scales_file_format, scales_file + ".npz")
-            save_scales(model, scales_obj, scales_file_format, scales_file + ".json")
-    return qconfig
-
+                scales[mod_name],
+                scale_config,
+                )
+    return mod_extra_config, save_file
 
 scaling_methods = {
     "unit_scale": {
