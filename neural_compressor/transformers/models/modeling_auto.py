@@ -144,7 +144,7 @@ class _BaseINCAutoModelClass:
 
             if hasattr(quantization_config, "use_layer_wise") and quantization_config.use_layer_wise:
                 from neural_compressor.torch import load_empty_model
-                
+
                 kwargs["low_cpu_mem_usage"] = True
                 kwargs["device_map"] = "cpu"
                 model = load_empty_model(pretrained_model_name_or_path, **kwargs)
