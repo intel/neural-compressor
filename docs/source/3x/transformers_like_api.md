@@ -174,7 +174,7 @@ tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, trust_remote_code=
 q_model = AutoModelForCausalLM.from_pretrained(model_name_or_path, device_map="xpu", trust_remote_code=True)
 
 # optimize the model with ipex, it will improve performance.
-quantization_config = q_model.quantization_config if hasattr(user_model, "quantization_config") else None
+quantization_config = q_model.quantization_config if hasattr(q_model, "quantization_config") else None
 q_model = ipex.optimize_transformers(
     q_model, inplace=True, dtype=torch.float16, quantization_config=quantizaiton_config, device="xpu"
 )
@@ -205,7 +205,7 @@ q_model.save_pretrained("saved_dir")
 loaded_model = AutoModelForCausalLM.from_pretrained("saved_dir", trust_remote_code=True)
 
 # Before executed the loaded model, you can call ipex.optimize_transformers function.
-quantization_config = q_model.quantization_config if hasattr(user_model, "quantization_config") else None
+quantization_config = q_model.quantization_config if hasattr(q_model, "quantization_config") else None
 loaded_model = ipex.optimize_transformers(
     loaded_model, inplace=True, dtype=torch.float16, quantization_config=quantization_config, device="xpu"
 )
@@ -217,7 +217,7 @@ prompt = "Once upon a time, a little girl"
 tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
 input_ids = tokenizer(prompt, return_tensors="pt")["input_ids"]
 generate_kwargs = dict(do_sample=False, temperature=0.9, num_beams=4)
-gen_ids = q_model.generate(input_ids, **generate_kwargs)
+gen_ids = loaded_model.generate(input_ids, **generate_kwargs)
 gen_text = tokenizer.batch_decode(gen_ids, skip_special_tokens=True)
 print(gen_text)
 ```
