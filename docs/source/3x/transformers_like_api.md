@@ -1,4 +1,4 @@
-Weight Only Quantization (WOQ)
+Transformers-like API
 =====
 
 1. [Introduction](#introduction)
@@ -13,7 +13,7 @@ Weight Only Quantization (WOQ)
 
 ## Introduction
 
-Transformers-like API provides seamless user experience of model compressions on Transformer-based models by extending [Hugging Face transformers](https://github.com/huggingface/transformers) APIs and leveraging [Intel® Neural Compressor](https://github.com/intel/neural-compressor).
+Transformers-like API provides a seamless user experience of model compressions on Transformer-based models by extending [Hugging Face transformers](https://github.com/huggingface/transformers) APIs, leveraging [Intel® Neural Compressor](https://github.com/intel/neural-compressor), and replacing Linear operator with [Intel® Extension for PyTorch](https://github.com/intel/intel-extension-for-pytorch).
 ## Supported Algorithms
 
 | Support Device |  Rtn  |  Awq  |  Teq |  GPTQ  | AutoRound |
