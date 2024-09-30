@@ -13,10 +13,11 @@ Transformers-like API
 
 ## Introduction
 
-Transformers-like API provides a seamless user experience of model compressions on Transformer-based models by extending [Hugging Face transformers](https://github.com/huggingface/transformers) APIs, leveraging [Intel® Neural Compressor](https://github.com/intel/neural-compressor), and replacing Linear operator with [Intel® Extension for PyTorch](https://github.com/intel/intel-extension-for-pytorch).
+Transformers-like API provides a seamless user experience of model compressions on Transformer-based models by extending Hugging Face transformers APIs, leveraging neural compressor existing weight-only quantization capability and replacing Linear operator with Intel® Extension for PyTorch.
+
 ## Supported Algorithms
 
-| Support Device |  Rtn  |  Awq  |  Teq |  GPTQ  | AutoRound |
+| Support Device |  RTN  |  AWQ  |  TEQ |  GPTQ  | AutoRound |
 |:--------------:|:----------:|:----------:|:----------:|:----:|:----:|
 |     Intel CPU        |  &#10004;  |  &#10004;  |  &#10004;  |  &#10004;  |  &#10004;  |
 |     Intel GPU        |  &#10004;  |  stay tuned  |  stay tuned  |  &#10004;  |  &#10004;  |
@@ -26,7 +27,7 @@ Transformers-like API provides a seamless user experience of model compressions 
 
 ## Usage For CPU 
 
-Our motivation is to improve CPU support for weight only quantization. We have extended the `from_pretrained` function so that `quantization_config` can accept [`RtnConfig`](https://github.com/intel/neural-compressor/blob/master/neural_compressor/transformers/utils/quantization_config.py#L243), [`AwqConfig`](https://github.com/intel/neural-compressor/blob/72398b69334d90cdd7664ac12a025cd36695b55c/neural_compressor/transformers/utils/quantization_config.py#L394), [`TeqConfig`](https://github.com/intel/neural-compressor/blob/72398b69334d90cdd7664ac12a025cd36695b55c/neural_compressor/transformers/utils/quantization_config.py#L464), [`GPTQConfig`](https://github.com/intel/neural-compressor/blob/72398b69334d90cdd7664ac12a025cd36695b55c/neural_compressor/transformers/utils/quantization_config.py#L298), [`AutoroundConfig`](https://github.com/intel/neural-compressor/blob/72398b69334d90cdd7664ac12a025cd36695b55c/neural_compressor/transformers/utils/quantization_config.py#L527) to implement conversion on the CPU.
+Our motivation is to improve CPU support for weight only quantization. We have extended the `from_pretrained` function so that `quantization_config` can accept [`RtnConfig`](https://github.com/intel/neural-compressor/blob/master/neural_compressor/transformers/utils/quantization_config.py#L243), [`AwqConfig`](https://github.com/intel/neural-compressor/blob/72398b69334d90cdd7664ac12a025cd36695b55c/neural_compressor/transformers/utils/quantization_config.py#L394), [`TeqConfig`](https://github.com/intel/neural-compressor/blob/72398b69334d90cdd7664ac12a025cd36695b55c/neural_compressor/transformers/utils/quantization_config.py#L464), [`GPTQConfig`](https://github.com/intel/neural-compressor/blob/72398b69334d90cdd7664ac12a025cd36695b55c/neural_compressor/transformers/utils/quantization_config.py#L298), [`AutoroundConfig`](https://github.com/intel/neural-compressor/blob/72398b69334d90cdd7664ac12a025cd36695b55c/neural_compressor/transformers/utils/quantization_config.py#L527) to implements conversion on the CPU.
 
 ### Usage examples for CPU device
 quantization and inference with `RtnConfig`, `AwqConfig`, `TeqConfig`, `GPTQConfig`, `AutoRoundConfig` on CPU device.
@@ -122,11 +123,11 @@ loaded_model = AutoModelForCausalLM.from_pretrained(saved_dir)
 ```
 
 ## Usage For Intel GPU
-Intel® Neural Compressor implement weight-only quantization for intel GPU(PVC/ARC/MTL) with [Intel-extension-for-pytorch](https://github.com/intel/intel-extension-for-pytorch).
+Intel® Neural Compressor implement weight-only quantization for Intel GPU,(PVC/ARC/MTL/LNL) with [intel-extension-for-pytorch](https://github.com/intel/intel-extension-for-pytorch).
 
-Now 4-bit/8-bit inference with `RtnConfig`, `GPTQConfig`, `AutoRoundConfig` are support on intel GPU device.
+Now 4-bit/8-bit inference with `RtnConfig`, `GPTQConfig`, `AutoRoundConfig` are support on Intel GPU device.
 
-We support experimental woq inference on intel GPU(PVC/ARC/MTL) with replacing Linear op in PyTorch. Validated models: Qwen-7B, Llama-7B, Phi-3.  
+We support experimental woq inference on Intel GPU,(PVC/ARC/MTL/LNL) with replacing Linear op in PyTorch. Validated models: meta-llama/Meta-Llama-3-8B, meta/llama-Llama-2-7b-hf, Qwen/Qwen-7B-Chat, microsoft/Phi-3-mini-4k-instruct.
 
 Here are the example codes.
 
@@ -134,32 +135,9 @@ Here are the example codes.
 1. Install Oneapi Package  
 The Oneapi DPCPP compiler is required to compile intel-extension-for-pytorch. Please follow [the link](https://www.intel.com/content/www/us/en/developer/articles/guide/installation-guide-for-oneapi-toolkits.html) to install the OneAPI to "/opt/intel folder".
 
-2. Build and Install PyTorch and Intel-extension-for-pytorch
-```python
-python -m pip install torch==2.3.1+cxx11.abi --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/
+2. Build and Install PyTorch and intel-extension-for-pytorch. Please follow [the link](https://intel.github.io/intel-extension-for-pytorch/index.html#installation).
 
-# Build IPEX from Source Code
-git clone https://github.com/intel/intel-extension-for-pytorch.git ipex-gpu
-cd ipex-gpu
-git submodule update --init --recursive
-export USE_AOT_DEVLIST='pvc,ats-m150'  # Comment this line if you are compiling for MTL
-export BUILD_WITH_CPU=OFF
-export LD_LIBRARY_PATH=${CONDA_PREFIX}/lib/:$LD_LIBRARY_PATH
-export OCL_ICD_VENDORS=/etc/OpenCL/vendors
-export CCL_ROOT=${CONDA_PREFIX}
-source /opt/intel/oneapi/setvars.sh --force
-export LLM_ACC_TEST=1
-pip install -r requirements.txt
-
-python setup.py install
-```
-
-3. Install Neural-compressor
-```pythpon
-pip install neural-compressor
-```
-
-4. Quantization Model and Inference
+3. Quantization Model and Inference
 ```python
 import intel_extension_for_pytorch as ipex
 from neural_compressor.transformers import AutoModelForCausalLM
@@ -185,7 +163,7 @@ print(tokenizer.batch_decode(output, skip_special_tokens=True))
 
 > Note: If your device memory is not enough, please quantize and save the model first, then rerun the example with loading the model as below, If your device memory is enough, skip below instruction, just quantization and inference.
 
-5. Saving and Loading quantized model
+4. Saving and Loading quantized model
  * First step: Quantize and save model
 ```python
 from neural_compressor.transformers import AutoModelForCausalLM, RtnConfig
@@ -222,7 +200,7 @@ gen_text = tokenizer.batch_decode(gen_ids, skip_special_tokens=True)
 print(gen_text)
 ```
 
-6. You can directly use [example script](https://github.com/intel/neural-compressor/blob/master/examples/3.x_api/pytorch/nlp/huggingface_models/language-modeling/quantization/transformers/weight_only/text-generation/run_generation_gpu_woq.py)
+5. You can directly use [example script](https://github.com/intel/neural-compressor/blob/master/examples/3.x_api/pytorch/nlp/huggingface_models/language-modeling/quantization/transformers/weight_only/text-generation/run_generation_gpu_woq.py)
 ```python
 python run_generation_gpu_woq.py --woq --benchmark --model save_dir
 ```
