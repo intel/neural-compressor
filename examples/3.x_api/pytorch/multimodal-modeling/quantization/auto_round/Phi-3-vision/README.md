@@ -25,7 +25,7 @@ pip install -r requirements.txt
 
 - **Default Settings:**
 ```bash
-CUDA_VISIBLE_DEVICES=0 python3 main.py --model_name microsoft/Phi-3-vision-128k-instruct  --bits 4 --group_size 128
+CUDA_VISIBLE_DEVICES=0 python3 main.py --model_name microsoft/Phi-3-vision-128k-instruct  --bits 4 --group_size 128  --quantize
 ```
 
 
@@ -94,7 +94,8 @@ Using [COCO 2017](https://cocodataset.org/) and [LLaVA-Instruct-150K](https://hu
 | ceval          | 0.4027 | 0.4012 |
 | gsm8k          | 0.7157 | 0.6755 | -->
 
-
+## 4. Known Issues
+* The Flashattention2 component that Phi3-Vision relies on is **not supported on cpu devices**.
 
 ## Reference
 If you find SignRound useful for your research, please cite our paper:
@@ -106,10 +107,4 @@ If you find SignRound useful for your research, please cite our paper:
   year={2023}
 }
 ```
-
-
-
-
-
-
 

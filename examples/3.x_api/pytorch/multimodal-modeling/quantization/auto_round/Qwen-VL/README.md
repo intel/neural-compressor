@@ -78,7 +78,7 @@ pip install -r requirements.txt
 
 - **Default Settings:**
 ```bash
-CUDA_VISIBLE_DEVICES=0 python3 main.py --model_name Qwen/Qwen-VL  --bits 4 --group_size 128
+CUDA_VISIBLE_DEVICES=0 python3 main.py --model_name Qwen/Qwen-VL  --bits 4 --group_size 128  --quantize
 ```
 
 
@@ -141,6 +141,7 @@ Using [COCO 2017](https://cocodataset.org/) and [LLaVA-Instruct-150K](https://hu
 | textVQA        | 0.6402 | 0.6379 |
 | scienceVQA     | 0.6748 | 0.6574 |
 
+
 ## 5. Known Issues
 * 'QWenTokenizer' object has no attribute 'IMAGE_ST'
 
@@ -167,6 +168,7 @@ If you find SignRound useful for your research, please cite our paper:
   year={2023}
 }
 ```
+
 
 
 

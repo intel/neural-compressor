@@ -24,13 +24,15 @@ pip install --upgrade pip  # enable PEP 660 support
 pip install -e .
 ```
 
-## Download the calibration data
+## Download the calibration/Evaluation data
 
 Our calibration process resembles the official visual instruction tuning process. To align the official implementation of [LLaVA](https://github.com/haotian-liu/LLaVA/tree/main?tab=readme-ov-file#visual-instruction-tuning)
 
 Please download the annotation of the final mixture our instruction tuning data [llava_v1_5_mix665k.json](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K/blob/main/llava_v1_5_mix665k.json), and download the images from constituting datasets:
 
 COCO: [train2017](http://images.cocodataset.org/zips/train2017.zip), and unzip the image folder to any directory you desire.
+
+Please refer to [llava_eval_datasets]https://github.com/haotian-liu/LLaVA/blob/main/docs/Evaluation.md#scripts to download the textVQA dataset for evaluation usage
 
 <br />
 
@@ -43,7 +45,7 @@ pip install -r requirements.txt
 
 - **Default Settings:**
 ```bash
-CUDA_VISIBLE_DEVICES=0 python3 main.py --model_name liuhaotian/llava-v1.5-7b  --bits 4 --group_size 128
+CUDA_VISIBLE_DEVICES=0 python3 main.py --model_name liuhaotian/llava-v1.5-7b  --bits 4 --group_size 128 --quantize
 ```
 
 ## 3. Results
@@ -75,5 +77,6 @@ If you find SignRound useful for your research, please cite our paper:
   year={2023}
 }
 ```
+
 
 
