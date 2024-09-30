@@ -153,7 +153,6 @@ def _replace_linear(
                         "fp16": ipex.quantization.WoqLowpMode.FP16,
                         "int8": ipex.quantization.WoqLowpMode.INT8,
                     }
-
                     ipex_qconfig_mapping = ipex.quantization.get_weight_only_quant_qconfig_mapping(
                         weight_dtype=weight_dtype[quantization_config.bits],
                         lowp_mode=compute_dtype[quantization_config.compute_dtype],
@@ -366,11 +365,6 @@ def convert_to_quantized_model(model, config, device="cpu"):
 
     # mapping to INC config
     dtype = "int4" if config.weight_dtype == "int4_fullrange" else config.weight_dtype
-    import neural_compressor.torch.utils as torch_utils
-
-    process_type = torch_utils.get_processor_type_from_user_config()
-    if process_type == torch_utils.ProcessorType.Client:
-        config.use_layer_wise = True
     if config.quant_method.value == "rtn":
         quant_config = RTNConfig(
             dtype=dtype,
@@ -528,6 +522,12 @@ def convert_to_quantized_model(model, config, device="cpu"):
 
     if orig_dtype != torch.float32:
         q_model.to(dtype=orig_dtype)
+
+    if config.use_layer_wise and not (q_model.device == device or q_model.device.type == device):
+        logger.warning(
+            "Do not convert device to avoid out of memory. Recommend using saved quantized model to inference."
+        )
+        return q_model
 
     return q_model.to(device)
 

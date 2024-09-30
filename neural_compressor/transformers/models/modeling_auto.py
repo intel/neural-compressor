@@ -134,7 +134,33 @@ class _BaseINCAutoModelClass:
             (RtnConfig, AwqConfig, TeqConfig, GPTQConfig, AutoRoundConfig),
         ):
             logger.info("Applying Weight Only Quantization.")
-            if use_xpu:
+            # set use_layer_wise on client
+            if hasattr(quantization_config, "use_layer_wise"):
+                import neural_compressor.torch.utils as torch_utils
+
+                process_type = torch_utils.get_processor_type_from_user_config()
+                if process_type == torch_utils.ProcessorType.Client:
+                    quantization_config.use_layer_wise = True
+
+            if hasattr(quantization_config, "use_layer_wise") and quantization_config.use_layer_wise:
+                from transformers.dynamic_module_utils import resolve_trust_remote_code
+
+                from neural_compressor.torch import load_empty_model
+
+                trust_remote_code = kwargs.get("trust_remote_code", None)
+                has_remote_code = hasattr(config, "auto_map") and cls.ORIG_MODEL.__name__ in config.auto_map
+                has_local_code = type(config) in cls.ORIG_MODEL._model_mapping.keys()
+                trust_remote_code = resolve_trust_remote_code(
+                    trust_remote_code,
+                    pretrained_model_name_or_path,
+                    has_local_code,
+                    has_remote_code,
+                )
+
+                model = load_empty_model(pretrained_model_name_or_path, trust_remote_code=trust_remote_code)
+                if use_cpu:
+                    quantization_config.post_init_cpu()
+            elif use_xpu:
                 # TODO: if low_cpu_mem_uasge is True, gptj will have accuracy issue on CPU device.
                 kwargs["low_cpu_mem_usage"] = True
                 kwargs["device_map"] = "cpu"

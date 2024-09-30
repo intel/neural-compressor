@@ -331,11 +331,11 @@ def load_empty_model(pretrained_model_name_or_path, cls=None, **kwargs):
     if cls.__base__ == _BaseAutoModelClass:
         config = AutoConfig.from_pretrained(path, **kwargs)
         with init_empty_weights():
-            model = cls.from_config(config)
+            model = cls.from_config(config, **kwargs)
     else:  # pragma: no cover
         config = cls.config_class.from_pretrained(path, **kwargs)
         with init_empty_weights():
-            model = cls(config)
+            model = cls(config, **kwargs)
     model.tie_weights()
     model.eval()
     model.path = pretrained_model_name_or_path
