@@ -33,21 +33,23 @@ quantization and inference with `RtnConfig`, `AwqConfig`, `TeqConfig`, `GPTQConf
 ```python
 # RTN
 from neural_compressor.transformers import AutoModelForCausalLM, RtnConfig
+
 model_name_or_path = "MODEL_NAME_OR_PATH"
 woq_config = RtnConfig(bits=4)
 q_model = AutoModelForCausalLM.from_pretrained(
     model_name_or_path,
     quantization_config=woq_config,
-    )
+)
 
 # AWQ
 from neural_compressor.transformers import AutoModelForCausalLM, AwqConfig
+
 model_name_or_path = "MODEL_NAME_OR_PATH"
 woq_config = AwqConfig(bits=4)
 q_model = AutoModelForCausalLM.from_pretrained(
     model_name_or_path,
     quantization_config=woq_config,
-    )
+)
 
 # TEQ
 from transformers import AutoTokenizer
@@ -59,7 +61,7 @@ woq_config = TeqConfig(bits=4, tokenizer=tokenizer)
 q_model = AutoModelForCausalLM.from_pretrained(
     model_name_or_path,
     quantization_config=woq_config,
-    )
+)
 
 # GPTQ
 from transformers import AutoTokenizer
@@ -71,7 +73,7 @@ woq_config = GPTQConfig(bits=4, tokenizer=tokenizer)
 woq_model = AutoModelForCausalLM.from_pretrained(
     model_name_or_path,
     quantization_config=woq_config,
-    )
+)
 
 # AutoRound
 from transformers import AutoTokenizer
@@ -83,10 +85,11 @@ woq_config = AutoRoundConfig(bits=4, tokenizer=tokenizer)
 woq_model = AutoModelForCausalLM.from_pretrained(
     model_name_or_path,
     quantization_config=woq_config,
-    )
+)
 
 # inference
 from transformers import AutoTokenizer
+
 prompt = "Once upon a time, a little girl"
 tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
 
@@ -102,12 +105,13 @@ You can also save and load your quantized low bit model by the below code.
 ```python
 # quant
 from neural_compressor.transformers import AutoModelForCausalLM, RtnConfig
+
 model_name_or_path = "MODEL_NAME_OR_PATH"
 woq_config = RtnConfig(bits=4)
 q_model = AutoModelForCausalLM.from_pretrained(
     model_name_or_path,
     quantization_config=woq_config,
-    )
+)
 
 # save quant model
 saved_dir = "SAVE_DIR"
@@ -162,7 +166,7 @@ from neural_compressor.transformers import AutoModelForCausalLM
 from transformers import AutoTokenizer
 import torch
 
-model_name_or_path = "Qwen/Qwen-7B-Chat" # MODEL_NAME_OR_PATH
+model_name_or_path = "Qwen/Qwen-7B-Chat"  # MODEL_NAME_OR_PATH
 prompt = "Once upon a time, a little girl"
 input_ids = tokenizer(prompt, return_tensors="pt")["input_ids"]
 tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, trust_remote_code=True)
@@ -170,8 +174,10 @@ tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, trust_remote_code=
 q_model = AutoModelForCausalLM.from_pretrained(model_name_or_path, device_map="xpu", trust_remote_code=True)
 
 # optimize the model with ipex, it will improve performance.
-quantization_config = q_model.quantization_config if hasattr (user_model, "quantization_config") else None
-q_model = ipex.optimize_transformers(q_model, inplace=True, dtype=torch.float16, quantization_config=quantizaiton_config, device="xpu")
+quantization_config = q_model.quantization_config if hasattr(user_model, "quantization_config") else None
+q_model = ipex.optimize_transformers(
+    q_model, inplace=True, dtype=torch.float16, quantization_config=quantizaiton_config, device="xpu"
+)
 
 output = q_model.generate(input_ids, max_new_tokens=100, do_sample=True)
 print(tokenizer.batch_decode(output, skip_special_tokens=True))
@@ -182,17 +188,15 @@ print(tokenizer.batch_decode(output, skip_special_tokens=True))
 5. Saving and Loading quantized model
  * First step: Quantize and save model
 ```python
-
 from neural_compressor.transformers import AutoModelForCausalLM, RtnConfig
+
 model_name_or_path = "MODEL_NAME_OR_PATH"
 woq_config = RtnConfig(bits=4)
 q_model = AutoModelForCausalLM.from_pretrained(
-    model_name_or_path,                                        quantization_config=woq_config,
-    device_map="xpu",
-    trust_remote_code=True，
-    )
+    model_name_or_path, quantization_config=woq_config, device_map="xpu", trust_remote_code=True，
+)
 
-# Please note, saving model should be executed before ipex.optimize_transformers function is called. 
+# Please note, saving model should be executed before ipex.optimize_transformers function is called.
 q_model.save_pretrained("saved_dir")
 ```
  * Second step: Load model and inference(In order to reduce memory usage, you may need to end the quantize process and rerun the script to load the model.)
@@ -201,11 +205,14 @@ q_model.save_pretrained("saved_dir")
 loaded_model = AutoModelForCausalLM.from_pretrained("saved_dir", trust_remote_code=True)
 
 # Before executed the loaded model, you can call ipex.optimize_transformers function.
-quantization_config = q_model.quantization_config if hasattr (user_model, "quantization_config") else None
-loaded_model = ipex.optimize_transformers(loaded_model, inplace=True, dtype=torch.float16, quantization_config=quantization_config, device="xpu")
+quantization_config = q_model.quantization_config if hasattr(user_model, "quantization_config") else None
+loaded_model = ipex.optimize_transformers(
+    loaded_model, inplace=True, dtype=torch.float16, quantization_config=quantization_config, device="xpu"
+)
 
 # inference
 from transformers import AutoTokenizer
+
 prompt = "Once upon a time, a little girl"
 tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
 input_ids = tokenizer(prompt, return_tensors="pt")["input_ids"]
@@ -213,7 +220,6 @@ generate_kwargs = dict(do_sample=False, temperature=0.9, num_beams=4)
 gen_ids = q_model.generate(input_ids, **generate_kwargs)
 gen_text = tokenizer.batch_decode(gen_ids, skip_special_tokens=True)
 print(gen_text)
-
 ```
 
 6. You can directly use [example script](https://github.com/intel/neural-compressor/blob/master/examples/3.x_api/pytorch/nlp/huggingface_models/language-modeling/quantization/transformers/weight_only/text-generation/run_generation_gpu_woq.py)
