@@ -837,7 +837,6 @@ class WOQModelLoader:
             _load_state_dict_into_meta_model(
                 model=model,
                 state_dict=state_dict,
-                loaded_state_dict_keys=self.loaded_state_dict_keys,
                 start_prefix="",
                 expected_keys=list(state_dict.keys()),
                 device_map={"": self.device},
