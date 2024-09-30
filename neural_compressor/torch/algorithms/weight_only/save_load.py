@@ -836,7 +836,8 @@ class WOQModelLoader:
             state_dict = load_state_dict(shard_file)
             import transformers
             from packaging.version import Version
-            if Version(transformers.__version__) >= Version("4.45.0"): # pragma: no cover
+
+            if Version(transformers.__version__) >= Version("4.45.0"):  # pragma: no cover
                 _load_state_dict_into_meta_model(
                     model=model,
                     state_dict=state_dict,
