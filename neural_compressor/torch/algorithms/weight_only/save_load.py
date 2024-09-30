@@ -834,19 +834,36 @@ class WOQModelLoader:
             resolved_archive_file = [resolved_archive_file]
         for shard_file in resolved_archive_file:
             state_dict = load_state_dict(shard_file)
-            _load_state_dict_into_meta_model(
-                model=model,
-                state_dict=state_dict,
-                loaded_state_dict_keys=self.loaded_state_dict_keys,
-                start_prefix="",
-                expected_keys=list(state_dict.keys()),
-                device_map={"": self.device},
-                offload_folder=offload_folder,
-                state_dict_folder=tempfile.mkdtemp() if offload_state_dict else None,
-                state_dict_index={} if offload_state_dict else None,
-                dtype=torch_dtype,
-                keep_in_fp32_modules=[],
-            )
+            import transformers
+            from packaging.version import Version
+
+            if Version(transformers.__version__) >= Version("4.45.0"):  # pragma: no cover
+                _load_state_dict_into_meta_model(
+                    model=model,
+                    state_dict=state_dict,
+                    start_prefix="",
+                    expected_keys=list(state_dict.keys()),
+                    device_map={"": self.device},
+                    offload_folder=offload_folder,
+                    state_dict_folder=tempfile.mkdtemp() if offload_state_dict else None,
+                    state_dict_index={} if offload_state_dict else None,
+                    dtype=torch_dtype,
+                    keep_in_fp32_modules=[],
+                )
+            else:
+                _load_state_dict_into_meta_model(
+                    model=model,
+                    state_dict=state_dict,
+                    loaded_state_dict_keys=self.loaded_state_dict_keys,
+                    start_prefix="",
+                    expected_keys=list(state_dict.keys()),
+                    device_map={"": self.device},
+                    offload_folder=offload_folder,
+                    state_dict_folder=tempfile.mkdtemp() if offload_state_dict else None,
+                    state_dict_index={} if offload_state_dict else None,
+                    dtype=torch_dtype,
+                    keep_in_fp32_modules=[],
+                )
 
         # make sure token embedding weights are still tied if needed
         model.tie_weights()
