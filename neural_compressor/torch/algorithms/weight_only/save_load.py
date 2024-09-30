@@ -864,7 +864,6 @@ class WOQModelLoader:
                     keep_in_fp32_modules=[],
                 )
 
-
         # make sure token embedding weights are still tied if needed
         model.tie_weights()
 
