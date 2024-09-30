@@ -5,9 +5,11 @@ Weight Only Quantization (WOQ)
 
 2. [Supported Algorithms](#supported-algorithms)
 
-3. [Usage For Intel CPU](#Usage-for-cpu-and-cuda)
+3. [Usage For Intel CPU](#usage-for-cpu)
 
-4. [Usage For Intel GPU](#Usage-for-intel-gpu)
+4. [Usage For Intel GPU](#usage-for-intel-gpu)
+
+5. [Examples](#examples)
 
 ## Introduction
 
