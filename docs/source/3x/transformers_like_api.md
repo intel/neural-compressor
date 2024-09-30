@@ -21,7 +21,7 @@ Transformers-like API provides a seamless user experience of model compressions 
 |     Intel CPU        |  &#10004;  |  &#10004;  |  &#10004;  |  &#10004;  |  &#10004;  |
 |     Intel GPU        |  &#10004;  |  stay tuned  |  stay tuned  |  &#10004;  |  &#10004;  |
 
-> Please refer to [weight-only quant document](./PT_WeightOnlyQuant.md) for more details.
+> Please refer to [weight-only quantization document](./PT_WeightOnlyQuant.md) for more details.
 
 
 ## Usage For CPU 
@@ -36,7 +36,8 @@ from neural_compressor.transformers import AutoModelForCausalLM, RtnConfig
 model_name_or_path = "MODEL_NAME_OR_PATH"
 woq_config = RtnConfig(bits=4)
 q_model = AutoModelForCausalLM.from_pretrained(
-    model_name_or_path,                                        quantization_config=woq_config,
+    model_name_or_path,
+    quantization_config=woq_config,
     )
 
 # AWQ
@@ -57,7 +58,7 @@ tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
 woq_config = TeqConfig(bits=4, tokenizer=tokenizer)
 q_model = AutoModelForCausalLM.from_pretrained(
     model_name_or_path,
-    quantization_config=woq_config
+    quantization_config=woq_config,
     )
 
 # GPTQ
@@ -69,7 +70,7 @@ tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
 woq_config = GPTQConfig(bits=4, tokenizer=tokenizer)
 woq_model = AutoModelForCausalLM.from_pretrained(
     model_name_or_path,
-    quantization_config=woq_config
+    quantization_config=woq_config,
     )
 
 # AutoRound
@@ -81,7 +82,7 @@ tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
 woq_config = AutoRoundConfig(bits=4, tokenizer=tokenizer)
 woq_model = AutoModelForCausalLM.from_pretrained(
     model_name_or_path,
-    quantization_config=woq_config
+    quantization_config=woq_config,
     )
 
 # inference
@@ -104,7 +105,8 @@ from neural_compressor.transformers import AutoModelForCausalLM, RtnConfig
 model_name_or_path = "MODEL_NAME_OR_PATH"
 woq_config = RtnConfig(bits=4)
 q_model = AutoModelForCausalLM.from_pretrained(
-    model_name_or_path,                                        quantization_config=woq_config,
+    model_name_or_path,
+    quantization_config=woq_config,
     )
 
 # save quant model
