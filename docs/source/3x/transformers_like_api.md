@@ -201,7 +201,7 @@ print(gen_text)
 ```
 
 5. You can directly use [example script](https://github.com/intel/neural-compressor/blob/master/examples/3.x_api/pytorch/nlp/huggingface_models/language-modeling/quantization/transformers/weight_only/text-generation/run_generation_gpu_woq.py)
-```python
+```bash
 python run_generation_gpu_woq.py --woq --benchmark --model save_dir
 ```
 
