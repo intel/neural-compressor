@@ -1,4 +1,4 @@
-Step-by-Step
+iStep-by-Step
 ============
 This document describes the step-by-step instructions to run [VLM quantization for Phi3-Vision](https://huggingface.co/microsoft/Phi-3-vision-128k-instruct) using AutoRound Quantization.
 
@@ -94,8 +94,8 @@ Using [COCO 2017](https://cocodataset.org/) and [LLaVA-Instruct-150K](https://hu
 | ceval          | 0.4027 | 0.4012 |
 | gsm8k          | 0.7157 | 0.6755 | -->
 
-## 4. Known Issues
-* The Flashattention2 component that Phi3-Vision relies on is **not supported on cpu devices**.
+<!-- ## 4. Known Issues
+* The Flashattention2 component that Phi3-Vision relies on is **not supported on cpu devices**. -->
 
 ## Reference
 If you find SignRound useful for your research, please cite our paper:
