@@ -53,7 +53,7 @@ parser.add_argument("--tasks", default="lambada_openai,hellaswag,winogrande,piqa
                     type=str, help="tasks for accuracy validation")
 parser.add_argument("--peft_model_id", type=str, default=None, help="model_name_or_path of peft model")
 # ============WeightOnly configs===============
-parser.add_argument("--woq_algo", default="RTN", choices=['RTN', 'AWQ', 'TEQ', 'GPTQ', 'AutoRound'],
+parser.add_argument("--woq_algo", default="RTN", choices=['RTN', 'AWQ', 'TEQ', 'GPTQ', 'AutoRound', 'AutoTune'],
                     help="Weight-only parameter.")
 parser.add_argument("--woq_bits", type=int, default=8)
 parser.add_argument("--woq_dtype", type=str, default="int")
