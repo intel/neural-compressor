@@ -439,8 +439,8 @@ if args.quantize:
         )
         dataloader = dataloaderPreprocessor.get_prepared_dataloader()
         custom_tune_config = TuningConfig(config_set=get_woq_tuning_config())
-        best_model = autotune(
-            model=model,
+        user_model = autotune(
+            model=user_model,
             tune_config=custom_tune_config,
             eval_fn=eval_acc_fn,
             run_fn=run_fn_for_gptq,
