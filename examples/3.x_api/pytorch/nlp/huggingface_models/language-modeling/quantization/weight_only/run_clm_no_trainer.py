@@ -476,6 +476,7 @@ if args.quantize:
                 else:
                     model(batch)
             return
+        example_inputs = torch.ones([1, args.pad_max_length], dtype=torch.long)
         user_model = autotune(
             model=user_model,
             tune_config=custom_tune_config,
