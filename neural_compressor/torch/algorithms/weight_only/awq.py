@@ -516,6 +516,9 @@ class ActAwareWeightQuant:
         """
         total_out = []
         for args, kwargs in zip(self.total_block_args, self.total_block_kwargs):
+            # to avoid layer_past: Dynamic_cache when transformers higher than 4.45.1
+            if "layer_past" in kwargs.keys() and kwargs["layer_past"] is not None:
+                kwargs["layer_past"] = None
             out = model(*args, **kwargs)
             if isinstance(out, tuple):  # pragma: no cover
                 out = out[0]

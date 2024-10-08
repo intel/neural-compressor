@@ -115,6 +115,39 @@ class TestTansformersLikeAPI:
         loaded_output = loaded_model(dummy_input)[0]
         assert torch.equal(woq_output, loaded_output), "loaded output should be same. Please double check."
 
+    def test_use_layer_wise(self):
+        model_name_or_path = self.model_name_or_path
+
+        fp32_model = AutoModelForCausalLM.from_pretrained(model_name_or_path)
+        dummy_input = fp32_model.dummy_inputs["input_ids"]
+
+        # RTN
+        # use_layer_wise=True
+        woq_config = RtnConfig(bits=4, group_size=16, use_layer_wise=True)
+        woq_model = AutoModelForCausalLM.from_pretrained(
+            model_name_or_path,
+            quantization_config=woq_config,
+        )
+        woq_output = woq_model(dummy_input)[0]
+
+        # save
+        output_dir = "./transformers_tmp"
+        woq_model.save_pretrained(output_dir)
+
+        # load
+        loaded_model = AutoModelForCausalLM.from_pretrained(output_dir)
+        loaded_output = loaded_model(dummy_input)[0]
+        assert torch.equal(woq_output, loaded_output), "loaded output should be same. Please double check."
+
+        # use_layer_wise=False
+        woq_config = RtnConfig(bits=4, group_size=16, use_layer_wise=False)
+        woq_model = AutoModelForCausalLM.from_pretrained(
+            model_name_or_path,
+            quantization_config=woq_config,
+        )
+        woq_output2 = woq_model(dummy_input)[0]
+        assert torch.equal(woq_output, woq_output2), "use_layer_wise output should be same. Please double check."
+
     def test_loading_autoawq_model(self):
         user_model = AutoModelForCausalLM.from_pretrained(self.autoawq_model)
         tokenizer = AutoTokenizer.from_pretrained(self.autoawq_model)

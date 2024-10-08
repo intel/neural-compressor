@@ -11,5 +11,5 @@ bitsandbytes  #baichuan
 transformers_stream_generator
 tiktoken  #qwen
 einops  #qwen
-autoround
+auto_round
 lm-eval==0.4.3

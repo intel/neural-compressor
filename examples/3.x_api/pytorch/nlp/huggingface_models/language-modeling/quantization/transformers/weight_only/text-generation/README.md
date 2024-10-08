@@ -116,12 +116,17 @@ Pytorch and Intel-extension-for-pytorch version for intel GPU > 2.1 are required
 ```bash
 pip install -r requirements_GPU.txt
 pip install transformers==4.38.1 # llama use 4.38.1
-source /opt/intel/oneapi/setvars.sh
 git clone https://github.com/intel/intel-extension-for-pytorch.git ipex-gpu
 cd ipex-gpu
 git submodule update --init --recursive
 export USE_AOT_DEVLIST='pvc,ats-m150'
 export BUILD_WITH_CPU=OFF
+
+export LD_LIBRARY_PATH=${CONDA_PREFIX}/lib/:$LD_LIBRARY_PATH
+export OCL_ICD_VENDORS=/etc/OpenCL/vendors
+export CCL_ROOT=${CONDA_PREFIX}
+source /opt/intel/oneapi/setvars.sh --force
+export LLM_ACC_TEST=1
 
 python setup.py install
 ```
