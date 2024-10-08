@@ -286,36 +286,32 @@ class PatchedLinear(nn.Module):
         )
 
 
-# patched vllm module without measure and quant
-# measure and quant of the weights is done thru PatchedMoeMatmul
+# patched vllm FusedMoE module removing the bf16 weights of all experts
+# measure and quant of the weights is done per expert using PatchedMoeMatmul
+# therefore it is configured: ModuleInfo.should_measure_and_quant = False
 class PatchedMixtralMoE(nn.Module):
     def __init__(self, mod, mod_extra_config, *args, **kwargs):
         super().__init__()
         set_attrs_from_orig_model(self, mod, mod_extra_config)
         # remove the MoE weights that are quanted by PatchedMoeMatmul
-        delattr(mod, "w13_weight")
-        delattr(mod, "w2_weight")
-        setattr(mod, "w13_weight", None)
-        setattr(mod, "w2_weight", None)
+        if self.quantization_mode == QuantMode.QUANTIZE:
+            delattr(mod, "w13_weight")
+            delattr(mod, "w2_weight")
+            setattr(mod, "w13_weight", None)
+            setattr(mod, "w2_weight", None)
         self.forward = mod.forward
 
 
+# This patched module is called by the vllm-mixtral FusedMoE layer
+# we wrap each expert weight with this module since FusedMoE has a single tensor for all experts weights
+# this way we can calculate scales per expert and achive better accuracy
 class PatchedMoeMatmul(nn.Module):
     def __init__(self, mod, mod_extra_config, *args, **kwargs):
         super().__init__()
         set_attrs_from_orig_model(self, mod, mod_extra_config)
         init_linear(self, mod_extra_config)
-        if self.quantization_mode == QuantMode.MEASURE:
-            mod.weight = mod.weight.t()
 
-    # The calc method is called by the vllm-mixtral MoE gate layer
-    # we patch it so that during quantized inference run it will use
-    # our internal quantized weight member for calculating the chosen expert.
-    # Therefore we ignore the expert_id and weight parameters used by the orig calc.
-    def calc(self, state, expert_id, w):
-        return self.forward(state)
-
-    def forward_quant(self, input):
+    def forward_quant(self, input, *args, **kwargs):
         qinput = self.quant_input(input)
         y = matmul_fp8(
             qinput,
@@ -326,9 +322,9 @@ class PatchedMoeMatmul(nn.Module):
         )
         return y
 
-    def forward_measure(self, input):
+    def forward_measure(self, input, *args, **kwargs):
         measure_input((input,), observer=self._mod_extra_config.inputs)
-        output = self.forward_orig(input)
+        output = self.forward_orig(input, *args, **kwargs)
         measure_output((output,), self._mod_extra_config.outputs)
         return output
 
