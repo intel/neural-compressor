@@ -62,6 +62,7 @@ parser.add_argument("--woq_group_dim", type=int, default=1)
 parser.add_argument("--woq_scheme", default="sym")
 parser.add_argument("--woq_use_mse_search", action="store_true")
 parser.add_argument("--woq_use_full_range", action="store_true")
+parser.add_argument("--quant_lm_head", action="store_true",  help="whether to quant the lm_head layer in transformers")
 # =============GPTQ configs====================
 parser.add_argument("--gptq_actorder", action="store_true",
                     help="Whether to apply the activation order GPTQ heuristic.")
@@ -268,6 +269,9 @@ if args.quantize:
         AWQConfig,
         AutoRoundConfig,
         TEQConfig,
+        TuningConfig,
+        autotune,
+        get_woq_tuning_config,
         prepare,
         convert
     )
@@ -283,6 +287,7 @@ if args.quantize:
                     # TODO: add group_dim into double quant config?
                     "use_full_range": args.woq_use_full_range,
                     "use_mse_search": args.woq_use_mse_search,
+                    "quant_lm_head": args.quant_lm_head,
                 }
             )
             quant_config = RTNConfig.from_dict(double_quant_config_dict)
@@ -300,8 +305,8 @@ if args.quantize:
                 double_quant_dtype=args.double_quant_dtype,
                 double_quant_use_sym=args.double_quant_use_sym,
                 double_quant_group_size=args.double_quant_group_size,
+                quant_lm_head=args.quant_lm_head,
             )
-        quant_config.set_local("lm_head", RTNConfig(dtype="fp32"))
         user_model = prepare(model=user_model, quant_config=quant_config)
         user_model = convert(model=user_model)
     elif args.woq_algo == "GPTQ":
@@ -332,6 +337,7 @@ if args.quantize:
                     "act_order": args.gptq_actorder,
                     "block_size": args.gptq_block_size,
                     "static_groups": args.gptq_static_groups,
+                    "quant_lm_head": args.quant_lm_head,
                 }
             )
             quant_config = GPTQConfig.from_dict(double_quant_config_dict)
@@ -351,8 +357,8 @@ if args.quantize:
                 double_quant_dtype=args.double_quant_dtype,
                 double_quant_use_sym=args.double_quant_use_sym,
                 double_quant_group_size=args.double_quant_group_size,
+                quant_lm_head=args.quant_lm_head,
             )
-        quant_config.set_local("lm_head", GPTQConfig(dtype="fp32"))
         user_model = prepare(model=user_model, quant_config=quant_config)
         run_fn_for_gptq(user_model, dataloader_for_calibration)
         user_model = convert(user_model)
@@ -367,6 +373,7 @@ if args.quantize:
             use_auto_clip=args.use_auto_clip,
             folding=args.folding,
             absorb_layer_dict=args.absorb_layer_dict,
+            quant_lm_head=args.quant_lm_head,
         )
         example_inputs = torch.ones([1, args.pad_max_length], dtype=torch.long)
         run_fn = calib_func
@@ -381,6 +388,7 @@ if args.quantize:
             group_size=args.woq_group_size,
             group_dim=args.woq_group_dim,
             folding=args.folding,
+            quant_lm_head=args.quant_lm_head,
         )
         example_inputs = torch.ones([1, args.pad_max_length], dtype=torch.long)
         run_fn = calib_func
@@ -422,8 +430,23 @@ if args.quantize:
         user_model = prepare(model=user_model, quant_config=quant_config)
         run_fn(user_model, *run_args)
         user_model = convert(user_model)
-    
-        
+    elif args.woq_algo == "AutoTune":
+        from utils import DataloaderPreprocessor
+        dataloaderPreprocessor = DataloaderPreprocessor(
+            dataloader_original=calib_dataloader,
+            use_max_length=args.gptq_use_max_length,
+            max_seq_length=args.gptq_max_seq_length,
+        )
+        dataloader = dataloaderPreprocessor.get_prepared_dataloader()
+        custom_tune_config = TuningConfig(config_set=get_woq_tuning_config())
+        best_model = autotune(
+            model=model,
+            tune_config=custom_tune_config,
+            eval_fn=eval_acc_fn,
+            run_fn=run_fn_for_gptq,
+            run_args=(dataloader, True),  # run_args should be a tuple,
+            example_inputs=example_inputs,
+        )
 
     user_model.save(args.output_dir)
 
