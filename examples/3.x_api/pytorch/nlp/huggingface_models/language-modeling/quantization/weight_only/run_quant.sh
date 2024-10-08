@@ -95,6 +95,9 @@ function run_tuning {
     elif [ "${topology}" = "opt_125m_woq_autoround_int4" ]; then
         model_name_or_path="facebook/opt-125m"
         extra_cmd=$extra_cmd" --woq_algo AutoRound --woq_bits 4 --woq_group_size 128"
+    elif [ "${topology}" = "opt_125m_woq_autotune_int4" ]; then
+        model_name_or_path="facebook/opt-125m"
+        extra_cmd=$extra_cmd" --woq_algo AutoTune --woq_bits 4"
     fi
 
     python -u run_clm_no_trainer.py \

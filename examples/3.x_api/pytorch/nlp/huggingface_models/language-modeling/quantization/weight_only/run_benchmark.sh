@@ -101,6 +101,8 @@ function run_benchmark {
     elif [ "${topology}" = "opt_125m_woq_autoround_int4" ]; then
         model_name_or_path="facebook/opt-125m"
         extra_cmd=$extra_cmd" --woq_algo AutoRound"
+    elif [ "${topology}" = "opt_125m_woq_autotune_int4" ]; then
+        model_name_or_path="facebook/opt-125m"
     fi
 
     if [[ ${mode} == "accuracy" ]]; then
