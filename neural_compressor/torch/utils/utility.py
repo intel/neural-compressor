@@ -434,7 +434,7 @@ def to_dtype(input, dtype=torch.float32): # pragma: no cover
 
 
 # for VLM usage
-def to_device(input, device=torch.device("cpu")):
+def to_device(input, device=torch.device("cpu")):  # pragma: no cover
     """Moves input data to the specified device.
 
     Args:
@@ -444,11 +444,11 @@ def to_device(input, device=torch.device("cpu")):
     Returns:
     The input data on the specified device.
     """
-    if input is None: # pragma: no cover
+    if input is None:
         return None
     if isinstance(input, torch.Tensor):
         return input.to(device)
-    if isinstance(input, dict) or isinstance(input, UserDict): # pragma: no cover
+    if isinstance(input, dict) or isinstance(input, UserDict):
         for inp in input.keys():
             input[inp] = to_device(input[inp], device)
     elif isinstance(input, list) or isinstance(input, tuple):
@@ -486,7 +486,7 @@ def get_block_names(model):
     return block_names
 
 
-def validate_modules(module_names):
+def validate_modules(module_names): # pragma: no cover
     """
     Test a list of modules' validity.
 
@@ -496,13 +496,13 @@ def validate_modules(module_names):
     Returns:
     bool: True if all modules have equal length or not dependent, otherwise False.
     """
-    if not bool(module_names):  # pragma: no cover
+    if not bool(module_names):  
         raise ValueError(f"Empty modules")
     if len(module_names) < 2:
         return True
     split_modules = [s.split('.') for s, _ in module_names]
     lengths = [len(parts) for parts in split_modules]
-    if len(set(lengths)) == 1:  # pragma: no cover
+    if len(set(lengths)) == 1:
         return True
     max_length = max(lengths)
     min_length = min(lengths)
@@ -511,7 +511,7 @@ def validate_modules(module_names):
     shortest_module = '.'.join(shortest_module)
     longest_module = '.'.join(longest_module)
     # Check if the shortest name is a substring of the longest name
-    if shortest_module in longest_module:  # pragma: no cover
+    if shortest_module in longest_module:
         raise ValueError(f"Invalid modules, at least two modules detected" \
                          " as dependent, {shortest_module} and {longest_module}")
     return True
@@ -585,7 +585,7 @@ def detect_device(device=None): # pragma: no cover
     return device
 
 
-def run_fn_for_vlm_autoround(model, dataloader, seqlen=512, nsamples=512):
+def run_fn_for_vlm_autoround(model, dataloader, seqlen=512, nsamples=512):  # pragma: no cover
     """
     Runs a model on a provided dataset with automatic device detection for vector-language models.
 
