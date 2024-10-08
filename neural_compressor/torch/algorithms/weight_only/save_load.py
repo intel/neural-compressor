@@ -40,23 +40,36 @@ format_woqlinear_mapping = {LoadFormat.HUGGINGFACE: INCWeightOnlyLinear, LoadFor
 device_woqlinear_mapping = {"cpu": INCWeightOnlyLinear, "hpu": HPUWeightOnlyLinear}
 
 
-def save(model, output_dir="./saved_results"):
+def save(model, output_dir="./saved_results", format=LoadFormat.DEFAULT, **kwargs):
     """Save the quantized model and config to the output path.
 
     Args:
         model (torch.nn.module): raw fp32 model or prepared model.
         output_dir (str, optional): output path to save.
+        format (str, optional): The format in which to save the model. Options include "default" and "huggingface". Defaults to "default".
+        kwargs: Additional arguments for specific formats. For example:
+            - safe_serialization (bool): Whether to use safe serialization when saving (only applicable for 'huggingface' format). Defaults to True.
+            - tokenizer (Tokenizer, optional): The tokenizer to be saved along with the model (only applicable for 'huggingface' format).
+            - max_shard_size (str, optional): The maximum size for each shard (only applicable for 'huggingface' format). Defaults to "5GB".
     """
     os.makedirs(output_dir, exist_ok=True)
+    if format == LoadFormat.HUGGINGFACE:  # pragma: no cover
+        config = model.config
+        quantization_config = config.quantization_config if hasattr(config, "quantization_config") else None
+        if "backend" in quantization_config and "auto_round" in quantization_config["backend"]:
+            safe_serialization = kwargs.get("safe_serialization", True)
+            tokenizer = kwargs.get("tokenizer", None)
+            max_shard_size = kwargs.get("max_shard_size", "5GB")
+            if tokenizer is not None:
+                tokenizer.save_pretrained(output_dir)
+            del model.save
+            model.save_pretrained(output_dir, max_shard_size=max_shard_size, safe_serialization=safe_serialization)
+            return
+
     qmodel_weight_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), WEIGHT_NAME)
     qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), QCONFIG_NAME)
     # saving process
     save_config_mapping(model.qconfig, qconfig_file_path)
-
-    if hasattr(model, "gptq_config") and model.gptq_config:
-        gptq_config_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), "gptq_config.json")
-        with open(gptq_config_path, "w") as f:
-            json.dump(model.gptq_config, f, indent=4)
 
     # MethodType 'save' not in state_dict
     del model.save
@@ -208,8 +221,15 @@ class WOQModelLoader:
 
         # get model class and config
         model_class, config = self._get_model_class_and_config()
-        self.quantization_config = config.quantization_config
+        self.quantization_config = config.quantization_config if hasattr(config, "quantization_config") else None
+        if (
+            "backend" in self.quantization_config and "auto_round" in self.quantization_config["backend"]
+        ):  # # pragma: no cover
+            # load autoround format quantized model
+            from auto_round import AutoRoundConfig
 
+            model = model_class.from_pretrained(self.model_name_or_path)
+            return model
         # get loaded state_dict
         self.loaded_state_dict = self._get_loaded_state_dict(config)
         self.loaded_state_dict_keys = list(set(self.loaded_state_dict.keys()))
@@ -405,7 +425,7 @@ class WOQModelLoader:
         trust_remote_code = self.kwargs.pop("trust_remote_code", None)
         kwarg_attn_imp = self.kwargs.pop("attn_implementation", None)
 
-        config = AutoConfig.from_pretrained(self.model_name_or_path)
+        config = AutoConfig.from_pretrained(self.model_name_or_path, trust_remote_code=trust_remote_code)
         # quantization_config = config.quantization_config
 
         if kwarg_attn_imp is not None and config._attn_implementation != kwarg_attn_imp:  # pragma: no cover
@@ -814,19 +834,36 @@ class WOQModelLoader:
             resolved_archive_file = [resolved_archive_file]
         for shard_file in resolved_archive_file:
             state_dict = load_state_dict(shard_file)
-            _load_state_dict_into_meta_model(
-                model=model,
-                state_dict=state_dict,
-                loaded_state_dict_keys=self.loaded_state_dict_keys,
-                start_prefix="",
-                expected_keys=list(state_dict.keys()),
-                device_map={"": self.device},
-                offload_folder=offload_folder,
-                state_dict_folder=tempfile.mkdtemp() if offload_state_dict else None,
-                state_dict_index={} if offload_state_dict else None,
-                dtype=torch_dtype,
-                keep_in_fp32_modules=[],
-            )
+            import transformers
+            from packaging.version import Version
+
+            if Version(transformers.__version__) >= Version("4.45.0"):  # pragma: no cover
+                _load_state_dict_into_meta_model(
+                    model=model,
+                    state_dict=state_dict,
+                    start_prefix="",
+                    expected_keys=list(state_dict.keys()),
+                    device_map={"": self.device},
+                    offload_folder=offload_folder,
+                    state_dict_folder=tempfile.mkdtemp() if offload_state_dict else None,
+                    state_dict_index={} if offload_state_dict else None,
+                    dtype=torch_dtype,
+                    keep_in_fp32_modules=[],
+                )
+            else:
+                _load_state_dict_into_meta_model(
+                    model=model,
+                    state_dict=state_dict,
+                    loaded_state_dict_keys=self.loaded_state_dict_keys,
+                    start_prefix="",
+                    expected_keys=list(state_dict.keys()),
+                    device_map={"": self.device},
+                    offload_folder=offload_folder,
+                    state_dict_folder=tempfile.mkdtemp() if offload_state_dict else None,
+                    state_dict_index={} if offload_state_dict else None,
+                    dtype=torch_dtype,
+                    keep_in_fp32_modules=[],
+                )
 
         # make sure token embedding weights are still tied if needed
         model.tie_weights()

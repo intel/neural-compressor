@@ -351,6 +351,7 @@ class GPTQConfig(TorchBaseConfig):
         "percdamp",
         "block_size",
         "static_groups",
+        "true_sequential",
     ]
 
     def __init__(
@@ -376,6 +377,7 @@ class GPTQConfig(TorchBaseConfig):
         percdamp: float = 0.01,
         block_size: int = 2048,
         static_groups: bool = False,
+        true_sequential: bool = False,
         # Tuning space
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
@@ -404,10 +406,12 @@ class GPTQConfig(TorchBaseConfig):
             static_groups (bool): Whether to calculate group wise quantization parameters in advance.
                                   This option mitigate actorder's extra computational requirements.
                                   Default is False.
+            true_sequential (bool): Whether to quantize layers within a transformer block in their original order.
+                                  This can lead to higher accuracy but slower overall quantization process.
+                                  Default is False.
             white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
                                                                  Default is DEFAULT_WHITE_LIST.
         """
-        assert not quant_lm_head, "GPTQ doesn't support lm_head quantization currently, it's coming soon!"
         super().__init__(white_list=white_list)
         self.dtype = dtype
         self.bits = bits
@@ -428,6 +432,7 @@ class GPTQConfig(TorchBaseConfig):
         self.percdamp = percdamp
         self.block_size = block_size
         self.static_groups = static_groups
+        self.true_sequential = true_sequential
         self.quant_lm_head = quant_lm_head
         self._post_init()  # initialize global & local configuration
 
@@ -599,7 +604,7 @@ class AWQConfig(TorchBaseConfig):
             double_quant_bits (int): Number of bits used to represent double_quant scale, default is 4.
             double_quant_use_sym (bool): Indicates whether double_quant scale are symmetric, default is True.
             double_quant_group_size (int): Size of double_quant groups, default is 32.
-            quant_lm_head (bool): Indicates whether quantize the lm_head layer in transformers。 Default is False.
+            quant_lm_head (bool): Indicates whether quantize the lm_head layer in transformer, default is False.
             use_auto_scale (bool): Enables best scales search based on activation distribution, default is True.
             use_auto_clip (bool):  Enables clip range search. Defaults to True.
             folding(bool): Allow insert mul before linear when the scale cannot be absorbed by last layer,
@@ -934,6 +939,7 @@ class AutoRoundConfig(TorchBaseConfig):
         scale_dtype: str = "fp16",
         use_layer_wise: bool = False,
         quant_block_list: list = None,
+        export_format: str = "itrex",
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init AUTOROUND weight-only quantization config.
@@ -968,6 +974,7 @@ class AutoRoundConfig(TorchBaseConfig):
               have different choices.
             use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
             quant_block_list (list): A list whose elements are list of block's layer names to be quantized.
+            export_format (str, optional): The format used for exporting the quantized model. Defaults to "itrex".
             white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
               Default is DEFAULT_WHITE_LIST.
         """
@@ -1000,6 +1007,7 @@ class AutoRoundConfig(TorchBaseConfig):
         self.scale_dtype = scale_dtype
         self.use_layer_wise = use_layer_wise
         self.quant_block_list = quant_block_list
+        self.export_format = export_format
         self._post_init()
 
     @classmethod

@@ -12,6 +12,7 @@ import datasets
 from torch.nn.functional import pad
 from torch.utils.data import DataLoader
 from transformers import AutoModelForCausalLM, AutoConfig, AutoTokenizer
+from neural_compressor.torch.utils import is_hpex_available
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -436,7 +437,11 @@ if args.int8 or args.int8_bf16_mixed:
     user_model, _ = get_user_model()
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     config = AutoConfig.from_pretrained(args.model)
-    user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)), user_model)
+    user_model = load(
+        os.path.abspath(os.path.expanduser(args.output_dir)),
+        user_model,
+        device="hpu" if is_hpex_available() else "cpu",
+    )
     setattr(user_model, "config", config)
 else:
     user_model, tokenizer = get_user_model()
@@ -444,14 +449,14 @@ else:
 
 if args.accuracy:
     user_model.eval()
-    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
+    from neural_compressor.evaluation.lm_eval import evaluate, LMEvalParser
     eval_args = LMEvalParser(
         model="hf",
         user_model=user_model,
         tokenizer=tokenizer,
         batch_size=args.batch_size,
         tasks=args.tasks,
-        device="cpu",
+        device="hpu" if is_hpex_available() else "cpu",
     )
     results = evaluate(eval_args)
     for task_name in args.tasks.split(","):
@@ -464,7 +469,7 @@ if args.accuracy:
 
 if args.performance:
     user_model.eval()
-    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
+    from neural_compressor.evaluation.lm_eval import evaluate, LMEvalParser
     import time
 
     samples = args.iters * args.batch_size
@@ -475,7 +480,7 @@ if args.performance:
         batch_size=args.batch_size,
         tasks=args.tasks,
         limit=samples,
-        device="cpu",
+        device="hpu" if is_hpex_available() else "cpu",
     )
     start = time.time()
     results = evaluate(eval_args)

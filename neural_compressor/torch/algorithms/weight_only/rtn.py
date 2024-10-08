@@ -130,17 +130,16 @@ class RTNQuantizer(Quantizer):
 
         if use_layer_wise:
             from neural_compressor.common.utils import DEFAULT_WORKSPACE
-            from neural_compressor.torch.algorithms.layer_wise.utils import get_path, load_module, register_weight_hooks
+            from neural_compressor.torch.algorithms.layer_wise.utils import get_path, load_module
 
             if model_path == "":
                 model_path = model.path
             assert model_path, "model_path should not be None."
             model_path = get_path(model_path)
 
-            register_weight_hooks(model, model_path, device=device, clean_weight=True)
-
         for name, m in model.named_modules():
-
+            if use_layer_wise and len(list(m.named_children())) == 0:
+                load_module(model, name, model_path, device=device)
             if not isinstance(m, supported_layers):
                 continue
             if name in weight_config:  # pragma: no cover
@@ -177,6 +176,8 @@ class RTNQuantizer(Quantizer):
                 if dtype != "int" and "int" in dtype:
                     bits = int(dtype.lstrip("int"))
                     dtype = "int"
+            else:
+                continue
             log_msg = (
                 f"RTN quantization config: bits={bits}, group_size={group_size}, "
                 + f"scheme={scheme}, quantile={quantile}"
@@ -189,9 +190,6 @@ class RTNQuantizer(Quantizer):
                 continue
             logger.debug(f"RTN quantized module:{name, m}")
             logger.debug(log_msg)
-
-            if use_layer_wise:
-                load_module(model, name, model_path, device=device)
 
             # for only group_dim is 0 or only `transformers.Conv1D`, we need transpose weight.
             if is_transformers_imported():

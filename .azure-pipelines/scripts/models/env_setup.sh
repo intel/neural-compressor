@@ -51,6 +51,10 @@ SCRIPTS_PATH="/neural-compressor/.azure-pipelines/scripts/models"
 log_dir="/neural-compressor/.azure-pipelines/scripts/models"
 if [[ "${inc_new_api}" == "3x"* ]]; then
     WORK_SOURCE_DIR="/neural-compressor/examples/3.x_api/${framework}"
+    git clone https://github.com/intel/intel-extension-for-transformers.git /itrex
+    cd /itrex
+    pip install -r requirements.txt
+    pip install -v .
 else
     WORK_SOURCE_DIR="/neural-compressor/examples/${framework}"
 fi
@@ -95,8 +99,8 @@ if [[ "${fwk_ver}" != "latest" ]]; then
             pip install intel-tensorflow==${fwk_ver}
         fi
     elif [[ "${framework}" == "pytorch" ]]; then
-        pip install torch==${fwk_ver} -f https://download.pytorch.org/whl/torch_stable.html
-        pip install torchvision==${torch_vision_ver} -f https://download.pytorch.org/whl/torch_stable.html
+        pip install torch==${fwk_ver} --index-url https://download.pytorch.org/whl/cpu
+        pip install torchvision==${torch_vision_ver} --index-url https://download.pytorch.org/whl/cpu
     elif [[ "${framework}" == "onnxrt" ]]; then
         pip install onnx==1.15.0
         pip install onnxruntime==${fwk_ver}

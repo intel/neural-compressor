@@ -60,21 +60,25 @@ PKG_INSTALL_CFG = {
         },
     },
     # 3.x pt binary build config, pip install neural-compressor-pt, install 3.x PyTorch API.
-    "neural_compressor_3x_pt": {
-        "project_name": "neural_compressor_3x_pt",
+    "neural_compressor_pt": {
+        "project_name": "neural_compressor_pt",
         "include_packages": find_packages(
             include=[
                 "neural_compressor.common",
                 "neural_compressor.common.*",
                 "neural_compressor.torch",
                 "neural_compressor.torch.*",
+                "neural_compressor.transformers",
+                "neural_compressor.transformers.*",
+                "neural_compressor.evaluation",
+                "neural_compressor.evaluation.*",
             ],
         ),
         "install_requires": fetch_requirements("requirements_pt.txt"),
     },
     # 3.x tf binary build config, pip install neural-compressor-tf, install 3.x TensorFlow API.
-    "neural_compressor_3x_tf": {
-        "project_name": "neural_compressor_3x_tf",
+    "neural_compressor_tf": {
+        "project_name": "neural_compressor_tf",
         "include_packages": find_packages(
             include=[
                 "neural_compressor.common",
@@ -100,11 +104,11 @@ if __name__ == "__main__":
 
     if "pt" in sys.argv:
         sys.argv.remove("pt")
-        cfg_key = "neural_compressor_3x_pt"
+        cfg_key = "neural_compressor_pt"
 
     if "tf" in sys.argv:
         sys.argv.remove("tf")
-        cfg_key = "neural_compressor_3x_tf"
+        cfg_key = "neural_compressor_tf"
 
     if bool(os.getenv("USE_FP8_CONVERT", False)):
         from torch.utils.cpp_extension import BuildExtension, CppExtension

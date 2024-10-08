@@ -104,7 +104,7 @@ def get_torch_version():
     return version
 
 
-GT_TORCH_VERSION_2_3_2 = get_torch_version() > Version("2.3.2")
+GT_OR_EQUAL_TORCH_VERSION_2_5 = get_torch_version() >= Version("2.5")
 
 
 def get_accelerator(device_name="auto"):

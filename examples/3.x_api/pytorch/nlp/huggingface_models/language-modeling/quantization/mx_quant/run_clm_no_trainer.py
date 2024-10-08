@@ -62,7 +62,7 @@ user_model = prepare(model=user_model, quant_config=quant_config)
 user_model = convert(model=user_model)
 user_model.eval()
 
-from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
+from neural_compressor.evaluation.lm_eval import evaluate, LMEvalParser
 eval_args = LMEvalParser(
     model="hf",
     user_model=user_model,

@@ -17,7 +17,9 @@ from neural_compressor.torch.utils.auto_accelerator import (
 @pytest.mark.skipif(not HPU_Accelerator.is_available(), reason="HPEX is not available")
 class TestHPUAccelerator:
     def test_cuda_accelerator(self):
-        assert os.environ.get("FORCE_DEVICE", None) is None, "FORCE_DEVICE shouldn't be set. HPU is the first priority."
+        assert (
+            os.environ.get("INC_TARGET_DEVICE", None) is None
+        ), "INC_TARGET_DEVICE shouldn't be set. HPU is the first priority."
         accelerator = auto_detect_accelerator()
         assert accelerator.current_device() == 0, f"{accelerator.current_device()}"
         assert accelerator.current_device_name() == "hpu:0"
@@ -47,10 +49,10 @@ class TestXPUAccelerator:
     @pytest.fixture
     def force_use_xpu(self, monkeypatch):
         # Force use xpu
-        monkeypatch.setenv("FORCE_DEVICE", "xpu")
+        monkeypatch.setenv("INC_TARGET_DEVICE", "xpu")
 
     def test_xpu_accelerator(self, force_use_xpu):
-        print(f"FORCE_DEVICE: {os.environ.get('FORCE_DEVICE', None)}")
+        print(f"INC_TARGET_DEVICE: {os.environ.get('INC_TARGET_DEVICE', None)}")
         accelerator = auto_detect_accelerator()
         assert accelerator.current_device() == 0, f"{accelerator.current_device()}"
         assert accelerator.current_device_name() == "xpu:0"
@@ -79,10 +81,10 @@ class TestCPUAccelerator:
     @pytest.fixture
     def force_use_cpu(self, monkeypatch):
         # Force use CPU
-        monkeypatch.setenv("FORCE_DEVICE", "cpu")
+        monkeypatch.setenv("INC_TARGET_DEVICE", "cpu")
 
     def test_cpu_accelerator(self, force_use_cpu):
-        print(f"FORCE_DEVICE: {os.environ.get('FORCE_DEVICE', None)}")
+        print(f"INC_TARGET_DEVICE: {os.environ.get('INC_TARGET_DEVICE', None)}")
         accelerator = auto_detect_accelerator()
         assert accelerator.current_device() == "cpu", f"{accelerator.current_device()}"
         assert accelerator.current_device_name() == "cpu"
@@ -99,10 +101,10 @@ class TestCUDAAccelerator:
     @pytest.fixture
     def force_use_cuda(self, monkeypatch):
         # Force use CUDA
-        monkeypatch.setenv("FORCE_DEVICE", "cuda")
+        monkeypatch.setenv("INC_TARGET_DEVICE", "cuda")
 
     def test_cuda_accelerator(self, force_use_cuda):
-        print(f"FORCE_DEVICE: {os.environ.get('FORCE_DEVICE', None)}")
+        print(f"INC_TARGET_DEVICE: {os.environ.get('INC_TARGET_DEVICE', None)}")
         accelerator = auto_detect_accelerator()
         assert accelerator.current_device() == 0, f"{accelerator.current_device()}"
         assert accelerator.current_device_name() == "cuda:0"
