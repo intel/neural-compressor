@@ -242,6 +242,31 @@ def get_user_model():
     user_model.eval()
     return user_model, tokenizer
 
+def eval_fn(user_model=None):
+    user_model.eval()
+    from neural_compressor.evaluation.lm_eval import evaluate, LMEvalParser
+    import time
+
+    samples = args.iters * args.batch_size
+    eval_args = LMEvalParser(
+        model="hf",
+        user_model=user_model,
+        tokenizer=tokenizer,
+        batch_size=args.batch_size,
+        tasks=args.tasks,
+        limit=samples,
+        device="hpu" if is_hpex_available() else "cpu",
+    )
+    start = time.time()
+    results = evaluate(eval_args)
+    end = time.time()
+    for task_name in args.tasks.split(","):
+        if task_name == "wikitext":
+            acc = results["results"][task_name]["word_perplexity,none"]
+        else:
+            acc = results["results"][task_name]["acc,none"]
+    print("Accuracy: %.5f" % acc)
+    return acc
 
 if args.quantize:
     # dataset
@@ -439,10 +464,22 @@ if args.quantize:
         )
         dataloader = dataloaderPreprocessor.get_prepared_dataloader()
         custom_tune_config = TuningConfig(config_set=get_woq_tuning_config())
+        from neural_compressor.torch.algorithms.weight_only.utility import move_input_to_device
+        from tqdm import tqdm
+        def run_fn_for_gptq(model, dataloader_for_calibration, *args):
+            for batch in tqdm(dataloader_for_calibration):
+                batch = move_input_to_device(batch, device=None)
+                if isinstance(batch, tuple) or isinstance(batch, list):
+                    model(batch[0])
+                elif isinstance(batch, dict):
+                    model(**batch)
+                else:
+                    model(batch)
+            return
         user_model = autotune(
             model=user_model,
             tune_config=custom_tune_config,
-            eval_fn=eval_acc_fn,
+            eval_fn=eval_fn,
             run_fn=run_fn_for_gptq,
             run_args=(dataloader, True),  # run_args should be a tuple,
             example_inputs=example_inputs,
