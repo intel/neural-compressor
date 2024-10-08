@@ -318,17 +318,17 @@ if __name__ == '__main__':
             if args.model_dtype == "bfloat16" or args.model_dtype == "bfp16":
                 torch_dtype = torch.bfloat16
                 
-        config = AutoConfig.from_pretrained(
-            model_name,
-            trust_remote_code=True,
-        )
-        config.use_cache = False
+        # config = AutoConfig.from_pretrained(
+        #     model_name,
+        #     trust_remote_code=not args.disable_trust_remote_code,
+        # )
+        # config.use_cache = False
         
         model = AutoModelForCausalLM.from_pretrained(
             model_name,
             torch_dtype=torch_dtype,
             trust_remote_code=not args.disable_trust_remote_code,
-            config=config,
+            _attn_implementation='eager' # _attn_implementation='flash_attention_2' to enable flash attention
         )
         seqlen = args.seqlen
         processor = Phi3VProcessor.from_pretrained(model_name)
