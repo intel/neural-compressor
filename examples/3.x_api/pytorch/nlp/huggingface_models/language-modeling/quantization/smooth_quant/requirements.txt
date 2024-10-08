@@ -8,7 +8,6 @@ pytest
 wandb
 einops
 neural-compressor
-intel-extension-for-transformers
-lm_eval==0.4.2
+lm_eval==0.4.3
 peft
 optimum-intel

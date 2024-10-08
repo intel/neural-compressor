@@ -185,7 +185,7 @@ if args.quantize:
         config = AutoConfig.from_pretrained(args.model)
         setattr(model, "config", config)
     
-        from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
+        from neural_compressor.evaluation.lm_eval import evaluate, LMEvalParser
         eval_args = LMEvalParser(
             model="hf",
             user_model=model,
@@ -232,7 +232,7 @@ if args.load:
 
 if args.accuracy:
     user_model.eval()
-    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
+    from neural_compressor.evaluation.lm_eval import evaluate, LMEvalParser
 
     eval_args = LMEvalParser(
         model="hf",
