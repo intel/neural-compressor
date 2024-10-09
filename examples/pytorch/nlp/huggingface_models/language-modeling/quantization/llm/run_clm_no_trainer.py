@@ -354,7 +354,7 @@ else:
 if args.accuracy:
     user_model.eval()
     if args.code_generation:
-        from intel_extension_for_transformers.transformers.llm.evaluation.bigcode_eval import evaluate
+        from neural_compressor.evaluation.bigcode_eval import evaluate
         from transformers import AutoTokenizer
         tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=args.trust_remote_code)
         results = evaluate(
@@ -370,7 +370,7 @@ if args.accuracy:
             else:
                 acc = results["results"][task_name]["acc"]
     else:
-        from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
+        from neural_compressor.evaluation.lm_eval import evaluate, LMEvalParser
         eval_args = LMEvalParser(
             model="hf", 
             user_model=user_model,
@@ -395,7 +395,7 @@ if args.performance:
     samples = args.iters * args.batch_size
 
     if args.code_generation:
-        from intel_extension_for_transformers.transformers.llm.evaluation.bigcode_eval import evaluate
+        from neural_compressor.evaluation.bigcode_eval import evaluate
         from transformers import AutoTokenizer
         tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=args.trust_remote_code)
         start = time.time()
@@ -413,7 +413,7 @@ if args.performance:
             else:
                 acc = results["results"][task_name]["acc"]
     else:
-        from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
+        from neural_compressor.evaluation.lm_eval import evaluate, LMEvalParser
         eval_args = LMEvalParser(
             model="hf", 
             user_model=user_model,

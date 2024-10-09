@@ -134,7 +134,7 @@ def replace_architectures(json_path):
         json.dump(data, file, indent=4)
 
 def eval_func(model):
-    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
+    from neural_compressor.evaluation.lm_eval import evaluate, LMEvalParser
 
     model_dir = model
     if isinstance(model, str) and model.endswith(".onnx"):
