@@ -2,21 +2,24 @@
   "pytorch": {
     "llava_woq_autoround_int4":{
       "model_src_dir": "multimodal-modeling/quantization/auto_round/Llava",
-      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/train2017",
+      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/train2017_full",
+      "question_file": "/tf_dataset2/datasets/llava/llava_v1_5_mix665k.json",
       "input_model": "liuhaotian/llava-v1.5-7b",
       "main_script": "main.py",
       "batch_size": 1
     },
     "qwenvl_woq_autoround_int4":{
       "model_src_dir": "multimodal-modeling/quantization/auto_round/Qwen-VL",
-      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/train2017",
+      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/train2017_full",
+      "question_file": "/tf_dataset2/datasets/llava/llava_v1_5_mix665k.json",
       "input_model": "Qwen/Qwen-VL",
       "main_script": "main.py",
       "batch_size": 8
     },
     "Phi3Vision_woq_autoround_int4":{
       "model_src_dir": "multimodal-modeling/quantization/auto_round/Phi3-3-vision",
-      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/train2017",
+      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/train2017_full",
+      "question_file": "/tf_dataset2/datasets/llava/llava_v1_5_mix665k.json",
       "input_model": "microsoft/Phi-3-vision-128k-instruct",
       "main_script": "main.py",
       "batch_size": 1
