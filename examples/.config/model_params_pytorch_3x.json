@@ -84,6 +84,34 @@
         "main_script": "run_clm_no_trainer.py",
         "batch_size": 8
       },
+      "gpt_j_woq_awq_int4":{
+        "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/weight_only",
+        "dataset_location": "",
+        "input_model": "",
+        "main_script": "run_clm_no_trainer.py",
+        "batch_size": 1
+      },
+      "opt_125m_woq_awq_int4":{
+        "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/weight_only",
+        "dataset_location": "",
+        "input_model": "",
+        "main_script": "run_clm_no_trainer.py",
+        "batch_size": 1
+      },
+      "opt_125m_woq_autoround_int4":{
+        "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/weight_only",
+        "dataset_location": "",
+        "input_model": "",
+        "main_script": "run_clm_no_trainer.py",
+        "batch_size": 1
+      },
+      "opt_125m_woq_autotune_int4":{
+        "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/weight_only",
+        "dataset_location": "",
+        "input_model": "",
+        "main_script": "run_clm_no_trainer.py",
+        "batch_size": 1
+      },
       "gpt_j_ipex":{
         "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/static_quant/ipex",
         "dataset_location": "",
