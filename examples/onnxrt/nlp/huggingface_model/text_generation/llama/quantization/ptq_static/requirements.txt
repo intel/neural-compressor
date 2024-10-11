@@ -7,6 +7,5 @@ onnxruntime-extensions; python_version < '3.11'
 datasets
 optimum
 evaluate
-intel-extension-for-transformers >= 1.4.1
 peft
-lm-eval==0.4.2
+lm-eval==0.4.3
