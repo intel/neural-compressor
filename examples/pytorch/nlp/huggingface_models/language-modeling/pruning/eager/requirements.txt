@@ -10,3 +10,5 @@ tqdm
 tiktoken
 transformers_stream_generator
 lm_eval==0.4.3
+numba
+pydantic

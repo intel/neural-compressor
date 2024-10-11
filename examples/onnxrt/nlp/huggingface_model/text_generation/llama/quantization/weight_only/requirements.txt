@@ -9,3 +9,5 @@ optimum
 evaluate
 peft
 lm-eval==0.4.3
+numba
+pydantic
