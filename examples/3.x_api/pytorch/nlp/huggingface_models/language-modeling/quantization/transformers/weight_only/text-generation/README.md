@@ -103,6 +103,7 @@ python run_generate_cpu_woq.py \
 > 1.  default search algorithm is beam search with num_beams = 1.
 > 2. [ipex.optimize_transformers](https://github.com/intel/intel-extension-for-pytorch/blob/v2.1.10%2Bxpu/docs/tutorials/llm/llm_optimize_transformers.md) Support for the optimized inference of model types "gptj," "mistral," "qwen," and "llama" to achieve high performance and accuracy. Ensure accurate inference for other model types as well.
 > 3. We provide compression technologies `WeightOnlyQuant` with `Rtn/GPTQ/AutoRound` algorithms and `load_in_4bit` and `load_in_8bit` work on intel GPU device.
+> 4. The quantization process is performed on the CPU accelerator by default. Users can override this setting by specifying the environment variable `INC_TARGET_DEVICE`. Usage on bash: ```export INC_TARGET_DEVICE=xpu```.
 
 ## Prerequisite​
 ### Dependencies
