@@ -343,6 +343,7 @@ if args.int8 or args.int8_bf16_mixed:
 
     if args.ipex:
         user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)))
+        from transformers import AutoTokenizer
         tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=args.trust_remote_code)
     else:
         user_model, tokenizer = get_user_model()
