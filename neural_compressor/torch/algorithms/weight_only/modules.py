@@ -458,9 +458,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
 
             numba.config.THREADING_LAYER = "safe"
         except ImportError:
-            logger.warning(
-                "Import numba failed, to accelerate packing, please install numba with `pip install numba`."
-            )
+            logger.warning("Import numba failed, to accelerate packing, please install numba with `pip install numba`.")
             return self.pack_tensor_with_torch(torch.from_numpy(raw_array)).cpu().numpy()
         except Exception as e:
             logger.warning(f"Import numba failed with error: {e}, fallback to torch implementation.")
