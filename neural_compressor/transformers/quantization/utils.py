@@ -351,10 +351,12 @@ def convert_to_quantized_model(model, config, device="cpu"):
         import intel_extension_for_pytorch
 
         assert hasattr(torch, "xpu") and torch.xpu.is_available(), "There is no xpu device in this system!"
-        os.environ["INC_TARGET_DEVICE"] = "cpu"
-        logger.info(
-            "Set the environment variable INC_TARGET_DEVICE='cpu' to ensure the quantization process occurs on the CPU."
-        )
+        if "INC_TARGET_DEVICE" not in os.environ:
+            os.environ["INC_TARGET_DEVICE"] = "cpu"
+            logger.info(
+                "Set the environment variable INC_TARGET_DEVICE='cpu'"
+                " to ensure the quantization process occurs on the CPU."
+            )
 
     orig_dtype = torch.float32
     for param in model.parameters():
