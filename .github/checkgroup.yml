@@ -78,19 +78,6 @@ subprojects:
       - "UT-Basic (Unit Test other basic case Test other basic case)"
       - "UT-Basic (Unit Test other cases baseline Test other cases baseline)"
 
-  - id: "Unit Tests ITREX workflow"
-    paths:
-      - "neural_compressor/**"
-      - "setup.py"
-      - "requirements.txt"
-      - ".azure-pipelines/scripts/ut/run_itrex.sh"
-      - ".azure-pipelines/ut-itrex.yml"
-      - "!neural_compressor/common/**"
-      - "!neural_compressor/torch/**"
-      - "!neural_compressor/tensorflow/**"
-    checks:
-      - "UT-ITREX"
-
   - id: "Unit Tests 3x-TensorFlow workflow"
     paths:
       - "neural_compressor/common/**"
