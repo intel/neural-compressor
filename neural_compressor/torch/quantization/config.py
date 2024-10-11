@@ -1780,6 +1780,7 @@ class FP8Config(TorchBaseConfig):
             mod_dict (dict, optional): The dict of modules to quantize. Defaults to {}.
             measure_exclude (str, optional): Select INPUT/OUTPUT to be exculded by measurement. Defaults to "OUTPUT".
             fake_quant (bool, optional): Whether to use fake quantization. Defaults to False.
+            scale_format (str, optional): Select the expression type of scale value, which may impact the performance. Defaults to const.
         """
         super().__init__()
         self.dump_stats_path = dump_stats_path
