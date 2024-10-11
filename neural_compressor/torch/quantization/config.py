@@ -412,6 +412,7 @@ class GPTQConfig(TorchBaseConfig):
             white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
                                                                  Default is DEFAULT_WHITE_LIST.
         """
+        assert not quant_lm_head, "GPTQ doesn't support lm_head quantization currently, it's coming soon!"
         super().__init__(white_list=white_list)
         self.dtype = dtype
         self.bits = bits
@@ -1736,34 +1737,15 @@ def get_default_hqq_config() -> HQQConfig:
 
 
 ######################## FP8 Quant Config ###############################
-# refer to habana_quantization_toolkit/_core/common.py
-FP8_WHITE_LIST = [
-    "Matmul",
-    "Linear",
-    "FalconLinear",
-    "KVCache",
-    "Conv2d",
-    "LoRACompatibleLinear",
-    "LoRACompatibleConv",
-    "Softmax",
-    "ModuleFusedSDPA",
-]
-if importlib.util.find_spec("deepspeed"):
-    FP8_WHITE_LIST.extend(["LinearLayer", "LinearAllreduce", "ScopedLinearAllReduce", "LmHeadLinearAllreduce"])
 
+from ..algorithms.fp8_quant._core.common import mod_default_dict
+FP8_WHITE_LIST = mod_default_dict.keys()
 
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=FP8_QUANT)
 class FP8Config(TorchBaseConfig):
     """Config class for FP8 quantization."""
 
     name = FP8_QUANT
-
-    # tunable params
-    params_list = [
-        "fp8_config",
-        "scale_method",
-        "observer",
-    ]
 
     def __init__(
         self,
@@ -1778,6 +1760,7 @@ class FP8Config(TorchBaseConfig):
         observer: str = "maxabs",
         mod_dict: dict = {},
         measure_exclude: str = "OUTPUT",
+        fake_quant: bool = False,
         **kwargs,
     ):
         """Initializing FP8Config.
@@ -1807,6 +1790,7 @@ class FP8Config(TorchBaseConfig):
         self.observer = observer
         self.mod_dict = mod_dict
         self._json_file = None
+        self.fake_quant = fake_quant
 
     @property
     def measure(self):

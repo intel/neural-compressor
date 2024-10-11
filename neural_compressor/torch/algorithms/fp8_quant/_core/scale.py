@@ -102,11 +102,11 @@ def get_config(
     method,
     params,
     scales_file=None,
-    recalc_scales=False,
     mod_list=None,
 ):
     with torch.no_grad():
         top_level_config = get_hqt_config(model)
+        recalc_scales = top_level_config.cfg["recalc_scales"]
         qconfig = {UNMEASURED_MODELS: []}
         scales_file_format = np.ndarray  # file_functions[os.path.splitext(scales_file)[1]][0]
         scales_obj = (
@@ -116,6 +116,7 @@ def get_config(
         )
         scales = convert_scales_to_tensors_dict(scales_obj, scales_file_format, params["hp_dtype"])
         model_dict = dict(model.named_modules())
+        save_file = False
         for mname in mod_list:
             mod = model_dict[mname]
             set_hqt_config(mod, top_level_config)  # set config in the module, as it consumed by the patched module
@@ -136,6 +137,7 @@ def get_config(
                     scales_obj[mname] = ModuleConfig(
                         **format_functions_rec((torch.Tensor, scales_file_format))(scales[mname].__dict__)
                     )
+                    save_file = True
 
             logger.debug(
                 "Preparing quantization functions for layer %s layer_type=%s",
@@ -151,7 +153,7 @@ def get_config(
                 params,
             )
             qconfig[mname] = mod_extra_config
-        if scales_file is not None:
+        if save_file and scales_file is not None:
             save_scales(model, scales_obj, scales_file_format, scales_file + ".npz")
             save_scales(model, scales_obj, scales_file_format, scales_file + ".json")
     return qconfig

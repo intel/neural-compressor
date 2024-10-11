@@ -31,10 +31,10 @@ def update_mod_dict(config):
 def print_init_info(config):
     import importlib.metadata
 
-    versionStr = importlib.metadata.version("neural_compressor_pt")
+    versionStr = importlib.metadata.version("neural_compressor_3x_pt")
     locationStr = versionStr.find("git") + 3
-    logger.info("neural_compressor_pt Git revision = %s", versionStr[locationStr:])
-    logger.info("neural_compressor_pt Configuration = %s", config)
+    logger.info("neural_compressor_3x_pt Git revision = %s", versionStr[locationStr:])
+    logger.info("neural_compressor_3x_pt Configuration = %s", config)
 
 
 def is_substr(substr_list, target):
@@ -42,6 +42,13 @@ def is_substr(substr_list, target):
 
 
 def prepare_model(model):
+    """Receives the parent module to quantize.
+    Replaces its submodules with patched submodules that perform calibration and quantization.
+    Returns the patched parent module that can perform calibration or quantization according to the configuration.
+
+    Args:
+        model (nn.module): The model that will be measured/quantized.
+    """
     config = get_hqt_config(model)
     update_mod_dict(config)
     allowlist = set(config.cfg["mod_dict"].keys())

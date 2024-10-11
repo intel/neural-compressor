@@ -103,12 +103,12 @@ class _Logger(object):
 
     def get_enable_console_val(self):
         enableConsole = os.environ.get("ENABLE_CONSOLE", "False").upper()
-        if enableConsole not in ["TRUE", "FALSE"]:
-            raise Exception("Env var 'ENABLE_CONSOLE' has to be true or false.")
-        return enableConsole == "TRUE"
+        if enableConsole not in ["TRUE", "FALSE", "1", "0"]:
+            raise Exception("Env var 'ENABLE_CONSOLE' has to be 'true' or 'false' ('1' or '0' respectively).")
+        return enableConsole == "TRUE" or enableConsole == "1"
 
     def get_log_level(self):
-        log_level_str = os.environ.get("LOG_LEVEL_HQT", os.environ.get("LOG_LEVEL_ALL"))
+        log_level_str = os.environ.get("LOG_LEVEL_INC", os.environ.get("LOG_LEVEL_ALL"))
         if log_level_str is None:
             return logging.INFO
         if log_level_str not in log_levels:
@@ -159,7 +159,7 @@ class _Logger(object):
     def _init_log(self):
         """Setup the logger format and handler."""
         enableConsole = self.get_enable_console_val()
-        self._logger = logging.getLogger("HQT")
+        self._logger = logging.getLogger("INC")
         log_level = self.get_log_level()
         if log_level == logging.IGNORE:
             self._logger.disabled = True
@@ -181,18 +181,18 @@ class _Logger(object):
                 os.makedirs(log_folder, exist_ok=True)
             except OSError as error:
                 print(
-                    f"Warning: Directory '{log_folder}' can not be created for HQT logs: {error.strerror}. Logger is disabled."
+                    f"Warning: Directory '{log_folder}' can not be created for INC logs: {error.strerror}. Logger is disabled."
                 )
                 self._logger.disabled = True
                 pass
-            file_path = log_folder + "/hqt_log.txt"
-            log_file_size = int(os.getenv("HQT_LOG_FILE_SIZE", DEFAULT_LOG_FILE_SIZE))
+            file_path = log_folder + "/inc_log.txt"
+            log_file_size = int(os.getenv("INC_LOG_FILE_SIZE", DEFAULT_LOG_FILE_SIZE))
             if log_file_size < 0:
                 print(
                     f"Warning: Log file size value is not valid [{log_file_size}]. Using default value [{DEFAULT_LOG_FILE_SIZE}]"
                 )
                 log_file_size = DEFAULT_LOG_FILE_SIZE
-            log_file_amount = int(os.getenv("HQT_LOG_FILE_AMOUNT", DEFAULT_LOG_FILE_AMOUNT))
+            log_file_amount = int(os.getenv("INC_LOG_FILE_AMOUNT", DEFAULT_LOG_FILE_AMOUNT))
             if log_file_amount < 0:
                 print(
                     f"Warning: Log file amount value is not valid [{log_file_amount}]. Using default value [{DEFAULT_LOG_FILE_AMOUNT}]"

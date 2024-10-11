@@ -1,9 +1,9 @@
 """Use this module as an example of how to write new unit tests for layers."""
-
-import habana_quantization_toolkit as hqt
+import os
 import torch
-from habana_quantization_toolkit._quant_common.helper_modules import Matmul
-from habana_quantization_toolkit._quant_common.quant_config import QuantMode
+import neural_compressor.torch.algorithms.fp8_quant as fp8_quant
+from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import QuantMode
+from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import Matmul
 
 
 class Model(torch.nn.Module):
@@ -20,6 +20,7 @@ def test_config_json():
             QuantMode.MEASURE: "measure",
             QuantMode.QUANTIZE: "quant",
         }[mode]
-        config_path = f"llama_{name}"
-        hqt.prep_model(model, config_path=config_path)
-        hqt.finish_measurements(model)
+        config_path = os.path.join(os.environ.get("NEURAL_COMPRESSOR_FORK_ROOT"),
+                                   f"neural_compressor/torch/algorithms/fp8_quant/custom_config/llama_{name}.json")
+        fp8_quant.prep_model(model, config_path=config_path)
+        fp8_quant.finish_measurements(model)

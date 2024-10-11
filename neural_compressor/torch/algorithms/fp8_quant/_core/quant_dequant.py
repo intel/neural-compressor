@@ -12,11 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from abc import abstractmethod
-
 import torch.nn as nn
+import torch
+from abc import abstractmethod
+import habana_frameworks.torch.core as htcore
 
-from .common import *
+
+descale_fcn = lambda x, scale: torch.mul(x, scale)
+scale_fcn = lambda x, scale: torch.div(x, scale)
+cast_fcn = lambda x, dtype: x.to(dtype=dtype)
+cast_to_fp8_fcn = lambda x, dtype, scale_inv=None: torch.ops.hpu.cast_to_fp8_v2(x, scale_inv, False, False, dtype)[0]
+cast_from_fp8_fcn = lambda x, dtype, scale=None: torch.ops.hpu.cast_from_fp8(x, scale, dtype)
 
 
 class QuantDequantBase(nn.Module):
@@ -69,3 +75,23 @@ class DequantOutput(QuantDequantBase):
     def extra_repr(self) -> str:
         repr = super(DequantOutput, self).extra_repr()
         return f"{repr}, scale dtype={self.scale.dtype}"
+
+
+class QuantDequant(QuantDequantBase):
+    def __init__(self, scale_inv, lp_dtype, hp_dtype, *args, **kwargs):
+        super(QuantDequant, self).__init__(lp_dtype, hp_dtype, *args, **kwargs)
+        self.scale_inv = nn.Parameter(scale_inv)
+        self.scale = nn.Parameter(1 / scale_inv)
+
+    def forward(self, x, *args, **kwargs):
+        y = cast_to_fp8_fcn(x, self.lp_dtype, self.scale_inv)
+        # mark_step is needed so fuser won't remove 2 consecutive casts.
+        # will be removed once SW-196431 is implemented
+        htcore.mark_step()
+        z = cast_from_fp8_fcn(y, self.hp_dtype, self.scale)
+        htcore.mark_step()
+        return z
+
+    def extra_repr(self) -> str:
+        repr = super(QuantDequant, self).extra_repr()
+        return f"{repr}, Quantize, and then dequantize"

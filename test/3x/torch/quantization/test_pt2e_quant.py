@@ -166,6 +166,54 @@ class TestPT2EQuantization:
         config.freezing = True
         q_model_out = q_model(*example_inputs)
         assert torch.allclose(float_model_output, q_model_out, atol=1e-2), "Quantization failed!"
+
+        # test save and load
+        q_model.save(
+            example_inputs=example_inputs,
+            output_dir="./saved_results",
+        )
+        from neural_compressor.torch.quantization import load
+
+        loaded_quantized_model = load("./saved_results")
+        loaded_q_model_out = loaded_quantized_model(*example_inputs)
+        assert torch.equal(loaded_q_model_out, q_model_out)
+
+        opt_model = torch.compile(q_model)
+        out = opt_model(*example_inputs)
+        assert out is not None
+
+    @pytest.mark.skipif(not GT_TORCH_VERSION_2_3_2, reason="Requires torch>=2.3.2")
+    def test_quantize_simple_model_with_set_local(self, force_not_import_ipex):
+        model, example_inputs = self.build_simple_torch_model_and_example_inputs()
+        float_model_output = model(*example_inputs)
+        quant_config = None
+
+        def calib_fn(model):
+            for i in range(4):
+                model(*example_inputs)
+
+        quant_config = get_default_static_config()
+        quant_config.set_local("fc1", StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
+        q_model = quantize(model=model, quant_config=quant_config, run_fn=calib_fn)
+
+        # check the half node
+        expected_node_occurrence = {
+            # Only quantize the `fc2`
+            torch.ops.quantized_decomposed.quantize_per_tensor.default: 2,
+            torch.ops.quantized_decomposed.quantize_per_tensor.default: 2,
+        }
+        expected_node_occurrence = {
+            torch_test_quant_common.NodeSpec.call_function(k): v for k, v in expected_node_occurrence.items()
+        }
+        node_in_graph = self.get_node_in_graph(q_model)
+        for node, cnt in expected_node_occurrence.items():
+            assert node_in_graph.get(node, 0) == cnt, f"Node {node} should occur {cnt} times, but {node_in_graph[node]}"
+
+        from torch._inductor import config
+
+        config.freezing = True
+        q_model_out = q_model(*example_inputs)
+        assert torch.allclose(float_model_output, q_model_out, atol=1e-2), "Quantization failed!"
         opt_model = torch.compile(q_model)
         out = opt_model(*example_inputs)
         assert out is not None
