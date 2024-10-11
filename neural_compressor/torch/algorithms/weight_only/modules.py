@@ -512,7 +512,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
     def unpack_tensor_with_numpy(self, packed_tensor):
         """Unpack the packed tensor with numpy."""
         packed_array = packed_tensor.cpu().numpy()
-        target_dtype = np.int8 if not hasattr(self, "qzeros") or "int" not in self.dtype else np.uint8
+        target_dtype = np.int16
         target_len = packed_array.shape[1] * self.n_pack
         unpacked_array = np.zeros((packed_array.shape[0], target_len), dtype=target_dtype)
         mask = np.uint8(2**self.bits - 1)
@@ -522,7 +522,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
                 tmp = packed_array[:, j]
                 tmp = np.left_shift(tmp, self.compress_bits - self.bits * (e + 1))
                 tmp = np.right_shift(tmp, self.compress_bits - self.bits)
-                if target_dtype == np.uint8:
+                if hasattr(self, "qzeros"):
                     tmp &= mask
                 unpacked_array[:, index] = tmp.astype(target_dtype)
                 accelerator.synchronize()
