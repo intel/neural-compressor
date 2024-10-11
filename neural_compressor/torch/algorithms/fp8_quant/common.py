@@ -14,6 +14,7 @@
 
 import json
 import os
+import copy
 import tempfile
 from collections import namedtuple
 from pathlib import Path
@@ -92,7 +93,7 @@ def restore_patched_module(patched_model):
                     getattr(patched_mod, "class_name_org", None) or patched_mod.__class__.__name__.split("Patched")[-1]
                 )
                 origin_mod = helper_mods[class_name_org](patched_mod)
-                origin_mod.forward = patched_mod.forward_orig
+                origin_mod.forward = copy.deepcopy(patched_mod.forward_orig)
                 setattr(parent, name, origin_mod)
 
 
