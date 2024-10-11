@@ -97,7 +97,7 @@ def prepare_model(model, qconfig, mod_list, hp_dtype=torch.float):
             if name in mod_list:
                 if name in qconfig:
                     mod_extra_config = qconfig[name]
-                    if config.cfg["fake_quant"] == False:
+                    if not config.cfg["fake_quant"]:
                         quantize_params(mod, mod_extra_config)
                 else:
                     # patched module without measure/quant

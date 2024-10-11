@@ -164,7 +164,7 @@ class PatchedMatmul(nn.Module):
         super().__init__()
         set_attrs_from_orig_model(self, mod, mod_extra_config)
         if self.quantization_mode == QuantMode.QUANTIZE:
-            if self.fake_quant == False:
+            if not self.fake_quant:
                 self.forward = self.forward_quant
                 self.quant_input_0 = self._mod_extra_config.inputs[0]
                 self.quant_input_1 = self._mod_extra_config.inputs[1]
