@@ -347,7 +347,6 @@ def run_fn_for_autoround(model, dataloader):
 
 
 def convert_to_quantized_model(model, config, device="cpu"):
-
     if device == "xpu" or device == torch.device("xpu"):
         import intel_extension_for_pytorch
 
