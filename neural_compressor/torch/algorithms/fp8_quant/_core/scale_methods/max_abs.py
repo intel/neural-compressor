@@ -13,10 +13,10 @@
 # limitations under the License.
 
 import torch
+from habana_frameworks.torch.utils.experimental import _get_device_type
 
 from ..common import *
 from ..fp_utils import *
-from habana_frameworks.torch.utils.experimental import _get_device_type
 
 
 def linear_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales(mod, measurement, params):
@@ -117,7 +117,7 @@ def fsdpa_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales(mod, measurement, para
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
     device_type = _get_device_type()
-    fullscale = get_fullscale(lp_dtype, device_type)    
+    fullscale = get_fullscale(lp_dtype, device_type)
     input_backoff = params["input_backoff"]
     input_scale = [
         calc_maxabs_scale(
@@ -143,6 +143,7 @@ def fsdpa_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales(mod, measurement, para
     )
     output_scale = [scale_to_pow2_hw(output_scale, device_type=config["device_type"])]
     return ModuleConfig(input_scale, output_scale, {})
+
 
 def fsdpa_act_maxabs_pts_pow2_weight_maxabs_pts_pow2(mod, measurement, params):
     device = torch.device("hpu")
@@ -175,6 +176,7 @@ def fsdpa_act_maxabs_pts_pow2_weight_maxabs_pts_pow2(mod, measurement, params):
     )
     output_scale = [scale_to_pow2(output_scale)]
     return ModuleConfig(input_scale, output_scale, {})
+
 
 def fsdpa_act_maxabs_pts_weight_maxabs_pts_pow2_scales(mod, measurement, params):
     device = torch.device("hpu")
@@ -307,6 +309,7 @@ def softmax_input_unit_output_maxabs_pts_hw_scales(mod, measurement, params):
     output_scale = [scale_to_pow2_hw(output_scale, device_type=config["device_type"])]
     return ModuleConfig((), output_scale, {})
 
+
 def softmax_input_unit_output_maxabs_pts_pow2(mod, measurement, params):
     config = get_hqt_config(mod).cfg
     device = torch.device("hpu")
@@ -322,6 +325,7 @@ def softmax_input_unit_output_maxabs_pts_pow2(mod, measurement, params):
     )
     output_scale = [scale_to_pow2(output_scale)]
     return ModuleConfig((), output_scale, {})
+
 
 def linear_act_maxabs_pts_pow2_hw_weights_maxabs_pcs_pow2_scales(mod, measurement, params):
     config = get_hqt_config(mod).cfg

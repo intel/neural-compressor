@@ -1,32 +1,52 @@
+# Copyright (c) 2024 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import argparse
 import json
 import os
 import sys
 
 import numpy as np
- 
+
+
 def fix_cache_inputs(json_data):
-    for layer_index in range(len(json_data['Nodes'])):
+    for layer_index in range(len(json_data["Nodes"])):
         kv_matmul_input = None
         value_cache_input = None
         qk_matmul_input = None
         key_cache_input = None
- 
-        for node_name, node_info in json_data['Nodes'].items():
-            if f'model.layers.{layer_index}.self_attn.attn.impl.av_matmul' in node_name:
-                kv_matmul_input = node_info['inputs'][1]
-            if f'model.layers.{layer_index}.self_attn.attn.impl.value_cache' in node_name:
-                value_cache_input = node_info['inputs'][0]
-            if f'model.layers.{layer_index}.self_attn.attn.impl.qk_matmul' in node_name:
-                qk_matmul_input = node_info['inputs'][1]
-            if f'model.layers.{layer_index}.self_attn.attn.impl.key_cache' in node_name:
-                key_cache_input = node_info['inputs'][0]
+
+        for node_name, node_info in json_data["Nodes"].items():
+            if f"model.layers.{layer_index}.self_attn.attn.impl.av_matmul" in node_name:
+                kv_matmul_input = node_info["inputs"][1]
+            if f"model.layers.{layer_index}.self_attn.attn.impl.value_cache" in node_name:
+                value_cache_input = node_info["inputs"][0]
+            if f"model.layers.{layer_index}.self_attn.attn.impl.qk_matmul" in node_name:
+                qk_matmul_input = node_info["inputs"][1]
+            if f"model.layers.{layer_index}.self_attn.attn.impl.key_cache" in node_name:
+                key_cache_input = node_info["inputs"][0]
         if kv_matmul_input != value_cache_input:
-            json_data['Nodes'][f'model.layers.{layer_index}.self_attn.attn.impl.kv_matmul']['inputs'][1] = value_cache_input
+            json_data["Nodes"][f"model.layers.{layer_index}.self_attn.attn.impl.kv_matmul"]["inputs"][
+                1
+            ] = value_cache_input
         if qk_matmul_input != key_cache_input:
-            json_data['Nodes'][f'model.layers.{layer_index}.self_attn.attn.impl.qk_matmul']['inputs'][1] = key_cache_input
+            json_data["Nodes"][f"model.layers.{layer_index}.self_attn.attn.impl.qk_matmul"]["inputs"][
+                1
+            ] = key_cache_input
 
     return json_data
+
 
 def parse_args(args):
     parser = argparse.ArgumentParser(
@@ -52,8 +72,18 @@ def main(args):
         os.mkdir(output_path)
     measurements_path = args.measurements
     measurements_paths = os.listdir(measurements_path)
-    measurements_paths_ranges = [measurement_path for measurement_path in measurements_paths if measurement_path.endswith(".json") and 'MAXABS_HW' not in measurement_path and "mod_list" not in measurement_path]
-    measurements_paths_scales = [measurement_path for measurement_path in measurements_paths if measurement_path.endswith(".json") and 'MAXABS_HW' in measurement_path and "mod_list" not in measurement_path]
+    measurements_paths_ranges = [
+        measurement_path
+        for measurement_path in measurements_paths
+        if measurement_path.endswith(".json")
+        and "MAXABS_HW" not in measurement_path
+        and "mod_list" not in measurement_path
+    ]
+    measurements_paths_scales = [
+        measurement_path
+        for measurement_path in measurements_paths
+        if measurement_path.endswith(".json") and "MAXABS_HW" in measurement_path and "mod_list" not in measurement_path
+    ]
 
     for measurement in measurements_paths_ranges + measurements_paths_scales:
         fixed_json_path = os.path.join(output_path, f"fixed_{measurement.split(os.sep)[-1]}")
@@ -83,6 +113,7 @@ def main(args):
                     np.savez(fixed_npz_path, df)
 
     print("finished fix_measurements script")
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])

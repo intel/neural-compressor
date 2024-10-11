@@ -2,8 +2,10 @@ import typing
 
 import pytest
 import torch
+
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import ScaleMethod
-from ..tester import run_accuracy_test, TestVector
+
+from ..tester import TestVector, run_accuracy_test
 
 
 class LinearBlock(torch.nn.Module):

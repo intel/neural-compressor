@@ -1,8 +1,10 @@
 import habana_frameworks.torch.core as htcore
-from neural_compressor.torch.algorithms.mixed_low_precision.custom_methods.quarot import rotate
 import pytest
 import torch
-from transformers import AutoModelForCausalLM, LlamaForCausalLM, LlamaConfig
+from transformers import AutoModelForCausalLM, LlamaConfig, LlamaForCausalLM
+
+from neural_compressor.torch.algorithms.mixed_low_precision.custom_methods.quarot import rotate
+
 
 class RotationOptions:
     def __init__(self, rotate_weights=True, rotate_values=False, rotate_mlp=True):
@@ -28,19 +30,19 @@ def get_model():
         "rms_norm_eps": 1e-05,
         "rope_scaling": None,
         "tie_word_embeddings": False,
-        "vocab_size": 32000
-        }
-    
+        "vocab_size": 32000,
+    }
+
     config = LlamaConfig(**config_dict)
     model = LlamaForCausalLM(config)
-    return (model)
+    return model
 
 
 def test_quarot():
     options = RotationOptions(rotate_weights=True, rotate_values=False, rotate_mlp=True)
     model = get_model()
     model.model.layers = model.model.layers[:2]
-    input = torch.ones((1,5), dtype=int).to('hpu')
+    input = torch.ones((1, 5), dtype=int).to("hpu")
     with torch.no_grad():
         output_logits = model(input).logits.cpu()
     rotate(model, options)

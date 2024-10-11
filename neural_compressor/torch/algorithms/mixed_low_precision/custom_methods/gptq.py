@@ -1,41 +1,42 @@
+# Copyright (c) 2024 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 # code ported from AutoGPTQ
 import copy
-import time
+import math
 import os
+import time
 from typing import Dict, List, Optional, Union
 
-import math
+import habana_frameworks.torch.core as htcore
 import torch
 import torch.nn as nn
-
-from transformers import  PreTrainedModel
 import transformers
-
-
-from auto_gptq.nn_modules._fused_base import FusedBaseAttentionModule, FusedBaseMLPModule
-from auto_gptq.quantization import BaseQuantizeConfig
-from auto_gptq.quantization.config import (
-    CHECKPOINT_FORMAT,
-)
-from auto_gptq.utils.data_utils import collate_data
 
 # from auto_gptq.quantization import Quantizer
 from auto_gptq.modeling._base import BaseGPTQForCausalLM
-
 from auto_gptq.modeling._const import CPU
-from auto_gptq.modeling._utils import (
-    find_layers,
-    get_device,
-    get_module_by_name_prefix,
-    move_to_device,
-    pack_model,
-)
+from auto_gptq.modeling._utils import find_layers, get_device, get_module_by_name_prefix, move_to_device, pack_model
+from auto_gptq.nn_modules._fused_base import FusedBaseAttentionModule, FusedBaseMLPModule
+from auto_gptq.quantization import BaseQuantizeConfig
+from auto_gptq.quantization.config import CHECKPOINT_FORMAT
+from auto_gptq.utils.data_utils import collate_data
+from transformers import PreTrainedModel
 
 from neural_compressor.torch.algorithms.fp8_quant.utils.logger import logger
-import habana_frameworks.torch.core as htcore
 
 HPU = torch.device("hpu")
-
 
 
 def quantize(x, scale, zero, maxq):
@@ -244,7 +245,7 @@ class GaudiGPTQ:
         if not self.quantizer.ready():
             self.quantizer.find_params(W, weight=True)
 
-        H = self.H.cpu()  # Keep Hessian in CPU 
+        H = self.H.cpu()  # Keep Hessian in CPU
         del self.H
         dead = torch.diag(H) == 0
         H[dead, dead] = 1
@@ -277,7 +278,7 @@ class GaudiGPTQ:
         Q = torch.zeros_like(W)
 
         damp = percdamp * torch.mean(torch.diag(H))
-        diag = torch.arange(self.columns, device='cpu')
+        diag = torch.arange(self.columns, device="cpu")
 
         H[diag, diag] += damp
         H = torch.linalg.cholesky(H)
@@ -576,9 +577,7 @@ class BaseGaudiGPTQForCausalLM(BaseGPTQForCausalLM):
 
                     layer_attention_mask = move_to_device(attention_masks[j], cur_layer_device)
                     additional_layer_inputs = {"attention_mask": layer_attention_mask}
-                    layer_position_ids = (
-                        None if not position_ids else move_to_device(position_ids[j], cur_layer_device)
-                    )
+                    layer_position_ids = None if not position_ids else move_to_device(position_ids[j], cur_layer_device)
                     if layer_position_ids is not None:
                         additional_layer_inputs["position_ids"] = layer_position_ids
                     for k, v in layer_input_kwargs[j].items():

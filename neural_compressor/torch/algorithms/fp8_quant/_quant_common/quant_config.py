@@ -33,11 +33,13 @@ except:
     world_size = -1
     local_rank = -1
 
+
 class QuantMode(Enum):
     NONE = 0
     QUANTIZE = 1
     MEASURE = 2
     SHAPE = 3
+
 
 class MeasureExclude(Flag):
     NONE = auto()
@@ -46,14 +48,17 @@ class MeasureExclude(Flag):
     PARAMS = auto()
     ALL = auto()
 
+
 class SupportedFp8(Enum):
     E4M3 = torch.float8_e4m3fn
     E5M2 = torch.float8_e5m2
+
 
 class HpDtype(Enum):
     BF16 = torch.bfloat16
     FP16 = torch.float16
     FP32 = torch.float32
+
 
 class ScaleMethod(Enum):
     MAX = 1
@@ -71,13 +76,16 @@ class ScaleMethod(Enum):
     MAXABS_HW_OPT_WEIGHT = 13
     MAXABS_POW2_OPT_WEIGHT = 14
 
+
 class TrueFalse(Enum):
     TRUE = True
     FALSE = False
 
+
 class ScaleFormat(Enum):
-    CONST = 1 # scales is const and persistent tensor
-    SCALAR = 2 # scales is non-const, non-persistent tensor with data ptr, used for low BS performance optimization
+    CONST = 1  # scales is const and persistent tensor
+    SCALAR = 2  # scales is non-const, non-persistent tensor with data ptr, used for low BS performance optimization
+
 
 _config_to_enum = {
     "mode": QuantMode,
@@ -88,12 +96,13 @@ _config_to_enum = {
     "recalc_scales": TrueFalse,
     "ignore_modules_wo_measures": TrueFalse,
     "fake_quant": TrueFalse,
-    "scale_format": ScaleFormat
+    "scale_format": ScaleFormat,
 }
 
 
 _configs_that_use_enum_value = ["fp8_config", "hp_dtype", "ignore_modules_wo_measures", "recalc_scales", "fake_quant"]
 _scale_methods_quant_only = [ScaleMethod.UNIT_SCALE, ScaleMethod.HW_ALIGNED_SINGLE_SCALE]
+
 
 def get_hqt_config(mod) -> Fp8cfg:
     return mod.__hqt_config__
@@ -106,7 +115,8 @@ def set_hqt_config(mod, config):
 def _get_enum_from_string(EnumClass, str, key):
     if not hasattr(EnumClass, str.upper()):
         raise ValueError(
-            f"Invalid '{key}' value in custom config ('{str}'). Enter one of {[m.name for m in EnumClass]}")
+            f"Invalid '{key}' value in custom config ('{str}'). Enter one of {[m.name for m in EnumClass]}"
+        )
     return EnumClass[str.upper()]
 
 
@@ -128,7 +138,7 @@ class Fp8cfg:
                 "types": (),
             },  # types and names to be quantized. Allowlist by names is not yet implemented
             "mode": QuantMode.QUANTIZE,  # Quantize or Measure
-            "fake_quant": False, # Fake or Real Quant
+            "fake_quant": False,  # Fake or Real Quant
             "scale_method": ScaleMethod.MAXABS_HW,  # Method to quantize with
             "scale_params": {},  # scaling parameters that are different then the default ones
             "observer": "maxabs",  # Supported ['shape', 'maxabs', 'maxabs_per_channel', 'save']
@@ -141,7 +151,7 @@ class Fp8cfg:
             "device_type": htexp._get_device_type(),  # Determines device type: Gaudi2, Gaudi3...
             "measure_exclude": MeasureExclude.OUTPUT,
             "recalc_scales": False,
-            "scale_format": ScaleFormat.CONST
+            "scale_format": ScaleFormat.CONST,
         }
         # assert measured_global_config['allowlist']['names'] == [''], "Allowlist names not yet implemented"
 
@@ -179,11 +189,15 @@ class Fp8cfg:
         quant_mode = measured_global_config["mode"]
         if scale_method in _scale_methods_quant_only:
             if quant_mode == QuantMode.QUANTIZE:
-                logger.debug(f"Quantization mode is quant, scale_method is {scale_method}, so stats files won't be used")
+                logger.debug(
+                    f"Quantization mode is quant, scale_method is {scale_method}, so stats files won't be used"
+                )
                 measured_global_config["use_stats_files"] = False
             else:
-                raise ValueError(f"Quantization mode is {quant_mode}, scale_method is {scale_method} (quant only). Unexpected behavior. "
-                                  "This scale method doesn't require measurements.")
+                raise ValueError(
+                    f"Quantization mode is {quant_mode}, scale_method is {scale_method} (quant only). Unexpected behavior. "
+                    "This scale method doesn't require measurements."
+                )
         else:
             measured_global_config["use_stats_files"] = True
             base_name = measured_global_config["dump_stats_path"].split("/")[-1]
@@ -195,7 +209,9 @@ class Fp8cfg:
                 if measured_global_config["local_rank"] is None
                 else "_" + str(measured_global_config["local_rank"]) + "_" + str(measured_global_config["world_size"])
             )
-            measured_global_config["shape_file"] = measured_global_config["dump_stats_path"] + "_hooks_shape" + worker_st
+            measured_global_config["shape_file"] = (
+                measured_global_config["dump_stats_path"] + "_hooks_shape" + worker_st
+            )
             measured_global_config["scale_file"] = (
                 measured_global_config["dump_stats_path"]
                 + "_hooks_"
@@ -204,11 +220,12 @@ class Fp8cfg:
                 + scale_method.name
                 + worker_st
             )
-            if (quant_mode == QuantMode.MEASURE) or (
-                quant_mode == QuantMode.QUANTIZE
-            ):
+            if (quant_mode == QuantMode.MEASURE) or (quant_mode == QuantMode.QUANTIZE):
                 measured_global_config["measure_file"] = (
-                    measured_global_config["dump_stats_path"] + "_hooks_" + measured_global_config["observer"] + worker_st
+                    measured_global_config["dump_stats_path"]
+                    + "_hooks_"
+                    + measured_global_config["observer"]
+                    + worker_st
                 )
             # measured_global_config['dump_stats_path'] += '_hooks_.json'
 

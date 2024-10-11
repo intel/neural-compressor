@@ -1,11 +1,15 @@
 """Use this module as an example of how to write new unit tests for layers."""
+
 import os
+
 import pytest
 import torch
+
 import neural_compressor.torch.algorithms.fp8_quant as fp8_quant
-from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import QuantMode, ScaleMethod
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import Matmul
-from ...tester import _get_test_only_config, SCALE_METHODS_QUANT_ONLY, SCALE_METHODS_KEY_ERROR
+from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import QuantMode, ScaleMethod
+
+from ...tester import SCALE_METHODS_KEY_ERROR, SCALE_METHODS_QUANT_ONLY, _get_test_only_config
 
 
 class Model(torch.nn.Module):
@@ -22,10 +26,13 @@ def test_config_json():
             QuantMode.MEASURE: "measure",
             QuantMode.QUANTIZE: "quant",
         }[mode]
-        config_path = os.path.join(os.environ.get("NEURAL_COMPRESSOR_FORK_ROOT"),
-                                   f"neural_compressor/torch/algorithms/fp8_quant/custom_config/llama_{name}.json")
+        config_path = os.path.join(
+            os.environ.get("NEURAL_COMPRESSOR_FORK_ROOT"),
+            f"neural_compressor/torch/algorithms/fp8_quant/custom_config/llama_{name}.json",
+        )
         fp8_quant.prep_model(model, config_path=config_path)
         fp8_quant.finish_measurements(model)
+
 
 @pytest.mark.parametrize("lp_dtype", [torch.float8_e4m3fn], ids=["fp8_e4m3fn"])
 @pytest.mark.parametrize("scale_method", ScaleMethod)
@@ -39,13 +46,16 @@ def test_predefined_config(lp_dtype, scale_method, quant_mode):
         )
         model = Model()
         import neural_compressor.torch.algorithms.fp8_quant.prepare_quant.prepare_model as prepare_model
+
         prepare_model._prep_model_with_predefined_config(model, config=config)
         fp8_quant.finish_measurements(model)
+
     def run_with_raises(error, error_str):
         with pytest.raises(Exception) as exc:
             run_predefined_config()
         assert error_str in str(exc.value)
         assert exc.type == error
+
     # TODO [SW-196641]: fix the following issue:
     if scale_method in SCALE_METHODS_KEY_ERROR and quant_mode == QuantMode.QUANTIZE:
         run_with_raises(KeyError, "(<ScaleMethod.")
@@ -61,5 +71,3 @@ def test_predefined_config(lp_dtype, scale_method, quant_mode):
             run_with_raises(UnboundLocalError, "local variable 'fname_base' referenced before assignment")
     else:
         run_predefined_config()
-
-

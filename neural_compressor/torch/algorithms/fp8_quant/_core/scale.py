@@ -15,7 +15,7 @@
 import numpy as np
 import torch
 
-from .._quant_common.quant_config import ScaleMethod, set_hqt_config, get_hqt_config
+from .._quant_common.quant_config import ScaleMethod, get_hqt_config, set_hqt_config
 from ..utils.logger import logger
 from .common import *
 from .fp_utils import *
@@ -28,8 +28,7 @@ def matmul_scales_to_mod_config(mod, scales, params):
     format = get_hqt_config(mod).cfg["scale_format"]
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    input_config = [QuantInput(s_inv, lp_dtype, hp_dtype, scale_format=format)
-                    for s_inv in scales_inv.inputs]
+    input_config = [QuantInput(s_inv, lp_dtype, hp_dtype, scale_format=format) for s_inv in scales_inv.inputs]
     # outputs as bf16, and descaled in gemm under PatchedMatmul, so no need to work here
     output_config = [QuantDequantNone(lp_dtype, hp_dtype, scale_format=format)]
     config = ModuleConfig(input_config, output_config, {})

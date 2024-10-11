@@ -1048,7 +1048,7 @@ class GPTQ:
 
         damp = percdamp * torch.mean(torch.diag(H))
         if "hpu" in self.device:
-            diag = torch.arange(self.columns, device='cpu')
+            diag = torch.arange(self.columns, device="cpu")
         else:
             diag = torch.arange(self.columns, device=self.device)
         H[diag, diag] += damp  # add a average value of

@@ -1738,7 +1738,9 @@ def get_default_hqq_config() -> HQQConfig:
 ######################## FP8 Quant Config ###############################
 
 from ..algorithms.fp8_quant._core.common import mod_default_dict
+
 FP8_WHITE_LIST = mod_default_dict.keys()
+
 
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=FP8_QUANT)
 class FP8Config(TorchBaseConfig):

@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch.nn as nn
-import torch
 from abc import abstractmethod
+
 import habana_frameworks.torch.core as htcore
+import torch
+import torch.nn as nn
 
 from .._core.scale_handler import create_scale_tensor
 from .._quant_common.quant_config import ScaleFormat

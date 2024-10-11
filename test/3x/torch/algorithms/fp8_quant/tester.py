@@ -8,17 +8,32 @@ import typing
 from dataclasses import dataclass
 
 import torch
+
 from neural_compressor.torch.algorithms.fp8_quant._core.common import mod_default_dict
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import Fp8cfg, QuantMode, ScaleMethod
 
 # TODO [SW-196641]: fix the following issues:
-SCALE_METHODS_SEGFAULT = [ScaleMethod.ACT_MAXABS_HW_WEIGHTS_PCS_OPT_POW2, ScaleMethod.ACT_MAXABS_POW2_WEIGHTS_PCS_OPT_POW2, ScaleMethod.MAXABS_HW_OPT_WEIGHT, ScaleMethod.MAXABS_POW2_OPT_WEIGHT]
-SCALE_METHODS_KEY_ERROR = [ScaleMethod.MAX, ScaleMethod.SMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2, ScaleMethod.WEAKSMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2, ScaleMethod.SMOOTHQUANT_OPT]
-SCALE_METHODS_COMPILATION_ERROR = [ScaleMethod.ACT_MAXABS_HW_WEIGHTS_PCS_MAXABS_POW2, ScaleMethod.ACT_MAXABS_POW2_WEIGHTS_PCS_MAXABS_POW2]
+SCALE_METHODS_SEGFAULT = [
+    ScaleMethod.ACT_MAXABS_HW_WEIGHTS_PCS_OPT_POW2,
+    ScaleMethod.ACT_MAXABS_POW2_WEIGHTS_PCS_OPT_POW2,
+    ScaleMethod.MAXABS_HW_OPT_WEIGHT,
+    ScaleMethod.MAXABS_POW2_OPT_WEIGHT,
+]
+SCALE_METHODS_KEY_ERROR = [
+    ScaleMethod.MAX,
+    ScaleMethod.SMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2,
+    ScaleMethod.WEAKSMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2,
+    ScaleMethod.SMOOTHQUANT_OPT,
+]
+SCALE_METHODS_COMPILATION_ERROR = [
+    ScaleMethod.ACT_MAXABS_HW_WEIGHTS_PCS_MAXABS_POW2,
+    ScaleMethod.ACT_MAXABS_POW2_WEIGHTS_PCS_MAXABS_POW2,
+]
 SCALE_METHODS_QUANT_ONLY = [ScaleMethod.UNIT_SCALE, ScaleMethod.HW_ALIGNED_SINGLE_SCALE]
 
 QUANT_MODES_DEFAULT = [QuantMode.MEASURE, QuantMode.QUANTIZE]
 QUANT_MODES_QUANT_ONLY = [QuantMode.QUANTIZE]
+
 
 @dataclass
 class TestVector:

@@ -43,8 +43,7 @@ def patch_module(mod, qconfig, mod_dict, patched_mod=None):
 
 
 def apply_hf_hook(module):
-    """Applies hf_hook on a given module so its weights will be loaded from disk to cpu and then we can quantize it.
-    """
+    """Applies hf_hook on a given module so its weights will be loaded from disk to cpu and then we can quantize it."""
     if hasattr(module, "_hf_hook"):
         module._hf_hook.pre_forward(module)
         module._hf_hook.detach_hook(module)
