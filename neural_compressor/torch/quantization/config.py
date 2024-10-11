@@ -412,7 +412,6 @@ class GPTQConfig(TorchBaseConfig):
             white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
                                                                  Default is DEFAULT_WHITE_LIST.
         """
-        assert not quant_lm_head, "GPTQ doesn't support lm_head quantization currently, it's coming soon!"
         super().__init__(white_list=white_list)
         self.dtype = dtype
         self.bits = bits
@@ -1769,14 +1768,15 @@ class FP8Config(TorchBaseConfig):
             dump_stats_path (str, optional): The file folder and file prefix to save measurement info. Defaults to "./hqt_output/measure".
             fp8_config (str, optional): The data type of fp8. Defaults to "E4M3".
             hp_dtype (str, optional): The high precision data type used in fp8 quantization. Defaults to "bf16".
-            blocklist (dict, optional): whether to skip fp8 quantization for specific op names or types, name could be substring. Defaults to {"names": [], "types": ()}.
-            allowlist (dict, optional): whether to execute fp8 quantization for specific op names or types. Defaults to {"names": [], "types": FP8_WHITE_LIST}.
+            blocklist (dict, optional): Whether to skip fp8 quantization for specific op names or types, name could be substring. Defaults to {"names": [], "types": ()}.
+            allowlist (dict, optional): Whether to execute fp8 quantization for specific op names or types. Defaults to {"names": [], "types": FP8_WHITE_LIST}.
             mode (str, optional): Choose the quantization mode. Defaults to "AUTO".
             scale_method (str, optional): Select method used to generate scale from calibration info. Defaults to "maxabs_hw".
             scale_params (dict, optional): _description_. Defaults to {}.
             observer (str, optional): Params of scales. Defaults to "maxabs".
             mod_dict (dict, optional): The dict of modules to quantize. Defaults to {}.
             measure_exclude (str, optional): Select INPUT/OUTPUT to be exculded by measurement. Defaults to "OUTPUT".
+            fake_quant (bool, optional): Whether to use fake quantization. Defaults to False.
         """
         super().__init__()
         self.dump_stats_path = dump_stats_path
