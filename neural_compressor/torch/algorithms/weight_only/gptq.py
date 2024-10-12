@@ -1047,6 +1047,7 @@ class GPTQ:
         Q = torch.zeros_like(W)
 
         damp = percdamp * torch.mean(torch.diag(H))
+        # TODO: [SW-201115] when index device is not the same as tensor, the H[diag, diag] += damp doesn't effect.
         if "hpu" in self.device:
             diag = torch.arange(self.columns, device="cpu")
         else:
