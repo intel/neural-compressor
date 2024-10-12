@@ -403,45 +403,46 @@ class BaseGaudiGPTQForCausalLM(BaseGPTQForCausalLM):
     ):
         super().__init__()
 
-        def _convert_tensor_to_list(tensor):
-            if isinstance(tensor, torch.Tensor):
-                if len(tensor.shape) == 1:
-                    tensor = tensor.unsqueeze(0)
-                tensor = tensor.long()
-                return tensor.cpu().numpy().tolist()
-            return [tensor]
+        # TODO: Due to logical errors, the code below is temporarily commented out.
+        # def _convert_tensor_to_list(tensor):
+        #     if isinstance(tensor, torch.Tensor):
+        #         if len(tensor.shape) == 1:
+        #             tensor = tensor.unsqueeze(0)
+        #         tensor = tensor.long()
+        #         return tensor.cpu().numpy().tolist()
+        #     return [tensor]
 
-        new_examples = []
-        for example in examples:
-            input_ids = _convert_tensor_to_list(example["input_ids"])
-            attention_mask = _convert_tensor_to_list(example["attention_mask"])
-            if "labels" in example:
-                labels = _convert_tensor_to_list(example["labels"])
-            elif "label" in example:
-                labels = _convert_tensor_to_list(example["label"])
-            elif "label_ids" in example:
-                labels = _convert_tensor_to_list(example["label_ids"])
-            else:
-                labels = copy.deepcopy(input_ids)
-            new_examples.append(
-                {
-                    "input_ids": input_ids,
-                    "attention_mask": attention_mask,
-                    "labels": labels,
-                }
-            )
-        pad_token_id = self.config.pad_token_id
-        if not pad_token_id:
-            pad_token_id = self.config.eos_token_id
+        # new_examples = []
+        # for example in examples:
+        #     input_ids = _convert_tensor_to_list(example["input_ids"])
+        #     attention_mask = _convert_tensor_to_list(example["attention_mask"])
+        #     if "labels" in example:
+        #         labels = _convert_tensor_to_list(example["labels"])
+        #     elif "label" in example:
+        #         labels = _convert_tensor_to_list(example["label"])
+        #     elif "label_ids" in example:
+        #         labels = _convert_tensor_to_list(example["label_ids"])
+        #     else:
+        #         labels = copy.deepcopy(input_ids)
+        #     new_examples.append(
+        #         {
+        #             "input_ids": input_ids,
+        #             "attention_mask": attention_mask,
+        #             "labels": labels,
+        #         }
+        #     )
+        # pad_token_id = self.config.pad_token_id
+        # if not pad_token_id:
+        #     pad_token_id = self.config.eos_token_id
 
-        new_examples = [
-            collate_data(new_examples[start : start + batch_size], pad_token_id)
-            for start in range(0, len(new_examples), batch_size)
-        ]
-        for new_example in new_examples:
-            del new_example["labels"]
+        # new_examples = [
+        #     collate_data(new_examples[start : start + batch_size], pad_token_id)
+        #     for start in range(0, len(new_examples), batch_size)
+        # ]
+        # for new_example in new_examples:
+        #     del new_example["labels"]
 
-        return new_examples
+        # return new_examples
 
     @torch.inference_mode()
     def quantize(
