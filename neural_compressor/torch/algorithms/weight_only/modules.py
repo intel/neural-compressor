@@ -513,6 +513,9 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
         """Unpack the packed tensor with numpy."""
         packed_array = packed_tensor.cpu().numpy()
         target_dtype = np.int16
+        if self.bits == 8 and self.compression_dtype == torch.int8 and hasattr(self, "qzeros"):
+            # special case for unpacking uint8 date from int8 compression_dtype
+            target_dtype = np.uint8
         target_len = packed_array.shape[1] * self.n_pack
         unpacked_array = np.zeros((packed_array.shape[0], target_len), dtype=target_dtype)
         mask = np.uint8(2**self.bits - 1)
