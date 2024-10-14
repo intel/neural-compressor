@@ -346,7 +346,7 @@ if args.int8 or args.int8_bf16_mixed:
         from transformers import AutoTokenizer, AutoConfig
         tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=args.trust_remote_code)
         config = AutoConfig.from_pretrained(args.model, trust_remote_code=args.trust_remote_code)
-        user_model.config = config
+        setattr(user_model, "config", config)
     else:
         user_model, tokenizer = get_user_model()
         kwargs = {'weight_only': True} if args.approach == 'weight_only' else {}
