@@ -19,6 +19,7 @@ import torch
 import torch.nn as nn
 
 from ...utils import logger
+from .util import append_attr
 
 
 class BF16ModuleWrapper(nn.Module):
@@ -62,9 +63,10 @@ def Convert(model, tune_cfg):
 def _bf16_wrapper_model(model, bf16_ops_list, prefix=""):
     for name, child in model.named_children():
         op_name = prefix + "." + name if prefix != "" else name
+        _bf16_wrapper_model(child, bf16_ops_list, op_name)
         for bf16_op_name in bf16_ops_list:
             if op_name == bf16_op_name[0] or op_name == bf16_op_name[0].split(".module")[0]:
-                child = BF16ModuleWrapper(child)
-                setattr(model, name, child)
-        _bf16_wrapper_model(child, bf16_ops_list, op_name)
+                child_bf16 = BF16ModuleWrapper(child)
+                append_attr(child_bf16, child)
+                setattr(model, name, child_bf16)
     return model
