@@ -1,7 +1,0 @@
-{
-    "mode": "MEASURE",
-    "observer": "maxabs",
-    "allowlist": {"types": [], "names":  []},
-    "blocklist": {"types": [], "names":  []},
-    "dump_stats_path": "./hqt_output/measure"
-}

@@ -1,8 +1,0 @@
-{
-    "mode": "AUTO",
-    "observer": "maxabs",
-    "scale_method": "maxabs_hw",
-    "allowlist": {"types": [], "names":  []},
-    "blocklist": {"types": [], "names":  []},
-    "dump_stats_path": "./hqt_output/measure"
-}
