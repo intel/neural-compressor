@@ -8,6 +8,7 @@ from transformers.generation import GenerationConfig
 import intel_extension_for_pytorch as ipex
 from neural_compressor.transformers import AutoModelForCausalLM, AutoRoundConfig, RtnConfig, GPTQConfig
 from neural_compressor.transformers.quantization.utils import convert_dtype_str2torch
+from neural_compressor.transformers.generation import _greedy_search, _beam_search
 from transformers.utils import check_min_version
 import contextlib
 
