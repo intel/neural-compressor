@@ -208,6 +208,8 @@ python run_generation_gpu_woq.py --woq --benchmark --model save_dir
 >Note:
 > * Saving quantized model should be executed before the optimize_transformers function is called.
 > * The optimize_transformers function is designed to optimize transformer-based models within frontend Python modules, with a particular focus on Large Language Models (LLMs). It provides optimizations for both model-wise and content-generation-wise. The detail of `optimize_transformers`, please refer to [the link](https://github.com/intel/intel-extension-for-pytorch/blob/xpu-main/docs/tutorials/llm/llm_optimize_transformers.md).
+>* The quantization process is performed on the CPU accelerator by default. Users can override this setting by specifying the environment variable `INC_TARGET_DEVICE`. Usage on bash: ```export INC_TARGET_DEVICE=xpu```.
+>* For Linux systems, users need to configure the environment variables appropriately to achieve optimal performance. For example, set the OMP_NUM_THREADS explicitly. For processors with hybrid architecture (including both P-cores and E-cores), it is recommended to bind tasks to all P-cores using taskset.
 
 ## Examples
 

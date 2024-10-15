@@ -35,9 +35,8 @@ python run_clm_no_trainer.py \
     --woq_group_size 128 \
     --gptq_max_seq_length 2048 \
     --gptq_use_max_length \
-    --accuracy \
-    --tasks "lambada_openai" \
-    --double_quant_type "BNB_NF4"
+    --double_quant_type "BNB_NF4" \
+    --output_dir saved_results
 
 # "--woq_algo RTN" is used to enable RTN algorithms
 python run_clm_no_trainer.py \
@@ -48,9 +47,38 @@ python run_clm_no_trainer.py \
     --woq_bits 4 \
     --woq_scheme asym \
     --woq_group_size 128 \
+    --double_quant_type "BNB_NF4"
+    --output_dir saved_results
+
+# "--woq_algo AWQ" is used to enable AWQ algorithms
+python run_clm_no_trainer.py \
+    --model EleutherAI/gpt-j-6B \
+    --dataset NeelNanda/pile-10k \
+    --quantize \
+    --woq_algo AWQ \
+    --woq_bits 4 \
+    --woq_scheme asym \
+    --woq_group_size 128 \
+    --calib_iters 128
+
+# "--woq_algo AutoRound" is used to enable AutoRound algorithms
+python run_clm_no_trainer.py \
+    --model EleutherAI/gpt-j-6B \
+    --dataset NeelNanda/pile-10k \
+    --quantize \
+    --woq_algo AutoRound \
+    --woq_bits 4 \
+    --woq_scheme asym \
+    --woq_group_size 128
+
+# "--accuracy" for eval
+python run_clm_no_trainer.py \
+    --model EleutherAI/gpt-j-6B \
+    --dataset NeelNanda/pile-10k \
+    --int8 \
     --accuracy \
     --tasks "lambada_openai" \
-    --double_quant_type "BNB_NF4"
+    --output_dir saved_results
 ```
 **Notes**: Weight-only quantization based on fake quantization is previewly supported and supports RTN, GPTQ[1], AWQ[2], TEQ algorithms. For more details, please refer to [link](https://github.com/intel/neural-compressor/blob/master/docs/source/quantization_weight_only.md). Our GPTQ API support various CLMs including GPTJ, OPTs, Blooms, Llamas, Falcons, MPTs, ChatGLMs, etc. Simply replace the "--model" argument with other models to quantize different CLMs with GPTQ.
 
@@ -72,8 +100,6 @@ python run_clm_no_trainer.py \
     --woq_group_size 128 \
     --gptq_max_seq_length 2048 \
     --gptq_use_max_length \
-    --accuracy \
-    --tasks "lambada_openai" \
     --double_quant_type "BNB_NF4"
 
 # "--woq_algo RTN" is used to enable RTN algorithms
@@ -85,13 +111,40 @@ python run_clm_no_trainer.py \
     --woq_bits 4 \
     --woq_scheme asym \
     --woq_group_size 128 \
+    --double_quant_type "BNB_NF4"
+
+# "--woq_algo AWQ" is used to enable AWQ algorithms
+python run_clm_no_trainer.py \
+    --model facebook/opt-125m \
+    --dataset NeelNanda/pile-10k \
+    --quantize \
+    --woq_algo AWQ \
+    --woq_bits 4 \
+    --woq_scheme asym \
+    --woq_group_size 128 \
+    --calib_iters 128
+
+# "--woq_algo AutoRound" is used to enable AutoRound algorithms
+python run_clm_no_trainer.py \
+    --model facebook/opt-125m \
+    --dataset NeelNanda/pile-10k \
+    --quantize \
+    --woq_algo AutoRound \
+    --woq_bits 4 \
+    --woq_scheme asym \
+    --woq_group_size 128
+
+# "--accuracy" for eval
+python run_clm_no_trainer.py \
+    --model facebook/opt-125m  \
+    --dataset NeelNanda/pile-10k \
+    --int8 \
     --accuracy \
     --tasks "lambada_openai" \
-    --double_quant_type "BNB_NF4"
+    --output_dir saved_results
 ```
 
 ### LLAMA2-7b/13b/70b
->Note: LLAMA requires IPEX requirements >= 2.1 to get better accuracy.
 #### Quantization
 
 ```bash
@@ -107,8 +160,6 @@ python run_clm_no_trainer.py \
     --woq_group_size 128 \
     --gptq_max_seq_length 2048 \
     --gptq_use_max_length \
-    --accuracy \
-    --tasks "lambada_openai" \
     --double_quant_type "BNB_NF4"
 
 # "--woq_algo RTN" is used to enable RTN algorithms
@@ -120,8 +171,6 @@ python run_clm_no_trainer.py \
     --woq_bits 4 \
     --woq_scheme asym \
     --woq_group_size 128 \
-    --accuracy \
-    --tasks "lambada_openai" \
     --double_quant_type "BNB_NF4"
 ```
 

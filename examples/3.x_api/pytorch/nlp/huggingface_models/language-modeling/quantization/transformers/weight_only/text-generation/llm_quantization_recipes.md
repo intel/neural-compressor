@@ -30,12 +30,6 @@ The scripts [run_generation_sq.py](./run_generation_sq.py) and [run_generation_c
 
 ```bash
 # Installation
-git clone https://github.com/intel/intel-extension-for-transformers.git
-
-# install ITREX
-cd intel-extension-for-transformers
-pip install -r requirements.txt
-pip install -v .
 
 # install requirements
 cd examples/huggingface/pytorch/text-generation/quantization

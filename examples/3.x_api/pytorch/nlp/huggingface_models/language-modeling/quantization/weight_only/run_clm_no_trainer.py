@@ -53,7 +53,7 @@ parser.add_argument("--tasks", default="lambada_openai,hellaswag,winogrande,piqa
                     type=str, help="tasks for accuracy validation")
 parser.add_argument("--peft_model_id", type=str, default=None, help="model_name_or_path of peft model")
 # ============WeightOnly configs===============
-parser.add_argument("--woq_algo", default="RTN", choices=['RTN', 'AWQ', 'TEQ', 'GPTQ'],
+parser.add_argument("--woq_algo", default="RTN", choices=['RTN', 'AWQ', 'TEQ', 'GPTQ', 'AutoRound', 'AutoTune'],
                     help="Weight-only parameter.")
 parser.add_argument("--woq_bits", type=int, default=8)
 parser.add_argument("--woq_dtype", type=str, default="int")
@@ -62,6 +62,7 @@ parser.add_argument("--woq_group_dim", type=int, default=1)
 parser.add_argument("--woq_scheme", default="sym")
 parser.add_argument("--woq_use_mse_search", action="store_true")
 parser.add_argument("--woq_use_full_range", action="store_true")
+parser.add_argument("--quant_lm_head", action="store_true",  help="whether to quant the lm_head layer in transformers")
 # =============GPTQ configs====================
 parser.add_argument("--gptq_actorder", action="store_true",
                     help="Whether to apply the activation order GPTQ heuristic.")
@@ -78,6 +79,35 @@ parser.add_argument('--gptq_max_seq_length', type=int, default=2048,
                     help='Calibration dataset sequence max length, '
                         'this should align with your model config, '
                         'and your dataset builder args: args.pad_max_length')
+# =============AWQ configs====================
+parser.add_argument("--use_auto_scale", action="store_true",
+                    help="Enables best scales search based on activation distribution.")
+parser.add_argument("--use_auto_clip", action="store_true",
+                    help="Enables clip range searchc.")
+parser.add_argument("--folding", action="store_true",
+                    help="Allow insert mul before linear when the scale cannot be absorbed by last layer for TEQ/AWQ.")
+parser.add_argument('--absorb_layer_dict', type=dict, default={},
+                    help="The layer dict that scale can be absorbed for TEQ/AWQ.")
+# ============AUTOROUND configs==============
+parser.add_argument(
+    "--lr",
+    type=float,
+    default=None,
+    help="learning rate, if None, it will be set to 1.0/iters automatically",
+)
+parser.add_argument(
+    "--minmax_lr",
+    type=float,
+    default=None,
+    help="minmax learning rate, if None,it will beset to be the same with lr",
+)
+parser.add_argument("--autoround_iters", default=200, type=int, help="num iters for autoround calibration.")
+parser.add_argument("--autoround_nsamples", default=128, type=int, help="num samples for autoround calibration.")
+parser.add_argument(
+    "--disable_quanted_input",
+    action="store_true",
+    help="whether to use the output of quantized block to tune the next block",
+)
 
 # =============DoubleQuant configs====================
 parser.add_argument("--double_quant_type",
@@ -196,6 +226,8 @@ def get_user_model():
     )
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     user_model = user_model.float()
+    if args.woq_algo == 'AutoRound':
+        user_model.to(torch.float32)
 
     # Set model's seq_len when GPTQ calibration is enabled.
     if args.woq_algo == 'GPTQ':
@@ -210,6 +242,31 @@ def get_user_model():
     user_model.eval()
     return user_model, tokenizer
 
+def eval_fn(user_model=None):
+    user_model.eval()
+    from neural_compressor.evaluation.lm_eval import evaluate, LMEvalParser
+    import time
+
+    samples = args.iters * args.batch_size
+    eval_args = LMEvalParser(
+        model="hf",
+        user_model=user_model,
+        tokenizer=tokenizer,
+        batch_size=args.batch_size,
+        tasks=args.tasks,
+        limit=samples,
+        device="hpu" if is_hpex_available() else "cpu",
+    )
+    start = time.time()
+    results = evaluate(eval_args)
+    end = time.time()
+    for task_name in args.tasks.split(","):
+        if task_name == "wikitext":
+            acc = results["results"][task_name]["word_perplexity,none"]
+        else:
+            acc = results["results"][task_name]["acc,none"]
+    print("Accuracy: %.5f" % acc)
+    return acc
 
 if args.quantize:
     # dataset
@@ -224,9 +281,25 @@ if args.quantize:
         shuffle=False,
         collate_fn=calib_evaluator.collate_batch,
     )
+    def calib_func(prepared_model):
+        for i, calib_input in enumerate(calib_dataloader):
+            if i > args.calib_iters:
+                break
+            prepared_model(calib_input[0])
 
     # 3.x api
-    from neural_compressor.torch.quantization import RTNConfig, GPTQConfig, prepare, convert, quantize
+    from neural_compressor.torch.quantization import (
+        RTNConfig,
+        GPTQConfig,
+        AWQConfig,
+        AutoRoundConfig,
+        TEQConfig,
+        TuningConfig,
+        autotune,
+        get_woq_tuning_config,
+        prepare,
+        convert
+    )
     from neural_compressor.torch.utils import get_double_quant_config_dict
     weight_sym = True if args.woq_scheme == "sym" else False
     if args.double_quant_type is not None:
@@ -239,6 +312,7 @@ if args.quantize:
                     # TODO: add group_dim into double quant config?
                     "use_full_range": args.woq_use_full_range,
                     "use_mse_search": args.woq_use_mse_search,
+                    "quant_lm_head": args.quant_lm_head,
                 }
             )
             quant_config = RTNConfig.from_dict(double_quant_config_dict)
@@ -256,8 +330,8 @@ if args.quantize:
                 double_quant_dtype=args.double_quant_dtype,
                 double_quant_use_sym=args.double_quant_use_sym,
                 double_quant_group_size=args.double_quant_group_size,
+                quant_lm_head=args.quant_lm_head,
             )
-        quant_config.set_local("lm_head", RTNConfig(dtype="fp32"))
         user_model = prepare(model=user_model, quant_config=quant_config)
         user_model = convert(model=user_model)
     elif args.woq_algo == "GPTQ":
@@ -288,6 +362,7 @@ if args.quantize:
                     "act_order": args.gptq_actorder,
                     "block_size": args.gptq_block_size,
                     "static_groups": args.gptq_static_groups,
+                    "quant_lm_head": args.quant_lm_head,
                 }
             )
             quant_config = GPTQConfig.from_dict(double_quant_config_dict)
@@ -307,11 +382,109 @@ if args.quantize:
                 double_quant_dtype=args.double_quant_dtype,
                 double_quant_use_sym=args.double_quant_use_sym,
                 double_quant_group_size=args.double_quant_group_size,
+                quant_lm_head=args.quant_lm_head,
             )
-        quant_config.set_local("lm_head", GPTQConfig(dtype="fp32"))
         user_model = prepare(model=user_model, quant_config=quant_config)
         run_fn_for_gptq(user_model, dataloader_for_calibration)
         user_model = convert(user_model)
+    elif args.woq_algo == "AWQ":
+        quant_config = AWQConfig(
+            dtype=args.woq_dtype,
+            bits=args.woq_bits,
+            use_sym=weight_sym,
+            group_size=args.woq_group_size,
+            group_dim=args.woq_group_dim,
+            use_auto_scale=args.use_auto_scale,
+            use_auto_clip=args.use_auto_clip,
+            folding=args.folding,
+            absorb_layer_dict=args.absorb_layer_dict,
+            quant_lm_head=args.quant_lm_head,
+        )
+        example_inputs = torch.ones([1, args.pad_max_length], dtype=torch.long)
+        run_fn = calib_func
+        user_model = prepare(model=user_model, quant_config=quant_config, example_inputs=example_inputs)
+        run_fn(user_model)
+        user_model = convert(user_model)
+    elif args.woq_algo == "TEQ":
+        quant_config = TEQConfig(
+            dtype=args.woq_dtype,
+            bits=args.woq_bits,
+            use_sym=weight_sym,
+            group_size=args.woq_group_size,
+            group_dim=args.woq_group_dim,
+            folding=args.folding,
+            quant_lm_head=args.quant_lm_head,
+        )
+        example_inputs = torch.ones([1, args.pad_max_length], dtype=torch.long)
+        run_fn = calib_func
+        user_model = prepare(model=user_model, quant_config=quant_config, example_inputs=example_inputs)
+        run_fn(user_model)
+        user_model = convert(user_model)
+    elif args.woq_algo == "AutoRound":
+        quant_config = AutoRoundConfig(
+                dtype=args.woq_dtype,
+                bits=args.woq_bits,
+                use_sym=weight_sym,
+                group_size=args.woq_group_size,
+                enable_quanted_input=not args.disable_quanted_input,
+                lr=args.lr,
+                minmax_lr=args.minmax_lr,
+                seqlen=args.pad_max_length,
+                nsamples=args.autoround_nsamples,
+                iters=args.autoround_iters,
+            )
+        quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
+        from neural_compressor.torch.algorithms.weight_only.autoround import get_dataloader
+        dataloader = get_dataloader(tokenizer=tokenizer,
+                                                seqlen=args.pad_max_length,
+                                                dataset_name=datasets,
+                                                seed=args.seed,
+                                                bs=args.batch_size,
+                                                nsamples=args.autoround_nsamples)
+        @torch.no_grad()
+        def run_fn_for_autoround(model, dataloader):
+            for data in dataloader:
+                if isinstance(data, tuple) or isinstance(data, list):
+                    model(*data)
+                elif isinstance(data, dict):
+                    model(**data)
+                else:
+                    model(data)
+        run_fn = run_fn_for_autoround
+        run_args = (dataloader,)
+        user_model = prepare(model=user_model, quant_config=quant_config)
+        run_fn(user_model, *run_args)
+        user_model = convert(user_model)
+    elif args.woq_algo == "AutoTune":
+        from utils import DataloaderPreprocessor
+        dataloaderPreprocessor = DataloaderPreprocessor(
+            dataloader_original=calib_dataloader,
+            use_max_length=args.gptq_use_max_length,
+            max_seq_length=args.gptq_max_seq_length,
+        )
+        dataloader = dataloaderPreprocessor.get_prepared_dataloader()
+        custom_tune_config = TuningConfig(config_set=get_woq_tuning_config())
+        from neural_compressor.torch.algorithms.weight_only.utility import move_input_to_device
+        from tqdm import tqdm
+        def run_fn_for_gptq(model, dataloader_for_calibration, *args):
+            for batch in tqdm(dataloader_for_calibration):
+                batch = move_input_to_device(batch, device=None)
+                if isinstance(batch, tuple) or isinstance(batch, list):
+                    model(batch[0])
+                elif isinstance(batch, dict):
+                    model(**batch)
+                else:
+                    model(batch)
+            return
+        example_inputs = torch.ones([1, args.pad_max_length], dtype=torch.long)
+        user_model = autotune(
+            model=user_model,
+            tune_config=custom_tune_config,
+            eval_fn=eval_fn,
+            run_fn=run_fn_for_gptq,
+            run_args=(dataloader, True),  # run_args should be a tuple,
+            example_inputs=example_inputs,
+        )
 
     user_model.save(args.output_dir)
 

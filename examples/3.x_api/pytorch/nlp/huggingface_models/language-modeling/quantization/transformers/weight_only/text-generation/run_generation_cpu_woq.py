@@ -293,7 +293,6 @@ if quantization_config is not None:
         _commit_hash=args._commit_hash,
     )
 elif args.load_in_4bit or args.load_in_8bit:
-    # CPU device usage is provided by intel-extension-for-transformers.
     user_model = AutoModelForCausalLM.from_pretrained(
         args.model,
         load_in_4bit=args.load_in_4bit,
