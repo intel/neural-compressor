@@ -230,6 +230,7 @@ class WOQModelLoader:
         ):  # # pragma: no cover
             # load autoround format quantized model
             from auto_round import AutoRoundConfig
+
             hf_kargs = {}
             pretrain_args = ["trust_remote_code", "_attn_implementation", "device_map", "torch_dtype"]
             for item in pretrain_args:
@@ -463,7 +464,7 @@ class WOQModelLoader:
             if model_cls:
                 model_class = model_cls
             else:
-                logger.info(f"Could't find model class.")
+                logger.info("Couldn't find model class.")
         return model_class, config
 
     def _get_loaded_state_dict(self, config):
@@ -921,4 +922,3 @@ class WOQModelLoader:
                 if os.path.exists(os.path.join(self._model_local_dir, HPU_WEIGHT_NAME)):
                     return True
         return False
-
