@@ -12,19 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import re
+import time
+import warnings
+from typing import List, Optional, Tuple, Union
+
 import torch
 import torch.distributed as dist
-import warnings
-from typing import Optional, Tuple, Union, List
-from transformers.generation.stopping_criteria import (
-    StoppingCriteriaList,
-    validate_stopping_criteria,
-)
 from transformers.generation.logits_process import LogitsProcessorList
+from transformers.generation.stopping_criteria import StoppingCriteriaList, validate_stopping_criteria
 from transformers.generation.streamers import BaseStreamer
 from transformers.utils import ModelOutput
-import time
-import re
 
 
 class GreedySearchDecoderOnlyOutput(ModelOutput):
@@ -46,9 +44,7 @@ class GreedySearchEncoderDecoderOutput(ModelOutput):
     past_key_values: Optional[Tuple[Tuple[Tuple[torch.FloatTensor]]]] = None
 
 
-GreedySearchOutput = Union[
-    GreedySearchEncoderDecoderOutput, GreedySearchDecoderOnlyOutput
-]
+GreedySearchOutput = Union[GreedySearchEncoderDecoderOutput, GreedySearchDecoderOnlyOutput]
 
 
 def _greedy_search(
@@ -145,9 +141,9 @@ def _greedy_search(
     ["It might be possible to get a better understanding of the nature of the problem, but it's not"]
     ```
     """
-    token_latency = (
-        self.config.token_latency if hasattr(self.config, "token_latency") else False
-    ) or (self.token_latency if hasattr(self, "token_latency") else False)
+    token_latency = (self.config.token_latency if hasattr(self.config, "token_latency") else False) or (
+        self.token_latency if hasattr(self, "token_latency") else False
+    )
 
     latency_list = []
     # init values
@@ -166,9 +162,7 @@ def _greedy_search(
         eos_token_id = [eos_token_id]
     eos_token_id_tensor = torch.tensor(eos_token_id).to(input_ids.device) if eos_token_id is not None else None
     output_scores = output_scores if output_scores is not None else self.generation_config.output_scores
-    output_attentions = (
-        output_attentions if output_attentions is not None else self.generation_config.output_attentions
-    )
+    output_attentions = output_attentions if output_attentions is not None else self.generation_config.output_attentions
     output_hidden_states = (
         output_hidden_states if output_hidden_states is not None else self.generation_config.output_hidden_states
     )
@@ -187,9 +181,7 @@ def _greedy_search(
     # if model is an encoder-decoder, retrieve encoder attention weights and hidden states
     if return_dict_in_generate and self.config.is_encoder_decoder:
         encoder_attentions = model_kwargs["encoder_outputs"].get("attentions") if output_attentions else None
-        encoder_hidden_states = (
-            model_kwargs["encoder_outputs"].get("hidden_states") if output_hidden_states else None
-        )
+        encoder_hidden_states = model_kwargs["encoder_outputs"].get("hidden_states") if output_hidden_states else None
     # keep track of which sequences are already finished
     unfinished_sequences = torch.ones(input_ids.shape[0], dtype=torch.long, device=input_ids.device)
     this_peer_finished = False  # used by synced_gpus only
@@ -280,9 +272,9 @@ def _greedy_search(
                             for i in range(self.config.num_hidden_layers)
                         ]
                     )
-                elif re.search(
-                    "falcon", self.config.architectures[0], re.IGNORECASE
-                ) or re.search("rw", self.config.architectures[0], re.IGNORECASE):
+                elif re.search("falcon", self.config.architectures[0], re.IGNORECASE) or re.search(
+                    "rw", self.config.architectures[0], re.IGNORECASE
+                ):
                     beam_idx_tmp = torch.zeros(
                         (2048, int(input_bs)), dtype=torch.long, device=input_ids.device
                     ).contiguous()
@@ -341,9 +333,7 @@ def _greedy_search(
 
             if output_hidden_states:
                 decoder_hidden_states += (
-                    (outputs.decoder_hidden_states,)
-                    if self.config.is_encoder_decoder
-                    else (outputs.hidden_states,)
+                    (outputs.decoder_hidden_states,) if self.config.is_encoder_decoder else (outputs.hidden_states,)
                 )
 
         # argmax

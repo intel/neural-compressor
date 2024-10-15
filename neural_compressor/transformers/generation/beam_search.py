@@ -12,20 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
-from torch import nn
-import torch.distributed as dist
-import warnings
-from typing import Optional, Tuple, Union, List
-from transformers.generation.stopping_criteria import (
-    StoppingCriteriaList,
-    validate_stopping_criteria,
-)
-from transformers.generation.logits_process import LogitsProcessorList
-from transformers.generation.beam_search import BeamScorer
-from transformers.utils import ModelOutput
-import time
 import re
+import time
+import warnings
+from typing import List, Optional, Tuple, Union
+
+import torch
+import torch.distributed as dist
+from torch import nn
+from transformers.generation.beam_search import BeamScorer
+from transformers.generation.logits_process import LogitsProcessorList
+from transformers.generation.stopping_criteria import StoppingCriteriaList, validate_stopping_criteria
+from transformers.utils import ModelOutput
 
 
 class BeamSearchEncoderDecoderOutput(ModelOutput):
@@ -52,7 +50,6 @@ class BeamSearchDecoderOnlyOutput(ModelOutput):
 
 
 BeamSearchOutput = Union[BeamSearchEncoderDecoderOutput, BeamSearchDecoderOnlyOutput]
-
 
 
 def _beam_search(
@@ -161,9 +158,9 @@ def _beam_search(
     ['Wie alt bist du?']
     ```"""
     # init values
-    token_latency = (
-        self.config.token_latency if hasattr(self.config, "token_latency") else False
-    ) or (self.token_latency if hasattr(self, "token_latency") else False)
+    token_latency = (self.config.token_latency if hasattr(self.config, "token_latency") else False) or (
+        self.token_latency if hasattr(self, "token_latency") else False
+    )
 
     latency_list = []
     logits_processor = logits_processor if logits_processor is not None else LogitsProcessorList()
@@ -182,9 +179,7 @@ def _beam_search(
     if isinstance(eos_token_id, int):
         eos_token_id = [eos_token_id]
     output_scores = output_scores if output_scores is not None else self.generation_config.output_scores
-    output_attentions = (
-        output_attentions if output_attentions is not None else self.generation_config.output_attentions
-    )
+    output_attentions = output_attentions if output_attentions is not None else self.generation_config.output_attentions
     output_hidden_states = (
         output_hidden_states if output_hidden_states is not None else self.generation_config.output_hidden_states
     )
@@ -206,18 +201,14 @@ def _beam_search(
 
     # init attention / hidden states / scores tuples
     scores = () if (return_dict_in_generate and output_scores) else None
-    beam_indices = (
-        tuple(() for _ in range(batch_beam_size)) if (return_dict_in_generate and output_scores) else None
-    )
+    beam_indices = tuple(() for _ in range(batch_beam_size)) if (return_dict_in_generate and output_scores) else None
     decoder_attentions = () if (return_dict_in_generate and output_attentions) else None
     cross_attentions = () if (return_dict_in_generate and output_attentions) else None
     decoder_hidden_states = () if (return_dict_in_generate and output_hidden_states) else None
     # if model is an encoder-decoder, retrieve encoder attention weights and hidden states
     if return_dict_in_generate and self.config.is_encoder_decoder:
         encoder_attentions = model_kwargs["encoder_outputs"].get("attentions") if output_attentions else None
-        encoder_hidden_states = (
-            model_kwargs["encoder_outputs"].get("hidden_states") if output_hidden_states else None
-        )
+        encoder_hidden_states = model_kwargs["encoder_outputs"].get("hidden_states") if output_hidden_states else None
     # initialise score of first beam with 0 and the rest with -1e9. This makes sure that only tokens
     # of the first beam are considered to avoid sampling the exact same tokens across all beams.
     beam_scores = torch.zeros((batch_size, num_beams), dtype=torch.float, device=input_ids.device)
@@ -313,9 +304,9 @@ def _beam_search(
                         ]
                     )
                     has_position_id = False
-                elif re.search(
-                    "falcon", self.config.architectures[0], re.IGNORECASE
-                ) or re.search("rw", self.config.architectures[0], re.IGNORECASE):
+                elif re.search("falcon", self.config.architectures[0], re.IGNORECASE) or re.search(
+                    "rw", self.config.architectures[0], re.IGNORECASE
+                ):
                     beam_idx_tmp = torch.zeros(
                         (2048, int(batch_size * num_beams)), dtype=torch.long, device=input_ids.device
                     ).contiguous()
@@ -334,23 +325,15 @@ def _beam_search(
 
             if hasattr(self, "trace_graph"):
                 if first_token:
-                    new_attention_mask = model_inputs["attention_mask"][
-                        :batch_size
-                    ].clone()
+                    new_attention_mask = model_inputs["attention_mask"][:batch_size].clone()
                     new_input_ids = model_inputs["input_ids"][:batch_size].clone()
                     if has_position_id:
-                        new_position_ids = model_inputs["position_ids"][
-                            :batch_size
-                        ].clone()
+                        new_position_ids = model_inputs["position_ids"][:batch_size].clone()
                     for i in range(batch_size):
-                        new_attention_mask[i] = model_inputs["attention_mask"][
-                            i * num_beams
-                        ]
+                        new_attention_mask[i] = model_inputs["attention_mask"][i * num_beams]
                         new_input_ids[i] = model_inputs["input_ids"][i * num_beams]
                         if has_position_id:
-                            new_position_ids[i] = model_inputs["position_ids"][
-                                i * num_beams
-                            ]
+                            new_position_ids[i] = model_inputs["position_ids"][i * num_beams]
                     model_inputs["attention_mask"] = new_attention_mask
                     model_inputs["input_ids"] = new_input_ids
                     if has_position_id:
@@ -392,13 +375,9 @@ def _beam_search(
                 cur_len = cur_len + 1
                 continue  # don't waste resources running the code we don't need
             next_token_logits = outputs.logits[:, -1, :]
-        next_token_scores = nn.functional.log_softmax(
-            next_token_logits, dim=-1
-        )  # (batch_size * num_beams, vocab_size)
+        next_token_scores = nn.functional.log_softmax(next_token_logits, dim=-1)  # (batch_size * num_beams, vocab_size)
         next_token_scores_processed = logits_processor(input_ids, next_token_scores)
-        next_token_scores = next_token_scores_processed + beam_scores[:, None].expand_as(
-            next_token_scores_processed
-        )
+        next_token_scores = next_token_scores_processed + beam_scores[:, None].expand_as(next_token_scores_processed)
         # Store scores, attentions and hidden_states when required
         if return_dict_in_generate:
             if output_scores:
@@ -412,9 +391,7 @@ def _beam_search(
 
             if output_hidden_states:
                 decoder_hidden_states += (
-                    (outputs.decoder_hidden_states,)
-                    if self.config.is_encoder_decoder
-                    else (outputs.hidden_states,)
+                    (outputs.decoder_hidden_states,) if self.config.is_encoder_decoder else (outputs.hidden_states,)
                 )
 
         # reshape for beam search
@@ -448,9 +425,7 @@ def _beam_search(
             outputs, model_kwargs, is_encoder_decoder=self.config.is_encoder_decoder
         )
         if model_kwargs["past_key_values"] is not None:
-            model_kwargs["past_key_values"] = self._temporary_reorder_cache(
-                model_kwargs["past_key_values"], beam_idx
-            )
+            model_kwargs["past_key_values"] = self._temporary_reorder_cache(model_kwargs["past_key_values"], beam_idx)
 
         if return_dict_in_generate and output_scores:
             # pylint: disable=unsubscriptable-object
