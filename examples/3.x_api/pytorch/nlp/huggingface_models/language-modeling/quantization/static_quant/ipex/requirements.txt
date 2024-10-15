@@ -10,3 +10,4 @@ einops
 neural-compressor
 lm_eval==0.4.3
 peft
+intel_extension_for_pytorch
