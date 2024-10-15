@@ -234,7 +234,9 @@ def main():
             new_model = opt_model
         else:
             new_model = model
+            # For fair comparison, we also compile the float model
             new_model.eval()
+            new_model = torch.compile(new_model)
         if args.performance:
             benchmark(val_loader, new_model, args)
             return
