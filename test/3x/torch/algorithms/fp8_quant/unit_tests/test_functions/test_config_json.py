@@ -26,10 +26,8 @@ def test_config_json():
             QuantMode.MEASURE: "measure",
             QuantMode.QUANTIZE: "quant",
         }[mode]
-        config_path = os.path.join(
-            os.environ.get("NEURAL_COMPRESSOR_FORK_ROOT"),
-            f"neural_compressor/torch/algorithms/fp8_quant/custom_config/llama_{name}.json",
-        )
+        config_path = f"llama_{name}.json"
+        # config comes from f"neural_compressor/torch/algorithms/fp8_quant/custom_config/llama_{name}.json"
         fp8_quant.prep_model(model, config_path=config_path)
         fp8_quant.finish_measurements(model)
 
