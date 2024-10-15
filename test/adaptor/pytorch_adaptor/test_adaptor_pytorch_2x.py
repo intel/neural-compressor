@@ -403,8 +403,11 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         q_model = quantization.fit(model_origin, conf, calib_dataloader=dataloader, calib_func=eval_func)
         self.assertEqual(q_model._model.conv.module.weight.dtype, torch.bfloat16)
         self.assertEqual(q_model._model.conv.module.bias.dtype, torch.bfloat16)
-        self.assertEqual(q_model._model.conv.stride[0], 1, 
-                         msg="GraphModule object should have the attributes of the original module.")
+        self.assertEqual(
+            q_model._model.conv.stride[0],
+            1,
+            msg="GraphModule object should have the attributes of the original module.",
+        )
 
     def test_hawq_metric(self):
         # Test for hawq metric
