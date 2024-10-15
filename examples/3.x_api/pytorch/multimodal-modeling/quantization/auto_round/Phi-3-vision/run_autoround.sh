@@ -1,14 +1,48 @@
 #!/bin/bash
 set -x
-device=0
-model_name=microsoft/Phi-3-vision-128k-instruct
-CUDA_VISIBLE_DEVICES=$device \
-python3 main.py \
---model_name=$model_name \
---nsamples 512 \
---quantize \
---image_folder /PATH/TO/coco/images/train2017 \
---question_file /PATH/TO/llava_v1_5_mix665k.json \
---output_dir "./tmp_autoround"
 
+function main {
 
+  init_params "$@"
+  run_tuning
+
+}
+
+# init params
+function init_params {
+  for var in "$@"
+  do
+    case $var in
+      --model_name=*)
+          model_name=$(echo $var |cut -f2 -d=)
+      ;;
+      --image_folder=*)
+          image_folder=$(echo $var |cut -f2 -d=)
+      ;;
+      --question_file=*)
+          question_file=$(echo $var |cut -f2 -d=)
+      ;;
+      --output_dir=*)
+          output_dir=$(echo $var |cut -f2 -d=)
+      ;;
+      *)
+          echo "Error: No such parameter: ${var}"
+          exit 1
+      ;;
+    esac
+  done
+
+}
+
+# run_tuning
+function run_tuning {
+    python main.py \
+            --model_name ${model_name} \
+            --nsamples 512 \
+            --quantize \
+            --image_folder ${image_folder} \
+            --question_file ${question_file} \
+            --output_dir ${output_dir}
+}
+
+main "$@"

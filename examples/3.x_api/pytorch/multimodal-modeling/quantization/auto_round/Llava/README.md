@@ -32,7 +32,7 @@ Please download the annotation of the final mixture our instruction tuning data 
 
 COCO: [train2017](http://images.cocodataset.org/zips/train2017.zip), and unzip the image folder to any directory you desire.
 
-Please refer to [llava_eval_datasets]https://github.com/haotian-liu/LLaVA/blob/main/docs/Evaluation.md#scripts to download the textVQA dataset for evaluation usage
+Please refer to [llava_eval_datasets](https://github.com/haotian-liu/LLaVA/blob/main/docs/Evaluation.md#scripts) to download the textVQA dataset for evaluation usage
 
 <br />
 

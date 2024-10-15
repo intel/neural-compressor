@@ -42,11 +42,11 @@ function run_tuning {
             --group_size 128 \
             --iters 200 \
             --seqlen 512 \
+            --disable_quanted_input \
             --quantize \
             --image_folder ${image_folder} \
             --question_file ${question_file} \
             --output_dir ${output_dir}
 }
-
 
 main "$@"

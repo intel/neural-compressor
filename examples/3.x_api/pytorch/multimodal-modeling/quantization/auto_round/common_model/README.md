@@ -78,46 +78,100 @@ pip install -r requirements.txt
 
 - **Default Settings:**
 ```bash
-CUDA_VISIBLE_DEVICES=0 python3 main.py --model_name Qwen/Qwen-VL  --bits 4 --group_size 128  --quantize
+sh run_autoround.sh
 ```
 
 
 ## 3. run inference
 
 ```python
-  from transformers import AutoModelForCausalLM, AutoTokenizer
-  from transformers.generation import GenerationConfig
-  import torch
-  from transformers import set_seed
-  set_seed(1234)
-  from auto_round.auto_quantizer import AutoHfQuantizer
-  quantized_model_path = "./tmp_autoround"
-  tokenizer = AutoTokenizer.from_pretrained(quantized_model_path, trust_remote_code=True)
-  # use bf16
-  model = AutoModelForCausalLM.from_pretrained(quantized_model_path, device_map="auto", trust_remote_code=True, bf16=True).eval()
-  # use fp16
-  # model = AutoModelForCausalLM.from_pretrained(quantized_model_path, device_map="auto", trust_remote_code=True, fp16=True).eval()
-  # use cpu only
-  # model = AutoModelForCausalLM.from_pretrained(quantized_model_path, device_map="cpu", trust_remote_code=True).eval()
-  # use cuda device
-  # model = AutoModelForCausalLM.from_pretrained(quantized_model_path, device_map="cuda", trust_remote_code=True).eval()
-  query = tokenizer.from_list_format([{'image': 'https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-VL/assets/demo.jpeg'}, \
-      {'text': 'Generate the caption in English with grounding:'}, \
-  ])
-  inputs = tokenizer(query, return_tensors='pt')
-  inputs = inputs.to(model.device)
-  with torch.cuda.amp.autocast(): 
-      pred = model.generate(**inputs)
-  response = tokenizer.decode(pred.cpu()[0], skip_special_tokens=False)
-  print(response)
-  # <img>https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-VL/assets/demo.jpeg</img>Generate the caption in English with grounding:<ref> Woman</ref><box>(451,379),(731,806)</box> and<ref> her dog</ref><box>(219,424),(576,896)</box> playing on the beach<|endoftext|>
-  image = tokenizer.draw_bbox_on_latest_picture(response)
-  if image:
-    image.save('2.jpg')
-  else:
-    print("no box")
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers.generation import GenerationConfig
+import torch
+from neural_compressor.torch.quantization import load
+from transformers import set_seed
+set_seed(1234)
+
+quantized_model_path = "./tmp_autoround"
+tokenizer = AutoTokenizer.from_pretrained(quantized_model_path, trust_remote_code=True)
+model = load(quantized_model_path, format='huggingface', device_map="auto", trust_remote_code=True).eval()
+query = tokenizer.from_list_format([{'image': 'https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-VL/assets/demo.jpeg'}, \
+    {'text': 'Generate the caption in English with grounding:'}, \
+])
+inputs = tokenizer(query, return_tensors='pt')
+inputs = inputs.to(model.device)
+with torch.cuda.amp.autocast(): 
+    pred = model.generate(**inputs)
+    
+response = tokenizer.decode(pred.cpu()[0], skip_special_tokens=False)
+print(response)
+# <img>https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-VL/assets/demo.jpeg</img>Generate the caption in English with grounding:<ref> Woman</ref><box>(451,379),(731,806)</box> and<ref> her dog</ref><box>(219,424),(576,896)</box> playing on the beach<|endoftext|>
+image = tokenizer.draw_bbox_on_latest_picture(response)
+if image:
+image.save('2.jpg')
+else:
+print("no box")
 
 ```
+
+
+
+- Qwen2-VL-7B-Instruct inference
+
+```python
+from transformers import Qwen2VLForConditionalGeneration, AutoProcessor
+from qwen_vl_utils import process_vision_info
+from neural_compressor.torch.quantization import load
+quantized_model_path="./tmp_autoround"
+model = load(quantized_model_path, format='huggingface', device_map="auto",
+             trust_remote_code=True, model_class=Qwen2VLForConditionalGeneration)
+processor = AutoProcessor.from_pretrained(quantized_model_path)
+messages = [{
+    "role": "user",
+    "content": [
+        {
+            "type": "image",
+            "image": "https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-VL/assets/demo.jpeg",
+        },
+        {"type": "text", "text": "Describe this image."},]
+}]
+# Preparation for inference
+text = processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+image_inputs, video_inputs = process_vision_info(messages)
+inputs = processor(
+    text=[text],
+    images=image_inputs,
+    videos=video_inputs,
+    padding=True,
+    return_tensors="pt",
+)
+inputs = inputs.to(model.device)
+ 
+# Inference: Generation of the output
+generated_ids = model.generate(**inputs, max_new_tokens=50)
+generated_ids_trimmed = [
+    out_ids[len(in_ids) :] for in_ids, out_ids in zip(inputs.input_ids, generated_ids)
+]
+output_text = processor.batch_decode(
+    generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False
+)
+print(output_text)
+# The image depicts a serene beach scene at sunset. A woman is sitting on the sand, facing a large dog that appears to be a Labrador Retriever. The dog is wearing a harness and is extending its paw towards the woman's hand, possibly
+
+# messages = [{
+#     "role": "user",
+#     "content": [
+#         {
+#             "type": "image",
+#             "image": "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/transformers/tasks/ai2d-demo.jpg",
+#         },
+#         {"type": "text", "text": "What does the label 15 represent? (1) lava (2) core (3) tunnel (4) ash cloud"},]
+# }]
+
+# The label 15 represents an ash cloud. In the context of a volcano, an ash cloud is formed when volcanic ash is ejected into the atmosphere during an eruption. Therefore, the correct answer is:\n\n(4) ash cloud
+
+```
+
 
 
 ## 4. Results

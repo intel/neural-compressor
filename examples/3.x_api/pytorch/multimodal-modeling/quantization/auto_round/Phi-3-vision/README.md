@@ -1,4 +1,4 @@
-iStep-by-Step
+Step-by-Step
 ============
 This document describes the step-by-step instructions to run [VLM quantization for Phi3-Vision](https://huggingface.co/microsoft/Phi-3-vision-128k-instruct) using AutoRound Quantization.
 
@@ -37,11 +37,12 @@ import requests
 import io
 from transformers import AutoModelForCausalLM
 from transformers import AutoProcessor
-from auto_round.auto_quantizer import AutoHfQuantizer
+from neural_compressor.torch.quantization import load
 quantized_model_path = "./tmp_autoround"
-model = AutoModelForCausalLM.from_pretrained(quantized_model_path, device_map="auto", trust_remote_code=True, torch_dtype="auto", _attn_implementation='flash_attention_2') # use _attn_implementation='eager' to disable flash attention
+model = load(quantized_model_path, format='huggingface', \
+             trust_remote_code=True, device_map="auto", torch_dtype="auto", _attn_implementation='eager') # use _attn_implementation='flash_attention_2' to enable flash attention
 
-processor = AutoProcessor.from_pretrained(quantized_model_path, trust_remote_code=True)
+processor = AutoProcessor.from_pretrained("microsoft/Phi-3-vision-128k-instruct", trust_remote_code=True)
 
 messages = [ \
     {"role": "user", "content": "<|image_1|>\nWhat is shown in this image?"}, \

@@ -402,6 +402,8 @@ if __name__ == '__main__':
         user_model.save(args.output_dir, format=LoadFormat.HUGGINGFACE, safe_serialization=False)
         if tokenizer is not None:
             tokenizer.save_pretrained(args.output_dir)
+        if processor is not None:
+            processor.save_pretrained(args.output_dir)
 
     
     # if args.accuracy:
@@ -412,7 +414,9 @@ if __name__ == '__main__':
     #         tasks = tasks.split(',')
     #     model_args = f"pretrained={args.model_name}"
     #     model_args = model_args + f",trust_remote_code={not args.disable_trust_remote_code}"
-    #     user_model = load(args.model_name, format='huggingface', trust_remote_code=not args.disable_trust_remote_code)
+    #     model_args += f",autogptq=True,gptq_use_triton=True"
+    #     user_model = load(args.model_name, format='huggingface', \
+    #                         trust_remote_code=not args.disable_trust_remote_code, _attn_implementation='eager')
     #     if args.act_bits <= 8:
     #         user_model = model.to(device_str)
 
