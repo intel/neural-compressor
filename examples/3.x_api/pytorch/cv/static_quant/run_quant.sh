@@ -44,7 +44,7 @@ function run_tuning {
             --pretrained \
             -t \
             -a resnet18 \
-            -b 30 \
+            -b ${batch_size} \
             --tuned_checkpoint ${tuned_checkpoint} \
             ${dataset_location}
 }

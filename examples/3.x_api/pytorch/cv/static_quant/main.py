@@ -189,7 +189,7 @@ def main():
         # Specify that the first dimension of each input is that batch size
         from torch.export import Dim
         print(args.batch_size)
-        batch = Dim("batch", min=16)
+        batch = Dim("batch")
     
         # Specify that the first dimension of each input is that batch size
         dynamic_shapes = {"x": {0: batch}}
