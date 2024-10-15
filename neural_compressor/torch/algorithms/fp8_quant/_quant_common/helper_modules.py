@@ -686,8 +686,6 @@ class PatchedSoftmax(nn.Module):
     def __init__(self, mod, mod_extra_config, *args, **kwargs):
         super().__init__()
         set_attrs_from_orig_model(self, mod, mod_extra_config)
-        # TODO: remove following line once SW-201424 is solved
-        self.scale_format = ScaleFormat.CONST
         if self.quantization_mode == QuantMode.QUANTIZE:
             self.quant_output = self._mod_extra_config.outputs[0]
             self.scale_input = create_scale_tensor(torch.Tensor([1.0]), self.scale_format)
@@ -808,16 +806,14 @@ class PatchedModuleFusedSDPA(nn.Module):
             self.quant_k = self._mod_extra_config.inputs[1]
             self.quant_v = self._mod_extra_config.inputs[2]
             self.dequant_output = self._mod_extra_config.outputs[0]
-            # fsdpa currently doesn't support scalar scales so scale format is always const.
-            # should be fixed once SW-199793 is done
-            self.scale_q = create_scale_tensor(mod_extra_config.scale.inputs[0].type(torch.float32), ScaleFormat.CONST)
-            self.scale_k = create_scale_tensor(mod_extra_config.scale.inputs[1].type(torch.float32), ScaleFormat.CONST)
-            self.scale_v = create_scale_tensor(mod_extra_config.scale.inputs[2].type(torch.float32), ScaleFormat.CONST)
+            self.scale_q = create_scale_tensor(mod_extra_config.scale.inputs[0].type(torch.float32), self.scale_format)
+            self.scale_k = create_scale_tensor(mod_extra_config.scale.inputs[1].type(torch.float32), self.scale_format)
+            self.scale_v = create_scale_tensor(mod_extra_config.scale.inputs[2].type(torch.float32), self.scale_format)
             self.descale_amax = create_scale_tensor(mod_extra_config.scale.inputs[3].type(torch.float32),
-                                                    ScaleFormat.CONST)
+                                                    self.scale_format)
             self.scale_output = create_scale_tensor(1 / mod_extra_config.scale.outputs[0].type(torch.float32),
-                                                    ScaleFormat.CONST)
-            self.scale_amax = create_scale_tensor(1 / self.descale_amax, ScaleFormat.CONST)
+                                                    self.scale_format)
+            self.scale_amax = create_scale_tensor(1 / self.descale_amax, self.scale_format)
         elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
             self.forward = self.forward_measure
 
