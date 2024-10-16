@@ -89,10 +89,10 @@ function run_benchmark {
         extra_cmd=$extra_cmd" --woq_algo TEQ"
     elif [ "${topology}" = "opt_125m_ipex" ]; then
         model_name_or_path="facebook/opt-125m"
-        extra_cmd=$extra_cmd" --ipex --int8_bf16_mixed"
+        extra_cmd=$extra_cmd" --ipex"
     elif [ "${topology}" = "opt_125m_ipex_sq" ]; then
         model_name_or_path="facebook/opt-125m"
-        extra_cmd=$extra_cmd" --ipex --int8_bf16_mixed --sq --alpha 0.5"
+        extra_cmd=$extra_cmd" --ipex --sq --alpha 0.5"
     elif [ "${topology}" = "bloom_560m_ipex_sq" ]; then
         model_name_or_path="bigscience/bloom-560m"
         extra_cmd=$extra_cmd" --ipex --sq --alpha 0.5"
