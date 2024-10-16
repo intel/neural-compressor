@@ -10,6 +10,7 @@ function main {
 
 # init params
 function init_params {
+  batch_size=16
   tuned_checkpoint="saved_results"
   for var in "$@"
   do
@@ -22,6 +23,9 @@ function init_params {
       ;;
       --input_model=*)
           input_model=$(echo $var |cut -f2 -d=)
+      ;;
+      --batch_size=*)
+          batch_size=$(echo $var |cut -f2 -d=)
       ;;
        --output_model=*)
            tuned_checkpoint=$(echo $var |cut -f2 -d=)
@@ -44,7 +48,7 @@ function run_tuning {
             --pretrained \
             -t \
             -a resnet18 \
-            -b 30 \
+            -b ${batch_size} \
             --tuned_checkpoint ${tuned_checkpoint} \
             ${dataset_location}
 }

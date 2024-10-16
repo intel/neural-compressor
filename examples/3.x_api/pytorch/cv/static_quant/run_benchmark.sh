@@ -79,7 +79,7 @@ function run_benchmark {
         python main.py \
                 --pretrained \
                 -a resnet18 \
-                -b 30 \
+                -b ${batch_size} \
                 --tuned_checkpoint ${tuned_checkpoint} \
                 ${dataset_location} \
                 ${extra_cmd} \
@@ -89,7 +89,7 @@ function run_benchmark {
                 main.py \
                 --pretrained \
                 -a resnet18 \
-                -b 30 \
+                -b ${batch_size} \
                 --tuned_checkpoint ${tuned_checkpoint} \
                 ${dataset_location} \
                 ${extra_cmd} \

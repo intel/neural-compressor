@@ -14,7 +14,8 @@ This implements quantization of popular model architectures, such as ResNet on t
 To quant a model and validate accaracy, run `main.py` with the desired model architecture and the path to the ImageNet dataset:
 
 ```bash
-python main.py -a resnet18 [imagenet-folder with train and val folders] -q -e
+export ImageNetDataPath=/path/to/imagenet
+python main.py $ImageNetDataPath --pretrained -a resnet18 --tune --calib_iters 5
 ```
 
 
