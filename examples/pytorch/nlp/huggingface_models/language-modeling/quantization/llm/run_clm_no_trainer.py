@@ -343,7 +343,10 @@ if args.int8 or args.int8_bf16_mixed:
 
     if args.ipex:
         user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)))
+        from transformers import AutoTokenizer, AutoConfig
         tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=args.trust_remote_code)
+        config = AutoConfig.from_pretrained(args.model, trust_remote_code=args.trust_remote_code)
+        setattr(user_model, "config", config)
     else:
         user_model, tokenizer = get_user_model()
         kwargs = {'weight_only': True} if args.approach == 'weight_only' else {}
@@ -354,7 +357,7 @@ else:
 if args.accuracy:
     user_model.eval()
     if args.code_generation:
-        from intel_extension_for_transformers.transformers.llm.evaluation.bigcode_eval import evaluate
+        from neural_compressor.evaluation.bigcode_eval import evaluate
         from transformers import AutoTokenizer
         tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=args.trust_remote_code)
         results = evaluate(
@@ -370,7 +373,7 @@ if args.accuracy:
             else:
                 acc = results["results"][task_name]["acc"]
     else:
-        from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
+        from neural_compressor.evaluation.lm_eval import evaluate, LMEvalParser
         eval_args = LMEvalParser(
             model="hf", 
             user_model=user_model,
@@ -395,7 +398,7 @@ if args.performance:
     samples = args.iters * args.batch_size
 
     if args.code_generation:
-        from intel_extension_for_transformers.transformers.llm.evaluation.bigcode_eval import evaluate
+        from neural_compressor.evaluation.bigcode_eval import evaluate
         from transformers import AutoTokenizer
         tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=args.trust_remote_code)
         start = time.time()
@@ -413,7 +416,7 @@ if args.performance:
             else:
                 acc = results["results"][task_name]["acc"]
     else:
-        from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
+        from neural_compressor.evaluation.lm_eval import evaluate, LMEvalParser
         eval_args = LMEvalParser(
             model="hf", 
             user_model=user_model,
