@@ -9,17 +9,17 @@ pip install -r requirements.txt
 
 ## Support status on HPU
 
-Below is the current support status on Intel Gaudi 2 AI Accelerator with PyTorch.
+Below is the current support status on Intel Gaudi AI Accelerator with PyTorch.
 
 | woq_algo |   Status  |
 |--------------|----------|
 |   GPTQ   |  &#10004;|
 
-> Validated models: [`meta-llama/Llama-2-7b-hf`, `EleutherAI/gpt-j-6B`, `facebook/opt-125m`]
+> We validated the typical LLMs such as: `meta-llama/Llama-2-7b-hf`, `EleutherAI/gpt-j-6B`, `facebook/opt-125m`.
 
 ## Support status on CPU
 
-Below is the current support status on 4th Gen Intel® Xeon® Scalable Processor (codenamed Sapphire Rapids) with PyTorch.
+Below is the current support status on Intel® Xeon® Scalable Processor with PyTorch.
 
 
 | woq_algo |   status |
@@ -30,7 +30,7 @@ Below is the current support status on 4th Gen Intel® Xeon® Scalable Processor
 |       AWQ      |  &#10004;  |
 |       TEQ      |  &#10004;  |
 
-> Validated models: [`meta-llama/Llama-2-7b-hf`, `EleutherAI/gpt-j-6B`, `facebook/opt-125m`]
+> We validated the typical LLMs such as: `meta-llama/Llama-2-7b-hf`, `EleutherAI/gpt-j-6B`, `facebook/opt-125m`.
 
 
 ## Run
