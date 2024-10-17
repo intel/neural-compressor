@@ -55,6 +55,7 @@ def save(model, output_dir="./saved_results", format=LoadFormat.DEFAULT, **kwarg
     os.makedirs(output_dir, exist_ok=True)
     if format == LoadFormat.HUGGINGFACE:  # pragma: no cover
         config = model.config
+        config_file = "quantize_config.json"
         quantization_config = config.quantization_config if hasattr(config, "quantization_config") else None
         if "backend" in quantization_config and "auto_round" in quantization_config["backend"]:
             safe_serialization = kwargs.get("safe_serialization", True)
@@ -64,6 +65,8 @@ def save(model, output_dir="./saved_results", format=LoadFormat.DEFAULT, **kwarg
                 tokenizer.save_pretrained(output_dir)
             del model.save
             model.save_pretrained(output_dir, max_shard_size=max_shard_size, safe_serialization=safe_serialization)
+            with open(os.path.join(output_dir, config_file), "w", encoding="utf-8") as f:
+                json.dump(quantization_config, f, indent=2)
             return
 
     qmodel_weight_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), WEIGHT_NAME)
@@ -228,7 +231,13 @@ class WOQModelLoader:
             # load autoround format quantized model
             from auto_round import AutoRoundConfig
 
-            model = model_class.from_pretrained(self.model_name_or_path)
+            hf_kargs = {}
+            pretrain_args = ["trust_remote_code", "_attn_implementation", "device_map", "torch_dtype"]
+            for item in pretrain_args:
+                arg_value = self.kwargs.get(item, None)
+                if arg_value is not None:
+                    hf_kargs[item] = arg_value
+            model = model_class.from_pretrained(self.model_name_or_path, **hf_kargs)
             return model
         # get loaded state_dict
         self.loaded_state_dict = self._get_loaded_state_dict(config)
@@ -441,6 +450,10 @@ class WOQModelLoader:
             has_remote_code,
         )
 
+        model_class = self.kwargs.get("model_class", None)
+        if model_class:
+            return model_class, config
+
         if has_remote_code and trust_remote_code:  # pragma: no cover
             class_ref = config.auto_map[AutoModelForCausalLM.__name__]
             model_class = get_class_from_dynamic_module(class_ref, self.model_name_or_path, **kwargs_orig)
@@ -450,7 +463,8 @@ class WOQModelLoader:
                 AutoModelForCausalLM.register(config.__class__, model_class, exist_ok=True)
         elif type(config) in AutoModelForCausalLM._model_mapping.keys():
             model_class = _get_model_class(config, AutoModelForCausalLM._model_mapping)
-
+        else:
+            logger.info("Couldn't find model class.")
         return model_class, config
 
     def _get_loaded_state_dict(self, config):

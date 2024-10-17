@@ -291,7 +291,7 @@ class BaseConfig(ABC):
                 self.local_config[operator_name] = config
         else:
             if operator_name_or_list in self.local_config:
-                logger.warning("The configuration for %s has already been set, update it.", operator_name)
+                logger.warning("The configuration for %s has already been set, update it.", operator_name_or_list)
             self.local_config[operator_name_or_list] = config
         return self
 

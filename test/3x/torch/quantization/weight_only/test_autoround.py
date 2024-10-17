@@ -162,6 +162,32 @@ class TestAutoRound:
         assert torch.allclose(out2, out1, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
         assert isinstance(q_model.h[0].attn.c_attn, WeightOnlyLinear), "loading compressed model failed."
 
+    def test_utils(self):
+        from neural_compressor.torch.utils.utility import (
+            detect_device,
+            get_layer_names_in_block,
+            get_multimodal_block_names,
+            run_fn_for_vlm_autoround,
+        )
+
+        fp32_model = copy.deepcopy(self.gptj)
+        quant_block_list = get_multimodal_block_names(fp32_model, quant_vision=True)
+        quant_config = AutoRoundConfig(
+            nsamples=32, seqlen=10, iters=10, scale_dtype="fp16", quant_block_list=quant_block_list
+        )
+        logger.info(f"Test AutoRound with config {quant_config}")
+        device = detect_device("auto")
+        layers_list = get_layer_names_in_block(fp32_model, quant_block_list=quant_block_list)
+        layers_list = get_layer_names_in_block(fp32_model)
+        fp32_model.to(device)
+        # quantizer execute
+        model = prepare(model=fp32_model, quant_config=quant_config)
+        run_fn_for_vlm_autoround(model, self.dataloader, seqlen=32, nsamples=8)
+        q_model = convert(model)
+        out = q_model(self.inp)[0]
+        assert torch.allclose(out, self.label, atol=1e-1)
+        assert isinstance(q_model.transformer.h[0].attn.k_proj, WeightOnlyLinear), "packing model failed."
+
     # def test_autoround_format_export(self):
     #     from neural_compressor.torch.quantization import load
     #     from auto_gptq.nn_modules.qlinear.qlinear_triton import QuantLinear
