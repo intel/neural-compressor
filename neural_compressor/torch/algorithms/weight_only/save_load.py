@@ -230,6 +230,7 @@ class WOQModelLoader:
         ):  # # pragma: no cover
             # load autoround format quantized model
             from auto_round import AutoRoundConfig
+
             hf_kargs = {}
             pretrain_args = ["trust_remote_code", "_attn_implementation", "device_map", "torch_dtype"]
             for item in pretrain_args:
@@ -435,11 +436,10 @@ class WOQModelLoader:
 
         config = AutoConfig.from_pretrained(self.model_name_or_path, trust_remote_code=trust_remote_code)
         # quantization_config = config.quantization_config
-        
+
         if kwarg_attn_imp is not None and config._attn_implementation != kwarg_attn_imp:  # pragma: no cover
             config._attn_implementation = kwarg_attn_imp
-            
-        
+
         has_remote_code = hasattr(config, "auto_map") and AutoModelForCausalLM.__name__ in config.auto_map
 
         has_local_code = type(config) in AutoModelForCausalLM._model_mapping.keys()
@@ -449,11 +449,11 @@ class WOQModelLoader:
             has_local_code,
             has_remote_code,
         )
-        
+
         model_class = self.kwargs.get("model_class", None)
         if model_class:
             return model_class, config
-                
+
         if has_remote_code and trust_remote_code:  # pragma: no cover
             class_ref = config.auto_map[AutoModelForCausalLM.__name__]
             model_class = get_class_from_dynamic_module(class_ref, self.model_name_or_path, **kwargs_orig)
@@ -464,7 +464,7 @@ class WOQModelLoader:
         elif type(config) in AutoModelForCausalLM._model_mapping.keys():
             model_class = _get_model_class(config, AutoModelForCausalLM._model_mapping)
         else:
-            logger.info(f"Could't find model class.")
+            logger.info("Couldn't find model class.")
         return model_class, config
 
     def _get_loaded_state_dict(self, config):
@@ -922,4 +922,3 @@ class WOQModelLoader:
                 if os.path.exists(os.path.join(self._model_local_dir, HPU_WEIGHT_NAME)):
                     return True
         return False
-
