@@ -45,7 +45,7 @@ function run_evaluation {
             --eval-image-folder ${eval-image-folder} \
             --eval-annotation-file ${eval-annotation-file} \
             --eval-result-file ${eval-result-file} \
-            --trust_remote_code \
+            --trust_remote_code
 }
 
 main "$@"
