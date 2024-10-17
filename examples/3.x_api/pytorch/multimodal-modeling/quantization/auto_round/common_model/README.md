@@ -173,6 +173,37 @@ print(output_text)
 ```
 
 
+- Llama-3.2-11B-Vision-Instruct inference
+
+```python
+import requests
+import torch
+from PIL import Image
+from transformers import MllamaForConditionalGeneration, AutoProcessor
+from neural_compressor.torch.quantization import load
+quantized_model_path="./tmp_autoround"
+model = load(quantized_model_path, format='huggingface', device_map="auto", torch_dtype=torch.bfloat16,
+             trust_remote_code=True, model_class=MllamaForConditionalGeneration)
+processor = AutoProcessor.from_pretrained(quantized_model_path)
+
+url = "https://huggingface.co/datasets/huggingface/documentation-images/resolve/0052a70beed5bf71b92610a43a52df6d286cd5f3/diffusers/rabbit.jpg"
+image = Image.open(requests.get(url, stream=True).raw)
+
+prompt = "<|image|><|begin_of_text|>If I had to write a haiku for this one"
+inputs = processor(image, prompt, return_tensors="pt", truncation=True).to(model.device)
+
+output = model.generate(**inputs, max_new_tokens=30)
+print(processor.decode(output[0]))
+
+# <|begin_of_text|><|image|><|begin_of_text|>If I had to write a haiku for this one, it would be:
+
+# Rabbit in a coat
+# Dressed up in style for the day
+# Country charm abounds
+
+# The image depicts a rabbit
+```
+
 
 ## 4. Results
 Using [COCO 2017](https://cocodataset.org/) and [LLaVA-Instruct-150K](https://huggingface.co/datasets/liuhaotian/LLaVA-Instruct-150K) datasets for quantization calibration, and TextVQA dataset for evaluation. please follow the [recipe](./run_autoround.sh) and [evaluate script](./run_eval.sh). The results for Qwen-VL are as follows:

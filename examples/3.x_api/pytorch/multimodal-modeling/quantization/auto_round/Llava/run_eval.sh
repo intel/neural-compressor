@@ -16,17 +16,17 @@ function init_params {
       --model_name=*)
           model_name=$(echo $var |cut -f2 -d=)
       ;;
-      --eval-question-file=*)
-          eval-question-file=$(echo $var |cut -f2 -d=)
+      --eval_question_file=*)
+          eval_question_file=$(echo $var |cut -f2 -d=)
       ;;
-      --eval-image-folder=*)
-          eval-image-folder=$(echo $var |cut -f2 -d=)
+      --eval_image_folder=*)
+          eval_image_folder=$(echo $var |cut -f2 -d=)
       ;;
-      --eval-annotation-file=*)
-          eval-annotation-file=$(echo $var |cut -f2 -d=)
+      --eval_annotation_file=*)
+          eval_annotation_file=$(echo $var |cut -f2 -d=)
       ;;
-      --eval-result-file=*)
-          eval-result-file=$(echo $var |cut -f2 -d=)
+      --eval_result_file=*)
+          eval_result_file=$(echo $var |cut -f2 -d=)
       ;;  
       *)
           echo "Error: No such parameter: ${var}"
@@ -39,13 +39,14 @@ function init_params {
 
 # run_evaluation
 function run_evaluation {
-    python mm_evaluation/textvqa.py \
+    python main.py \
+            --accuracy \
             --model_name ${model_name} \
-            --eval-question-file ${eval-question-file} \
-            --eval-image-folder ${eval-image-folder} \
-            --eval-annotation-file ${eval-annotation-file} \
-            --eval-result-file ${eval-result-file} \
-            --trust_remote_code \
+            --eval_question_file ${eval-question-file} \
+            --eval_image_folder ${eval-image-folder} \
+            --eval_annotation_file ${eval-annotation-file} \
+            --eval_result_file ${eval-result-file}
 }
 
 main "$@"
+

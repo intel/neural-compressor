@@ -27,10 +27,10 @@ function init_params {
 
 # run_evaluation
 function run_evaluation {
-    python mm_evaluation/main.py \
-            --model_name ${model_name} \
-            --trust_remote_code \
-            --eval_bs 4
+    python main.py \
+        --accuracy \
+        --model_name ${model_name} \
+        --eval_bs 4
 }
 
 main "$@"

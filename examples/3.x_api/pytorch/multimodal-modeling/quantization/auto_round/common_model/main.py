@@ -429,8 +429,12 @@ if __name__ == '__main__':
         config = transformers.AutoConfig.from_pretrained(model_name, trust_remote_code=not args.disable_trust_remote_code)
         model_type = config.model_type
         if "mllama" in model_type: #for Llama-3.2-11B-Vision-Instruct
+            transformers_version = [int(item) for item in transformers.__version__.split('.')[:2]]
+            if transformers_version[0] == 4 and transformers_version[1] < 45:
+                error_message = "Please upgrade transformers to version >= 4.45 or the newest source code to support Qwen2-VL quantization."
+                raise EnvironmentError(error_message)
             from transformers import MllamaForConditionalGeneration, AutoProcessor
-            model = MllamaForConditionalGeneration.from_pretrained(args.model_name, 
+            model = MllamaForConditionalGeneration.from_pretrained(args.model_name, attn_implementation="eager",
                                                                 trust_remote_code=not args.disable_trust_remote_code) # torch_dtype=torch.bfloat16
             processor = AutoProcessor.from_pretrained(args.model_name)
             tokenizer.processor = processor
@@ -438,7 +442,7 @@ if __name__ == '__main__':
         elif 'qwen2' in model_type: # for Qwen2-VL-instruct
             transformers_version = [int(item) for item in transformers.__version__.split('.')[:2]]
             if transformers_version[0] == 4 and transformers_version[1] < 45:
-                error_message = "Please upgrade transformers to version >= 4.45 or the newest source code to support lm-head quantization."
+                error_message = "Please upgrade transformers to version >= 4.45 or the newest source code to support Qwen2-VL quantization."
                 raise EnvironmentError(error_message)
             from transformers import Qwen2VLForConditionalGeneration, AutoProcessor
             from qwen_vl_utils import process_vision_info, fetch_image
