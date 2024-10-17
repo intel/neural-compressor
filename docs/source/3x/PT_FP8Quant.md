@@ -98,7 +98,7 @@ model = convert(model)
 
 | Task                 | Example |
 |----------------------|---------|
-| Computer Vision (CV)      |    [Link](../../examples/3.x_api/pytorch/cv/fp8_quant/)     |
+| Computer Vision (CV)      |    [Link](../../../examples/3.x_api/pytorch/cv/fp8_quant/)     |
 | Large Language Model (LLM) |    [Link](https://github.com/huggingface/optimum-habana/tree/main/examples/text-generation#running-with-fp8)     |
 
 > Note: For LLM, Optimum-habana provides higher performance based on modified modeling files, so here the Link of LLM goes to Optimum-habana, which utilize Intel Neural Compressor for FP8 quantization internally.
