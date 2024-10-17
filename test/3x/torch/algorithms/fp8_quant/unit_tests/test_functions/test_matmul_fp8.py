@@ -4,8 +4,9 @@ from typing import Iterable, Tuple
 import habana_frameworks.torch.utils.experimental as htexp
 import pytest
 import torch
-from habana_quantization_toolkit._core.fp_utils import FP8_143_SCALES
-from habana_quantization_toolkit._quant_common.helper_modules import matmul_fp8
+
+from neural_compressor.torch.algorithms.fp8_quant._core.fp_utils import FP8_143_SCALES
+from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import matmul_fp8
 
 
 def run_test_matmul_fp8(

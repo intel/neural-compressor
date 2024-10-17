@@ -13,3 +13,5 @@ einops  #qwen
 auto_round
 lm-eval==0.4.3
 huggingface_hub
+numba
+tbb

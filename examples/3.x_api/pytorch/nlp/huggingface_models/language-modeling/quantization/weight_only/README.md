@@ -1,179 +1,96 @@
-Step-by-Step
-============
-This document describes the step-by-step instructions to run large language models (LLMs) on 4th Gen Intel® Xeon® Scalable Processor (codenamed Sapphire Rapids) with PyTorch and Intel® Extension for PyTorch.
+Weight-only quantization
+===============
 
-The script `run_clm_no_trainer.py` supports `GPTJ`, `OPT`, `LLaMA2`, `BLOOM` and `Falcon` quantization and validates last word prediction accuracy with [lm_eval](https://github.com/EleutherAI/lm-evaluation-harness.git) now, and we are adding more models.
-
-# Prerequisite
-## 1. Create Environment
+##  Prerequisite
 ```
 # Installation
 pip install -r requirements.txt
 ```
 
-# Run
+## Support status on HPU
 
-Here is how to run the scripts:
+Below is the current support status on Intel Gaudi AI Accelerator with PyTorch.
 
-**Causal Language Modeling (CLM)**
+| woq_algo |   Status  |
+|--------------|----------|
+|   GPTQ   |  &#10004;|
 
-`run_clm_no_trainer.py` quantizes the large language models using the dataset [NeelNanda/pile-10k](https://huggingface.co/datasets/NeelNanda/pile-10k) calibration and validates `lambada_openai`, `piqa`, `winogrande`, `hellaswag` and other datasets accuracy provided by lm_eval, an example command is as follows.
-### GPT-J-6b
+> We validated the typical LLMs such as: `meta-llama/Llama-2-7b-hf`, `EleutherAI/gpt-j-6B`, `facebook/opt-125m`.
 
-#### Quantization
+## Support status on CPU
 
-```bash
-# "--woq_algo GPTQ" is used to enable GPTQ algorithms
-# "--double_quant_type BNB_NF4" is used to enable double quant algorithms
-python run_clm_no_trainer.py \
-    --model EleutherAI/gpt-j-6B \
-    --dataset NeelNanda/pile-10k \
-    --quantize \
-    --woq_algo GPTQ \
-    --woq_bits 4 \
-    --woq_scheme asym \
-    --woq_group_size 128 \
-    --gptq_max_seq_length 2048 \
-    --gptq_use_max_length \
-    --double_quant_type "BNB_NF4" \
-    --output_dir saved_results
-
-# "--woq_algo RTN" is used to enable RTN algorithms
-python run_clm_no_trainer.py \
-    --model EleutherAI/gpt-j-6B \
-    --dataset NeelNanda/pile-10k \
-    --quantize \
-    --woq_algo RTN \
-    --woq_bits 4 \
-    --woq_scheme asym \
-    --woq_group_size 128 \
-    --double_quant_type "BNB_NF4"
-    --output_dir saved_results
-
-# "--woq_algo AWQ" is used to enable AWQ algorithms
-python run_clm_no_trainer.py \
-    --model EleutherAI/gpt-j-6B \
-    --dataset NeelNanda/pile-10k \
-    --quantize \
-    --woq_algo AWQ \
-    --woq_bits 4 \
-    --woq_scheme asym \
-    --woq_group_size 128 \
-    --calib_iters 128
-
-# "--woq_algo AutoRound" is used to enable AutoRound algorithms
-python run_clm_no_trainer.py \
-    --model EleutherAI/gpt-j-6B \
-    --dataset NeelNanda/pile-10k \
-    --quantize \
-    --woq_algo AutoRound \
-    --woq_bits 4 \
-    --woq_scheme asym \
-    --woq_group_size 128
-
-# "--accuracy" for eval
-python run_clm_no_trainer.py \
-    --model EleutherAI/gpt-j-6B \
-    --dataset NeelNanda/pile-10k \
-    --int8 \
-    --accuracy \
-    --tasks "lambada_openai" \
-    --output_dir saved_results
-```
-**Notes**: Weight-only quantization based on fake quantization is previewly supported and supports RTN, GPTQ[1], AWQ[2], TEQ algorithms. For more details, please refer to [link](https://github.com/intel/neural-compressor/blob/master/docs/source/quantization_weight_only.md). Our GPTQ API support various CLMs including GPTJ, OPTs, Blooms, Llamas, Falcons, MPTs, ChatGLMs, etc. Simply replace the "--model" argument with other models to quantize different CLMs with GPTQ.
+Below is the current support status on Intel® Xeon® Scalable Processor with PyTorch.
 
 
-### OPT-125m
+| woq_algo |   status |
+|--------------|----------|
+|       RTN      |  &#10004;  |
+|       GPTQ     |  &#10004;  |
+|       AutoRound|  &#10004;  |
+|       AWQ      |  &#10004;  |
+|       TEQ      |  &#10004;  |
 
-#### Quantization
+> We validated the typical LLMs such as: `meta-llama/Llama-2-7b-hf`, `EleutherAI/gpt-j-6B`, `facebook/opt-125m`.
+
+
+## Run
+
+`run_clm_no_trainer.py` quantizes the large language models using the dataset [NeelNanda/pile-10k](https://huggingface.co/datasets/NeelNanda/pile-10k) calibration and validates datasets accuracy provided by lm_eval, an example command is as follows.
+
+### Quantization
 
 ```bash
-# "--woq_algo GPTQ" is used to enable GPTQ algorithms
-# "--double_quant_type BNB_NF4" is used to enable double quant algorithms
-python run_clm_no_trainer.py \
-    --model facebook/opt-125m \
-    --dataset NeelNanda/pile-10k \
-    --quantize \
-    --woq_algo GPTQ \
-    --woq_bits 4 \
-    --woq_scheme asym \
-    --woq_group_size 128 \
-    --gptq_max_seq_length 2048 \
-    --gptq_use_max_length \
-    --double_quant_type "BNB_NF4"
-
-# "--woq_algo RTN" is used to enable RTN algorithms
-python run_clm_no_trainer.py \
-    --model facebook/opt-125m \
-    --dataset NeelNanda/pile-10k \
-    --quantize \
-    --woq_algo RTN \
-    --woq_bits 4 \
-    --woq_scheme asym \
-    --woq_group_size 128 \
-    --double_quant_type "BNB_NF4"
-
-# "--woq_algo AWQ" is used to enable AWQ algorithms
-python run_clm_no_trainer.py \
-    --model facebook/opt-125m \
-    --dataset NeelNanda/pile-10k \
-    --quantize \
-    --woq_algo AWQ \
-    --woq_bits 4 \
-    --woq_scheme asym \
-    --woq_group_size 128 \
-    --calib_iters 128
-
-# "--woq_algo AutoRound" is used to enable AutoRound algorithms
-python run_clm_no_trainer.py \
-    --model facebook/opt-125m \
-    --dataset NeelNanda/pile-10k \
-    --quantize \
-    --woq_algo AutoRound \
-    --woq_bits 4 \
-    --woq_scheme asym \
-    --woq_group_size 128
-
-# "--accuracy" for eval
-python run_clm_no_trainer.py \
-    --model facebook/opt-125m  \
-    --dataset NeelNanda/pile-10k \
-    --int8 \
-    --accuracy \
-    --tasks "lambada_openai" \
-    --output_dir saved_results
-```
-
-### LLAMA2-7b/13b/70b
-#### Quantization
-
-```bash
-# "--double_quant_type BNB_NF4" is used to enable double quant algorithms
-# "--woq_algo GPTQ" is used to enable GPTQ algorithms
 python run_clm_no_trainer.py \
     --model meta-llama/Llama-2-7b-hf \
     --dataset NeelNanda/pile-10k \
     --quantize \
+    --batch_size 8 \
     --woq_algo GPTQ \
     --woq_bits 4 \
     --woq_scheme asym \
     --woq_group_size 128 \
     --gptq_max_seq_length 2048 \
     --gptq_use_max_length \
-    --double_quant_type "BNB_NF4"
+    --output_dir saved_results
+```
+### Evaluation
 
-# "--woq_algo RTN" is used to enable RTN algorithms
+```bash
+# original model
 python run_clm_no_trainer.py \
     --model meta-llama/Llama-2-7b-hf \
-    --dataset NeelNanda/pile-10k \
-    --quantize \
-    --woq_algo RTN \
-    --woq_bits 4 \
-    --woq_scheme asym \
-    --woq_group_size 128 \
-    --double_quant_type "BNB_NF4"
+    --accuracy \
+    --batch_size 8 \
+    --tasks "lambada_openai,wikitext" \
+    --output_dir saved_results
+
+# quantized model
+python run_clm_no_trainer.py \
+    --model meta-llama/Llama-2-7b-hf \
+    --load \
+    --accuracy \
+    --batch_size 8 \
+    --tasks "lambada_openai,wikitext" \
+    --output_dir saved_results
 ```
 
+### Benchmark
 
-[1]. Elias, Frantar, et al. "GPTQ: Accurate Post-training Compression for Generative Pretrained Transformers." arXiv preprint arXiv:2210.17323 (2023).
-[2]. Lin, Ji, et al. "AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration." arXiv preprint arXiv:2306.00978 (2023).
+```bash
+# original model
+python run_clm_no_trainer.py \
+    --model meta-llama/Llama-2-7b-hf \
+    --performance \
+    --batch_size 8 \
+    --output_dir saved_results
+
+# quantized model
+python run_clm_no_trainer.py \
+    --model meta-llama/Llama-2-7b-hf \
+    --load \
+    --performance \
+    --batch_size 8 \
+    --output_dir saved_results
+```
+
+For more information about parameter usage, please refer to [PT_WeightOnlyQuant.md](https://github.com/intel/neural-compressor/blob/master/docs/source/3x/PT_WeightOnlyQuant.md)

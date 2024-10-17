@@ -15,7 +15,7 @@
 import numpy as np
 import torch
 
-from .._quant_common.quant_config import ScaleMethod, set_hqt_config
+from .._quant_common.quant_config import ScaleMethod, get_hqt_config, set_hqt_config
 from ..utils.logger import logger
 from .common import *
 from .fp_utils import *
@@ -25,34 +25,37 @@ from .scale_methods import *
 
 def matmul_scales_to_mod_config(mod, scales, params):
     scales_inv = invert_scales(scales)
+    format = get_hqt_config(mod).cfg["scale_format"]
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    input_config = [QuantInput(s_inv, lp_dtype, hp_dtype) for s_inv in scales_inv.inputs]
+    input_config = [QuantInput(s_inv, lp_dtype, hp_dtype, scale_format=format) for s_inv in scales_inv.inputs]
     # outputs as bf16, and descaled in gemm under PatchedMatmul, so no need to work here
-    output_config = [QuantDequantNone(lp_dtype, hp_dtype)]
+    output_config = [QuantDequantNone(lp_dtype, hp_dtype, scale_format=format)]
     config = ModuleConfig(input_config, output_config, {})
     return config
 
 
 def fsdpa_scales_to_mod_config(mod, scales, params):
     scales_inv = invert_scales(scales)
+    format = get_hqt_config(mod).cfg["scale_format"]
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    input_config = [QuantInput(s_inv, lp_dtype, hp_dtype) for s_inv in scales_inv.inputs]
-    output_config = [DequantOutput(scales.outputs[0], lp_dtype, hp_dtype)]
+    input_config = [QuantInput(s_inv, lp_dtype, hp_dtype, scale_format=format) for s_inv in scales_inv.inputs]
+    output_config = [DequantOutput(scales.outputs[0], lp_dtype, hp_dtype, scale_format=format)]
     config = ModuleConfig(input_config, output_config, {})
     return config
 
 
 def linear_scales_to_mod_config(mod, scales, params):
     scales_inv = invert_scales(scales)
+    format = get_hqt_config(mod).cfg["scale_format"]
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    input_config = [QuantInput(scales_inv.inputs[0], lp_dtype, hp_dtype)]
+    input_config = [QuantInput(scales_inv.inputs[0], lp_dtype, hp_dtype, scale_format=format)]
     # outputs as bf16, and descaled in gemm under PatchedLinear, so no need to work here
-    output_config = [QuantDequantNone(lp_dtype, hp_dtype)]
+    output_config = [QuantDequantNone(lp_dtype, hp_dtype, scale_format=format)]
     if isinstance(scales_inv.params["weight"], (torch.Tensor, float)):
-        weight_config = QuantInput(scales_inv.params["weight"], lp_dtype, hp_dtype)
+        weight_config = QuantInput(scales_inv.params["weight"], lp_dtype, hp_dtype, scale_format=format)
     elif isinstance(scales_inv.params["weight"], dict):
         weight_scale_inv_out_ch = scales_inv.params["weight"][0]
         weight_scale_inv_in_ch = scales_inv.params["weight"][1]
@@ -80,18 +83,20 @@ def linear_scales_to_mod_config(mod, scales, params):
 def kv_cache_scales_to_mod_config(mod, scales, params):
     # how quant/dequant will be applied on layer tensors
     scales_inv = invert_scales(scales)
+    format = get_hqt_config(mod).cfg["scale_format"]
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    input_config = [QuantInput(scales_inv.inputs[0], lp_dtype, hp_dtype)]
-    output_config = [DequantOutput(scales.outputs[0], lp_dtype, hp_dtype)]
+    input_config = [QuantInput(scales_inv.inputs[0], lp_dtype, hp_dtype, scale_format=format)]
+    output_config = [DequantOutput(scales.outputs[0], lp_dtype, hp_dtype, scale_format=format)]
     config = ModuleConfig(input_config, output_config)
     return config
 
 
 def softmax_scales_to_mod_config(mod, scales, params):
+    format = get_hqt_config(mod).cfg["scale_format"]
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    output_config = [DequantOutput(scales.outputs[0], lp_dtype, hp_dtype)]
+    output_config = [DequantOutput(scales.outputs[0], lp_dtype, hp_dtype, scale_format=format)]
     return ModuleConfig(None, output_config)
 
 
@@ -102,11 +107,11 @@ def get_config(
     method,
     params,
     scales_file=None,
-    recalc_scales=False,
     mod_list=None,
 ):
     with torch.no_grad():
         top_level_config = get_hqt_config(model)
+        recalc_scales = top_level_config.cfg["recalc_scales"]
         qconfig = {UNMEASURED_MODELS: []}
         scales_file_format = np.ndarray  # file_functions[os.path.splitext(scales_file)[1]][0]
         scales_obj = (
@@ -116,6 +121,7 @@ def get_config(
         )
         scales = convert_scales_to_tensors_dict(scales_obj, scales_file_format, params["hp_dtype"])
         model_dict = dict(model.named_modules())
+        save_file = False
         for mname in mod_list:
             mod = model_dict[mname]
             set_hqt_config(mod, top_level_config)  # set config in the module, as it consumed by the patched module
@@ -123,19 +129,22 @@ def get_config(
             layer_type = mod_dict[mod_type_str].type
             if mname not in scales:
                 logger.debug("Calculating scales for layer %s", mname)
-                if mname not in measurement:
-                    qconfig[UNMEASURED_MODELS].append(mname)
+                if top_level_config.cfg["use_stats_files"] and mname not in measurement:
+                    if mod_dict[mod_type_str].should_measure:
+                        qconfig[UNMEASURED_MODELS].append(mname)
                     logger.debug(
                         "Layer '%s' has no measurements therefore it can't be quantized.",
                         mname,
                     )
                     continue
-                layer_measure = measurement[mname]  # ModuleConfig() of measurements
+
+                layer_measure = measurement.get(mname, None)  # ModuleConfig() of measurements
                 scales[mname] = method[layer_type][0](mod, layer_measure, params)  # ModuleConfig() of scales
                 if scales_file is not None:
                     scales_obj[mname] = ModuleConfig(
                         **format_functions_rec((torch.Tensor, scales_file_format))(scales[mname].__dict__)
                     )
+                    save_file = True
 
             logger.debug(
                 "Preparing quantization functions for layer %s layer_type=%s",
@@ -151,7 +160,7 @@ def get_config(
                 params,
             )
             qconfig[mname] = mod_extra_config
-        if scales_file is not None:
+        if save_file and scales_file is not None:
             save_scales(model, scales_obj, scales_file_format, scales_file + ".npz")
             save_scales(model, scales_obj, scales_file_format, scales_file + ".json")
     return qconfig
@@ -159,11 +168,18 @@ def get_config(
 
 scaling_methods = {
     "unit_scale": {
-        "linear": (linear_unit_scale_scales, linear_scales_to_mod_config),
-        "matmul": (matmul_unit_scale_scales, matmul_scales_to_mod_config),
-        "softmax": (softmax_unit_scale_scales, softmax_scales_to_mod_config),
-        "kv_cache": (kv_cache_unit_scale_scales, kv_cache_scales_to_mod_config),
-        "fused_sdpa": (fsdpa_unit_scale_scales, fsdpa_scales_to_mod_config),
+        "linear": (linear_single_scale_scales, linear_scales_to_mod_config),
+        "matmul": (matmul_single_scale_scales, matmul_scales_to_mod_config),
+        "softmax": (softmax_single_scale_scales, softmax_scales_to_mod_config),
+        "kv_cache": (kv_cache_single_scale_scales, kv_cache_scales_to_mod_config),
+        "fused_sdpa": (fsdpa_single_scale_scales, fsdpa_scales_to_mod_config),
+    },
+    "hw_aligned_single_scale": {
+        "linear": (linear_hw_aligned_single_scale_scales, linear_scales_to_mod_config),
+        "matmul": (matmul_hw_aligned_single_scale_scales, matmul_scales_to_mod_config),
+        "softmax": (softmax_hw_aligned_single_scale_scales, softmax_scales_to_mod_config),
+        "kv_cache": (kv_cache_hw_aligned_single_scale_scales, kv_cache_scales_to_mod_config),
+        "fused_sdpa": (fsdpa_hw_aligned_single_scale_scales, fsdpa_scales_to_mod_config),
     },
     "act_maxabs_pts_weight_maxabs_pts_pow2_hw": {
         "linear": (
@@ -195,6 +211,18 @@ scaling_methods = {
         "matmul": (
             matmul_act_maxabs_pts_weight_maxabs_pts_pow2_scales,
             matmul_scales_to_mod_config,
+        ),
+        "kv_cache": (
+            kv_cache_act_maxabs_pts_pow2,
+            kv_cache_scales_to_mod_config,
+        ),
+        "softmax": (
+            softmax_input_unit_output_maxabs_pts_pow2,
+            softmax_scales_to_mod_config,
+        ),
+        "fused_sdpa": (
+            fsdpa_act_maxabs_pts_pow2_weight_maxabs_pts_pow2,
+            fsdpa_scales_to_mod_config,
         ),
     },
     "act_maxabs_pts_pow2_hw_weights_maxabs_pcs_pow2": {
@@ -293,7 +321,7 @@ scaling_methods = {
         ),
         # kv_cache is pts as op in hw doesn't work in pcs
         "kv_cache": (
-            kv_cache_act_maxabs_pts_pow2_weight_opt_pcs_pow2_scales,
+            kv_cache_act_maxabs_pts_pow2,
             kv_cache_scales_to_mod_config,
         ),
         "fused_sdpa": (
@@ -336,6 +364,8 @@ scaling_methods = {
 scale_method_mapping = {
     (ScaleMethod.UNIT_SCALE, "maxabs"): "unit_scale",
     (ScaleMethod.UNIT_SCALE, "maxabs_per_channel"): "unit_scale",
+    (ScaleMethod.HW_ALIGNED_SINGLE_SCALE, "maxabs"): "hw_aligned_single_scale",
+    (ScaleMethod.HW_ALIGNED_SINGLE_SCALE, "maxabs_per_channel"): "hw_aligned_single_scale",
     (ScaleMethod.MAXABS_HW, "maxabs"): "act_maxabs_pts_weight_maxabs_pts_pow2_hw",
     (ScaleMethod.MAXABS_POW2, "maxabs"): "act_maxabs_pts_weight_maxabs_pts_pow2",
     (ScaleMethod.MAXABS_HW_OPT_WEIGHT, "maxabs"): "act_maxabs_pts_weight_opt_pts_hw",
@@ -384,6 +414,7 @@ scale_method_mapping = {
 
 scaling_params = {
     "unit_scale": {},
+    "hw_aligned_single_scale": {},
     "act_maxabs_pts_weight_maxabs_pts_pow2_hw": {
         "input_backoff": 0.25,
         "weight_backoff": 0.5,

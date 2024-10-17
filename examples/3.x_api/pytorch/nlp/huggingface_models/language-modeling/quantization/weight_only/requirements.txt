@@ -11,4 +11,5 @@ neural-compressor
 lm_eval==0.4.3
 peft
 auto_round
-intel_extension_for_pytorch
+numba
+tbb

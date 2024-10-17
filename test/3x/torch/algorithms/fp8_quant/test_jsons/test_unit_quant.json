@@ -12,5 +12,5 @@
             "lm_head"
         ]
     },
-    "dump_stats_path": "./test_outputs/unit_test"
+    "dump_stats_path": ""
 }

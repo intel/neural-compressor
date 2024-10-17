@@ -2,20 +2,38 @@ import typing
 
 import pytest
 import torch
-from habana_quantization_toolkit._quant_common.quant_config import ScaleMethod
-from habana_quantization_toolkit.tests import TestVector, run_accuracy_test
+
+from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import ScaleMethod
+
+from ...tester import *
 
 
-def get_test_vectors(*, dtype: torch.dtype, C_in: int, H: int, W: int) -> typing.Iterable[TestVector]:
+def get_test_vectors(
+    *, dtype: torch.dtype, C_in: int, H: int, W: int, atol: float = 0.2
+) -> typing.Iterable[TestVector]:
     yield TestVector(
         inputs=[torch.ones(1, C_in, H, W, dtype=dtype, device="hpu")],
-        atol=0.2,
+        atol=atol,
     )
 
 
-@pytest.mark.parametrize("hp_dtype", [torch.bfloat16, torch.float32])
-@pytest.mark.parametrize("lp_dtype", [torch.float8_e4m3fn])
-def test_conv2d_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype):
+@pytest.mark.parametrize("hp_dtype", [torch.bfloat16, torch.float32], ids=["bf16", "fp32"])
+@pytest.mark.parametrize("lp_dtype", [torch.float8_e4m3fn], ids=["fp8_e4m3fn"])
+@pytest.mark.parametrize("scale_method", ScaleMethod)
+def test_conv2d_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype, scale_method: ScaleMethod):
+    # TODO [SW-196641]: fix the following issues:
+    if scale_method in SCALE_METHODS_SEGFAULT:
+        pytest.skip("Not supported")
+    if scale_method in SCALE_METHODS_KEY_ERROR:
+        pytest.xfail("KeyError")
+    if scale_method in SCALE_METHODS_COMPILATION_ERROR:
+        pytest.xfail("Graph compile error")
+    quant_modes = QUANT_MODES_DEFAULT
+    atol = 0.2
+    if scale_method in SCALE_METHODS_QUANT_ONLY:
+        quant_modes = QUANT_MODES_QUANT_ONLY
+        if scale_method == ScaleMethod.HW_ALIGNED_SINGLE_SCALE:
+            atol = 1.0
     C_in = 1
     C_out = 1
     K = 3
@@ -34,6 +52,7 @@ def test_conv2d_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype):
             "dtype": hp_dtype,
         },
         lp_dtype=lp_dtype,
-        scale_method=ScaleMethod.MAXABS_HW,
-        test_vectors=get_test_vectors(dtype=hp_dtype, C_in=C_in, H=H, W=W),
+        scale_method=scale_method,
+        test_vectors=get_test_vectors(dtype=hp_dtype, C_in=C_in, H=H, W=W, atol=atol),
+        quant_modes=quant_modes,
     )

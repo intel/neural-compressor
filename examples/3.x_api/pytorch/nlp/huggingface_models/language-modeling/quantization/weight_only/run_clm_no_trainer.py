@@ -28,15 +28,10 @@ parser.add_argument("--dataset", nargs="?", default="NeelNanda/pile-10k", const=
 parser.add_argument("--output_dir", nargs="?", default="./saved_results")
 parser.add_argument("--quantize", action="store_true")
 parser.add_argument(
-    "--int8_bf16_mixed",
-    action="store_true",
-    help="By default it is int8-fp32 mixed, to enable int8 mixed amp bf16 (work on platforms like SPR)",
-)
-parser.add_argument(
     '--seed',
     type=int, default=42, help='Seed for sampling the calibration data.'
 )
-parser.add_argument("--int8", action="store_true")
+parser.add_argument("--load", action="store_true")
 parser.add_argument("--accuracy", action="store_true")
 parser.add_argument("--performance", action="store_true")
 parser.add_argument("--iters", default=100, type=int,
@@ -489,10 +484,8 @@ if args.quantize:
     user_model.save(args.output_dir)
 
 
-# TODO: we need run_benchmark.sh for loading and remove --accuracy in run_quant.sh, currently run_quant.sh will get fp32 result
-
-if args.int8 or args.int8_bf16_mixed:
-    print("load int8 model")
+if args.load:
+    print("load weight-only quantized model")
 
     from neural_compressor.torch.quantization import load
     user_model, _ = get_user_model()
@@ -530,28 +523,21 @@ if args.accuracy:
 
 if args.performance:
     user_model.eval()
-    from neural_compressor.evaluation.lm_eval import evaluate, LMEvalParser
+    batch_size, input_leng = args.batch_size, 512
+    example_inputs = torch.ones((batch_size, input_leng), dtype=torch.long)
+    print("Batch size = {:d}".format(batch_size))
+    print("The length of input tokens = {:d}".format(input_leng))
     import time
 
-    samples = args.iters * args.batch_size
-    eval_args = LMEvalParser(
-        model="hf",
-        user_model=user_model,
-        tokenizer=tokenizer,
-        batch_size=args.batch_size,
-        tasks=args.tasks,
-        limit=samples,
-        device="hpu" if is_hpex_available() else "cpu",
-    )
-    start = time.time()
-    results = evaluate(eval_args)
-    end = time.time()
-    for task_name in args.tasks.split(","):
-        if task_name == "wikitext":
-            acc = results["results"][task_name]["word_perplexity,none"]
-        else:
-            acc = results["results"][task_name]["acc,none"]
-    print("Accuracy: %.5f" % acc)
-    print('Throughput: %.3f samples/sec' % (samples / (end - start)))
-    print('Latency: %.3f ms' % ((end - start) * 1000 / samples))
-    print('Batch size = %d' % args.batch_size)
+    total_iters = args.iters
+    warmup_iters = 5
+    with torch.no_grad():
+        for i in range(total_iters):
+            if i == warmup_iters:
+                start = time.time()
+            user_model(example_inputs)
+        end = time.time()
+    latency = (end - start) / ((total_iters - warmup_iters) * args.batch_size)
+    throughput = ((total_iters - warmup_iters) * args.batch_size) / (end - start)
+    print("Latency: {:.3f} ms".format(latency * 10**3))
+    print("Throughput: {:.3f} samples/sec".format(throughput))

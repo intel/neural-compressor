@@ -20,7 +20,6 @@
 import math
 from abc import abstractmethod
 
-import numba
 import numpy as np
 import torch
 from torch.autograd import Function
@@ -436,240 +435,6 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
                 accelerator.synchronize()
         return unpacked_tensor
 
-    @staticmethod
-    @numba.jit(nopython=True, parallel=True)
-    def pack_array_with_numba_b4_c32(
-        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
-    ) -> np.ndarray:
-        """Pack the array with numba when bits=4 and compress_bits=32."""
-        for i in range(new_in_features):
-            packed_array[:, i] = (
-                ((raw_array[:, i * n_pack + 7] & 0b1111) << 28)
-                | ((raw_array[:, i * n_pack + 6] & 0b1111) << 24)
-                | ((raw_array[:, i * n_pack + 5] & 0b1111) << 20)
-                | ((raw_array[:, i * n_pack + 4] & 0b1111) << 16)
-                | ((raw_array[:, i * n_pack + 3] & 0b1111) << 12)
-                | ((raw_array[:, i * n_pack + 2] & 0b1111) << 8)
-                | ((raw_array[:, i * n_pack + 1] & 0b1111) << 4)
-                | (raw_array[:, i * n_pack] & 0b1111)
-            )
-        return packed_array
-
-    @staticmethod
-    @numba.jit(nopython=True, parallel=True)
-    def pack_array_with_numba_b4_c16(
-        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
-    ) -> np.ndarray:
-        """Pack the array with numba when bits=4 and compress_bits=16."""
-        for i in range(new_in_features):
-            packed_array[:, i] = (
-                ((raw_array[:, i * n_pack + 3] & 0b1111) << 12)
-                | ((raw_array[:, i * n_pack + 2] & 0b1111) << 8)
-                | ((raw_array[:, i * n_pack + 1] & 0b1111) << 4)
-                | (raw_array[:, i * n_pack] & 0b1111)
-            )
-        return packed_array
-
-    @staticmethod
-    @numba.jit(nopython=True, parallel=True)
-    def pack_array_with_numba_b4_c8(
-        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
-    ) -> np.ndarray:
-        """Pack the array with numba when bits=4 and compress_bits=8."""
-        for i in range(new_in_features):
-            packed_array[:, i] = ((raw_array[:, i * n_pack + 1] & 0b1111) << 4) | (raw_array[:, i * n_pack] & 0b1111)
-        return packed_array
-
-    @staticmethod
-    @numba.jit(nopython=True, parallel=True)
-    def pack_array_with_numba_b4_c64(
-        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
-    ) -> np.ndarray:
-        """Pack the array with numba when bits=4 and compress_bits=64."""
-        for i in range(new_in_features):
-            packed_array[:, i] = (
-                ((raw_array[:, i * n_pack + 15] & 0b1111) << 60)
-                | ((raw_array[:, i * n_pack + 14] & 0b1111) << 56)
-                | ((raw_array[:, i * n_pack + 13] & 0b1111) << 52)
-                | ((raw_array[:, i * n_pack + 12] & 0b1111) << 48)
-                | ((raw_array[:, i * n_pack + 11] & 0b1111) << 44)
-                | ((raw_array[:, i * n_pack + 10] & 0b1111) << 40)
-                | ((raw_array[:, i * n_pack + 9] & 0b1111) << 36)
-                | ((raw_array[:, i * n_pack + 8] & 0b1111) << 32)
-                | ((raw_array[:, i * n_pack + 7] & 0b1111) << 28)
-                | ((raw_array[:, i * n_pack + 6] & 0b1111) << 24)
-                | ((raw_array[:, i * n_pack + 5] & 0b1111) << 20)
-                | ((raw_array[:, i * n_pack + 4] & 0b1111) << 16)
-                | ((raw_array[:, i * n_pack + 3] & 0b1111) << 12)
-                | ((raw_array[:, i * n_pack + 2] & 0b1111) << 8)
-                | ((raw_array[:, i * n_pack + 1] & 0b1111) << 4)
-                | (raw_array[:, i * n_pack] & 0b1111)
-            )
-        return packed_array
-
-    @staticmethod
-    @numba.jit(nopython=True, parallel=True)
-    def pack_array_with_numba_b8_c32(
-        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
-    ) -> np.ndarray:
-        """Pack the array with numba when bits=8 and compress_bits=32."""
-        for i in range(new_in_features):
-            packed_array[:, i] = (
-                ((raw_array[:, i * n_pack + 3] & 0b11111111) << 24)
-                | ((raw_array[:, i * n_pack + 2] & 0b11111111) << 16)
-                | ((raw_array[:, i * n_pack + 1] & 0b11111111) << 8)
-                | (raw_array[:, i * n_pack] & 0b11111111)
-            )
-        return packed_array
-
-    @staticmethod
-    @numba.jit(nopython=True, parallel=True)
-    def pack_array_with_numba_b8_c16(
-        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
-    ) -> np.ndarray:
-        """Pack the array with numba when bits=8 and compress_bits=16."""
-        for i in range(new_in_features):
-            packed_array[:, i] = (
-                ((raw_array[:, i * n_pack + 3] & 0b11111111) << 24)
-                | ((raw_array[:, i * n_pack + 2] & 0b11111111) << 16)
-                | ((raw_array[:, i * n_pack + 1] & 0b11111111) << 8)
-                | (raw_array[:, i * n_pack] & 0b11111111)
-            )
-        return packed_array
-
-    @staticmethod
-    @numba.jit(nopython=True, parallel=True)
-    def pack_array_with_numba_b8_c8(
-        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
-    ) -> np.ndarray:
-        """Pack the array with numba when bits=8 and compress_bits=8."""
-        for i in range(new_in_features):
-            packed_array[:, i] = raw_array[:, i * n_pack] & 0b11111111
-        return packed_array
-
-    @staticmethod
-    @numba.jit(nopython=True, parallel=True)
-    def pack_array_with_numba_b8_c64(
-        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
-    ) -> np.ndarray:
-        """Pack the array with numba when bits=8 and compress_bits=64."""
-        for i in range(new_in_features):
-            packed_array[:, i] = (
-                ((raw_array[:, i * n_pack + 7] & 0b11111111) << 56)
-                | ((raw_array[:, i * n_pack + 6] & 0b11111111) << 48)
-                | ((raw_array[:, i * n_pack + 5] & 0b11111111) << 40)
-                | ((raw_array[:, i * n_pack + 4] & 0b11111111) << 32)
-                | ((raw_array[:, i * n_pack + 3] & 0b11111111) << 24)
-                | ((raw_array[:, i * n_pack + 2] & 0b11111111) << 16)
-                | ((raw_array[:, i * n_pack + 1] & 0b11111111) << 8)
-                | (raw_array[:, i * n_pack] & 0b11111111)
-            )
-        return packed_array
-
-    @staticmethod
-    @numba.jit(nopython=True, parallel=True)
-    def pack_array_with_numba_b2_c32(
-        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
-    ) -> np.ndarray:
-        """Pack the array with numba when bits=2 and compress_bits=32."""
-        for i in range(new_in_features):
-            packed_array[:, i] = (
-                ((raw_array[:, i * n_pack + 15] & 0b11) << 30)
-                | ((raw_array[:, i * n_pack + 14] & 0b11) << 28)
-                | ((raw_array[:, i * n_pack + 13] & 0b11) << 26)
-                | ((raw_array[:, i * n_pack + 12] & 0b11) << 24)
-                | ((raw_array[:, i * n_pack + 11] & 0b11) << 22)
-                | ((raw_array[:, i * n_pack + 10] & 0b11) << 20)
-                | ((raw_array[:, i * n_pack + 9] & 0b11) << 18)
-                | ((raw_array[:, i * n_pack + 8] & 0b11) << 16)
-                | ((raw_array[:, i * n_pack + 7] & 0b11) << 14)
-                | ((raw_array[:, i * n_pack + 6] & 0b11) << 12)
-                | ((raw_array[:, i * n_pack + 5] & 0b11) << 10)
-                | ((raw_array[:, i * n_pack + 4] & 0b11) << 8)
-                | ((raw_array[:, i * n_pack + 3] & 0b11) << 6)
-                | ((raw_array[:, i * n_pack + 2] & 0b11) << 4)
-                | ((raw_array[:, i * n_pack + 1] & 0b11) << 2)
-                | (raw_array[:, i * n_pack] & 0b11)
-            )
-        return packed_array
-
-    @staticmethod
-    @numba.jit(nopython=True, parallel=True)
-    def pack_array_with_numba_b2_c16(
-        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
-    ) -> np.ndarray:
-        """Pack the array with numba when bits=2 and compress_bits=16."""
-        for i in range(new_in_features):
-            packed_array[:, i] = (
-                ((raw_array[:, i * n_pack + 7] & 0b11) << 14)
-                | ((raw_array[:, i * n_pack + 6] & 0b11) << 12)
-                | ((raw_array[:, i * n_pack + 5] & 0b11) << 10)
-                | ((raw_array[:, i * n_pack + 4] & 0b11) << 8)
-                | ((raw_array[:, i * n_pack + 3] & 0b11) << 6)
-                | ((raw_array[:, i * n_pack + 2] & 0b11) << 4)
-                | ((raw_array[:, i * n_pack + 1] & 0b11) << 2)
-                | (raw_array[:, i * n_pack] & 0b11)
-            )
-        return packed_array
-
-    @staticmethod
-    @numba.jit(nopython=True, parallel=True)
-    def pack_array_with_numba_b2_c8(
-        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
-    ) -> np.ndarray:
-        """Pack the array with numba when bits=2 and compress_bits=8."""
-        for i in range(new_in_features):
-            packed_array[:, i] = (
-                ((raw_array[:, i * n_pack + 3] & 0b11) << 6)
-                | ((raw_array[:, i * n_pack + 2] & 0b11) << 4)
-                | ((raw_array[:, i * n_pack + 1] & 0b11) << 2)
-                | (raw_array[:, i * n_pack] & 0b11)
-            )
-        return packed_array
-
-    @staticmethod
-    @numba.jit(nopython=True, parallel=True)
-    def pack_array_with_numba_b2_c64(
-        raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
-    ) -> np.ndarray:
-        """Pack the array with numba when bits=2 and compress_bits=64."""
-        for i in range(new_in_features):
-            packed_array[:, i] = (
-                ((raw_array[:, i * n_pack + 31] & 0b11) << 62)
-                | ((raw_array[:, i * n_pack + 30] & 0b11) << 60)
-                | ((raw_array[:, i * n_pack + 29] & 0b11) << 58)
-                | ((raw_array[:, i * n_pack + 28] & 0b11) << 56)
-                | ((raw_array[:, i * n_pack + 27] & 0b11) << 54)
-                | ((raw_array[:, i * n_pack + 26] & 0b11) << 52)
-                | ((raw_array[:, i * n_pack + 25] & 0b11) << 50)
-                | ((raw_array[:, i * n_pack + 24] & 0b11) << 48)
-                | ((raw_array[:, i * n_pack + 23] & 0b11) << 46)
-                | ((raw_array[:, i * n_pack + 22] & 0b11) << 44)
-                | ((raw_array[:, i * n_pack + 21] & 0b11) << 42)
-                | ((raw_array[:, i * n_pack + 20] & 0b11) << 40)
-                | ((raw_array[:, i * n_pack + 19] & 0b11) << 38)
-                | ((raw_array[:, i * n_pack + 18] & 0b11) << 36)
-                | ((raw_array[:, i * n_pack + 17] & 0b11) << 34)
-                | ((raw_array[:, i * n_pack + 16] & 0b11) << 32)
-                | ((raw_array[:, i * n_pack + 15] & 0b11) << 30)
-                | ((raw_array[:, i * n_pack + 14] & 0b11) << 28)
-                | ((raw_array[:, i * n_pack + 13] & 0b11) << 26)
-                | ((raw_array[:, i * n_pack + 12] & 0b11) << 24)
-                | ((raw_array[:, i * n_pack + 11] & 0b11) << 22)
-                | ((raw_array[:, i * n_pack + 10] & 0b11) << 20)
-                | ((raw_array[:, i * n_pack + 9] & 0b11) << 18)
-                | ((raw_array[:, i * n_pack + 8] & 0b11) << 16)
-                | ((raw_array[:, i * n_pack + 7] & 0b11) << 14)
-                | ((raw_array[:, i * n_pack + 6] & 0b11) << 12)
-                | ((raw_array[:, i * n_pack + 5] & 0b11) << 10)
-                | ((raw_array[:, i * n_pack + 4] & 0b11) << 8)
-                | ((raw_array[:, i * n_pack + 3] & 0b11) << 6)
-                | ((raw_array[:, i * n_pack + 2] & 0b11) << 4)
-                | ((raw_array[:, i * n_pack + 1] & 0b11) << 2)
-                | (raw_array[:, i * n_pack] & 0b11)
-            )
-        return packed_array
-
     def pack_array_with_numba(
         self, raw_array: np.ndarray, n_pack: int, bits: int, compress_bits: int, compression_dtype=np.int32
     ) -> np.ndarray:
@@ -685,14 +450,32 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
         Returns:
             np.ndarray: The packed array.
         """
+        # Try to pack with numba to accelerate the packing process.
+        # If numba is not availabll or the packing method is not supported,
+        # fallback to the torch implementation.
+        try:
+            import numba
+
+            numba.config.THREADING_LAYER = "safe"
+        except ImportError:
+            logger.warning("To accelerate packing, please install numba with `pip install numba tbb`.")
+            return self.pack_tensor_with_torch(torch.from_numpy(raw_array)).cpu().numpy()
+        except Exception as e:
+            logger.warning(f"Import numba failed with error: {e}, fallback to torch implementation.")
+            return self.pack_tensor_with_torch(torch.from_numpy(raw_array)).cpu().numpy()
+        from neural_compressor.torch.utils.bit_packer import bit_packers
+
+        pack_func_name = (bits, compress_bits)
+        if pack_func_name not in bit_packers:
+            logger.warning(
+                f"Unsupported packing with bits: {bits}, compress_bits: {compress_bits} using numba, fallback to torch implementation."
+            )
+            return self.pack_tensor_with_torch(torch.from_numpy(raw_array)).cpu().numpy()
         out_features, in_features = raw_array.shape
         new_in_features = (in_features + n_pack - 1) // n_pack
         packed_array = np.zeros((out_features, new_in_features), dtype=compression_dtype)
         raw_array = raw_array.astype(compression_dtype)
-
-        pack_method_name = f"pack_array_with_numba_b{bits}_c{compress_bits}"
-        pack_method = getattr(self, pack_method_name)
-        numba.config.THREADING_LAYER = "safe"
+        pack_method = bit_packers[pack_func_name]
         return pack_method(raw_array, packed_array, n_pack, new_in_features)
 
     def pack_tensor_with_numpy_impl(self, raw_tensor):
@@ -716,6 +499,8 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
 
     def pack_tensor_with_numpy(self, raw_tensor):
         """Pack the tensor with numpy."""
+        if self.bits == 8 and self.compression_dtype == torch.int8:
+            return raw_tensor
         if self.bits not in [2, 4, 8]:
             return self.pack_tensor_with_numpy_impl(raw_tensor)
         compression_dtype = torch.tensor(0, dtype=self.compression_dtype).numpy().dtype
@@ -727,7 +512,10 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
     def unpack_tensor_with_numpy(self, packed_tensor):
         """Unpack the packed tensor with numpy."""
         packed_array = packed_tensor.cpu().numpy()
-        target_dtype = np.int8 if not hasattr(self, "qzeros") or "int" not in self.dtype else np.uint8
+        target_dtype = np.int16
+        if self.bits == 8 and self.compression_dtype == torch.int8 and hasattr(self, "qzeros"):
+            # special case for unpacking uint8 date from int8 compression_dtype
+            target_dtype = np.uint8
         target_len = packed_array.shape[1] * self.n_pack
         unpacked_array = np.zeros((packed_array.shape[0], target_len), dtype=target_dtype)
         mask = np.uint8(2**self.bits - 1)
@@ -737,7 +525,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
                 tmp = packed_array[:, j]
                 tmp = np.left_shift(tmp, self.compress_bits - self.bits * (e + 1))
                 tmp = np.right_shift(tmp, self.compress_bits - self.bits)
-                if target_dtype == np.uint8:
+                if hasattr(self, "qzeros"):
                     tmp &= mask
                 unpacked_array[:, index] = tmp.astype(target_dtype)
                 accelerator.synchronize()
@@ -746,14 +534,14 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
 
     def pack_tensor(self, raw_tensor):
         """Pack tensor."""
-        if "cuda" in raw_tensor.device.type or "hpu" in raw_tensor.device.type:
+        if "cuda" in raw_tensor.device.type:
             return self.pack_tensor_with_torch(raw_tensor)
         else:
             return self.pack_tensor_with_numpy(raw_tensor)
 
     def unpack_tensor(self, packed_tensor):
         """Unpack tensor."""
-        if "cuda" in packed_tensor.device.type or "hpu" in packed_tensor.device.type:
+        if "cuda" in packed_tensor.device.type:
             return self.unpack_tensor_with_torch(packed_tensor)
         else:
             return self.unpack_tensor_with_numpy(packed_tensor)

@@ -2,15 +2,37 @@ from __future__ import annotations
 
 import itertools
 import logging
-import os.path
+import os
 import random
 import typing
 from dataclasses import dataclass
 
-import habana_frameworks as htcore
 import torch
-from habana_quantization_toolkit._core.common import mod_default_dict
-from habana_quantization_toolkit._quant_common.quant_config import Fp8cfg, QuantMode, ScaleMethod
+
+from neural_compressor.torch.algorithms.fp8_quant._core.common import mod_default_dict
+from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import Fp8cfg, QuantMode, ScaleMethod
+
+# TODO [SW-196641]: fix the following issues:
+SCALE_METHODS_SEGFAULT = [
+    ScaleMethod.ACT_MAXABS_HW_WEIGHTS_PCS_OPT_POW2,
+    ScaleMethod.ACT_MAXABS_POW2_WEIGHTS_PCS_OPT_POW2,
+    ScaleMethod.MAXABS_HW_OPT_WEIGHT,
+    ScaleMethod.MAXABS_POW2_OPT_WEIGHT,
+]
+SCALE_METHODS_KEY_ERROR = [
+    ScaleMethod.MAX,
+    ScaleMethod.SMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2,
+    ScaleMethod.WEAKSMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2,
+    ScaleMethod.SMOOTHQUANT_OPT,
+]
+SCALE_METHODS_COMPILATION_ERROR = [
+    ScaleMethod.ACT_MAXABS_HW_WEIGHTS_PCS_MAXABS_POW2,
+    ScaleMethod.ACT_MAXABS_POW2_WEIGHTS_PCS_MAXABS_POW2,
+]
+SCALE_METHODS_QUANT_ONLY = [ScaleMethod.UNIT_SCALE, ScaleMethod.HW_ALIGNED_SINGLE_SCALE]
+
+QUANT_MODES_DEFAULT = [QuantMode.MEASURE, QuantMode.QUANTIZE]
+QUANT_MODES_QUANT_ONLY = [QuantMode.QUANTIZE]
 
 
 @dataclass
@@ -51,6 +73,7 @@ def run_accuracy_test(
     measure_vectors: typing.Optional[typing.Iterable[TestVector]] = None,
     test_vectors: typing.Iterable[TestVector],
     seed: typing.Optional[int] = None,
+    quant_modes: typing.Iterable[list] = QUANT_MODES_DEFAULT,
 ):
     """Run both the reference and the quantized versions of this module,
     and compare the outputs on every test vector.
@@ -59,8 +82,6 @@ def run_accuracy_test(
 
     This test also makes asserts the quantization actually happened.
     This may be moved to another tests in the future.
-
-    You can use the generate_test_vectors.py script to generate input test vectors.
 
     Args:
         module_class: The reference module class to test.
@@ -81,8 +102,8 @@ def run_accuracy_test(
     if measure_vectors is None:
         measure_vectors, test_vectors = itertools.tee(test_vectors)
 
-    for mode in [QuantMode.MEASURE, QuantMode.QUANTIZE]:
-        import habana_quantization_toolkit.prepare_quant.prepare_model as hqt
+    for mode in quant_modes:
+        import neural_compressor.torch.algorithms.fp8_quant.prepare_quant.prepare_model as prepare_model
 
         reference_model = WrapModel(module_class, seed, *module_args, **module_kwargs)
         quantized_model = WrapModel(module_class, seed, *module_args, **module_kwargs)
@@ -92,7 +113,7 @@ def run_accuracy_test(
             lp_dtype=lp_dtype,
             scale_method=scale_method,
         )
-        hqt._prep_model_with_predefined_config(quantized_model, config=config)
+        prepare_model._prep_model_with_predefined_config(quantized_model, config=config)
 
         _assert_quantized_correctly(reference_model=reference_model, quantized_model=quantized_model)
 
@@ -120,7 +141,7 @@ def run_accuracy_test(
                 f"\n  {scale_method.name=}"
             )
 
-        hqt.finish_measurements(quantized_model)
+        prepare_model.finish_measurements(quantized_model)
 
 
 def _set_optional_seed(*, module_class: typing.Type[M], seed: typing.Optional[int]):
@@ -172,10 +193,11 @@ class WrapModel(torch.nn.Module):
         return any(module._get_name() == module_name for module in self.modules())
 
 
-TEST_ONLY_OUTPUT_DIRECTORY = "habana_quantization_toolkit/tests/output/"
+dir_path = os.path.dirname(os.path.realpath(__file__))
+TEST_ONLY_OUTPUT_DIRECTORY = f"{dir_path}/test/3x/torch/algorithms/fp8_quant/output/"
 
 
-def get_test_unique_dump_path():
+def get_test_unique_dump_path(scale_method: ScaleMethod):
     # This is a unique id of the test including the parameters, thanks to pytest.
     # TODO: make sure this globally-ever unique (probably add global init timestamp)
     unique_test_id = os.environ.get("PYTEST_CURRENT_TEST")
@@ -202,6 +224,6 @@ def _get_test_only_config(
             "observer": "maxabs",
             "fp8_config": str(lp_dtype).replace("torch.float8_", "")[:4],
             "scale_method": scale_method.name,
-            "dump_stats_path": get_test_unique_dump_path(),
+            "dump_stats_path": get_test_unique_dump_path(scale_method),
         }
     )

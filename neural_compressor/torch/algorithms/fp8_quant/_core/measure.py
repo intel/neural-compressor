@@ -28,6 +28,16 @@ gmod_list = []
 
 
 def patch_module_measure(mod, mconfig, mod_dict):
+    """Replaces the module with patched module according to mconfig.
+
+    Args:
+        mod (nn.module): The module that will be replaced with patched module that measures the inputs.
+        mconfig (e.g. MaxAbsObserver/MaxAbsPerChannelObserver): The observer object that will measure the parameters.
+        mod_dict (dict): dictionary from module name to its patched module.
+
+    Returns:
+        nn.module: The new module after patching.
+    """
     parent = parent_child_mod_dict[mod].parent
     name = parent_child_mod_dict[mod].name
     patched_mod = mod_dict[mod.__class__.__name__].patched_module(mod, mconfig, name)
@@ -72,9 +82,15 @@ def init_measure_object(mod, name, observer_class, mod_type, skip_measure_output
 
 
 def prepare_model(model, mod_list=None):
+    """Defines the observer class and modules for measurement as preparation.
+
+    Args:
+        model (nn.module): The model that will be measured.
+        mod_list (list, optional): The specific submodules that will be measured in the model. Defaults to None.
+    """
     config = get_hqt_config(model).cfg
     observer_class = observer_types[config["observer"]]
-    if (config["shape_file"] is not None) and (observer_class != ShapeObserver):
+    if (config.get("shape_file", None) is not None) and (observer_class != ShapeObserver):
         shapes_fname = config["shape_file"] + ".json"
         d_shapes = load_file(shapes_fname, ShapeList, False)
     else:
@@ -85,6 +101,16 @@ def prepare_model(model, mod_list=None):
 
 
 def register_patched_measure_modules(model, mod_list, observer_class, d_shapes=None):
+    """Replace the submodules of the model that appear in mod_list with a patched submodule that uses the given observer_class
+    so the submodule will perform measurement on inputs/outputs in forward stage.
+    Weights measurement is done during model preparation as they are static.
+
+    Args:
+        model (nn.module): The model that will be measured.
+        mod_list (list): The specific submodules that will be measured in the model.
+        observer_class (e.g. MaxAbsObserver/MaxAbsPerChannelObserver): The observer type that will measure the weights.
+        d_shapes (dict, optional): Defaults to None.
+    """
     top_level_config = get_hqt_config(model)
     config = top_level_config.cfg
     skip_outputs_measurements = config["measure_exclude"] & (MeasureExclude.OUTPUT | MeasureExclude.ALL)
@@ -104,22 +130,27 @@ def register_patched_measure_modules(model, mod_list, observer_class, d_shapes=N
                 )
                 patched_types.add(type(mod))
 
-                mod_extra_config = init_measure_object(
-                    mod,
-                    name,
-                    observer_class,
-                    mod_types[mod_type],
-                    skip_outputs_measurements,
-                    (d_shapes[name] if ((d_shapes is not None) and (name in d_shapes)) else None),
-                    params,
-                )
                 set_hqt_config(mod, top_level_config)  # set config in the module, as it consumed by the patched module
+                mod_extra_config = (
+                    init_measure_object(
+                        mod,
+                        name,
+                        observer_class,
+                        mod_types[mod_type],
+                        skip_outputs_measurements,
+                        (d_shapes[name] if ((d_shapes is not None) and (name in d_shapes)) else None),
+                        params,
+                    )
+                    if mod_default_dict[mod_type_str].should_measure
+                    else None
+                )
                 pmod = patch_module_measure(mod, mod_extra_config, mod_default_dict)
-                for param_name in pmod._mod_extra_config.params:
-                    param = getattr(pmod, param_name)
-                    param = param.to("hpu")
-                    pmod._mod_extra_config.params[param_name].measure(param)
-                    htcore.mark_step()
+                if pmod._mod_extra_config:
+                    for param_name in pmod._mod_extra_config.params:
+                        param = getattr(pmod, param_name)
+                        param = param.to("hpu")
+                        pmod._mod_extra_config.params[param_name].measure(param)
+                        htcore.mark_step()
                 if observer_class == SaveObserver:
                     save_module(pmod)
                 patched_modules.append(name)
@@ -146,7 +177,7 @@ def is_measure_done(mod_extra_config):
 def get_mod_extra_config_dict(model):
     mcd = {}
     for name, mod in model.named_modules():
-        if hasattr(mod, "_mod_extra_config"):
+        if hasattr(mod, "_mod_extra_config") and mod._mod_extra_config:
             if is_measure_done(mod._mod_extra_config):
                 name = name.replace("_orig_mod.", "")  # remove _orig_mod part added by dynamo mechanism
                 mcd[name] = mod._mod_extra_config
@@ -254,26 +285,13 @@ class MaxAbsObserver:
         self.mod = mod
         self.first = True
         self.used = False
-        self.state = self.init_state_from_shape(d_shape)
-
-    def init_state(self, x):
-        device = x.device
-        state = torch.zeros((1, 1), device=device, dtype=torch.float32)
-        self.shape = list(x.shape)
-        return state
-
-    def init_state_from_shape(self, x_shape, device="hpu"):
-        state = torch.zeros((1, 1), device=device, dtype=torch.float32)
-        self.first = False
-        return state
+        config = get_hqt_config(mod).cfg
+        self.state = torch.zeros((1, 1), device="hpu", dtype=config["hp_dtype"])
 
     def update_state(self, x):
         self.state.copy_(torch.maximum(torch.max(torch.abs(x)), self.state))
 
     def measure(self, x):
-        if self.first:
-            self.state = self.init_state(x)
-            self.first = False
         self.update_state(x)
         self.used = True
 

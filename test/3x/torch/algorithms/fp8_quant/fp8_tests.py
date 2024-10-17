@@ -1,6 +1,7 @@
 import habana_frameworks.torch.core as htcore
-import habana_quantization_toolkit
 import torch
+
+import neural_compressor.torch.algorithms.fp8_quant
 
 # This file is for small tests run for debug flow and accuracy. (Not for CI)
 
@@ -73,7 +74,7 @@ model = TinyModel()
 model.eval()
 model = model.to("hpu").to(torch.bfloat16)
 htcore.hpu_initialize()
-habana_quantization_toolkit.prep_model(model)  # fp8 additions
+neural_compressor.torch.algorithms.fp8_quant.prep_model(model)  # fp8 additions
 
 
 with torch.no_grad():
@@ -148,7 +149,7 @@ with torch.no_grad():
 
     # Test3: (Disable (comment) all other tests, delete all files from the test_outputs folder)
     #        (Change Line 73 above to: model = TinyModel3())
-    # Run: (add LOG_LEVEL_HQT=0/1 for additional logs)
+    # Run: (add LOG_LEVEL_INC=0/1 for additional logs)
     #      (Uncomment lines 164+165)
     # 1) QUANT_CONFIG=test_jsons/test_measure.json python3 fp8_tests.py
     # 2) QUANT_CONFIG=test_jsons/test_hw_quant.json python3 fp8_tests.py
@@ -170,4 +171,4 @@ with torch.no_grad():
     # 5) tensor([[232.]], device='hpu:0', dtype=torch.bfloat16)
 
     # fp8 additions
-    habana_quantization_toolkit.finish_measurements(model)
+    neural_compressor.torch.algorithms.fp8_quant.finish_measurements(model)

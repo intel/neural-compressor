@@ -1,0 +1,16 @@
+{
+    "mode": "QUANTIZE",
+    "observer": "maxabs",
+    "scale_method": "hw_aligned_single_scale",
+    "allowlist": {
+        "types": [],
+        "names": []
+    },
+    "blocklist": {
+        "types": [],
+        "names": [
+            "lm_head"
+        ]
+    },
+    "dump_stats_path": ""
+}

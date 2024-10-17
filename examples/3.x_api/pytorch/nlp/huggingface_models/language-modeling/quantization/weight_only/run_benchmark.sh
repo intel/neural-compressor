@@ -66,7 +66,7 @@ function run_benchmark {
     fi
 
     if [[ ${int8} == "true" ]]; then
-        extra_cmd=$extra_cmd" --int8"
+        extra_cmd=$extra_cmd" --load"
     fi
     echo $extra_cmd
 

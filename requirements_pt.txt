@@ -1,8 +1,6 @@
-numba
-numpy < 2.0
-peft
+numpy==1.23.5 ; python_version < '3.12'
+numpy<2.0 ; python_version >= '3.12'
 prettytable
 psutil
 py-cpuinfo
 pydantic
-tbb

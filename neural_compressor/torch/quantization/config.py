@@ -1736,20 +1736,13 @@ def get_default_hqq_config() -> HQQConfig:
 
 
 ######################## FP8 Quant Config ###############################
-# refer to habana_quantization_toolkit/_core/common.py
-FP8_WHITE_LIST = [
-    "Matmul",
-    "Linear",
-    "FalconLinear",
-    "KVCache",
-    "Conv2d",
-    "LoRACompatibleLinear",
-    "LoRACompatibleConv",
-    "Softmax",
-    "ModuleFusedSDPA",
-]
-if importlib.util.find_spec("deepspeed"):
-    FP8_WHITE_LIST.extend(["LinearLayer", "LinearAllreduce", "ScopedLinearAllReduce", "LmHeadLinearAllreduce"])
+
+if is_hpex_available():
+    from ..algorithms.fp8_quant._core.common import mod_default_dict
+
+    FP8_WHITE_LIST = list(mod_default_dict.keys())
+else:
+    FP8_WHITE_LIST = list()
 
 
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=FP8_QUANT)
@@ -1757,13 +1750,6 @@ class FP8Config(TorchBaseConfig):
     """Config class for FP8 quantization."""
 
     name = FP8_QUANT
-
-    # tunable params
-    params_list = [
-        "fp8_config",
-        "scale_method",
-        "observer",
-    ]
 
     def __init__(
         self,
@@ -1778,6 +1764,8 @@ class FP8Config(TorchBaseConfig):
         observer: str = "maxabs",
         mod_dict: dict = {},
         measure_exclude: str = "OUTPUT",
+        fake_quant: bool = False,
+        scale_format: str = "const",
         **kwargs,
     ):
         """Initializing FP8Config.
@@ -1786,14 +1774,16 @@ class FP8Config(TorchBaseConfig):
             dump_stats_path (str, optional): The file folder and file prefix to save measurement info. Defaults to "./hqt_output/measure".
             fp8_config (str, optional): The data type of fp8. Defaults to "E4M3".
             hp_dtype (str, optional): The high precision data type used in fp8 quantization. Defaults to "bf16".
-            blocklist (dict, optional): whether to skip fp8 quantization for specific op names or types, name could be substring. Defaults to {"names": [], "types": ()}.
-            allowlist (dict, optional): whether to execute fp8 quantization for specific op names or types. Defaults to {"names": [], "types": FP8_WHITE_LIST}.
+            blocklist (dict, optional): Whether to skip fp8 quantization for specific op names or types, name could be substring. Defaults to {"names": [], "types": ()}.
+            allowlist (dict, optional): Whether to execute fp8 quantization for specific op names or types. Defaults to {"names": [], "types": FP8_WHITE_LIST}.
             mode (str, optional): Choose the quantization mode. Defaults to "AUTO".
             scale_method (str, optional): Select method used to generate scale from calibration info. Defaults to "maxabs_hw".
             scale_params (dict, optional): _description_. Defaults to {}.
             observer (str, optional): Params of scales. Defaults to "maxabs".
             mod_dict (dict, optional): The dict of modules to quantize. Defaults to {}.
             measure_exclude (str, optional): Select INPUT/OUTPUT to be exculded by measurement. Defaults to "OUTPUT".
+            fake_quant (bool, optional): Whether to use fake quantization. Defaults to False.
+            scale_format (str, optional): Select the expression type of scale value, which may impact the performance. Defaults to const.
         """
         super().__init__()
         self.dump_stats_path = dump_stats_path
@@ -1807,6 +1797,8 @@ class FP8Config(TorchBaseConfig):
         self.observer = observer
         self.mod_dict = mod_dict
         self._json_file = None
+        self.fake_quant = str(fake_quant)
+        self.scale_format = scale_format
 
     @property
     def measure(self):

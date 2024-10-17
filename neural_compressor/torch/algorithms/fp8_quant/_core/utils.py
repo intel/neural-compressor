@@ -42,6 +42,13 @@ def is_substr(substr_list, target):
 
 
 def prepare_model(model):
+    """Receives the parent module to quantize.
+    Replaces its submodules with patched submodules that perform calibration and quantization.
+    Returns the patched parent module that can perform calibration or quantization according to the configuration.
+
+    Args:
+        model (nn.module): The model that will be measured/quantized.
+    """
     config = get_hqt_config(model)
     update_mod_dict(config)
     allowlist = set(config.cfg["mod_dict"].keys())
@@ -55,7 +62,10 @@ def prepare_model(model):
         mod_type = mod.__class__.__name__
         if (
             (mod_type in allowlist_tuple)
-            and (is_substr(config.cfg["allowlist"]["names"], name) or len(config.cfg["allowlist"]["names"]) == 0)
+            and (
+                ((mod_type in config.cfg["allowlist"]["types"]) or (is_substr(config.cfg["allowlist"]["names"], name)))
+                or ((len(config.cfg["allowlist"]["names"]) == 0) and len(config.cfg["allowlist"]["types"]) == 0)
+            )
             and (not is_substr(config.cfg["blocklist"]["names"], name))
         ):
             mod_list.append(name)

@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import torch
+from habana_frameworks.torch.utils.experimental import _get_device_type
 from tqdm import tqdm
 
 from ..common import *
@@ -23,7 +24,8 @@ def linear_smoothquant_weights_opt_pow2_scales(mod, measurement, params):
     device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    fullscale = MAX_RANGE[lp_dtype]
+    device_type = _get_device_type()
+    fullscale = get_fullscale(lp_dtype, device_type)
     input_backoff = params["input_backoff"]
     weight_backoff = params["weight_backoff"]
     alpha = params["alpha"]
@@ -60,7 +62,8 @@ def linear_smoothquant_weights_maxabs_pow2_scales(mod, measurement, params):
     device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    fullscale = MAX_RANGE[lp_dtype]
+    device_type = _get_device_type()
+    fullscale = get_fullscale(lp_dtype, device_type)
     input_backoff = params["input_backoff"]
     weight_backoff = params["weight_backoff"]
     alpha = params["alpha"]
@@ -92,7 +95,8 @@ def linear_weaksmoothquant_weights_maxabs_pow2_scales(mod, measurement, params):
     device = torch.device("hpu")
     lp_dtype = params["lp_dtype"]
     hp_dtype = params["hp_dtype"]
-    fullscale = MAX_RANGE[lp_dtype]
+    device_type = _get_device_type()
+    fullscale = get_fullscale(lp_dtype, device_type)
     input_backoff = params["input_backoff"]
     weight_backoff = params["weight_backoff"]
     alpha = params["alpha"]

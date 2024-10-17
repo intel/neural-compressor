@@ -26,8 +26,12 @@ import torch
 
 from ..utils.logger import logger
 
-local_rank = int(os.getenv("LOCAL_RANK", "-1"))
-world_size = int(os.getenv("WORLD_SIZE", "-1"))
+try:
+    world_size = torch.distributed.get_world_size()
+    local_rank = torch.distributed.get_rank()
+except:
+    world_size = -1
+    local_rank = -1
 
 
 class QuantMode(Enum):
@@ -45,20 +49,59 @@ class MeasureExclude(Flag):
     ALL = auto()
 
 
+class SupportedFp8(Enum):
+    E4M3 = torch.float8_e4m3fn
+    E5M2 = torch.float8_e5m2
+
+
+class HpDtype(Enum):
+    BF16 = torch.bfloat16
+    FP16 = torch.float16
+    FP32 = torch.float32
+
+
 class ScaleMethod(Enum):
     MAX = 1
     UNIT_SCALE = 2
-    MAXABS_HW = 3
-    MAXABS_POW2 = 4
-    SMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2 = 5
-    WEAKSMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2 = 6
-    ACT_MAXABS_HW_WEIGHTS_PCS_MAXABS_POW2 = 7
-    ACT_MAXABS_HW_WEIGHTS_PCS_OPT_POW2 = 8
-    ACT_MAXABS_POW2_WEIGHTS_PCS_MAXABS_POW2 = 9
-    ACT_MAXABS_POW2_WEIGHTS_PCS_OPT_POW2 = 10
-    SMOOTHQUANT_OPT = 11
-    MAXABS_HW_OPT_WEIGHT = 12
-    MAXABS_POW2_OPT_WEIGHT = 13
+    HW_ALIGNED_SINGLE_SCALE = 3
+    MAXABS_HW = 4
+    MAXABS_POW2 = 5
+    SMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2 = 6
+    WEAKSMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2 = 7
+    ACT_MAXABS_HW_WEIGHTS_PCS_MAXABS_POW2 = 8
+    ACT_MAXABS_HW_WEIGHTS_PCS_OPT_POW2 = 9
+    ACT_MAXABS_POW2_WEIGHTS_PCS_MAXABS_POW2 = 10
+    ACT_MAXABS_POW2_WEIGHTS_PCS_OPT_POW2 = 11
+    SMOOTHQUANT_OPT = 12
+    MAXABS_HW_OPT_WEIGHT = 13
+    MAXABS_POW2_OPT_WEIGHT = 14
+
+
+class TrueFalse(Enum):
+    TRUE = True
+    FALSE = False
+
+
+class ScaleFormat(Enum):
+    CONST = 1  # scales is const and persistent tensor
+    SCALAR = 2  # scales is non-const, non-persistent tensor with data ptr, used for low BS performance optimization
+
+
+_config_to_enum = {
+    "mode": QuantMode,
+    "measure_exclude": MeasureExclude,
+    "fp8_config": SupportedFp8,
+    "hp_dtype": HpDtype,
+    "scale_method": ScaleMethod,
+    "recalc_scales": TrueFalse,
+    "ignore_modules_wo_measures": TrueFalse,
+    "fake_quant": TrueFalse,
+    "scale_format": ScaleFormat,
+}
+
+
+_configs_that_use_enum_value = ["fp8_config", "hp_dtype", "ignore_modules_wo_measures", "recalc_scales", "fake_quant"]
+_scale_methods_quant_only = [ScaleMethod.UNIT_SCALE, ScaleMethod.HW_ALIGNED_SINGLE_SCALE]
 
 
 def get_hqt_config(mod) -> Fp8cfg:
@@ -67,6 +110,14 @@ def get_hqt_config(mod) -> Fp8cfg:
 
 def set_hqt_config(mod, config):
     mod.__hqt_config__ = config
+
+
+def _get_enum_from_string(EnumClass, str, key):
+    if not hasattr(EnumClass, str.upper()):
+        raise ValueError(
+            f"Invalid '{key}' value in custom config ('{str}'). Enter one of {[m.name for m in EnumClass]}"
+        )
+    return EnumClass[str.upper()]
 
 
 @dataclass
@@ -84,10 +135,11 @@ class Fp8cfg:
             },  # types and names to not be quantized
             "allowlist": {
                 "names": [],
-                "types": ("torch.nn.Linear", "torch.nn.Conv2d", "BMM"),
+                "types": (),
             },  # types and names to be quantized. Allowlist by names is not yet implemented
             "mode": QuantMode.QUANTIZE,  # Quantize or Measure
-            "scale_method": ScaleMethod.UNIT_SCALE,  # Method to quantize with
+            "fake_quant": False,  # Fake or Real Quant
+            "scale_method": ScaleMethod.MAXABS_HW,  # Method to quantize with
             "scale_params": {},  # scaling parameters that are different then the default ones
             "observer": "maxabs",  # Supported ['shape', 'maxabs', 'maxabs_per_channel', 'save']
             "mod_dict": {},
@@ -98,88 +150,17 @@ class Fp8cfg:
             "seperate_measure_files": True,  # Determines whether to expect one or several measure files when using more than one gaudi
             "device_type": htexp._get_device_type(),  # Determines device type: Gaudi2, Gaudi3...
             "measure_exclude": MeasureExclude.OUTPUT,
+            "recalc_scales": False,
+            "scale_format": ScaleFormat.CONST,
         }
         # assert measured_global_config['allowlist']['names'] == [''], "Allowlist names not yet implemented"
 
         # go over all user-defined keys from json, handle various cases
         for keys in custom_config:
-            if keys == "mode":
-                if custom_config[keys] == "NONE":
-                    custom_config[keys] = QuantMode.NONE
-                elif custom_config[keys] == "QUANTIZE":
-                    custom_config[keys] = QuantMode.QUANTIZE
-                elif custom_config[keys] == "MEASURE":
-                    custom_config[keys] = QuantMode.MEASURE
-                elif custom_config[keys] == "SHAPE":
-                    custom_config[keys] = QuantMode.SHAPE
-                else:
-                    raise ValueError("invalid mode in custom config. Enter Quantize or Measure")
-
-            if keys == "measure_exclude":
-                if custom_config[keys] == "NONE":
-                    custom_config[keys] = MeasureExclude.NONE
-                elif custom_config[keys] == "OUTPUT":
-                    custom_config[keys] = MeasureExclude.OUTPUT
-                elif custom_config[keys] == "INPUT":
-                    custom_config[keys] = MeasureExclude.INPUT
-                elif custom_config[keys] == "ALL":
-                    custom_config[keys] = MeasureExclude.ALL
-                else:
-                    raise ValueError("invalid measure exclude value in custom config. Enter OUTPUT or NONE")
-
-            if keys == "fp8_config":
-                if custom_config[keys].lower() == "e4m3":
-                    custom_config[keys] = torch.float8_e4m3fn
-
-                elif custom_config[keys].lower() == "e5m2":
-                    custom_config[keys] = torch.float8_e5m2
-                else:
-                    raise ValueError("invalid fp8_config in custom config. Enter E4M3 or E5M2")
-
-            if keys == "hp_dtype":
-                if custom_config[keys].lower() == "bf16":
-                    custom_config[keys] = torch.bfloat16
-                elif custom_config[keys].lower() == "fp16":
-                    custom_config[keys] = torch.float16
-                elif custom_config[keys].lower() == "fp32":
-                    custom_config[keys] = torch.float32
-                else:
-                    raise ValueError("invalid hp_dtype in custom config. Enter bf16, fp16 or fp32")
-
-            if keys == "scale_method":
-                if custom_config[keys].lower() == "unit_scale":
-                    custom_config[keys] = ScaleMethod.UNIT_SCALE
-                elif custom_config[keys].lower() == "max":
-                    custom_config[keys] = ScaleMethod.MAX
-                elif custom_config[keys].lower() == "maxabs_hw":
-                    custom_config[keys] = ScaleMethod.MAXABS_HW
-                elif custom_config[keys].lower() == "maxabs_pow2":
-                    custom_config[keys] = ScaleMethod.MAXABS_POW2
-                elif custom_config[keys].lower() == "maxabs_hw_opt_weight":
-                    custom_config[keys] = ScaleMethod.MAXABS_HW_OPT_WEIGHT
-                elif custom_config[keys].lower() == "maxabs_pow2_opt_weight":
-                    custom_config[keys] = ScaleMethod.MAXABS_POW2_OPT_WEIGHT
-                elif custom_config[keys].lower() == "smoothquant_weights_output_channel_maxabs_pow2":
-                    custom_config[keys] = ScaleMethod.SMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2
-                elif custom_config[keys].lower() == "weaksmoothquant_weights_output_channel_maxabs_pow2":
-                    custom_config[keys] = ScaleMethod.WEAKSMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2
-                elif custom_config[keys].lower() == "act_maxabs_hw_weights_pcs_maxabs_pow2":
-                    custom_config[keys] = ScaleMethod.ACT_MAXABS_HW_WEIGHTS_PCS_MAXABS_POW2
-                elif custom_config[keys].lower() == "act_maxabs_hw_weights_pcs_opt_pow2":
-                    custom_config[keys] = ScaleMethod.ACT_MAXABS_HW_WEIGHTS_PCS_OPT_POW2
-                elif custom_config[keys].lower() == "act_maxabs_pow2_weights_pcs_maxabs_pow2":
-                    custom_config[keys] = ScaleMethod.ACT_MAXABS_POW2_WEIGHTS_PCS_MAXABS_POW2
-                elif custom_config[keys].lower() == "act_maxabs_pow2_weights_pcs_opt_pow2":
-                    custom_config[keys] = ScaleMethod.ACT_MAXABS_POW2_WEIGHTS_PCS_OPT_POW2
-                elif custom_config[keys].lower() == "smoothquant_opt":
-                    custom_config[keys] = ScaleMethod.SMOOTHQUANT_OPT
-                else:
-                    raise ValueError(
-                        f'Invalid fp8_config in custom config ({custom_config[keys]}). should be in ["max", "unit_scale", "maxabs_hw", "maxabs_pow2", "maxabs_per_channel_pow2", "smoothquant_opt"]'
-                    )
-
-            if keys == "ignore_modules_wo_measures":
-                custom_config[keys] = custom_config[keys].lower() == "true"
+            if keys in _config_to_enum.keys():
+                custom_config[keys] = _get_enum_from_string(_config_to_enum[keys], custom_config[keys], keys)
+                if keys in _configs_that_use_enum_value:
+                    custom_config[keys] = custom_config[keys].value
 
             # TODO [SW-175936] - remove checking for old key names whitelist and blacklist.
             if isinstance(custom_config[keys], dict):
@@ -204,52 +185,70 @@ class Fp8cfg:
             local_rank if local_rank >= 0 and custom_config.get("seperate_measure_files", True) else None
         )
 
-        base_name = measured_global_config["dump_stats_path"].split("/")[-1]
-        folder_name = measured_global_config["dump_stats_path"][: -(len(base_name))]
-        measured_global_config["dump_stats_base_path"] = folder_name
-        os.makedirs(folder_name, exist_ok=True)
-        worker_st = (
-            ""
-            if measured_global_config["local_rank"] is None
-            else "_" + str(measured_global_config["local_rank"]) + "_" + str(measured_global_config["world_size"])
-        )
-        measured_global_config["shape_file"] = measured_global_config["dump_stats_path"] + "_hooks_shape" + worker_st
-        measured_global_config["scale_file"] = (
-            measured_global_config["dump_stats_path"]
-            + "_hooks_"
-            + measured_global_config["observer"]
-            + "_"
-            + measured_global_config["scale_method"].name
-            + worker_st
-        )
-        if (measured_global_config["mode"] == QuantMode.MEASURE) or (
-            measured_global_config["mode"] == QuantMode.QUANTIZE
-        ):
-            measured_global_config["measure_file"] = (
-                measured_global_config["dump_stats_path"] + "_hooks_" + measured_global_config["observer"] + worker_st
+        scale_method = measured_global_config["scale_method"]
+        quant_mode = measured_global_config["mode"]
+        if scale_method in _scale_methods_quant_only:
+            if quant_mode == QuantMode.QUANTIZE:
+                logger.debug(
+                    f"Quantization mode is quant, scale_method is {scale_method}, so stats files won't be used"
+                )
+                measured_global_config["use_stats_files"] = False
+            else:
+                raise ValueError(
+                    f"Quantization mode is {quant_mode}, scale_method is {scale_method} (quant only). Unexpected behavior. "
+                    "This scale method doesn't require measurements."
+                )
+        else:
+            measured_global_config["use_stats_files"] = True
+            base_name = measured_global_config["dump_stats_path"].split("/")[-1]
+            folder_name = measured_global_config["dump_stats_path"][: -(len(base_name))]
+            measured_global_config["dump_stats_base_path"] = folder_name
+            os.makedirs(folder_name, exist_ok=True)
+            worker_st = (
+                ""
+                if measured_global_config["local_rank"] is None
+                else "_" + str(measured_global_config["local_rank"]) + "_" + str(measured_global_config["world_size"])
             )
-        # measured_global_config['dump_stats_path'] += '_hooks_.json'
+            measured_global_config["shape_file"] = (
+                measured_global_config["dump_stats_path"] + "_hooks_shape" + worker_st
+            )
+            measured_global_config["scale_file"] = (
+                measured_global_config["dump_stats_path"]
+                + "_hooks_"
+                + measured_global_config["observer"]
+                + "_"
+                + scale_method.name
+                + worker_st
+            )
+            if (quant_mode == QuantMode.MEASURE) or (quant_mode == QuantMode.QUANTIZE):
+                measured_global_config["measure_file"] = (
+                    measured_global_config["dump_stats_path"]
+                    + "_hooks_"
+                    + measured_global_config["observer"]
+                    + worker_st
+                )
+            # measured_global_config['dump_stats_path'] += '_hooks_.json'
 
-        logger.debug("HQT Paths:")
-        logger.debug("base_name='%s'", base_name)
-        logger.debug("folder_name='%s'", folder_name)
-        logger.debug(
-            "measured_global_config['shape_file']='%s'",
-            measured_global_config["shape_file"],
-        )
-        logger.debug(
-            "measured_global_config['scale_file']='%s'",
-            measured_global_config["scale_file"],
-        )
-        if "measure_file" in measured_global_config.keys():
+            logger.debug("HQT Paths:")
+            logger.debug("base_name='%s'", base_name)
+            logger.debug("folder_name='%s'", folder_name)
             logger.debug(
-                "measured_global_config['measure_file']='%s'",
-                measured_global_config["measure_file"],
+                "measured_global_config['shape_file']='%s'",
+                measured_global_config["shape_file"],
             )
-        logger.debug(
-            "measured_global_config['dump_stats_path']='%s'",
-            measured_global_config["dump_stats_path"],
-        )
+            logger.debug(
+                "measured_global_config['scale_file']='%s'",
+                measured_global_config["scale_file"],
+            )
+            if "measure_file" in measured_global_config.keys():
+                logger.debug(
+                    "measured_global_config['measure_file']='%s'",
+                    measured_global_config["measure_file"],
+                )
+            logger.debug(
+                "measured_global_config['dump_stats_path']='%s'",
+                measured_global_config["dump_stats_path"],
+            )
 
         return Fp8cfg(cfg=measured_global_config)
 
@@ -261,7 +260,7 @@ def _read_config_from_file(config_path: str) -> Mapping[str, str]:
 
     # if file in absolute path doesn't exist, try looking in cfg directory
     if not os.path.isfile(config_path):
-        config_path = os.path.join(module_directory, "..", f"custom_config/{config_path}.json")
+        config_path = os.path.join(module_directory, "..", f"custom_config/{config_path}")
     try:
         logger.info("QUANT PACKAGE: Loading %s", config_path)
         with open(config_path) as config_json:
@@ -270,5 +269,5 @@ def _read_config_from_file(config_path: str) -> Mapping[str, str]:
         raise Exception(f"Got exception: {e}. QUANT PACKAGE: Can't open {config_path}!")
     except JSONDecodeError as e:
         config_json.close()
-        raise Exception(f"Got exception: {e}. QUANT PACKAGE: Can't load {config_path} json!")
+        raise Exception(f"Got exception: {e}. QUANT PACKAGE: Can't load {config_path}!")
     return config

@@ -13,5 +13,5 @@
 # limitations under the License.
 
 from .max_abs import *
-from .unit_scale import *
+from .single_scale import *
 from .smooth_quant import *

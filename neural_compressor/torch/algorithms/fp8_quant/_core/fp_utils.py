@@ -16,7 +16,8 @@ import habana_frameworks.torch.core as htcore
 import habana_frameworks.torch.utils.experimental as htexp
 import torch
 
-from .common import *
+from .common import ModuleConfig
+from .quant_dequant import cast_fcn, cast_to_fp8_fcn, descale_fcn, scale_fcn
 
 GAUDI2 = htexp.synDeviceType.synDeviceGaudi2
 GAUDI3 = htexp.synDeviceType.synDeviceGaudi3
@@ -42,23 +43,30 @@ EXP_BIAS_SETS = {
 }
 
 MAX_RANGE = {
-    torch.float32: 2 ** ((2**8 - 2 - get_default_exp_bias(torch.float32))) * (2 - 2 ** -(23)),
-    torch.bfloat16: 2 ** ((2**8 - 2 - get_default_exp_bias(torch.bfloat16))) * (2 - 2 ** -(7)),
-    torch.float8_e4m3fn: 2 ** ((2**4 - 2 - get_default_exp_bias(torch.float8_e4m3fn))) * (2 - 2 ** -(8 - 1 - 4)),
-    torch.float8_e5m2: 2 ** ((2**5 - 2 - get_default_exp_bias(torch.float8_e5m2))) * (2 - 2 ** -(8 - 1 - 5)),
+    torch.float32: torch.finfo(torch.float32).max,
+    torch.bfloat16: torch.finfo(torch.bfloat16).max,
+    torch.float8_e4m3fn: torch.finfo(torch.float8_e4m3fn).max,
+    # float8_e4m3fn data type is 8-bit floating point consist of Exponent: 4, Mantissa: 3, bias: 7. It's supported by Gaudi3.
+    torch.float8_e5m2: torch.finfo(torch.float8_e5m2).max,
+    # float8_e5m2 data type is 8-bit floating point consist of Exponent: 5, Mantissa: 2, bias: 15. IEEE 754, with NaN and inf.
+    torch.float8_e4m3fnuz: torch.finfo(torch.float8_e4m3fnuz).max,
+    # float8_e4m3fnuz data type is 8-bit floating point consist of Exponent: 4, Mantissa: 3, bias: 8 with 1 sign bit. It's supported by Gaudi2.
 }
 
 
-def get_fullscale(dtype, exp_bias=None):
+def get_fullscale(dtype, device, exp_bias=None):
     default_exp_bias = get_default_exp_bias(dtype)
-    fullscale = MAX_RANGE[dtype]
+    if device == GAUDI2 and dtype == torch.float8_e4m3fn:
+        fullscale = MAX_RANGE[torch.float8_e4m3fnuz]
+    else:
+        fullscale = MAX_RANGE[dtype]
     exp_bias = default_exp_bias if exp_bias is None else exp_bias
     fullscale = fullscale * (2 ** (default_exp_bias - exp_bias))
     return fullscale
 
 
-def get_fullscales_by_expbias_set(dtype, expbias_set):
-    return [get_fullscale(dtype, exp_bias=eb) for eb in expbias_set]
+def get_fullscales_by_expbias_set(dtype, device, expbias_set):
+    return [get_fullscale(dtype, device, exp_bias=eb) for eb in expbias_set]
 
 
 def get_fp8_hw_alligned_scales(dtype, device):
@@ -66,7 +74,7 @@ def get_fp8_hw_alligned_scales(dtype, device):
     return (
         None
         if exp_bias_set is None
-        else [x / MAX_RANGE[dtype] for x in get_fullscales_by_expbias_set(dtype, exp_bias_set)]
+        else [x / get_fullscale(dtype, device) for x in get_fullscales_by_expbias_set(dtype, device, exp_bias_set)]
     )
 
 

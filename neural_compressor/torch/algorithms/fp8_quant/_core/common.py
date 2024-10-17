@@ -32,9 +32,10 @@ UNMEASURED_MODELS = "UnmeasuredModels"
 
 
 class ModuleInfo:
-    def __init__(self, type, patched_module):
+    def __init__(self, type, patched_module, should_measure=True):
         self.type = type
         self.patched_module = patched_module
+        self.should_measure = should_measure
 
 
 class ModuleConfig:
@@ -68,11 +69,6 @@ mod_types = {
     "softmax": ModuleType(1, [], 1, True),
     "fused_sdpa": ModuleType(3, [], 2, True),
 }
-descale_fcn = lambda x, scale: torch.mul(x, scale)
-scale_fcn = lambda x, scale: torch.div(x, scale)
-cast_fcn = lambda x, dtype: x.to(dtype=dtype)
-cast_to_fp8_fcn = lambda x, dtype, scale_inv=None: torch.ops.hpu.cast_to_fp8_v2(x, scale_inv, False, False, dtype)[0]
-cast_from_fp8_fcn = lambda x, dtype, scale=None: torch.ops.hpu.cast_from_fp8(x, scale, dtype)
 
 
 class ShapeList:
@@ -114,7 +110,7 @@ def save_file(model, d, source_format, fname, mode):
     config = get_hqt_config(model)
     logger.debug("Saving %s file: %s", mode, fname)
     ext = os.path.splitext(fname)[1]
-    target_format = file_functions[ext][0]
+    target_format = file_functions[ext]["format"]
     dc = rec_fn(d, format_functions[(source_format, target_format)])
     df = {
         "GlobalRank": config.cfg["global_rank"],
@@ -123,9 +119,26 @@ def save_file(model, d, source_format, fname, mode):
         "Nodes": dc,
     }
     try:
-        file_functions[ext][1](df, fname)
+        file_functions[ext]["save"](df, fname)
     except:
         pass
+
+
+def load_file(fname, target_format, fail_on_file_not_exist):
+    logger.debug("Loading file: %s", fname)
+    ext = os.path.splitext(fname)[1]
+    source_format = file_functions[ext]["format"]
+    d = {}
+    if os.path.isfile(fname):
+        d = file_functions[ext]["load"](fname)
+    elif fail_on_file_not_exist:
+        raise FileNotFoundError(f"Failed to load file {fname}")
+    if "Nodes" in d:
+        dc = {k: ModuleConfig(**fix_fields(d["Nodes"][k])) for k in d["Nodes"]}
+        dc = {k: module_convert(dc[k], format_functions[(source_format, target_format)]) for k in dc}
+    else:
+        dc = {}
+    return dc
 
 
 # convert module config data to other format
@@ -152,29 +165,26 @@ def fix_fields(d):
     return d
 
 
-def load_file(fname, target_format, fail_on_file_not_exist):
-    logger.debug("Loading file: %s", fname)
-    ext = os.path.splitext(fname)[1]
-    source_format = file_functions[ext][0]
-    d = {}
-    if os.path.isfile(fname):
-        d = file_functions[ext][2](fname)
-    elif fail_on_file_not_exist:
-        raise FileNotFoundError(f"Failed to load file {fname}")
-    if "Nodes" in d:
-        dc = {k: ModuleConfig(**fix_fields(d["Nodes"][k])) for k in d["Nodes"]}
-        dc = {k: module_convert(dc[k], format_functions[(source_format, target_format)]) for k in dc}
-    else:
-        dc = {}
-    return dc
-
-
 def save_scales(model, d, source_format, fname):
+    """Saves scales measured of a given model.
+
+    Args:
+        model : The measured model.
+        d : Modules_names to configuration dictionary.
+        source_format : How the data is stored in memory.
+        fname : File to save the scales to.
+    """
     dc = {k: d[k].__dict__ for k in d}
     save_file(model, dc, source_format, fname, "Scale")
 
 
 def load_scales(fname, target_format):
+    """Loads scales from given file.
+
+    Args:
+        fname : File to load the scales from.
+        target_format: How the data is stored in file.
+    """
     logger.debug("Loading scales file %s", fname)
     d = load_file(fname, target_format, False)
     return d
@@ -189,8 +199,8 @@ def convert_scales_to_tensors_dict(scales_obj, scales_file_format, hp_dtype):
 
 
 file_functions = {
-    ".json": (list, save_json, load_json),
-    ".npz": (np.ndarray, save_npz, load_npz),
+    ".json": {"format": list, "save": save_json, "load": load_json},
+    ".npz": {"format": np.ndarray, "save": save_npz, "load": load_npz},
 }
 
 format_functions = {
@@ -224,6 +234,9 @@ mod_default_dict = {
     "LoRACompatibleConv": ModuleInfo("linear", PatchedLoRACompatibleConv),
     "Softmax": ModuleInfo("softmax", PatchedSoftmax),
     "ModuleFusedSDPA": ModuleInfo("fused_sdpa", PatchedModuleFusedSDPA),
+    "MoeMatmul": ModuleInfo("linear", PatchedMoeMatmul),
+    "ReplicatedLinear": ModuleInfo("linear", PatchedReplicatedLinear),
+    "FusedMoE": ModuleInfo("linear", PatchedMixtralMoE, False),
 }
 
 

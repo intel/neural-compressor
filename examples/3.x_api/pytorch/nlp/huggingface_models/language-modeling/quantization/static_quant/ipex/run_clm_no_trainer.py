@@ -198,7 +198,6 @@ if args.quantize:
     user_model.save(args.output_dir)
 
 if args.load:
-    # TODO: we need run_benchmark.sh for loading and remove --accuracy in run_quant.sh, currently run_quant.sh will get fp32 result
     if args.int8 or args.int8_bf16_mixed:
         print("load int8 model")
         from neural_compressor.torch.quantization import load

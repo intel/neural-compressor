@@ -2,8 +2,10 @@ import typing
 
 import pytest
 import torch
-from habana_quantization_toolkit._quant_common.quant_config import ScaleMethod
-from habana_quantization_toolkit.tests import TestVector, run_accuracy_test
+
+from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import ScaleMethod
+
+from ..tester import TestVector, run_accuracy_test
 
 
 class LinearBlock(torch.nn.Module):
