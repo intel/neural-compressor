@@ -9,7 +9,7 @@
       "batch_size": 1
     },
     "qwenvl_woq_autoround_int4":{
-      "model_src_dir": "multimodal-modeling/quantization/auto_round/Qwen-VL",
+      "model_src_dir": "multimodal-modeling/quantization/auto_round/common_model",
       "dataset_location": "/tf_dataset2/datasets/coco2017/coco/train2017_full",
       "question_file": "/tf_dataset2/datasets/llava/llava_v1_5_mix665k.json",
       "input_model": "Qwen/Qwen-VL",

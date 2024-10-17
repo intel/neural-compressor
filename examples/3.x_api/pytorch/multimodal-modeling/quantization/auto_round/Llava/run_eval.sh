@@ -42,10 +42,10 @@ function run_evaluation {
     python main.py \
             --accuracy \
             --model_name ${model_name} \
-            --eval_question_file ${eval-question-file} \
-            --eval_image_folder ${eval-image-folder} \
-            --eval_annotation_file ${eval-annotation-file} \
-            --eval_result_file ${eval-result-file}
+            --eval_question_file ${eval_question_file} \
+            --eval_image_folder ${eval_image_folder} \
+            --eval_annotation_file ${eval_annotation_file} \
+            --eval_result_file ${eval_result_file}
 }
 
 main "$@"
