@@ -1,4 +1,4 @@
-auto_round @ git+https://github.com/intel/auto-round.git@5dd16fc34a974a8c2f5a4288ce72e61ec3b1410f
+auto_round
 deepspeed @ git+https://github.com/HabanaAI/DeepSpeed.git@1.18.0
 expecttest
 intel_extension_for_pytorch
