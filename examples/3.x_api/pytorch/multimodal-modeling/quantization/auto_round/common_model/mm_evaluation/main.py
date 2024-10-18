@@ -20,7 +20,7 @@ if __name__ == "__main__":
         help="Whether to enable trust_remote_code"
     )
     parser.add_argument(
-        "--device", default="cuda:0",
+        "--device", default="cpu",
         help="PyTorch device (e.g. cpu/cuda:0/hpu) for evaluation."
     )
     parser.add_argument(
@@ -97,5 +97,6 @@ if __name__ == "__main__":
                 )
 
     print("cost time: ", time.time() - s)
+
 
 

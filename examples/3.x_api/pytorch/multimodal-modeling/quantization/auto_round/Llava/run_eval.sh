@@ -24,10 +24,7 @@ function init_params {
       ;;
       --eval_annotation_file=*)
           eval_annotation_file=$(echo $var |cut -f2 -d=)
-      ;;
-      --eval_result_file=*)
-          eval_result_file=$(echo $var |cut -f2 -d=)
-      ;;  
+      ;; 
       *)
           echo "Error: No such parameter: ${var}"
           exit 1
@@ -44,8 +41,7 @@ function run_evaluation {
             --model_name ${model_name} \
             --eval_question_file ${eval_question_file} \
             --eval_image_folder ${eval_image_folder} \
-            --eval_annotation_file ${eval_annotation_file} \
-            --eval_result_file ${eval_result_file}
+            --eval_annotation_file ${eval_annotation_file}
 }
 
 main "$@"

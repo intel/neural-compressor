@@ -220,7 +220,7 @@ if __name__ == '__main__':
     
     parser.add_argument("--eval_image_folder", type=str)
     
-    parser.add_argument('--eval_result_file', type=str)
+    parser.add_argument('--eval_result_file', type=str, default="./tmp_results")
     
     parser.add_argument('--eval_annotation_file', type=str)
 
