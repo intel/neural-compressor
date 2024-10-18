@@ -73,7 +73,7 @@ if __name__ == "__main__":
     for dataset in test_tasks:
         if 'vqa' in dataset:
             from evaluate_vqa import textVQA_evaluation
-            with torch.cuda.amp.autocast():
+            with torch.amp.autocast(device_type=device.split(":")[0], dtype=torch_dtype):
                 evaluator = textVQA_evaluation(
                     model,
                     dataset_name=dataset,
@@ -85,7 +85,7 @@ if __name__ == "__main__":
                 )
         elif 'scienceqa' in dataset:
             from evaluate_multiple_choice import scienceQA_evaluation
-            with torch.cuda.amp.autocast():
+            with torch.amp.autocast(device_type=device.split(":")[0], dtype=torch_dtype):
                 evaluator = scienceQA_evaluation(
                     model,
                     dataset_name=dataset,

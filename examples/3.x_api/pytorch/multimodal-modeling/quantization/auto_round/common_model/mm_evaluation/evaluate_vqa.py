@@ -260,8 +260,8 @@ def textVQA_evaluation(model_name, dataset_name, base_model="Qwen/Qwen-VL", data
     #     world_size=int(os.getenv('WORLD_SIZE', '1')),
     #     rank=int(os.getenv('RANK', '0')),
     # )
-
-    torch.cuda.set_device(int(os.getenv('LOCAL_RANK', 0)))
+    if "cuda" in device:
+        torch.cuda.set_device(int(os.getenv('LOCAL_RANK', 0)))
     if isinstance(model_name, str):
         config = AutoConfig.from_pretrained(model_name, trust_remote_code=trust_remote_code)
         model = AutoModelForCausalLM.from_pretrained(model_name, config=config, trust_remote_code=trust_remote_code).eval()
@@ -303,8 +303,8 @@ def textVQA_evaluation(model_name, dataset_name, base_model="Qwen/Qwen-VL", data
     for _, (question_ids, input_ids, attention_mask,
             annotations) in tqdm(enumerate(dataloader)):
         pred = model.generate(
-            input_ids=input_ids.cuda(),
-            attention_mask=attention_mask.cuda(),
+            input_ids=input_ids.to(device),
+            attention_mask=attention_mask.to(device),
             do_sample=False,
             num_beams=1,
             max_new_tokens=ds_collections[dataset_name]['max_new_tokens'],
@@ -460,5 +460,6 @@ if __name__ == "__main__":
         trust_remote_code=args.trust_remote_code
     )
     print("cost time: ", time.time() - s)
+
 
 

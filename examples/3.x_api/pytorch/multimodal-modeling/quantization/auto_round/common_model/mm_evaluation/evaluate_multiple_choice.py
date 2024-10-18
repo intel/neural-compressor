@@ -109,8 +109,8 @@ def scienceQA_evaluation(model_name, dataset_name, dataset_path=None, tokenizer=
     #     world_size=int(os.getenv('WORLD_SIZE', '1')),
     #     rank=int(os.getenv('RANK', '0')),
     # )
-
-    torch.cuda.set_device(int(os.getenv('LOCAL_RANK', 0)))
+    if "cuda" in device:
+        torch.cuda.set_device(int(os.getenv('LOCAL_RANK', 0)))
     if isinstance(model_name, str):
         config = AutoConfig.from_pretrained(model_name, trust_remote_code=trust_remote_code)
         model = AutoModelForCausalLM.from_pretrained(model_name, config=config, trust_remote_code=trust_remote_code).eval()
@@ -141,14 +141,14 @@ def scienceQA_evaluation(model_name, dataset_name, dataset_path=None, tokenizer=
                 chunk_sizes) in tqdm(enumerate(dataloader)):
 
             outputs = model(
-                input_ids=input_tokens[:, :-1].cuda(),
-                attention_mask=attention_mask[:, :-1].cuda(),
+                input_ids=input_tokens[:, :-1].to(device),
+                attention_mask=attention_mask[:, :-1].to(device),
                 return_dict=True,
             )
             losses = torch.nn.functional.cross_entropy(outputs.logits.permute(
                 0, 2, 1),
                                                        input_tokens[:,
-                                                                    1:].cuda(),
+                                                                    1:].to(device),
                                                        reduction='none')
 
             losses = losses.split(chunk_sizes, dim=0)
