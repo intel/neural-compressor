@@ -539,6 +539,7 @@ if __name__ == '__main__':
             processor.save_pretrained(args.output_dir)
 
     if args.accuracy:
+        torch_dtype = "auto"
         model_name = args.model_name
         device_str = detect_device(args.device)
         torch_device = torch.device(device_str)
@@ -558,26 +559,29 @@ if __name__ == '__main__':
             model_cls = MllamaForConditionalGeneration
         model = load(args.model_name, format='huggingface', trust_remote_code=not args.disable_trust_remote_code, model_class=model_cls)
         model = model.to(torch_device)
+        torch_dtype = model.dtype
         datasets=args.eval_dataset.split(',')
         for dataset in datasets:
             if 'vqa' in dataset:
                 from mm_evaluation.evaluate_vqa import textVQA_evaluation
-                evaluator = textVQA_evaluation(
-                    model,
-                    dataset_name=dataset,
-                    tokenizer=tokenizer,
-                    batch_size=args.eval_bs,
-                    device=str(torch_device)
-                )
+                with torch.amp.autocast(device_type=device_str.split(":")[0], dtype=torch_dtype):
+                    evaluator = textVQA_evaluation(
+                        model,
+                        dataset_name=dataset,
+                        tokenizer=tokenizer,
+                        batch_size=args.eval_bs,
+                        device=str(torch_device)
+                    )
             elif 'scienceqa' in dataset:
                 from mm_evaluation.evaluate_multiple_choice import scienceQA_evaluation
-                evaluator = scienceQA_evaluation(
-                    model,
-                    dataset_name=dataset,
-                    tokenizer=tokenizer,
-                    batch_size=args.eval_bs,
-                    device=str(torch_device)
-                )
+                with torch.amp.autocast(device_type=device_str.split(":")[0], dtype=torch_dtype):
+                    evaluator = scienceQA_evaluation(
+                        model,
+                        dataset_name=dataset,
+                        tokenizer=tokenizer,
+                        batch_size=args.eval_bs,
+                        device=str(torch_device)
+                    )
 
 
 

@@ -69,7 +69,7 @@ if __name__ == "__main__":
     test_tasks = args.tasks
     if isinstance(test_tasks, str):
         test_tasks = test_tasks.split(',')
-
+    device = args.device
     for dataset in test_tasks:
         if 'vqa' in dataset:
             from evaluate_vqa import textVQA_evaluation
@@ -81,7 +81,7 @@ if __name__ == "__main__":
                     tokenizer=tokenizer,
                     batch_size=args.eval_bs,
                     trust_remote_code=args.trust_remote_code,
-                    device=str(args.device)
+                    device=str(device)
                 )
         elif 'scienceqa' in dataset:
             from evaluate_multiple_choice import scienceQA_evaluation
@@ -93,7 +93,7 @@ if __name__ == "__main__":
                     tokenizer=tokenizer,
                     batch_size=args.eval_bs,
                     trust_remote_code=args.trust_remote_code,
-                    device=str(args.device)
+                    device=str(device)
                 )
 
     print("cost time: ", time.time() - s)
