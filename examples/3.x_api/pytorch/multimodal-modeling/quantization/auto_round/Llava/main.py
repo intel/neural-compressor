@@ -216,13 +216,13 @@ if __name__ == '__main__':
                             help="The dataset for quantization training. It can be a custom one.")
     
     # ================= Evaluation Related =====================
-    parser.add_argument("--eval-question-file", type=str, default="tables/question.jsonl")
+    parser.add_argument("--eval_question_file", type=str, default="tables/question.jsonl")
     
-    parser.add_argument("--eval-image-folder", type=str)
+    parser.add_argument("--eval_image_folder", type=str)
     
-    parser.add_argument('--eval-result-file', type=str)
+    parser.add_argument('--eval_result_file', type=str)
     
-    parser.add_argument('--eval-annotation-file', type=str)
+    parser.add_argument('--eval_annotation_file', type=str)
 
     args = parser.parse_args()
 
