@@ -428,6 +428,7 @@ if __name__ == '__main__':
         questions = json.load(open(args.question_file, "r"))
         config = transformers.AutoConfig.from_pretrained(model_name, trust_remote_code=not args.disable_trust_remote_code)
         model_type = config.model_type
+        processor = None
         if "mllama" in model_type: #for Llama-3.2-11B-Vision-Instruct
             transformers_version = [int(item) for item in transformers.__version__.split('.')[:2]]
             if transformers_version[0] == 4 and transformers_version[1] < 45:
@@ -552,6 +553,9 @@ if __name__ == '__main__':
         if 'qwen2' in model_type: ## TODO test the eval ability
             from transformers import Qwen2VLForConditionalGeneration
             model_cls = Qwen2VLForConditionalGeneration
+        elif 'mllama' in model_type:
+            from transformers import MllamaForConditionalGeneration, AutoProcessor
+            model_cls = MllamaForConditionalGeneration
         model = load(args.model_name, format='huggingface', trust_remote_code=not args.disable_trust_remote_code, model_class=model_cls)
         model = model.to(torch_device)
         datasets=args.eval_dataset.split(',')
