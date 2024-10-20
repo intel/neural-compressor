@@ -211,7 +211,7 @@ def init_linear(instance, mod_extra_config):
     if instance.quantization_mode == QuantMode.QUANTIZE:
         # When offloading weights to disk using device_map, the module forward is overridden.
         # __dict__.update call again overrides the PatchedLinear forward with the forward that device_map planted.
-        # So need to set PatchedLinear forawrd to be the right forward.
+        # So need to set PatchedLinear forward to be the right forward.
         instance.weight = nn.Parameter(instance.weight.t().contiguous())
         instance.quant_input = instance._mod_extra_config.inputs[0]
         instance.scale_input = create_scale_tensor(mod_extra_config.scale.inputs[0], instance.scale_format)
@@ -223,7 +223,7 @@ def init_linear(instance, mod_extra_config):
             instance.scale_weight = nn.Parameter(mod_extra_config.scale.params["weight"][0])
             # When offloading weights to disk using device_map, the module forward is overridden.
             # __dict__.update call again overrides the PatchedLinear forward with the forward that device_map planted.
-            # So need to set PatchedLinear forawrd to be the right forward.
+            # So need to set PatchedLinear forward to be the right forward.
         if instance.use_qdq:
             instance.dequant_weights = instance._mod_extra_config.params["weight"][1]
             instance.forward = instance.forward_qdq
@@ -704,7 +704,7 @@ class PatchedVLLMKVCache(nn.Module):
             if self.use_qdq:
                 self.forward = self.forward_qdq
             else:
-                self.forawrd = self.forward_quant
+                self.forward = self.forward_quant
         elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
             self.fetch_from_cache = mod.fetch_from_cache
             self.forward = self.forward_measure
