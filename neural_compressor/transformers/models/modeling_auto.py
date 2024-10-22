@@ -325,7 +325,7 @@ class _BaseINCAutoModelClass:
             quantization_config = TeqConfig.from_dict(quantization_config)
         elif quantization_config["quant_method"] == "gptq":
             quantization_config = GPTQConfig.from_dict(quantization_config)
-        elif quantization_config["quant_method"] == "autoround":
+        elif quantization_config["quant_method"] in ["autoround", "intel/auto-round"]:
             quantization_config = AutoRoundConfig.from_dict(quantization_config)
 
         assert quantization_config is not None, "Detect this model is not a low-bit model."
