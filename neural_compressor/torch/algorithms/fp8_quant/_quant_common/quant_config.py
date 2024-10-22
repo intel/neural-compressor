@@ -248,6 +248,11 @@ class Fp8cfg:
                                 f"for device_type={measured_global_config['device_type']}")
 
         scale_method = measured_global_config["scale_method"]
+        if measured_global_config["use_qdq"] and "_PCS_" in scale_method.name:
+            raise ValueError(
+                f"use_qdq is enabled in config, but the scale_method is '{scale_method}', which is unexpected. "
+                "Q/DQ currently only supports per_tensor quantization, and this scale method doesn't support Q/DQ."
+                )
         if measured_global_config["scale_format"] == ScaleFormat.SCALAR:
             if scale_method in _pcq_scale_methods:
                 measured_global_config["scale_format"] = ScaleFormat.CONST
