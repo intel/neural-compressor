@@ -35,7 +35,7 @@ def init_mod_config(mod, scales, params):
 
 def init_input_config(scales_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant):
     if use_qdq or fake_quant:
-        input_config = [QuantDequant(s_inv, lp_dtype, hp_dtype, scale_format=scale_format) for s_inv in scales_inv.inputs]
+        input_config = [QuantDequant(s_inv, lp_dtype, hp_dtype, scale_format=scale_format, use_qdq=use_qdq) for s_inv in scales_inv.inputs]
     else:
         input_config = [QuantInput(s_inv, lp_dtype, hp_dtype, scale_format=scale_format) for s_inv in scales_inv.inputs]
     return input_config
@@ -44,8 +44,8 @@ def init_input_config(scales_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fak
 def init_weight_config(scales, scales_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant):
     if use_qdq:
         # to ensure the weights to be loaded to the device in fp8
-        weight_config = [QuantInput(scales_inv, lp_dtype, hp_dtype, scale_format=scale_format),
-                         DequantOutput(scales, lp_dtype, hp_dtype, scale_format=scale_format)]
+        weight_config = [QuantInput(scales_inv, lp_dtype, hp_dtype, scale_format=scale_format, use_qdq=use_qdq),
+                         DequantOutput(scales, lp_dtype, hp_dtype, scale_format=scale_format, use_qdq=use_qdq)]
     elif fake_quant:
         weight_config = [QuantDequant(scales_inv, lp_dtype, hp_dtype, scale_format=scale_format)]
     else:
