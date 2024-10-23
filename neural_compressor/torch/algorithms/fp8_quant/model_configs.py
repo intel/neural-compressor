@@ -22,17 +22,16 @@ __all__ = [
 # Patched Module Configurations
 # ==-------------------------------------------------------------------------==
 class ModuleInfo:
-    def __init__(self, type, patched_module, should_measure=True, should_measure_and_quant=True):
+    def __init__(self, type, patched_module, should_measure_and_quant=True):
         self.type = type
         self.patched_module = patched_module
-        self.should_measure = should_measure
         self.should_measure_and_quant = should_measure_and_quant
 
     def __repr__(self):
         return (
             f"ModuleInfo(type={self.type}, "
             f"patched_module={self.patched_module.__name__}), "
-            f"should_measure={self.should_measure}"
+            f"should_measure_and_quant={self.should_measure_and_quant}"
         )
 
 
