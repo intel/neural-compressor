@@ -78,12 +78,14 @@ parser.add_argument(
 )
 parser.add_argument("--group_size", type=int, default=128)
 parser.add_argument("--scheme", default=None)
-parser.add_argument('--use_layer_wise',
-                    nargs='?', 
-                    const=True,
-                    default=None,
-                    type=lambda x: bool(strtobool(x)), 
-                    help="Use layer wise to do quantization")
+parser.add_argument(
+    "--use_layer_wise",
+    nargs='?', 
+    const=True,
+    default=None,
+    type=lambda x: bool(strtobool(x)), 
+    help="Use layer wise to do quantization",
+)
 parser.add_argument(
     "--n_samples", type=int, default=512, help="Number of calibration data samples."
 )
