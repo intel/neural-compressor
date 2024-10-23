@@ -13,6 +13,7 @@ from neural_compressor.transformers import (
     GPTQConfig,
     AutoRoundConfig,
 )
+from distutils.util import strtobool
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--model", default=None)
@@ -77,11 +78,12 @@ parser.add_argument(
 )
 parser.add_argument("--group_size", type=int, default=128)
 parser.add_argument("--scheme", default=None)
-parser.add_argument(
-    "--layer_wise",
-    action="store_true",
-    help="Use layer wise to do quantization",
-)
+parser.add_argument('--use_layer_wise',
+                    nargs='?', 
+                    const=True,
+                    default=None,
+                    type=lambda x: bool(strtobool(x)), 
+                    help="Use layer wise to do quantization")
 parser.add_argument(
     "--n_samples", type=int, default=512, help="Number of calibration data samples."
 )
@@ -206,7 +208,7 @@ if args.woq:
             compute_dtype=args.compute_dtype,
             scale_dtype=args.scale_dtype,
             weight_dtype=args.weight_dtype,
-            layer_wise=args.layer_wise,
+            use_layer_wise=args.use_layer_wise,
             quant_lm_head=args.quant_lm_head,
         )
     elif args.woq_algo == "Awq":
@@ -257,7 +259,7 @@ if args.woq:
             compute_dtype=args.compute_dtype,
             scale_dtype=args.scale_dtype,
             weight_dtype=args.weight_dtype,
-            layer_wise=args.layer_wise,
+            use_layer_wise=args.use_layer_wise,
             true_sequential=args.true_sequential,
             quant_lm_head=args.quant_lm_head,
         )
@@ -278,6 +280,7 @@ if args.woq:
             minmax_lr=args.minmax_lr,
             disable_quanted_input=args.disable_quanted_input,
             quant_lm_head=args.quant_lm_head,
+            use_layer_wise=args.use_layer_wise,
         )
     else:
         assert False, "Please set the correct '--woq_algo'"
