@@ -248,7 +248,7 @@ class RtnConfig(INCQuantizationConfigMixin):
         compute_dtype: Any = None,
         scale_dtype: Any = None,
         sym: bool = True,
-        use_layer_wise: bool = False,
+        use_layer_wise: bool = None,
         quant_lm_head: bool = False,
         **kwargs,
     ):
