@@ -30,7 +30,7 @@ parser.add_argument(
 )
 parser.add_argument("--output_dir", nargs="?", default="./saved_results")
 parser.add_argument("--quant_lm_head", action="store_true",  help="whether to quant the lm_head layer in transformers")
-parser.add_argument('--use_layer_wise',  nargs='?', const=True, default=None, type=lambda x: bool(strtobool(x)), 
+parser.add_argument("--use_layer_wise",  nargs='?', const=True, default=None, type=lambda x: bool(strtobool(x)), 
                     help="whether to use layerwise quant")
 # ============Benchmark configs==============
 parser.add_argument("--benchmark", action="store_true")
