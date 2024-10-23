@@ -414,8 +414,10 @@ class PatchedLinearAllReduce(nn.Module):
             dist.inference_all_reduce(input, group=self.mp_group)
 
     def post_all_reduce(self, input):
-        output = input + self.bias if (self.bias is not None) else input
-        return output
+        # inplace addition needed for correct results
+        if self.bias is not None:
+            input += self.bias
+        return input
 
     def extra_repr(self) -> str:
         return extra_representation(
