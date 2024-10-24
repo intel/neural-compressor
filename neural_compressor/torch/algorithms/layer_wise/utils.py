@@ -23,9 +23,9 @@ import os
 import torch
 from accelerate import init_empty_weights
 from accelerate.utils import set_module_tensor_to_device
+from safetensors import safe_open
 from transformers import AutoConfig, AutoModelForCausalLM
 from transformers.models.auto.auto_factory import _BaseAutoModelClass
-from safetensors import safe_open
 
 from neural_compressor.common import options
 from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
@@ -211,13 +211,17 @@ def load_tensor(path, tensor_name=None, prefix=None):
     else:  # pragma: no cover
         return state_dict
 
+
 def load_tensor_from_safetensors(path, tensor_name=None, device="cpu"):
     """Load a tensor from safetensors file with given tensor name."""
     with safe_open(path, framework="pt", device=device) as f:
         value = f.get_tensor(tensor_name)
     return value
 
-def load_tensor_from_safetensors_shard(pretrained_model_name_or_path, tensor_name, prefix=None, device="cpu"):  # pragma: no cover
+
+def load_tensor_from_safetensors_shard(
+    pretrained_model_name_or_path, tensor_name, prefix=None, device="cpu"
+):  # pragma: no cover
     """Load tensor from shard."""
     path = _get_path(pretrained_model_name_or_path)
     idx_dict = json.load(open(os.path.join(path, "model.safetensors.index.json"), "r"))["weight_map"]
@@ -261,9 +265,9 @@ def load_value(model, param_name, path, device="cpu"):
                 param_name = name + "." + param_name.split(".")[-1]
     prefix = model.base_model_prefix
     files = os.listdir(path)
-    safetensors_files = [filename for filename in files if filename.endswith('.safetensors')]
+    safetensors_files = [filename for filename in files if filename.endswith(".safetensors")]
     if len(safetensors_files) == 1:
-        value = load_tensor_from_safetensors(os.path.join(path, "model.safetensors"), param_name ,device=device)
+        value = load_tensor_from_safetensors(os.path.join(path, "model.safetensors"), param_name, device=device)
     elif len(safetensors_files) >= 2:
         value = load_tensor_from_safetensors_shard(path, param_name, device=device)
     elif "pytorch_model.bin.index.json" in files:

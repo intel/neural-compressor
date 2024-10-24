@@ -147,11 +147,13 @@ class TestTansformersLikeAPI:
         )
         woq_output2 = woq_model(dummy_input)[0]
         assert torch.equal(woq_output, woq_output2), "use_layer_wise output should be same. Please double check."
-        
+
         # Case3: test safetensors model file
         from neural_compressor.torch.algorithms.layer_wise.utils import get_path
+
         model_path = get_path(model_name_or_path)
         from transformers import AutoModelForCausalLM as RawAutoModelForCausalLM
+
         ori_model = RawAutoModelForCausalLM.from_pretrained(model_name_or_path)
         # test 1 safetensors file
         ori_model.save_pretrained(model_path, safe_serialization=True)
@@ -173,15 +175,17 @@ class TestTansformersLikeAPI:
         )
         woq_output_3_safetensors = woq_model(dummy_input)[0]
         assert torch.equal(woq_output, woq_output_3_safetensors)
-        
+
         # clean safetensors files
         def clean_safetensors(model_path):
-            import re
             import os
-            pattern = re.compile(r'.*\.safetensors*')
+            import re
+
+            pattern = re.compile(r".*\.safetensors*")
             for filename in os.listdir(model_path):
                 if pattern.match(filename):
                     os.remove(os.path.join(model_path, filename))
+
         if model_name_or_path == "hf-internal-testing/tiny-random-gptj":
             clean_safetensors(model_path)
 
