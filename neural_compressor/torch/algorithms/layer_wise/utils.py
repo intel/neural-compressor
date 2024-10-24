@@ -271,7 +271,7 @@ def load_value(model, param_name, path, device="cpu"):
     elif len(safetensors_files) >= 2:
         value = load_tensor_from_safetensors_shard(path, param_name, device=device)
     elif "pytorch_model.bin.index.json" in files:
-        value = load_tensor_from_shard(os.path.join(path, "model.safetensors"), param_name, prefix)
+        value = load_tensor_from_shard(path, param_name, prefix)
     else:
         value = load_tensor(os.path.join(path, "pytorch_model.bin"), param_name, prefix)
     return value
