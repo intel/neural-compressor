@@ -25,6 +25,7 @@ from accelerate import init_empty_weights
 from accelerate.utils import set_module_tensor_to_device
 from transformers import AutoConfig, AutoModelForCausalLM
 from transformers.models.auto.auto_factory import _BaseAutoModelClass
+from safetensors import safe_open
 
 from neural_compressor.common import options
 from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
@@ -210,6 +211,23 @@ def load_tensor(path, tensor_name=None, prefix=None):
     else:  # pragma: no cover
         return state_dict
 
+def load_tensor_from_safetensors(path, tensor_name=None, device="cpu"):
+    """Load a tensor from safetensors file with given tensor name."""
+    with safe_open(path, framework="pt", device=device) as f:
+        value = f.get_tensor(tensor_name)
+    return value
+
+def load_tensor_from_safetensors_shard(pretrained_model_name_or_path, tensor_name, prefix=None, device="cpu"):  # pragma: no cover
+    """Load tensor from shard."""
+    path = _get_path(pretrained_model_name_or_path)
+    idx_dict = json.load(open(os.path.join(path, "model.safetensors.index.json"), "r"))["weight_map"]
+    if tensor_name not in idx_dict.keys():
+        if tensor_name.replace(f"{prefix}.", "") in idx_dict.keys():
+            tensor_name = tensor_name.replace(f"{prefix}.", "")
+        else:
+            assert False, "{} not in the index.json".format(tensor_name)
+    return load_tensor_from_safetensors(os.path.join(path, idx_dict[tensor_name]), tensor_name, device)
+
 
 def _get_path(pretrained_model_name_or_path):
     is_local = os.path.isdir(pretrained_model_name_or_path)
@@ -223,13 +241,14 @@ def _get_path(pretrained_model_name_or_path):
 get_path = _get_path
 
 
-def load_value(model, param_name, path):
+def load_value(model, param_name, path, device="cpu"):
     """Load the module value.
 
     Args:
         model (torch.nn.module): torch model.
         param_name (str): module name.
         path (str): path to load state_dict per layer.
+        device (str, optional): module device. Defaults to "cpu".
 
     Returns:
         tensor: the module value.
@@ -241,8 +260,14 @@ def load_value(model, param_name, path):
             if module == input_embeddings:
                 param_name = name + "." + param_name.split(".")[-1]
     prefix = model.base_model_prefix
-    if "pytorch_model.bin.index.json" in os.listdir(path):
-        value = load_tensor_from_shard(path, param_name, prefix)
+    files = os.listdir(path)
+    safetensors_files = [filename for filename in files if filename.endswith('.safetensors')]
+    if len(safetensors_files) == 1:
+        value = load_tensor_from_safetensors(os.path.join(path, "model.safetensors"), param_name ,device=device)
+    elif len(safetensors_files) >= 2:
+        value = load_tensor_from_safetensors_shard(path, param_name, device=device)
+    elif "pytorch_model.bin.index.json" in files:
+        value = load_tensor_from_shard(os.path.join(path, "model.safetensors"), param_name, prefix)
     else:
         value = load_tensor(os.path.join(path, "pytorch_model.bin"), param_name, prefix)
     return value
@@ -260,7 +285,7 @@ def load_module(model, module_name, path, device="cpu"):
     module = get_module(model, module_name)
     for n, p in module.named_parameters():
         param_name = module_name + "." + n
-        value = load_value(model, param_name, path)
+        value = load_value(model, param_name, path, device)
         set_module_tensor_to_device(model, param_name, device, value)
 
 
