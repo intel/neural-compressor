@@ -14,6 +14,10 @@ from torch.utils.data import DataLoader
 from transformers import AutoModelForCausalLM, AutoConfig, AutoTokenizer
 from neural_compressor.torch.utils import is_hpex_available
 
+if is_hpex_available():
+    import habana_frameworks.torch.core as htcore  # pylint: disable=E0401
+    htcore.hpu_set_inference_env()
+
 parser = argparse.ArgumentParser()
 parser.add_argument(
     "--model", nargs="?", default="EleutherAI/gpt-j-6b"
@@ -499,6 +503,12 @@ if args.load:
     setattr(user_model, "config", config)
 else:
     user_model, tokenizer = get_user_model()
+
+
+if is_hpex_available():
+    from habana_frameworks.torch.hpu import wrap_in_hpu_graph
+    user_model = user_model.to(torch.bfloat16)
+    wrap_in_hpu_graph(user_model, max_graphs=10) #会oom, 不加超慢
 
 
 if args.accuracy:
