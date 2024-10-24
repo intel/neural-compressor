@@ -247,8 +247,6 @@ class RAWGPTQuantizer(object):
 
         # device
         self.device = get_accelerator(kwargs.pop("device", "auto")).current_device_name()
-        if not use_layer_wise:
-            self.model.to(self.device)
         self.is_ready = False
 
         self.use_layer_wise = use_layer_wise
@@ -680,6 +678,7 @@ class RAWGPTQuantizer(object):
                     cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                     cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
                     out = transformer_block(*cache_positional_batch, **cache_keyword_batch)
+                    accelerator.synchronize()
                     out = self.track_hidden_states(out)
                     outs.append(out)
                 self.cache_key_arguments["batch_num"] = batch_num
@@ -755,6 +754,7 @@ class RAWGPTQuantizer(object):
 
                 del gptq_for_this_block
                 torch.cuda.empty_cache()
+                gc.collect()
                 # iteratively replace the input with output, thus layerwise quantization can continue.
                 self.update_blockwise_hidden_states(outs)
                 logger.info("------------------------------")
