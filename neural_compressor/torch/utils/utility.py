@@ -21,7 +21,6 @@ from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import psutil
 import torch
-import transformers
 from typing_extensions import TypeAlias
 
 from neural_compressor.common.utils import (
@@ -373,17 +372,22 @@ def get_module(module, key):
     return module
 
 
-def get_layer_names_in_block(
-    model, supported_types=[torch.nn.Linear, transformers.modeling_utils.Conv1D], quant_block_list=None
-):
+def _get_supported_types():
+    import transformers
+
+    return (torch.nn.Linear, transformers.modeling_utils.Conv1D)
+
+
+def get_layer_names_in_block(model, quant_block_list=None):
     """Retrieves the names of layers within each block of the model.
 
     Returns:
         list: A list of strings, where each string is the name of a layer
               within a block of the model.
     """
+    supported_types = _get_supported_types()
     for n, m in model.named_modules():
-        if isinstance(m, tuple(supported_types)):
+        if isinstance(m, supported_types):
             m.tmp_name = n
     layers_in_block = []
     if bool(quant_block_list):
