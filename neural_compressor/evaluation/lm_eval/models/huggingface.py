@@ -116,11 +116,13 @@ class HFLM(TemplateLM):
         peft: Optional[str] = None,
         autogptq: Optional[Union[bool, str]] = False,
         pad_to_buckets: Optional[Union[bool]] = False,
+        buckets: Optional[list] = [64, 128, 256, 512, 1024, 2048],
         model_format: Optional[str] = "torch",
         **kwargs,
     ) -> None:
         super().__init__()
         self.pad_to_buckets = pad_to_buckets
+        self.buckets = buckets
         self.model_format = model_format
         # optionally: take in an already-initialized transformers.PreTrainedModel
         if not isinstance(pretrained, str):
@@ -874,6 +876,15 @@ class HFLM(TemplateLM):
         elif self.AUTO_MODEL_CLASS == transformers.AutoModelForSeq2SeqLM:
             return self.tokenizer.decode(tokens, skip_special_tokens=skip_special_tokens)
 
+    def find_bucket(self, length):
+        suitable_buckets = [b for b in self.buckets if b >= length]
+        if len(suitable_buckets) == 0:
+            eval_logger.error(f"The input_length={length} exceeds the maximum value in buckets={self.buckets}")
+            eval_logger.error("Please add a higher value into the buckets list for this case.")
+            exit(0)
+        else:
+            return suitable_buckets[0]
+
     def _model_call(self, inps, attn_mask=None, labels=None):
         """
         :param inps: torch.Tensor
@@ -943,8 +954,7 @@ class HFLM(TemplateLM):
                     if self.pad_to_buckets:  # use buckets to pad inputs
                         bs, seq_length = inps.shape
                         padding_length = 0
-                        buckets = [64, 128, 256, 512, 1024, 2048, 4096, 8192]
-                        bucket_length = [b for b in buckets if b >= seq_length][0]
+                        bucket_length = self.find_bucket(seq_length)
                         padding_length = bucket_length - seq_length
                         inps = F.pad(inps, (0, padding_length), value=self.model.config.pad_token_id)
                     output = self.model(inps)
