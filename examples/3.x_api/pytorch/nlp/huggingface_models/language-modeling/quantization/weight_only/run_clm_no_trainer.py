@@ -508,7 +508,7 @@ else:
 if is_hpex_available():
     from habana_frameworks.torch.hpu import wrap_in_hpu_graph
     user_model = user_model.to(torch.bfloat16)
-    wrap_in_hpu_graph(user_model, max_graphs=10) #会oom, 不加超慢
+    wrap_in_hpu_graph(user_model, max_graphs=10)
 
 
 if args.accuracy:
