@@ -26,7 +26,7 @@ from safetensors import safe_open
 
 from neural_compressor.common import options
 from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
-from neural_compressor.torch.utils.utility import load_empty_model, dowload_hf_model
+from neural_compressor.torch.utils.utility import dowload_hf_model, load_empty_model
 
 from .load import load
 

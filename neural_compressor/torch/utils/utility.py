@@ -324,10 +324,11 @@ def dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None, dow
     if storage_folder and commit_hash:
         pointer_path = os.path.join(storage_folder, "snapshots", commit_hash)
         breakpoint()
-        if os.path.isdir(pointer_path) and \
-                (not download_weight or 
-                any(file.endswith('.bin') or file.endswith('.safetensors') for file in os.listdir(pointer_path))):
-            return pointer_path   
+        if os.path.isdir(pointer_path) and (
+            not download_weight
+            or any(file.endswith(".bin") or file.endswith(".safetensors") for file in os.listdir(pointer_path))
+        ):
+            return pointer_path
     from huggingface_hub import snapshot_download
 
     file_path = snapshot_download(repo_id)
