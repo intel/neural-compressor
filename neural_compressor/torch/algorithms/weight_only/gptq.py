@@ -607,8 +607,8 @@ class RAWGPTQuantizer(object):
                 for j in range(batch_num):
                     cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                     cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
-                    accelerator.mark_step()
                     out = transformer_block(*cache_positional_batch, **cache_keyword_batch)
+                    accelerator.synchronize()
                     out = self.track_hidden_states(out)
                 self.cache_key_arguments["batch_num"] = batch_num
                 for h in handles:
@@ -672,7 +672,6 @@ class RAWGPTQuantizer(object):
                     gptq_for_this_block[layer_name].free()
 
                 # Step 2.5: replace output data with quantized weights
-                outs = []
                 batch_num = self.cache_key_arguments.pop("batch_num")
                 for j in range(batch_num):
                     cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
@@ -680,7 +679,11 @@ class RAWGPTQuantizer(object):
                     out = transformer_block(*cache_positional_batch, **cache_keyword_batch)
                     accelerator.synchronize()
                     out = self.track_hidden_states(out)
-                    outs.append(out)
+                    # iteratively replace the input with output, thus layerwise quantization can continue.
+                    if "hidden_states" in self.cache_key_arguments:
+                        self.cache_key_arguments["hidden_states"][j] = out
+                    else:
+                        self.cache_positional_arguments[0][j] = out
                 self.cache_key_arguments["batch_num"] = batch_num
                 if self.use_layer_wise:  # pragma: no cover
                     self.gptq_related_blocks["transformers"][block_idx] = transformer_block
@@ -689,13 +692,13 @@ class RAWGPTQuantizer(object):
                 # Step 2.6: export to compressed model
                 for layer_name in sequential_layers:
                     weight_config_this_layer = self.get_layer_config(self.get_full_layer_name(layer_name, block_idx))
-                    gptq_scale = gptq_config[self.get_full_layer_name(layer_name, block_idx)]["scale"]
+                    gptq_scale = gptq_config[self.get_full_layer_name(layer_name, block_idx)]["scale"].cpu()
                     if not weight_config_this_layer["sym"]:
-                        gptq_zp = gptq_config[self.get_full_layer_name(layer_name, block_idx)]["zero"]
+                        gptq_zp = gptq_config[self.get_full_layer_name(layer_name, block_idx)]["zero"].cpu()
                     else:
                         gptq_zp = None
                     if weight_config_this_layer["act_order"]:  # save perm for restoring the weights
-                        gptq_perm = gptq_config[self.get_full_layer_name(layer_name, block_idx)]["perm"]
+                        gptq_perm = gptq_config[self.get_full_layer_name(layer_name, block_idx)]["perm"].cpu()
                     else:
                         gptq_perm = None
                     if self.use_layer_wise:
@@ -747,16 +750,16 @@ class RAWGPTQuantizer(object):
                         zp=gptq_zp is not None,
                         bias=bias is not None,
                         g_idx=gptq_perm is not None,
-                        device=self.device,
+                        device="cpu",
                     )
                     new_module.pack(int_weight, gptq_scale, gptq_zp, bias, gptq_perm)
                     set_module(transformer_block, layer_name, new_module)
+                    accelerator.synchronize()
 
                 del gptq_for_this_block
+                accelerator.synchronize()
                 torch.cuda.empty_cache()
                 gc.collect()
-                # iteratively replace the input with output, thus layerwise quantization can continue.
-                self.update_blockwise_hidden_states(outs)
                 logger.info("------------------------------")
         # 2.7.1 do the post transformer blocks quantization
         do_post_transformer_quant = self.quant_lm_head
