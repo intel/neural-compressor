@@ -21,7 +21,9 @@ from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import psutil
 import torch
+import torch.nn as nn
 from typing_extensions import TypeAlias
+from neural_compressor.torch.utils import is_transformers_imported
 
 from neural_compressor.common.utils import (
     Mode,
@@ -32,6 +34,12 @@ from neural_compressor.common.utils import (
     logger,
 )
 
+if is_transformers_imported():
+    import transformers
+    SUPPORTED_LAYERS = [nn.Linear, transformers.modeling_utils.Conv1D]
+else:
+    SUPPORTED_LAYERS = [nn.Conv1d, nn.Linear]
+    
 OP_NAME_AND_TYPE_TUPLE_TYPE: TypeAlias = Tuple[str, Union[torch.nn.Module, Callable]]
 
 # Dictionary to store a mapping between algorithm names and corresponding algo implementation(function)
@@ -374,7 +382,7 @@ def get_module(module, key):
 
 
 def get_layer_names_in_block(
-    model, supported_types=[torch.nn.Linear, transformers.modeling_utils.Conv1D], quant_block_list=None
+    model, supported_types=SUPPORTED_LAYERS, quant_block_list=None
 ):
     """Retrieves the names of layers within each block of the model.
 
