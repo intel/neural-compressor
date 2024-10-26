@@ -116,13 +116,14 @@ class HFLM(TemplateLM):
         peft: Optional[str] = None,
         autogptq: Optional[Union[bool, str]] = False,
         pad_to_buckets: Optional[Union[bool]] = False,
-        buckets: Optional[list] = [64, 128, 256, 512, 1024, 2048],
+        buckets: Optional[list] = [32, 64, 128, 256, 512, 1024, 2048, 4096],
         model_format: Optional[str] = "torch",
         **kwargs,
     ) -> None:
         super().__init__()
         self.pad_to_buckets = pad_to_buckets
         self.buckets = buckets
+        self.last_bucket = -1
         self.model_format = model_format
         # optionally: take in an already-initialized transformers.PreTrainedModel
         if not isinstance(pretrained, str):
@@ -883,7 +884,10 @@ class HFLM(TemplateLM):
             eval_logger.error("Please add a higher value into the buckets list for this case.")
             exit(0)
         else:
-            return suitable_buckets[0]
+            if self.last_bucket != suitable_buckets[0]:
+                self.model.clear_cache()  # clear graph cache to avoid OOM
+                self.last_bucket = suitable_buckets[0]
+            return self.last_bucket
 
     def _model_call(self, inps, attn_mask=None, labels=None):
         """
