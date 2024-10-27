@@ -41,10 +41,7 @@ def scale_to_scalar(scale):
 
 def get_scale_dtype(scale):
     if isinstance(scale, Tensor):  # tensor case
-        if scale.numel() == 1:
-            return scale.dtype
-        else:
-            raise Exception("scale as scalar isn't supported for scale tensors of dim > 0")
+        return scale.dtype
     elif isinstance(scale, float):  # already scalar case
         return type(scale).__name__
     else:
