@@ -158,9 +158,8 @@ class _BaseINCAutoModelClass:
                 )
 
                 model = load_empty_model(
-                    pretrained_model_name_or_path,
-                    download_weight=True,
-                    trust_remote_code=trust_remote_code)
+                    pretrained_model_name_or_path, download_weight=True, trust_remote_code=trust_remote_code
+                )
                 if use_cpu:
                     quantization_config.post_init_cpu()
             elif use_xpu:
