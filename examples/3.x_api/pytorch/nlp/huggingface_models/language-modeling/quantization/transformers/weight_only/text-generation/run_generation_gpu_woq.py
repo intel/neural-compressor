@@ -11,6 +11,7 @@ from neural_compressor.transformers.quantization.utils import convert_dtype_str2
 from neural_compressor.transformers.generation import _greedy_search, _beam_search
 from transformers.utils import check_min_version
 import contextlib
+from distutils.util import strtobool
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -29,6 +30,10 @@ parser.add_argument(
 )
 parser.add_argument("--output_dir", nargs="?", default="./saved_results")
 parser.add_argument("--quant_lm_head", action="store_true",  help="whether to quant the lm_head layer in transformers")
+parser.add_argument("--use_layer_wise",  nargs='?', const=True, default=None, type=lambda x: bool(strtobool(x)), 
+                    help="""whether to use layerwise quant. Case-insensitive and
+                            true values are 'y', 'yes', 't', 'true', 'on', and '1'; 
+                            false values are 'n', 'no', 'f', 'false', 'off', and '0'.""")
 # ============Benchmark configs==============
 parser.add_argument("--benchmark", action="store_true")
 parser.add_argument("--benchmark_batch_size", default=1, type=int,
@@ -155,6 +160,7 @@ if args.woq:
             weight_dtype=args.weight_dtype,
             batch_size=args.batch_size,
             quant_lm_head=args.quant_lm_head,
+            use_layer_wise=args.use_layer_wise,
         )
     elif args.woq_algo.lower() == "autoround":
         quantization_config = AutoRoundConfig(
@@ -173,12 +179,17 @@ if args.woq:
             minmax_lr=args.minmax_lr,
             disable_quanted_input=args.disable_quanted_input,
             quant_lm_head=args.quant_lm_head,
+            use_layer_wise=args.use_layer_wise,
         )
     elif args.woq_algo.lower() == "rtn":
         quantization_config = RtnConfig(
-            compute_dtype=args.compute_dtype, weight_dtype=args.weight_dtype,
-            group_size=args.group_size, scale_dtype=args.compute_dtype, quant_lm_head=args.quant_lm_head,
-        ) #default is A16W4G16
+            compute_dtype=args.compute_dtype,
+            weight_dtype=args.weight_dtype,
+            group_size=args.group_size,
+            scale_dtype=args.compute_dtype,
+            quant_lm_head=args.quant_lm_head,
+            use_layer_wise=args.use_layer_wise,
+        )
 
 # get model
 if quantization_config is not None:
