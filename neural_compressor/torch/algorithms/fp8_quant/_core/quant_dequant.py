@@ -62,11 +62,14 @@ class QuantInput(QuantDequantBase):
         self.scale_inv = create_scale_tensor(scale_inv, self.scale_format)
 
     def forward(self, x):
-        return cast_to_fp8_fcn(x, self.lp_dtype, self.scale_inv)
+        # create PCQ inv scale as tmp local variable since its size/mem-usage is equal to the module weight
+        scale_inv = torch.mul(self.scale_inv[0], self.scale_inv[1]) if isinstance(self.scale_inv, list) else self.scale_inv
+        return cast_to_fp8_fcn(x, self.lp_dtype, scale_inv)
 
     def extra_repr(self) -> str:
         repr = super(QuantInput, self).extra_repr()
-        dtype = get_scale_dtype(self.scale_inv)
+        scale_inv = self.scale_inv[0] if isinstance(self.scale_inv, list) else self.scale_inv
+        dtype = get_scale_dtype(scale_inv)
         return f"{repr}, scale_inv dtype={dtype}"
 
 

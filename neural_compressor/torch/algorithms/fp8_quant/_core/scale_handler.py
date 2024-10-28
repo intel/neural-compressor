@@ -4,7 +4,10 @@ from torch import Tensor, nn
 
 def create_scale_tensor(orig_tensor, scale_format):
     if scale_format == ScaleFormat.CONST:
-        return nn.Parameter(orig_tensor)
+        if isinstance(orig_tensor, Tensor):
+            return nn.Parameter(orig_tensor)
+        elif isinstance(orig_tensor, list):
+            return [nn.Parameter(x) for x in orig_tensor]
     elif scale_format == ScaleFormat.SCALAR:
         return scale_to_scalar(orig_tensor)
     else:

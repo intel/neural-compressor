@@ -82,10 +82,7 @@ def linear_scales_to_mod_config(mod, scales, params):
         weight_scale_inv_out_ch = scales_inv.params["weight"][0]
         weight_scale_inv_in_ch = scales_inv.params["weight"][1]
         if isinstance(weight_scale_inv_out_ch, torch.Tensor):
-            scale_inv = torch.mul(
-                weight_scale_inv_in_ch.reshape([1, -1]),
-                weight_scale_inv_out_ch.reshape([-1, 1]),
-            )
+            scale_inv = [weight_scale_inv_in_ch.reshape([1, -1]), weight_scale_inv_out_ch.reshape([-1, 1])]
         else:
             # TODO SW-169781: Handle here scalar weight for PCQ
             raise TypeError(f"Unknown weight scales type: {type(weight_scale_inv_out_ch)}.")
