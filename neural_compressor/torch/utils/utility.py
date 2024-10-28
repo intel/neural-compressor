@@ -298,7 +298,7 @@ def get_processor_type_from_user_config(user_processor_type: Optional[Union[str,
     return processor_type
 
 
-def dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None):
+def dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None, download_weight=False):
     """Download hugging face model from hf hub."""
     import os
 
@@ -323,16 +323,18 @@ def dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None):
                 commit_hash = f.read()
     if storage_folder and commit_hash:
         pointer_path = os.path.join(storage_folder, "snapshots", commit_hash)
-        if os.path.isdir(pointer_path):
+        if os.path.isdir(pointer_path) and (
+            not download_weight
+            or any(file.endswith(".bin") or file.endswith(".safetensors") for file in os.listdir(pointer_path))
+        ):
             return pointer_path
-    else:  # pragma: no cover
-        from huggingface_hub import snapshot_download
+    from huggingface_hub import snapshot_download
 
-        file_path = snapshot_download(repo_id)
-        return file_path
+    file_path = snapshot_download(repo_id)
+    return file_path
 
 
-def load_empty_model(pretrained_model_name_or_path, cls=None, **kwargs):
+def load_empty_model(pretrained_model_name_or_path, cls=None, download_weight=False, **kwargs):
     """Load a empty model."""
     import os
 
@@ -345,7 +347,7 @@ def load_empty_model(pretrained_model_name_or_path, cls=None, **kwargs):
     if is_local:  # pragma: no cover
         path = pretrained_model_name_or_path
     else:
-        path = dowload_hf_model(pretrained_model_name_or_path)
+        path = dowload_hf_model(pretrained_model_name_or_path, download_weight=download_weight)
     if cls.__base__ == _BaseAutoModelClass:
         config = AutoConfig.from_pretrained(path, **kwargs)
         with init_empty_weights():
