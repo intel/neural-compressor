@@ -587,7 +587,10 @@ class RAWGPTQuantizer(object):
 
                         W = load_value(self.model, full_layer_name + ".weight", self.model_path)
                     else:
+                        # [SW-206677] memory is not release when module is moved out of HPU
+                        sequential_layers[layer_name] = sequential_layers[layer_name].cpu()
                         W = sequential_layers[layer_name].weight.data.clone()
+                        sequential_layers[layer_name] = sequential_layers[layer_name].to("hpu")
 
                     gptq_for_this_block[layer_name] = GPTQ(sequential_layers[layer_name], W, self.device)
                     # gptq_for_this_block[layer_name].quantizer = Quantizer()
