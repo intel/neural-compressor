@@ -118,9 +118,9 @@ def scale_to_pow2(scale):
 # for Gaudi2 the range is 16^-2..16^1 so we change 2 with 16 and remember that:
 # 16 = 2^4, log16(m)=log2(m)/log2(16)=log2(m)/4, and we get:
 # we choose s=16^ciel(log16(m))=2^4^ciel(log2(m)/4)=2^(4*ciel(log2(m)/4))=2^(ciel(log2(m)/4)*4)
-def scale_to_pow2_hw(scale, device_type):
+def scale_to_pow2_hw(scale, device_for_scales):
     scale_pow2 = scale_to_pow2(scale)
-    min_scale, max_scale, scale_factor = FP8_143_SCALES_TRAITS[device_type]
+    min_scale, max_scale, scale_factor = FP8_143_SCALES_TRAITS[device_for_scales]
     scale_pow2_hw = torch.minimum(
         torch.maximum(
             2 ** (torch.ceil(torch.log2(scale_pow2) / scale_factor) * scale_factor),
