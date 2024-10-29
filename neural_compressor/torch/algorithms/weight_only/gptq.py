@@ -587,10 +587,13 @@ class RAWGPTQuantizer(object):
 
                         W = load_value(self.model, full_layer_name + ".weight", self.model_path)
                     else:
-                        # [SW-206677] memory is not release when module is moved out of HPU
-                        sequential_layers[layer_name] = sequential_layers[layer_name].cpu()
-                        W = sequential_layers[layer_name].weight.data.clone()
-                        sequential_layers[layer_name] = sequential_layers[layer_name].to("hpu")
+                        if "hpu" in self.device:
+                            # [SW-206677] memory is not release when module is moved out of HPU
+                            sequential_layers[layer_name] = sequential_layers[layer_name].cpu()
+                            W = sequential_layers[layer_name].weight.data.clone()
+                            sequential_layers[layer_name] = sequential_layers[layer_name].to("hpu")
+                        else:
+                            W = sequential_layers[layer_name].weight.data.clone()
 
                     gptq_for_this_block[layer_name] = GPTQ(sequential_layers[layer_name], W, self.device)
                     # gptq_for_this_block[layer_name].quantizer = Quantizer()
@@ -798,7 +801,13 @@ class RAWGPTQuantizer(object):
                     full_layer_name = self.gptq_related_blocks["transformers_post"]["name"]
                     W = load_value(self.model, full_layer_name + ".weight", self.model_path)
                 else:
-                    W = sub_layers[layer_name].weight.data.clone()
+                    if "hpu" in self.device:
+                        # [SW-206677] memory is not release when module is moved out of HPU
+                        sub_layers[layer_name] = sub_layers[layer_name].cpu()
+                        W = sub_layers[layer_name].weight.data.clone()
+                        sub_layers[layer_name] = sub_layers[layer_name].to("hpu")
+                    else:
+                        W = sub_layers[layer_name].weight.data.clone()
 
                 gptq_post_block[layer_name] = GPTQ(sub_layers[layer_name], W, self.device)
                 # gptq_for_this_block[layer_name].quantizer = Quantizer()
@@ -825,6 +834,8 @@ class RAWGPTQuantizer(object):
             for layer_name in sub_layers:
                 full_layer_name = self.gptq_related_blocks["transformers_post"]["name"]
                 weight_config_this_layer = self.get_layer_config(full_layer_name)
+                if "hpu" in self.device:
+                    W = W.to("cpu")
                 scale, zp, Q = gptq_post_block[layer_name].fasterquant(
                     W,
                     blocksize=weight_config_this_layer["block_size"],
