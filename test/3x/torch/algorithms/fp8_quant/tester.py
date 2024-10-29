@@ -6,6 +6,9 @@ import os
 import random
 import typing
 from dataclasses import dataclass
+from pytest import raises as pytest_raises
+
+from test_hpu_utils import get_device_name
 
 import torch
 
@@ -34,6 +37,12 @@ SCALE_METHODS_QUANT_ONLY = [ScaleMethod.UNIT_SCALE, ScaleMethod.HW_ALIGNED_SINGL
 QUANT_MODES_DEFAULT = [QuantMode.MEASURE, QuantMode.QUANTIZE]
 QUANT_MODES_QUANT_ONLY = [QuantMode.QUANTIZE]
 
+# Expects to get an exception. If there's no exception, the test will fail
+def run_with_raised_exception(test_to_run, error, error_str):
+    with pytest_raises(Exception) as exc:
+        test_to_run()
+    assert error_str in str(exc.value)
+    assert exc.type == error
 
 @dataclass
 class TestVector:
@@ -74,6 +83,7 @@ def run_accuracy_test(
     test_vectors: typing.Iterable[TestVector],
     seed: typing.Optional[int] = None,
     quant_modes: typing.Iterable[list] = QUANT_MODES_DEFAULT,
+    device_type: str = get_device_name(),
 ):
     """Run both the reference and the quantized versions of this module,
     and compare the outputs on every test vector.
@@ -95,6 +105,8 @@ def run_accuracy_test(
             That is, all the test vectors will be used for the measurements.
         test_vectors: An iterable of test vectors, each contains a sequence of inputs and tolerance
         seed: The random seed to use. If not given, will use a default seed derived from the module name.
+        quant_modes: An iterable of quantization modes.
+        device_type: Override device type
     """
 
     # If no measure vectors given - use the same dataset as for the test vectors
@@ -112,6 +124,7 @@ def run_accuracy_test(
             mode=mode,
             lp_dtype=lp_dtype,
             scale_method=scale_method,
+            device_type=device_type
         )
         prepare_model._prep_model_with_predefined_config(quantized_model, config=config)
 
@@ -209,6 +222,7 @@ def _get_test_only_config(
     mode: QuantMode,
     scale_method: ScaleMethod,
     lp_dtype: torch.dtype,
+    device_type: str = get_device_name(),
 ) -> Fp8cfg:
     """Should NOT be used externally.
 
@@ -225,5 +239,6 @@ def _get_test_only_config(
             "fp8_config": str(lp_dtype).replace("torch.float8_", "")[:4],
             "scale_method": scale_method.name,
             "dump_stats_path": get_test_unique_dump_path(scale_method),
+            "device_for_scales": device_type,
         }
     )
