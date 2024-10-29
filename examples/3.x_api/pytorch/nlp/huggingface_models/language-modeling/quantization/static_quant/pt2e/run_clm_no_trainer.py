@@ -102,9 +102,9 @@ if args.int8:
         print("Load int8 model.")
         from neural_compressor.torch.quantization import load
         model = load(args.output_dir)
-        
-        model.config = user_model.config # for lm eval
 
+        model.config = user_model.config # for lm eval
+        
         # Compile the quantized model and replace the Q/DQ pattern with Q-operator
         from torch._inductor import config
 
