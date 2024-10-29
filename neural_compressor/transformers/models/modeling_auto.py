@@ -85,6 +85,10 @@ def build_woq_model(model, quantization_config):
             set_module(model, n, new_module)
     return model
 
+def make_contiguous(model):
+    for param in model.parameters():
+        if param.data.ndimension() > 1:
+            param.data = param.data.contiguous()
 
 class _BaseINCAutoModelClass:
     ORIG_MODEL = None
