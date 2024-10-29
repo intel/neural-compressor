@@ -135,11 +135,12 @@ class _BaseINCAutoModelClass:
         ):
             logger.info("Applying Weight Only Quantization.")
             # set use_layer_wise on client
-            if hasattr(quantization_config, "use_layer_wise") and quantization_config.use_layer_wise is None:
+            if hasattr(quantization_config, "use_layer_wise"):
                 import neural_compressor.torch.utils as torch_utils
 
                 process_type = torch_utils.get_processor_type_from_user_config()
-                quantization_config.use_layer_wise = process_type == torch_utils.ProcessorType.Client
+                if process_type == torch_utils.ProcessorType.Client:
+                    quantization_config.use_layer_wise = True
 
             if hasattr(quantization_config, "use_layer_wise") and quantization_config.use_layer_wise:
                 from transformers.dynamic_module_utils import resolve_trust_remote_code
