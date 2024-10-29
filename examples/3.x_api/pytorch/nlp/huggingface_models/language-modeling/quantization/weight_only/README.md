@@ -55,22 +55,23 @@ python run_clm_no_trainer.py \
 ```
 ### Evaluation
 
+> Note: The SRAM_SLICER_SHARED_MME_INPUT_EXPANSION_ENABLED=false is an experimental flag which yields better performance for uint4, and it will be removed in a future release.
+
 ```bash
 # original model
 python run_clm_no_trainer.py \
     --model meta-llama/Llama-2-7b-hf \
     --accuracy \
     --batch_size 8 \
-    --tasks "lambada_openai,wikitext" \
-    --output_dir saved_results
+    --tasks "lambada_openai"
 
 # quantized model
-python run_clm_no_trainer.py \
+SRAM_SLICER_SHARED_MME_INPUT_EXPANSION_ENABLED=false ENABLE_EXPERIMENTAL_FLAGS=1 python run_clm_no_trainer.py \
     --model meta-llama/Llama-2-7b-hf \
-    --load \
     --accuracy \
     --batch_size 8 \
-    --tasks "lambada_openai,wikitext" \
+    --tasks "lambada_openai" \
+    --load \
     --output_dir saved_results
 ```
 
@@ -81,15 +82,14 @@ python run_clm_no_trainer.py \
 python run_clm_no_trainer.py \
     --model meta-llama/Llama-2-7b-hf \
     --performance \
-    --batch_size 8 \
-    --output_dir saved_results
+    --batch_size 8
 
 # quantized model
-python run_clm_no_trainer.py \
+SRAM_SLICER_SHARED_MME_INPUT_EXPANSION_ENABLED=false ENABLE_EXPERIMENTAL_FLAGS=1 python run_clm_no_trainer.py \
     --model meta-llama/Llama-2-7b-hf \
-    --load \
     --performance \
     --batch_size 8 \
+    --load \
     --output_dir saved_results
 ```
 

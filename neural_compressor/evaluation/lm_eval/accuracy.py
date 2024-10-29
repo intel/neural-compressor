@@ -199,6 +199,7 @@ def cli_evaluate(args) -> None:
             },
         )
     lm.pad_to_buckets = args.pad_to_buckets
+    lm.buckets = args.buckets
 
     results = evaluator.simple_evaluate(
         model=lm,
