@@ -380,6 +380,7 @@ def get_module(module, key):
         module = getattr(module, name, None)
     return module
 
+
 def get_layer_names_in_block(model, supported_types=SUPPORTED_LAYERS, quant_block_list=None):
     """Retrieves the names of layers within each block of the model.
 
@@ -387,9 +388,8 @@ def get_layer_names_in_block(model, supported_types=SUPPORTED_LAYERS, quant_bloc
         list: A list of strings, where each string is the name of a layer
               within a block of the model.
     """
-    supported_types = _get_supported_types()
     for n, m in model.named_modules():
-        if isinstance(m, supported_types):
+        if isinstance(m, tuple(supported_types)):
             m.tmp_name = n
     layers_in_block = []
     if bool(quant_block_list):

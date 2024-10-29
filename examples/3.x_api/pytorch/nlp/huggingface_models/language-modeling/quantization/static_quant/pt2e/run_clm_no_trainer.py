@@ -102,9 +102,18 @@ if args.int8:
         print("Load int8 model.")
         from neural_compressor.torch.quantization import load
         model = load(args.output_dir)
-        config = user_model.config # for lm eval
-        user_model = model
-        user_model.config = config
+
+        model.config = user_model.config # for lm eval
+
+        # Compile the quantized model and replace the Q/DQ pattern with Q-operator
+        from torch._inductor import config
+
+        config.freezing = True
+        opt_model = torch.compile(model)
+
+        opt_model.config = user_model.config # for lm eval
+        user_model = opt_model
+
 
 if args.accuracy:
 
@@ -127,12 +136,6 @@ if args.accuracy:
     print('Batch size = %d' % args.batch_size)
 
 if args.performance:
-
-    # Compile the quantized model and replace the Q/DQ pattern with Q-operator
-    from torch._inductor import config
-
-    config.freezing = True
-    opt_model = torch.compile(model)
     batch_size, input_leng = args.batch_size, 512
     example_inputs = torch.ones((batch_size, input_leng), dtype=torch.long)
     print("Batch size = {:d}".format(batch_size))
