@@ -323,17 +323,22 @@ def dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None):
                 commit_hash = f.read()
     if storage_folder and commit_hash:
         pointer_path = os.path.join(storage_folder, "snapshots", commit_hash)
-        if os.path.isdir(pointer_path) and \
-            any(file.endswith(".bin") or file.endswith(".safetensors") for file in os.listdir(pointer_path)):
+        if os.path.isdir(pointer_path) and any(
+            file.endswith(".bin") or file.endswith(".safetensors") for file in os.listdir(pointer_path)
+        ):
             return pointer_path
-    from huggingface_hub import  list_repo_files, snapshot_download
-    
+    from huggingface_hub import list_repo_files, snapshot_download
+
     files_info = list_repo_files("meta-llama/Llama-2-7b-hf")
-    ignore_patterns=["*.bin", "*.bin.index.json"] \
-        if (any(file for file in files_info if file.endswith('.bin')) and \
-            any(file for file in files_info if file.endswith('.safetensors'))) \
-        else None 
-    
+    ignore_patterns = (
+        ["*.bin", "*.bin.index.json"]
+        if (
+            any(file for file in files_info if file.endswith(".bin"))
+            and any(file for file in files_info if file.endswith(".safetensors"))
+        )
+        else None
+    )
+
     file_path = snapshot_download(repo_id, ignore_patterns=ignore_patterns)
     return file_path
 
