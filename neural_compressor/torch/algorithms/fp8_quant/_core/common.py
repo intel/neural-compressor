@@ -263,3 +263,7 @@ def generate_model_info(model):
             create_mod_info_recursion(mod)
 
     create_mod_info_recursion(model)
+
+def get_device_type_for_scales(mod):
+    config = get_hqt_config(mod).cfg
+    return config["device_for_scales"]

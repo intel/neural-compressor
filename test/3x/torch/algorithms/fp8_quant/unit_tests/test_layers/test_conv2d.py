@@ -3,6 +3,7 @@ import typing
 import pytest
 import torch
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import ScaleMethod
+from ...test_hpu_utils import *
 from ...tester import *
 
 
@@ -16,7 +17,8 @@ def get_test_vectors(*, dtype: torch.dtype, C_in: int, H: int, W: int, atol: flo
 @pytest.mark.parametrize("hp_dtype", [torch.bfloat16, torch.float32], ids=["bf16", "fp32"])
 @pytest.mark.parametrize("lp_dtype", [torch.float8_e4m3fn], ids=["fp8_e4m3fn"])
 @pytest.mark.parametrize("scale_method", ScaleMethod)
-def test_conv2d_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype, scale_method: ScaleMethod):
+@pytest.mark.parametrize("device_type", device_type)
+def test_conv2d_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype, scale_method: ScaleMethod, device_type: str):
     # TODO [SW-196641]: fix the following issues:
     if scale_method in SCALE_METHODS_SEGFAULT:
         pytest.skip("Not supported")
@@ -36,19 +38,27 @@ def test_conv2d_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype, scale_met
 
     H = W = 8
 
-    run_accuracy_test(
-        module_class=torch.nn.Conv2d,
-        module_kwargs={
-            "in_channels": C_in,
-            "out_channels": C_out,
-            "kernel_size": K,
-            "padding": 1,
-            "bias": False,
-            "device": "hpu",
-            "dtype": hp_dtype,
-        },
-        lp_dtype=lp_dtype,
-        scale_method=scale_method,
-        test_vectors=get_test_vectors(dtype=hp_dtype, C_in=C_in, H=H, W=W, atol=atol),
-        quant_modes=quant_modes,
-    )
+    def run():
+        run_accuracy_test(
+            module_class=torch.nn.Conv2d,
+            module_kwargs={
+                "in_channels": C_in,
+                "out_channels": C_out,
+                "kernel_size": K,
+                "padding": 1,
+                "bias": False,
+                "device": "hpu",
+                "dtype": hp_dtype,
+            },
+            lp_dtype=lp_dtype,
+            scale_method=scale_method,
+            test_vectors=get_test_vectors(dtype=hp_dtype, C_in=C_in, H=H, W=W, atol=atol),
+            quant_modes=quant_modes,
+            device_type=device_type,
+        )
+    if get_device_type() != device_type_id[device_type] and scale_method != ScaleMethod.MAXABS_HW:
+        return run_with_raised_exception(run, ValueError, "Unsupported config: scale_method: ")
+    elif device_type_id[device_type] != get_device_type():
+        if not (device_type_id[device_type] == get_gaudi2_type() and is_gaudi3()):
+            return run_with_raised_exception(run, ValueError, "Unsupported config: device_for_scales=")
+    return run()

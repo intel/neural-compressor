@@ -4,7 +4,7 @@ import pytest
 
 import habana_frameworks.torch.core as htcore
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from ..test_utils import is_gaudi3
+from ..test_hpu_utils import is_gaudi3
 
 htcore.hpu_set_env()
 
