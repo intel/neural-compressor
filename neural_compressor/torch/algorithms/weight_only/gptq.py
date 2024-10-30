@@ -587,7 +587,7 @@ class RAWGPTQuantizer(object):
 
                         W = load_value(self.model, full_layer_name + ".weight", self.model_path)
                     else:
-                        if "hpu" in self.device:
+                        if "hpu" in self.device:  # pragma: no cover
                             # [SW-206677] memory is not release when module is moved out of HPU
                             sequential_layers[layer_name] = sequential_layers[layer_name].cpu()
                             W = sequential_layers[layer_name].weight.data.clone()
@@ -801,7 +801,7 @@ class RAWGPTQuantizer(object):
                     full_layer_name = self.gptq_related_blocks["transformers_post"]["name"]
                     W = load_value(self.model, full_layer_name + ".weight", self.model_path)
                 else:
-                    if "hpu" in self.device:
+                    if "hpu" in self.device:  # pragma: no cover
                         # [SW-206677] memory is not release when module is moved out of HPU
                         sub_layers[layer_name] = sub_layers[layer_name].cpu()
                         W = sub_layers[layer_name].weight.data.clone()
@@ -1145,7 +1145,7 @@ class GPTQ:
             zero.append(self.quantizer.zero)
         scale = torch.cat(scale, dim=1)
         zero = torch.cat(zero, dim=1)
-        if "hpu" in self.device:
+        if "hpu" in self.device:  # pragma: no cover
             scale = scale.to(self.device)
             zero = zero.to(self.device)
             Q = Q.to(self.device)
