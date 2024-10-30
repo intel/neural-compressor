@@ -176,18 +176,16 @@ class TestTansformersLikeAPI:
         woq_output_3_safetensors = woq_model(dummy_input)[0]
         assert torch.equal(woq_output, woq_output_3_safetensors)
 
-        # clean safetensors files
-        def clean_safetensors(model_path):
-            import os
-            import re
+        # case4: test dowload_hf_model
+        shutil.rmtree(model_path, ignore_errors=True)
+        woq_config = RtnConfig(bits=4, group_size=16, use_layer_wise=True)
 
-            pattern = re.compile(r".*\.safetensors*")
-            for filename in os.listdir(model_path):
-                if pattern.match(filename):
-                    os.remove(os.path.join(model_path, filename))
-
-        if model_name_or_path == "hf-internal-testing/tiny-random-gptj":
-            clean_safetensors(model_path)
+        woq_model = AutoModelForCausalLM.from_pretrained(
+            model_name_or_path,
+            quantization_config=woq_config,
+        )
+        woq_output_download = woq_model(dummy_input)[0]
+        assert torch.equal(woq_output_download, woq_output)
 
     def test_loading_autoawq_model(self):
         user_model = AutoModelForCausalLM.from_pretrained(self.autoawq_model)
