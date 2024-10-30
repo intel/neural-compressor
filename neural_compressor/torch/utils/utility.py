@@ -329,7 +329,7 @@ def dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None):
             return pointer_path
     from huggingface_hub import list_repo_files, snapshot_download
 
-    files_info = list_repo_files("meta-llama/Llama-2-7b-hf")
+    files_info = list_repo_files(repo_id)
     ignore_patterns = (
         ["*.bin", "*.bin.index.json"]
         if (
