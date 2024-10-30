@@ -53,6 +53,9 @@ python run_clm_no_trainer.py \
     --gptq_use_max_length \
     --output_dir saved_results
 ```
+
+> Note: `--gptq_actorder` is not supported by HPU.
+
 ### Evaluation (CPU)
 
 ```bash
