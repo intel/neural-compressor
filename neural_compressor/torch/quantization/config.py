@@ -1453,8 +1453,6 @@ def get_default_static_config() -> StaticQuantConfig:
     Returns:
         the default static quant config.
     """
-    if not is_ipex_imported():
-        return StaticQuantConfig(w_granularity="per_tensor")
     return StaticQuantConfig()
 
 
