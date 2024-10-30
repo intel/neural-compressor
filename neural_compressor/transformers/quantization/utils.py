@@ -592,6 +592,12 @@ def convert_to_GPTQ_checkpoints(model, quantization_config):
     return model
 
 
+def make_contiguous(model):
+    for param in model.parameters():
+        if param.data.ndimension() > 1:
+            param.data = param.data.contiguous()
+
+
 def save_low_bit(self, save_directory: Union[str, os.PathLike], push_to_hub: bool = False, **kwargs):
 
     assert hasattr(self, "quantization_config"), "Detected this model is not a low-bit model."
@@ -603,6 +609,7 @@ def save_low_bit(self, save_directory: Union[str, os.PathLike], push_to_hub: boo
     os.makedirs(save_directory, exist_ok=True)
     # use transformers original `save_pretrained` function
     del self.save_pretrained
+    make_contiguous(self)
 
     if self.device == "cpu" or self.device == torch.device("cpu"):
         convert_to_GPTQ_checkpoints(self, self.quantization_config)
