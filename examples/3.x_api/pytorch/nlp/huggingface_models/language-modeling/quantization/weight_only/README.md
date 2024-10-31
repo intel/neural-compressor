@@ -37,7 +37,7 @@ Below is the current support status on Intel® Xeon® Scalable Processor with Py
 
 `run_clm_no_trainer.py` quantizes the large language models using the dataset [NeelNanda/pile-10k](https://huggingface.co/datasets/NeelNanda/pile-10k) calibration and validates datasets accuracy provided by lm_eval, an example command is as follows.
 
-### Quantization
+### Quantization (CPU & HPU)
 
 ```bash
 python run_clm_no_trainer.py \
@@ -53,7 +53,29 @@ python run_clm_no_trainer.py \
     --gptq_use_max_length \
     --output_dir saved_results
 ```
-### Evaluation
+
+> Note: `--gptq_actorder` is not supported by HPU.
+
+### Evaluation (CPU)
+
+```bash
+# original model
+python run_clm_no_trainer.py \
+    --model meta-llama/Llama-2-7b-hf \
+    --accuracy \
+    --batch_size 8 \
+    --tasks "lambada_openai"
+
+python run_clm_no_trainer.py \
+    --model meta-llama/Llama-2-7b-hf \
+    --accuracy \
+    --batch_size 8 \
+    --tasks "lambada_openai" \
+    --load \
+    --output_dir saved_results
+``` 
+
+### Evaluation (HPU)
 
 > Note: The SRAM_SLICER_SHARED_MME_INPUT_EXPANSION_ENABLED=false is an experimental flag which yields better performance for uint4, and it will be removed in a future release.
 
@@ -71,24 +93,6 @@ SRAM_SLICER_SHARED_MME_INPUT_EXPANSION_ENABLED=false ENABLE_EXPERIMENTAL_FLAGS=1
     --accuracy \
     --batch_size 8 \
     --tasks "lambada_openai" \
-    --load \
-    --output_dir saved_results
-```
-
-### Benchmark
-
-```bash
-# original model
-python run_clm_no_trainer.py \
-    --model meta-llama/Llama-2-7b-hf \
-    --performance \
-    --batch_size 8
-
-# quantized model
-SRAM_SLICER_SHARED_MME_INPUT_EXPANSION_ENABLED=false ENABLE_EXPERIMENTAL_FLAGS=1 python run_clm_no_trainer.py \
-    --model meta-llama/Llama-2-7b-hf \
-    --performance \
-    --batch_size 8 \
     --load \
     --output_dir saved_results
 ```
