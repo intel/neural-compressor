@@ -44,7 +44,7 @@ parser.add_argument("--performance", action="store_true",
 parser.add_argument("--iters", default=100, type=int,
                     help="Number of inference iterations for benchmarking.")
 parser.add_argument("--batch_size", default=1, type=int,
-                    help="Input batch size.")
+                    help="Input batch size for calibration and inference.")
 parser.add_argument("--pad_max_length", default=512, type=int,
                     help="Pad input ids to max length.")
 parser.add_argument("--calib_iters", default=512, type=int,
@@ -61,7 +61,8 @@ parser.add_argument("--woq_algo", default="RTN",
 parser.add_argument("--woq_bits", type=int, default=8,
                     help="Number of bits used to weights.")
 parser.add_argument("--woq_dtype", type=str, default="int",
-                    help="Data type for weights.")
+                    choices=['int', 'nf4', 'fp4'],
+                    help="Data type for weights.  Choices include: int, nf4, fp4")
 parser.add_argument("--woq_group_size", type=int, default=-1,
                     help="Size of weight groups, group_size=-1 refers to per output channel quantization.")
 parser.add_argument("--woq_group_dim", type=int, default=1,
@@ -117,7 +118,9 @@ parser.add_argument("--disable_quanted_input", action="store_true",
 # =============DoubleQuant configs====================
 parser.add_argument("--double_quant_type", type=str, default=None,
                     choices=['GGML_TYPE_Q4_K', 'BNB_NF4'],
-                    help="DoubleQuant parameter.")
+                    help="""A key value to use preset configuration, 
+                        GGML_TYPE_Q4_K refers to llama.cpp double quant configuation, 
+                        while BNB_NF4 refers to bitsandbytes double quant configuation.""")
 parser.add_argument("--double_quant_dtype", type=str, default="fp32",
                     help="Data type for double quant scale.")
 parser.add_argument("--double_quant_bits", type=int, default=8,
