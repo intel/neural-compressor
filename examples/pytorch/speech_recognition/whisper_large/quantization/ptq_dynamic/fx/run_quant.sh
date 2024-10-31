@@ -45,7 +45,8 @@ function run_tuning {
             --tune \
             --batch_size $batch_size \
             --output_dir ${output_model} \
-	    --cache_dir ${dataset_location}
+	          --cache_dir ${dataset_location} \
+            --trust_remote_code
 
 }
 

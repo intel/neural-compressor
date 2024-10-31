@@ -1,0 +1,17 @@
+transformers==4.45.2
+torch
+tiktoken
+transformers_stream_generator
+peft
+sentencepiece
+einops
+accelerate
+datasets
+protobuf
+auto-gptq
+openpyxl
+wandb
+py-cpuinfo
+# for Qwen2-VL
+Pillow
+qwen_vl_utils

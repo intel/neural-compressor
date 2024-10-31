@@ -185,7 +185,7 @@ if args.quantize:
         config = AutoConfig.from_pretrained(args.model)
         setattr(model, "config", config)
     
-        from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
+        from neural_compressor.evaluation.lm_eval import evaluate, LMEvalParser
         eval_args = LMEvalParser(
             model="hf",
             user_model=model,
@@ -217,7 +217,6 @@ if args.quantize:
 
 
 if args.load:
-    # TODO: we need run_benchmark.sh for loading and remove --accuracy in run_quant.sh, currently run_quant.sh will get fp32 result
     if args.int8 or args.int8_bf16_mixed:
         print("load int8 model")
         from neural_compressor.torch.quantization import load
@@ -232,7 +231,7 @@ if args.load:
 
 if args.accuracy:
     user_model.eval()
-    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
+    from neural_compressor.evaluation.lm_eval import evaluate, LMEvalParser
 
     eval_args = LMEvalParser(
         model="hf",

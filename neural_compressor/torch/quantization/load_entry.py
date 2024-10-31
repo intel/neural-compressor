@@ -55,7 +55,6 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
             from neural_compressor.torch.quantization import load
             load(model_name_or_path=model_name_or_path, format="huggingface")
 
-
     Args:
         model_name_or_path (str):  torch checkpoint directory or hugginface model_name_or_path.
             If 'format' is set to 'huggingface', it means the huggingface model_name_or_path.

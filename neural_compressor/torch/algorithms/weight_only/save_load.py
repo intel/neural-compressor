@@ -40,23 +40,39 @@ format_woqlinear_mapping = {LoadFormat.HUGGINGFACE: INCWeightOnlyLinear, LoadFor
 device_woqlinear_mapping = {"cpu": INCWeightOnlyLinear, "hpu": HPUWeightOnlyLinear}
 
 
-def save(model, output_dir="./saved_results"):
+def save(model, output_dir="./saved_results", format=LoadFormat.DEFAULT, **kwargs):
     """Save the quantized model and config to the output path.
 
     Args:
         model (torch.nn.module): raw fp32 model or prepared model.
         output_dir (str, optional): output path to save.
+        format (str, optional): The format in which to save the model. Options include "default" and "huggingface". Defaults to "default".
+        kwargs: Additional arguments for specific formats. For example:
+            - safe_serialization (bool): Whether to use safe serialization when saving (only applicable for 'huggingface' format). Defaults to True.
+            - tokenizer (Tokenizer, optional): The tokenizer to be saved along with the model (only applicable for 'huggingface' format).
+            - max_shard_size (str, optional): The maximum size for each shard (only applicable for 'huggingface' format). Defaults to "5GB".
     """
     os.makedirs(output_dir, exist_ok=True)
+    if format == LoadFormat.HUGGINGFACE:  # pragma: no cover
+        config = model.config
+        config_file = "quantize_config.json"
+        quantization_config = config.quantization_config if hasattr(config, "quantization_config") else None
+        if "backend" in quantization_config and "auto_round" in quantization_config["backend"]:
+            safe_serialization = kwargs.get("safe_serialization", True)
+            tokenizer = kwargs.get("tokenizer", None)
+            max_shard_size = kwargs.get("max_shard_size", "5GB")
+            if tokenizer is not None:
+                tokenizer.save_pretrained(output_dir)
+            del model.save
+            model.save_pretrained(output_dir, max_shard_size=max_shard_size, safe_serialization=safe_serialization)
+            with open(os.path.join(output_dir, config_file), "w", encoding="utf-8") as f:
+                json.dump(quantization_config, f, indent=2)
+            return
+
     qmodel_weight_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), WEIGHT_NAME)
     qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), QCONFIG_NAME)
     # saving process
     save_config_mapping(model.qconfig, qconfig_file_path)
-
-    if hasattr(model, "gptq_config") and model.gptq_config:
-        gptq_config_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), "gptq_config.json")
-        with open(gptq_config_path, "w") as f:
-            json.dump(model.gptq_config, f, indent=4)
 
     # MethodType 'save' not in state_dict
     del model.save
@@ -210,8 +226,21 @@ class WOQModelLoader:
 
         # get model class and config
         model_class, config = self._get_model_class_and_config()
-        self.quantization_config = config.quantization_config
+        self.quantization_config = config.quantization_config if hasattr(config, "quantization_config") else None
+        if (
+            "backend" in self.quantization_config and "auto_round" in self.quantization_config["backend"]
+        ):  # # pragma: no cover
+            # load autoround format quantized model
+            from auto_round import AutoRoundConfig
 
+            hf_kargs = {}
+            pretrain_args = ["trust_remote_code", "_attn_implementation", "device_map", "torch_dtype"]
+            for item in pretrain_args:
+                arg_value = self.kwargs.get(item, None)
+                if arg_value is not None:
+                    hf_kargs[item] = arg_value
+            model = model_class.from_pretrained(self.model_name_or_path, **hf_kargs)
+            return model
         # get loaded state_dict
         self.loaded_state_dict = self._get_loaded_state_dict(config)
         self.loaded_state_dict_keys = list(set(self.loaded_state_dict.keys()))
@@ -407,7 +436,7 @@ class WOQModelLoader:
         trust_remote_code = self.kwargs.pop("trust_remote_code", None)
         kwarg_attn_imp = self.kwargs.pop("attn_implementation", None)
 
-        config = AutoConfig.from_pretrained(self.model_name_or_path)
+        config = AutoConfig.from_pretrained(self.model_name_or_path, trust_remote_code=trust_remote_code)
         # quantization_config = config.quantization_config
 
         if kwarg_attn_imp is not None and config._attn_implementation != kwarg_attn_imp:  # pragma: no cover
@@ -423,6 +452,10 @@ class WOQModelLoader:
             has_remote_code,
         )
 
+        model_class = self.kwargs.get("model_class", None)
+        if model_class:
+            return model_class, config
+
         if has_remote_code and trust_remote_code:  # pragma: no cover
             class_ref = config.auto_map[AutoModelForCausalLM.__name__]
             model_class = get_class_from_dynamic_module(class_ref, self.model_name_or_path, **kwargs_orig)
@@ -432,7 +465,8 @@ class WOQModelLoader:
                 AutoModelForCausalLM.register(config.__class__, model_class, exist_ok=True)
         elif type(config) in AutoModelForCausalLM._model_mapping.keys():
             model_class = _get_model_class(config, AutoModelForCausalLM._model_mapping)
-
+        else:
+            logger.info("Couldn't find model class.")
         return model_class, config
 
     def _get_loaded_state_dict(self, config):

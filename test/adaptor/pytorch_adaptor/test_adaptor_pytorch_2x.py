@@ -401,8 +401,13 @@ class TestPytorchFXAdaptor(unittest.TestCase):
         ptq_fx_op_name_list["conv.*"] = {"weight": {"dtype": "bf16"}, "activation": {"dtype": "bf16"}}
         conf = PostTrainingQuantConfig(op_name_dict=ptq_fx_op_name_list)
         q_model = quantization.fit(model_origin, conf, calib_dataloader=dataloader, calib_func=eval_func)
-        self.assertEqual(q_model._model.conv.module.module.weight.dtype, torch.bfloat16)
-        self.assertEqual(q_model._model.conv.module.module.bias.dtype, torch.bfloat16)
+        self.assertEqual(q_model._model.conv.module.weight.dtype, torch.bfloat16)
+        self.assertEqual(q_model._model.conv.module.bias.dtype, torch.bfloat16)
+        self.assertEqual(
+            q_model._model.conv.stride[0],
+            1,
+            msg="GraphModule object should have the attributes of the original module.",
+        )
 
     def test_hawq_metric(self):
         # Test for hawq metric

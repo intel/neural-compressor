@@ -116,7 +116,7 @@ if args.int8:
 
 if args.accuracy:
 
-    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate, LMEvalParser
+    from neural_compressor.evaluation.lm_eval import evaluate, LMEvalParser
     eval_args = LMEvalParser(
         model="hf",
         user_model=user_model,

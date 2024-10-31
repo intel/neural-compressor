@@ -1,10 +1,13 @@
 """Use this module as an example of how to write new unit tests for layers."""
+
 import os
+
 import pytest
 import torch
+
 import neural_compressor.torch.algorithms.fp8_quant as fp8_quant
-from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import QuantMode, ScaleMethod
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import Matmul
+from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import QuantMode, ScaleMethod
 from ...tester import run_with_raised_exception, _get_test_only_config, SCALE_METHODS_QUANT_ONLY, SCALE_METHODS_KEY_ERROR
 from ...test_hpu_utils import *
 
@@ -22,10 +25,11 @@ def test_config_json():
             QuantMode.MEASURE: "measure",
             QuantMode.QUANTIZE: "quant",
         }[mode]
-        config_path = os.path.join(os.environ.get("NEURAL_COMPRESSOR_FORK_ROOT"),
-                                   f"neural_compressor/torch/algorithms/fp8_quant/custom_config/llama_{name}.json")
+        config_path = f"llama_{name}.json"
+        # config comes from f"neural_compressor/torch/algorithms/fp8_quant/custom_config/llama_{name}.json"
         fp8_quant.prep_model(model, config_path=config_path)
         fp8_quant.finish_measurements(model)
+
 
 @pytest.mark.parametrize("lp_dtype", [torch.float8_e4m3fn], ids=["fp8_e4m3fn"])
 @pytest.mark.parametrize("scale_method", ScaleMethod)
@@ -39,6 +43,7 @@ def test_predefined_config(lp_dtype, scale_method, quant_mode):
         )
         model = Model()
         import neural_compressor.torch.algorithms.fp8_quant.prepare_quant.prepare_model as prepare_model
+
         prepare_model._prep_model_with_predefined_config(model, config=config)
         fp8_quant.finish_measurements(model)
     # TODO [SW-196641]: fix the following issue:

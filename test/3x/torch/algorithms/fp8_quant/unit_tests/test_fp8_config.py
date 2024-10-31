@@ -29,7 +29,7 @@ def test_fakequant_default_config_from_dict():
     model = MyModel()
     htcore.hpu_initialize()
     config = FP8Config.from_dict(config_dict_no_fake_quant)
-    try :
+    try:
         prepare(model, config)
     except Exception as e:
         pytest.fail("error during config parsing - {}".format(e))

@@ -1,5 +1,6 @@
-import torch
 import habana_frameworks.torch.core as htcore
+import torch
+
 import neural_compressor.torch.algorithms.fp8_quant
 
 # This file is for small tests run for debug flow and accuracy. (Not for CI)

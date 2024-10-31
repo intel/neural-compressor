@@ -27,6 +27,7 @@ support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testi
 * Collaborate with cloud marketplaces such as [Google Cloud Platform](https://console.cloud.google.com/marketplace/product/bitnami-launchpad/inc-tensorflow-intel?project=verdant-sensor-286207), [Amazon Web Services](https://aws.amazon.com/marketplace/pp/prodview-yjyh2xmggbmga#pdp-support), and [Azure](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/bitnami.inc-tensorflow-intel), software platforms such as [Alibaba Cloud](https://www.intel.com/content/www/us/en/developer/articles/technical/quantize-ai-by-oneapi-analytics-on-alibaba-cloud.html), [Tencent TACO](https://new.qq.com/rain/a/20221202A00B9S00) and [Microsoft Olive](https://github.com/microsoft/Olive), and open AI ecosystem such as [Hugging Face](https://huggingface.co/blog/intel), [PyTorch](https://pytorch.org/tutorials/recipes/intel_neural_compressor_for_pytorch.html), [ONNX](https://github.com/onnx/models#models), [ONNX Runtime](https://github.com/microsoft/onnxruntime), and [Lightning AI](https://github.com/Lightning-AI/lightning/blob/master/docs/source-pytorch/advanced/post_training_quantization.rst)
 
 ## What's New
+* [2024/10] [Transformers-like API](./docs/source/3x/transformers_like_api.md) for INT4 inference on Intel CPU and GPU.
 * [2024/07] From 3.0 release, framework extension API is recommended to be used for quantization.
 * [2024/07] Performance optimizations and usability improvements on [client-side](./docs/source/3x/client_quant.md).
 
@@ -71,7 +72,7 @@ pip install "neural-compressor>=2.3" "transformers>=4.34.0" torch torchvision
 ```
 After successfully installing these packages, try your first quantization program.
 
-### [FP8 Quantization](./examples/3.x_api/pytorch/cv/fp8_quant/)
+### [FP8 Quantization](./docs/source/3x/PT_FP8Quant.md)
 Following example code demonstrates FP8 Quantization, it is supported by Intel Gaudi2 AI Accelerator. 
 
 To try on Intel Gaudi2, docker image with Gaudi Software Stack is recommended, please refer to following script for environment setup. More details can be found in [Gaudi Guide](https://docs.habana.ai/en/latest/Installation_Guide/Bare_Metal_Fresh_OS.html#launch-docker-image-that-was-built).
@@ -147,7 +148,7 @@ Intel Neural Compressor will convert the model format from auto-gptq to hpu form
     </tr>
     <tr>
         <td colspan="2" align="center"><a href="./docs/source/3x/PT_WeightOnlyQuant.md">Weight-Only Quantization</a></td>
-        <td colspan="2" align="center"><a href="./docs/3x/PT_FP8Quant.md">FP8 Quantization</a></td>
+        <td colspan="2" align="center"><a href="./docs/source/3x/PT_FP8Quant.md">FP8 Quantization</a></td>
         <td colspan="2" align="center"><a href="./docs/source/3x/PT_MXQuant.md">MX Quantization</a></td>
         <td colspan="2" align="center"><a href="./docs/source/3x/PT_MixedPrecision.md">Mixed Precision</a></td>
     </tr>
@@ -162,6 +163,16 @@ Intel Neural Compressor will convert the model format from auto-gptq to hpu form
           <td colspan="3" align="center"><a href="./docs/source/3x/TensorFlow.md">Overview</a></td>
           <td colspan="3" align="center"><a href="./docs/source/3x/TF_Quant.md">Static Quantization</a></td>
           <td colspan="2" align="center"><a href="./docs/source/3x/TF_SQ.md">Smooth Quantization</a></td>
+      </tr>
+  </tbody>
+  <thead>
+      <tr>
+        <th colspan="8">Transformers-like APIs</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td colspan="8" align="center"><a href="./docs/source/3x/transformers_like_api.md">Overview</a></td>
       </tr>
   </tbody>
   <thead>
@@ -181,6 +192,9 @@ Intel Neural Compressor will convert the model format from auto-gptq to hpu form
 > From 3.0 release, we recommend to use 3.X API. Compression techniques during training such as QAT, Pruning, Distillation only available in [2.X API](https://github.com/intel/neural-compressor/blob/master/docs/source/2x_user_guide.md) currently.
 
 ## Selected Publications/Events
+
+* EMNLP'2024: [Optimize Weight Rounding via Signed Gradient Descent for the Quantization of LLMs](https://arxiv.org/abs/2309.05516) (Sep 2024)
+* Blog on Medium: [Quantization on Intel Gaudi Series AI Accelerators](https://medium.com/intel-analytics-software/intel-neural-compressor-v3-0-a-quantization-tool-across-intel-hardware-9856adee6f11) (Aug 2024)
 * Blog by Intel: [Neural Compressor: Boosting AI Model Efficiency](https://community.intel.com/t5/Blogs/Tech-Innovation/Artificial-Intelligence-AI/Neural-Compressor-Boosting-AI-Model-Efficiency/post/1604740) (June 2024)
 * Blog by Intel: [Optimization of Intel AI Solutions for Alibaba Cloud’s Qwen2 Large Language Models](https://www.intel.com/content/www/us/en/developer/articles/technical/intel-ai-solutions-accelerate-alibaba-qwen2-llms.html) (June 2024)
 * Blog by Intel: [Accelerate Meta* Llama 3 with Intel AI Solutions](https://www.intel.com/content/www/us/en/developer/articles/technical/accelerate-meta-llama3-with-intel-ai-solutions.html) (Apr 2024)

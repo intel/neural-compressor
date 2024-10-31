@@ -21,7 +21,10 @@ rm -rf torch/quantization/fp8_quant
 LOG_DIR=/neural-compressor/log_dir
 mkdir -p ${LOG_DIR}
 ut_log_name=${LOG_DIR}/ut_3x_pt.log
-pytest --cov="${inc_path}" -vs --disable-warnings --html=report.html --self-contained-html . 2>&1 | tee -a ${ut_log_name}
+
+find . -name "test*.py" | sed "s,\.\/,python -m pytest --cov=\"${inc_path}\" --cov-report term --html=report.html --self-contained-html  --cov-report xml:coverage.xml --cov-append -vs --disable-warnings ,g" > run.sh
+cat run.sh
+bash run.sh 2>&1 | tee ${ut_log_name}
 
 cp report.html ${LOG_DIR}/
 

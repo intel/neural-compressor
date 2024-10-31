@@ -199,7 +199,6 @@ class PatchedMatmul(nn.Module):
         output = torch.matmul(qinput, qother)
         return output
 
-
     def forward_measure(self, input, other):
         measure_input((input, other), observer=self._mod_extra_config.inputs)
         output = self.orig_mod(input, other)

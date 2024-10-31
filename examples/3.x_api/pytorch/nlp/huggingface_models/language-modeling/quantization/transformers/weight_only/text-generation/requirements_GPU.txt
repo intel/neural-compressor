@@ -1,0 +1,17 @@
+accelerate
+datasets >= 2.0
+diffusers
+peft
+protobuf
+sentencepiece != 0.1.92
+--extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/
+torch==2.3.110
+transformers
+bitsandbytes  #baichuan
+transformers_stream_generator
+tiktoken  #qwen
+einops  #qwen
+auto_round
+lm-eval==0.4.3
+numba
+tbb

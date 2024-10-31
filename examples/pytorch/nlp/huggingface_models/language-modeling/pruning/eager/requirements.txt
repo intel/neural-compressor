@@ -1,7 +1,6 @@
 accelerate
 datasets
 einops
-intel-extension-for-transformers
 optimum
 peft
 sentencepiece
@@ -10,4 +9,6 @@ torch
 tqdm
 tiktoken
 transformers_stream_generator
-lm_eval==0.4.2
+lm_eval==0.4.3
+numba
+pydantic

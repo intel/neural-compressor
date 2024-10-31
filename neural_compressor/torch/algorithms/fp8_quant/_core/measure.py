@@ -111,7 +111,7 @@ def prepare_model(model, mod_list=None):
 
 def register_patched_measure_modules(model, mod_list, observer_class, d_shapes=None):
     """Replace the submodules of the model that appear in mod_list with a patched submodule that uses the given observer_class
-    so the submodule will preform measurement on inputs/outputs in forward stage.
+    so the submodule will perform measurement on inputs/outputs in forward stage.
     Weights measurement is done during model preparation as they are static.
 
     Args:
@@ -139,16 +139,20 @@ def register_patched_measure_modules(model, mod_list, observer_class, d_shapes=N
                 )
                 patched_types.add(type(mod))
 
-                set_hqt_config(mod, top_level_config) # set config in the module, as it consumed by the patched module
-                mod_extra_config = init_measure_object(
-                    mod,
-                    name,
-                    observer_class,
-                    mod_types[mod_type],
-                    skip_outputs_measurements,
-                    (d_shapes[name] if ((d_shapes is not None) and (name in d_shapes)) else None),
-                    params,
-                ) if mod_default_dict[mod_type_str].should_measure_and_quant else None
+                set_hqt_config(mod, top_level_config)  # set config in the module, as it consumed by the patched module
+                mod_extra_config = (
+                    init_measure_object(
+                        mod,
+                        name,
+                        observer_class,
+                        mod_types[mod_type],
+                        skip_outputs_measurements,
+                        (d_shapes[name] if ((d_shapes is not None) and (name in d_shapes)) else None),
+                        params,
+                    )
+                    if mod_default_dict[mod_type_str].should_measure_and_quant
+                    else None
+                )
                 pmod = patch_module_measure(mod, mod_extra_config, mod_default_dict)
                 if pmod._mod_extra_config:
                     for param_name in pmod._mod_extra_config.params:

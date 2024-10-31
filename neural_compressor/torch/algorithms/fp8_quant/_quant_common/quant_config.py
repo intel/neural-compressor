@@ -75,9 +75,11 @@ class TrueFalse(Enum):
     TRUE = True
     FALSE = False
 
+
 class ScaleFormat(Enum):
-    CONST = 1 # scales is const and persistent tensor
-    SCALAR = 2 # scales is non-const, non-persistent tensor with data ptr, used for low BS performance optimization
+    CONST = 1  # scales is const and persistent tensor
+    SCALAR = 2  # scales is non-const, non-persistent tensor with data ptr, used for low BS performance optimization
+
 
 class DeviceType(Enum):
     GAUDI2 = htexp.synDeviceType.synDeviceGaudi2
@@ -321,7 +323,7 @@ def _read_config_from_file(config_path: str) -> Mapping[str, str]:
 
     # if file in absolute path doesn't exist, try looking in cfg directory
     if not os.path.isfile(config_path):
-        config_path = os.path.join(module_directory, "..", f"custom_config/{config_path}.json")
+        config_path = os.path.join(module_directory, "..", f"custom_config/{config_path}")
     try:
         logger.info("QUANT PACKAGE: Loading %s", config_path)
         with open(config_path) as config_json:
@@ -330,5 +332,5 @@ def _read_config_from_file(config_path: str) -> Mapping[str, str]:
         raise Exception(f"Got exception: {e}. QUANT PACKAGE: Can't open {config_path}!")
     except JSONDecodeError as e:
         config_json.close()
-        raise Exception(f"Got exception: {e}. QUANT PACKAGE: Can't load {config_path} json!")
+        raise Exception(f"Got exception: {e}. QUANT PACKAGE: Can't load {config_path}!")
     return config

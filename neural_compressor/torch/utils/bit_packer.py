@@ -14,20 +14,22 @@
 """Utility functions for bit packing."""
 
 
+from typing import Callable, Dict, Tuple
 
 import numba
 import numpy as np
-from typing import Dict, Tuple, Callable
-
 
 #  key: (bits, compress_bits), value: pack function
 bit_packers: Dict[Tuple[int, int], Callable] = {}
 
+
 def register_pack_func(orig_bits: int, compress_bits: int):
     """Register the pack function."""
+
     def decorator(func):
         bit_packers[(orig_bits, compress_bits)] = func
         return func
+
     return decorator
 
 

@@ -17,11 +17,16 @@ from typing import Dict
 
 import torch
 import torch.ao.quantization.quantizer.x86_inductor_quantizer as xiq
-from torch.ao.quantization.observer import HistogramObserver, MinMaxObserver, PlaceholderObserver
+from torch.ao.quantization.observer import (
+    HistogramObserver,
+    MinMaxObserver,
+    PerChannelMinMaxObserver,
+    PlaceholderObserver,
+)
 from torch.ao.quantization.quantizer import QuantizationSpec
 from torch.ao.quantization.quantizer.x86_inductor_quantizer import QuantizationConfig, X86InductorQuantizer
 
-from neural_compressor.torch.utils import GT_TORCH_VERSION_2_3_2
+from neural_compressor.torch.utils import GT_OR_EQUAL_TORCH_VERSION_2_5
 
 
 def create_quant_spec_from_config(dtype, sym, granularity, algo, is_dynamic=False) -> QuantizationSpec:
@@ -48,12 +53,15 @@ def create_quant_spec_from_config(dtype, sym, granularity, algo, is_dynamic=Fals
         "placeholder": PlaceholderObserver,
         "minmax": MinMaxObserver,
         "kl": HistogramObserver,
+        "per_channel_minmax": PerChannelMinMaxObserver,
     }
     # Force to use placeholder observer for dynamic quantization
     if is_dynamic:
         algo = "placeholder"
-    # algo
-    observer_or_fake_quant_ctr = observer_mapping[algo]
+    if f"{granularity}_{algo}" in observer_mapping:
+        observer_or_fake_quant_ctr = observer_mapping[f"{granularity}_{algo}"]
+    else:
+        observer_or_fake_quant_ctr = observer_mapping[algo]
     # qscheme
     qscheme = qscheme_mapping[granularity][sym]
     quantization_spec = QuantizationSpec(
@@ -61,6 +69,7 @@ def create_quant_spec_from_config(dtype, sym, granularity, algo, is_dynamic=Fals
         quant_min=min_max_mapping[select_dtype][0],
         quant_max=min_max_mapping[select_dtype][1],
         observer_or_fake_quant_ctr=observer_or_fake_quant_ctr,
+        ch_axis=0,
         qscheme=qscheme,
         is_dynamic=is_dynamic,
     )
@@ -102,8 +111,8 @@ def create_xiq_quantizer_from_pt2e_config(config, is_dynamic=False) -> X86Induct
     # set global
     global_config = _map_inc_config_to_torch_quant_config(config, is_dynamic)
     quantizer.set_global(global_config)
-    # need torch >= 2.3.2
-    if GT_TORCH_VERSION_2_3_2:  # pragma: no cover
+    # need torch >= 2.5
+    if GT_OR_EQUAL_TORCH_VERSION_2_5:  # pragma: no cover
         op_type_config_dict, op_name_config_dict = config._get_op_name_op_type_config()
         if op_type_config_dict:
             for op_type, config in op_type_config_dict.items():

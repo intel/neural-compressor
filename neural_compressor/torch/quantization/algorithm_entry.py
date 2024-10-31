@@ -159,11 +159,13 @@ def gptq_entry(
             "percdamp": quant_config.percdamp,
             "block_size": quant_config.block_size,
             "static_groups": quant_config.static_groups,
+            "true_sequential": quant_config.true_sequential,
         }
     kwargs.update(
         {
             "use_layer_wise": quant_config.use_layer_wise,
             "model_path": quant_config.model_path,
+            "quant_lm_head": quant_config.quant_lm_head,
         }
     )
     kwargs.pop("example_inputs")
@@ -607,6 +609,7 @@ def autoround_quantize_entry(
             scale_dtype = quant_config.scale_dtype
             quant_block_list = quant_config.quant_block_list
             low_cpu_mem_usage = quant_config.use_layer_wise
+            export_format = quant_config.export_format
 
     kwargs.pop("example_inputs")
 
@@ -634,6 +637,7 @@ def autoround_quantize_entry(
         scale_dtype=scale_dtype,
         quant_block_list=quant_block_list,
         low_cpu_mem_usage=low_cpu_mem_usage,
+        export_format=export_format,
     )
     model = quantizer.execute(model=model, mode=mode, *args, **kwargs)
     model.qconfig = configs_mapping

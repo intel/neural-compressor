@@ -15,7 +15,7 @@ from neural_compressor.torch.quantization import (
     prepare,
     quantize,
 )
-from neural_compressor.torch.utils import GT_TORCH_VERSION_2_3_2, TORCH_VERSION_2_2_2, get_torch_version
+from neural_compressor.torch.utils import GT_OR_EQUAL_TORCH_VERSION_2_5, TORCH_VERSION_2_2_2, get_torch_version
 
 torch.manual_seed(0)
 
@@ -98,7 +98,10 @@ class TestPT2EQuantization:
         return exported_model, example_inputs
 
     @pytest.mark.skipif(get_torch_version() <= TORCH_VERSION_2_2_2, reason="Requires torch>=2.3.0")
-    def test_quantize_simple_model(self, force_not_import_ipex):
+    @pytest.mark.parametrize("granularity", ["per_tensor", "per_channel"])
+    def test_quantize_simple_model(self, granularity, force_not_import_ipex):
+        from neural_compressor.torch.quantization import StaticQuantConfig
+
         model, example_inputs = self.build_simple_torch_model_and_example_inputs()
         float_model_output = model(*example_inputs)
         quant_config = None
@@ -107,7 +110,7 @@ class TestPT2EQuantization:
             for i in range(4):
                 model(*example_inputs)
 
-        quant_config = get_default_static_config()
+        quant_config = StaticQuantConfig(w_granularity=granularity)
         q_model = quantize(model=model, quant_config=quant_config, run_fn=calib_fn)
         from torch._inductor import config
 
@@ -129,6 +132,54 @@ class TestPT2EQuantization:
         opt_model = torch.compile(q_model)
         out = opt_model(*example_inputs)
         logger.warning("out shape is %s", out.shape)
+        assert out is not None
+
+    @pytest.mark.skipif(not GT_OR_EQUAL_TORCH_VERSION_2_5, reason="Requires torch>=2.5")
+    def test_quantize_simple_model_with_set_local(self, force_not_import_ipex):
+        model, example_inputs = self.build_simple_torch_model_and_example_inputs()
+        float_model_output = model(*example_inputs)
+        quant_config = None
+
+        def calib_fn(model):
+            for i in range(4):
+                model(*example_inputs)
+
+        quant_config = get_default_static_config()
+        quant_config.set_local("fc1", StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
+        q_model = quantize(model=model, quant_config=quant_config, run_fn=calib_fn)
+
+        # check the half node
+        expected_node_occurrence = {
+            # Only quantize the `fc2`
+            torch.ops.quantized_decomposed.quantize_per_tensor.default: 2,
+            torch.ops.quantized_decomposed.quantize_per_tensor.default: 2,
+        }
+        expected_node_occurrence = {
+            torch_test_quant_common.NodeSpec.call_function(k): v for k, v in expected_node_occurrence.items()
+        }
+        node_in_graph = self.get_node_in_graph(q_model)
+        for node, cnt in expected_node_occurrence.items():
+            assert node_in_graph.get(node, 0) == cnt, f"Node {node} should occur {cnt} times, but {node_in_graph[node]}"
+
+        from torch._inductor import config
+
+        config.freezing = True
+        q_model_out = q_model(*example_inputs)
+        assert torch.allclose(float_model_output, q_model_out, atol=1e-2), "Quantization failed!"
+
+        # test save and load
+        q_model.save(
+            example_inputs=example_inputs,
+            output_dir="./saved_results",
+        )
+        from neural_compressor.torch.quantization import load
+
+        loaded_quantized_model = load("./saved_results")
+        loaded_q_model_out = loaded_quantized_model(*example_inputs)
+        assert torch.equal(loaded_q_model_out, q_model_out)
+
+        opt_model = torch.compile(q_model)
+        out = opt_model(*example_inputs)
         assert out is not None
 
     @pytest.mark.skipif(not GT_TORCH_VERSION_2_3_2, reason="Requires torch>=2.3.2")
@@ -243,7 +294,7 @@ class TestPT2EQuantization:
                     nodes_in_graph[n] = 1
         return nodes_in_graph
 
-    @pytest.mark.skipif(not GT_TORCH_VERSION_2_3_2, reason="Requires torch>=2.3.0")
+    @pytest.mark.skipif(not GT_OR_EQUAL_TORCH_VERSION_2_5, reason="Requires torch>=2.5")
     def test_mixed_fp16_and_int8(self, force_not_import_ipex):
         model, example_inputs = self.build_model_include_conv_and_linear()
         model = export(model, example_inputs=example_inputs)

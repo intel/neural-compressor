@@ -455,17 +455,21 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
         # fallback to the torch implementation.
         try:
             import numba
+
             numba.config.THREADING_LAYER = "safe"
         except ImportError:
-            logger.warning(f"Import numba failed, to accelerate packing, please install numba with `pip install numba`.")
+            logger.warning("To accelerate packing, please install numba with `pip install numba tbb`.")
             return self.pack_tensor_with_torch(torch.from_numpy(raw_array)).cpu().numpy()
         except Exception as e:
             logger.warning(f"Import numba failed with error: {e}, fallback to torch implementation.")
             return self.pack_tensor_with_torch(torch.from_numpy(raw_array)).cpu().numpy()
         from neural_compressor.torch.utils.bit_packer import bit_packers
+
         pack_func_name = (bits, compress_bits)
         if pack_func_name not in bit_packers:
-            logger.warning(f"Unsupported packing with bits: {bits}, compress_bits: {compress_bits} using numba, fallback to torch implementation.")
+            logger.warning(
+                f"Unsupported packing with bits: {bits}, compress_bits: {compress_bits} using numba, fallback to torch implementation."
+            )
             return self.pack_tensor_with_torch(torch.from_numpy(raw_array)).cpu().numpy()
         out_features, in_features = raw_array.shape
         new_in_features = (in_features + n_pack - 1) // n_pack
@@ -508,7 +512,10 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
     def unpack_tensor_with_numpy(self, packed_tensor):
         """Unpack the packed tensor with numpy."""
         packed_array = packed_tensor.cpu().numpy()
-        target_dtype = np.int8 if not hasattr(self, "qzeros") or "int" not in self.dtype else np.uint8
+        target_dtype = np.int16
+        if self.bits == 8 and self.compression_dtype == torch.int8 and hasattr(self, "qzeros"):
+            # special case for unpacking uint8 date from int8 compression_dtype
+            target_dtype = np.uint8
         target_len = packed_array.shape[1] * self.n_pack
         unpacked_array = np.zeros((packed_array.shape[0], target_len), dtype=target_dtype)
         mask = np.uint8(2**self.bits - 1)
@@ -518,7 +525,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
                 tmp = packed_array[:, j]
                 tmp = np.left_shift(tmp, self.compress_bits - self.bits * (e + 1))
                 tmp = np.right_shift(tmp, self.compress_bits - self.bits)
-                if target_dtype == np.uint8:
+                if hasattr(self, "qzeros"):
                     tmp &= mask
                 unpacked_array[:, index] = tmp.astype(target_dtype)
                 accelerator.synchronize()

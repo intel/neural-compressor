@@ -46,6 +46,7 @@ parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
 parser.add_argument('--wd', '--weight-decay', default=1e-4, type=float,
                     metavar='W', help='weight decay (default: 1e-4)',
                     dest='weight_decay')
+parser.add_argument('--w_granularity', default="per_channel", type=str, choices=["per_channel", "per_tensor"], help='weight granularity')
 parser.add_argument('-p', '--print-freq', default=10, type=int,
                     metavar='N', help='print frequency (default: 10)')
 parser.add_argument('--resume', default='', type=str, metavar='PATH',
@@ -179,7 +180,7 @@ def main():
     
     if args.tune:
         from neural_compressor.torch.export import export
-        from neural_compressor.torch.quantization import prepare, convert, get_default_static_config
+        from neural_compressor.torch.quantization import prepare, convert, StaticQuantConfig
 
         # Prepare the float model and example inputs for exporting model
         x = torch.randn(args.batch_size, 3, 224, 224).contiguous(memory_format=torch.channels_last)
@@ -188,7 +189,7 @@ def main():
         # Specify that the first dimension of each input is that batch size
         from torch.export import Dim
         print(args.batch_size)
-        batch = Dim("batch", min=16)
+        batch = Dim("batch")
     
         # Specify that the first dimension of each input is that batch size
         dynamic_shapes = {"x": {0: batch}}
@@ -196,7 +197,7 @@ def main():
         # Export eager model into FX graph model
         exported_model = export(model=model, example_inputs=example_inputs, dynamic_shapes=dynamic_shapes)
         # Quantize the model
-        quant_config = get_default_static_config()
+        quant_config = StaticQuantConfig(w_granularity=args.w_granularity)
         
         prepared_model = prepare(exported_model, quant_config=quant_config)
         # Calibrate
@@ -233,7 +234,9 @@ def main():
             new_model = opt_model
         else:
             new_model = model
+            # For fair comparison, we also compile the float model
             new_model.eval()
+            new_model = torch.compile(new_model)
         if args.performance:
             benchmark(val_loader, new_model, args)
             return

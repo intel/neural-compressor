@@ -63,7 +63,7 @@ pip install neural-compressor[tf]
 pip install neural-compressor
 ```
 ```Shell
-# Framework extension API + TensorFlow dependency
+# Framework extension API + PyTorch dependency
 pip install neural-compressor-pt
 ```
 ```Shell

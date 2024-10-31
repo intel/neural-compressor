@@ -68,13 +68,18 @@ PKG_INSTALL_CFG = {
                 "neural_compressor.common.*",
                 "neural_compressor.torch",
                 "neural_compressor.torch.*",
+                "neural_compressor.transformers",
+                "neural_compressor.transformers.*",
+                "neural_compressor.evaluation",
+                "neural_compressor.evaluation.*",
             ],
         ),
+        "package_data": {"": ["*.json"]},
         "install_requires": fetch_requirements("requirements_pt.txt"),
     },
     # 3.x tf binary build config, pip install neural-compressor-tf, install 3.x TensorFlow API.
-    "neural_compressor_3x_tf": {
-        "project_name": "neural_compressor_3x_tf",
+    "neural_compressor_tf": {
+        "project_name": "neural_compressor_tf",
         "include_packages": find_packages(
             include=[
                 "neural_compressor.common",
@@ -104,7 +109,7 @@ if __name__ == "__main__":
 
     if "tf" in sys.argv:
         sys.argv.remove("tf")
-        cfg_key = "neural_compressor_3x_tf"
+        cfg_key = "neural_compressor_tf"
 
     project_name = PKG_INSTALL_CFG[cfg_key].get("project_name")
     include_packages = PKG_INSTALL_CFG[cfg_key].get("include_packages") or {}
