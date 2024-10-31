@@ -446,7 +446,7 @@ if args.quantize:
                 else:
                     model(data)
         run_fn = run_fn_for_autoround
-        run_args = (dataloader)
+        run_args = (dataloader,)
         user_model = prepare(model=user_model, quant_config=quant_config)
         run_fn(user_model, *run_args)
         user_model = convert(user_model)
