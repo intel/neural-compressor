@@ -63,7 +63,7 @@ parser.add_argument("--woq_bits", type=int, default=8,
 parser.add_argument("--woq_dtype", type=str, default="int",
                     help="Data type for weights.")
 parser.add_argument("--woq_group_size", type=int, default=-1,
-                    help="Size of weight groups")
+                    help="Size of weight groups, group_size=-1 refers to per output channel quantization.")
 parser.add_argument("--woq_group_dim", type=int, default=1,
                     help="Dimension for grouping.")
 parser.add_argument("--woq_scheme", default="sym",
