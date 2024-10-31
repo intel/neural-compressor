@@ -119,8 +119,8 @@ parser.add_argument("--disable_quanted_input", action="store_true",
 parser.add_argument("--double_quant_type", type=str, default=None,
                     choices=['GGML_TYPE_Q4_K', 'BNB_NF4'],
                     help="""A key value to use preset configuration, 
-                        GGML_TYPE_Q4_K refers to llama.cpp double quant configuation, 
-                        while BNB_NF4 refers to bitsandbytes double quant configuation.""")
+                        GGML_TYPE_Q4_K refers to llama.cpp double quant configuration, 
+                        while BNB_NF4 refers to bitsandbytes double quant configuration.""")
 parser.add_argument("--double_quant_dtype", type=str, default="fp32",
                     help="Data type for double quant scale.")
 parser.add_argument("--double_quant_bits", type=int, default=8,
