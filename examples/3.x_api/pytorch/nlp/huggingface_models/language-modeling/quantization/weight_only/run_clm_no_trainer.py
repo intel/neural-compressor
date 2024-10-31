@@ -65,7 +65,7 @@ parser.add_argument("--woq_dtype", type=str, default="int",
 parser.add_argument("--woq_group_size", type=int, default=-1,
                     help="Size of weight groups, group_size=-1 refers to per output channel quantization.")
 parser.add_argument("--woq_group_dim", type=int, default=1,
-                    help="Dimension for grouping.")
+                    help="Dimension for grouping, group_dim=1 means grouping by input channels.")
 parser.add_argument("--woq_scheme", default="sym",
                     help="Indicates whether weights are symmetric or asymmetric.")
 parser.add_argument("--woq_use_mse_search", action="store_true",
