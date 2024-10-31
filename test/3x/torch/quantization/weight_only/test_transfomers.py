@@ -122,7 +122,7 @@ class TestTansformersLikeAPI:
         dummy_input = fp32_model.dummy_inputs["input_ids"]
 
         # RTN
-        # use_layer_wise=True
+        # Case1: use_layer_wise=True
         woq_config = RtnConfig(bits=4, group_size=16, use_layer_wise=True)
         woq_model = AutoModelForCausalLM.from_pretrained(
             model_name_or_path,
@@ -139,7 +139,7 @@ class TestTansformersLikeAPI:
         loaded_output = loaded_model(dummy_input)[0]
         assert torch.equal(woq_output, loaded_output), "loaded output should be same. Please double check."
 
-        # use_layer_wise=False
+        # Case2: use_layer_wise=False
         woq_config = RtnConfig(bits=4, group_size=16, use_layer_wise=False)
         woq_model = AutoModelForCausalLM.from_pretrained(
             model_name_or_path,
@@ -147,6 +147,45 @@ class TestTansformersLikeAPI:
         )
         woq_output2 = woq_model(dummy_input)[0]
         assert torch.equal(woq_output, woq_output2), "use_layer_wise output should be same. Please double check."
+
+        # Case3: test safetensors model file
+        from neural_compressor.torch.algorithms.layer_wise.utils import get_path
+
+        model_path = get_path(model_name_or_path)
+        from transformers import AutoModelForCausalLM as RawAutoModelForCausalLM
+
+        ori_model = RawAutoModelForCausalLM.from_pretrained(model_name_or_path)
+        # test 1 safetensors file
+        ori_model.save_pretrained(model_path, safe_serialization=True)
+        woq_config = RtnConfig(bits=4, group_size=16, use_layer_wise=True)
+
+        woq_model = AutoModelForCausalLM.from_pretrained(
+            model_name_or_path,
+            quantization_config=woq_config,
+        )
+        woq_output_1_safetensors = woq_model(dummy_input)[0]
+        assert torch.equal(woq_output, woq_output_1_safetensors)
+
+        # test 3 safetensors files
+        ori_model.save_pretrained(model_path, safe_serialization=True, max_shard_size="250KB")
+        woq_config = RtnConfig(bits=4, group_size=16, use_layer_wise=True)
+        woq_model = AutoModelForCausalLM.from_pretrained(
+            model_name_or_path,
+            quantization_config=woq_config,
+        )
+        woq_output_3_safetensors = woq_model(dummy_input)[0]
+        assert torch.equal(woq_output, woq_output_3_safetensors)
+
+        # case4: test dowload_hf_model
+        shutil.rmtree(model_path, ignore_errors=True)
+        woq_config = RtnConfig(bits=4, group_size=16, use_layer_wise=True)
+
+        woq_model = AutoModelForCausalLM.from_pretrained(
+            model_name_or_path,
+            quantization_config=woq_config,
+        )
+        woq_output_download = woq_model(dummy_input)[0]
+        assert torch.equal(woq_output_download, woq_output)
 
     def test_loading_autoawq_model(self):
         user_model = AutoModelForCausalLM.from_pretrained(self.autoawq_model)
