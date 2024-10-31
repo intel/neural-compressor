@@ -102,13 +102,16 @@ def conv2d_fp8(
     scale_input_inv=None,
     scale_other_inv=None,
 ):
+    def to_list_if_necessary(param):
+        return param if hasattr(param, "__iter__") else [param] * 2
+
     return torch.ops.hpu.conv2d_fp8(
         input=input,
         weight=other,
         bias=bias,
-        stride=stride,
-        padding=padding,
-        dilation=dilation,
+        stride=to_list_if_necessary(stride),
+        padding=to_list_if_necessary(padding),
+        dilation=to_list_if_necessary(dilation),
         groups=groups,
         out_dtype=out_dtype,
         scale_input=scale_input_inv,
