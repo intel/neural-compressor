@@ -30,7 +30,7 @@ parameters:
     type: object
     default:
       - opt_125m_woq_gptq_int4
-      - opt_125m_woq_gptq_int4_dq_bnb
+      - opt_125m_woq_gptq_nf4_dq_bnb
       - opt_125m_woq_gptq_int4_dq_ggml
 
 stages:

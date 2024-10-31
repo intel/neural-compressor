@@ -31,7 +31,7 @@
       "main_script": "run_clm_no_trainer.py",
       "batch_size": 1
     },
-    "opt_125m_woq_gptq_int4_dq_bnb":{
+    "opt_125m_woq_gptq_nf4_dq_bnb":{
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/weight_only",
       "dataset_location": "",
       "input_model": "",
@@ -52,7 +52,7 @@
       "main_script": "run_clm_no_trainer.py",
       "batch_size": 8
     },
-    "llama2_7b_gptq_int4_dq_bnb":{
+    "llama2_7b_gptq_nf4_dq_bnb":{
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/weight_only",
       "dataset_location": "",
       "input_model": "",
@@ -73,7 +73,7 @@
       "main_script": "run_clm_no_trainer.py",
       "batch_size": 8
     },
-    "gpt_j_woq_rtn_int4_dq_bnb":{
+    "gpt_j_woq_rtn_nf4_dq_bnb":{
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/weight_only",
       "dataset_location": "",
       "input_model": "",
@@ -94,7 +94,7 @@
       "main_script": "run_clm_no_trainer.py",
       "batch_size": 8
     },
-    "gpt_j_woq_gptq_int4_dq_bnb":{
+    "gpt_j_woq_gptq_nf4_dq_bnb":{
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/weight_only",
       "dataset_location": "",
       "input_model": "",
