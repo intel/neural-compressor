@@ -81,6 +81,9 @@ Notes:
 - *quant_lm_head* defaults to False. This means that, except for transformer blocks, the last layer in transformer models will not be quantized by default. The last layer may be named "lm_head", "output_layer" or "embed_out".
 - Only RTN and GPTQ support double quant.
 
+> [!TIP]
+> If you are working on a client machine, we highly recommend installing [numba](https://numba.readthedocs.io/en/stable/user/installing.html) and [tbb](https://pypi.org/project/tbb/#files) to speed up the packing process. You can do this with `pip install numba tbb`.
+
 #### RTN
 
 |  rtn_args  | comments |                                 default value                            |
