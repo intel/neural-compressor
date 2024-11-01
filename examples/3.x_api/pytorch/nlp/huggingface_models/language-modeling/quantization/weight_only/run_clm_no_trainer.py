@@ -108,7 +108,7 @@ parser.add_argument("--lr", type=float, default=None,
                     help="Learning rate, if None, it will be set to 1.0/iters automatically")
 parser.add_argument("--minmax_lr", type=float, default=None,
                     help="Minmax learning rate, if None,it will beset to be the same with lr")
-parser.add_argument("--Autoround_iters", default=200, type=int,
+parser.add_argument("--autoround_iters", default=200, type=int,
                     help="Num iters for autoround calibration.")
 parser.add_argument("--autoround_nsamples", default=128, type=int, 
                     help="Num samples for autoround calibration.")
