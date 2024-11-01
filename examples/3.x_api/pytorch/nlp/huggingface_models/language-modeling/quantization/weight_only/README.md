@@ -20,6 +20,7 @@ Below is the current support status on Intel Gaudi AI Accelerator with PyTorch.
 > Notes:
 > 1. `--gptq_actorder` is not supported by HPU.
 > 2. Only support inference using uint4.
+> 3. Double quantization is not supported on HPU.
 
 ## Support status on CPU
 
