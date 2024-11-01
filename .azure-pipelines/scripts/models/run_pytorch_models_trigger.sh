@@ -56,10 +56,10 @@ elif [ "${model}" == "opt_125m_woq_gptq_int4" ]; then
     model_src_dir="nlp/huggingface_models/language-modeling/quantization/weight_only"
     inc_new_api=3x_pt
     tuning_cmd="bash run_quant.sh --topology=opt_125m_woq_gptq_int4"
-elif [ "${model}" == "opt_125m_woq_gptq_int4_dq_bnb" ]; then
+elif [ "${model}" == "opt_125m_woq_gptq_nf4_dq_bnb" ]; then
     model_src_dir="nlp/huggingface_models/language-modeling/quantization/weight_only"
     inc_new_api=3x_pt
-    tuning_cmd="bash run_quant.sh --topology=opt_125m_woq_gptq_int4_dq_bnb"
+    tuning_cmd="bash run_quant.sh --topology=opt_125m_woq_gptq_nf4_dq_bnb"
 elif [ "${model}" == "opt_125m_woq_gptq_int4_dq_ggml" ]; then
     model_src_dir="nlp/huggingface_models/language-modeling/quantization/weight_only"
     inc_new_api=3x_pt

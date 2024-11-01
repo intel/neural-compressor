@@ -19,49 +19,63 @@ if is_hpex_available():
     htcore.hpu_set_inference_env()
 
 parser = argparse.ArgumentParser()
-parser.add_argument(
-    "--model", nargs="?", default="EleutherAI/gpt-j-6b"
-)
-parser.add_argument(
-    "--trust_remote_code", default=True,
-    help="Transformers parameter: use the external repo")
-parser.add_argument(
-    "--revision", default=None,
-    help="Transformers parameter: set the model hub commit number")
-parser.add_argument("--dataset", nargs="?", default="NeelNanda/pile-10k", const="NeelNanda/pile-10k")
-parser.add_argument("--output_dir", nargs="?", default="./saved_results")
-parser.add_argument("--quantize", action="store_true")
-parser.add_argument(
-    '--seed',
-    type=int, default=42, help='Seed for sampling the calibration data.'
-)
-parser.add_argument("--load", action="store_true")
-parser.add_argument("--accuracy", action="store_true")
-parser.add_argument("--performance", action="store_true")
+parser.add_argument("--model", nargs="?", default="EleutherAI/gpt-j-6b",
+                    help="Path to pre-trained model (on the HF Hub or locally).")
+parser.add_argument("--trust_remote_code", default=True,
+                    help="""Whether to trust the execution of code from datasets/models defined on the Hub.
+                    This option should only be set to `True` for repositories you trust and in which you have read the code, 
+                    as it will execute code present on the Hub on your local machine.""")
+parser.add_argument("--revision", default=None,
+                    help="The specific model version to use (can be a branch name, tag name or commit id).")
+parser.add_argument("--dataset", nargs="?", default="NeelNanda/pile-10k", const="NeelNanda/pile-10k",
+                    help="Calibration dataset name.")
+parser.add_argument("--output_dir", nargs="?", default="./saved_results",
+                    help="Path to save the output results.")
+parser.add_argument("--quantize", action="store_true",
+                    help="Enable model quantization.")
+parser.add_argument('--seed', type=int, default=42,
+                    help='Seed for sampling the calibration data.')
+parser.add_argument("--load", action="store_true",
+                    help="Load weight-only quantized model from the `output_dir`.")
+parser.add_argument("--accuracy", action="store_true",
+                    help="Enable accuracy measurement.")
+parser.add_argument("--performance", action="store_true",
+                    help="Enable benchmarking measurement.")
 parser.add_argument("--iters", default=100, type=int,
-                    help="For accuracy measurement only.")
+                    help="Number of inference iterations for benchmarking.")
 parser.add_argument("--batch_size", default=1, type=int,
-                    help="For accuracy measurement only.")
-parser.add_argument("--save_accuracy_path", default=None,
-                    help="Save accuracy results path.")
+                    help="Input batch size for calibration and inference.")
 parser.add_argument("--pad_max_length", default=512, type=int,
                     help="Pad input ids to max length.")
 parser.add_argument("--calib_iters", default=512, type=int,
-                    help="calibration iters.")
-parser.add_argument("--tasks", default="lambada_openai,hellaswag,winogrande,piqa",
-                    type=str, help="tasks for accuracy validation")
-parser.add_argument("--peft_model_id", type=str, default=None, help="model_name_or_path of peft model")
+                    help="Number of calibration iterations.")
+parser.add_argument("--tasks", default="lambada_openai,hellaswag,winogrande,piqa", type=str,
+                    help="Tasks for accuracy validation.")
+parser.add_argument("--peft_model_id", type=str, default=None,
+                    help="Model name or path of peft model")
+
 # ============WeightOnly configs===============
-parser.add_argument("--woq_algo", default="RTN", choices=['RTN', 'AWQ', 'TEQ', 'GPTQ', 'AutoRound', 'AutoTune'],
-                    help="Weight-only parameter.")
-parser.add_argument("--woq_bits", type=int, default=8)
-parser.add_argument("--woq_dtype", type=str, default="int")
-parser.add_argument("--woq_group_size", type=int, default=-1)
-parser.add_argument("--woq_group_dim", type=int, default=1)
-parser.add_argument("--woq_scheme", default="sym")
-parser.add_argument("--woq_use_mse_search", action="store_true")
-parser.add_argument("--woq_use_full_range", action="store_true")
-parser.add_argument("--quant_lm_head", action="store_true",  help="whether to quant the lm_head layer in transformers")
+parser.add_argument("--woq_algo", default="RTN",
+                    choices=['RTN', 'AWQ', 'TEQ', 'GPTQ', 'AutoRound', 'AutoTune'],
+                    help="Specify the algorithm for weight-only quantization. Choices include: RTN, AWQ, TEQ, GPTQ, AutoRound, AutoTune")
+parser.add_argument("--woq_bits", type=int, default=8,
+                    help="Number of bits used to weights.")
+parser.add_argument("--woq_dtype", type=str, default="int",
+                    choices=['int', 'nf4', 'fp4'],
+                    help="Data type for weights.  Choices include: int, nf4, fp4")
+parser.add_argument("--woq_group_size", type=int, default=-1,
+                    help="Size of weight groups, group_size=-1 refers to per output channel quantization.")
+parser.add_argument("--woq_group_dim", type=int, default=1,
+                    help="Dimension for grouping, group_dim=1 means grouping by input channels.")
+parser.add_argument("--woq_scheme", default="sym",
+                    help="Indicates whether weights are symmetric or asymmetric.")
+parser.add_argument("--woq_use_mse_search", action="store_true",
+                    help="Enables mean squared error (MSE) search.")
+parser.add_argument("--woq_use_full_range", action="store_true",
+                    help="Enables full range for activations.")
+parser.add_argument("--quant_lm_head", action="store_true",  
+                    help="Whether to quant the lm_head layer in transformers")
+
 # =============GPTQ configs====================
 parser.add_argument("--gptq_actorder", action="store_true",
                     help="Whether to apply the activation order GPTQ heuristic.")
@@ -77,58 +91,43 @@ parser.add_argument('--gptq_use_max_length', action="store_true",
 parser.add_argument('--gptq_max_seq_length', type=int, default=2048,
                     help='Calibration dataset sequence max length, '
                         'this should align with your model config, '
-                        'and your dataset builder args: args.pad_max_length')
+                        'and your dataset builder args: args.pad_max_length.')
+
 # =============AWQ configs====================
 parser.add_argument("--use_auto_scale", action="store_true",
                     help="Enables best scales search based on activation distribution.")
 parser.add_argument("--use_auto_clip", action="store_true",
-                    help="Enables clip range searchc.")
+                    help="Enables clip range search.")
 parser.add_argument("--folding", action="store_true",
                     help="Allow insert mul before linear when the scale cannot be absorbed by last layer for TEQ/AWQ.")
 parser.add_argument('--absorb_layer_dict', type=dict, default={},
                     help="The layer dict that scale can be absorbed for TEQ/AWQ.")
+
 # ============AUTOROUND configs==============
-parser.add_argument(
-    "--lr",
-    type=float,
-    default=None,
-    help="learning rate, if None, it will be set to 1.0/iters automatically",
-)
-parser.add_argument(
-    "--minmax_lr",
-    type=float,
-    default=None,
-    help="minmax learning rate, if None,it will beset to be the same with lr",
-)
-parser.add_argument("--autoround_iters", default=200, type=int, help="num iters for autoround calibration.")
-parser.add_argument("--autoround_nsamples", default=128, type=int, help="num samples for autoround calibration.")
-parser.add_argument(
-    "--disable_quanted_input",
-    action="store_true",
-    help="whether to use the output of quantized block to tune the next block",
-)
+parser.add_argument("--lr", type=float, default=None,
+                    help="Learning rate, if None, it will be set to 1.0/iters automatically")
+parser.add_argument("--minmax_lr", type=float, default=None,
+                    help="Minmax learning rate, if None,it will beset to be the same with lr")
+parser.add_argument("--autoround_iters", default=200, type=int,
+                    help="Num iters for autoround calibration.")
+parser.add_argument("--autoround_nsamples", default=128, type=int, 
+                    help="Num samples for autoround calibration.")
+parser.add_argument("--disable_quanted_input", action="store_true",
+                    help="Whether to use the output of quantized block to tune the next block",)
 
 # =============DoubleQuant configs====================
-parser.add_argument("--double_quant_type",
-                    type=str,
-                    default=None,
+parser.add_argument("--double_quant_type", type=str, default=None,
                     choices=['GGML_TYPE_Q4_K', 'BNB_NF4'],
-                    help="DoubleQuant parameter")
-parser.add_argument("--double_quant_dtype",
-                    type=str,
-                    default="fp32",
+                    help="""A key value to use preset configuration, 
+                        GGML_TYPE_Q4_K refers to llama.cpp double quant configuration, 
+                        while BNB_NF4 refers to bitsandbytes double quant configuration.""")
+parser.add_argument("--double_quant_dtype", type=str, default="fp32",
                     help="Data type for double quant scale.")
-parser.add_argument("--double_quant_bits",
-                    type=int,
-                    default=8,
+parser.add_argument("--double_quant_bits", type=int, default=8,
                     help="Number of bits used to represent double_quant scale.")
-parser.add_argument("--double_quant_use_sym",
-                    type=bool,
-                    default=True,
+parser.add_argument("--double_quant_use_sym", type=bool, default=True,
                     help="Indicates whether double quant scale are symmetric.")
-parser.add_argument("--double_quant_group_size",
-                    type=int,
-                    default=256,
+parser.add_argument("--double_quant_group_size", type=int, default=256,
                     help="Size of double quant groups.")
 # =======================================
 

@@ -44,7 +44,7 @@ subprojects:
       - "Model-Test-3x"
       - "Model-Test-3x (Generate Report GenerateReport)"
       - "Model-Test-3x (Run PyTorch Model opt_125m_woq_gptq_int4)"
-      - "Model-Test-3x (Run PyTorch Model opt_125m_woq_gptq_int4_dq_bnb)"
+      - "Model-Test-3x (Run PyTorch Model opt_125m_woq_gptq_nf4_dq_bnb)"
       - "Model-Test-3x (Run PyTorch Model opt_125m_woq_gptq_int4_dq_ggml)"
 
   - id: "Unit Tests basic workflow"
