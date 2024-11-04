@@ -148,7 +148,7 @@ def _validate_dump_path(dump_stats_path):
         for fname in files_to_backup:
             try:
                 os.rename(f"{dirname}/{fname}", f"{dirname}/{backup_dirname}/{fname}")
-            except FileNotFoundError:
+            except (OSError, FileNotFoundError):
                 pass
 
 
