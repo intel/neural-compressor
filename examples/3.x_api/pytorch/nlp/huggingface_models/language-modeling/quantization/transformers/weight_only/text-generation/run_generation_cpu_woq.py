@@ -85,8 +85,8 @@ parser.add_argument(
     default=None,
     type=lambda x: bool(strtobool(x)), 
     help="""Use layer wise to do quantization. Case-insensitive and
-    true values are 'y', 'yes', 't', 'true', 'on', and '1'; false values
-    are 'n', 'no', 'f', 'false', 'off', and '0'.""",
+    true values are 'y', 'yes', 't', 'true', 'on', and '1'; false values are 'n', 'no', 'f', 'false', 'off', and '0'.
+    Default is None, which means the value will be determined automatically based on whether the platform is client.""",
 )
 parser.add_argument(
     "--n_samples", type=int, default=512, help="Number of calibration data samples."
