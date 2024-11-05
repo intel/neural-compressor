@@ -19,7 +19,7 @@ echo "onnxruntime version is $onnxruntime_version"
 echo "mxnet version is $mxnet_version"
 
 test_case=$1
-echo "========= test case is ${test_case}"
+echo "##[group]========= test case is ${test_case}"
 
 if [[ "${tensorflow_version}" == *"-official" ]]; then
     pip install tensorflow==${tensorflow_version%-official}
@@ -113,3 +113,4 @@ if [[ $(echo "${test_case}" | grep -c "run basic api") != 0 ]] || [[ $(echo "${t
     find . -name "test*.py" | xargs sed -i 's/from tensorflow import keras/import torch; from tensorflow import keras/g'
 fi
 
+echo "##[endgroup]"

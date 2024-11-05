@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo -e "\n Install Neural Compressor ... "
+echo -e "##[group]Install Neural Compressor ... "
 cd /neural-compressor
 if [[ $1 = *"3x_pt"* ]]; then
     python -m pip install --no-cache-dir -r requirements_pt.txt
@@ -9,7 +9,8 @@ if [[ $1 = *"3x_pt"* ]]; then
         python setup.py pt bdist_wheel
     else
         echo -e "\n Install torch CPU ... "
-        pip install torch==2.4.0 --index-url https://download.pytorch.org/whl/cpu
+        python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+        python -m pip install intel-extension-for-pytorch oneccl_bind_pt --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/cpu/us/
         python -m pip install --no-cache-dir -r requirements.txt
         python setup.py bdist_wheel
     fi
@@ -26,4 +27,5 @@ else
 fi
 
 echo -e "\n pip list after install Neural Compressor ... "
+echo "##[endgroup]"
 pip list
