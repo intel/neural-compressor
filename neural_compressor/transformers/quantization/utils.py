@@ -358,13 +358,6 @@ def convert_to_quantized_model(model, config, device="cpu"):
                 " to ensure the quantization process occurs on the CPU."
             )
 
-    orig_dtype = torch.float32
-    for param in model.parameters():
-        orig_dtype = param.dtype
-        if orig_dtype != torch.float32:
-            model.to(dtype=torch.float32)
-        break
-
     # mapping to INC config
     dtype = "int4" if config.weight_dtype == "int4_fullrange" else config.weight_dtype
     if config.quant_method.value == "rtn":
@@ -521,9 +514,6 @@ def convert_to_quantized_model(model, config, device="cpu"):
     model.eval()
 
     q_model = replace_linear(model, None, None, config, device=device)
-
-    if orig_dtype != torch.float32:
-        q_model.to(dtype=orig_dtype)
 
     if config.use_layer_wise and not (q_model.device == device or q_model.device.type == device):
         logger.warning(
