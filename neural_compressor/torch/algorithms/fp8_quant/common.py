@@ -79,7 +79,7 @@ def get_patched_mod_list():
 
 
 def restore_patched_module(patched_model):
-    from neural_compressor.torch.algorithms.fp8_quant.helper_modules import helper_mods
+    from neural_compressor.torch.algorithms.fp8_quant.utils import helper_mods
 
     patched_mod_list = get_patched_mod_list()
 
