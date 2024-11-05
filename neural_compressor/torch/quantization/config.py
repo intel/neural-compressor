@@ -383,7 +383,7 @@ class GPTQConfig(TorchBaseConfig):
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
         **kwargs,
     ):
-        """Init RTN weight-only quantization config.
+        """Init GPTQ weight-only quantization config.
 
         Args:
             dtype (str): Data type for weights. Default is "int".
