@@ -7,7 +7,7 @@ from neural_compressor.torch.algorithms.fp8_quant._core.common import (
     QuantMode,
 )
 from neural_compressor.common import utils as inc_utils
-from neural_compressor.torch.algorithms.fp8_quant.helper_modules import (
+from neural_compressor.torch.algorithms.fp8_quant.utils import (
     helper_mod_register,
 )
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import (
