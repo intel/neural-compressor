@@ -64,6 +64,33 @@ def is_hpex_available():
     return _hpex_available
 
 
+## check optimum
+if is_package_available("optimum"):
+    _optimum_available = True
+else:
+    _optimum_available = False
+
+
+def is_optimum_available():
+    """Return whether optimum-habana is available."""
+    return _optimum_available
+
+
+## check optimum-habana
+if is_package_available("optimum-habana"):
+    if is_optimum_available():
+        _optimum_habana_available = True
+    else:
+        raise ValueError("optimum-habana needs to be installed together with optimum.")
+else:
+    _optimum_habana_available = False
+
+
+def is_optimum_habana_available():
+    """Return whether optimum-habana is available."""
+    return _optimum_habana_available
+
+
 ## check ipex
 if is_package_available("intel_extension_for_pytorch"):
     _ipex_available = True
