@@ -17,13 +17,13 @@ pip install -r requirements_cpu_woq.txt
 #### Performance
 ```shell
 # fp32
-OMP_NUM_THREADS=<physical cores num> numactl -m <node N> -C <cpu list> python run_generate_cpu_woq.py  \
+OMP_NUM_THREADS=<physical cores num> numactl -m <node N> -C <cpu list> python run_generation_cpu_woq.py  \
     --model <MODEL_NAME_OR_PATH> \
     --batch_size 1 \
     --benchmark
 
 # quant and do benchmark.
-OMP_NUM_THREADS=<physical cores num> numactl -m <node N> -C <cpu list> python run_generate_cpu_woq.py  \
+OMP_NUM_THREADS=<physical cores num> numactl -m <node N> -C <cpu list> python run_generation_cpu_woq.py  \
     --model <MODEL_NAME_OR_PATH> \
     --woq \
     --woq_algo <ALGORITHM_NAME> \  # Default is "Rtn", "Awq", "Teq", "GPTQ", "AutoRound" are provided.
@@ -32,12 +32,12 @@ OMP_NUM_THREADS=<physical cores num> numactl -m <node N> -C <cpu list> python ru
     --benchmark
 
 # load WOQ quantized model and do benchmark.
-OMP_NUM_THREADS=<physical cores num> numactl -m <node N> -C <cpu list> python run_generate_cpu_woq.py  \
+OMP_NUM_THREADS=<physical cores num> numactl -m <node N> -C <cpu list> python run_generation_cpu_woq.py  \
     --model <WOQ_MODEL_SAVE_PATH> \
     --benchmark
 
 # load WOQ model from Huggingface and do benchmark.
-OMP_NUM_THREADS=<physical cores num> numactl -m <node N> -C <cpu list> python run_generate_cpu_woq.py \
+OMP_NUM_THREADS=<physical cores num> numactl -m <node N> -C <cpu list> python run_generation_cpu_woq.py \
     --model <MODEL_NAME_OR_PATH> \
     --benchmark
 
@@ -46,7 +46,7 @@ OMP_NUM_THREADS=<physical cores num> numactl -m <node N> -C <cpu list> python ru
 The accuracy validation is based from [lm_evaluation_harness](https://github.com/EleutherAI/lm-evaluation-harness/blob/v0.4.3/lm_eval/__main__.py).
 ```shell
 # fp32
-python run_generate_cpu_woq.py \
+python run_generation_cpu_woq.py \
     --model <MODEL_NAME_OR_PATH> \
     --accuracy \
     --tasks lambada_openai,piqa,hellaswag \  # notice: no space.
@@ -54,7 +54,7 @@ python run_generate_cpu_woq.py \
     --batch_size 56
 
 # quant and do accuracy.
-python run_generate_cpu_woq.py \
+python run_generation_cpu_woq.py \
     --model <MODEL_NAME_OR_PATH> \
     --woq \
     --woq_algo <ALGORITHM_NAME> \  # Default is "Rtn", "Awq", "Teq", "GPTQ", "AutoRound" are provided.
@@ -64,7 +64,7 @@ python run_generate_cpu_woq.py \
     --batch_size 56 
 
 # load WOQ model quantied by itrex and do benchmark.
-python run_generate_cpu_woq.py \
+python run_generation_cpu_woq.py \
     --model <WOQ_MODEL_SAVE_PATH> \
     --accuracy \
     --tasks lambada_openai,piqa,hellaswag \  # notice: no space.
@@ -72,7 +72,7 @@ python run_generate_cpu_woq.py \
 
 # load WOQ model quantied by itrex and do benchmark with neuralspeed.
 # only support quantized with algorithm "Awq", "GPTQ", "AutoRound"
-python run_generate_cpu_woq.py \
+python run_generation_cpu_woq.py \
     --model <WOQ_MODEL_SAVE_PATH> \
     --accuracy \
     --tasks lambada_openai,piqa,hellaswag \  # notice: no space.
@@ -81,7 +81,7 @@ python run_generate_cpu_woq.py \
     
 
 # load WOQ model from Huggingface and do benchmark.
-python run_generate_cpu_woq.py \
+python run_generation_cpu_woq.py \
     --model <MODEL_NAME_OR_PATH> \
     --accuracy \
     --tasks lambada_openai,piqa,hellaswag \  # notice: no space.
@@ -89,7 +89,7 @@ python run_generate_cpu_woq.py \
     --batch_size 56
 
 # load WOQ model from Huggingface and do benchmark with neuralspeed.
-python run_generate_cpu_woq.py \
+python run_generation_cpu_woq.py \
     --model <MODEL_NAME_OR_PATH> \
     --accuracy \
     --tasks lambada_openai,piqa,hellaswag \  # notice: no space.
