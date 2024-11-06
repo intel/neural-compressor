@@ -885,7 +885,8 @@ class HFLM(TemplateLM):
             exit(0)
         else:
             if self.last_bucket != suitable_buckets[0]:
-                self.model.clear_cache()  # clear graph cache to avoid OOM
+                if hasattr(self.model, "clear_cache"):
+                    self.model.clear_cache()  # clear HPU graph cache to avoid OOM
                 self.last_bucket = suitable_buckets[0]
             return self.last_bucket
 

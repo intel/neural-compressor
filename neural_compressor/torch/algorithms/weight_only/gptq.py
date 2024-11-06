@@ -247,8 +247,6 @@ class RAWGPTQuantizer(object):
 
         # device
         self.device = get_accelerator(kwargs.pop("device", "auto")).current_device_name()
-        if not use_layer_wise:
-            self.model.to(self.device)
         self.is_ready = False
 
         self.use_layer_wise = use_layer_wise
@@ -589,7 +587,13 @@ class RAWGPTQuantizer(object):
 
                         W = load_value(self.model, full_layer_name + ".weight", self.model_path)
                     else:
-                        W = sequential_layers[layer_name].weight.data.clone()
+                        if "hpu" in self.device:  # pragma: no cover
+                            # [SW-206677] memory is not release when module is moved out of HPU
+                            sequential_layers[layer_name] = sequential_layers[layer_name].cpu()
+                            W = sequential_layers[layer_name].weight.data.clone()
+                            sequential_layers[layer_name] = sequential_layers[layer_name].to("hpu")
+                        else:
+                            W = sequential_layers[layer_name].weight.data.clone()
 
                     gptq_for_this_block[layer_name] = GPTQ(sequential_layers[layer_name], W, self.device)
                     # gptq_for_this_block[layer_name].quantizer = Quantizer()
@@ -609,8 +613,8 @@ class RAWGPTQuantizer(object):
                 for j in range(batch_num):
                     cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                     cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
-                    accelerator.mark_step()
                     out = transformer_block(*cache_positional_batch, **cache_keyword_batch)
+                    accelerator.synchronize()
                     out = self.track_hidden_states(out)
                 self.cache_key_arguments["batch_num"] = batch_num
                 for h in handles:
@@ -674,14 +678,18 @@ class RAWGPTQuantizer(object):
                     gptq_for_this_block[layer_name].free()
 
                 # Step 2.5: replace output data with quantized weights
-                outs = []
                 batch_num = self.cache_key_arguments.pop("batch_num")
                 for j in range(batch_num):
                     cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                     cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
                     out = transformer_block(*cache_positional_batch, **cache_keyword_batch)
+                    accelerator.synchronize()
                     out = self.track_hidden_states(out)
-                    outs.append(out)
+                    # iteratively replace the input with output, thus layerwise quantization can continue.
+                    if "hidden_states" in self.cache_key_arguments:
+                        self.cache_key_arguments["hidden_states"][j] = out
+                    else:
+                        self.cache_positional_arguments[0][j] = out
                 self.cache_key_arguments["batch_num"] = batch_num
                 if self.use_layer_wise:  # pragma: no cover
                     self.gptq_related_blocks["transformers"][block_idx] = transformer_block
@@ -690,13 +698,13 @@ class RAWGPTQuantizer(object):
                 # Step 2.6: export to compressed model
                 for layer_name in sequential_layers:
                     weight_config_this_layer = self.get_layer_config(self.get_full_layer_name(layer_name, block_idx))
-                    gptq_scale = gptq_config[self.get_full_layer_name(layer_name, block_idx)]["scale"]
+                    gptq_scale = gptq_config[self.get_full_layer_name(layer_name, block_idx)]["scale"].cpu()
                     if not weight_config_this_layer["sym"]:
-                        gptq_zp = gptq_config[self.get_full_layer_name(layer_name, block_idx)]["zero"]
+                        gptq_zp = gptq_config[self.get_full_layer_name(layer_name, block_idx)]["zero"].cpu()
                     else:
                         gptq_zp = None
                     if weight_config_this_layer["act_order"]:  # save perm for restoring the weights
-                        gptq_perm = gptq_config[self.get_full_layer_name(layer_name, block_idx)]["perm"]
+                        gptq_perm = gptq_config[self.get_full_layer_name(layer_name, block_idx)]["perm"].cpu()
                     else:
                         gptq_perm = None
                     if self.use_layer_wise:
@@ -748,15 +756,16 @@ class RAWGPTQuantizer(object):
                         zp=gptq_zp is not None,
                         bias=bias is not None,
                         g_idx=gptq_perm is not None,
-                        device=self.device,
+                        device="cpu",
                     )
                     new_module.pack(int_weight, gptq_scale, gptq_zp, bias, gptq_perm)
                     set_module(transformer_block, layer_name, new_module)
+                    accelerator.synchronize()
 
                 del gptq_for_this_block
+                accelerator.synchronize()
                 torch.cuda.empty_cache()
-                # iteratively replace the input with output, thus layerwise quantization can continue.
-                self.update_blockwise_hidden_states(outs)
+                gc.collect()
                 logger.info("------------------------------")
         # 2.7.1 do the post transformer blocks quantization
         do_post_transformer_quant = self.quant_lm_head
@@ -792,7 +801,13 @@ class RAWGPTQuantizer(object):
                     full_layer_name = self.gptq_related_blocks["transformers_post"]["name"]
                     W = load_value(self.model, full_layer_name + ".weight", self.model_path)
                 else:
-                    W = sub_layers[layer_name].weight.data.clone()
+                    if "hpu" in self.device:  # pragma: no cover
+                        # [SW-206677] memory is not release when module is moved out of HPU
+                        sub_layers[layer_name] = sub_layers[layer_name].cpu()
+                        W = sub_layers[layer_name].weight.data.clone()
+                        sub_layers[layer_name] = sub_layers[layer_name].to("hpu")
+                    else:
+                        W = sub_layers[layer_name].weight.data.clone()
 
                 gptq_post_block[layer_name] = GPTQ(sub_layers[layer_name], W, self.device)
                 # gptq_for_this_block[layer_name].quantizer = Quantizer()
@@ -819,6 +834,8 @@ class RAWGPTQuantizer(object):
             for layer_name in sub_layers:
                 full_layer_name = self.gptq_related_blocks["transformers_post"]["name"]
                 weight_config_this_layer = self.get_layer_config(full_layer_name)
+                if "hpu" in self.device:
+                    W = W.to("cpu")
                 scale, zp, Q = gptq_post_block[layer_name].fasterquant(
                     W,
                     blocksize=weight_config_this_layer["block_size"],
@@ -864,13 +881,13 @@ class RAWGPTQuantizer(object):
             for layer_name in sub_layers:
                 full_layer_name = self.gptq_related_blocks["transformers_post"]["name"]
                 weight_config_this_layer = self.get_layer_config(full_layer_name)
-                gptq_scale = gptq_config[full_layer_name]["scale"]
+                gptq_scale = gptq_config[full_layer_name]["scale"].cpu()
                 if not weight_config_this_layer["sym"]:
-                    gptq_zp = gptq_config[full_layer_name]["zero"]
+                    gptq_zp = gptq_config[full_layer_name]["zero"].cpu()
                 else:
                     gptq_zp = None
                 if weight_config_this_layer["act_order"]:  # save perm for restoring the weights
-                    gptq_perm = gptq_config[full_layer_name]["perm"]
+                    gptq_perm = gptq_config[full_layer_name]["perm"].cpu()
                 else:
                     gptq_perm = None
                 if self.use_layer_wise:  # pragma: no cover
@@ -923,7 +940,7 @@ class RAWGPTQuantizer(object):
                     zp=gptq_zp is not None,
                     bias=bias is not None,
                     g_idx=gptq_perm is not None,
-                    device=self.device,
+                    device="cpu",
                 )
                 new_module.pack(int_weight, gptq_scale, gptq_zp, bias, gptq_perm)
                 set_module(self.model, layer_name, new_module)
@@ -1128,7 +1145,7 @@ class GPTQ:
             zero.append(self.quantizer.zero)
         scale = torch.cat(scale, dim=1)
         zero = torch.cat(zero, dim=1)
-        if "hpu" in self.device:
+        if "hpu" in self.device:  # pragma: no cover
             scale = scale.to(self.device)
             zero = zero.to(self.device)
             Q = Q.to(self.device)

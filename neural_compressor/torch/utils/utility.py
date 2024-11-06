@@ -32,7 +32,7 @@ from neural_compressor.common.utils import (
     detect_processor_type_based_on_hw,
     logger,
 )
-from neural_compressor.torch.utils import is_transformers_imported
+from neural_compressor.torch.utils import is_optimum_habana_available, is_transformers_imported
 
 if is_transformers_imported():
     import transformers
@@ -54,21 +54,6 @@ HPU_SAFE_WEIGHTS_NAME = "hpu_model.safetensors"
 WEIGHT_NAME = "quantized_weight.pt"
 HPU_WEIGHT_NAME = "quantized_hpu_weight.pt"
 QCONFIG_NAME = "qconfig.json"
-
-
-def is_optimum_habana_available():
-    """Checks if the Optimum Habana module is available for use with the transformers library.
-
-    This function checks two conditions:
-    1. If the `optimum` package is available using `transformers.utils.import_utils.is_optimum_available`.
-    2. If the `optimum.habana` module can be found using `importlib.util.find_spec`.
-
-    Returns:
-        bool: True if Optimum Habana is available, False otherwise.
-    """
-    from transformers.utils.import_utils import is_optimum_available
-
-    return is_optimum_available() and importlib.util.find_spec("optimum.habana") is not None
 
 
 def register_algo(name):
@@ -331,13 +316,24 @@ def dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None):
                 commit_hash = f.read()
     if storage_folder and commit_hash:
         pointer_path = os.path.join(storage_folder, "snapshots", commit_hash)
-        if os.path.isdir(pointer_path):
+        if os.path.isdir(pointer_path) and any(
+            file.endswith(".bin") or file.endswith(".safetensors") for file in os.listdir(pointer_path)
+        ):
             return pointer_path
-    else:  # pragma: no cover
-        from huggingface_hub import snapshot_download
+    from huggingface_hub import list_repo_files, snapshot_download
 
-        file_path = snapshot_download(repo_id)
-        return file_path
+    files_info = list_repo_files(repo_id)
+    ignore_patterns = (
+        ["*.bin", "*.bin.index.json"]
+        if (
+            any(file for file in files_info if file.endswith(".bin"))
+            and any(file for file in files_info if file.endswith(".safetensors"))
+        )
+        else None
+    )
+
+    file_path = snapshot_download(repo_id, ignore_patterns=ignore_patterns)
+    return file_path
 
 
 def load_empty_model(pretrained_model_name_or_path, cls=None, **kwargs):
