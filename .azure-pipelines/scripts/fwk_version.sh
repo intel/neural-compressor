@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "export FWs version..."
-export tensorflow_version='2.18.0-official'
+export tensorflow_version='2.17.1-official'
 export pytorch_version='2.5.1+cpu'
 export torchvision_version='0.20.1'
 export ipex_version='2.5.0+cpu'

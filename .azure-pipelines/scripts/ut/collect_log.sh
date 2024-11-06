@@ -7,7 +7,7 @@ coverage_log_base="/neural-compressor/log_dir/coverage_log_base"
 coverage_compare="/neural-compressor/log_dir/coverage_compare.html"
 cd /neural-compressor/log_dir
 
-$BOLD_YELLOW && echo "collect coverage for PR branch" && $RESET
+$BOLD_YELLOW && echo "##[group]collect coverage for PR branch" && $RESET
 mkdir -p coverage_PR
 cp ut_*_coverage/.coverage.* ./coverage_PR/
 
@@ -28,8 +28,9 @@ git checkout master
 rm -rf build dist *egg-info
 echo y | pip uninstall neural-compressor
 cd /neural-compressor/.azure-pipelines-pr/scripts && bash install_nc.sh
+echo "##[endgroup]"
 
-$BOLD_YELLOW && echo "collect coverage for baseline" && $RESET
+$BOLD_YELLOW && echo "##[group]collect coverage for baseline" && $RESET
 coverage erase
 cd /neural-compressor/log_dir
 mkdir -p coverage_base
@@ -43,6 +44,7 @@ coverage report -m --rcfile=${COVERAGE_RCFILE} | tee ${coverage_log_base}
 coverage html -d log_dir/coverage_base/htmlcov --rcfile=${COVERAGE_RCFILE}
 coverage xml -o log_dir/coverage_base/coverage.xml --rcfile=${COVERAGE_RCFILE}
 ls -l log_dir/coverage_base/htmlcov
+echo "##[endgroup]"
 
 get_coverage_data() {
     # Input argument

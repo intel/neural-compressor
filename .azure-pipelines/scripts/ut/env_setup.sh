@@ -19,7 +19,7 @@ echo "onnxruntime version is $onnxruntime_version"
 echo "mxnet version is $mxnet_version"
 
 test_case=$1
-echo "##[group]========= test case is ${test_case}"
+echo "##[group]test case is ${test_case}"
 
 if [[ "${tensorflow_version}" == *"-official" ]]; then
     pip install tensorflow==${tensorflow_version%-official}
