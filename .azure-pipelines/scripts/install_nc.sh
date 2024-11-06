@@ -10,6 +10,7 @@ if [[ $1 = *"3x_pt"* ]]; then
     else
         echo -e "\n Install torch CPU ... "
         pip install torch==2.4.0 --index-url https://download.pytorch.org/whl/cpu
+        python -m pip install intel-extension-for-pytorch==2.4.0 oneccl_bind_pt==2.4.0 --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/cpu/us/
         python -m pip install --no-cache-dir -r requirements.txt
         python setup.py bdist_wheel
     fi
