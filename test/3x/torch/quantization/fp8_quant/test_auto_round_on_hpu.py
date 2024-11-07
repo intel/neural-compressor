@@ -80,7 +80,7 @@ class TestAutoRound:
 
         run_fn(model, self.dataloader)
         q_model = convert(model)
-        q_model = q_model.cpu().float()
+        q_model = q_model.cpu()
         self.inp = self.inp
         self.label = self.label
         assert "model.layers.0.self_attn.k_proj" in q_model.autoround_config.keys()
