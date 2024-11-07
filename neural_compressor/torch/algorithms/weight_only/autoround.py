@@ -22,7 +22,7 @@ import torch
 
 
 @lru_cache(None)
-def is_auto_round_available():
+def _is_auto_round_available():
     try:
         import auto_round  # pylint: disable=E0401
     except ImportError:
@@ -31,7 +31,7 @@ def is_auto_round_available():
     return True
 
 
-is_auto_round_available()
+_is_auto_round_available()
 
 from auto_round import AutoRound  # pylint: disable=E0401
 from auto_round.export.export_to_itrex.export import pack_model  # pylint: disable=E0401
