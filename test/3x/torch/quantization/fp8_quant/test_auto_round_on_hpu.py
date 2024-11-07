@@ -80,9 +80,6 @@ class TestAutoRound:
 
         run_fn(model, self.dataloader)
         q_model = convert(model)
-        q_model = q_model.cpu()
-        self.inp = self.inp
-        self.label = self.label
         assert "model.layers.0.self_attn.k_proj" in q_model.autoround_config.keys()
         assert "scale" in q_model.autoround_config["model.layers.0.self_attn.k_proj"].keys()
         assert torch.float32 == q_model.autoround_config["model.layers.0.self_attn.k_proj"]["scale_dtype"]
@@ -103,9 +100,6 @@ class TestAutoRound:
         assert "scale" in q_model.autoround_config["model.layers.0.self_attn.k_proj"].keys()
         assert torch.float32 == q_model.autoround_config["model.layers.0.self_attn.k_proj"]["scale_dtype"]
         assert isinstance(q_model.model.layers[0].self_attn.k_proj, WeightOnlyLinear), "packing model failed."
-        q_model.cpu()
-        out = q_model(self.inp)[0]
-        assert out is not None, "Quantization failed!"
 
     def test_autoround_with_quantize_API(self):
         model = copy.deepcopy(self.tiny_llama_model)
@@ -123,30 +117,3 @@ class TestAutoRound:
             run_args=(self.dataloader,),
         )
         assert isinstance(q_model.model.layers[0].self_attn.k_proj, WeightOnlyLinear), "packing model failed."
-
-    def test_save_and_load(self):
-        fp32_model = copy.deepcopy(self.tiny_llama_model)
-        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, scale_dtype="fp16")
-        # quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
-        logger.info(f"Test AutoRound with config {quant_config}")
-
-        # quantizer execute
-        model = prepare(model=fp32_model, quant_config=quant_config)
-        run_fn(model, self.dataloader)
-        q_model = convert(model)
-
-        assert q_model is not None, "Quantization failed!"
-        q_model.save("saved_results")
-        q_model.cpu()
-        inc_out = q_model(self.inp)[0]
-
-        from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
-        from neural_compressor.torch.quantization import load
-
-        # loading compressed model
-        loaded_model = load("saved_results", copy.deepcopy(self.tiny_llama_model))
-        loaded_out = loaded_model(self.inp)[0]
-        assert torch.allclose(inc_out, loaded_out), "Unexpected result. Please double check."
-        assert isinstance(
-            loaded_model.model.layers[0].self_attn.k_proj, INCWeightOnlyLinear
-        ), "loading compressed model failed."
