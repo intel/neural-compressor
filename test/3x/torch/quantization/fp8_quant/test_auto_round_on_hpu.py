@@ -47,7 +47,7 @@ def run_fn(model, dataloader):
 class TestAutoRound:
     @classmethod
     def setup_class(self):
-        model_name = "meta-llama/Llama-2-7b-chat-hf"
+        model_name = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
         from transformers import AutoModelForCausalLM, AutoTokenizer, LlamaConfig
 
         config = LlamaConfig(num_hidden_layers=2)
