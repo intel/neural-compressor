@@ -117,5 +117,3 @@ class TestAutoRound:
             run_args=(self.dataloader,),
         )
         assert isinstance(q_model.model.layers[0].self_attn.k_proj, WeightOnlyLinear), "packing model failed."
-
-
