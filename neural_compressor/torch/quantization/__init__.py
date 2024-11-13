@@ -55,4 +55,4 @@ from neural_compressor.torch.quantization.autotune import (
 
 ### Quantization Function Registration ###
 import neural_compressor.torch.quantization.algorithm_entry
-from neural_compressor.torch.quantization.load_entry import load
+from neural_compressor.torch.quantization.save_load_entry import save, load
