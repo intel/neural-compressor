@@ -28,7 +28,7 @@ from neural_compressor.torch.utils import (
     HPU_WEIGHT_NAME,
     QCONFIG_NAME,
     WEIGHT_NAME,
-    LoadFormat,
+    SaveLoadFormat,
     logger,
     set_module,
 )
@@ -36,11 +36,11 @@ from neural_compressor.torch.utils import (
 from .modules import HPUWeightOnlyLinear, INCWeightOnlyLinear, MulLinear
 from .utility import convert_dtype_str2torch
 
-format_woqlinear_mapping = {LoadFormat.HUGGINGFACE: INCWeightOnlyLinear, LoadFormat.DEFAULT: INCWeightOnlyLinear}
+format_woqlinear_mapping = {SaveLoadFormat.HUGGINGFACE: INCWeightOnlyLinear, SaveLoadFormat.DEFAULT: INCWeightOnlyLinear}
 device_woqlinear_mapping = {"cpu": INCWeightOnlyLinear, "hpu": HPUWeightOnlyLinear}
 
 
-def save(model, output_dir="./saved_results", format=LoadFormat.DEFAULT, **kwargs):
+def save(model, output_dir="./saved_results", format=SaveLoadFormat.DEFAULT, **kwargs):
     """Save the quantized model and config to the output path.
 
     Args:
@@ -53,7 +53,7 @@ def save(model, output_dir="./saved_results", format=LoadFormat.DEFAULT, **kwarg
             - max_shard_size (str, optional): The maximum size for each shard (only applicable for 'huggingface' format). Defaults to "5GB".
     """
     os.makedirs(output_dir, exist_ok=True)
-    if format == LoadFormat.HUGGINGFACE:  # pragma: no cover
+    if format == SaveLoadFormat.HUGGINGFACE:  # pragma: no cover
         config = model.config
         config_file = "quantize_config.json"
         quantization_config = config.quantization_config if hasattr(config, "quantization_config") else None
@@ -82,7 +82,7 @@ def save(model, output_dir="./saved_results", format=LoadFormat.DEFAULT, **kwarg
     logger.info("Save configuration of quantized model to {}.".format(qconfig_file_path))
 
 
-def load(model_name_or_path, original_model=None, format=LoadFormat.DEFAULT, device="cpu", **kwargs):
+def load(model_name_or_path, original_model=None, format=SaveLoadFormat.DEFAULT, device="cpu", **kwargs):
     """Load quantized weight-only quantization model.
 
     1. Load INC weight-only quantized model in local.
@@ -119,7 +119,7 @@ def load(model_name_or_path, original_model=None, format=LoadFormat.DEFAULT, dev
 class WOQModelLoader:
     """WOQ Model Loader."""
 
-    def __init__(self, model_name_or_path, original_model=None, format=LoadFormat.DEFAULT, device="cpu", **kwargs):
+    def __init__(self, model_name_or_path, original_model=None, format=SaveLoadFormat.DEFAULT, device="cpu", **kwargs):
         """Init the WOQModelLoader object."""
         self.model_name_or_path = model_name_or_path
         self.original_model = original_model
@@ -141,12 +141,12 @@ class WOQModelLoader:
         Returns:
             torch.nn.Module: quantized model
         """
-        if self.format == LoadFormat.HUGGINGFACE:
+        if self.format == SaveLoadFormat.HUGGINGFACE:
             assert self.model_name_or_path is not None, "'model_name_or_path' can't be None."
 
             model = self.load_hf_format_woq_model()
             logger.info("Loading HuggingFace weight-only quantization model successfully.")
-        elif self.format == LoadFormat.DEFAULT:
+        elif self.format == SaveLoadFormat.DEFAULT:
             assert os.path.exists(self.model_name_or_path), f"'{self.model_name_or_path}' path doesn't exist."
             assert (
                 self.original_model is not None
@@ -884,11 +884,11 @@ class WOQModelLoader:
         if not os.path.exists(self._model_local_dir):
             logger.warning(f"{self._model_local_dir} doesn't exist, can't save hpu format safetensors")
 
-        if self.format == LoadFormat.HUGGINGFACE:
+        if self.format == SaveLoadFormat.HUGGINGFACE:
             filename = os.path.join(self._model_local_dir, HPU_SAFE_WEIGHTS_NAME)
             save_file({k: v for k, v in model.state_dict().items()}, filename=filename, metadata={"format": "pt"})
             logger.debug(f"Save hpu format tensor to {filename}")
-        elif self.format == LoadFormat.DEFAULT:
+        elif self.format == SaveLoadFormat.DEFAULT:
             qmodel_weight_file_path = os.path.join(self._model_local_dir, HPU_WEIGHT_NAME)
             torch.save({k: v for k, v in model.state_dict().items()}, qmodel_weight_file_path)
             logger.debug(f"Save hpu format tensor to {qmodel_weight_file_path}")
@@ -904,12 +904,12 @@ class WOQModelLoader:
            or 'format' flag in config.json file is 'habana' (flag name needs discussion, not implemented yet)
         """
         if self.device == "hpu" and os.path.exists(self._model_local_dir):
-            if self.format == LoadFormat.HUGGINGFACE:
+            if self.format == SaveLoadFormat.HUGGINGFACE:
                 if os.path.exists(os.path.join(self._model_local_dir, HPU_SAFE_WEIGHTS_NAME)):
                     # update resolved_archive_file
                     self.kwargs["resolved_archive_file"] = os.path.join(self._model_local_dir, HPU_SAFE_WEIGHTS_NAME)
                     return True
-            elif self.format == LoadFormat.DEFAULT:
+            elif self.format == SaveLoadFormat.DEFAULT:
                 if os.path.exists(os.path.join(self._model_local_dir, HPU_WEIGHT_NAME)):
                     return True
         return False
