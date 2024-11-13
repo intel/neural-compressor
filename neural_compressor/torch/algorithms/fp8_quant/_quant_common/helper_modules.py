@@ -140,7 +140,7 @@ def set_attrs_from_orig_model(cls_instance, mod, mod_extra_config, *func_names):
 
 def get_current_repr(cls_instance, *member_names):
     curr_repr = ""
-    if cls_instance.quantization_mode == QuantMode.QUANTIZE:
+    if cls_instance.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
         first_name = True
         for name in member_names:
             if not first_name:
@@ -169,7 +169,7 @@ class PatchedMatmul(nn.Module):
     def __init__(self, mod, mod_extra_config, *args, **kwargs):
         super().__init__()
         set_attrs_from_orig_model(self, mod, mod_extra_config)
-        if self.quantization_mode == QuantMode.QUANTIZE:
+        if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             self.quant_input_0 = self._mod_extra_config.inputs[0]
             self.quant_input_1 = self._mod_extra_config.inputs[1]
             if self.use_qdq or self.fake_quant:
@@ -213,7 +213,7 @@ class PatchedMatmul(nn.Module):
         )
 
 def init_linear(instance, mod_extra_config):
-    if instance.quantization_mode == QuantMode.QUANTIZE:
+    if instance.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
         # When offloading weights to disk using device_map, the module forward is overridden.
         # __dict__.update call again overrides the PatchedLinear forward with the forward that device_map planted.
         # So need to set PatchedLinear forward to be the right forward.
@@ -291,7 +291,7 @@ class PatchedMixtralMoE(nn.Module):
         super().__init__()
         set_attrs_from_orig_model(self, mod, mod_extra_config)
         # remove the MoE weights that are quanted by PatchedMoeMatmul
-        if self.quantization_mode == QuantMode.QUANTIZE:
+        if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             delattr(mod, "w13_weight")
             delattr(mod, "w2_weight")
             setattr(mod, "w13_weight", None)
@@ -656,7 +656,7 @@ class PatchedKVCache(nn.Module):
         self.org_allocate = mod.allocate
         self.org_update = mod.update
 
-        if self.quantization_mode == QuantMode.QUANTIZE:
+        if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             self.quant_input = self._mod_extra_config.inputs[0]
             self.dequant_output = self._mod_extra_config.outputs[0]
             if self.use_qdq:
@@ -671,7 +671,7 @@ class PatchedKVCache(nn.Module):
 
     # overwrite allocate function of original module to force allocation in fp8
     def allocate(self, inp_seq_len, dtype, device, shape):
-        dtype = torch.float8_e4m3fn if (self.quantization_mode == QuantMode.QUANTIZE) else dtype
+        dtype = torch.float8_e4m3fn if (self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]) else dtype
         return self.org_allocate(inp_seq_len, dtype, device, shape)
 
     # overwrite update function of original module to force quant and dequant of cache input and output
@@ -702,7 +702,7 @@ class PatchedVLLMKVCache(nn.Module):
     def __init__(self, mod, mod_extra_config, *args, **kwargs):
         super().__init__()
         set_attrs_from_orig_model(self, mod, mod_extra_config)
-        if self.quantization_mode == QuantMode.QUANTIZE:
+        if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             self.orig_fetch_from_cache = mod.fetch_from_cache
             self.quant_input = self._mod_extra_config.inputs[0]
             self.dequant_output = self._mod_extra_config.outputs[0]
@@ -735,13 +735,13 @@ class PatchedVLLMKVCache(nn.Module):
         if permutations:
             output_cache = self.orig_fetch_from_cache(quant_cache, blocks, permutations)
             for i in range(len(output_cache)):
-                output_cache[i]=self.dequant_output(output_cache[i])
+                output_cache[i] = self.dequant_output(output_cache[i])
             return output_cache
         output_cache = self.orig_fetch_from_cache(quant_cache, blocks)
         return self.dequant_output(output_cache)
 
 def init_conv(instance, mod_extra_config):
-    if instance.quantization_mode == QuantMode.QUANTIZE:
+    if instance.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
         instance.quant_input = instance._mod_extra_config.inputs[0]
         if instance.use_qdq:
             instance.forward = instance.forward_qdq
@@ -806,7 +806,7 @@ class PatchedSoftmax(nn.Module):
     def __init__(self, mod, mod_extra_config, *args, **kwargs):
         super().__init__()
         set_attrs_from_orig_model(self, mod, mod_extra_config)
-        if self.quantization_mode == QuantMode.QUANTIZE:
+        if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             self.dequant_output = self._mod_extra_config.outputs[0]
             if self.use_qdq:
                 self.forward = self.forward_qdq
@@ -953,7 +953,7 @@ class PatchedModuleFusedSDPA(nn.Module):
         # during measure we receive the amax value from the cguid and apply it during quant as input
         super().__init__()
         set_attrs_from_orig_model(self, mod, mod_extra_config)
-        if self.quantization_mode == QuantMode.QUANTIZE:
+        if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             self.quant_q = self._mod_extra_config.inputs[0]
             self.quant_k = self._mod_extra_config.inputs[1]
             self.quant_v = self._mod_extra_config.inputs[2]

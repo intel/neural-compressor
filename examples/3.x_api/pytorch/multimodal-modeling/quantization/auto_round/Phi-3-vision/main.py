@@ -398,8 +398,8 @@ if __name__ == '__main__':
         run_fn_for_vlm_autoround(user_model, *run_args)
         user_model = convert(user_model)
 
-        from neural_compressor.torch.utils import (LoadFormat,)
-        user_model.save(args.output_dir, format=LoadFormat.HUGGINGFACE, safe_serialization=False)
+        from neural_compressor.torch.utils import (SaveLoadFormat,)
+        user_model.save(args.output_dir, format=SaveLoadFormat.HUGGINGFACE, safe_serialization=False)
         if tokenizer is not None:
             tokenizer.save_pretrained(args.output_dir)
         if processor is not None:

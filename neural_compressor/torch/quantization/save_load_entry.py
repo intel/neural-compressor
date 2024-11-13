@@ -16,8 +16,7 @@
 import json
 import os
 
-from neural_compressor.common.utils import FP8_QUANT  # unified namespace
-from neural_compressor.common.utils import load_config_mapping  # unified namespace
+from neural_compressor.common.utils import FP8_QUANT, Mode, load_config_mapping, log_process
 from neural_compressor.torch.quantization.config import (
     AutoRoundConfig,
     AWQConfig,
@@ -27,13 +26,34 @@ from neural_compressor.torch.quantization.config import (
     RTNConfig,
     TEQConfig,
 )
-from neural_compressor.torch.utils import LoadFormat
+from neural_compressor.torch.utils import SaveLoadFormat
 
 config_name_mapping = {
     FP8_QUANT: FP8Config,
 }
 
+def save(model, checkpoint_dir="saved_results", format="default"):
+    """Save quantized model.
 
+    Args:
+        model (torch.nn.module or TorchScript model with IPEX or fx graph with pt2e, optional): Quantized model.
+        checkpoint_dir (str, optional): checkpoint directory. Defaults to "saved_results".
+        format (str, optional): 'defult' for loading INC quantized model.
+            'huggingface' for loading huggingface WOQ causal language model. Defaults to "default".
+    """
+    config_mapping = model.qconfig
+    config_object = config_mapping[next(iter(config_mapping))]
+    # fp8_quant
+    if isinstance(config_object, FP8Config):
+        from neural_compressor.torch.algorithms import fp8_quant
+        format = SaveLoadFormat.HUGGINGFACE.value  # TODO: support default format for FP8 algorithm
+        fp8_quant.save(model, checkpoint_dir, format)
+    else:
+        assert format == SaveLoadFormat.DEFAULT.value, "Currently, only default format is supported."
+        model.save(checkpoint_dir)  # TODO: support huggingface format for WOQ algorithms.
+
+
+@log_process(mode=Mode.LOAD)
 def load(model_name_or_path, original_model=None, format="default", device="cpu", **kwargs):
     """Load quantized model.
 
@@ -75,7 +95,7 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
     Returns:
         The quantized model
     """
-    if format == LoadFormat.DEFAULT.value:
+    if format == SaveLoadFormat.DEFAULT.value:
         from neural_compressor.common.base_config import ConfigRegistry
 
         qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(model_name_or_path)), "qconfig.json")
@@ -100,18 +120,19 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
             ):  # WOQ
                 from neural_compressor.torch.algorithms import weight_only
 
-                qmodel = weight_only.load(model_name_or_path, original_model, format=LoadFormat.DEFAULT, device=device)
+                qmodel = weight_only.load(model_name_or_path, original_model, format=SaveLoadFormat.DEFAULT, device=device)
                 return qmodel.to(device)
+    elif format == SaveLoadFormat.HUGGINGFACE.value:
+        import transformers
+        config = transformers.AutoConfig.from_pretrained(model_name_or_path, **kwargs)
+        # use config to check which algorithm is used.
+        if "fp8_config" in config.quantization_config:
+            from neural_compressor.torch.algorithms import fp8_quant
+            return fp8_quant.load(model_name_or_path, format=format, device=device, **kwargs)
+        else:
+            from neural_compressor.torch.algorithms import weight_only
 
-            original_model.qconfig = config_mapping
-            if isinstance(config_object, FP8Config):
-                # TODO: support loading FP8 model
-                raise NotImplementedError("`load` function for FP8 model is not supported yet.")
-    elif format == LoadFormat.HUGGINGFACE.value:
-        # now only support load huggingface WOQ causal language model
-        from neural_compressor.torch.algorithms import weight_only
-
-        qmodel = weight_only.load(model_name_or_path, format=LoadFormat.HUGGINGFACE, device=device, **kwargs)
-        return qmodel.to(device)
+            qmodel = weight_only.load(model_name_or_path, format=SaveLoadFormat.HUGGINGFACE, device=device, **kwargs)
+            return qmodel.to(device)
     else:
         raise ValueError("`format` in load function can only be 'huggingface' or 'default', but get {}".format(format))

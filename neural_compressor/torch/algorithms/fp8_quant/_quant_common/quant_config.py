@@ -30,14 +30,15 @@ try:
     world_size = torch.distributed.get_world_size()
     local_rank = torch.distributed.get_rank()
 except:
-    world_size = -1
-    local_rank = -1
+    local_rank = int(os.getenv("LOCAL_RANK", "-1"))
+    world_size = int(os.getenv("WORLD_SIZE", "-1"))
 
 class QuantMode(Enum):
     NONE = 0
     QUANTIZE = 1
     MEASURE = 2
     SHAPE = 3
+    LOAD = 4
 
 class MeasureExclude(Flag):
     NONE = auto()

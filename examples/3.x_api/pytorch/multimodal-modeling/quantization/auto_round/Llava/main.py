@@ -339,9 +339,9 @@ if __name__ == '__main__':
         run_fn_for_vlm_autoround(user_model, *run_args)
         user_model = convert(user_model)
 
-        from neural_compressor.torch.utils import LoadFormat
+        from neural_compressor.torch.utils import SaveLoadFormat
         save_tower(user_model, args.output_dir, quant_vision=args.quant_vision)
-        user_model.save(args.output_dir, format=LoadFormat.HUGGINGFACE)
+        user_model.save(args.output_dir, format=SaveLoadFormat.HUGGINGFACE)
         if tokenizer is not None:
             tokenizer.save_pretrained(args.output_dir)
 

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .._quant_common.quant_config import QuantMode
 import habana_frameworks.torch.core as htcore
 import torch
 import torch.nn as nn
@@ -26,6 +27,7 @@ from .measure import load_measurements
 from .scale import scale_method_mapping, scaling_methods, convert_scales_to_tensors_dict, load_layer_scales
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 cur_accelerator = auto_detect_accelerator()
+
 
 def patch_module(mod, qconfig, mod_dict, patched_mod=None):
     """Replaces the module with patched module according to mod_dict.
@@ -46,8 +48,7 @@ def patch_module(mod, qconfig, mod_dict, patched_mod=None):
 
 
 def apply_hf_hook(module):
-    """Applies hf_hook on a given module so its weights will be loaded from disk to cpu and then we can quantize it.
-    """
+    """Applies hf_hook on a given module so its weights will be loaded from disk to cpu and then we can quantize it."""
     if hasattr(module, "_hf_hook"):
         module._hf_hook.pre_forward(module)
         module._hf_hook.detach_hook(module)
@@ -137,6 +138,64 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method, scal
     cur_accelerator.synchronize()
 
 
+def prepare_model_with_dummy_measurement(model, mod_list, scaling_method, scale_config):
+    """Aim for loading, replace module with patched module for model on meta device.
+
+    Args:
+        model (torch.nn.Module): empty model on meta device
+        mod_list (list): The specific submodules that will be quantized in the model.
+        scaling_method (str): The scaling method to use.
+        scale_config (dict): The scaling configuration.
+
+    Returns:
+        model: empty model that quantized by default qconfig.
+    """
+    from .common import ModuleConfig, ModuleExtraConfig, mod_types
+
+    config = get_hqt_config(model)
+    patched_modules = []
+    patched_module_types = set()
+    with torch.no_grad():
+        for name, mod in model.named_modules():
+            if name not in mod_list:
+                continue
+            set_hqt_config(mod, config)  # set config in the module, as it consumed by the patched module
+            mod_type_str = mod.__class__.__name__
+            mode_type = config.cfg["mod_dict"][mod_type_str]
+            mod_info = mod_types[mode_type]
+            # build dummy_mod_extra_config for module initialization
+            placeholder_tensor = torch.tensor(1.0).to("hpu")
+            dummy_mod_scales = ModuleConfig(
+                [placeholder_tensor for _ in range(mod_info.num_inputs)],
+                [placeholder_tensor for _ in range(mod_info.num_outputs)],
+                {name: placeholder_tensor for name in mod_info.param_names},
+            )
+            mod_config = scaling_method[mode_type][1](mod, dummy_mod_scales, scale_config)
+            dummy_mod_extra_config = ModuleExtraConfig(
+                mod_config.inputs,
+                mod_config.outputs,
+                mod_config.params,
+                dummy_mod_scales,
+                scale_config,
+                )
+            # replace bf16 meta weights with FP8 meta weights for loading
+            if not config.cfg["fake_quant"] and mod_default_dict[mod_type_str].should_measure_and_quant:
+                for param_name in mod_info.param_names:
+                    if param_name == "weight":  # only weight is quantized now
+                        raw_param = getattr(mod, param_name)
+                        param = torch.ones(raw_param.shape, dtype=scale_config["lp_dtype"], device="meta")  # meta tensor
+                        delattr(mod, param_name)
+                        setattr(mod, param_name, nn.Parameter(param))
+            patch_module(mod, dummy_mod_extra_config, mod_default_dict)
+            patched_modules.append(name)
+            patched_module_types.add(type(mod))
+            logger.debug("Patched module name: %s", name)
+    logger.debug("Patched module types: %s", patched_module_types)
+    logger.debug("Patched modules: %s", patched_modules)
+    logger.debug("Total patched modules: %d", len(patched_modules))
+    return model
+
+
 def quantize(model, mod_list):
     """Builds quantization config object that contains for each submodule its quantization functions as preparation for quantization.
 
@@ -148,16 +207,22 @@ def quantize(model, mod_list):
     generate_model_info(model)
     hp_dtype = config.cfg["hp_dtype"]
     lp_dtype = config.cfg["fp8_config"]
-    measurement = {}
-    scale_file = None
-    use_stats_files = config.cfg["use_stats_files"]
-    if use_stats_files:
-        measurement = load_measurements(model, config.cfg["measure_file"])
-        scale_file = config.cfg["scale_file"]
     # FIXME make sure this takes unit_scale or measured scale, from Configs
     scaling_method_name = scale_method_mapping[(config.cfg["scale_method"], config.cfg["observer"])]
     scaling_method = scaling_methods[scaling_method_name]
     scale_config = config.cfg["scale_params"]
     scale_config["hp_dtype"] = hp_dtype
     scale_config["lp_dtype"] = lp_dtype
-    prepare_model(model, mod_list, measurement, scale_file, scaling_method, scale_config)
+    if config.cfg["mode"] == QuantMode.QUANTIZE:
+        measurement = {}
+        scale_file = None
+        use_stats_files = config.cfg["use_stats_files"]
+        if use_stats_files:
+            measurement = load_measurements(model, config.cfg["measure_file"])
+            scale_file = config.cfg["scale_file"]
+        prepare_model(model, mod_list, measurement, scale_file, scaling_method, scale_config)
+    elif config.cfg["mode"] == QuantMode.LOAD:
+        # no measurement and scale file
+        prepare_model_with_dummy_measurement(model, mod_list, scaling_method, scale_config)
+    else:
+        raise Exception("unexpected mode, expected QuantMode.QUANTIZE or QuantMode.LOAD")
