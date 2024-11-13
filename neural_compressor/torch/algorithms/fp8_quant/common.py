@@ -92,8 +92,8 @@ def restore_patched_module(patched_model):
                 class_name_org = (
                     getattr(patched_mod, "class_name_org", None) or patched_mod.__class__.__name__.split("Patched")[-1]
                 )
+                patched_mod.__dict__.pop("forward", None)
                 origin_mod = helper_mods[class_name_org](patched_mod)
-                origin_mod.forward = copy.deepcopy(patched_mod.forward_orig)
                 setattr(parent, name, origin_mod)
 
 
