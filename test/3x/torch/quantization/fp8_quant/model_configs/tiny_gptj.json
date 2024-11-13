@@ -32,6 +32,7 @@
         "temperature": 1.0
       }
     },
+    "torch_dtype": "bfloat16",
     "tie_word_embeddings": false,
     "tokenizer_class": "GPT2Tokenizer",
     "transformers_version": "4.18.0.dev0",

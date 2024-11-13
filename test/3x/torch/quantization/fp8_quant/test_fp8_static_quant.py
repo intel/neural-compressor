@@ -14,6 +14,8 @@ from neural_compressor.torch.quantization import (
     get_default_fp8_config,
     prepare,
     quantize,
+    save,
+    load
 )
 from neural_compressor.torch.utils import is_hpex_available
 
@@ -45,6 +47,7 @@ class TestFP8StaticQuant:
 
     def teardown_class(self):
         shutil.rmtree("test_ouputs", ignore_errors=True)
+        shutil.rmtree("saved_results", ignore_errors=True)
 
     def test_one_step_quant_nlp(self):
         model = copy.deepcopy(self.tiny_gptj)
