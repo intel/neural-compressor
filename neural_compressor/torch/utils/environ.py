@@ -225,3 +225,11 @@ def is_tbb_available():  # pragma: no cover
         )
         return False
     return True
+
+
+def get_used_cpu_mem_MB():
+    """Get CPU used memory: MiB."""
+    import psutil
+    data = psutil.virtual_memory()
+    used_cpu_mem = round(data.used / 1024**2, 3)
+    return used_cpu_mem
