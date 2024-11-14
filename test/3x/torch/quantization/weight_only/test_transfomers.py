@@ -3,8 +3,10 @@ from math import isclose
 
 import pytest
 import torch
+from packaging.version import Version
 from transformers import AutoTokenizer
 
+from neural_compressor.torch.utils import get_ipex_version
 from neural_compressor.transformers import (
     AutoModelForCausalLM,
     AutoRoundConfig,
@@ -13,10 +15,9 @@ from neural_compressor.transformers import (
     RtnConfig,
     TeqConfig,
 )
-from neural_compressor.torch.utils import get_ipex_version
-from packaging.version import Version
 
 ipex_version = get_ipex_version()
+
 
 class TestTansformersLikeAPI:
     def setup_class(self):
@@ -84,7 +85,7 @@ class TestTansformersLikeAPI:
         woq_model = AutoModelForCausalLM.from_pretrained(model_name_or_path, quantization_config=woq_config)
         woq_model.eval()
         output = woq_model(dummy_input)
-        if ipex_version  < Version("2.5.0"):
+        if ipex_version < Version("2.5.0"):
             assert isclose(float(output[0][0][0][0]), 0.17234990000724792, rel_tol=1e-04)
         else:
             assert isclose(float(output[0][0][0][0]), 0.17049233615398407, rel_tol=1e-04)
