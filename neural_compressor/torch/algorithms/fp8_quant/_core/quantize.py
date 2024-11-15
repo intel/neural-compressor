@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .._quant_common.quant_config import QuantMode
+import gc
 import habana_frameworks.torch.core as htcore
 import torch
 import torch.nn as nn
 import numpy as np
 
+from .._quant_common.quant_config import QuantMode
 from .._quant_common.helper_modules import PatchedUnmeasuredModule
 from .._quant_common.quant_config import get_hqt_config, set_hqt_config
 from ..utils.logger import logger
@@ -75,6 +76,7 @@ def quantize_params(mod, mod_extra_config):
         setattr(mod, param_name, nn.Parameter(quantized_param))
         quantized_param = getattr(mod, param_name)
         quantized_param.requires_grad_(False)
+        gc.collect()
         cur_accelerator.synchronize()
 
 
