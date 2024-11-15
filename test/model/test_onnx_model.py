@@ -11,6 +11,10 @@ from onnx import TensorProto, helper, numpy_helper
 from neural_compressor import PostTrainingQuantConfig, quantization
 from neural_compressor.data import DATALOADERS, Datasets
 from neural_compressor.model.onnx_model import ONNXModel
+from neural_compressor.adaptor.pytorch import get_torch_version
+from packaging.version import Version
+
+PT_VERSION = get_torch_version().release
 
 
 def get_onnx_model():
@@ -410,6 +414,8 @@ class TestOnnxModel(unittest.TestCase):
         self.model.remove_unused_nodes()
         self.assertEqual(len(self.model.nodes()), 6)
 
+    # TODO: follow https://github.com/onnx/neural-compressor/pull/40
+    @unittest.skipIf(PT_VERSION >= Version("2.5.0").release,"Please use Pytorch version lower 2.5.")
     def test_check_large_model(self):
         import onnx
         import torch
