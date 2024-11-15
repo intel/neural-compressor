@@ -135,6 +135,16 @@ def device_synchronize(raw_func):
     return new_func
 
 
+def get_used_hpu_mem_MB():
+    """Get HPU used memory: MiB."""
+    from habana_frameworks.torch.hpu import memory_stats
+    import numpy as np
+    torch.hpu.synchronize()
+    mem_stats = memory_stats()
+    used_hpu_mem = np.round(mem_stats["InUse"] / 1024**2, 3)
+    return used_hpu_mem
+
+
 def get_used_cpu_mem_MB():
     """Get CPU used memory: MiB."""
     import psutil
