@@ -76,6 +76,7 @@ class ScaleMethod(Enum):
     SMOOTHQUANT_OPT = 12
     MAXABS_HW_OPT_WEIGHT = 13
     MAXABS_POW2_OPT_WEIGHT = 14
+    MAXABS_ARBITRARY = 15
 
 
 class TrueFalse(Enum):
