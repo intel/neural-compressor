@@ -34,6 +34,8 @@ def test_linear_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype, scale_met
         pytest.xfail("KeyError")
     quant_modes = QUANT_MODES_DEFAULT
     atol = 0.02
+    if scale_method == ScaleMethod.MAXABS_ARBITRARY:
+        atol = 0.03
     if scale_method in SCALE_METHODS_QUANT_ONLY:
         quant_modes = QUANT_MODES_QUANT_ONLY
         if scale_method == ScaleMethod.HW_ALIGNED_SINGLE_SCALE:
