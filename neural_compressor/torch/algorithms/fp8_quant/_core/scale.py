@@ -160,6 +160,28 @@ scaling_methods = {
         "kv_cache": (kv_cache_hw_aligned_single_scale_scales, kv_cache_scales_to_mod_config),
         "fused_sdpa": (fsdpa_hw_aligned_single_scale_scales, fsdpa_scales_to_mod_config),
     },
+    "act_maxabs_pts_weight_maxabs_pts_arbitrary": {
+        "linear": (
+            linear_act_maxabs_pts_weight_maxabs_pts_arbitrary_scales,
+            linear_scales_to_mod_config,
+        ),
+        "matmul": (
+            matmul_act_maxabs_pts_weight_maxabs_pts_arbitrary_scales,
+            matmul_scales_to_mod_config,
+        ),
+        "kv_cache": (
+            kv_cache_act_maxabs_pts_weight_maxabs_pts_arbitrary_scales,
+            kv_cache_scales_to_mod_config,
+        ),
+        "softmax": (
+            softmax_input_unit_output_maxabs_pts_arbitrary_scales,
+            softmax_scales_to_mod_config,
+        ),
+        "fused_sdpa": (
+            fsdpa_act_maxabs_pts_weight_maxabs_pts_arbitrary_scales,
+            fsdpa_scales_to_mod_config,
+        ),
+    },
     "act_maxabs_pts_weight_maxabs_pts_pow2_hw": {
         "linear": (
             linear_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales,
@@ -371,6 +393,7 @@ scale_method_mapping = {
     (ScaleMethod.HW_ALIGNED_SINGLE_SCALE, "maxabs_per_channel"): "hw_aligned_single_scale",
     (ScaleMethod.MAXABS_HW, "maxabs"): "act_maxabs_pts_weight_maxabs_pts_pow2_hw",
     (ScaleMethod.MAXABS_POW2, "maxabs"): "act_maxabs_pts_weight_maxabs_pts_pow2",
+    (ScaleMethod.MAXABS_ARBITRARY, "maxabs"): "act_maxabs_pts_weight_maxabs_pts_arbitrary",
     (ScaleMethod.MAXABS_HW_OPT_WEIGHT, "maxabs"): "act_maxabs_pts_weight_opt_pts_hw",
     (
         ScaleMethod.MAXABS_POW2_OPT_WEIGHT,
@@ -418,6 +441,10 @@ scale_method_mapping = {
 scaling_params = {
     "unit_scale": {},
     "hw_aligned_single_scale": {},
+    "act_maxabs_pts_weight_maxabs_pts_arbitrary": {
+        "input_backoff": 0.25,
+        "weight_backoff": 0.5,
+    },
     "act_maxabs_pts_weight_maxabs_pts_pow2_hw": {
         "input_backoff": 0.25,
         "weight_backoff": 0.5,
