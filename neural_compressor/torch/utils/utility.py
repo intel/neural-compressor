@@ -641,9 +641,8 @@ def can_pack_with_numba():
     if not is_numba_available():
         logger.warning("Numba is not installed, please install it with `pip install numba`.")
         return False
-    else:
-        if not is_tbb_available():
-            return False
+    if not is_tbb_available():
+        return False
     return True
 
 
@@ -678,15 +677,13 @@ def is_tbb_available():
     if not _is_tbb_installed():
         logger.warning("TBB is not installed, please install it with `pip install tbb`.")
         return False
-    else:
-        if not _is_tbb_configured():
-            logger.warning(
-                (
-                    "TBB is installed but not configured correctly. \n"
-                    "Please add the TBB installation path to `LD_LIBRARY_PATH`, "
-                    "for example: `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/tbb`."
-                )
+    if not _is_tbb_configured():
+        logger.warning(
+            (
+                "TBB is installed but not configured correctly. \n"
+                "Please add the TBB installation path to `LD_LIBRARY_PATH`, "
+                "for example: `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/tbb`."
             )
-            return False
-        else:
-            return True
+        )
+        return False
+    return True
