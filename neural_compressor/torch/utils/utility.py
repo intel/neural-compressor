@@ -665,10 +665,16 @@ def _is_tbb_installed():
 
 def _is_tbb_configured():
     try:
+        from numba.np.ufunc.parallel import _check_tbb_version_compatible
+
+        # check if TBB is present and compatible
+        _check_tbb_version_compatible()
+        # now try and load the backend
         from numba.np.ufunc import tbbpool as lib
 
         return True
     except ImportError as e:
+        logger.warning(f"TBB not available: {e}")
         return False
 
 
