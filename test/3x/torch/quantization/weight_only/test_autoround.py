@@ -16,7 +16,7 @@ from neural_compressor.torch.quantization import (
 from neural_compressor.torch.utils import logger
 
 torch.backends.__allow_nonbracketed_mutation_flag = True
-from neural_compressor.torch.algorithms.weight_only.autoround import get_dataloader
+from neural_compressor.torch.utils.environ import is_hpex_available
 
 try:
     import auto_round
@@ -37,9 +37,9 @@ def run_fn(model, dataloader):
         else:
             model(data)
 
-
+@pytest.mark.skipif(is_hpex_available(), reason="These tests are not supported on HPU for now.")
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
-class TestAutoRound:
+class TestAutoRoundCPU:
     @classmethod
     def setup_class(self):
         self.gptj = transformers.AutoModelForCausalLM.from_pretrained(
@@ -50,6 +50,7 @@ class TestAutoRound:
         tokenizer = transformers.AutoTokenizer.from_pretrained(
             "hf-internal-testing/tiny-random-GPTJForCausalLM", trust_remote_code=True
         )
+        from neural_compressor.torch.algorithms.weight_only.autoround import get_dataloader
         self.dataloader = get_dataloader(tokenizer, 32, dataset_name="NeelNanda/pile-10k", seed=42, bs=8, nsamples=10)
         self.label = self.gptj(self.inp)[0]
 
