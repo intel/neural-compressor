@@ -639,6 +639,7 @@ def can_pack_with_numba():
     To pack tensor with Numba, both Numba and TBB are required, and TBB should be configured correctly.
     """
     if not is_numba_available():
+        logger.warning("Numba is not installed, please install it with `pip install numba`.")
         return False
     else:
         if not is_tbb_available():
@@ -653,7 +654,6 @@ def is_numba_available():
 
         return True
     except ImportError:
-        logger.warning("Numba is not installed, please install it with `pip install numba`.")
         return False
 
 
@@ -670,7 +670,6 @@ def _is_tbb_configured():
 
         return True
     except ImportError as e:
-        logger.warning(f"Unable importing tbbpool: {e}")
         return False
 
 
