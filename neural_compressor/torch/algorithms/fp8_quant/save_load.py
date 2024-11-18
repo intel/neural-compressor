@@ -27,6 +27,14 @@ from neural_compressor.torch.utils import get_accelerator
 
 MAX_FILE_SIZE = 5  # GB
 cur_accelerator = get_accelerator()
+tp_module_list = (
+    "PatchedLinear",
+    "PatchedLinearAllReduce",
+    "PatchedLmHeadLinearAllreduce",
+    "PatchedColumnParallelLinear",
+    "PatchedRowParallelLinear",
+)
+
 
 ##################################### save ##################################
 
@@ -43,16 +51,9 @@ def save_rank_model(model, folder_prefix=""):
 
 def find_tp_mod_list(model):
     """Get the module list that uses tensor parallel from model."""
-    tp_modules = (
-        "PatchedLinear",
-        "PatchedLinearAllReduce",
-        "PatchedLmHeadLinearAllreduce",
-        "PatchedColumnParallelLinear",
-        "PatchedRowParallelLinear",
-    )
     tp_mod_list = []
     for n, m in model.named_modules():
-        if m.__class__.__name__ in tp_modules:
+        if m.__class__.__name__ in tp_module_list:
             tp_mod_list.append(n)
     return tp_mod_list
 
@@ -152,23 +153,27 @@ def load_empty_raw_model(model_name_or_path, **kwargs):
     """Initialize BF16 model with meta tensor."""
     import transformers
     from accelerate import init_empty_weights
+    from neural_compressor.torch.utils import get_non_persistent_buffers, load_non_persistent_buffers
 
     if world_size > 1:
         import deepspeed
 
         config = transformers.AutoConfig.from_pretrained(model_name_or_path, **kwargs)
-        # TODO: [SW-199728] [DeepSpeed] parameters initialized by model are not correct after tensor parallel for meta model
-        # with init_empty_weights():
-        model = transformers.AutoModelForCausalLM.from_config(config, torch_dtype=torch.bfloat16)
+        with init_empty_weights(include_buffers=False):
+            model = transformers.AutoModelForCausalLM.from_config(config, torch_dtype=torch.bfloat16)
+        # TODO: [SW-199728] [DeepSpeed] Buffers initialized by model are not correct after tensor parallel
+        # get_non_persistent_buffers and load_non_persistent_buffers are workrounds of [SW-199728]
+        non_persistent_buffers = get_non_persistent_buffers(model)
         ds_inference_kwargs = {
             "dtype": torch.bfloat16,
             "tensor_parallel": {"tp_size": world_size},
         }
         model = deepspeed.init_inference(model, **ds_inference_kwargs)
         model = model.module
+        load_non_persistent_buffers(model, non_persistent_buffers)
     else:
         config = transformers.AutoConfig.from_pretrained(model_name_or_path, **kwargs)
-        with init_empty_weights():
+        with init_empty_weights(include_buffers=False):
             model = transformers.AutoModelForCausalLM.from_config(config, torch_dtype=torch.bfloat16)
     return model
 
