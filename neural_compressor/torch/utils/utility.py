@@ -628,3 +628,37 @@ def run_fn_for_vlm_autoround(model, dataloader, seqlen=512, nsamples=512):  # pr
         total_cnt += input_ids.shape[0] if len(input_ids.shape) > 1 else 1
         if total_cnt >= nsamples:
             break
+
+
+def get_non_persistent_buffers(model):
+    """
+    Get all non-persistent buffers in the model.
+    
+    Args:
+        model (torch.nn.Module): PyTorch model
+        
+    Returns:
+        dict: A dictionary containing all non-persistent buffers, {buffer_names: buffer_tensors}
+    """
+    non_persistent_buffers = {}
+    for name, module in model.named_modules():
+        # Check the module's non-persistent buffer
+        for buffer_name, buffer in module._buffers.items():
+            if buffer_name in module._non_persistent_buffers_set:
+                non_persistent_buffers[(name, buffer_name)] = buffer
+    return non_persistent_buffers
+
+
+def load_non_persistent_buffers(model, non_persistent_buffers):
+    """
+    Load all non-persistent buffers into the model.
+    
+    Args:
+        model (torch.nn.Module): PyTorch model
+        non_persistent_buffers (dict): A dictionary containing all non-persistent buffers, {buffer_names: buffer_tensors}
+
+    """
+    for full_name, buffer in non_persistent_buffers.items():
+        module_name, buffer_name = full_name
+        module = model.get_submodule(module_name) if module_name else model
+        setattr(module, buffer_name, buffer)

@@ -9,6 +9,14 @@ from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config imp
 from neural_compressor.torch.quantization import FP8Config, convert, load, prepare, save
 
 
+def get_hpu_used_mem():
+    from habana_frameworks.torch.hpu import memory_stats
+    import numpy as np
+    torch.hpu.synchronize()
+    mem_stats = memory_stats()
+    return np.round(mem_stats["InUse"] / 1024**3, 3)
+
+
 @torch.no_grad()
 def calib_func(model):
     example_inputs = torch.tensor([[10, 20, 30, 40, 50, 60]], dtype=torch.long).to("hpu")
@@ -17,9 +25,10 @@ def calib_func(model):
 
 
 def test_multi_cards_save_load():
-    config = transformers.AutoConfig.from_pretrained("./model_configs/tiny_gptj.json")
+    name = "facebook/opt-350m"
     if world_size > 0:
-        model = transformers.AutoModelForCausalLM.from_config(config)
+        # Do not use random weights since multi-processes will get different weights for Embedding
+        model = transformers.AutoModelForCausalLM.from_pretrained(name)
         ds_inference_kwargs = {
             "dtype": torch.bfloat16,
             "tensor_parallel": {"tp_size": world_size},
@@ -27,7 +36,8 @@ def test_multi_cards_save_load():
         model = deepspeed.init_inference(model, **ds_inference_kwargs)
         model = model.module
     else:
-        model = transformers.AutoModelForCausalLM.from_config(config)
+        model = transformers.AutoModelForCausalLM.from_pretrained(name)
+    model = model.eval()
     example_inputs = torch.tensor([[10, 20]], dtype=torch.long).to("hpu")
 
     # TODO: [SW-205970] update state_dict to save scalar scale format
