@@ -17,6 +17,7 @@
 import enum
 import importlib
 from collections import UserDict
+from importlib.machinery import ModuleSpec
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import psutil
@@ -630,3 +631,63 @@ def run_fn_for_vlm_autoround(model, dataloader, seqlen=512, nsamples=512):  # pr
         total_cnt += input_ids.shape[0] if len(input_ids.shape) > 1 else 1
         if total_cnt >= nsamples:
             break
+
+
+def can_pack_with_numba():
+    """Check if Numba and TBB are available for packing.
+
+    To pack tensor with Numba, both Numba and TBB are required, and TBB should be configured correctly.
+    """
+    if not is_numba_available():
+        return False
+    else:
+        if not is_tbb_available():
+            return False
+    return True
+
+
+def is_numba_available():
+    """Check if Numba is available."""
+    try:
+        import numba  # noqa: F401
+
+        return True
+    except ImportError:
+        logger.warning("Numba is not installed, please install it with `pip install numba`.")
+        return False
+
+
+def _is_tbb_installed():
+    from importlib.util import find_spec
+
+    package_spec = find_spec("tbb")
+    return package_spec is not None
+
+
+def _is_tbb_configured():
+    try:
+        from numba.np.ufunc import tbbpool as lib
+
+        return True
+    except ImportError as e:
+        logger.warning(f"Unable importing tbbpool: {e}")
+        return False
+
+
+def is_tbb_available():
+    """Check if TBB is available."""
+    if not _is_tbb_installed():
+        logger.warning("TBB is not installed, please install it with `pip install tbb`.")
+        return False
+    else:
+        if not _is_tbb_configured():
+            logger.warning(
+                (
+                    "TBB is installed but not configured correctly. \n"
+                    "Please add the TBB installation path to `LD_LIBRARY_PATH`, "
+                    "for example: `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/tbb`."
+                )
+            )
+            return False
+        else:
+            return True
