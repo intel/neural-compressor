@@ -32,7 +32,7 @@ from neural_compressor.common.utils import (
     detect_processor_type_based_on_hw,
     logger,
 )
-from neural_compressor.torch.utils import is_transformers_imported
+from neural_compressor.torch.utils import is_optimum_habana_available, is_transformers_imported
 
 if is_transformers_imported():
     import transformers
@@ -54,21 +54,6 @@ HPU_SAFE_WEIGHTS_NAME = "hpu_model.safetensors"
 WEIGHT_NAME = "quantized_weight.pt"
 HPU_WEIGHT_NAME = "quantized_hpu_weight.pt"
 QCONFIG_NAME = "qconfig.json"
-
-
-def is_optimum_habana_available():
-    """Checks if the Optimum Habana module is available for use with the transformers library.
-
-    This function checks two conditions:
-    1. If the `optimum` package is available using `transformers.utils.import_utils.is_optimum_available`.
-    2. If the `optimum.habana` module can be found using `importlib.util.find_spec`.
-
-    Returns:
-        bool: True if Optimum Habana is available, False otherwise.
-    """
-    from transformers.utils.import_utils import is_optimum_available
-
-    return is_optimum_available() and importlib.util.find_spec("optimum.habana") is not None
 
 
 def register_algo(name):

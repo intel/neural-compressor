@@ -147,6 +147,7 @@ class RTNConfig(TorchBaseConfig):
         quant_lm_head: bool = False,
         # Tuning space
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+        **kwargs,
     ):
         """Init RTN weight-only quantization config.
 
@@ -380,8 +381,9 @@ class GPTQConfig(TorchBaseConfig):
         true_sequential: bool = False,
         # Tuning space
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+        **kwargs,
     ):
-        """Init RTN weight-only quantization config.
+        """Init GPTQ weight-only quantization config.
 
         Args:
             dtype (str): Data type for weights. Default is "int".
@@ -586,6 +588,7 @@ class AWQConfig(TorchBaseConfig):
         folding: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
         absorb_layer_dict: dict = {},
+        **kwargs,
     ):
         """Init AWQ weight-only quantization config.
 
@@ -762,6 +765,7 @@ class TEQConfig(TorchBaseConfig):
         absorb_to_layer: dict = {},
         folding: bool = True,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+        **kwargs,
     ):
         """Init TEQ weight-only quantization config.
 
@@ -941,6 +945,7 @@ class AutoRoundConfig(TorchBaseConfig):
         quant_block_list: list = None,
         export_format: str = "itrex",
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+        **kwargs,
     ):
         """Init AUTOROUND weight-only quantization config.
 
@@ -1104,6 +1109,7 @@ class MXQuantConfig(TorchBaseConfig):
         round_method: str = "nearest",
         weight_only: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+        **kwargs,
     ):
         """Init MX quantization config.
 
@@ -1233,6 +1239,7 @@ class DynamicQuantConfig(TorchBaseConfig):
         act_granularity: str = "per_tensor",
         act_algo: str = "kl",
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+        **kwargs,
     ):
         """Init Dynamic Quant Configs."""
         super().__init__(white_list=white_list)
@@ -1330,6 +1337,7 @@ class StaticQuantConfig(TorchBaseConfig):
         excluded_precisions: list = [],
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
         model_info: Optional[List[Tuple[str, Callable]]] = None,
+        **kwargs,
     ):
         """Init StaticQuant Config.
 
@@ -1502,6 +1510,7 @@ class SmoothQuantConfig(TorchBaseConfig):
         do_blockwise: bool = False,
         auto_alpha_args: dict = None,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+        **kwargs,
     ):
         """Init SmoothQuant Config.
 
@@ -1642,6 +1651,7 @@ class HQQConfig(TorchBaseConfig):
         scale_quant_group_size: int = 128,
         quant_lm_head: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+        **kwargs,
     ):
         """Initialize HQQConfig.
 
@@ -1957,6 +1967,7 @@ class MixedPrecisionConfig(BaseConfig):
         self,
         dtype: Union[str, List[str]] = "fp16",
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+        **kwargs,
     ):
         """Init MixedPrecision config.
 
