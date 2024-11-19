@@ -259,7 +259,7 @@ def register_weight_hooks(model, path, device="cpu", clean_weight=True, saved_pa
             state_dict = None
             if os.path.exists(os.path.join(LWQ_WORKSPACE, f"{name}.pt")):
                 state_dict = torch.load(
-                    os.path.join(LWQ_WORKSPACE, f"{name}.pt"), 
+                    os.path.join(LWQ_WORKSPACE, f"{name}.pt"),
                     map_location=torch.device(device) if isinstance(device, str) else device,
                 )
             for n, p in module.named_parameters():
@@ -270,6 +270,7 @@ def register_weight_hooks(model, path, device="cpu", clean_weight=True, saved_pa
                     value = load_value(model, param_name, path, device=device)
                 set_module_tensor_to_device(model, param_name, device, value)
             module = module.to(device)
+
         return hook
 
     def forward_hook(name):
@@ -289,7 +290,7 @@ def register_weight_hooks(model, path, device="cpu", clean_weight=True, saved_pa
             state_dict = None
             if os.path.exists(os.path.join(LWQ_WORKSPACE, f"{name}.pt")):
                 state_dict = torch.load(
-                    os.path.join(LWQ_WORKSPACE, f"{name}.pt"), 
+                    os.path.join(LWQ_WORKSPACE, f"{name}.pt"),
                     map_location=torch.device(device) if isinstance(device, str) else device,
                 )
             for n, p in module.named_parameters():
