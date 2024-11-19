@@ -119,12 +119,6 @@ def save(model, checkpoint_dir="saved_results", format="huggingface"):
         "Currently, only huggingface models are supported." + "Please set format='huggingface'."
     )
     from safetensors.torch import save_file as safe_save_file
-
-    # cancel tied weights to avoid reloading issue when lm_head is not quantized.
-    for key in model._tied_weights_keys:
-        weight = get_attr(model, key)
-        set_attr(model, key, copy.deepcopy(weight))
-
     if world_size > 0:
         save_rank_model(model, folder_prefix=checkpoint_dir)
         rank_directory = f"{checkpoint_dir}_{0}_{world_size}"
