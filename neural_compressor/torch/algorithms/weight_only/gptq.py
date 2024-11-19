@@ -946,6 +946,10 @@ class RAWGPTQuantizer(object):
                 new_module.pack(int_weight, gptq_scale, gptq_zp, bias, gptq_perm)
                 set_module(self.model, layer_name, new_module)
 
+        # Clear temporary workspace
+        if self.use_layer_wise:
+            import shutil
+            shutil.rmtree(LWQ_WORKSPACE, ignore_errors=True)
         logger.info("Quantization done")
         # self.model.config.use_cache = self.use_cache
         return self.model
