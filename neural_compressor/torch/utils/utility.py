@@ -639,7 +639,7 @@ def can_pack_with_numba():
     To pack tensor with Numba, both Numba and TBB are required, and TBB should be configured correctly.
     """
     if not is_numba_available():
-        logger.warning("Numba is not installed, please install it with `pip install numba`.")
+        logger.warning_once("Numba is not installed, please install it with `pip install numba`.")
         return False
     if not is_tbb_available():
         return False
@@ -657,10 +657,13 @@ def is_numba_available():
 
 
 def _is_tbb_installed():
-    from importlib.util import find_spec
+    import importlib.metadata
 
-    package_spec = find_spec("tbb")
-    return package_spec is not None
+    try:
+        importlib.metadata.version("tbb")
+        return True
+    except importlib.metadata.PackageNotFoundError:
+        return False
 
 
 def _is_tbb_configured():
@@ -669,8 +672,6 @@ def _is_tbb_configured():
 
         # check if TBB is present and compatible
         _check_tbb_version_compatible()
-        # now try and load the backend
-        from numba.np.ufunc import tbbpool as lib
 
         return True
     except ImportError as e:
@@ -681,14 +682,14 @@ def _is_tbb_configured():
 def is_tbb_available():
     """Check if TBB is available."""
     if not _is_tbb_installed():
-        logger.warning("TBB is not installed, please install it with `pip install tbb`.")
+        logger.warning_once("TBB is not installed, please install it with `pip install tbb`.")
         return False
     if not _is_tbb_configured():
-        logger.warning(
+        logger.warning_once(
             (
                 "TBB is installed but not configured correctly. \n"
-                "Please add the TBB installation path to `LD_LIBRARY_PATH`, "
-                "for example: `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/tbb`."
+                "Please add the TBB library path to `LD_LIBRARY_PATH`, "
+                "for example: `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/`."
             )
         )
         return False
