@@ -17,6 +17,7 @@
 """Logger: handles logging functionalities."""
 
 
+import functools
 import logging
 import os
 
@@ -136,6 +137,10 @@ class Logger(object):
                 Logger().get_logger().warning(line, *args, **kwargs)
         else:
             Logger().get_logger().warning(msg, *args, **kwargs)
+
+    @functools.lru_cache(None)
+    def warning_once(msg, *args, **kwargs):
+        Logger.warning(msg, *args, **kwargs)
 
 
 level = Logger().get_logger().level
