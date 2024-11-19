@@ -882,13 +882,13 @@ class RAWGPTQuantizer(object):
             for layer_name in sub_layers:
                 full_layer_name = self.gptq_related_blocks["transformers_post"]["name"]
                 weight_config_this_layer = self.get_layer_config(full_layer_name)
-                gptq_scale = gptq_config[full_layer_name]["scale"]
+                gptq_scale = gptq_config[full_layer_name]["scale"].cpu()
                 if not weight_config_this_layer["sym"]:
-                    gptq_zp = gptq_config[full_layer_name]["zero"]
+                    gptq_zp = gptq_config[full_layer_name]["zero"].cpu()
                 else:
                     gptq_zp = None
                 if weight_config_this_layer["act_order"]:  # save perm for restoring the weights
-                    gptq_perm = gptq_config[full_layer_name]["perm"]
+                    gptq_perm = gptq_config[full_layer_name]["perm"].cpu()
                 else:
                     gptq_perm = None
                 if self.use_layer_wise:  # pragma: no cover
@@ -941,7 +941,7 @@ class RAWGPTQuantizer(object):
                     zp=gptq_zp is not None,
                     bias=bias is not None,
                     g_idx=gptq_perm is not None,
-                    device=self.device,
+                    device="cpu",
                 )
                 new_module.pack(int_weight, gptq_scale, gptq_zp, bias, gptq_perm)
                 set_module(self.model, layer_name, new_module)
