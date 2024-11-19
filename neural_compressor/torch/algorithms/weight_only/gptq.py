@@ -699,13 +699,13 @@ class RAWGPTQuantizer(object):
                 # Step 2.6: export to compressed model
                 for layer_name in sequential_layers:
                     weight_config_this_layer = self.get_layer_config(self.get_full_layer_name(layer_name, block_idx))
-                    gptq_scale = gptq_config[self.get_full_layer_name(layer_name, block_idx)]["scale"]
+                    gptq_scale = gptq_config[self.get_full_layer_name(layer_name, block_idx)]["scale"].cpu()
                     if not weight_config_this_layer["sym"]:
-                        gptq_zp = gptq_config[self.get_full_layer_name(layer_name, block_idx)]["zero"]
+                        gptq_zp = gptq_config[self.get_full_layer_name(layer_name, block_idx)]["zero"].cpu()
                     else:
                         gptq_zp = None
                     if weight_config_this_layer["act_order"]:  # save perm for restoring the weights
-                        gptq_perm = gptq_config[self.get_full_layer_name(layer_name, block_idx)]["perm"]
+                        gptq_perm = gptq_config[self.get_full_layer_name(layer_name, block_idx)]["perm"].cpu()
                     else:
                         gptq_perm = None
                     if self.use_layer_wise:
@@ -757,7 +757,7 @@ class RAWGPTQuantizer(object):
                         zp=gptq_zp is not None,
                         bias=bias is not None,
                         g_idx=gptq_perm is not None,
-                        device=self.device,
+                        device="cpu",
                     )
                     new_module.pack(int_weight, gptq_scale, gptq_zp, bias, gptq_perm)
                     set_module(transformer_block, layer_name, new_module)
