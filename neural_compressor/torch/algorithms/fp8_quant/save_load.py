@@ -18,8 +18,6 @@ import shutil
 import time
 
 import torch
-from safetensors.torch import load_file as safe_load_file
-from safetensors.torch import save_file as safe_save_file
 
 from ._quant_common.quant_config import local_rank, world_size
 from neural_compressor.torch.utils import get_accelerator
@@ -60,6 +58,7 @@ def find_tp_mod_list(model):
 
 def gather_state_dict(folder_prefix, file_name, tp_mod_list=[]):
     """Gather state_dict from files saved by each rank."""
+    from safetensors.torch import load_file as safe_load_file
 
     def _is_in_list(name, tp_mod_list):
         for tp_name in tp_mod_list:
@@ -109,6 +108,7 @@ def save(model, checkpoint_dir="saved_results", format="huggingface"):
     assert format == "huggingface", (
         "Currently, only huggingface models are supported." + "Please set format='huggingface'."
     )
+    from safetensors.torch import save_file as safe_save_file
     if world_size > 0:
         save_rank_model(model, folder_prefix=checkpoint_dir)
         rank_directory = f"{checkpoint_dir}_{0}_{world_size}"
@@ -234,6 +234,7 @@ def load(model_name_or_path, format="huggingface", device="hpu", **kwargs):
     """
     assert format == "huggingface", "Currently, only huggingface models are supported."
     assert device == "hpu", "Currently, only hpu device is supported for FP8 model."
+    from safetensors.torch import load_file as safe_load_file
 
     model = load_empty_raw_model(model_name_or_path, **kwargs)
     from neural_compressor.torch.algorithms.fp8_quant import prep_model
