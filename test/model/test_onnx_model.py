@@ -209,7 +209,8 @@ class TestOnnxModel(unittest.TestCase):
     def tearDownClass(self):
         shutil.rmtree("./gptj", ignore_errors=True)
         shutil.rmtree("./hf_test", ignore_errors=True)
-        os.remove("model.onnx")
+        if os.path.exists("model.onnx"):
+            os.remove("model.onnx")
 
     def test_hf_model(self):
         from optimum.onnxruntime import ORTModelForCausalLM
