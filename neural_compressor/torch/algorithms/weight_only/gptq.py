@@ -169,6 +169,7 @@ def log_quantizable_layers_per_transformer(transformer_blocks, layers=SUPPORTED_
             quantizable_layers.append(name)
     return quantizable_layers
 
+
 class RAWGPTQuantizer(object):
     """Main API for GPTQ algorithm.
 
@@ -277,7 +278,12 @@ class RAWGPTQuantizer(object):
         assert model_path, "model_path should not be None."
         self.model_path = get_path(model_path)
         register_weight_hooks(
-            self.model, self.model_path, device=self.device, clean_weight=True, saved_path=LWQ_WORKSPACE, indicated_layers=indicated_layers
+            self.model,
+            self.model_path,
+            device=self.device,
+            clean_weight=True,
+            saved_path=LWQ_WORKSPACE,
+            indicated_layers=indicated_layers,
         )
 
     def get_full_layer_name(self, sub_layer_name, block_idx):
@@ -949,6 +955,7 @@ class RAWGPTQuantizer(object):
         # Clear temporary workspace
         if self.use_layer_wise:
             import shutil
+
             shutil.rmtree(LWQ_WORKSPACE, ignore_errors=True)
         logger.info("Quantization done")
         # self.model.config.use_cache = self.use_cache

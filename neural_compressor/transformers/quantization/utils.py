@@ -321,6 +321,7 @@ def default_run_fn(model, tokenizer, dataset, max_length=512, n_samples=100, bat
     )
     total_cnt = 0
     from neural_compressor.torch.utils import get_accelerator
+
     device = get_accelerator().current_device_name()
     for i, (input_ids) in enumerate(calib_dataloader):
         input_ids = input_ids.to(torch.device(device))
