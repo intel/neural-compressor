@@ -140,6 +140,7 @@ class Logger(object):
 
     @functools.lru_cache(None)
     def warning_once(msg, *args, **kwargs):
+        """Output log with the warning level only once."""
         Logger.warning(msg, *args, **kwargs)
 
 
