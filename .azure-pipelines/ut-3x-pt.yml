@@ -14,6 +14,8 @@ pr:
       - test/3x/common
       - setup.py
       - requirements_pt.txt
+      - .azure-pipelines/ut-3x-pt.yml
+      - .azure-pipelines/scripts/install_nc.sh
       - .azure-pipelines/scripts/ut/3x/run_3x_pt.sh
 
 pool: ICX-16C

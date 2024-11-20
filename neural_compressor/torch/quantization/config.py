@@ -93,7 +93,8 @@ class TorchBaseConfig(BaseConfig):
                 op_type_config_dict[new_name] = config
             else:
                 op_name_config_dict[name] = config
-                op_type_config_dict[name] = config
+                if is_ipex_imported():
+                    op_type_config_dict[name] = config
         return op_type_config_dict, op_name_config_dict
 
 
