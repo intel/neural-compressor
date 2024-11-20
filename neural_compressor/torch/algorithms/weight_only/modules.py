@@ -493,7 +493,6 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
             for e in range(tmp.shape[1]):
                 tmp[:, e] = np.left_shift(tmp[:, e], self.bits * e)
                 packed_array[:, j] |= tmp[:, e]
-                accelerator.synchronize()
         packed_tensor = torch.from_numpy(packed_array).to(device=raw_tensor.device)
         return packed_tensor
 
