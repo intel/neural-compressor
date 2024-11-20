@@ -82,8 +82,10 @@ class TestLogger(unittest.TestCase):
         mock_method.assert_called_with(warning_message)
         # Second call
         Logger.warning_once(warning_message)
-        # Call `warning_once` twice, but the `warning` method should only be called once
-        mock_method.assert_called_once()
+        Logger.warning_once(warning_message)
+        # Call `warning_once` 3 times, but `warning` should only be called twice,
+        # one for help message and one for warning message.
+        assert mock_method.call_count == 2, "Expected warning to be called twice."
 
 
 if __name__ == "__main__":

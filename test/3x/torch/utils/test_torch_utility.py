@@ -81,12 +81,25 @@ class TestTorchUtils:
         config_dict = get_double_quant_config_dict(double_quant_type)
         assert isinstance(config_dict, dict), "The returned object should be a dict."
 
+
+class TestPackingWithNumba:
+
     @patch.object(inc_torch_utility, "_is_tbb_installed", lambda: False)
     def test_tbb_not_installed(self):
         assert inc_torch_utility.is_tbb_available() is False, "`is_tbb_available` should return False."
         assert inc_torch_utility.can_pack_with_numba() is False, "`can_pack_with_numba` should return False."
 
+    @patch.object(inc_torch_utility, "_is_tbb_installed", lambda: True)
     @patch.object(inc_torch_utility, "_is_tbb_configured", lambda: False)
     def test_tbb_installed_but_not_configured_right(self):
         assert inc_torch_utility.is_tbb_available() is False, "`is_tbb_available` should return False."
         assert inc_torch_utility.can_pack_with_numba() is False, "`can_pack_with_numba` should return False."
+
+    @patch.object(inc_torch_utility, "is_numba_available", lambda: False)
+    def test_numba_not_installed(self):
+        assert inc_torch_utility.can_pack_with_numba() is False, "`can_pack_with_numba` should return False."
+
+    def test_pack_with_numba2(self):
+        assert (
+            inc_torch_utility.can_pack_with_numba() is True
+        ), "At CI environment, it should be able to pack with numba."

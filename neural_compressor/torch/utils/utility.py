@@ -646,7 +646,7 @@ def can_pack_with_numba():
     return True
 
 
-def is_numba_available():
+def is_numba_available():  # pragma: no cover
     """Check if Numba is available."""
     try:
         import numba  # noqa: F401
@@ -656,7 +656,7 @@ def is_numba_available():
         return False
 
 
-def _is_tbb_installed():
+def _is_tbb_installed():  # pragma: no cover
     import importlib.metadata
 
     try:
@@ -666,7 +666,7 @@ def _is_tbb_installed():
         return False
 
 
-def _is_tbb_configured():
+def _is_tbb_configured():  # pragma: no cover
     try:
         from numba.np.ufunc.parallel import _check_tbb_version_compatible
 
@@ -675,7 +675,7 @@ def _is_tbb_configured():
 
         return True
     except ImportError as e:
-        logger.warning(f"TBB not available: {e}")
+        logger.warning_once(f"TBB not available: {e}")
         return False
 
 
