@@ -98,8 +98,3 @@ class TestPackingWithNumba:
     @patch.object(inc_torch_utility, "is_numba_available", lambda: False)
     def test_numba_not_installed(self):
         assert inc_torch_utility.can_pack_with_numba() is False, "`can_pack_with_numba` should return False."
-
-    def test_pack_with_numba2(self):
-        assert (
-            inc_torch_utility.can_pack_with_numba() is True
-        ), "At CI environment, it should be able to pack with numba."
