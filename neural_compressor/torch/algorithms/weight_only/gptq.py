@@ -267,10 +267,10 @@ class RAWGPTQuantizer(object):
 
         Args:
             model_path (str): Model path that is used to load state_dict per layer.
-              indicated_layers (list, optional): A list of layer names to apply layer-wise quantization.
-                                           If None, all layers will be considered.
-                                           Layers not specified in this list will be retained in memory
-                                           but will not undergo quantization.
+            indicated_layers (list, optional): A list of layer names to apply layer-wise quantization.
+                                        If None, all layers will be considered.
+                                        Layers not specified in this list will be retained in memory
+                                        but will not undergo quantization.
         """
         import os
 
