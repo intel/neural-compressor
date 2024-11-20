@@ -7,10 +7,14 @@ import unittest
 import numpy as np
 import onnx
 from onnx import TensorProto, helper, numpy_helper
+from packaging.version import Version
 
 from neural_compressor import PostTrainingQuantConfig, quantization
+from neural_compressor.adaptor.pytorch import get_torch_version
 from neural_compressor.data import DATALOADERS, Datasets
 from neural_compressor.model.onnx_model import ONNXModel
+
+PT_VERSION = get_torch_version().release
 
 
 def get_onnx_model():
@@ -205,7 +209,8 @@ class TestOnnxModel(unittest.TestCase):
     def tearDownClass(self):
         shutil.rmtree("./gptj", ignore_errors=True)
         shutil.rmtree("./hf_test", ignore_errors=True)
-        os.remove("model.onnx")
+        if os.path.exists("model.onnx"):
+            os.remove("model.onnx")
 
     def test_hf_model(self):
         from optimum.onnxruntime import ORTModelForCausalLM
@@ -410,6 +415,8 @@ class TestOnnxModel(unittest.TestCase):
         self.model.remove_unused_nodes()
         self.assertEqual(len(self.model.nodes()), 6)
 
+    # TODO: follow https://github.com/onnx/neural-compressor/pull/40
+    @unittest.skipIf(PT_VERSION >= Version("2.5.0").release, "Please use Pytorch version lower 2.5.")
     def test_check_large_model(self):
         import onnx
         import torch

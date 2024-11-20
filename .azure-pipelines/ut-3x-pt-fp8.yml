@@ -9,6 +9,7 @@ pr:
   paths:
     include:
       - .azure-pipelines/scripts/ut/3x/run_3x_pt_fp8.sh
+      - .azure-pipelines/scripts/install_nc.sh
       - .azure-pipelines/ut-3x-pt-fp8.yml
       - neural_compressor/common
       - neural_compressor/torch

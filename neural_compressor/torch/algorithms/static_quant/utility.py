@@ -240,7 +240,6 @@ def generate_activation_observer(
     kl_activation_observer = {
         "name": "HistogramObserver",
         "bins": 2048,
-        "upsample_rate": 128,
         "dtype": "torch.quint8",
         "qscheme": "torch.per_tensor_affine",
         "reduce_range": False,

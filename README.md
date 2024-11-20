@@ -78,7 +78,7 @@ Following example code demonstrates FP8 Quantization, it is supported by Intel G
 To try on Intel Gaudi2, docker image with Gaudi Software Stack is recommended, please refer to following script for environment setup. More details can be found in [Gaudi Guide](https://docs.habana.ai/en/latest/Installation_Guide/Bare_Metal_Fresh_OS.html#launch-docker-image-that-was-built).
 ```bash
 # Run a container with an interactive shell
-docker run -it --runtime=habana -e HABANA_VISIBLE_DEVICES=all -e OMPI_MCA_btl_vader_single_copy_mechanism=none --cap-add=sys_nice --net=host --ipc=host vault.habana.ai/gaudi-docker/1.17.0/ubuntu22.04/habanalabs/pytorch-installer-2.3.1:latest
+docker run -it --runtime=habana -e HABANA_VISIBLE_DEVICES=all -e OMPI_MCA_btl_vader_single_copy_mechanism=none --cap-add=sys_nice --net=host --ipc=host vault.habana.ai/gaudi-docker/1.18.0/ubuntu22.04/habanalabs/pytorch-installer-2.4.0:latest
 ```
 Run the example:
 ```python
@@ -87,14 +87,21 @@ from neural_compressor.torch.quantization import (
     prepare,
     convert,
 )
+
+import torch
 import torchvision.models as models
 
 model = models.resnet18()
 qconfig = FP8Config(fp8_config="E4M3")
 model = prepare(model, qconfig)
-# customer defined calibration
-calib_func(model)
+
+# Customer defined calibration. Below is a dummy calibration
+model(torch.randn(1, 3, 224, 224).to("hpu"))
+
 model = convert(model)
+
+output = model(torch.randn(1, 3, 224, 224).to("hpu")).to("cpu")
+print(output.shape)
 ```
 
 ### Weight-Only Large Language Model Loading (LLMs)

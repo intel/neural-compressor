@@ -12,7 +12,10 @@ pr:
       - test
       - setup.py
       - requirements.txt
+      - .azure-pipelines/ut-basic.yml
       - .azure-pipelines/scripts/ut
+      - .azure-pipelines/scripts/fwk_version.sh
+      - .azure-pipelines/scripts/install_nc.sh
     exclude:
       - test/3x
       - neural_compressor/common

@@ -15,9 +15,24 @@
 import copy
 import json
 import time
+from functools import lru_cache
 from typing import Union
 
 import torch
+
+
+@lru_cache(None)
+def _is_auto_round_available():
+    try:
+        import auto_round  # pylint: disable=E0401
+    except ImportError:
+        logger.error("AutoRound is not installed. Please install it using 'pip install auto_round'.")
+        return False
+    return True
+
+
+_is_auto_round_available()
+
 from auto_round import AutoRound  # pylint: disable=E0401
 from auto_round.export.export_to_itrex.export import pack_model  # pylint: disable=E0401
 
