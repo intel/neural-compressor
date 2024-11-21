@@ -147,7 +147,6 @@ class TestPT2EQuantization:
         quant_config = get_default_static_config()
         quant_config.set_local("fc1", StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
         q_model = quantize(model=model, quant_config=quant_config, run_fn=calib_fn)
-        q_model.print_readable()
         expected_node_occurrence = {
             # Only quantize the `fc2`
             # Quantize/Dequantize input
