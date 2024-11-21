@@ -633,7 +633,7 @@ def run_fn_for_vlm_autoround(model, dataloader, seqlen=512, nsamples=512):  # pr
             break
 
 
-def can_pack_with_numba():
+def can_pack_with_numba():  # pragma: no cover
     """Check if Numba and TBB are available for packing.
 
     To pack tensor with Numba, both Numba and TBB are required, and TBB should be configured correctly.
@@ -649,7 +649,7 @@ def can_pack_with_numba():
 def is_numba_available():  # pragma: no cover
     """Check if Numba is available."""
     try:
-        import numba  # noqa: F401
+        import numba
 
         return True
     except ImportError:
@@ -679,7 +679,7 @@ def _is_tbb_configured():  # pragma: no cover
         return False
 
 
-def is_tbb_available():
+def is_tbb_available():  # pragma: no cover
     """Check if TBB is available."""
     if not _is_tbb_installed():
         logger.warning_once("TBB is not installed, please install it with `pip install tbb`.")
