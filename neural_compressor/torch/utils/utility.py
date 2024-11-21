@@ -17,7 +17,6 @@
 import enum
 import importlib
 from collections import UserDict
-from importlib.machinery import ModuleSpec
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import psutil
