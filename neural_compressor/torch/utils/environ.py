@@ -20,6 +20,8 @@ import sys
 import torch
 from packaging.version import Version
 
+from neural_compressor.common.utils import logger
+
 
 ################ Check imported sys.module first to decide behavior #################
 def is_ipex_imported() -> bool:
@@ -160,3 +162,66 @@ def device_synchronize(raw_func):
         return output
 
     return new_func
+
+
+def can_pack_with_numba():  # pragma: no cover
+    """Check if Numba and TBB are available for packing.
+
+    To pack tensor with Numba, both Numba and TBB are required, and TBB should be configured correctly.
+    """
+    if not is_numba_available():
+        logger.warning_once("Numba is not installed, please install it with `pip install numba`.")
+        return False
+    if not is_tbb_available():
+        return False
+    return True
+
+
+def is_numba_available():  # pragma: no cover
+    """Check if Numba is available."""
+    try:
+        import numba
+
+        return True
+    except ImportError:
+        return False
+
+
+def _is_tbb_installed():  # pragma: no cover
+    import importlib.metadata
+
+    try:
+        importlib.metadata.version("tbb")
+        return True
+    except importlib.metadata.PackageNotFoundError:
+        return False
+
+
+def _is_tbb_configured():  # pragma: no cover
+    try:
+        from numba.np.ufunc.parallel import _check_tbb_version_compatible
+
+        # check if TBB is present and compatible
+        _check_tbb_version_compatible()
+
+        return True
+    except ImportError as e:
+        logger.warning_once(f"TBB not available: {e}")
+        return False
+
+
+def is_tbb_available():  # pragma: no cover
+    """Check if TBB is available."""
+    if not _is_tbb_installed():
+        logger.warning_once("TBB is not installed, please install it with `pip install tbb`.")
+        return False
+    if not _is_tbb_configured():
+        logger.warning_once(
+            (
+                "TBB is installed but not configured correctly. \n"
+                "Please add the TBB library path to `LD_LIBRARY_PATH`, "
+                "for example: `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/`."
+            )
+        )
+        return False
+    return True

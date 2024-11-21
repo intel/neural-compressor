@@ -3,7 +3,7 @@ from unittest.mock import patch
 import pytest
 import torch
 
-import neural_compressor.torch.utils.utility as inc_torch_utility
+import neural_compressor.torch.utils.environ as inc_torch_env
 from neural_compressor.torch.utils.utility import get_double_quant_config_dict
 
 
@@ -84,17 +84,17 @@ class TestTorchUtils:
 
 class TestPackingWithNumba:
 
-    @patch.object(inc_torch_utility, "_is_tbb_installed", lambda: False)
+    @patch.object(inc_torch_env, "_is_tbb_installed", lambda: False)
     def test_tbb_not_installed(self):
-        assert inc_torch_utility.is_tbb_available() is False, "`is_tbb_available` should return False."
-        assert inc_torch_utility.can_pack_with_numba() is False, "`can_pack_with_numba` should return False."
+        assert inc_torch_env.is_tbb_available() is False, "`is_tbb_available` should return False."
+        assert inc_torch_env.can_pack_with_numba() is False, "`can_pack_with_numba` should return False."
 
-    @patch.object(inc_torch_utility, "_is_tbb_installed", lambda: True)
-    @patch.object(inc_torch_utility, "_is_tbb_configured", lambda: False)
+    @patch.object(inc_torch_env, "_is_tbb_installed", lambda: True)
+    @patch.object(inc_torch_env, "_is_tbb_configured", lambda: False)
     def test_tbb_installed_but_not_configured_right(self):
-        assert inc_torch_utility.is_tbb_available() is False, "`is_tbb_available` should return False."
-        assert inc_torch_utility.can_pack_with_numba() is False, "`can_pack_with_numba` should return False."
+        assert inc_torch_env.is_tbb_available() is False, "`is_tbb_available` should return False."
+        assert inc_torch_env.can_pack_with_numba() is False, "`can_pack_with_numba` should return False."
 
-    @patch.object(inc_torch_utility, "is_numba_available", lambda: False)
+    @patch.object(inc_torch_env, "is_numba_available", lambda: False)
     def test_numba_not_installed(self):
-        assert inc_torch_utility.can_pack_with_numba() is False, "`can_pack_with_numba` should return False."
+        assert inc_torch_env.can_pack_with_numba() is False, "`can_pack_with_numba` should return False."
