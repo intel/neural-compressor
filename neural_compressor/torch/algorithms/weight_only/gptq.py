@@ -633,7 +633,7 @@ class RAWGPTQuantizer(object):
                         W = load_value(self.model, full_layer_name + ".weight", self.model_path)
                     else:
                         W = sequential_layers[layer_name].weight.data.clone()
-                    accelerator.mark_step()
+                    accelerator.synchronize()
                     # TODO: remove it when cholesky_inverse on HPU is ready
                     if "hpu" in self.device:
                         W = W.to("cpu")
