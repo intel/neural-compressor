@@ -7,6 +7,7 @@ import transformers
 
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import local_rank, world_size
 from neural_compressor.torch.quantization import FP8Config, convert, load, prepare, save
+from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import PatchedLinear
 
 
 def get_hpu_used_mem():
@@ -22,6 +23,23 @@ def calib_func(model):
     example_inputs = torch.tensor([[10, 20, 30, 40, 50, 60]], dtype=torch.long).to("hpu")
     for i in range(2):
         model(example_inputs)
+
+
+def test_load_model_provided_by_neuralmagic():
+    model_name_or_path = "neuralmagic/Qwen2-0.5B-Instruct-FP8"
+    model = load(model_name_or_path, format="huggingface", device="hpu")
+    assert isinstance(model, torch.nn.Module)
+    assert isinstance(model.model.layers[0].self_attn.q_proj, PatchedLinear)
+    tokenizer = transformers.AutoTokenizer.from_pretrained(model_name_or_path)
+    prompt = "There existed a little girl, who liked to have adventures."
+    input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to("hpu")
+    generate_kwargs = dict(do_sample=False, temperature=0.9, num_beams=1)
+    gen_ids = model.generate(
+        input_ids,
+        max_new_tokens=5,
+        **generate_kwargs,
+    )
+    assert isinstance(gen_ids, torch.Tensor)
 
 
 def test_multi_cards_save_load():
@@ -58,3 +76,4 @@ def test_multi_cards_save_load():
 
 if __name__ == "__main__":
     test_multi_cards_save_load()
+    test_load_model_provided_by_neuralmagic()
