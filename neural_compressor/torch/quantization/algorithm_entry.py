@@ -607,7 +607,7 @@ def autoround_quantize_entry(
             not_use_best_mse = quant_config.not_use_best_mse
             dynamic_max_gap = quant_config.dynamic_max_gap
             scale_dtype = quant_config.scale_dtype
-            quant_block_list = quant_config.quant_block_list
+            to_quant_block_names = quant_config.to_quant_block_names
             low_cpu_mem_usage = quant_config.use_layer_wise
             export_format = quant_config.export_format
 
@@ -635,7 +635,7 @@ def autoround_quantize_entry(
         not_use_best_mse=not_use_best_mse,
         dynamic_max_gap=dynamic_max_gap,
         scale_dtype=scale_dtype,
-        quant_block_list=quant_block_list,
+        to_quant_block_names=to_quant_block_names,
         low_cpu_mem_usage=low_cpu_mem_usage,
         export_format=export_format,
     )

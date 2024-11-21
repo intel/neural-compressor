@@ -70,7 +70,7 @@ class AutoRoundQuantizer(Quantizer):
         dynamic_max_gap: int = -1,
         data_type: str = "int",
         scale_dtype: str = "fp16",
-        quant_block_list: list = None,
+        to_quant_block_names: list = None,
         act_bits: int = 32,
         act_group_size: int = None,
         act_sym: bool = None,
@@ -130,7 +130,7 @@ class AutoRoundQuantizer(Quantizer):
             data_type (str): The data type to be used (default is "int").
             scale_dtype (str): The data type of quantization scale to be used (default is "float16"), different kernels
                 have different choices.
-            quant_block_list (list): A list whose elements are list of block's layer names to be quantized.
+            to_quant_block_names (list): A list whose elements are list of block's layer names to be quantized.
             act_bits (int): Number of bits for activation quantization. Default is 32.
             act_group_size (int): Group size for activation quantization. Default is None.
             act_sym (bool): Whether to use symmetric activation quantization. Default is None.
@@ -162,7 +162,7 @@ class AutoRoundQuantizer(Quantizer):
         self.dynamic_max_gap = dynamic_max_gap
         self.data_type = data_type
         self.scale_dtype = scale_dtype
-        self.quant_block_list = quant_block_list
+        self.to_quant_block_names = to_quant_block_names
         self.act_bits = act_bits
         self.act_group_size = act_group_size
         self.act_sym = act_sym
@@ -219,7 +219,7 @@ class AutoRoundQuantizer(Quantizer):
             dynamic_max_gap=self.dynamic_max_gap,
             data_type=self.data_type,
             scale_dtype=self.scale_dtype,
-            quant_block_list=self.quant_block_list,
+            to_quant_block_names=self.to_quant_block_names,
             act_bits=self.act_bits,
             act_group_size=self.act_group_size,
             act_sym=self.act_sym,

@@ -943,7 +943,7 @@ class AutoRoundConfig(TorchBaseConfig):
         dynamic_max_gap: int = -1,
         scale_dtype: str = "fp16",
         use_layer_wise: bool = False,
-        quant_block_list: list = None,
+        to_quant_block_names: list = None,
         export_format: str = "itrex",
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
         **kwargs,
@@ -979,7 +979,7 @@ class AutoRoundConfig(TorchBaseConfig):
             scale_dtype (str): The data type of quantization scale to be used (default is "float16"), different kernels
               have different choices.
             use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
-            quant_block_list (list): A list whose elements are list of block's layer names to be quantized.
+            to_quant_block_names (list): A list whose elements are list of block's layer names to be quantized.
             export_format (str, optional): The format used for exporting the quantized model. Defaults to "itrex".
             white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
               Default is DEFAULT_WHITE_LIST.
@@ -1012,7 +1012,7 @@ class AutoRoundConfig(TorchBaseConfig):
         self.dynamic_max_gap = dynamic_max_gap
         self.scale_dtype = scale_dtype
         self.use_layer_wise = use_layer_wise
-        self.quant_block_list = quant_block_list
+        self.to_quant_block_names = to_quant_block_names
         self.export_format = export_format
         self._post_init()
 
