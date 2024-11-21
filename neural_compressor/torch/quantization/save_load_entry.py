@@ -126,7 +126,14 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
         import transformers
         config = transformers.AutoConfig.from_pretrained(model_name_or_path, **kwargs)
         # use config to check which algorithm is used.
-        if "fp8_config" in config.quantization_config:
+        if (
+            "fp8_config" in config.quantization_config or
+            # for FP8 LLMs for vLLM (https://huggingface.co/neuralmagic).
+            (
+                "quant_method" in config.quantization_config and
+                config.quantization_config["quant_method"] in ["fp8", "compressed-tensors"]
+            )
+        ):
             from neural_compressor.torch.algorithms import fp8_quant
             return fp8_quant.load(model_name_or_path, format=format, device=device, **kwargs)
         else:
