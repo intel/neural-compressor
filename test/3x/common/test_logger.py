@@ -8,6 +8,7 @@ All tests will be included for each framework CI.
 """
 
 import unittest
+from unittest.mock import patch
 
 from neural_compressor.common.utils import Logger
 
@@ -71,6 +72,20 @@ class TestLogger(unittest.TestCase):
     #         fatal(msg)
     #         info(msg)
     #         warning(msg)
+
+    @patch.object(Logger, "warning")
+    def test_warning_once(self, mock_method):
+
+        warning_message = "test warning message"
+        # First call
+        Logger.warning_once(warning_message)
+        mock_method.assert_called_with(warning_message)
+        # Second call
+        Logger.warning_once(warning_message)
+        Logger.warning_once(warning_message)
+        # Call `warning_once` 3 times, but `warning` should only be called twice,
+        # one for help message and one for warning message.
+        assert mock_method.call_count == 2, "Expected warning to be called twice."
 
 
 if __name__ == "__main__":
