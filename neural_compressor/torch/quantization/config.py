@@ -991,6 +991,17 @@ class AutoRoundConfig(TorchBaseConfig):
             use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
             to_quant_block_names (list): A list whose elements are list of block's layer names to be quantized.
             export_format (str, optional): The format used for exporting the quantized model. Defaults to "itrex".
+            enable_norm_bias_tuning (bool): Whether to enable fast norm/layer_bias tuning.
+            enable_torch_compile (bool): Whether to enable torch compile to optimize quant_block/layer, torch>=2.6 True.
+            quant_nontext_module (Union[str, list]): Whether to quantize nontext module.
+            extra_data_dir (str): The path for extra data such as images, audio or videos.
+            is_mllm (bool): Indicates whether the model to be quantized is a multi-modal model (MLLM).
+            image_processor (transformers.AutoProcessor): Any multi-modal model will require an object to encode or 
+              decode the data that groups several modalities (among text, vision and audio). 
+              This is handled by objects called processors, which group together two or more processing objects such 
+              as tokenizers (for the text modality), image processors (for vision) and feature extractors (for audio).
+            template (Template): The template to specify process for different mllms.
+            truncation (bool): Activates truncation to cut input sequences longer than `max_length` to `max_length`.
             white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
               Default is DEFAULT_WHITE_LIST.
         """
