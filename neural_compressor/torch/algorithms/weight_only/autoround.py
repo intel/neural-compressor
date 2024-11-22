@@ -35,7 +35,7 @@ _is_auto_round_available()
 
 from auto_round import AutoRound, AutoRoundMLLM  # pylint: disable=E0401
 from auto_round.export.export_to_itrex.export import pack_model  # pylint: disable=E0401
-from auto_round.mllm.template import get_template, Template
+from auto_round.mllm.template import Template, get_template
 
 from neural_compressor.torch.algorithms import Quantizer
 from neural_compressor.torch.utils import get_accelerator, logger
@@ -85,7 +85,7 @@ class AutoRoundQuantizer(Quantizer):
         is_mllm: bool = False,
         quant_nontext_module: Union[str, list] = None,
         extra_data_dir: str = None,
-        image_processor = None,
+        image_processor=None,
         template: Union[str, Template] = None,
         truncation: bool = False,
         **kwargs,
@@ -324,22 +324,23 @@ def get_dataloader(tokenizer, seqlen, dataset_name="NeelNanda/pile-10k", seed=42
     )
     return dataloader
 
+
 def get_mllm_dataloader(
-        template,
-        model,
-        tokenizer, 
-        image_processor=None,
-        dataset="liuhaotian/llava_conv_58k",
-        extra_data_dir=None,
-        seqlen=512,
-        bs=1, 
-        split=None,
-        apply_template=None,
-        truncation=False,
-        seed=42,
-        nsamples=512,
-        gradient_accumulate_steps=1,
-        quant_nontext_module=False
+    template,
+    model,
+    tokenizer,
+    image_processor=None,
+    dataset="liuhaotian/llava_conv_58k",
+    extra_data_dir=None,
+    seqlen=512,
+    bs=1,
+    split=None,
+    apply_template=None,
+    truncation=False,
+    seed=42,
+    nsamples=512,
+    gradient_accumulate_steps=1,
+    quant_nontext_module=False,
 ):
     """Generate a DataLoader for calibration using specified parameters.
 
@@ -354,22 +355,25 @@ def get_mllm_dataloader(
         bs (int, optional): The batch size. Defaults to 4.
         split (str, optional): The data split to use. Defaults to None.
         apply_template: Whether to apply chat template in tokenization.
-    
+
     Returns:
         DataLoader: The DataLoader for the calibrated datasets.
     """
-    from auto_round.mllm.mllm_dataset  import get_mllm_dataloader  # pylint: disable=E0401
-    from auto_round.mllm.template import get_template # pylint: disable=E0401
-    from auto_round.mllm.autoround_mllm import _only_text_test
     from auto_round.calib_dataset import CALIB_DATASETS
+    from auto_round.mllm.autoround_mllm import _only_text_test
+    from auto_round.mllm.mllm_dataset import get_mllm_dataloader  # pylint: disable=E0401
 
     if quant_nontext_module or (dataset in CALIB_DATASETS.keys() and not _only_text_test(model, tokenizer)):
         if quant_nontext_module:
-            logger.warning(f"Quantitative nontext module is not supported for plain text datasets,"
-                            "will use liuhaotian/llava_conv_58k with default config as an alternative.")
+            logger.warning(
+                "Quantitative nontext module is not supported for plain text datasets,"
+                "will use liuhaotian/llava_conv_58k with default config as an alternative."
+            )
         else:
-            logger.warning(f"{model.config.model_type} not support for {dataset},"
-                        " will use liuhaotian/llava_conv_58k with default config as an alternative.")
+            logger.warning(
+                f"{model.config.model_type} not support for {dataset},"
+                " will use liuhaotian/llava_conv_58k with default config as an alternative."
+            )
         dataset = "liuhaotian/llava_conv_58k"
         truncation = False
         batch_size = 1
@@ -380,18 +384,18 @@ def get_mllm_dataloader(
     template = template if template is not None else model.config.model_type
     template = get_template(template, model=model, tokenizer=tokenizer, image_processor=image_processor)
     dataloader, batch_size, gradient_accumulate_steps = get_mllm_dataloader(
-            template=template,
-            model=model,
-            tokenizer=tokenizer,
-            image_processor=image_processor,
-            dataset=dataset, 
-            extra_data_dir=extra_data_dir,
-            seqlen=seqlen, 
-            bs=bs,
-            seed=seed,
-            truncation=truncation,
-            nsamples=nsamples,
-            gradient_accumulate_steps=gradient_accumulate_steps,
-            quant_nontext_module=quant_nontext_module,
+        template=template,
+        model=model,
+        tokenizer=tokenizer,
+        image_processor=image_processor,
+        dataset=dataset,
+        extra_data_dir=extra_data_dir,
+        seqlen=seqlen,
+        bs=bs,
+        seed=seed,
+        truncation=truncation,
+        nsamples=nsamples,
+        gradient_accumulate_steps=gradient_accumulate_steps,
+        quant_nontext_module=quant_nontext_module,
     )
-    return  dataloader, template, truncation, batch_size, gradient_accumulate_steps, seqlen
+    return dataloader, template, truncation, batch_size, gradient_accumulate_steps, seqlen

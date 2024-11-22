@@ -948,12 +948,12 @@ class AutoRoundConfig(TorchBaseConfig):
         # v0.4
         enable_norm_bias_tuning: bool = False,
         enable_torch_compile: bool = None,
-        # mllm 
+        # mllm
         is_mllm: bool = False,
         quant_nontext_module: Union[str, list] = None,
         extra_data_dir: str = None,
-        image_processor = None,
-        template = None,
+        image_processor=None,
+        template=None,
         truncation: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
         **kwargs,
