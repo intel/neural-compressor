@@ -187,6 +187,42 @@ class TestAutoRound:
         out = q_model(self.inp)[0]
         assert torch.allclose(out, self.label, atol=1e-1)
         assert isinstance(q_model.transformer.h[0].attn.k_proj, WeightOnlyLinear), "packing model failed."
+        
+    def test_mllm(self):
+        input = torch.randn(1, 32)
+        from neural_compressor.torch.algorithms.weight_only.autoround import get_mllm_dataloader
+        from transformers import AutoProcessor, AutoTokenizer, Qwen2VLForConditionalGeneration
+        
+        model_name = "Qwen/Qwen2-VL-2B-Instruct"
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        processor = AutoProcessor.from_pretrained(model_name, trust_remote_code=True)
+        tokenizer.processor = processor
+        model = Qwen2VLForConditionalGeneration.from_pretrained(
+            model_name, trust_remote_code=True, device_map="auto")
+        dataloader, template, truncation, batch_size, gradient_accumulate_steps, seqlen = get_mllm_dataloader(
+            template=None,
+            model=model,
+            tokenizer=tokenizer, 
+            image_processor=None,
+            dataset="liuhaotian/llava_conv_58k",
+            extra_data_dir=None,
+            seqlen=2048,
+            bs=1, 
+            split=None,
+            apply_template=None,
+            truncation=False,
+            seed=42,
+            nsamples=5,
+            gradient_accumulate_steps=1,
+            quant_nontext_module=False,
+        )
+        quant_config = AutoRoundConfig(
+            bits=4, group_size=128, is_mllm=True, nsamples=5, batch_size=batch_size, iters=2, seqlen=seqlen,
+            quant_nontext_module=False, truncation=truncation, gradient_accumulate_steps=gradient_accumulate_steps)
+        model = prepare(model=model, quant_config=quant_config)
+        run_fn(model, dataloader, nsamples=5)
+        q_model = convert(model)
+        assert isinstance(q_model.visual.blocks[0].attn.qkv, WeightOnlyLinear), "model quantization failed."
 
     # def test_autoround_format_export(self):
     #     from neural_compressor.torch.quantization import load

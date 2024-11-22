@@ -945,6 +945,16 @@ class AutoRoundConfig(TorchBaseConfig):
         use_layer_wise: bool = False,
         to_quant_block_names: list = None,
         export_format: str = "itrex",
+        # v0.4
+        enable_norm_bias_tuning: bool = False,
+        enable_torch_compile: bool = None,
+        # mllm 
+        is_mllm: bool = False,
+        quant_nontext_module: Union[str, list] = None,
+        extra_data_dir: str = None,
+        image_processor = None,
+        template = None,
+        truncation: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
         **kwargs,
     ):
@@ -1014,6 +1024,14 @@ class AutoRoundConfig(TorchBaseConfig):
         self.use_layer_wise = use_layer_wise
         self.to_quant_block_names = to_quant_block_names
         self.export_format = export_format
+        self.enable_norm_bias_tuning = enable_norm_bias_tuning
+        self.enable_torch_compile = enable_torch_compile
+        self.is_mllm = is_mllm
+        self.quant_nontext_module = quant_nontext_module
+        self.extra_data_dir = extra_data_dir
+        self.image_processor = image_processor
+        self.template = template
+        self.truncation = truncation
         self._post_init()
 
     @classmethod
