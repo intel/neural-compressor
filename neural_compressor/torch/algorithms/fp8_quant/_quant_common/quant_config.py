@@ -105,6 +105,7 @@ _config_to_enum = {
     "fake_quant": TrueFalse,
     "scale_format": ScaleFormat,
     "device_for_scales": DeviceType,
+    "measure_on_hpu": TrueFalse,
 }
 
 
@@ -116,6 +117,7 @@ _configs_that_use_enum_value = [
     "fake_quant",
     "use_qdq",
     "device_for_scales",
+    "measure_on_hpu",
 ]
 
 _scale_methods_quant_only = [ScaleMethod.UNIT_SCALE, ScaleMethod.HW_ALIGNED_SINGLE_SCALE]
@@ -137,12 +139,14 @@ def set_hqt_config(mod, config):
     mod.__hqt_config__ = config
 
 
-def _get_enum_from_string(EnumClass, str, key):
-    if not hasattr(EnumClass, str.upper()):
+def _get_enum_from_string(EnumClass, string, key):
+    string = str(string)  # bool must be converted to string
+    if not hasattr(EnumClass, string.upper()):
         raise ValueError(
-            f"Invalid '{key}' value in custom config ('{str}'). Enter one of {[m.name for m in EnumClass]}"
+            f"Invalid '{key}' value in custom config ('{string}'). Enter one of {[m.name for m in EnumClass]}"
         )
-    return EnumClass[str.upper()]
+    return EnumClass[string.upper()]
+
 
 def _validate_dump_path(dump_stats_path):
     dirname = os.path.dirname(dump_stats_path)
@@ -198,7 +202,8 @@ class Fp8cfg:
             "device_for_scales": None,  # Overrides device type for scale: Gaudi2, Gaudi3... Enables using only G2 scales on G3
             "measure_exclude": MeasureExclude.OUTPUT,
             "recalc_scales": False,
-            "scale_format": ScaleFormat.SCALAR
+            "scale_format": ScaleFormat.SCALAR,
+            "measure_on_hpu": True,  # Determines whether to measure model on hpu device.
         }
         # assert measured_global_config['allowlist']['names'] == [''], "Allowlist names not yet implemented"
 
