@@ -996,9 +996,9 @@ class AutoRoundConfig(TorchBaseConfig):
             quant_nontext_module (Union[str, list]): Whether to quantize nontext module.
             extra_data_dir (str): The path for extra data such as images, audio or videos.
             is_mllm (bool): Indicates whether the model to be quantized is a multi-modal model (MLLM).
-            image_processor (transformers.AutoProcessor): Any multi-modal model will require an object to encode or 
-              decode the data that groups several modalities (among text, vision and audio). 
-              This is handled by objects called processors, which group together two or more processing objects such 
+            image_processor (transformers.AutoProcessor): Any multi-modal model will require an object to encode or
+              decode the data that groups several modalities (among text, vision and audio).
+              This is handled by objects called processors, which group together two or more processing objects such
               as tokenizers (for the text modality), image processors (for vision) and feature extractors (for audio).
             template (Template): The template to specify process for different mllms.
             truncation (bool): Activates truncation to cut input sequences longer than `max_length` to `max_length`.
