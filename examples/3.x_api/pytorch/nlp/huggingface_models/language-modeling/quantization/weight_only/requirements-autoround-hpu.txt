@@ -1,0 +1,16 @@
+accelerate
+protobuf
+sentencepiece != 0.1.92
+datasets >= 1.1.3
+transformers
+pytest
+wandb
+einops
+neural-compressor
+lm_eval==0.4.3
+peft
+numba
+tbb
+# TODO: (Yi) SW-208079 replace auto-round with the released version
+auto-round-hpu @ git+https://github.com/intel/auto-round.git@hpu_only_pkg
+optimum-habana==1.14.1
