@@ -11,12 +11,12 @@ pip install -r requirements.txt
 
 Below is the current support status on Intel Gaudi AI Accelerator with PyTorch.
 
-| woq_algo |   Status  |
-|--------------|----------|
-|   GPTQ   |  &#10004;|
+| woq_algo  | Status   | Validated Models                                                               |
+|-----------|----------|--------------------------------------------------------------------------------|
+|   GPTQ    | &#10004; | `meta-llama/Llama-2-7b-hf`<br/> `EleutherAI/gpt-j-6B`<br/> `facebook/opt-125m` |
+| AutoRound | &#10004; | `meta-llama/Llama-2-7b-chat-hf`                                                |
 
-> We validated the typical LLMs such as: `meta-llama/Llama-2-7b-hf`, `EleutherAI/gpt-j-6B`, `facebook/opt-125m`.
->
+
 > Notes:
 > 1. `--gptq_actorder` is not supported by HPU.
 > 2. Only support inference using uint4.
@@ -58,6 +58,28 @@ python run_clm_no_trainer.py \
     --gptq_use_max_length \
     --output_dir saved_results
 ```
+
+#### Quantize model with AutoRound on HPU
+```bash
+pip install -r requirements-autoround-hpu.txt
+
+PT_ENABLE_INT64_SUPPORT=1 PT_HPU_LAZY_MODE=0 python run_clm_no_trainer.py \
+    --model meta-llama/Llama-2-7b-chat-hf \
+    --dataset NeelNanda/pile-10k \
+    --quantize \
+    --batch_size 8 \
+    --woq_algo AutoRound \
+    --woq_bits 4 \
+    --woq_scheme asym \
+    --woq_group_size 128 \
+    --autoround_seq_len 2048 \
+    --output_dir saved_results
+```
+> [!TIP]
+> We use `torch.compile`  to accelerate the quantization process of AutoRound on HPU.
+> Please set the following environment variables before running the command:
+> `PT_ENABLE_INT64_SUPPORT=1` and `PT_HPU_LAZY_MODE=0`.
+
 
 ### Evaluation (CPU)
 
