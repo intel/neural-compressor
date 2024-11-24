@@ -1761,6 +1761,7 @@ class FP8Config(TorchBaseConfig):
         fake_quant: bool = False,
         use_qdq: bool = False,
         scale_format: str = "scalar",
+        measure_on_hpu: bool = True,
         **kwargs,
     ):
         """Initializing FP8Config.
@@ -1795,6 +1796,7 @@ class FP8Config(TorchBaseConfig):
         self.fake_quant = str(fake_quant)
         self.use_qdq = str(use_qdq)
         self.scale_format = scale_format
+        self.measure_on_hpu = measure_on_hpu
 
     @property
     def measure(self):

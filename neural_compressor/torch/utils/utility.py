@@ -668,3 +668,58 @@ def load_non_persistent_buffers(model, non_persistent_buffers):
         module_name, buffer_name = full_name
         module = model.get_submodule(module_name) if module_name else model
         setattr(module, buffer_name, buffer)
+
+
+# copied from neural_compressor/adaptor/torch_utils/util.py
+def move_input_device(input, device="cpu"):
+    """Auto mapping input to device for all kinds of format.
+
+    Args:
+        input (torch.tensor): input data
+        device (str, optional): target device. Defaults to "cpu".
+
+    Returns:
+        input (torch.tensor): input data on target device
+    """
+    if isinstance(input, dict) or isinstance(input, UserDict):
+        tmp_input = {}
+        for k, inp in input.items():
+            tmp_input[k] = move_input_device(inp, device)
+        input = tmp_input
+    elif isinstance(input, list) or isinstance(input, tuple):
+        tmp_input = []
+        for inp in input:
+            tmp_input.append(move_input_device(inp, device))
+        input = tmp_input
+    elif isinstance(input, torch.Tensor):
+        input = input.to(device)  # pylint: disable=no-member
+    return input
+
+
+# copied from neural_compressor/adaptor/torch_utils/util.py
+def forward_wrapper(model, input):
+    """Model forward with device auto mapping.
+
+    Args:
+        model (torch.nn.Module): input model
+        input (torch.tensor): input data
+
+    Returns:
+        output: output data
+    """
+    try:
+        device = next(model.parameters()).device
+    except:
+        # for RecursiveScriptModule
+        device = "cpu"
+    input = move_input_device(input, device)
+    if isinstance(input, dict) or isinstance(input, UserDict):
+        output = model(**input)
+    elif isinstance(input, list) or isinstance(input, tuple):
+        try:
+            output = model(*input)
+        except:
+            output = model(input)
+    else:
+        output = model(input)
+    return output
