@@ -16,15 +16,26 @@ import gc
 import os
 import shutil
 import time
+import copy
 
 import torch
 
-from ._quant_common.quant_config import local_rank, world_size
-from neural_compressor.torch.utils import get_accelerator, is_optimum_habana_available
+from ._quant_common.quant_config import local_rank, world_size, HpDtype
+from neural_compressor.torch.utils import get_accelerator, is_optimum_habana_available, get_attr, set_attr
+
 
 MAX_FILE_SIZE = 5  # GB
 cur_accelerator = get_accelerator()
 tp_module_list = (
+    # raw module
+    "LinearLayer",
+    "LinearLayerAllReduce",
+    "LmHeadLinearAllreduce",
+    "RowParallelLinear",
+    "ColumnParallelLinear",
+    "MergedColumnParallelLinear",
+    "QKVParallelLinear",
+    # patched module
     "PatchedLinear",
     "PatchedLinearAllReduce",
     "PatchedLmHeadLinearAllreduce",
@@ -108,6 +119,12 @@ def save(model, checkpoint_dir="saved_results", format="huggingface"):
         "Currently, only huggingface models are supported." + "Please set format='huggingface'."
     )
     from safetensors.torch import save_file as safe_save_file
+
+    # cancel tied weights to avoid reloading issue when lm_head is not quantized.
+    for key in model._tied_weights_keys:
+        weight = get_attr(model, key)
+        set_attr(model, key, copy.deepcopy(weight))
+
     if world_size > 0:
         save_rank_model(model, folder_prefix=checkpoint_dir)
         rank_directory = f"{checkpoint_dir}_{0}_{world_size}"
@@ -180,23 +197,28 @@ def load_empty_raw_model(model_name_or_path, **kwargs):
 
     from neural_compressor.torch.utils import get_non_persistent_buffers, load_non_persistent_buffers
 
+    hp_dtype = config.torch_dtype
+    if hasattr(config, "quantization_config") and "hp_dtype" in config.quantization_config:
+        hp_dtype = HpDtype[config.quantization_config["hp_dtype"].upper()].value
     if world_size > 1:
         import deepspeed
+
         with init_empty_weights(include_buffers=False):
-            model = transformers.AutoModelForCausalLM.from_config(config, torch_dtype=torch.bfloat16)
+            model = transformers.AutoModelForCausalLM.from_config(config, torch_dtype=hp_dtype)
         # TODO: [SW-199728] [DeepSpeed] Buffers initialized by model are not correct after tensor parallel
         # get_non_persistent_buffers and load_non_persistent_buffers are workrounds of [SW-199728]
         non_persistent_buffers = get_non_persistent_buffers(model)
         ds_inference_kwargs = {
-            "dtype": torch.bfloat16,
+            "dtype": hp_dtype,
             "tensor_parallel": {"tp_size": world_size},
         }
         model = deepspeed.init_inference(model, **ds_inference_kwargs)
         model = model.module
         load_non_persistent_buffers(model, non_persistent_buffers)
+        model.to(hp_dtype)
     else:
         with init_empty_weights(include_buffers=False):
-            model = transformers.AutoModelForCausalLM.from_config(config, torch_dtype=torch.bfloat16)
+            model = transformers.AutoModelForCausalLM.from_config(config, torch_dtype=hp_dtype)
     return model, from_neuralmagic, from_neuralmagic_with_kv
 
 
@@ -344,9 +366,8 @@ def load(model_name_or_path, format="huggingface", device="hpu", **kwargs):
 
     if from_neuralmagic or from_neuralmagic_with_kv:
         model.tie_weights()
-    model = model.eval()
     model = model.to(cur_accelerator.name())
-
+    model = model.eval()
     cur_accelerator.synchronize()
     # make sure cpu and hpu memory are all released.
     gc.collect()

@@ -10,12 +10,23 @@ from neural_compressor.torch.quantization import FP8Config, convert, load, prepa
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import PatchedLinear
 
 
-def get_hpu_used_mem():
-    from habana_frameworks.torch.hpu import memory_stats
-    import numpy as np
-    torch.hpu.synchronize()
-    mem_stats = memory_stats()
-    return np.round(mem_stats["InUse"] / 1024**3, 3)
+def get_model_param_buffers(model):
+    tmp = {}
+    for name, param in model.named_parameters():
+        tmp[name] = param
+    for name, buffer in model.named_buffers():
+        tmp[name] = buffer
+    return tmp
+
+
+def compare_parameters_buffers(model1, model2):
+    import torch
+    dict1 = get_model_param_buffers(model1)
+    dict2 = get_model_param_buffers(model2)
+    for k, v in dict1.items():
+        assert k in dict2, "k not in dict2"
+        assert v.dtype == dict2[k].dtype, f"dtype of {k} is differnt.\n{v.dtype}\n{dict2[k].dtype}"
+        assert torch.allclose(v, dict2[k]), f"{k} is differnt in model1 and model2.\n" + f"{v}\n" + f"{dict2[k]}\n"
 
 
 @torch.no_grad()
@@ -42,6 +53,7 @@ def test_load_model_provided_by_neuralmagic():
     assert isinstance(gen_ids, torch.Tensor)
 
 
+@torch.no_grad()
 def test_multi_cards_save_load():
     name = "facebook/opt-350m"
     if world_size > 0:
@@ -59,19 +71,20 @@ def test_multi_cards_save_load():
     example_inputs = torch.tensor([[10, 20]], dtype=torch.long).to("hpu")
 
     # TODO: [SW-205970] update state_dict to save scalar scale format
-    qconfig = FP8Config(fp8_config="E4M3", scale_format="const")
+    qconfig = FP8Config(fp8_config="E4M3", scale_format="const", blocklist={"names": ["q_proj", "lm_head"]})
     model = prepare(model, qconfig)
     calib_func(model)
     model = convert(model)
     # save and load on multi cards
     save(model, "saved_results", format="huggingface")
     new_model = load("saved_results", format="huggingface", device="hpu")
+    shutil.rmtree("saved_results", ignore_errors=True)
     # check result
+    compare_parameters_buffers(model, new_model)
     fp8_out = model(example_inputs)[0]
     loaded_fp8_out = new_model(example_inputs)[0]
     assert (loaded_fp8_out == fp8_out).all(), "Loaded FP8 model output is different with raw FP8 output."
     print("saving and loading test passed.")
-    shutil.rmtree("saved_results", ignore_errors=True)
 
 
 if __name__ == "__main__":
