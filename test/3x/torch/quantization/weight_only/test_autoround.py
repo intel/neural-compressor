@@ -120,7 +120,8 @@ class TestAutoRound:
 
     def test_save_and_load(self):
         fp32_model = copy.deepcopy(self.gptj)
-        # known issue: scale_dtype="fp32" will cause accuracy gap between quantized model (using auto-round WeightOnlyLinear) and reloaded model (using INCWeightOnlyLinear)
+        # known issue: scale_dtype="fp32" will cause accuracy gap between quantized model 
+        # (using auto-round WeightOnlyLinear) and reloaded model (using INCWeightOnlyLinear)
         quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, scale_dtype="fp16")
         # quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
         logger.info(f"Test AutoRound with config {quant_config}")
@@ -171,13 +172,13 @@ class TestAutoRound:
         )
 
         fp32_model = copy.deepcopy(self.gptj)
-        quant_block_list = get_multimodal_block_names(fp32_model, quant_vision=True)
+        to_quant_block_names = get_multimodal_block_names(fp32_model, quant_vision=True)
         quant_config = AutoRoundConfig(
-            nsamples=32, seqlen=10, iters=10, scale_dtype="fp16", quant_block_list=quant_block_list
+            nsamples=32, seqlen=10, iters=10, scale_dtype="fp16", to_quant_block_names=to_quant_block_names
         )
         logger.info(f"Test AutoRound with config {quant_config}")
         device = detect_device("auto")
-        layers_list = get_layer_names_in_block(fp32_model, quant_block_list=quant_block_list)
+        layers_list = get_layer_names_in_block(fp32_model, to_quant_block_names=to_quant_block_names)
         layers_list = get_layer_names_in_block(fp32_model)
         fp32_model.to(device)
         # quantizer execute
@@ -191,13 +192,10 @@ class TestAutoRound:
     def test_mllm(self):
         input = torch.randn(1, 32)
         from transformers import AutoProcessor, AutoTokenizer, Qwen2VLForConditionalGeneration
-
         from neural_compressor.torch.algorithms.weight_only.autoround import get_mllm_dataloader
-
         model_name = "Qwen/Qwen2-VL-2B-Instruct"
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         processor = AutoProcessor.from_pretrained(model_name, trust_remote_code=True)
-        tokenizer.processor = processor
         model = Qwen2VLForConditionalGeneration.from_pretrained(model_name, trust_remote_code=True, device_map="auto")
         dataloader, template, truncation, batch_size, gradient_accumulate_steps, seqlen = get_mllm_dataloader(
             template=None,
@@ -215,6 +213,7 @@ class TestAutoRound:
             nsamples=5,
             gradient_accumulate_steps=1,
             quant_nontext_module=False,
+            processor=processor,
         )
         quant_config = AutoRoundConfig(
             bits=4,
@@ -228,8 +227,9 @@ class TestAutoRound:
             truncation=truncation,
             gradient_accumulate_steps=gradient_accumulate_steps,
         )
+        
         model = prepare(model=model, quant_config=quant_config)
-        run_fn(model, dataloader, nsamples=5)
+        run_fn(model, dataloader)
         q_model = convert(model)
         assert isinstance(q_model.visual.blocks[0].attn.qkv, WeightOnlyLinear), "model quantization failed."
 
@@ -247,3 +247,4 @@ class TestAutoRound:
     #     assert isinstance(q_model.transformer.h[0].attn.k_proj, QuantLinear), "packing model failed."
     #     q_model.save(output_dir="saved_results_tiny-random-GPTJForCausalLM", format="huggingface")
     #     loaded_model = load("saved_results_tiny-random-GPTJForCausalLM", format="huggingface", trust_remote_code=True)
+

@@ -615,6 +615,7 @@ def autoround_quantize_entry(
             is_mllm = quant_config.is_mllm
             quant_nontext_module = quant_config.quant_nontext_module
             extra_data_dir = quant_config.extra_data_dir
+            processor = quant_config.processor
             image_processor = quant_config.image_processor
             template = quant_config.template
             truncation = quant_config.truncation
@@ -651,6 +652,7 @@ def autoround_quantize_entry(
         is_mllm=is_mllm,
         quant_nontext_module=quant_nontext_module,
         extra_data_dir=extra_data_dir,
+        processor=processor,
         image_processor=image_processor,
         template=template,
         truncation=truncation,
@@ -770,3 +772,4 @@ def mixed_precision_entry(
     mixed_precision_model = half_precision_converter.convert(model)
 
     return mixed_precision_model
+

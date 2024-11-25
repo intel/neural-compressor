@@ -952,6 +952,7 @@ class AutoRoundConfig(TorchBaseConfig):
         is_mllm: bool = False,
         quant_nontext_module: Union[str, list] = None,
         extra_data_dir: str = None,
+        processor=None,
         image_processor=None,
         template=None,
         truncation: bool = False,
@@ -996,10 +997,11 @@ class AutoRoundConfig(TorchBaseConfig):
             quant_nontext_module (Union[str, list]): Whether to quantize nontext module.
             extra_data_dir (str): The path for extra data such as images, audio or videos.
             is_mllm (bool): Indicates whether the model to be quantized is a multi-modal model (MLLM).
-            image_processor (transformers.AutoProcessor): Any multi-modal model will require an object to encode or
+            processor (transformers.AutoProcessor): Any multi-modal model will require an object to encode or
               decode the data that groups several modalities (among text, vision and audio).
               This is handled by objects called processors, which group together two or more processing objects such
               as tokenizers (for the text modality), image processors (for vision) and feature extractors (for audio).
+            image_processor (Processor): Image processor for special model like llava.
             template (Template): The template to specify process for different mllms.
             truncation (bool): Activates truncation to cut input sequences longer than `max_length` to `max_length`.
             white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
@@ -1040,6 +1042,7 @@ class AutoRoundConfig(TorchBaseConfig):
         self.is_mllm = is_mllm
         self.quant_nontext_module = quant_nontext_module
         self.extra_data_dir = extra_data_dir
+        self.processor = processor
         self.image_processor = image_processor
         self.template = template
         self.truncation = truncation
@@ -2092,3 +2095,4 @@ def get_woq_tuning_config() -> list:
     GPTQ_G32ASYM = GPTQConfig(use_sym=False, group_size=32)
     AWQ_G32ASYM = AWQConfig(use_sym=False, group_size=32)
     return [RTN_G32ASYM, AUTO_ROUND_CONFIG, GPTQ_G32ASYM, AWQ_G32ASYM]
+

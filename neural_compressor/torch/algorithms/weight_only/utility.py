@@ -1172,7 +1172,7 @@ def get_module_input_output(
     return total_values
 
 
-class CapturedDataloader:
+class CapturedDataloader(torch.utils.data.DataLoader):
     def __init__(self, args_list, kwargs_list) -> None:
         self.args_list = args_list
         self.kwargs_list = kwargs_list
@@ -1447,3 +1447,4 @@ def repack_awq_to_optimum_format(
     unpack_qweight, unpack_qzeros = unpack_awq(awq_qweight, awq_qzeros, awq_scales, bits, group_size)
     qweight, qzeros = pack_from_tensors(unpack_qweight, unpack_qzeros, awq_scales, bits, group_size)
     return qweight, qzeros, awq_scales
+

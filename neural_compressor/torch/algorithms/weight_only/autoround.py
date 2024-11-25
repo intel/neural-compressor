@@ -86,6 +86,7 @@ class AutoRoundQuantizer(Quantizer):
         quant_nontext_module: Union[str, list] = None,
         extra_data_dir: str = None,
         image_processor=None,
+        processor=None,
         template: Union[str, Template] = None,
         truncation: bool = False,
         **kwargs,
@@ -151,10 +152,11 @@ class AutoRoundQuantizer(Quantizer):
             quant_nontext_module (Union[str, list]): Whether to quantize nontext module.
             is_mllm (bool): Indicates whether the model to be quantized is a multi-modal model (MLLM).
             extra_data_dir (str): The path for extra data such as images, audio or videos.
-            image_processor (transformers.AutoProcessor): Any multi-modal model will require an object to encode or
+            processor (transformers.AutoProcessor): Any multi-modal model will require an object to encode or
                 decode the data that groups several modalities (among text, vision and audio).
                 This is handled by objects called processors, which group together two or more processing objects such
                 as tokenizers (for the text modality), image processors (for vision) and feature extractors (for audio).
+            image_processor (Processor): Image processor for special model like llava.
             template (Template): The template to specify process for different mllms.
             truncation (bool): Activates truncation to cut input sequences longer than `max_length` to `max_length`.
 
@@ -196,6 +198,7 @@ class AutoRoundQuantizer(Quantizer):
         self.is_mllm = is_mllm
         self.quant_nontext_module = quant_nontext_module
         self.extra_data_dir = extra_data_dir
+        self.processor = processor
         self.image_processor = image_processor
         self.template = template
         self.truncation = truncation
@@ -227,6 +230,7 @@ class AutoRoundQuantizer(Quantizer):
             rounder = AutoRoundMLLM(
                 model,
                 tokenizer=None,
+                processor = self.processor,
                 image_processor=self.image_processor,
                 layer_config=self.quant_config,
                 batch_size=self.batch_size,
@@ -338,6 +342,7 @@ def get_mllm_dataloader(
     template,
     model,
     tokenizer,
+    processor=None,
     image_processor=None,
     dataset="liuhaotian/llava_conv_58k",
     extra_data_dir=None,
@@ -391,7 +396,7 @@ def get_mllm_dataloader(
 
     dataset = dataset.replace(" ", "")
     template = template if template is not None else model.config.model_type
-    template = get_template(template, model=model, tokenizer=tokenizer, image_processor=image_processor)
+    template = get_template(template, model=model, tokenizer=tokenizer, processor=processor, image_processor=image_processor)
     dataloader, batch_size, gradient_accumulate_steps = get_mllm_dataloader(
         template=template,
         model=model,
@@ -408,3 +413,4 @@ def get_mllm_dataloader(
         quant_nontext_module=quant_nontext_module,
     )
     return dataloader, template, truncation, batch_size, gradient_accumulate_steps, seqlen
+
