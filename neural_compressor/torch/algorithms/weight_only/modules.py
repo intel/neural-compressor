@@ -25,7 +25,7 @@ import torch
 from torch.autograd import Function
 from torch.nn import functional as F
 
-from neural_compressor.torch.utils import accelerator, logger
+from neural_compressor.torch.utils import accelerator, can_pack_with_numba, logger
 
 from .utility import quant_tensor
 
@@ -453,15 +453,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
         # Try to pack with numba to accelerate the packing process.
         # If numba is not availabll or the packing method is not supported,
         # fallback to the torch implementation.
-        try:
-            import numba
-
-            numba.config.THREADING_LAYER = "safe"
-        except ImportError:
-            logger.warning("To accelerate packing, please install numba with `pip install numba tbb`.")
-            return self.pack_tensor_with_torch(torch.from_numpy(raw_array)).cpu().numpy()
-        except Exception as e:
-            logger.warning(f"Import numba failed with error: {e}, fallback to torch implementation.")
+        if not can_pack_with_numba():
             return self.pack_tensor_with_torch(torch.from_numpy(raw_array)).cpu().numpy()
         from neural_compressor.torch.utils.bit_packer import bit_packers
 

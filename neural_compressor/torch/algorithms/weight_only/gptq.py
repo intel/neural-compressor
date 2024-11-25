@@ -156,7 +156,7 @@ def find_layers_name(module, layers=SUPPORTED_LAYERS, name=""):
 def log_quantizable_layers_per_transformer(transformer_blocks, layers=SUPPORTED_LAYERS):
     """Print all layers which will be quantized in GPTQ algorithm."""
     logger.info("* * Layer to be quantized * *")
-
+    quantizable_layers = []
     for block_id in range(len(transformer_blocks["transformers"])):
         transformer_block = transformer_blocks["transformers"][block_id]
         layers_for_this_tblock = find_layers_name(transformer_block)
@@ -166,6 +166,8 @@ def log_quantizable_layers_per_transformer(transformer_blocks, layers=SUPPORTED_
         ]
         for name in layer_names:
             logger.info(name)
+            quantizable_layers.append(name)
+    return quantizable_layers
 
 
 class RAWGPTQuantizer(object):
@@ -221,7 +223,7 @@ class RAWGPTQuantizer(object):
         # self.use_cache = self.model.config.use_cache
         self.gptq_related_blocks = trace_gptq_target_blocks(self.model)  # get the transformer block list above
         self.dtype = next(iter(self.model.parameters())).dtype
-        log_quantizable_layers_per_transformer(self.gptq_related_blocks)
+        quantizable_layers = log_quantizable_layers_per_transformer(self.gptq_related_blocks)
 
         # weight config
         self.weight_config = weight_config
@@ -251,7 +253,7 @@ class RAWGPTQuantizer(object):
 
         self.use_layer_wise = use_layer_wise
         if use_layer_wise:
-            self.prepare_layer_wise(model_path)
+            self.prepare_layer_wise(model_path, quantizable_layers)
 
         # dataloader
         self.use_max_length = use_max_length
@@ -260,11 +262,15 @@ class RAWGPTQuantizer(object):
         self.dataloader = []
         self.nsamples = nsamples
 
-    def prepare_layer_wise(self, model_path):
+    def prepare_layer_wise(self, model_path, indicated_layers=None):
         """Prepare for layer-wise quantization, including registering hooks and setting up the model path.
 
         Args:
             model_path (str): Model path that is used to load state_dict per layer.
+            indicated_layers (list, optional): A list of layer names to apply layer-wise quantization.
+                                        If None, all layers will be considered.
+                                        Layers not specified in this list will be retained in memory
+                                        but will not undergo quantization.
         """
         import os
 
@@ -276,7 +282,12 @@ class RAWGPTQuantizer(object):
         assert model_path, "model_path should not be None."
         self.model_path = get_path(model_path)
         register_weight_hooks(
-            self.model, self.model_path, device=self.device, clean_weight=True, saved_path=LWQ_WORKSPACE
+            self.model,
+            self.model_path,
+            device=self.device,
+            clean_weight=True,
+            saved_path=LWQ_WORKSPACE,
+            indicated_layers=indicated_layers,
         )
 
     def get_full_layer_name(self, sub_layer_name, block_idx):
@@ -585,7 +596,7 @@ class RAWGPTQuantizer(object):
                     if self.use_layer_wise:  # pragma: no cover
                         from neural_compressor.torch.algorithms.layer_wise import load_value
 
-                        W = load_value(self.model, full_layer_name + ".weight", self.model_path)
+                        W = load_value(self.model, full_layer_name + ".weight", self.model_path, self.device)
                     else:
                         if "hpu" in self.device:  # pragma: no cover
                             # [SW-206677] memory is not release when module is moved out of HPU
@@ -630,7 +641,7 @@ class RAWGPTQuantizer(object):
                         from neural_compressor.torch.algorithms.layer_wise import load_value
 
                         full_layer_name = self.get_full_layer_name(layer_name, block_idx)
-                        W = load_value(self.model, full_layer_name + ".weight", self.model_path)
+                        W = load_value(self.model, full_layer_name + ".weight", self.model_path, self.device)
                     else:
                         W = sequential_layers[layer_name].weight.data.clone()
                     accelerator.mark_step()
@@ -859,7 +870,7 @@ class RAWGPTQuantizer(object):
                         if n == "weight":
                             set_module_tensor_to_device(self.model, param_name, self.device, Q)
                         else:
-                            value = load_value(self.model, param_name, self.model_path)
+                            value = load_value(self.model, param_name, self.model_path, device=self.device)
                             set_module_tensor_to_device(self.model, param_name, self.device, value)
                     # sub_layer.weight.data = Q
                     torch.save(sub_layer.state_dict(), LWQ_WORKSPACE + f"/{full_layer_name}.pt")
@@ -945,6 +956,11 @@ class RAWGPTQuantizer(object):
                 new_module.pack(int_weight, gptq_scale, gptq_zp, bias, gptq_perm)
                 set_module(self.model, layer_name, new_module)
 
+        # Clear temporary workspace
+        if self.use_layer_wise:
+            import shutil
+
+            shutil.rmtree(LWQ_WORKSPACE, ignore_errors=True)
         logger.info("Quantization done")
         # self.model.config.use_cache = self.use_cache
         return self.model

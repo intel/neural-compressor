@@ -147,12 +147,14 @@ class TestPT2EQuantization:
         quant_config = get_default_static_config()
         quant_config.set_local("fc1", StaticQuantConfig(w_dtype="fp32", act_dtype="fp32"))
         q_model = quantize(model=model, quant_config=quant_config, run_fn=calib_fn)
-
-        # check the half node
         expected_node_occurrence = {
             # Only quantize the `fc2`
-            torch.ops.quantized_decomposed.quantize_per_tensor.default: 2,
-            torch.ops.quantized_decomposed.quantize_per_tensor.default: 2,
+            # Quantize/Dequantize input
+            torch.ops.quantized_decomposed.quantize_per_tensor.default: 1,
+            torch.ops.quantized_decomposed.dequantize_per_tensor.default: 1,
+            # Quantize/Dequantize weight
+            torch.ops.quantized_decomposed.quantize_per_channel.default: 1,
+            torch.ops.quantized_decomposed.quantize_per_channel.default: 1,
         }
         expected_node_occurrence = {
             torch_test_quant_common.NodeSpec.call_function(k): v for k, v in expected_node_occurrence.items()

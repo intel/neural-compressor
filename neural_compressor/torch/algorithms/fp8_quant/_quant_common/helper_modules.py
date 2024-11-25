@@ -624,18 +624,14 @@ class PatchedVLLMKVCache(nn.Module):
             self.fetch_from_cache = mod.fetch_from_cache
             self.forward = self.forward_measure
 
-    def forward(self, input, cache, num_kv_cache_passes, num_slots_available, block_indices, block_offset):
+    def forward(self, input, *args, **kwargs):
         qinput = self.quant_input(input)
-        output_cache = self.forward_orig(
-            qinput, cache, num_kv_cache_passes, num_slots_available, block_indices, block_offset
-        )
+        output_cache = self.forward_orig(qinput, *args, **kwargs)
         return self.quant_output(output_cache)
 
-    def forward_measure(self, input, cache, num_kv_cache_passes, num_slots_available, block_indices, block_offset):
+    def forward_measure(self, input, *args, **kwargs):
         measure_input((input), self._mod_extra_config.inputs)
-        output_cache = self.forward_orig(
-            input, cache, num_kv_cache_passes, num_slots_available, block_indices, block_offset
-        )
+        output_cache = self.forward_orig(input, *args, **kwargs)
         measure_output((output_cache), self._mod_extra_config.outputs)
         return output_cache
 
