@@ -772,4 +772,3 @@ def mixed_precision_entry(
     mixed_precision_model = half_precision_converter.convert(model)
 
     return mixed_precision_model
-

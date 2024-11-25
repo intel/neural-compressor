@@ -630,4 +630,3 @@ def run_fn_for_vlm_autoround(model, dataloader, seqlen=512, nsamples=512):  # pr
         total_cnt += input_ids.shape[0] if len(input_ids.shape) > 1 else 1
         if total_cnt >= nsamples:
             break
-

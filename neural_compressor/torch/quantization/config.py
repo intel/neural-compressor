@@ -2095,4 +2095,3 @@ def get_woq_tuning_config() -> list:
     GPTQ_G32ASYM = GPTQConfig(use_sym=False, group_size=32)
     AWQ_G32ASYM = AWQConfig(use_sym=False, group_size=32)
     return [RTN_G32ASYM, AUTO_ROUND_CONFIG, GPTQ_G32ASYM, AWQ_G32ASYM]
-

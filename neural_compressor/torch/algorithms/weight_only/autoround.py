@@ -230,7 +230,7 @@ class AutoRoundQuantizer(Quantizer):
             rounder = AutoRoundMLLM(
                 model,
                 tokenizer=None,
-                processor = self.processor,
+                processor=self.processor,
                 image_processor=self.image_processor,
                 layer_config=self.quant_config,
                 batch_size=self.batch_size,
@@ -396,7 +396,9 @@ def get_mllm_dataloader(
 
     dataset = dataset.replace(" ", "")
     template = template if template is not None else model.config.model_type
-    template = get_template(template, model=model, tokenizer=tokenizer, processor=processor, image_processor=image_processor)
+    template = get_template(
+        template, model=model, tokenizer=tokenizer, processor=processor, image_processor=image_processor
+    )
     dataloader, batch_size, gradient_accumulate_steps = get_mllm_dataloader(
         template=template,
         model=model,
@@ -413,4 +415,3 @@ def get_mllm_dataloader(
         quant_nontext_module=quant_nontext_module,
     )
     return dataloader, template, truncation, batch_size, gradient_accumulate_steps, seqlen
-
