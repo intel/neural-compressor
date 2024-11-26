@@ -266,6 +266,10 @@ stages:
               && bash ut/collect_log.sh"
             displayName: "Collect UT Coverage"
 
+          - task: PublishCodeCoverageResults@2
+            inputs:
+              summaryFileLocation: $(Build.SourcesDirectory)/log_dir/coverage_PR/coverage.xml
+
           - task: PublishPipelineArtifact@1
             condition: succeededOrFailed()
             inputs:

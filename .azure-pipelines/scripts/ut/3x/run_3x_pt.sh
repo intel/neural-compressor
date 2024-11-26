@@ -4,11 +4,12 @@ test_case="run 3x Torch"
 echo "${test_case}"
 
 # install requirements
-echo "set up UT env..."
+echo "##[group]set up UT env..."
 export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH
 pip install -r /neural-compressor/test/3x/torch/requirements.txt
 pip install pytest-cov
 pip install pytest-html
+echo "##[endgroup]"
 pip list
 
 export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/3x/coverage.3x_pt

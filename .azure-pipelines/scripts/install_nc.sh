@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo -e "\n Install Neural Compressor ... "
+echo -e "##[group]Install Neural Compressor ... "
 cd /neural-compressor
 if [[ $1 = *"3x_pt"* ]]; then
     python -m pip install --no-cache-dir -r requirements_pt.txt
@@ -27,4 +27,5 @@ else
 fi
 
 echo -e "\n pip list after install Neural Compressor ... "
+echo "##[endgroup]"
 pip list
