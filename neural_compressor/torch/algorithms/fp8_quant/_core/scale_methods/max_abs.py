@@ -173,7 +173,7 @@ def fsdpa_act_maxabs_pts_weight_maxabs_pts_arbitrary_scales(mod, measurement, pa
         fullscale,
         input_backoff,
     )
-    return ModuleConfig(input_scale, output_scale, {})
+    return ModuleConfig(input_scale, [output_scale], {})
 
 def fsdpa_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales(mod, measurement, params, device = torch.device("hpu")):
     config = get_hqt_config(mod).cfg
@@ -391,7 +391,7 @@ def softmax_input_unit_output_maxabs_pts_arbitrary_scales(mod, measurement, para
         fullscale,
         input_backoff,
     )
-    return ModuleConfig((), output_scale, {})
+    return ModuleConfig((), [output_scale], {})
 
 def softmax_input_unit_output_maxabs_pts_pow2(mod, measurement, params, device = torch.device("hpu")):
     config = get_hqt_config(mod).cfg
