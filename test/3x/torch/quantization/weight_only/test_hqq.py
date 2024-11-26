@@ -77,7 +77,7 @@ class TestHQQ:
     def test_hqq_quant(self, force_use_cpu, force_not_half):
 
         hqq_global_option.use_half = False
-        fp32_model = AutoModelForCausalLM.from_pretrained("trl-internal-testing/tiny-random-OPTForCausalLM")
+        fp32_model = AutoModelForCausalLM.from_pretrained("trl-internal-testing/tiny-OPTForCausalLM")
         example_inputs = torch.tensor([[10, 20, 30, 40, 50, 60]], dtype=torch.long, device="cpu")
         # test_default_config
         quant_config = get_default_hqq_config()
@@ -99,7 +99,7 @@ class TestHQQ:
     def test_hqq_load_save(self, force_use_cpu, force_not_half):
 
         hqq_global_option.use_half = False
-        fp32_model = AutoModelForCausalLM.from_pretrained("trl-internal-testing/tiny-random-OPTForCausalLM")
+        fp32_model = AutoModelForCausalLM.from_pretrained("trl-internal-testing/tiny-OPTForCausalLM")
         example_inputs = torch.tensor([[10, 20, 30, 40, 50, 60]], dtype=torch.long, device="cpu")
         # test_default_config
         quant_config = get_default_hqq_config()

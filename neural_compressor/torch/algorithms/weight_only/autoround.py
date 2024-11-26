@@ -33,8 +33,9 @@ def _is_auto_round_available():
 
 _is_auto_round_available()
 
-from auto_round import AutoRound  # pylint: disable=E0401
+from auto_round import AutoRound, AutoRoundMLLM  # pylint: disable=E0401
 from auto_round.export.export_to_itrex.export import pack_model  # pylint: disable=E0401
+from auto_round.mllm.template import Template, get_template
 
 from neural_compressor.torch.algorithms import Quantizer
 from neural_compressor.torch.utils import get_accelerator, logger
@@ -70,13 +71,24 @@ class AutoRoundQuantizer(Quantizer):
         dynamic_max_gap: int = -1,
         data_type: str = "int",
         scale_dtype: str = "fp16",
-        quant_block_list: list = None,
+        to_quant_block_names: list = None,
         act_bits: int = 32,
         act_group_size: int = None,
         act_sym: bool = None,
         act_dynamic: bool = True,
         low_cpu_mem_usage: bool = False,
         export_format: str = "itrex",
+        # v0.4
+        enable_norm_bias_tuning: bool = False,
+        enable_torch_compile: bool = None,
+        # mllm
+        is_mllm: bool = False,
+        quant_nontext_module: Union[str, list] = None,
+        extra_data_dir: str = None,
+        image_processor=None,
+        processor=None,
+        template: Union[str, Template] = None,
+        truncation: bool = False,
         **kwargs,
     ):
         """Init a AutQRoundQuantizer object.
@@ -130,11 +142,23 @@ class AutoRoundQuantizer(Quantizer):
             data_type (str): The data type to be used (default is "int").
             scale_dtype (str): The data type of quantization scale to be used (default is "float16"), different kernels
                 have different choices.
-            quant_block_list (list): A list whose elements are list of block's layer names to be quantized.
+            to_quant_block_names (list): A list whose elements are list of block's layer names to be quantized.
             act_bits (int): Number of bits for activation quantization. Default is 32.
             act_group_size (int): Group size for activation quantization. Default is None.
             act_sym (bool): Whether to use symmetric activation quantization. Default is None.
             act_dynamic (bool): Whether to use dynamic activation quantization. Default is True.
+            enable_norm_bias_tuning (bool): Whether to enable fast norm/layer_bias tuning.
+            enable_torch_compile (bool): Whether to enable torch compile to optimize quant_block/layer, torch>=2.6 True.
+            quant_nontext_module (Union[str, list]): Whether to quantize nontext module.
+            is_mllm (bool): Indicates whether the model to be quantized is a multi-modal model (MLLM).
+            extra_data_dir (str): The path for extra data such as images, audio or videos.
+            processor (transformers.AutoProcessor): Any multi-modal model will require an object to encode or
+                decode the data that groups several modalities (among text, vision and audio).
+                This is handled by objects called processors, which group together two or more processing objects such
+                as tokenizers (for the text modality), image processors (for vision) and feature extractors (for audio).
+            image_processor (Processor): Image processor for special model like llava.
+            template (Template): The template to specify process for different mllms.
+            truncation (bool): Activates truncation to cut input sequences longer than `max_length` to `max_length`.
 
         Returns:
             The quantized model.
@@ -162,13 +186,22 @@ class AutoRoundQuantizer(Quantizer):
         self.dynamic_max_gap = dynamic_max_gap
         self.data_type = data_type
         self.scale_dtype = scale_dtype
-        self.quant_block_list = quant_block_list
+        self.to_quant_block_names = to_quant_block_names
         self.act_bits = act_bits
         self.act_group_size = act_group_size
         self.act_sym = act_sym
         self.act_dynamic = act_dynamic
         self.low_cpu_mem_usage = low_cpu_mem_usage
         self.export_format = export_format
+        self.enable_norm_bias_tuning = enable_norm_bias_tuning
+        self.enable_torch_compile = enable_torch_compile
+        self.is_mllm = is_mllm
+        self.quant_nontext_module = quant_nontext_module
+        self.extra_data_dir = extra_data_dir
+        self.processor = processor
+        self.image_processor = image_processor
+        self.template = template
+        self.truncation = truncation
 
     def prepare(self, model: torch.nn.Module, *args, **kwargs):
         """Prepares a given model for quantization.
@@ -193,39 +226,83 @@ class AutoRoundQuantizer(Quantizer):
         """
         dataloader = CapturedDataloader(model.args_list, model.kwargs_list)
         model = model.orig_model
-        rounder = AutoRound(
-            model=model,
-            tokenizer=None,
-            dataset=dataloader,
-            layer_config=self.quant_config or {},
-            enable_full_range=self.enable_full_range,
-            batch_size=self.batch_size,
-            amp=self.amp,
-            device=self.device,
-            lr_scheduler=self.lr_scheduler,
-            enable_quanted_input=self.enable_quanted_input,
-            enable_minmax_tuning=self.enable_minmax_tuning,
-            lr=self.lr,
-            minmax_lr=self.minmax_lr,
-            low_gpu_mem_usage=self.low_gpu_mem_usage,
-            iters=self.iters,
-            seqlen=self.seqlen,
-            nsamples=self.nsamples,
-            sampler=self.sampler,
-            seed=self.seed,
-            nblocks=self.nblocks,
-            gradient_accumulate_steps=self.gradient_accumulate_steps,
-            not_use_best_mse=self.not_use_best_mse,
-            dynamic_max_gap=self.dynamic_max_gap,
-            data_type=self.data_type,
-            scale_dtype=self.scale_dtype,
-            quant_block_list=self.quant_block_list,
-            act_bits=self.act_bits,
-            act_group_size=self.act_group_size,
-            act_sym=self.act_sym,
-            act_dynamic=self.act_dynamic,
-            low_cpu_mem_usage=self.low_cpu_mem_usage,
-        )
+        if self.is_mllm:
+            rounder = AutoRoundMLLM(
+                model,
+                tokenizer=None,
+                processor=self.processor,
+                image_processor=self.image_processor,
+                layer_config=self.quant_config,
+                batch_size=self.batch_size,
+                amp=self.amp,
+                device=self.device,
+                lr_scheduler=self.lr_scheduler,
+                dataset=dataloader,
+                extra_data_dir=self.extra_data_dir,
+                template=self.template,
+                quant_nontext_module=self.quant_nontext_module,
+                enable_quanted_input=self.enable_quanted_input,
+                enable_minmax_tuning=self.enable_minmax_tuning,
+                lr=self.lr,
+                minmax_lr=self.minmax_lr,
+                low_gpu_mem_usage=self.low_gpu_mem_usage,
+                low_cpu_mem_usage=self.low_gpu_mem_usage,
+                iters=self.iters,
+                seqlen=self.seqlen,
+                nsamples=self.nsamples,
+                sampler=self.sampler,
+                seed=self.seed,
+                nblocks=self.nblocks,
+                gradient_accumulate_steps=self.gradient_accumulate_steps,
+                not_use_best_mse=self.not_use_best_mse,
+                dynamic_max_gap=self.dynamic_max_gap,
+                data_type=self.data_type,
+                scale_dtype=self.scale_dtype,
+                act_bits=self.act_bits,
+                act_group_size=self.act_group_size,
+                act_sym=self.act_sym,
+                act_dynamic=self.act_dynamic,
+                to_quant_block_names=self.to_quant_block_names,
+                enable_norm_bias_tuning=self.enable_norm_bias_tuning,
+                truncation=self.truncation,
+                enable_torch_compile=self.enable_torch_compile,
+            )
+        else:
+            rounder = AutoRound(
+                model=model,
+                tokenizer=None,
+                dataset=dataloader,
+                layer_config=self.quant_config or {},
+                enable_full_range=self.enable_full_range,
+                batch_size=self.batch_size,
+                amp=self.amp,
+                device=self.device,
+                lr_scheduler=self.lr_scheduler,
+                enable_quanted_input=self.enable_quanted_input,
+                enable_minmax_tuning=self.enable_minmax_tuning,
+                lr=self.lr,
+                minmax_lr=self.minmax_lr,
+                low_gpu_mem_usage=self.low_gpu_mem_usage,
+                iters=self.iters,
+                seqlen=self.seqlen,
+                nsamples=self.nsamples,
+                sampler=self.sampler,
+                seed=self.seed,
+                nblocks=self.nblocks,
+                gradient_accumulate_steps=self.gradient_accumulate_steps,
+                not_use_best_mse=self.not_use_best_mse,
+                dynamic_max_gap=self.dynamic_max_gap,
+                data_type=self.data_type,
+                scale_dtype=self.scale_dtype,
+                to_quant_block_names=self.to_quant_block_names,
+                act_bits=self.act_bits,
+                act_group_size=self.act_group_size,
+                act_sym=self.act_sym,
+                act_dynamic=self.act_dynamic,
+                low_cpu_mem_usage=self.low_cpu_mem_usage,
+                enable_norm_bias_tuning=self.enable_norm_bias_tuning,
+                enable_torch_compile=self.enable_torch_compile,
+            )
         model, weight_config = rounder.quantize()
         model.autoround_config = weight_config
         if "itrex" in self.export_format:
@@ -259,3 +336,82 @@ def get_dataloader(tokenizer, seqlen, dataset_name="NeelNanda/pile-10k", seed=42
         tokenizer, seqlen, dataset_name="NeelNanda/pile-10k", seed=seed, bs=bs, nsamples=nsamples
     )
     return dataloader
+
+
+def get_mllm_dataloader(
+    template,
+    model,
+    tokenizer,
+    processor=None,
+    image_processor=None,
+    dataset="liuhaotian/llava_conv_58k",
+    extra_data_dir=None,
+    seqlen=512,
+    bs=1,
+    split=None,
+    apply_template=None,
+    truncation=False,
+    seed=42,
+    nsamples=512,
+    gradient_accumulate_steps=1,
+    quant_nontext_module=False,
+):
+    """Generate a DataLoader for calibration using specified parameters.
+
+    Args:
+        template (Template): The template to specify process for different mllms.
+        model (Model): The model to quantized.
+        tokenizer (Tokenizer): The tokenizer to use for tokenization.
+        Dataset_name (str): The name or path of the dataset.
+        extra_data_dir (str): The path for extra data such as images, audio or videos.
+        seqlen (int): The exact sequence length. samples < seqlen will be dropped,
+                      samples longer than seqlen will be truncated
+        bs (int, optional): The batch size. Defaults to 4.
+        split (str, optional): The data split to use. Defaults to None.
+        apply_template: Whether to apply chat template in tokenization.
+
+    Returns:
+        DataLoader: The DataLoader for the calibrated datasets.
+    """
+    from auto_round.calib_dataset import CALIB_DATASETS
+    from auto_round.mllm.autoround_mllm import _only_text_test
+    from auto_round.mllm.mllm_dataset import get_mllm_dataloader  # pylint: disable=E0401
+
+    if quant_nontext_module or (dataset in CALIB_DATASETS.keys() and not _only_text_test(model, tokenizer)):
+        if quant_nontext_module:
+            logger.warning(
+                "Quantitative nontext module is not supported for plain text datasets,"
+                "will use liuhaotian/llava_conv_58k with default config as an alternative."
+            )
+        else:
+            logger.warning(
+                f"{model.config.model_type} not support for {dataset},"
+                " will use liuhaotian/llava_conv_58k with default config as an alternative."
+            )
+        dataset = "liuhaotian/llava_conv_58k"
+        truncation = False
+        batch_size = 1
+        gradient_accumulate_steps = 4
+        seqlen = 512
+
+    dataset = dataset.replace(" ", "")
+    template = template if template is not None else model.config.model_type
+    template = get_template(
+        template, model=model, tokenizer=tokenizer, processor=processor, image_processor=image_processor
+    )
+    dataloader, batch_size, gradient_accumulate_steps = get_mllm_dataloader(
+        template=template,
+        model=model,
+        tokenizer=tokenizer,
+        image_processor=image_processor,
+        dataset=dataset,
+        extra_data_dir=extra_data_dir,
+        seqlen=seqlen,
+        bs=bs,
+        seed=seed,
+        truncation=truncation,
+        nsamples=nsamples,
+        gradient_accumulate_steps=gradient_accumulate_steps,
+        quant_nontext_module=quant_nontext_module,
+    )
+    return dataloader, template, truncation, batch_size, gradient_accumulate_steps, seqlen
