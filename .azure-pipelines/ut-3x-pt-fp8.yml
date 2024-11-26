@@ -95,6 +95,10 @@ stages:
               && bash ut/3x/collect_log_3x.sh 3x_pt_fp8"
             displayName: "Collect UT Coverage"
 
+          - task: PublishCodeCoverageResults@2
+            inputs:
+              summaryFileLocation: $(Build.SourcesDirectory)/log_dir/coverage_PR/coverage.xml
+
           - task: PublishPipelineArtifact@1
             condition: succeededOrFailed()
             inputs:
