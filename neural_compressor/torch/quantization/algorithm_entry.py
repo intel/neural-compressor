@@ -607,9 +607,18 @@ def autoround_quantize_entry(
             not_use_best_mse = quant_config.not_use_best_mse
             dynamic_max_gap = quant_config.dynamic_max_gap
             scale_dtype = quant_config.scale_dtype
-            quant_block_list = quant_config.quant_block_list
+            to_quant_block_names = quant_config.to_quant_block_names
             low_cpu_mem_usage = quant_config.use_layer_wise
             export_format = quant_config.export_format
+            enable_norm_bias_tuning = quant_config.enable_norm_bias_tuning
+            enable_torch_compile = quant_config.enable_torch_compile
+            is_mllm = quant_config.is_mllm
+            quant_nontext_module = quant_config.quant_nontext_module
+            extra_data_dir = quant_config.extra_data_dir
+            processor = quant_config.processor
+            image_processor = quant_config.image_processor
+            template = quant_config.template
+            truncation = quant_config.truncation
 
     kwargs.pop("example_inputs")
 
@@ -635,9 +644,18 @@ def autoround_quantize_entry(
         not_use_best_mse=not_use_best_mse,
         dynamic_max_gap=dynamic_max_gap,
         scale_dtype=scale_dtype,
-        quant_block_list=quant_block_list,
+        to_quant_block_names=to_quant_block_names,
         low_cpu_mem_usage=low_cpu_mem_usage,
         export_format=export_format,
+        enable_norm_bias_tuning=enable_norm_bias_tuning,
+        enable_torch_compile=enable_torch_compile,
+        is_mllm=is_mllm,
+        quant_nontext_module=quant_nontext_module,
+        extra_data_dir=extra_data_dir,
+        processor=processor,
+        image_processor=image_processor,
+        template=template,
+        truncation=truncation,
     )
     model = quantizer.execute(model=model, mode=mode, *args, **kwargs)
     model.qconfig = configs_mapping

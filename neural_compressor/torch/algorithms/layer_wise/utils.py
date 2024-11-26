@@ -238,7 +238,7 @@ def load_module(model, module_name, path, device="cpu"):
         set_module_tensor_to_device(model, param_name, device, value)
 
 
-def register_weight_hooks(model, path, device="cpu", clean_weight=True, saved_path=None):
+def register_weight_hooks(model, path, device="cpu", clean_weight=True, saved_path=None, indicated_layers=None):
     """Register weight hooks for model.
 
     Args:
@@ -258,14 +258,18 @@ def register_weight_hooks(model, path, device="cpu", clean_weight=True, saved_pa
         def hook(module, input):
             state_dict = None
             if os.path.exists(os.path.join(LWQ_WORKSPACE, f"{name}.pt")):
-                state_dict = torch.load(os.path.join(LWQ_WORKSPACE, f"{name}.pt"))
+                state_dict = torch.load(
+                    os.path.join(LWQ_WORKSPACE, f"{name}.pt"),
+                    map_location=torch.device(device) if isinstance(device, str) else device,
+                )
             for n, p in module.named_parameters():
                 param_name = name + "." + n
                 if state_dict:
                     value = state_dict[n]
                 else:
-                    value = load_value(model, param_name, path)
+                    value = load_value(model, param_name, path, device=device)
                 set_module_tensor_to_device(model, param_name, device, value)
+            module = module.to(device)
 
         return hook
 
@@ -281,6 +285,23 @@ def register_weight_hooks(model, path, device="cpu", clean_weight=True, saved_pa
     handle = {}
     modules = get_named_children(model)
     for name, module in modules:
+        if indicated_layers is not None and name not in indicated_layers:  # pragma: no cover
+            # load other layers to memory
+            state_dict = None
+            if os.path.exists(os.path.join(LWQ_WORKSPACE, f"{name}.pt")):
+                state_dict = torch.load(
+                    os.path.join(LWQ_WORKSPACE, f"{name}.pt"),
+                    map_location=torch.device(device) if isinstance(device, str) else device,
+                )
+            for n, p in module.named_parameters():
+                param_name = name + "." + n
+                if state_dict:
+                    value = state_dict[n]
+                else:
+                    value = load_value(model, param_name, path, device=device)
+                set_module_tensor_to_device(model, param_name, device, value)
+            module = module.to(device)
+            continue
         handle[name] = [module.register_forward_pre_hook(forward_pre_hook(name))]
         if clean_weight:
             handle[name] += [module.register_forward_hook(forward_hook(name))]

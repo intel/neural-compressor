@@ -1172,7 +1172,7 @@ def get_module_input_output(
     return total_values
 
 
-class CapturedDataloader:
+class CapturedDataloader(torch.utils.data.DataLoader):
     def __init__(self, args_list, kwargs_list) -> None:
         self.args_list = args_list
         self.kwargs_list = kwargs_list

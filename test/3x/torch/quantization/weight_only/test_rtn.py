@@ -159,7 +159,7 @@ class TestRTNQuant:
 
         # tie_word_embeddings=true
         opt_model = transformers.AutoModelForCausalLM.from_pretrained(
-            "trl-internal-testing/tiny-random-OPTForCausalLM",
+            "trl-internal-testing/tiny-OPTForCausalLM",
             device_map=device,
         )
         lm_head_id = id(opt_model.lm_head.weight)

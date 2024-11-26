@@ -4926,7 +4926,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
         act_group_size = self.recipes["autoround_args"].get("act_group_size", None)
         act_sym = self.recipes["autoround_args"].get("act_sym", None)
         act_dynamic = self.recipes["autoround_args"].get("act_dynamic", True)
-        quant_block_list = self.recipes["autoround_args"].get("quant_block_list", None)
+        to_quant_block_names = self.recipes["autoround_args"].get("to_quant_block_names", None)
         use_layer_wise = self.recipes["autoround_args"].get("use_layer_wise", False)
 
         if dataloader is not None:
@@ -4959,7 +4959,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
             dynamic_max_gap=dynamic_max_gap,
             data_type=data_type,
             scale_dtype=scale_dtype,
-            quant_block_list=quant_block_list,
+            to_quant_block_names=to_quant_block_names,
             act_bits=act_bits,
             act_group_size=act_group_size,
             act_sym=act_sym,

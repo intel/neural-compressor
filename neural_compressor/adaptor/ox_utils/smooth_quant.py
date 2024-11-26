@@ -295,6 +295,9 @@ class ORTSmoothQuant:
                 return False
             for inp in node.input:
                 if self.model.get_initializer(inp) is not None:
+                    # Ensure that mul operators with shared initializer will not be absorbed.
+                    if self.model.get_initializer_share_num(inp) > 1:
+                        return False
                     key = node.input[0].split("_smooth_output")[0]
                     tensor = self.model.get_initializer(inp)
                     new_tensor = (
