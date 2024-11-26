@@ -149,8 +149,9 @@ class TestUtility:
         example_inp_single_batch = get_example_input(dataloader_single_batch, i=0)
         assert torch.all(example_inp_single_batch == torch.tensor([1, 2, 3, 4]))
         example_inp_single_batch = get_example_input(dataloader_single_batch, i=1)
+
     #     assert torch.all(example_inp_single_batch == torch.tensor([5, 6, 7, 8]))
-        
+
     def test_captured_dataloader_iteration(self):
         """Test the iteration behavior of CapturedDataloader."""
 
@@ -166,7 +167,7 @@ class TestUtility:
         kwargs_list = [{}, {}, {}]
         dataloader = CapturedDataloader(args_list, kwargs_list)
         for i, data in enumerate(dataloader):
-            assert data == i+1
+            assert data == i + 1
 
         # Test case when both args and kwargs are present
         args_list = [(1, 2), (2, 3), (3, 4)]
