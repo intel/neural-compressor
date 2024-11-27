@@ -316,13 +316,6 @@
       "batch_size": 100,
       "main_script": "run.py"
     },
-    "rnnt": {
-      "model_src_dir": "speech_recognition/rnnt/quantization/ptq_dynamic/fx",
-      "dataset_location": "/tf_dataset/pytorch/rnnt/convert_dataset/",
-      "input_model": "/tf_dataset/pytorch/rnnt/rnnt.pt",
-      "main_script": "run_tune.py",
-      "batch_size": 100
-    },
     "wav2vec2_dynamic":{
       "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_dynamic/fx",
       "dataset_location": "/tf_dataset2/datasets/speech_data/LibriSpeech/test-clean",

@@ -487,12 +487,6 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/speech_recognition/torchaudio_models/quantization/ptq_dynamic/fx">fx</a></td>
   </tr>
   <tr>
-    <td>RNNT</td>
-    <td>Speech Recognition</td>
-    <td>Post-Training Dynamic Quantization</td>
-    <td><a href="./pytorch/speech_recognition/rnnt/quantization/ptq_dynamic/fx">fx</a></td>
-  </tr>
-  <tr>
     <td>BlendCNN</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
@@ -1479,7 +1473,6 @@ Intel® Neural Compressor validated examples with multiple compression technique
 # Notebook Examples
 
 * [Performance of FP32 Vs. INT8 ResNet50 Model](/examples/notebook/perf_fp32_int8_tf): compare existed FP32 & INT8 ResNet50 model directly.
-* [Intel® Neural Compressor Sample for PyTorch*](/examples/notebook/pytorch/alexnet_fashion_mnist): an End-To-End pipeline to build up a CNN model by PyTorch to recognize fashion image and speed up AI model by Intel® Neural Compressor.
 * [Intel® Neural Compressor Sample for TensorFlow*](/examples/notebook/tensorflow/alexnet_mnist): an End-To-End pipeline to build up a CNN model by TensorFlow to recognize handwriting number and speed up AI model by Intel® Neural Compressor.
 * [Accelerate VGG19 Inference on Intel® Gen4 Xeon® Sapphire Rapids](/examples/notebook/tensorflow/vgg19_ibean): an End-To-End pipeline to train VGG19 model by transfer learning based on pre-trained model from [TensorFlow Hub](https://tfhub.dev); quantize it by Intel® Neural Compressor on Intel® Gen4 Xeon® Sapphire Rapids.
 
