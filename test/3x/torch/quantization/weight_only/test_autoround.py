@@ -168,7 +168,6 @@ class TestAutoRound:
             detect_device,
             get_layer_names_in_block,
             get_multimodal_block_names,
-            run_fn_for_vlm_autoround,
         )
 
         fp32_model = copy.deepcopy(self.gptj)
@@ -183,7 +182,7 @@ class TestAutoRound:
         fp32_model.to(device)
         # quantizer execute
         model = prepare(model=fp32_model, quant_config=quant_config)
-        run_fn_for_vlm_autoround(model, self.dataloader, seqlen=32, nsamples=8)
+        run_fn(model, self.dataloader)
         q_model = convert(model)
         out = q_model(self.inp)[0]
         assert torch.allclose(out, self.label, atol=1e-1)
