@@ -591,14 +591,13 @@ def detect_device(device=None):  # pragma: no cover
 
 
 def find_matching_blocks(model, all_blocks, to_quant_block_names):
-    """
-    Find and return matching blocks in the model based on to_quant_block_names.
-    
+    """Find and return matching blocks in the model based on to_quant_block_names.
+
     Args:
         model: The model (not used in this specific function but kept for completeness).
         all_blocks: List of lists, where each inner list contains full block names in the model.
         to_quant_block_names: Comma-separated string of target block names to match.
-    
+
     Returns:
         target_blocks: List of lists containing full paths of matching blocks in the model.
     """
@@ -606,7 +605,7 @@ def find_matching_blocks(model, all_blocks, to_quant_block_names):
     if not to_quant_block_names:
         return all_blocks
     to_quant_block_list = to_quant_block_names
-    if isinstance(to_quant_block_names, list) or isinstance(to_quant_block_names,tuple):
+    if isinstance(to_quant_block_names, list) or isinstance(to_quant_block_names, tuple):
         return to_quant_block_names
     if isinstance(to_quant_block_names, str):
         to_quant_block_list = [name.strip() for name in to_quant_block_names.split(",")]
@@ -620,7 +619,8 @@ def find_matching_blocks(model, all_blocks, to_quant_block_names):
         if matched_sublist:
             target_blocks.append(matched_sublist)
         if not target_blocks:
-            raise ValueError("No block names matched. Please check the input for to_quant_block_name," \
-                             "or set to_quant_block_name to None to automatically match quantizable blocks.")
+            raise ValueError(
+                "No block names matched. Please check the input for to_quant_block_name,"
+                "or set to_quant_block_name to None to automatically match quantizable blocks."
+            )
     return target_blocks
-
