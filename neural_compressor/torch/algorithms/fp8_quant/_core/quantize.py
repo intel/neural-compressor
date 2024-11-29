@@ -194,6 +194,8 @@ def prepare_model_with_dummy_measurement(model, mod_list, scaling_method, scale_
                 [placeholder_tensor for _ in range(mod_info.num_outputs)],
                 {name: placeholder_tensor for name in mod_info.param_names},
             )
+            if mode_type == "fused_sdpa":
+                dummy_mod_scales.inputs.append(placeholder_tensor)  # add amax scale to input scales
             mod_config = scaling_method[mode_type][1](mod, dummy_mod_scales, scale_config)
             dummy_mod_extra_config = ModuleExtraConfig(
                 mod_config.inputs,
