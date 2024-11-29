@@ -3,6 +3,12 @@ python -c "import neural_compressor as nc"
 test_case="run 3x TensorFlow"
 echo "${test_case}"
 
+echo "##[section]Run import check"
+set -e
+python -c "import neural_compressor.tensorflow"
+python -c "import neural_compressor.common"
+echo "##[section]import check pass"
+
 # install requirements
 echo "##[group]set up UT env..."
 pip install -r /neural-compressor/test/3x/tensorflow/requirements.txt
