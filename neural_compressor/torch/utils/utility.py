@@ -603,6 +603,7 @@ def find_matching_blocks(model, all_blocks, to_quant_block_names=None):
         target_blocks: List of lists containing full paths of matching blocks in the model.
     """
     import re
+
     if not to_quant_block_names:
         return all_blocks
     to_quant_block_list = to_quant_block_names
