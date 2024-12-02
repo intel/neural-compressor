@@ -139,6 +139,9 @@ config = AutoConfig.from_pretrained(
 user_model = None
 
 tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=args.trust_remote_code)
+# Ensure pad_token is set for tasks that require it (e.g., truthfulqa)
+if tokenizer.pad_token is None and tokenizer.eos_token is not None:
+    tokenizer.pad_token = tokenizer.eos_token
 
 quantization_config = None
 if args.woq:
