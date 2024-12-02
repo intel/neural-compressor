@@ -37,20 +37,20 @@ from neural_compressor.torch.quantization import (AutoRoundConfig,
                                                     load)
 
 def set_nontext_module_config(model, to_quant_block_names, quant_config):
-        all_block_list = get_multimodal_block_names(model, quant_vision=True)
-        all_block_set = set(tuple(block) for block in all_block_list)
-        quant_block_set = set(tuple(block) for block in to_quant_block_names)
-        set_to_full_prec = list(all_block_set - quant_block_set)
-        set_to_full_prec = get_layer_names_in_block(model, to_quant_block_names=set_to_full_prec)
-        for name in set_to_full_prec:
-            quant_config.set_local(name, AutoRoundConfig(dtype="fp32"))
-            
-        # skip layers not in blocks
-        quant_config.set_local("model.vision_embed_tokens.img_projection*", AutoRoundConfig(dtype="fp32"))
-        quant_config.set_local("transformer.visual.attn_pool.*_proj", AutoRoundConfig(dtype="fp32"))
-        quant_config.set_local("model.mm_projector*", AutoRoundConfig(dtype="fp32"))
-        quant_config.set_local("multi_modal_projector", AutoRoundConfig(dtype="fp32"))
-        quant_config.set_local("visual.merger", AutoRoundConfig(dtype="fp32"))
+    all_block_list = get_multimodal_block_names(model, quant_vision=True)
+    all_block_set = set(tuple(block) for block in all_block_list)
+    quant_block_set = set(tuple(block) for block in to_quant_block_names)
+    set_to_full_prec = list(all_block_set - quant_block_set)
+    set_to_full_prec = get_layer_names_in_block(model, to_quant_block_names=set_to_full_prec)
+    for name in set_to_full_prec:
+        quant_config.set_local(name, AutoRoundConfig(dtype="fp32"))
+        
+    # skip layers not in blocks
+    quant_config.set_local("model.vision_embed_tokens.img_projection*", AutoRoundConfig(dtype="fp32"))
+    quant_config.set_local("transformer.visual.attn_pool.*_proj", AutoRoundConfig(dtype="fp32"))
+    quant_config.set_local("model.mm_projector*", AutoRoundConfig(dtype="fp32"))
+    quant_config.set_local("multi_modal_projector", AutoRoundConfig(dtype="fp32"))
+    quant_config.set_local("visual.merger", AutoRoundConfig(dtype="fp32"))
 
 
 @torch.no_grad()
@@ -116,7 +116,7 @@ class BasicArgumentParser(argparse.ArgumentParser):
         self.add_argument("--low_gpu_mem_usage", action='store_true',
                           help="offload intermediate features to cpu")
 
-        self.add_argument("--export_format", default="auto_round", type=str,
+        self.add_argument("--export_format", default="auto_round:gptq", type=str,
                           help="the format to save the model"
                           )
 
@@ -350,7 +350,7 @@ def tune(args):
         export_format=args.export_format
     )
         
-    set_nontext_module_config(model, to_quant_block_names, quant_config)
+    # set_nontext_module_config(model, to_quant_block_names, quant_config)
 
     format = args.export_format
     if args.fp_layers != "":
@@ -411,7 +411,10 @@ def tune(args):
         torch.cuda.empty_cache()
     
     from neural_compressor.torch.utils import (LoadFormat,)
-    user_model.save(args.output_dir, format=LoadFormat.HUGGINGFACE, safe_serialization=False)
+    kargs = {}
+    if "phi3_v" in model_type:
+        kargs['safe_serialization'] = 'False'
+    user_model.save(args.output_dir, format=LoadFormat.HUGGINGFACE, **kargs)
     if tokenizer is not None:
         tokenizer.save_pretrained(args.output_dir)
     if processor is not None and hasattr(processor, 'chat_template'): # Avoiding phi-3.5-vision save errors
@@ -512,7 +515,7 @@ def setup_lmms_parser():
     return args
 
 
-def eval(args):
+def mllm_eval(args):
     if isinstance(args.tasks, str):
         args.tasks = args.tasks.replace(' ', '').split(',')
     from neural_compressor.torch.algorithms.weight_only.autoround import mllm_eval
@@ -531,32 +534,22 @@ def eval(args):
         ignore=args.ignore
     )
 
-# def lmms_eval(args):
-#     from neural_compressor.torch.algorithms.weight_only.autoround import lmms_eval
+def lmms_eval(args):
+    from neural_compressor.torch.algorithms.weight_only.autoround import lmms_eval
+    results = lmms_eval(
+        model=args.model,
+        tasks=args.tasks,
+        output_dir=args.output_dir,
+        num_fewshot=args.num_fewshot,
+        limit=args.limit,
+        batch_size=args.batch_size,
+        max_batch_size=args.max_batch_size,
+        device=args.device,
+        use_cache=None,
+        apply_chat_template=False,
+    )
+    return results
 
-#     results = lmms_eval(
-#         model=args.model,
-#         tasks=args.tasks,
-#         output_dir=args.output_dir,
-#         num_fewshot=args.num_fewshot,
-#         limit=args.limit,
-#         batch_size=args.batch_size,
-#         max_batch_size=args.max_batch_size,
-#         device=args.device,
-#         use_cache=None,
-#         apply_chat_template=False,
-#     )
-#     return results
-
-# def run_mllm():
-#     if "--eval" in sys.argv:
-#         from auto_round.script.mllm import setup_lmeval_parser, eval
-#         sys.argv.remove("--eval")
-#         args = setup_lmeval_parser()
-#         eval(args)
-#     elif "--lmms" in sys.argv:
-#         sys.argv.remove("--lmms")
-#         run_lmms()
 
 if __name__ == '__main__':
     if "--quantize" in sys.argv:
@@ -564,5 +557,13 @@ if __name__ == '__main__':
         tune(args)
     elif "--accuracy" in sys.argv:
         sys.argv.remove("--accuracy")
-        args = setup_lmeval_parser()
-        eval(args)
+        from neural_compressor.torch.quantization import load
+        if "--lmms" in sys.argv:
+            sys.argv.remove("--lmms")
+            args = setup_lmms_parser()
+            lmms_eval(args)
+        else:
+            if "--mllm_eval" in sys.argv:
+                sys.argv.remove("--mllm_eval")
+            args = setup_mllm_eval_parser()
+            mllm_eval(args)
