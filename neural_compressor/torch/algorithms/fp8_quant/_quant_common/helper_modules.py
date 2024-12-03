@@ -844,7 +844,6 @@ class PatchedSoftmax(nn.Module):
 
 class PatchedLoRACompatibleLinear(nn.Linear):
     def __init__(self, mod, mod_extra_config, *args, **kwargs):
-        super().__init__()
         set_attrs_from_orig_model(self, mod, mod_extra_config)
         init_linear(self, mod_extra_config)
 
