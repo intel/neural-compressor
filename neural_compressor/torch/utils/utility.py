@@ -351,9 +351,8 @@ def load_empty_model(pretrained_model_name_or_path, cls=None, **kwargs):
     else:
         path = dowload_hf_model(pretrained_model_name_or_path)
     if cls.__base__ == _BaseAutoModelClass:
-        config = AutoConfig.from_pretrained(path, **kwargs)
         with init_empty_weights():
-            model = cls.from_config(config, **kwargs)
+            model = cls.from_pretrained(path, **kwargs)
     else:  # pragma: no cover
         config = cls.config_class.from_pretrained(path, **kwargs)
         with init_empty_weights():
