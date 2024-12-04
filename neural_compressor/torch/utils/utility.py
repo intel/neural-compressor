@@ -590,43 +590,38 @@ def detect_device(device=None):  # pragma: no cover
     return device
 
 
-def run_fn_for_vlm_autoround(model, dataloader, seqlen=512, nsamples=512):  # pragma: no cover
-    """Runs a model on a provided dataset with automatic device detection for vector-language models.
+def find_matching_blocks(model, all_blocks, to_quant_block_names=None):
+    """Find and return matching blocks in the model based on to_quant_block_names.
 
     Args:
-        model: The model to run.
-        dataloader: A PyTorch dataloader providing the input data for the model.
-        seqlen (int, optional): The minimum sequence length of input data to process. Defaults to 512.
-        nsamples (int, optional): The number of samples to process before stopping. Defaults to 512.
+        model: The model (not used in this specific function but kept for completeness).
+        all_blocks: List of lists, where each inner list contains full block names in the model.
+        to_quant_block_names: Comma-separated string of target block names to match.
 
     Returns:
-        None
+        target_blocks: List of lists containing full paths of matching blocks in the model.
     """
-    device = model.orig_model.device
-    total_cnt = 0
-    for org_data in dataloader:
-        if isinstance(org_data, torch.Tensor):
-            input_ids = org_data.to(device)
-            data = input_ids
-        elif isinstance(org_data, tuple) or isinstance(org_data, list):
-            data = org_data
-            input_ids = data[0]
-        else:
-            data = {}
-            for key in org_data.keys():
-                data[key] = to_device(org_data[key], device)
-                if key == "images":
-                    data[key] = to_dtype(org_data[key], model.orig_model.dtype)
-            input_ids = data["input_ids"]
-        if input_ids.shape[-1] < seqlen:
-            continue
+    import re
 
-        if isinstance(data, tuple) or isinstance(data, list):
-            model(*data)
-        elif isinstance(data, dict):
-            model(**data)
-        else:
-            model(data)
-        total_cnt += input_ids.shape[0] if len(input_ids.shape) > 1 else 1
-        if total_cnt >= nsamples:
-            break
+    if not to_quant_block_names:
+        return all_blocks
+    to_quant_block_list = to_quant_block_names
+    if isinstance(to_quant_block_names, list) or isinstance(to_quant_block_names, tuple):
+        return to_quant_block_names
+    if isinstance(to_quant_block_names, str):
+        to_quant_block_list = [name.strip() for name in to_quant_block_names.split(",")]
+    target_blocks = []
+    for block_list in all_blocks:
+        matched_sublist = []
+        for name in to_quant_block_list:
+            matches = [block for block in block_list if re.search(name, block)]
+            if matches:
+                matched_sublist.extend(matches)
+        if matched_sublist:
+            target_blocks.append(matched_sublist)
+        if not target_blocks:
+            raise ValueError(
+                "No block names matched. Please check the input for to_quant_block_name,"
+                "or set to_quant_block_name to None to automatically match quantizable blocks."
+            )
+    return target_blocks

@@ -168,7 +168,6 @@ class TestAutoRound:
             detect_device,
             get_layer_names_in_block,
             get_multimodal_block_names,
-            run_fn_for_vlm_autoround,
         )
 
         fp32_model = copy.deepcopy(self.gptj)
@@ -183,7 +182,7 @@ class TestAutoRound:
         fp32_model.to(device)
         # quantizer execute
         model = prepare(model=fp32_model, quant_config=quant_config)
-        run_fn_for_vlm_autoround(model, self.dataloader, seqlen=32, nsamples=8)
+        run_fn(model, self.dataloader)
         q_model = convert(model)
         out = q_model(self.inp)[0]
         assert torch.allclose(out, self.label, atol=1e-1)
@@ -199,15 +198,15 @@ class TestAutoRound:
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         processor = AutoProcessor.from_pretrained(model_name, trust_remote_code=True)
         model = Qwen2VLForConditionalGeneration.from_pretrained(model_name, trust_remote_code=True, device_map="auto")
-        dataloader, template, truncation, batch_size, gradient_accumulate_steps, seqlen = get_mllm_dataloader(
+        dataloader, template, truncation, batch_size, gradient_accumulate_steps, seqlen, nsamples = get_mllm_dataloader(
             template=None,
             model=model,
             tokenizer=tokenizer,
             image_processor=None,
             dataset="liuhaotian/llava_conv_58k",
             extra_data_dir=None,
-            seqlen=2048,
-            bs=1,
+            seqlen=512,
+            batch_size=1,
             split=None,
             apply_template=None,
             truncation=False,
@@ -233,7 +232,7 @@ class TestAutoRound:
         model = prepare(model=model, quant_config=quant_config)
         run_fn(model, dataloader)
         q_model = convert(model)
-        assert isinstance(q_model.visual.blocks[0].attn.qkv, WeightOnlyLinear), "model quantization failed."
+        assert isinstance(q_model.model.layers[0].mlp.up_proj, WeightOnlyLinear), "model quantization failed."
 
     # def test_autoround_format_export(self):
     #     from neural_compressor.torch.quantization import load

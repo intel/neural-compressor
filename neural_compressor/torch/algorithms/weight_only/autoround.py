@@ -35,6 +35,7 @@ _is_auto_round_available()
 
 from auto_round import AutoRound, AutoRoundMLLM  # pylint: disable=E0401
 from auto_round.export.export_to_itrex.export import pack_model  # pylint: disable=E0401
+from auto_round.mllm import lmms_eval, mllm_eval
 from auto_round.mllm.template import Template, get_template
 
 from neural_compressor.torch.algorithms import Quantizer
@@ -339,20 +340,20 @@ def get_dataloader(tokenizer, seqlen, dataset_name="NeelNanda/pile-10k", seed=42
 
 
 def get_mllm_dataloader(
-    template,
     model,
     tokenizer,
+    template=None,
     processor=None,
     image_processor=None,
-    dataset="liuhaotian/llava_conv_58k",
+    dataset=None,
     extra_data_dir=None,
-    seqlen=512,
-    bs=1,
+    seqlen=None,
+    batch_size=8,
     split=None,
     apply_template=None,
-    truncation=False,
+    truncation=None,
     seed=42,
-    nsamples=512,
+    nsamples=128,
     gradient_accumulate_steps=1,
     quant_nontext_module=False,
 ):
@@ -377,6 +378,11 @@ def get_mllm_dataloader(
     from auto_round.mllm.autoround_mllm import _only_text_test
     from auto_round.mllm.mllm_dataset import get_mllm_dataloader  # pylint: disable=E0401
 
+    template = template if template is not None else model.config.model_type
+    template = get_template(
+        template, model=model, tokenizer=tokenizer, processor=processor, image_processor=image_processor
+    )
+    dataset = template.default_dataset if dataset is None else dataset
     if quant_nontext_module or (dataset in CALIB_DATASETS.keys() and not _only_text_test(model, tokenizer)):
         if quant_nontext_module:
             logger.warning(
@@ -389,16 +395,19 @@ def get_mllm_dataloader(
                 " will use liuhaotian/llava_conv_58k with default config as an alternative."
             )
         dataset = "liuhaotian/llava_conv_58k"
+        seqlen = 512 if seqlen is None else seqlen
         truncation = False
+        gradient_accumulate_steps = batch_size * gradient_accumulate_steps
         batch_size = 1
-        gradient_accumulate_steps = 4
-        seqlen = 512
 
+    seqlen = 2048 if seqlen is None else seqlen  # set text only calibration default args
+    truncation = True if truncation is None else truncation
     dataset = dataset.replace(" ", "")
-    template = template if template is not None else model.config.model_type
-    template = get_template(
-        template, model=model, tokenizer=tokenizer, processor=processor, image_processor=image_processor
-    )
+
+    if nsamples % batch_size != 0:
+        nsamples = (nsamples // batch_size + 1) * batch_size
+        logger.warning(f"'nsamples' is not divisible by 'batch_size', will adjusted to {nsamples}")
+
     dataloader, batch_size, gradient_accumulate_steps = get_mllm_dataloader(
         template=template,
         model=model,
@@ -407,11 +416,11 @@ def get_mllm_dataloader(
         dataset=dataset,
         extra_data_dir=extra_data_dir,
         seqlen=seqlen,
-        bs=bs,
+        bs=batch_size,
         seed=seed,
         truncation=truncation,
         nsamples=nsamples,
         gradient_accumulate_steps=gradient_accumulate_steps,
         quant_nontext_module=quant_nontext_module,
     )
-    return dataloader, template, truncation, batch_size, gradient_accumulate_steps, seqlen
+    return dataloader, template, truncation, batch_size, gradient_accumulate_steps, seqlen, nsamples
