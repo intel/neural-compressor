@@ -75,8 +75,8 @@ if args.quantize:
         tuple_inputs = (input_ids_batch,)
         return tuple_inputs
     # torch._dynamo.config.cache_size_limit = 4 # set limitation if out of memory
-    batch = Dim(name="batch_size")
-    seq_len = Dim(name="seq_len")
+    batch = Dim(name="batch_size", max=16)
+    seq_len = Dim(name="seq_len", max=user_model.config.vocab_size)
     dynamic_shapes = {"input_ids": (batch, seq_len)}
     example_inputs = get_example_inputs(tokenizer)
     exported_model = export(user_model, example_inputs=example_inputs, dynamic_shapes=dynamic_shapes)
