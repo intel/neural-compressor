@@ -485,7 +485,6 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
             for e in range(tmp.shape[1]):
                 tmp[:, e] = np.left_shift(tmp[:, e], self.bits * e)
                 packed_array[:, j] |= tmp[:, e]
-                accelerator.synchronize()
         packed_tensor = torch.from_numpy(packed_array).to(device=raw_tensor.device)
         return packed_tensor
 
@@ -520,7 +519,6 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
                 if hasattr(self, "qzeros"):
                     tmp &= mask
                 unpacked_array[:, index] = tmp.astype(target_dtype)
-                accelerator.synchronize()
         unpacked_tensor = torch.from_numpy(unpacked_array).to(device=packed_tensor.device)
         return unpacked_tensor
 
