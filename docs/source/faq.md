@@ -29,6 +29,6 @@ $ conda/pip install tbb
 #### Issue 6:  
 torch._C._LinAlgError: linalg.cholesky: The factorization could not be completed because the input is not positive-definite.  
 **Solution:** This is a known issue. For more details, refer to 
-[this AutoGPTQ issue](https://github.com/AutoGPTQ/AutoGPTQ/issues/196). 
+[AutoGPTQ/AutoGPTQ#196](https://github.com/AutoGPTQ/AutoGPTQ/issues/196). 
 Try increasing `percdamp` (percent of the average Hessian diagonal to use for dampening), 
 or increasing `nsamples` (the number of calibration samples).
