@@ -408,8 +408,8 @@ def main():
             q_unet = load(os.path.abspath(os.path.expanduser(args.output_dir)))
         else:
             q_unet = pipeline.unet
-
-    setattr(q_unet, "config", pipeline.unet.config)
+    if not hasattr(q_unet, "config"):
+        setattr(q_unet, "config", pipeline.unet.config)
     pipeline.unet = q_unet
     quant_images = prompts2images(pipeline, prompts, n_steps=args.n_steps, latent=init_latent)
     save_images(prompts, quant_images, args.output_dir, prefix='quant')
