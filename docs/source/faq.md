@@ -26,3 +26,9 @@ Intel TBB is required, try:
 $ conda/pip install tbb
 ```
 **Solution:** It's actually already installed by `requirements_pt.txt`, so just need to set up with `export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH`. 
+#### Issue 6:  
+torch._C._LinAlgError: linalg.cholesky: The factorization could not be completed because the input is not positive-definite.  
+**Solution:** This is a known issue. For more details, refer to 
+[AutoGPTQ/AutoGPTQ#196](https://github.com/AutoGPTQ/AutoGPTQ/issues/196). 
+Try increasing `percdamp` (percent of the average Hessian diagonal to use for dampening), 
+or increasing `nsamples` (the number of calibration samples).
