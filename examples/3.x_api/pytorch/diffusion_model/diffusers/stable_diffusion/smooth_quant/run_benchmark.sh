@@ -50,9 +50,6 @@ function run_benchmark {
 
     if [[ ${mode} == "performance" ]]; then
       extra_cmd=$extra_cmd" --performance"
-      if [[ ${int8} == "true" ]]; then
-        extra_cmd=$extra_cmd" --int8"
-      fi
       echo $extra_cmd
 
       python -u sdxl_smooth_quant.py \
@@ -60,9 +57,6 @@ function run_benchmark {
         --latent ${latent} \
         ${extra_cmd}
     else
-      if [[ ${int8} == "true" ]]; then
-        extra_cmd=$extra_cmd" --int8"
-      fi
       echo $extra_cmd
 
       python -u sdxl_smooth_quant.py \
@@ -82,7 +76,7 @@ function run_benchmark {
       cd mlperf_sd_inference
       cp ../main.py ./
       if [ -d "../saved_results/" ]; then
-        mv ../saved_results/ ./
+        cp -r ../saved_results/ ./
       fi
       
       python -u main.py \
