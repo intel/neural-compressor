@@ -23,5 +23,23 @@ Here is how to run the scripts:
 #### Quantization
 
 ```bash
-python run_clm_no_trainer.py --model facebook/opt-125m --quantize --accuracy
+python run_clm_no_trainer.py --model facebook/opt-125m --quantize --output_dir qmodel_save_path
+```
+
+#### Accuracy
+```bash
+# Measure the accuracy of the floating model
+python run_clm_no_trainer.py --model facebook/opt-125m --accuracy  --tasks lambada_openai
+
+# Measure the accuracy of the quantized model
+python run_clm_no_trainer.py --model facebook/opt-125m --accuracy  --tasks lambada_openai --int8 --output_dir qmodel_save_path 
+```
+
+#### Performance
+```bash
+# Measure the performance of the floating model
+python run_clm_no_trainer.py --model facebook/opt-125m --performance
+
+# Measure the performance of the quantized model
+python run_clm_no_trainer.py --model facebook/opt-125m --performance --int8 --output_dir qmodel_save_path 
 ```
