@@ -93,6 +93,7 @@ class DeviceType(Enum):
     GAUDI2 = htexp.synDeviceType.synDeviceGaudi2
     GAUDI3 = htexp.synDeviceType.synDeviceGaudi3
 
+
 _config_to_enum = {
     "mode": QuantMode,
     "measure_exclude": MeasureExclude,
@@ -156,6 +157,7 @@ def _validate_dump_path(dump_stats_path):
     files_to_backup = [fname for fname in os.listdir(dirname) if fname.startswith(basename)]
     if files_to_backup:
         from datetime import datetime
+
         backup_dirname = f"{basename}_backup_{datetime.now().strftime('%d-%m_%H:%M:%S')}"
         try:
             os.mkdir(f"{dirname}/{backup_dirname}")
@@ -166,7 +168,6 @@ def _validate_dump_path(dump_stats_path):
                 os.rename(f"{dirname}/{fname}", f"{dirname}/{backup_dirname}/{fname}")
             except (OSError, FileNotFoundError):
                 pass
-
 
 
 @dataclass
@@ -187,8 +188,8 @@ class Fp8cfg:
                 "types": (),
             },  # types and names to be quantized. Allowlist by names is not yet implemented
             "mode": QuantMode.QUANTIZE,  # Quantize or Measure
-            "fake_quant": False, # Fake or Real Quant, fake_quant only works for linear(PatchedLinear) and matmul(PatchedMatmul), usually used for training.
-            "use_qdq": False, # QDQ or Real Quant, QDQ works for operators in helper_modules.py, usually used for inference.
+            "fake_quant": False,  # Fake or Real Quant, fake_quant only works for linear(PatchedLinear) and matmul(PatchedMatmul), usually used for training.
+            "use_qdq": False,  # QDQ or Real Quant, QDQ works for operators in helper_modules.py, usually used for inference.
             "scale_method": ScaleMethod.MAXABS_HW,  # Method to quantize with
             "scale_params": {},  # scaling parameters that are different then the default ones
             "observer": "maxabs",  # Supported ['shape', 'maxabs', 'maxabs_per_channel', 'save']
@@ -251,23 +252,29 @@ class Fp8cfg:
                 measured_global_config["device_for_scales"] == htexp.synDeviceType.synDeviceGaudi2
                 and measured_global_config["device_type"] == htexp.synDeviceType.synDeviceGaudi3
             ):
-                raise ValueError(f"Unsupported config: device_for_scales={measured_global_config['device_for_scales']} "
-                                f"for device_type={measured_global_config['device_type']}")
+                raise ValueError(
+                    f"Unsupported config: device_for_scales={measured_global_config['device_for_scales']} "
+                    f"for device_type={measured_global_config['device_type']}"
+                )
 
         scale_method = measured_global_config["scale_method"]
         if measured_global_config["use_qdq"] and "_PCS_" in scale_method.name:
             raise ValueError(
                 f"use_qdq is enabled in config, but the scale_method is '{scale_method}', which is unexpected. "
                 "Q/DQ currently only supports per_tensor quantization, and this scale method doesn't support Q/DQ."
-                )
+            )
         if measured_global_config["scale_format"] == ScaleFormat.SCALAR:
             if scale_method in _pcq_scale_methods:
                 measured_global_config["scale_format"] = ScaleFormat.CONST
-                logger.warning(f"Cannot use 'scale_format = SCALAR' when using PCQ (Per Channel Quantization, "
-                               f"e.g. {scale_method}) value for 'scale_method'. Reduced to 'CONST'.")
+                logger.warning(
+                    f"Cannot use 'scale_format = SCALAR' when using PCQ (Per Channel Quantization, "
+                    f"e.g. {scale_method}) value for 'scale_method'. Reduced to 'CONST'."
+                )
             if measured_global_config["fake_quant"] or measured_global_config["use_qdq"]:
                 measured_global_config["scale_format"] = ScaleFormat.CONST
-                logger.warning(f"Cannot use 'scale_format = SCALAR' when using fake_quant or use_qdq. Reduced to 'CONST'.")
+                logger.warning(
+                    "Cannot use 'scale_format = SCALAR' when using fake_quant or use_qdq. Reduced to 'CONST'."
+                )
         quant_mode = measured_global_config["mode"]
         if scale_method in _scale_methods_quant_only:
             if quant_mode == QuantMode.QUANTIZE:

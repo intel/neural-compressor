@@ -1,20 +1,18 @@
 import copy
-import torch
-import pytest
 import shutil
 
 import habana_frameworks.torch.core as htcore
 import pytest
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from ..test_hpu_utils import is_gaudi3
 
+from ..test_hpu_utils import is_gaudi3
 from ..test_utils import is_gaudi3
 
 htcore.hpu_set_env()
 
-from neural_compressor.torch.quantization import FP8Config, convert, prepare, save, load
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import Matmul
+from neural_compressor.torch.quantization import FP8Config, convert, load, prepare, save
 
 torch.manual_seed(1)
 
@@ -57,7 +55,7 @@ config_dict = {
 
 
 # Run both real and fake quantization, and compare
-#TODO: SW-203453 fix test in Gaudi3
+# TODO: SW-203453 fix test in Gaudi3
 @pytest.mark.skipif(is_gaudi3(), reason="SW-203453")
 def test_fakequant_model():
     model = AutoModelForCausalLM.from_pretrained("facebook/opt-350m")
@@ -88,7 +86,6 @@ def test_fakequant_model():
         output_fakequant = model_fakequant(**inputs).logits.cpu()
     assert torch.allclose(output, output_fakequant, rtol=0.01), "FakeQuant on model failed"
 
-
     # test save and load API
     # These two usages of save are equal, we discussed to keep both.
     model.save("model_tmp")
@@ -99,8 +96,8 @@ def test_fakequant_model():
     with torch.no_grad():
         output_tmp = model_tmp(**inputs).logits.cpu()
         output_fakequant_tmp = model_fakequant_tmp(**inputs).logits.cpu()
-    assert torch.allclose(output, output_tmp, rtol=0.01), f"Loading quantized model failed"
-    assert torch.allclose(output_fakequant, output_fakequant_tmp, rtol=0.01), f"Loading fake quantized model failed"
+    assert torch.allclose(output, output_tmp, rtol=0.01), "Loading quantized model failed"
+    assert torch.allclose(output_fakequant, output_fakequant_tmp, rtol=0.01), "Loading fake quantized model failed"
     shutil.rmtree("model_tmp", ignore_errors=True)
     shutil.rmtree("model_fakequant_tmp", ignore_errors=True)
 
@@ -130,4 +127,4 @@ def test_fakequant_simple():
     with torch.no_grad():
         output = model(inp_test).cpu()
         output_fake = model_fake(inp_test).cpu()
-    assert torch.allclose(output, output_fake, rtol=0.01), f"FakeQuant failed"
+    assert torch.allclose(output, output_fake, rtol=0.01), "FakeQuant failed"

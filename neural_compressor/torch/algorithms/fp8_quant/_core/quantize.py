@@ -13,20 +13,21 @@
 # limitations under the License.
 
 import gc
+
 import habana_frameworks.torch.core as htcore
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
 
-from .._quant_common.quant_config import QuantMode
-from .._quant_common.helper_modules import PatchedUnmeasuredModule
-from .._quant_common.quant_config import get_hqt_config, set_hqt_config
-from ..utils.logger import logger
-from .common import generate_model_info, mod_default_dict, parent_child_mod_dict, \
-                    save_scales, load_scales
-from .measure import load_measurements
-from .scale import scale_method_mapping, scaling_methods, convert_scales_to_tensors_dict, load_layer_scales
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
+
+from .._quant_common.helper_modules import PatchedUnmeasuredModule
+from .._quant_common.quant_config import QuantMode, get_hqt_config, set_hqt_config
+from ..utils.logger import logger
+from .common import generate_model_info, load_scales, mod_default_dict, parent_child_mod_dict, save_scales
+from .measure import load_measurements
+from .scale import convert_scales_to_tensors_dict, load_layer_scales, scale_method_mapping, scaling_methods
+
 cur_accelerator = auto_detect_accelerator()
 
 
@@ -82,7 +83,7 @@ def quantize_params(mod, mod_extra_config):
 
 def convert_fp16_to_bf16(model):
     """Convert all float16 parameters and buffers in the model to bfloat16 after FP8 quantization.
-    
+
     Args:
         model (torch.nn.Module): The PyTorch model that needs to be converted.
     """
@@ -91,7 +92,7 @@ def convert_fp16_to_bf16(model):
         if param.dtype == torch.float16:
             param.data = param.data.to(torch.bfloat16)
             logger.debug("Convert FP16 to BF16, parameter name: %s", name)
-    
+
     # convert buffers
     for name, buffer in model.named_buffers():
         if buffer.dtype == torch.float16:
@@ -117,9 +118,7 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method, scal
     recalc_scales = config.cfg["recalc_scales"]
     scales_file_format = np.ndarray
     scales_obj = (
-        load_scales(scale_file + ".npz", scales_file_format)
-        if (scale_file is not None) and not recalc_scales
-        else {}
+        load_scales(scale_file + ".npz", scales_file_format) if (scale_file is not None) and not recalc_scales else {}
     )
     scales = convert_scales_to_tensors_dict(scales_obj, scales_file_format, scale_config["hp_dtype"])
     save_file = False
@@ -139,19 +138,27 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method, scal
             apply_hf_hook(mod)
             if name in mod_list:
                 set_hqt_config(mod, config)  # set config in the module, as it consumed by the patched module
-                mod_extra_config, save_file = load_layer_scales(mod, name, config,
-                                                                mod_type_str, measurement,
-                                                                scales, scale_file,
-                                                                scales_file_format,
-                                                                scales_obj, scaling_method,
-                                                                scale_config, save_file)
+                mod_extra_config, save_file = load_layer_scales(
+                    mod,
+                    name,
+                    config,
+                    mod_type_str,
+                    measurement,
+                    scales,
+                    scale_file,
+                    scales_file_format,
+                    scales_obj,
+                    scaling_method,
+                    scale_config,
+                    save_file,
+                )
                 if not config.cfg["fake_quant"] and mod_default_dict[mod_type_str].should_measure_and_quant:
                     quantize_params(mod, mod_extra_config)
                 patch_module(mod, mod_extra_config, mod_default_dict)
                 patched_modules.append(name)
                 patched_module_types.add(type(mod))
                 logger.debug("Patched module name: %s", name)
-    if save_file: # cache calculated scales
+    if save_file:  # cache calculated scales
         save_scales(model, scales_obj, scales_file_format, scale_file + ".npz")
         save_scales(model, scales_obj, scales_file_format, scale_file + ".json")
     logger.debug("Patched module types: %s", patched_module_types)
@@ -203,13 +210,15 @@ def prepare_model_with_dummy_measurement(model, mod_list, scaling_method, scale_
                 mod_config.params,
                 dummy_mod_scales,
                 scale_config,
-                )
+            )
             # replace bf16 meta weights with FP8 meta weights for loading
             if not config.cfg["fake_quant"] and mod_default_dict[mod_type_str].should_measure_and_quant:
                 for param_name in mod_info.param_names:
                     if param_name == "weight":  # only weight is quantized now
                         raw_param = getattr(mod, param_name)
-                        param = torch.ones(raw_param.shape, dtype=scale_config["lp_dtype"], device="meta")  # meta tensor
+                        param = torch.ones(
+                            raw_param.shape, dtype=scale_config["lp_dtype"], device="meta"
+                        )  # meta tensor
                         delattr(mod, param_name)
                         setattr(mod, param_name, nn.Parameter(param))
             patch_module(mod, dummy_mod_extra_config, mod_default_dict)

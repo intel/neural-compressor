@@ -4,6 +4,7 @@ import pytest
 import torch
 
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import ScaleMethod
+
 from ...test_hpu_utils import *
 from ...tester import *
 
@@ -57,6 +58,7 @@ def test_matmul_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype, scale_met
     quant_modes = QUANT_MODES_DEFAULT
     if scale_method in SCALE_METHODS_QUANT_ONLY:
         quant_modes = QUANT_MODES_QUANT_ONLY
+
     def run():
         run_accuracy_test(
             module_class=Matmul,
@@ -66,6 +68,7 @@ def test_matmul_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype, scale_met
             quant_modes=quant_modes,
             device_type=device_type,
         )
+
     if get_device_type() != device_type_id[device_type] and scale_method != ScaleMethod.MAXABS_HW:
         return run_with_raised_exception(run, ValueError, "Unsupported config: scale_method: ")
     elif device_type_id[device_type] != get_device_type():

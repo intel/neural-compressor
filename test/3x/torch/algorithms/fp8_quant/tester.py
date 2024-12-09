@@ -6,11 +6,10 @@ import os
 import random
 import typing
 from dataclasses import dataclass
-from pytest import raises as pytest_raises
-
-from test_hpu_utils import get_device_name
 
 import torch
+from pytest import raises as pytest_raises
+from test_hpu_utils import get_device_name
 
 from neural_compressor.torch.algorithms.fp8_quant._core.common import mod_default_dict
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import Fp8cfg, QuantMode, ScaleMethod
@@ -37,12 +36,14 @@ SCALE_METHODS_QUANT_ONLY = [ScaleMethod.UNIT_SCALE, ScaleMethod.HW_ALIGNED_SINGL
 QUANT_MODES_DEFAULT = [QuantMode.MEASURE, QuantMode.QUANTIZE]
 QUANT_MODES_QUANT_ONLY = [QuantMode.QUANTIZE]
 
+
 # Expects to get an exception. If there's no exception, the test will fail
 def run_with_raised_exception(test_to_run, error, error_str):
     with pytest_raises(Exception) as exc:
         test_to_run()
     assert error_str in str(exc.value)
     assert exc.type == error
+
 
 @dataclass
 class TestVector:
@@ -120,12 +121,7 @@ def run_accuracy_test(
         reference_model = WrapModel(module_class, seed, *module_args, **module_kwargs)
         quantized_model = WrapModel(module_class, seed, *module_args, **module_kwargs)
 
-        config = _get_test_only_config(
-            mode=mode,
-            lp_dtype=lp_dtype,
-            scale_method=scale_method,
-            device_type=device_type
-        )
+        config = _get_test_only_config(mode=mode, lp_dtype=lp_dtype, scale_method=scale_method, device_type=device_type)
         prepare_model._prep_model_with_predefined_config(quantized_model, config=config)
 
         _assert_quantized_correctly(reference_model=reference_model, quantized_model=quantized_model)

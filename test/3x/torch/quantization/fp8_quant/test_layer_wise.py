@@ -1,10 +1,9 @@
-import torch
 import habana_frameworks.torch.core as htcore
+import torch
+from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 
-from transformers import AutoModelForCausalLM, AutoTokenizer, AutoConfig
-from neural_compressor.torch.quantization import FP8Config, convert, prepare, finalize_calibration
+from neural_compressor.torch.quantization import FP8Config, convert, finalize_calibration, prepare
 from neural_compressor.torch.utils import get_used_cpu_mem_MB
-
 
 htcore.hpu_set_env()
 

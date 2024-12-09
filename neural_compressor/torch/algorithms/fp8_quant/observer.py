@@ -1,17 +1,32 @@
+# Copyright (c) 2024 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 """Base class and helper functions for registering observers."""
 
-from typing import Dict, Optional, Any
-from abc import abstractmethod, ABC
 import os
+from abc import ABC, abstractmethod
+from typing import Any, Dict, Optional
+
 import torch
+
+from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import get_hqt_config
 from neural_compressor.torch.algorithms.fp8_quant.model_configs import (
-    ModuleConfig,
-    OBSERVER_TYPES,
-    OBSERVER_PARAMS,
     IMOD_DICT,
+    OBSERVER_PARAMS,
+    OBSERVER_TYPES,
+    ModuleConfig,
 )
 from neural_compressor.torch.algorithms.fp8_quant.utils.logger import logger
-from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import get_hqt_config
 
 __all__ = [
     "ObserverBase",
@@ -45,6 +60,7 @@ def register_observer(observer_type):
     Args:
         observer_type (str): The observer registration name.
     """
+
     def decorator(cls):
         if observer_type in OBSERVER_TYPES:
             logger.info("Overwrite the existing observer {}.".format(observer_type))
@@ -54,7 +70,9 @@ def register_observer(observer_type):
     return decorator
 
 
-def register_module_config_for_observer(module_name, inputs_param=(None,), outputs_param=(None,), weight_param=None, **kwargs):
+def register_module_config_for_observer(
+    module_name, inputs_param=(None,), outputs_param=(None,), weight_param=None, **kwargs
+):
     """Decorate and register module config for specific observer.
 
     Args:
@@ -63,14 +81,15 @@ def register_module_config_for_observer(module_name, inputs_param=(None,), outpu
         outputs_param (tuple): The parameter of outputs. It is a tuple of dicts: (output1 param, output2 param, ...).
         weight_param (dict): The parameter of weight, can be used by some modules like linear.
     """
+
     def decorator(cls):
         if cls not in OBSERVER_TYPES.values():
             raise ValueError(
-                f"Please register observer first and then register module_config like below: \n"
-                f"@register_module_config_for_observer(module_name=module_name, inputs_param=..., outputs_param=..., ...) \n"
-                f"@register_observer(observer_type=observer_type) \n"
-                f"class CustomizedObserver(ObserverBase): \n"
-                f"... \n"
+                "Please register observer first and then register module_config like below: \n"
+                "@register_module_config_for_observer(module_name=module_name, inputs_param=..., outputs_param=..., ...) \n"
+                "@register_observer(observer_type=observer_type) \n"
+                "class CustomizedObserver(ObserverBase): \n"
+                "... \n"
             )
         observer_type = list(OBSERVER_TYPES.keys())[list(OBSERVER_TYPES.values()).index(cls)]
         if observer_type in OBSERVER_PARAMS and module_name in OBSERVER_PARAMS[observer_type]:
@@ -78,12 +97,13 @@ def register_module_config_for_observer(module_name, inputs_param=(None,), outpu
         if weight_param is not None:
             kwargs.update({"weight": weight_param})
         OBSERVER_PARAMS.setdefault(observer_type, {})[module_name] = ModuleConfig(
-            inputs=inputs_param, outputs=outputs_param, params=kwargs,
+            inputs=inputs_param,
+            outputs=outputs_param,
+            params=kwargs,
         )
         return cls
 
     return decorator
-
 
 
 @register_observer(observer_type="maxabs")
@@ -103,8 +123,17 @@ class MaxAbsObserver(ObserverBase):
         self.used = True
 
 
-@register_module_config_for_observer(module_name="linear", inputs_param=({"dim": -1},), outputs_param=({"dim": -1},), weight_param={"dim": 0})
-@register_module_config_for_observer(module_name="matmul", inputs_param=({"dim": -1}, {"dim": -2},), outputs_param=({"dim": -1},))
+@register_module_config_for_observer(
+    module_name="linear", inputs_param=({"dim": -1},), outputs_param=({"dim": -1},), weight_param={"dim": 0}
+)
+@register_module_config_for_observer(
+    module_name="matmul",
+    inputs_param=(
+        {"dim": -1},
+        {"dim": -2},
+    ),
+    outputs_param=({"dim": -1},),
+)
 @register_observer(observer_type="maxabs_per_channel")
 class MaxAbsPerChannelObserver(ObserverBase):
     def __init__(self, name, mod, d_shape=None, params=None, device="hpu"):

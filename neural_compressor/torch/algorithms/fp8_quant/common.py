@@ -15,7 +15,6 @@
 import copy
 import json
 import os
-import copy
 import tempfile
 from collections import namedtuple
 from pathlib import Path

@@ -35,7 +35,10 @@ def init_mod_config(mod, scales, params):
 
 def init_input_config(scales_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant):
     if use_qdq or fake_quant:
-        input_config = [QuantDequant(s_inv, lp_dtype, hp_dtype, scale_format=scale_format, use_qdq=use_qdq) for s_inv in scales_inv.inputs]
+        input_config = [
+            QuantDequant(s_inv, lp_dtype, hp_dtype, scale_format=scale_format, use_qdq=use_qdq)
+            for s_inv in scales_inv.inputs
+        ]
     else:
         input_config = [QuantInput(s_inv, lp_dtype, hp_dtype, scale_format=scale_format) for s_inv in scales_inv.inputs]
     return input_config
@@ -44,8 +47,10 @@ def init_input_config(scales_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fak
 def init_weight_config(scales, scales_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant):
     if use_qdq:
         # to ensure the weights to be loaded to the device in fp8
-        weight_config = [QuantInput(scales_inv, lp_dtype, hp_dtype, scale_format=scale_format, use_qdq=use_qdq),
-                         DequantOutput(scales, lp_dtype, hp_dtype, scale_format=scale_format, use_qdq=use_qdq)]
+        weight_config = [
+            QuantInput(scales_inv, lp_dtype, hp_dtype, scale_format=scale_format, use_qdq=use_qdq),
+            DequantOutput(scales, lp_dtype, hp_dtype, scale_format=scale_format, use_qdq=use_qdq),
+        ]
     elif fake_quant:
         weight_config = [QuantDequant(scales_inv, lp_dtype, hp_dtype, scale_format=scale_format)]
     else:
@@ -77,7 +82,9 @@ def linear_scales_to_mod_config(mod, scales, params):
     output_config = [QuantDequantNone(lp_dtype, hp_dtype, scale_format=scale_format)]
 
     if isinstance(scales_inv.params["weight"], (torch.Tensor, float)):
-        weight_config = init_weight_config(scales.params["weight"], scales_inv.params["weight"], lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant)
+        weight_config = init_weight_config(
+            scales.params["weight"], scales_inv.params["weight"], lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant
+        )
     elif isinstance(scales_inv.params["weight"], dict):
         weight_scale_inv_out_ch = scales_inv.params["weight"][0]
         weight_scale_inv_in_ch = scales_inv.params["weight"][1]
@@ -114,8 +121,20 @@ def softmax_scales_to_mod_config(mod, scales, params):
     return ModuleConfig(None, output_config)
 
 
-def load_layer_scales(mod, mod_name, config, mod_type_str, measurement, scales, scale_file,
-                      scales_file_format, scales_obj, scaling_method, scale_config, save_file):
+def load_layer_scales(
+    mod,
+    mod_name,
+    config,
+    mod_type_str,
+    measurement,
+    scales,
+    scale_file,
+    scales_file_format,
+    scales_obj,
+    scaling_method,
+    scale_config,
+    save_file,
+):
     module_type = mod_default_dict[mod_type_str].type
     logger.debug(
         "Preparing quantization functions for module %s module_type=%s",
@@ -128,7 +147,9 @@ def load_layer_scales(mod, mod_name, config, mod_type_str, measurement, scales, 
             logger.debug("Calculating scales for module %s", mod_name)
             layer_measure = measurement.get(mod_name, None)  # ModuleConfig of measurements
             # calculates scales for current module according to scalling_methods
-            scales[mod_name] = scaling_method[module_type][0](mod, layer_measure, scale_config)  # ModuleConfig of scales
+            scales[mod_name] = scaling_method[module_type][0](
+                mod, layer_measure, scale_config
+            )  # ModuleConfig of scales
             if scale_file is not None:
                 scales_obj[mod_name] = ModuleConfig(
                     **format_functions_rec((torch.Tensor, scales_file_format))(scales[mod_name].__dict__)
@@ -137,13 +158,14 @@ def load_layer_scales(mod, mod_name, config, mod_type_str, measurement, scales, 
         # calculates QuantDequant config for current module according to scalling_methods
         mod_config = scaling_method[module_type][1](mod, scales[mod_name], scale_config)  # ModuleConfig of QuantDequant
         mod_extra_config = ModuleExtraConfig(
-                mod_config.inputs,
-                mod_config.outputs,
-                mod_config.params,
-                scales[mod_name],
-                scale_config,
-                )
+            mod_config.inputs,
+            mod_config.outputs,
+            mod_config.params,
+            scales[mod_name],
+            scale_config,
+        )
     return mod_extra_config, save_file
+
 
 scaling_methods = {
     "unit_scale": {

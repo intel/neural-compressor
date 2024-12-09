@@ -7,8 +7,15 @@ import torch
 
 import neural_compressor.torch.algorithms.fp8_quant as fp8_quant
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import Matmul
-from ...tester import run_with_raised_exception, _get_test_only_config, SCALE_METHODS_QUANT_ONLY, SCALE_METHODS_KEY_ERROR
+
 from ...test_hpu_utils import *
+from ...tester import (
+    SCALE_METHODS_KEY_ERROR,
+    SCALE_METHODS_QUANT_ONLY,
+    _get_test_only_config,
+    run_with_raised_exception,
+)
+
 
 class Model(torch.nn.Module):
     def __init__(self):
@@ -45,19 +52,24 @@ def test_predefined_config(lp_dtype, scale_method, quant_mode):
 
         prepare_model._prep_model_with_predefined_config(model, config=config)
         fp8_quant.finish_measurements(model)
+
     # TODO [SW-196641]: fix the following issue:
     if scale_method in SCALE_METHODS_KEY_ERROR and quant_mode == QuantMode.QUANTIZE:
         run_with_raised_exception(run_predefined_config, KeyError, "(<ScaleMethod.")
     # This is an expected exception, quant only methods support only quantization
     elif scale_method in SCALE_METHODS_QUANT_ONLY and quant_mode != QuantMode.QUANTIZE:
-        run_with_raised_exception(run_predefined_config, ValueError, "Unexpected behavior. This scale method doesn't require measurements.")
+        run_with_raised_exception(
+            run_predefined_config, ValueError, "Unexpected behavior. This scale method doesn't require measurements."
+        )
     # This is an expected exception, as test is not measuring before
     elif scale_method not in SCALE_METHODS_QUANT_ONLY:
         if quant_mode == QuantMode.QUANTIZE:
             run_with_raised_exception(run_predefined_config, FileNotFoundError, "Failed to load file ")
         # TODO [SW-196641]: fix the following issue:
         elif quant_mode == QuantMode.SHAPE:
-            run_with_raised_exception(run_predefined_config, UnboundLocalError, "local variable 'fname_base' referenced before assignment")
+            run_with_raised_exception(
+                run_predefined_config, UnboundLocalError, "local variable 'fname_base' referenced before assignment"
+            )
     else:
         run_predefined_config()
 
@@ -68,13 +80,16 @@ def test_predefined_config(lp_dtype, scale_method, quant_mode):
 def test_device_override(lp_dtype, quant_mode, device_type):
     def run_predefined_config():
         config = _get_test_only_config(
-                mode=quant_mode,
-                lp_dtype=lp_dtype,
-                scale_method=ScaleMethod.MAXABS_HW,
-                device_type=device_type,
-            )
+            mode=quant_mode,
+            lp_dtype=lp_dtype,
+            scale_method=ScaleMethod.MAXABS_HW,
+            device_type=device_type,
+        )
         assert config.cfg["device_for_scales"] == device_type_id[device_type]
+
     if device_type_id[device_type] != get_device_type():
         if not (device_type_id[device_type] == get_gaudi2_type() and is_gaudi3()):
-            return run_with_raised_exception(run_predefined_config, ValueError, "Unsupported config: device_for_scales=")
+            return run_with_raised_exception(
+                run_predefined_config, ValueError, "Unsupported config: device_for_scales="
+            )
     return run_predefined_config()

@@ -1,36 +1,32 @@
-import pytest
 import shutil
+from typing import Any, Dict, List, Optional
+
+import pytest
 import torch
 
 from neural_compressor.torch.algorithms.fp8_quant import (
-    PatchedModuleBase,
-    ScalingMethodBase,
-    ObserverBase,
     ModuleConfig,
+    ModuleExtraConfig,
     ModuleInfo,
     ModuleType,
-    ModuleExtraConfig,
+    ObserverBase,
+    PatchedModuleBase,
+    ScalingMethodBase,
+    register_observer,
     register_patched_module,
     register_scaling_methods,
-    register_observer,
 )
-from typing import List, Dict, Optional, Any
-
-from neural_compressor.torch.algorithms.fp8_quant.observer import register_module_config_for_observer
+from neural_compressor.torch.algorithms.fp8_quant._core.fp_utils import invert_scales
+from neural_compressor.torch.algorithms.fp8_quant._core.quant_dequant import DequantOutput, QuantDequantNone, QuantInput
+from neural_compressor.torch.algorithms.fp8_quant._core.scale import scaling_methods
 from neural_compressor.torch.algorithms.fp8_quant.model_configs import (
-    OBSERVER_TYPES,
     OBSERVER_PARAMS,
+    OBSERVER_TYPES,
     PATCHED_MODULE_TABLE,
     get_patched_module_table,
 )
-from neural_compressor.torch.algorithms.fp8_quant._core.fp_utils import invert_scales
-from neural_compressor.torch.algorithms.fp8_quant._core.quant_dequant import (
-    QuantInput,
-    QuantDequantNone,
-    DequantOutput,
-)
+from neural_compressor.torch.algorithms.fp8_quant.observer import register_module_config_for_observer
 from neural_compressor.torch.algorithms.fp8_quant.scaling_method_base import SCALING_METHODS_TABLE
-from neural_compressor.torch.algorithms.fp8_quant._core.scale import scaling_methods
 
 
 class _NewModuleAlphaForTest(torch.nn.Module):
@@ -183,8 +179,9 @@ class TestRegisterAPIs:
 
     @torch.no_grad()
     def test_register_new_module_e2e(self):
-        import habana_frameworks.torch.core as htcore
         from pathlib import Path
+
+        import habana_frameworks.torch.core as htcore
 
         class NewModuleForTest(torch.nn.Module):
             def __init__(self):
@@ -225,10 +222,7 @@ class TestRegisterAPIs:
                 return ModuleConfig(inputs=(None,), outputs=(None,), params=None)
 
             def forward_measure(self, input):
-                from neural_compressor.torch.algorithms.fp8_quant._core.common import (
-                    measure_input,
-                    measure_output,
-                )
+                from neural_compressor.torch.algorithms.fp8_quant._core.common import measure_input, measure_output
 
                 measure_input((input,), observer=self._mod_extra_config.inputs)
                 output = self.orig_mod(input)
@@ -293,7 +287,7 @@ class TestRegisterAPIs:
         model.eval()
         model = model.to(device).to(torch.bfloat16)
         htcore.hpu_initialize()
-        from neural_compressor.torch.quantization import prepare, convert, FP8Config, finalize_calibration
+        from neural_compressor.torch.quantization import FP8Config, convert, finalize_calibration, prepare
 
         cur_path = Path(__file__).parent
         config_file_path = cur_path / "test_jsons/test_measure.json"
@@ -312,8 +306,8 @@ class TestRegisterAPIs:
         assert (
             len(inner_mod_mod_extra_config.outputs) == cur_module_type.num_outputs
         ), f"Expected {cur_module_type.num_outputs} observers for outputs, but got {len(inner_mod_mod_extra_config.outputs)}"
-        assert (
-            len(inner_mod_mod_extra_config.params) == len(cur_module_type.param_names)
+        assert len(inner_mod_mod_extra_config.params) == len(
+            cur_module_type.param_names
         ), f"Expected {len(cur_module_type.param_names)} observers for params, but got {len(inner_mod_mod_extra_config.params)}"
 
         # Forward the model
@@ -336,8 +330,9 @@ class TestRegisterAPIs:
     @torch.no_grad()
     def test_register_observer(self):
         import habana_frameworks.torch.core as htcore
+
         from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import PatchedLinear
-        from neural_compressor.torch.quantization import finalize_calibration, prepare, FP8Config
+        from neural_compressor.torch.quantization import FP8Config, finalize_calibration, prepare
 
         class TinyModel(torch.nn.Module):
             def __init__(self):

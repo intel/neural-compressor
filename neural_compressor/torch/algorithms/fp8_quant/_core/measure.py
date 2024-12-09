@@ -14,22 +14,19 @@
 
 import json
 import os
+from abc import abstractmethod
 
 import habana_frameworks.torch.core as htcore
 import numpy as np
 import torch
 
-from abc import abstractmethod
+from neural_compressor.torch.algorithms.fp8_quant.model_configs import IMOD_DICT, OBSERVER_PARAMS, OBSERVER_TYPES
+from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
 from .._quant_common.quant_config import MeasureExclude, QuantMode, ScaleMethod, get_hqt_config, set_hqt_config
 from ..utils.logger import logger
 from .common import *
-from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
-from neural_compressor.torch.algorithms.fp8_quant.model_configs import (
-    OBSERVER_TYPES,
-    OBSERVER_PARAMS,
-    IMOD_DICT,
-)
+
 cur_accelerator = auto_detect_accelerator()
 
 
@@ -139,16 +136,20 @@ def register_patched_measure_modules(model, mod_list, observer_class, d_shapes=N
                 )
                 patched_types.add(type(mod))
 
-                set_hqt_config(mod, top_level_config) # set config in the module, as it consumed by the patched module
-                mod_extra_config = init_measure_object(
-                    mod,
-                    name,
-                    observer_class,
-                    mod_types[mod_type],
-                    skip_outputs_measurements,
-                    (d_shapes[name] if ((d_shapes is not None) and (name in d_shapes)) else None),
-                    params,
-                ) if mod_default_dict[mod_type_str].should_measure_and_quant else None
+                set_hqt_config(mod, top_level_config)  # set config in the module, as it consumed by the patched module
+                mod_extra_config = (
+                    init_measure_object(
+                        mod,
+                        name,
+                        observer_class,
+                        mod_types[mod_type],
+                        skip_outputs_measurements,
+                        (d_shapes[name] if ((d_shapes is not None) and (name in d_shapes)) else None),
+                        params,
+                    )
+                    if mod_default_dict[mod_type_str].should_measure_and_quant
+                    else None
+                )
                 pmod = patch_module_measure(mod, mod_extra_config, mod_default_dict)
                 if pmod._mod_extra_config:
                     for param_name in pmod._mod_extra_config.params:

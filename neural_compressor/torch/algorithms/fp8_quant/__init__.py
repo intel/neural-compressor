@@ -37,6 +37,6 @@ from neural_compressor.torch.algorithms.fp8_quant.model_configs import (
     ModuleConfig,
     ModuleInfo,
     ModuleType,
-    ModuleExtraConfig
+    ModuleExtraConfig,
 )
 from neural_compressor.torch.algorithms.fp8_quant.save_load import save, load

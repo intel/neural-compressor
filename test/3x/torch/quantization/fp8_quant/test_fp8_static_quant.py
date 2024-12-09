@@ -12,12 +12,12 @@ from neural_compressor.torch.quantization import (
     convert,
     finalize_calibration,
     get_default_fp8_config,
+    load,
     prepare,
     quantize,
     save,
-    load
 )
-from neural_compressor.torch.utils import is_hpex_available, get_used_hpu_mem_MB
+from neural_compressor.torch.utils import get_used_hpu_mem_MB, is_hpex_available
 
 
 def change_to_cur_file_dir():

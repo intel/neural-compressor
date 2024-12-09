@@ -20,18 +20,20 @@ import os
 import numpy as np
 import torch
 
-from .._quant_common.helper_modules import *
-from .._quant_common.quant_config import get_hqt_config
-from ..utils.logger import logger
 from neural_compressor.torch.algorithms.fp8_quant.model_configs import (
-    ModuleInfo,
     ModuleConfig,
-    ModuleType,
     ModuleExtraConfig,
+    ModuleInfo,
+    ModuleType,
     get_patched_module_table,
     get_patched_module_type_table,
 )
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
+
+from .._quant_common.helper_modules import *
+from .._quant_common.quant_config import get_hqt_config
+from ..utils.logger import logger
+
 deepspeed_exists = False
 if importlib.util.find_spec("deepspeed"):  # check if deepspeed is installed
     deepspeed_exists = True
@@ -227,11 +229,14 @@ if deepspeed_exists:
         }
     )
 
+
 @functools.lru_cache(maxsize=None)
 def _import_hpu_modules():
     from neural_compressor.torch.algorithms.fp8_quant.patched_module_base import (
-        PATCHED_MODULE_TABLE, PATCHED_MODULE_TYPES_TABLE
+        PATCHED_MODULE_TABLE,
+        PATCHED_MODULE_TYPES_TABLE,
     )
+
     cur_accelerator = auto_detect_accelerator()
     if not cur_accelerator.current_device_name().startswith("hpu"):
         return
@@ -244,8 +249,10 @@ _import_hpu_modules()
 mod_default_dict = get_patched_module_table()
 mod_types = get_patched_module_type_table()
 
+
 def get_white_list():
     return list(mod_default_dict.keys())
+
 
 class ModInstInfo:
     def __init__(self, name, parent):
@@ -263,6 +270,7 @@ def generate_model_info(model):
             create_mod_info_recursion(mod)
 
     create_mod_info_recursion(model)
+
 
 def get_device_type_for_scales(mod):
     config = get_hqt_config(mod).cfg

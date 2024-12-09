@@ -627,12 +627,11 @@ def find_matching_blocks(model, all_blocks, to_quant_block_names=None):
 
 
 def get_non_persistent_buffers(model):
-    """
-    Get all non-persistent buffers in the model.
-    
+    """Get all non-persistent buffers in the model.
+
     Args:
         model (torch.nn.Module): PyTorch model
-        
+
     Returns:
         dict: A dictionary containing all non-persistent buffers, {buffer_names: buffer_tensors}
     """
@@ -646,13 +645,11 @@ def get_non_persistent_buffers(model):
 
 
 def load_non_persistent_buffers(model, non_persistent_buffers):
-    """
-    Load all non-persistent buffers into the model.
-    
+    """Load all non-persistent buffers into the model.
+
     Args:
         model (torch.nn.Module): PyTorch model
         non_persistent_buffers (dict): A dictionary containing all non-persistent buffers, {buffer_names: buffer_tensors}
-
     """
     for full_name, buffer in non_persistent_buffers.items():
         module_name, buffer_name = full_name

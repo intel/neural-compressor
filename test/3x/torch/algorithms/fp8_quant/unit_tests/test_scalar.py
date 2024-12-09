@@ -1,13 +1,13 @@
 import copy
-import torch
 
 import habana_frameworks.torch.core as htcore
+import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 htcore.hpu_set_env()
 
-from neural_compressor.torch.quantization import FP8Config, convert, prepare
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import Matmul
+from neural_compressor.torch.quantization import FP8Config, convert, prepare
 
 torch.manual_seed(1)
 
@@ -77,7 +77,7 @@ def test_scalar_model():
     with torch.no_grad():
         output_const = model_const(**inputs).logits.cpu()
         output_scalar = model_scalar(**inputs).logits.cpu()
-    assert torch.allclose(output_const, output_scalar, rtol=0.01), f"Scalar on model failed"
+    assert torch.allclose(output_const, output_scalar, rtol=0.01), "Scalar on model failed"
 
 
 def test_scalar_simple():
@@ -107,4 +107,4 @@ def test_scalar_simple():
     with torch.no_grad():
         output_const = model_const(inp_test).cpu()
         output_scalar = model_scalar(inp_test).cpu()
-    assert torch.allclose(output_const, output_scalar, rtol=0.01), f"Scalar failed"
+    assert torch.allclose(output_const, output_scalar, rtol=0.01), "Scalar failed"

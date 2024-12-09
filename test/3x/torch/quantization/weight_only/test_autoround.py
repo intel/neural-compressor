@@ -1,12 +1,13 @@
 import copy
+import os
 import shutil
+from functools import lru_cache
 
 import pytest
 import torch
 import transformers
 from packaging.version import Version
-import os
-from functools import lru_cache
+
 
 @lru_cache(None)
 def is_habana_framework_installed():
@@ -19,6 +20,7 @@ def is_habana_framework_installed():
 
     package_spec = find_spec("habana_frameworks")
     return package_spec is not None
+
 
 def set_hpu_torch_compile_envs():
     if not is_habana_framework_installed():
@@ -45,7 +47,6 @@ from neural_compressor.torch.quantization import (
     prepare,
     quantize,
 )
-
 from neural_compressor.torch.utils import logger
 
 torch.backends.__allow_nonbracketed_mutation_flag = True
@@ -69,6 +70,7 @@ def run_fn(model, dataloader):
         else:
             model(data)
 
+
 @pytest.mark.skipif(is_habana_framework_installed(), reason="These tests are not supported on HPU for now.")
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
 class TestAutoRoundCPU:
@@ -83,6 +85,7 @@ class TestAutoRoundCPU:
             "hf-internal-testing/tiny-random-GPTJForCausalLM", trust_remote_code=True
         )
         from neural_compressor.torch.algorithms.weight_only.autoround import get_dataloader
+
         self.dataloader = get_dataloader(tokenizer, 32, dataset_name="NeelNanda/pile-10k", seed=42, bs=8, nsamples=10)
         self.label = self.gptj(self.inp)[0]
 
@@ -289,9 +292,10 @@ class TestAutoRoundCPU:
 class TestAutoRoundHPU:
     @classmethod
     def setup_class(self):
-        
+
         model_name = "TheBloke/Llama-2-7B-Chat-GPTQ"
         from transformers import AutoModelForCausalLM, AutoTokenizer, LlamaConfig
+
         from neural_compressor.torch.algorithms.weight_only.autoround import get_dataloader
 
         config = LlamaConfig(num_hidden_layers=2)

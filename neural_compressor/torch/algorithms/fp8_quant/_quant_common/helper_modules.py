@@ -55,6 +55,7 @@ class Softmax(nn.Module):
     def forward(self, x, dim=None, invAttnHead=None):
         return torch.softmax(x, dim)
 
+
 def matmul_fp8(
     input,
     other,
@@ -198,7 +199,6 @@ class PatchedMatmul(nn.Module):
         output = torch.matmul(qinput, qother)
         return output
 
-
     def forward_measure(self, input, other):
         measure_input((input, other), observer=self._mod_extra_config.inputs)
         output = self.orig_mod(input, other)
@@ -211,6 +211,7 @@ class PatchedMatmul(nn.Module):
             self.class_name_org,
             get_current_repr(self, "scale_input", "scale_other"),
         )
+
 
 def init_linear(instance, mod_extra_config):
     if instance.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
@@ -241,6 +242,7 @@ def init_linear(instance, mod_extra_config):
     elif (instance.quantization_mode == QuantMode.MEASURE) or (instance.quantization_mode == QuantMode.SHAPE):
         instance.forward = instance.forward_measure
 
+
 class PatchedLinear(nn.Module):
     def __init__(self, mod, mod_extra_config, *args, **kwargs):
         super().__init__()
@@ -249,10 +251,14 @@ class PatchedLinear(nn.Module):
 
     def forward_qdq(self, input):
         if self.fake_quant:
-            qweight = self.qdq_weights(self.weight, )
+            qweight = self.qdq_weights(
+                self.weight,
+            )
         else:
-            qweight = self.dequant_weights(self.weight, )
-        qinput =  self.quant_input(input)
+            qweight = self.dequant_weights(
+                self.weight,
+            )
+        qinput = self.quant_input(input)
         y = torch.matmul(qinput, qweight)
         output = y + self.bias if (self.bias is not None) else y
         return output
@@ -311,12 +317,15 @@ class PatchedMoeMatmul(nn.Module):
     def forward_qdq(self, input, *args, **kwargs):
         qinput = self.quant_input(input)
         if self.fake_quant:
-            qweight = self.qdq_weights(self.weight, )
+            qweight = self.qdq_weights(
+                self.weight,
+            )
         else:
-            qweight = self.dequant_weights(self.weight, )
+            qweight = self.dequant_weights(
+                self.weight,
+            )
         y = torch.matmul(qinput, qweight)
         return y
-
 
     def forward_quant(self, input, *args, **kwargs):
         qinput = self.quant_input(input)
@@ -342,6 +351,7 @@ class PatchedMoeMatmul(nn.Module):
             get_current_repr(self, "scale_input", "scale_weight"),
         )
 
+
 class PatchedReplicatedLinear(nn.Module):
     def __init__(self, mod, mod_extra_config, *args, **kwargs):
         super().__init__()
@@ -351,9 +361,13 @@ class PatchedReplicatedLinear(nn.Module):
     def forward_qdq(self, input):
         qinput = self.quant_input(input)
         if self.fake_quant:
-            qweight = self.qdq_weights(self.weight, )
+            qweight = self.qdq_weights(
+                self.weight,
+            )
         else:
-            qweight = self.dequant_weights(self.weight, )
+            qweight = self.dequant_weights(
+                self.weight,
+            )
         bias = self.bias if not self.skip_bias_add else None
         y = torch.matmul(qinput, qweight)
         output = y + bias if (bias is not None) else y
@@ -399,9 +413,13 @@ class PatchedLinearAllReduce(nn.Module):
         # pre_all_reduce
         qinput = self.quant_input(input)
         if self.fake_quant:
-            qweight = self.qdq_weights(self.weight, )
+            qweight = self.qdq_weights(
+                self.weight,
+            )
         else:
-            qweight = self.dequant_weights(self.weight, )
+            qweight = self.dequant_weights(
+                self.weight,
+            )
         output = torch.matmul(qinput, qweight)
 
         if not self.scoped_version:
@@ -463,9 +481,13 @@ class PatchedRowParallelLinear(nn.Module):
         resolved_input = self.resolve_input(input)
         qinput = self.quant_input(resolved_input)
         if self.fake_quant:
-            qweight = self.qdq_weights(self.weight, )
+            qweight = self.qdq_weights(
+                self.weight,
+            )
         else:
-            qweight = self.dequant_weights(self.weight, )
+            qweight = self.dequant_weights(
+                self.weight,
+            )
         output = torch.matmul(qinput, qweight)
 
         if self.reduce_results:
@@ -524,9 +546,13 @@ class PatchedColumnParallelLinear(nn.Module):
     def forward_qdq(self, input):
         qinput = self.quant_input(input)
         if self.fake_quant:
-            qweight = self.qdq_weights(self.weight, )
+            qweight = self.qdq_weights(
+                self.weight,
+            )
         else:
-            qweight = self.dequant_weights(self.weight, )
+            qweight = self.dequant_weights(
+                self.weight,
+            )
         output = torch.matmul(qinput, qweight)
 
         if self.gather_output:
@@ -585,9 +611,13 @@ class PatchedLmHeadLinearAllreduce(nn.Module):
         splittedInput = input[:, :, self.rank * input_shard : (self.rank + 1) * input_shard]
         qinput = self.quant_input(splittedInput)
         if self.fake_quant:
-            qweight = self.qdq_weights(self.weight, )
+            qweight = self.qdq_weights(
+                self.weight,
+            )
         else:
-            qweight = self.dequant_weights(self.weight, )
+            qweight = self.dequant_weights(
+                self.weight,
+            )
         output = torch.matmul(qinput, qweight)
 
         if self.mp_group is not None:
@@ -740,6 +770,7 @@ class PatchedVLLMKVCache(nn.Module):
         output_cache = self.orig_fetch_from_cache(quant_cache, blocks)
         return self.dequant_output(output_cache)
 
+
 def init_conv(instance, mod_extra_config):
     if instance.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
         instance.quant_input = instance._mod_extra_config.inputs[0]
@@ -753,13 +784,16 @@ def init_conv(instance, mod_extra_config):
     elif (instance.quantization_mode == QuantMode.MEASURE) or (instance.quantization_mode == QuantMode.SHAPE):
         instance.forward = instance.forward_measure
 
+
 class PatchedConv2d(nn.Conv2d):
     def __init__(self, mod, mod_extra_config, *args, **kwargs):
         set_attrs_from_orig_model(self, mod, mod_extra_config)
         init_conv(self, mod_extra_config)
 
     def forward_qdq(self, input):
-        qweight = self.dequant_weights(self.weight, )
+        qweight = self.dequant_weights(
+            self.weight,
+        )
         qinput = self.quant_input(input)
         output = torch.nn.functional.conv2d(
             qinput,
@@ -815,7 +849,9 @@ class PatchedSoftmax(nn.Module):
                 self.forward = self.forward_quant
                 # input scale is 1 assuming the input to SM is descaled because we are using HW supported scales
                 self.scale_input = create_scale_tensor(torch.Tensor([1.0]), self.scale_format)
-                self.scale_output = create_scale_tensor(torch.Tensor([1 / mod_extra_config.scale.outputs[0]]), self.scale_format)
+                self.scale_output = create_scale_tensor(
+                    torch.Tensor([1 / mod_extra_config.scale.outputs[0]]), self.scale_format
+                )
         elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
             self.forward = self.forward_measure
 
@@ -850,9 +886,13 @@ class PatchedLoRACompatibleLinear(nn.Linear):
     def forward_qdq(self, input, scale: float = 1.0):
         qinput = self.quant_input(input)
         if self.fake_quant:
-            qweight = self.qdq_weights(self.weight, )
+            qweight = self.qdq_weights(
+                self.weight,
+            )
         else:
-            qweight = self.dequant_weights(self.weight, )
+            qweight = self.dequant_weights(
+                self.weight,
+            )
         y = torch.matmul(qinput, qweight)
         output = y + self.bias if (self.bias is not None) else y
         if self.lora_layer is not None:
@@ -900,7 +940,9 @@ class PatchedLoRACompatibleConv(nn.Conv2d):
             # TODO SW-174899 support lora layer quantization
             _raise_lora_layer_error(self.class_name_org)
         else:
-            qweight = self.dequant_weights(self.weight, )
+            qweight = self.dequant_weights(
+                self.weight,
+            )
             output = torch.nn.functional.conv2d(
                 qinput,
                 qweight,
@@ -960,10 +1002,12 @@ class PatchedModuleFusedSDPA(nn.Module):
             self.scale_q = create_scale_tensor(mod_extra_config.scale.inputs[0].type(torch.float32), self.scale_format)
             self.scale_k = create_scale_tensor(mod_extra_config.scale.inputs[1].type(torch.float32), self.scale_format)
             self.scale_v = create_scale_tensor(mod_extra_config.scale.inputs[2].type(torch.float32), self.scale_format)
-            self.descale_amax = create_scale_tensor(mod_extra_config.scale.inputs[3].type(torch.float32),
-                                                    self.scale_format)
-            self.scale_output = create_scale_tensor(1 / mod_extra_config.scale.outputs[0].type(torch.float32),
-                                                    self.scale_format)
+            self.descale_amax = create_scale_tensor(
+                mod_extra_config.scale.inputs[3].type(torch.float32), self.scale_format
+            )
+            self.scale_output = create_scale_tensor(
+                1 / mod_extra_config.scale.outputs[0].type(torch.float32), self.scale_format
+            )
             self.scale_amax = create_scale_tensor(1 / self.descale_amax, self.scale_format)
             if self.use_qdq:
                 self.forward = self.forward_qdq
@@ -1003,7 +1047,7 @@ class PatchedModuleFusedSDPA(nn.Module):
             recompute,
             valid_seq_len,
             seq_padding_type,
-            )
+        )
         return results
 
     def forward_quant(

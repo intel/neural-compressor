@@ -1,4 +1,19 @@
-from typing import Dict, Optional, Tuple, Any
+# Copyright (c) 2024 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from typing import Any, Dict, Optional, Tuple
+
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
 __all__ = [
@@ -17,6 +32,7 @@ __all__ = [
     "import_external_scaling_methods",
     "clear_external_scaling_methods",
 ]
+
 
 # ==-------------------------------------------------------------------------==
 # Patched Module Configurations
@@ -103,9 +119,7 @@ def import_external_scaling_methods():
     This function is called by the `register_scaling_methods` decorator and import
     the scaling methods registered out-of-tree to the `scaling_methods` dictionary.
     """
-    from neural_compressor.torch.algorithms.fp8_quant._core.scale import (
-        scaling_methods,
-    )
+    from neural_compressor.torch.algorithms.fp8_quant._core.scale import scaling_methods
 
     for scaling_method_name, (patch_module_type, cls) in SCALING_METHODS_TABLE.items():
         if scaling_method_name not in scaling_methods:

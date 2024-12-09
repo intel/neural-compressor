@@ -36,7 +36,10 @@ from neural_compressor.torch.utils import (
 from .modules import HPUWeightOnlyLinear, INCWeightOnlyLinear, MulLinear
 from .utility import convert_dtype_str2torch
 
-format_woqlinear_mapping = {SaveLoadFormat.HUGGINGFACE: INCWeightOnlyLinear, SaveLoadFormat.DEFAULT: INCWeightOnlyLinear}
+format_woqlinear_mapping = {
+    SaveLoadFormat.HUGGINGFACE: INCWeightOnlyLinear,
+    SaveLoadFormat.DEFAULT: INCWeightOnlyLinear,
+}
 device_woqlinear_mapping = {"cpu": INCWeightOnlyLinear, "hpu": HPUWeightOnlyLinear}
 
 
@@ -199,7 +202,7 @@ class WOQModelLoader:
         model = self._build_woq_model()
 
         # load remaining pretrained weight to weight-only quantization model
-        is_meta_device = hasattr(self.original_model, "device") and self.original_model.device.type == 'meta'
+        is_meta_device = hasattr(self.original_model, "device") and self.original_model.device.type == "meta"
         if is_meta_device:
             model.load_state_dict(self.loaded_state_dict, assign=True, strict=False)
 
@@ -851,7 +854,7 @@ class WOQModelLoader:
         for shard_file in resolved_archive_file:
             state_dict = load_state_dict(shard_file)
 
-            params_dict={
+            params_dict = {
                 "model": model,
                 "state_dict": state_dict,
                 "start_prefix": "",
@@ -865,6 +868,7 @@ class WOQModelLoader:
             }
 
             import transformers
+
             if transformers.__version__ < "4.45.0":
                 params_dict["loaded_state_dict_keys"] = self.loaded_state_dict_keys
 

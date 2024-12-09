@@ -12,17 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 import gc
 import os
 import shutil
 import time
-import copy
 
 import torch
 
-from ._quant_common.quant_config import local_rank, world_size, HpDtype
-from neural_compressor.torch.utils import get_accelerator, is_optimum_habana_available, get_attr, set_attr
+from neural_compressor.torch.utils import get_accelerator, get_attr, is_optimum_habana_available, set_attr
 
+from ._quant_common.quant_config import HpDtype, local_rank, world_size
 
 MAX_FILE_SIZE = 5  # GB
 cur_accelerator = get_accelerator()
@@ -45,6 +45,7 @@ tp_module_list = (
 
 
 ##################################### save ##################################
+
 
 def save_rank_model(model, folder_prefix=""):
     """Save state_dict for model from each rank."""
@@ -169,12 +170,13 @@ def load_empty_raw_model(model_name_or_path, **kwargs):
     """Initialize BF16 model with meta tensor."""
     import transformers
     from accelerate import init_empty_weights
+
     config = transformers.AutoConfig.from_pretrained(model_name_or_path, **kwargs)
     # fp8 model provided by neuralmagic.
-    if (
-        "quant_method" in config.quantization_config
-        and config.quantization_config["quant_method"] in ["fp8", "compressed-tensors"]
-    ):
+    if "quant_method" in config.quantization_config and config.quantization_config["quant_method"] in [
+        "fp8",
+        "compressed-tensors",
+    ]:
         from_neuralmagic = True
         if (
             "kv_cache_scheme" in config.quantization_config
@@ -191,6 +193,7 @@ def load_empty_raw_model(model_name_or_path, **kwargs):
         config.flash_attention_fp8 = True
         if is_optimum_habana_available:
             from optimum.habana.transformers.modeling_utils import adapt_transformers_to_gaudi
+
             adapt_transformers_to_gaudi()
         else:
             raise ValueError("Please install optimum-habana to load fp8 kv cache model.")
@@ -206,7 +209,7 @@ def load_empty_raw_model(model_name_or_path, **kwargs):
         with init_empty_weights(include_buffers=False):
             model = transformers.AutoModelForCausalLM.from_config(config, torch_dtype=hp_dtype)
         # TODO: [SW-199728] [DeepSpeed] Buffers initialized by model are not correct after tensor parallel
-        # get_non_persistent_buffers and load_non_persistent_buffers are workrounds of [SW-199728]
+        # get_non_persistent_buffers and load_non_persistent_buffers are workarounds of [SW-199728]
         non_persistent_buffers = get_non_persistent_buffers(model)
         ds_inference_kwargs = {
             "dtype": hp_dtype,
@@ -266,8 +269,9 @@ def shard_state_dict(state_dict):
             rank_state_dict[k] = v.to("hpu")
     return rank_state_dict
 
+
 def split_rank_state_dict(model, gathered_state_dict):
-    """split state_dict for current local_rank."""
+    """Split state_dict for current local_rank."""
     rank_state_dict = {}
     for name, param in model.named_parameters():
         if name in gathered_state_dict:
@@ -298,13 +302,14 @@ def get_inc_fp8config(model, from_neuralmagic=False, from_neuralmagic_with_kv=Fa
         INC FP8 Config.
     """
     from neural_compressor.torch.quantization import FP8Config
+
     if from_neuralmagic:
         if "ignore" in model.config.quantization_config.keys():
-            blocklist =  {"types": [], "names": model.config.quantization_config["ignore"]}
+            blocklist = {"types": [], "names": model.config.quantization_config["ignore"]}
         elif "ignored_layers" in model.config.quantization_config.keys():
-            blocklist =  {"types": [], "names": model.config.quantization_config["ignored_layers"]}
+            blocklist = {"types": [], "names": model.config.quantization_config["ignored_layers"]}
         else:
-            blocklist =  {"types": [], "names": ["lm_head"]}
+            blocklist = {"types": [], "names": ["lm_head"]}
         if "target" in model.config.quantization_config.keys():
             allowlist = {"types": model.config.quantization_config["target"], "names": []}
         else:
@@ -350,10 +355,11 @@ def load(model_name_or_path, format="huggingface", device="hpu", **kwargs):
         gathered_state_dict = safe_load_file(cur_file)
         if from_neuralmagic or from_neuralmagic_with_kv:
             import habana_frameworks.torch.utils.experimental as htexp
+
             gathered_state_dict = convert_weight_to_inc(
-                                        state_dict=gathered_state_dict,
-                                        on_gaudi2=htexp._get_device_type() == htexp.synDeviceType.synDeviceGaudi2
-                                        )
+                state_dict=gathered_state_dict,
+                on_gaudi2=htexp._get_device_type() == htexp.synDeviceType.synDeviceGaudi2,
+            )
         if world_size > 0:
             # only return state_dict for the current local_rank
             if from_neuralmagic or from_neuralmagic_with_kv:
@@ -375,7 +381,7 @@ def load(model_name_or_path, format="huggingface", device="hpu", **kwargs):
 
 
 def convert_weight_to_inc(state_dict, on_gaudi2=False):
-    """To convert the vllm compatable fp8 model weight to INC format,
+    """To convert the vllm compatible fp8 model weight to INC format,
        one is operators' name are different, the other is to adapt weight on G2
        due to the torch.float8_e4m3fn scope [-240, 240].
 
@@ -397,9 +403,12 @@ def convert_weight_to_inc(state_dict, on_gaudi2=False):
                 scale = state_dict[key].to("hpu")
                 dequant_weight = qweight * scale
                 # recompute scale, qweight
-                recompute_scale = scale * (torch.finfo(torch.float8_e4m3fn).max /
-                                        torch.finfo(torch.float8_e4m3fnuz).max)
-                qweight = torch.ops.hpu.cast_to_fp8_v2(dequant_weight, 1.0 / recompute_scale, False, False, torch.float8_e4m3fn)[0]
+                recompute_scale = scale * (
+                    torch.finfo(torch.float8_e4m3fn).max / torch.finfo(torch.float8_e4m3fnuz).max
+                )
+                qweight = torch.ops.hpu.cast_to_fp8_v2(
+                    dequant_weight, 1.0 / recompute_scale, False, False, torch.float8_e4m3fn
+                )[0]
                 state_dict[weight_key] = qweight
                 state_dict[scale_weight] = recompute_scale
             else:

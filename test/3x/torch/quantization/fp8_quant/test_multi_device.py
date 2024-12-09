@@ -5,9 +5,9 @@ import deepspeed
 import torch
 import transformers
 
+from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import PatchedLinear
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import local_rank, world_size
 from neural_compressor.torch.quantization import FP8Config, convert, load, prepare, save
-from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import PatchedLinear
 
 
 def get_model_param_buffers(model):
@@ -21,12 +21,13 @@ def get_model_param_buffers(model):
 
 def compare_parameters_buffers(model1, model2):
     import torch
+
     dict1 = get_model_param_buffers(model1)
     dict2 = get_model_param_buffers(model2)
     for k, v in dict1.items():
         assert k in dict2, "k not in dict2"
-        assert v.dtype == dict2[k].dtype, f"dtype of {k} is differnt.\n{v.dtype}\n{dict2[k].dtype}"
-        assert torch.allclose(v, dict2[k]), f"{k} is differnt in model1 and model2.\n" + f"{v}\n" + f"{dict2[k]}\n"
+        assert v.dtype == dict2[k].dtype, f"dtype of {k} is different.\n{v.dtype}\n{dict2[k].dtype}"
+        assert torch.allclose(v, dict2[k]), f"{k} is different in model1 and model2.\n" + f"{v}\n" + f"{dict2[k]}\n"
 
 
 @torch.no_grad()

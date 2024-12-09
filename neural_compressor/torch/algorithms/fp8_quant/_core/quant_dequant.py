@@ -12,13 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch.nn as nn
-import torch
-from torch.ao.quantization.fx._decomposed import quantized_decomposed_lib
 from abc import abstractmethod
 
 import habana_frameworks.torch.core as htcore
+import torch
+import torch.nn as nn
+from torch.ao.quantization.fx._decomposed import quantized_decomposed_lib
+
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
+
 cur_accelerator = auto_detect_accelerator()
 
 from .._core.scale_handler import create_scale_tensor, get_scale_dtype
@@ -29,10 +31,14 @@ scale_fcn = lambda x, scale: torch.div(x, scale)
 cast_fcn = lambda x, dtype: x.to(dtype=dtype)
 cast_to_fp8_fcn = lambda x, dtype, scale_inv=None: torch.ops.hpu.cast_to_fp8_v2(x, scale_inv, False, False, dtype)[0]
 cast_from_fp8_fcn = lambda x, dtype, scale=None: torch.ops.hpu.cast_from_fp8(x, scale, dtype)
-quant_to_fp8_fcn = lambda x, scale, zero_point, quant_min, quant_max, dtype=None: \
-    torch.ops.quantized_decomposed.quantize_per_tensor(x, scale, zero_point, quant_min, quant_max, dtype=dtype)
-dequant_from_fp8_fcn = lambda x, scale, zero_point, quant_min, quant_max, dtype, out_dtype=None: \
-    torch.ops.quantized_decomposed.dequantize_per_tensor(x, scale, zero_point, quant_min, quant_max, dtype=dtype, out_dtype=out_dtype)
+quant_to_fp8_fcn = (
+    lambda x, scale, zero_point, quant_min, quant_max, dtype=None: torch.ops.quantized_decomposed.quantize_per_tensor(
+        x, scale, zero_point, quant_min, quant_max, dtype=dtype
+    )
+)
+dequant_from_fp8_fcn = lambda x, scale, zero_point, quant_min, quant_max, dtype, out_dtype=None: torch.ops.quantized_decomposed.dequantize_per_tensor(
+    x, scale, zero_point, quant_min, quant_max, dtype=dtype, out_dtype=out_dtype
+)
 
 
 class QuantDequantBase(nn.Module):
@@ -80,18 +86,20 @@ class QuantInput(QuantDequantBase):
 
     def forward(self, x):
         # create PCQ inv scale as tmp local variable since its size/mem-usage is equal to the module weight
-        scale_inv = torch.mul(self.scale_inv[0], self.scale_inv[1]) if isinstance(self.scale_inv, list) else self.scale_inv
+        scale_inv = (
+            torch.mul(self.scale_inv[0], self.scale_inv[1]) if isinstance(self.scale_inv, list) else self.scale_inv
+        )
         return cast_to_fp8_fcn(x, self.lp_dtype, scale_inv)
 
     def forward_qdq(self, x):
         return quant_to_fp8_fcn(
-                x,
-                scale=self.scale,
-                zero_point=0,
-                quant_min=self.quant_min,
-                quant_max=self.quant_max,
-                dtype=self.lp_dtype,
-            )
+            x,
+            scale=self.scale,
+            zero_point=0,
+            quant_min=self.quant_min,
+            quant_max=self.quant_max,
+            dtype=self.lp_dtype,
+        )
 
     def extra_repr(self) -> str:
         repr = super(QuantInput, self).extra_repr()
@@ -110,14 +118,14 @@ class DequantOutput(QuantDequantBase):
 
     def forward_qdq(self, x):
         return dequant_from_fp8_fcn(
-                x,
-                scale=self.scale,
-                zero_point=0,
-                quant_min=self.quant_min,
-                quant_max=self.quant_max,
-                dtype=self.lp_dtype,
-                out_dtype=self.hp_dtype,
-            )
+            x,
+            scale=self.scale,
+            zero_point=0,
+            quant_min=self.quant_min,
+            quant_max=self.quant_max,
+            dtype=self.lp_dtype,
+            out_dtype=self.hp_dtype,
+        )
 
     def extra_repr(self) -> str:
         repr = super(DequantOutput, self).extra_repr()
