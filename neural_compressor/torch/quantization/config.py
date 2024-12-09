@@ -1780,7 +1780,13 @@ def get_default_hqq_config() -> HQQConfig:
 
 ######################## FP8 Quant Config ###############################
 
-from ..algorithms.fp8_quant._core.common import get_white_list
+if is_hpex_available():
+    from ..algorithms.fp8_quant._core.common import get_white_list
+
+    FP8_WHITE_LIST = get_white_list()
+else:
+    FP8_WHITE_LIST = list()
+
 
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=FP8_QUANT)
 class FP8Config(TorchBaseConfig):
@@ -1793,7 +1799,7 @@ class FP8Config(TorchBaseConfig):
         fp8_config: str = "E4M3",
         hp_dtype: str = "bf16",
         blocklist: dict = {"names": [], "types": ()},
-        allowlist: dict = {"names": [], "types": get_white_list()},
+        allowlist: dict = {"names": [], "types": FP8_WHITE_LIST},
         mode: str = "AUTO",
         scale_method: str = "maxabs_hw",
         scale_params: dict = {},
@@ -1820,8 +1826,10 @@ class FP8Config(TorchBaseConfig):
             observer (str, optional): Params of scales. Defaults to "maxabs".
             mod_dict (dict, optional): The dict of modules to quantize. Defaults to {}.
             measure_exclude (str, optional): Select INPUT/OUTPUT to be exculded by measurement. Defaults to "OUTPUT".
-            fake_quant (bool, optional): whether to execute fake quantization, a little bit different with use_qdq, used for training. Defaults to False.
-            use_qdq (bool, optional): whether to execute Q/DQ quantization. Defaults to False.
+            fake_quant (bool, optional): Whether to execute fake quantization, a little bit different with use_qdq, used for training. Defaults to False.
+            use_qdq (bool, optional): Whether to execute Q/DQ quantization. Defaults to False.
+            scale_format (str, optional): Select the expression type of scale value, which may impact the performance. Defaults to const.
+            measure_on_hpu (bool, optional): Whether to measure model on hpu device. Defaults to True.
         """
         super().__init__()
         self.dump_stats_path = dump_stats_path
@@ -1930,8 +1938,8 @@ class FP8Config(TorchBaseConfig):
         filter_result = []
         for op_name, module in model.named_modules():
             if (
-                module.__class__.__name__ in get_white_list()
-                or module.__class__.__name__.split("Patched")[-1] in get_white_list()
+                module.__class__.__name__ in FP8_WHITE_LIST
+                or module.__class__.__name__.split("Patched")[-1] in FP8_WHITE_LIST
             ):
                 pair = (op_name, module.__class__.__name__)
                 filter_result.append(pair)
