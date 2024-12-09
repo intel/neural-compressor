@@ -19,4 +19,24 @@ from neural_compressor.torch.algorithms.fp8_quant.common import (
     with_patched_module,
 )
 from neural_compressor.torch.algorithms.fp8_quant.prepare_quant.prepare_model import finish_measurements, prep_model
-from neural_compressor.torch.algorithms.fp8_quant.fp8_quant import FP8Quantizer
+from neural_compressor.torch.algorithms.fp8_quant.quantizer import FP8Quantizer
+from neural_compressor.torch.algorithms.fp8_quant.patched_module_base import (
+    PatchedModuleBase,
+    register_patched_module,
+)
+
+from neural_compressor.torch.algorithms.fp8_quant.scaling_method_base import (
+    ScalingMethodBase,
+    register_scaling_methods,
+)
+from neural_compressor.torch.algorithms.fp8_quant.observer import (
+    ObserverBase,
+    register_observer,
+)
+from neural_compressor.torch.algorithms.fp8_quant.model_configs import (
+    ModuleConfig,
+    ModuleInfo,
+    ModuleType,
+    ModuleExtraConfig,
+)
+from neural_compressor.torch.algorithms.fp8_quant.save_load import save, load

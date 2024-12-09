@@ -28,9 +28,8 @@ def linear_single_scale_scales(mod, measurement, params, scale=1.0):
 
 
 def linear_hw_aligned_single_scale_scales(mod, measurement, params):
-    config = get_hqt_config(mod).cfg
-    device_type = config["device_type"]
-    hw_aligned_single_scale = FP8_143_SCALES[device_type][0]
+    device_for_scales = get_device_type_for_scales(mod)
+    hw_aligned_single_scale = FP8_143_SCALES[device_for_scales][0]
     return linear_single_scale_scales(mod, measurement, params, hw_aligned_single_scale)
 
 
@@ -47,9 +46,8 @@ def fsdpa_single_scale_scales(mod, measurement, params, scale=1.0):
 
 
 def fsdpa_hw_aligned_single_scale_scales(mod, measurement, params):
-    config = get_hqt_config(mod).cfg
-    device_type = config["device_type"]
-    hw_aligned_single_scale = FP8_143_SCALES[device_type][0]
+    device_for_scales = get_device_type_for_scales(mod)
+    hw_aligned_single_scale = FP8_143_SCALES[device_for_scales][0]
     return fsdpa_single_scale_scales(mod, measurement, params, hw_aligned_single_scale)
 
 
@@ -65,9 +63,8 @@ def matmul_single_scale_scales(mod, measurement, params, scale=1.0):
 
 
 def matmul_hw_aligned_single_scale_scales(mod, measurement, params):
-    config = get_hqt_config(mod).cfg
-    device_type = config["device_type"]
-    hw_aligned_single_scale = FP8_143_SCALES[device_type][0]
+    device_for_scales = get_device_type_for_scales(mod)
+    hw_aligned_single_scale = FP8_143_SCALES[device_for_scales][0]
     return matmul_single_scale_scales(mod, measurement, params, hw_aligned_single_scale)
 
 
@@ -80,9 +77,8 @@ def softmax_single_scale_scales(mod, measurement, params, scale=1.0):
 
 
 def softmax_hw_aligned_single_scale_scales(mod, measurement, params):
-    config = get_hqt_config(mod).cfg
-    device_type = config["device_type"]
-    hw_aligned_single_scale = FP8_143_SCALES[device_type][0]
+    device_for_scales = get_device_type_for_scales(mod)
+    hw_aligned_single_scale = FP8_143_SCALES[device_for_scales][0]
     return softmax_single_scale_scales(mod, measurement, params, hw_aligned_single_scale)
 
 
@@ -95,7 +91,6 @@ def kv_cache_single_scale_scales(mod, measurement, params, scale=1.0):
 
 
 def kv_cache_hw_aligned_single_scale_scales(mod, measurement, params):
-    config = get_hqt_config(mod).cfg
-    device_type = config["device_type"]
-    hw_aligned_single_scale = FP8_143_SCALES[device_type][0]
+    device_for_scales = get_device_type_for_scales(mod)
+    hw_aligned_single_scale = FP8_143_SCALES[device_for_scales][0]
     return kv_cache_single_scale_scales(mod, measurement, params, hw_aligned_single_scale)

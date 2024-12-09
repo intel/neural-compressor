@@ -179,8 +179,8 @@ def convert(
     """Convert the prepared model to a quantized model.
 
     Args:
-        model (torch.nn.Module): the prepared model
-        quant_config (BaseConfig, optional): path to quantization config
+        model (torch.nn.Module): torch model
+        quant_config (BaseConfig, optional): path to quantization config, only required when model is not prepared.
         inplace (bool, optional): It will change the given model in-place if True.
 
     Returns:
@@ -195,6 +195,8 @@ def convert(
     if getattr(model, "is_prepared", False):
         if quant_config is None:
             quant_config = model.quant_config
+        else:
+            logger.warning("quant_config will be ignored since the model has been prepared.")
     example_inputs = model.example_inputs if getattr(model, "is_prepared", False) else None
 
     registered_configs = config_registry.get_cls_configs()

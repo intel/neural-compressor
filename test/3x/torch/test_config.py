@@ -9,8 +9,10 @@ import neural_compressor.torch.utils as torch_utils
 from neural_compressor.torch.quantization import (
     AutoRoundConfig,
     AWQConfig,
+    FP8Config,
     GPTQConfig,
     HQQConfig,
+    INT8StaticQuantConfig,
     RTNConfig,
     SmoothQuantConfig,
     StaticQuantConfig,
@@ -373,3 +375,20 @@ class TestQuantConfigBasedonProcessorType:
         assert autoround_config.use_layer_wise == (
             p_type == torch_utils.ProcessorType.Client
         ), f"Expect use_layer_wise to be {p_type == torch_utils.ProcessorType.Client}, got {autoround_config.use_layer_wise}"
+
+
+def test_auto_config_mapping():
+    # case 1
+    class_obj = StaticQuantConfig()
+    assert isinstance(
+        class_obj, INT8StaticQuantConfig
+    ), "StaticQuantConfig should be mapped to INT8StaticQuantConfig by default."
+    # case 2
+    class_obj = StaticQuantConfig(fp8_config="E4M3")
+    assert isinstance(class_obj, FP8Config), "StaticQuantConfig should be mapped to FP8Config with fp8_config argument."
+    # case 3
+    class_obj = StaticQuantConfig(fp8_config="E4M3", observer="maxabs")
+    assert isinstance(class_obj, FP8Config), "StaticQuantConfig should be mapped to FP8Config with fp8_config argument."
+    # case 4
+    class_obj = StaticQuantConfig(act_sym=True, act_algo="kl")
+    assert isinstance(class_obj, INT8StaticQuantConfig), "StaticQuantConfig should be mapped to INT8StaticQuantConfig."
