@@ -4,7 +4,8 @@ FP8 Quantization
 1. [Introduction](#introduction)
 2. [Supported Parameters](#supported-parameters)
 3. [Get Start with FP8 Quantization](#get-start-with-fp8-quantization)
-4. [Examples](#examples)  
+4. [Optimum-habana LLM example](#Optimum-habana LLM example) 
+5. [VLLM example](#VLLM example) 
 
 ## Introduction
 
@@ -75,30 +76,97 @@ Intel Neural Compressor provides general quantization APIs to leverage HPU FP8 c
 </tbody></table>
 
 ## Get Start with FP8 Quantization
+[Demo Usage](https://github.com/intel/neural-compressor?tab=readme-ov-file#getting-started)    
+[Computer vision example](../../../examples/3.x_api/pytorch/cv/fp8_quant)
 
-### Demo Usage
+## Optimum-habana LLM example
+### Overview
+[Optimum](https://huggingface.co/docs/optimum) is an extension of Transformers that provides a set of performance optimization tools to train and run models on targeted hardware with maximum efficiency.    
+[Optimum-habana](https://github.com/huggingface/optimum-habana) is the interface between the Transformers, Diffusers libraries and Intel Gaudi AI Accelerators (HPU). It provides higher performance based on modified modeling files, and utilizes Intel Neural Compressor for FP8 quantization internally,  [running-with-fp8](https://github.com/huggingface/optimum-habana/tree/main/examples/text-generation#running-with-fp8)    
+![](./optimum-habana.png)
+### Installation
+Refer to [optimum-habana, install-the-library-and-get-example-scripts](https://github.com/huggingface/optimum-habana?tab=readme-ov-file#install-the-library-and-get-example-scripts)    
+Option to install from source,
+```
+git clone https://github.com/huggingface/optimum-habana
+cd optimum-habana && git checkout v1.14.0 (change the version)
+pip install -e .
+pip install git+https://github.com/HabanaAI/DeepSpeed.git@1.18.0
+cd examples/text-generation
+pip install -r requirements_lm_eval.txt  (Option)
+```
+### Check neural_compressor code
+> optimum-habana/examples/text-generation/utils.py
+>> initialize_model() -> setup_model() -> setup_quantization() -> FP8Config/prepare()/convert() 
 
-```python
-from neural_compressor.torch.quantization import (
-    FP8Config,
-    prepare,
-    convert,
-)
-import torchvision.models as models
+### FP8 KV cache
+Introduction: [kv-cache-quantization in huggingface transformers](https://huggingface.co/blog/kv-cache-quantization)    
 
-model = models.resnet18()
-qconfig = FP8Config(fp8_config="E4M3")
-model = prepare(model, qconfig)
-# customer defined calibration
-calib_func(model)
-model = convert(model)
+BF16 KVCache Code -> [Modeling_all_models.py -> KVCache()](https://github.com/huggingface/optimum-habana/blob/main/optimum/habana/transformers/models/modeling_all_models.py#L40)    
+
+FP8 KVCache code trace, for example Llama models,    
+> optimum-habana/optimum/habana/transformers/models/llama/modeling_llama.py     
+>> GaudiLlamaForCausalLM()  -> self.model()
+>>>    GaudiLlamaModel() -> forward() -> decoder_layer() ->  GaudiLlamaDecoderLayer() forward() -> pre_attn() -> pre_attn_forward() -> self.k_cache.update     
+
+> neural_compressor/torch/algorithms/fp8_quant/_quant_common/helper_modules.py    
+>> PatchedKVCache() -> update()    
+
+Models list which support FP8 KV Cache,
+```
+microsoft/Phi-3-mini-4k-instruct
+bigcode/starcoder2-3b
+Qwen/Qwen2.5-7B-Instruct|
+meta-llama/Llama-3.2-3B-Instruct
+tiiuae/falcon-7b-instruct
+mistralai/Mixtral-8x7B-Instruct-v0.1
+EleutherAI/gpt-j-6b
+mistralai/Mistral-Nemo-Instruct-2407
 ```
 
-## Examples
+### Running with FP8
+Refer to [here](https://github.com/huggingface/optimum-habana/tree/main/examples/text-generation#running-with-fp8). Change "--model_name_or_path" to be your model like "meta-llama/Llama-3.1-8B-Instruct", "Qwen/Qwen2.5-7B-Instruct", "mistralai/Mixtral-8x7B-Instruct-v0.1" and so on.    
+"--use_kv_cache" is to enable FP8 KV cache.
 
-| Task                 | Example |
-|----------------------|---------|
-| Computer Vision (CV)      |    [Link](../../../examples/3.x_api/pytorch/cv/fp8_quant/)     |
-| Large Language Model (LLM) |    [Link](https://github.com/huggingface/optimum-habana/tree/main/examples/text-generation#running-with-fp8)     |
+### Profiling
+Add "--profiling_warmup_steps 5 --profiling_steps 2 --profiling_record_shapes" as args in the end of commandline of run_generation.py. Refer to [code](https://github.com/huggingface/optimum-habana/blob/c9e1c23620618e2f260c92c46dfeb163545ec5ba/optimum/habana/utils.py#L305).    
 
-> Note: For LLM, Optimum-habana provides higher performance based on modified modeling files, so here the Link of LLM goes to Optimum-habana, which utilize Intel Neural Compressor for FP8 quantization internally.
+### FP8 Accuracy 
+| Llama-2-7b-hf| fp8 & fp8 KVCache| bf16 w/o fp8 KVCache||
+|---------------|---------|--------|--------|
+| hellaswag     | 0.5691097390957977   | 0.5704043019318861    ||
+| lambada_openai| 0.7360760721909567   | 0.7372404424607025 | |
+| piqa          | 0.7850924918389554   | 0.7818280739934712 ||
+| winogrande    | 0.6929755327545383   | 0.6929755327545383 ||
+
+| Qwen2.5-7B-Instruct| fp8 & fp8 KVCache| bf16 w/o fp8 KVCache||
+|---------------|---------|--------|--------|
+| hellaswag     |  0.2539334793865764  |   0.2539334793865764    ||
+| lambada_openai| 0.0   | 0.0 | |
+| piqa          | 0.5391730141458106   | 0.5391730141458106 ||
+| winogrande    | 0.4956590370955012  | 0.4956590370955012 ||
+
+| Llama-3.1-8B-Instruct| fp8 & fp8 KVCache| bf16 w/o fp8 KVCache||
+|---------------|---------|--------|--------|
+| hellaswag     | 0.5934076877116112   |   0.5975901214897431    ||
+| lambada_openai| 0.7230739375121289   | 0.7255967397632447 | |
+| piqa          | 0.7932535364526659   | 0.8030467899891186 ||
+| winogrande    | 0.7434885556432518  | 0.7371744277821626 ||
+
+
+| Mixtral-8x7B-Instruct-v0.1| fp8 & fp8 KVCache| bf16 w/o fp8 KVCache||
+|---------------|---------|--------|--------|
+| hellaswag     | 0.25323640709022105   |   0.25323640709022105    ||
+| lambada_openai| 0.0   | 0.0  | |
+| piqa          | 0.528835690968444   | 0.528835690968444  ||
+| winogrande    | 0.4956590370955012  | 0.4956590370955012 ||
+
+## VLLM example
+### Overview
+### FP8 KV cache
+### llama2/3, Qwen 2/2.5, Mixtral
+### accuracy table
+
+## Reference
+https://github.com/huggingface/optimum-habana/tree/main/examples/text-generation#running-with-fp8   
+https://docs.habana.ai/en/latest/PyTorch/Inference_on_PyTorch/Inference_Using_FP8.html     

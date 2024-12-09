@@ -33,51 +33,36 @@ support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testi
 
 ## Installation
 ### Install Framework
-#### Install torch for CPU
-```Shell
-pip install torch --index-url https://download.pytorch.org/whl/cpu
+[Install intel_extension_for_pytorch for CPU -> Installation](https://intel.github.io/intel-extension-for-pytorch/cpu/latest/)    
+[Install intel_extension_for_pytorch for XPU -> Installation](https://intel.github.io/intel-extension-for-pytorch/xpu/latest/)    
+[Use Docker Image with torch installed for HPU](https://docs.habana.ai/en/latest/Installation_Guide/Bare_Metal_Fresh_OS.html#bare-metal-fresh-os-single-click)    --> **Note**: There is a version mapping between Intel Neural Compressor and Gaudi Software Stack, please refer to this [table](./docs/source/3x/gaudi_version_map.md) and make sure to use a matched combination.    
+[Install torch for other platform](https://pytorch.org/get-started/locally)    
+[Install Tensorflow](https://www.tensorflow.org/install)    
+
+### Install Neural Compressor from pypi
 ```
-#### Use Docker Image with torch installed for HPU
-https://docs.habana.ai/en/latest/Installation_Guide/Bare_Metal_Fresh_OS.html#bare-metal-fresh-os-single-click
-
-> **Note**:
-> There is a version mapping between Intel Neural Compressor and Gaudi Software Stack, please refer to this [table](./docs/source/3x/gaudi_version_map.md) and make sure to use a matched combination.
-
-#### Install torch/intel_extension_for_pytorch for Intel GPU
-https://intel.github.io/intel-extension-for-pytorch/index.html#installation
-
-#### Install torch for other platform
-https://pytorch.org/get-started/locally
-
-#### Install tensorflow
-```Shell
-pip install tensorflow
-```
-
-### Install from pypi
-```Shell
 # Install 2.X API + Framework extension API + PyTorch dependency
 pip install neural-compressor[pt]
 # Install 2.X API + Framework extension API + TensorFlow dependency
 pip install neural-compressor[tf]
 ```
-> **Note**:
-> Further installation methods can be found under [Installation Guide](./docs/source/installation_guide.md). check out our [FAQ](./docs/source/faq.md) for more details.
+### Install Neural Compressor from Source for torch
+```
+git clone https://github.com/intel/neural-compressor.git
+cd neural-compressor
+pip install -r requirements.txt
+pip install -r requirements_pt.txt
+python setup.py pt develop --user
+```
+**Note**: Further installation methods can be found under [Installation Guide](./docs/source/installation_guide.md). check out our [FAQ](./docs/source/faq.md) for more details.
 
 ## Getting Started
-
-Setting up the environment:
-```bash
-pip install "neural-compressor>=2.3" "transformers>=4.34.0" torch torchvision
-```
 After successfully installing these packages, try your first quantization program.
 
-### [FP8 Quantization](./docs/source/3x/PT_FP8Quant.md)
-Following example code demonstrates FP8 Quantization, it is supported by Intel Gaudi2 AI Accelerator. 
-
-To try on Intel Gaudi2, docker image with Gaudi Software Stack is recommended, please refer to following script for environment setup. More details can be found in [Gaudi Guide](https://docs.habana.ai/en/latest/Installation_Guide/Bare_Metal_Fresh_OS.html#launch-docker-image-that-was-built).
-```bash
-# Run a container with an interactive shell
+**Following example code demonstrates FP8 Quantization**, it is supported by Intel Gaudi2 AI Accelerator. More [FP8 quantization doc here](./docs/source/3x/PT_FP8Quant.md)    
+To try on Intel Gaudi2, docker image with Gaudi Software Stack is recommended, please refer to following script for environment setup. More details can be found in [Gaudi Guide](https://docs.habana.ai/en/latest/Installation_Guide/Bare_Metal_Fresh_OS.html#launch-docker-image-that-was-built).    
+Run a container with an interactive shell,
+```
 docker run -it --runtime=habana -e HABANA_VISIBLE_DEVICES=all -e OMPI_MCA_btl_vader_single_copy_mechanism=none --cap-add=sys_nice --net=host --ipc=host vault.habana.ai/gaudi-docker/1.18.0/ubuntu22.04/habanalabs/pytorch-installer-2.4.0:latest
 ```
 Run the example:
@@ -102,12 +87,9 @@ model = convert(model)
 
 output = model(torch.randn(1, 3, 224, 224).to("hpu")).to("cpu")
 print(output.shape)
-```
+```    
 
-### Weight-Only Large Language Model Loading (LLMs)
-
-Following example code demonstrates weight-only large language model loading on Intel Gaudi2 AI Accelerator. 
-
+**Following example code demonstrates weight-only large language model loading** on Intel Gaudi2 AI Accelerator. 
 ```python
 from neural_compressor.torch.quantization import load
 
@@ -119,10 +101,7 @@ model = load(
     torch_dtype=torch.bfloat16,
 )
 ```
-
-**Note:**
-
-Intel Neural Compressor will convert the model format from auto-gptq to hpu format on the first load and save hpu_model.safetensors to the local cache directory for the next load. So it may take a while to load for the first time.
+**Note:** Intel Neural Compressor will convert the model format from auto-gptq to hpu format on the first load and save hpu_model.safetensors to the local cache directory for the next load. So it may take a while to load for the first time.
 
 ## Documentation
 
