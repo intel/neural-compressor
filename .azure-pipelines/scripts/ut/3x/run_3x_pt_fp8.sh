@@ -33,7 +33,11 @@ pytest --cov="${inc_path}" -vs --disable-warnings --html=report_1.html --self-co
 pytest --cov="${inc_path}" -vs --disable-warnings --html=report_2.html --self-contained-html torch/quantization/weight_only/test_rtn.py 2>&1 | tee -a ${ut_log_name}
 # pytest --cov="${inc_path}" -vs --disable-warnings --html=report_3.html --self-contained-html torch/quantization/weight_only/test_autoround.py 2>&1 | tee -a ${ut_log_name}
 pytest --cov="${inc_path}" -vs --disable-warnings --html=report_4.html --self-contained-html torch/quantization/fp8_quant 2>&1 | tee -a ${ut_log_name}
-pytest --cov="${inc_path}" -vs --disable-warnings --html=report_5.html --self-contained-html torch/algorithms/fp8_quant 2>&1 | tee -a ${ut_log_name}
+
+# Below folder contains some special configuration for pytest so we need to enter the path and run it separately
+cd /neural-compressor/test/3x/torch/algorithms/fp8_quant
+pytest --cov="${inc_path}" -vs --disable-warnings --html=report_5.html --self-contained-html . 2>&1 | tee -a ${ut_log_name}
+cd - && mv /neural-compressor/test/3x/torch/algorithms/fp8_quant/*.html .
 
 mkdir -p report && mv *.html report
 pytest_html_merger -i ./report -o ./report.html
