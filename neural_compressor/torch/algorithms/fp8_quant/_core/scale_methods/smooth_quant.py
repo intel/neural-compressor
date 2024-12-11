@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import torch
-from habana_frameworks.torch.utils.experimental import _get_device_type
 from tqdm import tqdm
 
 from ..common import *

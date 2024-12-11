@@ -9,8 +9,6 @@ import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from ..test_hpu_utils import is_gaudi3
 
-from ..test_utils import is_gaudi3
-
 htcore.hpu_set_env()
 
 from neural_compressor.torch.quantization import FP8Config, convert, prepare, save, load
@@ -57,7 +55,7 @@ config_dict = {
 
 
 # Run both real and fake quantization, and compare
-#TODO: SW-203453 fix test in Gaudi3
+# TODO: SW-203453 fix test in Gaudi3
 @pytest.mark.skipif(is_gaudi3(), reason="SW-203453")
 def test_fakequant_model():
     model = AutoModelForCausalLM.from_pretrained("facebook/opt-350m")
@@ -86,8 +84,7 @@ def test_fakequant_model():
     with torch.no_grad():
         output = model(**inputs).logits.cpu()
         output_fakequant = model_fakequant(**inputs).logits.cpu()
-    assert torch.allclose(output, output_fakequant, rtol=0.01), "FakeQuant on model failed"
-
+    assert torch.allclose(output, output_fakequant, rtol=0.01), f"FakeQuant on model failed"
 
     # test save and load API
     # These two usages of save are equal, we discussed to keep both.
@@ -130,4 +127,4 @@ def test_fakequant_simple():
     with torch.no_grad():
         output = model(inp_test).cpu()
         output_fake = model_fake(inp_test).cpu()
-    assert torch.allclose(output, output_fake, rtol=0.01), f"FakeQuant failed"
+    assert torch.allclose(output, output_fake, rtol=0.01), "FakeQuant failed"

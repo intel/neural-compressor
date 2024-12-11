@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from torch import Tensor, nn
-
 from .._quant_common.quant_config import ScaleFormat
+from torch import Tensor, nn
 
 
 def create_scale_tensor(orig_tensor, scale_format):

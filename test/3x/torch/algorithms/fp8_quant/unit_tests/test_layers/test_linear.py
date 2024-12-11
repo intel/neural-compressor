@@ -4,6 +4,7 @@ import pytest
 import torch
 
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import ScaleMethod
+
 from ...test_hpu_utils import *
 from ...tester import *
 
