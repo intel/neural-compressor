@@ -32,8 +32,18 @@ ut_log_name=${LOG_DIR}/ut_3x_pt_fp8.log
 pytest --cov="${inc_path}" -vs --disable-warnings --html=report_1.html --self-contained-html torch/quantization/weight_only/test_load.py 2>&1 | tee -a ${ut_log_name}
 pytest --cov="${inc_path}" -vs --disable-warnings --html=report_2.html --self-contained-html torch/quantization/weight_only/test_rtn.py 2>&1 | tee -a ${ut_log_name}
 # pytest --cov="${inc_path}" -vs --disable-warnings --html=report_3.html --self-contained-html torch/quantization/weight_only/test_autoround.py 2>&1 | tee -a ${ut_log_name}
-pytest --cov="${inc_path}" -vs --disable-warnings --html=report_4.html --self-contained-html torch/quantization/fp8_quant 2>&1 | tee -a ${ut_log_name}
-pytest --cov="${inc_path}" -vs --disable-warnings --html=report_5.html --self-contained-html torch/algorithms/fp8_quant 2>&1 | tee -a ${ut_log_name}
+
+# Below folder contains some special configuration for pytest so we need to enter the path and run it separately
+cd /neural-compressor/test/3x/torch/algorithms/fp8_quant
+pytest --cov="${inc_path}" -vs --disable-warnings --html=report_4.html --self-contained-html . 2>&1 | tee -a ${ut_log_name}
+cp .coverage ${LOG_DIR}/.coverage.algo_fp8
+cd - && mv /neural-compressor/test/3x/torch/algorithms/fp8_quant/*.html .
+
+# Below folder contains some special configuration for pytest so we need to enter the path and run it separately
+cd /neural-compressor/test/3x/torch/quantization/fp8_quant
+pytest --cov="${inc_path}" -vs --disable-warnings --html=report_5.html --self-contained-html . 2>&1 | tee -a ${ut_log_name}
+cp .coverage ${LOG_DIR}/.coverage.quant_fp8
+cd - && mv /neural-compressor/test/3x/torch/quantization/fp8_quant/*.html .
 
 mkdir -p report && mv *.html report
 pytest_html_merger -i ./report -o ./report.html
@@ -47,5 +57,7 @@ fi
 
 # if ut pass, collect the coverage file into artifacts
 cp .coverage ${LOG_DIR}/.coverage
+cd ${LOG_DIR}
+coverage combine .coverage.*
 
 echo "UT finished successfully! "
