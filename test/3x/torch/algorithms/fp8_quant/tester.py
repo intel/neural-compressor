@@ -11,7 +11,6 @@ from pytest import raises as pytest_raises
 from test_hpu_utils import get_device_name
 
 import torch
-
 from neural_compressor.torch.algorithms.fp8_quant._core.common import mod_default_dict
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import Fp8cfg, QuantMode, ScaleMethod
 

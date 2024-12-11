@@ -15,7 +15,7 @@
 import numpy as np
 import torch
 
-from .._quant_common.quant_config import ScaleMethod, get_hqt_config, set_hqt_config
+from .._quant_common.quant_config import ScaleMethod, set_hqt_config, get_hqt_config
 from ..utils.logger import logger
 from .common import *
 from .fp_utils import *

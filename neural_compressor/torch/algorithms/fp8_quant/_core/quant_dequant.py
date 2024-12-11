@@ -16,7 +16,6 @@ import torch.nn as nn
 import torch
 from torch.ao.quantization.fx._decomposed import quantized_decomposed_lib
 from abc import abstractmethod
-
 import habana_frameworks.torch.core as htcore
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 cur_accelerator = auto_detect_accelerator()

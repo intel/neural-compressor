@@ -37,13 +37,9 @@ def fix_cache_inputs(json_data):
             if f"model.layers.{layer_index}.self_attn.attn.impl.key_cache" in node_name:
                 key_cache_input = node_info["inputs"][0]
         if kv_matmul_input != value_cache_input:
-            json_data["Nodes"][f"model.layers.{layer_index}.self_attn.attn.impl.kv_matmul"]["inputs"][
-                1
-            ] = value_cache_input
+            json_data['Nodes'][f'model.layers.{layer_index}.self_attn.attn.impl.kv_matmul']['inputs'][1] = value_cache_input
         if qk_matmul_input != key_cache_input:
-            json_data["Nodes"][f"model.layers.{layer_index}.self_attn.attn.impl.qk_matmul"]["inputs"][
-                1
-            ] = key_cache_input
+            json_data['Nodes'][f'model.layers.{layer_index}.self_attn.attn.impl.qk_matmul']['inputs'][1] = key_cache_input
 
     return json_data
 
