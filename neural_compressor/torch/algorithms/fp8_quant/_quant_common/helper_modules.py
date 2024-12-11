@@ -15,6 +15,7 @@
 import torch
 import torch.nn as nn
 
+from .quant_config import QuantMode, get_hqt_config, ScaleFormat
 from .._core.quant_dequant import QuantDequant as qdq
 from .._core.scale_handler import create_scale_tensor, get_scale_dtype
 
@@ -197,7 +198,6 @@ class PatchedMatmul(nn.Module):
         qother = self.quant_input_1(other)
         output = torch.matmul(qinput, qother)
         return output
-
 
     def forward_measure(self, input, other):
         measure_input((input, other), observer=self._mod_extra_config.inputs)

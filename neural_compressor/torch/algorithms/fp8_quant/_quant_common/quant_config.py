@@ -33,14 +33,12 @@ except:
     local_rank = int(os.getenv("LOCAL_RANK", "-1"))
     world_size = int(os.getenv("WORLD_SIZE", "-1"))
 
-
 class QuantMode(Enum):
     NONE = 0
     QUANTIZE = 1
     MEASURE = 2
     SHAPE = 3
     LOAD = 4
-
 
 class MeasureExclude(Flag):
     NONE = auto()
@@ -49,17 +47,14 @@ class MeasureExclude(Flag):
     PARAMS = auto()
     ALL = auto()
 
-
 class SupportedFp8(Enum):
     E4M3 = torch.float8_e4m3fn
     E5M2 = torch.float8_e5m2
-
 
 class HpDtype(Enum):
     BF16 = torch.bfloat16
     FP16 = torch.float16
     FP32 = torch.float32
-
 
 class ScaleMethod(Enum):
     MAX = 1
@@ -77,7 +72,6 @@ class ScaleMethod(Enum):
     MAXABS_HW_OPT_WEIGHT = 13
     MAXABS_POW2_OPT_WEIGHT = 14
     MAXABS_ARBITRARY = 15
-
 
 class TrueFalse(Enum):
     TRUE = True
@@ -129,7 +123,6 @@ _pcq_scale_methods = [
     ScaleMethod.ACT_MAXABS_POW2_WEIGHTS_PCS_MAXABS_POW2,
     ScaleMethod.ACT_MAXABS_POW2_WEIGHTS_PCS_OPT_POW2,
 ]
-
 
 def get_hqt_config(mod) -> Fp8cfg:
     return mod.__hqt_config__
@@ -271,15 +264,11 @@ class Fp8cfg:
         quant_mode = measured_global_config["mode"]
         if scale_method in _scale_methods_quant_only:
             if quant_mode == QuantMode.QUANTIZE:
-                logger.debug(
-                    f"Quantization mode is quant, scale_method is {scale_method}, so stats files won't be used"
-                )
+                logger.debug(f"Quantization mode is quant, scale_method is {scale_method}, so stats files won't be used")
                 measured_global_config["use_stats_files"] = False
             else:
-                raise ValueError(
-                    f"Quantization mode is {quant_mode}, scale_method is {scale_method} (quant only). Unexpected behavior. "
-                    "This scale method doesn't require measurements."
-                )
+                raise ValueError(f"Quantization mode is {quant_mode}, scale_method is {scale_method} (quant only). Unexpected behavior. "
+                                  "This scale method doesn't require measurements.")
         else:
             measured_global_config["use_stats_files"] = True
             base_name = os.path.basename(measured_global_config["dump_stats_path"])
@@ -291,9 +280,7 @@ class Fp8cfg:
                 if measured_global_config["local_rank"] is None
                 else "_" + str(measured_global_config["local_rank"]) + "_" + str(measured_global_config["world_size"])
             )
-            measured_global_config["shape_file"] = (
-                measured_global_config["dump_stats_path"] + "_hooks_shape" + worker_st
-            )
+            measured_global_config["shape_file"] = measured_global_config["dump_stats_path"] + "_hooks_shape" + worker_st
             measured_global_config["scale_file"] = (
                 measured_global_config["dump_stats_path"]
                 + "_hooks_"
@@ -302,12 +289,11 @@ class Fp8cfg:
                 + scale_method.name
                 + worker_st
             )
-            if (quant_mode == QuantMode.MEASURE) or (quant_mode == QuantMode.QUANTIZE):
+            if (quant_mode == QuantMode.MEASURE) or (
+                quant_mode == QuantMode.QUANTIZE
+            ):
                 measured_global_config["measure_file"] = (
-                    measured_global_config["dump_stats_path"]
-                    + "_hooks_"
-                    + measured_global_config["observer"]
-                    + worker_st
+                    measured_global_config["dump_stats_path"] + "_hooks_" + measured_global_config["observer"] + worker_st
                 )
             # measured_global_config['dump_stats_path'] += '_hooks_.json'
 

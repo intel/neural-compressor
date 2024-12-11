@@ -4,11 +4,14 @@ import pytest
 import torch
 
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import ScaleMethod
+
 from ...test_hpu_utils import *
 from ...tester import *
 
 
-def get_test_vectors(*, dtype: torch.dtype, C_in: int, H: int, W: int, atol: float = 0.2) -> typing.Iterable[TestVector]:
+def get_test_vectors(
+    *, dtype: torch.dtype, C_in: int, H: int, W: int, atol: float = 0.2
+) -> typing.Iterable[TestVector]:
     yield TestVector(
         inputs=[torch.ones(1, C_in, H, W, dtype=dtype, device="hpu")],
         atol=atol,
@@ -32,7 +35,7 @@ def test_conv2d_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype, scale_met
     if scale_method in SCALE_METHODS_QUANT_ONLY:
         quant_modes = QUANT_MODES_QUANT_ONLY
         if scale_method == ScaleMethod.HW_ALIGNED_SINGLE_SCALE:
-            atol = 1.
+            atol = 1.0
     C_in = 1
     C_out = 1
     K = 3

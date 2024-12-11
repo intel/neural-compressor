@@ -7,6 +7,7 @@ import torch
 
 import neural_compressor.torch.algorithms.fp8_quant as fp8_quant
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import Matmul
+from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import QuantMode, ScaleMethod
 from ...tester import run_with_raised_exception, _get_test_only_config, SCALE_METHODS_QUANT_ONLY, SCALE_METHODS_KEY_ERROR
 from ...test_hpu_utils import *
 
