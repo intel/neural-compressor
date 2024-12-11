@@ -1,5 +1,5 @@
 ci:
-  autofix_prs: true
+  autofix_prs: false
   autoupdate_schedule: quarterly
 
 repos:

@@ -58,7 +58,7 @@ PT2E_DYNAMIC_QUANT = "pt2e_dynamic_quant"
 from enum import Enum
 
 
-class LoadFormat(Enum):
+class SaveLoadFormat(Enum):
     """Load API formats for different usages."""
 
     DEFAULT = "default"

@@ -225,3 +225,21 @@ def is_tbb_available():  # pragma: no cover
         )
         return False
     return True
+
+
+def get_used_hpu_mem_MB():
+    """Get HPU used memory: MiB."""
+    from habana_frameworks.torch.hpu import memory_stats
+    import numpy as np
+    torch.hpu.synchronize()
+    mem_stats = memory_stats()
+    used_hpu_mem = np.round(mem_stats["InUse"] / 1024**2, 3)
+    return used_hpu_mem
+
+
+def get_used_cpu_mem_MB():
+    """Get CPU used memory: MiB."""
+    import psutil
+    data = psutil.virtual_memory()
+    used_cpu_mem = round(data.used / 1024**2, 3)
+    return used_cpu_mem

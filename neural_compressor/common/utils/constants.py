@@ -56,6 +56,7 @@ class Mode(Enum):
     PREPARE = "prepare"
     CONVERT = "convert"
     QUANTIZE = "quantize"
+    LOAD = "load"
 
 
 SERVER_PROCESSOR_BRAND_KEY_WORLD_LST = ["Xeon"]

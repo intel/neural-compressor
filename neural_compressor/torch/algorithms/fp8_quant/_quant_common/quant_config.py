@@ -30,16 +30,15 @@ try:
     world_size = torch.distributed.get_world_size()
     local_rank = torch.distributed.get_rank()
 except:
-    world_size = -1
-    local_rank = -1
-
+    local_rank = int(os.getenv("LOCAL_RANK", "-1"))
+    world_size = int(os.getenv("WORLD_SIZE", "-1"))
 
 class QuantMode(Enum):
     NONE = 0
     QUANTIZE = 1
     MEASURE = 2
     SHAPE = 3
-
+    LOAD = 4
 
 class MeasureExclude(Flag):
     NONE = auto()
@@ -48,17 +47,14 @@ class MeasureExclude(Flag):
     PARAMS = auto()
     ALL = auto()
 
-
 class SupportedFp8(Enum):
     E4M3 = torch.float8_e4m3fn
     E5M2 = torch.float8_e5m2
-
 
 class HpDtype(Enum):
     BF16 = torch.bfloat16
     FP16 = torch.float16
     FP32 = torch.float32
-
 
 class ScaleMethod(Enum):
     MAX = 1
@@ -75,7 +71,7 @@ class ScaleMethod(Enum):
     SMOOTHQUANT_OPT = 12
     MAXABS_HW_OPT_WEIGHT = 13
     MAXABS_POW2_OPT_WEIGHT = 14
-
+    MAXABS_ARBITRARY = 15
 
 class TrueFalse(Enum):
     TRUE = True
@@ -87,6 +83,10 @@ class ScaleFormat(Enum):
     SCALAR = 2  # scales is non-const, non-persistent tensor with data ptr, used for low BS performance optimization
 
 
+class DeviceType(Enum):
+    GAUDI2 = htexp.synDeviceType.synDeviceGaudi2
+    GAUDI3 = htexp.synDeviceType.synDeviceGaudi3
+
 _config_to_enum = {
     "mode": QuantMode,
     "measure_exclude": MeasureExclude,
@@ -95,14 +95,34 @@ _config_to_enum = {
     "scale_method": ScaleMethod,
     "recalc_scales": TrueFalse,
     "ignore_modules_wo_measures": TrueFalse,
+    "use_qdq": TrueFalse,
     "fake_quant": TrueFalse,
     "scale_format": ScaleFormat,
+    "device_for_scales": DeviceType,
+    "measure_on_hpu": TrueFalse,
 }
 
 
-_configs_that_use_enum_value = ["fp8_config", "hp_dtype", "ignore_modules_wo_measures", "recalc_scales", "fake_quant"]
-_scale_methods_quant_only = [ScaleMethod.UNIT_SCALE, ScaleMethod.HW_ALIGNED_SINGLE_SCALE]
+_configs_that_use_enum_value = [
+    "fp8_config",
+    "hp_dtype",
+    "ignore_modules_wo_measures",
+    "recalc_scales",
+    "fake_quant",
+    "use_qdq",
+    "device_for_scales",
+    "measure_on_hpu",
+]
 
+_scale_methods_quant_only = [ScaleMethod.UNIT_SCALE, ScaleMethod.HW_ALIGNED_SINGLE_SCALE]
+_pcq_scale_methods = [
+    ScaleMethod.SMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2,
+    ScaleMethod.WEAKSMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2,
+    ScaleMethod.ACT_MAXABS_HW_WEIGHTS_PCS_MAXABS_POW2,
+    ScaleMethod.ACT_MAXABS_HW_WEIGHTS_PCS_OPT_POW2,
+    ScaleMethod.ACT_MAXABS_POW2_WEIGHTS_PCS_MAXABS_POW2,
+    ScaleMethod.ACT_MAXABS_POW2_WEIGHTS_PCS_OPT_POW2,
+]
 
 def get_hqt_config(mod) -> Fp8cfg:
     return mod.__hqt_config__
@@ -112,12 +132,34 @@ def set_hqt_config(mod, config):
     mod.__hqt_config__ = config
 
 
-def _get_enum_from_string(EnumClass, str, key):
-    if not hasattr(EnumClass, str.upper()):
+def _get_enum_from_string(EnumClass, string, key):
+    string = str(string)  # bool must be converted to string
+    if not hasattr(EnumClass, string.upper()):
         raise ValueError(
-            f"Invalid '{key}' value in custom config ('{str}'). Enter one of {[m.name for m in EnumClass]}"
+            f"Invalid '{key}' value in custom config ('{string}'). Enter one of {[m.name for m in EnumClass]}"
         )
-    return EnumClass[str.upper()]
+    return EnumClass[string.upper()]
+
+
+def _validate_dump_path(dump_stats_path):
+    dirname = os.path.dirname(dump_stats_path)
+    basename = os.path.basename(dump_stats_path)
+    if not os.access(dirname, os.W_OK):  # checks if the directory is not writable
+        raise ValueError(f"Measurements dump directory '{dirname}' is non-writable")
+    files_to_backup = [fname for fname in os.listdir(dirname) if fname.startswith(basename)]
+    if files_to_backup:
+        from datetime import datetime
+        backup_dirname = f"{basename}_backup_{datetime.now().strftime('%d-%m_%H:%M:%S')}"
+        try:
+            os.mkdir(f"{dirname}/{backup_dirname}")
+        except FileExistsError:
+            pass
+        for fname in files_to_backup:
+            try:
+                os.rename(f"{dirname}/{fname}", f"{dirname}/{backup_dirname}/{fname}")
+            except (OSError, FileNotFoundError):
+                pass
+
 
 
 @dataclass
@@ -138,7 +180,8 @@ class Fp8cfg:
                 "types": (),
             },  # types and names to be quantized. Allowlist by names is not yet implemented
             "mode": QuantMode.QUANTIZE,  # Quantize or Measure
-            "fake_quant": False,  # Fake or Real Quant
+            "fake_quant": False, # Fake or Real Quant, fake_quant only works for linear(PatchedLinear) and matmul(PatchedMatmul), usually used for training.
+            "use_qdq": False, # QDQ or Real Quant, QDQ works for operators in helper_modules.py, usually used for inference.
             "scale_method": ScaleMethod.MAXABS_HW,  # Method to quantize with
             "scale_params": {},  # scaling parameters that are different then the default ones
             "observer": "maxabs",  # Supported ['shape', 'maxabs', 'maxabs_per_channel', 'save']
@@ -149,9 +192,11 @@ class Fp8cfg:
             "world_size": world_size if world_size >= 0 else None,
             "seperate_measure_files": True,  # Determines whether to expect one or several measure files when using more than one gaudi
             "device_type": htexp._get_device_type(),  # Determines device type: Gaudi2, Gaudi3...
+            "device_for_scales": None,  # Overrides device type for scale: Gaudi2, Gaudi3... Enables using only G2 scales on G3
             "measure_exclude": MeasureExclude.OUTPUT,
             "recalc_scales": False,
-            "scale_format": ScaleFormat.CONST,
+            "scale_format": ScaleFormat.SCALAR,
+            "measure_on_hpu": True,  # Determines whether to measure model on hpu device.
         }
         # assert measured_global_config['allowlist']['names'] == [''], "Allowlist names not yet implemented"
 
@@ -185,23 +230,49 @@ class Fp8cfg:
             local_rank if local_rank >= 0 and custom_config.get("seperate_measure_files", True) else None
         )
 
+        if custom_config.get("device_for_scales", None) is None:
+            # Device for scales is the current device by default
+            measured_global_config["device_for_scales"] = measured_global_config["device_type"]
+        elif measured_global_config["device_for_scales"] != measured_global_config["device_type"]:
+            # Currently, only maxabs_hw is supported for a different device scales configuration
+            if measured_global_config["scale_method"] != ScaleMethod.MAXABS_HW:
+                raise ValueError(
+                    f"Unsupported config: scale_method: {measured_global_config['scale_method']} "
+                    f"for scale device overriding: {measured_global_config['device_for_scales']}"
+                )
+            if not (
+                measured_global_config["device_for_scales"] == htexp.synDeviceType.synDeviceGaudi2
+                and measured_global_config["device_type"] == htexp.synDeviceType.synDeviceGaudi3
+            ):
+                raise ValueError(f"Unsupported config: device_for_scales={measured_global_config['device_for_scales']} "
+                                f"for device_type={measured_global_config['device_type']}")
+
         scale_method = measured_global_config["scale_method"]
+        if measured_global_config["use_qdq"] and "_PCS_" in scale_method.name:
+            raise ValueError(
+                f"use_qdq is enabled in config, but the scale_method is '{scale_method}', which is unexpected. "
+                "Q/DQ currently only supports per_tensor quantization, and this scale method doesn't support Q/DQ."
+                )
+        if measured_global_config["scale_format"] == ScaleFormat.SCALAR:
+            if scale_method in _pcq_scale_methods:
+                measured_global_config["scale_format"] = ScaleFormat.CONST
+                logger.warning(f"Cannot use 'scale_format = SCALAR' when using PCQ (Per Channel Quantization, "
+                               f"e.g. {scale_method}) value for 'scale_method'. Reduced to 'CONST'.")
+            if measured_global_config["fake_quant"] or measured_global_config["use_qdq"]:
+                measured_global_config["scale_format"] = ScaleFormat.CONST
+                logger.warning(f"Cannot use 'scale_format = SCALAR' when using fake_quant or use_qdq. Reduced to 'CONST'.")
         quant_mode = measured_global_config["mode"]
         if scale_method in _scale_methods_quant_only:
             if quant_mode == QuantMode.QUANTIZE:
-                logger.debug(
-                    f"Quantization mode is quant, scale_method is {scale_method}, so stats files won't be used"
-                )
+                logger.debug(f"Quantization mode is quant, scale_method is {scale_method}, so stats files won't be used")
                 measured_global_config["use_stats_files"] = False
             else:
-                raise ValueError(
-                    f"Quantization mode is {quant_mode}, scale_method is {scale_method} (quant only). Unexpected behavior. "
-                    "This scale method doesn't require measurements."
-                )
+                raise ValueError(f"Quantization mode is {quant_mode}, scale_method is {scale_method} (quant only). Unexpected behavior. "
+                                  "This scale method doesn't require measurements.")
         else:
             measured_global_config["use_stats_files"] = True
-            base_name = measured_global_config["dump_stats_path"].split("/")[-1]
-            folder_name = measured_global_config["dump_stats_path"][: -(len(base_name))]
+            base_name = os.path.basename(measured_global_config["dump_stats_path"])
+            folder_name = os.path.dirname(measured_global_config["dump_stats_path"])
             measured_global_config["dump_stats_base_path"] = folder_name
             os.makedirs(folder_name, exist_ok=True)
             worker_st = (
@@ -209,9 +280,7 @@ class Fp8cfg:
                 if measured_global_config["local_rank"] is None
                 else "_" + str(measured_global_config["local_rank"]) + "_" + str(measured_global_config["world_size"])
             )
-            measured_global_config["shape_file"] = (
-                measured_global_config["dump_stats_path"] + "_hooks_shape" + worker_st
-            )
+            measured_global_config["shape_file"] = measured_global_config["dump_stats_path"] + "_hooks_shape" + worker_st
             measured_global_config["scale_file"] = (
                 measured_global_config["dump_stats_path"]
                 + "_hooks_"
@@ -220,12 +289,11 @@ class Fp8cfg:
                 + scale_method.name
                 + worker_st
             )
-            if (quant_mode == QuantMode.MEASURE) or (quant_mode == QuantMode.QUANTIZE):
+            if (quant_mode == QuantMode.MEASURE) or (
+                quant_mode == QuantMode.QUANTIZE
+            ):
                 measured_global_config["measure_file"] = (
-                    measured_global_config["dump_stats_path"]
-                    + "_hooks_"
-                    + measured_global_config["observer"]
-                    + worker_st
+                    measured_global_config["dump_stats_path"] + "_hooks_" + measured_global_config["observer"] + worker_st
                 )
             # measured_global_config['dump_stats_path'] += '_hooks_.json'
 
@@ -249,6 +317,9 @@ class Fp8cfg:
                 "measured_global_config['dump_stats_path']='%s'",
                 measured_global_config["dump_stats_path"],
             )
+
+        if measured_global_config["mode"] == QuantMode.MEASURE:
+            _validate_dump_path(measured_global_config["dump_stats_path"])
 
         return Fp8cfg(cfg=measured_global_config)
 

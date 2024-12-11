@@ -22,6 +22,7 @@ from neural_compressor.torch.quantization.config import (
     get_default_gptq_config,
     AWQConfig,
     get_default_awq_config,
+    INT8StaticQuantConfig,
     StaticQuantConfig,
     get_default_static_config,
     SmoothQuantConfig,
@@ -54,4 +55,4 @@ from neural_compressor.torch.quantization.autotune import (
 
 ### Quantization Function Registration ###
 import neural_compressor.torch.quantization.algorithm_entry
-from neural_compressor.torch.quantization.load_entry import load
+from neural_compressor.torch.quantization.save_load_entry import save, load

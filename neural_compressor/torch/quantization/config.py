@@ -1340,7 +1340,7 @@ def get_default_dynamic_config() -> DynamicQuantConfig:
 
 ######################## Static Quant Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=STATIC_QUANT)
-class StaticQuantConfig(TorchBaseConfig):
+class INT8StaticQuantConfig(TorchBaseConfig):
     """Config class for static quantization."""
 
     name = STATIC_QUANT
@@ -1405,7 +1405,7 @@ class StaticQuantConfig(TorchBaseConfig):
     def register_supported_configs(cls) -> List[OperatorConfig]:
         """Register supported configurations."""
         supported_configs = []
-        linear_static_config = StaticQuantConfig()
+        linear_static_config = INT8StaticQuantConfig()
         operators = [torch.nn.Linear]
         supported_configs.append(OperatorConfig(config=linear_static_config, operators=operators))
         cls.supported_configs = supported_configs
@@ -1460,9 +1460,9 @@ class StaticQuantConfig(TorchBaseConfig):
 
         if is_ipex_imported():
             if auto_detect_accelerator().current_device() == "cpu":
-                return StaticQuantConfig.get_model_info_for_ipex(model, example_inputs)
+                return INT8StaticQuantConfig.get_model_info_for_ipex(model, example_inputs)
             else:
-                return StaticQuantConfig.get_model_info_for_ipex_xpu(self, model)
+                return INT8StaticQuantConfig.get_model_info_for_ipex_xpu(self, model)
 
     def to_config_mapping(
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
@@ -1483,18 +1483,20 @@ class StaticQuantConfig(TorchBaseConfig):
         return config_mapping
 
     @classmethod
-    def get_config_set_for_tuning(cls) -> Union[None, "StaticQuantConfig", List["StaticQuantConfig"]]:
+    def get_config_set_for_tuning(cls) -> Union[None, "INT8StaticQuantConfig", List["INT8StaticQuantConfig"]]:
         """Get the default configuration set for tuning."""
-        return StaticQuantConfig(act_sym=[True, False], act_algo=["kl", "minmax"])
+        return INT8StaticQuantConfig(act_sym=[True, False], act_algo=["kl", "minmax"])
 
 
-def get_default_static_config() -> StaticQuantConfig:
+def get_default_static_config() -> INT8StaticQuantConfig:
     """Generate the default static quant config.
 
     Returns:
         the default static quant config.
     """
-    return StaticQuantConfig()
+    if not is_ipex_imported():
+        return INT8StaticQuantConfig(w_granularity="per_tensor")
+    return INT8StaticQuantConfig()
 
 
 ######################## Smooth Quant Config ###############################
@@ -1779,9 +1781,9 @@ def get_default_hqq_config() -> HQQConfig:
 ######################## FP8 Quant Config ###############################
 
 if is_hpex_available():
-    from ..algorithms.fp8_quant._core.common import mod_default_dict
+    from ..algorithms.fp8_quant._core.common import get_white_list
 
-    FP8_WHITE_LIST = list(mod_default_dict.keys())
+    FP8_WHITE_LIST = get_white_list()
 else:
     FP8_WHITE_LIST = list()
 
@@ -1789,7 +1791,6 @@ else:
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=FP8_QUANT)
 class FP8Config(TorchBaseConfig):
     """Config class for FP8 quantization."""
-
     name = FP8_QUANT
 
     def __init__(
@@ -1806,7 +1807,9 @@ class FP8Config(TorchBaseConfig):
         mod_dict: dict = {},
         measure_exclude: str = "OUTPUT",
         fake_quant: bool = False,
-        scale_format: str = "const",
+        use_qdq: bool = False,
+        scale_format: str = "scalar",
+        measure_on_hpu: bool = True,
         **kwargs,
     ):
         """Initializing FP8Config.
@@ -1823,8 +1826,10 @@ class FP8Config(TorchBaseConfig):
             observer (str, optional): Params of scales. Defaults to "maxabs".
             mod_dict (dict, optional): The dict of modules to quantize. Defaults to {}.
             measure_exclude (str, optional): Select INPUT/OUTPUT to be exculded by measurement. Defaults to "OUTPUT".
-            fake_quant (bool, optional): Whether to use fake quantization. Defaults to False.
+            fake_quant (bool, optional): Whether to execute fake quantization, a little bit different with use_qdq, used for training. Defaults to False.
+            use_qdq (bool, optional): Whether to execute Q/DQ quantization. Defaults to False.
             scale_format (str, optional): Select the expression type of scale value, which may impact the performance. Defaults to const.
+            measure_on_hpu (bool, optional): Whether to measure model on hpu device. Defaults to True.
         """
         super().__init__()
         self.dump_stats_path = dump_stats_path
@@ -1839,7 +1844,9 @@ class FP8Config(TorchBaseConfig):
         self.mod_dict = mod_dict
         self._json_file = None
         self.fake_quant = str(fake_quant)
+        self.use_qdq = str(use_qdq)
         self.scale_format = scale_format
+        self.measure_on_hpu = measure_on_hpu
 
     @property
     def measure(self):
@@ -2095,3 +2102,28 @@ def get_woq_tuning_config() -> list:
     GPTQ_G32ASYM = GPTQConfig(use_sym=False, group_size=32)
     AWQ_G32ASYM = AWQConfig(use_sym=False, group_size=32)
     return [RTN_G32ASYM, AUTO_ROUND_CONFIG, GPTQ_G32ASYM, AWQ_G32ASYM]
+
+
+CONFIGS_FOR_STATIC_QUANT_MAPPING = OrderedDict(
+    [
+        # Configs for static quant mapping
+        (STATIC_QUANT, INT8StaticQuantConfig),
+        (FP8_QUANT, FP8Config),
+    ]
+)
+
+
+class StaticQuantConfig:
+    _model_mapping = CONFIGS_FOR_STATIC_QUANT_MAPPING
+
+    def __new__(
+        self,
+        *args,
+        **kwargs,
+    ):
+        dtype = kwargs.get("fp8_config", None)
+        if dtype is not None:
+            config_cls = self._model_mapping[FP8_QUANT]
+        else:
+            config_cls = self._model_mapping[STATIC_QUANT]
+        return config_cls(*args, **kwargs)

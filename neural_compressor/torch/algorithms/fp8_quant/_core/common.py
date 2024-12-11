@@ -23,7 +23,15 @@ import torch
 from .._quant_common.helper_modules import *
 from .._quant_common.quant_config import get_hqt_config
 from ..utils.logger import logger
-
+from neural_compressor.torch.algorithms.fp8_quant.model_configs import (
+    ModuleInfo,
+    ModuleConfig,
+    ModuleType,
+    ModuleExtraConfig,
+    get_patched_module_table,
+    get_patched_module_type_table,
+)
+from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 deepspeed_exists = False
 if importlib.util.find_spec("deepspeed"):  # check if deepspeed is installed
     deepspeed_exists = True
@@ -31,38 +39,7 @@ if importlib.util.find_spec("deepspeed"):  # check if deepspeed is installed
 UNMEASURED_MODELS = "UnmeasuredModels"
 
 
-class ModuleInfo:
-    def __init__(self, type, patched_module, should_measure=True):
-        self.type = type
-        self.patched_module = patched_module
-        self.should_measure = should_measure
-
-
-class ModuleConfig:
-    def __init__(self, inputs=(None,), outputs=(None,), params=None):
-        self.inputs = inputs
-        self.outputs = outputs
-        self.params = params if params is not None else {}
-
-
-class ModuleExtraConfig:
-    def __init__(self, inputs=(None,), outputs=(None,), params=None, scale=None, config_params=None):
-        self.inputs = inputs
-        self.outputs = outputs
-        self.params = params if params is not None else {}
-        self.scale = scale
-        self.config_params = config_params if config_params is not None else {}
-
-
-class ModuleType:
-    def __init__(self, num_inputs, param_names, num_outputs, required_output):
-        self.num_inputs = num_inputs
-        self.param_names = param_names
-        self.num_outputs = num_outputs
-        self.required_output = required_output
-
-
-mod_types = {
+_mod_types = {
     "linear": ModuleType(1, ["weight"], 1, False),
     "matmul": ModuleType(2, [], 1, False),
     "kv_cache": ModuleType(1, [], 1, False),
@@ -110,7 +87,7 @@ def save_file(model, d, source_format, fname, mode):
     config = get_hqt_config(model)
     logger.debug("Saving %s file: %s", mode, fname)
     ext = os.path.splitext(fname)[1]
-    target_format = file_functions[ext]["format"]
+    target_format = file_functions[ext]['format']
     dc = rec_fn(d, format_functions[(source_format, target_format)])
     df = {
         "GlobalRank": config.cfg["global_rank"],
@@ -119,7 +96,7 @@ def save_file(model, d, source_format, fname, mode):
         "Nodes": dc,
     }
     try:
-        file_functions[ext]["save"](df, fname)
+        file_functions[ext]['save'](df, fname)
     except:
         pass
 
@@ -127,10 +104,10 @@ def save_file(model, d, source_format, fname, mode):
 def load_file(fname, target_format, fail_on_file_not_exist):
     logger.debug("Loading file: %s", fname)
     ext = os.path.splitext(fname)[1]
-    source_format = file_functions[ext]["format"]
+    source_format = file_functions[ext]['format']
     d = {}
     if os.path.isfile(fname):
-        d = file_functions[ext]["load"](fname)
+        d = file_functions[ext]['load'](fname)
     elif fail_on_file_not_exist:
         raise FileNotFoundError(f"Failed to load file {fname}")
     if "Nodes" in d:
@@ -190,17 +167,17 @@ def load_scales(fname, target_format):
     return d
 
 
-def convert_scales_to_tensors_dict(scales_obj, scales_file_format, hp_dtype):
+def convert_scales_to_tensors_dict(scales_obj, scales_file_format, hp_dtype, device="hpu"):
     scales_temp = {k: scales_obj[k].__dict__ for k in scales_obj}
     scales_temp = format_functions_rec((scales_file_format, torch.Tensor))(scales_temp)
-    scales_temp = rec_fn(scales_temp, lambda x: x.to(dtype=hp_dtype, device="hpu"))
+    scales_temp = rec_fn(scales_temp, lambda x: x.to(dtype=hp_dtype, device=device))
     scales = {k: ModuleConfig(**scales_temp[k]) for k in scales_temp}
     return scales
 
 
 file_functions = {
-    ".json": {"format": list, "save": save_json, "load": load_json},
-    ".npz": {"format": np.ndarray, "save": save_npz, "load": load_npz},
+    ".json": {'format': list, 'save': save_json, 'load': load_json},
+    ".npz": {'format': np.ndarray, 'save': save_npz, 'load': load_npz}
 }
 
 format_functions = {
@@ -219,7 +196,7 @@ format_functions = {
 
 format_functions_rec = lambda k: functools.partial(rec_fn, fn=format_functions[k])
 
-mod_default_dict = {
+_mod_default_dict = {
     "Matmul": ModuleInfo("matmul", PatchedMatmul),
     "Linear": ModuleInfo("linear", PatchedLinear),
     "RowParallelLinear": ModuleInfo("linear", PatchedRowParallelLinear),
@@ -241,7 +218,7 @@ mod_default_dict = {
 
 
 if deepspeed_exists:
-    mod_default_dict.update(
+    _mod_default_dict.update(
         {
             "LinearLayer": ModuleInfo("linear", PatchedLinear),
             "LinearAllreduce": ModuleInfo("linear", PatchedLinearAllReduce),
@@ -250,6 +227,25 @@ if deepspeed_exists:
         }
     )
 
+@functools.lru_cache(maxsize=None)
+def _import_hpu_modules():
+    from neural_compressor.torch.algorithms.fp8_quant.patched_module_base import (
+        PATCHED_MODULE_TABLE, PATCHED_MODULE_TYPES_TABLE
+    )
+    cur_accelerator = auto_detect_accelerator()
+    if not cur_accelerator.current_device_name().startswith("hpu"):
+        return
+    PATCHED_MODULE_TABLE["hpu"].update(_mod_default_dict)
+    PATCHED_MODULE_TYPES_TABLE["hpu"].update(_mod_types)
+
+
+_import_hpu_modules()
+
+mod_default_dict = get_patched_module_table()
+mod_types = get_patched_module_type_table()
+
+def get_white_list():
+    return list(mod_default_dict.keys())
 
 class ModInstInfo:
     def __init__(self, name, parent):
@@ -267,3 +263,7 @@ def generate_model_info(model):
             create_mod_info_recursion(mod)
 
     create_mod_info_recursion(model)
+
+def get_device_type_for_scales(mod):
+    config = get_hqt_config(mod).cfg
+    return config["device_for_scales"]

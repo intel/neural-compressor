@@ -624,3 +624,92 @@ def find_matching_blocks(model, all_blocks, to_quant_block_names=None):
                 "or set to_quant_block_name to None to automatically match quantizable blocks."
             )
     return target_blocks
+
+
+def get_non_persistent_buffers(model):
+    """
+    Get all non-persistent buffers in the model.
+    
+    Args:
+        model (torch.nn.Module): PyTorch model
+        
+    Returns:
+        dict: A dictionary containing all non-persistent buffers, {buffer_names: buffer_tensors}
+    """
+    non_persistent_buffers = {}
+    for name, module in model.named_modules():
+        # Check the module's non-persistent buffer
+        for buffer_name, buffer in module._buffers.items():
+            if buffer_name in module._non_persistent_buffers_set:
+                non_persistent_buffers[(name, buffer_name)] = buffer
+    return non_persistent_buffers
+
+
+def load_non_persistent_buffers(model, non_persistent_buffers):
+    """
+    Load all non-persistent buffers into the model.
+    
+    Args:
+        model (torch.nn.Module): PyTorch model
+        non_persistent_buffers (dict): A dictionary containing all non-persistent buffers, {buffer_names: buffer_tensors}
+
+    """
+    for full_name, buffer in non_persistent_buffers.items():
+        module_name, buffer_name = full_name
+        module = model.get_submodule(module_name) if module_name else model
+        setattr(module, buffer_name, buffer)
+
+
+# copied from neural_compressor/adaptor/torch_utils/util.py
+def move_input_device(input, device="cpu"):
+    """Auto mapping input to device for all kinds of format.
+
+    Args:
+        input (torch.tensor): input data
+        device (str, optional): target device. Defaults to "cpu".
+
+    Returns:
+        input (torch.tensor): input data on target device
+    """
+    if isinstance(input, dict) or isinstance(input, UserDict):
+        tmp_input = {}
+        for k, inp in input.items():
+            tmp_input[k] = move_input_device(inp, device)
+        input = tmp_input
+    elif isinstance(input, list) or isinstance(input, tuple):
+        tmp_input = []
+        for inp in input:
+            tmp_input.append(move_input_device(inp, device))
+        input = tmp_input
+    elif isinstance(input, torch.Tensor):
+        input = input.to(device)  # pylint: disable=no-member
+    return input
+
+
+# copied from neural_compressor/adaptor/torch_utils/util.py
+def forward_wrapper(model, input):
+    """Model forward with device auto mapping.
+
+    Args:
+        model (torch.nn.Module): input model
+        input (torch.tensor): input data
+
+    Returns:
+        output: output data
+    """
+    try:
+        device = next(model.parameters()).device
+    except:
+        # for RecursiveScriptModule
+        device = "cpu"
+    input = move_input_device(input, device)
+    if isinstance(input, dict) or isinstance(input, UserDict):
+        output = model(**input)
+    elif isinstance(input, list) or isinstance(input, tuple):
+        try:
+            output = model(*input)
+        except:
+            output = model(input)
+    else:
+        output = model(input)
+    return output

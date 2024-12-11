@@ -7,7 +7,7 @@ import torch
 import transformers
 
 from neural_compressor.torch.quantization import load
-from neural_compressor.torch.utils import LoadFormat, accelerator, is_hpex_available
+from neural_compressor.torch.utils import SaveLoadFormat, accelerator, is_hpex_available
 
 device = accelerator.current_device_name()
 

@@ -712,9 +712,12 @@ def fp8_entry(
 ) -> torch.nn.Module:
     """The main entry to apply fp8 quantization."""
     from neural_compressor.torch.algorithms.fp8_quant import FP8Quantizer
+    from neural_compressor.torch.algorithms.fp8_quant.save_load import save
 
     quantizer = get_quantizer(model, quantizer_cls=FP8Quantizer, quant_config=configs_mapping)
     model = quantizer.execute(model, mode=mode)
+    model.qconfig = configs_mapping
+    model.save = MethodType(save, model)
     postprocess_model(model, mode, quantizer)
     return model
 

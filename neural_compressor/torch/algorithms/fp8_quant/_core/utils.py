@@ -76,7 +76,7 @@ def prepare_model(model):
     logger.info("Total modules : %d", len(mod_list))
     if (config.cfg["mode"] == QuantMode.MEASURE) or (config.cfg["mode"] == QuantMode.SHAPE):
         return prepare_model_for_measure(model, mod_list)
-    elif config.cfg["mode"] == QuantMode.QUANTIZE:
+    elif config.cfg["mode"] in [QuantMode.QUANTIZE, QuantMode.LOAD]:
         scaling_method_name = scale_method_mapping[(config.cfg["scale_method"], config.cfg["observer"])]
         scaling_params[scaling_method_name].update(config.cfg["scale_params"])
         config.cfg["scale_params"] = scaling_params[scaling_method_name]

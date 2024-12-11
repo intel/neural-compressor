@@ -12,14 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from torch import Tensor, nn
-
 from .._quant_common.quant_config import ScaleFormat
+from torch import Tensor, nn
 
 
 def create_scale_tensor(orig_tensor, scale_format):
     if scale_format == ScaleFormat.CONST:
-        return nn.Parameter(orig_tensor)
+        if isinstance(orig_tensor, Tensor):
+            return nn.Parameter(orig_tensor)
+        elif isinstance(orig_tensor, list):
+            return [nn.Parameter(x) for x in orig_tensor]
     elif scale_format == ScaleFormat.SCALAR:
         return scale_to_scalar(orig_tensor)
     else:
@@ -35,5 +37,14 @@ def scale_to_scalar(scale):
             raise Exception("scale as scalar isn't supported for scale tensors of dim > 0")
     elif isinstance(scale, float):  # already scalar case
         return scale
+    else:
+        raise Exception("unexpected scale instance type, expected Torch.tensor or float number")
+
+
+def get_scale_dtype(scale):
+    if isinstance(scale, Tensor):  # tensor case
+        return scale.dtype
+    elif isinstance(scale, float):  # already scalar case
+        return type(scale).__name__
     else:
         raise Exception("unexpected scale instance type, expected Torch.tensor or float number")

@@ -410,11 +410,11 @@ def tune(args):
     if args.device != "cpu":
         torch.cuda.empty_cache()
     
-    from neural_compressor.torch.utils import (LoadFormat,)
+    from neural_compressor.torch.utils import (SaveLoadFormat,)
     kargs = {}
     if "phi3_v" in model_type:
         kargs['safe_serialization'] = 'False'
-    user_model.save(args.output_dir, format=LoadFormat.HUGGINGFACE, **kargs)
+    user_model.save(args.output_dir, format=SaveLoadFormat.HUGGINGFACE, **kargs)
     if tokenizer is not None:
         tokenizer.save_pretrained(args.output_dir)
     if processor is not None and hasattr(processor, 'chat_template'): # Avoiding phi-3.5-vision save errors
