@@ -87,7 +87,7 @@ def save_file(model, d, source_format, fname, mode):
     config = get_hqt_config(model)
     logger.debug("Saving %s file: %s", mode, fname)
     ext = os.path.splitext(fname)[1]
-    target_format = file_functions[ext]["format"]
+    target_format = file_functions[ext]['format']
     dc = rec_fn(d, format_functions[(source_format, target_format)])
     df = {
         "GlobalRank": config.cfg["global_rank"],
@@ -96,7 +96,7 @@ def save_file(model, d, source_format, fname, mode):
         "Nodes": dc,
     }
     try:
-        file_functions[ext]["save"](df, fname)
+        file_functions[ext]['save'](df, fname)
     except:
         pass
 
@@ -104,10 +104,10 @@ def save_file(model, d, source_format, fname, mode):
 def load_file(fname, target_format, fail_on_file_not_exist):
     logger.debug("Loading file: %s", fname)
     ext = os.path.splitext(fname)[1]
-    source_format = file_functions[ext]["format"]
+    source_format = file_functions[ext]['format']
     d = {}
     if os.path.isfile(fname):
-        d = file_functions[ext]["load"](fname)
+        d = file_functions[ext]['load'](fname)
     elif fail_on_file_not_exist:
         raise FileNotFoundError(f"Failed to load file {fname}")
     if "Nodes" in d:
@@ -176,8 +176,8 @@ def convert_scales_to_tensors_dict(scales_obj, scales_file_format, hp_dtype, dev
 
 
 file_functions = {
-    ".json": {"format": list, "save": save_json, "load": load_json},
-    ".npz": {"format": np.ndarray, "save": save_npz, "load": load_npz},
+    ".json": {'format': list, 'save': save_json, 'load': load_json},
+    ".npz": {'format': np.ndarray, 'save': save_npz, 'load': load_npz}
 }
 
 format_functions = {

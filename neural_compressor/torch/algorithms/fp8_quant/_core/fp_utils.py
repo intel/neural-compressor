@@ -12,10 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import torch
 import habana_frameworks.torch.core as htcore
 import habana_frameworks.torch.utils.experimental as htexp
-import torch
-
 from .common import ModuleConfig
 from .quant_dequant import cast_to_fp8_fcn, cast_fcn, descale_fcn, scale_fcn
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
