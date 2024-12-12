@@ -20,7 +20,7 @@ import torch
 
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
 from neural_compressor.common.utils import Mode, call_counter, log_process
-from neural_compressor.torch.quantization.config import FP8Config, SmoothQuantConfig, StaticQuantConfig
+from neural_compressor.torch.quantization.config import SmoothQuantConfig, INT8StaticQuantConfig
 from neural_compressor.torch.utils import is_ipex_available, logger
 from neural_compressor.torch.utils.utility import WHITE_MODULE_LIST, algos_mapping, get_model_info
 
@@ -76,7 +76,7 @@ def quantize(
     # select quantization algo according to config
 
     if is_ipex_available and (
-        isinstance(quant_config, StaticQuantConfig) or isinstance(quant_config, SmoothQuantConfig)
+        isinstance(quant_config, INT8StaticQuantConfig) or isinstance(quant_config, SmoothQuantConfig)
     ):
         if isinstance(quant_config, SmoothQuantConfig):
             from neural_compressor.torch.algorithms.smooth_quant import TorchSmoothQuant
@@ -146,7 +146,7 @@ def prepare(
 
     # select quantization algo according to config
     if is_ipex_available and (
-        isinstance(quant_config, StaticQuantConfig) or isinstance(quant_config, SmoothQuantConfig)
+        isinstance(quant_config, INT8StaticQuantConfig) or isinstance(quant_config, SmoothQuantConfig)
     ):
         model_info = quant_config.get_model_info(prepared_model, example_inputs)
     else:
@@ -212,7 +212,7 @@ def convert(
 
     # select quantization algo according to config
     if is_ipex_available and (
-        isinstance(quant_config, StaticQuantConfig) or isinstance(quant_config, SmoothQuantConfig)
+        isinstance(quant_config, INT8StaticQuantConfig) or isinstance(quant_config, SmoothQuantConfig)
     ):
         model_info = quant_config.get_model_info(q_model, example_inputs)
     else:

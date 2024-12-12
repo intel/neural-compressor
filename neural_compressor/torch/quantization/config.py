@@ -1955,7 +1955,7 @@ def get_default_fp8_config_set() -> FP8Config:
 
 ######################## MixedPrecision Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=MIXED_PRECISION)
-class MixedPrecisionConfig(BaseConfig):
+class MixedPrecisionConfig(TorchBaseConfig):
     """Config class for mixed-precision."""
 
     name = MIXED_PRECISION
@@ -2080,7 +2080,7 @@ CONFIGS_FOR_STATIC_QUANT_MAPPING = OrderedDict(
 )
 
 
-class StaticQuantConfig:
+class StaticQuantConfig(TorchBaseConfig):
     _model_mapping = CONFIGS_FOR_STATIC_QUANT_MAPPING
 
     def __new__(
