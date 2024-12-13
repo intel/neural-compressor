@@ -95,6 +95,11 @@ function run_tuning {
     elif [ "${topology}" = "opt_125m_woq_autoround_int4" ]; then
         model_name_or_path="facebook/opt-125m"
         extra_cmd=$extra_cmd" --woq_algo AutoRound --woq_bits 4 --woq_group_size 128 --woq_scheme asym --autoround_iters 200 --autoround_nsamples 500"
+    elif [ "${topology}" = "opt_125m_woq_autoround_int4_hpu" ]; then
+        model_name_or_path="facebook/opt-125m"
+        extra_cmd=$extra_cmd" --woq_algo AutoRound --woq_bits 4 --woq_group_size 128 --woq_scheme asym --autoround_iters 200 --autoround_nsamples 500"
+        export PT_ENABLE_INT64_SUPPORT=1
+        export PT_HPU_LAZY_MODE=0
     elif [ "${topology}" = "opt_125m_woq_autotune_int4" ]; then
         model_name_or_path="facebook/opt-125m"
         extra_cmd=$extra_cmd" --woq_algo AutoTune --woq_bits 4"

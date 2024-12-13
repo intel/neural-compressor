@@ -129,6 +129,13 @@
       "main_script": "run_clm_no_trainer.py",
       "batch_size": 1
     },
+    "opt_125m_woq_autoround_int4_hpu":{
+      "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/weight_only",
+      "dataset_location": "",
+      "input_model": "",
+      "main_script": "run_clm_no_trainer.py",
+      "batch_size": 1
+    },
     "opt_125m_woq_autotune_int4":{
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/weight_only",
       "dataset_location": "",
