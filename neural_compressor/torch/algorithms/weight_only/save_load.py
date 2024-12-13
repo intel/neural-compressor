@@ -22,7 +22,7 @@ import tempfile
 
 import torch
 
-from neural_compressor.common.utils import save_config_mapping
+from neural_compressor.common.utils import save_config_mapping, AWQ, TEQ
 from neural_compressor.torch.utils import (
     HPU_SAFE_WEIGHTS_NAME,
     HPU_WEIGHT_NAME,
@@ -200,7 +200,9 @@ class WOQModelLoader:
 
         # load remaining pretrained weight to weight-only quantization model
         is_meta_device = hasattr(self.original_model, "device") and self.original_model.device.type == 'meta'
-        if is_meta_device:
+        algo_name = next(iter(self.quantization_config[next(iter(self.quantization_config))].keys()))
+        if is_meta_device or algo_name in [AWQ, TEQ]:
+            # AWQ and TEQ will update some weight except WOQLinear to handle additional input_scale
             model.load_state_dict(self.loaded_state_dict, assign=True, strict=False)
 
         # save hpu format tensor to local directory
