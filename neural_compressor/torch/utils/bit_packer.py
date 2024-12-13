@@ -39,7 +39,7 @@ def pack_array_with_numba_b4_c32(
     raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
 ) -> np.ndarray:
     """Pack the array with numba when bits=4 and compress_bits=32."""
-    for i in range(new_in_features):
+    for i in numba.prange(new_in_features):
         packed_array[:, i] = (
             ((raw_array[:, i * n_pack + 7] & 0b1111) << 28)
             | ((raw_array[:, i * n_pack + 6] & 0b1111) << 24)
@@ -59,7 +59,7 @@ def pack_array_with_numba_b4_c16(
     raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
 ) -> np.ndarray:
     """Pack the array with numba when bits=4 and compress_bits=16."""
-    for i in range(new_in_features):
+    for i in numba.prange(new_in_features):
         packed_array[:, i] = (
             ((raw_array[:, i * n_pack + 3] & 0b1111) << 12)
             | ((raw_array[:, i * n_pack + 2] & 0b1111) << 8)
@@ -75,7 +75,7 @@ def pack_array_with_numba_b4_c8(
     raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
 ) -> np.ndarray:
     """Pack the array with numba when bits=4 and compress_bits=8."""
-    for i in range(new_in_features):
+    for i in numba.prange(new_in_features):
         packed_array[:, i] = ((raw_array[:, i * n_pack + 1] & 0b1111) << 4) | (raw_array[:, i * n_pack] & 0b1111)
     return packed_array
 
@@ -86,7 +86,7 @@ def pack_array_with_numba_b4_c64(
     raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
 ) -> np.ndarray:
     """Pack the array with numba when bits=4 and compress_bits=64."""
-    for i in range(new_in_features):
+    for i in numba.prange(new_in_features):
         packed_array[:, i] = (
             ((raw_array[:, i * n_pack + 15] & 0b1111) << 60)
             | ((raw_array[:, i * n_pack + 14] & 0b1111) << 56)
@@ -114,7 +114,7 @@ def pack_array_with_numba_b8_c32(
     raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
 ) -> np.ndarray:
     """Pack the array with numba when bits=8 and compress_bits=32."""
-    for i in range(new_in_features):
+    for i in numba.prange(new_in_features):
         packed_array[:, i] = (
             ((raw_array[:, i * n_pack + 3] & 0b11111111) << 24)
             | ((raw_array[:, i * n_pack + 2] & 0b11111111) << 16)
@@ -130,7 +130,7 @@ def pack_array_with_numba_b8_c16(
     raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
 ) -> np.ndarray:
     """Pack the array with numba when bits=8 and compress_bits=16."""
-    for i in range(new_in_features):
+    for i in numba.prange(new_in_features):
         packed_array[:, i] = (
             ((raw_array[:, i * n_pack + 3] & 0b11111111) << 24)
             | ((raw_array[:, i * n_pack + 2] & 0b11111111) << 16)
@@ -146,7 +146,7 @@ def pack_array_with_numba_b8_c8(
     raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
 ) -> np.ndarray:
     """Pack the array with numba when bits=8 and compress_bits=8."""
-    for i in range(new_in_features):
+    for i in numba.prange(new_in_features):
         packed_array[:, i] = raw_array[:, i * n_pack] & 0b11111111
     return packed_array
 
@@ -157,7 +157,7 @@ def pack_array_with_numba_b8_c64(
     raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
 ) -> np.ndarray:
     """Pack the array with numba when bits=8 and compress_bits=64."""
-    for i in range(new_in_features):
+    for i in numba.prange(new_in_features):
         packed_array[:, i] = (
             ((raw_array[:, i * n_pack + 7] & 0b11111111) << 56)
             | ((raw_array[:, i * n_pack + 6] & 0b11111111) << 48)
@@ -177,7 +177,7 @@ def pack_array_with_numba_b2_c32(
     raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
 ) -> np.ndarray:
     """Pack the array with numba when bits=2 and compress_bits=32."""
-    for i in range(new_in_features):
+    for i in numba.prange(new_in_features):
         packed_array[:, i] = (
             ((raw_array[:, i * n_pack + 15] & 0b11) << 30)
             | ((raw_array[:, i * n_pack + 14] & 0b11) << 28)
@@ -205,7 +205,7 @@ def pack_array_with_numba_b2_c16(
     raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
 ) -> np.ndarray:
     """Pack the array with numba when bits=2 and compress_bits=16."""
-    for i in range(new_in_features):
+    for i in numba.prange(new_in_features):
         packed_array[:, i] = (
             ((raw_array[:, i * n_pack + 7] & 0b11) << 14)
             | ((raw_array[:, i * n_pack + 6] & 0b11) << 12)
@@ -225,7 +225,7 @@ def pack_array_with_numba_b2_c8(
     raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
 ) -> np.ndarray:
     """Pack the array with numba when bits=2 and compress_bits=8."""
-    for i in range(new_in_features):
+    for i in numba.prange(new_in_features):
         packed_array[:, i] = (
             ((raw_array[:, i * n_pack + 3] & 0b11) << 6)
             | ((raw_array[:, i * n_pack + 2] & 0b11) << 4)
@@ -241,7 +241,7 @@ def pack_array_with_numba_b2_c64(
     raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
 ) -> np.ndarray:
     """Pack the array with numba when bits=2 and compress_bits=64."""
-    for i in range(new_in_features):
+    for i in numba.prange(new_in_features):
         packed_array[:, i] = (
             ((raw_array[:, i * n_pack + 31] & 0b11) << 62)
             | ((raw_array[:, i * n_pack + 30] & 0b11) << 60)
