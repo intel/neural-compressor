@@ -252,7 +252,7 @@ class RTNQuantizer(Quantizer):
                 m.to(model_device)
                 new_module.to(model_device)
 
-        with concurrent.futures.ThreadPoolExecutor() as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=12) as executor:
             futures = [executor.submit(process_module, name, m) for name, m in model.named_modules()]
             for future in concurrent.futures.as_completed(futures):
                 future.result()
