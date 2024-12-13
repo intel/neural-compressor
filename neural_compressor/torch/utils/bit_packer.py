@@ -34,7 +34,7 @@ def register_pack_func(orig_bits: int, compress_bits: int):
 
 
 @register_pack_func(4, 32)
-@numba.jit(nopython=True, parallel=True)
+@numba.jit(nopython=True, parallel=True, fastmath=True)
 def pack_array_with_numba_b4_c32(
     raw_array: np.ndarray, packed_array: np.ndarray, n_pack: int, new_in_features: int
 ) -> np.ndarray:
