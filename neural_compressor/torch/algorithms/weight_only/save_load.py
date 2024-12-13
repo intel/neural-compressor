@@ -288,9 +288,19 @@ class WOQModelLoader:
                 new_module = HQQLinear(
                     in_features=module.in_features, out_features=module.out_features, bias=module.bias is not None
                 )
+                self._load_data_to_new_module_hqq(new_module, name)
                 set_module(self.original_model, name, new_module)
         woq_model = self.original_model
         return woq_model
+
+    def _load_data_to_new_module_hqq(self, new_module, module_name):
+        new_module_state_dict = {}
+        for key in self.loaded_state_dict:
+            if key.startswith(module_name):
+                new_key = key[len(module_name) + 1:]  # Remove module_name and the following dot
+                new_module_state_dict[new_key] = self.loaded_state_dict[key]
+                self.loaded_state_dict_keys.remove(key)
+        new_module.load_state_dict(new_module_state_dict, strict=False)  # bias is not needed.
 
     def _build_woq_model(self):
         """Build weight-only quantization model."""
