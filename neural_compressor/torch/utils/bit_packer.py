@@ -40,16 +40,9 @@ def pack_array_with_numba_b4_c32(
 ) -> np.ndarray:
     """Pack the array with numba when bits=4 and compress_bits=32."""
     for i in numba.prange(new_in_features):
-        packed_array[:, i] = (
-            ((raw_array[:, i * n_pack + 7] & 0b1111) << 28)
-            | ((raw_array[:, i * n_pack + 6] & 0b1111) << 24)
-            | ((raw_array[:, i * n_pack + 5] & 0b1111) << 20)
-            | ((raw_array[:, i * n_pack + 4] & 0b1111) << 16)
-            | ((raw_array[:, i * n_pack + 3] & 0b1111) << 12)
-            | ((raw_array[:, i * n_pack + 2] & 0b1111) << 8)
-            | ((raw_array[:, i * n_pack + 1] & 0b1111) << 4)
-            | (raw_array[:, i * n_pack] & 0b1111)
-        )
+        packed_array[:, i] = 0
+        for j in range(n_pack):
+            packed_array[:, i] |= (raw_array[:, i * n_pack + j] & 0b1111) << (4 * (n_pack - 1 - j))
     return packed_array
 
 
