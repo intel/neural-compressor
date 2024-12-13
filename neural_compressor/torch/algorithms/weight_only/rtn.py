@@ -137,59 +137,57 @@ class RTNQuantizer(Quantizer):
             assert model_path, "model_path should not be None."
             model_path = get_path(model_path)
 
-        import concurrent.futures
-
-        def process_module(name, m):
+        for name, m in model.named_modules():
             if use_layer_wise and len(list(m.named_children())) == 0:
                 load_module(model, name, model_path, device=device)
             if not isinstance(m, supported_layers):
-                return
+                continue
             if name in weight_config:  # pragma: no cover
-            # initialize op configuration
+                # initialize op configuration
                 dtype = weight_config[name].get("dtype", "int")
-            if dtype == "fp32":
-                return
-            # Move modules to the accelerator device layer-by-layer
-            if not use_layer_wise:
-                m.to(device)
-            ### FP8 cast part
-            if dtype in ["fp8_e5m2", "fp8_e5m2fnuz", "fp8_e4m3fn", "fp8_e4m3fnuz"]:
-                logger.debug("Cast module {} to FP8 using qdq mode, no scaling".format(name))
-                m.weight = cast_fp8(m.weight, dtype, use_qdq=True)
-                return
-            ####
-            logger.debug("Apply RTN on module %s.", name)
-            bits = weight_config[name].get("bits", 4)
-            group_size = weight_config[name]["group_size"]
-            scheme = weight_config[name]["scheme"]
-            quantile = weight_config[name].get("quantile", 1.0)
-            group_dim = weight_config[name]["group_dim"]
-            use_full_range = weight_config[name]["use_full_range"]
-            use_mse_search = weight_config[name]["use_mse_search"]
-            use_optimum_format = kwargs.get("use_optimum_format", True)
-            # double quant config
-            double_quant_config = {
-                "double_quant": weight_config[name]["use_double_quant"],
-                "double_quant_dtype": weight_config[name]["double_quant_dtype"],
-                "double_quant_bits": weight_config[name]["double_quant_bits"],
-                "double_quant_scheme": weight_config[name]["double_quant_scheme"],
-                "double_quant_group_size": weight_config[name]["double_quant_group_size"],
-            }
-            if dtype != "int" and "int" in dtype:
-                bits = int(dtype.lstrip("int"))
-                dtype = "int"
+                if dtype == "fp32":
+                    continue
+                # Move modules to the accelerator device layer-by-layer
+                if not use_layer_wise:
+                    m.to(device)
+                ### FP8 cast part
+                if dtype in ["fp8_e5m2", "fp8_e5m2fnuz", "fp8_e4m3fn", "fp8_e4m3fnuz"]:
+                    logger.debug("Cast module {} to FP8 using qdq mode, no scaling".format(name))
+                    m.weight = cast_fp8(m.weight, dtype, use_qdq=True)
+                    continue
+                ####
+                logger.debug("Apply RTN on module %s.", name)
+                bits = weight_config[name].get("bits", 4)
+                group_size = weight_config[name]["group_size"]
+                scheme = weight_config[name]["scheme"]
+                quantile = weight_config[name].get("quantile", 1.0)
+                group_dim = weight_config[name]["group_dim"]
+                use_full_range = weight_config[name]["use_full_range"]
+                use_mse_search = weight_config[name]["use_mse_search"]
+                use_optimum_format = kwargs.get("use_optimum_format", True)
+                # double quant config
+                double_quant_config = {
+                    "double_quant": weight_config[name]["use_double_quant"],
+                    "double_quant_dtype": weight_config[name]["double_quant_dtype"],
+                    "double_quant_bits": weight_config[name]["double_quant_bits"],
+                    "double_quant_scheme": weight_config[name]["double_quant_scheme"],
+                    "double_quant_group_size": weight_config[name]["double_quant_group_size"],
+                }
+                if dtype != "int" and "int" in dtype:
+                    bits = int(dtype.lstrip("int"))
+                    dtype = "int"
             else:
-                return
+                continue
             log_msg = (
-            f"RTN quantization config: bits={bits}, group_size={group_size}, "
-            + f"scheme={scheme}, quantile={quantile}"
+                f"RTN quantization config: bits={bits}, group_size={group_size}, "
+                + f"scheme={scheme}, quantile={quantile}"
             )
             if dtype != "int":
                 log_msg += f", dtype={dtype}"
             elif scheme == "sym":  # nf4/fp4 is always [-7,7]
                 log_msg += f", use_full_range={use_full_range}"
             if dtype == "fp32":
-                return
+                continue
             logger.debug(f"RTN quantized module:{name, m}")
             logger.debug(log_msg)
 
@@ -223,21 +221,21 @@ class RTNQuantizer(Quantizer):
                 out_features = m.out_features
             elif is_transformers_imported() and isinstance(m, transformers.Conv1D):
                 in_features = m.weight.shape[0]
-            out_features = m.weight.shape[1]
-            int_weight = int_weight.t_().contiguous()
-            scale = scale.t_().contiguous()
-            zp = zp.t_().contiguous() if zp is not None else zp
+                out_features = m.weight.shape[1]
+                int_weight = int_weight.t_().contiguous()
+                scale = scale.t_().contiguous()
+                zp = zp.t_().contiguous() if zp is not None else zp
 
             new_module = INCWeightOnlyLinear(
-            in_features,
-            out_features,
-            dtype=dtype,
-            bits=bits,
-            group_size=group_size,
-            zp=zp is not None,
-            bias=m.bias is not None,
-            use_optimum_format=use_optimum_format,
-            device=device,
+                in_features,
+                out_features,
+                dtype=dtype,
+                bits=bits,
+                group_size=group_size,
+                zp=zp is not None,
+                bias=m.bias is not None,
+                use_optimum_format=use_optimum_format,
+                device=device,
             )
             new_module.pack(int_weight, scale, zp, m.bias)
 
@@ -251,12 +249,6 @@ class RTNQuantizer(Quantizer):
             if not use_layer_wise:
                 m.to(model_device)
                 new_module.to(model_device)
-
-        with concurrent.futures.ThreadPoolExecutor(max_workers=12) as executor:
-            futures = [executor.submit(process_module, name, m) for name, m in model.named_modules()]
-            for future in concurrent.futures.as_completed(futures):
-                future.result()
-
         if not use_layer_wise:
             model.to(model_device)
         return model
