@@ -300,7 +300,7 @@ class WOQModelLoader:
                 new_key = key[len(module_name) + 1:]  # Remove module_name and the following dot
                 new_module_state_dict[new_key] = self.loaded_state_dict[key]
                 self.loaded_state_dict_keys.remove(key)
-        new_module.load_state_dict(new_module_state_dict, strict=False)  # bias is not needed.
+        new_module.load_state_dict(new_module_state_dict, strict=False)
 
     def _build_woq_model(self):
         """Build weight-only quantization model."""

@@ -1494,8 +1494,6 @@ def get_default_static_config() -> INT8StaticQuantConfig:
     Returns:
         the default static quant config.
     """
-    if not is_ipex_imported():
-        return INT8StaticQuantConfig(w_granularity="per_tensor")
     return INT8StaticQuantConfig()
 
 
@@ -1788,6 +1786,7 @@ else:
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=FP8_QUANT)
 class FP8Config(TorchBaseConfig):
     """Config class for FP8 quantization."""
+
     name = FP8_QUANT
 
     def __init__(
