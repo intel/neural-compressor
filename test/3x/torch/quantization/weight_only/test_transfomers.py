@@ -3,6 +3,7 @@ from math import isclose
 
 import pytest
 import torch
+import transformers
 from packaging.version import Version
 from transformers import AutoTokenizer
 
@@ -202,5 +203,8 @@ class TestTansformersLikeAPI:
         self.generate_kwargs = dict(do_sample=False, temperature=0.9, num_beams=4)
         gen_ids = user_model.generate(input_ids, **self.generate_kwargs)
         gen_text = tokenizer.batch_decode(gen_ids, skip_special_tokens=True)
-        target_text = ["One day, the little girl in the back of my mind will ask me if I'm a"]
+        if Version(transformers.__version__) < Version("4.47.0"):
+            target_text = ["One day, the little girl in the back of my mind will ask me if I'm a"]
+        else:
+            target_text = ["One day, the little girl in the back of my mind will say, “I’m so glad you’"]
         assert gen_text == target_text, "loading autoawq quantized model failed."
