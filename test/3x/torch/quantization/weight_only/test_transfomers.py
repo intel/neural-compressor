@@ -206,5 +206,5 @@ class TestTansformersLikeAPI:
         if Version(transformers.__version__) < Version("4.47.0"):
             target_text = ["One day, the little girl in the back of my mind will ask me if I'm a"]
         else:
-            target_text = ['One day, the little girl in the back of my mind will say, “I’m so glad you’']
+            target_text = ["One day, the little girl in the back of my mind will say, “I’m so glad you’"]
         assert gen_text == target_text, "loading autoawq quantized model failed."
