@@ -76,7 +76,6 @@ def quantize_params(mod, mod_extra_config):
         setattr(mod, param_name, nn.Parameter(quantized_param))
         quantized_param = getattr(mod, param_name)
         quantized_param.requires_grad_(False)
-        gc.collect()
         cur_accelerator.synchronize()
 
 
