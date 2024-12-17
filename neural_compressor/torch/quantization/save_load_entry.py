@@ -26,7 +26,7 @@ from neural_compressor.torch.quantization.config import (
     RTNConfig,
     TEQConfig,
 )
-from neural_compressor.torch.utils import SaveLoadFormat
+from neural_compressor.torch.utils import SaveLoadFormat, get_enum_from_format
 
 config_name_mapping = {
     FP8_QUANT: FP8Config,
@@ -45,6 +45,7 @@ def save(model, checkpoint_dir="saved_results", format="default"):
             quantized by llm-compressor(https://github.com/vllm-project/llm-compressor).
             Defaults to "default".
     """
+    format = get_enum_from_format(format)
     config_mapping = model.qconfig
     config_object = config_mapping[next(iter(config_mapping))]
     # fp8_quant
@@ -104,7 +105,8 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
     Returns:
         The quantized model
     """
-    if format == SaveLoadFormat.DEFAULT.value:
+    format = get_enum_from_format(format)
+    if format == SaveLoadFormat.DEFAULT:
         from neural_compressor.common.base_config import ConfigRegistry
 
         qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(model_name_or_path)), "qconfig.json")
@@ -133,7 +135,7 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
                     model_name_or_path, original_model, format=SaveLoadFormat.DEFAULT, device=device
                 )
                 return qmodel.to(device)
-    elif format == SaveLoadFormat.HUGGINGFACE.value:
+    elif format == SaveLoadFormat.HUGGINGFACE:
         import transformers
 
         config = transformers.AutoConfig.from_pretrained(model_name_or_path, **kwargs)
@@ -156,4 +158,4 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
             qmodel = weight_only.load(model_name_or_path, format=SaveLoadFormat.HUGGINGFACE, device=device, **kwargs)
             return qmodel.to(device)
     else:
-        raise ValueError("`format` in load function can only be 'huggingface' or 'default', but get {}".format(format))
+        assert False, "This code path should never be reached."

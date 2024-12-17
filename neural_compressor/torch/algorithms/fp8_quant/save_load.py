@@ -348,6 +348,10 @@ def save_for_multi_devices(model, checkpoint_dir="saved_results", format="huggin
         checkpoint_dir (str, optional): path to checkpoint. Defaults to "saved_results".
         format (str, optional): defaults to 'huggingface'.
     """
+    format = get_enum_from_format(format)
+    assert format == SaveLoadFormat.HUGGINGFACE, (
+        "Currently, only huggingface models are supported." + "Please set format='huggingface'."
+    )
     from safetensors.torch import save_file as safe_save_file
     if format == SaveLoadFormat.VLLM:
         import transformers
