@@ -559,7 +559,7 @@ class WOQModelLoader:
             "_raise_exceptions_for_missing_entries": False,
             "_commit_hash": commit_hash,
         }
-        resolved_archive_file = self._get_resolved_archive_file(**kwargs)
+        resolved_archive_file, is_sharded = self._get_resolved_archive_file(**kwargs)
 
         self._model_local_dir = os.path.abspath(os.path.expanduser(os.path.dirname(resolved_archive_file)))
         # if hpu format tensor can be used directly, then update resolved_archive_file to the hpu format tensor file
@@ -623,6 +623,7 @@ class WOQModelLoader:
         subfolder = kwargs.get("subfolder")
 
         resolved_archive_file = None
+        is_sharded = False
         is_local = os.path.isdir(self.model_name_or_path)
         if is_local:  # pragma: no cover
             # self.model_name_or_path is a local directory
@@ -770,7 +771,7 @@ class WOQModelLoader:
         if is_local:
             resolved_archive_file = archive_file
 
-        return resolved_archive_file
+        return resolved_archive_file, is_sharded
 
     def _init_hf_model(self, model_class, config):
         from accelerate.big_modeling import init_empty_weights
