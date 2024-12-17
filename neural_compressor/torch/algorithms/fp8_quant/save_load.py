@@ -425,6 +425,7 @@ def convert_weight_to_inc(state_dict, on_gaudi2=False):
             state_dict[key] = state_dict[key].detach().t().to("hpu")
         else:
             pass
+        cur_accelerator.synchronize()
     return state_dict
 
 
