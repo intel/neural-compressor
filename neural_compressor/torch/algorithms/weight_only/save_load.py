@@ -31,6 +31,7 @@ from neural_compressor.torch.utils import (
     SaveLoadFormat,
     logger,
     set_module,
+    get_enum_from_format,
 )
 
 from .modules import HPUWeightOnlyLinear, INCWeightOnlyLinear, MulLinear
@@ -52,6 +53,7 @@ def save(model, output_dir="./saved_results", format=SaveLoadFormat.DEFAULT, **k
             - tokenizer (Tokenizer, optional): The tokenizer to be saved along with the model (only applicable for 'huggingface' format).
             - max_shard_size (str, optional): The maximum size for each shard (only applicable for 'huggingface' format). Defaults to "5GB".
     """
+    format = get_enum_from_format(format)
     os.makedirs(output_dir, exist_ok=True)
     if format == SaveLoadFormat.HUGGINGFACE:  # pragma: no cover
         config = model.config
@@ -111,6 +113,7 @@ def load(model_name_or_path, original_model=None, format=SaveLoadFormat.DEFAULT,
     Returns:
         torch.nn.Module: quantized model
     """
+    format = get_enum_from_format(format)
     model_loader = WOQModelLoader(model_name_or_path, original_model, format, device, **kwargs)
     model = model_loader.load_woq_model()
     return model

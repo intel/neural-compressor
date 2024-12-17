@@ -21,7 +21,14 @@ import copy
 import torch
 
 from ._quant_common.quant_config import local_rank, world_size, HpDtype
-from neural_compressor.torch.utils import get_accelerator, is_optimum_habana_available, get_attr, set_attr
+from neural_compressor.torch.utils import (
+    get_accelerator,
+    is_optimum_habana_available,
+    get_attr,
+    set_attr,
+    SaveLoadFormat,
+    get_enum_from_format,
+)
 
 
 MAX_FILE_SIZE = 5  # GB
@@ -115,7 +122,8 @@ def save(model, checkpoint_dir="saved_results", format="huggingface"):
         checkpoint_dir (str, optional): path to checkpoint. Defaults to "saved_results".
         format (str, optional): _description_. Defaults to 'huggingface'.
     """
-    assert format == "huggingface", (
+    format = get_enum_from_format(format)
+    assert format == SaveLoadFormat.HUGGINGFACE, (
         "Currently, only huggingface models are supported." + "Please set format='huggingface'."
     )
     from safetensors.torch import save_file as safe_save_file
@@ -330,7 +338,8 @@ def load(model_name_or_path, format="huggingface", device="hpu", **kwargs):
     Returns:
         FP8 model.
     """
-    assert format == "huggingface", "Currently, only huggingface models are supported."
+    format = get_enum_from_format(format)
+    assert format == SaveLoadFormat.HUGGINGFACE, "Currently, only huggingface models are supported."
     assert device == "hpu", "Currently, only hpu device is supported for FP8 model."
     from safetensors.torch import load_file as safe_load_file
 
