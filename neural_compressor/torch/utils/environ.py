@@ -238,8 +238,9 @@ def get_used_hpu_mem_MB():
 
 
 def get_used_cpu_mem_MB():
-    """Get CPU used memory: MiB."""
+    """Get the amount of CPU memory used by the current process in MiB (Mebibytes)."""
     import psutil
-    data = psutil.virtual_memory()
-    used_cpu_mem = round(data.used / 1024**2, 3)
+    process = psutil.Process()
+    mem_info = process.memory_info()
+    used_cpu_mem = round(mem_info.rss / 1024**2, 3)
     return used_cpu_mem
