@@ -168,6 +168,8 @@ def save(model, checkpoint_dir="saved_results", format="huggingface"):
     config_object.mode = "LOAD"
     model.config.quantization_config = config_object
     model.config.save_pretrained(checkpoint_dir)
+    if hasattr(model, "generation_config") and model.generation_config is not None:
+        model.generation_config.save_pretrained(checkpoint_dir)
 
 
 ##################################### load ##################################
@@ -227,6 +229,11 @@ def load_empty_raw_model(model_name_or_path, **kwargs):
     else:
         with init_empty_weights(include_buffers=False):
             model = transformers.AutoModelForCausalLM.from_config(config, torch_dtype=hp_dtype)
+    try:
+        generation_config = transformers.GenerationConfig.from_pretrained(model_name_or_path, **kwargs)
+        model.generation_config = generation_config
+    except FileNotFoundError:
+        pass  # in case that no file named generation_config.json
     return model, from_neuralmagic, from_neuralmagic_with_kv
 
 

@@ -68,6 +68,8 @@ def test_multi_cards_save_load():
     else:
         model = transformers.AutoModelForCausalLM.from_pretrained(name)
     model = model.eval()
+    # The default value of model.generation_config.max_length in transformers is 20
+    model.generation_config.max_length = 2
     example_inputs = torch.tensor([[10, 20]], dtype=torch.long).to("hpu")
 
     # TODO: [SW-205970] update state_dict to save scalar scale format
@@ -78,6 +80,7 @@ def test_multi_cards_save_load():
     # save and load on multi cards
     save(model, "saved_results", format="huggingface")
     new_model = load("saved_results", format="huggingface", device="hpu")
+    assert new_model.generation_config.max_length == 2, "The generation config is not loaded."
     shutil.rmtree("saved_results", ignore_errors=True)
     # check result
     compare_parameters_buffers(model, new_model)
