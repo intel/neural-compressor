@@ -22,7 +22,7 @@ import tempfile
 
 import torch
 
-from neural_compressor.common.utils import save_config_mapping, AWQ, TEQ
+from neural_compressor.common.utils import AWQ, TEQ, save_config_mapping
 from neural_compressor.torch.utils import (
     HPU_SAFE_WEIGHTS_NAME,
     HPU_WEIGHT_NAME,
@@ -36,7 +36,10 @@ from neural_compressor.torch.utils import (
 from .modules import HPUWeightOnlyLinear, INCWeightOnlyLinear, MulLinear
 from .utility import convert_dtype_str2torch
 
-format_woqlinear_mapping = {SaveLoadFormat.HUGGINGFACE: INCWeightOnlyLinear, SaveLoadFormat.DEFAULT: INCWeightOnlyLinear}
+format_woqlinear_mapping = {
+    SaveLoadFormat.HUGGINGFACE: INCWeightOnlyLinear,
+    SaveLoadFormat.DEFAULT: INCWeightOnlyLinear,
+}
 device_woqlinear_mapping = {"cpu": INCWeightOnlyLinear, "hpu": HPUWeightOnlyLinear}
 
 
@@ -199,7 +202,7 @@ class WOQModelLoader:
         model = self._build_woq_model()
 
         # load remaining pretrained weight to weight-only quantization model
-        is_meta_device = hasattr(self.original_model, "device") and self.original_model.device.type == 'meta'
+        is_meta_device = hasattr(self.original_model, "device") and self.original_model.device.type == "meta"
         algo_name = next(iter(self.quantization_config[next(iter(self.quantization_config))].keys()))
         if is_meta_device or algo_name in [AWQ, TEQ]:
             # AWQ and TEQ will update some weight except WOQLinear to handle additional input_scale
@@ -297,7 +300,7 @@ class WOQModelLoader:
         new_module_state_dict = {}
         for key in self.loaded_state_dict:
             if key.startswith(module_name):
-                new_key = key[len(module_name) + 1:]  # Remove module_name and the following dot
+                new_key = key[len(module_name) + 1 :]  # Remove module_name and the following dot
                 new_module_state_dict[new_key] = self.loaded_state_dict[key]
                 self.loaded_state_dict_keys.remove(key)
         new_module.load_state_dict(new_module_state_dict, strict=False)
@@ -863,7 +866,7 @@ class WOQModelLoader:
         for shard_file in resolved_archive_file:
             state_dict = load_state_dict(shard_file)
 
-            params_dict={
+            params_dict = {
                 "model": model,
                 "state_dict": state_dict,
                 "start_prefix": "",
@@ -877,6 +880,7 @@ class WOQModelLoader:
             }
 
             import transformers
+
             if transformers.__version__ < "4.45.0":
                 params_dict["loaded_state_dict_keys"] = self.loaded_state_dict_keys
 

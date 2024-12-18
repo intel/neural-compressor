@@ -20,7 +20,7 @@ import torch
 
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
 from neural_compressor.common.utils import Mode, call_counter, log_process
-from neural_compressor.torch.quantization.config import SmoothQuantConfig, INT8StaticQuantConfig
+from neural_compressor.torch.quantization.config import INT8StaticQuantConfig, SmoothQuantConfig
 from neural_compressor.torch.utils import is_ipex_available, logger
 from neural_compressor.torch.utils.utility import WHITE_MODULE_LIST, algos_mapping, get_model_info
 
