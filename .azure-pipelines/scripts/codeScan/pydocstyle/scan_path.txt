@@ -25,5 +25,3 @@
 /neural-compressor/neural_compressor/torch/algorithms/static_quant
 /neural-compressor/neural_compressor/torch/algorithms/weight_only
 /neural-compressor/neural_compressor/torch/export
-/neural-compressor/neural_compressor/torch/quantization
-/neural-compressor/neural_compressor/torch/utils
