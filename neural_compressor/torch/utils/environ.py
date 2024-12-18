@@ -229,8 +229,9 @@ def is_tbb_available():  # pragma: no cover
 
 def get_used_hpu_mem_MB():
     """Get HPU used memory: MiB."""
-    from habana_frameworks.torch.hpu import memory_stats
     import numpy as np
+    from habana_frameworks.torch.hpu import memory_stats
+
     torch.hpu.synchronize()
     mem_stats = memory_stats()
     used_hpu_mem = np.round(mem_stats["InUse"] / 1024**2, 3)
@@ -240,6 +241,7 @@ def get_used_hpu_mem_MB():
 def get_used_cpu_mem_MB():
     """Get the amount of CPU memory used by the current process in MiB (Mebibytes)."""
     import psutil
+
     process = psutil.Process()
     mem_info = process.memory_info()
     used_cpu_mem = round(mem_info.rss / 1024**2, 3)

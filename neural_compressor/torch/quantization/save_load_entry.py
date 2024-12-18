@@ -32,6 +32,7 @@ config_name_mapping = {
     FP8_QUANT: FP8Config,
 }
 
+
 def save(model, checkpoint_dir="saved_results", format="default"):
     """Save quantized model.
 
@@ -46,6 +47,7 @@ def save(model, checkpoint_dir="saved_results", format="default"):
     # fp8_quant
     if isinstance(config_object, FP8Config):
         from neural_compressor.torch.algorithms import fp8_quant
+
         format = SaveLoadFormat.HUGGINGFACE.value  # TODO: support default format for FP8 algorithm
         fp8_quant.save(model, checkpoint_dir, format)
     else:
@@ -120,21 +122,26 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
             ):  # WOQ
                 from neural_compressor.torch.algorithms import weight_only
 
-                qmodel = weight_only.load(model_name_or_path, original_model, format=SaveLoadFormat.DEFAULT, device=device)
+                qmodel = weight_only.load(
+                    model_name_or_path, original_model, format=SaveLoadFormat.DEFAULT, device=device
+                )
                 return qmodel.to(device)
     elif format == SaveLoadFormat.HUGGINGFACE.value:
         import transformers
+
         config = transformers.AutoConfig.from_pretrained(model_name_or_path, **kwargs)
         # use config to check which algorithm is used.
         if (
-            "fp8_config" in config.quantization_config or
+            "fp8_config" in config.quantization_config
+            or
             # for FP8 LLMs for vLLM (https://huggingface.co/neuralmagic).
             (
-                "quant_method" in config.quantization_config and
-                config.quantization_config["quant_method"] in ["fp8", "compressed-tensors"]
+                "quant_method" in config.quantization_config
+                and config.quantization_config["quant_method"] in ["fp8", "compressed-tensors"]
             )
         ):
             from neural_compressor.torch.algorithms import fp8_quant
+
             return fp8_quant.load(model_name_or_path, format=format, device=device, **kwargs)
         else:
             from neural_compressor.torch.algorithms import weight_only

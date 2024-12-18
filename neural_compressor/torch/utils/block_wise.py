@@ -11,22 +11,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""This utility is for block-wise calibration of LLMs"""
+"""This utility is for block-wise calibration of LLMs."""
 
-import torch
 import gc
 from functools import partial
 
+import torch
+
 from neural_compressor.torch.utils import (
     fetch_module,
-    logger,
-    set_module,
-    get_accelerator,
     forward_wrapper,
+    get_accelerator,
     get_non_persistent_buffers,
     load_non_persistent_buffers,
+    logger,
+    set_module,
 )
-
 
 cur_accelerator = get_accelerator()
 

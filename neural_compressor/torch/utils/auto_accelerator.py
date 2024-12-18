@@ -26,12 +26,12 @@
 
 import os
 from abc import ABC, abstractmethod
+from functools import lru_cache
 from typing import Any, Callable, List
 
 import torch
 
 from neural_compressor.common.utils import LazyImport, logger
-from functools import lru_cache
 
 htcore = LazyImport("habana_frameworks.torch.core")
 
@@ -149,7 +149,6 @@ class Auto_Accelerator(ABC):  # pragma: no cover
     def synchronize(self):
         """Synchronize the accelerator."""
         pass
-
 
 
 @register_accelerator(name="cpu", priority=PRIORITY_CPU)
