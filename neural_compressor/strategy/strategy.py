@@ -36,7 +36,6 @@ from neural_compressor.adaptor.tensorflow import TensorFlowAdaptor
 
 from ..adaptor import FRAMEWORKS
 from ..algorithm import ALGORITHMS, AlgorithmScheduler
-from ..common.version import __version__
 from ..config import MixedPrecisionConfig, options
 from ..objective import MultiObjective
 from ..utils import logger
@@ -55,6 +54,7 @@ from ..utils.utility import (
     print_op_list,
     print_table,
 )
+from ..version import __version__
 from ..utils.weights_details import WeightsDetails
 from .utils.constant import FALLBACK_RECIPES_SET, TUNING_ITEMS_LST
 from .utils.tuning_sampler import tuning_sampler_dict
