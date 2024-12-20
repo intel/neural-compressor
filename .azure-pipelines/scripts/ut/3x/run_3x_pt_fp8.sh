@@ -11,7 +11,7 @@ echo "##[section]import check pass"
 
 # install requirements
 echo "##[group]set up UT env..."
-export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=${HOME}/.local/lib/:$LD_LIBRARY_PATH
 sed -i '/^intel_extension_for_pytorch/d' /neural-compressor/test/3x/torch/requirements.txt
 sed -i '/^auto_round/d' /neural-compressor/test/3x/torch/requirements.txt
 cat /neural-compressor/test/3x/torch/requirements.txt
