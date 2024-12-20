@@ -28,7 +28,6 @@ from neural_compressor.common.utils import (
 )
 from neural_compressor.common.base_config import options
 
-
 __all__ = [
     "options",
     "level",
