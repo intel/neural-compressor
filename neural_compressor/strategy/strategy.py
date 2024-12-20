@@ -55,7 +55,7 @@ from ..utils.utility import (
     print_table,
 )
 from ..utils.weights_details import WeightsDetails
-from ..version import __version__
+from ..common.version import __version__
 from .utils.constant import FALLBACK_RECIPES_SET, TUNING_ITEMS_LST
 from .utils.tuning_sampler import tuning_sampler_dict
 from .utils.tuning_space import TuningSpace
