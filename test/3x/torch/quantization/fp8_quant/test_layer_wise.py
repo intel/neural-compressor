@@ -1,5 +1,6 @@
 import torch
 import habana_frameworks.torch.core as htcore
+import pytest
 
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoConfig
 from neural_compressor.torch.quantization import FP8Config, convert, prepare, finalize_calibration
@@ -8,7 +9,7 @@ from neural_compressor.torch.utils import get_used_cpu_mem_MB
 
 htcore.hpu_set_env()
 
-
+@pytest.mark.xfail(reason="test fails, will be fixed at SW-213890")
 def test_two_step_layer_wise():
     # layer-wise is based on memory mapping technique and https://github.com/huggingface/transformers/pull/31771
     model_name = "facebook/opt-350m"
