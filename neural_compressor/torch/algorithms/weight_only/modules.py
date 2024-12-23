@@ -528,7 +528,6 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
                 if hasattr(self, "qzeros"):
                     tmp &= mask
                 unpacked_array[:, index] = tmp.astype(target_dtype)
-                accelerator.synchronize()
         unpacked_tensor = torch.from_numpy(unpacked_array).to(device=packed_tensor.device)
         return unpacked_tensor
 
