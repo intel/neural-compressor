@@ -16,6 +16,7 @@ from neural_compressor.torch.quantization import (
 from neural_compressor.torch.utils import accelerator, is_hpex_available
 
 device = accelerator.current_device_name()
+torch.set_grad_enabled(False)
 
 
 class ModelConv1d(torch.nn.Module):
