@@ -210,7 +210,7 @@ class PatchedMatmul(nn.Module):
             get_current_repr(self, "scale_input", "scale_other"),
         )
 
-def init_linear(instance, mod_extra_config):
+def init_linear(instance, mod_extra_config, change_forward=True):
     if instance.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
         # When offloading weights to disk using device_map, the module forward is overridden.
         # __dict__.update call again overrides the PatchedLinear forward with the forward that device_map planted.
@@ -229,15 +229,15 @@ def init_linear(instance, mod_extra_config):
             # So need to set PatchedLinear forward to be the right forward.
         if instance.use_qdq:
             instance.dequant_weights = instance._mod_extra_config.params["weight"][1]
-            instance.forward = instance.forward_qdq
+            instance.forward = instance.forward_qdq if change_forward else instance.forward
         elif instance.fake_quant:
             instance.qdq_weights = instance._mod_extra_config.params["weight"][0]
-            instance.forward = instance.forward_qdq
+            instance.forward = instance.forward_qdq if change_forward else instance.forward
         else:
-            instance.forward = instance.forward_quant
+            instance.forward = instance.forward_quant if change_forward else instance.forward
 
     elif (instance.quantization_mode == QuantMode.MEASURE) or (instance.quantization_mode == QuantMode.SHAPE):
-        instance.forward = instance.forward_measure
+        instance.forward = instance.forward_measure if change_forward else instance.forward
 
 class PatchedLinear(nn.Module):
     def __init__(self, mod, mod_extra_config, *args, **kwargs):
@@ -270,6 +270,63 @@ class PatchedLinear(nn.Module):
     def forward_measure(self, input):
         measure_input((input,), observer=self._mod_extra_config.inputs)
         output = self.forward_orig(input)
+        measure_output((output,), self._mod_extra_config.outputs)
+        return output
+
+    def extra_repr(self) -> str:
+        return extra_representation(
+            self.extra_repr_org(),
+            self.class_name_org,
+            get_current_repr(self, "scale_input", "scale_weight"),
+        )
+
+
+class PatchedParallelLMHead(nn.Module):
+    def __init__(self, mod, mod_extra_config, *args, **kwargs):
+        super().__init__()
+        set_attrs_from_orig_model(self, mod, mod_extra_config)
+        # ParallelLMHead inherits from VocabParallelEmbedding (nn.module) which has a member called
+        # "linear_method" of type UnquantizedEmbeddingMethod that inherits from QuantizeMethodBase
+        # (both are not nn.module) and implement an "apply" method by using torch.nn.functional.linear
+        # (Apply the weights in layer to the input tensor.)
+        # ParallelLMHead's forward method should not be called because LMHead's weights should be used
+        # in the sampler. (The forward itself throws RuntimeError exception)
+        # So in order to quantize that linear_method we patch only the "apply" method.
+        init_linear(self, mod_extra_config, False)
+        self.orig_linear_apply = types.MethodType(mod.linear_method.apply.__func__, self)
+        if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
+            if self.use_qdq or self.fake_quant:
+                self.linear_method.apply = self.apply_qdq
+            else:
+                self.linear_method.apply = self.apply_quant
+        elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
+            self.linear_method.apply = self.apply_measure
+
+    def apply_quant(self, layer, x, bias):
+        qinput = self.quant_input(x)
+        y = matmul_fp8(
+            qinput,
+            self.weight,
+            out_dtype=self._mod_extra_config.config_params["hp_dtype"],
+            scale_input_inv=self.scale_input,
+            scale_other_inv=self.scale_weight,
+        )
+        output = y + bias if (bias is not None) else y
+        return output
+
+    def apply_qdq(self, layer, x, bias):
+        if self.fake_quant:
+            qweight = self.qdq_weights(self.weight, )
+        else:
+            qweight = self.dequant_weights(self.weight, )
+        qinput =  self.quant_input(x)
+        y = torch.matmul(qinput, qweight)
+        output = y + bias if (bias is not None) else y
+        return output
+
+    def apply_measure(self, layer, x, bias):
+        measure_input((x,), observer=self._mod_extra_config.inputs)
+        output = self.orig_linear_apply(layer, x, bias)
         measure_output((output,), self._mod_extra_config.outputs)
         return output
 

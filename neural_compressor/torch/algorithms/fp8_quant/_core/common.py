@@ -199,6 +199,7 @@ format_functions_rec = lambda k: functools.partial(rec_fn, fn=format_functions[k
 _mod_default_dict = {
     "Matmul": ModuleInfo("matmul", PatchedMatmul),
     "Linear": ModuleInfo("linear", PatchedLinear),
+    "ParallelLMHead": ModuleInfo("linear", PatchedParallelLMHead),
     "RowParallelLinear": ModuleInfo("linear", PatchedRowParallelLinear),
     "ColumnParallelLinear": ModuleInfo("linear", PatchedColumnParallelLinear),
     "MergedColumnParallelLinear": ModuleInfo("linear", PatchedColumnParallelLinear),
