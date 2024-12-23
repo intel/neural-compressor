@@ -270,8 +270,9 @@ def get_user_model():
         torchscript = True
     if args.woq_algo == "AutoRound" and is_habana_framework_installed():
         print("Quantizing model with AutoRound on HPU")
-        check_torch_compile_with_hpu_backend()
-        set_envs_for_torch_compile_with_hpu_backend()
+        if args.quantize:
+            check_torch_compile_with_hpu_backend()
+            set_envs_for_torch_compile_with_hpu_backend()
         user_model = AutoModelForCausalLM.from_pretrained(
             args.model,
             trust_remote_code=args.trust_remote_code,
@@ -568,7 +569,7 @@ else:
 
 
 if is_hpex_available():
-    from habana_frameworks.torch.hpu import wrap_in_hpu_graph
+    from habana_frameworks.torch.hpu.graphs import wrap_in_hpu_graph
     user_model = user_model.to(torch.bfloat16)
     wrap_in_hpu_graph(user_model, max_graphs=10)
 
