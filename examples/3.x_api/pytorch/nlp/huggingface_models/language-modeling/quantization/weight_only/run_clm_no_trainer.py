@@ -8,12 +8,15 @@ import json
 import re
 import torch
 from datasets import load_dataset
+from functools import lru_cache
 import datasets
+from packaging import version
 from torch.nn.functional import pad
 from torch.utils.data import DataLoader
 from transformers import AutoModelForCausalLM, AutoConfig, AutoTokenizer
 from neural_compressor.torch.utils import is_hpex_available
-
+import logging
+logger = logging.getLogger(__name__)
 parser = argparse.ArgumentParser()
 parser.add_argument(
     "--model", nargs="?", default="EleutherAI/gpt-j-6b"
@@ -97,7 +100,9 @@ parser.add_argument(
     help="minmax learning rate, if None,it will beset to be the same with lr",
 )
 parser.add_argument("--autoround_iters", default=200, type=int, help="num iters for autoround calibration.")
+parser.add_argument("--autoround_seq_len", default=2048, type=int, help="The sequence length for autoround calibration.")
 parser.add_argument("--autoround_nsamples", default=128, type=int, help="num samples for autoround calibration.")
+parser.add_argument("--autoround_attn_implementation", default="eager", type=str, help="The attention implementation.")
 parser.add_argument(
     "--disable_quanted_input",
     action="store_true",
@@ -131,6 +136,45 @@ parser.add_argument("--double_quant_group_size",
 args = parser.parse_args()
 calib_size = 1
 
+
+def compare_versions(v1, v2):
+    return version.parse(v1) >= version.parse(v2)
+
+
+def torch_version_at_least(version_string):
+    return compare_versions(torch.__version__, version_string)
+
+
+TORCH_VERSION_AT_LEAST_2_4 = torch_version_at_least("2.4.0")
+
+
+def check_torch_compile_with_hpu_backend():
+    assert TORCH_VERSION_AT_LEAST_2_4, "Please use torch>=2.4.0 to use torch compile with HPU backend."
+    if os.environ.get("PT_HPU_LAZY_MODE") != "0":
+        raise ValueError("Please set `PT_HPU_LAZY_MODE=0` to use torch compile with HPU backend.")
+    if os.environ.get("PT_ENABLE_INT64_SUPPORT" != "true"):
+        raise ValueError("Please set `PT_ENABLE_INT64_SUPPORT=true` to use torch compile with HPU backend.")
+
+
+def set_envs_for_torch_compile_with_hpu_backend():
+    import torch._dynamo.config as dynamo_config
+    import torch._inductor.config as inductor_config
+
+    inductor_config.force_disable_caches = True
+    dynamo_config.inline_inbuilt_nn_modules = True
+
+
+@lru_cache(None)
+def is_habana_framework_installed():
+    """Check if Habana framework is installed.
+
+    Only check for the habana_frameworks package without importing it to avoid
+    initializing lazy-mode-related components.
+    """
+    from importlib.util import find_spec
+
+    package_spec = find_spec("habana_frameworks")
+    return package_spec is not None
 
 class Evaluator:
     def __init__(self, dataset, tokenizer, batch_size=8, pad_val=1, pad_max=196, is_calib=False):
@@ -211,14 +255,25 @@ class Evaluator:
 
 def get_user_model():
     torchscript = False
-    if  args.woq_algo in ['AWQ', 'TEQ']:
+    if args.woq_algo in ["AWQ", "TEQ"]:
         torchscript = True
-    user_model = AutoModelForCausalLM.from_pretrained(
-        args.model,
-        torchscript=torchscript,  # torchscript will force `return_dict=False` to avoid jit errors
-        trust_remote_code=args.trust_remote_code,
-        revision=args.revision,
-    )
+    if args.woq_algo == "AutoRound" and is_habana_framework_installed():
+        logger.info("Quantizing model with AutoRound on HPU")
+        check_torch_compile_with_hpu_backend()
+        set_envs_for_torch_compile_with_hpu_backend()
+        user_model = AutoModelForCausalLM.from_pretrained(
+            args.model,
+            trust_remote_code=args.trust_remote_code,
+            attn_implementation=args.autoround_attn_implementation,
+            revision=args.revision,
+        )
+    else:
+        user_model = AutoModelForCausalLM.from_pretrained(
+            args.model,
+            torchscript=torchscript,  # torchscript will force `return_dict=False` to avoid jit errors
+            trust_remote_code=args.trust_remote_code,
+            revision=args.revision,
+        )
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     user_model = user_model.float()
     if args.woq_algo == 'AutoRound':
@@ -424,14 +479,14 @@ if args.quantize:
                 enable_quanted_input=not args.disable_quanted_input,
                 lr=args.lr,
                 minmax_lr=args.minmax_lr,
-                seqlen=args.pad_max_length,
+                seqlen=args.autoround_seq_len,
                 nsamples=args.autoround_nsamples,
                 iters=args.autoround_iters,
             )
         quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
         from neural_compressor.torch.algorithms.weight_only.autoround import get_dataloader
         dataloader = get_dataloader(tokenizer=tokenizer,
-                                                seqlen=args.pad_max_length,
+                                                seqlen=args.autoround_seq_len,
                                                 dataset_name=datasets,
                                                 seed=args.seed,
                                                 bs=args.batch_size,
