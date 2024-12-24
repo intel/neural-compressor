@@ -1,7 +1,7 @@
 """Use this module as an example of how to write new unit tests for layers."""
 
 import os
-
+import sys
 import pytest
 import torch
 
@@ -58,7 +58,12 @@ def test_predefined_config(lp_dtype, scale_method, quant_mode):
             run_with_raised_exception(run_predefined_config, FileNotFoundError, "Failed to load file ")
         # TODO [SW-196641]: fix the following issue:
         elif quant_mode == QuantMode.SHAPE:
-            run_with_raised_exception(run_predefined_config, UnboundLocalError, "local variable 'fname_base' referenced before assignment")
+            error_message = (
+                "cannot access local variable 'fname_base' where it is not associated with a value"
+                if sys.version_info >= (3, 11)
+                else "local variable 'fname_base' referenced before assignment"
+            )
+            run_with_raised_exception(run_predefined_config, UnboundLocalError, error_message)
     else:
         run_predefined_config()
 
