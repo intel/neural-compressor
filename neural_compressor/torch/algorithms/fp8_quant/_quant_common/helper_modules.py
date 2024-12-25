@@ -349,9 +349,9 @@ class PatchedMixtralMoE(nn.Module):
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             delattr(mod, "w13_weight")
             delattr(mod, "w2_weight")
-            setattr(mod, "w13_weight", None)
-            setattr(mod, "w2_weight", None)
-        self.forward = mod.forward
+            setattr(self, "w13_weight", None)
+            setattr(self, "w2_weight", None)
+        self.forward = self.forward_orig
 
 
 # This patched module is called by the vllm-mixtral FusedMoE layer
