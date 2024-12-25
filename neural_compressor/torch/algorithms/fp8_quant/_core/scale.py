@@ -35,17 +35,24 @@ def init_mod_config(mod, scales, params):
 
 def init_input_config(scales_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant):
     if use_qdq or fake_quant:
-        input_config = [QuantDequant(s_inv, lp_dtype, hp_dtype, scale_format=scale_format, use_qdq=use_qdq) for s_inv in scales_inv.inputs]
+        input_config = [
+            QuantDequant(s_inv, lp_dtype, hp_dtype, scale_format=scale_format, use_qdq=use_qdq)
+            for s_inv in scales_inv.inputs
+                       ]
     else:
-        input_config = [QuantInput(s_inv, lp_dtype, hp_dtype, scale_format=scale_format) for s_inv in scales_inv.inputs]
+        input_config =  [
+            QuantInput(s_inv, lp_dtype, hp_dtype, scale_format=scale_format) for s_inv in scales_inv.inputs
+                        ]
     return input_config
 
 
 def init_weight_config(scales, scales_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant):
     if use_qdq:
         # to ensure the weights to be loaded to the device in fp8
-        weight_config = [QuantInput(scales_inv, lp_dtype, hp_dtype, scale_format=scale_format, use_qdq=use_qdq),
-                         DequantOutput(scales, lp_dtype, hp_dtype, scale_format=scale_format, use_qdq=use_qdq)]
+        weight_config = [
+            QuantInput(scales_inv, lp_dtype, hp_dtype, scale_format=scale_format, use_qdq=use_qdq),
+            DequantOutput(scales, lp_dtype, hp_dtype, scale_format=scale_format, use_qdq=use_qdq)
+        ]
     elif fake_quant:
         weight_config = [QuantDequant(scales_inv, lp_dtype, hp_dtype, scale_format=scale_format)]
     else:
@@ -77,16 +84,30 @@ def linear_scales_to_mod_config(mod, scales, params):
     output_config = [QuantDequantNone(lp_dtype, hp_dtype, scale_format=scale_format)]
 
     if isinstance(scales_inv.params["weight"], (torch.Tensor, float)):
-        weight_config = init_weight_config(scales.params["weight"], scales_inv.params["weight"], lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant)
+        weight_config = init_weight_config(
+            scales.params["weight"],
+            scales_inv.params["weight"],
+            lp_dtype,
+            hp_dtype,
+            scale_format,
+            use_qdq,
+            fake_quant,
+        )
     elif isinstance(scales_inv.params["weight"], dict):
         weight_scale_inv_out_ch = scales_inv.params["weight"][0]
-        weight_scale_inv_in_ch = scales_inv.params["weight"][1]
         if isinstance(weight_scale_inv_out_ch, torch.Tensor):
-            scale_inv = [weight_scale_inv_in_ch.reshape([1, -1]), weight_scale_inv_out_ch.reshape([-1, 1])]
+            weight_config = init_weight_config(
+                scales.params["weight"][0],
+                weight_scale_inv_out_ch,
+                lp_dtype,
+                hp_dtype,
+                scale_format,
+                use_qdq,
+                fake_quant,
+            )
         else:
             # TODO SW-169781: Handle here scalar weight for PCQ
             raise TypeError(f"Unknown weight scales type: {type(weight_scale_inv_out_ch)}.")
-        weight_config = init_weight_config(scales, scale_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant)
     else:
         logger.error("Unknown weight scales format.")
     params_config = {"weight": weight_config}
