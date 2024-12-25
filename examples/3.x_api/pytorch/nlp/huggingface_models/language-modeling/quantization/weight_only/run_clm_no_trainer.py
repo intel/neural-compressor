@@ -403,11 +403,12 @@ if args.quantize:
             max_seq_length=args.gptq_max_seq_length,
         )
         dataloader_for_calibration = dataloaderPreprocessor.get_prepared_dataloader()
-        from neural_compressor.torch.algorithms.weight_only.utility import move_input_to_device
+        from neural_compressor.torch.utils import get_model_device, move_input_device
         from tqdm import tqdm
         def run_fn_for_gptq(model, dataloader_for_calibration, *args):
             for batch in tqdm(dataloader_for_calibration):
-                batch = move_input_to_device(batch, device=None)
+                device = get_model_device(model)
+                batch = move_input_device(batch, device=device)
                 if isinstance(batch, tuple) or isinstance(batch, list):
                     model(batch[0])
                 elif isinstance(batch, dict):
@@ -525,11 +526,12 @@ if args.quantize:
         )
         dataloader = dataloaderPreprocessor.get_prepared_dataloader()
         custom_tune_config = TuningConfig(config_set=get_woq_tuning_config())
-        from neural_compressor.torch.algorithms.weight_only.utility import move_input_to_device
+        from neural_compressor.torch.utils import get_model_device, move_input_device
         from tqdm import tqdm
         def run_fn_for_gptq(model, dataloader_for_calibration, *args):
             for batch in tqdm(dataloader_for_calibration):
-                batch = move_input_to_device(batch, device=None)
+                device = get_model_device(model)
+                batch = move_input_device(batch, device=device)
                 if isinstance(batch, tuple) or isinstance(batch, list):
                     model(batch[0])
                 elif isinstance(batch, dict):
