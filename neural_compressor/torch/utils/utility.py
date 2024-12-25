@@ -710,13 +710,3 @@ def forward_wrapper(model, input):
     else:
         output = model(input)
     return output
-
-
-def get_model_device(model):
-    """Return model device"""
-    try:
-        device = next(model.parameters()).device
-    except:
-        # for RecursiveScriptModule
-        device = "cpu"
-    return device
