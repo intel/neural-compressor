@@ -15,6 +15,8 @@ pr:
       - neural_compressor/torch
       - test/3x/torch/algorithms/fp8_quant
       - test/3x/torch/quantization/fp8_quant
+      - test/3x/torch/quantization/weight_only/test_rtn.py
+      - test/3x/torch/quantization/weight_only/test_load.py
       - setup.py
       - requirements_pt.txt
 
