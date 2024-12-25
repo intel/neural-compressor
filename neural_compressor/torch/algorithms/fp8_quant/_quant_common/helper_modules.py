@@ -18,12 +18,8 @@ import types
 
 from .quant_config import QuantMode, get_hqt_config, ScaleFormat
 from .._core.quant_dequant import QuantDequant as qdq
+from .._core.quantized_hpu_ops import get_hpu_quantized_func_wrapper, OP_TYPE
 from .._core.scale_handler import create_scale_tensor, get_scale_dtype
-
-try:  # backwards compatibility for 1.16
-    from habana_frameworks.torch.hpex.kernels import fp8_fused_sdpa
-except ImportError:
-    pass
 
 
 class BMM(nn.Module):
@@ -57,28 +53,6 @@ class Softmax(nn.Module):
     def forward(self, x, dim=None, invAttnHead=None):
         return torch.softmax(x, dim)
 
-def matmul_fp8(
-    input,
-    other,
-    out=None,
-    out_dtype=torch.bfloat16,
-    scale_input_inv=None,
-    scale_other_inv=None,
-):
-    res = torch.ops.hpu.fp8_gemm_v2(
-        input,
-        False,
-        other,
-        False,
-        out,
-        out_dtype,
-        scale_input_inv,
-        scale_other_inv,
-        None,
-        False,
-    )
-    return res
-
 
 def measure_input(input, observer):
     for i in range(len(observer)):
@@ -89,35 +63,6 @@ def measure_output(output, observer):
     if observer:
         for i in range(len(observer)):
             observer[i].measure(output[i])
-
-
-def conv2d_fp8(
-    input,
-    other,
-    bias,
-    stride,
-    padding,
-    dilation,
-    groups,
-    out_dtype=torch.bfloat16,
-    scale_input_inv=None,
-    scale_other_inv=None,
-):
-    def to_list_if_necessary(param):
-        return param if hasattr(param, "__iter__") else [param] * 2
-
-    return torch.ops.hpu.conv2d_fp8(
-        input=input,
-        weight=other,
-        bias=bias,
-        stride=to_list_if_necessary(stride),
-        padding=to_list_if_necessary(padding),
-        dilation=to_list_if_necessary(dilation),
-        groups=groups,
-        out_dtype=out_dtype,
-        scale_input=scale_input_inv,
-        scale_weight=scale_other_inv,
-    )
 
 
 def set_attrs_from_orig_model(cls_instance, mod, mod_extra_config, *func_names):
@@ -176,19 +121,18 @@ class PatchedMatmul(nn.Module):
                 self.scale_input = create_scale_tensor(mod_extra_config.scale.inputs[0], self.scale_format)
                 self.scale_other = create_scale_tensor(mod_extra_config.scale.inputs[1], self.scale_format)
                 self.forward = self.forward_quant
+                self.matmul_fp8 = get_hpu_quantized_func_wrapper(OP_TYPE.GEMM, self.scale_format)
         elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
             self.forward = self.forward_measure
 
     def forward_quant(self, input, other):
         qinput = self.quant_input_0(input)
         qother = self.quant_input_1(other)
-        output = matmul_fp8(
-            qinput,
-            qother,
-            out_dtype=self._mod_extra_config.config_params["hp_dtype"],
-            scale_input_inv=self.scale_input,
-            scale_other_inv=self.scale_other,
-        )
+        output = self.matmul_fp8(qinput,
+                                 qother,
+                                 out_dtype=self._mod_extra_config.config_params["hp_dtype"],
+                                 scale_input_inv=self.scale_input,
+                                 scale_other_inv=self.scale_other)
         return output
 
     def forward_qdq(self, input, other):
@@ -234,6 +178,7 @@ def init_linear(instance, mod_extra_config, change_forward=True):
             instance.qdq_weights = instance._mod_extra_config.params["weight"][0]
             instance.forward = instance.forward_qdq if change_forward else instance.forward
         else:
+            instance.matmul_fp8 = get_hpu_quantized_func_wrapper(OP_TYPE.GEMM, instance.scale_format)
             instance.forward = instance.forward_quant if change_forward else instance.forward
 
     elif (instance.quantization_mode == QuantMode.MEASURE) or (instance.quantization_mode == QuantMode.SHAPE):
@@ -257,13 +202,11 @@ class PatchedLinear(nn.Module):
 
     def forward_quant(self, input):
         qinput = self.quant_input(input)
-        y = matmul_fp8(
-            qinput,
-            self.weight,
-            out_dtype=self._mod_extra_config.config_params["hp_dtype"],
-            scale_input_inv=self.scale_input,
-            scale_other_inv=self.scale_weight,
-        )
+        y = self.matmul_fp8(qinput,
+                            self.weight,
+                            out_dtype=self._mod_extra_config.config_params["hp_dtype"],
+                            scale_input_inv=self.scale_input,
+                            scale_other_inv=self.scale_weight)
         output = y + self.bias if (self.bias is not None) else y
         return output
 
@@ -304,7 +247,7 @@ class PatchedParallelLMHead(nn.Module):
 
     def apply_quant(self, layer, x, bias):
         qinput = self.quant_input(x)
-        y = matmul_fp8(
+        y = self.matmul_fp8(
             qinput,
             self.weight,
             out_dtype=self._mod_extra_config.config_params["hp_dtype"],
@@ -375,13 +318,11 @@ class PatchedMoeMatmul(nn.Module):
 
     def forward_quant(self, input, *args, **kwargs):
         qinput = self.quant_input(input)
-        y = matmul_fp8(
-            qinput,
-            self.weight,
-            out_dtype=self._mod_extra_config.config_params["hp_dtype"],
-            scale_input_inv=self.scale_input,
-            scale_other_inv=self.scale_weight,
-        )
+        y = self.matmul_fp8(qinput,
+                            self.weight,
+                            out_dtype=self._mod_extra_config.config_params["hp_dtype"],
+                            scale_input_inv=self.scale_input,
+                            scale_other_inv=self.scale_weight)
         return y
 
     def forward_measure(self, input, *args, **kwargs):
@@ -418,13 +359,11 @@ class PatchedReplicatedLinear(nn.Module):
     def forward_quant(self, input):
         qinput = self.quant_input(input)
         bias = self.bias if not self.skip_bias_add else None
-        y = matmul_fp8(
-            qinput,
-            self.weight,
-            out_dtype=self._mod_extra_config.config_params["hp_dtype"],
-            scale_input_inv=self.scale_input,
-            scale_other_inv=self.scale_weight,
-        )
+        y = self.matmul_fp8(qinput,
+                            self.weight,
+                            out_dtype=self._mod_extra_config.config_params["hp_dtype"],
+                            scale_input_inv=self.scale_input,
+                            scale_other_inv=self.scale_weight)
         output = y + bias if (bias is not None) else y
         output_bias = self.bias if self.skip_bias_add else None
         return output, output_bias
@@ -467,13 +406,11 @@ class PatchedLinearAllReduce(nn.Module):
     def forward_quant(self, input):
         # pre_all_reduce
         qinput = self.quant_input(input)
-        output = matmul_fp8(
-            qinput,
-            self.weight,
-            out_dtype=self._mod_extra_config.config_params["hp_dtype"],
-            scale_input_inv=self.scale_input,
-            scale_other_inv=self.scale_weight,
-        )
+        output = self.matmul_fp8(qinput,
+                                 self.weight,
+                                 out_dtype=self._mod_extra_config.config_params["hp_dtype"],
+                                 scale_input_inv=self.scale_input,
+                                 scale_other_inv=self.scale_weight)
         dqoutput = self.dequant_output(output)
         if not self.scoped_version:
             self.all_reduce(dqoutput)
@@ -530,13 +467,11 @@ class PatchedRowParallelLinear(nn.Module):
     def forward_quant(self, input):
         resolved_input = self.resolve_input(input)
         qinput = self.quant_input(resolved_input)
-        output = matmul_fp8(
-            qinput,
-            self.weight,
-            out_dtype=self._mod_extra_config.config_params["hp_dtype"],
-            scale_input_inv=self.scale_input,
-            scale_other_inv=self.scale_weight,
-        )
+        output = self.matmul_fp8(qinput,
+                                 self.weight,
+                                 out_dtype=self._mod_extra_config.config_params["hp_dtype"],
+                                 scale_input_inv=self.scale_input,
+                                 scale_other_inv=self.scale_weight)
         dqoutput = self.dequant_output(output)
         if self.reduce_results:
             dqoutput = self.collective_func(dqoutput)
@@ -590,13 +525,11 @@ class PatchedColumnParallelLinear(nn.Module):
 
     def forward_quant(self, input):
         qinput = self.quant_input(input)
-        output = matmul_fp8(
-            qinput,
-            self.weight,
-            out_dtype=self._mod_extra_config.config_params["hp_dtype"],
-            scale_input_inv=self.scale_input,
-            scale_other_inv=self.scale_weight,
-        )
+        output = self.matmul_fp8(qinput,
+                                 self.weight,
+                                 out_dtype=self._mod_extra_config.config_params["hp_dtype"],
+                                 scale_input_inv=self.scale_input,
+                                 scale_other_inv=self.scale_weight)
         dqoutput = self.dequant_output(output)
         if self.gather_output:
             dqoutput = self.collective_func(dqoutput)
@@ -660,13 +593,11 @@ class PatchedLmHeadLinearAllreduce(nn.Module):
         input_shard = input.shape[-1] // self.world_size
         splittedInput = input[:, :, self.rank * input_shard : (self.rank + 1) * input_shard]
         qinput = self.quant_input(splittedInput)
-        output = matmul_fp8(
-            qinput,
-            self.weight,
-            out_dtype=self._mod_extra_config.config_params["hp_dtype"],
-            scale_input_inv=self.scale_input,
-            scale_other_inv=self.scale_weight,
-        )
+        output = self.matmul_fp8(qinput,
+                                 self.weight,
+                                 out_dtype=self._mod_extra_config.config_params["hp_dtype"],
+                                 scale_input_inv=self.scale_input,
+                                 scale_other_inv=self.scale_weight)
         dqoutput = self.dequant_output(output)
 
         if self.mp_group is not None:
@@ -805,6 +736,7 @@ def init_conv(instance, mod_extra_config):
             instance.forward = instance.forward_quant
             instance.scale_input = create_scale_tensor(mod_extra_config.scale.inputs[0], instance.scale_format)
             instance.scale_weight = create_scale_tensor(mod_extra_config.scale.params["weight"], instance.scale_format)
+            instance.conv2d_fp8 = get_hpu_quantized_func_wrapper(OP_TYPE.CONV, instance.scale_format)
     elif (instance.quantization_mode == QuantMode.MEASURE) or (instance.quantization_mode == QuantMode.SHAPE):
         instance.forward = instance.forward_measure
 
@@ -829,18 +761,16 @@ class PatchedConv2d(nn.Conv2d):
 
     def forward_quant(self, input):
         qinput = self.quant_input(input)
-        output = conv2d_fp8(
-            qinput,
-            self.weight,
-            self.bias,
-            self.stride,
-            self.padding,
-            self.dilation,
-            self.groups,
-            out_dtype=self._mod_extra_config.config_params["hp_dtype"],
-            scale_input_inv=self.scale_input,
-            scale_other_inv=self.scale_weight,
-        )
+        output = self.conv2d_fp8(qinput,
+                                 self.weight,
+                                 self.bias,
+                                 self.stride,
+                                 self.padding,
+                                 self.dilation,
+                                 self.groups,
+                                 out_dtype=self._mod_extra_config.config_params["hp_dtype"],
+                                 scale_input_inv=self.scale_input,
+                                 scale_other_inv=self.scale_weight)
         return output
 
     def forward_measure(self, input):
@@ -871,6 +801,7 @@ class PatchedSoftmax(nn.Module):
                 # input scale is 1 assuming the input to SM is descaled because we are using HW supported scales
                 self.scale_input = create_scale_tensor(torch.Tensor([1.0]), self.scale_format)
                 self.scale_output = create_scale_tensor(torch.Tensor([1 / mod_extra_config.scale.outputs[0]]), self.scale_format)
+                self.softmax_fp8 = get_hpu_quantized_func_wrapper(OP_TYPE.SOFTMAX, self.scale_format)
         elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
             self.forward = self.forward_measure
 
@@ -880,7 +811,7 @@ class PatchedSoftmax(nn.Module):
         return output
 
     def forward_quant(self, x, dim=None, invAttnHead=None):
-        output = torch.ops.hpu.softmax_fp8(x, dim, self.scale_input, self.scale_output, invAttnHead)
+        output = self.softmax_fp8(x, dim, self.scale_input, self.scale_output, invAttnHead)
         return self.dequant_output(output)
 
     def forward_measure(self, x, dim=None, invAttnHead=None):
@@ -917,13 +848,11 @@ class PatchedLoRACompatibleLinear(nn.Linear):
 
     def forward_quant(self, input, scale: float = 1.0):
         qinput = self.quant_input(input)
-        y = matmul_fp8(
-            qinput,
-            self.weight,
-            out_dtype=self._mod_extra_config.config_params["hp_dtype"],
-            scale_input_inv=self.scale_input,
-            scale_other_inv=self.scale_weight,
-        )
+        y = self.matmul_fp8(qinput,
+                            self.weight,
+                            out_dtype=self._mod_extra_config.config_params["hp_dtype"],
+                            scale_input_inv=self.scale_input,
+                            scale_other_inv=self.scale_weight)
         output = y + self.bias if (self.bias is not None) else y
         if self.lora_layer is not None:
             # TODO SW-174899 support lora layer quantization
@@ -973,18 +902,16 @@ class PatchedLoRACompatibleConv(nn.Conv2d):
             # TODO SW-174899 support lora layer quantization
             _raise_lora_layer_error(self.class_name_org)
         else:
-            output = conv2d_fp8(
-                qinput,
-                self.weight,
-                self.bias,
-                self.stride,
-                self.padding,
-                self.dilation,
-                self.groups,
-                out_dtype=self._mod_extra_config.config_params["hp_dtype"],
-                scale_input_inv=self.scale_input,
-                scale_other_inv=self.scale_weight,
-            )
+            output = self.conv2d_fp8(qinput,
+                                     self.weight,
+                                     self.bias,
+                                     self.stride,
+                                     self.padding,
+                                     self.dilation,
+                                     self.groups,
+                                     out_dtype=self._mod_extra_config.config_params["hp_dtype"],
+                                     scale_input_inv=self.scale_input,
+                                     scale_other_inv=self.scale_weight)
         return output
 
     def forward_measure(self, input, scale: float = 1.0):
@@ -1024,8 +951,10 @@ class PatchedModuleFusedSDPA(nn.Module):
                 self.forward = self.forward_qdq
             else:
                 self.forward = self.forward_quant
+                self.fp8_fused_sdpa = get_hpu_quantized_func_wrapper(OP_TYPE.FSDPA, self.scale_format)
         elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
             self.forward = self.forward_measure
+            self.fp8_fused_sdpa = get_hpu_quantized_func_wrapper(OP_TYPE.FSDPA, self.scale_format)
 
     def forward_qdq(
         self,
@@ -1078,7 +1007,7 @@ class PatchedModuleFusedSDPA(nn.Module):
         qinput = self.quant_q(q).detach()
         kinput = self.quant_k(k).detach()
         vinput = self.quant_v(v).detach()
-        results = fp8_fused_sdpa(
+        results = self.fp8_fused_sdpa(
             qinput,
             kinput,
             vinput,
@@ -1120,7 +1049,7 @@ class PatchedModuleFusedSDPA(nn.Module):
         dk = k.detach()
         dv = v.detach()
         measure_input((dq, dk, dv), observer=self._mod_extra_config.inputs)
-        results = fp8_fused_sdpa(
+        results = self.fp8_fused_sdpa(
             dq,
             dk,
             dv,

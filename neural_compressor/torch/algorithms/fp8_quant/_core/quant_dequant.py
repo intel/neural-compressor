@@ -58,6 +58,14 @@ class QuantDequantBase(nn.Module):
             self.quant_max = int(torch.finfo(self.lp_dtype).max)
         self.forward = self.forward_qdq
 
+    def set_cast_to_op(self):
+        return torch.ops.hpu.cast_to_fp8_v2.scalar if self.scale_format == ScaleFormat.SCALAR else \
+               torch.ops.hpu.cast_to_fp8_v2
+
+    def set_cast_from_op(self):
+        return torch.ops.hpu.cast_from_fp8.scalar if self.scale_format == ScaleFormat.SCALAR else \
+               torch.ops.hpu.cast_from_fp8
+
     @abstractmethod
     def forward(self, *args, **kwargs):
         pass
@@ -95,8 +103,10 @@ class QuantInput(QuantDequantBase):
                 quantize_per_channel_to_fp8 if self.scale.numel() > 1 else quantize_per_tensor_to_fp8
                 )
 
+        self.cast_to_op = self.set_cast_to_op()
+
     def forward(self, x):
-        return cast_to_fp8_fcn(x, self.lp_dtype, self.scale_inv)
+        return self.cast_to_op(x, self.scale_inv, False, False, self.lp_dtype)[0]
 
     def forward_qdq(self, x):
         return self.quantize_op(
@@ -124,8 +134,10 @@ class DequantOutput(QuantDequantBase):
                 dequantize_per_channel_from_fp8 if self.scale.numel() > 1 else dequantize_per_tensor_from_fp8
                 )
 
+        self.cast_from_op = self.set_cast_from_op()
+
     def forward(self, x):
-        return cast_from_fp8_fcn(x, self.hp_dtype, self.scale)
+        return self.cast_from_op(x, self.scale, self.hp_dtype)
 
     def forward_qdq(self, x):
         return self.dequantize_op(
@@ -150,14 +162,16 @@ class QuantDequant(QuantDequantBase):
         super(QuantDequant, self).__init__(lp_dtype, hp_dtype, *args, **kwargs)
         self.scale_inv = create_scale_tensor(scale_inv, self.scale_format)
         self.scale = create_scale_tensor(1 / scale_inv, self.scale_format)
+        self.cast_to_op = self.set_cast_to_op()
+        self.cast_from_op = self.set_cast_from_op()
 
     def forward(self, x, *args, **kwargs):
-        y = cast_to_fp8_fcn(x, self.lp_dtype, self.scale_inv)
+        y = self.cast_to_op(x, self.scale_inv, False, False, self.lp_dtype)[0]
         # mark_step is needed so fuser won't remove 2 consecutive casts.
         # will be removed once SW-196431 is implemented
         # Call cur_accelerator.synchronize() which will call mark_step() as well
         cur_accelerator.synchronize()
-        z = cast_from_fp8_fcn(y, self.hp_dtype, self.scale)
+        z = self.cast_from_op(y, self.scale, self.hp_dtype)
         cur_accelerator.synchronize()
         return z
 
