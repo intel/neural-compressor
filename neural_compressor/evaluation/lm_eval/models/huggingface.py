@@ -969,6 +969,8 @@ class HFLM(TemplateLM):
                         output = output.logits
                     if self.pad_to_buckets and padding_length != 0:  # use buckets to pad inputs
                         output = output[:, :-padding_length, :]
+                    if "hpu" in output.device.type:  # make sure return fp32 tensor for HPU, TODO: root cause
+                        output = output.to(torch.float32)
                 return output
 
     def _model_generate(self, context, max_length, stop, **generation_kwargs):
