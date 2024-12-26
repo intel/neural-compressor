@@ -116,7 +116,9 @@ def trace_gptq_target_blocks(module, module_types=[torch.nn.ModuleList, torch.nn
                 gptq_related_blocks["transformers"] = m
                 find_transformers = True
                 # return gptq_related_blocks
-            elif (is_leaf(m) and not find_transformers) or "Embedding" in type(m).__name__: # resolve 'LlamaRotaryEmbedding'
+            elif (is_leaf(m) and not find_transformers) or "Embedding" in type(
+                m
+            ).__name__:  # resolve 'LlamaRotaryEmbedding'
                 gptq_related_blocks["embeddings"][n] = m
             elif n.find(gptq_related_blocks["transformers_name"]) == -1 and find_transformers:
                 # no longer belong to transformers
