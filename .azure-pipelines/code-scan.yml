@@ -13,6 +13,7 @@ pr:
       - requirements.txt
       - .azure-pipelines/code-scan.yml
       - .azure-pipelines/scripts/codeScan
+      - .azure-pipelines/template/docker-template.yml
 
 pool:
   vmImage: "ubuntu-latest"
