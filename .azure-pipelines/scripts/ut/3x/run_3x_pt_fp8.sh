@@ -13,7 +13,8 @@ echo "##[section]import check pass"
 echo "##[group]set up UT env..."
 export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH
 sed -i '/^intel_extension_for_pytorch/d' /neural-compressor/test/3x/torch/requirements.txt
-sed -i '/^auto_round/d' /neural-compressor/test/3x/torch/requirements.txt
+# Install auto_round_lib for auto-round-hpu UTs
+# sed -i '/^auto_round/d' /neural-compressor/test/3x/torch/requirements.txt
 cat /neural-compressor/test/3x/torch/requirements.txt
 pip install -r /neural-compressor/test/3x/torch/requirements.txt
 pip install pytest-cov
