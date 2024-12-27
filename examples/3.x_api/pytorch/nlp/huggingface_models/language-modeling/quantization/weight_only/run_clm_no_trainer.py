@@ -270,8 +270,9 @@ def get_user_model():
         torchscript = True
     if args.woq_algo == "AutoRound" and is_habana_framework_installed():
         print("Quantizing model with AutoRound on HPU")
-        check_torch_compile_with_hpu_backend()
-        set_envs_for_torch_compile_with_hpu_backend()
+        if args.quantize:
+            check_torch_compile_with_hpu_backend()
+            set_envs_for_torch_compile_with_hpu_backend()
         user_model = AutoModelForCausalLM.from_pretrained(
             args.model,
             trust_remote_code=args.trust_remote_code,
@@ -403,11 +404,12 @@ if args.quantize:
             max_seq_length=args.gptq_max_seq_length,
         )
         dataloader_for_calibration = dataloaderPreprocessor.get_prepared_dataloader()
-        from neural_compressor.torch.algorithms.weight_only.utility import move_input_to_device
+        from neural_compressor.torch.utils import get_model_device, move_input_device
         from tqdm import tqdm
         def run_fn_for_gptq(model, dataloader_for_calibration, *args):
             for batch in tqdm(dataloader_for_calibration):
-                batch = move_input_to_device(batch, device=None)
+                device = get_model_device(model)
+                batch = move_input_device(batch, device=device)
                 if isinstance(batch, tuple) or isinstance(batch, list):
                     model(batch[0])
                 elif isinstance(batch, dict):
@@ -525,11 +527,12 @@ if args.quantize:
         )
         dataloader = dataloaderPreprocessor.get_prepared_dataloader()
         custom_tune_config = TuningConfig(config_set=get_woq_tuning_config())
-        from neural_compressor.torch.algorithms.weight_only.utility import move_input_to_device
+        from neural_compressor.torch.utils import get_model_device, move_input_device
         from tqdm import tqdm
         def run_fn_for_gptq(model, dataloader_for_calibration, *args):
             for batch in tqdm(dataloader_for_calibration):
-                batch = move_input_to_device(batch, device=None)
+                device = get_model_device(model)
+                batch = move_input_device(batch, device=device)
                 if isinstance(batch, tuple) or isinstance(batch, list):
                     model(batch[0])
                 elif isinstance(batch, dict):
@@ -568,7 +571,7 @@ else:
 
 
 if is_hpex_available():
-    from habana_frameworks.torch.hpu import wrap_in_hpu_graph
+    from habana_frameworks.torch.hpu.graphs import wrap_in_hpu_graph
     user_model = user_model.to(torch.bfloat16)
     wrap_in_hpu_graph(user_model, max_graphs=10)
 
