@@ -32,7 +32,7 @@ mkdir -p ${LOG_DIR}
 ut_log_name=${LOG_DIR}/ut_3x_pt_fp8.log
 pytest --cov="${inc_path}" -vs --disable-warnings --html=report_1.html --self-contained-html torch/quantization/weight_only/test_load.py 2>&1 | tee -a ${ut_log_name}
 pytest --cov="${inc_path}" -vs --disable-warnings --html=report_2.html --self-contained-html torch/quantization/weight_only/test_rtn.py 2>&1 | tee -a ${ut_log_name}
-# pytest --cov="${inc_path}" -vs --disable-warnings --html=report_3.html --self-contained-html torch/quantization/weight_only/test_autoround.py 2>&1 | tee -a ${ut_log_name}
+pytest --cov="${inc_path}" -vs --disable-warnings --html=report_3.html --self-contained-html torch/quantization/weight_only/test_autoround.py 2>&1 | tee -a ${ut_log_name}
 
 # Below folder contains some special configuration for pytest so we need to enter the path and run it separately
 cd /neural-compressor/test/3x/torch/algorithms/fp8_quant
