@@ -231,7 +231,7 @@ class TestRegisterAPIs:
                 )
 
                 measure_input((input,), observer=self._mod_extra_config.inputs)
-                output = self.forward_orig(input)
+                output = self.orig_mod(input)
                 measure_output((output,), self._mod_extra_config.outputs)
                 return output
 
