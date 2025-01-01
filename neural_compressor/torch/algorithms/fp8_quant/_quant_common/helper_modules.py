@@ -589,11 +589,10 @@ class PatchedLmHeadLinearAllreduce(nn.Module):
         return output
 
     def forward_quant(self, input):
-        assert (
-            input.shape[-1] % self.world_size == 0
-        ), "Please ensure that self.world_size is divisible by input.shape[-1]"
-        input_shard = input.shape[-1] // self.world_size
-        splittedInput = input[:, :, self.rank * input_shard : (self.rank + 1) * input_shard]
+        from deepspeed.module_inject.tp_shard import get_shard_size, get_shard_size_list
+        input_shard_size = get_shard_size(input.shape[-1], self.world_size, "lm_head")
+        input_shard_offset = sum(get_shard_size_list(input.shape[-1], self.world_size, "lm_head")[0:self.rank])
+        splittedInput = input[:, :, input_shard_offset:input_shard_offset + input_shard_size]
         qinput = self.quant_input(splittedInput)
         output = self.matmul_fp8(qinput,
                                  self.weight,
@@ -611,11 +610,10 @@ class PatchedLmHeadLinearAllreduce(nn.Module):
         return dqoutput
 
     def forward_measure(self, input):
-        assert (
-            input.shape[-1] % self.world_size == 0
-        ), "Please ensure that self.world_size is divisible by input.shape[-1]"
-        input_shard = input.shape[-1] // self.world_size
-        splittedInput = input[:, :, self.rank * input_shard : (self.rank + 1) * input_shard]
+        from deepspeed.module_inject.tp_shard import get_shard_size, get_shard_size_list
+        input_shard_size = get_shard_size(input.shape[-1], self.world_size, "lm_head")
+        input_shard_offset = sum(get_shard_size_list(input.shape[-1], self.world_size, "lm_head")[0:self.rank])
+        splittedInput = input[:, :, input_shard_offset:input_shard_offset + input_shard_size]
         measure_input((splittedInput,), observer=self._mod_extra_config.inputs)
         output = torch.matmul(splittedInput, self.weight.t())
         measure_output((output,), self._mod_extra_config.outputs)
