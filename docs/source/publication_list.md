@@ -1,6 +1,7 @@
-Full Publications/Events (85)
+Full Publications/Events (86)
 ==========
-## 2024 (6)
+## 2024 (7)
+* Blog by Microsoft: [Phi-4 quantization and inference speedup](https://techcommunity.microsoft.com/blog/machinelearningblog/phi-4-quantization-and-inference-speedup/4360047) (Dec 2024)
 * EMNLP'2024: [Optimize Weight Rounding via Signed Gradient Descent for the Quantization of LLMs](https://arxiv.org/abs/2309.05516) (Sep 2024)
 * Blog on Medium: [Quantization on Intel Gaudi Series AI Accelerators](https://medium.com/intel-analytics-software/intel-neural-compressor-v3-0-a-quantization-tool-across-intel-hardware-9856adee6f11) (Aug 2024)
 * Blog on Medium: [Accelerating Qwen2 Models with Intel Extension for Transformers](https://medium.com/intel-analytics-software/accelerating-qwen2-models-with-intel-extension-for-transformers-99403de82f68) (June 2024)
