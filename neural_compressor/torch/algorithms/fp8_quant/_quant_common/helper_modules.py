@@ -14,6 +14,7 @@
 
 import torch
 import torch.nn as nn
+import types
 
 from .quant_config import QuantMode, get_hqt_config, ScaleFormat
 from .._core.quant_dequant import QuantDequant as qdq
@@ -294,6 +295,8 @@ class PatchedMixtralMoE(nn.Module):
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             delattr(mod, "w13_weight")
             delattr(mod, "w2_weight")
+            setattr(mod, "w13_weight", None)
+            setattr(mod, "w2_weight", None)
             setattr(self, "w13_weight", None)
             setattr(self, "w2_weight", None)
         self.forward = self.forward_orig
