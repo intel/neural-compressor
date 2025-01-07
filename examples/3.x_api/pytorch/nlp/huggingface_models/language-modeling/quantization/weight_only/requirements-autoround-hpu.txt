@@ -11,6 +11,5 @@ lm_eval==0.4.3
 peft
 numba
 tbb
-# TODO: (Yi) SW-208079 replace auto-round with the released version
-auto-round-hpu @ git+https://github.com/intel/auto-round.git@hpu_only_pkg
-optimum-habana>=1.14.1
+auto-round @ git+https://github.com/intel/auto-round.git@v0.4.2
+optimum-habana==1.14.1

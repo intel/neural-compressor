@@ -49,6 +49,7 @@ class LMEvalParser:
         seed=[0, 1234, 1234],
         trust_remote_code=False,
         pad_to_buckets=None,  # used by HPU to align input length for performance.
+        buckets=[32, 64, 128, 256, 512, 1024, 2048, 4096],  # used by HPU to limit input length range.
     ):
         self.model = model
         self.tasks = tasks
@@ -81,3 +82,4 @@ class LMEvalParser:
                 self.pad_to_buckets = False
         else:
             self.pad_to_buckets = pad_to_buckets
+        self.buckets = buckets

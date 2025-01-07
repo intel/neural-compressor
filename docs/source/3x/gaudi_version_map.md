@@ -19,4 +19,10 @@
             <td>v1.18</td>
         </tr>
     </tbody>
+    <tbody>
+        <tr>
+            <td>v3.2</td>
+            <td>v1.19</td>
+        </tr>
+    </tbody>
 </table>

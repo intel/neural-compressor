@@ -10,7 +10,9 @@ repos:
         files: (.*\.(py|md|rst|yaml|yml))$
         exclude: |
           (?x)^(
-              examples/.+
+              examples/.+|
+              neural_compressor/torch/algorithms/fp8_quant/.+|
+              test/3x/torch/algorithms/fp8_quant/.+
           )$
       - id: check-json
         exclude: |
@@ -41,7 +43,10 @@ repos:
         files: (.*\.(py|rst|cmake|yaml|yml))$
         exclude: |
           (?x)^(
-              examples/.+
+              examples/.+|
+              neural_compressor/torch/utils/.+|
+              neural_compressor/torch/algorithms/fp8_quant/.+|
+              test/3x/torch/quantization/.+
           )$
 
   - repo: https://github.com/Lucas-C/pre-commit-hooks
@@ -72,7 +77,9 @@ repos:
       - id: isort
         exclude: |
           (?x)^(
-              examples/.+
+              examples/.+|
+              neural_compressor/torch/algorithms/fp8_quant/.+|
+              test/3x/torch/.+
           )$
 
   - repo: https://github.com/PyCQA/docformatter
@@ -88,7 +95,9 @@ repos:
           ]
         exclude: |
           (?x)^(
-              examples/.+
+              examples/.+|
+              neural_compressor/torch/algorithms/fp8_quant/.+|
+              test/3x/torch/.+
           )$
 
   - repo: https://github.com/psf/black.git
@@ -100,7 +109,9 @@ repos:
           (?x)^(
               neural_compressor/conf/config.py|
               neural_compressor/conf/pythonic_config.py|
-              examples/.+
+              examples/.+|
+              neural_compressor/torch/algorithms/fp8_quant/.+|
+              test/3x/torch/.+
           )$
 
   - repo: https://github.com/asottile/blacken-docs
@@ -113,7 +124,9 @@ repos:
         exclude: |
           (?x)^(
               examples/.+|
-              docs/source-app
+              docs/source-app|
+              neural_compressor/torch/algorithms/fp8_quant/.+|
+              test/3x/torch/.+
           )$
 
   - repo: https://github.com/codespell-project/codespell
@@ -130,7 +143,9 @@ repos:
               examples/notebook/dynas/ResNet50_Quantiation_Search_Supernet_NAS.ipynb|
               examples/notebook/dynas/Transformer_LT_Supernet_NAS.ipynb|
               neural_compressor/torch/algorithms/fp8_quant/internal/diffusion_evaluation/SR_evaluation/imagenet1000_clsidx_to_labels.txt|
-              neural_compressor/evaluation/hf_eval/datasets/cnn_validation.json
+              neural_compressor/evaluation/hf_eval/datasets/cnn_validation.json|
+              neural_compressor/torch/algorithms/fp8_quant/.+|
+              test/3x/torch/.+
           )$
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
@@ -140,5 +155,7 @@ repos:
         args: [--fix, --exit-non-zero-on-fix, --no-cache]
         exclude: |
           (?x)^(
-              examples/.+
+              examples/.+|
+              neural_compressor/torch/algorithms/fp8_quant/.+|
+              test/3x/torch/.+
           )$

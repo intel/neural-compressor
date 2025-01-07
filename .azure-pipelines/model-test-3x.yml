@@ -15,6 +15,7 @@ pr:
       - requirements_pt.txt
       - .azure-pipelines/scripts/models
       - .azure-pipelines/model-test-3x.yml
+      - .azure-pipelines/template/docker-template.yml
 
 variables:
   OUT_SCRIPT_PATH: $(Build.SourcesDirectory)/.azure-pipelines/scripts/models
@@ -30,7 +31,7 @@ parameters:
     type: object
     default:
       - opt_125m_woq_gptq_int4
-      - opt_125m_woq_gptq_int4_dq_bnb
+      - opt_125m_woq_gptq_nf4_dq_bnb
       - opt_125m_woq_gptq_int4_dq_ggml
 
 stages:

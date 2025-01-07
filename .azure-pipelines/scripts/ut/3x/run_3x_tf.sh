@@ -3,12 +3,19 @@ python -c "import neural_compressor as nc"
 test_case="run 3x TensorFlow"
 echo "${test_case}"
 
+echo "##[section]Run import check"
+set -e
+python -c "import neural_compressor.tensorflow"
+python -c "import neural_compressor.common"
+echo "##[section]import check pass"
+
 # install requirements
-echo "set up UT env..."
+echo "##[group]set up UT env..."
 pip install -r /neural-compressor/test/3x/tensorflow/requirements.txt
 pip install pytest-cov
 pip install pytest-html
 pip install pytest-html-merger
+echo "##[endgroup]"
 pip list
 
 export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/3x/coverage.3x_tf

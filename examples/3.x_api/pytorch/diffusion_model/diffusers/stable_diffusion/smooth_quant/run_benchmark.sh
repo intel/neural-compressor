@@ -82,7 +82,7 @@ function run_benchmark {
       cd mlperf_sd_inference
       cp ../main.py ./
       if [ -d "../saved_results/" ]; then
-        mv ../saved_results/ ./
+        cp -r ../saved_results/ ./
       fi
       
       python -u main.py \

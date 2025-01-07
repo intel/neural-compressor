@@ -14,6 +14,9 @@ pr:
       - test/3x/common
       - setup.py
       - requirements_pt.txt
+      - .azure-pipelines/ut-3x-pt.yml
+      - .azure-pipelines/template/docker-template.yml
+      - .azure-pipelines/scripts/install_nc.sh
       - .azure-pipelines/scripts/ut/3x/run_3x_pt.sh
 
 pool: ICX-16C
@@ -84,7 +87,7 @@ stages:
 
           - script: |
               echo "--- create container ---"
-              docker run -d -it --name="collectLogs"  -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor  ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash
+              docker run -d -it --name="collectLogs" -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor  ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash
               echo "--- docker ps ---"
               docker ps
               echo "--- collect logs ---"
@@ -92,6 +95,10 @@ stages:
               && bash install_nc.sh 3x_pt \
               && bash ut/3x/collect_log_3x.sh 3x_pt"
             displayName: "Collect UT Coverage"
+
+          - task: PublishCodeCoverageResults@2
+            inputs:
+              summaryFileLocation: $(Build.SourcesDirectory)/log_dir/coverage_PR/coverage.xml
 
           - task: PublishPipelineArtifact@1
             condition: succeededOrFailed()

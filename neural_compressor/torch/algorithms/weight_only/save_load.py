@@ -22,7 +22,7 @@ import tempfile
 
 import torch
 
-from neural_compressor.common.utils import save_config_mapping
+from neural_compressor.common.utils import AWQ, TEQ, save_config_mapping
 from neural_compressor.torch.utils import (
     HPU_SAFE_WEIGHTS_NAME,
     HPU_WEIGHT_NAME,
@@ -37,7 +37,10 @@ from neural_compressor.torch.utils import (
 from .modules import HPUWeightOnlyLinear, INCWeightOnlyLinear, MulLinear
 from .utility import convert_dtype_str2torch
 
-format_woqlinear_mapping = {SaveLoadFormat.HUGGINGFACE: INCWeightOnlyLinear, SaveLoadFormat.DEFAULT: INCWeightOnlyLinear}
+format_woqlinear_mapping = {
+    SaveLoadFormat.HUGGINGFACE: INCWeightOnlyLinear,
+    SaveLoadFormat.DEFAULT: INCWeightOnlyLinear,
+}
 device_woqlinear_mapping = {"cpu": INCWeightOnlyLinear, "hpu": HPUWeightOnlyLinear}
 
 
@@ -202,8 +205,10 @@ class WOQModelLoader:
         model = self._build_woq_model()
 
         # load remaining pretrained weight to weight-only quantization model
-        is_meta_device = hasattr(self.original_model, "device") and self.original_model.device.type == 'meta'
-        if is_meta_device:
+        is_meta_device = hasattr(self.original_model, "device") and self.original_model.device.type == "meta"
+        algo_name = next(iter(self.quantization_config[next(iter(self.quantization_config))].keys()))
+        if is_meta_device or algo_name in [AWQ, TEQ]:
+            # AWQ and TEQ will update some weight except WOQLinear to handle additional input_scale
             model.load_state_dict(self.loaded_state_dict, assign=True, strict=False)
 
         # save hpu format tensor to local directory
@@ -289,9 +294,19 @@ class WOQModelLoader:
                 new_module = HQQLinear(
                     in_features=module.in_features, out_features=module.out_features, bias=module.bias is not None
                 )
+                self._load_data_to_new_module_hqq(new_module, name)
                 set_module(self.original_model, name, new_module)
         woq_model = self.original_model
         return woq_model
+
+    def _load_data_to_new_module_hqq(self, new_module, module_name):
+        new_module_state_dict = {}
+        for key in self.loaded_state_dict:
+            if key.startswith(module_name):
+                new_key = key[len(module_name) + 1 :]  # Remove module_name and the following dot
+                new_module_state_dict[new_key] = self.loaded_state_dict[key]
+                self.loaded_state_dict_keys.remove(key)
+        new_module.load_state_dict(new_module_state_dict, strict=False)
 
     def _build_woq_model(self):
         """Build weight-only quantization model."""
@@ -564,7 +579,7 @@ class WOQModelLoader:
             "_raise_exceptions_for_missing_entries": False,
             "_commit_hash": commit_hash,
         }
-        resolved_archive_file = self._get_resolved_archive_file(**kwargs)
+        resolved_archive_file, is_sharded = self._get_resolved_archive_file(**kwargs)
 
         self._model_local_dir = os.path.abspath(os.path.expanduser(os.path.dirname(resolved_archive_file)))
         # if hpu format tensor can be used directly, then update resolved_archive_file to the hpu format tensor file
@@ -628,6 +643,7 @@ class WOQModelLoader:
         subfolder = kwargs.get("subfolder")
 
         resolved_archive_file = None
+        is_sharded = False
         is_local = os.path.isdir(self.model_name_or_path)
         if is_local:  # pragma: no cover
             # self.model_name_or_path is a local directory
@@ -775,7 +791,7 @@ class WOQModelLoader:
         if is_local:
             resolved_archive_file = archive_file
 
-        return resolved_archive_file
+        return resolved_archive_file, is_sharded
 
     def _init_hf_model(self, model_class, config):
         from accelerate.big_modeling import init_empty_weights
@@ -854,7 +870,7 @@ class WOQModelLoader:
         for shard_file in resolved_archive_file:
             state_dict = load_state_dict(shard_file)
 
-            params_dict={
+            params_dict = {
                 "model": model,
                 "state_dict": state_dict,
                 "start_prefix": "",

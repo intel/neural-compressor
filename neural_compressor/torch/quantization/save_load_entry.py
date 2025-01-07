@@ -122,7 +122,9 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
             ):  # WOQ
                 from neural_compressor.torch.algorithms import weight_only
 
-                qmodel = weight_only.load(model_name_or_path, original_model, format=SaveLoadFormat.DEFAULT, device=device)
+                qmodel = weight_only.load(
+                    model_name_or_path, original_model, format=SaveLoadFormat.DEFAULT, device=device
+                )
                 return qmodel.to(device)
     elif format == SaveLoadFormat.HUGGINGFACE:
         import transformers

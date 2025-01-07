@@ -14,6 +14,7 @@ function init_params {
   batch_size=16
   tuned_checkpoint=saved_results
   task=lambada_openai
+  incbench_cmd="incbench --num_cores_per_instance 4"
   echo ${max_eval_samples}
   for var in "$@"
   do
@@ -72,25 +73,25 @@ function run_benchmark {
 
     if [ "${topology}" = "opt_125m_woq_gptq_int4" ]; then
         model_name_or_path="facebook/opt-125m"
-    elif [ "${topology}" = "opt_125m_woq_gptq_int4_dq_bnb" ]; then
+    elif [ "${topology}" = "opt_125m_woq_gptq_nf4_dq_bnb" ]; then
         model_name_or_path="facebook/opt-125m"
     elif [ "${topology}" = "opt_125m_woq_gptq_int4_dq_ggml" ]; then
         model_name_or_path="facebook/opt-125m"
     elif [ "${topology}" = "llama2_7b_gptq_int4" ]; then
         model_name_or_path="meta-llama/Llama-2-7b-hf"
-    elif [ "${topology}" = "llama2_7b_gptq_int4_dq_bnb" ]; then
+    elif [ "${topology}" = "llama2_7b_gptq_nf4_dq_bnb" ]; then
         model_name_or_path="meta-llama/Llama-2-7b-hf"
     elif [ "${topology}" = "llama2_7b_gptq_int4_dq_ggml" ]; then
         model_name_or_path="meta-llama/Llama-2-7b-hf"
     elif [ "${topology}" = "gpt_j_woq_rtn_int4" ]; then
         model_name_or_path="EleutherAI/gpt-j-6b"
-    elif [ "${topology}" = "gpt_j_woq_rtn_int4_dq_bnb" ]; then
+    elif [ "${topology}" = "gpt_j_woq_rtn_nf4_dq_bnb" ]; then
         model_name_or_path="EleutherAI/gpt-j-6b"
     elif [ "${topology}" = "gpt_j_woq_rtn_int4_dq_ggml" ]; then
         model_name_or_path="EleutherAI/gpt-j-6b"
     elif [ "${topology}" = "gpt_j_woq_gptq_int4" ]; then
         model_name_or_path="EleutherAI/gpt-j-6b"
-    elif [ "${topology}" = "gpt_j_woq_gptq_int4_dq_bnb" ]; then
+    elif [ "${topology}" = "gpt_j_woq_gptq_nf4_dq_bnb" ]; then
         model_name_or_path="EleutherAI/gpt-j-6b"
     elif [ "${topology}" = "gpt_j_woq_gptq_int4_dq_ggml" ]; then
         model_name_or_path="EleutherAI/gpt-j-6b"
@@ -101,6 +102,10 @@ function run_benchmark {
     elif [ "${topology}" = "opt_125m_woq_autoround_int4" ]; then
         model_name_or_path="facebook/opt-125m"
         extra_cmd=$extra_cmd" --woq_algo AutoRound"
+    elif [ "${topology}" = "opt_125m_woq_autoround_int4_hpu" ]; then
+        model_name_or_path="facebook/opt-125m"
+        extra_cmd=$extra_cmd" --woq_algo AutoRound"
+        incbench_cmd="incbench --num_instances 1"
     elif [ "${topology}" = "opt_125m_woq_autotune_int4" ]; then
         model_name_or_path="facebook/opt-125m"
     fi
@@ -113,7 +118,7 @@ function run_benchmark {
             --batch_size ${batch_size} \
             ${extra_cmd} ${mode_cmd}
     elif [[ ${mode} == "performance" ]]; then
-        incbench --num_cores_per_instance 4 run_clm_no_trainer.py \
+        ${incbench_cmd} run_clm_no_trainer.py \
             --model ${model_name_or_path} \
             --batch_size ${batch_size} \
             --output_dir ${tuned_checkpoint} \

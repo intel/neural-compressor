@@ -17,6 +17,7 @@
 """Logger: handles logging functionalities."""
 
 
+import functools
 import logging
 import os
 
@@ -136,6 +137,12 @@ class Logger(object):
                 Logger().get_logger().warning(line, *args, **kwargs)
         else:
             Logger().get_logger().warning(msg, *args, **kwargs)
+
+    @functools.lru_cache(None)
+    def warning_once(msg, *args, **kwargs):
+        """Output log with the warning level only once."""
+        Logger.warning("Below warning will be shown only once:")
+        Logger.warning(msg, *args, **kwargs)
 
 
 level = Logger().get_logger().level

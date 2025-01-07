@@ -16,6 +16,7 @@ from neural_compressor.torch.quantization import (
 from neural_compressor.torch.utils import accelerator, is_hpex_available
 
 device = accelerator.current_device_name()
+torch.set_grad_enabled(False)
 
 
 class ModelConv1d(torch.nn.Module):
@@ -159,7 +160,7 @@ class TestRTNQuant:
 
         # tie_word_embeddings=true
         opt_model = transformers.AutoModelForCausalLM.from_pretrained(
-            "trl-internal-testing/tiny-random-OPTForCausalLM",
+            "trl-internal-testing/tiny-OPTForCausalLM",
             device_map=device,
         )
         lm_head_id = id(opt_model.lm_head.weight)

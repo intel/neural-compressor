@@ -93,7 +93,8 @@ class TorchBaseConfig(BaseConfig):
                 op_type_config_dict[new_name] = config
             else:
                 op_name_config_dict[name] = config
-                op_type_config_dict[name] = config
+                if is_ipex_imported():
+                    op_type_config_dict[name] = config
         return op_type_config_dict, op_name_config_dict
 
 
@@ -147,6 +148,7 @@ class RTNConfig(TorchBaseConfig):
         quant_lm_head: bool = False,
         # Tuning space
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+        **kwargs,
     ):
         """Init RTN weight-only quantization config.
 
@@ -380,8 +382,9 @@ class GPTQConfig(TorchBaseConfig):
         true_sequential: bool = False,
         # Tuning space
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+        **kwargs,
     ):
-        """Init RTN weight-only quantization config.
+        """Init GPTQ weight-only quantization config.
 
         Args:
             dtype (str): Data type for weights. Default is "int".
@@ -587,6 +590,7 @@ class AWQConfig(TorchBaseConfig):
         folding: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
         absorb_layer_dict: dict = {},
+        **kwargs,
     ):
         """Init AWQ weight-only quantization config.
 
@@ -763,6 +767,7 @@ class TEQConfig(TorchBaseConfig):
         absorb_to_layer: dict = {},
         folding: bool = True,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+        **kwargs,
     ):
         """Init TEQ weight-only quantization config.
 
@@ -939,9 +944,21 @@ class AutoRoundConfig(TorchBaseConfig):
         dynamic_max_gap: int = -1,
         scale_dtype: str = "fp16",
         use_layer_wise: bool = False,
-        quant_block_list: list = None,
+        to_quant_block_names: list = None,
         export_format: str = "itrex",
+        # v0.4
+        enable_norm_bias_tuning: bool = False,
+        enable_torch_compile: bool = None,
+        # mllm
+        is_mllm: bool = False,
+        quant_nontext_module: Union[str, list] = None,
+        extra_data_dir: str = None,
+        processor=None,
+        image_processor=None,
+        template=None,
+        truncation: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+        **kwargs,
     ):
         """Init AUTOROUND weight-only quantization config.
 
@@ -974,8 +991,20 @@ class AutoRoundConfig(TorchBaseConfig):
             scale_dtype (str): The data type of quantization scale to be used (default is "float16"), different kernels
               have different choices.
             use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
-            quant_block_list (list): A list whose elements are list of block's layer names to be quantized.
+            to_quant_block_names (list): A list whose elements are list of block's layer names to be quantized.
             export_format (str, optional): The format used for exporting the quantized model. Defaults to "itrex".
+            enable_norm_bias_tuning (bool): Whether to enable fast norm/layer_bias tuning.
+            enable_torch_compile (bool): Whether to enable torch compile to optimize quant_block/layer, torch>=2.6 True.
+            quant_nontext_module (Union[str, list]): Whether to quantize nontext module.
+            extra_data_dir (str): The path for extra data such as images, audio or videos.
+            is_mllm (bool): Indicates whether the model to be quantized is a multi-modal model (MLLM).
+            processor (transformers.AutoProcessor): Any multi-modal model will require an object to encode or
+              decode the data that groups several modalities (among text, vision and audio).
+              This is handled by objects called processors, which group together two or more processing objects such
+              as tokenizers (for the text modality), image processors (for vision) and feature extractors (for audio).
+            image_processor (Processor): Image processor for special model like llava.
+            template (Template): The template to specify process for different mllms.
+            truncation (bool): Activates truncation to cut input sequences longer than `max_length` to `max_length`.
             white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
               Default is DEFAULT_WHITE_LIST.
         """
@@ -1007,8 +1036,17 @@ class AutoRoundConfig(TorchBaseConfig):
         self.dynamic_max_gap = dynamic_max_gap
         self.scale_dtype = scale_dtype
         self.use_layer_wise = use_layer_wise
-        self.quant_block_list = quant_block_list
+        self.to_quant_block_names = to_quant_block_names
         self.export_format = export_format
+        self.enable_norm_bias_tuning = enable_norm_bias_tuning
+        self.enable_torch_compile = enable_torch_compile
+        self.is_mllm = is_mllm
+        self.quant_nontext_module = quant_nontext_module
+        self.extra_data_dir = extra_data_dir
+        self.processor = processor
+        self.image_processor = image_processor
+        self.template = template
+        self.truncation = truncation
         self._post_init()
 
     @classmethod
@@ -1105,6 +1143,7 @@ class MXQuantConfig(TorchBaseConfig):
         round_method: str = "nearest",
         weight_only: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+        **kwargs,
     ):
         """Init MX quantization config.
 
@@ -1234,6 +1273,7 @@ class DynamicQuantConfig(TorchBaseConfig):
         act_granularity: str = "per_tensor",
         act_algo: str = "kl",
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+        **kwargs,
     ):
         """Init Dynamic Quant Configs."""
         super().__init__(white_list=white_list)
@@ -1331,6 +1371,7 @@ class INT8StaticQuantConfig(TorchBaseConfig):
         excluded_precisions: list = [],
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
         model_info: Optional[List[Tuple[str, Callable]]] = None,
+        **kwargs,
     ):
         """Init StaticQuant Config.
 
@@ -1454,8 +1495,6 @@ def get_default_static_config() -> INT8StaticQuantConfig:
     Returns:
         the default static quant config.
     """
-    if not is_ipex_imported():
-        return INT8StaticQuantConfig(w_granularity="per_tensor")
     return INT8StaticQuantConfig()
 
 
@@ -1505,6 +1544,7 @@ class SmoothQuantConfig(TorchBaseConfig):
         do_blockwise: bool = False,
         auto_alpha_args: dict = None,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+        **kwargs,
     ):
         """Init SmoothQuant Config.
 
@@ -1645,6 +1685,7 @@ class HQQConfig(TorchBaseConfig):
         scale_quant_group_size: int = 128,
         quant_lm_head: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+        **kwargs,
     ):
         """Initialize HQQConfig.
 
@@ -1737,6 +1778,15 @@ def get_default_hqq_config() -> HQQConfig:
 
 
 ######################## FP8 Quant Config ###############################
+if is_hpex_available():
+    from neural_compressor.torch.algorithms.fp8_quant._core.common import get_white_list
+else:
+    get_white_list = lambda: []
+
+
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=FP8_QUANT)
+class FP8Config(TorchBaseConfig):
+    """Config class for FP8 quantization."""
 
 from ..algorithms.fp8_quant._core.common import get_white_list
 
@@ -1838,6 +1888,7 @@ class FP8Config(TorchBaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "FP8Config", List["FP8Config"]]:
+        """Get the configuration set for tuning."""
         # just a simple example here
         # usually write parameter combinations that are more suitable to tune based on experience.
         return FP8Config()
@@ -1909,7 +1960,7 @@ def get_default_fp8_config_set() -> FP8Config:
 
 ######################## MixedPrecision Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=MIXED_PRECISION)
-class MixedPrecisionConfig(BaseConfig):
+class MixedPrecisionConfig(TorchBaseConfig):
     """Config class for mixed-precision."""
 
     name = MIXED_PRECISION
@@ -1928,6 +1979,7 @@ class MixedPrecisionConfig(BaseConfig):
         self,
         dtype: Union[str, List[str]] = "fp16",
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+        **kwargs,
     ):
         """Init MixedPrecision config.
 
@@ -2033,7 +2085,7 @@ CONFIGS_FOR_STATIC_QUANT_MAPPING = OrderedDict(
 )
 
 
-class StaticQuantConfig:
+class StaticQuantConfig(TorchBaseConfig):
     _model_mapping = CONFIGS_FOR_STATIC_QUANT_MAPPING
 
     def __new__(

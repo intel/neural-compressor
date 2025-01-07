@@ -8,6 +8,7 @@ source /neural-compressor/.azure-pipelines/scripts/fwk_version.sh $1
 
 echo "set up UT env..."
 bash /neural-compressor/.azure-pipelines/scripts/ut/env_setup.sh "${test_case}"
+export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH
 export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/coverage.file
 lpot_path=$(python -c 'import neural_compressor; import os; print(os.path.dirname(neural_compressor.__file__))')
 cd /neural-compressor/test || exit 1

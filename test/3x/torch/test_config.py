@@ -375,3 +375,49 @@ class TestQuantConfigBasedonProcessorType:
         assert autoround_config.use_layer_wise == (
             p_type == torch_utils.ProcessorType.Client
         ), f"Expect use_layer_wise to be {p_type == torch_utils.ProcessorType.Client}, got {autoround_config.use_layer_wise}"
+
+        config_for_server = config_cls.get_predefined_configs()[torch_utils.ProcessorType.Server]
+        assert (
+            config_for_server.use_layer_wise is False
+        ), f"Expect use_layer_wise to be False, got {config_for_server.use_layer_wise}"
+
+    @pytest.fixture
+    def force_server(self, monkeypatch):
+        monkeypatch.setattr(torch_utils.utility.cpu_info, "sockets", 2)
+
+    def test_get_default_config_force_server(self, force_server):
+        rtn_config = get_default_rtn_config()
+        assert not rtn_config.use_layer_wise, f"Expect use_layer_wise to be `False`, got {rtn_config.use_layer_wise}"
+        gptq_config = get_default_gptq_config()
+        assert not gptq_config.use_layer_wise, f"Expect use_layer_wise to be `False`, got {gptq_config.use_layer_wise}"
+
+    @pytest.mark.parametrize("p_type", [None, torch_utils.ProcessorType.Client, torch_utils.ProcessorType.Server])
+    def test_get_default_config(self, p_type):
+        rtn_config = get_default_rtn_config(processor_type=p_type)
+        assert rtn_config.use_layer_wise == (
+            p_type == torch_utils.ProcessorType.Client
+        ), f"Expect use_layer_wise to be {p_type == torch_utils.ProcessorType.Client}, got {rtn_config.use_layer_wise}"
+        gptq_config = get_default_gptq_config(processor_type=p_type)
+        assert gptq_config.use_layer_wise == (
+            p_type == torch_utils.ProcessorType.Client
+        ), f"Expect use_layer_wise to be {p_type == torch_utils.ProcessorType.Client}, got {gptq_config.use_layer_wise}"
+        autoround_config = get_default_AutoRound_config(processor_type=p_type)
+        assert autoround_config.use_layer_wise == (
+            p_type == torch_utils.ProcessorType.Client
+        ), f"Expect use_layer_wise to be {p_type == torch_utils.ProcessorType.Client}, got {autoround_config.use_layer_wise}"
+
+def test_auto_config_mapping():
+    # case 1
+    class_obj = StaticQuantConfig()
+    assert isinstance(
+        class_obj, INT8StaticQuantConfig
+    ), "StaticQuantConfig should be mapped to INT8StaticQuantConfig by default."
+    # case 2
+    class_obj = StaticQuantConfig(fp8_config="E4M3")
+    assert isinstance(class_obj, FP8Config), "StaticQuantConfig should be mapped to FP8Config with fp8_config argument."
+    # case 3
+    class_obj = StaticQuantConfig(fp8_config="E4M3", observer="maxabs")
+    assert isinstance(class_obj, FP8Config), "StaticQuantConfig should be mapped to FP8Config with fp8_config argument."
+    # case 4
+    class_obj = StaticQuantConfig(act_sym=True, act_algo="kl")
+    assert isinstance(class_obj, INT8StaticQuantConfig), "StaticQuantConfig should be mapped to INT8StaticQuantConfig."

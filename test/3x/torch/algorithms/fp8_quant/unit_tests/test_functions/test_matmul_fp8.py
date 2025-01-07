@@ -9,6 +9,7 @@ from neural_compressor.torch.algorithms.fp8_quant._core.fp_utils import FP8_143_
 from neural_compressor.torch.algorithms.fp8_quant._core.quantized_hpu_ops import QuantizedHpuMatmul
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import ScaleFormat
 
+
 def run_test_matmul_fp8(
     *,
     hp_dtype: torch.dtype,

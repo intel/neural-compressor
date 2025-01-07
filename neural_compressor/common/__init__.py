@@ -27,7 +27,7 @@ from neural_compressor.common.utils import (
     dump_elapsed_time,
 )
 from neural_compressor.common.base_config import options
-
+from neural_compressor.common.version import __version__
 
 __all__ = [
     "options",

@@ -320,7 +320,11 @@ def default_run_fn(model, tokenizer, dataset, max_length=512, n_samples=100, bat
         collate_fn=collate_batch,
     )
     total_cnt = 0
+    from neural_compressor.torch.utils import get_accelerator
+
+    device = get_accelerator().current_device_name()
     for i, (input_ids) in enumerate(calib_dataloader):
+        input_ids = input_ids.to(torch.device(device))
         if total_cnt + input_ids.shape[0] > n_samples:
             input_ids = input_ids[: n_samples - total_cnt, ...]
         total_cnt += input_ids.shape[0]
@@ -357,13 +361,6 @@ def convert_to_quantized_model(model, config, device="cpu"):
                 "Set the environment variable INC_TARGET_DEVICE='cpu'"
                 " to ensure the quantization process occurs on the CPU."
             )
-
-    orig_dtype = torch.float32
-    for param in model.parameters():
-        orig_dtype = param.dtype
-        if orig_dtype != torch.float32:
-            model.to(dtype=torch.float32)
-        break
 
     # mapping to INC config
     dtype = "int4" if config.weight_dtype == "int4_fullrange" else config.weight_dtype
@@ -522,9 +519,6 @@ def convert_to_quantized_model(model, config, device="cpu"):
 
     q_model = replace_linear(model, None, None, config, device=device)
 
-    if orig_dtype != torch.float32:
-        q_model.to(dtype=orig_dtype)
-
     if config.use_layer_wise and not (q_model.device == device or q_model.device.type == device):
         logger.warning(
             "Do not convert device to avoid out of memory. Recommend using saved quantized model to inference."
@@ -592,6 +586,12 @@ def convert_to_GPTQ_checkpoints(model, quantization_config):
     return model
 
 
+def make_contiguous(model):
+    for param in model.parameters():
+        if param.data.ndimension() > 1:
+            param.data = param.data.contiguous()
+
+
 def save_low_bit(self, save_directory: Union[str, os.PathLike], push_to_hub: bool = False, **kwargs):
 
     assert hasattr(self, "quantization_config"), "Detected this model is not a low-bit model."
@@ -603,6 +603,7 @@ def save_low_bit(self, save_directory: Union[str, os.PathLike], push_to_hub: boo
     os.makedirs(save_directory, exist_ok=True)
     # use transformers original `save_pretrained` function
     del self.save_pretrained
+    make_contiguous(self)
 
     if self.device == "cpu" or self.device == torch.device("cpu"):
         convert_to_GPTQ_checkpoints(self, self.quantization_config)
