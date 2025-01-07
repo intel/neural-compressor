@@ -1241,7 +1241,7 @@ def loadDataset(
             data_ready = False
 
     # pre-process data if needed
-    # WARNNING: when memory mapping is used we get a collection of files
+    # WARNING: when memory mapping is used we get a collection of files
     if data_ready:
         print("Reading pre-processed data=%s" % (str(pro_data)))
         file = str(pro_data)

@@ -49,7 +49,7 @@ class Adaptor(object):
 
     @abstractmethod
     def quantize(self, tune_cfg, model, dataloader, q_func=None):
-        """The function is used to do calibration and quanitization in post-training quantization.
+        """The function is used to do calibration and quantization in post-training quantization.
 
         Args:
             tune_cfg(dict): The chosen tuning configuration.
