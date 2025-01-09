@@ -77,8 +77,6 @@ def save(model, output_dir="./saved_results", format=SaveLoadFormat.DEFAULT, **k
     # saving process
     save_config_mapping(model.qconfig, qconfig_file_path)
 
-    # MethodType 'save' not in state_dict
-    del model.save
     torch.save(model.state_dict(), qmodel_weight_file_path)
 
     logger.info("Save quantized model weight to {}.".format(qmodel_weight_file_path))
