@@ -144,6 +144,108 @@ def matmul_act_maxabs_pts_weight_maxabs_pts_pow2_scales(mod, measurement, params
     output_scale = [input_scale[0] * input_scale[1]]
     return ModuleConfig(input_scale, output_scale, {})
 
+
+# the MOE weights are scaled using PatchedMoeMatmul (which is linear)
+def dynamic_moe_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales(mod, measurement, params, device = torch.device("hpu")):
+    config = get_hqt_config(mod).cfg
+    lp_dtype = params["lp_dtype"]
+    hp_dtype = params["hp_dtype"]
+    device_for_scales = get_device_type_for_scales(mod)
+    fullscale = get_fullscale(lp_dtype, device_for_scales)
+    input_backoff = params["input_backoff"]
+    input_scale = [
+        calc_maxabs_scale(
+            torch.tensor(x, dtype=hp_dtype, device=device).max(),
+            fullscale,
+            input_backoff,
+        )
+        for x in measurement.inputs
+    ]
+    # add amax of intermidiate hidden to input scales
+    for i in range(1, mod.num_experts+1):
+        input_scale.append(
+            calc_maxabs_scale(
+                torch.tensor(measurement.outputs[i], dtype=hp_dtype, device=device).max(),
+                fullscale,
+                input_backoff,
+            )
+    )
+    input_scale = [scale_to_pow2_hw(x, device_for_scales) for x in input_scale]
+    output_scale = calc_maxabs_scale(
+        torch.tensor(measurement.outputs[0], dtype=hp_dtype, device=device).max(),
+        fullscale,
+        input_backoff,
+    )
+    output_scale = [scale_to_pow2_hw(output_scale, device_for_scales)]
+    return ModuleConfig(input_scale, output_scale, {})
+
+
+def dynamic_moe_act_maxabs_pts_weight_maxabs_pts_pow2_scales(mod, measurement, params, device = torch.device("hpu")):
+    config = get_hqt_config(mod).cfg
+    lp_dtype = params["lp_dtype"]
+    hp_dtype = params["hp_dtype"]
+    device_for_scales = get_device_type_for_scales(mod)
+    fullscale = get_fullscale(lp_dtype, device_for_scales)
+    input_backoff = params["input_backoff"]
+    input_scale = [
+        calc_maxabs_scale(
+            torch.tensor(x, dtype=hp_dtype, device=device).max(),
+            fullscale,
+            input_backoff,
+        )
+        for x in measurement.inputs
+    ]
+    # add amax of intermidiate hidden to input scales
+    for i in range(1, mod.num_experts+1):
+        input_scale.append(
+            calc_maxabs_scale(
+                torch.tensor(measurement.outputs[i], dtype=hp_dtype, device=device).max(),
+                fullscale,
+                input_backoff,
+            )
+    )
+    input_scale = [scale_to_pow2(x) for x in input_scale]
+    output_scale = calc_maxabs_scale(
+        torch.tensor(measurement.outputs[0], dtype=hp_dtype, device=device).max(),
+        fullscale,
+        input_backoff,
+    )
+    output_scale = [scale_to_pow2(output_scale)]
+    return ModuleConfig(input_scale, output_scale, {})
+
+
+def dynamic_moe_act_maxabs_pts_weight_maxabs_pts_arbitrary_scales(mod, measurement, params, device = torch.device("hpu")):
+    config = get_hqt_config(mod).cfg
+    lp_dtype = params["lp_dtype"]
+    hp_dtype = params["hp_dtype"]
+    device_for_scales = get_device_type_for_scales(mod)
+    fullscale = get_fullscale(lp_dtype, device_for_scales)
+    input_backoff = params["input_backoff"]
+    input_scale = [
+        calc_maxabs_scale(
+            torch.tensor(x, dtype=hp_dtype, device=device).max(),
+            fullscale,
+            input_backoff,
+        )
+        for x in measurement.inputs
+    ]
+    # add amax of intermidiate hidden to input scales
+    for i in range(1, mod.num_experts+1):
+        input_scale.append(
+            calc_maxabs_scale(
+                torch.tensor(measurement.outputs[i], dtype=hp_dtype, device=device).max(),
+                fullscale,
+                input_backoff,
+            )
+    )
+    output_scale =[calc_maxabs_scale(
+        torch.tensor(measurement.outputs[0], dtype=hp_dtype, device=device).max(),
+        fullscale,
+        input_backoff,
+    )]
+    return ModuleConfig(input_scale, output_scale, {})
+
+
 def fsdpa_act_maxabs_pts_weight_maxabs_pts_arbitrary_scales(mod, measurement, params, device = torch.device("hpu")):
     config = get_hqt_config(mod).cfg
     lp_dtype = params["lp_dtype"]

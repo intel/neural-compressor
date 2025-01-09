@@ -32,6 +32,22 @@ def linear_hw_aligned_single_scale_scales(mod, measurement, params):
     hw_aligned_single_scale = FP8_143_SCALES[device_for_scales][0]
     return linear_single_scale_scales(mod, measurement, params, hw_aligned_single_scale)
 
+def dynamic_moe_single_scale_scales(mod, measurement, params, scale=1.0):
+    device = torch.device("hpu")
+    hp_dtype =  params["hp_dtype"]
+    hidden_scale = torch.tensor(scale, dtype=hp_dtype, device=device)
+    number_of_experts = 8
+    intermediate_scales = [torch.tensor(scale, dtype=hp_dtype, device=device) for i in range(number_of_experts)]
+    input_scale = (hidden_scale, *intermediate_scales)
+    output_scale = (torch.tensor(scale, dtype=hp_dtype, device=device),)
+    return ModuleConfig(input_scale, output_scale, {})
+
+
+def dynamic_moe_hw_aligned_single_scale_scales(mod, measurement, params):
+    device_for_scales = get_device_type_for_scales(mod)
+    hw_aligned_single_scale = FP8_143_SCALES[device_for_scales][0]
+    return dynamic_moe_single_scale_scales(mod, measurement, params, hw_aligned_single_scale)
+
 
 def fsdpa_single_scale_scales(mod, measurement, params, scale=1.0):
     device = torch.device("hpu")

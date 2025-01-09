@@ -49,7 +49,8 @@ def patch_module_measure(mod, mconfig, mod_dict):
     """
     parent = parent_child_mod_dict[mod].parent
     name = parent_child_mod_dict[mod].name
-    patched_mod = mod_dict[mod.__class__.__name__].patched_module(mod, mconfig, name)
+    parent = parent_child_mod_dict[mod].parent
+    patched_mod = mod_dict[mod.__class__.__name__].patched_module(mod, parent, mconfig, name)
     setattr(parent, name, patched_mod)
     return patched_mod
 

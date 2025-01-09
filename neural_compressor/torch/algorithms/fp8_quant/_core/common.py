@@ -45,6 +45,7 @@ _mod_types = {
     "kv_cache": ModuleType(1, [], 1, False),
     "softmax": ModuleType(1, [], 1, True),
     "fused_sdpa": ModuleType(3, [], 2, True),
+    "dynamic_moe": ModuleType(1, [], 9, True),
 }
 
 
@@ -215,6 +216,7 @@ _mod_default_dict = {
     "MoeMatmul": ModuleInfo("linear", PatchedMoeMatmul),
     "ReplicatedLinear": ModuleInfo("linear", PatchedReplicatedLinear),
     "FusedMoE": ModuleInfo("linear", PatchedMixtralMoE, False),
+    "GaudiMixtralSparseMoeBlock": ModuleInfo("dynamic_moe", PatchedGaudiMixtralSparseMoeBlock),
 }
 
 

@@ -22,7 +22,7 @@ from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerat
 cur_accelerator = auto_detect_accelerator()
 
 from .._core.scale_handler import create_scale_tensor, get_scale_dtype
-from .._quant_common.quant_config import ScaleFormat, ScaleMethod
+from .._quant_common.quant_config import ScaleFormat
 
 descale_fcn = lambda x, scale: torch.mul(x, scale)
 scale_fcn = lambda x, scale: torch.div(x, scale)

@@ -44,7 +44,7 @@ def patch_module(mod, qconfig, mod_dict, patched_mod=None):
     parent = parent_child_mod_dict[mod].parent
     name = parent_child_mod_dict[mod].name
     if patched_mod is None:
-        patched_mod = mod_dict[mod.__class__.__name__].patched_module(mod, qconfig)
+        patched_mod = mod_dict[mod.__class__.__name__].patched_module(mod, parent, qconfig)
     setattr(parent, name, patched_mod)
 
 
