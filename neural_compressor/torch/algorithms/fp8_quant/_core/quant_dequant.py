@@ -56,6 +56,11 @@ class QuantDequantBase(nn.Module):
         else:
             self.quant_min = int(torch.finfo(self.lp_dtype).min)
             self.quant_max = int(torch.finfo(self.lp_dtype).max)
+
+        if self.scale_format == ScaleFormat.CONST:
+            self.zero_point = nn.Parameter(torch.tensor(0.))
+        else:
+            self.zero_point = 0
         self.forward = self.forward_qdq
 
     def set_cast_to_op(self):
@@ -100,8 +105,10 @@ class QuantInput(QuantDequantBase):
         if self.use_qdq:
             self.scale = create_scale_tensor(1 / self.scale_inv, self.scale_format)
             self.quantize_op = (
-                quantize_per_channel_to_fp8 if self.scale.numel() > 1 else quantize_per_tensor_to_fp8
-                )
+                quantize_per_channel_to_fp8
+                if self.scale_format == ScaleFormat.CONST and self.scale.numel() > 1
+                else quantize_per_tensor_to_fp8
+            )
 
         self.cast_to_op = self.set_cast_to_op()
 
@@ -112,7 +119,7 @@ class QuantInput(QuantDequantBase):
         return self.quantize_op(
                 x,
                 scale=self.scale,
-                zero_point=torch.tensor(0),
+                zero_point=self.zero_point,
                 axis=0,
                 quant_min=self.quant_min,
                 quant_max=self.quant_max,
@@ -131,8 +138,10 @@ class DequantOutput(QuantDequantBase):
         self.scale = create_scale_tensor(scale, self.scale_format)
         if self.use_qdq:
             self.dequantize_op = (
-                dequantize_per_channel_from_fp8 if self.scale.numel() > 1 else dequantize_per_tensor_from_fp8
-                )
+                dequantize_per_channel_from_fp8
+                if self.scale_format == ScaleFormat.CONST and self.scale.numel() > 1
+                else dequantize_per_tensor_from_fp8
+            )
 
         self.cast_from_op = self.set_cast_from_op()
 
@@ -143,7 +152,7 @@ class DequantOutput(QuantDequantBase):
         return self.dequantize_op(
                 x,
                 scale= self.scale,
-                zero_point=torch.tensor(0),
+                zero_point=self.zero_point,
                 axis=1,
                 quant_min=self.quant_min,
                 quant_max=self.quant_max,
@@ -179,7 +188,7 @@ class QuantDequant(QuantDequantBase):
         y = quantize_per_tensor_to_fp8(
             x,
             scale=self.scale,
-            zero_point=torch.tensor(0),
+            zero_point=self.zero_point,
             quant_min=self.quant_min,
             quant_max=self.quant_max,
             dtype=self.lp_dtype,
@@ -187,7 +196,7 @@ class QuantDequant(QuantDequantBase):
         z = dequantize_per_tensor_from_fp8(
             y,
             scale=self.scale,
-            zero_point=torch.tensor(0),
+            zero_point=self.zero_point,
             quant_min=self.quant_min,
             quant_max=self.quant_max,
             dtype=self.lp_dtype,

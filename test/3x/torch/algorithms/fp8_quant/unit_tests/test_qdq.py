@@ -78,7 +78,10 @@ class SimpleSoftmaxModel(torch.nn.Module):
         output = self.softmax(x, dim=self.dim)
         return output
 
-def prepare_model_to_compare(model, config_dict, config_dict_qdq, module_type="Linear", scale_method="MAXABS_HW"):
+
+def prepare_model_to_compare(
+    model, config_dict, config_dict_qdq, module_type="Linear", scale_method="MAXABS_HW", scale_format="CONST"
+):
     model_quant = copy.deepcopy(model)
     model_qdq = copy.deepcopy(model)
     htcore.hpu_initialize()
@@ -89,10 +92,14 @@ def prepare_model_to_compare(model, config_dict, config_dict_qdq, module_type="L
     if scale_method != "MAXABS_HW":
         config_dict["scale_method"] = scale_method
         config_dict_qdq["scale_method"] = scale_method
+    config_dict["scale_format"] = scale_format
+    config_dict_qdq["scale_format"] = scale_format
     config_quant = FP8Config.from_dict(config_dict)
     config_qdq = FP8Config.from_dict(config_dict_qdq)
     model_quant = prepare(model_quant, config_quant)
+    htcore.mark_step()
     model_qdq = prepare(model_qdq, config_qdq)
+    htcore.mark_step()
     return model_quant, model_qdq
 
 def test_PatchedConv2d():
@@ -139,6 +146,7 @@ def test_PatchedMatmul():
     output = model(x, y)
     output_quant = model_quant(x, y)
     output_qdq = model_qdq(x, y)
+    htcore.mark_step()
 
     # comparsion
     assert torch.allclose(output_quant, output_qdq, rtol=0.01, atol=5 * 1e-01), f"QDQ comparsion with Quant failed"
@@ -209,29 +217,32 @@ def test_qdq_model():
     shutil.rmtree("model_qdq_tmp", ignore_errors=True)
 
 
-def test_PatchedLinear():
-    scale_methods = ["MAXABS_HW", "ACT_MAXABS_POW2_WEIGHTS_PCS_OPT_POW2"]
-    for scale_method in scale_methods:
-        for bias in [True, False]:
-            model = SimpleLinearModel(in_features=10, out_features=5, bias=bias).to(torch.bfloat16).to("hpu")
-            model_quant, model_qdq = prepare_model_to_compare(model, config_dict, config_dict_qdq, "Linear", scale_method)
-            with torch.no_grad():
-                for i in range(10):
-                    calibration_tensor = torch.randn(2, 10).to(torch.bfloat16).to("hpu")
-                    a = model_quant(calibration_tensor)
-                    b = model_qdq(calibration_tensor)
+@pytest.mark.parametrize("scale_method", ["MAXABS_HW", "ACT_MAXABS_POW2_WEIGHTS_PCS_OPT_POW2"])
+@pytest.mark.parametrize("scale_format", ["SCALAR", "CONST"])
+@pytest.mark.parametrize("bias", [True, False], ids=["bias", "no_bias"])
+def test_PatchedLinear(scale_method, scale_format, bias):
+    model = SimpleLinearModel(in_features=10, out_features=5, bias=bias).to(torch.bfloat16).to("hpu")
+    model_quant, model_qdq = prepare_model_to_compare(
+        model, config_dict, config_dict_qdq, "Linear", scale_method, scale_format
+    )
+    with torch.no_grad():
+        for i in range(10):
+            calibration_tensor = torch.randn(2, 10).to(torch.bfloat16).to("hpu")
+            a = model_quant(calibration_tensor)
+            b = model_qdq(calibration_tensor)
 
-            model_quant = convert(model_quant)
-            model_qdq = convert(model_qdq)
+    model_quant = convert(model_quant)
+    model_qdq = convert(model_qdq)
 
-            # output
-            input_tensor = torch.randn(2, 10).to(torch.bfloat16).to("hpu")
-            with torch.no_grad():
-                output = model(input_tensor)
-                output_quant = model_quant(input_tensor)
-                output_qdq = model_qdq(input_tensor)
+    # output
+    input_tensor = torch.randn(2, 10).to(torch.bfloat16).to("hpu")
+    with torch.no_grad():
+        output = model(input_tensor)
+        output_quant = model_quant(input_tensor)
+        output_qdq = model_qdq(input_tensor)
 
-            # comparsion
-            assert torch.allclose(output_qdq, output_quant, rtol=0.01, atol=1e-01), f"QDQ comparsion with Quant failed"
-            assert torch.allclose(output_quant, output, rtol=0.01, atol=1e-01), f"Quant comparsion with OriginModule failed"
-            assert torch.allclose(output_qdq, output, rtol=0.01, atol=1e-01),  f"QDQ comparsion with OriginModule failed"
+    htcore.mark_step()
+    # comparsion
+    assert torch.allclose(output_qdq, output_quant, rtol=0.01, atol=1e-01), f"QDQ comparsion with Quant failed"
+    assert torch.allclose(output_quant, output, rtol=0.01, atol=1e-01), f"Quant comparsion with OriginModule failed"
+    assert torch.allclose(output_qdq, output, rtol=0.01, atol=1e-01), f"QDQ comparsion with OriginModule failed"

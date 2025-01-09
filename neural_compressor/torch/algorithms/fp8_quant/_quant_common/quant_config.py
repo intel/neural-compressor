@@ -253,9 +253,9 @@ class Fp8cfg:
                 measured_global_config["scale_format"] = ScaleFormat.CONST
                 logger.warning(f"Cannot use 'scale_format = SCALAR' when using PCQ (Per Channel Quantization, "
                                f"e.g. {scale_method}) value for 'scale_method'. Reduced to 'CONST'.")
-            if measured_global_config["fake_quant"] or measured_global_config["use_qdq"]:
+            if measured_global_config["fake_quant"]:
                 measured_global_config["scale_format"] = ScaleFormat.CONST
-                logger.warning(f"Cannot use 'scale_format = SCALAR' when using fake_quant or use_qdq. Reduced to 'CONST'.")
+                logger.warning(f"Cannot use 'scale_format = SCALAR' when using fake_quant. Reduced to 'CONST'.")
         quant_mode = measured_global_config["mode"]
         if scale_method in _scale_methods_quant_only:
             if quant_mode == QuantMode.QUANTIZE:
