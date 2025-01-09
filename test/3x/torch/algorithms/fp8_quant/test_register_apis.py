@@ -60,10 +60,11 @@ def test_register_patched_module():
         def __init__(
             self,
             mod: torch.nn.Module,
+            parent: torch.nn.Module,
             mod_extra_config: ModuleExtraConfig,
             name: Optional[str] = None,
         ):
-            super().__init__(mod, mod_extra_config, name)
+            super().__init__(mod, parent, mod_extra_config, name)
 
         @classmethod
         def get_type(cls) -> str:
@@ -87,10 +88,11 @@ def test_register_patched_module_multiple_types():
         def __init__(
             self,
             mod: torch.nn.Module,
+            parent: torch.nn.Module,
             mod_extra_config: ModuleExtraConfig,
             name: Optional[str] = None,
         ):
-            super().__init__(mod, mod_extra_config, name)
+            super().__init__(mod, parent, mod_extra_config, name)
 
         @classmethod
         def get_type(cls) -> str:
@@ -116,10 +118,11 @@ def test_register_patched_module_multiple_device_types(device_types):
         def __init__(
             self,
             mod: torch.nn.Module,
+            parent: torch.nn.Module,
             mod_extra_config: ModuleExtraConfig,
             name: Optional[str] = None,
         ):
-            super().__init__(mod, mod_extra_config, name)
+            super().__init__(mod, parent, mod_extra_config, name)
 
         @classmethod
         def get_type(cls) -> str:
@@ -201,11 +204,12 @@ class TestRegisterAPIs:
             def __init__(
                 self,
                 mod: torch.nn.Module,
+                parent: torch.nn.Module,
                 mod_extra_config: ModuleExtraConfig,
                 name: Optional[str] = None,
                 **kwargs,
             ):
-                super().__init__(mod, mod_extra_config, name, **kwargs)
+                super().__init__(mod, parent, mod_extra_config, name, **kwargs)
 
             @classmethod
             def get_type(cls) -> str:

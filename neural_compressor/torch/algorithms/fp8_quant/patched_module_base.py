@@ -119,6 +119,7 @@ class PatchedModuleBase(torch.nn.Module):
     def __init__(
         self,
         mod: torch.nn.Module,
+        parent: torch.nn.Module,
         mod_extra_config: ModuleExtraConfig,
         name: Optional[str] = None,
         **kwargs,
@@ -126,7 +127,7 @@ class PatchedModuleBase(torch.nn.Module):
         """Initialize the patched module."""
         super().__init__()
         self.name = name
-        set_attrs_from_orig_model(self, mod, mod_extra_config)
+        set_attrs_from_orig_model(self, mod, parent, mod_extra_config)
         self.mod_extra_config = mod_extra_config
         if self.quantization_mode in (QuantMode.MEASURE, QuantMode.SHAPE):
             self.forward = self.forward_measure

@@ -14,10 +14,11 @@ from enum import Enum, auto
 
 class OP_TYPE(Enum):
     # class per hpu custom fp8 ops used in patched modules logic
-    GEMM = auto(),
+    GEMM = auto()
     SOFTMAX = auto()
     CONV = auto()
     FSDPA = auto()
+    DYNAMIC_MOE = auto()
 
 
 class QuantizedHpuFuncWrapper(ABC):
@@ -29,8 +30,7 @@ class QuantizedHpuFuncWrapper(ABC):
     classes below.
     """
     def __init__(self, scale_format):
-        self.set_quantized_func(scale_format)
-        self.quantized_func_args = None
+        self._quantized_func_ = self.get_quantized_func(scale_format)
 
     @abstractmethod
     def get_default_quantized_func(self):
@@ -39,19 +39,19 @@ class QuantizedHpuFuncWrapper(ABC):
     def get_scalar_quantized_func(self):
         return self.get_default_quantized_func().scalar
 
-    def set_quantized_func(self, scale_format):
+    def get_quantized_func(self, scale_format):
         if scale_format == ScaleFormat.SCALAR:
-                self._quantized_func_ = self.get_scalar_quantized_func()
+                return self.get_scalar_quantized_func()
         elif scale_format == ScaleFormat.CONST:
-            self._quantized_func_ = self.get_default_quantized_func()
+            return self.get_default_quantized_func()
         else:
             raise ValueError("Unexpected scale format - {}".format(scale_format))
 
     def __call__(self, *args, **kwargs):
         return self._quantized_func_(*args, **kwargs)
 
-class QuantizedHpuMatmul(QuantizedHpuFuncWrapper):
 
+class QuantizedHpuMatmul(QuantizedHpuFuncWrapper):
     def get_default_quantized_func(self):
         return torch.ops.hpu.fp8_gemm_v2
 
@@ -68,8 +68,8 @@ class QuantizedHpuMatmul(QuantizedHpuFuncWrapper):
                                      None,
                                      False)
 
-class QuantizedHpuConv(QuantizedHpuFuncWrapper):
 
+class QuantizedHpuConv(QuantizedHpuFuncWrapper):
     def get_default_quantized_func(self):
         return torch.ops.hpu.conv2d_fp8
 
@@ -101,8 +101,8 @@ class QuantizedHpuConv(QuantizedHpuFuncWrapper):
                                      scale_input=scale_input_inv,
                                      scale_weight=scale_other_inv)
 
-class QuantizedHpuSoftmax(QuantizedHpuFuncWrapper):
 
+class QuantizedHpuSoftmax(QuantizedHpuFuncWrapper):
     def get_default_quantized_func(self):
         return torch.ops.hpu.softmax_fp8
 
@@ -110,22 +110,29 @@ class QuantizedHpuSoftmax(QuantizedHpuFuncWrapper):
         # softmax custom op has different scalar impl name
         return self.get_default_quantized_func().Scalar_scales
 
+
 class QuantizedHpuFSDPA(QuantizedHpuFuncWrapper):
-
-    def __init__(self, scale_format):
-        # FSDPA isn't optimized for scalar flavor due to complexity of specific torch op api selection
-        self._quantized_func_ = self.get_default_quantized_func()
-
     def get_default_quantized_func(self):
         return fp8_fused_sdpa
 
     def get_scalar_quantized_func(self):
-        raise NotImplementedError()
+        # FSDPA isn't optimized for scalar flavor due to complexity of specific torch op api selection
+        return self.get_default_quantized_func()
+
+
+class QuantizedHpuDynamicMoe(QuantizedHpuFuncWrapper):
+    def get_default_quantized_func(self):
+        return torch.ops.hpu.mixture_of_experts.fp8
+
+    def get_scalar_quantized_func(self):
+        return torch.ops.hpu.mixture_of_experts.fp8_scalars
+
 
 _OP_TYPE_HPU_QUANTIZED_WRAPPER_CLASSES = {OP_TYPE.GEMM : QuantizedHpuMatmul,
                                           OP_TYPE.SOFTMAX : QuantizedHpuSoftmax,
                                           OP_TYPE.CONV  : QuantizedHpuConv,
-                                          OP_TYPE.FSDPA : QuantizedHpuFSDPA
+                                          OP_TYPE.FSDPA : QuantizedHpuFSDPA,
+                                          OP_TYPE.DYNAMIC_MOE: QuantizedHpuDynamicMoe,
                                           }
 
 def get_hpu_quantized_func_wrapper(op_type, scale_format):

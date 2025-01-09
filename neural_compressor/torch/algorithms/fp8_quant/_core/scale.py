@@ -69,6 +69,14 @@ def matmul_scales_to_mod_config(mod, scales, params):
     return config
 
 
+def dynamic_moe_scales_to_mod_config(mod, scales, params):
+    scales_inv, scale_format, use_qdq, fake_quant, lp_dtype, hp_dtype = init_mod_config(mod, scales, params)
+    input_config = init_input_config(scales_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant)
+    output_config = [QuantDequantNone(scales.outputs[0], lp_dtype, hp_dtype, scale_format=scale_format)]
+    config = ModuleConfig(input_config, output_config, {})
+    return config
+
+
 def fsdpa_scales_to_mod_config(mod, scales, params):
     scales_inv, scale_format, use_qdq, fake_quant, lp_dtype, hp_dtype = init_mod_config(mod, scales, params)
     input_config = init_input_config(scales_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant)
@@ -173,6 +181,7 @@ scaling_methods = {
         "softmax": (softmax_single_scale_scales, softmax_scales_to_mod_config),
         "kv_cache": (kv_cache_single_scale_scales, kv_cache_scales_to_mod_config),
         "fused_sdpa": (fsdpa_single_scale_scales, fsdpa_scales_to_mod_config),
+        "dynamic_moe": (dynamic_moe_single_scale_scales, dynamic_moe_scales_to_mod_config),
     },
     "hw_aligned_single_scale": {
         "linear": (linear_hw_aligned_single_scale_scales, linear_scales_to_mod_config),
@@ -180,6 +189,7 @@ scaling_methods = {
         "softmax": (softmax_hw_aligned_single_scale_scales, softmax_scales_to_mod_config),
         "kv_cache": (kv_cache_hw_aligned_single_scale_scales, kv_cache_scales_to_mod_config),
         "fused_sdpa": (fsdpa_hw_aligned_single_scale_scales, fsdpa_scales_to_mod_config),
+        "dynamic_moe": (dynamic_moe_hw_aligned_single_scale_scales, dynamic_moe_scales_to_mod_config),
     },
     "act_maxabs_pts_weight_maxabs_pts_arbitrary": {
         "linear": (
@@ -201,6 +211,10 @@ scaling_methods = {
         "fused_sdpa": (
             fsdpa_act_maxabs_pts_weight_maxabs_pts_arbitrary_scales,
             fsdpa_scales_to_mod_config,
+        ),
+        "dynamic_moe": (
+            dynamic_moe_act_maxabs_pts_weight_maxabs_pts_arbitrary_scales,
+            dynamic_moe_scales_to_mod_config,
         ),
     },
     "act_maxabs_pts_weight_maxabs_pts_pow2_hw": {
@@ -224,6 +238,10 @@ scaling_methods = {
             fsdpa_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales,
             fsdpa_scales_to_mod_config,
         ),
+        "dynamic_moe": (
+            dynamic_moe_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales,
+            dynamic_moe_scales_to_mod_config
+        ),
     },
     "act_maxabs_pts_weight_maxabs_pts_pow2": {
         "linear": (
@@ -245,6 +263,10 @@ scaling_methods = {
         "fused_sdpa": (
             fsdpa_act_maxabs_pts_pow2_weight_maxabs_pts_pow2,
             fsdpa_scales_to_mod_config,
+        ),
+        "dynamic_moe": (
+            dynamic_moe_act_maxabs_pts_weight_maxabs_pts_pow2_scales,
+            dynamic_moe_scales_to_mod_config
         ),
     },
     "act_maxabs_pts_pow2_hw_weights_maxabs_pcs_pow2": {
@@ -269,6 +291,10 @@ scaling_methods = {
             softmax_input_unit_output_maxabs_pts_pow2,
             softmax_scales_to_mod_config,
         ),
+        "dynamic_moe": (
+            dynamic_moe_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales,
+            dynamic_moe_scales_to_mod_config
+        ),
     },
     "act_maxabs_pts_weight_opt_pts_pow2": {
         "linear": (
@@ -283,6 +309,22 @@ scaling_methods = {
             softmax_input_unit_output_maxabs_pts_pow2,
             softmax_scales_to_mod_config,
         ),
+        "kv_cache": (
+            kv_cache_act_maxabs_pts_pow2,
+            kv_cache_scales_to_mod_config,
+        ),
+        "softmax": (
+            softmax_input_unit_output_maxabs_pts_pow2,
+            softmax_scales_to_mod_config,
+        ),
+        "fused_sdpa": (
+            fsdpa_act_maxabs_pts_pow2_weight_maxabs_pts_pow2,
+            fsdpa_scales_to_mod_config,
+        ),
+        "dynamic_moe": (
+            dynamic_moe_act_maxabs_pts_weight_maxabs_pts_pow2_scales,
+            dynamic_moe_scales_to_mod_config
+        ),
     },
     "act_maxabs_pts_weight_opt_pts_hw": {
         "linear": (
@@ -292,6 +334,10 @@ scaling_methods = {
         "matmul": (
             matmul_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales,
             matmul_scales_to_mod_config,
+        ),
+        "kv_cache": (
+            kv_cache_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales,
+            kv_cache_scales_to_mod_config,
         ),
         "softmax": (
             softmax_input_unit_output_maxabs_pts_hw_scales,
@@ -304,6 +350,10 @@ scaling_methods = {
         "softmax": (
             softmax_input_unit_output_maxabs_pts_hw_scales,
             softmax_scales_to_mod_config,
+        ),
+        "dynamic_moe": (
+            dynamic_moe_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales,
+            dynamic_moe_scales_to_mod_config
         ),
     },
     "act_maxabs_pts_pow2_hw_weights_opt_pcs_pow2": {

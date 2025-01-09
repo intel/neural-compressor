@@ -149,7 +149,7 @@ def _validate_dump_path(dump_stats_path):
     files_to_backup = [fname for fname in os.listdir(dirname) if fname.startswith(basename)]
     if files_to_backup:
         from datetime import datetime
-        backup_dirname = f"{basename}_backup_{datetime.now().strftime('%d-%m_%H:%M:%S')}"
+        backup_dirname = f"backup_{basename}_{datetime.now().strftime('%d-%m_%H:%M:%S')}"
         try:
             os.mkdir(f"{dirname}/{backup_dirname}")
         except FileExistsError:
