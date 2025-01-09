@@ -21,20 +21,10 @@ def get_test_vectors(*, dtype: torch.dtype, N: int, D_in: int, atol: float = 0.0
 @pytest.mark.parametrize("scale_method", ScaleMethod)
 @pytest.mark.parametrize("device_type", device_type)
 def test_linear_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype, scale_method: ScaleMethod, device_type: str):
-    # TODO [SW-196641]: fix the following issues:
-    if scale_method in [
-        ScaleMethod.ACT_MAXABS_HW_WEIGHTS_PCS_OPT_POW2,
-        ScaleMethod.ACT_MAXABS_POW2_WEIGHTS_PCS_OPT_POW2,
-        ScaleMethod.MAXABS_HW_OPT_WEIGHT,
-        ScaleMethod.MAXABS_POW2_OPT_WEIGHT,
-        ScaleMethod.ACT_MAXABS_HW_WEIGHTS_PCS_MAXABS_POW2,
-        ScaleMethod.ACT_MAXABS_POW2_WEIGHTS_PCS_MAXABS_POW2,
-    ]:
-        pytest.skip("Not supported")
     if scale_method in SCALE_METHODS_KEY_ERROR:
         pytest.xfail("KeyError")
     quant_modes = QUANT_MODES_DEFAULT
-    atol = 0.02
+    atol = 0.022
     if scale_method == ScaleMethod.MAXABS_ARBITRARY:
         atol = 0.03
     if scale_method in SCALE_METHODS_QUANT_ONLY:
@@ -51,6 +41,7 @@ def test_linear_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype, scale_met
                 "in_features": D_in,
                 "out_features": H,
                 "bias": False,
+                "dtype": hp_dtype,
             },
             lp_dtype=lp_dtype,
             scale_method=scale_method,

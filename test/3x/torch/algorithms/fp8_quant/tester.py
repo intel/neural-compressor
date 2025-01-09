@@ -36,6 +36,12 @@ SCALE_METHODS_QUANT_ONLY = [ScaleMethod.UNIT_SCALE, ScaleMethod.HW_ALIGNED_SINGL
 QUANT_MODES_DEFAULT = [QuantMode.MEASURE, QuantMode.QUANTIZE]
 QUANT_MODES_QUANT_ONLY = [QuantMode.QUANTIZE]
 
+DTYPE_TO_HPDTYPE_STR = {
+    torch.bfloat16: "BF16", 
+    torch.float16: "FP16",
+    torch.float32: "FP32",
+}
+
 # Expects to get an exception. If there's no exception, the test will fail
 def run_with_raised_exception(test_to_run, error, error_str):
     with pytest_raises(Exception) as exc:
@@ -123,7 +129,8 @@ def run_accuracy_test(
             mode=mode,
             lp_dtype=lp_dtype,
             scale_method=scale_method,
-            device_type=device_type
+            device_type=device_type,
+            **module_kwargs,
         )
         prepare_model._prep_model_with_predefined_config(quantized_model, config=config)
 
@@ -222,6 +229,7 @@ def _get_test_only_config(
     scale_method: ScaleMethod,
     lp_dtype: torch.dtype,
     device_type: str = get_device_name(),
+    **kwargs
 ) -> Fp8cfg:
     """Should NOT be used externally.
 
@@ -230,14 +238,16 @@ def _get_test_only_config(
 
     # TODO: replace this with a version that does not use strings but direct values.
     #  It is currently needed because of how Fp8cfg.parse() works.
-    return Fp8cfg.parse(
-        {
-            "method": "HOOKS",
-            "mode": mode.name,
-            "observer": "maxabs",
-            "fp8_config": str(lp_dtype).replace("torch.float8_", "")[:4],
-            "scale_method": scale_method.name,
-            "dump_stats_path": get_test_unique_dump_path(scale_method),
-            "device_for_scales": device_type,
-        }
-    )
+    fp8_cfg = {
+        "method": "HOOKS",
+        "mode": mode.name,
+        "observer": "maxabs",
+        "fp8_config": str(lp_dtype).replace("torch.float8_", "")[:4],
+        "scale_method": scale_method.name,
+        "dump_stats_path": get_test_unique_dump_path(scale_method),
+        "device_for_scales": device_type,
+    }
+    if "dtype" in kwargs:
+       fp8_cfg["hp_dtype"] = DTYPE_TO_HPDTYPE_STR[kwargs["dtype"]]
+
+    return Fp8cfg.parse(fp8_cfg)
