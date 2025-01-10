@@ -1,6 +1,4 @@
-accelerate
-auto_round_lib @ git+https://github.com/intel/auto-round.git@lib/pre-4.4.0
-datasets
+auto-round-lib==0.4.4
 deepspeed @ git+https://github.com/HabanaAI/DeepSpeed.git@1.19.0
 expecttest
 intel_extension_for_pytorch
