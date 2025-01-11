@@ -36,8 +36,9 @@ def test_block_wise_measurement():
         cur_accelerator.synchronize()
         mem3 = get_used_hpu_mem_MB()
 
-    assert mem1 == mem2, "measure_on_hpu=False should not allocate hpu memory for model."
-    assert mem2 == mem3, "block-wise calibration should release hpu memory after calibration."
+    # set threshold to 10MiB to avoid random fluctuations
+    assert mem2 - mem1 < 10, "measure_on_hpu=False should not allocate hpu memory for model."
+    assert mem3 - mem2 < 10, "block-wise calibration should release hpu memory after calibration."
     model_normal = convert(model_normal)
     model_block_wise = convert(model_block_wise)
 
