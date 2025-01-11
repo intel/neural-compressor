@@ -206,10 +206,10 @@ class TestRegisterAPIs:
                 mod: torch.nn.Module,
                 parent: torch.nn.Module,
                 mod_extra_config: ModuleExtraConfig,
-                name: Optional[str] = None,
+                *args,
                 **kwargs,
             ):
-                super().__init__(mod, parent, mod_extra_config, name, **kwargs)
+                super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
 
             @classmethod
             def get_type(cls) -> str:

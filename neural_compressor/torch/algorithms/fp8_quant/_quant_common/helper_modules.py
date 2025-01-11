@@ -20,6 +20,7 @@ from .quant_config import QuantMode, get_hqt_config
 from .._core.quant_dequant import QuantDequant as qdq
 from .._core.quantized_hpu_ops import get_hpu_quantized_func_wrapper, OP_TYPE
 from .._core.scale_handler import create_scale_tensor, get_scale_dtype
+from ..patched_module_base import PatchedModuleBase
 
 
 class BMM(nn.Module):
@@ -65,26 +66,6 @@ def measure_output(output, observer):
             observer[i].measure(output[i])
 
 
-def set_attrs_from_orig_model(cls_instance, mod, parent, mod_extra_config, *func_names):
-    cls_instance.__dict__.update(mod.__dict__)
-    config = get_hqt_config(cls_instance)
-    cls_instance.extra_repr_org = mod.extra_repr
-    cls_instance.class_name_org = mod.__class__.__name__
-    cls_instance._mod_extra_config = mod_extra_config
-    cls_instance.quantization_mode = config.cfg["mode"]
-    cls_instance.fake_quant = config.cfg["fake_quant"]
-    cls_instance.use_qdq = config.cfg["use_qdq"]
-    cls_instance.scale_format = config.cfg["scale_format"]
-    # store original module in order to invoke its functions during measurements.
-    # this may be omitted of torch remove the related validation from dynamo. see SW-187731.
-    cls_instance.__dict__["orig_mod"] = mod
-    cls_instance.__dict__["orig_mod_parent"] = parent
-    cls_instance.forward_orig = mod.forward
-    if func_names is not None:
-        for func in func_names:
-            setattr(cls_instance, func, getattr(mod, func))
-
-
 def get_current_repr(cls_instance, *member_names):
     curr_repr = ""
     if cls_instance.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
@@ -112,10 +93,9 @@ def _raise_lora_layer_error(layer_class):
     )
 
 
-class PatchedMatmul(nn.Module):
+class PatchedMatmul(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
-        super().__init__()
-        set_attrs_from_orig_model(self, mod, parent, mod_extra_config)
+        super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             self.quant_input_0 = self._mod_extra_config.inputs[0]
             self.quant_input_1 = self._mod_extra_config.inputs[1]
@@ -199,10 +179,10 @@ def init_mixture_of_experts_linears(instance):
         # adding a fake 0 data input to instantiate the needed measurment objects
         measure_input((torch.tensor(0),), observer=instance._mod_extra_config.inputs)
 
-class PatchedLinear(nn.Module):
+
+class PatchedLinear(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
-        super().__init__()
-        set_attrs_from_orig_model(self, mod, parent, mod_extra_config)
+        super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         init_linear(self, mod_extra_config)
 
     def forward_qdq(self, input):
@@ -239,10 +219,9 @@ class PatchedLinear(nn.Module):
         )
 
 
-class PatchedParallelLMHead(nn.Module):
+class PatchedParallelLMHead(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
-        super().__init__()
-        set_attrs_from_orig_model(self, mod, parent, mod_extra_config)
+        super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         # ParallelLMHead inherits from VocabParallelEmbedding (nn.module) which has a member called
         # "linear_method" of type UnquantizedEmbeddingMethod that inherits from QuantizeMethodBase
         # (both are not nn.module) and implement an "apply" method by using torch.nn.functional.linear
@@ -296,10 +275,9 @@ class PatchedParallelLMHead(nn.Module):
         )
 
 
-class PatchedReplicatedLinear(nn.Module):
+class PatchedReplicatedLinear(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
-        super().__init__()
-        set_attrs_from_orig_model(self, mod, parent, mod_extra_config)
+        super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         init_linear(self, mod_extra_config)
 
     def forward_qdq(self, input):
@@ -340,10 +318,9 @@ class PatchedReplicatedLinear(nn.Module):
         )
 
 
-class PatchedLinearAllReduce(nn.Module):
+class PatchedLinearAllReduce(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
-        super().__init__()
-        set_attrs_from_orig_model(self, mod, parent, mod_extra_config)
+        super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         init_linear(self, mod_extra_config)
         self.scoped_version = mod.__class__.__name__ == "ScopedLinearAllReduce"
 
@@ -403,10 +380,10 @@ class PatchedLinearAllReduce(nn.Module):
         )
 
 
-class PatchedRowParallelLinear(nn.Module):
+class PatchedRowParallelLinear(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
-        super().__init__()
-        set_attrs_from_orig_model(self, mod, parent, mod_extra_config, "resolve_input")
+        kwargs["func_names"] = ("resolve_input")
+        super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         init_linear(self, mod_extra_config)
 
     def forward_qdq(self, input):
@@ -463,10 +440,9 @@ class PatchedRowParallelLinear(nn.Module):
         )
 
 
-class PatchedColumnParallelLinear(nn.Module):
+class PatchedColumnParallelLinear(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
-        super().__init__()
-        set_attrs_from_orig_model(self, mod, parent, mod_extra_config)
+        super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         init_linear(self, mod_extra_config)
 
     def forward_qdq(self, input):
@@ -517,10 +493,9 @@ class PatchedColumnParallelLinear(nn.Module):
         )
 
 
-class PatchedLmHeadLinearAllreduce(nn.Module):
+class PatchedLmHeadLinearAllreduce(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
-        super().__init__()
-        set_attrs_from_orig_model(self, mod, parent, mod_extra_config)
+        super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         init_linear(self, mod_extra_config)
 
     def forward_qdq(self, input):
@@ -593,10 +568,9 @@ class PatchedLmHeadLinearAllreduce(nn.Module):
 # patched vllm FusedMoE module removing the bf16 weights of all experts
 # measure and quant of the weights is done per expert using PatchedMoeMatmul
 # therefore it is configured: ModuleInfo.should_measure_and_quant = False
-class PatchedMixtralMoE(nn.Module):
+class PatchedMixtralMoE(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
-        super().__init__()
-        set_attrs_from_orig_model(self, mod, parent, mod_extra_config)
+        super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         # remove the MoE weights that are quanted by PatchedMoeMatmul
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             delattr(mod, "w13_weight")
@@ -611,10 +585,9 @@ class PatchedMixtralMoE(nn.Module):
 # This patched module is called by the vllm-mixtral FusedMoE layer
 # we wrap each expert weight with this module since FusedMoE has a single tensor for all experts weights
 # this way we can calculate scales per expert and achive better accuracy
-class PatchedMoeMatmul(nn.Module):
+class PatchedMoeMatmul(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
-        super().__init__()
-        set_attrs_from_orig_model(self, mod, parent, mod_extra_config)
+        super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         init_linear(self, mod_extra_config)
 
     def forward_qdq(self, input, *args, **kwargs):
@@ -649,10 +622,9 @@ class PatchedMoeMatmul(nn.Module):
         )
 
 
-class PatchedGaudiMixtralSparseMoeBlock(nn.Module):
+class PatchedGaudiMixtralSparseMoeBlock(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
-        super().__init__()
-        set_attrs_from_orig_model(self, mod, parent, mod_extra_config)
+        super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         self.forward = self.forward_orig
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             self.dynamic_moe_op = get_hpu_quantized_func_wrapper(OP_TYPE.DYNAMIC_MOE, self.scale_format)
@@ -736,13 +708,14 @@ class PatchedGaudiMixtralSparseMoeBlock(nn.Module):
         )
 
 
-class PatchedKVCache(nn.Module):
+class PatchedKVCache(PatchedModuleBase):
     # Module to patch KVCache module from llama model
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
-        super().__init__()
-        set_attrs_from_orig_model(self, mod, parent, mod_extra_config, "forward", "get_shape")
+        kwargs["func_names"] = ("forward", "get_shape")
+        super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         self.org_allocate = mod.allocate
         self.org_update = mod.update
+        self.forward = mod.forward
 
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             self.quant_input = self._mod_extra_config.inputs[0]
@@ -785,11 +758,10 @@ class PatchedKVCache(nn.Module):
         return output
 
 
-class PatchedVLLMKVCache(nn.Module):
+class PatchedVLLMKVCache(PatchedModuleBase):
     # Module to patch VLLMKVCache module from llama model
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
-        super().__init__()
-        set_attrs_from_orig_model(self, mod, parent, mod_extra_config)
+        super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             self.orig_fetch_from_cache = mod.fetch_from_cache
             self.quant_input = self._mod_extra_config.inputs[0]
@@ -842,9 +814,9 @@ def init_conv(instance, mod_extra_config):
     elif (instance.quantization_mode == QuantMode.MEASURE) or (instance.quantization_mode == QuantMode.SHAPE):
         instance.forward = instance.forward_measure
 
-class PatchedConv2d(nn.Conv2d):
+class PatchedConv2d(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
-        set_attrs_from_orig_model(self, mod, parent, mod_extra_config)
+        super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         init_conv(self, mod_extra_config)
 
     def forward_qdq(self, input):
@@ -889,10 +861,9 @@ class PatchedConv2d(nn.Conv2d):
         )
 
 
-class PatchedSoftmax(nn.Module):
+class PatchedSoftmax(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
-        super().__init__()
-        set_attrs_from_orig_model(self, mod, parent, mod_extra_config)
+        super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             self.dequant_output = self._mod_extra_config.outputs[0]
             if self.use_qdq:
@@ -930,9 +901,9 @@ class PatchedSoftmax(nn.Module):
         )
 
 
-class PatchedLoRACompatibleLinear(nn.Linear):
+class PatchedLoRACompatibleLinear(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
-        set_attrs_from_orig_model(self, mod, parent, mod_extra_config)
+        super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         init_linear(self, mod_extra_config)
 
     def forward_qdq(self, input, scale: float = 1.0):
@@ -975,9 +946,9 @@ class PatchedLoRACompatibleLinear(nn.Linear):
         )
 
 
-class PatchedLoRACompatibleConv(nn.Conv2d):
+class PatchedLoRACompatibleConv(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
-        set_attrs_from_orig_model(self, mod, parent, mod_extra_config)
+        super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         init_conv(self, mod_extra_config)
 
     def forward_qdq(self, input, scale: float = 1.0):
@@ -1030,12 +1001,11 @@ class PatchedLoRACompatibleConv(nn.Conv2d):
         )
 
 
-class PatchedModuleFusedSDPA(nn.Module):
+class PatchedModuleFusedSDPA(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         # fsdpa is combined out of - BMM1(Q,K) -> Softmax -> BMM2(AMAX,V)
         # during measure we receive the amax value from the cguid and apply it during quant as input
-        super().__init__()
-        set_attrs_from_orig_model(self, mod, parent, mod_extra_config)
+        super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         self.fp8_fused_sdpa = get_hpu_quantized_func_wrapper(OP_TYPE.FSDPA, self.scale_format)
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             self.quant_q = self._mod_extra_config.inputs[0]
