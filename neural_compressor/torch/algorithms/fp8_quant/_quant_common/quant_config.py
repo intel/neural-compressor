@@ -169,8 +169,8 @@ class Fp8cfg:
     def parse(custom_config: Mapping[str, str]) -> Fp8cfg:
         measured_global_config = {
             "dump_stats_path": "stats",
-            "fp8_config": torch.float8_e4m3fn,  # The low precision data type
-            "hp_dtype": torch.bfloat16,  # The high precision data type
+            "fp8_config": torch.float8_e4m3fn,  # The parameters of the chosen Quantization methed
+            "hp_dtype": torch.bfloat16,  # The parameters of the chosen Quantization methed
             "blocklist": {
                 "names": [],
                 "types": (),
@@ -178,8 +178,8 @@ class Fp8cfg:
             "allowlist": {
                 "names": [],
                 "types": (),
-            },  # types and names to be quantized.
-            "mode": QuantMode.QUANTIZE,
+            },  # types and names to be quantized. Allowlist by names is not yet implemented
+            "mode": QuantMode.QUANTIZE,  # Quantize or Measure
             "fake_quant": False, # Fake or Real Quant, fake_quant only works for linear(PatchedLinear) and matmul(PatchedMatmul), usually used for training.
             "use_qdq": False, # QDQ or Real Quant, QDQ works for operators in helper_modules.py, usually used for inference.
             "scale_method": ScaleMethod.MAXABS_HW,  # Method to quantize with
@@ -198,30 +198,31 @@ class Fp8cfg:
             "scale_format": ScaleFormat.SCALAR,
             "measure_on_hpu": True,  # Determines whether to measure model on hpu device.
         }
+        # assert measured_global_config['allowlist']['names'] == [''], "Allowlist names not yet implemented"
 
         # go over all user-defined keys from json, handle various cases
-        for key in custom_config:
-            if key in _config_to_enum.keys():
-                custom_config[key] = _get_enum_from_string(_config_to_enum[key], custom_config[key], key)
-                if key in _configs_that_use_enum_value:
-                    custom_config[key] = custom_config[key].value
+        for keys in custom_config:
+            if keys in _config_to_enum.keys():
+                custom_config[keys] = _get_enum_from_string(_config_to_enum[keys], custom_config[keys], keys)
+                if keys in _configs_that_use_enum_value:
+                    custom_config[keys] = custom_config[keys].value
 
             # TODO [SW-175936] - remove checking for old key names whitelist and blacklist.
-            if isinstance(custom_config[key], dict):
-                for inner_key in custom_config[key]:
-                    if key == "whitelist":
-                        measured_global_config["allowlist"][inner_key] = custom_config[key][inner_key]
-                    elif key == "blacklist":
-                        measured_global_config["blocklist"][inner_key] = custom_config[key][inner_key]
+            if isinstance(custom_config[keys], dict):
+                for keys_2 in custom_config[keys]:
+                    if keys == "whitelist":
+                        measured_global_config["allowlist"][keys_2] = custom_config[keys][keys_2]
+                    elif keys == "blacklist":
+                        measured_global_config["blocklist"][keys_2] = custom_config[keys][keys_2]
                     else:
-                        measured_global_config[key][inner_key] = custom_config[key][inner_key]
+                        measured_global_config[keys][keys_2] = custom_config[keys][keys_2]
             else:
-                if key == "whitelist":
-                    measured_global_config["allowlist"] = custom_config[key]
-                elif key == "blacklist":
-                    measured_global_config["blocklist"] = custom_config[key]
+                if keys == "whitelist":
+                    measured_global_config["allowlist"] = custom_config[keys]
+                elif keys == "blacklist":
+                    measured_global_config["blocklist"] = custom_config[keys]
                 else:
-                    measured_global_config[key] = custom_config[key]
+                    measured_global_config[keys] = custom_config[keys]
 
         # If seperate_measure_files is True (default value), then it is assumed that there are multiple distinct measure and scale files
         # and they are stored in / loaded from paths with the correct index as a suffix. Else, only one is searched for.
@@ -229,7 +230,6 @@ class Fp8cfg:
             local_rank if local_rank >= 0 and custom_config.get("seperate_measure_files", True) else None
         )
 
-        # validate device_for_scales field
         if custom_config.get("device_for_scales", None) is None:
             # Device for scales is the current device by default
             measured_global_config["device_for_scales"] = measured_global_config["device_type"]
@@ -275,10 +275,10 @@ class Fp8cfg:
                 if measured_global_config["local_rank"] is None
                 else "_" + str(measured_global_config["local_rank"]) + "_" + str(measured_global_config["world_size"])
             )
-            measured_global_config["shape_file"] = measured_global_config["dump_stats_path"] + "_shape" + worker_st
+            measured_global_config["shape_file"] = measured_global_config["dump_stats_path"] + "_hooks_shape" + worker_st
             measured_global_config["scale_file"] = (
                 measured_global_config["dump_stats_path"]
-                + "_"
+                + "_hooks_"
                 + measured_global_config["observer"]
                 + "_"
                 + scale_method.name
@@ -288,10 +288,11 @@ class Fp8cfg:
                 quant_mode == QuantMode.QUANTIZE
             ):
                 measured_global_config["measure_file"] = (
-                    measured_global_config["dump_stats_path"] + "_" + measured_global_config["observer"] + worker_st
+                    measured_global_config["dump_stats_path"] + "_hooks_" + measured_global_config["observer"] + worker_st
                 )
+            # measured_global_config['dump_stats_path'] += '_hooks_.json'
 
-            logger.debug("INC Paths:")
+            logger.debug("HQT Paths:")
             logger.debug("base_name='%s'", base_name)
             logger.debug("folder_name='%s'", folder_name)
             logger.debug(
@@ -319,7 +320,7 @@ class Fp8cfg:
 
 
 def _read_config_from_file(config_path: str) -> Mapping[str, str]:
-    logger.debug("INC Config path: using %s config", config_path)
+    logger.debug("QUANT PACKAGE: using %s config", config_path)
 
     module_directory = os.path.dirname(os.path.abspath(__file__))
 
@@ -327,12 +328,12 @@ def _read_config_from_file(config_path: str) -> Mapping[str, str]:
     if not os.path.isfile(config_path):
         config_path = os.path.join(module_directory, "..", f"custom_config/{config_path}")
     try:
-        logger.info("INC Config path: Loading %s", config_path)
+        logger.info("QUANT PACKAGE: Loading %s", config_path)
         with open(config_path) as config_json:
             config = json.load(config_json)
     except FileNotFoundError as e:
-        raise Exception(f"Got exception: {e}. INC Config path: Can't open {config_path}!")
+        raise Exception(f"Got exception: {e}. QUANT PACKAGE: Can't open {config_path}!")
     except JSONDecodeError as e:
         config_json.close()
-        raise Exception(f"Got exception: {e}. INC Config path: Can't load {config_path}!")
+        raise Exception(f"Got exception: {e}. QUANT PACKAGE: Can't load {config_path}!")
     return config
