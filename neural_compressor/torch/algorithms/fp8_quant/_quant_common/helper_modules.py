@@ -382,7 +382,7 @@ class PatchedLinearAllReduce(PatchedModuleBase):
 
 class PatchedRowParallelLinear(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
-        kwargs["func_names"] = ("resolve_input")
+        kwargs["func_names"] = ("resolve_input", )
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         init_linear(self, mod_extra_config)
 
