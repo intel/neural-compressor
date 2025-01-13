@@ -18,6 +18,7 @@
 
 from typing import Any
 
+import torch
 import torch.ao.quantization.quantizer.x86_inductor_quantizer as xiq
 from torch.ao.quantization.quantize_pt2e import convert_pt2e, prepare_pt2e
 from torch.ao.quantization.quantizer.x86_inductor_quantizer import X86InductorQuantizer
@@ -102,4 +103,5 @@ class W8A8PT2EQuantizer(Quantizer):
         """
         half_precision_node_set = hp_rewriter.get_half_precision_node_set(model, config)
         logger.info("Try to convert %d nodes to half precision.", len(half_precision_node_set))
-        hp_rewriter.transformation(model, half_precision_node_set)
+        hp_rewriter.transformation(model, half_precision_node_set, torch.float16)
+        hp_rewriter.transformation(model, half_precision_node_set, torch.bfloat16)

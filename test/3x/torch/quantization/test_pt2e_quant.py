@@ -283,3 +283,22 @@ class TestPT2EQuantization:
         opt_model = torch.compile(converted_model)
         out = opt_model(*example_inputs)
         assert out is not None
+
+    @pytest.mark.skipif(not GT_OR_EQUAL_TORCH_VERSION_2_5, reason="Requires torch>=2.5")
+    @pytest.mark.parametrize("half_precision_dtype", ["fp16", "bf16"])
+    def test_auto_tune_mixed_int8_and_16bits(self, half_precision_dtype, force_not_import_ipex):
+        # config1: int8 for all
+        # config2: half precision for linear
+        from neural_compressor.torch.quantization.config import INT8StaticQuantConfig
+        from neural_compressor.torch.quantization.autotune import autotune, TuningConfig
+        config1 = INT8StaticQuantConfig()
+        config2 = INT8StaticQuantConfig().set_local("fc1", StaticQuantConfig(w_dtype=half_precision_dtype, act_dtype=half_precision_dtype))
+        tune_config = TuningConfig(config_set=[config1, config2], tolerable_loss=-0.1)
+        def fake_eval_fn(model):
+            return 1.0
+        def run_fn(model):
+            for i in range(2):
+                model(*example_inputs)
+        model, example_inputs = self.build_model_include_conv_and_linear()
+        model = export(model, example_inputs=example_inputs)
+        qmodel = autotune(model=model, tune_config=tune_config, eval_fn=fake_eval_fn,run_fn=run_fn, example_inputs=example_inputs)

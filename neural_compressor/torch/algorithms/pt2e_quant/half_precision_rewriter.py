@@ -107,6 +107,7 @@ def _register_pattern_pair(dtype: torch.dtype) -> None:
 
 
 _register_pattern_pair(torch.float16)
+_register_pattern_pair(torch.bfloat16)
 
 
 def get_filter_fn(node_list, fn):
@@ -201,11 +202,11 @@ def _parse_node_candidate_set_from_user_config(config, gm):
     op_name_filters = []
     for op_type_name, config in op_type_configs.items():  # pragma: no cover
         op_type = getattr(torch.nn, op_type_name)
-        if config.act_dtype == "fp16":  # pragma: no cover
+        if config.act_dtype in ["fp16", "bf16"]:  # pragma: no cover
             filter = xpq._get_module_type_filter(op_type)
             op_type_filters.append(filter)
     for op_name, config in op_name_configs.items():
-        if config.act_dtype == "fp16":  # pragma: no cover
+        if config.act_dtype in ["fp16", "bf16"]:  # pragma: no cover
             filter = xpq._get_module_name_filter(op_name)
             op_name_filters.append(filter)
     node_set_from_user_config = set()
