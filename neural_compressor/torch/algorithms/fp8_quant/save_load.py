@@ -288,12 +288,13 @@ def split_rank_state_dict(model, gathered_state_dict):
         if name in gathered_state_dict:
             full_weight = gathered_state_dict[name]
             if len(param.shape) != 0 and full_weight.shape != param.shape:
+                # clone to release reference to the original tensor
                 if full_weight.shape[0] != param.shape[0]:
-                    split_weight = split_weights(full_weight, world_size, local_rank, split_axis=0)
+                    split_weight = split_weights(full_weight, world_size, local_rank, split_axis=0).clone()
                 elif full_weight.shape[1] != param.shape[1]:
-                    split_weight = split_weights(full_weight, world_size, local_rank, split_axis=1)
+                    split_weight = split_weights(full_weight, world_size, local_rank, split_axis=1).clone()
                 else:
-                    split_weight = split_weights(full_weight, world_size, local_rank, split_axis=0)
+                    split_weight = split_weights(full_weight, world_size, local_rank, split_axis=0).clone()
             else:
                 split_weight = full_weight
             rank_state_dict[name] = split_weight

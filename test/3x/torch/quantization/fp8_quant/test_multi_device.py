@@ -8,6 +8,7 @@ import transformers
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import local_rank, world_size
 from neural_compressor.torch.quantization import FP8Config, convert, load, prepare, save
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import PatchedLinear
+from neural_compressor.torch.utils import get_used_hpu_mem_MB
 
 
 def get_model_param_buffers(model):
@@ -38,7 +39,11 @@ def calib_func(model):
 
 def test_load_model_provided_by_neuralmagic():
     model_name_or_path = "neuralmagic/Qwen2-0.5B-Instruct-FP8"
+    hpu_mem0 = get_used_hpu_mem_MB()
     model = load(model_name_or_path, format="huggingface", device="hpu")
+    hpu_mem1 = get_used_hpu_mem_MB()
+    if world_size > 0:
+        assert (hpu_mem1 - hpu_mem0) < 480, "The memory usage is too high."
     assert isinstance(model, torch.nn.Module)
     assert isinstance(model.model.layers[0].self_attn.q_proj, PatchedLinear)
     tokenizer = transformers.AutoTokenizer.from_pretrained(model_name_or_path)
@@ -79,7 +84,11 @@ def test_multi_cards_save_load():
     model = convert(model)
     # save and load on multi cards
     save(model, "saved_results", format="huggingface")
+    hpu_mem0 = get_used_hpu_mem_MB()
     new_model = load("saved_results", format="huggingface", device="hpu")
+    hpu_mem1 = get_used_hpu_mem_MB()
+    if world_size > 0:
+        assert (hpu_mem1 - hpu_mem0) < 300, "The memory usage is too high."
     assert new_model.generation_config.max_length == 2, "The generation config is not loaded."
     shutil.rmtree("saved_results", ignore_errors=True)
     # check result
