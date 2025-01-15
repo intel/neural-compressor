@@ -1,4 +1,4 @@
-Full Publications/Events (86)
+Full Publications/Events (87)
 ==========
 ## 2025 (1)
 * Blog on SqueezeBits: [[Intel Gaudi] #4. FP8 Quantization](https://blog.squeezebits.com/intel-gaudi-4-fp8-quantization--40269) (Jan 2025)
