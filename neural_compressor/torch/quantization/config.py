@@ -1786,7 +1786,6 @@ else:
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=FP8_QUANT)
 class FP8Config(TorchBaseConfig):
     """Config class for FP8 quantization."""
-
     name = FP8_QUANT
 
     def __init__(
@@ -1841,6 +1840,9 @@ class FP8Config(TorchBaseConfig):
         self.use_qdq = str(use_qdq)
         self.scale_format = scale_format
         self.measure_on_hpu = measure_on_hpu
+        # add kwargs
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
     @property
     def measure(self):
