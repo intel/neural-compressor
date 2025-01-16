@@ -1783,11 +1783,6 @@ if is_hpex_available():
 else:
     get_white_list = lambda: []
 
-
-@register_config(framework_name=FRAMEWORK_NAME, algo_name=FP8_QUANT)
-class FP8Config(TorchBaseConfig):
-    """Config class for FP8 quantization."""
-
 from ..algorithms.fp8_quant._core.common import get_white_list
 
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=FP8_QUANT)
@@ -1847,6 +1842,9 @@ class FP8Config(TorchBaseConfig):
         self.use_qdq = str(use_qdq)
         self.scale_format = scale_format
         self.measure_on_hpu = measure_on_hpu
+        # add kwargs
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
     @property
     def measure(self):

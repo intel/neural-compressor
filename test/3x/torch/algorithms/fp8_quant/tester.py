@@ -7,12 +7,15 @@ import random
 import typing
 from dataclasses import dataclass
 from pytest import raises as pytest_raises
+from typing import Dict
 
 from .test_hpu_utils import get_device_name
 
 import torch
 from neural_compressor.torch.algorithms.fp8_quant._core.common import mod_default_dict
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import Fp8cfg, QuantMode, ScaleMethod
+
+from neural_compressor.torch.quantization import prepare, convert, FP8Config # user level API
 
 # TODO [SW-196641]: fix the following issues:
 SCALE_METHODS_SEGFAULT = [
@@ -125,14 +128,19 @@ def run_accuracy_test(
         reference_model = WrapModel(module_class, seed, *module_args, **module_kwargs)
         quantized_model = WrapModel(module_class, seed, *module_args, **module_kwargs)
 
-        config = _get_test_only_config(
+        config = get_API_level_config(
             mode=mode,
             lp_dtype=lp_dtype,
             scale_method=scale_method,
             device_type=device_type,
             **module_kwargs,
         )
-        prepare_model._prep_model_with_predefined_config(quantized_model, config=config)
+        if mode == QuantMode.MEASURE :
+            prepare(quantized_model, config)
+        elif mode == QuantMode.QUANTIZE :
+            convert(quantized_model, config)
+        else:
+            raise(ValueError(), "Unexpected mode value - {}".format(mode))
 
         _assert_quantized_correctly(reference_model=reference_model, quantized_model=quantized_model)
 
@@ -230,7 +238,7 @@ def _get_test_only_config(
     lp_dtype: torch.dtype,
     device_type: str = get_device_name(),
     **kwargs
-) -> Fp8cfg:
+) -> Dict:
     """Should NOT be used externally.
 
     Return a new config used only for the tests.
@@ -250,4 +258,32 @@ def _get_test_only_config(
     if "dtype" in kwargs:
        fp8_cfg["hp_dtype"] = DTYPE_TO_HPDTYPE_STR[kwargs["dtype"]]
 
-    return Fp8cfg.parse(fp8_cfg)
+    return fp8_cfg
+
+def get_internal_config(
+    *,
+    mode: QuantMode,
+    scale_method: ScaleMethod,
+    lp_dtype: torch.dtype,
+    device_type: str = get_device_name(),
+    **kwargs
+) -> Fp8cfg:
+        return Fp8cfg.parse(_get_test_only_config(mode=mode,
+                                                  scale_method=scale_method,
+                                                  lp_dtype=lp_dtype,
+                                                  device_type=device_type,
+                                                  **kwargs))
+
+def get_API_level_config(
+    *,
+    mode: QuantMode,
+    scale_method: ScaleMethod,
+    lp_dtype: torch.dtype,
+    device_type: str = get_device_name(),
+    **kwargs
+) ->FP8Config:
+    return FP8Config.from_dict(_get_test_only_config(mode=mode,
+                                                     scale_method=scale_method,
+                                                     lp_dtype=lp_dtype,
+                                                     device_type=device_type,
+                                                     **kwargs))

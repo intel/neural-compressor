@@ -8,7 +8,7 @@ import torch
 import neural_compressor.torch.algorithms.fp8_quant as fp8_quant
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import Matmul
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import QuantMode, ScaleMethod
-from ...tester import run_with_raised_exception, _get_test_only_config, SCALE_METHODS_QUANT_ONLY, SCALE_METHODS_KEY_ERROR
+from ...tester import run_with_raised_exception, get_internal_config, SCALE_METHODS_QUANT_ONLY, SCALE_METHODS_KEY_ERROR
 from ...test_hpu_utils import *
 
 class Model(torch.nn.Module):
@@ -36,7 +36,7 @@ def test_config_json():
 @pytest.mark.parametrize("quant_mode", QuantMode)
 def test_predefined_config(lp_dtype, scale_method, quant_mode):
     def run_predefined_config():
-        config = _get_test_only_config(
+        config = get_internal_config(
             mode=quant_mode,
             lp_dtype=lp_dtype,
             scale_method=scale_method,
@@ -73,7 +73,7 @@ def test_predefined_config(lp_dtype, scale_method, quant_mode):
 @pytest.mark.parametrize("device_type", device_type)
 def test_device_override(lp_dtype, quant_mode, device_type):
     def run_predefined_config():
-        config = _get_test_only_config(
+        config = get_internal_config(
                 mode=quant_mode,
                 lp_dtype=lp_dtype,
                 scale_method=ScaleMethod.MAXABS_HW,
