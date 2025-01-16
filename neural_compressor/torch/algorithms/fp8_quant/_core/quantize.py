@@ -27,6 +27,8 @@ from .common import generate_model_info, mod_default_dict, parent_child_mod_dict
 from .measure import load_measurements
 from .scale import scale_method_mapping, scaling_methods, convert_scales_to_tensors_dict, load_layer_scales
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
+
+
 cur_accelerator = auto_detect_accelerator()
 
 

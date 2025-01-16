@@ -135,6 +135,38 @@ _OP_TYPE_HPU_QUANTIZED_WRAPPER_CLASSES = {OP_TYPE.GEMM : QuantizedHpuMatmul,
                                           OP_TYPE.DYNAMIC_MOE: QuantizedHpuDynamicMoe,
                                           }
 
+class QuantizedFuncWrapperFactory():
+    """
+    A Factory object to create func wrappers objects.
+    This is a singleton and it creates single object per quantized func wrapper class.
+    This is done to avoid unnecessary duplication of quantized func wrapper objects since, since they are all identical.
+    """
+
+    _factory_instance = None
+
+    # using a global map and the below get_quantized_func_wrapper method,
+    # ensures only a single object of each quantized func wrapper concrete class will be created.
+    _quantized_func_wrapper_instances = {}
+
+    def __new__(cls):
+        if cls._factory_instance is None:
+            cls._factory_instance = super().__new__(cls)
+        return cls._factory_instance
+
+    def get_quantized_func_wrapper(self, op_type, scale_format):
+        if op_type not in self._quantized_func_wrapper_instances:
+            quantized_hpu_wrapper_class = _OP_TYPE_HPU_QUANTIZED_WRAPPER_CLASSES[op_type]
+            self._quantized_func_wrapper_instances[op_type] = quantized_hpu_wrapper_class(scale_format)
+
+        return self._quantized_func_wrapper_instances[op_type]
+
+    def clear(self):
+        self._quantized_func_wrapper_instances.clear()
+
+    def __del__(self):
+        self._factory_instance = None
+
+
+
 def get_hpu_quantized_func_wrapper(op_type, scale_format):
-    quantized_hpu_wrapper_class = _OP_TYPE_HPU_QUANTIZED_WRAPPER_CLASSES[op_type]
-    return quantized_hpu_wrapper_class(scale_format)
+    return QuantizedFuncWrapperFactory().get_quantized_func_wrapper(op_type, scale_format)

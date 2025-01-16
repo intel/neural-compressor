@@ -23,6 +23,7 @@ from neural_compressor.torch.algorithms.fp8_quant import (
     update_mode,
     with_patched_module,
 )
+from neural_compressor.torch.algorithms.fp8_quant._core.quantized_hpu_ops import QuantizedFuncWrapperFactory
 
 
 class FP8Quantizer(Quantizer):
@@ -32,9 +33,13 @@ class FP8Quantizer(Quantizer):
             json_file = [cfg.json_file for cfg in quant_config.values()]
             assert len(json_file) > 0, "Cannot get json file from config."
             self.quant_config = json_file[0]
+        # singleton object to create quantized func wrapper objects.
+        # creation logic is invoked from get_hpu_quantized_func_wrapper function
+        self.quantized_func_wrapper_factory = QuantizedFuncWrapperFactory()
 
     def prepare(self, model):
         _prepare(model, self.quant_config)
+        self.quantized_func_wrapper_factory.clear()
         return model
 
     def convert(self, model):
@@ -43,6 +48,7 @@ class FP8Quantizer(Quantizer):
             # for INC flow, it calls `prepare` and then `convert` user-facing API in one run
             restore_patched_module(model)
         _convert(model, self.quant_config)
+        self.quantized_func_wrapper_factory.clear()
         return model
 
 
