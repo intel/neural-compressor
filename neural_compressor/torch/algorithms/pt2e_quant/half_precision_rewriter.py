@@ -54,15 +54,33 @@ FuncArgsMappingType: TypeAlias = Dict[TorchFuncType, Tuple[torch.Tensor, ...]]
 
 
 # Align with https://pytorch.org/docs/stable/amp.html#cpu-ops-that-can-autocast-to-bfloat16
-# TODO: complete the mapping
+# conv1d, conv2d, conv3d, bmm, mm, linalg_vecdot, baddbmm, addmm, addbmm,
+# linear, matmul, _convolution, conv_tbc, mkldnn_rnn_layer, conv_transpose1d,
+# conv_transpose2d, conv_transpose3d, prelu, scaled_dot_product_attention, _native_multi_head_attention
+
 FN_ARGS_MAPPING: FuncArgsMappingType = {
     torch.nn.functional.linear: (torch.randn(0, 0), torch.randn(0, 0)),  # linear w/o bias
     torch.nn.functional.linear: (torch.randn(0, 0), torch.randn(0, 0), torch.randn(0)),  # linear w/ bias
+    torch.nn.functional.conv2d: (torch.randn(0, 0, 0, 0), torch.randn(0, 0, 0, 0)),  # conv2d w/o bias
+    torch.nn.functional.conv2d: (torch.randn(0, 0, 0, 0), torch.randn(0, 0, 0, 0), torch.randn(0)),  # conv2d w/ bias
+    torch.bmm: (torch.randn(0, 0, 0), torch.randn(0, 0, 0)),  # bmm
+    torch.mm: (torch.randn(0, 0), torch.randn(0, 0)),  # mm
 }
-# TODO: complete the mapping
-FN_ATEN_OPS_MAPPING = {
-    torch.nn.functional.linear: torch.ops.aten.linear.default,
+
+# module cls -> function name
+NN_MODULES_MAPPING = {
+    torch.nn.Linear: torch.nn.functional.linear,
+    torch.nn.Conv2d: torch.nn.functional.conv2d,
+    torch.nn.MaxPool2d: torch.nn.functional.max_pool2d,
 }
+
+for nn_cls, fn in NN_MODULES_MAPPING.items():
+    if fn in FN_ARGS_MAPPING:
+        FN_ARGS_MAPPING[nn_cls] = FN_ARGS_MAPPING[fn]
+
+
+# Use the mapping from xiq
+FN_ATEN_OPS_MAPPING = xiq._map_module_function_to_aten_operator_type()
 
 SUPPORTED_OPERATORS = FN_ATEN_OPS_MAPPING.values()
 
@@ -101,7 +119,7 @@ def _register_pattern_pair(dtype: torch.dtype) -> None:
     for fn, fn_args in FN_ARGS_MAPPING.items():
         pattern_pair = pattern_factory(fn, fn_args)
         HALF_PRECISION_PATTERN_REGISTRY[dtype][fn] = pattern_pair
-    utils.logger.info(
+    utils.logger.debug(
         f"Registered {len(HALF_PRECISION_PATTERN_REGISTRY[dtype])} search and replace patterns for {dtype}."
     )
 
