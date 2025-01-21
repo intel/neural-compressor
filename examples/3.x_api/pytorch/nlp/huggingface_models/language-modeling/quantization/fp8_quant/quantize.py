@@ -50,7 +50,6 @@ if __name__ == "__main__":
         "act_maxabs_pow2_weights_pcs_maxabs_pow2", "act_maxabs_pow2_weights_pcs_opt_pow2",
     ])
     parser.add_argument("--use_hpu_graph", action="store_true", help="whether to use hpu graph mode to accelerate performance")
-    parser.add_argument("--use_const_scale", action="store_true", help="whether to use const scale mode to accelerate performance")
     parser.add_argument("--enable_block_wise_calibration", action="store_true", help="whether to use block-wise calibration")
     parser.add_argument("--disable_optimum_habana", action="store_true", help="whether to use adapt_transformers_to_gaudi")
     parser.add_argument("--save", action="store_true", help="whether to save the quantized model")
@@ -94,7 +93,6 @@ if __name__ == "__main__":
             fp8_config="E4M3",
             scale_method=args.scale_method,
             blocklist={"names": ["lm_head"]} if args.enable_block_wise_calibration else {},  # block-wise cannot calibrate lm_head
-            scale_format="const" if args.use_const_scale else "scalar",  # save and load only support const scales
             measure_on_hpu=False if args.enable_block_wise_calibration else True,  # to avoid device mapping of model
             dump_stats_path=args.dump_stats_path,
         )

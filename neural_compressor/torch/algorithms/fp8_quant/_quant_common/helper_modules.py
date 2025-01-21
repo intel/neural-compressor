@@ -16,11 +16,11 @@ import torch
 import torch.nn as nn
 import types
 
-from .quant_config import QuantMode, get_hqt_config
+from .quant_config import QuantMode
 from .._core.quant_dequant import QuantDequant as qdq
 from .._core.quantized_hpu_ops import get_hpu_quantized_func_wrapper, OP_TYPE
-from .._core.scale_handler import create_scale_tensor, get_scale_dtype
 from ..patched_module_base import PatchedModuleBase
+from .._core.scale_handler import get_scale_dtype
 
 
 class BMM(nn.Module):
@@ -102,8 +102,8 @@ class PatchedMatmul(PatchedModuleBase):
             if self.use_qdq or self.fake_quant:
                 self.forward = self.forward_qdq
             else:
-                self.scale_input = create_scale_tensor(mod_extra_config.scale.inputs[0], self.scale_format)
-                self.scale_other = create_scale_tensor(mod_extra_config.scale.inputs[1], self.scale_format)
+                self.register_scale("scale_input", mod_extra_config.scale.inputs[0], self.scale_format)
+                self.register_scale("scale_other", mod_extra_config.scale.inputs[1], self.scale_format)
                 self.forward = self.forward_quant
                 self.matmul_fp8 = get_hpu_quantized_func_wrapper(OP_TYPE.GEMM, self.scale_format)
         elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
@@ -145,10 +145,10 @@ def init_linear(instance, mod_extra_config, change_forward=True):
         # So need to set PatchedLinear forward to be the right forward.
         instance.weight = nn.Parameter(instance.weight.t().contiguous())
         instance.quant_input = instance._mod_extra_config.inputs[0]
-        instance.scale_input = create_scale_tensor(mod_extra_config.scale.inputs[0], instance.scale_format)
+        instance.register_scale("scale_input", mod_extra_config.scale.inputs[0], instance.scale_format)
         instance.dequant_output = instance._mod_extra_config.outputs[0]
         if isinstance(mod_extra_config.scale.params["weight"], (torch.Tensor, float)):
-            instance.scale_weight = create_scale_tensor(mod_extra_config.scale.params["weight"], instance.scale_format)
+            instance.register_scale("scale_weight", mod_extra_config.scale.params["weight"], instance.scale_format)
         elif isinstance(mod_extra_config.scale.params["weight"], dict):
             # PCQ weight is calculated with actual weight [0] and ones [1]
             instance.scale_weight = nn.Parameter(mod_extra_config.scale.params["weight"][0])
@@ -808,8 +808,8 @@ def init_conv(instance, mod_extra_config):
             instance.dequant_weights = mod_extra_config.params["weight"][1]
         else:
             instance.forward = instance.forward_quant
-            instance.scale_input = create_scale_tensor(mod_extra_config.scale.inputs[0], instance.scale_format)
-            instance.scale_weight = create_scale_tensor(mod_extra_config.scale.params["weight"], instance.scale_format)
+            instance.register_scale("scale_input", mod_extra_config.scale.inputs[0], instance.scale_format)
+            instance.register_scale("scale_weight", mod_extra_config.scale.params["weight"], instance.scale_format)
             instance.conv2d_fp8 = get_hpu_quantized_func_wrapper(OP_TYPE.CONV, instance.scale_format)
     elif (instance.quantization_mode == QuantMode.MEASURE) or (instance.quantization_mode == QuantMode.SHAPE):
         instance.forward = instance.forward_measure
@@ -872,8 +872,8 @@ class PatchedSoftmax(PatchedModuleBase):
             else:
                 self.forward = self.forward_quant
                 # input scale is 1 assuming the input to SM is descaled because we are using HW supported scales
-                self.scale_input = create_scale_tensor(torch.Tensor([1.0]), self.scale_format)
-                self.scale_output = create_scale_tensor(torch.Tensor([1 / mod_extra_config.scale.outputs[0]]), self.scale_format)
+                self.register_scale("scale_input", torch.Tensor([1.0]), self.scale_format)
+                self.register_scale("scale_output", torch.Tensor([1 / mod_extra_config.scale.outputs[0]]), self.scale_format)
                 self.softmax_fp8 = get_hpu_quantized_func_wrapper(OP_TYPE.SOFTMAX, self.scale_format)
         elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
             self.forward = self.forward_measure
@@ -1012,18 +1012,12 @@ class PatchedModuleFusedSDPA(PatchedModuleBase):
             self.quant_k = self._mod_extra_config.inputs[1]
             self.quant_v = self._mod_extra_config.inputs[2]
             self.dequant_output = self._mod_extra_config.outputs[0]
-            self.scale_q = create_scale_tensor(mod_extra_config.scale.inputs[0].type(torch.float32), self.scale_format)
-            self.scale_k = create_scale_tensor(mod_extra_config.scale.inputs[1].type(torch.float32), self.scale_format)
-            self.scale_v = create_scale_tensor(mod_extra_config.scale.inputs[2].type(torch.float32), self.scale_format)
-            self.descale_amax = create_scale_tensor(mod_extra_config.scale.inputs[3].type(torch.float32),
-                                                    self.scale_format)
-            self.scale_output = create_scale_tensor(1 / mod_extra_config.scale.outputs[0].type(torch.float32),
-                                                    self.scale_format)
-            self.scale_amax = create_scale_tensor(1 / self.descale_amax, self.scale_format)
-            if self.use_qdq:
-                self.forward = self.forward_qdq
-            else:
-                self.forward = self.forward_quant
+            self.register_scale("scale_q", mod_extra_config.scale.inputs[0].type(torch.float32), self.scale_format)
+            self.register_scale("scale_k", mod_extra_config.scale.inputs[1].type(torch.float32), self.scale_format)
+            self.register_scale("scale_v", mod_extra_config.scale.inputs[2].type(torch.float32), self.scale_format)
+            self.register_scale("descale_amax", mod_extra_config.scale.inputs[3].type(torch.float32), self.scale_format)
+            self.register_scale("scale_output", 1 / mod_extra_config.scale.outputs[0].type(torch.float32), self.scale_format)
+            self.register_scale("scale_amax", 1 / self.descale_amax, self.scale_format)
         elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
             self.forward = self.forward_measure
 
