@@ -33,7 +33,6 @@ from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config imp
     QuantMode,
     get_hqt_config,
 )
-from neural_compressor.torch.algorithms.fp8_quant._core.scale_handler import add_scale_registry
 
 
 def set_attrs_from_orig_model(cls_instance, mod, parent, mod_extra_config, *func_names):
@@ -146,7 +145,6 @@ class PatchedModuleBase(torch.nn.Module):
         super().__init__()  # Initialize nn.Module
         func_names = kwargs.get("func_names", tuple())
         set_attrs_from_orig_model(self, mod, parent, mod_extra_config, *func_names)
-        add_scale_registry(self)
         self.mod_extra_config = mod_extra_config
         if self.quantization_mode in (QuantMode.MEASURE, QuantMode.SHAPE):
             self.forward = self.forward_measure

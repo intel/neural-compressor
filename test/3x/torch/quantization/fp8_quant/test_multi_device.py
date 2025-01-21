@@ -24,7 +24,6 @@ def compare_parameters_buffers(model1, model2):
     import torch
     dict1 = get_model_param_buffers(model1)
     dict2 = get_model_param_buffers(model2)
-    assert len(dict1) == len(dict2), "The number of parameters and buffers are different."
     for k, v in dict1.items():
         assert k in dict2, "k not in dict2"
         assert v.dtype == dict2[k].dtype, f"dtype of {k} is differnt.\n{v.dtype}\n{dict2[k].dtype}"
@@ -60,7 +59,7 @@ def test_load_model_provided_by_neuralmagic():
 
 
 @torch.no_grad()
-def test_default_save_load():
+def test_multi_cards_save_load():
     name = "facebook/opt-350m"
     if world_size > 0:
         # Do not use random weights since multi-processes will get different weights for Embedding
@@ -79,7 +78,7 @@ def test_default_save_load():
     example_inputs = torch.tensor([[10, 20]], dtype=torch.long).to("hpu")
 
     # TODO: [SW-205970] update state_dict to save scalar scale format
-    qconfig = FP8Config(fp8_config="E4M3", blocklist={"names": ["q_proj", "lm_head"]})
+    qconfig = FP8Config(fp8_config="E4M3", scale_format="const", blocklist={"names": ["q_proj", "lm_head"]})
     model = prepare(model, qconfig)
     calib_func(model)
     model = convert(model)
@@ -101,6 +100,5 @@ def test_default_save_load():
 
 
 if __name__ == "__main__":
-    # This script supports running on multi-cards, command: deepspeed --num_gpus N test_save_load.py
-    test_default_save_load()
+    test_multi_cards_save_load()
     test_load_model_provided_by_neuralmagic()

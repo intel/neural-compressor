@@ -12,34 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
-import types
 from .._quant_common.quant_config import ScaleFormat
-
-
-def add_scale_registry(patched_mod):
-    """Update scale registry"""
-    patched_mod.scale_members = set()
-    patched_mod.register_scale = types.MethodType(register_scale, patched_mod)
-    return patched_mod
-
-
-def register_scale(patched_mod, name, scale, scale_format):
-    """Register the scale name into patched_mod.scale_member_list so that the scalar scale is updated into state_dict"""
-    if name in patched_mod.scale_members:
-        raise ValueError("scale member {} already exists".format(name))
-    scale = create_scale_tensor(scale, scale_format)
-    patched_mod.scale_members.add(name)
-    setattr(patched_mod, name, scale)
+from torch import Tensor, nn
 
 
 def create_scale_tensor(orig_tensor, scale_format):
     if scale_format == ScaleFormat.CONST:
-        if isinstance(orig_tensor, torch.Tensor):
-            return torch.nn.Parameter(orig_tensor)
+        if isinstance(orig_tensor, Tensor):
+            return nn.Parameter(orig_tensor)
         elif isinstance(orig_tensor, list):
-            # TODO: [SW-216417] List scales in Neural Compressor do not seem to be used
-            return [torch.nn.Parameter(x) for x in orig_tensor]
+            return [nn.Parameter(x) for x in orig_tensor]
     elif scale_format == ScaleFormat.SCALAR:
         return scale_to_scalar(orig_tensor)
     else:
@@ -48,7 +30,7 @@ def create_scale_tensor(orig_tensor, scale_format):
 
 # scalar scale is a performance optimization for LLM layers in small BS
 def scale_to_scalar(scale):
-    if isinstance(scale, torch.Tensor):  # tensor case
+    if isinstance(scale, Tensor):  # tensor case
         if scale.numel() == 1:
             return scale.item()
         else:
@@ -60,59 +42,9 @@ def scale_to_scalar(scale):
 
 
 def get_scale_dtype(scale):
-    if isinstance(scale, torch.Tensor):  # tensor case
+    if isinstance(scale, Tensor):  # tensor case
         return scale.dtype
     elif isinstance(scale, float):  # already scalar case
         return type(scale).__name__
     else:
         raise Exception("unexpected scale instance type, expected Torch.tensor or float number")
-
-
-def get_param_scales_from_scalar(patched_mod, prefix, dtype=torch.bfloat16, device=torch.device('hpu')):
-    """Get all scales in param_list, used for saving scalar scales"""
-    scale_dict = {}
-    for name in patched_mod.scale_members:
-        if hasattr(patched_mod, name) and isinstance(getattr(patched_mod, name), float):
-            scale_dict.update({
-                # E.g. lm_head.scale_input
-                prefix + name: torch.tensor(getattr(patched_mod, name), dtype=dtype, device=device),
-            })
-    return scale_dict
-
-
-def set_param_scales_as_scalar(patched_mod, state_dict):
-    """Set all scales in param_list, used for loading scalar scales"""
-    state_dict_keys = list(state_dict.keys())
-    for name in patched_mod.scale_members:
-        if hasattr(patched_mod, name) and isinstance(getattr(patched_mod, name), float):
-            for k in state_dict_keys:
-                if name == k.split('.')[-1]:
-                    v = state_dict.pop(k)
-                    setattr(patched_mod, name, v.item())
-    return state_dict
-
-
-def get_state_dict(patched_mod, *args, destination=None, prefix='', keep_vars=False):
-    """replace torch.nn.Module.state_dict"""
-    cur_state_dict = torch.nn.Module.state_dict(patched_mod, *args, destination=destination, prefix=prefix, keep_vars=keep_vars)
-    if patched_mod.scale_format == ScaleFormat.SCALAR:
-        device = torch.device('hpu')
-        dtype = patched_mod.hp_dtype
-        scale_dict = get_param_scales_from_scalar(patched_mod, prefix, dtype=dtype, device=device)
-        cur_state_dict.update(scale_dict)
-    return cur_state_dict
-
-
-def load_state_dict(patched_mod, state_dict, prefix, local_metadata, strict,
-                    missing_keys, unexpected_keys, error_msgs):
-    """replace torch.nn.Module._load_from_state_dict"""
-    if patched_mod.scale_format == ScaleFormat.SCALAR:
-        state_dict = set_param_scales_as_scalar(patched_mod, state_dict)
-    torch.nn.Module._load_from_state_dict(patched_mod, state_dict, prefix, local_metadata, strict,
-                    missing_keys, unexpected_keys, error_msgs)
-
-
-def update_state_dict_method(patched_mod):
-    """update fetch and load state_dict method for scalar scales"""
-    patched_mod.state_dict = types.MethodType(get_state_dict, patched_mod)
-    patched_mod._load_from_state_dict = types.MethodType(load_state_dict, patched_mod)

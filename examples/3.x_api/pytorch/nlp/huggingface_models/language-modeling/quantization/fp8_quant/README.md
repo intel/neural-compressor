@@ -27,9 +27,9 @@ cd ..
 
 ```bash
 # Measure, quantize and save
-deepspeed --num_gpus 2 quantize.py --model_name_or_path meta-llama/Llama-2-70b-hf --quantize --save --save_path llama2_70b_fp8/
+deepspeed --num_gpus 2 quantize.py --model_name_or_path meta-llama/Llama-2-70b-hf --quantize --use_const_scale --save --save_path llama2_70b_fp8/
 # With block-wise calibration, we can quantize 70b with one Gaudi2 cards
-python quantize.py --model_name_or_path meta-llama/Llama-2-70b-hf --quantize --enable_block_wise_calibration --save --save_path llama2_70b_fp8/
+python quantize.py --model_name_or_path meta-llama/Llama-2-70b-hf --quantize --use_const_scale --enable_block_wise_calibration --save --save_path llama2_70b_fp8/
 
 
 # Load fp8 model and verify accuracy
@@ -42,7 +42,7 @@ python quantize.py --model_name_or_path llama2_70b_fp8/ --load --use_hpu_graph -
 
 ```bash
 # Measure
-deepspeed --num_gpus 8 quantize.py --model_name_or_path meta-llama/Llama-3.1-405B-Instruct --quantize --enable_block_wise_calibration --save --save_path llama3.1_405b_fp8/ 
+deepspeed --num_gpus 8 quantize.py --model_name_or_path meta-llama/Llama-3.1-405B-Instruct --quantize --use_const_scale --enable_block_wise_calibration --save --save_path llama3.1_405b_fp8/ 
 
 # Load fp8 model and verify accuracy
 deepspeed --num_gpus 8 quantize.py --model_name_or_path llama3.1_405b_fp8/ --load --use_hpu_graph --accuracy
