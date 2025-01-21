@@ -23,4 +23,5 @@ from .models import (
     AutoModelForCausalLM,
     AutoModel,
     AutoModelForSeq2SeqLM,
+    Qwen2VLForConditionalGeneration,
 )

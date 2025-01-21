@@ -13,4 +13,4 @@
 # limitations under the License.
 
 from .modeling_auto import _BaseINCAutoModelClass
-from .modeling_auto import AutoModel, AutoModelForCausalLM, AutoModelForSeq2SeqLM
+from .modeling_auto import AutoModel, AutoModelForCausalLM, AutoModelForSeq2SeqLM, Qwen2VLForConditionalGeneration

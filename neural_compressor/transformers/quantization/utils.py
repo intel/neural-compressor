@@ -33,10 +33,13 @@ from neural_compressor.torch.quantization import (
     convert,
     prepare,
 )
-from neural_compressor.torch.utils import is_ipex_available
+from neural_compressor.torch.utils import is_ipex_available, is_package_available
 
 if is_ipex_available():
     import intel_extension_for_pytorch as ipex
+    
+if is_package_available("auto_round"):
+    import auto_round
 
 from typing import Union
 
@@ -123,9 +126,12 @@ def _replace_linear(
             current_key_name = []
         current_key_name.append(name)
         is_removed = False
+        print(isinstance(module, auto_round.export.export_to_itrex.model_wrapper.WeightOnlyLinear))
         if (
             isinstance(module, torch.nn.Linear)
             or isinstance(module, INCWeightOnlyLinear)
+            or (is_package_available("auto_round") and \
+                isinstance(module, auto_round.export.export_to_itrex.model_wrapper.WeightOnlyLinear))
             or (is_ipex_available() and isinstance(module, ipex.nn.utils._weight_prepack._IPEXLinear))
         ) and (name not in modules_to_not_convert):
             # Check if the current key is not in the `modules_to_not_convert`
@@ -475,6 +481,40 @@ def convert_to_quantized_model(model, config, device="cpu"):
         run_fn(model, *run_args)
         model = convert(model)
     elif config.quant_method.value == "autoround":
+        if config.is_vlm is True:
+            from neural_compressor.torch.algorithms.weight_only.autoround import get_mllm_dataloader as get_autoround_dataloader
+            from transformers import AutoTokenizer, AutoProcessor
+            tokenizer = AutoTokenizer.from_pretrained(model.config._name_or_path)
+            processor = AutoProcessor.from_pretrained(model.config._name_or_path, trust_remote_code=True)
+            dataloader, template, config.truncation, config.batch_size, \
+                config.gradient_accumulate_steps, config.seq_len, config.n_samples = get_autoround_dataloader(
+                    template=None,
+                    model=model,
+                    tokenizer=tokenizer,
+                    image_processor=None,
+                    dataset=config.dataset,
+                    extra_data_dir=None,
+                    seqlen=config.seq_len,
+                    batch_size=config.batch_size,
+                    split=None,
+                    apply_template=None,
+                    truncation=False,
+                    nsamples=config.n_samples,
+                    seed=42,
+                    gradient_accumulate_steps=config.gradient_accumulate_steps,
+                    quant_nontext_module=config.quant_nontext_module,
+                    processor=processor,
+            )
+        else:
+            from neural_compressor.torch.algorithms.weight_only.autoround import get_dataloader as get_autoround_dataloader
+            dataloader = get_autoround_dataloader(
+                tokenizer=config.tokenizer,
+                seqlen=config.seq_len,
+                dataset_name=config.dataset,
+                seed=42,
+                bs=config.batch_size,
+                nsamples=config.n_samples,
+            )
         quant_config = AutoRoundConfig(
             dtype=dtype,
             bits=config.bits,
@@ -486,24 +526,25 @@ def convert_to_quantized_model(model, config, device="cpu"):
             seqlen=config.seq_len,
             nsamples=config.n_samples,
             iters=config.iters,
+            batch_size=config.batch_size,
             scale_dtype=config.scale_dtype,
             use_layer_wise=config.use_layer_wise,
+            # vlm arguments
+            is_mllm=config.is_vlm,
+            quant_nontext_module=config.quant_nontext_module,
+            truncation=config.truncation,
+            gradient_accumulate_steps=config.gradient_accumulate_steps,
+            export_format=config.export_format,
         )
+
         if config.modules_to_not_convert != []:
             for module in config.modules_to_not_convert:
                 module_name = ".*" + module
                 quant_config.set_local(module_name, AutoRoundConfig(dtype="fp32"))
         logger.info(f"Do AutoRound algorithm with config {quant_config}")
-        from neural_compressor.torch.algorithms.weight_only.autoround import get_dataloader as get_autoround_dataloader
+        
 
-        dataloader = get_autoround_dataloader(
-            tokenizer=config.tokenizer,
-            seqlen=config.seq_len,
-            dataset_name=config.dataset,
-            seed=42,
-            bs=config.batch_size,
-            nsamples=config.n_samples,
-        )
+
         run_fn = run_fn_for_autoround
         run_args = (dataloader,)
         model = prepare(model=model, quant_config=quant_config)
