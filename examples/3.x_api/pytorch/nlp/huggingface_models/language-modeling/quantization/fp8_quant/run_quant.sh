@@ -77,7 +77,6 @@ function run_tuning {
     ${python_cmd} quantize.py \
         --model_name_or_path ${model_name_or_path} \
         --quantize \
-        --use_const_scale \
         --use_hpu_graph \
         --batch_size ${batch_size} \
         --save \

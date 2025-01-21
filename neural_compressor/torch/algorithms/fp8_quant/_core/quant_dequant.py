@@ -21,7 +21,7 @@ import habana_frameworks.torch.utils.experimental as htexp
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 cur_accelerator = auto_detect_accelerator()
 
-from .._core.scale_handler import create_scale_tensor, get_scale_dtype
+from .._core.scale_handler import add_scale_registry, get_scale_dtype
 from .._quant_common.quant_config import ScaleFormat
 
 descale_fcn = lambda x, scale: torch.mul(x, scale)
@@ -41,7 +41,8 @@ dequantize_per_channel_from_fp8 = lambda x, scale, zero_point, axis, quant_min, 
 
 class QuantDequantBase(nn.Module):
     def __init__(self, lp_dtype, hp_dtype="", *args, **kwargs):
-        super(QuantDequantBase, self).__init__()
+        super().__init__()  # Initialize nn.Module
+        add_scale_registry(self)
         self.lp_dtype = lp_dtype
         self.hp_dtype = hp_dtype
         self.scale_format = kwargs.get("scale_format", ScaleFormat.CONST)
@@ -98,12 +99,10 @@ class QuantDequantNone(QuantDequantBase):
 class QuantInput(QuantDequantBase):
     def __init__(self, scale_inv, lp_dtype, hp_dtype, *args, **kwargs):
         super(QuantInput, self).__init__(lp_dtype, hp_dtype, *args, **kwargs)
-        self.scale_inv = create_scale_tensor(
-                scale_inv.unsqueeze(1) if (scale_inv.numel() > 1 and not self.use_qdq) else scale_inv,
-                self.scale_format
-            )
+        scale_inv = scale_inv.unsqueeze(1) if (scale_inv.numel() > 1 and not self.use_qdq) else scale_inv
+        self.register_scale("scale_inv", scale_inv, self.scale_format)
         if self.use_qdq:
-            self.scale = create_scale_tensor(1 / self.scale_inv, self.scale_format)
+            self.register_scale("scale", 1 / self.scale_inv, self.scale_format)
             self.quantize_op = (
                 quantize_per_channel_to_fp8
                 if self.scale_format == ScaleFormat.CONST and self.scale.numel() > 1
@@ -135,7 +134,7 @@ class QuantInput(QuantDequantBase):
 class DequantOutput(QuantDequantBase):
     def __init__(self, scale, lp_dtype, hp_dtype, *args, **kwargs):
         super(DequantOutput, self).__init__(lp_dtype, hp_dtype, *args, **kwargs)
-        self.scale = create_scale_tensor(scale, self.scale_format)
+        self.register_scale("scale", scale, self.scale_format)
         if self.use_qdq:
             self.dequantize_op = (
                 dequantize_per_channel_from_fp8
@@ -169,8 +168,8 @@ class DequantOutput(QuantDequantBase):
 class QuantDequant(QuantDequantBase):
     def __init__(self, scale_inv, lp_dtype, hp_dtype, *args, **kwargs):
         super(QuantDequant, self).__init__(lp_dtype, hp_dtype, *args, **kwargs)
-        self.scale_inv = create_scale_tensor(scale_inv, self.scale_format)
-        self.scale = create_scale_tensor(1 / scale_inv, self.scale_format)
+        self.register_scale("scale_inv", scale_inv, self.scale_format)
+        self.register_scale("scale", 1 / scale_inv, self.scale_format)
         self.cast_to_op = self.set_cast_to_op()
         self.cast_from_op = self.set_cast_from_op()
 
