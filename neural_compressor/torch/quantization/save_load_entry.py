@@ -39,7 +39,7 @@ def save(model, checkpoint_dir="saved_results", format="default"):
     Args:
         model (torch.nn.module or TorchScript model with IPEX or fx graph with pt2e, optional): Quantized model.
         checkpoint_dir (str, optional): checkpoint directory. Defaults to "saved_results".
-        format (str, optional): 'defult' for loading INC quantized model.
+        format (str, optional): 'default' for loading INC quantized model.
             'huggingface' for loading huggingface WOQ causal language model. Defaults to "default".
     """
     config_mapping = model.qconfig
@@ -50,9 +50,13 @@ def save(model, checkpoint_dir="saved_results", format="default"):
 
         format = SaveLoadFormat.HUGGINGFACE.value  # TODO: support default format for FP8 algorithm
         fp8_quant.save(model, checkpoint_dir, format)
+    elif isinstance(config_object, (RTNConfig, GPTQConfig, AWQConfig, TEQConfig, AutoRoundConfig)):
+        from neural_compressor.torch.algorithms import weight_only
+
+        weight_only.save(model, checkpoint_dir, format=format)
     else:
-        assert format == SaveLoadFormat.DEFAULT.value, "Currently, only default format is supported."
-        model.save(checkpoint_dir)  # TODO: support huggingface format for WOQ algorithms.
+        assert format == SaveLoadFormat.DEFAULT, "Currently, only default format is supported."
+        model.save(checkpoint_dir)
 
 
 @log_process(mode=Mode.LOAD)
@@ -81,12 +85,12 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
         model_name_or_path (str):  torch checkpoint directory or hugginface model_name_or_path.
             If 'format' is set to 'huggingface', it means the huggingface model_name_or_path.
             If 'format' is set to 'default', it means the 'checkpoint_dir'.
-            Parameter should not be None. it coworks with 'original_model' parameter to load INC
+            Parameter should not be None. it co-works with 'original_model' parameter to load INC
             quantized model in local.
         original_model (torch.nn.module or TorchScript model with IPEX or fx graph with pt2e, optional):
             original model before quantization. Needed if 'format' is set to 'default' and not TorchScript model.
             Defaults to None.
-        format (str, optional): 'defult' for loading INC quantized model.
+        format (str, optional): 'default' for loading INC quantized model.
             'huggingface' for loading huggingface WOQ causal language model. Defaults to "default".
         device (str, optional): 'cpu', 'hpu'. specify the device the model will be loaded to.
             currently only used for weight-only quantization.

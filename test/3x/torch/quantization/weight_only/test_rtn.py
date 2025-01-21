@@ -15,8 +15,7 @@ from neural_compressor.torch.quantization import (
 )
 from neural_compressor.torch.utils import accelerator, is_hpex_available
 
-device = accelerator.current_device_name()
-torch.set_grad_enabled(False)
+device = accelerator.name()
 
 
 class ModelConv1d(torch.nn.Module):
@@ -60,6 +59,7 @@ class TestRTNQuant:
 
     def teardown_class(self):
         shutil.rmtree("saved_results", ignore_errors=True)
+        shutil.rmtree("tiny_gptj_int4_rtn", ignore_errors=True)
 
     # TODO: (4, True, 32, 0), group_dim=0, format not supported
     @pytest.mark.parametrize(
@@ -84,7 +84,7 @@ class TestRTNQuant:
         model = convert(model)
         out = model(self.example_inputs)[0]
         assert (out != self.label).any(), "WOQ output should be different with raw output"
-        if is_hpex_available():
+        if "hpu" in device:
             assert "hpu" in out.device.type, "Neural Compressor should run on HPU when HPEX is available."
         if (bits, use_sym, group_size, group_dim) == (8, True, -1, 1):
             assert torch.allclose(out, self.label, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
@@ -353,50 +353,38 @@ class TestRTNQuant:
         quant_config = get_default_rtn_config()
         q_model = quantize(fp32_model, quant_config=quant_config)
         assert q_model is not None, "Quantization failed!"
+        q_model.save("tiny_gptj_int4_rtn", format="huggingface")
         q_model.save("saved_results")
-        inc_out = q_model(self.example_inputs)[0]
 
-        # loading compressed model (format=default, device="cpu")
-        # linear -> INCWeightOnlyLinear
-        loaded_model = load("saved_results", copy.deepcopy(self.tiny_gptj))
-        output = loaded_model(self.example_inputs)[0]
+        loaded_model_hf = load("tiny_gptj_int4_rtn", format="huggingface", device=device)
+        loaded_model = load("saved_results", copy.deepcopy(self.tiny_gptj), device=device)
+        with torch.no_grad():
+            inc_out = q_model(self.example_inputs)[0]
+            output_hf = loaded_model_hf(self.example_inputs)[0]
+            output = loaded_model(self.example_inputs)[0]
+        assert torch.allclose(output_hf, output), "Unexpected result. Please double check."
         if "hpu" in device:
-            assert torch.allclose(inc_out, output, atol=0.001), "Unexpected result. Please double check."
+            # scale dtype is float16 in saved_results, so we need to set atol=0.002
+            assert torch.allclose(inc_out, output, atol=0.002), "Unexpected result. Please double check."
+            assert (
+                get_woq_linear_num(loaded_model, "HPUWeightOnlyLinear") == 30
+            ), "Incorrect number of HPUWeightOnlyLinear modules"
+            # test the second load, which reuses the cached quantized_hpu_weight.pt
+            loaded_model = load("saved_results", copy.deepcopy(self.tiny_gptj), device="hpu")
+            assert (
+                get_woq_linear_num(loaded_model, "HPUWeightOnlyLinear") == 30
+            ), "Incorrect number of HPUWeightOnlyLinear modules"
+
+            with torch.no_grad():
+                output2 = loaded_model(self.example_inputs)[0]
+            assert torch.equal(
+                output, output2
+            ), "The model loaded the second time is different from the model loaded the first time"
         else:
             assert torch.allclose(inc_out, output), "Unexpected result. Please double check."
-        assert (
-            get_woq_linear_num(loaded_model, "INCWeightOnlyLinear") == 30
-        ), "Incorrect number of INCWeightOnlyLinear modules"
-
-    @pytest.mark.skipif(not is_hpex_available(), reason="no hpex in environment here.")
-    def test_save_and_load_hpu(self):
-        from neural_compressor.torch.quantization import load
-
-        fp32_model = copy.deepcopy(self.tiny_gptj)
-        quant_config = get_default_rtn_config()
-        q_model = quantize(fp32_model, quant_config=quant_config)
-        assert q_model is not None, "Quantization failed!"
-        q_model.save("saved_results")
-        inc_out = q_model(self.example_inputs)[0]
-
-        # loading compressed model (format=default, device="hpu")
-        # first load: linear -> INCWeightOnlyLinear -> HPUWeightOnlyLinear, save quantized_hpu_weight.pt to local cache dir
-        loaded_model = load("saved_results", copy.deepcopy(self.tiny_gptj), device="hpu")
-        assert (
-            get_woq_linear_num(loaded_model, "HPUWeightOnlyLinear") == 30
-        ), "Incorrect number of HPUWeightOnlyLinear modules"
-        output1 = loaded_model(self.example_inputs)[0]
-
-        # second load: linear -> HPUWeightOnlyLinear using quantized_hpu_weight.pt saved in local cache dir
-        loaded_model = load("saved_results", copy.deepcopy(self.tiny_gptj), device="hpu")
-        assert (
-            get_woq_linear_num(loaded_model, "HPUWeightOnlyLinear") == 30
-        ), "Incorrect number of HPUWeightOnlyLinear modules"
-        output2 = loaded_model(self.example_inputs)[0]
-
-        assert torch.equal(
-            output1, output2
-        ), "The model loaded the second time is different from the model loaded the first time"
+            assert (
+                get_woq_linear_num(loaded_model, "INCWeightOnlyLinear") == 30
+            ), "Incorrect number of INCWeightOnlyLinear modules"
 
     def test_no_transformers(self, monkeypatch):
         def mock_is_transformers_imported():

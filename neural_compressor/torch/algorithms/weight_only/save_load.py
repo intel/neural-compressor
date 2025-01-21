@@ -31,6 +31,9 @@ from neural_compressor.torch.utils import (
     SaveLoadFormat,
     logger,
     set_module,
+    get_enum_from_format,
+    LM_HEAD_NAMES,
+    get_accelerator,
 )
 
 from .modules import HPUWeightOnlyLinear, INCWeightOnlyLinear, MulLinear
@@ -41,6 +44,9 @@ format_woqlinear_mapping = {
     SaveLoadFormat.DEFAULT: INCWeightOnlyLinear,
 }
 device_woqlinear_mapping = {"cpu": INCWeightOnlyLinear, "hpu": HPUWeightOnlyLinear}
+
+MAX_FILE_SIZE = 5  # GB
+cur_accelerator = get_accelerator()
 
 
 def save(model, output_dir="./saved_results", format=SaveLoadFormat.DEFAULT, **kwargs):
@@ -56,33 +62,41 @@ def save(model, output_dir="./saved_results", format=SaveLoadFormat.DEFAULT, **k
             - max_shard_size (str, optional): The maximum size for each shard (only applicable for 'huggingface' format). Defaults to "5GB".
     """
     os.makedirs(output_dir, exist_ok=True)
+    cur_accelerator.synchronize()
     if format == SaveLoadFormat.HUGGINGFACE:  # pragma: no cover
-        config = model.config
-        config_file = "quantize_config.json"
-        quantization_config = config.quantization_config if hasattr(config, "quantization_config") else None
-        if "backend" in quantization_config and "auto_round" in quantization_config["backend"]:
-            safe_serialization = kwargs.get("safe_serialization", True)
-            tokenizer = kwargs.get("tokenizer", None)
-            max_shard_size = kwargs.get("max_shard_size", "5GB")
-            if tokenizer is not None:
-                tokenizer.save_pretrained(output_dir)
-            del model.save
-            model.save_pretrained(output_dir, max_shard_size=max_shard_size, safe_serialization=safe_serialization)
-            with open(os.path.join(output_dir, config_file), "w", encoding="utf-8") as f:
-                json.dump(quantization_config, f, indent=2)
-            return
+        quantization_config_file = "quantize_config.json"
+        safe_serialization = kwargs.get("safe_serialization", True)
+        max_shard_size = kwargs.get("max_shard_size", f"{MAX_FILE_SIZE}GB")
+        if not hasattr(model.config, "quantization_config"):
+            quantization_config = change_config_to_hf_format(model.qconfig)
+            model.config.quantization_config = quantization_config
+        # save model state_dict and config.json
+        model.save_pretrained(output_dir, max_shard_size=max_shard_size, safe_serialization=safe_serialization)
+        # save quantize_config.json
+        with open(os.path.join(output_dir, quantization_config_file), "w", encoding="utf-8") as f:
+            json.dump(quantization_config, f, indent=2)
+        # save generation_config.json
+        if hasattr(model, "generation_config") and model.generation_config is not None:
+            model.generation_config.save_pretrained(output_dir)
+        # save tokenizer
+        tokenizer = kwargs.get("tokenizer", None)
+        if tokenizer is not None:
+            tokenizer.save_pretrained(output_dir)
+        return
+    elif format == SaveLoadFormat.DEFAULT:
+        qmodel_weight_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), WEIGHT_NAME)
+        qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), QCONFIG_NAME)
+        # saving process
+        save_config_mapping(model.qconfig, qconfig_file_path)
 
-    qmodel_weight_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), WEIGHT_NAME)
-    qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), QCONFIG_NAME)
-    # saving process
-    save_config_mapping(model.qconfig, qconfig_file_path)
+        # MethodType 'save' not in state_dict
+        del model.save
+        torch.save(model.state_dict(), qmodel_weight_file_path)
 
-    # MethodType 'save' not in state_dict
-    del model.save
-    torch.save(model.state_dict(), qmodel_weight_file_path)
-
-    logger.info("Save quantized model weight to {}.".format(qmodel_weight_file_path))
-    logger.info("Save configuration of quantized model to {}.".format(qconfig_file_path))
+        logger.info("Save quantized model weight to {}.".format(qmodel_weight_file_path))
+        logger.info("Save configuration of quantized model to {}.".format(qconfig_file_path))
+    else:
+        raise ValueError(f"`format` in save function can only be 'huggingface' or 'default', but get {format}")
 
 
 def load(model_name_or_path, original_model=None, format=SaveLoadFormat.DEFAULT, device="cpu", **kwargs):
@@ -332,6 +346,8 @@ class WOQModelLoader:
         """Update format mapping module to HPUWeightOnlyLinear if tensor is hpu format."""
         if self._use_hpu_module():
             format_woqlinear_mapping.update({self.format: HPUWeightOnlyLinear})
+        else:  # reset format mapping module to INCWeightOnlyLinear
+            format_woqlinear_mapping.update({self.format: INCWeightOnlyLinear})
 
         logger.debug(
             f"Build weight-only quantization model according to format and device mapping. \n"
@@ -935,3 +951,62 @@ class WOQModelLoader:
                 if os.path.exists(os.path.join(self._model_local_dir, HPU_WEIGHT_NAME)):
                     return True
         return False
+
+
+def change_config_to_hf_format(config_mappings):
+    # Refer to https://huggingface.co/TheBloke/Llama-2-7B-Chat-GPTQ/blob/main/config.json
+    default_quantization_config = {
+        "bits": 4,
+        "group_size": 128,
+        "damp_percent": 0.01,
+        "desc_act": True,
+        "sym": True,
+        "true_sequential": True,
+        "model_name_or_path": None,
+        "model_file_base_name": "model",
+        "quant_method": "gptq"  # INC is using AutoGPTQ format for RTN, GPTQ, AWQ, and TEQ
+    }
+    def _is_lm_head(name):
+        for lm_head_name in LM_HEAD_NAMES:
+            if re.match(lm_head_name, name):
+                if config.dtype != "fp32":
+                    raise ValueError(f"{name} should not be quantized if you want to save in huggingface format.")
+                else:
+                    return True
+        return False
+
+    bits, group_size, damp_percent, desc_act, sym, true_sequential = None, None, None, None, None, None
+    for (name, type), config in config_mappings.items():
+        # Check 1: check whether LM_HEAD_NAMES is quantized, hf_format cannot quantize LM_HEAD_NAMES
+        if _is_lm_head(name):
+            continue
+        # Check 2: check whether config is the same for all modules
+        if bits is None:
+            # percdamp, act_order, true_sequential are specific to GPTQ
+            bits = config.bits
+            group_size = config.group_size
+            sym = config.use_sym
+            damp_percent = config.percdamp if hasattr(config, "percdamp") else 0
+            desc_act = config.act_order if hasattr(config, "act_order") else False
+            true_sequential = config.true_sequential if hasattr(config, "true_sequential") else False
+        else:
+            assert bits == config.bits, "bits should be the same for all modules, got {bits} and {config.bits}."
+            assert sym == config.use_sym, "sym should be the same for all modules, got {sym} and {config.use_sym}."
+            assert group_size == config.group_size, \
+                    "group_size should be the same for all modules, got {group_size} and {config.group_size}."
+            if hasattr(config, "percdamp"):
+                assert damp_percent == config.percdamp, \
+                        "percdamp should be the same for all modules, got {damp_percent} and {config.percdamp}."
+            if hasattr(config, "act_order"):
+                assert desc_act == config.act_order, \
+                        "act_order should be the same for all modules, got {desc_act} and {config.act_order}."
+            if hasattr(config, "true_sequential"):
+                assert true_sequential == config.true_sequential, \
+                        "true_sequential should be the same for all modules, got {true_sequential} and {config.true_sequential}."
+    default_quantization_config["bits"] = bits
+    default_quantization_config["group_size"] = group_size
+    default_quantization_config["damp_percent"] = damp_percent
+    default_quantization_config["desc_act"] = desc_act
+    default_quantization_config["sym"] = sym
+    default_quantization_config["true_sequential"] = true_sequential
+    return default_quantization_config

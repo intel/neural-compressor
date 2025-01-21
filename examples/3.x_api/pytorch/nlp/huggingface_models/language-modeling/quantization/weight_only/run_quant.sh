@@ -103,6 +103,9 @@ function run_tuning {
     elif [ "${topology}" = "opt_125m_woq_autotune_int4" ]; then
         model_name_or_path="facebook/opt-125m"
         extra_cmd=$extra_cmd" --woq_algo AutoTune --woq_bits 4"
+    elif [ "${topology}" = "llama3_1_8b_gptq_int4_hf" ]; then
+        model_name_or_path="/mnt/weka/data/pytorch/llama3.1/Meta-Llama-3.1-8B-Instruct/"
+        extra_cmd=$extra_cmd" --woq_algo GPTQ --woq_bits 4 --woq_group_size 128 --woq_scheme asym --woq_use_mse_search --gptq_use_max_length --use_hf_format"
     fi
 
     python -u run_clm_no_trainer.py \
