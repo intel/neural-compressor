@@ -1,5 +1,8 @@
-Full Publications/Events (86)
+Full Publications/Events (87)
 ==========
+## 2025 (1)
+* Blog on SqueezeBits: [[Intel Gaudi] #4. FP8 Quantization](https://blog.squeezebits.com/intel-gaudi-4-fp8-quantization--40269) (Jan 2025)
+
 ## 2024 (7)
 * Blog by Microsoft: [Phi-4 quantization and inference speedup](https://techcommunity.microsoft.com/blog/machinelearningblog/phi-4-quantization-and-inference-speedup/4360047) (Dec 2024)
 * EMNLP'2024: [Optimize Weight Rounding via Signed Gradient Descent for the Quantization of LLMs](https://arxiv.org/abs/2309.05516) (Sep 2024)
@@ -29,7 +32,7 @@ Full Publications/Events (86)
 * Blog on Medium: [Intel Optimization at Netflix](https://medium.com/@amerather_9719/intel-optimization-at-netflix-79ef0efb9d2) (May 2023)
 * Blog on Medium: [Effective Post-training Quantization for Large Language Models with Enhanced SmoothQuant Approach](https://medium.com/@NeuralCompressor/effective-post-training-quantization-for-large-language-models-with-enhanced-smoothquant-approach-93e9d104fb98) (Apr 2023)
 * Blog by Intel: [Intel® Xeon® Processors Are Still the Only CPU With MLPerf Results, Raising the Bar By 5x](https://community.intel.com/t5/Blogs/Tech-Innovation/Artificial-Intelligence-AI/Intel-Xeon-Processors-Are-Still-the-Only-CPU-With-MLPerf-Results/post/1472750) (Apr 2023)
-* Blog by Intel: [集成英特尔® Neural Compressor，腾讯云TACO Kit为AI应用带来高效异构加速服务]([https://mp.weixin.qq.com/s/I-FQqOuW7HTnwXegLGNAtw](https://www.intel.cn/content/www/cn/zh/customer-spotlight/cases/neural-compressor-tencent-cloud-taco-kit-ai.html)) (Mar 2023)
+* Blog by Intel: [集成英特尔® Neural Compressor，腾讯云TACO Kit为AI应用带来高效异构加速服务](https://www.intel.cn/content/www/cn/zh/customer-spotlight/cases/neural-compressor-tencent-cloud-taco-kit-ai.html) (Mar 2023)
 * Post on Social Media: [Adopt with Tencent TACO: Heterogeneous optimization is also key to improving AI computing power](https://mp.weixin.qq.com/s/I-FQqOuW7HTnwXegLGNAtw) (Mar 2023)
 * Blog on Medium: [Structured Pruning for Transformer-Based Models](https://medium.com/intel-analytics-software/structured-pruning-for-transformer-based-models-116e949ef12c) (Jan 2023)
 * Post on Social Media: [Training and Inference for Stable Diffusion | Intel Business](https://www.youtube.com/watch?v=emCgSTlJaAg) (Jan 2023)
