@@ -29,7 +29,6 @@ def force_not_import_ipex(monkeypatch):
     monkeypatch.setattr("neural_compressor.torch.quantization.algorithm_entry.is_ipex_imported", _is_ipex_imported)
     monkeypatch.setattr("neural_compressor.torch.export.pt2e_export.is_ipex_imported", _is_ipex_imported)
 
-
 class TestPT2EQuantization:
     def teardown_class(self):
         shutil.rmtree("saved_results", ignore_errors=True)
@@ -53,15 +52,15 @@ class TestPT2EQuantization:
         return bar, example_inputs
 
     @staticmethod
-    def build_model_include_conv_and_linear():
+    def build_model_include_conv_and_linear(bias=True):
         class Model(torch.nn.Module):
-            def __init__(self):
+            def __init__(self, bias=True):
                 super(Model, self).__init__()
-                self.conv1 = torch.nn.Conv2d(3, 6, 5)
+                self.conv1 = torch.nn.Conv2d(3, 6, 5, bias=bias)
                 self.pool = torch.nn.MaxPool2d(2, 2)
-                self.conv2 = torch.nn.Conv2d(6, 16, 5)
-                self.fc1 = torch.nn.Linear(16 * 5 * 5, 120)
-                self.fc2 = torch.nn.Linear(120, 84)
+                self.conv2 = torch.nn.Conv2d(6, 16, 5, bias=bias)
+                self.fc1 = torch.nn.Linear(16 * 5 * 5, 120, bias=bias)
+                self.fc2 = torch.nn.Linear(120, 84, bias=bias)
 
             def forward(self, x):
                 x = self.conv1(x)
@@ -74,7 +73,7 @@ class TestPT2EQuantization:
 
                 return x
 
-        model = Model()
+        model = Model(bias)
         example_inputs = (torch.randn(1, 3, 32, 32),)
         return model, example_inputs
 
@@ -286,19 +285,54 @@ class TestPT2EQuantization:
 
     @pytest.mark.skipif(not GT_OR_EQUAL_TORCH_VERSION_2_5, reason="Requires torch>=2.5")
     @pytest.mark.parametrize("half_precision_dtype", ["fp16", "bf16"])
-    def test_auto_tune_mixed_int8_and_16bits(self, half_precision_dtype, force_not_import_ipex):
+    @pytest.mark.parametrize("op_name", ["conv1", "fc1"])
+    @pytest.mark.parametrize("bias", [True, False])
+    def test_auto_tune_mixed_int8_and_16bits(self, half_precision_dtype, op_name, bias, force_not_import_ipex):
+        # Test for auto-tune with mixed int8 and 16bits
+        # Just make sure the pattern matches, not the accuracy.
         # config1: int8 for all
-        # config2: half precision for linear
+        # config2: half precision for linear/conv
         from neural_compressor.torch.quantization.config import INT8StaticQuantConfig
         from neural_compressor.torch.quantization.autotune import autotune, TuningConfig
+
         config1 = INT8StaticQuantConfig()
-        config2 = INT8StaticQuantConfig().set_local("fc1", StaticQuantConfig(w_dtype=half_precision_dtype, act_dtype=half_precision_dtype))
+        config2 = INT8StaticQuantConfig().set_local(
+            op_name, StaticQuantConfig(w_dtype=half_precision_dtype, act_dtype=half_precision_dtype)
+        )
         tune_config = TuningConfig(config_set=[config1, config2], tolerable_loss=-0.1)
+        eval_result = [1, 1, 2]
+
         def fake_eval_fn(model):
-            return 1.0
+            res = eval_result.pop(0)
+            return res
+
         def run_fn(model):
             for i in range(2):
                 model(*example_inputs)
-        model, example_inputs = self.build_model_include_conv_and_linear()
+
+        model, example_inputs = self.build_model_include_conv_and_linear(bias)
         model = export(model, example_inputs=example_inputs)
-        qmodel = autotune(model=model, tune_config=tune_config, eval_fn=fake_eval_fn,run_fn=run_fn, example_inputs=example_inputs)
+        qmodel = autotune(
+            model=model, tune_config=tune_config, eval_fn=fake_eval_fn, run_fn=run_fn, example_inputs=example_inputs
+        )
+
+        # check the half node
+        expected_node_occurrence = {
+            # 4 `aten.to` for target op if bias else 3
+            torch.ops.aten.to.dtype: (3 + int(bias))
+        }
+        expected_node_occurrence = {
+            torch_test_quant_common.NodeSpec.call_function(k): v for k, v in expected_node_occurrence.items()
+        }
+        node_in_graph = self.get_node_in_graph(qmodel)
+        for node, cnt in expected_node_occurrence.items():
+            assert (
+                node_in_graph.get(node, 0) == cnt
+            ), f"Node {node} should occur {cnt} times, but {node_in_graph.get(node, 0)}"
+        # inference
+        from torch._inductor import config
+
+        config.freezing = True
+        opt_model = torch.compile(qmodel)
+        out = opt_model(*example_inputs)
+        assert out is not None
