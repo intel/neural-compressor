@@ -288,7 +288,7 @@ scaling_methods = {
             fsdpa_scales_to_mod_config,
         ),
         "softmax": (
-            softmax_input_unit_output_maxabs_pts_pow2,
+            softmax_input_unit_output_maxabs_pts_hw_scales,
             softmax_scales_to_mod_config,
         ),
         "dynamic_moe": (
@@ -304,10 +304,6 @@ scaling_methods = {
         "matmul": (
             matmul_act_maxabs_pts_weight_maxabs_pts_pow2_scales,
             matmul_scales_to_mod_config,
-        ),
-        "softmax": (
-            softmax_input_unit_output_maxabs_pts_pow2,
-            softmax_scales_to_mod_config,
         ),
         "kv_cache": (
             kv_cache_act_maxabs_pts_pow2,
@@ -338,10 +334,6 @@ scaling_methods = {
         "kv_cache": (
             kv_cache_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales,
             kv_cache_scales_to_mod_config,
-        ),
-        "softmax": (
-            softmax_input_unit_output_maxabs_pts_hw_scales,
-            softmax_scales_to_mod_config,
         ),
         "fused_sdpa": (
             fsdpa_act_maxabs_pts_weight_maxabs_pts_pow2_hw_scales,
