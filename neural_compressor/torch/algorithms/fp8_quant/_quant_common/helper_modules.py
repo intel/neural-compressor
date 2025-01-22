@@ -589,6 +589,8 @@ class PatchedMoeMatmul(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         init_linear(self, mod_extra_config)
+        if (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
+            measure_input((torch.tensor(0),), observer=self._mod_extra_config.inputs)
 
     def forward_qdq(self, input, *args, **kwargs):
         qinput = self.quant_input(input)
@@ -685,6 +687,91 @@ class PatchedGaudiMixtralSparseMoeBlock(PatchedModuleBase):
             w1=w1_list,
             w3=w2_list,
             w2=w3_list,
+            permuted_weights=permuted_weights,
+            activation=activation,
+            experts_min=0,
+            experts_max=7,
+            measurement_mode=True,
+        )
+        output_measure_list = [output]
+        for i in range(self.num_experts):
+            output_measure_list.append(intermidiate_amax[i])
+        measure_output(output_measure_list, self._mod_extra_config.outputs)
+        return output
+
+    def extra_repr(self) -> str:
+        member_names = ["scale_input"]
+        for x in range(1, self.num_experts+1):
+            member_names.append("scale_intermediate["+str(x)+"]")
+        return extra_representation(
+            self.extra_repr_org(),
+            self.class_name_org,
+            get_current_repr(self, *member_names),
+        )
+
+
+class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
+    def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
+        super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
+        if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
+            self.forward = self.forward_quant
+            self.dynamic_moe_op = get_hpu_quantized_func_wrapper(OP_TYPE.DYNAMIC_MOE_FUSED_WEIGHTS, self.scale_format)
+            self.quant_input = self._mod_extra_config.inputs[0]
+            self.scale_input = create_scale_tensor(mod_extra_config.scale.inputs[0], self.scale_format)
+            self.scale_intermediate = [create_scale_tensor(mod_extra_config.scale.inputs[x], self.scale_format)
+                                       for x in range(1, self.num_experts+1)]
+            self.quant_input = self._mod_extra_config.inputs[0]
+            self.scale_input = create_scale_tensor(mod_extra_config.scale.inputs[0], self.scale_format)
+            self.scale_intermediate = [create_scale_tensor(mod_extra_config.scale.inputs[x], self.scale_format)
+                                       for x in range(1, self.num_experts+1)]
+        elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
+            self.forward = self.forward_measure
+
+    def forward_quant(self,
+                      hidden_states,
+                      expert_routing_table,
+                      router_weights,
+                      permuted_weights=True,
+                      activation="silu"):
+        experts_range = range(self.num_experts)
+        w1_list = [self.w13_list[i].weight.squeeze() for i in experts_range]
+        w2_list = [self.w2_list[i].weight.squeeze() for i in experts_range]
+        scale_w1 = [self.w13_list[i].scale_weight for i in experts_range]
+        scale_w2 = [self.w2_list[i].scale_weight for i in experts_range]
+        qinput = self.quant_input(hidden_states)
+        output = self.dynamic_moe_op(
+            hidden_states=qinput,
+            expert_routing_table=expert_routing_table,
+            router_weights=router_weights,
+            w12=w1_list,
+            w3=w2_list,
+            d_scale_w12=scale_w1,
+            d_scale_w3=scale_w2,
+            d_scale_hidden_states=self.scale_input,
+            d_scale_intermediate_hidden_states=self.scale_intermediate,
+            permuted_weights=False,
+            activation=activation,
+            experts_min=0,
+            experts_max=7
+        )
+        return output
+
+    def forward_measure(self,
+                        hidden_states,
+                        expert_routing_table,
+                        router_weights,
+                        permuted_weights=True,
+                        activation="silu"):
+        experts_range = range(self.num_experts)
+        w1_list = [self.w13_list[i].weight.squeeze() for i in experts_range]
+        w2_list = [self.w2_list[i].weight.squeeze() for i in experts_range]
+        measure_input((hidden_states,), observer=self._mod_extra_config.inputs)
+        output, intermidiate_amax = torch.ops.hpu.mixture_of_experts.fp8_measurement_fused_weights(
+            hidden_states=hidden_states,
+            expert_routing_table=expert_routing_table,
+            router_weights=router_weights,
+            w12=w1_list,
+            w3=w2_list,
             permuted_weights=permuted_weights,
             activation=activation,
             experts_min=0,

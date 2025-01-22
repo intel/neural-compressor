@@ -72,7 +72,7 @@ def matmul_scales_to_mod_config(mod, scales, params):
 def dynamic_moe_scales_to_mod_config(mod, scales, params):
     scales_inv, scale_format, use_qdq, fake_quant, lp_dtype, hp_dtype = init_mod_config(mod, scales, params)
     input_config = init_input_config(scales_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant)
-    output_config = [QuantDequantNone(scales.outputs[0], lp_dtype, hp_dtype, scale_format=scale_format)]
+    output_config = [QuantDequantNone(lp_dtype, hp_dtype, scale_format=scale_format)]
     config = ModuleConfig(input_config, output_config, {})
     return config
 

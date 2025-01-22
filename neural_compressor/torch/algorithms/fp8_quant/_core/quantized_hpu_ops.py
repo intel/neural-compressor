@@ -19,6 +19,7 @@ class OP_TYPE(Enum):
     CONV = auto()
     FSDPA = auto()
     DYNAMIC_MOE = auto()
+    DYNAMIC_MOE_FUSED_WEIGHTS = auto()
 
 
 class QuantizedHpuFuncWrapper(ABC):
@@ -128,11 +129,20 @@ class QuantizedHpuDynamicMoe(QuantizedHpuFuncWrapper):
         return torch.ops.hpu.mixture_of_experts.fp8_scalars
 
 
+class QuantizedHpuDynamicMoeFusedWeights(QuantizedHpuFuncWrapper):
+    def get_default_quantized_func(self):
+        return torch.ops.hpu.mixture_of_experts.fp8_fused_weights
+
+    def get_scalar_quantized_func(self):
+        return torch.ops.hpu.mixture_of_experts.fp8_fused_weights_scalars
+
+
 _OP_TYPE_HPU_QUANTIZED_WRAPPER_CLASSES = {OP_TYPE.GEMM : QuantizedHpuMatmul,
                                           OP_TYPE.SOFTMAX : QuantizedHpuSoftmax,
                                           OP_TYPE.CONV  : QuantizedHpuConv,
                                           OP_TYPE.FSDPA : QuantizedHpuFSDPA,
                                           OP_TYPE.DYNAMIC_MOE: QuantizedHpuDynamicMoe,
+                                          OP_TYPE.DYNAMIC_MOE_FUSED_WEIGHTS: QuantizedHpuDynamicMoeFusedWeights,
                                           }
 
 class QuantizedFuncWrapperFactory():

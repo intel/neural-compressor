@@ -217,6 +217,7 @@ _mod_default_dict = {
     "ReplicatedLinear": ModuleInfo("linear", PatchedReplicatedLinear),
     "FusedMoE": ModuleInfo("linear", PatchedMixtralMoE, False),
     "GaudiMixtralSparseMoeBlock": ModuleInfo("dynamic_moe", PatchedGaudiMixtralSparseMoeBlock),
+    "VllmMixtureOfExpertsOp": ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOp),
 }
 
 
