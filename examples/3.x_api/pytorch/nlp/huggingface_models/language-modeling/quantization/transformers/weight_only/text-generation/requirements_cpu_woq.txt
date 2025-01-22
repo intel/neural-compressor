@@ -11,7 +11,7 @@ transformers_stream_generator
 tiktoken  #qwen
 einops  #qwen
 auto_round
-lm-eval==0.4.3
+lm-eval>=0.4.2
 huggingface_hub
 numba
 tbb

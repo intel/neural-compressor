@@ -20,6 +20,7 @@ try:
 except:
     _hpex_available = False
 
+from neural_compressor.common import logger
 
 class LMEvalParser:
     def __init__(
@@ -50,6 +51,7 @@ class LMEvalParser:
         trust_remote_code=False,
         pad_to_buckets=None,  # used by HPU to align input length for performance.
         buckets=[32, 64, 128, 256, 512, 1024, 2048, 4096],  # used by HPU to limit input length range.
+        add_bos_token=False,
     ):
         self.model = model
         self.tasks = tasks
@@ -83,3 +85,17 @@ class LMEvalParser:
         else:
             self.pad_to_buckets = pad_to_buckets
         self.buckets = buckets
+        self.add_bos_token = add_bos_token
+        self._post_init()
+
+    def _check_add_bos_token(self):
+        if self.add_bos_token == False:
+            logger.warning(
+                (
+                    "`add_bos_token` is set to False. "
+                    "If the model was trained or fine-tuned with a BOS token, this may lead to incorrect results."
+                )
+            )
+
+    def _post_init(self):
+        self._check_add_bos_token()
