@@ -288,7 +288,6 @@ class TestPT2EQuantization:
     @pytest.mark.parametrize("op_name", ["conv1", "fc1"])
     @pytest.mark.parametrize("bias", [True, False])
     def test_auto_tune_mixed_int8_and_16bits(self, half_precision_dtype, op_name, bias, force_not_import_ipex):
-        # Test for auto-tune with mixed int8 and 16bits
         # Just make sure the pattern matches, not the accuracy.
         # config1: int8 for all
         # config2: half precision for linear/conv
@@ -318,7 +317,7 @@ class TestPT2EQuantization:
 
         # check the half node
         expected_node_occurrence = {
-            # 4 `aten.to` for target op if bias else 3
+            # 4 `aten.to` for target op if bias else 3 `aten.to`
             torch.ops.aten.to.dtype: (3 + int(bias))
         }
         expected_node_occurrence = {
