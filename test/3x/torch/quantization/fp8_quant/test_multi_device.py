@@ -37,6 +37,37 @@ def calib_func(model):
         model(example_inputs)
 
 
+def test_save_vllm_compatible_model():
+    name = "Qwen/Qwen2-0.5B-Instruct"
+    if world_size > 0:
+        # Do not use random weights since multi-processes will get different weights for Embedding
+        model = transformers.AutoModelForCausalLM.from_pretrained(name)
+        ds_inference_kwargs = {
+            "dtype": torch.bfloat16,
+            "tensor_parallel": {"tp_size": world_size},
+        }
+        model = deepspeed.init_inference(model, **ds_inference_kwargs)
+        model = model.module
+    else:
+        model = transformers.AutoModelForCausalLM.from_pretrained(name)
+    model = model.eval()
+    generation_config = transformers.GenerationConfig.from_model_config(model.config)
+    qconfig = FP8Config(
+        fp8_config="E4M3",
+        scale_format="const",
+        allowlist={"types": ["Linear", "LinearLayer", "LinearAllreduce", "KVCache", "VLLMKVCache"]},
+        blocklist={"names": ["lm_head"]},
+    )
+    model = prepare(model, qconfig)
+    calib_func(model)
+    model = convert(model)
+    save(model, "saved_results_qwen", format="vllm")
+    # save tokenizer and generation_configs.
+    generation_config.save_pretrained("saved_results_qwen")
+    tokenizer = transformers.AutoTokenizer.from_pretrained(name)
+    tokenizer.save_pretrained("saved_results_qwen")
+
+
 def test_load_model_provided_by_neuralmagic():
     model_name_or_path = "neuralmagic/Qwen2-0.5B-Instruct-FP8"
     hpu_mem0 = get_used_hpu_mem_MB()
@@ -100,5 +131,6 @@ def test_multi_cards_save_load():
 
 
 if __name__ == "__main__":
+    test_save_vllm_compatible_model()
     test_multi_cards_save_load()
     test_load_model_provided_by_neuralmagic()

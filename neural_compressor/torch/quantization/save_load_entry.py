@@ -39,16 +39,19 @@ def save(model, checkpoint_dir="saved_results", format="default"):
     Args:
         model (torch.nn.module or TorchScript model with IPEX or fx graph with pt2e, optional): Quantized model.
         checkpoint_dir (str, optional): checkpoint directory. Defaults to "saved_results".
-        format (str, optional): 'default' for loading INC quantized model.
-            'huggingface' for loading huggingface WOQ causal language model. Defaults to "default".
+        format (str, optional): 'default' for saving INC quantized model.
+            'huggingface' for saving huggingface WOQ causal language model.
+            'vllm' for saving FP8 model like 'neuralmagic/Meta-Llama-3.1-8B-Instruct-FP8'
+            quantized by llm-compressor(https://github.com/vllm-project/llm-compressor).
+            Defaults to "default".
     """
     config_mapping = model.qconfig
     config_object = config_mapping[next(iter(config_mapping))]
     # fp8_quant
     if isinstance(config_object, FP8Config):
         from neural_compressor.torch.algorithms import fp8_quant
-
-        format = SaveLoadFormat.HUGGINGFACE.value  # TODO: support default format for FP8 algorithm
+        if format == SaveLoadFormat.DEFAULT:
+            format = SaveLoadFormat.HUGGINGFACE
         fp8_quant.save(model, checkpoint_dir, format)
     elif isinstance(config_object, (RTNConfig, GPTQConfig, AWQConfig, TEQConfig, AutoRoundConfig)):
         from neural_compressor.torch.algorithms import weight_only
