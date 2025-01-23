@@ -285,9 +285,9 @@ class TestPT2EQuantization:
 
     @pytest.mark.skipif(not GT_OR_EQUAL_TORCH_VERSION_2_5, reason="Requires torch>=2.5")
     @pytest.mark.parametrize("half_precision_dtype", ["fp16", "bf16"])
-    @pytest.mark.parametrize("op_name", ["conv1", "fc1"])
+    @pytest.mark.parametrize("op_name_or_type", ["conv1", "fc1", torch.nn.Linear, torch.nn.Conv2d])
     @pytest.mark.parametrize("bias", [True, False])
-    def test_auto_tune_mixed_int8_and_16bits(self, half_precision_dtype, op_name, bias, force_not_import_ipex):
+    def test_auto_tune_mixed_int8_and_16bits(self, half_precision_dtype, op_name_or_type, bias, force_not_import_ipex):
         # Just make sure the pattern matches, not the accuracy.
         # config1: int8 for all
         # config2: half precision for linear/conv
@@ -296,7 +296,7 @@ class TestPT2EQuantization:
 
         config1 = INT8StaticQuantConfig()
         config2 = INT8StaticQuantConfig().set_local(
-            op_name, StaticQuantConfig(w_dtype=half_precision_dtype, act_dtype=half_precision_dtype)
+            op_name_or_type, StaticQuantConfig(w_dtype=half_precision_dtype, act_dtype=half_precision_dtype)
         )
         tune_config = TuningConfig(config_set=[config1, config2], tolerable_loss=-0.1)
         eval_result = [1, 1, 2]
@@ -315,11 +315,17 @@ class TestPT2EQuantization:
             model=model, tune_config=tune_config, eval_fn=fake_eval_fn, run_fn=run_fn, example_inputs=example_inputs
         )
 
-        # check the half node
+        # Calculate the expected number of `aten.to` operations based on bias and op_name_or_type
+        """
+        | Bias  | op_name | nn.Module |
+        |-------|---------|-----------|
+        | True  | 4       | 8         |
+        | False | 3       | 6         |
+        """
         expected_node_occurrence = {
-            # 4 `aten.to` for target op if bias else 3 `aten.to`
-            torch.ops.aten.to.dtype: (3 + int(bias))
+            torch.ops.aten.to.dtype: (3 + int(bias)) * (1 if isinstance(op_name_or_type, str) else 2)
         }
+
         expected_node_occurrence = {
             torch_test_quant_common.NodeSpec.call_function(k): v for k, v in expected_node_occurrence.items()
         }
