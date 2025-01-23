@@ -49,6 +49,7 @@ algos_mapping: Dict[str, Callable] = {}
 
 # All constants for torch
 WHITE_MODULE_LIST = [torch.nn.Linear, torch.nn.Conv1d, torch.nn.Conv2d, torch.nn.Conv3d]
+UNIT_MAPPING = {"KB": 1024, "MB": 1024**2, "GB": 1024**3, "TB": 1024**4, "B": 1}
 
 HPU_SAFE_WEIGHTS_NAME = "hpu_model.safetensors"
 WEIGHT_NAME = "quantized_weight.pt"
