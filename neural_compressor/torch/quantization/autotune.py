@@ -54,6 +54,15 @@ def get_all_config_set() -> Union[BaseConfig, List[BaseConfig]]:
     return get_all_config_set_from_config_registry(fwk_name=FRAMEWORK_NAME)
 
 
+def _deepcopy_warp(model):
+    additional_attr_lst = ["_exported", "dynamic_shapes"]
+    original_attr = {key: getattr(model, key, None) for key in additional_attr_lst}
+    new_model = deepcopy(model)
+    for key, value in original_attr.items():
+        setattr(new_model, key, value)
+    return new_model
+
+
 @dump_elapsed_time("Pass auto-tune")
 def autotune(
     model: torch.nn.Module,
@@ -81,7 +90,7 @@ def autotune(
     best_quant_model = None
     eval_func_wrapper = EvaluationFuncWrapper(eval_fn, eval_args)
     config_loader, tuning_logger, tuning_monitor = init_tuning(tuning_config=tune_config)
-    baseline: float = eval_func_wrapper.evaluate(deepcopy(model))
+    baseline: float = eval_func_wrapper.evaluate(_deepcopy_warp(model))
     tuning_monitor.set_baseline(baseline)
     tuning_logger.tuning_start()
     for trial_index, quant_config in enumerate(config_loader, 1):
@@ -90,7 +99,7 @@ def autotune(
         logger.info(quant_config.to_dict())
         # !!! Make sure to use deepcopy only when inplace is set to `True`.
         q_model = quantize(
-            deepcopy(model),
+            _deepcopy_warp(model),
             quant_config=quant_config,
             run_fn=run_fn,
             run_args=run_args,
@@ -112,7 +121,7 @@ def autotune(
                 best_quant_config: BaseConfig = best_trial_record.quant_config
                 # !!! Make sure to use deepcopy only when inplace is set to `True`.
                 q_model = quantize(
-                    deepcopy(model),
+                    _deepcopy_warp(model),
                     quant_config=best_quant_config,
                     run_fn=run_fn,
                     run_args=run_args,
