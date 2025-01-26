@@ -50,7 +50,7 @@ def test_predefined_config(lp_dtype, scale_method, quant_mode):
     if scale_method in SCALE_METHODS_KEY_ERROR and quant_mode == QuantMode.QUANTIZE:
         run_with_raised_exception(run_predefined_config, KeyError, "(<ScaleMethod.")
     # This is an expected exception, quant only methods support only quantization
-    elif scale_method in SCALE_METHODS_QUANT_ONLY and quant_mode != QuantMode.QUANTIZE:
+    elif scale_method in SCALE_METHODS_QUANT_ONLY and quant_mode not in [QuantMode.QUANTIZE, QuantMode.LOAD]:
         run_with_raised_exception(run_predefined_config, ValueError, "Unexpected behavior. This scale method doesn't require measurements.")
     # This is an expected exception, as test is not measuring before
     elif scale_method not in SCALE_METHODS_QUANT_ONLY:
