@@ -21,14 +21,12 @@ def initialize_model_and_tokenizer(model_name_or_path, use_load=False, device="c
     if use_load:
         from neural_compressor.torch.quantization import load
         model = load(model_name_or_path, format="huggingface", device=device)
-        # for llama evaluation
-        model, tokenizer = update_llama_tokenizer(model, tokenizer)
+        model, tokenizer = update_tokenizer(model, tokenizer)
         return model, tokenizer
     config = transformers.AutoConfig.from_pretrained(model_name_or_path)
     # using memory mapping with torch_dtype=config.torch_dtype
     model = transformers.AutoModelForCausalLM.from_pretrained(model_name_or_path, torch_dtype=config.torch_dtype)
-    # for llama evaluation
-    model, tokenizer = update_llama_tokenizer(model, tokenizer)
+    model, tokenizer = update_tokenizer(model, tokenizer)
     # shard model for multi-cards and enable hpu graph
     if world_size > 1:
         if "hpu" in device:
@@ -45,9 +43,8 @@ def initialize_model_and_tokenizer(model_name_or_path, use_load=False, device="c
     return model, tokenizer
 
 
-def update_llama_tokenizer(model, tokenizer):
-    # for llama evaluation
-    if model.config.model_type == "llama":
+def update_tokenizer(model, tokenizer):
+    if model.config.model_type in ["llama", "mixtral"]:
         # unwind broken decapoda-research config
         model.generation_config.pad_token_id = 0
         model.generation_config.bos_token_id = 1

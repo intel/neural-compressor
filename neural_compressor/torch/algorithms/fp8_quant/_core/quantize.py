@@ -195,8 +195,12 @@ def prepare_model_with_dummy_measurement(model, mod_list, scaling_method, scale_
                 [placeholder_tensor for _ in range(mod_info.num_outputs)],
                 {name: placeholder_tensor for name in mod_info.param_names},
             )
+            # add amax scale to input scales for special cases
+            # TODO: make it more robust for newly added modules after polishing scale method
             if mode_type == "fused_sdpa":
-                dummy_mod_scales.inputs.append(placeholder_tensor)  # add amax scale to input scales
+                dummy_mod_scales.inputs.append(placeholder_tensor)
+            if mode_type == "dynamic_moe":
+                dummy_mod_scales.inputs += [placeholder_tensor for i in range(1, mod.num_experts+1)]
             mod_config = scaling_method[mode_type][1](mod, dummy_mod_scales, scale_config)
             dummy_mod_extra_config = ModuleExtraConfig(
                 mod_config.inputs,

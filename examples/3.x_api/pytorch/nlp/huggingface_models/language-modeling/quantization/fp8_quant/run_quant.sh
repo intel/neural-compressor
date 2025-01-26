@@ -67,6 +67,10 @@ function run_tuning {
         model_name_or_path="/git_lfs/data/pytorch/llama2/Llama-2-70b-hf/"
         extra_cmd=$extra_cmd" --enable_block_wise_calibration"
         tuned_checkpoint="/software/llama_fp8/llama2_70b_fp8_block_wise"
+    elif [ "${topology}" = "mixtral_8x7b_fp8_block_wise" ]; then
+        model_name_or_path="mistralai/Mixtral-8x7B-v0.1"
+        extra_cmd=$extra_cmd" --enable_block_wise_calibration"
+        tuned_checkpoint="/software/mixtral_fp8/mixtral_8x7b_fp8_block_wise"
     elif [ "${topology}" = "llama3_1_405b_fp8_block_wise" ]; then
         model_name_or_path="/git_lfs/data/pytorch/llama3.1/Meta-Llama-3.1-405B-Instruct/"
         extra_cmd=$extra_cmd" --enable_block_wise_calibration"
@@ -77,7 +81,6 @@ function run_tuning {
     ${python_cmd} quantize.py \
         --model_name_or_path ${model_name_or_path} \
         --quantize \
-        --use_const_scale \
         --use_hpu_graph \
         --batch_size ${batch_size} \
         --save \

@@ -131,3 +131,12 @@ class ModuleFusedSDPA(torch.nn.Module):
         super().__init__()
         self.__dict__.update(patched_mod.__dict__)
         self.extra_repr = patched_mod.extra_repr_org
+
+
+# [SW-216623] restore_patched_module cannot handle newly added modules
+@helper_mod_register(name="GaudiMixtralSparseMoeBlock")
+class GaudiMixtralSparseMoeBlock(torch.nn.Module):
+    def __init__(self, patched_mod, *args, **kwargs):
+        super().__init__()
+        self.__dict__.update(patched_mod.__dict__)
+        self.extra_repr = patched_mod.extra_repr_org

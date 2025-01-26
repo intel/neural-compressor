@@ -85,6 +85,9 @@ function run_benchmark {
     elif [ "${topology}" = "llama2_70b_fp8_block_wise" ]; then
         model_name_or_path="/git_lfs/data/pytorch/llama2/Llama-2-70b-hf/"
         tuned_checkpoint="/software/llama_fp8/llama2_70b_fp8_block_wise"
+    elif [ "${topology}" = "mixtral_8x7b_fp8_block_wise" ]; then
+        model_name_or_path="mistralai/Mixtral-8x7B-v0.1"
+        tuned_checkpoint="/software/mixtral_fp8/mixtral_8x7b_fp8_block_wise"
     elif [ "${topology}" = "llama3_1_405b_fp8_block_wise" ]; then
         model_name_or_path="/git_lfs/data/pytorch/llama3.1/Meta-Llama-3.1-405B-Instruct/"
         tuned_checkpoint="/software/llama_fp8/llama3_1_405b_fp8_block_wise"
