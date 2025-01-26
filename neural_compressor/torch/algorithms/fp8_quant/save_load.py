@@ -482,10 +482,11 @@ def load_empty_raw_model(model_name_or_path, **kwargs):
         model = deepspeed.init_inference(model, **ds_inference_kwargs)
         model = model.module
         load_non_persistent_buffers(model, non_persistent_buffers)
-        model.to(hp_dtype)
     else:
         with init_empty_weights(include_buffers=False):
             model = transformers.AutoModelForCausalLM.from_config(config, torch_dtype=hp_dtype)
+    model.to(hp_dtype)
+
     try:
         generation_config = transformers.GenerationConfig.from_pretrained(model_name_or_path, **kwargs)
         model.generation_config = generation_config
@@ -634,6 +635,7 @@ def load(model_name_or_path, format="huggingface", device="hpu", **kwargs):
             model.load_state_dict(rank_state_dict, assign=True, strict=False)
         else:
             model.load_state_dict(gathered_state_dict, assign=True, strict=False)
+        load_scale_params(model, gathered_state_dict)  # ensure per-channel scale is loaded correctly
 
     model.tie_weights()
     model = model.to(cur_accelerator.name())
@@ -747,3 +749,20 @@ def update_model_config(model, format, config_object):
     else:
         config_object.mode = "LOAD"
         model.config.quantization_config = config_object
+
+
+def load_scale_params(model, new_scale_params):
+    """
+    Load scale parameters into the model. If the lengths do not match, replace the old scales with the new ones.
+    
+    Args:
+        model (torch.nn.Module): The model to load scale parameters into.
+        new_scale_params (dict): A dictionary containing the new scale parameters.
+    """
+    for name, param in model.named_parameters():
+        if name in new_scale_params:
+            new_scale = new_scale_params[name]
+            old_scale = param.data
+            # update per-tensor scale with per-channel scale
+            if old_scale.shape != new_scale.shape:
+                param.data = new_scale

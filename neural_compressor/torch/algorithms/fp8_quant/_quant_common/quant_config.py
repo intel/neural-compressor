@@ -258,7 +258,7 @@ class Fp8cfg:
                 logger.warning(f"Cannot use 'scale_format = SCALAR' when using fake_quant. Reduced to 'CONST'.")
         quant_mode = measured_global_config["mode"]
         if scale_method in _scale_methods_quant_only:
-            if quant_mode == QuantMode.QUANTIZE:
+            if quant_mode in (QuantMode.QUANTIZE, QuantMode.LOAD):
                 logger.debug(f"Quantization mode is quant, scale_method is {scale_method}, so stats files won't be used")
                 measured_global_config["use_stats_files"] = False
             else:
