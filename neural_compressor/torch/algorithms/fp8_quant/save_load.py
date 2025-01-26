@@ -21,6 +21,7 @@ import copy
 import torch
 
 from ._quant_common.quant_config import local_rank, world_size, HpDtype
+from ._core.scale_handler import update_state_dict_method
 from .utils.logger import logger
 from neural_compressor.torch.utils import (
     get_accelerator,
@@ -55,15 +56,16 @@ tp_module_list = (
 
 ##################################### save ##################################
 
-def save_rank_model(model, folder_prefix=""):
+def save_rank_model(model, folder_prefix="", **kwargs):
     """Save state_dict for model from each rank."""
-    from huggingface_hub import save_torch_model
-
-    save_directory = f"{folder_prefix}_{local_rank}_{world_size}"
-    os.makedirs(save_directory, exist_ok=True)
     # workaround for [SW-199005] [HQT] casted fp8 tensor cannot get data pointer
     cur_accelerator.synchronize()
-    save_torch_model(model, save_directory, max_shard_size=f"{MAX_FILE_SIZE/world_size}GB", metadata={"format": "pt"})
+    save_directory = f"{folder_prefix}_{local_rank}_{world_size}"
+    os.makedirs(save_directory, exist_ok=True)
+    safe_serialization = kwargs.get("safe_serialization", True)
+    max_shard_size = kwargs.get("max_shard_size", f"{MAX_FILE_SIZE}GB")
+    # save model state_dict and config.json
+    model.save_pretrained(save_directory, max_shard_size=max_shard_size, safe_serialization=safe_serialization)
 
 
 def find_tp_mod_list(model):
@@ -339,7 +341,7 @@ def check_config_for_vllm_compatible(config):
     assert all("kvcache" in t.lower() or "linear" in t.lower() for t in types), error_message
 
 
-def save_for_multi_devices(model, checkpoint_dir="saved_results", format="huggingface"):
+def save_for_multi_devices(model, checkpoint_dir="saved_results", format="huggingface", **kwargs):
     """Save FP8 model for multi-devices.
     Args:
         model (torch.nn.Module): fp8 model object.
@@ -356,7 +358,7 @@ def save_for_multi_devices(model, checkpoint_dir="saved_results", format="huggin
             model, reference_model, world_size=world_size, max_shard_size=f"{MAX_FILE_SIZE}GB", output_dir=checkpoint_dir
             )
     else:
-        save_rank_model(model, folder_prefix=checkpoint_dir)
+        save_rank_model(model, folder_prefix=checkpoint_dir, **kwargs)
         rank_directory = f"{checkpoint_dir}_{0}_{world_size}"
         files_list = find_safetensors_files(rank_directory)
         # use rank:0 process to gather checkpoint files
@@ -374,7 +376,7 @@ def save_for_multi_devices(model, checkpoint_dir="saved_results", format="huggin
             clean_rank_files(folder_prefix=checkpoint_dir)
 
 
-def save_for_single_device(model, checkpoint_dir="saved_results", format="huggingface"):
+def save_for_single_device(model, checkpoint_dir="saved_results", format="huggingface", **kwargs):
     """Save FP8 model for single device.
 
     Args:
@@ -394,11 +396,14 @@ def save_for_single_device(model, checkpoint_dir="saved_results", format="huggin
         state_dict = convert_weight_to_vllm_compatible(state_dict=model.state_dict())
         save_state_dict_sharded_safetensors(state_dict, checkpoint_dir, max_shard_size=f"{MAX_FILE_SIZE}GB")
     else:
-        save_torch_model(model, checkpoint_dir, max_shard_size=f"{MAX_FILE_SIZE}GB", metadata={"format": "pt"})
+        safe_serialization = kwargs.get("safe_serialization", True)
+        max_shard_size = kwargs.get("max_shard_size", f"{MAX_FILE_SIZE}GB")
+        # save model state_dict and config.json
+        model.save_pretrained(checkpoint_dir, max_shard_size=max_shard_size, safe_serialization=safe_serialization)
         torch.use_deterministic_algorithms(tmp_deterministic_algorithms_flag)
 
 
-def save(model, checkpoint_dir="saved_results", format="huggingface"):
+def save(model, checkpoint_dir="saved_results", format="huggingface", **kwargs):
     """Save FP8 model.
 
     Args:
@@ -407,35 +412,25 @@ def save(model, checkpoint_dir="saved_results", format="huggingface"):
         format (str, optional): defaults to 'huggingface'.
     """
     format = get_enum_from_format(format)
+    model = process_model_for_scalar_scale(model)
     if format == SaveLoadFormat.VLLM:
         check_config_for_vllm_compatible(model.qconfig[next(iter(model.qconfig))])
-    # cancel tied weights to avoid reloading issue when lm_head is not quantized.
-    for key in model._tied_weights_keys:
-        weight = get_attr(model, key)
-        set_attr(model, key, copy.deepcopy(weight))
     if world_size > 0:
-        save_for_multi_devices(model, checkpoint_dir=checkpoint_dir, format=format)
+        save_for_multi_devices(model, checkpoint_dir=checkpoint_dir, format=format, **kwargs)
     else:
-        save_for_single_device(model, checkpoint_dir=checkpoint_dir, format=format)
+        save_for_single_device(model, checkpoint_dir=checkpoint_dir, format=format, **kwargs)
 
     # save "quantization_config" in config.json
     configs_mapping = model.qconfig
     config_object = configs_mapping[next(iter(configs_mapping))]
-    if format == SaveLoadFormat.VLLM:
-        quantization_config = convert_config_to_vllm_compatible(config_object)
-        model.config.quantization_config = quantization_config
-        model.config.save_pretrained(checkpoint_dir)
-    else:
-        config_object.mode = "LOAD"
-        model.config.quantization_config = config_object
-        model.config.save_pretrained(checkpoint_dir)
+    update_model_config(model, format, config_object)
+    model.config.save_pretrained(checkpoint_dir)
 
     if hasattr(model, "generation_config") and model.generation_config is not None:
         model.generation_config.save_pretrained(checkpoint_dir)
 
 
 ##################################### load ##################################
-
 
 def load_empty_raw_model(model_name_or_path, **kwargs):
     """Initialize BF16 model with meta tensor."""
@@ -621,6 +616,7 @@ def load(model_name_or_path, format="huggingface", device="hpu", **kwargs):
 
     # replace modules to patched modules
     prep_model(model, qconfig.json_file)
+    model = process_model_for_scalar_scale(model)
     # get the safetensors file list from one folder
     files_list = find_safetensors_files(model_name_or_path, **kwargs)  # TODO: get online files
     # based on the safetensors file name to collect tensors from shard folders
@@ -628,7 +624,6 @@ def load(model_name_or_path, format="huggingface", device="hpu", **kwargs):
         cur_file = os.path.join(model_name_or_path, file_name)
         gathered_state_dict = safe_load_file(cur_file)
         if from_neuralmagic or from_neuralmagic_with_kv:
-
             gathered_state_dict = convert_weight_to_inc(state_dict=gathered_state_dict)
         if world_size > 0:
             # only return state_dict for the current local_rank
@@ -640,13 +635,10 @@ def load(model_name_or_path, format="huggingface", device="hpu", **kwargs):
         else:
             model.load_state_dict(gathered_state_dict, assign=True, strict=False)
 
-    if from_neuralmagic or from_neuralmagic_with_kv:
-        model.tie_weights()
+    model.tie_weights()
     model = model.to(cur_accelerator.name())
     model = model.eval()
     cur_accelerator.synchronize()
-    # make sure cpu and hpu memory are all released.
-    gc.collect()
     return model
 
 
@@ -657,12 +649,10 @@ def convert_weight_to_inc(state_dict):
 
     Args:
         state_dict (dict): state_dict from modelhub.
-        on_gaudi2 (bool, optional): whether is on Gaudi2. Defaults to False.
 
     Returns:
         state_dict includes weight and scale adapted to INC format.
     """
-
     import habana_frameworks.torch.utils.experimental as htexp
     on_gaudi2 = htexp._get_device_type() == htexp.synDeviceType.synDeviceGaudi2
     key_name = state_dict.keys()
@@ -731,3 +721,29 @@ def split_weights(weight, tp_size, tp_rank, split_axis=0):
     else:
         raise ValueError("split_axis must be 0 (row) or 1 (column).")
 
+
+def process_model_for_scalar_scale(model):
+    from neural_compressor.torch.algorithms.fp8_quant.patched_module_base import PatchedModuleBase
+    from neural_compressor.torch.algorithms.fp8_quant._core.quant_dequant import QuantDequantBase
+    for mod in model.modules():
+        if isinstance(mod, (PatchedModuleBase, QuantDequantBase)):
+            update_state_dict_method(mod)
+    return model
+
+
+def update_model_config(model, format, config_object):
+    """Update model config for saving."""
+    # update config for tie_word_embeddings
+    if model.config.tie_word_embeddings:
+        from transformers.modeling_utils import _get_tied_weight_keys
+        embedding_weight = model.get_input_embeddings().weight
+        for key in _get_tied_weight_keys(model):
+            if model.state_dict()[key].data_ptr() != embedding_weight.data_ptr():
+                model.config.tie_word_embeddings = False
+    # update per format
+    if format == SaveLoadFormat.VLLM:
+        quantization_config = convert_config_to_vllm_compatible(config_object)
+        model.config.quantization_config = quantization_config
+    else:
+        config_object.mode = "LOAD"
+        model.config.quantization_config = config_object
