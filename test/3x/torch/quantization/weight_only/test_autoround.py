@@ -69,6 +69,7 @@ def run_fn(model, dataloader):
         else:
             model(data)
 
+@pytest.mark.skip(reason="SW-217321 pytorch inductor error")
 @pytest.mark.skipif(is_habana_framework_installed(), reason="These tests are not supported on HPU for now.")
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
 class TestAutoRoundCPU:
@@ -283,6 +284,7 @@ class TestAutoRoundCPU:
     #     loaded_model = load("saved_results_tiny-random-GPTJForCausalLM", format="huggingface", trust_remote_code=True)
 
 
+@pytest.mark.skip(reason="SW-217321 pytorch inductor error")
 @pytest.mark.skipif(not is_habana_framework_installed(), reason="Habana framework is not installed")
 @pytest.mark.skipif(os.getenv("PT_HPU_LAZY_MODE", "0") == "1", reason="Lazy mode is enabled")
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
