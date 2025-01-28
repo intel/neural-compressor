@@ -124,10 +124,7 @@ def import_external_scaling_methods():
     for scaling_method_name, (patch_module_type, cls) in SCALING_METHODS_TABLE.items():
         if scaling_method_name not in scaling_methods:
             scaling_methods[scaling_method_name] = {}
-        scaling_methods[scaling_method_name][patch_module_type] = (
-            cls.generate_op_scale_method,
-            cls.op_scales_to_mod_config,
-        )
+        scaling_methods[scaling_method_name][patch_module_type] = cls
 
 
 def clear_external_scaling_methods():
