@@ -299,6 +299,7 @@ def rtn_quantize(
     ratios={},
     accuracy_level=0,
     providers=["CPUExecutionProvider"],
+    nodes_to_exclude=[],
 ):
     """Quant the model with round to nearst method.
 
@@ -323,6 +324,7 @@ def rtn_quantize(
                               2 (fp16 compute type of jblas kernel), 3 (bf16 compute type of jblas kernel),
                               4 (int8 compute type of jblas kernel)
         providers (list): providers to use
+        nodes_to_exclude (list): nodes to exclude quantization.
 
     Returns:
         model: fake quantized ONNXModel
@@ -334,6 +336,8 @@ def rtn_quantize(
     total_num = len([i for i in model.nodes() if i.op_type in ["MatMul"]])
     curr_id = 0
     for node in model.nodes():
+        if node.name in nodes_to_exclude:
+            continue
         if node.op_type in ["MatMul"]:
             curr_id += 1
             simple_progress_bar(total_num, curr_id)
