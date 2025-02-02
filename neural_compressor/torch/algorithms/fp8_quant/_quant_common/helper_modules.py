@@ -231,7 +231,7 @@ class PatchedParallelLMHead(PatchedModuleBase):
         # in the sampler. (The forward itself throws RuntimeError exception)
         # So in order to quantize that linear_method we patch only the "apply" method.
         init_linear(self, mod_extra_config, False)
-        self.orig_linear_apply = types.MethodType(mod.linear_method.apply.__func__, self)
+        self.orig_linear_apply = self.orig_mod.linear_method.apply
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             if self.use_qdq or self.fake_quant:
                 self.linear_method.apply = self.apply_qdq
@@ -307,7 +307,7 @@ class PatchedReplicatedLinear(PatchedModuleBase):
 
     def forward_measure(self, input):
         measure_input((input,), observer=self._mod_extra_config.inputs)
-        output, output_bias = self.forward_orig(input)
+        output, output_bias = self.orig_mod(input)
         measure_output((output,), self._mod_extra_config.outputs)
         return output, output_bias
 
@@ -455,7 +455,7 @@ class PatchedColumnParallelLinear(PatchedModuleBase):
         output = torch.matmul(qinput, qweight)
 
         if self.gather_output:
-            output = self.orig_mod.collective_func(output)
+            output = self.collective_func(output)
         return self.post_all_reduce(output)
 
     def forward_quant(self, input):
@@ -467,7 +467,7 @@ class PatchedColumnParallelLinear(PatchedModuleBase):
                                  scale_other_inv=self.scale_weight)
         dqoutput = self.dequant_output(output)
         if self.gather_output:
-            dqoutput = self.orig_mod.collective_func(dqoutput)
+            dqoutput = self.collective_func(dqoutput)
         return self.post_all_reduce(dqoutput)
 
     def forward_measure(self, input):
@@ -475,7 +475,7 @@ class PatchedColumnParallelLinear(PatchedModuleBase):
         output = torch.matmul(input, self.weight.transpose(-1, -2))
         measure_output((output,), self._mod_extra_config.outputs)
         if self.gather_output:
-            output = self.orig_mod.collective_func(output)
+            output = self.collective_func(output)
         return self.post_all_reduce(output)
 
     def post_all_reduce(self, output):
@@ -613,7 +613,7 @@ class PatchedMoeMatmul(PatchedModuleBase):
 
     def forward_measure(self, input, *args, **kwargs):
         measure_input((input,), observer=self._mod_extra_config.inputs)
-        output = self.forward_orig(input, *args, **kwargs)
+        output = self.orig_mod(input, *args, **kwargs)
         measure_output((output,), self._mod_extra_config.outputs)
         return output
 
@@ -805,7 +805,7 @@ class PatchedKVCache(PatchedModuleBase):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         self.org_allocate = mod.allocate
         self.org_update = mod.update
-        self.forward = mod.forward
+        self.forward = self.forward_orig
 
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             self.quant_input = self._mod_extra_config.inputs[0]
@@ -853,7 +853,6 @@ class PatchedVLLMKVCache(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
-            self.orig_fetch_from_cache = mod.fetch_from_cache
             self.quant_input = self._mod_extra_config.inputs[0]
             self.dequant_output = self._mod_extra_config.outputs[0]
             if self.use_qdq:
@@ -866,12 +865,12 @@ class PatchedVLLMKVCache(PatchedModuleBase):
 
     def forward_qdq(self, input, *args, **kwargs):
         qinput = self.quant_input(input)
-        output_cache = self.forward_orig(qinput, *args, **kwargs)
+        output_cache = self.orig_mod(qinput, *args, **kwargs)
         return output_cache
 
     def forward_quant(self, input, *args, **kwargs):
         qinput = self.quant_input(input)
-        output_cache = self.forward_orig(qinput, *args, **kwargs)
+        output_cache = self.orig_mod(qinput, *args, **kwargs)
         return self.dequant_output(output_cache)
 
     def forward_measure(self, input, *args, **kwargs):
@@ -883,11 +882,11 @@ class PatchedVLLMKVCache(PatchedModuleBase):
     def fetch_from_cache(self, cache, blocks, permutations=None):
         quant_cache = self.quant_input(cache)
         if permutations:
-            output_cache = self.orig_fetch_from_cache(quant_cache, blocks, permutations)
+            output_cache = self.orig_mod.fetch_from_cache(quant_cache, blocks, permutations)
             for i in range(len(output_cache)):
                 output_cache[i] = self.dequant_output(output_cache[i])
             return output_cache
-        output_cache = self.orig_fetch_from_cache(quant_cache, blocks)
+        output_cache = self.orig_mod.fetch_from_cache(quant_cache, blocks)
         return self.dequant_output(output_cache)
 
 def init_conv(instance, mod_extra_config):
