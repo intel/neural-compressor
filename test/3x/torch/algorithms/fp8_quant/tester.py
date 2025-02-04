@@ -12,8 +12,16 @@ from typing import Dict
 from .test_hpu_utils import get_device_name
 
 import torch
-from neural_compressor.torch.algorithms.fp8_quant._core.common import mod_default_dict
-from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import Fp8cfg, QuantMode, ScaleMethod
+import habana_frameworks.torch as ht
+from neural_compressor.torch.algorithms.fp8_quant._core.patching_common import mod_default_dict
+from neural_compressor.torch.algorithms.fp8_quant._core.utils import should_quantize
+from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import (
+    Fp8cfg,
+    QuantMode,
+    ScaleMethod,
+    ScaleFormat,
+    get_hqt_config,
+)
 
 from neural_compressor.torch.quantization import prepare, convert, FP8Config # user level API
 
@@ -34,7 +42,8 @@ SCALE_METHODS_COMPILATION_ERROR = [
     ScaleMethod.ACT_MAXABS_HW_WEIGHTS_PCS_MAXABS_POW2,
     ScaleMethod.ACT_MAXABS_POW2_WEIGHTS_PCS_MAXABS_POW2,
 ]
-SCALE_METHODS_QUANT_ONLY = [ScaleMethod.UNIT_SCALE, ScaleMethod.HW_ALIGNED_SINGLE_SCALE]
+SCALE_METHODS_DYNAMIC = [ScaleMethod.MAXABS_POW2_DYNAMIC]
+SCALE_METHODS_QUANT_ONLY = [ScaleMethod.UNIT_SCALE, ScaleMethod.HW_ALIGNED_SINGLE_SCALE] + SCALE_METHODS_DYNAMIC
 
 QUANT_MODES_DEFAULT = [QuantMode.MEASURE, QuantMode.QUANTIZE]
 QUANT_MODES_QUANT_ONLY = [QuantMode.QUANTIZE]
@@ -71,6 +80,12 @@ def _assert_quantized_correctly(*, reference_model: WrapModel, quantized_model: 
     Otherwise, assert that both are not quantized.
     """
     for reference_name in mod_default_dict.keys():
+        # Modules that don't support dynamic quantization currently won't be patched
+        # preventing the tests from failing
+        # TODO [SW-217813]: Remove this when we support dynamic quantization in all modules, and remove supported_dynamic_ops
+        config_internal = get_hqt_config(quantized_model)
+        if not should_quantize(config_internal, reference_name, ""):
+            continue
         quantized_name = mod_default_dict[reference_name].patched_module.__name__
 
         assert not reference_model.has_name(quantized_name)
@@ -92,6 +107,7 @@ def run_accuracy_test(
     seed: typing.Optional[int] = None,
     quant_modes: typing.Iterable[list] = QUANT_MODES_DEFAULT,
     device_type: str = get_device_name(),
+    scale_format: ScaleFormat = ScaleFormat.SCALAR,
 ):
     """Run both the reference and the quantized versions of this module,
     and compare the outputs on every test vector.
@@ -115,6 +131,7 @@ def run_accuracy_test(
         seed: The random seed to use. If not given, will use a default seed derived from the module name.
         quant_modes: An iterable of quantization modes.
         device_type: Override device type
+        scale_format: The scale format to use: Const tensor or scalar (default: scalar)
     """
 
     # If no measure vectors given - use the same dataset as for the test vectors
@@ -133,6 +150,7 @@ def run_accuracy_test(
             lp_dtype=lp_dtype,
             scale_method=scale_method,
             device_type=device_type,
+            scale_format=scale_format,
             **module_kwargs,
         )
         if mode == QuantMode.MEASURE :
@@ -143,6 +161,8 @@ def run_accuracy_test(
             raise(ValueError(), "Unexpected mode value - {}".format(mode))
 
         _assert_quantized_correctly(reference_model=reference_model, quantized_model=quantized_model)
+
+        quantized_model = ht.hpu.wrap_in_hpu_graph(quantized_model)
 
         vectors = {
             QuantMode.MEASURE: measure_vectors,
@@ -237,6 +257,7 @@ def _get_test_only_config(
     scale_method: ScaleMethod,
     lp_dtype: torch.dtype,
     device_type: str = get_device_name(),
+    scale_format: ScaleFormat = ScaleFormat.SCALAR,
     **kwargs
 ) -> Dict:
     """Should NOT be used externally.
@@ -254,6 +275,7 @@ def _get_test_only_config(
         "scale_method": scale_method.name,
         "dump_stats_path": get_test_unique_dump_path(scale_method),
         "device_for_scales": device_type,
+        "scale_format": scale_format.name,
     }
     if "dtype" in kwargs:
        fp8_cfg["hp_dtype"] = DTYPE_TO_HPDTYPE_STR[kwargs["dtype"]]
@@ -280,10 +302,12 @@ def get_API_level_config(
     scale_method: ScaleMethod,
     lp_dtype: torch.dtype,
     device_type: str = get_device_name(),
+    scale_format: ScaleFormat = ScaleFormat.SCALAR,
     **kwargs
 ) ->FP8Config:
     return FP8Config.from_dict(_get_test_only_config(mode=mode,
                                                      scale_method=scale_method,
                                                      lp_dtype=lp_dtype,
                                                      device_type=device_type,
+                                                     scale_format=scale_format,
                                                      **kwargs))

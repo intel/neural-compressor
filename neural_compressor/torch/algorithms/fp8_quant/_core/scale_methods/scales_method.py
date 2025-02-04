@@ -12,18 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from abc import abstractmethod
-from enum import Enum, auto
+import torch
 from . import ScaleIdentity
-from ..common import torch
+from ..common import QuantTensorType
 from ..fp_utils import mmse_scale_multi, get_fullscale, mmse_scale, calc_maxabs_scale, invert_scale
 
 
-class QuantTensorType(Enum):
-    MEASUREMENTS = auto()
-    CONST = auto()
-
 class ScalesMethod:
-    def __init__(self, round_scale_method, params, device_for_scale, fullscale=None, device = torch.device("hpu")):
+    def __init__(
+        self, round_scale_method, params, device_for_scale, fullscale=None, device=torch.device("hpu"), is_dynamic=False
+    ):
         self.round_scale_method = round_scale_method
         self.params = params
         self.hp_dtype = self.params["hp_dtype"]
@@ -31,6 +29,11 @@ class ScalesMethod:
         self.device = device
         self.fullscale = fullscale if fullscale is not None else get_fullscale(self.lp_dtype, device_for_scale)
         self.scale = None
+        self.is_dynamic = is_dynamic
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(round_scale_method={self.round_scale_method.__class__.__name__}, params={self.params}, " \
+            f"fullscale={self.fullscale}, scale={self.scale}, is_dynamic={self.is_dynamic})"
 
     def calc_invert_scales(self):
         return invert_scale(self.scale)
@@ -59,14 +62,25 @@ class MaxAbsPts(ScalesMethod):
 ## MulAdditionalScales Get 2 input scales, and return their multiplication.
 # used for linear and matmul outputs
 class MulAdditionalScales(ScalesMethod):
-    def __init__(self, round_scale_method, params, device_for_scales):
-        super().__init__(round_scale_method, params, device_for_scales)
+    def __init__(self, round_scale_method, params, device_for_scales, is_dynamic=False):
+        super().__init__(round_scale_method, params, device_for_scales, is_dynamic=is_dynamic)
 
     def calc_scales(self, tensor, tensor_type, **additional_kwargs):
         input0 = additional_kwargs["input0"]
         input1 = additional_kwargs["input1"]
         self.scale = input0 * input1
         return self.scale
+
+
+class MulAdditionalDynamicScales(MulAdditionalScales):
+    def __init__(self, round_scale_method, params, device_for_scales):
+        super().__init__(round_scale_method, params, device_for_scales, is_dynamic=True)
+
+    def calc_scales(self, tensor, tensor_type, **additional_kwargs):
+        if tensor_type != QuantTensorType.DYNAMIC:
+            return None
+        return super().calc_scales(tensor, tensor_type, **additional_kwargs)
+
 
 ## UseFirstAdditionalScales Get 2 input scales, and return the first one.
 # used for linear smooth quant output
@@ -88,21 +102,26 @@ class DummyScales(ScalesMethod):
 
 class MaxAbsPcs(ScalesMethod):
 
-    def __init__(self, round_scale_method, params, device_for_scales, backoff, fullscale=None, dim=1):
-        super().__init__(round_scale_method, params, device_for_scales, fullscale)
+    def __init__(self, round_scale_method, params, device_for_scales, backoff, fullscale=None, dim=1, keepdim=False, is_dynamic=False):
+        super().__init__(round_scale_method, params, device_for_scales, fullscale, is_dynamic=is_dynamic)
         self.backoff = backoff
         self.dim = dim
+        self.keepdim = keepdim
 
     def calc_scales(self, tensor, tensor_type, **additional_kwargs):
-        if tensor_type == QuantTensorType.CONST:
-            max_abs_input = torch.max(torch.abs(tensor), dim=self.dim)[0].reshape([-1, 1])
+        if tensor_type in [QuantTensorType.CONST, QuantTensorType.DYNAMIC]:
+            max_abs_input = torch.max(torch.abs(tensor), dim=self.dim, keepdim=self.keepdim)[0]
+            # on dynamic quantization we don't need to reshape
+            if self.dim != -1:
+                max_abs_input = max_abs_input.reshape([-1, 1])
             if self.dim == 1:
                 max_abs_input = max_abs_input.flatten()
         else:
             max_abs_input = torch.tensor(tensor, dtype=self.hp_dtype ,device=self.device).max()
         scale = calc_maxabs_scale(max_abs_input, self.fullscale, self.backoff)
-        self.scale = self.round_scale_method.calc(scale)
-        return self.scale
+        scale = self.round_scale_method.calc(scale)
+        self.scale = scale
+        return scale
 
 
 ## InputChannelScale used for input channel in PCS mode
@@ -205,7 +224,6 @@ class InputSmoothQuantOpt(ScalesMethod):
         return self.scale
 
 
-
 class WeightIchSmoothQuant(ScalesMethod):
     def __init__(self, round_scale_method, params, device_for_scales):
         super().__init__(round_scale_method, params, device_for_scales)
@@ -214,3 +232,15 @@ class WeightIchSmoothQuant(ScalesMethod):
         self.scale = 1 / tensor
         return self.scale
 
+
+class MaxAbsDynamicPcs(MaxAbsPcs):
+
+    def __init__(self, round_scale_method, params, device_for_scales, backoff, fullscale=None):
+        super().__init__(round_scale_method, params, device_for_scales, backoff, fullscale, dim=-1, keepdim=True, is_dynamic=True)
+
+    # returns either None when not supplying dynamic tensor (during init..)
+    # or calculates the scale
+    def calc_scales(self, tensor, tensor_type, **additional_kwargs):
+        if tensor_type != QuantTensorType.DYNAMIC:
+            return None
+        return super().calc_scales(tensor, tensor_type, **additional_kwargs)

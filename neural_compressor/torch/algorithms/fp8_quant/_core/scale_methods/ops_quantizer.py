@@ -14,10 +14,9 @@
 from abc import abstractmethod
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import get_hqt_config
 from .scale_method_factory import ScaleMethodFactory, QuantTensorName
-from .scales_method import QuantTensorType
-from ..common import ModuleConfig
-from ..quant_dequant import DequantOutput, QuantDequant, QuantDequantNone, QuantInput, scale_fcn
-
+from ..common import ModuleConfig, QuantTensorType
+from ..quant_dequant import DequantOutput, QuantDequant, QuantDequantNone, QuantInput, QuantDynamicInput
+from ..fp_utils import scale_fcn
 
 class BaseOpQuantizer:
 
@@ -74,10 +73,16 @@ class BaseOpQuantizer:
                 for s_inv in scales_inv
             ]
         else:
-            input_config =  [
-                QuantInput(s_inv, lp_dtype, hp_dtype, scale_format=scale_format) for s_inv in scales_inv
-            ]
+            input_config = []
+            for input_scales_creator, s_inv in zip(self.inputs_scales_creators, scales_inv):
+                if input_scales_creator.is_dynamic:
+                    input_config.append(
+                        QuantDynamicInput(input_scales_creator, lp_dtype, hp_dtype, scale_format=scale_format)
+                    )
+                else:
+                    input_config.append(QuantInput(s_inv, lp_dtype, hp_dtype, scale_format=scale_format))
         return input_config
+
 
 class LinearOpQuantizer(BaseOpQuantizer):
 
@@ -124,7 +129,6 @@ class LinearOpQuantizer(BaseOpQuantizer):
             self.weight_ich_scale_calc.scale = params_config[1]
         else:
             self.weight_och_scale_calc.scale = params_config
-
 
     def scales_module_config_to_q_and_dq(self, module):
         self.init_scales_from_module_config(module)

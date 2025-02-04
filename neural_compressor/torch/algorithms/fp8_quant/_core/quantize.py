@@ -21,12 +21,13 @@ import numpy as np
 from .scale_methods import ops_quantizer
 from .._quant_common.quant_config import QuantMode
 from .._quant_common.helper_modules import PatchedUnmeasuredModule
-from .._quant_common.quant_config import get_hqt_config, set_hqt_config
+# TODO [SW-217813]: support dynamic quantization in all ops and remove supported_dynamic_ops
+from .._quant_common.quant_config import get_hqt_config, set_hqt_config, supported_dynamic_ops
 from ..utils.logger import logger
-from .common import convert_scales_to_tensors_dict, generate_model_info, mod_default_dict, parent_child_mod_dict, \
-                    save_scales, load_scales
+from .common import convert_scales_to_tensors_dict, save_scales, load_scales
+from .patching_common import generate_model_info, mod_default_dict, parent_child_mod_dict
 from .measure import load_measurements
-from .scale import scale_method_mapping, load_layer_scales
+from .scale import scale_method_mapping, load_layer_scales, prepare_layer_scales
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
 
@@ -127,9 +128,18 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     save_file = False
     patched_modules = []
     patched_module_types = set()
+    # TODO [SW-217814]: improve config parsing
+    is_dynamic_quantization = "dyn" in scaling_method_name
+    #TODO Merge with load_layer_scales
+    prepare_scales_func = prepare_layer_scales if is_dynamic_quantization else load_layer_scales
+    should_quantize_cond = True # In static quantization we quantize everything
     with torch.no_grad():
         for name, mod in model.named_modules():
             mod_type_str = mod.__class__.__name__
+            if is_dynamic_quantization:
+                # TODO [SW-217813]: support dynamic quantization in all ops and remove supported_dynamic_ops, then move outside the loop
+                should_quantize_cond = mod_type_str in supported_dynamic_ops
+
             if name in mod_list and name not in scales and config.cfg["use_stats_files"] and name not in measurement:
                 if mod_default_dict[mod_type_str].should_measure_and_quant:
                     if not config.cfg["ignore_modules_wo_measures"]:
@@ -141,18 +151,22 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
             apply_hf_hook(mod)
             if name in mod_list:
                 set_hqt_config(mod, config)  # set config in the module, as it consumed by the patched module
-                mod_extra_config, save_file = load_layer_scales(mod, name, config,
+
+                # TODO [SW-217813]: support dynamic quantization in all ops and remove should_quantize_cond
+                if should_quantize_cond:
+                    mod_extra_config, save_file = prepare_scales_func(mod, name, config,
                                                                 mod_type_str, measurement,
                                                                 scales, scale_file,
                                                                 scales_file_format,
                                                                 scales_obj, scaling_method_name,
                                                                 scale_config, save_file)
-                if not config.cfg["fake_quant"] and mod_default_dict[mod_type_str].should_measure_and_quant:
-                    quantize_params(mod, mod_extra_config)
-                patch_module(mod, mod_extra_config, mod_default_dict)
-                patched_modules.append(name)
-                patched_module_types.add(type(mod))
-                logger.debug("Patched module name: %s", name)
+
+                    if not config.cfg["fake_quant"] and mod_default_dict[mod_type_str].should_measure_and_quant:
+                        quantize_params(mod, mod_extra_config)
+                    patch_module(mod, mod_extra_config, mod_default_dict)
+                    patched_modules.append(name)
+                    patched_module_types.add(type(mod))
+                    logger.debug("Patched module name: %s", name)
     if save_file: # cache calculated scales
         save_scales(model, scales_obj, scales_file_format, scale_file + ".npz")
         save_scales(model, scales_obj, scales_file_format, scale_file + ".json")
@@ -176,7 +190,8 @@ def prepare_model_with_dummy_measurement(model, mod_list, scaling_method_name, s
     Returns:
         model: empty model that quantized by default qconfig.
     """
-    from .common import ModuleExtraConfig, mod_types
+    from .patching_common import mod_types
+    from ..model_configs import ModuleExtraConfig
 
     config = get_hqt_config(model)
     patched_modules = []

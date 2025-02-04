@@ -72,6 +72,7 @@ class ScaleMethod(Enum):
     MAXABS_HW_OPT_WEIGHT = 13
     MAXABS_POW2_OPT_WEIGHT = 14
     MAXABS_ARBITRARY = 15
+    MAXABS_POW2_DYNAMIC = 16
 
 class TrueFalse(Enum):
     TRUE = True
@@ -114,7 +115,13 @@ _configs_that_use_enum_value = [
     "measure_on_hpu",
 ]
 
-_scale_methods_quant_only = [ScaleMethod.UNIT_SCALE, ScaleMethod.HW_ALIGNED_SINGLE_SCALE]
+# TODO [SW-217813]: support dynamic quantization in all ops and remove
+supported_dynamic_ops = ["Linear"]
+def is_supported_dynamic_op(op_name):
+    return op_name.lower() in [op.lower() for op in supported_dynamic_ops]
+
+_dynamic_scale_methods = [ScaleMethod.MAXABS_POW2_DYNAMIC]
+_quant_only_scale_methods = [ScaleMethod.UNIT_SCALE, ScaleMethod.HW_ALIGNED_SINGLE_SCALE]
 _pcq_scale_methods = [
     ScaleMethod.SMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2,
     ScaleMethod.WEAKSMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2,
@@ -257,7 +264,12 @@ class Fp8cfg:
                 measured_global_config["scale_format"] = ScaleFormat.CONST
                 logger.warning(f"Cannot use 'scale_format = SCALAR' when using fake_quant. Reduced to 'CONST'.")
         quant_mode = measured_global_config["mode"]
-        if scale_method in _scale_methods_quant_only:
+        # TODO [SW-217814]: get dynamic methods in a better way, or support file handling in dynamic mode
+        if scale_method in _dynamic_scale_methods:
+            logger.info(f"NOTE: Using dynamic scale method, only supported ops will be quantized.")
+            # TODO: "Linear only" in types still causes issues as llama7b quantizes also self_attn,
+            # which should be blocked for some reason. We might then want to set measured_global_config["allowlist"]["types"] = supported_dynamic_ops
+        if scale_method in _quant_only_scale_methods + _dynamic_scale_methods:
             if quant_mode in (QuantMode.QUANTIZE, QuantMode.LOAD):
                 logger.debug(f"Quantization mode is quant, scale_method is {scale_method}, so stats files won't be used")
                 measured_global_config["use_stats_files"] = False

@@ -15,9 +15,10 @@
 import torch
 import torch.nn as nn
 import types
+import functools
 
 from .quant_config import QuantMode
-from .._core.quant_dequant import QuantDequant as qdq
+from .._core.quant_dequant import QuantDequant as qdq, QuantDynamicInput
 from .._core.quantized_hpu_ops import get_hpu_quantized_func_wrapper, OP_TYPE
 from ..patched_module_base import PatchedModuleBase
 from .._core.scale_handler import get_scale_dtype, ScaleFormat
@@ -158,6 +159,7 @@ def init_linear(instance, mod_extra_config, change_forward=True):
         else:
             instance.matmul_fp8 = get_hpu_quantized_func_wrapper(OP_TYPE.GEMM, instance.scale_format)
             instance.forward = instance.forward_quant if change_forward else instance.forward
+            # input0 is None when initializing a dynamic quantization op
             instance.register_scale("scale_input", mod_extra_config.scale.inputs[0], instance.scale_format)
             if isinstance(mod_extra_config.scale.params["weight"], (torch.Tensor, float)):
                 instance.register_scale("scale_weight", mod_extra_config.scale.params["weight"], instance.scale_format)
@@ -185,6 +187,13 @@ class PatchedLinear(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         init_linear(self, mod_extra_config)
+        if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
+            if not self.use_qdq and not self.fake_quant:
+                # dynamic quantization needs to get the scale from the quant_input calculation
+                # TODO [SW-217921]: find a better solution, like PatchedLinearBase, or at least move to init_linear
+                if isinstance(self.quant_input, QuantDynamicInput):
+                    self.forward = self.forward_quant_dynamic
+
 
     def forward_qdq(self, input):
         if self.fake_quant:
@@ -202,6 +211,17 @@ class PatchedLinear(PatchedModuleBase):
                             self.weight,
                             out_dtype=self._mod_extra_config.config_params["hp_dtype"],
                             scale_input_inv=self.scale_input,
+                            scale_other_inv=self.scale_weight)
+        output = y + self.bias if (self.bias is not None) else y
+        return output
+
+    # TODO [SW-217921]: find a better solution, like PatchedLinearBase, or at least move to init_linear
+    def forward_quant_dynamic(self, input):
+        qinput, scale_input = self.quant_input(input)
+        y = self.matmul_fp8(qinput,
+                            self.weight,
+                            out_dtype=self._mod_extra_config.config_params["hp_dtype"],
+                            scale_input_inv=scale_input,
                             scale_other_inv=self.scale_weight)
         output = y + self.bias if (self.bias is not None) else y
         return output

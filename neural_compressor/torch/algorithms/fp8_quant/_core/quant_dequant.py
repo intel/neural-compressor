@@ -19,24 +19,19 @@ from abc import abstractmethod
 import habana_frameworks.torch.core as htcore
 import habana_frameworks.torch.utils.experimental as htexp
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
+
 cur_accelerator = auto_detect_accelerator()
 
 from .._core.scale_handler import add_scale_registry, get_scale_dtype
 from .._quant_common.quant_config import ScaleFormat
-
-descale_fcn = lambda x, scale: torch.mul(x, scale)
-scale_fcn = lambda x, scale: torch.div(x, scale)
-cast_fcn = lambda x, dtype: x.to(dtype=dtype)
-cast_to_fp8_fcn = lambda x, dtype, scale_inv=None: torch.ops.hpu.cast_to_fp8_v2(x, scale_inv, False, False, dtype)[0]
-cast_from_fp8_fcn = lambda x, dtype, scale=None: torch.ops.hpu.cast_from_fp8(x, scale, dtype)
-quantize_per_tensor_to_fp8 = lambda x, scale, zero_point, quant_min, quant_max, dtype=None, axis=None: \
-    torch.ops.quantized_decomposed.quantize_per_tensor(x, scale, zero_point, quant_min, quant_max, dtype=dtype)
-dequantize_per_tensor_from_fp8= lambda x, scale, zero_point, quant_min, quant_max, dtype, out_dtype=None, axis=None: \
-    torch.ops.quantized_decomposed.dequantize_per_tensor(x, scale, zero_point, quant_min, quant_max, dtype=dtype, out_dtype=out_dtype)
-quantize_per_channel_to_fp8 = lambda x, scale, zero_point, axis, quant_min, quant_max, dtype=None: \
-    torch.ops.quantized_decomposed.quantize_per_channel(x, scale, zero_point, axis, quant_min, quant_max, dtype=dtype)
-dequantize_per_channel_from_fp8 = lambda x, scale, zero_point, axis, quant_min, quant_max, dtype, out_dtype=None: \
-    torch.ops.quantized_decomposed.dequantize_per_channel(x, scale, zero_point, axis, quant_min, quant_max, dtype=dtype, out_dtype=out_dtype)
+from .common import QuantTensorType
+from .fp_utils import (
+    quantize_per_tensor_to_fp8,
+    dequantize_per_tensor_from_fp8,
+    quantize_per_channel_to_fp8,
+    dequantize_per_channel_from_fp8,
+)
+from .scale_handler import create_scale_tensor
 
 
 class QuantDequantBase(nn.Module):
@@ -129,6 +124,29 @@ class QuantInput(QuantDequantBase):
         repr = super(QuantInput, self).extra_repr()
         dtype = get_scale_dtype(self.scale_inv)
         return f"{repr}, scale_inv dtype={dtype}"
+
+
+class QuantDynamicInput(QuantDequantBase):
+    def __init__(self, input_scales_creator, lp_dtype, hp_dtype, *args, **kwargs):
+        super(QuantDynamicInput, self).__init__(lp_dtype, hp_dtype, *args, **kwargs)
+        self.input_scales_creator = input_scales_creator
+
+        self.cast_to_op = self.set_cast_to_op()
+
+    def forward(self, x):
+        scale = self.input_scales_creator.calc_scales(x, QuantTensorType.DYNAMIC)
+        scale_inv = self.input_scales_creator.calc_invert_scales()
+
+        scale = create_scale_tensor(scale, self.scale_format)
+        scale_inv = create_scale_tensor(scale_inv, self.scale_format)
+
+        ret = self.cast_to_op(x, scale_inv, False, False, self.lp_dtype)[0]
+
+        return ret, scale
+
+    def extra_repr(self) -> str:
+        repr = super(QuantDynamicInput, self).extra_repr()
+        return f"{repr} input_scales_creator={self.input_scales_creator}"
 
 
 class DequantOutput(QuantDequantBase):

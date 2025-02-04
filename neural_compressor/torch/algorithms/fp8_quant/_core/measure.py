@@ -23,7 +23,9 @@ from abc import abstractmethod
 
 from .._quant_common.quant_config import MeasureExclude, QuantMode, ScaleMethod, get_hqt_config, set_hqt_config
 from ..utils.logger import logger
-from .common import *
+from .common import load_file, save_file, ShapeList
+from .patching_common import generate_model_info, mod_default_dict, mod_types, parent_child_mod_dict
+from ..model_configs import ModuleExtraConfig
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 from neural_compressor.torch.algorithms.fp8_quant.model_configs import (
     OBSERVER_TYPES,

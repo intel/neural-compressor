@@ -3,7 +3,7 @@ import typing
 import pytest
 import torch
 
-from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import ScaleMethod
+from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import ScaleMethod, ScaleFormat
 
 from ...test_hpu_utils import *
 from ...tester import *
@@ -20,9 +20,16 @@ def get_test_vectors(*, dtype: torch.dtype, N: int, D_in: int, atol: float = 0.0
 @pytest.mark.parametrize("lp_dtype", [torch.float8_e4m3fn], ids=["fp8_e4m3fn"])
 @pytest.mark.parametrize("scale_method", ScaleMethod)
 @pytest.mark.parametrize("device_type", device_type)
-def test_linear_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype, scale_method: ScaleMethod, device_type: str):
+@pytest.mark.parametrize("scale_format", ScaleFormat)
+def test_linear_accuracy(
+    hp_dtype: torch.dtype, lp_dtype: torch.dtype, scale_method: ScaleMethod, device_type: str, scale_format: ScaleFormat
+):
     if scale_method in SCALE_METHODS_KEY_ERROR:
         pytest.xfail("KeyError")
+    # TODO [SW-215692]: Fix segfault
+    if scale_format == ScaleFormat.CONST:
+        if scale_method in [ScaleMethod.MAXABS_HW_OPT_WEIGHT, ScaleMethod.MAXABS_POW2_OPT_WEIGHT]:
+            pytest.xfail("Segfault")
     quant_modes = QUANT_MODES_DEFAULT
     atol = 0.022
     if scale_method == ScaleMethod.MAXABS_ARBITRARY:
@@ -48,6 +55,7 @@ def test_linear_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype, scale_met
             test_vectors=get_test_vectors(dtype=hp_dtype, N=N, D_in=D_in, atol=atol),
             quant_modes=quant_modes,
             device_type=device_type,
+            scale_format=scale_format,
         )
     if get_device_type() != device_type_id[device_type] and scale_method != ScaleMethod.MAXABS_HW:
         return run_with_raised_exception(run, ValueError, "Unsupported config: scale_method: ")
