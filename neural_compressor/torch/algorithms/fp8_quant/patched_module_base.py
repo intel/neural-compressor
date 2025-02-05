@@ -153,7 +153,7 @@ class PatchedModuleBase(torch.nn.Module):
         elif self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             self.lp_dtype = self._mod_extra_config.config_params["lp_dtype"] if self._mod_extra_config else torch.float8_e4m3fn
             self.hp_dtype = self._mod_extra_config.config_params["hp_dtype"] if self._mod_extra_config else torch.bfloat16
-            if self.fake_quant:
+            if self.fake_quant or self.use_qdq:
                 self.forward = self.forward_qdq
             else:
                 self.forward = self.forward_quant
