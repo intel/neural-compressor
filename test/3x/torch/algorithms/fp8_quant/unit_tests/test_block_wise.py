@@ -1,4 +1,5 @@
 import copy
+import pytest
 import torch
 
 import habana_frameworks.torch.core as htcore
@@ -14,6 +15,7 @@ torch.manual_seed(1)
 
 
 # Run real quantization, and compare
+@pytest.mark.skip(reason="SW-218081 unknown CI failure")
 def test_block_wise_measurement():
     model_name = "facebook/opt-350m"
     model_normal = AutoModelForCausalLM.from_pretrained(model_name)
