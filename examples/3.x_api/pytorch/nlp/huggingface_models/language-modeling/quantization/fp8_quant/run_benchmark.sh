@@ -92,6 +92,11 @@ function run_benchmark {
         model_name_or_path="/git_lfs/data/pytorch/llama3.1/Meta-Llama-3.1-405B-Instruct/"
         tuned_checkpoint="/software/llama_fp8/llama3_1_405b_fp8_block_wise"
         python_cmd="deepspeed --num_gpus 8"
+    elif [ "${topology}" = "deepseek_v2_lite" ]; then
+        model_name_or_path="deepseek-ai/DeepSeek-V2-Lite"
+        tuned_checkpoint="/software/llama_fp8/deepseek_v2_lite_fp8_block_wise"
+        mode_cmd=$mode_cmd" --disable_optimum_habana"
+        python_cmd="deepspeed --num_gpus 2"
     fi
 
     if [[ ${int8} == "true" ]]; then

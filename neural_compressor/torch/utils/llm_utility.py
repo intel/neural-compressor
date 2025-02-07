@@ -17,15 +17,15 @@
 def initialize_model_and_tokenizer(model_name_or_path, use_load=False, device="cpu"):
     import transformers
     from neural_compressor.torch.utils import local_rank, world_size, logger
-    tokenizer = transformers.AutoTokenizer.from_pretrained(model_name_or_path)
+    tokenizer = transformers.AutoTokenizer.from_pretrained(model_name_or_path, trust_remote_code=True)
     if use_load:
         from neural_compressor.torch.quantization import load
-        model = load(model_name_or_path, format="huggingface", device=device)
+        model = load(model_name_or_path, format="huggingface", device=device, trust_remote_code=True)
         model, tokenizer = update_tokenizer(model, tokenizer)
         return model, tokenizer
-    config = transformers.AutoConfig.from_pretrained(model_name_or_path)
+    config = transformers.AutoConfig.from_pretrained(model_name_or_path, trust_remote_code=True)
     # using memory mapping with torch_dtype=config.torch_dtype
-    model = transformers.AutoModelForCausalLM.from_pretrained(model_name_or_path, torch_dtype=config.torch_dtype)
+    model = transformers.AutoModelForCausalLM.from_pretrained(model_name_or_path, torch_dtype=config.torch_dtype, trust_remote_code=True)
     model, tokenizer = update_tokenizer(model, tokenizer)
     # shard model for multi-cards and enable hpu graph
     if world_size > 1:
