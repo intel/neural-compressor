@@ -53,6 +53,7 @@ if __name__ == "__main__":
     parser.add_argument("--enable_block_wise_calibration", action="store_true", help="whether to use block-wise calibration")
     parser.add_argument("--disable_optimum_habana", action="store_true", help="whether to use adapt_transformers_to_gaudi")
     parser.add_argument("--save", action="store_true", help="whether to save the quantized model")
+    parser.add_argument("--save_in_vllm_format", action="store_true", help="whether to save model in vllm format")
     parser.add_argument("--load", action="store_true", help="whether to load the quantized model")
     parser.add_argument("--save_path", type=str, default="saved_results", help="path to save the quantized model")
     parser.add_argument("--accuracy", action="store_true", help="accuracy measurement")
@@ -92,9 +93,12 @@ if __name__ == "__main__":
         qconfig = FP8Config(
             fp8_config="E4M3",
             scale_method=args.scale_method,
-            blocklist={"names": ["lm_head"]} if args.enable_block_wise_calibration else {},  # block-wise cannot calibrate lm_head
+            blocklist={"names": ["lm_head"]} if args.enable_block_wise_calibration or args.save_in_vllm_format else {},  # block-wise cannot calibrate lm_head
             measure_on_hpu=False if args.enable_block_wise_calibration else True,  # to avoid device mapping of model
             dump_stats_path=args.dump_stats_path,
+            allowlist={
+                "types": ["Linear", "LinearLayer", "LinearAllreduce", "KVCache", "VLLMKVCache"]
+            } if args.save_in_vllm_format else FP8Config().allowlist,
         )
         if args.scale_method in ["unit_scale", "hw_aligned_single_scale"]:
             model = convert(model, qconfig)
@@ -129,7 +133,7 @@ if __name__ == "__main__":
         logger.info(f"Used CPU memory: {round((get_used_cpu_mem_MB() - cpu_mem_0)/1024, 3)} GiB")
         if args.save:
             logger.info(f"Saving quantized model to {args.save_path}")
-            save(model, args.save_path, format="huggingface")
+            save(model, args.save_path, format="huggingface" if not args.save_in_vllm_format else "vllm")
             tokenizer.save_pretrained(args.save_path)
             logger.info(f"Saved quantized model to {args.save_path}")
         exit(0)  # model is wrapped during calibration, need to exit before accuracy and performance measurement
