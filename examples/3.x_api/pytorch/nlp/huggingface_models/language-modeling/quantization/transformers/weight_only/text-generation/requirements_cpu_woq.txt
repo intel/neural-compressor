@@ -15,3 +15,6 @@ lm-eval==0.4.3
 huggingface_hub
 numba
 tbb
+intel-extension-for-pytorch==2.4.0
+--extra-index-url https://pytorch-extension.intel.com/release-whl/stable/cpu/us/
+oneccl_bind_pt==2.4.0
