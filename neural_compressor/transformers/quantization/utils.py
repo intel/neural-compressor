@@ -126,7 +126,6 @@ def _replace_linear(
             current_key_name = []
         current_key_name.append(name)
         is_removed = False
-        print(isinstance(module, auto_round.export.export_to_itrex.model_wrapper.WeightOnlyLinear))
         if (
             isinstance(module, torch.nn.Linear)
             or isinstance(module, INCWeightOnlyLinear)
