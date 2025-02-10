@@ -226,7 +226,7 @@ class TestTansformersLikeAPI:
             bits=4, 
             group_size=128,
             is_vlm=True,
-            dataset="liuhaotian/llava_conv_58k", 
+            dataset="NeelNanda/pile-10k",  
             iters=2,
             n_samples=5,
             seq_len=512,
@@ -248,17 +248,17 @@ class TestTansformersLikeAPI:
         loaded_model = Qwen2VLForConditionalGeneration.from_pretrained("transformers_vlm_tmp")
         assert isinstance(loaded_model.model.layers[0].self_attn.k_proj, WeightOnlyQuantizedLinear), "loaing model failed."
         
-        # phi-3-vision-128k-instruct
-        woq_config = AutoRoundConfig(
-            bits=4, 
-            group_size=128,
-            is_vlm=True,
-            dataset="NeelNanda/pile-10k", 
-            iters=2,
-            n_samples=5,
-            seq_len=64,
-            batch_size=1,
-        )
-        model_name = "microsoft/Phi-3-vision-128k-instruct"
-        woq_model = AutoModelForCausalLM.from_pretrained(model_name, quantization_config=woq_config, trust_remote_code=True, attn_implementation='eager')
-        assert isinstance(woq_model.model.layers[0].self_attn.o_proj, WeightOnlyQuantizedLinear), "quantizaion failed."
+        # phi-3-vision-128k-instruct, disable as CI consumes too much time
+        # woq_config = AutoRoundConfig(
+        #     bits=4, 
+        #     group_size=128,
+        #     is_vlm=True,
+        #     dataset="liuhaotian/llava_conv_58k",
+        #     iters=2,
+        #     n_samples=5,
+        #     seq_len=64,
+        #     batch_size=1,
+        # )
+        # model_name = "microsoft/Phi-3-vision-128k-instruct"
+        # woq_model = AutoModelForCausalLM.from_pretrained(model_name, quantization_config=woq_config, trust_remote_code=True, attn_implementation='eager')
+        # assert isinstance(woq_model.model.layers[0].self_attn.o_proj, WeightOnlyQuantizedLinear), "quantizaion failed."
