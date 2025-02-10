@@ -41,7 +41,7 @@ if is_ipex_available():
 if is_package_available("auto_round"):
     import auto_round
     from auto_round.export.export_to_itrex.model_wrapper import WeightOnlyLinear as auto_round_woq_linear
-    
+
 
 from typing import Union
 
