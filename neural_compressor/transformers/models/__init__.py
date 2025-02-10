@@ -18,6 +18,6 @@ from .modeling_auto import (
     AutoModelForCausalLM,
     AutoModelForSeq2SeqLM,
     Qwen2VLForConditionalGeneration,
-    MllamaForConditionalGeneration, 
+    MllamaForConditionalGeneration,
     LlavaForConditionalGeneration,
 )
