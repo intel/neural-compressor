@@ -545,7 +545,7 @@ class AutoRoundConfig(INCQuantizationConfigMixin):
         quant_lm_head: bool = False,
         # vlm arguments
         is_vlm: bool = False,
-        quant_nontext_module: Union[str, list] = None,
+        quant_nontext_module: bool = False,
         truncation: bool = False,
         gradient_accumulate_steps: int = 1,
         export_format="itrex",

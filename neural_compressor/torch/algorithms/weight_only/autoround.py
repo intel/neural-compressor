@@ -84,7 +84,7 @@ class AutoRoundQuantizer(Quantizer):
         enable_torch_compile: bool = None,
         # mllm
         is_mllm: bool = False,
-        quant_nontext_module: Union[str, list] = None,
+        quant_nontext_module: bool = False,
         extra_data_dir: str = None,
         image_processor=None,
         processor=None,
@@ -150,7 +150,7 @@ class AutoRoundQuantizer(Quantizer):
             act_dynamic (bool): Whether to use dynamic activation quantization. Default is True.
             enable_norm_bias_tuning (bool): Whether to enable fast norm/layer_bias tuning.
             enable_torch_compile (bool): Whether to enable torch compile to optimize quant_block/layer, torch>=2.6 True.
-            quant_nontext_module (Union[str, list]): Whether to quantize nontext module.
+            quant_nontext_module (bool): Whether to quantize nontext module.
             is_mllm (bool): Indicates whether the model to be quantized is a multi-modal model (MLLM).
             extra_data_dir (str): The path for extra data such as images, audio or videos.
             processor (transformers.AutoProcessor): Any multi-modal model will require an object to encode or
@@ -383,7 +383,7 @@ def get_mllm_dataloader(
         template, model=model, tokenizer=tokenizer, processor=processor, image_processor=image_processor
     )
     dataset = template.default_dataset if dataset is None else dataset
-    if quant_nontext_module or (dataset in CALIB_DATASETS.keys() and not _only_text_test(model, tokenizer)):
+    if quant_nontext_module or (dataset in CALIB_DATASETS.keys() and not _only_text_test(model, tokenizer, "cpu", template.model_type)):
         if quant_nontext_module:
             logger.warning(
                 "Quantitative nontext module is not supported for plain text datasets,"
@@ -399,7 +399,7 @@ def get_mllm_dataloader(
         truncation = False
         gradient_accumulate_steps = batch_size * gradient_accumulate_steps
         batch_size = 1
-
+        seed = 42  # The seed is fixed to 42 in transformers
     seqlen = 2048 if seqlen is None else seqlen  # set text only calibration default args
     truncation = True if truncation is None else truncation
     dataset = dataset.replace(" ", "")

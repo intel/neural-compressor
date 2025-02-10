@@ -950,7 +950,7 @@ class AutoRoundConfig(TorchBaseConfig):
         enable_torch_compile: bool = None,
         # mllm
         is_mllm: bool = False,
-        quant_nontext_module: Union[str, list] = None,
+        quant_nontext_module: bool = False,
         extra_data_dir: str = None,
         processor=None,
         image_processor=None,
@@ -994,7 +994,7 @@ class AutoRoundConfig(TorchBaseConfig):
             export_format (str, optional): The format used for exporting the quantized model. Defaults to "itrex".
             enable_norm_bias_tuning (bool): Whether to enable fast norm/layer_bias tuning.
             enable_torch_compile (bool): Whether to enable torch compile to optimize quant_block/layer, torch>=2.6 True.
-            quant_nontext_module (Union[str, list]): Whether to quantize nontext module.
+            quant_nontext_module (bool): Whether to quantize nontext module.
             extra_data_dir (str): The path for extra data such as images, audio or videos.
             is_mllm (bool): Indicates whether the model to be quantized is a multi-modal model (MLLM).
             processor (transformers.AutoProcessor): Any multi-modal model will require an object to encode or
