@@ -357,7 +357,7 @@ class _BaseINCAutoModelClass:
         if "AutoModel" in cls.ORIG_MODEL.__name__:
             has_remote_code = hasattr(config, "auto_map") and cls.ORIG_MODEL.__name__ in config.auto_map
             has_local_code = type(config) in cls.ORIG_MODEL._model_mapping.keys()
-        
+
             trust_remote_code = resolve_trust_remote_code(
                 trust_remote_code,
                 pretrained_model_name_or_path,
@@ -750,12 +750,15 @@ class AutoModel(_BaseINCAutoModelClass):
 
 class AutoModelForSeq2SeqLM(_BaseINCAutoModelClass):
     ORIG_MODEL = transformers.AutoModelForSeq2SeqLM
-    
+
+
 class Qwen2VLForConditionalGeneration(_BaseINCAutoModelClass):
     ORIG_MODEL = transformers.Qwen2VLForConditionalGeneration
-    
+
+
 class MllamaForConditionalGeneration(_BaseINCAutoModelClass):
     ORIG_MODEL = transformers.MllamaForConditionalGeneration
+
 
 class LlavaForConditionalGeneration(_BaseINCAutoModelClass):
     ORIG_MODEL = transformers.LlavaForConditionalGeneration

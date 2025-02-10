@@ -544,7 +544,7 @@ class AutoRoundConfig(INCQuantizationConfigMixin):
         use_layer_wise: bool = None,
         quant_lm_head: bool = False,
         # vlm arguments
-        is_vlm: bool = False, 
+        is_vlm: bool = False,
         quant_nontext_module: Union[str, list] = None,
         truncation: bool = False,
         gradient_accumulate_steps: int = 1,
@@ -599,13 +599,13 @@ class AutoRoundConfig(INCQuantizationConfigMixin):
             self.scale_dtype = scale_dtype
         self.use_layer_wise = use_layer_wise
         self.model_path = kwargs.get("model_path", "")
-        
+
         # vlm arguments
-        self.is_vlm = is_vlm 
+        self.is_vlm = is_vlm
         self.quant_nontext_module = quant_nontext_module
         self.truncation = truncation
         self.gradient_accumulate_steps = gradient_accumulate_steps
-        self.export_format= export_format
+        self.export_format = export_format
 
     def to_diff_dict(self) -> Dict[str, Any]:
         """Removes all attributes from config which correspond to the default config attributes
