@@ -40,6 +40,8 @@ if is_ipex_available():
 
 if is_package_available("auto_round"):
     import auto_round
+    from auto_round.export.export_to_itrex.model_wrapper import WeightOnlyLinear as auto_round_woq_linear
+    
 
 from typing import Union
 
@@ -129,10 +131,7 @@ def _replace_linear(
         if (
             isinstance(module, torch.nn.Linear)
             or isinstance(module, INCWeightOnlyLinear)
-            or (
-                is_package_available("auto_round")
-                and isinstance(module, auto_round.export.export_to_itrex.model_wrapper.WeightOnlyLinear)
-            )
+            or (is_package_available("auto_round") and isinstance(module, auto_round_woq_linear))
             or (is_ipex_available() and isinstance(module, ipex.nn.utils._weight_prepack._IPEXLinear))
         ) and (name not in modules_to_not_convert):
             # Check if the current key is not in the `modules_to_not_convert`

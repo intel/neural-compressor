@@ -548,7 +548,7 @@ class AutoRoundConfig(INCQuantizationConfigMixin):
         quant_nontext_module: Union[str, list] = None,
         truncation: bool = False,
         gradient_accumulate_steps: int = 1,
-        export_format="auto_round:gptq",
+        export_format="itrex",
         **kwargs,
     ):
 

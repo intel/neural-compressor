@@ -231,10 +231,9 @@ class TestTansformersLikeAPI:
             n_samples=5,
             seq_len=512,
             batch_size=1,
-            export_format="itrex",
         )
         
-        woq_model = Qwen2VLForConditionalGeneration.from_pretrained(model_name, quantization_config=woq_config, attn_implementation='eager')
+        woq_model = Qwen2VLForConditionalGeneration.from_pretrained(model_name, quantization_config=woq_config, trust_remote_code=True)
        
         if  hasattr(torch, "xpu") and torch.xpu.is_available():
             from intel_extension_for_pytorch.nn.utils._quantize_convert import WeightOnlyQuantizedLinear
@@ -251,5 +250,5 @@ class TestTansformersLikeAPI:
         
         # phi-3-vision-128k-instruct
         model_name = "microsoft/Phi-3-vision-128k-instruct"
-        woq_model = AutoModelForCausalLM.from_pretrained(model_name, quantization_config=woq_config, attn_implementation='eager')
+        woq_model = AutoModelForCausalLM.from_pretrained(model_name, quantization_config=woq_config, trust_remote_code=True, attn_implementation='eager')
         assert isinstance(woq_model.model.layers[0].self_attn.o_proj, WeightOnlyQuantizedLinear), "quantizaion failed."
