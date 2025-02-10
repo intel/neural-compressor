@@ -235,8 +235,11 @@ class TestTansformersLikeAPI:
         )
         
         woq_model = Qwen2VLForConditionalGeneration.from_pretrained(model_name, quantization_config=woq_config, attn_implementation='eager')
-        
-        from intel_extension_for_pytorch.nn.modules import WeightOnlyQuantizedLinear
+       
+        if  hasattr(torch, "xpu") and torch.xpu.is_available():
+            from intel_extension_for_pytorch.nn.utils._quantize_convert import WeightOnlyQuantizedLinear
+        else:    
+            from intel_extension_for_pytorch.nn.modules import WeightOnlyQuantizedLinear
         assert isinstance(woq_model.model.layers[0].self_attn.k_proj, WeightOnlyQuantizedLinear), "replacing model failed."
         
         #save
@@ -251,5 +254,4 @@ class TestTansformersLikeAPI:
         woq_model = AutoModelForCausalLM.from_pretrained(model_name, quantization_config=woq_config, attn_implementation='eager')
         
         from intel_extension_for_pytorch.nn.modules import WeightOnlyQuantizedLinear
-        breakpoint()
         assert isinstance(woq_model.model.layers[0].self_attn.o_proj, WeightOnlyQuantizedLinear), "quantizaion failed."
