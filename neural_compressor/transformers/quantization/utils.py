@@ -17,8 +17,8 @@
 import json
 import math
 import os
-import types
 import re
+import types
 
 from datasets import load_dataset
 
@@ -43,7 +43,6 @@ if is_package_available("auto_round"):
     import auto_round
     import transformers
     from auto_round.export.export_to_itrex.model_wrapper import WeightOnlyLinear as auto_round_woq_linear
-
 
 from typing import Union
 
@@ -136,8 +135,9 @@ def _replace_linear(
             or (is_package_available("auto_round") and isinstance(module, auto_round_woq_linear))
         ) and (name not in modules_to_not_convert):
             # Check if the current key is not in the `modules_to_not_convert`
-            if not any(key in ".".join(current_key_name) for key in modules_to_not_convert) and \
-                not any(re.match(pattern, ".".join(current_key_name)) for pattern in modules_to_not_convert):
+            if not any(key in ".".join(current_key_name) for key in modules_to_not_convert) and not any(
+                re.match(pattern, ".".join(current_key_name)) for pattern in modules_to_not_convert
+            ):
                 in_features = module.in_features
                 out_features = module.out_features
                 if device == "cpu" or device == torch.device("cpu") or device == "auto":
@@ -145,7 +145,7 @@ def _replace_linear(
                     from intel_extension_for_pytorch.utils.weight_only_quantization import (
                         _convert_optimum_format_to_desired,
                     )
-                        
+
                     qweight = module.qweight
                     scales = module.scales
                     qzeros = module.qzeros
@@ -552,14 +552,15 @@ def convert_to_quantized_model(model, config, device="cpu"):
             gradient_accumulate_steps=config.gradient_accumulate_steps,
             export_format=config.export_format,
         )
-        
+
         # vlm set non-text module config
         if config.is_vlm is True:
             from neural_compressor.torch.utils.utility import (
-                get_multimodal_block_names,
                 find_matching_blocks,
                 get_layer_names_in_block,
+                get_multimodal_block_names,
             )
+
             def set_nontext_module_config(model, to_quant_block_names, config):
                 all_block_list = get_multimodal_block_names(model, quant_vision=True)
                 all_block_set = set(tuple(block) for block in all_block_list)
@@ -568,25 +569,26 @@ def convert_to_quantized_model(model, config, device="cpu"):
                 set_to_full_prec = get_layer_names_in_block(model, to_quant_block_names=set_to_full_prec)
                 for name in set_to_full_prec:
                     config.modules_to_not_convert.append(name)
-                    
+
                 # skip layers not in blocks
                 config.modules_to_not_convert.append("model.vision_embed_tokens.img_projection*")
                 config.modules_to_not_convert.append("transformer.visual.attn_pool.*_proj")
                 config.modules_to_not_convert.append("model.mm_projector*")
                 config.modules_to_not_convert.append("multi_modal_projector")
                 config.modules_to_not_convert.append("visual.merger")
-            
+
             all_blocks = get_multimodal_block_names(model, quant_config.quant_nontext_module)
             to_quant_block_names = find_matching_blocks(model, all_blocks, quant_config.to_quant_block_names)
             set_nontext_module_config(model, to_quant_block_names, config)
-            
+
             for n, m in model.named_modules():
                 if isinstance(m, torch.nn.Linear) or isinstance(m, transformers.modeling_utils.Conv1D):
                     if m.weight.shape[0] % 32 != 0 or m.weight.shape[1] % 32 != 0:
                         config.modules_to_not_convert.append(n)
                         print(
                             f"{n} will not be quantized due to its shape not being divisible by 32,"
-                            " resulting in an exporting issue to autogptq")
+                            " resulting in an exporting issue to autogptq"
+                        )
         if config.modules_to_not_convert != []:
             for module in config.modules_to_not_convert:
                 module_name = ".*" + module

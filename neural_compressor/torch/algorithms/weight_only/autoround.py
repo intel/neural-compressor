@@ -383,7 +383,9 @@ def get_mllm_dataloader(
         template, model=model, tokenizer=tokenizer, processor=processor, image_processor=image_processor
     )
     dataset = template.default_dataset if dataset is None else dataset
-    if quant_nontext_module or (dataset in CALIB_DATASETS.keys() and not _only_text_test(model, tokenizer, "cpu", template.model_type)):
+    if quant_nontext_module or (
+        dataset in CALIB_DATASETS.keys() and not _only_text_test(model, tokenizer, "cpu", template.model_type)
+    ):
         if quant_nontext_module:
             logger.warning(
                 "Quantitative nontext module is not supported for plain text datasets,"

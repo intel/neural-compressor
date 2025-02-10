@@ -262,4 +262,3 @@ class TestTansformersLikeAPI:
         model_name = "microsoft/Phi-3-vision-128k-instruct"
         woq_model = AutoModelForCausalLM.from_pretrained(model_name, quantization_config=woq_config, trust_remote_code=True, attn_implementation='eager')
         assert isinstance(woq_model.model.layers[0].self_attn.o_proj, WeightOnlyQuantizedLinear), "quantizaion failed."
-
