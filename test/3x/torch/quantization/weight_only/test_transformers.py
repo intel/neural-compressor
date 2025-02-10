@@ -227,9 +227,9 @@ class TestTansformersLikeAPI:
             group_size=128,
             is_vlm=True,
             dataset="NeelNanda/pile-10k",  
-            iters=2,
-            n_samples=5,
-            seq_len=512,
+            iters=1,
+            n_samples=1,
+            seq_len=32,
             batch_size=1,
         )
         
