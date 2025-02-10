@@ -226,6 +226,8 @@ class _BaseINCAutoModelClass:
 
         # add quantization_config and save_low_bit to pretrained model dynamically
         model.device_map = device_map
+        # StaticCache's device is initialized by `hf_device_map` in `from_pretrained` method.
+        model.hf_device_map = dict(device_map)
         model.quantization_config = quantization_config
 
         model.save_pretrained = types.MethodType(save_low_bit, model)
