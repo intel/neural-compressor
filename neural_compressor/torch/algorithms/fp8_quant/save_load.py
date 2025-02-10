@@ -93,8 +93,12 @@ def gather_state_dict(folder_prefix, file_name, tp_mod_list=[]):
     for i in range(world_size):  # TODO: assuming tp_size == world_size
         folder_name = f"{folder_prefix}_{i}_{world_size}"
         cur_file = os.path.join(folder_name, file_name)
-        if not os.path.exists(cur_file):
-            time.sleep(10)  # Waiting for other ranks to finish saving
+        time_cnt = 0
+        while not os.path.exists(cur_file):
+            time.sleep(1)  # Waiting for other ranks to finish saving
+            time_cnt = 0
+            if time_cnt > 300:  # 5 min
+                raise FileNotFoundError(f"File {cur_file} not found.")
         cur_state_dict[i] = safe_load_file(cur_file)
     # gather state_dict
     for k, v in cur_state_dict[0].items():
