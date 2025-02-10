@@ -252,6 +252,4 @@ class TestTansformersLikeAPI:
         # phi-3-vision-128k-instruct
         model_name = "microsoft/Phi-3-vision-128k-instruct"
         woq_model = AutoModelForCausalLM.from_pretrained(model_name, quantization_config=woq_config, attn_implementation='eager')
-        
-        from intel_extension_for_pytorch.nn.modules import WeightOnlyQuantizedLinear
         assert isinstance(woq_model.model.layers[0].self_attn.o_proj, WeightOnlyQuantizedLinear), "quantizaion failed."
