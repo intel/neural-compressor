@@ -31,10 +31,13 @@ MODEL_STATE_DICT_MAPPING_FILENAME = "model.safetensors.index.json"
 def skip_weight(weight_name):
     return any([skip_name in weight_name for skip_name in SKIP_WEIGHT_LST])
 
+
 def get_cpu_mem_size_in_gb():
     import psutil
+
     mem = psutil.virtual_memory()
     return mem.available
+
 
 def get_all_weight_filename(model_path):
     all_files = os.listdir(model_path)
@@ -62,6 +65,7 @@ def quant_tensor(tensor):
     cliped_qtensor = torch.clamp(qtensor, -FULL_RANGE, FULL_RANGE)
     cliped_qtensor_fp8 = cliped_qtensor.to(torch.float8_e4m3fn)
     return scale, cliped_qtensor_fp8
+
 
 def _maybe_create_dir(qmodel_path):
     if not os.path.exists(qmodel_path):
@@ -120,6 +124,7 @@ def static_quant_model_tran(model_path, qmodel_path):
     # assert get_cpu_mem_size_in_gb(800), "Not enough memory, please use quant_model_weight_with_low_cpu_usage"
     import transformers
     from patch_for_ds import patch_transformers
+
     # import_oh()
     patch_transformers()
     model = transformers.AutoModelForCausalLM.from_pretrained(
@@ -143,6 +148,7 @@ def static_quant_model_tran(model_path, qmodel_path):
 
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_path", type=str, required=True)
     parser.add_argument("--qmodel_path", type=str, required=True)
@@ -152,14 +158,3 @@ if __name__ == "__main__":
         quant_model_weight_with_low_cpu_usage(args.model_path, args.qmodel_path)
     else:
         static_quant_model_tran(args.model_path, args.qmodel_path)
-
-"""
-model_path = "/software/users/yiliu4/HF_HOME/hub/DeepSeek-V3-BF16"
-model_path = "/software/users/yiliu4/HF_HOME/hub/deepseekv3-bf16-4l/"
-qmodel_path = "/software/users/yiliu4/HF_HOME/hub/deepseekv3-bf16-4l-q/"
-static_quant_model(model_path, qmodel_path)
-python quant.py --model_path /software/users/yiliu4/HF_HOME/hub/deepseekv3-bf16-4l/ --qmodel_path /software/users/yiliu4/HF_HOME/hub/deepseekv3-bf16-4l-q2/  --low_cpu_mem
-python quant.py --model_path /software/users/yiliu4/HF_HOME/hub/deepseekv3-bf16-4l/ --qmodel_path /software/users/yiliu4/HF_HOME/hub/deepseekv3-bf16-4l-q/
-python quant.py --model_path /software/users/yiliu4/HF_HOME/hub/DeepSeek-V3-BF16/ --qmodel_path /software/users/yiliu4/HF_HOME/hub/DeepSeek-V3-BF16-q/
-
-"""
