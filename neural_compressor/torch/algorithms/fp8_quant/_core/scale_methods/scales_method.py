@@ -12,21 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from abc import abstractmethod
-import torch
+from enum import Enum, auto
+
+from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 from . import ScaleIdentity
 from ..common import QuantTensorType
 from ..fp_utils import mmse_scale_multi, get_fullscale, mmse_scale, calc_maxabs_scale, invert_scale
 
+class QuantTensorType(Enum):
+    MEASUREMENTS = auto()
+    CONST = auto()
 
 class ScalesMethod:
-    def __init__(
-        self, round_scale_method, params, device_for_scale, fullscale=None, device=torch.device("hpu"), is_dynamic=False
-    ):
+
+    curr_device = auto_detect_accelerator()
+
+    def __init__(self, round_scale_method, params, device_for_scale, fullscale=None):
         self.round_scale_method = round_scale_method
         self.params = params
         self.hp_dtype = self.params["hp_dtype"]
         self.lp_dtype = self.params["lp_dtype"]
-        self.device = device
+        self.device = torch.device(self.curr_device.name())
         self.fullscale = fullscale if fullscale is not None else get_fullscale(self.lp_dtype, device_for_scale)
         self.scale = None
         self.is_dynamic = is_dynamic

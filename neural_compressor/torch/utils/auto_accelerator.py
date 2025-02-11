@@ -26,6 +26,7 @@
 
 import os
 from abc import ABC, abstractmethod
+from enum import Enum, auto
 from functools import lru_cache
 from typing import Any, Callable, List
 
@@ -40,6 +41,14 @@ PRIORITY_XPU = 95
 PRIORITY_CUDA = 90
 PRIORITY_CPU = 80
 
+class INCAcceleratorType(Enum):
+    CUDA = auto()
+    CPU = auto()
+    EXTERNAL_ACCELERATOR_MAX = auto() # differentiate between external to intel accelerators
+    XPU = auto()
+    GAUDI_MIN = auto() # differentiate between any gaudi to xpu
+    GAUDI2 = auto()
+    GAUDI3 = auto()
 
 class AcceleratorRegistry:
     """Accelerator Registry."""
@@ -150,6 +159,11 @@ class Auto_Accelerator(ABC):  # pragma: no cover
         """Synchronize the accelerator."""
         pass
 
+    @abstractmethod
+    def get_inc_accelerator_type(self)->INCAcceleratorType:
+        """Synchronize the accelerator."""
+        pass
+
 
 @register_accelerator(name="cpu", priority=PRIORITY_CPU)
 class CPU_Accelerator(Auto_Accelerator):
@@ -195,6 +209,9 @@ class CPU_Accelerator(Auto_Accelerator):
     def synchronize(self):
         """Do nothing."""
         pass
+
+    def get_inc_accelerator_type(self):
+        return INCAcceleratorType.CPU
 
 
 @register_accelerator(name="cuda", priority=PRIORITY_CUDA)
@@ -243,6 +260,9 @@ class CUDA_Accelerator(Auto_Accelerator):  # pragma: no cover
     def empty_cache(self):
         """Empties the cuda cache."""
         return torch.cuda.empty_cache()
+
+    def get_inc_accelerator_type(self):
+        return INCAcceleratorType.CUDA
 
 
 @register_accelerator(name="xpu", priority=PRIORITY_XPU)
@@ -325,6 +345,9 @@ class XPU_Accelerator(Auto_Accelerator):  # pragma: no cover
         """Empties the xpu cache."""
         return torch.xpu.empty_cache()
 
+    def get_inc_accelerator_type(self):
+        return INCAcceleratorType.XPU
+
 
 @register_accelerator(name="hpu", priority=PRIORITY_HPU)
 class HPU_Accelerator(Auto_Accelerator):  # pragma: no cover
@@ -385,6 +408,17 @@ class HPU_Accelerator(Auto_Accelerator):  # pragma: no cover
             torch.hpu.empty_cache()
         except Exception as e:
             logger.warning(e)
+
+    def get_inc_accelerator_type(self):
+        import habana_frameworks.torch.utils.experimental as htexp
+
+        hpu_device_type = htexp._get_device_type()
+        if hpu_device_type == htexp.synDeviceType.synDeviceGaudi2:
+            return INCAcceleratorType.GAUDI2
+        elif hpu_device_type == htexp.synDeviceType.synDeviceGaudi3:
+            return INCAcceleratorType.GAUDI3
+        else:
+            raise ValueError("Unexpected Device Type for HPU accelerator - {}".format(hpu_device_type))
 
 
 @lru_cache()
