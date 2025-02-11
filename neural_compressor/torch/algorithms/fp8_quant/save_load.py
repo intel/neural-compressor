@@ -363,6 +363,7 @@ def save_for_multi_devices(model, checkpoint_dir="saved_results", format="huggin
             )
     else:
         save_rank_model(model, folder_prefix=checkpoint_dir, **kwargs)
+        torch.distributed.barrier()
         rank_directory = f"{checkpoint_dir}_{0}_{world_size}"
         files_list = find_safetensors_files(rank_directory)
         # use rank:0 process to gather checkpoint files
@@ -378,6 +379,7 @@ def save_for_multi_devices(model, checkpoint_dir="saved_results", format="huggin
                 safe_save_file(gathered_state_dict, os.path.join(checkpoint_dir, file_name), metadata={"format": "pt"})
                 clean_rank_files(folder_prefix=checkpoint_dir, file_name=file_name)
             clean_rank_files(folder_prefix=checkpoint_dir)
+    torch.distributed.barrier()
 
 
 def save_for_single_device(model, checkpoint_dir="saved_results", format="huggingface", **kwargs):

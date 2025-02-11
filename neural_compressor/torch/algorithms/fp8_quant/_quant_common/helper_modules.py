@@ -1249,4 +1249,4 @@ class PatchedUnmeasuredModule(nn.Module):
         )
 
     def extra_repr(self) -> str:
-        return f"Dummy patch of {self.name} to raise exception as there are no measurements provided."
+        return f"Dummy patch to raise exception as there are no measurements provided."

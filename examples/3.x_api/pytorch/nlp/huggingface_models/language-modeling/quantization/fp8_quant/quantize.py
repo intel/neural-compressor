@@ -114,6 +114,7 @@ if __name__ == "__main__":
                 seq_len=args.seq_len, 
                 seed=42, 
             )
+            logger.info("Calibration started")
             if args.enable_block_wise_calibration:
                 block_wise_calibration(model, dataloader)
             else:
@@ -121,9 +122,8 @@ if __name__ == "__main__":
                     from habana_frameworks.torch.hpu import wrap_in_hpu_graph
                     model = wrap_in_hpu_graph(model)
                 for data in tqdm.tqdm(dataloader):
-                    logger.info("Calibration started")
                     forward_wrapper(model, data)
-                    logger.info("Calibration end")
+            logger.info("Calibration end")
 
             # convert
             model = convert(model)
@@ -159,6 +159,7 @@ if __name__ == "__main__":
             device="hpu",
             pad_to_buckets=True,
             num_fewshot=args.num_fewshot,
+            trust_remote_code=True,
         )
         results = evaluate(eval_args)
         # show used memory

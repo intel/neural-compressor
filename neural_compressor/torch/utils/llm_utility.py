@@ -69,30 +69,59 @@ def get_default_llm_dataloader(tokenizer, dataset_name="NeelNanda/pile-10k", bs=
     Returns:
         dataloader: dataloader
     """
+    supported_datasets = {
+        # task_name: data_name
+        "NeelNanda/pile-10k": "text",  # General Text
+        "1231czx/orm_ds_train_ds_test_math": "prompt",  # Math Question
+        "ArhamNaeem/code-gen-train": "instruction",  # Code Instruction
+        "nanaaaa/emotion_chinese_english": "sentence",  # Chinese and English
+    }
     from datasets import load_dataset
     from torch.utils.data import DataLoader, Dataset
 
-    dataset = load_dataset(dataset_name, split="train")
-    dataset = dataset.shuffle(seed=seed).select(range(nsamples))
+    def build_tokenized_dataset(dataset_name, bs, nsamples, seq_len, seed):
+        dataset = load_dataset(dataset_name, split="train")
+        dataset = dataset.shuffle(seed=seed).select(range(nsamples))
 
-    class TokenizedDataset(Dataset):
-        def __init__(self, dataset, tokenizer, seq_len):
-            self.dataset = dataset
-            self.tokenizer = tokenizer
-            self.seq_len = seq_len
+        class TokenizedDataset(Dataset):
+            def __init__(self, dataset, tokenizer, seq_len):
+                self.dataset = dataset
+                self.tokenizer = tokenizer
+                self.seq_len = seq_len
+
+            def __len__(self):
+                return len(self.dataset)
+
+            def __getitem__(self, idx):
+                text = self.dataset[idx][supported_datasets[dataset_name]]
+                inputs = self.tokenizer(
+                    text, max_length=self.seq_len, padding="max_length", truncation=True, return_tensors="pt"
+                )
+                return {key: val.squeeze(0) for key, val in inputs.items()}
+
+        tokenized_dataset = TokenizedDataset(dataset, tokenizer, seq_len)
+        return tokenized_dataset
+
+    class CombinedDataset(Dataset):
+        def __init__(self, dataset_list):
+            self.dataset_list = dataset_list
 
         def __len__(self):
-            return len(self.dataset)
+            return sum(len(dataset) for dataset in self.dataset_list)
 
         def __getitem__(self, idx):
-            text = self.dataset[idx]["text"]
-            inputs = self.tokenizer(
-                text, max_length=self.seq_len, padding="max_length", truncation=True, return_tensors="pt"
-            )
-            return {key: val.squeeze(0) for key, val in inputs.items()}
+            for dataset in self.dataset_list:
+                if idx < len(dataset):
+                    return dataset[idx]
+                idx -= len(dataset)
 
-    tokenized_dataset = TokenizedDataset(dataset, tokenizer, seq_len)
-    dataloader = DataLoader(tokenized_dataset, batch_size=bs, shuffle=True)
+    dataset_names = dataset_name.split(",")
+    tokenized_dataset_list = []
+    for name in dataset_names:
+        tokenized_dataset = build_tokenized_dataset(name, bs, nsamples, seq_len, seed)
+        tokenized_dataset_list.append(tokenized_dataset)
+    combined_dataset = CombinedDataset(tokenized_dataset_list)
+    dataloader = DataLoader(combined_dataset, batch_size=bs, shuffle=True)
     return dataloader
 
 def llm_benchmark(model, batch_size, input_length, warmup_iters=3, total_iters=20):
