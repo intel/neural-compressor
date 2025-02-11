@@ -96,8 +96,6 @@ def static_quant_model(model_path, qmodel_path):
     logger.info(f"Got {len(all_weight_filename)} weight files")
     qtensor_mappping = {}
     for i, filename in tqdm.tqdm(enumerate(all_weight_filename)):
-        if i >= 2:
-            break
         file_path = os.path.join(model_path, filename)
         qmodel_file_name = filename
         qmodel_file_path = os.path.join(qmodel_path, qmodel_file_name)
