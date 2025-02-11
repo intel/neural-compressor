@@ -20,7 +20,14 @@ SCALE_FILE_NAME = f"scales.{SAFETENSORS}"
 FULL_RANGE = torch.finfo(torch.float8_e4m3fn).max
 WEIGHT_BACKOFF = 0.5
 QUANT_MODULE_TYPES = (torch.nn.Linear,)
-SKIP_WEIGHT_LST = {"model.norm", "layernorm", "e_score_correction_bias", "lm_head.weight", "embed_tokens"}
+SKIP_WEIGHT_LST = {
+    "model.norm",
+    "layernorm",
+    "e_score_correction_bias",
+    "lm_head.weight",
+    "embed_tokens",
+    "mlp.gate.weight",  # mlp.gate is not linear
+}
 """
 # https://docs.habana.ai/en/latest/PyTorch/Inference_on_PyTorch/Quantization/Inference_Using_FP8.html?highlight=backoff#supported-json-config-file-options
 Similarly, the maxabs value of a weight is scaled to weight_backoff*FP8_143_FULLSCALE. The default values are input_backoff=0.25 and weight_backoff=0.5.
