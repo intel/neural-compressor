@@ -72,6 +72,7 @@ def quant_model_weight_with_low_cpu_usage(model_path, qmodel_path):
     # FIXME: need to skip some layers like embedding
     _maybe_create_dir(qmodel_path)
     all_weight_filename = get_all_weight_filename(model_path)
+    files_cnt = len(all_weight_filename)
     logger.info(f"Got {len(all_weight_filename)} weight files")
     qtensor_mappping = {}
     for i, filename in enumerate(all_weight_filename):
@@ -88,7 +89,7 @@ def quant_model_weight_with_low_cpu_usage(model_path, qmodel_path):
                     qtensors[weight_name] = weight
                     qtensor_mappping[weight_name] = qmodel_file_name
                     continue
-                logger.debug(f"Processing {weight_name}")
+                logger.debug(f"[{i+1}/{files_cnt}] Processing {weight_name}")
                 scale, qtensor = quant_tensor(weight)
                 preifx_name = weight_name[: -len(".weight")]
                 scale_name = f"{preifx_name}.{WEIGHT_SCALE_NAME}"
@@ -96,7 +97,7 @@ def quant_model_weight_with_low_cpu_usage(model_path, qmodel_path):
                 qtensors[weight_name] = qtensor
                 qtensor_mappping[scale_name] = qmodel_file_name
                 qtensor_mappping[weight_name] = qmodel_file_name
-        logger.debug(f"Saving {len(qtensors)} tensors to {qmodel_file_path}")
+        logger.debug(f"[{i+1}/{files_cnt}] Saving {len(qtensors)} tensors to {qmodel_file_path}")
         save_file(qtensors, os.path.join(qmodel_path, qmodel_file_path))
     # Dump tensor mapping into json file
     model_state_dict_mapping_file_path = os.path.join(qmodel_path, MODEL_STATE_DICT_MAPPING_FILENAME)
