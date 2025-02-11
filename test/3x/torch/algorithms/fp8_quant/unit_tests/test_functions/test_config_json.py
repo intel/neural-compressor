@@ -79,7 +79,7 @@ def test_device_override(lp_dtype, quant_mode, device_type):
                 scale_method=ScaleMethod.MAXABS_HW,
                 device_type=device_type,
             )
-        assert config.cfg["device_for_scales"] == device_type_id[device_type]
+        assert config.cfg["device_for_scales"] == htexp_device_type_to_inc_acclerator_type(device_type_id[device_type])
     if device_type_id[device_type] != get_device_type():
         if not (device_type_id[device_type] == get_gaudi2_type() and is_gaudi3()):
             return run_with_raised_exception(run_predefined_config, ValueError, "Unsupported config: device_for_scales=")

@@ -19,6 +19,7 @@ from .scale_methods import ops_quantizer
 from .._quant_common.quant_config import ScaleMethod
 import torch
 
+
 def load_layer_scales(mod, mod_name, config, mod_type_str, measurement, scales, scale_file,
                       scales_file_format, scales_obj, scaling_method_name, scale_config, save_file):
     module_type = mod_default_dict[mod_type_str].type

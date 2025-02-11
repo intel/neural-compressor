@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from abc import abstractmethod
+import torch
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import get_hqt_config
 from .scale_method_factory import ScaleMethodFactory, QuantTensorName
 from ..common import ModuleConfig, QuantTensorType
 from ..quant_dequant import DequantOutput, QuantDequant, QuantDequantNone, QuantInput, QuantDynamicInput
 from ..fp_utils import scale_fcn
+
 
 class BaseOpQuantizer:
 
@@ -99,7 +101,7 @@ class LinearOpQuantizer(BaseOpQuantizer):
         rescaled_weight = self.mod.weight if hasattr(self.mod, 'weight') else None
         if self.weight_ich_scale_calc is not None:
             weight_scales_in_ch = self.weight_ich_scale_calc.calc_scales(input_scales[0], QuantTensorType.CONST)
-            rescaled_weight = scale_fcn(self.mod.weight, weight_scales_in_ch.reshape([1, -1]))
+            rescaled_weight = torch.div(self.mod.weight, weight_scales_in_ch.reshape([1, -1]))
         weights_scales_out_ch = self.weight_och_scale_calc.calc_scales(rescaled_weight, QuantTensorType.CONST)
         params_config = {"weight": weights_scales_out_ch} if (
                 self.weight_ich_scale_calc is None) \

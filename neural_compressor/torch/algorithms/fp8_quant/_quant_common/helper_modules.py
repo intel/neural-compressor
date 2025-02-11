@@ -19,7 +19,7 @@ import functools
 
 from .quant_config import QuantMode
 from .._core.quant_dequant import QuantDequant as qdq, QuantDynamicInput
-from .._core.quantized_hpu_ops import get_hpu_quantized_func_wrapper, OP_TYPE
+from .._core.quantized_func_wrappers import get_quantized_func_wrapper, OP_TYPE
 from ..patched_module_base import PatchedModuleBase
 from .._core.scale_handler import get_scale_dtype, ScaleFormat
 
@@ -103,7 +103,10 @@ class PatchedMatmul(PatchedModuleBase):
             if not self.use_qdq and not self.fake_quant:
                 self.register_scale("scale_input", mod_extra_config.scale.inputs[0], self.scale_format)
                 self.register_scale("scale_other", mod_extra_config.scale.inputs[1], self.scale_format)
-                self.matmul_fp8 = get_hpu_quantized_func_wrapper(OP_TYPE.GEMM, self.scale_format)
+                self.forward = self.forward_quant
+                self.matmul_fp8 = get_quantized_func_wrapper(OP_TYPE.MATMUL_GEMM, self.scale_format)
+        elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
+            self.forward = self.forward_measure
 
     def forward_quant(self, input, other):
         qinput = self.quant_input_0(input)
@@ -150,7 +153,8 @@ def init_linear(instance, mod_extra_config):
         elif instance.fake_quant:
             instance.qdq_weights = instance._mod_extra_config.params["weight"][0]
         else:
-            instance.matmul_fp8 = get_hpu_quantized_func_wrapper(OP_TYPE.GEMM, instance.scale_format)
+            instance.matmul_fp8 = get_quantized_func_wrapper(OP_TYPE.LINEAR_GEMM, instance.scale_format)
+            instance.forward = instance.forward_quant if change_forward else instance.forward
             instance.register_scale("scale_input", mod_extra_config.scale.inputs[0], instance.scale_format)
             if isinstance(mod_extra_config.scale.params["weight"], (torch.Tensor, float)):
                 instance.register_scale("scale_weight", mod_extra_config.scale.params["weight"], instance.scale_format)
@@ -646,7 +650,7 @@ class PatchedGaudiMixtralSparseMoeBlock(PatchedModuleBase):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         self.forward = self.forward_orig
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
-            self.dynamic_moe_op = get_hpu_quantized_func_wrapper(OP_TYPE.DYNAMIC_MOE, self.scale_format)
+            self.dynamic_moe_op = get_quantized_func_wrapper(OP_TYPE.DYNAMIC_MOE, self.scale_format)
             self.quant_input = self._mod_extra_config.inputs[0]
             self.register_scale("scale_input", mod_extra_config.scale.inputs[0], self.scale_format)
             self.register_scale(
@@ -734,7 +738,8 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
-            self.dynamic_moe_op = get_hpu_quantized_func_wrapper(OP_TYPE.DYNAMIC_MOE_FUSED_WEIGHTS, self.scale_format)
+            self.forward = self.forward_quant
+            self.dynamic_moe_op = get_quantized_func_wrapper(OP_TYPE.DYNAMIC_MOE_FUSED_WEIGHTS, self.scale_format)
             self.quant_input = self._mod_extra_config.inputs[0]
             self.register_scale("scale_input", mod_extra_config.scale.inputs[0], self.scale_format)
             self.register_scale(
@@ -921,7 +926,9 @@ def init_conv(instance, mod_extra_config):
         else:
             instance.register_scale("scale_input", mod_extra_config.scale.inputs[0], instance.scale_format)
             instance.register_scale("scale_weight", mod_extra_config.scale.params["weight"], instance.scale_format)
-            instance.conv2d_fp8 = get_hpu_quantized_func_wrapper(OP_TYPE.CONV, instance.scale_format)
+            instance.conv2d_fp8 = get_quantized_func_wrapper(OP_TYPE.CONV, instance.scale_format)
+    elif (instance.quantization_mode == QuantMode.MEASURE) or (instance.quantization_mode == QuantMode.SHAPE):
+        instance.forward = instance.forward_measure
 
 class PatchedConv2d(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
@@ -981,7 +988,9 @@ class PatchedSoftmax(PatchedModuleBase):
                 # input scale is 1 assuming the input to SM is descaled because we are using HW supported scales
                 self.register_scale("scale_input", torch.Tensor([1.0]), self.scale_format)
                 self.register_scale("scale_output", torch.Tensor([1 / mod_extra_config.scale.outputs[0]]), self.scale_format)
-                self.softmax_fp8 = get_hpu_quantized_func_wrapper(OP_TYPE.SOFTMAX, self.scale_format)
+                self.softmax_fp8 = get_quantized_func_wrapper(OP_TYPE.SOFTMAX, self.scale_format)
+        elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
+            self.forward = self.forward_measure
 
     def forward_qdq(self, x, dim=None, invAttnHead=None):
         x = self.quant_input(x)
@@ -1111,7 +1120,7 @@ class PatchedModuleFusedSDPA(PatchedModuleBase):
         # fsdpa is combined out of - BMM1(Q,K) -> Softmax -> BMM2(AMAX,V)
         # during measure we receive the amax value from the cguid and apply it during quant as input
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        self.fp8_fused_sdpa = get_hpu_quantized_func_wrapper(OP_TYPE.FSDPA, self.scale_format)
+        self.fp8_fused_sdpa = get_quantized_func_wrapper(OP_TYPE.FSDPA, self.scale_format)
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             self.quant_q = self._mod_extra_config.inputs[0]
             self.quant_k = self._mod_extra_config.inputs[1]
