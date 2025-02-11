@@ -19,8 +19,8 @@ python quant.py --model_path /path/to/DeepSeek/R1/BF16/ --qmodel_path /path/to/D
 
 ## Example
 1. Name convention:
-    - weight scale name: "prefix.scale_weight"
-    - input scale name: "prefix.scale_input" (for static only)
+    - weight scale name: `prefix.scale_weight`
+    - input scale name: `prefix.scale_input` (for static only)
 2. A json file mapping from tensor name to safetensor file name.
 
 ```python
@@ -42,7 +42,7 @@ class M(torch.nn.Module):
     "fc1.scale_input": torch.Tensor(...),
 }
 
-2. json file, model.safetensors.index.json
+2. json file, `model.safetensors.index.json`
 {
     "fc1.weight": "qmodel.safetensors",
     "fc1.scale_weight": "qmodel.safetensors",
