@@ -2,3 +2,4 @@ loguru
 torch
 safetensors
 tqdm
+transformers
