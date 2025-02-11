@@ -7,12 +7,12 @@ pip install -r requirements.txt
 
 ## Usage
 
-- Option 1 (Rec)
+- Option 1. (Rec)
 ```bash
 python quant.py --model_path /path/to/DeepSeek/R1/BF16/ --qmodel_path /path/to/DeepSeek/R1/Dynamic-FP8
 ```
 
-- Option 2 handle weights only (If the DRAM size is less than ~700 GB)
+- Option 2. handle weights only (If the DRAM size is less than ~700 GB)
 ```bash
 python quant.py --model_path /path/to/DeepSeek/R1/BF16/ --qmodel_path /path/to/DeepSeek/R1-Dynamic-FP8 --low_cpu_mem
 ```

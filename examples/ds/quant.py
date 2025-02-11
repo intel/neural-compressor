@@ -88,7 +88,7 @@ def quant_model_weight_with_low_cpu_usage(model_path, qmodel_path):
                     qtensors[weight_name] = weight
                     qtensor_mappping[weight_name] = qmodel_file_name
                     continue
-                logger.debug(f"Processing {weight_name}"
+                logger.debug(f"Processing {weight_name}")
                 scale, qtensor = quant_tensor(weight)
                 preifx_name = weight_name[: -len(".weight")]
                 scale_name = f"{preifx_name}.{WEIGHT_SCALE_NAME}"
