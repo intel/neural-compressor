@@ -354,24 +354,27 @@ class _BaseINCAutoModelClass:
             else:
                 commit_hash = getattr(config, "_commit_hash", None)
 
-        has_remote_code = hasattr(config, "auto_map") and cls.ORIG_MODEL.__name__ in config.auto_map
+        if "AutoModel" in cls.ORIG_MODEL.__name__:
+            has_remote_code = hasattr(config, "auto_map") and cls.ORIG_MODEL.__name__ in config.auto_map
+            has_local_code = type(config) in cls.ORIG_MODEL._model_mapping.keys()
 
-        has_local_code = type(config) in cls.ORIG_MODEL._model_mapping.keys()
-        trust_remote_code = resolve_trust_remote_code(
-            trust_remote_code,
-            pretrained_model_name_or_path,
-            has_local_code,
-            has_remote_code,
-        )
-        if has_remote_code and trust_remote_code:
-            class_ref = config.auto_map[cls.ORIG_MODEL.__name__]
-            model_class = get_class_from_dynamic_module(class_ref, pretrained_model_name_or_path, **kwargs_orig)
-            if os.path.isdir(pretrained_model_name_or_path):
-                model_class.register_for_auto_class(cls.ORIG_MODEL.__name__)
-            else:
-                cls.ORIG_MODEL.register(config.__class__, model_class, exist_ok=True)
-        elif type(config) in cls.ORIG_MODEL._model_mapping.keys():
-            model_class = _get_model_class(config, cls.ORIG_MODEL._model_mapping)
+            trust_remote_code = resolve_trust_remote_code(
+                trust_remote_code,
+                pretrained_model_name_or_path,
+                has_local_code,
+                has_remote_code,
+            )
+            if has_remote_code and trust_remote_code:
+                class_ref = config.auto_map[cls.ORIG_MODEL.__name__]
+                model_class = get_class_from_dynamic_module(class_ref, pretrained_model_name_or_path, **kwargs_orig)
+                if os.path.isdir(pretrained_model_name_or_path):
+                    model_class.register_for_auto_class(cls.ORIG_MODEL.__name__)
+                else:
+                    cls.ORIG_MODEL.register(config.__class__, model_class, exist_ok=True)
+            elif type(config) in cls.ORIG_MODEL._model_mapping.keys():
+                model_class = _get_model_class(config, cls.ORIG_MODEL._model_mapping)
+        else:
+            model_class = cls.ORIG_MODEL
 
         # This variable will flag if we're loading a sharded checkpoint. In this case the archive file is just the
         # index of the files.
@@ -747,3 +750,15 @@ class AutoModel(_BaseINCAutoModelClass):
 
 class AutoModelForSeq2SeqLM(_BaseINCAutoModelClass):
     ORIG_MODEL = transformers.AutoModelForSeq2SeqLM
+
+
+class Qwen2VLForConditionalGeneration(_BaseINCAutoModelClass):
+    ORIG_MODEL = transformers.Qwen2VLForConditionalGeneration
+
+
+class MllamaForConditionalGeneration(_BaseINCAutoModelClass):
+    ORIG_MODEL = transformers.MllamaForConditionalGeneration
+
+
+class LlavaForConditionalGeneration(_BaseINCAutoModelClass):
+    ORIG_MODEL = transformers.LlavaForConditionalGeneration

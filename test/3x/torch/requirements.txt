@@ -7,4 +7,5 @@ peft
 prettytable
 psutil
 pytest
+torchvision
 transformers
