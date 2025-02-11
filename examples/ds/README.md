@@ -23,8 +23,6 @@ python quant.py --model_path /path/to/DeepSeek/R1/BF16/ --qmodel_path /path/to/D
 ```
 
 > [!NOTE]
->
-> - Skip quantize `lm-head`.
 > - `WEIGHT_BACKOFF = 0.5`
 > - `SCALE_DTYPE = torch.bfloat16`
 

@@ -24,7 +24,7 @@ SKIP_WEIGHT_LST = {
     "model.norm",
     "layernorm",
     "e_score_correction_bias",
-    "lm_head.weight",
+    # "lm_head.weight",
     "embed_tokens",
     "mlp.gate.weight",  # mlp.gate is not linear
 }
@@ -80,7 +80,6 @@ def _maybe_create_dir(qmodel_path):
 
 
 def quant_model_weight_with_low_cpu_usage(model_path, qmodel_path):
-    # FIXME: need to skip some layers like embedding
     _maybe_create_dir(qmodel_path)
     all_weight_filename = get_all_weight_filename(model_path)
     files_cnt = len(all_weight_filename)
