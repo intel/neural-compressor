@@ -10,12 +10,11 @@ pip install -r requirements.txt
 - Option 1 (Rec). handle weights only 
 ```bash
 python quant.py --model_path /path/to/DeepSeek/R1/BF16/ --qmodel_path /path/to/DeepSeek/R1-Dynamic-FP8 --low_cpu_mem
+```
 
 - Option 2. Loading model using transformers (Requires DRAM > ~700 GB)
 ```bash
 python quant.py --model_path /path/to/DeepSeek/R1/BF16/ --qmodel_path /path/to/DeepSeek/R1/Dynamic-FP8
-```
-
 ```
 
 > [!NOTE]
