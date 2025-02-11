@@ -1,39 +1,3 @@
-"""
-# Prerequisite
-pip install -r requirements.txt
-
-# Note for static/dynamic W8FP8 quantization:
-1. Name convention:
-    - weight scale name: "prefix.scale_weight"
-    - input scale name: "prefix.scale_input"
-2. A json file mapping from tensor name to safetensor file name.
-
-Example:
-class M(torch.nn.Module):
-    def __init__(self) -> None:
-        super().__init__()
-        self.fc1 = torch.nn.Linear(10, 5, bias=False)
-
-    def forward(self, inp):
-        x1 = self.fc1(inp)
-        return x1
-
-1. state dict
-{
-    "fc1.weight": torch.Tensor(...),
-    "fc1.scale_weight": torch.Tensor(...),
-    "fc1.scale_input": torch.Tensor(...),
-}
-
-2. json file, model.safetensors.index.json
-{
-    "fc1.weight": "qmodel.safetensors",
-    "fc1.scale_weight": "qmodel.safetensors",
-    "fc1.scale_input": "qmodel.safetensors"
-}
-
-"""
-
 import os
 import torch
 import tqdm
@@ -51,16 +15,26 @@ torch.set_grad_enabled(False)
 SAFETENSORS = "safetensors"
 WEIGHT_SCALE_NAME = "scale_weight"
 INPUT_SCALE_NAME = "scale_input"
+SCALE_DTYPE = torch.bfloat16
 SCALE_FILE_NAME = f"scales.{SAFETENSORS}"
 FULL_RANGE = torch.finfo(torch.float8_e4m3fn).max
 WEIGHT_BACKOFF = 0.5
 QUANT_MODULE_TYPES = (torch.nn.Linear,)
+SKIP_WEIGHT_LST = {"model.norm", "layernorm", "e_score_correction_bias", "lm_head.weight", "embed_tokens"}
 """
 # https://docs.habana.ai/en/latest/PyTorch/Inference_on_PyTorch/Quantization/Inference_Using_FP8.html?highlight=backoff#supported-json-config-file-options
 Similarly, the maxabs value of a weight is scaled to weight_backoff*FP8_143_FULLSCALE. The default values are input_backoff=0.25 and weight_backoff=0.5.
 """
 MODEL_STATE_DICT_MAPPING_FILENAME = "model.safetensors.index.json"
 
+
+def skip_weight(weight_name):
+    return any([skip_name in weight_name for skip_name in SKIP_WEIGHT_LST])
+
+def get_cpu_mem_size_in_gb():
+    import psutil
+    mem = psutil.virtual_memory()
+    return mem.available
 
 def get_all_weight_filename(model_path):
     all_files = os.listdir(model_path)
@@ -83,25 +57,25 @@ def quant_tensor(tensor):
     #  2. Check the scale shape
     amax = tensor.abs().max()
     scale = calc_maxabs_scale(amax, FULL_RANGE, WEIGHT_BACKOFF)
+    scale = scale.to(SCALE_DTYPE)
     qtensor = tensor / scale
     cliped_qtensor = torch.clamp(qtensor, -FULL_RANGE, FULL_RANGE)
     cliped_qtensor_fp8 = cliped_qtensor.to(torch.float8_e4m3fn)
     return scale, cliped_qtensor_fp8
-
 
 def _maybe_create_dir(qmodel_path):
     if not os.path.exists(qmodel_path):
         os.makedirs(qmodel_path)
 
 
-def static_quant_model_for_low_cpu_usage(model_path, qmodel_path):
+def quant_model_weight_with_low_cpu_usage(model_path, qmodel_path):
     # FIXME: need to skip some layers like embedding
-    logger.warning("It will quantize all weight tensors")
     _maybe_create_dir(qmodel_path)
     all_weight_filename = get_all_weight_filename(model_path)
     logger.info(f"Got {len(all_weight_filename)} weight files")
     qtensor_mappping = {}
-    for i, filename in tqdm.tqdm(enumerate(all_weight_filename)):
+    for i, filename in enumerate(all_weight_filename):
+        logger.info(f"Processing {i + 1}/{len(all_weight_filename)}: {filename}")
         file_path = os.path.join(model_path, filename)
         qmodel_file_name = filename
         qmodel_file_path = os.path.join(qmodel_path, qmodel_file_name)
@@ -109,6 +83,12 @@ def static_quant_model_for_low_cpu_usage(model_path, qmodel_path):
         with safe_open(file_path, framework="pt", device="cpu") as f:
             for weight_name in f.keys():
                 weight = f.get_tensor(weight_name)
+                if skip_weight(weight_name):
+                    logger.debug(f"Skiping quantize {weight_name}")
+                    qtensors[weight_name] = weight
+                    qtensor_mappping[weight_name] = qmodel_file_name
+                    continue
+                logger.debug(f"Processing {weight_name}"
                 scale, qtensor = quant_tensor(weight)
                 preifx_name = weight_name[: -len(".weight")]
                 scale_name = f"{preifx_name}.{WEIGHT_SCALE_NAME}"
@@ -125,38 +105,50 @@ def static_quant_model_for_low_cpu_usage(model_path, qmodel_path):
         json.dump(qtensor_mappping, f, indent=4)
 
 
+def _import_oh():
+    import transformers
+    from optimum.habana.transformers.modeling_utils import adapt_transformers_to_gaudi
+
+    orig_check_support_param_buffer_assignment = transformers.modeling_utils.check_support_param_buffer_assignment
+    adapt_transformers_to_gaudi()
+    transformers.modeling_utils.check_support_param_buffer_assignment = orig_check_support_param_buffer_assignment
+
+
 @torch.no_grad()
 def static_quant_model_tran(model_path, qmodel_path):
+    # assert get_cpu_mem_size_in_gb(800), "Not enough memory, please use quant_model_weight_with_low_cpu_usage"
     import transformers
-    from transformers.modeling_utils import no_init_weights
-    with no_init_weights():
-        model = transformers.AutoModelForCausalLM.from_pretrained(
-            model_path,
-            torch_dtype="auto",
-            low_cpu_mem_usage=True,
-            trust_remote_code=True,
-        )
+    from patch_for_ds import patch_transformers
+    # import_oh()
+    patch_transformers()
+    model = transformers.AutoModelForCausalLM.from_pretrained(
+        model_path,
+        torch_dtype="auto",
+        low_cpu_mem_usage=True,
+        trust_remote_code=True,
+    )
     for name, module in model.named_modules():
-        if isinstance(module, QUANT_MODULE_TYPES):
-            logger.debug(f"Processing {name}")
-            weight = module.weight
-            scale, qtensor = quant_tensor(weight)
-            module.weight.data = qtensor
-            setattr(module, "scale_weight", torch.nn.Parameter(scale, requires_grad=False))
+        if not isinstance(module, QUANT_MODULE_TYPES) or skip_weight(name):
+            logger.debug(f"Skiping quantize {name}")
+            continue
+        logger.debug(f"Processing {name}")
+        weight = module.weight
+        scale, qtensor = quant_tensor(weight)
+        module.weight.data = qtensor
+        setattr(module, "scale_weight", torch.nn.Parameter(scale, requires_grad=False))
     logger.info(f"Saving quantized model to {qmodel_path}")
     model.save_pretrained(qmodel_path)
 
 
 if __name__ == "__main__":
     import argparse
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_path", type=str, required=True)
     parser.add_argument("--qmodel_path", type=str, required=True)
     parser.add_argument("--low_cpu_mem", action="store_true", help="Load weight file one by one to reduce memory usage")
     args = parser.parse_args()
     if args.low_cpu_mem:
-        static_quant_model_for_low_cpu_usage(args.model_path, args.qmodel_path)
+        quant_model_weight_with_low_cpu_usage(args.model_path, args.qmodel_path)
     else:
         static_quant_model_tran(args.model_path, args.qmodel_path)
 
@@ -165,7 +157,8 @@ model_path = "/software/users/yiliu4/HF_HOME/hub/DeepSeek-V3-BF16"
 model_path = "/software/users/yiliu4/HF_HOME/hub/deepseekv3-bf16-4l/"
 qmodel_path = "/software/users/yiliu4/HF_HOME/hub/deepseekv3-bf16-4l-q/"
 static_quant_model(model_path, qmodel_path)
-python static_quant.py --model_path /software/users/yiliu4/HF_HOME/hub/deepseekv3-bf16-4l/ --qmodel_path /software/users/yiliu4/HF_HOME/hub/deepseekv3-bf16-4l-q/
-python static_quant.py --model_path /software/users/yiliu4/HF_HOME/hub/DeepSeek-V3-BF16/ --qmodel_path /software/users/yiliu4/HF_HOME/hub/DeepSeek-V3-BF16-q/
+python quant.py --model_path /software/users/yiliu4/HF_HOME/hub/deepseekv3-bf16-4l/ --qmodel_path /software/users/yiliu4/HF_HOME/hub/deepseekv3-bf16-4l-q2/  --low_cpu_mem
+python quant.py --model_path /software/users/yiliu4/HF_HOME/hub/deepseekv3-bf16-4l/ --qmodel_path /software/users/yiliu4/HF_HOME/hub/deepseekv3-bf16-4l-q/
+python quant.py --model_path /software/users/yiliu4/HF_HOME/hub/DeepSeek-V3-BF16/ --qmodel_path /software/users/yiliu4/HF_HOME/hub/DeepSeek-V3-BF16-q/
 
 """
