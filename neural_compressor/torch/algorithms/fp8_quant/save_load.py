@@ -22,6 +22,7 @@ import torch
 
 from ._quant_common.quant_config import local_rank, world_size, HpDtype
 from ._core.scale_handler import update_state_dict_method
+from ._core.quantized_func_wrappers import init_quantized_func_wrapper_factory, clear_quantized_func_wrapper_factory
 from .utils.logger import logger
 from neural_compressor.torch.utils import (
     get_accelerator,
@@ -615,6 +616,7 @@ def load(model_name_or_path, format="huggingface", device="hpu", **kwargs):
     qconfig = get_inc_fp8config(model, from_neuralmagic, from_neuralmagic_with_kv)
     qconfig.save_temp_json_file()  # generate qconfig.json_file
 
+    init_quantized_func_wrapper_factory()
     # replace modules to patched modules
     prep_model(model, qconfig.json_file)
     model = process_model_for_scalar_scale(model)
@@ -636,7 +638,7 @@ def load(model_name_or_path, format="huggingface", device="hpu", **kwargs):
         else:
             model.load_state_dict(gathered_state_dict, assign=True, strict=False)
         load_scale_params(model, gathered_state_dict)  # ensure per-channel scale is loaded correctly
-
+    clear_quantized_func_wrapper_factory()
     model.tie_weights()
     model = model.to(cur_accelerator.name())
     model = model.eval()

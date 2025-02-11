@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import gc
-import habana_frameworks.torch.core as htcore
 import torch
 import torch.nn as nn
 import numpy as np
@@ -127,6 +126,7 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     save_file = False
     patched_modules = []
     patched_module_types = set()
+    device = torch.device(cur_accelerator.name())
     with torch.no_grad():
         for name, mod in model.named_modules():
             mod_type_str = mod.__class__.__name__

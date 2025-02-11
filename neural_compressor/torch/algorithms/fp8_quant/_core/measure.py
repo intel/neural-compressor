@@ -15,7 +15,6 @@
 import json
 import os
 
-import habana_frameworks.torch.core as htcore
 import numpy as np
 import torch
 

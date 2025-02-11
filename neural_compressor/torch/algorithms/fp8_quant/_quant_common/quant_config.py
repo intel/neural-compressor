@@ -21,9 +21,9 @@ from enum import Enum, Flag, auto
 from json.decoder import JSONDecodeError
 from typing import Any, Mapping
 
-import habana_frameworks.torch.utils.experimental as htexp
 import torch
 
+from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator, INCAcceleratorType
 from ..utils.logger import logger
 
 try:
@@ -83,9 +83,10 @@ class ScaleFormat(Enum):
     SCALAR = 2  # scales is non-const, non-persistent tensor with data ptr, used for low BS performance optimization
 
 
-class DeviceType(Enum):
-    GAUDI2 = htexp.synDeviceType.synDeviceGaudi2
-    GAUDI3 = htexp.synDeviceType.synDeviceGaudi3
+class DeviceForScalesType(Enum):
+    GAUDI2 = INCAcceleratorType.GAUDI2
+    GAUDI3 = INCAcceleratorType.GAUDI3
+
 
 _config_to_enum = {
     "mode": QuantMode,
@@ -98,7 +99,7 @@ _config_to_enum = {
     "use_qdq": TrueFalse,
     "fake_quant": TrueFalse,
     "scale_format": ScaleFormat,
-    "device_for_scales": DeviceType,
+    "device_for_scales": DeviceForScalesType,
     "measure_on_hpu": TrueFalse,
 }
 
@@ -191,7 +192,7 @@ class Fp8cfg:
             "global_rank": None,
             "world_size": world_size if world_size >= 0 else None,
             "seperate_measure_files": True,  # Determines whether to expect one or several measure files when using more than one gaudi
-            "device_type": htexp._get_device_type(),  # Determines device type: Gaudi2, Gaudi3...
+            "device_type": auto_detect_accelerator().get_inc_accelerator_type(),  # Determines device type: Gaudi2, Gaudi3...
             "device_for_scales": None,  # Overrides device type for scale: Gaudi2, Gaudi3... Enables using only G2 scales on G3
             "measure_exclude": MeasureExclude.OUTPUT,
             "recalc_scales": False,
@@ -229,23 +230,10 @@ class Fp8cfg:
         measured_global_config["local_rank"] = (
             local_rank if local_rank >= 0 and custom_config.get("seperate_measure_files", True) else None
         )
-
-        if custom_config.get("device_for_scales", None) is None:
-            # Device for scales is the current device by default
-            measured_global_config["device_for_scales"] = measured_global_config["device_type"]
-        elif measured_global_config["device_for_scales"] != measured_global_config["device_type"]:
-            # Currently, only maxabs_hw is supported for a different device scales configuration
-            if measured_global_config["scale_method"] != ScaleMethod.MAXABS_HW:
-                raise ValueError(
-                    f"Unsupported config: scale_method: {measured_global_config['scale_method']} "
-                    f"for scale device overriding: {measured_global_config['device_for_scales']}"
-                )
-            if not (
-                measured_global_config["device_for_scales"] == htexp.synDeviceType.synDeviceGaudi2
-                and measured_global_config["device_type"] == htexp.synDeviceType.synDeviceGaudi3
-            ):
-                raise ValueError(f"Unsupported config: device_for_scales={measured_global_config['device_for_scales']} "
-                                f"for device_type={measured_global_config['device_type']}")
+        # set device_for_scales config for gaudi device only
+        if measured_global_config["device_type"].value > INCAcceleratorType.GAUDI_MIN.value:
+            logger.debug("setting device for scales config")
+            Fp8cfg.set_gaudi_device_for_scales(custom_config, measured_global_config)
 
         scale_method = measured_global_config["scale_method"]
         if measured_global_config["scale_format"] == ScaleFormat.SCALAR:
@@ -318,6 +306,28 @@ class Fp8cfg:
 
         return Fp8cfg(cfg=measured_global_config)
 
+    @staticmethod
+    def set_gaudi_device_for_scales(custom_config, measured_global_config):
+        current_device_type = measured_global_config["device_type"]
+        if current_device_type.value < INCAcceleratorType.GAUDI_MIN.value:
+            raise ValueError("device for scales config is supported for only gaudi device line.")
+        if custom_config.get("device_for_scales", None) is None:
+            # Device for scales is the current device by default
+            measured_global_config["device_for_scales"] = current_device_type
+
+        elif measured_global_config["device_for_scales"] != measured_global_config["device_type"]:
+            # Currently, only maxabs_hw is supported for a different device scales configuration
+            if measured_global_config["scale_method"] != ScaleMethod.MAXABS_HW:
+                raise ValueError(
+                    f"Unsupported config: scale_method: {measured_global_config['scale_method']} "
+                    f"for scale device overriding: {measured_global_config['device_for_scales']}"
+                )
+            if not (
+                measured_global_config["device_for_scales"] == INCAcceleratorType.GAUDI2
+                and measured_global_config["device_type"] == INCAcceleratorType.GAUDI3
+            ):
+                raise ValueError(f"Unsupported config: device_for_scales={measured_global_config['device_for_scales']} "
+                                f"for device_type={measured_global_config['device_type']}")
 
 def _read_config_from_file(config_path: str) -> Mapping[str, str]:
     logger.debug("QUANT PACKAGE: using %s config", config_path)
