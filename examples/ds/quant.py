@@ -92,6 +92,9 @@ def quant_model_weight_with_low_cpu_usage(model_path, qmodel_path):
         qmodel_file_path = os.path.join(qmodel_path, qmodel_file_name)
         qtensors = {}
         with safe_open(file_path, framework="pt", device="cpu") as f:
+            if "lm_head.weight" not in f.keys():
+                logger.warning(f"Skiping {filename}")
+                continue
             for weight_name in f.keys():
                 weight = f.get_tensor(weight_name)
                 if skip_weight(weight_name):
