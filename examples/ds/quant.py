@@ -85,29 +85,33 @@ def quant_model_weight_with_low_cpu_usage(model_path, qmodel_path):
         qmodel_file_name = filename
         qmodel_file_path = os.path.join(qmodel_path, qmodel_file_name)
         qtensors = {}
+        # mlp.gate.weight
+        fp8_tensors = {}
+        bf16_tensors = {}
         with safe_open(file_path, framework="pt", device="cpu") as f:
             for weight_name in f.keys():
                 weight = f.get_tensor(weight_name)
-                if skip_weight(weight_name):
-                    logger.debug(f"Skiping quantize {weight_name}")
-                    qtensors[weight_name] = weight
-                    qtensor_mappping[weight_name] = qmodel_file_name
-                    continue
-                logger.debug(f"[{i+1}/{files_cnt}] Processing {weight_name}")
-                scale, qtensor = quant_tensor(weight)
-                preifx_name = weight_name[: -len(".weight")]
-                scale_name = f"{preifx_name}.{WEIGHT_SCALE_NAME}"
-                qtensors[scale_name] = scale
-                qtensors[weight_name] = qtensor
-                qtensor_mappping[scale_name] = qmodel_file_name
-                qtensor_mappping[weight_name] = qmodel_file_name
-        logger.debug(f"[{i+1}/{files_cnt}] Saving {len(qtensors)} tensors to {qmodel_file_path}")
-        save_file(qtensors, os.path.join(qmodel_path, qmodel_file_path))
+                bf16_tensors[weight_name] = weight
+        with safe_open(qmodel_file_path, framework="pt", device="cpu") as f:
+            for weight_name in f.keys():
+                weight = f.get_tensor(weight_name)
+                fp8_tensors[weight_name] = weight
+        need_update = False
+        for weight_name, bf16_weight in bf16_tensors.items():
+            if "mlp.gate.weight" in weight_name:
+                logger.debug(f"move float tensor {weight_name}")
+                fp8_tensors[weight_name] = bf16_weight
+                need_update = True
+        if need_update:
+            logger.debug(f"Saving {len(fp8_tensors)} tensors to {qmodel_file_path}")
+            save_file(fp8_tensors, qmodel_file_path)
+        # logger.debug(f"[{i+1}/{files_cnt}] Saving {len(qtensors)} tensors to {qmodel_file_path}")
+        # save_file(fp8_tensors, os.path.join(qmodel_path, qmodel_file_path))
     # Dump tensor mapping into json file
-    model_state_dict_mapping_file_path = os.path.join(qmodel_path, MODEL_STATE_DICT_MAPPING_FILENAME)
-    logger.info(f"Saving tensor mapping to {model_state_dict_mapping_file_path}")
-    with open(model_state_dict_mapping_file_path, "w") as f:
-        json.dump(qtensor_mappping, f, indent=4)
+    # model_state_dict_mapping_file_path = os.path.join(qmodel_path, MODEL_STATE_DICT_MAPPING_FILENAME)
+    # logger.info(f"Saving tensor mapping to {model_state_dict_mapping_file_path}")
+    # with open(model_state_dict_mapping_file_path, "w") as f:
+    #     json.dump(qtensor_mappping, f, indent=4)
 
 
 def _import_oh():
