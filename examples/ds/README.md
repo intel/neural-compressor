@@ -1,4 +1,4 @@
-# Note for static quantize DeepSeek model
+# Note for quantize DeepSeek model
 
 ## Prerequisite
 
@@ -28,7 +28,7 @@ python quant.py --model_path /path/to/DeepSeek/R1/BF16/ --qmodel_path /path/to/D
 
 ### Step 2. copy model files for inference
 
-Since DeepSeek V3 and R1 asre not yet supported by Transformers, we need to manually copy some model files.
+Since DeepSeek V3 and R1 are not yet supported by Transformers, we need to manually copy some model files.
 
 ```bash
 python post_process.py --model_path /path/to/DeepSeek/R1/BF16/ --qmodel_path /path/to/DeepSeek/R1/Dynamic-FP8
