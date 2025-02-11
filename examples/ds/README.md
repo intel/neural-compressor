@@ -1,29 +1,43 @@
-Note for static quantize DeepSeek model
+# Note for static quantize DeepSeek model
 
 ## Prerequisite
+
 ```
 pip install -r requirements.txt
 ```
 
 ## Usage
 
-- Option 1 (Rec). handle weights only 
+### Step 1. quantize model weights
+
+- Option 1 (Recommended): Quantize weights directly
+
 ```bash
 python quant.py --model_path /path/to/DeepSeek/R1/BF16/ --qmodel_path /path/to/DeepSeek/R1-Dynamic-FP8 --low_cpu_mem
 ```
 
-- Option 2. Loading model using transformers (Requires DRAM > ~700 GB)
+- Option 2. Load the model using transformers (requires ~700 GB of DRAM)
+
 ```bash
 python quant.py --model_path /path/to/DeepSeek/R1/BF16/ --qmodel_path /path/to/DeepSeek/R1/Dynamic-FP8
 ```
 
 > [!NOTE]
+>
 > - Skip quantize `lm-head`.
 > - `WEIGHT_BACKOFF = 0.5`
 > - `SCALE_DTYPE = torch.bfloat16`
 
+### Step 2. copy model files for inference
+
+Since DeepSeek V3 and R1 asre not yet supported by Transformers, we need to manually copy some model files.
+
+```bash
+python post_process.py --model_path /path/to/DeepSeek/R1/BF16/ --qmodel_path /path/to/DeepSeek/R1/Dynamic-FP8
+```
 
 ## Example
+
 1. Name convention:
     - weight scale name: `prefix.scale_weight`
     - input scale name: `prefix.scale_input` (for static only)
@@ -55,4 +69,3 @@ class M(torch.nn.Module):
     "fc1.scale_input": "qmodel.safetensors"
 }
 ```
-
