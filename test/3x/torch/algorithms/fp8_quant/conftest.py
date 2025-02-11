@@ -10,3 +10,4 @@ def pytest_sessionstart():
 
     # Fix the seed - just in case
     torch.manual_seed(0)
+

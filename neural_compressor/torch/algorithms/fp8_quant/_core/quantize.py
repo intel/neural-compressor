@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import gc
-import habana_frameworks.torch.core as htcore
 import torch
 import torch.nn as nn
 import numpy as np
