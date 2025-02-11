@@ -16,7 +16,7 @@ pip install -r requirements.txt
 python quant.py --model_path /path/to/DeepSeek/R1/BF16/ --qmodel_path /path/to/DeepSeek/R1-Dynamic-FP8 --low_cpu_mem
 ```
 
-- Option 2. Load the model using transformers (requires ~700 GB of DRAM)
+- Option 2: Load the model using transformers (requires ~700 GB of DRAM)
 
 ```bash
 python quant.py --model_path /path/to/DeepSeek/R1/BF16/ --qmodel_path /path/to/DeepSeek/R1/Dynamic-FP8
@@ -36,7 +36,7 @@ Since DeepSeek V3 and R1 asre not yet supported by Transformers, we need to manu
 python post_process.py --model_path /path/to/DeepSeek/R1/BF16/ --qmodel_path /path/to/DeepSeek/R1/Dynamic-FP8
 ```
 
-## Example
+## More details
 
 1. Name convention:
     - weight scale name: `prefix.scale_weight`
