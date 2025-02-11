@@ -1,0 +1,4 @@
+loguru
+torch
+safetensors
+tqdm
