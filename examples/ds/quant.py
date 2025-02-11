@@ -95,7 +95,7 @@ def quant_model_weight_with_low_cpu_usage(model_path, qmodel_path):
             for weight_name in f.keys():
                 weight = f.get_tensor(weight_name)
                 if skip_weight(weight_name):
-                    logger.debug(f"Skiping quantize {weight_name}")
+                    logger.debug(f"Skipping quantize {weight_name}")
                     qtensors[weight_name] = weight
                     qtensor_mappping[weight_name] = qmodel_file_name
                     continue
@@ -141,7 +141,7 @@ def static_quant_model_tran(model_path, qmodel_path):
     )
     for name, module in model.named_modules():
         if not isinstance(module, QUANT_MODULE_TYPES) or skip_weight(name):
-            logger.debug(f"Skiping quantize {name}")
+            logger.debug(f"Skipping quantize {name}")
             continue
         logger.debug(f"Processing {name}")
         weight = module.weight
