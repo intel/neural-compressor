@@ -633,9 +633,10 @@ def load(model_name_or_path, format="huggingface", device="hpu", **kwargs):
             else:
                 rank_state_dict = shard_state_dict(gathered_state_dict)
             model.load_state_dict(rank_state_dict, assign=True, strict=False)
+            load_scale_params(model, rank_state_dict)  # ensure per-channel scale is loaded correctly
         else:
             model.load_state_dict(gathered_state_dict, assign=True, strict=False)
-        load_scale_params(model, gathered_state_dict)  # ensure per-channel scale is loaded correctly
+            load_scale_params(model, gathered_state_dict)  # ensure per-channel scale is loaded correctly
 
     model.tie_weights()
     model = model.to(cur_accelerator.name())
