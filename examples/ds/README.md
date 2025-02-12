@@ -23,6 +23,7 @@ python quant.py --model_path /path/to/DeepSeek/R1/BF16/ --qmodel_path /path/to/D
 ```
 
 > [!NOTE]
+> - weight dtype is `torch.float8_e4m3fn` (full range is `-448` to `448`)
 > - `WEIGHT_BACKOFF = 0.5`
 > - `SCALE_DTYPE = torch.bfloat16`
 
