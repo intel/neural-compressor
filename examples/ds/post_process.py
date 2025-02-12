@@ -53,15 +53,13 @@ def update_config(model_path, qmodel_path):
     import json
     import os
 
-    # open config
     with open(os.path.join(model_path, "config.json"), "r") as f:
         config = json.load(f)
         config["quantization_config"] = quantization_config
-        # save new config to qmodel_path
         logger.info(f"Updated config: {config}")
-        logger.debug(f"Saving config to {qmodel_path}")
-
-        with open(os.path.join(qmodel_path, "config.json"), "w") as f:
+        config_filepath = os.path.join(qmodel_path, "config.json")
+        logger.debug(f"Saving config to {config_filepath}")
+        with open(config_filepath, "w") as f:
             json.dump(config, f, indent=4)
 
 

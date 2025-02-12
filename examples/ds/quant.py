@@ -112,8 +112,12 @@ def quant_model_weight_with_low_cpu_usage(model_path, qmodel_path):
     # Dump tensor mapping into json file
     model_state_dict_mapping_file_path = os.path.join(qmodel_path, MODEL_STATE_DICT_MAPPING_FILENAME)
     logger.info(f"Saving tensor mapping to {model_state_dict_mapping_file_path}")
+    state_dict_mapping = {
+        "metadata":{},
+        "weight_map": qtensor_mappping,
+    }
     with open(model_state_dict_mapping_file_path, "w") as f:
-        json.dump(qtensor_mappping, f, indent=4)
+        json.dump(state_dict_mapping, f, indent=4)
 
 
 def _import_oh():
