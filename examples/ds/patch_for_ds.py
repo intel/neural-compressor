@@ -1,5 +1,5 @@
 # ==--------------------------------------------------------------------------==
-# Patch for loading DS models
+# Patch for loading DS models from transformers
 from typing import Union, Optional
 import torch
 import os
@@ -101,7 +101,7 @@ def load_state_dict(
                 "If you tried to load a PyTorch model from a TF 2.0 checkpoint, please set from_tf=True."
             )
 
-
+#  https://github.com/huggingface/transformers/pull/35493
 def set_initialized_submodules(model, state_dict_keys):
     """
     Sets the `_is_hf_initialized` flag in all submodules of a given model when all its weights are in the loaded state

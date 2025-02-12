@@ -95,38 +95,32 @@ class FP8QDQLinear(torch.nn.Linear):
         return out
 
 
-torch.nn.Linear = FP8QDQLinear
-# def patch_linear_(module):
-#     for name, child in module.named_children():
-#         if isinstance(child, nn.Linear):
-#             qdq_linear = FP8QDQLinear.create_from_linear(child)
-#             logger.debug(f"Replacing {name} with {qdq_linear}")
-#             setattr(module, name, qdq_linear)
-#         else:
-#             patch_linear_(child)  # Recursively apply to submodules
+def patch_lin():
+    logger.warning("Patching torch.nn.Linear to FP8QDQLinear")
+    torch.nn.Linear = FP8QDQLinear
 
 
-def qdq_eval(model_path, qmodel_path):
+def qdq_eval(model_path, not_patch_lin=False):
     import transformers
     from transformers.modeling_utils import no_init_weights
     from patch_for_ds import patch_transformers
+
+    if not not_patch_lin:
+        patch_lin()
 
     def _patch__initialize_weights(self, module):
         print(f"Skipping init_weights ")
         module._is_hf_initialized = True
 
     transformers.modeling_utils.PreTrainedModel._initialize_weights = _patch__initialize_weights
-    # import_oh()
     patch_transformers()
-    # with torch.device("meta"):
     with no_init_weights():
         model = transformers.AutoModelForCausalLM.from_pretrained(
-            qmodel_path,
+            model_path,
             torch_dtype="auto",
             low_cpu_mem_usage=True,
             trust_remote_code=True,
         )
-    # patch_linear_(model)
     logger.info(f"Patched model: {model}")
     model.eval()
     tokenizer = transformers.AutoTokenizer.from_pretrained(model_path)
@@ -141,8 +135,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_path", type=str, required=True)
     parser.add_argument("--qmodel_path", type=str, required=True)
-    parser.add_argument("--low_cpu_mem", action="store_true", help="Load weight file one by one to reduce memory usage")
+    parser.add_argument("--not_patch_lin", action="store_true", help="Measure float model")
     args = parser.parse_args()
-    qdq_eval(args.model_path, args.qmodel_path)
+    qdq_eval(args.qmodel_path, not_patch_lin=args.not_patch_lin)
