@@ -64,7 +64,7 @@ class FP8QDQLinear(torch.nn.Linear):
         self.weight = nn.Parameter(
             torch.empty(out_features, in_features, dtype=FP8QDQLinear.fp8_dtype), requires_grad=True
         )
-        self.scale_weight = nn.Parameter(torch.zeros((1), dtype=FP8QDQLinear.dtype), requires_grad=False)
+        self.scale_weight = nn.Parameter(torch.tensor(0, dtype=FP8QDQLinear.dtype), requires_grad=False)
         if bias:
             self.bias = nn.Parameter(torch.empty(out_features))
         else:
@@ -121,9 +121,9 @@ def qdq_eval(model_path, qmodel_path):
     # with torch.device("meta"):
     with no_init_weights():
         model = transformers.AutoModelForCausalLM.from_pretrained(
-            model_path,
+            qmodel_path,
             torch_dtype="auto",
-            # low_cpu_mem_usage=True,
+            low_cpu_mem_usage=True,
             trust_remote_code=True,
         )
     # patch_linear_(model)
