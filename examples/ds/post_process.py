@@ -42,7 +42,7 @@ quantization_config = {
     "mode": "LOAD",
     "observer": "maxabs",
     "scale_format": "const",
-    "scale_method": "maxabs_pow2_dynamic",
+    "scale_method": "maxabs_hw",
     "scale_params": {},
     "use_qdq": "False",
 }
