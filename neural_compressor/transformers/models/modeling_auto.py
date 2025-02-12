@@ -229,7 +229,8 @@ class _BaseINCAutoModelClass:
         
         # StaticCache's device is initialized by `hf_device_map` in `from_pretrained` method.
         if hasattr(model, "hf_device_map"):
-            model.hf_device_map = {"" : model.device_map}
+            device_map = torch.device(device_map) if isinstance(device_map, str) else device_map
+            model.hf_device_map = {"" : device_map}
         model.quantization_config = quantization_config
 
         model.save_pretrained = types.MethodType(save_low_bit, model)
