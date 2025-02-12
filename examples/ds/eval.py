@@ -124,10 +124,12 @@ def qdq_eval(model_path, not_patch_lin=False):
     logger.info(f"Patched model: {model}")
     model.eval()
     tokenizer = transformers.AutoTokenizer.from_pretrained(model_path)
-    encode = tokenizer.encode("Hello, !", return_tensors="pt")
+    prompt = "Hi, who"
+    encode = tokenizer.encode(prompt, return_tensors="pt")
     with torch.no_grad():
         output_tokens = model.generate(encode, max_length=10)
         output = tokenizer.decode(output_tokens[0], skip_special_tokens=True)
+        logger.info(f"Prompt: {prompt}")
         logger.info(f"Output: {output}")
 
 
