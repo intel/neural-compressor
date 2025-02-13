@@ -108,6 +108,7 @@ def run_accuracy_test(
     quant_modes: typing.Iterable[list] = QUANT_MODES_DEFAULT,
     device_type: str = get_device_name(),
     scale_format: ScaleFormat = ScaleFormat.SCALAR,
+    use_hpu_graphs: bool = True,
 ):
     """Run both the reference and the quantized versions of this module,
     and compare the outputs on every test vector.
@@ -162,7 +163,8 @@ def run_accuracy_test(
 
         _assert_quantized_correctly(reference_model=reference_model, quantized_model=quantized_model)
 
-        quantized_model = ht.hpu.wrap_in_hpu_graph(quantized_model)
+        if use_hpu_graphs:
+            quantized_model = ht.hpu.wrap_in_hpu_graph(quantized_model)
 
         vectors = {
             QuantMode.MEASURE: measure_vectors,

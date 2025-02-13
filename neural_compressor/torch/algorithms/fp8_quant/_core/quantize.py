@@ -133,6 +133,11 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     prepare_scales_func = prepare_layer_scales if is_dynamic_quantization else load_layer_scales
     should_quantize_cond = True # In static quantization we quantize everything
     device = torch.device(cur_accelerator.name())
+    # TODO [SW-217814]: improve config parsing
+    is_dynamic_quantization = "dyn" in scaling_method_name
+    #TODO Merge with load_layer_scales
+    prepare_scales_func = prepare_layer_scales if is_dynamic_quantization else load_layer_scales
+    should_quantize_cond = True # In static quantization we quantize everything
     with torch.no_grad():
         for name, mod in model.named_modules():
             mod_type_str = mod.__class__.__name__

@@ -127,7 +127,7 @@ class QuantDynamicInput(QuantDequantBase):
         super(QuantDynamicInput, self).__init__(lp_dtype, hp_dtype, *args, **kwargs)
         self.input_scales_creator = input_scales_creator
 
-        self.cast_to_op = self.set_cast_to_op()
+        self.cast_to_op = get_quantized_func_wrapper(OP_TYPE.CAST_TO_FP8, self.scale_format)
 
     def forward(self, x):
         scale = self.input_scales_creator.calc_scales(x, QuantTensorType.DYNAMIC)
@@ -136,7 +136,7 @@ class QuantDynamicInput(QuantDequantBase):
         scale = create_scale_tensor(scale, self.scale_format)
         scale_inv = create_scale_tensor(scale_inv, self.scale_format)
 
-        ret = self.cast_to_op(x, scale_inv, False, False, self.lp_dtype)[0]
+        ret = self.cast_to_op(x, scale_inv, False, False, self.lp_dtype)
 
         return ret, scale
 

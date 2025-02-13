@@ -16,12 +16,13 @@ import importlib.util
 
 from ..model_configs import ModuleInfo, ModuleType
 from .._quant_common.helper_modules import *
+from ..utils.logger import logger
 
 from neural_compressor.torch.algorithms.fp8_quant.model_configs import (
     get_patched_module_table,
     get_patched_module_type_table,
 )
-from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
+from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator, INCAcceleratorType
 deepspeed_exists = False
 if importlib.util.find_spec("deepspeed"):  # check if deepspeed is installed
     deepspeed_exists = True
@@ -111,3 +112,26 @@ def _import_hpu_modules():
 
 
 _import_hpu_modules()
+@functools.lru_cache(maxsize=None)
+def _import_xpu_modules():
+    from neural_compressor.torch.algorithms.fp8_quant.patched_module_base import (
+        PATCHED_MODULE_TABLE, PATCHED_MODULE_TYPES_TABLE
+    )
+    cur_accelerator = auto_detect_accelerator()
+    if not cur_accelerator.current_device_name().startswith("xpu"):
+        return
+    PATCHED_MODULE_TABLE["xpu"].update({"Linear": ModuleInfo("linear", PatchedLinear),
+                                        "Matmul": ModuleInfo("matmul", PatchedMatmul),})
+    PATCHED_MODULE_TYPES_TABLE["xpu"].update({"linear": _mod_types["linear"]})
+
+@functools.lru_cache(maxsize=None)
+def _import_device_modules():
+    cur_accelerator_type = auto_detect_accelerator().get_inc_accelerator_type()
+    if cur_accelerator_type.value > INCAcceleratorType.GAUDI_MIN.value:
+        _import_hpu_modules()
+    elif cur_accelerator_type == INCAcceleratorType.XPU:
+        _import_xpu_modules()
+    else:
+        logger.warning("No HPU or XPU devices were detected. No Patched Modules available.")
+
+_import_device_modules()

@@ -17,7 +17,6 @@ from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config imp
 from .scale_method_factory import ScaleMethodFactory, QuantTensorName
 from ..common import ModuleConfig, QuantTensorType
 from ..quant_dequant import DequantOutput, QuantDequant, QuantDequantNone, QuantInput, QuantDynamicInput
-from ..fp_utils import scale_fcn
 
 
 class BaseOpQuantizer:

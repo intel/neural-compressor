@@ -155,6 +155,7 @@ def init_linear(instance, mod_extra_config):
         else:
             instance.matmul_fp8 = get_quantized_func_wrapper(OP_TYPE.LINEAR_GEMM, instance.scale_format)
             instance.forward = instance.forward_quant if change_forward else instance.forward
+            # input0 is None when initializing a dynamic quantization op
             instance.register_scale("scale_input", mod_extra_config.scale.inputs[0], instance.scale_format)
             if isinstance(mod_extra_config.scale.params["weight"], (torch.Tensor, float)):
                 instance.register_scale("scale_weight", mod_extra_config.scale.params["weight"], instance.scale_format)
