@@ -65,6 +65,7 @@ class QuantizedXPUCastFromFP8Base(QuantizedXPUFuncWrapperBase):
 
 _OP_TYPE_XPU_QUANTIZED_WRAPPER_CLASSES = {
                                           OP_TYPE.LINEAR_GEMM : QuantizedXPUMatmul,
+                                          OP_TYPE.MATMUL_GEMM : QuantizedXPUMatmul,
                                           OP_TYPE.CAST_TO_FP8 : QuantizedXPUCastToFP8Base,
                                           OP_TYPE.CAST_FROM_FP8 : QuantizedXPUCastFromFP8Base
                                          }

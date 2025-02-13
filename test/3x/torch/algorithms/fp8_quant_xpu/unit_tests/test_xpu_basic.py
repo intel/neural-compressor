@@ -61,7 +61,6 @@ class MyModel(torch.nn.Module):
         return self.my_linear(input)
 
 
-@pytest.mark.skip(reason="FSW-13402 device hangs")
 def test_xpu_basic_mamtul():
     # test convert flow and quantized func
     my_model = MyModelMatmul()
