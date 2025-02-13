@@ -58,7 +58,7 @@ def scale_to_scalar(scale):
     elif isinstance(scale, float):  # already scalar case
         return scale
     else:
-        raise Exception("unexpected scale instance type, expected Torch.tensor or float number")
+        raise Exception(f"Unexpected scale instance type: {type(scale).__name__}, expected Torch.tensor or float number")
 
 
 def get_scale_dtype(scale):
@@ -66,8 +66,10 @@ def get_scale_dtype(scale):
         return scale.dtype
     elif isinstance(scale, float):  # already scalar case
         return type(scale).__name__
+    elif scale is None: # possible dynamic scalar case
+        return None
     else:
-        raise Exception("unexpected scale instance type, expected Torch.tensor or float number")
+        raise Exception(f"Unexpected scale instance type: {type(scale).__name__}, expected Torch.tensor or float number")
 
 
 def get_param_scales_from_scalar(patched_mod, prefix, dtype=torch.bfloat16, device=torch.device('hpu')):

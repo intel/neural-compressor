@@ -32,6 +32,24 @@ EXP_WIDTH = {
     torch.float8_e5m2: 5,
 }
 
+descale_fcn = lambda x, scale: torch.mul(x, scale)
+scale_fcn = lambda x, scale: torch.div(x, scale)
+cast_fcn = lambda x, dtype: x.to(dtype=dtype)
+cast_to_fp8_fcn = lambda x, dtype, scale_inv=None: torch.ops.hpu.cast_to_fp8_v2(x, scale_inv, False, False, dtype)[0]
+cast_from_fp8_fcn = lambda x, dtype, scale=None: torch.ops.hpu.cast_from_fp8(x, scale, dtype)
+quantize_per_tensor_to_fp8 = lambda x, scale, zero_point, quant_min, quant_max, dtype=None, axis=None: torch.ops.quantized_decomposed.quantize_per_tensor(
+    x, scale, zero_point, quant_min, quant_max, dtype=dtype
+)
+dequantize_per_tensor_from_fp8 = lambda x, scale, zero_point, quant_min, quant_max, dtype, out_dtype=None, axis=None: torch.ops.quantized_decomposed.dequantize_per_tensor(
+    x, scale, zero_point, quant_min, quant_max, dtype=dtype, out_dtype=out_dtype
+)
+quantize_per_channel_to_fp8 = lambda x, scale, zero_point, axis, quant_min, quant_max, dtype=None: torch.ops.quantized_decomposed.quantize_per_channel(
+    x, scale, zero_point, axis, quant_min, quant_max, dtype=dtype
+)
+dequantize_per_channel_from_fp8 = lambda x, scale, zero_point, axis, quant_min, quant_max, dtype, out_dtype=None: torch.ops.quantized_decomposed.dequantize_per_channel(
+    x, scale, zero_point, axis, quant_min, quant_max, dtype=dtype, out_dtype=out_dtype
+)
+
 
 def get_default_exp_bias(dtype):
     exp_width = EXP_WIDTH[dtype]
@@ -165,9 +183,14 @@ def manipulate_scales(scales, func):
     new_scales = ModuleConfig(new_inputs, new_outputs, new_weights)
     return new_scales
 
+
 def invert_scale(x):
+    if x is None:
+        return None
     if isinstance(x, (list, tuple)):
         return [1 / x_i for x_i in x]
     return 1 / x
+
+
 def invert_scales(scales):
     return manipulate_scales(scales, invert_scale)

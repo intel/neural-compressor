@@ -1779,11 +1779,11 @@ def get_default_hqq_config() -> HQQConfig:
 
 ######################## FP8 Quant Config ###############################
 if is_hpex_available():
-    from neural_compressor.torch.algorithms.fp8_quant._core.common import get_white_list
+    from neural_compressor.torch.algorithms.fp8_quant._core.patching_common import get_white_list
 else:
     get_white_list = lambda: []
 
-from ..algorithms.fp8_quant._core.common import get_white_list
+from ..algorithms.fp8_quant._core.patching_common import get_white_list
 
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=FP8_QUANT)
 class FP8Config(TorchBaseConfig):
