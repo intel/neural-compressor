@@ -52,7 +52,7 @@ class BaseOpQuantizer:
         for idx, output in enumerate(module.outputs):
             if self.output_scales_creators[idx].scale is None:
                 self.output_scales_creators[idx].scale = output
-                
+
     def calc_input_scales(self, num_of_inputs):
         input_scales = []
         for i in  range(num_of_inputs):
@@ -96,7 +96,7 @@ class LinearOpQuantizer(BaseOpQuantizer):
     def get_scales_module_config(self):
         input_scales = self.calc_input_scales(num_of_inputs=1)
         output_measurement = self.measurement.outputs[0] if self.measurement is not None else []
-        rescaled_weight = self.mod.weight
+        rescaled_weight = self.mod.weight if hasattr(self.mod, 'weight') else None
         if self.weight_ich_scale_calc is not None:
             weight_scales_in_ch = self.weight_ich_scale_calc.calc_scales(input_scales[0], QuantTensorType.CONST)
             rescaled_weight = scale_fcn(self.mod.weight, weight_scales_in_ch.reshape([1, -1]))
@@ -265,7 +265,12 @@ class DynamicMoeOpQuantizer(BaseOpQuantizer):
 
     def __init__(self, config, mod, measurement, params, module_type):
         super().__init__(config, mod, measurement, params, module_type)
-        self.inputs_scales_creators = [self.scales_method_factory.get_scale_method(QuantTensorName.INPUT) for i in range(len(measurement.inputs) + mod.num_experts)]
+        num_of_inputs = len(self.measurement.inputs) if self.measurement is not None else 1
+        num_of_experts = self.mod.num_experts if self.mod.num_experts is not None else 8
+        self.inputs_scales_creators = [
+            self.scales_method_factory.get_scale_method(QuantTensorName.INPUT)
+            for i in range(num_of_inputs + num_of_experts)
+        ]
         self.output_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.OUTPUT))
 
     def get_scales_module_config(self):
@@ -304,4 +309,3 @@ ops_quantizer_map = {"linear": LinearOpQuantizer,
 
 def get_op_quantizer(module_type, config, mod, measurement, params):
     return ops_quantizer_map[module_type](config, mod, measurement, params, module_type)
-
