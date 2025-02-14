@@ -71,8 +71,8 @@ def quantize(
         assert isinstance(
             quant_config, BaseConfig
         ), f"Please pass a dict or config instance as the quantization configuration, but got {type(quant_config)}."
-    logger.debug("Quantize model with config:")
-    logger.debug(quant_config.to_dict())
+    # logger.debug("Quantize model with config:")
+    # logger.debug(quant_config.to_dict())
     # select quantization algo according to config
 
     if is_ipex_available and (
@@ -96,7 +96,7 @@ def quantize(
     else:
         model_info = quant_config.get_model_info(model=q_model)
     configs_mapping = quant_config.to_config_mapping(model_info=model_info)
-    logger.debug(configs_mapping)
+    # logger.debug(configs_mapping)
     for algo_name, algo_func in algos_mapping.items():
         if need_apply(configs_mapping, algo_name):
             logger.info(f"Start to apply {algo_name} on the model.")
@@ -141,8 +141,8 @@ def prepare(
         assert isinstance(
             quant_config, BaseConfig
         ), f"Please pass a dict or config instance as the quantization configuration, but got {type(quant_config)}."
-    logger.debug("Prepare model with config:")
-    logger.debug(quant_config.to_dict())
+    # logger.debug("Prepare model with config:")
+    # logger.debug(quant_config.to_dict())
 
     # select quantization algo according to config
     if is_ipex_available and (
@@ -152,7 +152,7 @@ def prepare(
     else:
         model_info = quant_config.get_model_info(model=prepared_model)
     configs_mapping = quant_config.to_config_mapping(model_info=model_info)
-    logger.debug(configs_mapping)
+    # logger.debug(configs_mapping)
 
     # TODO: Need to consider composableConfig situation
     for algo_name, algo_func in algos_mapping.items():
@@ -207,8 +207,8 @@ def convert(
         assert isinstance(
             quant_config, BaseConfig
         ), f"Please pass a dict or config instance as the quantization configuration, but got {type(quant_config)}."
-    logger.debug("Convert model with config:")
-    logger.debug(quant_config.to_dict())
+    # logger.debug("Convert model with config:")
+    # logger.debug(quant_config.to_dict())
 
     # select quantization algo according to config
     if is_ipex_available and (
@@ -218,7 +218,7 @@ def convert(
     else:
         model_info = quant_config.get_model_info(model=q_model)
     configs_mapping = quant_config.to_config_mapping(model_info=model_info)
-    logger.debug(configs_mapping)
+    # logger.debug(configs_mapping)
 
     # TODO: Need to consider composableConfig situation
     for algo_name, algo_func in algos_mapping.items():

@@ -21,7 +21,8 @@ from .scale_methods import ops_quantizer
 from .._quant_common.quant_config import QuantMode
 from .._quant_common.helper_modules import PatchedUnmeasuredModule
 from .._quant_common.quant_config import get_hqt_config, set_hqt_config
-from ..utils.logger import logger
+# from ..utils.logger import logger
+from neural_compressor.common.utils.logger import logger
 from .common import convert_scales_to_tensors_dict, generate_model_info, mod_default_dict, parent_child_mod_dict, \
                     save_scales, load_scales
 from .measure import load_measurements
@@ -130,12 +131,14 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     with torch.no_grad():
         for name, mod in model.named_modules():
             mod_type_str = mod.__class__.__name__
+            logger.info(f"start to patch module {name}, type: {mod_type_str}")
             if name in mod_list and name not in scales and config.cfg["use_stats_files"] and name not in measurement:
                 if mod_default_dict[mod_type_str].should_measure_and_quant:
                     if not config.cfg["ignore_modules_wo_measures"]:
                         patch_module(mod, None, None, PatchedUnmeasuredModule(name))
+                        logger.warning(f"patch module {name} with unmeasured module")
                     else:
-                        logger.debug("Module %s was not quantized.", name)
+                        logger.warning("Module %s was ignore_modules_wo_measures", name)
                     continue
             # When offloading weight to disk, need to transfer the weight from disk to cpu using hf_hook
             apply_hf_hook(mod)
@@ -149,6 +152,7 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
                                                                 scale_config, save_file)
                 if not config.cfg["fake_quant"] and mod_default_dict[mod_type_str].should_measure_and_quant:
                     quantize_params(mod, mod_extra_config)
+                logger.warning(f"patching module {name}")
                 patch_module(mod, mod_extra_config, mod_default_dict)
                 patched_modules.append(name)
                 patched_module_types.add(type(mod))

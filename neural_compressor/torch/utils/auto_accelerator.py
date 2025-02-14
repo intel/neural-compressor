@@ -380,7 +380,7 @@ class HPU_Accelerator(Auto_Accelerator):  # pragma: no cover
 
     def synchronize(self):
         """Synchronizes the 'hpu' device."""
-        logger.debug("Calling `htcore.mark_step()` and `torch.hpu.synchronize()`.")
+        # logger.debug("Calling `htcore.mark_step()` and `torch.hpu.synchronize()`.")
         htcore.mark_step()
         return torch.hpu.synchronize()
 

@@ -186,23 +186,25 @@ class PatchedModuleBase(torch.nn.Module):
         return ModuleInfo(type=cls.get_type(), patched_module=cls)
 
     @classmethod
-    @abstractmethod
+    # @abstractmethod
     def get_type(cls) -> str:
         """Return the type of the patched module.
 
         Multiple patched modules can have the same type, and share the same scaling methods.
         """
-        raise NotImplementedError("`get_type` is not implemented")
+        return f"{cls.__name__} [NotImplementedError get_type]"
+        # raise NotImplementedError("`get_type` is not implemented")
 
     @classmethod
-    @abstractmethod
+    # @abstractmethod
     def get_module_type(cls) -> ModuleType:
         """Return the module type for the module.
 
         The module type is used to determine the number of inputs, outputs, and parameters of the module.
         For example, for linear module, the module type is: ModuleType(1, ["weight"], 1, False).
         """
-        raise NotImplementedError("`get_module_type` is not implemented")
+        return f"{cls.__name__} [NotImplementedError get_module_type]"
+        # raise NotImplementedError("`get_module_type` is not implemented")
 
     def extra_repr(self):
         return  f"quantization_mode={self.quantization_mode}, " + \
