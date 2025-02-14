@@ -51,6 +51,7 @@ def save(model, checkpoint_dir="saved_results", format="default"):
     # fp8_quant
     if isinstance(config_object, FP8Config):
         from neural_compressor.torch.algorithms import fp8_quant
+
         if format == SaveLoadFormat.DEFAULT:
             format = SaveLoadFormat.HUGGINGFACE
         fp8_quant.save(model, checkpoint_dir, format)

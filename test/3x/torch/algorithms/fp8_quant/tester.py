@@ -49,7 +49,7 @@ QUANT_MODES_DEFAULT = [QuantMode.MEASURE, QuantMode.QUANTIZE]
 QUANT_MODES_QUANT_ONLY = [QuantMode.QUANTIZE]
 
 DTYPE_TO_HPDTYPE_STR = {
-    torch.bfloat16: "BF16", 
+    torch.bfloat16: "BF16",
     torch.float16: "FP16",
     torch.float32: "FP32",
 }

@@ -32,7 +32,7 @@ from neural_compressor.common.utils import (
     detect_processor_type_based_on_hw,
     logger,
 )
-from neural_compressor.torch.utils import is_optimum_habana_available, is_transformers_imported, SaveLoadFormat
+from neural_compressor.torch.utils import SaveLoadFormat, is_optimum_habana_available, is_transformers_imported
 
 if is_transformers_imported():
     import transformers
@@ -722,5 +722,4 @@ def get_enum_from_format(format):
             return obj
         elif format.upper() == obj.name:
             return obj
-    raise ValueError(
-        f"Invalid format value ('{format}'). Enter one of [{[m.name for m in SaveLoadFormat]}]")
+    raise ValueError(f"Invalid format value ('{format}'). Enter one of [{[m.name for m in SaveLoadFormat]}]")

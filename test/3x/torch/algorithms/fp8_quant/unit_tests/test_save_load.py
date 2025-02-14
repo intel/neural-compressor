@@ -32,7 +32,7 @@ def compare_parameters_buffers(model1, model2):
     unique_keys_in_dict2 = keys2 - keys1
     unique_keys = unique_keys_in_dict1.union(unique_keys_in_dict2)
     assert len(dict1) == len(dict2), f"The number of parameters and buffers are different, {unique_keys}.\n" + \
-            f"unique_keys_in_model1: {unique_keys_in_dict1}\nunique_keys_in_model2: {unique_keys_in_dict2}\n" 
+            f"unique_keys_in_model1: {unique_keys_in_dict1}\nunique_keys_in_model2: {unique_keys_in_dict2}\n"
     for k, v in dict1.items():
         assert k in dict2, "k not in dict2"
         assert v.dtype == dict2[k].dtype, f"dtype of {k} is differnt.\n{v.dtype}\n{dict2[k].dtype}"
@@ -40,10 +40,10 @@ def compare_parameters_buffers(model1, model2):
 
 
 @pytest.mark.parametrize("scale_method", [
-    "unit_scale", "hw_aligned_single_scale", "maxabs_hw", "maxabs_pow2", 
-    "maxabs_arbitrary", "maxabs_hw_opt_weight", "maxabs_pow2_opt_weight", 
+    "unit_scale", "hw_aligned_single_scale", "maxabs_hw", "maxabs_pow2",
+    "maxabs_arbitrary", "maxabs_hw_opt_weight", "maxabs_pow2_opt_weight",
     # per-channel
-    "act_maxabs_hw_weights_pcs_maxabs_pow2", "act_maxabs_hw_weights_pcs_opt_pow2", 
+    "act_maxabs_hw_weights_pcs_maxabs_pow2", "act_maxabs_hw_weights_pcs_opt_pow2",
     "act_maxabs_pow2_weights_pcs_maxabs_pow2", "act_maxabs_pow2_weights_pcs_opt_pow2",
 ])
 @pytest.mark.parametrize("scale_format", ["const", "scalar"])

@@ -22,6 +22,7 @@ except:
 
 from neural_compressor.common import logger
 
+
 class LMEvalParser:
     def __init__(
         self,
@@ -89,7 +90,7 @@ class LMEvalParser:
         self._post_init()
 
     def _check_add_bos_token(self):
-        if self.add_bos_token == False:
+        if not self.add_bos_token:
             logger.warning(
                 (
                     "`add_bos_token` is set to False. "

@@ -15,8 +15,8 @@
 """Intel Neural Compressor PyTorch environment check."""
 
 import importlib
-import sys
 import os
+import sys
 
 import torch
 from packaging.version import Version

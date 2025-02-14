@@ -1786,6 +1786,7 @@ else:
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=FP8_QUANT)
 class FP8Config(TorchBaseConfig):
     """Config class for FP8 quantization."""
+
     name = FP8_QUANT
 
     def __init__(

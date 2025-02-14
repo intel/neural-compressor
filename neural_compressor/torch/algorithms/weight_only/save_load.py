@@ -26,14 +26,14 @@ from neural_compressor.common.utils import AWQ, TEQ, save_config_mapping
 from neural_compressor.torch.utils import (
     HPU_SAFE_WEIGHTS_NAME,
     HPU_WEIGHT_NAME,
+    LM_HEAD_NAMES,
     QCONFIG_NAME,
     WEIGHT_NAME,
     SaveLoadFormat,
+    get_accelerator,
+    get_enum_from_format,
     logger,
     set_module,
-    get_enum_from_format,
-    LM_HEAD_NAMES,
-    get_accelerator,
 )
 
 from .modules import HPUWeightOnlyLinear, INCWeightOnlyLinear, MulLinear
@@ -956,6 +956,7 @@ class WOQModelLoader:
 
 
 def change_config_to_hf_format(config_mappings):
+    """Change INC config_mappings to Huggingface format."""
     # Refer to https://huggingface.co/TheBloke/Llama-2-7B-Chat-GPTQ/blob/main/config.json
     default_quantization_config = {
         "bits": 4,
@@ -966,8 +967,9 @@ def change_config_to_hf_format(config_mappings):
         "true_sequential": True,
         "model_name_or_path": None,
         "model_file_base_name": "model",
-        "quant_method": "gptq"  # INC is using AutoGPTQ format for RTN, GPTQ, AWQ, and TEQ
+        "quant_method": "gptq",  # INC is using AutoGPTQ format for RTN, GPTQ, AWQ, and TEQ
     }
+
     def _is_lm_head(name):
         for lm_head_name in LM_HEAD_NAMES:
             if re.match(lm_head_name, name):
@@ -994,17 +996,21 @@ def change_config_to_hf_format(config_mappings):
         else:
             assert bits == config.bits, "bits should be the same for all modules, got {bits} and {config.bits}."
             assert sym == config.use_sym, "sym should be the same for all modules, got {sym} and {config.use_sym}."
-            assert group_size == config.group_size, \
-                    "group_size should be the same for all modules, got {group_size} and {config.group_size}."
+            assert (
+                group_size == config.group_size
+            ), "group_size should be the same for all modules, got {group_size} and {config.group_size}."
             if hasattr(config, "percdamp"):
-                assert damp_percent == config.percdamp, \
-                        "percdamp should be the same for all modules, got {damp_percent} and {config.percdamp}."
+                assert (
+                    damp_percent == config.percdamp
+                ), "percdamp should be the same for all modules, got {damp_percent} and {config.percdamp}."
             if hasattr(config, "act_order"):
-                assert desc_act == config.act_order, \
-                        "act_order should be the same for all modules, got {desc_act} and {config.act_order}."
+                assert (
+                    desc_act == config.act_order
+                ), "act_order should be the same for all modules, got {desc_act} and {config.act_order}."
             if hasattr(config, "true_sequential"):
-                assert true_sequential == config.true_sequential, \
-                        "true_sequential should be the same for all modules, got {true_sequential} and {config.true_sequential}."
+                assert (
+                    true_sequential == config.true_sequential
+                ), "true_sequential should be the same for all modules, got {true_sequential} and {config.true_sequential}."
     default_quantization_config["bits"] = bits
     default_quantization_config["group_size"] = group_size
     default_quantization_config["damp_percent"] = damp_percent

@@ -16,10 +16,13 @@
 
 def initialize_model_and_tokenizer(model_name_or_path, use_load=False, device="cpu"):
     import transformers
-    from neural_compressor.torch.utils import local_rank, world_size, logger
+
+    from neural_compressor.torch.utils import local_rank, logger, world_size
+
     tokenizer = transformers.AutoTokenizer.from_pretrained(model_name_or_path)
     if use_load:
         from neural_compressor.torch.quantization import load
+
         model = load(model_name_or_path, format="huggingface", device=device)
         model, tokenizer = update_tokenizer(model, tokenizer)
         return model, tokenizer
@@ -37,6 +40,7 @@ def initialize_model_and_tokenizer(model_name_or_path, use_load=False, device="c
             "keep_module_on_host": True,
         }
         import deepspeed
+
         ds_model = deepspeed.init_inference(model, **ds_inference_kwargs)
         model = ds_model.module
     model.eval()
@@ -95,10 +99,14 @@ def get_default_llm_dataloader(tokenizer, dataset_name="NeelNanda/pile-10k", bs=
     dataloader = DataLoader(tokenized_dataset, batch_size=bs, shuffle=True)
     return dataloader
 
+
 def llm_benchmark(model, batch_size, input_length, warmup_iters=3, total_iters=20):
     import time
+
     import torch
+
     from neural_compressor.torch.utils import get_accelerator, logger
+
     cur_accelerator = get_accelerator()
     # this is a simple example to show the performance benefit of quantization
     example_inputs = torch.ones((batch_size, input_length), dtype=torch.long)
