@@ -19,3 +19,9 @@ from neural_compressor.common.utils.save_load import save_config_mapping, load_c
 
 # ! Put the following `utility` import after the `logger` import as `utility` used `logger`
 from neural_compressor.common.utils.utility import *
+
+
+# !FIXME(Yi) REMOVE BELOW CODE
+DEEPSEEK_EP = 16
+DEEPSEEK_EXPERTS = 256
+DEEPSEEK_EXPERTS_PER_EP_GROUP = DEEPSEEK_EXPERTS // DEEPSEEK_EP

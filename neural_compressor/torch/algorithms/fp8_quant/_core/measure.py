@@ -21,7 +21,8 @@ import torch
 from abc import abstractmethod
 
 from .._quant_common.quant_config import MeasureExclude, QuantMode, ScaleMethod, get_hqt_config, set_hqt_config
-from ..utils.logger import logger
+# from ..utils.logger import logger
+
 from .common import *
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 from neural_compressor.torch.algorithms.fp8_quant.model_configs import (
@@ -30,7 +31,7 @@ from neural_compressor.torch.algorithms.fp8_quant.model_configs import (
     IMOD_DICT,
 )
 cur_accelerator = auto_detect_accelerator()
-
+from neural_compressor.common.utils.logger import logger
 
 gmod_list = []
 
@@ -153,6 +154,7 @@ def register_patched_measure_modules(model, mod_list, observer_class, d_shapes=N
                     if mod_default_dict[mod_type_str].should_measure_and_quant
                     else None
                 )
+                logger.info(f"Patching measure module {name} {mod.__class__} ")
                 pmod = patch_module_measure(mod, mod_extra_config, mod_default_dict)
                 if pmod._mod_extra_config:
                     for param_name in pmod._mod_extra_config.params:

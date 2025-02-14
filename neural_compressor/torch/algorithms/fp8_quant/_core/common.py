@@ -22,7 +22,8 @@ import torch
 
 from .._quant_common.helper_modules import *
 from .._quant_common.quant_config import get_hqt_config
-from ..utils.logger import logger
+# from ..utils.logger import logger
+from neural_compressor.common.utils.logger import logger
 from neural_compressor.torch.algorithms.fp8_quant.model_configs import (
     ModuleInfo,
     ModuleConfig,
@@ -31,6 +32,7 @@ from neural_compressor.torch.algorithms.fp8_quant.model_configs import (
     get_patched_module_table,
     get_patched_module_type_table,
 )
+from neural_compressor.common import utils as inc_utils
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator, INCAcceleratorType
 deepspeed_exists = False
 if importlib.util.find_spec("deepspeed"):  # check if deepspeed is installed
@@ -45,7 +47,12 @@ _mod_types = {
     "kv_cache": ModuleType(1, [], 1, False),
     "softmax": ModuleType(1, [], 1, True),
     "fused_sdpa": ModuleType(3, [], 2, True),
-    "dynamic_moe": ModuleType(1, [], 9, True),
+    "dynamic_moe": ModuleType(
+        1,
+        [],
+        inc_utils.DEEPSEEK_EXPERTS_PER_EP_GROUP + 1,  # FIXME (Yi) # one output, DEEPSEEK_EXPERTS_PER_EP_GROUP weights
+        True,
+    ),
 }
 
 
@@ -86,7 +93,7 @@ def load_npz(fname):
 
 def save_file(model, d, source_format, fname, mode):
     config = get_hqt_config(model)
-    logger.debug("Saving %s file: %s", mode, fname)
+    logger.warning("Saving %s file: %s", mode, fname)
     ext = os.path.splitext(fname)[1]
     target_format = file_functions[ext]['format']
     dc = rec_fn(d, format_functions[(source_format, target_format)])
@@ -215,7 +222,8 @@ _mod_default_dict = {
     "ModuleFusedSDPA": ModuleInfo("fused_sdpa", PatchedModuleFusedSDPA),
     "MoeMatmul": ModuleInfo("linear", PatchedMoeMatmul),
     "ReplicatedLinear": ModuleInfo("linear", PatchedReplicatedLinear),
-    "FusedMoE": ModuleInfo("linear", PatchedMixtralMoE, False),
+    # FIXME (Yi) revert change
+    # "FusedMoE": ModuleInfo("linear", PatchedMixtralMoE, False),
     "GaudiMixtralSparseMoeBlock": ModuleInfo("dynamic_moe", PatchedGaudiMixtralSparseMoeBlock),
     "VllmMixtureOfExpertsOp": ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOp),
 }
