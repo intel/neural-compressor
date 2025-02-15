@@ -21,7 +21,24 @@ from neural_compressor.common.utils.save_load import save_config_mapping, load_c
 from neural_compressor.common.utils.utility import *
 
 
-# !FIXME(Yi) REMOVE BELOW CODE
+# FIXME: (Yi) REMOVE BELOW CODE
 DEEPSEEK_EP = 16
 DEEPSEEK_EXPERTS = 256
 DEEPSEEK_EXPERTS_PER_EP_GROUP = DEEPSEEK_EXPERTS // DEEPSEEK_EP
+
+
+import sys
+import pdb
+
+class ForkedPdb(pdb.Pdb):
+    """A Pdb subclass that may be used
+    from a forked multiprocessing child
+
+    """
+    def interaction(self, *args, **kwargs):
+        _stdin = sys.stdin
+        try:
+            sys.stdin = open('/dev/stdin')
+            pdb.Pdb.interaction(self, *args, **kwargs)
+        finally:
+            sys.stdin = _stdin

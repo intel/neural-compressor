@@ -19,7 +19,7 @@ from ..common import ModuleConfig
 from .scale_method_factory import QuantTensorName, ScaleMethodFactory
 from .scales_method import QuantTensorType
 from ..quant_dequant import DequantOutput, QuantDequant, QuantDequantNone, QuantInput
-
+from neural_compressor.common import utils as inc_utils
 
 class BaseOpQuantizer:
 
