@@ -39,6 +39,7 @@ from neural_compressor.common.utils import (
     AWQ,
     DEFAULT_WHITE_LIST,
     FP8_QUANT,
+    HYBRID_GPTQ,
     GPTQ,
     HQQ,
     MIXED_PRECISION,
@@ -1806,6 +1807,7 @@ class FP8Config(TorchBaseConfig):
         use_qdq: bool = False,
         scale_format: str = "scalar",
         measure_on_hpu: bool = True,
+        int4_weights: bool = False,
         **kwargs,
     ):
         """Initializing FP8Config.
@@ -1824,6 +1826,7 @@ class FP8Config(TorchBaseConfig):
             measure_exclude (str, optional): Select INPUT/OUTPUT to be exculded by measurement. Defaults to "OUTPUT".
             fake_quant (bool, optional): whether to execute fake quantization, a little bit different with use_qdq, used for training. Defaults to False.
             use_qdq (bool, optional): whether to execute Q/DQ quantization. Defaults to False.
+            int4_weights (bool, optional): Expect 4bit weights or not. Defaults to False.
         """
         super().__init__()
         self.dump_stats_path = dump_stats_path
@@ -1839,6 +1842,7 @@ class FP8Config(TorchBaseConfig):
         self._json_file = None
         self.fake_quant = str(fake_quant)
         self.use_qdq = str(use_qdq)
+        self.int4_weights = int4_weights  # FIXME should be inferred
         self.scale_format = scale_format
         self.measure_on_hpu = measure_on_hpu
         # add kwargs
@@ -1954,6 +1958,34 @@ def get_default_fp8_config_set() -> FP8Config:
     """
     return FP8Config.get_config_set_for_tuning()
 
+
+######################## Hybrid GPTQ Quant Config ###############################
+
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=HYBRID_GPTQ)
+class HybridGPTQConfig(FP8Config):
+    """Config class for Hybrid Precision GPTQ quantization.
+    Currently supports running 4bit weights which have been quantized by GPTQ, during which 
+    the weights have been double quantized from high precision, to fp8, to int4.
+    The activations will be quantized to fp8."""
+    name = HYBRID_GPTQ
+
+    def __init__(
+        self,
+        **kwargs,
+    ):
+        """Initializing Hybrid GPTQ Config.
+
+        """
+        super().__init__(**kwargs)
+
+
+    @staticmethod
+    def convert_from_fp8(config):
+        new_self = HybridGPTQConfig()
+        for attr, value in vars(config).items():
+            setattr(new_self, attr, value)
+        new_self.int4_weights = True
+        return new_self
 
 ######################## MixedPrecision Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=MIXED_PRECISION)

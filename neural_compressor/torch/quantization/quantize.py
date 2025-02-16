@@ -20,7 +20,7 @@ import torch
 
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
 from neural_compressor.common.utils import Mode, call_counter, log_process
-from neural_compressor.torch.quantization.config import INT8StaticQuantConfig, SmoothQuantConfig
+from neural_compressor.torch.quantization.config import INT8StaticQuantConfig, SmoothQuantConfig, HybridGPTQConfig, FP8Config
 from neural_compressor.torch.utils import is_ipex_available, logger
 from neural_compressor.torch.utils.utility import WHITE_MODULE_LIST, algos_mapping, get_model_info
 
@@ -207,6 +207,9 @@ def convert(
         assert isinstance(
             quant_config, BaseConfig
         ), f"Please pass a dict or config instance as the quantization configuration, but got {type(quant_config)}."
+
+    if hasattr(quant_config, 'int4_weights') and quant_config.int4_weights and type(quant_config) == FP8Config:
+        quant_config = HybridGPTQConfig.convert_from_fp8(quant_config)
     logger.debug("Convert model with config:")
     logger.debug(quant_config.to_dict())
 
