@@ -198,6 +198,11 @@ class MatmulOpQuantizer(BaseOpQuantizer):
             use_qdq,
             fake_quant,
         )
+        
+        # 4bit->8bit inputs, no need to quant
+        if hasattr(self.mod, "no_input_quant"):
+            input_config[1] = QuantDequantNone(lp_dtype, hp_dtype, scale_format=scale_format)
+
         # outputs as bf16, and descaled in gemm under PatchedLinear, so no need to work here
         output_config = [QuantDequantNone(lp_dtype, hp_dtype, scale_format=scale_format)]
         return ModuleConfig(input_config, output_config)

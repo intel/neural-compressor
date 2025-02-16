@@ -99,6 +99,7 @@ _config_to_enum = {
     "ignore_modules_wo_measures": TrueFalse,
     "use_qdq": TrueFalse,
     "fake_quant": TrueFalse,
+    "int4_weights": TrueFalse,
     "scale_format": ScaleFormat,
     "device_for_scales": DeviceForScalesType,
     "measure_on_hpu": TrueFalse,
@@ -111,6 +112,7 @@ _configs_that_use_enum_value = [
     "ignore_modules_wo_measures",
     "recalc_scales",
     "fake_quant",
+    "int4_weights",
     "use_qdq",
     "device_for_scales",
     "measure_on_hpu",
@@ -189,6 +191,7 @@ class Fp8cfg:
             },  # types and names to be quantized. Allowlist by names is not yet implemented
             "mode": QuantMode.QUANTIZE,  # Quantize or Measure
             "fake_quant": False, # Fake or Real Quant, fake_quant only works for linear(PatchedLinear) and matmul(PatchedMatmul), usually used for training.
+            "int4_weights": False,
             "use_qdq": False, # QDQ or Real Quant, QDQ works for operators in helper_modules.py, usually used for inference.
             "scale_method": ScaleMethod.MAXABS_HW,  # Method to quantize with
             "scale_params": {},  # scaling parameters that are different then the default ones

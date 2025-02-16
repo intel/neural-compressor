@@ -29,6 +29,14 @@ from neural_compressor.torch.utils import accelerator, can_pack_with_numba, logg
 
 from .utility import quant_tensor
 
+class Matmul(torch.nn.Module):
+
+    def __init__(self, ) -> None:
+        super().__init__()
+
+    def forward(self, X, Y):
+        """Forward function."""
+        return torch.matmul(X, Y)
 
 class QDQLayer(torch.nn.Module):
     """Quantized and dequantized layer."""
@@ -672,6 +680,7 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
         self.half_indim = self.in_features // 2
 
         self.wf = torch.tensor(list(range(0, 32, self.bits)), dtype=torch.int32).unsqueeze(0)
+        self.matmul_internal = Matmul()
 
     def forward(self, input):
         """The forward function of HPUWeighOnlyLinear."""
@@ -681,7 +690,7 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
         qweight = self.qweight
         zeros = self.qzeros
         weight = torch.ops.hpu.convert_from_uint4(qweight, scales, zeros, input_dtype)
-        output = torch.matmul(input, weight)
+        output = self.matmul_internal(input, weight)
         output = output.to(dtype=input_dtype).reshape(
             output_shape
         )  # A cast is needed here as for some reason the vecquant2matmul_faster_old still allocate a float32 output.
