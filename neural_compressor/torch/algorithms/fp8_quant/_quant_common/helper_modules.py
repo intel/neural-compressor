@@ -794,13 +794,14 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
 
     def extra_repr(self) -> str:
         member_names = ["scale_input"]
-        # FIXME (Yi) Error `PatchedVllmMixtureOfExpertsOp' object has no attribute 'scale_intermediate[1]'. Did you mean: 'scale_intermediate'?
+        # FIXME: (Yi) Error `PatchedVllmMixtureOfExpertsOp' object has no attribute 'scale_intermediate[1]'. Did you mean: 'scale_intermediate'?
         # for x in range(1, self.num_experts+1):
         #     member_names.append("scale_intermediate["+str(x)+"]")
+        quant_mode = str(self.quantization_mode)
         return extra_representation(
             self.extra_repr_org(),
             self.class_name_org,
-            get_current_repr(self, *member_names),
+            f"quant_mode:{quant_mode}, {get_current_repr(self, *member_names)}",
         )
 
 
