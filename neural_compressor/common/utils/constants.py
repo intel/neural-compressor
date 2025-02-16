@@ -34,6 +34,7 @@ HQQ = "hqq"  # pragma: no cover
 TEQ = "teq"  # pragma: no cover
 AUTOROUND = "autoround"
 FP8_QUANT = "fp8_quant"
+HYBRID_GPTQ = "hybrid_gptq"
 MX_QUANT = "mx_quant"
 MIXED_PRECISION = "mixed_precision"
 
