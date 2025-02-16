@@ -16,6 +16,7 @@ from .common import format_functions_rec, logger, mod_default_dict, ModuleConfig
 from .scale_methods import ops_quantizer
 from .._quant_common.quant_config import ScaleMethod
 import torch
+from neural_compressor.common import utils as inc_utils
 
 
 def load_layer_scales(mod, mod_name, config, mod_type_str, measurement, scales, scale_file,
