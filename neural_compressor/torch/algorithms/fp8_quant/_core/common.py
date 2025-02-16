@@ -50,7 +50,7 @@ _mod_types = {
     "dynamic_moe": ModuleType(
         1,
         [],
-        inc_utils.DEEPSEEK_EXPERTS_PER_EP_GROUP + 1,  # FIXME (Yi) # one output, DEEPSEEK_EXPERTS_PER_EP_GROUP weights
+        inc_utils.FUSED_MOE_EXPERTS + 1,  # FIXME (Yi) # one output, FUSED_MOE_EXPERTS weights
         True,
     ),
 }

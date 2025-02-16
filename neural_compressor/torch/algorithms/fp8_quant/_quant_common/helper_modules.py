@@ -740,13 +740,13 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
                       permuted_weights=True,
                       activation="silu"):
         experts_range = range(self.num_experts)
-        # FIXME: (Yi) move the transpose to the init
+        # FIXME: (Yi) move these transposes to the init
         w1_list = [self.w13_list[i].weight.squeeze().t() for i in experts_range]
         w2_list = [self.w2_list[i].weight.squeeze().t() for i in experts_range]
         scale_w1 = [self.w13_list[i].scale_weight for i in experts_range]
         scale_w2 = [self.w2_list[i].scale_weight for i in experts_range]
         qinput = self.quant_input(hidden_states)
-        output = torch.ops.hpu.mixture_of_experts.fp8_fused_weights(
+        output = self.dynamic_moe_op(
             hidden_states=qinput,
             expert_routing_table=expert_routing_table,
             router_weights=router_weights,
@@ -794,13 +794,14 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
 
     def extra_repr(self) -> str:
         member_names = ["scale_input"]
-        # FIXME (Yi) Error `PatchedVllmMixtureOfExpertsOp' object has no attribute 'scale_intermediate[1]'. Did you mean: 'scale_intermediate'?
+        # FIXME: (Yi) Error `PatchedVllmMixtureOfExpertsOp' object has no attribute 'scale_intermediate[1]'. Did you mean: 'scale_intermediate'?
         # for x in range(1, self.num_experts+1):
         #     member_names.append("scale_intermediate["+str(x)+"]")
+        quant_mode = str(self.quantization_mode)
         return extra_representation(
             self.extra_repr_org(),
             self.class_name_org,
-            get_current_repr(self, *member_names),
+            f"quant_mode:{quant_mode}, {get_current_repr(self, *member_names)}",
         )
 
 
