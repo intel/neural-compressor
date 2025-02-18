@@ -2096,3 +2096,14 @@ class StaticQuantConfig(TorchBaseConfig):
         else:
             config_cls = self._model_mapping[STATIC_QUANT]
         return config_cls(*args, **kwargs)
+    
+    @classmethod
+    def get_config_set_for_tuning(cls, dtype="int8"):
+        """Map to different config set for tuning."""
+        # dtype = "fp8", "int8"
+        if dtype == "fp8":
+            return cls._model_mapping[FP8_QUANT].get_config_set_for_tuning()
+        elif dtype == "int8":
+            return cls._model_mapping[STATIC_QUANT].get_config_set_for_tuning()
+        else:
+            raise ValueError(f"Unsupported dtype: {dtype}, allowed values are 'fp8' and 'int8'.")
