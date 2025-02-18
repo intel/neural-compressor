@@ -758,12 +758,19 @@ class AutoModelForSeq2SeqLM(_BaseINCAutoModelClass):
 
 
 class Qwen2VLForConditionalGeneration(_BaseINCAutoModelClass):
-    ORIG_MODEL = transformers.Qwen2VLForConditionalGeneration
-
+    if transformers.__version__ >= "4.46":
+        ORIG_MODEL = transformers.Qwen2VLForConditionalGeneration
+    else:
+        logger.warning("please install transfomrts>=4.46 for quantizing Qwen2VLForConditionalGeneration.")
 
 class MllamaForConditionalGeneration(_BaseINCAutoModelClass):
-    ORIG_MODEL = transformers.MllamaForConditionalGeneration
-
+    if transformers.__version__ >= "4.46":
+        ORIG_MODEL = transformers.MllamaForConditionalGeneration
+    else:
+        logger.warning("please install transfomrts>=4.46 for quantizing MllamaForConditionalGeneration.")
 
 class LlavaForConditionalGeneration(_BaseINCAutoModelClass):
-    ORIG_MODEL = transformers.LlavaForConditionalGeneration
+    if transformers.__version__ >= "4.46":
+        ORIG_MODEL = transformers.LlavaForConditionalGeneration
+    else:
+        logger.warning("please install transfomrts>=4.46 for quantizing LlavaForConditionalGeneration.")
