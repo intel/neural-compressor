@@ -33,7 +33,6 @@ def calib_func(model):
     for i in range(2):
         model(example_inputs)
 
-@pytest.mark.skip(reason="SW-218081 Unknown CI failure")
 @pytest.mark.skipif(not is_hpex_available(), reason="HPU environment is required!")
 class TestFP8StaticQuantNLP:
     def setup_class(self):
