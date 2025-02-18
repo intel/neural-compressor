@@ -1,12 +1,13 @@
 # ==--------------------------------------------------------------------------==
 # Patch for loading DS models
-from typing import Union, Optional
-import torch
 import os
-from packaging import version
+from typing import Optional, Union
 from zipfile import is_zipfile
-from transformers.utils import is_safetensors_available, strtobool
+
+import torch
+from packaging import version
 from transformers.integrations import PeftAdapterMixin, deepspeed_config, is_deepspeed_zero3_enabled
+from transformers.utils import is_safetensors_available, strtobool
 
 if is_safetensors_available():
     from safetensors import safe_open
@@ -37,9 +38,7 @@ def load_state_dict(
     map_location: Optional[Union[str, torch.device]] = None,
     weights_only: bool = True,
 ):
-    """
-    Reads a PyTorch checkpoint file, returning properly formatted errors if they arise.
-    """
+    """Reads a PyTorch checkpoint file, returning properly formatted errors if they arise."""
 
     if checkpoint_file.endswith(".safetensors") and is_safetensors_available():
         # Check format of the archive
@@ -103,10 +102,8 @@ def load_state_dict(
 
 
 def set_initialized_submodules(model, state_dict_keys):
-    """
-    Sets the `_is_hf_initialized` flag in all submodules of a given model when all its weights are in the loaded state
-    dict.
-    """
+    """Sets the `_is_hf_initialized` flag in all submodules of a given model when all its weights are in the loaded state
+    dict."""
     state_dict_keys = set(state_dict_keys)
     not_initialized_submodules = {}
     for module_name, module in model.named_modules():
@@ -137,16 +134,17 @@ import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+
 def eval(model_path):
     import transformers
     from transformers.modeling_utils import no_init_weights
-    # from patch_for_ds import patch_transformers
 
+    # from patch_for_ds import patch_transformers
     # if not not_patch_lin:
     #     patch_lin()
 
     def _patch__initialize_weights(self, module):
-        print(f"Skipping init_weights ")
+        print("Skipping init_weights ")
         module._is_hf_initialized = True
 
     transformers.modeling_utils.PreTrainedModel._initialize_weights = _patch__initialize_weights
