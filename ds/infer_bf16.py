@@ -135,7 +135,7 @@ def patch_transformers():
 import logging
 
 logger = logging.getLogger(__name__)
-
+logger.setLevel(logging.INFO)
 
 def eval(model_path):
     import transformers
