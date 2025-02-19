@@ -26,6 +26,9 @@ from neural_compressor.torch.utils import (
     load_non_persistent_buffers,
     logger,
     set_module,
+    get_used_hpu_mem_MB,
+    get_used_cpu_mem_MB,
+    local_rank,
 )
 
 cur_accelerator = get_accelerator()
@@ -122,6 +125,8 @@ def block_wise_calibration(model, dataloader=None, data=None, inference_dtype=to
         dataloader (obj): dataloader.
         data (obj): one data.
     """
+    hpu_mem_0 = get_used_hpu_mem_MB()
+    cpu_mem_0 = get_used_cpu_mem_MB()
 
     def get_block_kwargs(model, dataloader=None, data=None, device="cpu"):
         """Get the input args and kwargs of the first block.
@@ -160,6 +165,9 @@ def block_wise_calibration(model, dataloader=None, data=None, inference_dtype=to
             total_block_args = getattr(model, "total_block_args", [])
             total_block_kwargs = getattr(model, "total_block_kwargs", [])
             model.load_state_dict(mapped_state_dict, assign=True)  # recover memory mapping
+        # show used memory
+        logger.info(f"Used HPU memory: {round((get_used_hpu_mem_MB() - hpu_mem_0)/1024, 3)} GiB")
+        logger.info(f"Used CPU memory: {round((get_used_cpu_mem_MB() - cpu_mem_0)/1024, 3)} GiB")
         return total_block_args, total_block_kwargs
 
     def calibrate_block_and_update_inputs(block, total_block_args, total_block_kwargs, device="cpu"):
@@ -193,8 +201,15 @@ def block_wise_calibration(model, dataloader=None, data=None, inference_dtype=to
             gc.collect()
             cur_accelerator.synchronize()
             block.load_state_dict(mapped_state_dict, assign=True)  # recover memory mapping
+            # show used memory
+            if local_rank in [0, -1]:
+                logger.info(f"Used HPU memory: {round((get_used_hpu_mem_MB() - hpu_mem_0)/1024, 3)} GiB")
+                logger.info(f"Used CPU memory: {round((get_used_cpu_mem_MB() - cpu_mem_0)/1024, 3)} GiB")
         return total_block_args, total_block_kwargs
 
+    # Set use_cache to False to avoid memory leak, especially for DeepSeek.
+    if hasattr(model.config, "use_cache"):
+        model.config.use_cache=False
     # Get non_persistent_buffers
     non_persistent_buffers = get_non_persistent_buffers(model)
     # Get prefix and number of attention blocks of transformer models.
