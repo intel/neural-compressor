@@ -100,15 +100,10 @@ class PatchedMatmul(PatchedModuleBase):
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             self.quant_input_0 = self._mod_extra_config.inputs[0]
             self.quant_input_1 = self._mod_extra_config.inputs[1]
-            if self.use_qdq or self.fake_quant:
-                self.forward = self.forward_qdq
-            else:
+            if not self.use_qdq or self.fake_quant:
                 self.register_scale("scale_input", mod_extra_config.scale.inputs[0], self.scale_format)
                 self.register_scale("scale_other", mod_extra_config.scale.inputs[1], self.scale_format)
-                self.forward = self.forward_quant
                 self.matmul_fp8 = get_quantized_func_wrapper(OP_TYPE.MATMUL_GEMM, self.scale_format)
-        elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
-            self.forward = self.forward_measure
 
     def forward_quant(self, input, other):
         qinput = self.quant_input_0(input)
@@ -139,7 +134,7 @@ class PatchedMatmul(PatchedModuleBase):
             get_current_repr(self, "scale_input", "scale_other"),
         )
 
-def init_linear(instance, mod_extra_config, change_forward=True):
+def init_linear(instance, mod_extra_config):
     if instance.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
         # When offloading weights to disk using device_map, the module forward is overridden.
         # __dict__.update call again overrides the PatchedLinear forward with the forward that device_map planted.
@@ -152,13 +147,10 @@ def init_linear(instance, mod_extra_config, change_forward=True):
         # So need to set PatchedLinear forward to be the right forward.
         if instance.use_qdq:
             instance.dequant_weights = instance._mod_extra_config.params["weight"][1]
-            instance.forward = instance.forward_qdq if change_forward else instance.forward
         elif instance.fake_quant:
             instance.qdq_weights = instance._mod_extra_config.params["weight"][0]
-            instance.forward = instance.forward_qdq if change_forward else instance.forward
         else:
             instance.matmul_fp8 = get_quantized_func_wrapper(OP_TYPE.LINEAR_GEMM, instance.scale_format)
-            instance.forward = instance.forward_quant if change_forward else instance.forward
             # input0 is None when initializing a dynamic quantization op
             instance.register_scale("scale_input", mod_extra_config.scale.inputs[0], instance.scale_format)
             if isinstance(mod_extra_config.scale.params["weight"], (torch.Tensor, float)):
@@ -167,9 +159,7 @@ def init_linear(instance, mod_extra_config, change_forward=True):
                 # PCQ weight is calculated with actual weight [0] and ones [1]
                 # only ScaleFormat.CONST is supported for per-channel scale now.
                 instance.register_scale("scale_weight", mod_extra_config.scale.params["weight"][0], ScaleFormat.CONST)
-
     elif (instance.quantization_mode == QuantMode.MEASURE) or (instance.quantization_mode == QuantMode.SHAPE):
-        instance.forward = instance.forward_measure if change_forward else instance.forward
         init_mixture_of_experts_linears(instance)
 
 
@@ -250,7 +240,7 @@ class PatchedParallelLMHead(PatchedModuleBase):
         # ParallelLMHead's forward method should not be called because LMHead's weights should be used
         # in the sampler. (The forward itself throws RuntimeError exception)
         # So in order to quantize that quant_method we patch only the "apply" method.
-        init_linear(self, mod_extra_config, False)
+        init_linear(self, mod_extra_config)
         self.orig_linear_quant_apply = self.orig_mod.quant_method.apply
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             if self.use_qdq or self.fake_quant:
@@ -654,7 +644,7 @@ class PatchedGaudiMixtralSparseMoeBlock(PatchedModuleBase):
             self.quant_input = self._mod_extra_config.inputs[0]
             self.register_scale("scale_input", mod_extra_config.scale.inputs[0], self.scale_format)
             self.register_scale(
-                "scale_intermediate", 
+                "scale_intermediate",
                 [mod_extra_config.scale.inputs[x] for x in range(1, self.num_experts+1)],
                 self.scale_format,
             )
@@ -738,7 +728,6 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
-            self.forward = self.forward_quant
             self.dynamic_moe_op = get_quantized_func_wrapper(OP_TYPE.DYNAMIC_MOE_FUSED_WEIGHTS, self.scale_format)
             self.quant_input = self._mod_extra_config.inputs[0]
             self.register_scale("scale_input", mod_extra_config.scale.inputs[0], self.scale_format)
@@ -747,8 +736,6 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
                 [mod_extra_config.scale.inputs[x] for x in range(1, self.num_experts+1)],
                 self.scale_format,
             )
-        elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
-            self.forward = self.forward_measure
 
     def forward_quant(self,
                       hidden_states,
@@ -875,13 +862,8 @@ class PatchedVLLMKVCache(PatchedModuleBase):
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             self.quant_input = self._mod_extra_config.inputs[0]
             self.dequant_output = self._mod_extra_config.outputs[0]
-            if self.use_qdq:
-                self.forward = self.forward_qdq
-            else:
-                self.forward = self.forward_quant
         elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
             self.fetch_from_cache = mod.fetch_from_cache
-            self.forward = self.forward_measure
 
     def forward_qdq(self, input, *args, **kwargs):
         qinput = self.quant_input(input)
@@ -909,19 +891,17 @@ class PatchedVLLMKVCache(PatchedModuleBase):
         output_cache = self.orig_mod.fetch_from_cache(quant_cache, blocks)
         return self.dequant_output(output_cache)
 
+
 def init_conv(instance, mod_extra_config):
     if instance.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
         instance.quant_input = instance._mod_extra_config.inputs[0]
         if instance.use_qdq:
-            instance.forward = instance.forward_qdq
             instance.dequant_weights = mod_extra_config.params["weight"][1]
         else:
-            instance.forward = instance.forward_quant
             instance.register_scale("scale_input", mod_extra_config.scale.inputs[0], instance.scale_format)
             instance.register_scale("scale_weight", mod_extra_config.scale.params["weight"], instance.scale_format)
             instance.conv2d_fp8 = get_quantized_func_wrapper(OP_TYPE.CONV, instance.scale_format)
-    elif (instance.quantization_mode == QuantMode.MEASURE) or (instance.quantization_mode == QuantMode.SHAPE):
-        instance.forward = instance.forward_measure
+
 
 class PatchedConv2d(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
@@ -976,16 +956,12 @@ class PatchedSoftmax(PatchedModuleBase):
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             self.dequant_output = self._mod_extra_config.outputs[0]
             if self.use_qdq:
-                self.forward = self.forward_qdq
                 self.quant_input = qdq(nn.Parameter(torch.Tensor([1.0])), torch.float8_e4m3fn, torch.bfloat16)
             else:
-                self.forward = self.forward_quant
                 # input scale is 1 assuming the input to SM is descaled because we are using HW supported scales
                 self.register_scale("scale_input", torch.Tensor([1.0]), self.scale_format)
                 self.register_scale("scale_output", torch.Tensor([1 / mod_extra_config.scale.outputs[0]]), self.scale_format)
                 self.softmax_fp8 = get_quantized_func_wrapper(OP_TYPE.SOFTMAX, self.scale_format)
-        elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
-            self.forward = self.forward_measure
 
     def forward_qdq(self, x, dim=None, invAttnHead=None):
         x = self.quant_input(x)
@@ -1127,8 +1103,6 @@ class PatchedModuleFusedSDPA(PatchedModuleBase):
             self.register_scale("descale_amax", mod_extra_config.scale.inputs[3].type(torch.float32), self.scale_format)
             self.register_scale("scale_output", 1 / mod_extra_config.scale.outputs[0].type(torch.float32), self.scale_format)
             self.register_scale("scale_amax", 1 / self.descale_amax, self.scale_format)
-        elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
-            self.forward = self.forward_measure
 
     def forward_qdq(
         self,
