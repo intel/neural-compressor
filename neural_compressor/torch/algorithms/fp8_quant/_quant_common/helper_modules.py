@@ -17,9 +17,9 @@ import torch.nn as nn
 import types
 import functools
 
-from .quant_config import QuantMode
 from .._core.quant_dequant import QuantDequant as qdq, QuantDynamicInput
 from .._core.quantized_func_wrappers import get_quantized_func_wrapper, OP_TYPE
+from .quant_config import QuantMode, get_hqt_config
 from ..patched_module_base import PatchedModuleBase
 from .._core.scale_handler import get_scale_dtype, ScaleFormat
 
@@ -395,9 +395,27 @@ class PatchedRowParallelLinear(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         kwargs["func_names"] = ("resolve_input", )
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
+        allreduce_quantization_enable = get_hqt_config(mod).cfg["row_parallel_linear_allreduce_quantization"]
+        self.forward_measure = self.forward_measure_reduce if self.reduce_results and self.tp_size > 1 else self.forward_measure_no_reduce
+        if self.reduce_results and self.tp_size > 1:
+            if allreduce_quantization_enable:
+                self.forward_quant = self.forward_quant_reduce_in_lp
+            else:
+                self.forward_quant = self.forward_quant_reduce_in_hp
+        else:
+            self.forward_quant = self.forward_quant_no_reduce
         init_linear(self, mod_extra_config)
+        if self.quantization_mode == QuantMode.QUANTIZE:
+            self.dequant_scatter_output = self._mod_extra_config.outputs[0]
+            self.quant_scatter_input = self._mod_extra_config.outputs[1]
+            if allreduce_quantization_enable:
+                self.quant_gather_input = self._mod_extra_config.outputs[2]
+                self.dequant_gather_output = self._mod_extra_config.outputs[3]
+        from torch import distributed as dist
+        self.world_size = dist.get_world_size()
 
     def forward_qdq(self, input):
+        #TODO: [SW-208441] Support all_reduce_fp8 in forward_qdq in PatchedRowParallelLinear
         resolved_input = self.resolve_input(input)
         qinput = self.quant_input(resolved_input)
         if self.fake_quant:
@@ -408,31 +426,92 @@ class PatchedRowParallelLinear(PatchedModuleBase):
 
         if self.reduce_results:
             output = self.collective_func(output)
-        return self.post_all_reduce(output)
+        return self.bias_add(output)
 
-    def forward_quant(self, input):
+    def lp_matmul_hp(self, input):
+        """
+        Perfoms a matmul with lp inputs and returns output in hp
+        """
         resolved_input = self.resolve_input(input)
-        qinput = self.quant_input(resolved_input)
-        output = self.matmul_fp8(qinput,
-                                 self.weight,
-                                 out_dtype=self._mod_extra_config.config_params["hp_dtype"],
-                                 scale_input_inv=self.scale_input,
-                                 scale_other_inv=self.scale_weight)
-        dqoutput = self.dequant_output(output)
-        if self.reduce_results:
-            dqoutput = self.collective_func(dqoutput)
-        return self.post_all_reduce(dqoutput)
+        matmul_input_lp = self.quant_input(resolved_input)
+        return self.matmul_fp8(matmul_input_lp,
+                               self.weight,
+                               out_dtype=self._mod_extra_config.config_params["hp_dtype"],
+                               scale_input_inv=self.scale_input,
+                               scale_other_inv=self.scale_weight)
 
-    def forward_measure(self, input):
+    def forward_quant_no_reduce(self, input):
+        matmul_output_hp = self.lp_matmul_hp(input)
+        return self.bias_add(matmul_output_hp)
+
+    def forward_quant_reduce_in_lp(self, input):
+        matmul_output_hp = self.lp_matmul_hp(input)
+        # performing all_reduce in fp8 should be done only at decode phase
+        # decode phase is indicated by input.shape[1] == 1
+        if input.shape[1] == 1:
+            allreduce_output_hp = self.quant_all_reduce_sum(matmul_output_hp)
+        else:
+            allreduce_output_hp = self.collective_func(matmul_output_hp)
+        return self.bias_add(allreduce_output_hp)
+
+    def forward_quant_reduce_in_hp(self, input):
+        matmul_output_hp = self.lp_matmul_hp(input)
+        all_reduce_output_hp = self.collective_func(matmul_output_hp)
+        return self.bias_add(all_reduce_output_hp)
+
+    def measure_input_and_matmul(self, input):
         resolved_input = self.resolve_input(input)
         measure_input((resolved_input,), observer=self._mod_extra_config.inputs)
-        output = torch.matmul(resolved_input, self.weight.transpose(-1, -2))
-        measure_output((output,), self._mod_extra_config.outputs)
-        if self.reduce_results:
-            output = self.collective_func(output)
-        return self.post_all_reduce(output)
+        return torch.matmul(resolved_input, self.weight.transpose(-1, -2))
 
-    def post_all_reduce(self, output):
+    def forward_measure_no_reduce(self, input):
+        output = self.measure_input_and_matmul(input)
+        temp = torch.empty(1)
+        measure_output((output, temp,), self._mod_extra_config.outputs)
+        return self.bias_add(output)
+
+    def forward_measure_reduce(self, input):
+        from torch import distributed as dist
+        output = self.measure_input_and_matmul(input)
+        max_output = output.clone()
+        dist.all_reduce(max_output, op=dist.ReduceOp.MAX)
+        all_reduce_output = self.collective_func(output)
+        measure_output((max_output, all_reduce_output,), self._mod_extra_config.outputs)
+        return self.bias_add(all_reduce_output)
+
+    def scatter(self, tensor):
+        from torch import distributed as dist
+        buffer = torch.empty_like(tensor)
+        # Perform all_to_all_single communication
+        dist.all_to_all_single(buffer, tensor)
+        # Reshape output_tensor to (world_size, -1)
+        return buffer.view(self.world_size, -1)
+
+    def gather(self, tensor, reduced_chunk, original_shape):
+        from torch import distributed as dist
+        # Gather the reduced chunks from all processes
+        dist.all_gather_into_tensor(tensor, reduced_chunk)
+        # Reshape back to the original tensor shape
+        return tensor.view(original_shape)
+
+    def quant_all_reduce_sum(self, scatter_input_hp):
+        scatter_input_lp = self.quant_scatter_input(scatter_input_hp)
+        original_shape = scatter_input_lp.shape
+        buffer_lp = self.scatter(scatter_input_lp)
+
+        # Dequant tensor as sum preformed in bf16
+        buffer_hp = self.dequant_scatter_output(buffer_lp)
+        # Sum the received chunks (local reduction)
+        sum_hp = buffer_hp.sum(dim=0)  # Shape: [-1]
+        # Quant tensor as all_gather preformed in fp8
+        gather_input_lp = self.quant_gather_input(sum_hp)
+
+        gather_output_lp = self.gather(scatter_input_lp, gather_input_lp, original_shape)
+        gather_output_hp = self.dequant_gather_output(gather_output_lp)
+
+        return gather_output_hp
+
+    def bias_add(self, output):
         assert (
             self.reduce_results or (not self.bias) or self.skip_bias_add
         ), "When not reduce the results, adding bias to the results can lead to incorrect results"

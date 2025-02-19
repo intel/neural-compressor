@@ -40,6 +40,7 @@ def generate_model_info(model):
 
 _mod_types = {
     "linear": ModuleType(1, ["weight"], 1, False),
+    "row_parallel_linear": ModuleType(1, ["weight"], 2, True),
     "matmul": ModuleType(2, [], 1, False),
     "kv_cache": ModuleType(1, [], 1, False),
     "softmax": ModuleType(1, [], 1, True),
@@ -52,7 +53,7 @@ _mod_default_dict = {
     "Matmul": ModuleInfo("matmul", PatchedMatmul),
     "Linear": ModuleInfo("linear", PatchedLinear),
     "ParallelLMHead": ModuleInfo("linear", PatchedParallelLMHead),
-    "RowParallelLinear": ModuleInfo("linear", PatchedRowParallelLinear),
+    "RowParallelLinear": ModuleInfo("row_parallel_linear", PatchedRowParallelLinear),
     "ColumnParallelLinear": ModuleInfo("linear", PatchedColumnParallelLinear),
     "MergedColumnParallelLinear": ModuleInfo("linear", PatchedColumnParallelLinear),
     "QKVParallelLinear": ModuleInfo("linear", PatchedColumnParallelLinear),

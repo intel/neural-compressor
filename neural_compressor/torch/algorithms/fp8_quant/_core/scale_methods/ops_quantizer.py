@@ -138,6 +138,10 @@ class LinearOpQuantizer(BaseOpQuantizer):
         else:
             self.weight_och_scale_calc.scale = params_config
 
+    def get_output_config(self, lp_dtype, hp_dtype, scale_format):
+        output_config = [QuantDequantNone(lp_dtype, hp_dtype, scale_format=scale_format)]
+        return output_config
+
     def scales_module_config_to_q_and_dq(self, module):
         self.init_scales_from_module_config(module)
         self.init_weights_from_module(module.params["weight"])
@@ -151,7 +155,7 @@ class LinearOpQuantizer(BaseOpQuantizer):
             fake_quant,
         )
         # outputs as bf16, and descaled in gemm under PatchedLinear, so no need to work here
-        output_config = [QuantDequantNone(lp_dtype, hp_dtype, scale_format=scale_format)]
+        output_config = self.get_output_config(lp_dtype, hp_dtype, scale_format=scale_format)
         weight_config = self.init_weight_config(
             self.weight_och_scale_calc.scale,
             self.weight_och_scale_calc.calc_invert_scales(),
@@ -169,7 +173,41 @@ class LinearOpQuantizer(BaseOpQuantizer):
             params_config.update({"bias": bias_config})
         return ModuleConfig(input_config, output_config, params_config)
 
+class RowParallelLinearOpQuantizer(LinearOpQuantizer):
+    def __init__(self, config, mod, measurement, params, module_type):
+        super().__init__(config, mod, measurement, params, module_type)
+        self.allreduce_quantization_enabled = get_hqt_config(mod).cfg["row_parallel_linear_allreduce_quantization"]
+        if self.allreduce_quantization_enabled:
+            self.output_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.OUTPUT))
 
+    def init_scales_from_module_config(self, module):
+        for idx, input in enumerate(module.inputs):
+            if self.inputs_scales_creators[idx].scale is None:
+                self.inputs_scales_creators[idx].scale = input
+        if self.output_scales_creators[0].scale is None:
+            self.output_scales_creators[0].scale = module.outputs[0]
+        if self.allreduce_quantization_enabled and self.output_scales_creators[1].scale is None:
+                self.output_scales_creators[1].scale = module.outputs[1]
+
+    def get_scales_module_config(self):
+        if not self.allreduce_quantization_enabled:
+            return super().get_scales_module_config()
+        module_config = super().get_scales_module_config()
+        output_measurement = self.measurement.outputs[1] if self.measurement is not None else []
+        output_scales = self.output_scales_creators[1].calc_scales(output_measurement, QuantTensorType.MEASUREMENTS)
+        module_config.outputs = (module_config.outputs[0], output_scales,)
+        return module_config
+
+    def get_output_config(self, lp_dtype, hp_dtype, scale_format):
+        output_config_dq_scatter_output = DequantOutput(self.output_scales_creators[0].scale, lp_dtype, hp_dtype)
+        output_config_q_scatter_input = QuantInput(self.output_scales_creators[0].calc_invert_scales(), lp_dtype, hp_dtype)
+        output_config = [output_config_dq_scatter_output,
+                         output_config_q_scatter_input]
+        if self.allreduce_quantization_enabled:
+            output_config_q_gather_input = QuantInput(self.output_scales_creators[1].calc_invert_scales(), lp_dtype, hp_dtype)
+            output_config_dq_gather_output = DequantOutput(self.output_scales_creators[1].scale, lp_dtype, hp_dtype)
+            output_config.extend([output_config_q_gather_input, output_config_dq_gather_output])
+        return output_config
 
 class MatmulOpQuantizer(BaseOpQuantizer):
 
@@ -337,7 +375,8 @@ ops_quantizer_map = {"linear": LinearOpQuantizer,
                       "fused_sdpa": FsdpaOpQuantizer,
                       "softmax": SoftmaxOpQuantizer,
                       "kv_cache": KVCacheOpQuantizer,
-                      "dynamic_moe": DynamicMoeOpQuantizer
+                      "dynamic_moe": DynamicMoeOpQuantizer,
+                      "row_parallel_linear": RowParallelLinearOpQuantizer
                      }
 
 def get_op_quantizer(module_type, config, mod, measurement, params):
