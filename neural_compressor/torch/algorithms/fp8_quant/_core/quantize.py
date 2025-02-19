@@ -29,6 +29,7 @@ from .measure import load_measurements
 from .scale import scale_method_mapping, load_layer_scales
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 from neural_compressor.common import utils as inc_utils
+from neural_compressor.torch.utils import show_hpu_mem_info
 
 cur_accelerator = auto_detect_accelerator()
 
@@ -154,6 +155,7 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
                     quantize_params(mod, mod_extra_config)
                 logger.warning(f"patching module {name}")
                 patch_module(mod, mod_extra_config, mod_default_dict)
+                show_hpu_mem_info()
                 patched_modules.append(name)
                 patched_module_types.add(type(mod))
                 logger.debug("Patched module name: %s", name)
