@@ -718,7 +718,8 @@ class PatchedGaudiMixtralSparseMoeBlock(PatchedModuleBase):
 class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        
+        self.experts_min = self.orig_mod.experts_min
+        self.experts_max = self.orig_mod.experts_max
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             self.forward = self.forward_quant
             self.dynamic_moe_op = get_quantized_func_wrapper(OP_TYPE.DYNAMIC_MOE_FUSED_WEIGHTS, self.scale_format)
@@ -758,8 +759,8 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
             d_scale_intermediate_hidden_states=self.scale_intermediate,
             permuted_weights=permuted_weights,
             activation=activation,
-            experts_min=0,
-            experts_max=self.num_experts-1
+            experts_min=self.experts_min,
+            experts_max=self.experts_max,
         )
         return output
 
@@ -782,8 +783,8 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
             w3=w2_list,
             permuted_weights=permuted_weights,
             activation=activation,
-            experts_min=0,
-            experts_max=self.num_experts-1,
+            experts_min=self.experts_min,
+            experts_max=self.experts_max,
             measurement_mode=True,
         )
         output_measure_list = [output]
