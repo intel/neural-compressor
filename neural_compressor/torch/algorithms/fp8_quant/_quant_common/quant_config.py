@@ -205,6 +205,7 @@ class Fp8cfg:
             "recalc_scales": False,
             "scale_format": ScaleFormat.SCALAR,
             "measure_on_hpu": True,  # Determines whether to measure model on hpu device.
+            "row_parallel_linear_allreduce_quantization" : False # Turn on/off fp8 allreduce optimization detailed in SW-207602
         }
         # assert measured_global_config['allowlist']['names'] == [''], "Allowlist names not yet implemented"
 
