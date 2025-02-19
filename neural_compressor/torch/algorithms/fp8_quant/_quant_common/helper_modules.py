@@ -1261,8 +1261,12 @@ class PatchedModuleFusedSDPA(PatchedModuleBase):
 
 
 class PatchedUnmeasuredModule(nn.Module):
-    def __init__(self, name, *args, **kwargs):
+    def __init__(self, name, mod, *args, **kwargs):
         super().__init__()
+        if (name == "lm_head" and mod.__class__.__name__ == "ParallelLMHead"):
+            # For LM_HEAD when using vLLM (as it doesn't use its forward, but a member's [quant_method] apply).
+            self.__dict__.update(mod.__dict__)
+            self.quant_method.apply = self.forward
         self.name = name
 
     def forward(self, *args, **kwargs):

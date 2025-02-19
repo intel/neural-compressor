@@ -142,7 +142,7 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
             if name in mod_list and name not in scales and config.cfg["use_stats_files"] and name not in measurement:
                 if mod_default_dict[mod_type_str].should_measure_and_quant:
                     if not config.cfg["ignore_modules_wo_measures"]:
-                        patch_module(mod, None, None, PatchedUnmeasuredModule(name))
+                        patch_module(mod, None, None, PatchedUnmeasuredModule(name, mod))
                     else:
                         logger.debug("Module %s was not quantized.", name)
                     continue
