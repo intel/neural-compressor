@@ -405,14 +405,19 @@ class PatchedRowParallelLinear(PatchedModuleBase):
         kwargs["func_names"] = ("resolve_input", )
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         allreduce_quantization_enable = get_hqt_config(mod).cfg["row_parallel_linear_allreduce_quantization"]
-        self.forward_measure = self.forward_measure_reduce if self.reduce_results and self.tp_size > 1 else self.forward_measure_no_reduce
-        if self.reduce_results and self.tp_size > 1:
-            if allreduce_quantization_enable:
-                self.forward_quant = self.forward_quant_reduce_in_lp
+        if self.quantization_mode in (QuantMode.MEASURE, QuantMode.SHAPE):
+            self.forward = self.forward_measure_reduce if self.reduce_results and self.tp_size > 1 else self.forward_measure_no_reduce
+        elif self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
+            if self.fake_quant or self.use_qdq:
+                self.forward = self.forward_qdq
             else:
-                self.forward_quant = self.forward_quant_reduce_in_hp
-        else:
-            self.forward_quant = self.forward_quant_no_reduce
+                if self.reduce_results and self.tp_size > 1:
+                    if allreduce_quantization_enable:
+                        self.forward = self.forward_quant_reduce_in_lp
+                    else:
+                        self.forward = self.forward_quant_reduce_in_hp
+                else:
+                    self.forward = self.forward_quant_no_reduce
         init_linear(self, mod_extra_config)
         if self.quantization_mode == QuantMode.QUANTIZE:
             self.dequant_scatter_output = self._mod_extra_config.outputs[0]
