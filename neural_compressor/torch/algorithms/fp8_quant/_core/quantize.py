@@ -16,7 +16,7 @@ import gc
 import torch
 import torch.nn as nn
 import numpy as np
-
+import habana_frameworks.torch.core as htcore
 from .scale_methods import ops_quantizer
 from .._quant_common.quant_config import QuantMode
 from .._quant_common.helper_modules import PatchedUnmeasuredModule
@@ -33,7 +33,7 @@ from neural_compressor.torch.utils import show_hpu_mem_info
 
 cur_accelerator = auto_detect_accelerator()
 
-
+@torch.no_grad()
 def patch_module(mod, qconfig, mod_dict, patched_mod=None):
     """Replaces the module with patched module according to mod_dict.
 
@@ -158,6 +158,7 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
                 show_hpu_mem_info()
                 patched_modules.append(name)
                 patched_module_types.add(type(mod))
+                htcore.mark_step()
                 logger.debug("Patched module name: %s", name)
     if save_file: # cache calculated scales
         save_scales(model, scales_obj, scales_file_format, scale_file + ".npz")
