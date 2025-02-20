@@ -226,6 +226,9 @@ def block_wise_calibration(model, dataloader=None, data=None, inference_dtype=to
         total_block_args, total_block_kwargs = calibrate_block_and_update_inputs(
             block, total_block_args, total_block_kwargs, device=device
         )
+        cur_accelerator.synchronize()
+        if torch.distributed.is_initialized():
+            torch.distributed.barrier()
     # Load non_persistent_buffers
     load_non_persistent_buffers(model, non_persistent_buffers)
     # Clean host and device memory
