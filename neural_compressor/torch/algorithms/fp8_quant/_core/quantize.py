@@ -153,6 +153,7 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
                 patched_modules.append(name)
                 patched_module_types.add(type(mod))
                 logger.debug("Patched module name: %s", name)
+            cur_accelerator.synchronize()
     if save_file: # cache calculated scales
         save_scales(model, scales_obj, scales_file_format, scale_file + ".npz")
         save_scales(model, scales_obj, scales_file_format, scale_file + ".json")
@@ -212,6 +213,7 @@ def prepare_model_with_dummy_measurement(model, mod_list, scaling_method_name, s
             patched_modules.append(name)
             patched_module_types.add(type(mod))
             logger.debug("Patched module name: %s", name)
+            cur_accelerator.synchronize()
     logger.debug("Patched module types: %s", patched_module_types)
     logger.debug("Patched modules: %s", patched_modules)
     logger.debug("Total patched modules: %d", len(patched_modules))

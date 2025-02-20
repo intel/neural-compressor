@@ -124,9 +124,11 @@ if __name__ == "__main__":
                 for data in tqdm.tqdm(dataloader):
                     forward_wrapper(model, data)
             logger.info("Calibration end")
+            finalize_calibration(model)
 
             # convert
             model = convert(model)
+            print(model)
 
         # show used memory
         logger.info(f"Used HPU memory: {round((get_used_hpu_mem_MB() - hpu_mem_0)/1024, 3)} GiB")

@@ -20,6 +20,7 @@ import numpy as np
 import torch
 
 from abc import abstractmethod
+from neural_compressor.torch.utils import get_used_hpu_mem_MB, get_used_cpu_mem_MB
 
 from .._quant_common.quant_config import MeasureExclude, QuantMode, ScaleMethod, get_hqt_config, set_hqt_config
 from ..utils.logger import logger
@@ -167,6 +168,12 @@ def register_patched_measure_modules(model, mod_list, observer_class, d_shapes=N
                 patched_modules.append(name)
             else:
                 non_patched_types.add(type(mod))
+            cur_accelerator.synchronize()
+            if torch.distributed.is_initialized():
+                torch.distributed.barrier()
+            # print("used HPU memory: ", round((get_used_hpu_mem_MB())/1024, 3))
+            # print("used CPU memory: ", round((get_used_cpu_mem_MB())/1024, 3))
+            print(name)
     logger.debug("Patched module types: %s", patched_types)
     logger.debug("None-patched module types: %s", non_patched_types)
     logger.debug("Patched modules: %s", patched_modules)
