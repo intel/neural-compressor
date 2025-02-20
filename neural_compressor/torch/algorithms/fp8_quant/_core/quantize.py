@@ -14,6 +14,7 @@
 
 import gc
 import torch
+import torch.distributed
 import torch.nn as nn
 import numpy as np
 import habana_frameworks.torch.core as htcore
@@ -167,6 +168,7 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     logger.debug("Patched modules: %s", patched_modules)
     logger.debug("Total patched modules: %d", len(patched_modules))
     model = model.to(cur_accelerator.name())
+    torch.distributed.barrier()
     convert_fp16_to_bf16(model)
     cur_accelerator.synchronize()
 
