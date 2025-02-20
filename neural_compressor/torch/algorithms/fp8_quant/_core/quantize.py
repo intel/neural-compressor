@@ -14,7 +14,6 @@
 
 import gc
 import torch
-import torch.distributed
 import torch.nn as nn
 import numpy as np
 import habana_frameworks.torch.core as htcore
