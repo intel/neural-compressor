@@ -228,7 +228,7 @@ class FsdpaOpQuantizer(BaseOpQuantizer):
         self.output_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.OUTPUT))
 
     def get_scales_module_config(self):
-        # ForkedPdb().set_trace()
+        ForkedPdb().set_trace()
         # 3 inputs calcs from input measurement
         input_scales = self.calc_input_scales(num_of_inputs=self.num_of_inputs - 1)
         # one input calcs from output measurement
