@@ -39,6 +39,15 @@ def initialize_model_and_tokenizer(model_name_or_path, use_load=False, device="c
         import deepspeed
         ds_model = deepspeed.init_inference(model, **ds_inference_kwargs)
         model = ds_model.module
+    # from vllm import LLM, SamplingParams
+    # llm = LLM(
+    #     model=model_name_or_path,
+    #     trust_remote_code=True,
+    #     tensor_parallel_size=world_size if world_size > 1 else 1,
+    #     device='cpu',
+    # )
+    # model = llm.llm_engine.model_executor.driver_worker.worker.model_runner.model.model
+    # print(model)
     model.eval()
     return model, tokenizer
 
@@ -81,7 +90,14 @@ def get_default_llm_dataloader(tokenizer, dataset_name="NeelNanda/pile-10k", bs=
 
     def build_tokenized_dataset(dataset_name, bs, nsamples, seq_len, seed):
         dataset = load_dataset(dataset_name, split="train")
-        dataset = dataset.shuffle(seed=seed).select(range(nsamples))
+        def filter_long_sequences(example):
+            tokens = tokenizer(example['text'], return_tensors="pt")
+            print(len(tokens.input_ids[0]))
+            return len(tokens.input_ids[0]) > 2048
+
+        # 过滤数据
+        filtered_dataset = dataset.filter(filter_long_sequences)
+        dataset = filtered_dataset.shuffle(seed=seed).select(range(nsamples))
 
         class TokenizedDataset(Dataset):
             def __init__(self, dataset, tokenizer, seq_len):

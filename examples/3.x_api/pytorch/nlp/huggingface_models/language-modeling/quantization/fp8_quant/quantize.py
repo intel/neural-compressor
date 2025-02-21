@@ -20,7 +20,7 @@ from neural_compressor.torch.quantization import (
     save,
     load,
 )
-from neural_compressor.torch.utils import get_used_hpu_mem_MB, get_used_cpu_mem_MB, logger, forward_wrapper
+from neural_compressor.torch.utils import get_used_hpu_mem_MB, get_used_cpu_mem_MB, logger, forward_wrapper, local_rank
 from neural_compressor.torch.utils.block_wise import block_wise_calibration
 from neural_compressor.torch.utils.llm_utility import (
     initialize_model_and_tokenizer,
@@ -81,6 +81,8 @@ if __name__ == "__main__":
             adapt_transformers_to_gaudi()
 
     model, tokenizer = initialize_model_and_tokenizer(args.model_name_or_path, use_load=args.load, device="hpu")
+    if local_rank in [-1, 0]:
+        print(model)
     # show used memory
     logger.info(f"After loading model, used HPU memory: {round((get_used_hpu_mem_MB() - hpu_mem_0)/1024, 3)} GiB")
     logger.info(f"After loading model, used CPU memory: {round((get_used_cpu_mem_MB() - cpu_mem_0)/1024, 3)} GiB")

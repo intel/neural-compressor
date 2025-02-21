@@ -87,9 +87,9 @@ function run_tuning {
         tuned_checkpoint="/software/llama_fp8/deepseek_v3_fp8_block_wise"
         python_cmd="deepspeed --num_gpus 8"
     elif [ "${topology}" = "deepseek_r1" ]; then
-        model_name_or_path="/scratch-2/lkk/DeepSeek-R1-bf16"
+        model_name_or_path="/scratch-3/xinhe/DeepSeek-R1-BF16"
         extra_cmd=$extra_cmd" --enable_block_wise_calibration --disable_optimum_habana --seq_len 2048"
-        tuned_checkpoint="/scratch-2/xinhe/deepseek_r1_fp8_block_wise"
+        tuned_checkpoint="/scratch-3/xinhe/deepseek_r1_fp8_block_wise"
         python_cmd="deepspeed --num_gpus 8"
     elif [ "${topology}" = "deepseek_v2_lite" ]; then
         model_name_or_path="deepseek-ai/DeepSeek-V2-Lite"
