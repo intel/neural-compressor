@@ -132,7 +132,7 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     with torch.no_grad():
         for name, mod in model.named_modules():
             mod_type_str = mod.__class__.__name__
-            logger.info(f"start to patch module {name}, type: {mod_type_str}")
+            logger.info(f"start to handle module {name}, type: {mod_type_str}")
             if name in mod_list and name not in scales and config.cfg["use_stats_files"] and name not in measurement:
                 if mod_default_dict[mod_type_str].should_measure_and_quant:
                     if not config.cfg["ignore_modules_wo_measures"]:
