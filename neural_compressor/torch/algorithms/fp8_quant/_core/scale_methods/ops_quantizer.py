@@ -230,7 +230,7 @@ class FsdpaOpQuantizer(BaseOpQuantizer):
         # 3 inputs calcs from input measurement
         input_scales = self.calc_input_scales(num_of_inputs=self.num_of_inputs - 1)
         # one input calcs from output measurement
-        output1_measurement = self.measurement.outputs[0][1] if self.measurement is not None else []
+        output1_measurement = self.measurement.outputs[1] if self.measurement is not None else []
         input_scales.append(
             self.inputs_scales_creators[self.num_of_inputs - 1].calc_scales(
                 output1_measurement, QuantTensorType.MEASUREMENTS
