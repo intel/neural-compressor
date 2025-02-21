@@ -92,7 +92,6 @@ def get_default_llm_dataloader(tokenizer, dataset_name="NeelNanda/pile-10k", bs=
         dataset = load_dataset(dataset_name, split="train")
         def filter_long_sequences(example):
             tokens = tokenizer(example['text'], return_tensors="pt")
-            print(len(tokens.input_ids[0]))
             return len(tokens.input_ids[0]) > 2048
 
         # 过滤数据
