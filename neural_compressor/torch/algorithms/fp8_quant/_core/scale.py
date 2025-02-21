@@ -18,7 +18,7 @@ from .._quant_common.quant_config import ScaleMethod
 import torch
 from neural_compressor.common import utils as inc_utils
 
-from neural_compressor.common.utils import logger
+
 def load_layer_scales(mod, mod_name, config, mod_type_str, measurement, scales, scale_file,
                       scales_file_format, scales_obj, scaling_method_name, scale_config, save_file):
     module_type = mod_default_dict[mod_type_str].type
@@ -32,7 +32,7 @@ def load_layer_scales(mod, mod_name, config, mod_type_str, measurement, scales, 
         op_for_scale_obj = ops_quantizer.get_op_quantizer(module_type, scaling_method_name, mod,
                                                           measurement.get(mod_name, None), scale_config)
         if mod_name not in scales:
-            logger.info("Calculating scales for module %s", mod_name)
+            logger.debug("Calculating scales for module %s", mod_name)
             # calculates scales for current module according to scalling_methods
             scales[mod_name] = op_for_scale_obj.get_scales_module_config()  # ModuleConfig of scales
             if scale_file is not None:
