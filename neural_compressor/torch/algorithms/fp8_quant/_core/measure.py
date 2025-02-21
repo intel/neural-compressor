@@ -174,7 +174,8 @@ def register_patched_measure_modules(model, mod_list, observer_class, d_shapes=N
             if local_rank in [0, -1]:
                 # print("used HPU memory: ", round((get_used_hpu_mem_MB())/1024, 3))
                 # print("used CPU memory: ", round((get_used_cpu_mem_MB())/1024, 3))
-                print(name)
+                pass
+                #print(name)
     logger.debug("Patched module types: %s", patched_types)
     logger.debug("None-patched module types: %s", non_patched_types)
     logger.debug("Patched modules: %s", patched_modules)
