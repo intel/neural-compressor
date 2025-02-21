@@ -33,7 +33,7 @@ from typing import Any, Callable, List
 import torch
 
 from neural_compressor.common.utils import LazyImport, logger
-from functoopls import lru_cache
+from functools import lru_cache
 
 htcore = LazyImport("habana_frameworks.torch.core")
 
