@@ -29,7 +29,7 @@ from .measure import load_measurements
 from .scale import scale_method_mapping, load_layer_scales
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 from neural_compressor.common import utils as inc_utils
-from neural_compressor.torch.utils import show_hpu_mem_info
+from neural_compressor.torch.utils import show_mem_info
 
 cur_accelerator = auto_detect_accelerator()
 
@@ -132,14 +132,14 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     with torch.no_grad():
         for name, mod in model.named_modules():
             mod_type_str = mod.__class__.__name__
-            logger.info(f"start to patch module {name}, type: {mod_type_str}")
+            logger.debug(f"start to handle module {name}, type: {mod_type_str}")
             if name in mod_list and name not in scales and config.cfg["use_stats_files"] and name not in measurement:
                 if mod_default_dict[mod_type_str].should_measure_and_quant:
                     if not config.cfg["ignore_modules_wo_measures"]:
                         patch_module(mod, None, None, PatchedUnmeasuredModule(name))
-                        logger.warning(f"patch module {name} with unmeasured module")
+                        logger.debug(f"patch module {name} with unmeasured module")
                     else:
-                        logger.warning("Module %s was ignore_modules_wo_measures", name)
+                        logger.debug("Module %s was ignore_modules_wo_measures", name)
                     continue
             # When offloading weight to disk, need to transfer the weight from disk to cpu using hf_hook
             apply_hf_hook(mod)
@@ -153,9 +153,9 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
                                                                 scale_config, save_file)
                 if not config.cfg["fake_quant"] and mod_default_dict[mod_type_str].should_measure_and_quant:
                     quantize_params(mod, mod_extra_config)
-                logger.warning(f"patching module {name}")
+                logger.debug(f"patching module {name}")
                 patch_module(mod, mod_extra_config, mod_default_dict)
-                show_hpu_mem_info()
+                # show_mem_info()
                 patched_modules.append(name)
                 patched_module_types.add(type(mod))
                 htcore.mark_step()
