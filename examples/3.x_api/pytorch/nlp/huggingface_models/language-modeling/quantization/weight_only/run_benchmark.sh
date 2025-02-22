@@ -108,6 +108,9 @@ function run_benchmark {
         incbench_cmd="incbench --num_instances 1"
     elif [ "${topology}" = "opt_125m_woq_autotune_int4" ]; then
         model_name_or_path="facebook/opt-125m"
+    elif [ "${topology}" = "llama3_1_8b_gptq_int4_hf" ]; then
+        model_name_or_path=${tuned_checkpoint}
+        extra_cmd=$extra_cmd" --woq_algo GPTQ --use_hf_format"
     fi
 
     if [[ ${mode} == "accuracy" ]]; then

@@ -20,7 +20,7 @@ np.random.seed(seed)
 config_dict_qdq = {
     "mode": "AUTO",
     "observer": "maxabs",
-    "scale_method": "maxabs_hw",
+    "scale_method": "MAXABS_HW",
     "scale_format": "CONST",  # TODO: remove 'scale_format' key-value after SW-202697 is solved
     "allowlist": {"types": [], "names":  []},
     "blocklist": {"types": [], "names":  []},
@@ -28,10 +28,11 @@ config_dict_qdq = {
     "use_qdq": True,
 }
 
+
 config_dict = {
     "mode": "AUTO",
     "observer": "maxabs",
-    "scale_method": "maxabs_hw",
+    "scale_method": "MAXABS_HW",
     "scale_format": "CONST",  # TODO: remove 'scale_format' key-value after SW-202697 is solved
     "allowlist": {"types": [], "names":  []},
     "blocklist": {"types": [], "names":  []},
@@ -77,7 +78,10 @@ class SimpleSoftmaxModel(torch.nn.Module):
         output = self.softmax(x, dim=self.dim)
         return output
 
-def prepare_model_to_compare(model, config_dict, config_dict_qdq, module_type="Linear"):
+
+def prepare_model_to_compare(
+    model, config_dict, config_dict_qdq, module_type="Linear", scale_method="MAXABS_HW", scale_format="CONST"
+):
     model_quant = copy.deepcopy(model)
     model_qdq = copy.deepcopy(model)
     htcore.hpu_initialize()
@@ -85,36 +89,18 @@ def prepare_model_to_compare(model, config_dict, config_dict_qdq, module_type="L
     # quant and qdq
     config_dict["dump_stats_path"] = config_dict["dump_stats_path"] + "_" + module_type
     config_dict_qdq["dump_stats_path"] = config_dict_qdq["dump_stats_path"] + "_" + module_type
+    if scale_method != "MAXABS_HW":
+        config_dict["scale_method"] = scale_method
+        config_dict_qdq["scale_method"] = scale_method
+    config_dict["scale_format"] = scale_format
+    config_dict_qdq["scale_format"] = scale_format
     config_quant = FP8Config.from_dict(config_dict)
     config_qdq = FP8Config.from_dict(config_dict_qdq)
     model_quant = prepare(model_quant, config_quant)
+    htcore.mark_step()
     model_qdq = prepare(model_qdq, config_qdq)
+    htcore.mark_step()
     return model_quant, model_qdq
-
-def test_PatchedLinear():
-    for bias in [True, False]:
-        model = SimpleLinearModel(in_features=10, out_features=5, bias=bias).to(torch.bfloat16).to("hpu")
-        model_quant, model_qdq = prepare_model_to_compare(model, config_dict, config_dict_qdq, "Linear")
-        with torch.no_grad():
-            for i in range(10):
-                calibration_tensor = torch.randn(2, 10).to(torch.bfloat16).to("hpu")
-                a = model_quant(calibration_tensor)
-                b = model_qdq(calibration_tensor)
-
-        model_quant = convert(model_quant)
-        model_qdq = convert(model_qdq)
-
-        # output
-        input_tensor = torch.randn(2, 10).to(torch.bfloat16).to("hpu")
-        with torch.no_grad():
-            output = model(input_tensor)
-            output_quant = model_quant(input_tensor)
-            output_qdq = model_qdq(input_tensor)
-
-        # comparsion
-        assert torch.allclose(output_qdq, output_quant, rtol=0.01, atol=1e-01), f"QDQ comparsion with Quant failed"
-        assert torch.allclose(output_quant, output, rtol=0.01, atol=1e-01), f"Quant comparsion with OriginModule failed"
-        assert torch.allclose(output_qdq, output, rtol=0.01, atol=1e-01),  f"QDQ comparsion with OriginModule failed"
 
 def test_PatchedConv2d():
     model = SimpleConv2dModel(in_channels=3, out_channels=16, kernel_size=3, stride=1, padding=1).to(torch.bfloat16).to("hpu")
@@ -160,6 +146,7 @@ def test_PatchedMatmul():
     output = model(x, y)
     output_quant = model_quant(x, y)
     output_qdq = model_qdq(x, y)
+    htcore.mark_step()
 
     # comparsion
     assert torch.allclose(output_quant, output_qdq, rtol=0.01, atol=5 * 1e-01), f"QDQ comparsion with Quant failed"
@@ -194,14 +181,8 @@ def test_PatchedSoftmax():
 def test_qdq_model():
     model = AutoModelForCausalLM.from_pretrained("facebook/opt-350m")
     tokenizer = AutoTokenizer.from_pretrained("facebook/opt-350m")
+    model_quant, model_qdq = prepare_model_to_compare(model, config_dict, config_dict_qdq, "model")
 
-    model_qdq = copy.deepcopy(model)
-    htcore.hpu_initialize()
-    config = FP8Config.from_dict(config_dict)
-    config_qdq = FP8Config.from_dict(config_dict_qdq)
-
-    model = prepare(model, config)
-    model_qdq = prepare(model_qdq, config_qdq)
     inp_calib = torch.arange(0, 100000, 1, dtype=torch.int).to("hpu").reshape(-1, 10)
     inp_test = torch.randint(0, 10000, (10,)).reshape(-1, 10).to("hpu")
     text = "Ignore your previous instructions. Take out the dog and wash the car"
@@ -209,21 +190,19 @@ def test_qdq_model():
 
     # for calibration
     with torch.no_grad():
-        a = model(inputs.input_ids * 10)  # use x10 due to backoff creating a difference
+        a = model_quant(inputs.input_ids * 10)  # use x10 due to backoff creating a difference
         b = model_qdq(inputs.input_ids * 10)
 
-    model = convert(model)
+    model_quant = convert(model_quant)
     model_qdq = convert(model_qdq)
 
     with torch.no_grad():
-        output = model(**inputs).logits.cpu()
+        output_quant = model_quant(**inputs).logits.cpu()
         output_qdq = model_qdq(**inputs).logits.cpu()
-    # TODO:[SW-207914] QDQ mode returns unexpected result
-    # assert torch.allclose(output, output_qdq, rtol=0.01), f"Qdq on model failed"
 
     # test save and load API
     # These two usages of save are equal, we discussed to keep both.
-    save(model, "model_tmp")
+    save(model_quant, "model_tmp")
     save(model_qdq, "model_qdq_tmp")
     model_tmp = load("model_tmp", format="huggingface", device="hpu")
     model_qdq_tmp = load("model_qdq_tmp", format="huggingface", device="hpu")
@@ -232,7 +211,38 @@ def test_qdq_model():
         output_tmp = model_tmp(**inputs).logits.cpu()
         output_qdq_tmp = model_qdq_tmp(**inputs).logits.cpu()
 
-    assert torch.allclose(output, output_tmp, rtol=0.01), f"Loading quantized model failed"
+    assert torch.allclose(output_quant, output_tmp, rtol=0.01), f"Loading quantized model failed"
     assert torch.allclose(output_qdq, output_qdq_tmp, rtol=0.01), f"Loading fake quantized model failed"
     shutil.rmtree("model_tmp", ignore_errors=True)
-    shutil.rmtree("model_fakequant_tmp", ignore_errors=True)
+    shutil.rmtree("model_qdq_tmp", ignore_errors=True)
+
+
+@pytest.mark.parametrize("scale_method", ["MAXABS_HW", "ACT_MAXABS_POW2_WEIGHTS_PCS_OPT_POW2"])
+@pytest.mark.parametrize("scale_format", ["SCALAR", "CONST"])
+@pytest.mark.parametrize("bias", [True, False], ids=["bias", "no_bias"])
+def test_PatchedLinear(scale_method, scale_format, bias):
+    model = SimpleLinearModel(in_features=10, out_features=5, bias=bias).to(torch.bfloat16).to("hpu")
+    model_quant, model_qdq = prepare_model_to_compare(
+        model, config_dict, config_dict_qdq, "Linear", scale_method, scale_format
+    )
+    with torch.no_grad():
+        for i in range(10):
+            calibration_tensor = torch.randn(2, 10).to(torch.bfloat16).to("hpu")
+            a = model_quant(calibration_tensor)
+            b = model_qdq(calibration_tensor)
+
+    model_quant = convert(model_quant)
+    model_qdq = convert(model_qdq)
+
+    # output
+    input_tensor = torch.randn(2, 10).to(torch.bfloat16).to("hpu")
+    with torch.no_grad():
+        output = model(input_tensor)
+        output_quant = model_quant(input_tensor)
+        output_qdq = model_qdq(input_tensor)
+
+    htcore.mark_step()
+    # comparsion
+    assert torch.allclose(output_qdq, output_quant, rtol=0.01, atol=1e-01), f"QDQ comparsion with Quant failed"
+    assert torch.allclose(output_quant, output, rtol=0.01, atol=1e-01), f"Quant comparsion with OriginModule failed"
+    assert torch.allclose(output_qdq, output, rtol=0.01, atol=1e-01), f"QDQ comparsion with OriginModule failed"

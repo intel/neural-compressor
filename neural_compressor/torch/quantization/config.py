@@ -1778,7 +1778,7 @@ def get_default_hqq_config() -> HQQConfig:
 
 ######################## FP8 Quant Config ###############################
 if is_hpex_available():
-    from neural_compressor.torch.algorithms.fp8_quant._core.common import get_white_list
+    from neural_compressor.torch.algorithms.fp8_quant._core.patching_common import get_white_list
 else:
     get_white_list = lambda: []
 
@@ -1841,6 +1841,9 @@ class FP8Config(TorchBaseConfig):
         self.use_qdq = str(use_qdq)
         self.scale_format = scale_format
         self.measure_on_hpu = measure_on_hpu
+        # add kwargs
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
     @property
     def measure(self):
@@ -2093,3 +2096,14 @@ class StaticQuantConfig(TorchBaseConfig):
         else:
             config_cls = self._model_mapping[STATIC_QUANT]
         return config_cls(*args, **kwargs)
+
+    @classmethod
+    def get_config_set_for_tuning(cls, dtype="int8"):
+        """Map to different config set for tuning."""
+        # dtype = "fp8", "int8"
+        if dtype == "fp8":
+            return cls._model_mapping[FP8_QUANT].get_config_set_for_tuning()
+        elif dtype == "int8":
+            return cls._model_mapping[STATIC_QUANT].get_config_set_for_tuning()
+        else:
+            raise ValueError(f"Unsupported dtype: {dtype}, allowed values are 'fp8' and 'int8'.")

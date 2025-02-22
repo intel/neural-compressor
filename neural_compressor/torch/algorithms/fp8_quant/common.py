@@ -69,7 +69,7 @@ def generate_model_info(model):
 
 
 def get_patched_mod_list():
-    from ._core.common import mod_default_dict
+    from ._core.patching_common import mod_default_dict
 
     patched_mod_list = []
     for patched_mod in mod_default_dict.values():

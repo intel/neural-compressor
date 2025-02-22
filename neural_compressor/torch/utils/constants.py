@@ -63,6 +63,7 @@ class SaveLoadFormat(Enum):
 
     DEFAULT = "default"
     HUGGINGFACE = "huggingface"
+    VLLM = "vllm"
 
 
 LM_HEAD_NAMES = [".*lm_head", ".*output_layer", ".*embed_out"]

@@ -16,9 +16,11 @@ from torch.utils.data import DataLoader
 from transformers import AutoModelForCausalLM, AutoConfig, AutoTokenizer
 from neural_compressor.torch.utils import is_hpex_available
 
+
 if is_hpex_available():
     import habana_frameworks.torch.core as htcore  # pylint: disable=E0401
     htcore.hpu_set_inference_env()
+device = "hpu" if is_hpex_available() else "cpu"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--model", nargs="?", default="EleutherAI/gpt-j-6b",
@@ -77,6 +79,8 @@ parser.add_argument("--woq_use_full_range", action="store_true",
                     help="Enables full range for activations.")
 parser.add_argument("--quant_lm_head", action="store_true",  
                     help="Whether to quant the lm_head layer in transformers")
+parser.add_argument("--use_hf_format", action="store_true",  
+                    help="Whether to save & load quantized model in huggingface format")
 
 # =============GPTQ configs====================
 parser.add_argument("--gptq_actorder", action="store_true",
@@ -317,7 +321,7 @@ def eval_fn(user_model=None):
         batch_size=args.batch_size,
         tasks=args.tasks,
         limit=samples,
-        device="hpu" if is_hpex_available() else "cpu",
+        device=device,
     )
     start = time.time()
     results = evaluate(eval_args)
@@ -550,22 +554,31 @@ if args.quantize:
             example_inputs=example_inputs,
         )
 
-    user_model.save(args.output_dir)
+    print("saving weight-only quantized model")
+    if args.use_hf_format:
+        user_model.save(args.output_dir, format="huggingface")
+        tokenizer.save_pretrained(args.output_dir)
+    else:
+        user_model.save(args.output_dir)
+    print("saved weight-only quantized model")
 
 
 if args.load:
     print("load weight-only quantized model")
 
     from neural_compressor.torch.quantization import load
-    user_model, _ = get_user_model()
+    if args.use_hf_format:
+        user_model = load(args.model, format="huggingface", device=device)
+    else:
+        user_model, _ = get_user_model()
+        config = AutoConfig.from_pretrained(args.model)
+        user_model = load(
+            os.path.abspath(os.path.expanduser(args.output_dir)),
+            user_model,
+            device=device,
+        )
+        setattr(user_model, "config", config)
     tokenizer = AutoTokenizer.from_pretrained(args.model)
-    config = AutoConfig.from_pretrained(args.model)
-    user_model = load(
-        os.path.abspath(os.path.expanduser(args.output_dir)),
-        user_model,
-        device="hpu" if is_hpex_available() else "cpu",
-    )
-    setattr(user_model, "config", config)
 else:
     user_model, tokenizer = get_user_model()
 
@@ -585,7 +598,7 @@ if args.accuracy:
         tokenizer=tokenizer,
         batch_size=args.batch_size,
         tasks=args.tasks,
-        device="hpu" if is_hpex_available() else "cpu",
+        device=device,
     )
     results = evaluate(eval_args)
     for task_name in args.tasks.split(","):

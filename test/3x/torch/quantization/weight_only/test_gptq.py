@@ -13,9 +13,9 @@ from neural_compressor.torch.quantization import (
     prepare,
     quantize,
 )
-from neural_compressor.torch.utils import accelerator
+from neural_compressor.torch.utils import accelerator, is_hpex_available
 
-device = accelerator.current_device_name()
+device = accelerator.name()
 
 
 def run_fn(model):
@@ -42,6 +42,7 @@ class TestGPTQQuant:
 
     def teardown_class(self):
         shutil.rmtree("saved_results", ignore_errors=True)
+        shutil.rmtree("tiny_gptj_int4_gptq", ignore_errors=True)
 
     @pytest.mark.skipif(device == "cpu", reason="no available accelerator")
     def test_auto_host2device(self):
@@ -182,6 +183,7 @@ class TestGPTQQuant:
         # compare atol, this case is an ideal case.
         assert atol_false > atol_true, "act_order=True doesn't help accuracy, maybe is reasonable, please double check."
 
+    @pytest.mark.skipif(is_hpex_available(), reason="These tests are not supported on HPU for now.")
     @pytest.mark.parametrize("quant_lm_head", [False, True])
     def test_layer_wise(self, quant_lm_head):
         model = copy.deepcopy(self.tiny_gptj)
@@ -239,6 +241,8 @@ class TestGPTQQuant:
             atol_false < atol_true
         ), "true_sequential=True doesn't help accuracy, maybe is reasonable, please double check."
 
+    # TODO [SW-216127]: it's not in high priority, so we can implement it later.
+    @pytest.mark.skipif(is_hpex_available(), reason="These tests are not supported on HPU for now.")
     def test_quant_lm_head(self):
         # quant_lm_head=False
         model = copy.deepcopy(self.tiny_gptj)
@@ -269,8 +273,6 @@ class TestGPTQQuant:
     @pytest.mark.parametrize("dtype", ["nf4", "int4"])
     @pytest.mark.parametrize("double_quant_bits", [6])
     @pytest.mark.parametrize("double_quant_group_size", [8, 256])
-    # TODO: (Xin) to implement
-    # @pytest.mark.parametrize('export_compressed_model', [False, True])
     def test_double_quant_params(self, dtype, double_quant_bits, double_quant_group_size):
         model = copy.deepcopy(self.tiny_gptj)
         # double_quant_use_sym = False
@@ -308,6 +310,8 @@ class TestGPTQQuant:
         except:
             assert torch.allclose(atol_false, atol_true, atol=0.008), "atol is very close, double checked the logic."
 
+    # TODO [SW-216127]: it's not in high priority, so we can implement it later.
+    @pytest.mark.skipif(is_hpex_available(), reason="These tests are not supported on HPU for now.")
     def test_conv1d(self):
         from transformers import GPT2Model, GPT2Tokenizer
 
@@ -336,14 +340,35 @@ class TestGPTQQuant:
         run_fn(prepared_model)
         q_model = convert(prepared_model)
         assert q_model is not None, "Quantization failed!"
+        q_model.save("tiny_gptj_int4_gptq", format="huggingface")
         q_model.save("saved_results")
-        inc_out = q_model(self.example_inputs)[0]
 
-        # loading compressed model (format=INC, device="cpu")
-        # linear -> INCWeightOnlyLinear
-        loaded_model = load("saved_results", copy.deepcopy(self.tiny_gptj))
-        output = loaded_model(self.example_inputs)[0]
-        assert torch.allclose(inc_out, output), "Unexpected result. Please double check."
-        assert (
-            get_woq_linear_num(loaded_model, "INCWeightOnlyLinear") == 30
-        ), "Incorrect number of INCWeightOnlyLinear modules"
+        loaded_model_hf = load("tiny_gptj_int4_gptq", format="huggingface", device=device)
+        loaded_model = load("saved_results", copy.deepcopy(self.tiny_gptj), device=device)
+        with torch.no_grad():
+            inc_out = q_model(self.example_inputs)[0]
+            output_hf = loaded_model_hf(self.example_inputs)[0]
+            output = loaded_model(self.example_inputs)[0]
+        assert torch.allclose(output_hf, output), "Unexpected result. Please double check."
+        if "hpu" in device:
+            # scale dtype is float16 in saved_results, so we need to set atol=0.002
+            assert torch.allclose(inc_out, output, atol=0.002), "Unexpected result. Please double check."
+            assert (
+                get_woq_linear_num(loaded_model, "HPUWeightOnlyLinear") == 30
+            ), "Incorrect number of HPUWeightOnlyLinear modules"
+            # test the second load, which reuses the cached quantized_hpu_weight.pt
+            loaded_model = load("saved_results", copy.deepcopy(self.tiny_gptj), device="hpu")
+            assert (
+                get_woq_linear_num(loaded_model, "HPUWeightOnlyLinear") == 30
+            ), "Incorrect number of HPUWeightOnlyLinear modules"
+
+            with torch.no_grad():
+                output2 = loaded_model(self.example_inputs)[0]
+            assert torch.equal(
+                output, output2
+            ), "The model loaded the second time is different from the model loaded the first time"
+        else:
+            assert torch.allclose(inc_out, output), "Unexpected result. Please double check."
+            assert (
+                get_woq_linear_num(loaded_model, "INCWeightOnlyLinear") == 30
+            ), "Incorrect number of INCWeightOnlyLinear modules"

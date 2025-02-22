@@ -21,7 +21,17 @@ import copy
 import torch
 
 from ._quant_common.quant_config import local_rank, world_size, HpDtype
-from neural_compressor.torch.utils import get_accelerator, is_optimum_habana_available, get_attr, set_attr
+from ._core.scale_handler import update_state_dict_method
+from .utils.logger import logger
+from neural_compressor.torch.utils import (
+    get_accelerator,
+    is_optimum_habana_available,
+    get_attr,
+    set_attr,
+    SaveLoadFormat,
+    get_enum_from_format,
+    UNIT_MAPPING,
+)
 
 
 MAX_FILE_SIZE = 5  # GB
@@ -46,15 +56,16 @@ tp_module_list = (
 
 ##################################### save ##################################
 
-def save_rank_model(model, folder_prefix=""):
+def save_rank_model(model, folder_prefix="", **kwargs):
     """Save state_dict for model from each rank."""
-    from huggingface_hub import save_torch_model
-
-    save_directory = f"{folder_prefix}_{local_rank}_{world_size}"
-    os.makedirs(save_directory, exist_ok=True)
     # workaround for [SW-199005] [HQT] casted fp8 tensor cannot get data pointer
     cur_accelerator.synchronize()
-    save_torch_model(model, save_directory, max_shard_size=f"{MAX_FILE_SIZE/world_size}GB", metadata={"format": "pt"})
+    save_directory = f"{folder_prefix}_{local_rank}_{world_size}"
+    os.makedirs(save_directory, exist_ok=True)
+    safe_serialization = kwargs.get("safe_serialization", True)
+    max_shard_size = kwargs.get("max_shard_size", f"{MAX_FILE_SIZE}GB")
+    # save model state_dict and config.json
+    model.save_pretrained(save_directory, max_shard_size=max_shard_size, safe_serialization=safe_serialization)
 
 
 def find_tp_mod_list(model):
@@ -107,26 +118,251 @@ def clean_rank_files(folder_prefix, file_name=None):
             shutil.rmtree(cur_file, ignore_errors=True)
 
 
-def save(model, checkpoint_dir="saved_results", format="huggingface"):
-    """Save FP8 model.
+def parse_shard_size(size_str):
+    """
+    Parse a human-readable size string (e.g., '5GB', '10MB') into bytes as an integer.
+    Args:
+        size_str (str): The size string to parse, including a number and unit (e.g., '5GB').
+    Returns:
+        int: The size in bytes.
+    Raises:
+        ValueError: If the format of the input string is invalid.
+    """
+    size_str = size_str.strip().upper()
 
+    for unit in UNIT_MAPPING:
+        if size_str.endswith(unit):
+            number = float(size_str[:-len(unit)].strip())
+            return int(number * UNIT_MAPPING[unit])
+
+    raise ValueError(f"Invalid size format: {size_str}")
+
+
+def save_state_dict_sharded_safetensors(state_dict, save_dir, max_shard_size="5GB"):
+    """Save the state_dict into safetensors files. If the model fits within max_shard_size, save as a single file.
+    Otherwise, split into shards.
+    Args:
+        state_dict (dict): The model's state_dict.
+        save_dir (str): The directory to save the files.
+        max_shard_size (string): The maximum size for each file in bytes, default is 5GB.
+    """
+    from safetensors.torch import save_file
+
+    os.makedirs(save_dir, exist_ok=True)
+
+    total_model_size = sum(tensor.element_size() * tensor.numel() for tensor in state_dict.values())
+    max_shard_size = parse_shard_size(max_shard_size)
+    if total_model_size <= max_shard_size:
+        # Save as a single file if the total size fits within max_shard_size
+        single_file_path = os.path.join(save_dir, "model.safetensors")
+        save_file(state_dict, single_file_path)
+    else:
+        # Save as multiple shards if the total size exceeds max_shard_size
+        current_file_size = 0
+        shard = {}
+        shard_id = 1
+        file_list = []
+
+        for key, tensor in state_dict.items():
+            tensor_size = tensor.element_size() * tensor.numel()
+
+            if current_file_size + tensor_size > max_shard_size and shard:
+                shard_file = os.path.join(save_dir, f"model-{shard_id:05d}-of-00000.safetensors")
+                save_file(shard, shard_file)
+                file_list.append(shard_file)
+                shard = {}
+                shard_id += 1
+                current_file_size = 0
+
+            shard[key] = tensor
+            current_file_size += tensor_size
+
+        if shard:
+            shard_file = os.path.join(save_dir, f"model-{shard_id:05d}-of-00000.safetensors")
+            save_file(shard, shard_file)
+            file_list.append(shard_file)
+
+        num_shards = len(file_list)
+        for _, file_path in enumerate(file_list):
+            new_file_name = file_path.replace("00000", f"{num_shards:05d}")
+            os.rename(file_path, new_file_name)
+
+
+def convert_weight_to_vllm_compatible(state_dict):
+    """To convert INC fp8 model weight format to the vllm compatible format quantized by llm-compressor.
+    Args:
+        state_dict (dict): state_dict from INC model.
+    Returns:
+        The modified state_dict includes weight and scale adapted to llm-compressor.
+    """
+    keys_to_remove = []
+    keys_to_add = {}
+
+    for key in list(state_dict.keys()):
+        if "scale_weight" in key:
+            weight_scale = key.replace("scale_weight", "weight_scale")
+            keys_to_add[weight_scale] = state_dict[key].contiguous().to("cpu")
+            keys_to_remove.append(key)
+        elif "k_cache.dequant_output.scale" in key:
+            kv_scale = key.replace("k_cache.dequant_output.scale", "kv_scale")
+            v_scale = key.replace("k_cache", "v_cache")
+            k_scale_inv = key.replace("k_cache.dequant_output.scale", "k_cache.quant_input.scale_inv")
+            v_scale_inv = key.replace("k_cache.dequant_output.scale", "v_cache.quant_input.scale_inv")
+
+            keys_to_add[kv_scale] = max(state_dict[key], state_dict[v_scale]).contiguous().to("cpu")
+            keys_to_remove.extend([key, v_scale, k_scale_inv, v_scale_inv])
+        elif "scale_input" in key:
+            input_scale = key.replace("scale_input", "input_scale")
+            scale_input_inv = key.replace("scale_input", "quant_input.scale_inv")
+
+            keys_to_add[input_scale] = state_dict[key].contiguous().to("cpu")
+            keys_to_remove.extend([key, scale_input_inv])
+        elif "proj.weight" in key:
+            state_dict[key] = state_dict[key].t().contiguous().to("cpu")
+
+    # Remove unnecessary keys
+    for key in keys_to_remove:
+        state_dict.pop(key, None)
+
+    # Add new keys
+    state_dict.update(keys_to_add)
+
+    return state_dict
+
+
+def generate_scheme(
+    dynamic=False, observer="minmax", observer_kwargs={}, strategy="tensor", symmetric=True, type="float"
+):
+    """To generate the scheme requested by vllm compatible config."""
+    return {
+        "actorder": None,
+        "block_structure": None,
+        "dynamic": dynamic,
+        "group_size": None,
+        "num_bits": 8,
+        "observer": observer,
+        "observer_kwargs": observer_kwargs,
+        "strategy": strategy,
+        "symmetric": symmetric,
+        "type": type,
+    }
+
+
+def convert_config_to_vllm_compatible(config):
+    """Convert INC quantization_config to vllm compatible config.
+    Args:
+        config(dict): inc quantization config dictionary.
+    """
+    config_groups = {
+        "group_0": {
+            "input_activations": generate_scheme(
+                dynamic=False, observer="minmax", observer_kwargs={}, strategy="tensor", symmetric=True, type="float"
+            ),
+            "output_activations": None,
+            "targets": ["Linear"],
+            "weights": generate_scheme(
+                dynamic=False, observer="minmax", observer_kwargs={}, strategy="tensor", symmetric=True, type="float"
+            ),
+        }
+    }
+    ignore = [] if "names" not in config.blocklist else config.blocklist["names"]
+    kv_cache_scheme = generate_scheme(
+        dynamic=False, observer="minmax", observer_kwargs={}, strategy="tensor", symmetric=True, type="float"
+    )
+    quantization_config = {
+        "config_groups": config_groups,
+        "quant_method": "compressed-tensors",
+        "format": "float-quantized",
+        "ignore": ignore,
+        "kv_cache_scheme": kv_cache_scheme,
+    }
+    return quantization_config
+
+def gather_and_save_model(tp_model, original_model, world_size, max_shard_size, output_dir):
+    """
+    Merge the weights of a DeepSpeed Tensor Parallel model into the original model
+    and save them as sharded safetensors files.
+
+    Args:
+        tp_model: DeepSpeed tensor parallel model.
+        original_model: The original unsharded model.
+        world_size: The model parallelism size.
+        max_shard_size: The maximum size of each shard in bytes.
+        output_dir: The directory to save the files.
+    """
+    import deepspeed
+    merged_state_dict = {}
+
+    for name, tp_param in tp_model.named_parameters():
+        if "scale" not in name:
+            param = original_model.state_dict()[name].t()
+            if len(param.shape) != 0 and tp_param.shape != param.shape:
+                # Perform all-gather to merge tensor parallel parameters
+                tensor_list = [torch.zeros_like(tp_param) for _ in range(world_size)]
+                deepspeed.comm.all_gather(tensor_list, tp_param)
+                if local_rank == 0:
+                    if tp_param.shape[0] != param.shape[0]:
+                        merged_param = torch.cat(tensor_list, dim=0)
+                    elif tp_param.shape[1] != param.shape[1]:
+                        merged_param = torch.cat(tensor_list, dim=1)
+                    logger.info(f"[Rank {local_rank}] Merging parameter: {name}")
+            else:
+                if local_rank == 0:
+                    # No merging needed if shapes match
+                    merged_param = tp_param
+                    logger.info(f"[Rank {local_rank}] No merging needed for parameter: {name}")
+        else:
+            deepspeed.comm.all_reduce(tp_param, op=deepspeed.comm.ReduceOp.MAX)
+            if local_rank == 0:
+                merged_param = tp_param
+                logger.info(f"[Rank {local_rank}] No merging needed for parameter: {name}")
+        # Update the merged state dict
+        if local_rank == 0:
+            merged_state_dict[name] = merged_param
+
+    # Save the merged state dict as sharded safetensors files (only on rank 0)
+    if local_rank == 0:
+        logger.info(f"[Rank {local_rank}] Saving model shards to {output_dir}...")
+        merged_state_dict = convert_weight_to_vllm_compatible(state_dict=merged_state_dict)
+        save_state_dict_sharded_safetensors(merged_state_dict, output_dir, f"{MAX_FILE_SIZE}GB")
+
+
+def check_config_for_vllm_compatible(config):
+    """
+    check config parameters for saving vllm compatible format.
+    """
+    error_message = (
+        "Save format='vllm' only supports per-tensor static quantization. The allowlist only supports "
+        "Linear-related types (e.g., LinearReduce, LinearLayer) and KVCache-related types (e.g., VLLMKVCache)."
+    )
+    assert "_PCS_" not in config.scale_method.upper(), error_message
+    assert "types" in config.allowlist, error_message
+    types = config.allowlist["types"]
+    assert all("kvcache" in t.lower() or "linear" in t.lower() for t in types), error_message
+
+
+def save_for_multi_devices(model, checkpoint_dir="saved_results", format="huggingface", **kwargs):
+    """Save FP8 model for multi-devices.
     Args:
         model (torch.nn.Module): fp8 model object.
         checkpoint_dir (str, optional): path to checkpoint. Defaults to "saved_results".
-        format (str, optional): _description_. Defaults to 'huggingface'.
+        format (str, optional): defaults to 'huggingface'.
     """
-    assert format == "huggingface", (
+    format = get_enum_from_format(format)
+    assert format == SaveLoadFormat.HUGGINGFACE, (
         "Currently, only huggingface models are supported." + "Please set format='huggingface'."
     )
     from safetensors.torch import save_file as safe_save_file
-
-    # cancel tied weights to avoid reloading issue when lm_head is not quantized.
-    for key in model._tied_weights_keys:
-        weight = get_attr(model, key)
-        set_attr(model, key, copy.deepcopy(weight))
-
-    if world_size > 0:
-        save_rank_model(model, folder_prefix=checkpoint_dir)
+    if format == SaveLoadFormat.VLLM:
+        import transformers
+        from accelerate import init_empty_weights
+        with init_empty_weights(include_buffers=False):
+            reference_model = transformers.AutoModelForCausalLM.from_config(model.config)
+        gather_and_save_model(
+            model, reference_model, world_size=world_size, max_shard_size=f"{MAX_FILE_SIZE}GB", output_dir=checkpoint_dir
+            )
+    else:
+        save_rank_model(model, folder_prefix=checkpoint_dir, **kwargs)
         rank_directory = f"{checkpoint_dir}_{0}_{world_size}"
         files_list = find_safetensors_files(rank_directory)
         # use rank:0 process to gather checkpoint files
@@ -142,28 +378,63 @@ def save(model, checkpoint_dir="saved_results", format="huggingface"):
                 safe_save_file(gathered_state_dict, os.path.join(checkpoint_dir, file_name), metadata={"format": "pt"})
                 clean_rank_files(folder_prefix=checkpoint_dir, file_name=file_name)
             clean_rank_files(folder_prefix=checkpoint_dir)
-    else:
-        from huggingface_hub import save_torch_model
 
-        os.makedirs(checkpoint_dir, exist_ok=True)
-        # TODO: [SW-207766] RuntimeError: "fill_empty_deterministic_" not implemented for 'Float8_e4m3fn'
-        tmp_deterministic_algorithms_flag = torch.are_deterministic_algorithms_enabled()
-        torch.use_deterministic_algorithms(False)
-        # TODO: [SW-199005] [HQT] casted fp8 tensor cannot get data pointer
-        cur_accelerator.synchronize()
-        save_torch_model(model, checkpoint_dir, max_shard_size=f"{MAX_FILE_SIZE}GB", metadata={"format": "pt"})
+
+def save_for_single_device(model, checkpoint_dir="saved_results", format="huggingface", **kwargs):
+    """Save FP8 model for single device.
+
+    Args:
+        model (torch.nn.Module): fp8 model object.
+        checkpoint_dir (str, optional): path to checkpoint. Defaults to "saved_results".
+        format (str, optional): defaults to 'huggingface'.
+    """
+    from huggingface_hub import save_torch_model
+
+    os.makedirs(checkpoint_dir, exist_ok=True)
+    # TODO: [SW-207766] RuntimeError: "fill_empty_deterministic_" not implemented for 'Float8_e4m3fn'
+    tmp_deterministic_algorithms_flag = torch.are_deterministic_algorithms_enabled()
+    torch.use_deterministic_algorithms(False)
+    # TODO: [SW-199005] [HQT] casted fp8 tensor cannot get data pointer
+    cur_accelerator.synchronize()
+    if format == SaveLoadFormat.VLLM:
+        state_dict = convert_weight_to_vllm_compatible(state_dict=model.state_dict())
+        save_state_dict_sharded_safetensors(state_dict, checkpoint_dir, max_shard_size=f"{MAX_FILE_SIZE}GB")
+    else:
+        safe_serialization = kwargs.get("safe_serialization", True)
+        max_shard_size = kwargs.get("max_shard_size", f"{MAX_FILE_SIZE}GB")
+        # save model state_dict and config.json
+        model.save_pretrained(checkpoint_dir, max_shard_size=max_shard_size, safe_serialization=safe_serialization)
         torch.use_deterministic_algorithms(tmp_deterministic_algorithms_flag)
+
+
+def save(model, checkpoint_dir="saved_results", format="huggingface", **kwargs):
+    """Save FP8 model.
+
+    Args:
+        model (torch.nn.Module): fp8 model object.
+        checkpoint_dir (str, optional): path to checkpoint. Defaults to "saved_results".
+        format (str, optional): defaults to 'huggingface'.
+    """
+    format = get_enum_from_format(format)
+    model = process_model_for_scalar_scale(model)
+    if format == SaveLoadFormat.VLLM:
+        check_config_for_vllm_compatible(model.qconfig[next(iter(model.qconfig))])
+    if world_size > 0:
+        save_for_multi_devices(model, checkpoint_dir=checkpoint_dir, format=format, **kwargs)
+    else:
+        save_for_single_device(model, checkpoint_dir=checkpoint_dir, format=format, **kwargs)
 
     # save "quantization_config" in config.json
     configs_mapping = model.qconfig
     config_object = configs_mapping[next(iter(configs_mapping))]
-    config_object.mode = "LOAD"
-    model.config.quantization_config = config_object
+    update_model_config(model, format, config_object)
     model.config.save_pretrained(checkpoint_dir)
+
+    if hasattr(model, "generation_config") and model.generation_config is not None:
+        model.generation_config.save_pretrained(checkpoint_dir)
 
 
 ##################################### load ##################################
-
 
 def load_empty_raw_model(model_name_or_path, **kwargs):
     """Initialize BF16 model with meta tensor."""
@@ -206,7 +477,7 @@ def load_empty_raw_model(model_name_or_path, **kwargs):
         with init_empty_weights(include_buffers=False):
             model = transformers.AutoModelForCausalLM.from_config(config, torch_dtype=hp_dtype)
         # TODO: [SW-199728] [DeepSpeed] Buffers initialized by model are not correct after tensor parallel
-        # get_non_persistent_buffers and load_non_persistent_buffers are workrounds of [SW-199728]
+        # get_non_persistent_buffers and load_non_persistent_buffers are workarounds of [SW-199728]
         non_persistent_buffers = get_non_persistent_buffers(model)
         ds_inference_kwargs = {
             "dtype": hp_dtype,
@@ -215,10 +486,16 @@ def load_empty_raw_model(model_name_or_path, **kwargs):
         model = deepspeed.init_inference(model, **ds_inference_kwargs)
         model = model.module
         load_non_persistent_buffers(model, non_persistent_buffers)
-        model.to(hp_dtype)
     else:
         with init_empty_weights(include_buffers=False):
             model = transformers.AutoModelForCausalLM.from_config(config, torch_dtype=hp_dtype)
+    model.to(hp_dtype)
+
+    try:
+        generation_config = transformers.GenerationConfig.from_pretrained(model_name_or_path, **kwargs)
+        model.generation_config = generation_config
+    except FileNotFoundError:
+        pass  # in case that no file named generation_config.json
     return model, from_neuralmagic, from_neuralmagic_with_kv
 
 
@@ -267,18 +544,19 @@ def shard_state_dict(state_dict):
     return rank_state_dict
 
 def split_rank_state_dict(model, gathered_state_dict):
-    """split state_dict for current local_rank."""
+    """Split state_dict for current local_rank."""
     rank_state_dict = {}
     for name, param in model.named_parameters():
         if name in gathered_state_dict:
             full_weight = gathered_state_dict[name]
             if len(param.shape) != 0 and full_weight.shape != param.shape:
+                # clone to release reference to the original tensor
                 if full_weight.shape[0] != param.shape[0]:
-                    split_weight = split_weights(full_weight, world_size, local_rank, split_axis=0)
+                    split_weight = split_weights(full_weight, world_size, local_rank, split_axis=0).clone()
                 elif full_weight.shape[1] != param.shape[1]:
-                    split_weight = split_weights(full_weight, world_size, local_rank, split_axis=1)
+                    split_weight = split_weights(full_weight, world_size, local_rank, split_axis=1).clone()
                 else:
-                    split_weight = split_weights(full_weight, world_size, local_rank, split_axis=0)
+                    split_weight = split_weights(full_weight, world_size, local_rank, split_axis=0).clone()
             else:
                 split_weight = full_weight
             rank_state_dict[name] = split_weight
@@ -330,7 +608,8 @@ def load(model_name_or_path, format="huggingface", device="hpu", **kwargs):
     Returns:
         FP8 model.
     """
-    assert format == "huggingface", "Currently, only huggingface models are supported."
+    format = get_enum_from_format(format)
+    assert format == SaveLoadFormat.HUGGINGFACE, "Currently, only huggingface models are supported."
     assert device == "hpu", "Currently, only hpu device is supported for FP8 model."
     from safetensors.torch import load_file as safe_load_file
 
@@ -342,6 +621,7 @@ def load(model_name_or_path, format="huggingface", device="hpu", **kwargs):
 
     # replace modules to patched modules
     prep_model(model, qconfig.json_file)
+    model = process_model_for_scalar_scale(model)
     # get the safetensors file list from one folder
     files_list = find_safetensors_files(model_name_or_path, **kwargs)  # TODO: get online files
     # based on the safetensors file name to collect tensors from shard folders
@@ -349,11 +629,7 @@ def load(model_name_or_path, format="huggingface", device="hpu", **kwargs):
         cur_file = os.path.join(model_name_or_path, file_name)
         gathered_state_dict = safe_load_file(cur_file)
         if from_neuralmagic or from_neuralmagic_with_kv:
-            import habana_frameworks.torch.utils.experimental as htexp
-            gathered_state_dict = convert_weight_to_inc(
-                                        state_dict=gathered_state_dict,
-                                        on_gaudi2=htexp._get_device_type() == htexp.synDeviceType.synDeviceGaudi2
-                                        )
+            gathered_state_dict = convert_weight_to_inc(state_dict=gathered_state_dict)
         if world_size > 0:
             # only return state_dict for the current local_rank
             if from_neuralmagic or from_neuralmagic_with_kv:
@@ -361,31 +637,31 @@ def load(model_name_or_path, format="huggingface", device="hpu", **kwargs):
             else:
                 rank_state_dict = shard_state_dict(gathered_state_dict)
             model.load_state_dict(rank_state_dict, assign=True, strict=False)
+            load_scale_params(model, rank_state_dict)  # ensure per-channel scale is loaded correctly
         else:
             model.load_state_dict(gathered_state_dict, assign=True, strict=False)
+            load_scale_params(model, gathered_state_dict)  # ensure per-channel scale is loaded correctly
 
-    if from_neuralmagic or from_neuralmagic_with_kv:
-        model.tie_weights()
+    model.tie_weights()
     model = model.to(cur_accelerator.name())
     model = model.eval()
     cur_accelerator.synchronize()
-    # make sure cpu and hpu memory are all released.
-    gc.collect()
     return model
 
 
-def convert_weight_to_inc(state_dict, on_gaudi2=False):
-    """To convert the vllm compatable fp8 model weight to INC format,
+def convert_weight_to_inc(state_dict):
+    """To convert the vllm compatible fp8 model weight to INC format,
        one is operators' name are different, the other is to adapt weight on G2
        due to the torch.float8_e4m3fn scope [-240, 240].
 
     Args:
         state_dict (dict): state_dict from modelhub.
-        on_gaudi2 (bool, optional): whether is on Gaudi2. Defaults to False.
 
     Returns:
         state_dict includes weight and scale adapted to INC format.
     """
+    import habana_frameworks.torch.utils.experimental as htexp
+    on_gaudi2 = htexp._get_device_type() == htexp.synDeviceType.synDeviceGaudi2
     key_name = state_dict.keys()
     for key in list(key_name):
         if "weight_scale" in key:
@@ -425,6 +701,7 @@ def convert_weight_to_inc(state_dict, on_gaudi2=False):
             state_dict[key] = state_dict[key].detach().t().to("hpu")
         else:
             pass
+        cur_accelerator.synchronize()
     return state_dict
 
 
@@ -450,3 +727,47 @@ def split_weights(weight, tp_size, tp_rank, split_axis=0):
         return weight[:, start_idx:end_idx]
     else:
         raise ValueError("split_axis must be 0 (row) or 1 (column).")
+
+
+def process_model_for_scalar_scale(model):
+    from neural_compressor.torch.algorithms.fp8_quant.patched_module_base import PatchedModuleBase
+    from neural_compressor.torch.algorithms.fp8_quant._core.quant_dequant import QuantDequantBase
+    for mod in model.modules():
+        if isinstance(mod, (PatchedModuleBase, QuantDequantBase)):
+            update_state_dict_method(mod)
+    return model
+
+
+def update_model_config(model, format, config_object):
+    """Update model config for saving."""
+    # update config for tie_word_embeddings
+    if model.config.tie_word_embeddings:
+        from transformers.modeling_utils import _get_tied_weight_keys
+        embedding_weight = model.get_input_embeddings().weight
+        for key in _get_tied_weight_keys(model):
+            if model.state_dict()[key].data_ptr() != embedding_weight.data_ptr():
+                model.config.tie_word_embeddings = False
+    # update per format
+    if format == SaveLoadFormat.VLLM:
+        quantization_config = convert_config_to_vllm_compatible(config_object)
+        model.config.quantization_config = quantization_config
+    else:
+        config_object.mode = "LOAD"
+        model.config.quantization_config = config_object
+
+
+def load_scale_params(model, new_scale_params):
+    """
+    Load scale parameters into the model. If the lengths do not match, replace the old scales with the new ones.
+    
+    Args:
+        model (torch.nn.Module): The model to load scale parameters into.
+        new_scale_params (dict): A dictionary containing the new scale parameters.
+    """
+    for name, param in model.named_parameters():
+        if name in new_scale_params:
+            new_scale = new_scale_params[name]
+            old_scale = param.data
+            # update per-tensor scale with per-channel scale
+            if old_scale.shape != new_scale.shape:
+                param.data = new_scale

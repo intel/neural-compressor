@@ -32,7 +32,7 @@ from neural_compressor.common.utils import (
     detect_processor_type_based_on_hw,
     logger,
 )
-from neural_compressor.torch.utils import is_optimum_habana_available, is_transformers_imported
+from neural_compressor.torch.utils import SaveLoadFormat, is_optimum_habana_available, is_transformers_imported
 
 if is_transformers_imported():
     import transformers
@@ -49,6 +49,7 @@ algos_mapping: Dict[str, Callable] = {}
 
 # All constants for torch
 WHITE_MODULE_LIST = [torch.nn.Linear, torch.nn.Conv1d, torch.nn.Conv2d, torch.nn.Conv3d]
+UNIT_MAPPING = {"KB": 1024, "MB": 1024**2, "GB": 1024**3, "TB": 1024**4, "B": 1}
 
 HPU_SAFE_WEIGHTS_NAME = "hpu_model.safetensors"
 WEIGHT_NAME = "quantized_weight.pt"
@@ -710,3 +711,15 @@ def forward_wrapper(model, input):
     else:
         output = model(input)
     return output
+
+
+def get_enum_from_format(format):
+    """Make sure Save&Load format is an Enum object."""
+    if isinstance(format, SaveLoadFormat):
+        return format
+    for obj in SaveLoadFormat:
+        if format == obj.value:
+            return obj
+        elif format.upper() == obj.name:
+            return obj
+    raise ValueError(f"Invalid format value ('{format}'). Enter one of [{[m.name for m in SaveLoadFormat]}]")

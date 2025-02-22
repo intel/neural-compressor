@@ -39,7 +39,6 @@ from typing import Union
 import lm_eval
 import numpy as np
 from lm_eval import evaluator, utils
-from lm_eval.loggers import WandbLogger
 from lm_eval.tasks import TaskManager
 from lm_eval.utils import make_table, simple_parse_args_string
 
@@ -67,6 +66,17 @@ def _handle_non_serializable(o):
 
 def cli_evaluate(args) -> None:
     if args.wandb_args:
+        try:
+            # For 0.4.3 and above
+            from lm_eval.loggers import WandbLogger
+        except ImportError:
+            try:
+                # For 0.4.2
+                from lm_eval.logging_utils import WandbLogger
+            except ImportError:
+                raise ImportError("Import of WandbLogger failed. Please install wandb to use this feature.")
+        except Exception as e:
+            raise RuntimeError(f"An unexpected error occurred: {e}")
         wandb_logger = WandbLogger(**simple_parse_args_string(args.wandb_args))
 
     eval_logger = utils.eval_logger
@@ -200,6 +210,7 @@ def cli_evaluate(args) -> None:
         )
     lm.pad_to_buckets = args.pad_to_buckets
     lm.buckets = args.buckets
+    lm.add_bos_token = args.add_bos_token
 
     results = evaluator.simple_evaluate(
         model=lm,
