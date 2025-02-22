@@ -400,6 +400,7 @@ pipe = StableDiffusionXLPipelineSQ.from_pretrained(
     torch_dtype=dtype,
     use_safetensors=True,
 )
+pipe = pipe.to(dtype)  # Ensure all modules are set as dtype
 pipe.scheduler = EulerDiscreteScheduler.from_config(pipe.scheduler.config)
 
 if args.refiner:
