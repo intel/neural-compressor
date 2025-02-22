@@ -361,6 +361,7 @@ def main():
         torch_dtype=dtype,
         use_safetensors=True,
     )
+    pipeline = pipeline.to(dtype)  # Ensure all modules are set as dtype
     pipeline.scheduler = EulerDiscreteScheduler.from_config(pipeline.scheduler.config)
     
     # This is a list of prompts
