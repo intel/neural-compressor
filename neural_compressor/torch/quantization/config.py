@@ -2096,7 +2096,7 @@ class StaticQuantConfig(TorchBaseConfig):
         else:
             config_cls = self._model_mapping[STATIC_QUANT]
         return config_cls(*args, **kwargs)
-    
+
     @classmethod
     def get_config_set_for_tuning(cls, dtype="int8"):
         """Map to different config set for tuning."""
