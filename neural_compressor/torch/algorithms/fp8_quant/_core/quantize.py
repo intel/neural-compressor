@@ -133,10 +133,13 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     import habana_frameworks.torch.core as htcore
     stacked_params_mapping = {
         "gate_up_proj": [("gate_proj", 0), ("up_proj", 1)],
-        "w13_list": [("gate_proj", "w1"), ("up_proj", "w3")],
-        "w2_list": [("down_proj", "w2")],
             }
 
+    #moe_map = {
+    #        "w13_list": [("gate_proj", "w1"), ("up_proj", "w3")],
+    #        "w2_list": [("down_proj", "w2")],
+    #        }
+    moe_map = ["gate_proj", "up_proj", "down_proj"]
     moe_tmp_name = "_temp_expert_group_"
 
     def load_weight(param_name):
@@ -153,38 +156,70 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     #    import pdb;pdb.set_trace()
     with torch.no_grad():
         for name, mod in model.named_modules():
-            if name in origin_mod and len([_ for _ in mod.named_modules()]) == 1:
-                for n, param in mod.named_parameters():
+
+            # restore moe param name
+            if "MoeOp" in name and "_list" not in name and len([_ for _ in mod.named_modules()]) > 1:
+                #if torch.distributed.get_rank() ==0:
+                #    import pdb;pdb.set_trace()
+                group_id_on_rank = int(name.split(moe_tmp_name)[-1].split(".")[0])
+                NUM_EXPERT_GROUPS = 8
+                n_expert_slice = 4
+
+                # model.layers.id.mlp.experts.id.MoeOp
+                new_param_name = name.replace(moe_tmp_name, "")
+
+                new_param_name = ".".join(new_param_name.split(".")[:-2])
+                for i in range(n_expert_slice):
+                    #actual_id = NUM_EXPERT_GROUPS * get_tensor_model_parallel_rank() * group_id_on_rank + i
+                    actual_id = NUM_EXPERT_GROUPS * n_expert_slice * get_tensor_model_parallel_rank() + n_expert_slice * group_id_on_rank + i
+
+                    # model.layers.id.mlp.experts.id.w13_list
+                    #new_param_name = new_param_name.replace(str(group_id_on_rank) + ".MoeOp", str(actual_id)) + "." + n
                     if torch.distributed.get_rank() ==0:
                         import pdb;pdb.set_trace()
-                    full_param_name = name + "." + n
-
-                    # restore moe param name
-                    if moe_tmp_name in full_param_name:
+                    for sub_name in moe_map:
+                        #new_name = new_param_name.replace(stacked_name, sub_name)
+                        new_name = ".".join([new_param_name, str(actual_id), sub_name, "weight"])
+                        value = load_value(model, new_name, model.name_or_path, "cpu").to(device)
+                        model.load_weights([(new_name, value)])
+                        #mod.weight_loader(param, value, shard_id, actual_id)
                         #if torch.distributed.get_rank() ==0:
                         #    import pdb;pdb.set_trace()
-                        group_id_on_rank = int(name.split(moe_tmp_name)[-1].split(".")[0])
-                        NUM_EXPERT_GROUPS = 8
-                        n_expert_slice = 4
+                        htcore.mark_step()
 
-                        # model.layers.id.mlp.experts.id.MoeOp.w13_list.0
-                        new_param_name = name.replace(moe_tmp_name, "")
 
-                        expert_id_in_group = int(new_param_name.split(".")[-1])
-                        new_param_name = ".".join(new_param_name.split(".")[:-1])
-                        actual_id = NUM_EXPERT_GROUPS * get_tensor_model_parallel_rank() * group_id_on_rank + expert_id_in_group
+            elif name in origin_mod and len([_ for _ in mod.named_modules()]) == 1:
+                for n, param in mod.named_parameters():
+                    #if torch.distributed.get_rank() ==0:
+                    #    import pdb;pdb.set_trace()
+                    full_param_name = name + "." + n
 
-                        # model.layers.id.mlp.experts.id.w13_list
-                        new_param_name = new_param_name.replace(str(group_id_on_rank) + "MoeOp", str(actual_id)) + "." + n
-                        for stacked_name in stacked_params_mapping:
-                            if stacked_name not in new_param_name:
-                                continue
-                            if torch.distributed.get_rank() ==0:
-                                import pdb;pdb.set_trace()
-                            for sub_name, shard_id in stacked_params_mapping[stacked_name]:
-                                new_name = new_param_name.replace(stacked_name, sub_name)
-                                value = load_value(model, new_name, model.name_or_path, "cpu").to(device)
-                                mod.weight_loader(param, value, shard_id, actual_id)
+                    ## restore moe param name
+                    #if moe_tmp_name in full_param_name:
+                    #    #if torch.distributed.get_rank() ==0:
+                    #    #    import pdb;pdb.set_trace()
+                    #    group_id_on_rank = int(name.split(moe_tmp_name)[-1].split(".")[0])
+                    #    NUM_EXPERT_GROUPS = 8
+                    #    n_expert_slice = 4
+
+                    #    # model.layers.id.mlp.experts.id.MoeOp.w13_list.0
+                    #    new_param_name = name.replace(moe_tmp_name, "")
+
+                    #    expert_id_in_group = int(new_param_name.split(".")[-1])
+                    #    new_param_name = ".".join(new_param_name.split(".")[:-1])
+                    #    actual_id = NUM_EXPERT_GROUPS * get_tensor_model_parallel_rank() * group_id_on_rank + expert_id_in_group
+
+                    #    # model.layers.id.mlp.experts.id.w13_list
+                    #    new_param_name = new_param_name.replace(str(group_id_on_rank) + ".MoeOp", str(actual_id)) + "." + n
+                    #    for stacked_name in stacked_params_mapping:
+                    #        if stacked_name not in new_param_name:
+                    #            continue
+                    #        if torch.distributed.get_rank() ==0:
+                    #            import pdb;pdb.set_trace()
+                    #        for sub_name, shard_id in stacked_params_mapping[stacked_name]:
+                    #            new_name = new_param_name.replace(stacked_name, sub_name)
+                    #            value = load_value(model, new_name, model.name_or_path, "cpu").to(device)
+                    #            mod.weight_loader(param, value, shard_id, actual_id)
 
                     # gate_proj and up_proj should be stacked
                     is_stacked = False
@@ -195,10 +230,14 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
                         for sub_name, shard_id in stacked_params_mapping[stacked_name]:
                             new_name = full_param_name.replace(stacked_name, sub_name)
                             value = load_value(model, new_name, model.name_or_path, "cpu").to(device)
-                            mod.weight_loader(param, value, shard_id)
+                            model.load_weights([(new_name, value)])
+                            htcore.mark_step()
 
                     if not is_stacked:
-                        load_weight(full_param_name)
+                        value = load_value(model, full_param_name, model.name_or_path, "cpu").to(device)
+                        model.load_weights([(full_param_name, value)])
+                        htcore.mark_step()
+
             mod_type_str = mod.__class__.__name__
             logger.info(f"start to patch module {name}, type: {mod_type_str}")
             if name in mod_list and name not in scales and config.cfg["use_stats_files"] and name not in measurement:
@@ -212,6 +251,9 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
             # When offloading weight to disk, need to transfer the weight from disk to cpu using hf_hook
             apply_hf_hook(mod)
             if name in mod_list:
+                if not mod_default_dict[mod_type_str].should_measure_and_quant:
+                    continue
+
                 set_hqt_config(mod, config)  # set config in the module, as it consumed by the patched module
                 mod_extra_config, save_file = load_layer_scales(mod, name, config,
                                                                 mod_type_str, measurement,
