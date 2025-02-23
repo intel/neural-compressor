@@ -115,6 +115,7 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
         scaling_method_name (str): The scaling method to use.
         scale_config (dict): The scaling configuration.
     """
+    from ...layer_wise.utils import load_value, set_module_tensor_to_device
     config = get_hqt_config(model)
     recalc_scales = config.cfg["recalc_scales"]
     scales_file_format = np.ndarray
@@ -128,8 +129,76 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     patched_modules = []
     patched_module_types = set()
     device = torch.device(cur_accelerator.name())
+    from vllm.distributed import get_tensor_model_parallel_rank, get_tensor_model_parallel_world_size
+    import habana_frameworks.torch.core as htcore
+    stacked_params_mapping = {
+        "gate_up_proj": [("gate_proj", 0), ("up_proj", 1)],
+        "w13_list": [("gate_proj", "w1"), ("up_proj", "w3")],
+        "w2_list": [("down_proj", "w2")],
+            }
+
+    moe_tmp_name = "_temp_expert_group_"
+
+    def load_weight(param_name):
+        value = load_value(model, param_name, model.name_or_path, "cpu").to(device)
+        if hasattr(mod, "weight_loader"):
+            mod.weight_loader(param, value)
+        else:
+            set_module_tensor_to_device(model, param_name, device, value)
+        htcore.mark_step()
+
+    origin_mod = [name for name, _ in model.named_modules()]
+
+    #if torch.distributed.get_rank() ==0:
+    #    import pdb;pdb.set_trace()
     with torch.no_grad():
         for name, mod in model.named_modules():
+            if name in origin_mod and len([_ for _ in mod.named_modules()]) == 1:
+                for n, param in mod.named_parameters():
+                    if torch.distributed.get_rank() ==0:
+                        import pdb;pdb.set_trace()
+                    full_param_name = name + "." + n
+
+                    # restore moe param name
+                    if moe_tmp_name in full_param_name:
+                        #if torch.distributed.get_rank() ==0:
+                        #    import pdb;pdb.set_trace()
+                        group_id_on_rank = int(name.split(moe_tmp_name)[-1].split(".")[0])
+                        NUM_EXPERT_GROUPS = 8
+                        n_expert_slice = 4
+
+                        # model.layers.id.mlp.experts.id.MoeOp.w13_list.0
+                        new_param_name = name.replace(moe_tmp_name, "")
+
+                        expert_id_in_group = int(new_param_name.split(".")[-1])
+                        new_param_name = ".".join(new_param_name.split(".")[:-1])
+                        actual_id = NUM_EXPERT_GROUPS * get_tensor_model_parallel_rank() * group_id_on_rank + expert_id_in_group
+
+                        # model.layers.id.mlp.experts.id.w13_list
+                        new_param_name = new_param_name.replace(str(group_id_on_rank) + "MoeOp", str(actual_id)) + "." + n
+                        for stacked_name in stacked_params_mapping:
+                            if stacked_name not in new_param_name:
+                                continue
+                            if torch.distributed.get_rank() ==0:
+                                import pdb;pdb.set_trace()
+                            for sub_name, shard_id in stacked_params_mapping[stacked_name]:
+                                new_name = new_param_name.replace(stacked_name, sub_name)
+                                value = load_value(model, new_name, model.name_or_path, "cpu").to(device)
+                                mod.weight_loader(param, value, shard_id, actual_id)
+
+                    # gate_proj and up_proj should be stacked
+                    is_stacked = False
+                    for stacked_name in stacked_params_mapping:
+                        if stacked_name not in full_param_name:
+                            continue
+                        is_stacked = True
+                        for sub_name, shard_id in stacked_params_mapping[stacked_name]:
+                            new_name = full_param_name.replace(stacked_name, sub_name)
+                            value = load_value(model, new_name, model.name_or_path, "cpu").to(device)
+                            mod.weight_loader(param, value, shard_id)
+
+                    if not is_stacked:
+                        load_weight(full_param_name)
             mod_type_str = mod.__class__.__name__
             logger.info(f"start to patch module {name}, type: {mod_type_str}")
             if name in mod_list and name not in scales and config.cfg["use_stats_files"] and name not in measurement:
@@ -163,6 +232,8 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     logger.debug("Patched module types: %s", patched_module_types)
     logger.debug("Patched modules: %s", patched_modules)
     logger.debug("Total patched modules: %d", len(patched_modules))
+    if torch.distributed.get_rank() ==0:
+        import pdb;pdb.set_trace()
     model = model.to(cur_accelerator.name())
     convert_fp16_to_bf16(model)
     cur_accelerator.synchronize()

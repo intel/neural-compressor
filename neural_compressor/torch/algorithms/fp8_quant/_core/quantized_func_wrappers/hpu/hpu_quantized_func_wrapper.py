@@ -149,9 +149,11 @@ class QuantizedHPUCastFromFP8(QuantizedHpuFuncWrapperBase):
 
 class QuantizedHpuDynamicMoeFusedWeights(QuantizedHpuFuncWrapperBase):
     def get_default_quantized_func(self):
-        return torch.ops.hpu.mixture_of_experts.fp8_fused_weights
+        return torch.ops.hpu.mixture_of_experts
+        #return torch.ops.hpu.mixture_of_experts.fp8_fused_weights
     def get_scalar_quantized_func(self):
-        return torch.ops.hpu.mixture_of_experts.fp8_fused_weights_scalars
+        #return torch.ops.hpu.mixture_of_experts.fp8_fused_weights_scalars
+        return torch.ops.hpu.mixture_of_experts
 
 
 _OP_TYPE_HPU_QUANTIZED_WRAPPER_CLASSES = {OP_TYPE.LINEAR_GEMM : QuantizedHpuMatmul,
