@@ -160,8 +160,15 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     #    import pdb;pdb.set_trace()
     with torch.no_grad():
         for name, mod in model.named_modules():
-
-            #if "MoeOp" in name:
+            #torch.hpu.synchronize()
+            #if torch.distributed.is_initialized():
+            #    torch.distributed.barrier()
+ 
+            #htcore.mark_step()
+            #print("!!!!!!!!!!", name)
+            #if torch.distributed.get_rank() ==0:
+            #    import pdb;pdb.set_trace()
+            #if "model.layers.4.mlp.gate" in name:
             #    if torch.distributed.get_rank() ==0:
             #        import pdb;pdb.set_trace()
             # restore moe param name

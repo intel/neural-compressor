@@ -54,7 +54,7 @@ class MaxAbsPts(ScalesMethod):
             max_abs_input =  torch.max(
                 torch.abs(tensor.detach())).to(dtype=self.hp_dtype, device=self.device)
         else:
-            max_abs_input = torch.tensor(tensor, dtype=self.hp_dtype ,device=self.device).max().item()
+            max_abs_input = torch.tensor(tensor, dtype=self.hp_dtype ,device=self.device).max()
         #self.curr_device.synchronize()
         scale = calc_maxabs_scale(max_abs_input, self.fullscale, self.backoff)
         self.scale = self.round_scale_method.calc(scale)
