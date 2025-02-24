@@ -109,7 +109,7 @@ def prepare_model(model, mod_list=None):
     gmod_list.extend(mod_list)
     generate_model_info(model)
     logger.info(f"generated model info")  
-    for mod, name in parent_child_mod_dict:
+    for mod, name in parent_child_mod_dict.items():
         logger.info(f"mod: {mod}, name: {name}")
     register_patched_measure_modules(model, mod_list, observer_class, d_shapes)
 
