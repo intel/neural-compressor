@@ -285,6 +285,9 @@ class ModInstInfo:
     def __init__(self, name, parent):
         self.name = name
         self.parent = parent
+    
+    def __repr__(self):
+        return f"ModInstInfo(name={self.name}, parent={self.parent})"
 
 
 parent_child_mod_dict = {}
