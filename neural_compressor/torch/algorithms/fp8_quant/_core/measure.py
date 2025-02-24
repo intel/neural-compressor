@@ -156,6 +156,7 @@ def register_patched_measure_modules(model, mod_list, observer_class, d_shapes=N
                 )
                 logger.info(f"Patching measure module {name} {mod.__class__} ")
                 pmod = patch_module_measure(mod, mod_extra_config, mod_default_dict)
+                logger.info(f"Pacthed module pmod: {pmod}")
                 if pmod._mod_extra_config:
                     for param_name in pmod._mod_extra_config.params:
                         param = getattr(pmod, param_name)
