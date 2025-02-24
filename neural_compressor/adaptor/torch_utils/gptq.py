@@ -745,7 +745,7 @@ class GPTQuantizer(object):
             for j in range(len(self.dataloader)):
                 cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                 cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
-                transformer_block.to(cache_positional_batch[0].dtype)
+                transformer_block = transformer_block.to(cache_positional_batch[0].dtype)
                 out = transformer_block(*cache_positional_batch, **cache_keyword_batch)
                 out = self.track_hidden_states(out)
                 outs.append(out)
