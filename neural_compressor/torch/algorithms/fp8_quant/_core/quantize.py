@@ -161,6 +161,9 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     with torch.no_grad():
         for name, mod in model.named_modules():
 
+            #if "MoeOp" in name:
+            #    if torch.distributed.get_rank() ==0:
+            #        import pdb;pdb.set_trace()
             # restore moe param name
             #if "MoeOp" in name and "_list" not in name and len([_ for _ in mod.named_modules()]) > 1:
             if False:
@@ -192,58 +195,59 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
                         #    import pdb;pdb.set_trace()
                         htcore.mark_step()
 
+            elif name in origin_mod and moe_tmp_name in name and len([_ for _ in mod.named_parameters()]) == 0 and len([_ for _ in mod.named_modules()]) == 1:
+                #if torch.distributed.get_rank() ==0:
+                #    import pdb;pdb.set_trace()
+                # model.layers.id.mlp.experts.id.moe_tmp_name_0.MoeOp.w13_list.0
+                group_id_on_rank = int(name.split(moe_tmp_name)[-1].split(".")[0])
+                NUM_EXPERT_GROUPS = 8
+                n_expert_slice = 4
 
-            elif name in origin_mod and len([_ for _ in mod.named_modules()]) == 1:
-                if moe_tmp_name in name and len([_ for _ in mod.named_parameters()]) == 0:
+                # model.layers.id.mlp.experts.id.MoeOp.w13_list.0
+                new_param_name = name.replace(moe_tmp_name, "")
+
+                #if torch.distributed.get_rank() ==0:
+                #    import pdb;pdb.set_trace()
+                expert_id_in_group = int(new_param_name.split(".")[-1])
+                #model.layers.id.mlp.experts.id.MoeOp.w13_list
+                new_param_name = ".".join(new_param_name.split(".")[:-1])
+                #actual_id = NUM_EXPERT_GROUPS * get_tensor_model_parallel_rank() * group_id_on_rank + expert_id_in_group
+                actual_id = NUM_EXPERT_GROUPS * n_expert_slice * get_tensor_model_parallel_rank() + n_expert_slice * group_id_on_rank + expert_id_in_group
+
+                # model.layers.id.mlp.experts.id.w13_list
+                new_param_name = new_param_name.replace(str(group_id_on_rank) + ".MoeOp", str(actual_id)) + "." + "weight"
+                for stacked_name in stacked_moe_params_mapping:
+                    if stacked_name not in new_param_name:
+                        continue
                     #if torch.distributed.get_rank() ==0:
                     #    import pdb;pdb.set_trace()
-                    # model.layers.id.mlp.experts.id.moe_tmp_name_0.MoeOp.w13_list.0
-                    group_id_on_rank = int(name.split(moe_tmp_name)[-1].split(".")[0])
-                    NUM_EXPERT_GROUPS = 8
-                    n_expert_slice = 4
+                    for sub_name in stacked_moe_params_mapping[stacked_name]:
+                        new_name = new_param_name.replace(stacked_name, sub_name)
+                        value = load_value(model, new_name, model.name_or_path, "cpu").to(device)
+                        model.load_weights([(new_name, value)])
+ 
+            elif name in origin_mod and len([_ for _ in mod.named_modules()]) == 1:
+                for n, param in mod.named_parameters():
+                    #if torch.distributed.get_rank() ==0:
+                    #    import pdb;pdb.set_trace()
+                    full_param_name = name + "." + n
 
-                    # model.layers.id.mlp.experts.id.MoeOp.w13_list.0
-                    new_param_name = name.replace(moe_tmp_name, "")
-
-                    expert_id_in_group = int(new_param_name.split(".")[-1])
-                    #model.layers.id.mlp.experts.id.MoeOp.w13_list
-                    new_param_name = ".".join(new_param_name.split(".")[:-1])
-                    #actual_id = NUM_EXPERT_GROUPS * get_tensor_model_parallel_rank() * group_id_on_rank + expert_id_in_group
-                    actual_id = NUM_EXPERT_GROUPS * n_expert_slice * get_tensor_model_parallel_rank() + n_expert_slice * group_id_on_rank + expert_id_in_group
-
-                    # model.layers.id.mlp.experts.id.w13_list
-                    new_param_name = new_param_name.replace(str(group_id_on_rank) + ".MoeOp", str(actual_id)) + "." + "weight"
-                    for stacked_name in stacked_moe_params_mapping:
-                        if stacked_name not in new_param_name:
+                    # gate_proj and up_proj should be stacked
+                    is_stacked = False
+                    for stacked_name in stacked_params_mapping:
+                        if stacked_name not in full_param_name:
                             continue
-                        #if torch.distributed.get_rank() ==0:
-                        #    import pdb;pdb.set_trace()
-                        for sub_name in stacked_moe_params_mapping[stacked_name]:
-                            new_name = new_param_name.replace(stacked_name, sub_name)
+                        is_stacked = True
+                        for sub_name, shard_id in stacked_params_mapping[stacked_name]:
+                            new_name = full_param_name.replace(stacked_name, sub_name)
                             value = load_value(model, new_name, model.name_or_path, "cpu").to(device)
                             model.load_weights([(new_name, value)])
-                else:
-                    for n, param in mod.named_parameters():
-                        #if torch.distributed.get_rank() ==0:
-                        #    import pdb;pdb.set_trace()
-                        full_param_name = name + "." + n
-
-                        # gate_proj and up_proj should be stacked
-                        is_stacked = False
-                        for stacked_name in stacked_params_mapping:
-                            if stacked_name not in full_param_name:
-                                continue
-                            is_stacked = True
-                            for sub_name, shard_id in stacked_params_mapping[stacked_name]:
-                                new_name = full_param_name.replace(stacked_name, sub_name)
-                                value = load_value(model, new_name, model.name_or_path, "cpu").to(device)
-                                model.load_weights([(new_name, value)])
-                                htcore.mark_step()
-
-                        if not is_stacked:
-                            value = load_value(model, full_param_name, model.name_or_path, "cpu").to(device)
-                            model.load_weights([(full_param_name, value)])
                             htcore.mark_step()
+
+                    if not is_stacked:
+                        value = load_value(model, full_param_name, model.name_or_path, "cpu").to(device)
+                        model.load_weights([(full_param_name, value)])
+                        htcore.mark_step()
 
             mod_type_str = mod.__class__.__name__
             logger.info(f"start to patch module {name}, type: {mod_type_str}")
@@ -275,6 +279,9 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
                 patched_modules.append(name)
                 patched_module_types.add(type(mod))
                 logger.debug("Patched module name: %s", name)
+                torch.hpu.synchronize()
+                if torch.distributed.is_initialized():
+                    torch.distributed.barrier()
     if save_file: # cache calculated scales
         save_scales(model, scales_obj, scales_file_format, scale_file + ".npz")
         save_scales(model, scales_obj, scales_file_format, scale_file + ".json")
