@@ -721,7 +721,9 @@ class GPTQuantizer(object):
                                 set_module_tensor_to_device(self.model, param_name, self.device, Q, dtype=Q.dtype)
                             else:
                                 value = load_value(self.model, param_name, model_path)
-                                set_module_tensor_to_device(self.model, param_name, self.device, value, dtype=value.dtype)
+                                set_module_tensor_to_device(
+                                    self.model, param_name, self.device, value, dtype=value.dtype
+                                )
                         # sub_layer.weight.data = Q
                         torch.save(sub_layer.state_dict(), LWQ_WORKSPACE + f"/{full_layer_name}.pt")
                         clean_module_weight(sub_layer)
