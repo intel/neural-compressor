@@ -40,9 +40,10 @@ def xfail(test_func):
             test_func(*args, **kwargs)
         except Exception as e:
             print(f"Test {test_func.__name__} expected to fail: {e}")
-            print(f"Test fails with transformers >= 4.49.0, please downgrade the version")
+            print("Test fails with transformers >= 4.49.0, please downgrade the version")
             return
         raise AssertionError(f"Test {test_func.__name__} was expected to fail but passed. We can remove xfail now")
+
     return wrapper
 
 
