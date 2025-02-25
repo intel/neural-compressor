@@ -221,7 +221,7 @@ def load_module(model, module_name, path, device="cpu"):
     for n, p in module.named_parameters():
         param_name = module_name + "." + n
         value = load_value(model, param_name, path)
-        set_module_tensor_to_device(model, param_name, device, value)
+        set_module_tensor_to_device(model, param_name, device, value, dtype=value.dtype)
 
 
 def register_weight_hooks(model, path, device="cpu", clean_weight=True, saved_path=None):
@@ -239,7 +239,7 @@ def register_weight_hooks(model, path, device="cpu", clean_weight=True, saved_pa
                     value = state_dict[n]
                 else:
                     value = load_value(model, param_name, path)
-                set_module_tensor_to_device(model, param_name, device, value)
+                set_module_tensor_to_device(model, param_name, device, value, dtype=value.dtype)
 
         return hook
 

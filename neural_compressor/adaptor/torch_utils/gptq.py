@@ -718,10 +718,10 @@ class GPTQuantizer(object):
                         for n, p in sub_layer.named_parameters():
                             param_name = full_layer_name + "." + n
                             if n == "weight":
-                                set_module_tensor_to_device(self.model, param_name, self.device, Q)
+                                set_module_tensor_to_device(self.model, param_name, self.device, Q, dtype=Q.dtype)
                             else:
                                 value = load_value(self.model, param_name, model_path)
-                                set_module_tensor_to_device(self.model, param_name, self.device, value)
+                                set_module_tensor_to_device(self.model, param_name, self.device, value, dtype=value.dtype)
                         # sub_layer.weight.data = Q
                         torch.save(sub_layer.state_dict(), LWQ_WORKSPACE + f"/{full_layer_name}.pt")
                         clean_module_weight(sub_layer)
@@ -745,7 +745,8 @@ class GPTQuantizer(object):
             for j in range(len(self.dataloader)):
                 cache_keyword_batch = self.gather_single_batch_from_dict(self.cache_key_arguments, j)
                 cache_positional_batch = self.gather_single_batch_from_list(self.cache_positional_arguments, j)
-                transformer_block = transformer_block.to(cache_positional_batch[0].dtype)
+                # breakpoint()
+                # transformer_block = transformer_block.to(getattr(torch, self.model.config.torch_dtype))
                 out = transformer_block(*cache_positional_batch, **cache_keyword_batch)
                 out = self.track_hidden_states(out)
                 outs.append(out)
@@ -968,6 +969,7 @@ class GPTQ:
                     if not static_groups:
                         if (i1 + i) % groupsize == 0:
                             self.quantizer.find_params(W[:, (i1 + i) : (i1 + i + groupsize)], weight=True)
+                            scale.append(self.quantizer.scale)
                             zero.append(self.quantizer.zero)
                     else:
                         idx = i1 + i
