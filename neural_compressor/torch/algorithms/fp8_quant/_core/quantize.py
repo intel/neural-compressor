@@ -146,63 +146,15 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
             "w13_list": ["gate_proj", "up_proj"],
             "w2_list": ["down_proj"],
             }
-    def load_weight(param_name):
-        value = load_value(model, param_name, model.name_or_path, "cpu").to(device)
-        if hasattr(mod, "weight_loader"):
-            mod.weight_loader(param, value)
-        else:
-            set_module_tensor_to_device(model, param_name, device, value)
-        htcore.mark_step()
 
-    origin_mod = [name for name, _ in model.named_modules()]
+    #origin_mod = [name for name, _ in model.named_modules()]
 
     #if torch.distributed.get_rank() ==0:
     #    import pdb;pdb.set_trace()
     with torch.no_grad():
         for name, mod in model.named_modules():
-            #torch.hpu.synchronize()
-            #if torch.distributed.is_initialized():
-            #    torch.distributed.barrier()
- 
-            #htcore.mark_step()
-            #print("!!!!!!!!!!", name)
-            #if torch.distributed.get_rank() ==0:
-            #    import pdb;pdb.set_trace()
-            #if "model.layers.4.mlp.gate" in name:
-            #    if torch.distributed.get_rank() ==0:
-            #        import pdb;pdb.set_trace()
-            # restore moe param name
-            #if "MoeOp" in name and "_list" not in name and len([_ for _ in mod.named_modules()]) > 1:
-            if False:
-                if torch.distributed.get_rank() ==0:
-                    import pdb;pdb.set_trace()
-                group_id_on_rank = int(name.split(moe_tmp_name)[-1].split(".")[0])
-                NUM_EXPERT_GROUPS = 8
-                n_expert_slice = 4
-
-                # model.layers.id.mlp.experts.id.MoeOp
-                new_param_name = name.replace(moe_tmp_name, "")
-
-                new_param_name = ".".join(new_param_name.split(".")[:-2])
-                for i in range(n_expert_slice):
-                    #actual_id = NUM_EXPERT_GROUPS * get_tensor_model_parallel_rank() * group_id_on_rank + i
-                    actual_id = NUM_EXPERT_GROUPS * n_expert_slice * get_tensor_model_parallel_rank() + n_expert_slice * group_id_on_rank + i
-
-                    # model.layers.id.mlp.experts.id.w13_list
-                    #new_param_name = new_param_name.replace(str(group_id_on_rank) + ".MoeOp", str(actual_id)) + "." + n
-                    if torch.distributed.get_rank() ==0:
-                        import pdb;pdb.set_trace()
-                    for sub_name in moe_map:
-                        #new_name = new_param_name.replace(stacked_name, sub_name)
-                        new_name = ".".join([new_param_name, str(actual_id), sub_name, "weight"])
-                        value = load_value(model, new_name, model.name_or_path, "cpu").to(device)
-                        model.load_weights([(new_name, value)])
-                        #mod.weight_loader(param, value, shard_id, actual_id)
-                        #if torch.distributed.get_rank() ==0:
-                        #    import pdb;pdb.set_trace()
-                        htcore.mark_step()
-
-            elif name in origin_mod and moe_tmp_name in name and len([_ for _ in mod.named_parameters()]) == 0 and len([_ for _ in mod.named_modules()]) == 1:
+            if mod in parent_child_mod_dict and moe_tmp_name in name and len([_ for _ in mod.named_parameters()]) == 0 and len([_ for _ in mod.named_modules()]) == 1:
+            #if name in origin_mod and moe_tmp_name in name and len([_ for _ in mod.named_parameters()]) == 0 and len([_ for _ in mod.named_modules()]) == 1:
                 #if torch.distributed.get_rank() ==0:
                 #    import pdb;pdb.set_trace()
                 # model.layers.id.mlp.experts.id.moe_tmp_name_0.MoeOp.w13_list.0
@@ -233,7 +185,8 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
                         value = load_value(model, new_name, model.name_or_path, "cpu").to(device)
                         model.load_weights([(new_name, value)])
  
-            elif name in origin_mod and len([_ for _ in mod.named_modules()]) == 1:
+            #elif name in origin_mod and len([_ for _ in mod.named_modules()]) == 1:
+            elif mod in parent_child_mod_dict and len([_ for _ in mod.named_modules()]) == 1:
                 for n, param in mod.named_parameters():
                     #if torch.distributed.get_rank() ==0:
                     #    import pdb;pdb.set_trace()
@@ -295,8 +248,8 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     logger.debug("Patched module types: %s", patched_module_types)
     logger.debug("Patched modules: %s", patched_modules)
     logger.debug("Total patched modules: %d", len(patched_modules))
-    if torch.distributed.get_rank() ==0:
-        import pdb;pdb.set_trace()
+    #if torch.distributed.get_rank() ==0:
+    #    import pdb;pdb.set_trace()
     model = model.to(cur_accelerator.name())
     convert_fp16_to_bf16(model)
     cur_accelerator.synchronize()
