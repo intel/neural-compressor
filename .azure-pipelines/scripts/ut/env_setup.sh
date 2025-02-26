@@ -67,7 +67,7 @@ if [[ "${onnxruntime_version}" != "" ]]; then
 fi
 
 if [ "${mxnet_version}" != '' ]; then
-    pip install numpy==1.23.5
+    pip install numpy==1.26.4
     echo "re-install pycocotools resolve the issue with numpy..."
     pip uninstall pycocotools -y
     pip install --no-cache-dir pycocotools
