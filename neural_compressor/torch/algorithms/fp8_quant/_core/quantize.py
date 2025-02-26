@@ -130,6 +130,7 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     patched_module_types = set()
     device = torch.device(cur_accelerator.name())
     from vllm.distributed import get_tensor_model_parallel_rank, get_tensor_model_parallel_world_size
+    from vllm.model_executor.layers.fused_moe.layer import FusedMoE
     import habana_frameworks.torch.core as htcore
     stacked_params_mapping = {
         "gate_up_proj": [("gate_proj", 0), ("up_proj", 1)],
@@ -153,6 +154,13 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     #    import pdb;pdb.set_trace()
     with torch.no_grad():
         for name, mod in model.named_modules():
+            #if isinstance(mod, FusedMoE):
+            #    if hasattr(mod, "w2_weight"):
+            #        delattr(mod, "w2_weight")
+            #        setattr(mod, "w2_weight", None)
+            #    if hasattr(mod, "w13_weight"):
+            #        delattr(mod, "w13_weight")
+            #        setattr(mod, "w13_weight", None)
             if mod in parent_child_mod_dict and moe_tmp_name in name and len([_ for _ in mod.named_parameters()]) == 0 and len([_ for _ in mod.named_modules()]) == 1:
             #if name in origin_mod and moe_tmp_name in name and len([_ for _ in mod.named_parameters()]) == 0 and len([_ for _ in mod.named_modules()]) == 1:
                 #if torch.distributed.get_rank() ==0:
@@ -248,8 +256,6 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     logger.debug("Patched module types: %s", patched_module_types)
     logger.debug("Patched modules: %s", patched_modules)
     logger.debug("Total patched modules: %d", len(patched_modules))
-    #if torch.distributed.get_rank() ==0:
-    #    import pdb;pdb.set_trace()
     model = model.to(cur_accelerator.name())
     convert_fp16_to_bf16(model)
     cur_accelerator.synchronize()
