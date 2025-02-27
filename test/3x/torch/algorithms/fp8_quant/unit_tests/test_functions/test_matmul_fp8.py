@@ -6,8 +6,8 @@ import pytest
 import torch
 
 from neural_compressor.torch.algorithms.fp8_quant._core.fp_utils import FP8_143_SCALES
-from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import matmul_fp8
-
+from neural_compressor.torch.algorithms.fp8_quant._core.quantized_hpu_ops import QuantizedHpuMatmul
+from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import ScaleFormat
 
 def run_test_matmul_fp8(
     *,
@@ -21,7 +21,7 @@ def run_test_matmul_fp8(
 
     x_scale, y_scale = scales
     expected_result = (torch.matmul(x, y) / x_scale / y_scale).to(dtype=hp_dtype)
-
+    matmul_fp8 = QuantizedHpuMatmul(ScaleFormat.SCALAR)
     result = matmul_fp8(
         input=x.to(device="hpu").to(dtype=lp_dtype),
         other=y.to(device="hpu").to(dtype=lp_dtype),

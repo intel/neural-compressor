@@ -17,17 +17,10 @@
 from typing import Union, List, Type, Optional
 from abc import abstractmethod
 import torch
-from neural_compressor.torch.algorithms.fp8_quant._core.common import (
-    QuantMode,
-)
 from neural_compressor.common import utils as inc_utils
 from neural_compressor.torch.algorithms.fp8_quant.utils import (
     helper_mod_register,
 )
-from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import (
-    set_attrs_from_orig_model,
-)
-
 from neural_compressor.torch.algorithms.fp8_quant.model_configs import (
     ModuleInfo,
     ModuleType,
@@ -36,6 +29,31 @@ from neural_compressor.torch.algorithms.fp8_quant.model_configs import (
     PATCHED_MODULE_TYPES_TABLE,
     DEVICE_TYPES,
 )
+from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import (
+    QuantMode,
+    get_hqt_config,
+)
+from neural_compressor.torch.algorithms.fp8_quant._core.scale_handler import add_scale_registry
+
+
+def set_attrs_from_orig_model(cls_instance, mod, parent, mod_extra_config, *func_names):
+    cls_instance.__dict__.update(mod.__dict__)
+    config = get_hqt_config(cls_instance)
+    cls_instance.extra_repr_org = mod.extra_repr
+    cls_instance.class_name_org = mod.__class__.__name__
+    cls_instance._mod_extra_config = mod_extra_config
+    cls_instance.quantization_mode = config.cfg["mode"]
+    cls_instance.fake_quant = config.cfg["fake_quant"]
+    cls_instance.use_qdq = config.cfg["use_qdq"]
+    cls_instance.scale_format = config.cfg["scale_format"]
+    # store original module in order to invoke its functions during measurements.
+    # this may be omitted of torch remove the related validation from dynamo. see SW-187731.
+    cls_instance.__dict__["orig_mod"] = mod
+    cls_instance.__dict__["orig_mod_parent"] = parent
+    cls_instance.forward_orig = mod.forward
+    if func_names is not None:
+        for func in func_names:
+            setattr(cls_instance, func, getattr(mod, func))
 
 __all__ = [
     "PatchedModuleBase",
@@ -70,7 +88,7 @@ def register_patched_module(
 
     """
 
-    def decorator(patch_mdoule_cls: "PatchedModuleBase") -> "PatchedModuleBase":
+    def decorator(patch_module_cls: "PatchedModuleBase") -> "PatchedModuleBase":
         nonlocal supported_float_module_types, device_types
         if not isinstance(supported_float_module_types, list):
             supported_float_module_types = [supported_float_module_types]
@@ -83,8 +101,8 @@ def register_patched_module(
                 supported_type_name = (
                     supported_type is isinstance(supported_type, str) and supported_type or supported_type.__name__
                 )
-                module_info = patch_mdoule_cls.get_module_info()
-                module_type = patch_mdoule_cls.get_module_type()
+                module_info = patch_module_cls.get_module_info()
+                module_type = patch_module_cls.get_module_type()
                 PATCHED_MODULE_TABLE[device_type][supported_type_name] = module_info
                 PATCHED_MODULE_TYPES_TABLE[device_type][supported_type_name] = module_type
                 inc_utils.logger.info(
@@ -97,7 +115,7 @@ def register_patched_module(
                 )
                 # Add the new module to the `helper_mods` dict
                 _create_and_register_helper_module_class(supported_type.__name__)
-        return patch_mdoule_cls
+        return patch_module_cls
 
     return decorator
 
@@ -105,7 +123,7 @@ def register_patched_module(
 class PatchedModuleBase(torch.nn.Module):
     """Base class for patched modules.
 
-    The patched module is used to replace the original float module in the model at `prepare` and `convert` stages.
+    The patched module is used to replace the original high precision module in the model at `prepare` and `convert` stages.
     To make the patched module compatible with the module-agnostic patching process, the patched module should
     provide a set of module configurations by implementing the following abstract methods:
         - get_type
@@ -119,25 +137,31 @@ class PatchedModuleBase(torch.nn.Module):
     def __init__(
         self,
         mod: torch.nn.Module,
+        parent: torch.nn.Module,
         mod_extra_config: ModuleExtraConfig,
-        name: Optional[str] = None,
+        *args,
         **kwargs,
     ):
         """Initialize the patched module."""
-        super().__init__()
-        self.name = name
-        set_attrs_from_orig_model(self, mod, mod_extra_config)
+        super().__init__()  # Initialize nn.Module
+        func_names = kwargs.get("func_names", tuple())
+        set_attrs_from_orig_model(self, mod, parent, mod_extra_config, *func_names)
+        add_scale_registry(self)
         self.mod_extra_config = mod_extra_config
         if self.quantization_mode in (QuantMode.MEASURE, QuantMode.SHAPE):
             self.forward = self.forward_measure
-        elif self.quantization_mode == QuantMode.QUANTIZE:
-            if self.fake_quant:
+        elif self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
+            self.lp_dtype = self._mod_extra_config.config_params["lp_dtype"] if self._mod_extra_config else torch.float8_e4m3fn
+            self.hp_dtype = self._mod_extra_config.config_params["hp_dtype"] if self._mod_extra_config else torch.bfloat16
+            if self.fake_quant or self.use_qdq:
                 self.forward = self.forward_qdq
             else:
                 self.forward = self.forward_quant
 
+    @abstractmethod
     def forward_qdq(self, *args, **kwargs):
         """Forward function with Q-DQ mode for quantization stage."""
+        raise NotImplementedError("forward_qdq is not implemented")
 
     @abstractmethod
     def forward_measure(self, *args, **kwargs):
@@ -162,7 +186,7 @@ class PatchedModuleBase(torch.nn.Module):
     def get_type(cls) -> str:
         """Return the type of the patched module.
 
-        Multiple patched modules can have the same type, and share the same scling methods.
+        Multiple patched modules can have the same type, and share the same scaling methods.
         """
         raise NotImplementedError("`get_type` is not implemented")
 
@@ -176,13 +200,10 @@ class PatchedModuleBase(torch.nn.Module):
         """
         raise NotImplementedError("`get_module_type` is not implemented")
 
-    def __repr__(self):
-        return (
-            f"{self.__class__.__name__}(\n"
-            f"    quantization_mode={self.quantization_mode}, \n"
-            f"    module_info={self.get_module_info()}, \n"
-            f"    module_type={self.get_module_type()})\n"
-        )
+    def extra_repr(self):
+        return  f"quantization_mode={self.quantization_mode}, " + \
+                f"module_info={self.get_module_info()}, " + \
+                f"module_type={self.get_module_type()}"
 
 
 def _create_and_register_helper_module_class(name):

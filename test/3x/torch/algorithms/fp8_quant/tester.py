@@ -7,12 +7,23 @@ import random
 import typing
 from dataclasses import dataclass
 from pytest import raises as pytest_raises
+from typing import Dict
 
 from .test_hpu_utils import get_device_name
 
 import torch
-from neural_compressor.torch.algorithms.fp8_quant._core.common import mod_default_dict
-from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import Fp8cfg, QuantMode, ScaleMethod
+import habana_frameworks.torch as ht
+from neural_compressor.torch.algorithms.fp8_quant._core.patching_common import mod_default_dict
+from neural_compressor.torch.algorithms.fp8_quant._core.utils import should_quantize
+from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import (
+    Fp8cfg,
+    QuantMode,
+    ScaleMethod,
+    ScaleFormat,
+    get_hqt_config,
+)
+
+from neural_compressor.torch.quantization import prepare, convert, FP8Config # user level API
 
 # TODO [SW-196641]: fix the following issues:
 SCALE_METHODS_SEGFAULT = [
@@ -31,10 +42,17 @@ SCALE_METHODS_COMPILATION_ERROR = [
     ScaleMethod.ACT_MAXABS_HW_WEIGHTS_PCS_MAXABS_POW2,
     ScaleMethod.ACT_MAXABS_POW2_WEIGHTS_PCS_MAXABS_POW2,
 ]
-SCALE_METHODS_QUANT_ONLY = [ScaleMethod.UNIT_SCALE, ScaleMethod.HW_ALIGNED_SINGLE_SCALE]
+SCALE_METHODS_DYNAMIC = [ScaleMethod.MAXABS_POW2_DYNAMIC]
+SCALE_METHODS_QUANT_ONLY = [ScaleMethod.UNIT_SCALE, ScaleMethod.HW_ALIGNED_SINGLE_SCALE] + SCALE_METHODS_DYNAMIC
 
 QUANT_MODES_DEFAULT = [QuantMode.MEASURE, QuantMode.QUANTIZE]
 QUANT_MODES_QUANT_ONLY = [QuantMode.QUANTIZE]
+
+DTYPE_TO_HPDTYPE_STR = {
+    torch.bfloat16: "BF16",
+    torch.float16: "FP16",
+    torch.float32: "FP32",
+}
 
 # Expects to get an exception. If there's no exception, the test will fail
 def run_with_raised_exception(test_to_run, error, error_str):
@@ -62,6 +80,12 @@ def _assert_quantized_correctly(*, reference_model: WrapModel, quantized_model: 
     Otherwise, assert that both are not quantized.
     """
     for reference_name in mod_default_dict.keys():
+        # Modules that don't support dynamic quantization currently won't be patched
+        # preventing the tests from failing
+        # TODO [SW-217813]: Remove this when we support dynamic quantization in all modules, and remove supported_dynamic_ops
+        config_internal = get_hqt_config(quantized_model)
+        if not should_quantize(config_internal, reference_name, ""):
+            continue
         quantized_name = mod_default_dict[reference_name].patched_module.__name__
 
         assert not reference_model.has_name(quantized_name)
@@ -83,6 +107,7 @@ def run_accuracy_test(
     seed: typing.Optional[int] = None,
     quant_modes: typing.Iterable[list] = QUANT_MODES_DEFAULT,
     device_type: str = get_device_name(),
+    scale_format: ScaleFormat = ScaleFormat.SCALAR,
 ):
     """Run both the reference and the quantized versions of this module,
     and compare the outputs on every test vector.
@@ -106,6 +131,7 @@ def run_accuracy_test(
         seed: The random seed to use. If not given, will use a default seed derived from the module name.
         quant_modes: An iterable of quantization modes.
         device_type: Override device type
+        scale_format: The scale format to use: Const tensor or scalar (default: scalar)
     """
 
     # If no measure vectors given - use the same dataset as for the test vectors
@@ -119,15 +145,24 @@ def run_accuracy_test(
         reference_model = WrapModel(module_class, seed, *module_args, **module_kwargs)
         quantized_model = WrapModel(module_class, seed, *module_args, **module_kwargs)
 
-        config = _get_test_only_config(
+        config = get_API_level_config(
             mode=mode,
             lp_dtype=lp_dtype,
             scale_method=scale_method,
-            device_type=device_type
+            device_type=device_type,
+            scale_format=scale_format,
+            **module_kwargs,
         )
-        prepare_model._prep_model_with_predefined_config(quantized_model, config=config)
+        if mode == QuantMode.MEASURE :
+            prepare(quantized_model, config)
+        elif mode == QuantMode.QUANTIZE :
+            convert(quantized_model, config)
+        else:
+            raise(ValueError(), "Unexpected mode value - {}".format(mode))
 
         _assert_quantized_correctly(reference_model=reference_model, quantized_model=quantized_model)
+
+        quantized_model = ht.hpu.wrap_in_hpu_graph(quantized_model)
 
         vectors = {
             QuantMode.MEASURE: measure_vectors,
@@ -222,7 +257,9 @@ def _get_test_only_config(
     scale_method: ScaleMethod,
     lp_dtype: torch.dtype,
     device_type: str = get_device_name(),
-) -> Fp8cfg:
+    scale_format: ScaleFormat = ScaleFormat.SCALAR,
+    **kwargs
+) -> Dict:
     """Should NOT be used externally.
 
     Return a new config used only for the tests.
@@ -230,14 +267,47 @@ def _get_test_only_config(
 
     # TODO: replace this with a version that does not use strings but direct values.
     #  It is currently needed because of how Fp8cfg.parse() works.
-    return Fp8cfg.parse(
-        {
-            "method": "HOOKS",
-            "mode": mode.name,
-            "observer": "maxabs",
-            "fp8_config": str(lp_dtype).replace("torch.float8_", "")[:4],
-            "scale_method": scale_method.name,
-            "dump_stats_path": get_test_unique_dump_path(scale_method),
-            "device_for_scales": device_type,
-        }
-    )
+    fp8_cfg = {
+        "method": "HOOKS",
+        "mode": mode.name,
+        "observer": "maxabs",
+        "fp8_config": str(lp_dtype).replace("torch.float8_", "")[:4],
+        "scale_method": scale_method.name,
+        "dump_stats_path": get_test_unique_dump_path(scale_method),
+        "device_for_scales": device_type,
+        "scale_format": scale_format.name,
+    }
+    if "dtype" in kwargs:
+       fp8_cfg["hp_dtype"] = DTYPE_TO_HPDTYPE_STR[kwargs["dtype"]]
+
+    return fp8_cfg
+
+def get_internal_config(
+    *,
+    mode: QuantMode,
+    scale_method: ScaleMethod,
+    lp_dtype: torch.dtype,
+    device_type: str = get_device_name(),
+    **kwargs
+) -> Fp8cfg:
+        return Fp8cfg.parse(_get_test_only_config(mode=mode,
+                                                  scale_method=scale_method,
+                                                  lp_dtype=lp_dtype,
+                                                  device_type=device_type,
+                                                  **kwargs))
+
+def get_API_level_config(
+    *,
+    mode: QuantMode,
+    scale_method: ScaleMethod,
+    lp_dtype: torch.dtype,
+    device_type: str = get_device_name(),
+    scale_format: ScaleFormat = ScaleFormat.SCALAR,
+    **kwargs
+) ->FP8Config:
+    return FP8Config.from_dict(_get_test_only_config(mode=mode,
+                                                     scale_method=scale_method,
+                                                     lp_dtype=lp_dtype,
+                                                     device_type=device_type,
+                                                     scale_format=scale_format,
+                                                     **kwargs))

@@ -16,7 +16,6 @@ import torch
 import habana_frameworks.torch.core as htcore
 import habana_frameworks.torch.utils.experimental as htexp
 from .common import ModuleConfig
-from .quant_dequant import cast_to_fp8_fcn, cast_fcn, descale_fcn, scale_fcn
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 cur_accelerator = auto_detect_accelerator()
 
@@ -29,6 +28,24 @@ EXP_WIDTH = {
     torch.float8_e4m3fn: 4,
     torch.float8_e5m2: 5,
 }
+
+descale_fcn = lambda x, scale: torch.mul(x, scale)
+scale_fcn = lambda x, scale: torch.div(x, scale)
+cast_fcn = lambda x, dtype: x.to(dtype=dtype)
+cast_to_fp8_fcn = lambda x, dtype, scale_inv=None: torch.ops.hpu.cast_to_fp8_v2(x, scale_inv, False, False, dtype)[0]
+cast_from_fp8_fcn = lambda x, dtype, scale=None: torch.ops.hpu.cast_from_fp8(x, scale, dtype)
+quantize_per_tensor_to_fp8 = lambda x, scale, zero_point, quant_min, quant_max, dtype=None, axis=None: torch.ops.quantized_decomposed.quantize_per_tensor(
+    x, scale, zero_point, quant_min, quant_max, dtype=dtype
+)
+dequantize_per_tensor_from_fp8 = lambda x, scale, zero_point, quant_min, quant_max, dtype, out_dtype=None, axis=None: torch.ops.quantized_decomposed.dequantize_per_tensor(
+    x, scale, zero_point, quant_min, quant_max, dtype=dtype, out_dtype=out_dtype
+)
+quantize_per_channel_to_fp8 = lambda x, scale, zero_point, axis, quant_min, quant_max, dtype=None: torch.ops.quantized_decomposed.quantize_per_channel(
+    x, scale, zero_point, axis, quant_min, quant_max, dtype=dtype
+)
+dequantize_per_channel_from_fp8 = lambda x, scale, zero_point, axis, quant_min, quant_max, dtype, out_dtype=None: torch.ops.quantized_decomposed.dequantize_per_channel(
+    x, scale, zero_point, axis, quant_min, quant_max, dtype=dtype, out_dtype=out_dtype
+)
 
 
 def get_default_exp_bias(dtype):
@@ -95,40 +112,9 @@ FP8_143_SCALES_TRAITS = {
     for device in DEVICES_SCALE_FACTORS.keys()
 }
 
-
 def calc_maxabs_scale(xmaxabs, fullscale, backoff=1):
     scale = xmaxabs / (fullscale * backoff)
     return scale
-
-
-def scale_to_pow2(scale):
-    scale_pow2 = 2 ** torch.ceil(torch.log2(scale))
-    return scale_pow2
-
-
-# Considering range of hw aligned scales: 2^a, 2^a+1,..., 2^b (a<b)
-# we want to choose scale s for maxabs m such that 2^a <= s=2^x <= 2^b (for integer a<=x<=b)
-# and also 2^(x-1) < m <= 2^x
-# if m>=2^b then s=2^b, therefore min(_, 2^b)
-# if m<=2^a then s=2^a, therefore max(_, 2^a) --> 2^a <= min(max(_,2^a),2^b) <=2^b
-# if s^a<m<2^b then m as a positive number can be written as m=2^y (y=log2(m))
-# if y is integer then y=ciel(y) we choose x=y so s=2^x=2^y=2^ciel(y)=2^ciel(log2(m))
-# else we choose x=ciel(y) and a<=x-1<y<x<=b and s=2^x=2^ciel(y)=2^ciel(log2(m))
-# for Gaudi2 the range is 16^-2..16^1 so we change 2 with 16 and remember that:
-# 16 = 2^4, log16(m)=log2(m)/log2(16)=log2(m)/4, and we get:
-# we choose s=16^ciel(log16(m))=2^4^ciel(log2(m)/4)=2^(4*ciel(log2(m)/4))=2^(ciel(log2(m)/4)*4)
-def scale_to_pow2_hw(scale, device_for_scales):
-    scale_pow2 = scale_to_pow2(scale)
-    min_scale, max_scale, scale_factor = FP8_143_SCALES_TRAITS[device_for_scales]
-    scale_pow2_hw = torch.minimum(
-        torch.maximum(
-            2 ** (torch.ceil(torch.log2(scale_pow2) / scale_factor) * scale_factor),
-            torch.tensor(min_scale, dtype=scale.dtype, device=scale.device),
-        ),
-        torch.tensor(max_scale, dtype=scale.dtype, device=scale.device),
-    )
-    return scale_pow2_hw
-
 
 def mmse_scale_multi(x, ref_scale, scales, lp_dtype, hp_dtype):
     # TODO: SW-176672 move weights to hpu before the scale calculations
@@ -187,10 +173,13 @@ def manipulate_scales(scales, func):
     return new_scales
 
 
-def invert_scales(scales):
-    def invert(x):
-        if isinstance(x, (list, tuple)):
-            return [1 / x_i for x_i in x]
-        return 1 / x
+def invert_scale(x):
+    if x is None:
+        return None
+    if isinstance(x, (list, tuple)):
+        return [1 / x_i for x_i in x]
+    return 1 / x
 
-    return manipulate_scales(scales, invert)
+
+def invert_scales(scales):
+    return manipulate_scales(scales, invert_scale)

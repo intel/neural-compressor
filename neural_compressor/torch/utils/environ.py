@@ -15,12 +15,20 @@
 """Intel Neural Compressor PyTorch environment check."""
 
 import importlib
+import os
 import sys
 
 import torch
 from packaging.version import Version
 
 from neural_compressor.common.utils import logger
+
+try:
+    world_size = torch.distributed.get_world_size()
+    local_rank = torch.distributed.get_rank()
+except:
+    local_rank = int(os.getenv("LOCAL_RANK", "-1"))
+    world_size = int(os.getenv("WORLD_SIZE", "-1"))
 
 
 ################ Check imported sys.module first to decide behavior #################

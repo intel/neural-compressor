@@ -72,6 +72,7 @@ class ScaleMethod(Enum):
     MAXABS_HW_OPT_WEIGHT = 13
     MAXABS_POW2_OPT_WEIGHT = 14
     MAXABS_ARBITRARY = 15
+    MAXABS_POW2_DYNAMIC = 16
 
 class TrueFalse(Enum):
     TRUE = True
@@ -114,7 +115,13 @@ _configs_that_use_enum_value = [
     "measure_on_hpu",
 ]
 
-_scale_methods_quant_only = [ScaleMethod.UNIT_SCALE, ScaleMethod.HW_ALIGNED_SINGLE_SCALE]
+# TODO [SW-217813]: support dynamic quantization in all ops and remove
+supported_dynamic_ops = ["Linear"]
+def is_supported_dynamic_op(op_name):
+    return op_name.lower() in [op.lower() for op in supported_dynamic_ops]
+
+_dynamic_scale_methods = [ScaleMethod.MAXABS_POW2_DYNAMIC]
+_quant_only_scale_methods = [ScaleMethod.UNIT_SCALE, ScaleMethod.HW_ALIGNED_SINGLE_SCALE]
 _pcq_scale_methods = [
     ScaleMethod.SMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2,
     ScaleMethod.WEAKSMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2,
@@ -149,7 +156,7 @@ def _validate_dump_path(dump_stats_path):
     files_to_backup = [fname for fname in os.listdir(dirname) if fname.startswith(basename)]
     if files_to_backup:
         from datetime import datetime
-        backup_dirname = f"{basename}_backup_{datetime.now().strftime('%d-%m_%H:%M:%S')}"
+        backup_dirname = f"backup_{basename}_{datetime.now().strftime('%d-%m_%H:%M:%S')}"
         try:
             os.mkdir(f"{dirname}/{backup_dirname}")
         except FileExistsError:
@@ -248,22 +255,22 @@ class Fp8cfg:
                                 f"for device_type={measured_global_config['device_type']}")
 
         scale_method = measured_global_config["scale_method"]
-        if measured_global_config["use_qdq"] and "_PCS_" in scale_method.name:
-            raise ValueError(
-                f"use_qdq is enabled in config, but the scale_method is '{scale_method}', which is unexpected. "
-                "Q/DQ currently only supports per_tensor quantization, and this scale method doesn't support Q/DQ."
-                )
         if measured_global_config["scale_format"] == ScaleFormat.SCALAR:
             if scale_method in _pcq_scale_methods:
                 measured_global_config["scale_format"] = ScaleFormat.CONST
                 logger.warning(f"Cannot use 'scale_format = SCALAR' when using PCQ (Per Channel Quantization, "
                                f"e.g. {scale_method}) value for 'scale_method'. Reduced to 'CONST'.")
-            if measured_global_config["fake_quant"] or measured_global_config["use_qdq"]:
+            if measured_global_config["fake_quant"]:
                 measured_global_config["scale_format"] = ScaleFormat.CONST
-                logger.warning(f"Cannot use 'scale_format = SCALAR' when using fake_quant or use_qdq. Reduced to 'CONST'.")
+                logger.warning(f"Cannot use 'scale_format = SCALAR' when using fake_quant. Reduced to 'CONST'.")
         quant_mode = measured_global_config["mode"]
-        if scale_method in _scale_methods_quant_only:
-            if quant_mode == QuantMode.QUANTIZE:
+        # TODO [SW-217814]: get dynamic methods in a better way, or support file handling in dynamic mode
+        if scale_method in _dynamic_scale_methods:
+            logger.info(f"NOTE: Using dynamic scale method, only supported ops will be quantized.")
+            # TODO: "Linear only" in types still causes issues as llama7b quantizes also self_attn,
+            # which should be blocked for some reason. We might then want to set measured_global_config["allowlist"]["types"] = supported_dynamic_ops
+        if scale_method in _quant_only_scale_methods + _dynamic_scale_methods:
+            if quant_mode in (QuantMode.QUANTIZE, QuantMode.LOAD):
                 logger.debug(f"Quantization mode is quant, scale_method is {scale_method}, so stats files won't be used")
                 measured_global_config["use_stats_files"] = False
             else:

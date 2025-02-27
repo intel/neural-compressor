@@ -26,7 +26,7 @@ from neural_compressor.torch.quantization.config import (
     RTNConfig,
     TEQConfig,
 )
-from neural_compressor.torch.utils import SaveLoadFormat
+from neural_compressor.torch.utils import SaveLoadFormat, get_enum_from_format
 
 config_name_mapping = {
     FP8_QUANT: FP8Config,
@@ -39,20 +39,29 @@ def save(model, checkpoint_dir="saved_results", format="default"):
     Args:
         model (torch.nn.module or TorchScript model with IPEX or fx graph with pt2e, optional): Quantized model.
         checkpoint_dir (str, optional): checkpoint directory. Defaults to "saved_results".
-        format (str, optional): 'defult' for loading INC quantized model.
-            'huggingface' for loading huggingface WOQ causal language model. Defaults to "default".
+        format (str, optional): 'default' for saving INC quantized model.
+            'huggingface' for saving huggingface WOQ causal language model.
+            'vllm' for saving FP8 model like 'neuralmagic/Meta-Llama-3.1-8B-Instruct-FP8'
+            quantized by llm-compressor(https://github.com/vllm-project/llm-compressor).
+            Defaults to "default".
     """
+    format = get_enum_from_format(format)
     config_mapping = model.qconfig
     config_object = config_mapping[next(iter(config_mapping))]
     # fp8_quant
     if isinstance(config_object, FP8Config):
         from neural_compressor.torch.algorithms import fp8_quant
 
-        format = SaveLoadFormat.HUGGINGFACE.value  # TODO: support default format for FP8 algorithm
+        if format == SaveLoadFormat.DEFAULT:
+            format = SaveLoadFormat.HUGGINGFACE
         fp8_quant.save(model, checkpoint_dir, format)
+    elif isinstance(config_object, (RTNConfig, GPTQConfig, AWQConfig, TEQConfig, AutoRoundConfig)):
+        from neural_compressor.torch.algorithms import weight_only
+
+        weight_only.save(model, checkpoint_dir, format=format)
     else:
-        assert format == SaveLoadFormat.DEFAULT.value, "Currently, only default format is supported."
-        model.save(checkpoint_dir)  # TODO: support huggingface format for WOQ algorithms.
+        assert format == SaveLoadFormat.DEFAULT, "Currently, only default format is supported."
+        model.save(checkpoint_dir)
 
 
 @log_process(mode=Mode.LOAD)
@@ -81,12 +90,12 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
         model_name_or_path (str):  torch checkpoint directory or hugginface model_name_or_path.
             If 'format' is set to 'huggingface', it means the huggingface model_name_or_path.
             If 'format' is set to 'default', it means the 'checkpoint_dir'.
-            Parameter should not be None. it coworks with 'original_model' parameter to load INC
+            Parameter should not be None. it co-works with 'original_model' parameter to load INC
             quantized model in local.
         original_model (torch.nn.module or TorchScript model with IPEX or fx graph with pt2e, optional):
             original model before quantization. Needed if 'format' is set to 'default' and not TorchScript model.
             Defaults to None.
-        format (str, optional): 'defult' for loading INC quantized model.
+        format (str, optional): 'default' for loading INC quantized model.
             'huggingface' for loading huggingface WOQ causal language model. Defaults to "default".
         device (str, optional): 'cpu', 'hpu'. specify the device the model will be loaded to.
             currently only used for weight-only quantization.
@@ -97,7 +106,8 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
     Returns:
         The quantized model
     """
-    if format == SaveLoadFormat.DEFAULT.value:
+    format = get_enum_from_format(format)
+    if format == SaveLoadFormat.DEFAULT:
         from neural_compressor.common.base_config import ConfigRegistry
 
         qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(model_name_or_path)), "qconfig.json")
@@ -126,7 +136,7 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
                     model_name_or_path, original_model, format=SaveLoadFormat.DEFAULT, device=device
                 )
                 return qmodel.to(device)
-    elif format == SaveLoadFormat.HUGGINGFACE.value:
+    elif format == SaveLoadFormat.HUGGINGFACE:
         import transformers
 
         config = transformers.AutoConfig.from_pretrained(model_name_or_path, **kwargs)
@@ -149,4 +159,4 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
             qmodel = weight_only.load(model_name_or_path, format=SaveLoadFormat.HUGGINGFACE, device=device, **kwargs)
             return qmodel.to(device)
     else:
-        raise ValueError("`format` in load function can only be 'huggingface' or 'default', but get {}".format(format))
+        assert False, "This code path should never be reached."
