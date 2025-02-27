@@ -575,12 +575,13 @@ class PatchedMixtralMoE(PatchedModuleBase):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         # remove the MoE weights that are quanted by PatchedMoeMatmul
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
-            delattr(mod, "w13_weight")
-            delattr(mod, "w2_weight")
-            setattr(mod, "w13_weight", None)
-            setattr(mod, "w2_weight", None)
-            setattr(self, "w13_weight", None)
-            setattr(self, "w2_weight", None)
+            if hasattr(mod, "w13_weight"):
+                delattr(mod, "w13_weight")
+                delattr(mod, "w2_weight")
+                setattr(mod, "w13_weight", None)
+                setattr(mod, "w2_weight", None)
+                setattr(self, "w13_weight", None)
+                setattr(self, "w2_weight", None)
         self.forward = self.forward_orig
 
 
@@ -731,9 +732,9 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
                 [mod_extra_config.scale.inputs[x] for x in range(1, self.num_experts+1)],
                 self.scale_format,
             )
-            for i in range(self.num_experts):
-                self.w13_list[i].weight = self.w13_list[i].weight.squeeze().t().contiguous()
-                self.w2_list[i].weight = self.w2_list[i].weight.squeeze().t().contiguous()
+            #for i in range(self.num_experts):
+            #    self.w13_list[i].weight = self.w13_list[i].weight.squeeze().t().contiguous()
+            #    self.w2_list[i].weight = self.w2_list[i].weight.squeeze().t().contiguous()
         elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
             self.forward = self.forward_measure
 
@@ -744,8 +745,8 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
                       permuted_weights=True,
                       activation="silu"):
         experts_range = range(self.num_experts)
-        w1_list = [self.w13_list[i].weight for i in experts_range]
-        w2_list = [self.w2_list[i].weight for i in experts_range]
+        w1_list = [self.w13_list[i].weight.t() for i in experts_range]
+        w2_list = [self.w2_list[i].weight.t() for i in experts_range]
         scale_w1 = [self.w13_list[i].scale_weight for i in experts_range]
         scale_w2 = [self.w2_list[i].scale_weight for i in experts_range]
         qinput = self.quant_input(hidden_states)

@@ -132,6 +132,9 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     with torch.no_grad():
         for name, mod in model.named_modules():
             mod_type_str = mod.__class__.__name__
+            #if mod_type_str == "FusedMoE":
+            #    if torch.distributed.get_rank() ==0:
+            #        import pdb;pdb.set_trace()
             logger.debug(f"start to handle module {name}, type: {mod_type_str}")
             if name in mod_list and name not in scales and config.cfg["use_stats_files"] and name not in measurement:
                 if mod_default_dict[mod_type_str].should_measure_and_quant:
@@ -170,6 +173,8 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     torch.distributed.barrier()
     convert_fp16_to_bf16(model)
     cur_accelerator.synchronize()
+    if torch.distributed.get_rank() == 0:
+        import pdb;pdb.set_trace()
 
 
 def prepare_model_with_dummy_measurement(model, mod_list, scaling_method_name, scale_config):
