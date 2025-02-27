@@ -391,7 +391,8 @@ class RAWGPTQuantizer(object):
             for arg in kwargs:
                 # TODO: investigate include parameters
                 # each outputs can be different shape, hence also use list to store
-                if isinstance(kwargs[arg], torch.Tensor) or arg == "alibi":
+                # position_embeddings is a list of two tensors in llama, handle it specially.
+                if isinstance(kwargs[arg], torch.Tensor) or arg in ["alibi", "position_embeddings"]:
                     if self.cache_key_arguments.get(arg, None) is None:
                         self.cache_key_arguments[arg] = []
                     self.cache_key_arguments[arg].append(kwargs[arg])
