@@ -223,7 +223,7 @@ def convert(
     # TODO: Need to consider composableConfig situation
     for algo_name, algo_func in algos_mapping.items():
         if need_apply(configs_mapping, algo_name):
-            logger.info(f"Start to convert model with {algo_name}.")
+            logger.info(f"Start to convert model with {algo_name}, it may take a while.")
             q_model = algo_func(
                 q_model,
                 configs_mapping,
