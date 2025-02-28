@@ -201,9 +201,12 @@ class PatchedModuleBase(torch.nn.Module):
         raise NotImplementedError("`get_module_type` is not implemented")
 
     def extra_repr(self):
-        return  f"quantization_mode={self.quantization_mode}, " + \
-                f"module_info={self.get_module_info()}, " + \
-                f"module_type={self.get_module_type()}"
+        try:
+            return  f"quantization_mode={self.quantization_mode}, " + \
+                    f"module_info={self.get_module_info()}, " + \
+                    f"module_type={self.get_module_type()}"
+        except NotImplementedError:
+            return ""
 
 
 def _create_and_register_helper_module_class(name):
