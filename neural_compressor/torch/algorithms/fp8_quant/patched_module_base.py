@@ -182,7 +182,6 @@ class PatchedModuleBase(torch.nn.Module):
         return ModuleInfo(type=cls.get_type(), patched_module=cls)
 
     @classmethod
-    @abstractmethod
     def get_type(cls) -> str:
         """Return the type of the patched module.
 
@@ -191,7 +190,6 @@ class PatchedModuleBase(torch.nn.Module):
         raise NotImplementedError("`get_type` is not implemented")
 
     @classmethod
-    @abstractmethod
     def get_module_type(cls) -> ModuleType:
         """Return the module type for the module.
 
