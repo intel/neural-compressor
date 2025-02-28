@@ -239,7 +239,7 @@ class PatchedParallelLMHead(PatchedModuleBase):
         # ParallelLMHead's forward method should not be called because LMHead's weights should be used
         # in the sampler. (The forward itself throws RuntimeError exception)
         # So in order to quantize that quant_method we patch only the "apply" method.
-        init_linear(self, mod_extra_config, False)
+        init_linear(self, mod_extra_config)
         self.orig_linear_quant_apply = self.orig_mod.quant_method.apply
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             if self.use_qdq or self.fake_quant:
