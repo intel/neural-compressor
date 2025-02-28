@@ -12,7 +12,7 @@ function main {
 function init_params {
   iters=50
   batch_size=8
-  tuned_checkpoint=transformers_vlm_tmp
+  tuned_checkpoint=saved_results
   echo ${max_eval_samples}
   for var in "$@"
   do

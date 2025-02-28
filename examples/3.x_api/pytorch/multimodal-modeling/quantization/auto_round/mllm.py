@@ -267,7 +267,12 @@ if __name__ == '__main__':
             model_name = model_name[:-1]
         
         # Preparation for inference    
-        model = AutoModelForCausalLM.from_pretrained(args.output_dir, trust_remote_code=True, attn_implementation='eager')
+        model = AutoModelForCausalLM.from_pretrained(
+            args.output_dir, 
+            trust_remote_code=True,
+            attn_implementation='eager',
+            torch_dtype=torch.float16,
+        )
         processor = AutoProcessor.from_pretrained(model_name,  trust_remote_code=True)
         image_url = "https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-VL/assets/demo.jpeg"
 
