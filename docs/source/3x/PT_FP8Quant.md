@@ -129,47 +129,71 @@ mistralai/Mistral-Nemo-Instruct-2407
 
 ### Running with FP8
 Refer to [here](https://github.com/huggingface/optimum-habana/tree/main/examples/text-generation#running-with-fp8).    
-Change "--model_name_or_path" to be your model like    
-"meta-llama/Llama-3.1-8B-Instruct",    
-"Qwen/Qwen2.5-7B-Instruct", or     
-"mistralai/Mixtral-8x7B-Instruct-v0.1" and so on.    
-"--use_kv_cache" is to enable FP8 KV cache.
+Change "--model_name_or_path" to be your model like someone in the above models list. "--use_kv_cache" is or not to enable FP8 KV cache.
 
 ### Profiling
-Add "--profiling_warmup_steps 5 --profiling_steps 2 --profiling_record_shapes" as args in the end of commandline of run_generation.py.     
+Add "--profiling_warmup_steps 5 --profiling_steps 2 --profiling_record_shapes" as args in the end of commandline of `run_generation.py`.     
 Refer to [torch.profiler.ProfilerActivity.HPU](https://github.com/huggingface/optimum-habana/blob/c9e1c23620618e2f260c92c46dfeb163545ec5ba/optimum/habana/utils.py#L305).    
 
 ### FP8 Accuracy 
 "lm_eval.tasks", "lm_eval.evaluator", "lm_eval" are installed from the above requirements_lm_eval.txt. The tasks can be set and the default is ["hellaswag", "lambada_openai", "piqa", "winogrande"], [more info](https://github.com/EleutherAI/lm-evaluation-harness/)    
 
-| `Llama-2-7b-hf`| fp8 & fp8 KVCache| bf16 w/ bf16 KVCache|
+| `Llama-3.1-8B-Instruct`| fp8 w/ fp8 KVCache| bf16 w/ bf16 KVCache|
 |---------------|---------|--------|
-| hellaswag     | 0.5691097390957977   | 0.5704043019318861    |
-| lambada_openai| 0.7360760721909567   | 0.7372404424607025 | 
-| piqa          | 0.7850924918389554   | 0.7818280739934712 |
-| winogrande    | 0.6929755327545383   | 0.6929755327545383 |
+| lambada_openai| 0.7299  | 0.7359 |
+| hellaswag     | 0.5892  | 0.5911 |
+| piqa          | 0.7965  | 0.7998 |
+| winogrande    | 0.7474  | 0.7372 |
+| mmlu          | 0.6599  | 0.6829 |
 
-| `Qwen2.5-7B-Instruct`| fp8 & fp8 KVCache| bf16 w/ bf16 KVCache|
+| `Phi-3-mini-4k-instruct`| fp8 w/ fp8 KVCache| bf16 w/ bf16 KVCache|
 |---------------|---------|--------|
-| hellaswag     |  0.2539334793865764  |   0.2539334793865764    |
-| lambada_openai| 0.0   | 0.0 | 
-| piqa          | 0.5391730141458106   | 0.5391730141458106 |
-| winogrande    | 0.4956590370955012  | 0.4956590370955012 |
+| lambada_openai| 0.6420  | 0.6552 |
+| hellaswag     | 0.5866  | 0.5902 |
+| piqa          | 0.8041  | 0.8014 |
+| winogrande    | 0.7324  | 0.7348 |
+| mmlu          | 0.7035  | 0.7055 |
 
-| `Llama-3.1-8B-Instruct`| fp8 & fp8 KVCache| bf16 w/ bf16 KVCache|
+| `Mistral-7B-Instruct-v0.2`| fp8 w/ fp8 KVCache| bf16 w/ bf16 KVCache|
 |---------------|---------|--------|
-| hellaswag     | 0.5934076877116112   |   0.5975901214897431    |
-| lambada_openai| 0.7230739375121289   | 0.7255967397632447 | 
-| piqa          | 0.7932535364526659   | 0.8030467899891186 |
-| winogrande    | 0.7434885556432518  | 0.7371744277821626 |
+| lambada_openai| 0.7126  | 0.7165 |
+| hellaswag     | 0.6556  | 0.6609 |
+| piqa          | 0.8014  | 0.8025 |
+| winogrande    | 0.7253  | 0.7388 |
+| mmlu          | 0.5833  | 0.5919 |
 
-
-| `Mixtral-8x7B-Instruct-v0.1`| fp8 & fp8 KVCache| bf16 w/ bf16 KVCache|
+| `Mistral-Nemo-Instruct-2407`| fp8 w/ fp8 KVCache| bf16 w/ bf16 KVCache|
 |---------------|---------|--------|
-| hellaswag     | 0.25323640709022105   |   0.25323640709022105    |
-| lambada_openai| 0.0   | 0.0  |
-| piqa          | 0.528835690968444   | 0.528835690968444  |
-| winogrande    | 0.4956590370955012  | 0.4956590370955012 |
+| lambada_openai| 0.7568  | 0.7596 |
+| hellaswag     | 0.6273  | 0.6325 |
+| piqa          | 0.8150  | 0.8085 |
+| winogrande    | 0.7419  | 0.7482 |
+| mmlu          | 0.6684  | 0.6840 |
+
+| `bigscience/bloom-7b1`| fp8 w/ fp8 KVCache| bf16 w/ bf16 KVCache|
+|---------------|---------|--------|
+| lambada_openai| 0.5599  | 0.5731 |
+| hellaswag     | 0.4632  | 0.4639 |
+| piqa          | 0.7301  | 0.7242 |
+| winogrande    | 0.6314  | 0.6393 |
+| mmlu          | 0.2563  | 0.2572 |
+
+| `Mixtral-8x7B-Instruct-v0.1`| fp8 w/ fp8 KVCache| bf16 w/ bf16 KVCache|
+|---------------|---------|--------|
+| lambada_openai| 0.7805  | 0.7778 |
+| hellaswag     | 0.6733  | 0.6764 |
+| piqa          | 0.8324  | 0.8351 |
+| winogrande    | 0.7680  | 0.7672 |
+| mmlu          | 0.7031  | 0.7026 |
+
+| `EleutherAI/gpt-j-6b`| fp8 w/ fp8 KVCache| bf16 w/ bf16 KVCache|
+|---------------|---------|--------|
+| lambada_openai| 0.6769  | 0.6781 |
+| hellaswag     | 0.4928  | 0.4958 |
+| piqa          | 0.7557  | 0.7541 |
+| winogrande    | 0.6409  | 0.6425 |
+| mmlu          | 0.2524  | 0.2606 |
+> Notes: For gpt-j model, if `--use_kv_cache` is set to enable KVCache quantization, `--reuse_cache` should also be set.    
 
 ## VLLM example
 ### Overview
