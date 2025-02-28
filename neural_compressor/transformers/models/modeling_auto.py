@@ -761,18 +761,18 @@ class Qwen2VLForConditionalGeneration(_BaseINCAutoModelClass):
     if transformers.__version__ >= "4.46":
         ORIG_MODEL = transformers.Qwen2VLForConditionalGeneration
     else:
-        logger.warning("please install transfomers>=4.46 for quantizing Qwen2VLForConditionalGeneration.")
+        logger.warning("please install transformers>=4.46 for quantizing Qwen2VLForConditionalGeneration.")
 
 
 class MllamaForConditionalGeneration(_BaseINCAutoModelClass):
     if transformers.__version__ >= "4.46":
         ORIG_MODEL = transformers.MllamaForConditionalGeneration
     else:
-        logger.warning("please install transfomers>=4.46 for quantizing MllamaForConditionalGeneration.")
+        logger.warning("please install transformers>=4.46 for quantizing MllamaForConditionalGeneration.")
 
 
 class LlavaForConditionalGeneration(_BaseINCAutoModelClass):
     if transformers.__version__ >= "4.46":
         ORIG_MODEL = transformers.LlavaForConditionalGeneration
     else:
-        logger.warning("please install transfomers>=4.46 for quantizing LlavaForConditionalGeneration.")
+        logger.warning("please install transformers>=4.46 for quantizing LlavaForConditionalGeneration.")
