@@ -249,7 +249,7 @@ def tune(args):
     model.eval()
     kwargs = {}
     kwargs['safe_serialization'] = 'False'  # for phi3 saving model
-    model.save_pretrained("transformers_vlm_tmp", safe_serialization=False)
+    model.save_pretrained(args.output_dir, safe_serialization=False)
 
 if __name__ == '__main__':
     if "--quantize" in sys.argv:
