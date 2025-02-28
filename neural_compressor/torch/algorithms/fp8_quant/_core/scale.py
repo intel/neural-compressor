@@ -29,6 +29,8 @@ def load_layer_scales(mod, mod_name, config, mod_type_str, measurement, scales, 
     )
     mod_extra_config = None
     if mod_name in scales or not config.cfg["use_stats_files"] or mod_name in measurement:
+        if "w1_list" in mod_name or "w3_list" in mod_name:
+            mod_name = mod_name.replace("w1_list", "w13_list") if "w1_list" in mod_name else mod_name.replace("w3_list", "w13_list")
         op_for_scale_obj = ops_quantizer.get_op_quantizer(module_type, scaling_method_name, mod,
                                                           measurement.get(mod_name, None), scale_config)
         if mod_name not in scales:
