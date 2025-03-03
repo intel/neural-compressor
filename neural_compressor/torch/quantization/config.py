@@ -346,6 +346,7 @@ class GPTQConfig(TorchBaseConfig):
         "double_quant_group_size",
         # layer wise params
         "use_layer_wise",
+        "use_block_wise",
         "model_path",
         # quant lm_head
         "quant_lm_head",
@@ -366,6 +367,7 @@ class GPTQConfig(TorchBaseConfig):
         use_mse_search: bool = False,
         # layer wise
         use_layer_wise: bool = False,
+        use_block_wise: bool = False,
         model_path: str = "",
         # double quant
         use_double_quant: bool = False,
@@ -394,6 +396,7 @@ class GPTQConfig(TorchBaseConfig):
             group_size (int): Size of weight groups. Default is 32.
             use_mse_search (bool): Enables mean squared error (MSE) search. Default is False.
             use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
+            use_block_wise (bool): Enables quantize model per block. Defaults to False. Used for large GPU/HPU.
             model_path (str): Model path that is used to load state_dict per layer.
             use_double_quant (bool): Enables double quantization. Default is False.
             double_quant_dtype (str): Data type for double_quant scale. Default is "int".
@@ -425,6 +428,7 @@ class GPTQConfig(TorchBaseConfig):
         self.use_mse_search = use_mse_search
         # layer wise
         self.use_layer_wise = use_layer_wise
+        self.use_block_wise = use_block_wise
         self.model_path = model_path
         # double quant
         self.use_double_quant = use_double_quant
@@ -470,7 +474,7 @@ class GPTQConfig(TorchBaseConfig):
         """
         if not self.quant_lm_head:
             self.set_local(
-                LM_HEAD_NAMES, GPTQConfig(dtype="fp32", use_layer_wise=self.use_layer_wise, model_path=self.model_path)
+                LM_HEAD_NAMES, GPTQConfig(dtype="fp32", use_layer_wise=self.use_layer_wise, model_path=self.model_path, use_block_wise=self.use_block_wise)
             )
         config_mapping = super().to_config_mapping(config_list, model_info)
         return config_mapping
