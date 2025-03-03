@@ -151,6 +151,9 @@ def prepare(
         model_info = quant_config.get_model_info(prepared_model, example_inputs)
     else:
         model_info = quant_config.get_model_info(model=prepared_model)
+
+    if hasattr(quant_config, "model_path") and quant_config.model_path == "":
+        quant_config.model_path = prepared_model.name_or_path
     configs_mapping = quant_config.to_config_mapping(model_info=model_info)
     logger.debug(configs_mapping)
 

@@ -20,13 +20,20 @@ import gc
 import json
 import os
 
+
+
 import torch
 from accelerate.utils import set_module_tensor_to_device
 from safetensors import safe_open
 
 from neural_compressor.common import options
 from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
-from neural_compressor.torch.utils.utility import dowload_hf_model, load_empty_model
+from neural_compressor.torch.utils.utility import dowload_hf_model
+from neural_compressor.torch.utils import is_hpex_available
+from safetensors.torch import save_file
+
+if is_hpex_available():
+    import habana_frameworks
 
 from .load import load
 
@@ -216,6 +223,10 @@ def load_value(model, param_name, path, device="cpu"):
     prefix = model.base_model_prefix
     files = os.listdir(path)
     safetensors_files = [filename for filename in files if filename.endswith(".safetensors")]
+
+    if device == torch.device('hpu'):
+        device = 'hpu'
+            
     if len(safetensors_files) == 1:
         value = load_tensor_from_safetensors(
             os.path.join(path, "model.safetensors"), param_name, prefix=prefix, device=device
@@ -244,6 +255,10 @@ def load_module(model, module_name, path, device="cpu"):
         value = load_value(model, param_name, path, device)
         set_module_tensor_to_device(model, param_name, device, value)
 
+def load_first_layer_only(user_model, model_name):
+    for name, m in user_model.named_modules():
+        if ('layers' not in name or 'layers.0' in name) and len(name) > 0 and len(list(m.named_children())) == 0:
+            load_module(user_model, name, get_path(model_name), device="hpu" if is_hpex_available() else "cpu")
 
 def register_weight_hooks(model, path, device="cpu", clean_weight=True, saved_path=None, indicated_layers=None):
     """Register weight hooks for model.
@@ -316,6 +331,7 @@ def register_weight_hooks(model, path, device="cpu", clean_weight=True, saved_pa
 
 
 def clean_module_weight(module):
+    hpu_available = is_hpex_available()
     """Clean module weight."""
     if isinstance(module, QDQLayer):
         submodule = module.module
@@ -337,7 +353,113 @@ def clean_module_weight(module):
             else:
                 param_cls = type(submodule._parameters[n])
                 kwargs = submodule._parameters[n].__dict__
+                if hpu_available:
+                    if param_cls == habana_frameworks.torch.core.weight_sharing.HabanaParameterWrapper:
+                        try:
+                            kwargs.pop('change_device_placement')
+                        except KeyError:
+                            pass
+
                 new_value = torch.zeros(old_value.shape, device="meta")
                 new_value = param_cls(new_value, requires_grad=old_value.requires_grad, **kwargs).to("meta")
                 submodule._parameters[n] = new_value
-    gc.collect()
+    # gc.collect()
+
+def save_layers_in_shards_iteratively(checkpoint_dir, output_dir, layers_per_shard=10):
+    """
+    Save model layers iteratively in shards, each shard containing a fixed number of layers using safetensors.
+    """
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Get list of checkpoint files in the checkpoint_dir
+    checkpoint_files = [f for f in os.listdir(checkpoint_dir) if f.endswith('.pt')]
+    checkpoint_files.sort()
+
+    bin_index = {}
+    shard_idx = 0
+    layer_buffer = []
+
+    # Iterate over each checkpoint file and process layer state dicts
+    for checkpoint_file in checkpoint_files:
+        layer_path = os.path.join(checkpoint_dir, checkpoint_file)
+        print(f"Loading layer from {layer_path}")
+        
+        # Load the layer checkpoint
+        checkpoint = torch.load(layer_path, map_location='cpu')
+        layer_state_dict = checkpoint
+
+        # Add the layer's state dict to the buffer
+        layer_buffer.append(layer_state_dict)
+
+        # If the buffer has reached the number of layers per shard, save the shard
+        if len(layer_buffer) == layers_per_shard:
+            shard_state_dict = {}
+            for i, layer_dict in enumerate(layer_buffer):
+                shard_state_dict.update(layer_dict)
+                # Update the bin index for each layer
+                for layer_name in layer_dict.keys():
+                    bin_index[layer_name] = shard_idx
+            
+            # Save the shard to disk using safetensors
+            shard_filename = f"model_shard-{str(shard_idx + 1).zfill(5)}-of-{str((len(checkpoint_files) // layers_per_shard) + 1).zfill(5)}.safetensors"
+            shard_path = os.path.join(output_dir, shard_filename)
+            save_file(shard_state_dict, shard_path)  # Save using safetensors
+            print(f"Saved shard {shard_idx + 1} of {len(checkpoint_files) // layers_per_shard + 1} at {shard_path}")
+
+            # Clear the buffer and move to the next shard
+            layer_buffer.clear()
+            shard_idx += 1
+
+    # If there are any remaining layers in the buffer, save them as the last shard
+    if layer_buffer:
+        shard_state_dict = {}
+        for i, layer_dict in enumerate(layer_buffer):
+            shard_state_dict.update(layer_dict)
+            # Update the bin index for each layer
+            for layer_name in layer_dict.keys():
+                bin_index[layer_name] = shard_idx
+        
+        # Save the final shard
+        shard_filename = f"model_shard-{str(shard_idx + 1).zfill(5)}-of-{str((len(checkpoint_files) // layers_per_shard) + 1).zfill(5)}.safetensors"
+        shard_path = os.path.join(output_dir, shard_filename)
+        save_file(shard_state_dict, shard_path)  # Save using safetensors
+        print(f"Saved final shard {shard_idx + 1} of {len(checkpoint_files) // layers_per_shard + 1} at {shard_path}")
+
+    # Save bin index to a JSON file
+    bin_index_file = os.path.join(output_dir, 'model_bin_index.json')
+    with open(bin_index_file, 'w') as f:
+        json.dump(bin_index, f, indent=4)
+
+    print(f"Model bin index saved to {bin_index_file}")
+
+from safetensors.torch import load_file  # Safetensors load function
+
+
+def load_model_from_shards_with_safetensors(shard_dir, bin_index_file):
+    """
+    Load the model from its shards and the bin index using safetensors.
+    
+    Args:
+        shard_dir (str): Directory containing the model shard files.
+        bin_index_file (str): Path to the bin index JSON file.
+    
+    Returns:
+        torch.nn.Module: The reconstructed model with the layers.
+    """
+    # Load bin index to get the layer -> shard mapping
+    with open(bin_index_file, 'r') as f:
+        bin_index = json.load(f)
+
+    full_state_dict = {}
+
+    # Sort and load the shard files
+    shard_files = [f for f in os.listdir(shard_dir) if f.endswith('.safetensors')]
+    shard_files.sort()
+
+    for shard_file in shard_files:
+        shard_path = os.path.join(shard_dir, shard_file)
+        print(f"Loading shard from {shard_path}")
+        shard_state_dict = load_file(shard_path, device="hpu" if is_hpex_available() else "cpu")
+        full_state_dict.update(shard_state_dict)
+    
+    return full_state_dict
