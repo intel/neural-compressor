@@ -35,9 +35,9 @@ from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config imp
 )
 from neural_compressor.torch.algorithms.fp8_quant._core.scale_handler import add_scale_registry
 
-def get_orig_call_wrapper(cls_instance, func_name):
+def get_call_wrapper(cls_instance, func_name):
     def call_wrapper(*args, **kwargs):
-        return getattr(cls_instance.orig_mod, func_name)(*args, **kwargs)
+        return getattr(cls_instance, func_name)(*args, **kwargs)
     return call_wrapper
 
 def set_attrs_from_orig_model(cls_instance, mod, parent, mod_extra_config, *func_names):
@@ -54,10 +54,10 @@ def set_attrs_from_orig_model(cls_instance, mod, parent, mod_extra_config, *func
     # this may be omitted of torch remove the related validation from dynamo. see SW-187731.
     cls_instance.__dict__["orig_mod"] = mod
     cls_instance.__dict__["orig_mod_parent"] = parent
-    cls_instance.forward_orig = get_orig_call_wrapper(cls_instance, "forward")
+    cls_instance.forward_orig = get_call_wrapper(cls_instance.orig_mod, "forward")
     if func_names is not None:
         for func in func_names:
-            setattr(cls_instance, func, get_orig_call_wrapper(cls_instance, func))
+            setattr(cls_instance, func, get_call_wrapper(cls_instance.orig_mod, func))
 
 __all__ = [
     "PatchedModuleBase",
