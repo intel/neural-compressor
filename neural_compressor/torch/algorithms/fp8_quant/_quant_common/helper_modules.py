@@ -14,6 +14,7 @@
 
 import torch
 import torch.nn as nn
+import copy
 import types
 import habana_frameworks.torch.core as htcore
 from .quant_config import QuantMode
@@ -575,12 +576,18 @@ class PatchedMixtralMoE(PatchedModuleBase):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         # remove the MoE weights that are quanted by PatchedMoeMatmul
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
-            delattr(mod, "w13_weight")
-            delattr(mod, "w2_weight")
-            setattr(mod, "w13_weight", None)
-            setattr(mod, "w2_weight", None)
-            setattr(self, "w13_weight", None)
-            setattr(self, "w2_weight", None)
+            if hasattr(mod, "w13_weight"):
+                delattr(mod, "w13_weight")
+                setattr(mod, "w13_weight", None)
+            if hasattr(mod, "w2_weight"):
+                delattr(mod, "w2_weight")
+                setattr(self, "w2_weight", None)
+            if hasattr(mod, "w1_weight"):
+                delattr(mod, "w1_weight")
+                setattr(self, "w1_weight", None)
+            if hasattr(mod, "w3_weight"):
+                delattr(mod, "w3_weight")
+                setattr(self, "w3_weight", None)
         self.forward = self.forward_orig
 
 
@@ -714,8 +721,7 @@ class PatchedGaudiMixtralSparseMoeBlock(PatchedModuleBase):
             get_current_repr(self, *member_names),
         )
 
-
-class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
+class PatchedVllmMixtureOfExpertsOpV1(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         self.experts_min = self.orig_mod.experts_min
@@ -806,6 +812,76 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
             self.class_name_org,
             f"quant_mode:{quant_mode}, {get_current_repr(self, *member_names)}",
         )
+
+
+class PatchedVllmMixtureOfExpertsOpV2(PatchedVllmMixtureOfExpertsOpV1):
+    def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
+        PatchedModuleBase.__init__(self, mod, parent, mod_extra_config, *args, **kwargs)
+        self.experts_min = self.orig_mod.experts_min
+        self.experts_max = self.orig_mod.experts_max
+        if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
+            self.forward = self.forward_quant
+            self.dynamic_moe_op = get_quantized_func_wrapper(OP_TYPE.DYNAMIC_MOE, self.scale_format)
+            self.quant_input = self._mod_extra_config.inputs[0]
+            self.register_scale("scale_input", mod_extra_config.scale.inputs[0], self.scale_format)
+            # FIXME: (Yi) should we take the scale_intermediate from the mod_extra_config.scale.outputs?
+            self.register_scale(
+                "scale_intermediate",
+                [mod_extra_config.scale.inputs[x] for x in range(1, self.num_experts+1)],
+                self.scale_format,
+            )
+            for i in range(self.num_experts):
+                self.w1_list[i].weight.data = self.w1_list[i].weight.squeeze().t().contiguous()
+                self.w3_list[i].weight.data = self.w3_list[i].weight.squeeze().t().contiguous()
+                self.w2_list[i].weight.data = self.w2_list[i].weight.squeeze().t().contiguous()
+        elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
+            self.forward = self.forward_measure
+
+    def post_process(self):
+        self.dynamic_moe_op = get_quantized_func_wrapper(OP_TYPE.DYNAMIC_MOE_FUSED_WEIGHTS, self.scale_format)
+        self.w13_weight = []
+        self.w2_weight = []
+        self.scale_w1 = []
+        self.scale_w2 = []
+        for i in range(self.num_experts):
+            self.w2_weight.append(self.w2_list[i].weight.contiguous())
+            w1_weight = self.w1_list[i].weight
+            w3_weight = self.w3_list[i].weight
+            self.w13_weight.append(torch.cat((w1_weight, w3_weight), dim=0).contiguous())
+            # TODO: (Mengni) enhance the scale process for different scale formats
+            self.scale_w1.append(max(self.w1_list[i].scale_weight, self.w3_list[i].scale_weight))
+            self.scale_w2.append(self.w2_list[i].scale_weight)
+            delattr(self.w1_list[i], "weight")
+            delattr(self.w3_list[i], "weight")
+            delattr(self.w2_list[i], "weight")
+            htcore.mark_step()
+        delattr(self, "w1_list")
+        delattr(self, "w3_list")
+        delattr(self, "w2_list")
+
+    def forward_quant(self,
+                      hidden_states,
+                      expert_routing_table,
+                      router_weights,
+                      permuted_weights=True,
+                      activation="silu"):
+        qinput = self.quant_input(hidden_states)
+        output = self.dynamic_moe_op(
+            hidden_states=qinput,
+            expert_routing_table=expert_routing_table,
+            router_weights=router_weights,
+            w12=self.w13_weight,
+            w3=self.w2_weight,
+            d_scale_w12=self.scale_w1,
+            d_scale_w3=self.scale_w2,
+            d_scale_hidden_states=self.scale_input,
+            d_scale_intermediate_hidden_states=self.scale_intermediate,
+            permuted_weights=permuted_weights,
+            activation=activation,
+            experts_min=self.experts_min,
+            experts_max=self.experts_max,
+        )
+        return output
 
 
 class PatchedKVCache(PatchedModuleBase):
