@@ -106,6 +106,9 @@ def prepare_model(model, mod_list=None):
         d_shapes = load_file(shapes_fname, ShapeList, False)
     else:
         d_shapes = None
+    # TODO SW-220992: Add dependency check for observer, just like maxabs_per_channel is dependent on shape
+    if not d_shapes and observer_class == OBSERVER_TYPES["maxabs_per_channel"]:
+        raise RuntimeError("Required shape files are missing from measurement directory")
     gmod_list.extend(mod_list)
     generate_model_info(model)
     register_patched_measure_modules(model, mod_list, observer_class, d_shapes)
