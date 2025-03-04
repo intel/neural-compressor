@@ -666,9 +666,7 @@ def convert_to_GPTQ_checkpoints(model, quantization_config):
                 scales = scales.unsqueeze(0)
             if len(qzeros.shape) == 1:
                 qzeros = qzeros.unsqueeze(0)
-            qzeros = new_module.pack_tensor_with_numpy(
-                qzeros - 1
-            ).contiguous()
+            qzeros = new_module.pack_tensor_with_numpy(qzeros - 1).contiguous()
             g_idx = module._op_context.get_g_idx()
 
             new_module.qweight = qweight
