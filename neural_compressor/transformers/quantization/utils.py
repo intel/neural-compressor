@@ -660,8 +660,14 @@ def convert_to_GPTQ_checkpoints(model, quantization_config):
             new_module.n_pack = 32 // bits
             scales = module._op_context.get_scales().t().contiguous()
             bias = module._op_context.get_bias()
+            qzeros = module._op_context.get_zero_points().t().to(torch.uint8)
+            # For group_size = -1, the dimensions of scale and qzeros will be 1
+            if len(scales.shape) == 1:
+                scales = scales.unsqueeze(0)
+            if len(qzeros.shape) == 1:
+                qzeros = qzeros.unsqueeze(0)
             qzeros = new_module.pack_tensor_with_numpy(
-                module._op_context.get_zero_points().t().to(torch.uint8) - 1
+                qzeros - 1
             ).contiguous()
             g_idx = module._op_context.get_g_idx()
 
