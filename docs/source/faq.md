@@ -26,9 +26,18 @@ Intel TBB is required, try:
 $ conda/pip install tbb
 ```
 **Solution:** It's actually already installed by `requirements_pt.txt`, so just need to set up with `export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH`. 
-#### Issue 6:  
+#### Issue 7:  
 torch._C._LinAlgError: linalg.cholesky: The factorization could not be completed because the input is not positive-definite.  
 **Solution:** This is a known issue. For more details, refer to 
 [AutoGPTQ/AutoGPTQ#196](https://github.com/AutoGPTQ/AutoGPTQ/issues/196). 
 Try increasing `percdamp` (percent of the average Hessian diagonal to use for dampening), 
 or increasing `nsamples` (the number of calibration samples).
+#### Issue 6:  
+If you run GPTQ quantization with transformers-like API on xpu device, then you may encounter the following error:  
+```shell
+[ERROR][modeling_auto.py:128] index 133 is out of bounds for dimension 0 with size 128
+[ERROR][modeling_auto.py:129] Saved low bit model loading failed, please check your model.
+HINT:
+XPU device does not support `g_idx` for GPTQ quantization now. Please stay tuned.
+You can set desc_act=False.
+```
