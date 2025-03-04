@@ -41,3 +41,10 @@ HINT:
 XPU device does not support `g_idx` for GPTQ quantization now. Please stay tuned.
 You can set desc_act=False.
 ```
+#### Issue 8:
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2191' in position 195: character maps to <undefined>
+**Solution:**
+```
+set PYTHONIOENCODING=UTF-8 # for windows
+export PYTHONIOENCODING=UTF-8 # for linux
+```
