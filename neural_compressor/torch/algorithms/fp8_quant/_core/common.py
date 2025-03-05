@@ -226,9 +226,9 @@ _mod_default_dict = {
     "FusedMoE": ModuleInfo("linear", PatchedMixtralMoE, False),
     "GaudiMixtralSparseMoeBlock": ModuleInfo("dynamic_moe", PatchedGaudiMixtralSparseMoeBlock),
     "VllmMixtureOfExpertsOp": (
-        ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOpV1)
-        if os.getenv("LOW_CPU_MEM", "0") == "0"
-        else ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOpV2)
+        ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOpV2)
+        if os.getenv("LOW_CPU_MEM", "0") == "1"
+        else ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOpV1)
     ),
 }
 
