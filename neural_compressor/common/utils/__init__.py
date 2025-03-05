@@ -25,14 +25,14 @@ from neural_compressor.common.utils.utility import *
 import os
 
 DEEPSEEK_EXPERTS = 256
-VLLM_TP_SIZE = int(os.getenv("VLLM_TP_SIZE", 8))
+VLLM_TP_SIZE = int(os.getenv("VLLM_TP_SIZE", "8"))
 VLLM_EP_SIZE = int(os.getenv("VLLM_EP_SIZE", VLLM_TP_SIZE))
 NUM_EXPERTS_PER_EP_RANK = DEEPSEEK_EXPERTS // VLLM_EP_SIZE  # 32
 NUM_EXPERTS_GROUPS = 8
 NUM_EXPERTS_PER_GROUP_PER_RANK = NUM_EXPERTS_PER_EP_RANK // NUM_EXPERTS_GROUPS # 4
 FUSED_MOE_EXPERTS = NUM_EXPERTS_PER_GROUP_PER_RANK  # 4
 
-logger.warning(
+logger.warning_once(
     (
         f"INC uses VLLM_TP_SIZE={VLLM_TP_SIZE},\n"
         f"VLLM_EP_SIZE={VLLM_EP_SIZE},\n"
