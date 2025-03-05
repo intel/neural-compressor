@@ -37,8 +37,16 @@ def print_init_info(config):
     # logger.info("neural_compressor_pt Git revision = %s", versionStr[locationStr:])
     # logger.info("neural_compressor_pt Configuration = %s", config)
 
+import re
+from typing import List
+def is_re_match(substr_list: List[str], target: str):
+    for substr in substr_list:
+        if re.search(substr, target):
+            return True
+    return False
 
 def is_substr(substr_list, target):
+    return is_re_match(substr_list, target)
     return any([x in target for x in substr_list])
 
 
