@@ -133,6 +133,10 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
         for name, mod in model.named_modules():
             mod_type_str = mod.__class__.__name__
             logger.debug(f"start to handle module {name}, type: {mod_type_str}")
+            origin_name = name
+            # TODO: (Mengni) optimize the name conversion method between MoEV1 and MoEV2
+            if "w1_list" in name or "w3_list" in name:
+                name = name.replace("w1_list", "w13_list") if "w1_list" in name else name.replace("w3_list", "w13_list")
             if name in mod_list and name not in scales and config.cfg["use_stats_files"] and name not in measurement:
                 if mod_default_dict[mod_type_str].should_measure_and_quant:
                     if not config.cfg["ignore_modules_wo_measures"]:
@@ -143,7 +147,7 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
                     continue
             # When offloading weight to disk, need to transfer the weight from disk to cpu using hf_hook
             apply_hf_hook(mod)
-            if name in mod_list:
+            if origin_name in mod_list:
                 set_hqt_config(mod, config)  # set config in the module, as it consumed by the patched module
                 mod_extra_config, save_file = load_layer_scales(mod, name, config,
                                                                 mod_type_str, measurement,
@@ -155,7 +159,7 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
                     quantize_params(mod, mod_extra_config)
                 logger.debug(f"patching module {name}")
                 patch_module(mod, mod_extra_config, mod_default_dict)
-                # show_mem_info()
+                name = origin_name
                 patched_modules.append(name)
                 patched_module_types.add(type(mod))
                 htcore.mark_step()
@@ -167,6 +171,9 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     logger.debug("Patched modules: %s", patched_modules)
     logger.debug("Total patched modules: %d", len(patched_modules))
     model = model.to(cur_accelerator.name())
+    for _, mod in model.named_modules():
+        if hasattr(mod, "post_process"):
+            mod.post_process()
     torch.distributed.barrier()
     convert_fp16_to_bf16(model)
     cur_accelerator.synchronize()
