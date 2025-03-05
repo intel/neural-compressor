@@ -33,7 +33,8 @@ from neural_compressor.torch.utils import show_mem_info
 import time
 cur_accelerator = auto_detect_accelerator()
 
-QUANTIZATION_INFO_INTERVAL = 30
+from neural_compressor.torch.algorithms.fp8_quant._core.common import INFO_INTERVAL
+
 
 @torch.no_grad()
 def patch_module(mod, qconfig, mod_dict, patched_mod=None):
@@ -137,7 +138,7 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
         for name, mod in model.named_modules():
             mod_type_str = mod.__class__.__name__
             logger.debug(f"start to handle module {name}, type: {mod_type_str}")
-            if time.monotonic() - start_time > QUANTIZATION_INFO_INTERVAL * num_info:
+            if time.monotonic() - start_time > INFO_INTERVAL * num_info:
                 logger.info(f"Currently handling module {name}, type: {mod_type_str}")
                 num_info += 1
             origin_name = name
