@@ -30,8 +30,10 @@ from .scale import scale_method_mapping, load_layer_scales
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 from neural_compressor.common import utils as inc_utils
 from neural_compressor.torch.utils import show_mem_info
-
+import time
 cur_accelerator = auto_detect_accelerator()
+
+QUANTIZATION_INFO_INTERVAL = 30
 
 @torch.no_grad()
 def patch_module(mod, qconfig, mod_dict, patched_mod=None):
@@ -130,9 +132,14 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     patched_module_types = set()
     device = torch.device(cur_accelerator.name())
     with torch.no_grad():
+        start_time = time.monotonic()
+        num_info = 0
         for name, mod in model.named_modules():
             mod_type_str = mod.__class__.__name__
             logger.debug(f"start to handle module {name}, type: {mod_type_str}")
+            if time.monotonic() - start_time > QUANTIZATION_INFO_INTERVAL * num_info:
+                logger.info(f"Currently handling module {name}, type: {mod_type_str}")
+                num_info += 1
             if name in mod_list and name not in scales and config.cfg["use_stats_files"] and name not in measurement:
                 if mod_default_dict[mod_type_str].should_measure_and_quant:
                     if not config.cfg["ignore_modules_wo_measures"]:
