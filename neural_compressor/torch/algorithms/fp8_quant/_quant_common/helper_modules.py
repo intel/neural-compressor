@@ -550,10 +550,10 @@ class PatchedColumnParallelLinear(PatchedModuleBase):
         else:
             qweight = self.dequant_weights(self.weight, )
         output = torch.matmul(qinput, qweight)
-
+        output, output_bias = self.add_bias(output)
         if self.gather_output:
             output = self.collective_func(output)
-        return self.post_all_reduce(output)
+        return output, output_bias
 
     def forward_quant(self, input):
         qinput = self.quant_input(input)
@@ -563,19 +563,21 @@ class PatchedColumnParallelLinear(PatchedModuleBase):
                                  scale_input_inv=self.scale_input,
                                  scale_other_inv=self.scale_weight)
         dqoutput = self.dequant_output(output)
+        dqoutput, dqoutput_bias = self.add_bias(dqoutput)
         if self.gather_output:
             dqoutput = self.collective_func(dqoutput)
-        return self.post_all_reduce(dqoutput)
+        return dqoutput, dqoutput_bias
 
     def forward_measure(self, input):
         measure_input((input,), observer=self._mod_extra_config.inputs)
         output = torch.matmul(input, self.weight.transpose(-1, -2))
         measure_output((output,), self._mod_extra_config.outputs)
+        output, output_bias = self.add_bias(output)
         if self.gather_output:
             output = self.collective_func(output)
-        return self.post_all_reduce(output)
+        return output, output_bias
 
-    def post_all_reduce(self, output):
+    def add_bias(self, output):
         if not self.skip_bias_add:
             output = output + self.bias if self.bias is not None else output
             output_bias = None
