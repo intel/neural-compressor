@@ -19,10 +19,10 @@ import numpy as np
 import torch
 
 from abc import abstractmethod
-
+import time
 from .._quant_common.quant_config import MeasureExclude, QuantMode, ScaleMethod, get_hqt_config, set_hqt_config
 # from ..utils.logger import logger
-
+from neural_compressor.torch.algorithms.fp8_quant._core.common import INFO_INTERVAL
 from .common import *
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 from neural_compressor.torch.algorithms.fp8_quant.model_configs import (
@@ -132,6 +132,8 @@ def register_patched_measure_modules(model, mod_list, observer_class, d_shapes=N
     non_patched_types = set()
     patched_modules = []
     with torch.no_grad():
+        start_time = time.monotonic()
+        num_info = 0
         for name, mod in model.named_modules():
             if (name in mod_list) or (mod_list is None):
                 IMOD_DICT[mod] = name
@@ -143,7 +145,9 @@ def register_patched_measure_modules(model, mod_list, observer_class, d_shapes=N
                     else None
                 )
                 patched_types.add(type(mod))
-
+                if time.monotonic() - start_time > num_info * INFO_INTERVAL:
+                    logger.info(f"Patching measure module {name} {mod.__class__}")
+                    num_info += 1
                 set_hqt_config(mod, top_level_config)  # set config in the module, as it consumed by the patched module
                 mod_extra_config = (
                     init_measure_object(
@@ -158,7 +162,7 @@ def register_patched_measure_modules(model, mod_list, observer_class, d_shapes=N
                     if mod_default_dict[mod_type_str].should_measure_and_quant
                     else None
                 )
-                logger.info(f"Patching measure module {name} {mod.__class__} ")
+                logger.debug(f"Patching measure module {name} {mod.__class__} ")
                 pmod = patch_module_measure(mod, mod_extra_config, mod_default_dict)
                 # logger.info(f"Pacthed module pmod: {pmod}")
                 if pmod._mod_extra_config:

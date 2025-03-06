@@ -30,8 +30,11 @@ from .scale import scale_method_mapping, load_layer_scales
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 from neural_compressor.common import utils as inc_utils
 from neural_compressor.torch.utils import show_mem_info
-
+import time
 cur_accelerator = auto_detect_accelerator()
+
+from neural_compressor.torch.algorithms.fp8_quant._core.common import INFO_INTERVAL
+
 
 @torch.no_grad()
 def patch_module(mod, qconfig, mod_dict, patched_mod=None):
@@ -130,9 +133,14 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     patched_module_types = set()
     device = torch.device(cur_accelerator.name())
     with torch.no_grad():
+        start_time = time.monotonic()
+        num_info = 0
         for name, mod in model.named_modules():
             mod_type_str = mod.__class__.__name__
             logger.debug(f"start to handle module {name}, type: {mod_type_str}")
+            if time.monotonic() - start_time > INFO_INTERVAL * num_info:
+                logger.info(f"Currently handling module {name}, type: {mod_type_str}")
+                num_info += 1
             origin_name = name
             # TODO: (Mengni) optimize the name conversion method between MoEV1 and MoEV2
             if "w1_list" in name or "w3_list" in name:

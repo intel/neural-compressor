@@ -19,7 +19,8 @@ from .common import mod_default_dict
 from .measure import prepare_model as prepare_model_for_measure
 from .quantize import quantize
 from .scale import scale_method_mapping, scaling_params
-
+import re
+from typing import List
 
 def update_mod_dict(config):
     assert (
@@ -38,7 +39,14 @@ def print_init_info(config):
     # logger.info("neural_compressor_pt Configuration = %s", config)
 
 
+def is_re_match(substr_list: List[str], target: str):
+    for substr in substr_list:
+        if re.search(substr, target):
+            return True
+    return False
+
 def is_substr(substr_list, target):
+    return is_re_match(substr_list, target)
     return any([x in target for x in substr_list])
 
 

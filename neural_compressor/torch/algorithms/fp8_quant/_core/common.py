@@ -40,6 +40,7 @@ if importlib.util.find_spec("deepspeed"):  # check if deepspeed is installed
 
 UNMEASURED_MODELS = "UnmeasuredModels"
 
+INFO_INTERVAL = 30 # seconds
 
 _mod_types = {
     "linear": ModuleType(1, ["weight"], 1, False),
