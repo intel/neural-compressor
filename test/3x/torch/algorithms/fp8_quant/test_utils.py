@@ -1,7 +1,10 @@
+import unittest
+import re
+from typing import List
 from neural_compressor.torch.algorithms.fp8_quant._core.utils import is_re_match
 
 
-class TestUtils:
+class TestUtils(unittest.TestCase):
     def test_is_re_match_found(self):
         substr_list = ["lm_head", "mlp\\.gate\\b"]
         target = "layer.1.mlp.gate"
