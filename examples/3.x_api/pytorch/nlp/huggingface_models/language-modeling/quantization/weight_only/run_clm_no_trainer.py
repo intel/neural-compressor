@@ -282,6 +282,7 @@ def get_user_model():
             trust_remote_code=args.trust_remote_code,
             attn_implementation=args.autoround_attn_implementation,
             revision=args.revision,
+            torch_dtype=torch.bfloat16,
         )
     else:
         user_model = AutoModelForCausalLM.from_pretrained(
@@ -289,8 +290,9 @@ def get_user_model():
             torchscript=torchscript,  # torchscript will force `return_dict=False` to avoid jit errors
             trust_remote_code=args.trust_remote_code,
             revision=args.revision,
+            torch_dtype=torch.bfloat16,
         )
-    tokenizer = AutoTokenizer.from_pretrained(args.model)
+    tokenizer = AutoTokenizer.from_pretrained(args.model, torch_dtype=torch.bfloat16,)
     user_model = user_model.float()
     if args.woq_algo == 'AutoRound':
         user_model.to(torch.float32)
@@ -301,7 +303,7 @@ def get_user_model():
 
     if args.peft_model_id is not None:
         from peft import PeftModel
-        user_model = PeftModel.from_pretrained(user_model, args.peft_model_id)
+        user_model = PeftModel.from_pretrained(user_model, args.peft_model_id, torch_dtype=torch.bfloat16,)
 
     # to channels last
     user_model = user_model.to(memory_format=torch.channels_last)
@@ -571,14 +573,14 @@ if args.load:
         user_model = load(args.model, format="huggingface", device=device)
     else:
         user_model, _ = get_user_model()
-        config = AutoConfig.from_pretrained(args.model)
+        config = AutoConfig.from_pretrained(args.model, torch_dtype=torch.bfloat16)
         user_model = load(
             os.path.abspath(os.path.expanduser(args.output_dir)),
             user_model,
             device=device,
         )
         setattr(user_model, "config", config)
-    tokenizer = AutoTokenizer.from_pretrained(args.model)
+    tokenizer = AutoTokenizer.from_pretrained(args.model, torch_dtype=torch.bfloat16,)
 else:
     user_model, tokenizer = get_user_model()
 
