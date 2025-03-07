@@ -46,7 +46,7 @@ function run_tuning {
         extra_cmd=$extra_cmd" --woq_algo GPTQ --woq_bits 4 --woq_group_size 128 --woq_scheme asym --woq_use_mse_search --gptq_use_max_length"
     elif [ "${topology}" = "deepseek-r1" ]; then
         model_name_or_path="/home/sdp/disks/sdb1/DeepSeek-R1"
-        extra_cmd=$extra_cmd" --woq_algo Rtn --woq_bits 8"
+        extra_cmd=$extra_cmd" --woq_algo RTN --woq_bits 8"
     elif [ "${topology}" = "opt_125m_woq_gptq_nf4_dq_bnb" ]; then
         model_name_or_path="facebook/opt-125m"
         extra_cmd=$extra_cmd" --woq_algo GPTQ --woq_bits 4 --woq_group_size 128 --woq_scheme asym --woq_use_mse_search --gptq_use_max_length"
