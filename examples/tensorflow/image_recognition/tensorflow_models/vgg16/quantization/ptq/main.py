@@ -61,6 +61,7 @@ def evaluate(model, eval_dataloader, metric, postprocess=None):
         latency_list = []
         for idx, (inputs, labels) in enumerate(dataloader):
             # dataloader should keep the order and len of inputs same with input_tensor
+            print(idx)
             inputs = np.array([inputs])
             feed_dict = dict(zip(input_tensor, inputs))
 
@@ -97,7 +98,7 @@ class eval_classifier_optimized_graph:
             from neural_compressor.config import PostTrainingQuantConfig
             from neural_compressor.utils.create_obj_from_config import create_dataloader
             dataloader_args = {
-                'batch_size': 10,
+                'batch_size': 1,
                 'dataset': {"ImageRecord": {'root':args.dataset_location}},
                 'transform': {'ResizeCropImagenet':
                      {'height': 224, 'width': 224,
@@ -105,7 +106,7 @@ class eval_classifier_optimized_graph:
                 'filter': None
             }
             dataloader = create_dataloader('tensorflow', dataloader_args)
-            conf = PostTrainingQuantConfig(calibration_sampling_size=[50, 100])
+            conf = PostTrainingQuantConfig(backend="itex", calibration_sampling_size=[50, 100])
             from neural_compressor import METRICS
             metrics = METRICS('tensorflow')
             top1 = metrics['topk']()

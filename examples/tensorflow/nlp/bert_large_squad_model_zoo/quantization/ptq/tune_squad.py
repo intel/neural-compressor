@@ -89,6 +89,9 @@ def evaluate(model, dataloader, data_path, label_path, vocab_path):
     warmup = 5
     for idx, (inputs, labels) in enumerate(dataloader):
         # dataloader should keep the order and len of inputs same with input_tensor
+        if idx % 1000 == 0:
+            print(idx)
+        # print(idx)
         assert len(input_tensor) == len(inputs), \
             'inputs len must equal with input_tensor'
         feed_dict = dict(zip(input_tensor, inputs))
@@ -150,15 +153,15 @@ def main(_):
         from neural_compressor.model.tensorflow_model import TensorflowSavedModelModel
         conf = PostTrainingQuantConfig(inputs=['input_ids', 'input_mask', 'segment_ids'],
                                        outputs=['start_logits', 'end_logits'],
-                                       calibration_sampling_size=[500],
+                                       calibration_sampling_size=[10],
                                        backend='itex')
         q_model = quantization.fit(FLAGS.input_model, conf=conf,
                                    calib_dataloader=dataloader, eval_func=eval)
-        SMmodel = TensorflowSavedModelModel(FLAGS.input_model)
-        SMmodel.model_type="saved_model"
-        SMmodel.graph_def = q_model.graph_def
-        SMmodel.save(FLAGS.output_model)
-
+        # SMmodel = TensorflowSavedModelModel(FLAGS.input_model)
+        # SMmodel.model_type="saved_model"
+        # SMmodel.graph_def = q_model.graph_def
+        # SMmodel.save(FLAGS.output_model)
+        q_model.save(FLAGS.output_model)
 
 if __name__ == "__main__":
     tf.compat.v1.app.run()

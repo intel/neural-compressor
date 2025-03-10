@@ -11,7 +11,7 @@ function main {
 
 # init params
 function init_params {
-  batch_size=64
+  batch_size=1
   for var in "$@"
   do
     case $var in

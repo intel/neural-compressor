@@ -495,8 +495,11 @@ def main(_):
   convert_examples_to_features(
       examples=eval_examples,
       tokenizer=tokenizer,
-      max_seq_length=384,
-      doc_stride=128,
+      # max_seq_length=384,
+      # doc_stride=128,
+      # max_query_length=64,
+      max_seq_length=128,
+      doc_stride=64,
       max_query_length=64,
       is_training=False,
       output_fn=append_feature)
