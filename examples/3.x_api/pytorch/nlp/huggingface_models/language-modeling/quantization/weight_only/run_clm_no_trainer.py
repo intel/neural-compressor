@@ -293,7 +293,7 @@ def get_user_model():
             torch_dtype=torch.bfloat16,
         )
     tokenizer = AutoTokenizer.from_pretrained(args.model, torch_dtype=torch.bfloat16,)
-    user_model = user_model.float()
+    # user_model = user_model.float()
     if args.woq_algo == 'AutoRound':
         user_model.to(torch.float32)
 
