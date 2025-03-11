@@ -241,6 +241,7 @@ def _replace_linear(
                     model._modules[name].set_weights_bias(
                         module.qweight.data if hasattr(module, "qweight") else weight,
                         None if module.bias is None else module.bias.data,
+                        update_g_idx=not empty_weights,
                     )
                 else:
                     raise Exception("{} device Unsupported weight only quantization!".format(device))
