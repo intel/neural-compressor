@@ -960,9 +960,9 @@ class PatchedVLLMKVCache(PatchedModuleBase):
     #     return self.dequant_output(output_cache)
 
     def forward_measure(self, input, *args, **kwargs):
-        measure_input((input), self._mod_extra_config.inputs)
+        measure_input((input,), self._mod_extra_config.inputs)
         output_cache = self.orig_mod(input, *args, **kwargs)
-        measure_output((output_cache), self._mod_extra_config.outputs)
+        measure_output((output_cache,), self._mod_extra_config.outputs)
         return output_cache
 
     # def fetch_from_cache(self, cache, blocks, permutations=None):
