@@ -247,7 +247,7 @@ class RTNQuantizer(Quantizer):
                 set_module(model, name, new_module)
             # Move modules back to the model device layer-by-layer
             if not use_layer_wise:
-                m.to(model_device)
+                m = m.to_empty(device=torch.device("meta")) # clear the original module
                 new_module.to(model_device)
         if not use_layer_wise:
             model.to(model_device)
