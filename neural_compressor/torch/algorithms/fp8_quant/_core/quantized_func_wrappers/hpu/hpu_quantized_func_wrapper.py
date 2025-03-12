@@ -38,8 +38,16 @@ FP8_DTYPE = torch.float8_e4m3fn
 # 7/8×(2^−6)
 MAX_FP8SUBNORMAL = 0.875 * (2 ** -6)
 def is_denormalized_fp8(fp8_tensor: torch.Tensor) -> torch.Tensor:
-    fp8_tensor_float = fp8_tensor.to(torch.float)
+    # fp8_tensor_float = fp8_tensor.to(torch.float)
+    fp8_tensor_float = torch.ops.hpu.cast_from_fp8(fp8_tensor, None, torch.float)
+    
     return (fp8_tensor_float != 0) & (fp8_tensor_float.abs() <= MAX_FP8SUBNORMAL)
+
+# # 7/8×(2^−6)
+# MAX_FP8SUBNORMAL = 0.875 * (2 ** -6)
+# def is_denormalized_fp8(fp8_tensor: torch.Tensor) -> torch.Tensor:
+#     fp8_tensor_float = fp8_tensor.to(torch.float)
+#     return (fp8_tensor_float != 0) & (fp8_tensor_float.abs() <= MAX_FP8SUBNORMAL)
 
 
 def apply_ftz(fp8_tensor: torch.Tensor):
