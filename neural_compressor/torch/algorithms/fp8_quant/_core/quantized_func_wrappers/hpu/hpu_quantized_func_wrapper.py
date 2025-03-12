@@ -24,6 +24,25 @@ try:  # backwards compatibility for 1.16
 except ImportError:
     pass
 
+
+import torch
+FP8_DTYPE = torch.float8_e4m3fn
+def is_denormalized_fp8_cpu(fp8_tensor: torch.Tensor) -> torch.Tensor:
+    # fp8_tensor_hpu >> 3: RuntimeError: "rshift_cpu" not implemented for 'Float' 
+    fp8_tensor = fp8_tensor.cpu().view(torch.uint8)
+    exponent = (fp8_tensor >> 3) & 0xF
+    fraction = fp8_tensor & 0x7
+    mask = (exponent == 0) & (fraction != 0)
+    return mask.to("hpu")
+
+
+def apply_ftz(fp8_tensor: torch.Tensor):
+    assert fp8_tensor.dtype == FP8_DTYPE, f"Expected torch.float8_e4m3fnuz, got {fp8_tensor.dtype}"
+    denormal_mask = is_denormalized_fp8_cpu(fp8_tensor)
+    fp8_tensor[denormal_mask] = 0.0
+    return fp8_tensor
+    
+
 class QuantizedHpuFuncWrapperBase(QuantizedFuncWrapperBase, metaclass=ABCMeta):
     """
     Base class for wrapping calls to hpu custom fp8 ops.
@@ -61,6 +80,9 @@ class QuantizedHpuMatmul(QuantizedHpuFuncWrapperBase):
 
     # only specific arguments are defined, to avoid having all other arguments defined in each call in patched modules.
     def __call__(self, input, other, out=None, out_dtype=torch.bfloat16, scale_input_inv=None, scale_other_inv=None):
+        input = apply_ftz(input)
+        other = apply_ftz(other)
+        
         return self._quantized_func_(input,
                                      False,
                                      other,
