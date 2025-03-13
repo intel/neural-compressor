@@ -29,19 +29,11 @@ import torch
 FP8_DTYPE = torch.float8_e4m3fn
 def is_denormalized_fp8_cpu(fp8_tensor: torch.Tensor) -> torch.Tensor:
     # fp8_tensor_hpu >> 3: RuntimeError: "rshift_cpu" not implemented for 'Float' 
-    fp8_tensor = fp8_tensor.view(torch.uint8)
+    fp8_tensor = fp8_tensor.cpu().view(torch.uint8)
     exponent = (fp8_tensor >> 3) & 0xF
     fraction = fp8_tensor & 0x7
     mask = (exponent == 0) & (fraction != 0)
-    return mask
-
-
-def apply_ftz_cpu(fp8_tensor: torch.Tensor):
-    assert fp8_tensor.dtype == FP8_DTYPE, f"Expected torch.float8_e4m3fnuz, got {fp8_tensor.dtype}"
-    fp8_tensor_cpu = fp8_tensor.cpu()
-    denormal_mask = is_denormalized_fp8_cpu(fp8_tensor_cpu)
-    fp8_tensor_cpu[denormal_mask] = 0.0
-    return fp8_tensor_cpu.to("hpu")
+    return mask.to("hpu")
 
 # 7/8×(2^−6)
 MAX_FP8SUBNORMAL = 0.875 * (2 ** -6)
@@ -51,16 +43,11 @@ def is_denormalized_fp8(fp8_tensor: torch.Tensor) -> torch.Tensor:
     
     return (fp8_tensor_float != 0) & (fp8_tensor_float.abs() <= MAX_FP8SUBNORMAL)
 
-# # 7/8×(2^−6)
-# MAX_FP8SUBNORMAL = 0.875 * (2 ** -6)
-# def is_denormalized_fp8(fp8_tensor: torch.Tensor) -> torch.Tensor:
-#     fp8_tensor_float = fp8_tensor.to(torch.float)
-#     return (fp8_tensor_float != 0) & (fp8_tensor_float.abs() <= MAX_FP8SUBNORMAL)
-
 
 def apply_ftz(fp8_tensor: torch.Tensor):
     assert fp8_tensor.dtype == FP8_DTYPE, f"Expected torch.float8_e4m3fnuz, got {fp8_tensor.dtype}"
-    denormal_mask = is_denormalized_fp8(fp8_tensor)
+    # denormal_mask = is_denormalized_fp8(fp8_tensor)
+    denormal_mask = is_denormalized_fp8_cpu(fp8_tensor)
     fp8_tensor[denormal_mask] = 0.0
     return fp8_tensor
     
