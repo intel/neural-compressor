@@ -52,12 +52,13 @@ from enum import Enum
 
 
 class Mode(Enum):
-    """Enumeration class representing different modes of the quantizer execution."""
+    """Enumeration class representing different modes of the quantization."""
 
     PREPARE = "prepare"
     CONVERT = "convert"
     QUANTIZE = "quantize"
     LOAD = "load"
+    SAVE = "save"
 
 
 SERVER_PROCESSOR_BRAND_KEY_WORLD_LST = ["Xeon"]
