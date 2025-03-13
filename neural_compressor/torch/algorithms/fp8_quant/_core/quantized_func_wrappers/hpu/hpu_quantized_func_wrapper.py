@@ -91,8 +91,8 @@ class QuantizedHpuMatmul(QuantizedHpuFuncWrapperBase):
     def __call__(self, input, other, out=None, out_dtype=torch.bfloat16, scale_input_inv=None, scale_other_inv=None):
         # input = apply_ftz(input)
         # other = apply_ftz(other)
-        input = apply_ftz_cpu(input)
-        other = apply_ftz_cpu(other)
+        input = apply_ftz(input)
+        other = apply_ftz(other)
         
         return self._quantized_func_(input,
                                      False,
