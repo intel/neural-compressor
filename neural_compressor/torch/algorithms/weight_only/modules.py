@@ -527,7 +527,8 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
         if "cuda" in raw_tensor.device.type:
             return self.pack_tensor_with_torch(raw_tensor)
         else:
-            return self.pack_tensor_with_numpy(raw_tensor)
+            # return self.pack_tensor_with_numpy(raw_tensor)
+            return self.pack_tensor_with_torch(raw_tensor) # use torch for testing deepseek-R1
 
     def unpack_tensor(self, packed_tensor):
         """Unpack tensor."""
