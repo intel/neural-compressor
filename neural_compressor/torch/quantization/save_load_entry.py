@@ -32,6 +32,7 @@ config_name_mapping = {
     FP8_QUANT: FP8Config,
 }
 
+@log_process(mode=Mode.SAVE)
 def save(model, checkpoint_dir="saved_results", format="default"):
     """Save quantized model.
 
