@@ -175,25 +175,26 @@ class PatchedModuleBase(torch.nn.Module):
 
     @classmethod
     def get_module_info(cls) -> ModuleInfo:
-        """Return the module info for the module.
+        """Only necessary for the newly registered patched module that doesn't in _mod_default_dict.
+        Return the module info for the module, which is used to determine the scaling methods for the module.
 
         For example, for linear module, the module info is: ModuleInfo(type="linear", patched_module=cls).
         """
         return ModuleInfo(type=cls.get_type(), patched_module=cls)
 
     @classmethod
-    @abstractmethod
     def get_type(cls) -> str:
-        """Return the type of the patched module.
+        """Only necessary for the newly registered patched module that doesn't in _mod_default_dict.
+        Return the type of the patched module, which is used to determine the scaling methods for the module.
 
         Multiple patched modules can have the same type, and share the same scaling methods.
         """
         raise NotImplementedError("`get_type` is not implemented")
 
     @classmethod
-    @abstractmethod
     def get_module_type(cls) -> ModuleType:
-        """Return the module type for the module.
+        """Only necessary for the newly registered patched module that doesn't in _mod_default_dict.
+        Return the module type for the module, which is used to determine the number of inputs, outputs, and parameters of the module.
 
         The module type is used to determine the number of inputs, outputs, and parameters of the module.
         For example, for linear module, the module type is: ModuleType(1, ["weight"], 1, False).
@@ -201,6 +202,7 @@ class PatchedModuleBase(torch.nn.Module):
         raise NotImplementedError("`get_module_type` is not implemented")
 
     def extra_repr(self):
+        """This extra_repr is only for the newly registered patched module that doesn't in _mod_default_dict."""
         return  f"quantization_mode={self.quantization_mode}, " + \
                 f"module_info={self.get_module_info()}, " + \
                 f"module_type={self.get_module_type()}"
