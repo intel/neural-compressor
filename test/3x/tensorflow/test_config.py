@@ -213,6 +213,35 @@ class TestTF3xNewApi(unittest.TestCase):
 
         self.assertEqual(conv2d_quantized, False)
 
+    def test_static_quant_from_dict_advance2(self):
+        logger.info("test_static_quant_from_dict_advance2")
+        from neural_compressor.tensorflow import quantize_model
+        from neural_compressor.tensorflow.utils import DummyDataset
+
+        dataset = DummyDataset(shape=(100, 32, 32, 3), label=True)
+        calib_dataloader = MyDataLoader(dataset=dataset)
+        fp32_model = self.graph
+        quant_config = {
+            "static_quant": {
+                "global": {
+                    "weight_dtype": "int8",
+                    "weight_sym": True,
+                    "weight_granularity": "per_channel",
+                    "act_dtype": "int8",
+                    "act_sym": True,
+                    "act_granularity": "per_channel",
+                },
+                "local": {
+                    "conv1": {
+                        "weight_algorithm": "kl",
+                        "act_algorithm": "kl",
+                    }
+                },
+            }
+        }
+        qmodel = quantize_model(fp32_model, quant_config, calib_dataloader)
+        self.assertIsNotNone(qmodel)
+
     def test_static_quant_from_class_advance(self):
         logger.info("test_static_quant_from_class_advance")
         from neural_compressor.tensorflow import StaticQuantConfig, quantize_model

@@ -553,51 +553,6 @@ def generate_feed_dict(input_tensor, inputs):
     return feed_dict
 
 
-def get_weight_from_input_tensor(model, input_tensor_names, op_types):
-    """Extracts weight tensors and their associated nodes from a smooth quant node's input tensor.
-
-    Args:
-        model: A TensorFlow model containing a `graph_def` attribute.
-        input_tensor_names: A list of input tensor names to search for weight tensors.
-        op_types: A list of operation types to search for when looking for weight tensors.
-
-    Returns:
-        A tuple of two dictionaries:
-        - sq_weight_tensors: A dictionary mapping each input tensor name
-            to a dict of its associated weight tensors with weight name.
-        - sq_weights_nodes: A dictionary mapping each input tensor name
-            to a dict of its associated weight nodes with weight name.
-    """
-    g_analyzer = GraphAnalyzer()
-    g_analyzer.graph = model.graph_def
-    graph_info = g_analyzer.parse_graph()
-
-    sq_weight_tensors = {}
-    sq_weights_nodes = {}
-
-    from tensorflow.python.framework import tensor_util
-
-    for name in input_tensor_names:
-        # Use dict rather than list to fix the QKV/VQK misorder issue
-        curr_weight_tensors = {}
-        curr_weights_nodes = {}
-        next_node_names = graph_info[name].outputs
-        for node_name in next_node_names:
-            curr_node = graph_info[node_name].node
-            if curr_node.op not in op_types:
-                continue
-            if len(curr_node.input) >= 2:
-                weight_name = curr_node.input[1]
-                weight_node = graph_info[weight_name].node
-                weight_tensor = tensor_util.MakeNdarray(weight_node.attr["value"].tensor)
-                curr_weight_tensors[weight_name] = weight_tensor
-                curr_weights_nodes[weight_name] = weight_node
-        # {input node -> {xxx_q_proj_matmul: value1, xxx_v_proj_matmul: value2, ...}, ...}
-        sq_weight_tensors[name] = curr_weight_tensors
-        sq_weights_nodes[name] = curr_weights_nodes
-    return sq_weight_tensors, sq_weights_nodes
-
-
 def apply_inlining(func):
     """Apply an inlining optimization to the function's graph definition.
 

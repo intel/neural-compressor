@@ -1,5 +1,5 @@
 --find-links https://download.pytorch.org/whl/torch_stable.html
-accelerate==0.21.0
+accelerate
 auto-round
 dynast==1.6.0rc1
 horovod

@@ -56,11 +56,34 @@ def update_source_url(version, folder_name, index_file):
         f.write(index_buf)
 
 
+def update_search(folder):
+    search_file_name = "{}/search.html".format(folder)
+
+    with open(search_file_name, "r") as f:
+        index_buf = f.read()
+        key_str = '<script src="_static/searchtools.js"></script>'
+        version_list = """<!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+    <![endif]-->
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=fc837d61"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <script src="_static/searchtools.js"></script>"""
+        index_buf = index_buf.replace(key_str, version_list)
+
+    with open(search_file_name, "w") as f:
+        f.write(index_buf)
+
+
 def main(folder, version):
     folder_name = os.path.basename(folder)
     for index_file in glob.glob("{}/**/*.html".format(folder), recursive=True):
         update_version_link(version, folder_name, index_file)
         update_source_url(version, folder_name, index_file)
+    update_search(folder)
 
 
 def help(me):

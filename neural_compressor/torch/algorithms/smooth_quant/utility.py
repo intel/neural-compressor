@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Utility functions for Smooth quantization."""
+
 
 import copy
 import json
@@ -21,16 +23,19 @@ from collections import UserDict
 import intel_extension_for_pytorch as ipex
 import numpy
 import torch
-import tqdm
 from packaging.version import Version
+from tqdm import tqdm
 
 from neural_compressor.torch.algorithms.static_quant import (
+    CpuInfo,
+    Statistics,
     TransformerBasedModelBlockPatternDetector,
-    dump_model_op_stats,
     generate_activation_observer,
-    get_quantizable_ops_recursively,
+    get_quantizable_ops_from_cfgs,
     ipex_config_path,
+    parse_cfgs,
     simple_inference,
+    unify_op_type_mapping_ipex,
 )
 from neural_compressor.torch.utils import get_ipex_version, get_torch_version, logger
 
@@ -38,8 +43,132 @@ version = get_torch_version()
 ipex_ver = get_ipex_version()
 
 
+def get_quantizable_ops_recursively(model, example_inputs, alpha, act_algo, inplace=True):  # pragma: no cover
+    """Get all quantizable ops from model.
+
+    Args:
+        model (object): input model
+        example_inputs (dict|list|tuple|torch.Tensor): used to trace torch model.
+        alpha (float|str): smoothquant alpha.
+        act_algo (str): activation algorithm, minmax or kl.
+        inplace (bool): whether to carry out model transformations in-place. Defaults to True.
+
+    Returns:
+        quantizable_ops (list): list of tuples of op_name and op_type.
+        cfgs (dict): dict of configuration.
+        op_infos_from_cfgs (dict): op infos from configs.
+        output_tensor_ids_op_name (dict): dictionary of output tensor op names.
+    """
+    quantizable_ops = []
+    # group ops by position for transform-based model
+    detector = TransformerBasedModelBlockPatternDetector(model)
+    detect_result = detector.detect_block()
+    attention_block = detect_result.get("attention_blocks", None)
+    ffn_blocks = detect_result.get("ffn_blocks", None)
+    logger.info(f"Attention Blocks: {len(attention_block)}")
+    logger.info(f"FFN Blocks: {len(ffn_blocks)}")
+    if not os.path.exists(ipex_config_path):
+        assert isinstance(model, torch.nn.Module), "The model passed in is not the instance of torch.nn.Module"
+
+    if hasattr(model, "save_qconf_summary"):
+        os.makedirs(os.path.dirname(ipex_config_path), exist_ok=True)
+        model.save_qconf_summary(qconf_summary=ipex_config_path)
+    else:  # pragma: no cover
+        model.eval()
+
+        # create a quantization config file for intel pytorch extension model
+        os.makedirs(os.path.dirname(ipex_config_path), exist_ok=True)
+        assert example_inputs is not None, "IPEX need q_dataloader or example_inputs to prepare the model"
+
+        from torch.ao.quantization import MinMaxObserver
+
+        if alpha == "auto":  # for quantize API
+            alpha = 0.5
+
+        if ipex_ver.release >= Version("2.1.1").release:
+            static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
+                alpha=alpha, act_observer=MinMaxObserver
+            )
+        else:  # pragma: no cover
+            if act_algo == "minmax":
+                static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(
+                    alpha=alpha, act_observer=MinMaxObserver()
+                )
+                logger.warning(
+                    "The int8 model accuracy will be close to 0 with MinMaxobserver, "
+                    + "the suggested IPEX version is higher or equal than 2.1.100+cpu."
+                )
+            else:
+                static_qconfig = ipex.quantization.get_smooth_quant_qconfig_mapping(alpha=alpha)
+
+        if isinstance(example_inputs, dict):
+            model = ipex.quantization.prepare(
+                model, static_qconfig, example_kwarg_inputs=example_inputs, inplace=inplace
+            )
+        else:
+            model = ipex.quantization.prepare(model, static_qconfig, example_inputs=example_inputs, inplace=inplace)
+
+        simple_inference(model, example_inputs, iterations=1)
+        model.save_qconf_summary(qconf_summary=ipex_config_path)
+
+    map_op_name_to_fqn = {}
+    with open(ipex_config_path, "r") as f:
+        cfgs = json.load(f)
+        (
+            ops_name,
+            op_infos_from_cfgs,
+            input_tensor_id_op_name,
+            output_tensor_id_op_name,
+        ) = parse_cfgs(cfgs)
+        quantizable_op_names = get_quantizable_ops_from_cfgs(ops_name, op_infos_from_cfgs, input_tensor_id_op_name)
+        for name in quantizable_op_names:
+            # name : list
+            if len(name) == 1:
+                module_key = name[0][0]
+                op_cfg_id = name[0][2]
+                ipex_op_type = cfgs[module_key]["q_op_infos"][op_cfg_id]["op_type"]
+                module_fqn = cfgs[module_key]["q_op_infos"][op_cfg_id].get("fqn", None)
+
+                if ipex_op_type in unify_op_type_mapping_ipex:
+                    quantizable_ops.append((tuple(name), unify_op_type_mapping_ipex[ipex_op_type]))
+                    map_op_name_to_fqn[(tuple(name), ipex_op_type)] = module_fqn
+                else:
+                    re_flag = False
+                    for pattern, unify_op_type in unify_op_type_mapping_ipex["re"].items():
+                        if re.match(pattern, ipex_op_type):
+                            re_flag = True
+                            quantizable_ops.append((tuple(name), unify_op_type))
+                            map_op_name_to_fqn[(tuple(name), unify_op_type)] = module_fqn
+                            break
+                    if not re_flag:
+                        quantizable_ops.append((tuple(name), ipex_op_type))
+                        map_op_name_to_fqn[(tuple(name), ipex_op_type)] = module_fqn
+            else:  # pragma: no cover
+                op_type = ""
+                for op_name in name:
+                    module_key = op_name[0]
+                    op_cfg_id = op_name[2]
+                    single_op_type = cfgs[module_key]["q_op_infos"][op_cfg_id]["op_type"]
+                    if single_op_type in unify_op_type_mapping_ipex:
+                        single_op_type = unify_op_type_mapping_ipex[single_op_type]
+                    op_type += "&" + single_op_type if op_type else single_op_type
+                quantizable_ops.append((tuple(name), op_type))
+                _module_key = name[0][0]
+                _op_cfg_id = name[0][2]
+                module_fqn = cfgs[_module_key]["q_op_infos"][_op_cfg_id]["fqn"]
+                map_op_name_to_fqn[(tuple(name), op_type)] = module_fqn
+
+    logger.debug("Map op name to fqn: ")
+    logger.debug(map_op_name_to_fqn)
+    logger.info("Attention Blocks : ")
+    logger.info(attention_block)
+    logger.info("FFN Blocks : ")
+    logger.info(ffn_blocks)
+    return quantizable_ops, cfgs, op_infos_from_cfgs, output_tensor_id_op_name
+
+
 def check_cfg_and_qconfig(
-    tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_op_name, smooth_quant=False
+    tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_op_name, alpha=0.5, smooth_quant=True
 ):  # pragma: no cover
     """Check configs and quantization configs.
 
@@ -48,6 +177,9 @@ def check_cfg_and_qconfig(
         cfgs (dict): the input configs.
         op_infos_from_cfgs (dict): op infos from configs.
         output_tensor_ids_op_name (dict): dictionary of output tensor op names.
+        alpha (float): Value to balance input and weight quantization error,
+            between 0 and 1, default is 0.5.
+        smooth_quant (bool, optional): whether to use smooth quant.
 
     Returns:
         cfgs (dict).
@@ -80,7 +212,7 @@ def check_cfg_and_qconfig(
                         else:
                             smooth_quant_enable = False
                         activation_observer = generate_activation_observer(
-                            inc_scheme, inc_algorithm, smooth_quant, smooth_quant_enable
+                            inc_scheme, inc_algorithm, smooth_quant, smooth_quant_enable, alpha
                         )
                         if not smooth_quant:
                             if inc_scheme == "sym":
@@ -116,17 +248,95 @@ def check_cfg_and_qconfig(
 
 
 def cfg_to_qconfig(
-    tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, smooth_quant=False
+    tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, alpha=0.5, smooth_quant=True
 ):  # pragma: no cover
+    """Check configs and quantization configs.
+
+    Args:
+        user_cfg (dict): quantization configuration for ops.
+        cfgs (dict): configs loaded from ipex config path.
+        op_infos_from_cfgs (dict): dict containing configs that have been parsed for each op.
+        output_tensor_ids_op_name (dict): dict containing op names corresponding to 'op_infos_from_cfgs'.
+        alpha (float): Value to balance input and weight quantization error,
+            between 0 and 1, default is 0.5.
+        smooth_quant (bool, optional): whether to use smooth quant.
+
+    Returns:
+        cfgs (dict): updated configs.
+    """
     assert cfgs is not None, "No configure for IPEX int8 model..."
     op_infos = copy.deepcopy(op_infos_from_cfgs)
-    cfgs = check_cfg_and_qconfig(tune_cfg["op"], cfgs, op_infos, output_tensor_id_op_name, smooth_quant)
+    cfgs = check_cfg_and_qconfig(tune_cfg["op"], cfgs, op_infos, output_tensor_id_op_name, alpha, smooth_quant)
     with open(ipex_config_path, "w") as write_f:
         json.dump(cfgs, write_f, indent=4)
     return None
 
 
+def dump_model_op_stats(user_cfg):
+    """This is a function to dump quantizable ops of model to user.
+
+    Args:
+        user_cfg (dict): quantization config.
+
+    Returns:
+        None
+    """
+    res = dict()
+    for k, v in user_cfg.items():
+        op_type_list = k[-1].split("><")
+        op_type = ""
+        for op in op_type_list:
+            if "class" in op:
+                op_type = (
+                    op[op.rfind(".") + 1 : op.rfind("'")]
+                    if op_type == ""
+                    else op_type + "&" + op[op.rfind(".") + 1 : op.rfind("'")]
+                )
+            elif "method" in op:
+                start = op.find("'") + 1
+                if start > 1:
+                    op_type = (
+                        op[start : op.find("'", start)]
+                        if op_type == ""
+                        else op_type + "&" + op[start : op.find("'", start)]
+                    )
+                else:
+                    start = op.find("method") + 7
+                    op_type = (
+                        op[start : op.find(" ", start)]
+                        if op_type == ""
+                        else op_type + "&" + op[start : op.find(" ", start)]
+                    )
+            else:
+                op_type = op if op_type == "" else op_type + "&" + op
+        if op_type not in res.keys():
+            res[op_type] = {"INT8": 0, "BF16": 0, "FP32": 0}
+        if v["weight"]["dtype"] == "int8":
+            res[op_type]["INT8"] += 1
+        elif v["weight"]["dtype"] == "fp32":
+            res[op_type]["FP32"] += 1
+
+    output_data = [
+        [op_type, sum(res[op_type].values()), res[op_type]["INT8"], res[op_type]["BF16"], res[op_type]["FP32"]]
+        for op_type in res.keys()
+    ]
+
+    Statistics(
+        output_data, header="Mixed Precision Statistics", field_names=["Op Type", "Total", "INT8", "BF16", "FP32"]
+    ).print_stat()
+
+
 def get_parent(node, all_parents=False):  # pragma: no cover
+    """Get the parent node(s) of a given node.
+
+    Args:
+        node (Node): The node whose parent(s) are to be retrieved.
+        all_parents (bool, optional): Whether to return all parents or just the first one. Defaults to False.
+
+    Returns:
+        list: The parent node if `all_parents` is False, otherwise a list of all parent nodes.
+            Returns None if no parents are found.
+    """
     if node.inputs() is None:
         return None
     elif len(list(node.inputs())) == 0:
@@ -225,6 +435,15 @@ def update_sq_scale(ipex_config_path, smoothquant_scale_info):  # pragma: no cov
 
 
 def enough_memo_store_scale(device, need_space):  # pragma: no cover
+    """Check if there is enough memory available to store a specified amount of data.
+
+    Args:
+        device (str): The device type ('cuda' for GPU or 'cpu' for CPU).
+        need_space (int): The amount of memory needed, in bytes.
+
+    Returns:
+        bool: True if there is enough memory available, False otherwise.
+    """
     if device == "cuda":  # pragma: no cover
         current_gpu_index = torch.cuda.current_device()
         total_memory = torch.cuda.get_device_properties(current_gpu_index).total_memory
@@ -238,6 +457,18 @@ def enough_memo_store_scale(device, need_space):  # pragma: no cover
 
 
 def move_input_to_device(input, device=torch.device("cpu")):  # pragma: no cover
+    """Move the input data to the specified device.
+
+    Args:
+        input (dict, list, tuple, or torch.Tensor): The input data to be moved.
+            Can be a dictionary, list, tuple, or a tensor.
+        device (torch.device, optional): The device to which the input should be moved.
+            Defaults to CPU.
+
+    Returns:
+        The input data moved to the specified device,
+            with the same type as the input (dict, list, tuple, or tensor).
+    """
     if isinstance(input, dict) or isinstance(input, UserDict):
         tmp_input = {}
         for k, inp in input.items():
@@ -255,6 +486,21 @@ def move_input_to_device(input, device=torch.device("cpu")):  # pragma: no cover
 
 
 def forward_wrapper(model, input, device=torch.device("cpu")):  # pragma: no cover
+    """Apply the model to the input data on the specified device.
+
+    Args:
+        model (torch.nn.Module): The model to be applied.
+        input (dict, list, tuple, or zip): The input data to be fed to the model.
+            Can be a dictionary, list, tuple, or a zip of arguments and keyword arguments.
+        device (torch.device, optional): The device on which the model and input should be located.
+            Defaults to CPU.
+
+    Returns:
+        The output of the model after applying it to the input data.
+
+    Raises:
+        Exception: Logs warnings if there are issues with moving the model or input to the device.
+    """
     try:
         model = model.to(device)
         input = move_input_to_device(input, device)
@@ -268,12 +514,30 @@ def forward_wrapper(model, input, device=torch.device("cpu")):  # pragma: no cov
             output = model(*input)
         except:
             output = model(input)
+    elif isinstance(input, zip):
+        for args, kwargs in input:
+            output = model(*args, **kwargs)
     else:
         output = model(input)
     return output
 
 
 def model_forward(model, dataloader, iters, device):  # pragma: no cover
+    """Run the model on data from the dataloader for a specified number of iterations.
+
+    Args:
+        model (torch.nn.Module): The model to be used for forward passes.
+        dataloader (DataLoader): The dataloader providing the input data and labels.
+        iters (int): The maximum number of iterations to run.
+            If -1, run until the dataloader is exhausted.
+        device (torch.device): The device on which the model and data are located.
+
+    Returns:
+        None
+
+    Raises:
+        Exception: Handles exceptions during the forward pass and retries if needed.
+    """
     try:
         cnt = 0
         for idx, (input, label) in enumerate(dataloader):
@@ -290,7 +554,68 @@ def model_forward(model, dataloader, iters, device):  # pragma: no cover
                 break
 
 
+def build_captured_dataloader(model, run_fn, calib_num=None):
+    """Build a dataloader that captures input data and keyword arguments used in forward passes of the model.
+
+    Args:
+        model (torch.nn.Module): The model whose inputs will be captured.
+        run_fn (function): A function to run the model, which will use the InputCaptureModule to collect inputs.
+        calib_num (int, optional): The number of inputs to capture for calibration. If None, capture all inputs.
+
+    Returns:
+        torch.nn.Module: The original model.
+        CapturedDataloader: A dataloader with the captured inputs and keyword arguments.
+    """
+
+    class CapturedDataloader:
+        def __init__(self, args_list, kwargs_list) -> None:
+            self.args_list = args_list
+            self.kwargs_list = kwargs_list
+
+        def __iter__(self):
+            for args, kwargs in zip(self.args_list, self.kwargs_list):
+                if not args:
+                    yield kwargs
+                elif not kwargs:
+                    yield args
+                else:
+                    yield args, kwargs
+
+    class InputCaptureModule(torch.nn.Module):
+        def __init__(self, model) -> None:
+            super().__init__()
+            self.args_list = []
+            self.kwargs_list = []
+            self.orig_model = model
+            self.iters = 0
+            self.calib_num = calib_num
+
+        def forward(self, *args, **kwargs):
+            if self.iters < self.calib_num:
+                self.args_list.append(args)
+                self.kwargs_list.append(kwargs)
+                self.iters += 1
+
+    captured_model = InputCaptureModule(model)
+    run_fn(captured_model)
+    dataloader = CapturedDataloader(captured_model.args_list, captured_model.kwargs_list)
+    model = captured_model.orig_model
+    return model, dataloader
+
+
 def cal_scale(input_max_abs, weights, alpha, weight_max_lb=1e-5):  # pragma: no cover
+    """Calculate the scaling factor for weights based on the input max values and weight magnitudes.
+
+    Args:
+        input_max_abs (Tensor): The maximum absolute values of the inputs.
+        weights (list of Tensor): The list of weight tensors to be concatenated and processed.
+        alpha (float): A parameter to balance the scaling between inputs and weights.
+        weight_max_lb (float, optional): The lower bound for weight magnitudes to avoid division by zero.
+            Defaults to 1e-5.
+
+    Returns:
+        Tensor: The calculated scaling factors for the weights.
+    """
     weights = torch.cat(weights, dim=0)
     weight_max = torch.max(torch.abs(weights), dim=0)[0]
     weight_max = torch.clip(weight_max, weight_max_lb)
@@ -303,6 +628,19 @@ def cal_scale(input_max_abs, weights, alpha, weight_max_lb=1e-5):  # pragma: no 
 
 
 def model_forward_per_sample(model, sample, device):  # pragma: no cover
+    """Perform a forward pass of the model on a single sample.
+
+    Args:
+        model (torch.nn.Module): The model to be applied.
+        sample (Tensor or tuple): The input sample or a tuple of inputs to be passed to the model.
+        device (torch.device): The device on which the model and input sample are located.
+
+    Returns:
+        Tensor: The output of the model after applying it to the sample.
+
+    Raises:
+        Exception: Handles exceptions during the forward pass and retries if needed.
+    """
     try:
         output = forward_wrapper(model, sample, device)
         return output
@@ -313,6 +651,22 @@ def model_forward_per_sample(model, sample, device):  # pragma: no cover
 
 
 def quant_dequant_w_v1(m, num_bits=8, scheme="sym"):  # pragma: no cover
+    """Quantize and dequantize the weights of a layer.
+
+    Args:
+        m (torch.nn.Module): The layer whose weights are to be quantized and dequantized.
+            Supports torch.nn.Linear and torch.nn.Conv2d.
+        num_bits (int, optional): The number of bits for quantization.
+            Defaults to 8.
+        scheme (str, optional): The quantization scheme to use.
+            Can be "sym" for symmetric or "asym" for asymmetric quantization. Defaults to "sym".
+
+    Returns:
+        Tensor: The quantized and dequantized weights of the layer.
+
+    Raises:
+        Warning: Logs a warning if the layer type is not supported.
+    """
     eps = torch.finfo(torch.float32).eps
     if isinstance(m, torch.nn.Linear):
         x = m.weight
@@ -371,6 +725,22 @@ def quant_dequant_w_v1(m, num_bits=8, scheme="sym"):  # pragma: no cover
 
 
 def quant_dequant_x_v1(x, min_x=None, max_x=None, num_bits=8):  # pragma: no cover
+    """Quantize and dequantize a tensor.
+
+    Args:
+        x (Tensor): The input tensor to be quantized and dequantized.
+        min_x (Tensor, optional): The minimum value of the input tensor.
+            If None, it will be computed from x. Defaults to None.
+        max_x (Tensor, optional): The maximum value of the input tensor.
+            If None, it will be computed from x. Defaults to None.
+        num_bits (int, optional): The number of bits for quantization. Defaults to 8.
+
+    Returns:
+        Tensor: The quantized and dequantized tensor.
+
+    Raises:
+        None: No specific exceptions are raised, but input values are clipped to avoid invalid operations.
+    """
     eps = torch.finfo(torch.float32).eps
     q_min, q_max = 0, 2.0**num_bits - 1.0
     if max_x is None or min_x is None:
@@ -387,10 +757,15 @@ def quant_dequant_x_v1(x, min_x=None, max_x=None, num_bits=8):  # pragma: no cov
 
 
 def reshape_scale_as_weight(layer, scale):  # pragma: no cover
-    """Reshape the scale for weight input channel, depthwise output channel
-    :param layer:  torch module
-    :param scale: orig scale
-    :return: reshaped scale."""
+    """Reshape the scale for weight input channel, depthwise output channel.
+
+    Args:
+        layer (torch.nn.Module): Torch module.
+        scale (Tensor): Original scale.
+
+    Returns:
+        Tensor: Reshaped scale.
+    """
     if hasattr(layer, "orig_layer"):
         layer = layer.orig_layer
     if isinstance(layer, torch.nn.Conv2d) and layer.groups > 1:  ##only depthwise conv could hit here
@@ -406,9 +781,14 @@ def reshape_scale_as_weight(layer, scale):  # pragma: no cover
 
 
 def reshape_in_channel_to_last(layer_name, model):  # pragma: no cover
-    """Move the input channel to the last dim
-    :param layer_name: Layer name
-    :return: The reshaped weight."""
+    """Move the input channel to the last dimension.
+
+    Args:
+        layer_name (str): Layer name.
+
+    Returns:
+        Tensor: The reshaped weight.
+    """
     layer = get_module(model, layer_name)
     if layer.__class__.__name__ == "WrapperLayer":
         layer = layer.orig_layer
@@ -421,11 +801,14 @@ def reshape_in_channel_to_last(layer_name, model):  # pragma: no cover
 
 
 def reshape_scale_as_input(layer, scale):  # pragma: no cover
-    """Reshape the scale for input feature in channel
-    :param layer:
+    """Reshape the scale for input feature in channel.
 
-    :param scale:
-    :return:
+    Args:
+        layer (torch.nn.Module): Torch module.
+        scale (Tensor): Original scale.
+
+    Returns:
+        Tensor: Reshaped scale.
     """
     if hasattr(layer, "orig_layer"):
         layer = layer.orig_layer
@@ -442,9 +825,10 @@ TUNERS = {}
 
 
 def register_autotune(name):  # pragma: no cover
-    """Class decorator to register a smoothquant auto-tune subclass.
+    """Class decorator to register a SmoothQuant auto-tune subclass.
 
-    :return: the class of register
+    Returns:
+        type: The class of register.
     """
 
     def register(auto_tune):
@@ -455,7 +839,17 @@ def register_autotune(name):  # pragma: no cover
 
 
 class Calibration:  # pragma: no cover
+    """Calibration class."""
+
     def __init__(self, model, dataloder=None, q_func=None, device="cpu"):
+        """Initialize the Calibration class.
+
+        Args:
+            model (torch.nn.Module): The model to be calibrated.
+            dataloder (DataLoader, optional): DataLoader providing the calibration data. Defaults to None.
+            q_func (Callable, optional): A function for quantization. Defaults to None.
+            device (str, optional): The device to perform calibration on. Defaults to "cpu".
+        """
         self.model = model
         self.dataloader = dataloder
         self.q_func = q_func
@@ -463,9 +857,14 @@ class Calibration:  # pragma: no cover
 
     @torch.no_grad()
     def _save_input_pc_hook(self, name):
-        """A forward hook to save input max of a module
-        :param name: the module name
-        :return: A hook function."""
+        """A forward hook to save input max of a module.
+
+        Args:
+            name (str): The module name.
+
+        Returns:
+            function: A hook function.
+        """
 
         def save_input_hook(module, inputs, outputs):
             input = inputs[0]
@@ -485,9 +884,13 @@ class Calibration:  # pragma: no cover
 
     @torch.no_grad()
     def _add_min_max_observer(self, modules):
-        """
-        :param modules: the modules which the observer will insert to
-        :return:
+        """Insert observers into the given modules.
+
+        Args:
+            modules (list): The modules to which the observer will be inserted.
+
+        Returns:
+            None
         """
         self.hook_handles = []
         for key in modules.keys():
@@ -497,17 +900,25 @@ class Calibration:  # pragma: no cover
 
     @torch.no_grad()
     def _remove_observer(self):
-        """Remove the observer from the model
-        :return:"""
+        """Remove the observer from the model.
+
+        Returns:
+            None
+        """
         for hook_handle in self.hook_handles:
             hook_handle.remove()
 
     @torch.no_grad()
     def _dump_min_max(self, calib_iter=100):
-        """Dump min max per channel information, the min max value will be saved in input_maxes attribute
-        :param calibration_method: only support min_max currently
-        :param calib_iter: Sample size for calibration
-        :return:"""
+        """Dump min-max per channel information; the min-max values will be saved in the input_maxes attribute.
+
+        Args:
+            calibration_method (str): Only supports 'min_max' currently.
+            calib_iter (int): Sample size for calibration.
+
+        Returns:
+            None
+        """
         logger.info("Calibrating...")
         if self.q_func:
             self.q_func(self.model)
@@ -517,10 +928,15 @@ class Calibration:  # pragma: no cover
 
     @torch.no_grad()
     def calibrate(self, calib_iter, op_types=[torch.nn.Conv2d, torch.nn.Linear]):  ##TODO transformers.conv1d
-        """
-        :param absorb_to_layer: A dict,key is the absorb layer, val is a list of the to be smoothed layer
-        :param calib_iter: Data size for calibration
-        :return: A dict that saved the layer name and the channel-wise max value info
+        """Process the absorb layer and smooth layers, then return the channel-wise max value info.
+
+        Args:
+            absorb_to_layer (dict): A dictionary where keys are absorb layers and values are lists
+                of layers to be smoothed.
+            calib_iter (int): Data size for calibration.
+
+        Returns:
+            dict: A dictionary containing the layer names and channel-wise max value information.
         """
         ##hook all the module
         self.input_mins = {}
@@ -539,9 +955,19 @@ class Calibration:  # pragma: no cover
 
 
 class GraphTrace:  # pragma: no cover
-    """"""
+    """GraphTrace Class."""
 
     def __init__(self):
+        """Initialize the GraphTrace class with supported operations and layers.
+
+        Attributes:
+            supported_torch_module_to_aten (dict): A mapping from PyTorch module names
+                to their corresponding ATen operation names.
+            skip_ops_to_find_absorb (list of str): A list of ATen operations that should
+                be skipped when searching for operations to absorb.
+            could_absorb_layers (list of str): A list of ATen operations that are eligible
+                for absorption during graph tracing.
+        """
         self.supported_torch_module_to_aten = {
             "Linear": "aten::linear",
             "Conv2d": "aten::_convolution",
@@ -570,6 +996,19 @@ class GraphTrace:  # pragma: no cover
         ]  ##TODO,support more norm
 
     def trace(self, model, dummy_input):
+        """Trace and freeze a model using TorchScript, handling various input formats and devices.
+
+        Args:
+            model (torch.nn.Module): The model to be traced and frozen.
+            dummy_input (Tensor, dict, or tuple): A dummy input or a dictionary of inputs
+                for tracing the model.
+
+        Returns:
+            torch.jit.ScriptModule or None: The traced and frozen model, or None if tracing failed.
+
+        Raises:
+            Exception: Logs warnings if tracing or freezing the model fails.
+        """
         traced_model = None
         optimize_numerics = False
         orig_device = str(next(model.parameters()).device)
@@ -600,6 +1039,17 @@ class GraphTrace:  # pragma: no cover
         return traced_model
 
     def get_nodes(self, traced_model, op_types=["Linear"]):
+        """Extract nodes of specified types from a traced model's computation graph.
+
+        Args:
+            traced_model (torch.jit.ScriptModule): The traced and frozen model.
+            op_types (list or str, optional): The types of operations to extract nodes for.
+                Defaults to ["Linear"].
+
+        Returns:
+            list of tuple: A list of tuples where each tuple contains a node
+                and its operation type.
+        """
         if isinstance(op_types, str):
             op_types = [op_types]
         nodes = []
@@ -612,6 +1062,14 @@ class GraphTrace:  # pragma: no cover
         return nodes
 
     def get_prev_absorb_layer(self, nodes):
+        """Find previous layers that can be absorbed based on the given nodes.
+
+        Args:
+            nodes (list): A list of nodes for which to find absorbable previous layers.
+
+        Returns:
+            list: A list of previous layers that can be absorbed, or None if no suitable layer is found.
+        """
         prev_absorb_layer = []
         for node in nodes:
             parent = get_parent(node)
@@ -640,6 +1098,14 @@ class GraphTrace:  # pragma: no cover
         return prev_absorb_layer
 
     def skip_op_absorb_helper(self, parent_node):
+        """Helper function to determine if a node should be skipped for absorption based on its outputs.
+
+        Args:
+            parent_node (torch.jit.Node): The node to evaluate for absorption suitability.
+
+        Returns:
+            bool: True if the node can be absorbed, False otherwise.
+        """
         for val_user in list(parent_node.outputs())[0].uses():
             next_node = val_user.user
             if next_node.kind() == "aten::size":
@@ -655,6 +1121,14 @@ class GraphTrace:  # pragma: no cover
         return True
 
     def mapping_torch_module_to_aten(self, op_types):
+        """Map specified torch module operation types to their corresponding ATen operation types.
+
+        Args:
+            op_types (list of str): A list of operation types to be mapped from torch module to ATen.
+
+        Returns:
+            list: A list of unique ATen operation types corresponding to the provided torch module operation types.
+        """
         res = []
         for op in op_types:
             if op not in self.supported_torch_module_to_aten.keys():
@@ -665,10 +1139,13 @@ class GraphTrace:  # pragma: no cover
         return res
 
     def _check_valid_conv(self, module):
-        """Remove group conv except depthwise conv
-        :param module:
+        """Remove group convolution layers except depthwise convolution.
 
-        :return:
+        Args:
+            module (torch.nn.Module): The module to process.
+
+        Returns:
+            None
         """
         if not isinstance(module, torch.nn.Conv2d):
             return True
@@ -680,6 +1157,19 @@ class GraphTrace:  # pragma: no cover
         return True
 
     def get_absorb_to_layer(self, model, example_input, op_types, skip_unsupported_layers=True):
+        """Determine which layers in the model can be absorbed by other layers and map them accordingly.
+
+        Args:
+            model (torch.nn.Module): The model to analyze for absorbable layers.
+            example_input (Tensor, dict, or tuple): Example input to trace the model.
+            op_types (list of str): List of operation types to be considered for absorption.
+            skip_unsupported_layers (bool, optional): Whether to exclude layers that are not supported.
+                Defaults to True.
+
+        Returns:
+            absorb_to_layer (dict): A dictionary mapping absorbable layer names to the layers they can absorb.
+            no_absorb_layers (list): A list of layer names that could not be absorbed.
+        """
         traced_model = self.trace(model, example_input)
         if traced_model is None:
             return None, None
@@ -708,6 +1198,17 @@ class GraphTrace:  # pragma: no cover
         return absorb_to_layer, no_absorb_layers
 
     def remove_unsupported_layers(self, model, absorb_to_layer, no_absorb_layers):
+        """Filter out unsupported layers from the absorb-to-layer mapping based on model's layer types.
+
+        Args:
+            model (torch.nn.Module): The model containing layers to be checked.
+            absorb_to_layer (dict): A dictionary mapping absorbable layer names to layers they can absorb.
+            no_absorb_layers (list): A list to collect names of layers that cannot be absorbed.
+
+        Returns:
+            dict: A dictionary with only the supported layers, mapping absorbable layer names
+                to valid layers they can absorb.
+        """
         res = {}
         for key in absorb_to_layer.keys():
             absorb_layer = get_module(model, key)
@@ -729,7 +1230,9 @@ class GraphTrace:  # pragma: no cover
 
 
 @register_autotune("version1")
-class AutoAlpha:
+class AutoAlpha:  # pragma: no cover
+    """AutoAlpha Class."""
+
     def __init__(
         self,
         model,
@@ -750,7 +1253,6 @@ class AutoAlpha:
         n_samples=32,
     ):
         """Initialize the AutoAlpha tuner with necessary parameters and components."""
-
         self.model = model.to("cpu")
         self.model.eval()
         self.dataloader = dataloader
@@ -775,8 +1277,11 @@ class AutoAlpha:
         self.device = device
 
     def tune(self):
-        """The main entry of auto_alpha
-        :return: Optimal alpha values and scales based on user-defined recipes."""
+        """The main entry of auto_alpha.
+
+        Returns:
+            tuple: Optimal alpha values and scales based on user-defined recipes.
+        """
         calib = Calibration(self.model, self.dataloader, self.q_func, self.device)
         calib_iter = 100
         self.input_mins, self.input_maxes = calib.calibrate(calib_iter, self.op_types)
@@ -831,9 +1336,13 @@ class AutoAlpha:
         return block_names
 
     def _add_blockwise_observer(self, block_modules):
-        """
-        :param block_modules: the block modules which the observer will insert to
-        :return:
+        """Insert observers into the block modules.
+
+        Args:
+            block_modules (list): The block modules to which the observer will be inserted.
+
+        Returns:
+            None
         """
         self.blockwise_hook_handles = []
         for key in block_modules.keys():
@@ -842,9 +1351,14 @@ class AutoAlpha:
             self.blockwise_hook_handles.append(hook_handle)
 
     def _save_blockwise_hook(self, name):
-        """A forward hook to save inputs/outputs of a block
-        :param name: the block name
-        :return: A hook function."""
+        """A forward hook to save inputs and outputs of a block.
+
+        Args:
+            name (str): The block name.
+
+        Returns:
+            function: A hook function.
+        """
 
         def save_blockwise_hook(module, inputs, outputs):
             self.block_inputs[name] = inputs[0]
@@ -886,8 +1400,11 @@ class AutoAlpha:
                 module.disable_quant()
 
     def _qdq_model_wrapper_for_auto(self, save_q_input=False):
-        """Wrapper all the module with qdq
-        :return:"""
+        """Wrap all the modules with QDQ (Quantize-Dequantize) operations.
+
+        Returns:
+            None
+        """
         module_names = self._get_all_hook_module_names()
         self.to_unwrap_module_names = module_names
         for name in module_names:
@@ -898,8 +1415,11 @@ class AutoAlpha:
             set_module(self.model, name, new_module)
 
     def _qdq_model_unwrapper_for_auto(self):
-        """Unwrapper all the module with qdq
-        :return:"""
+        """Unwrap all the modules from QDQ (Quantize-Dequantize) operations.
+
+        Returns:
+            None
+        """
         module_names = self.to_unwrap_module_names
         for name in module_names:
             module = get_module(self.model, name)
@@ -908,11 +1428,16 @@ class AutoAlpha:
             set_module(self.model, name, module.orig_layer)
 
     def _cal_scales(self, absorb_to_layer, input_maxes, alpha=0.5):
-        """Cal the adjust scales
-        :param absorb_to_layer: A dict mapping absorb layer to smooth quantized layer
-        :param input_maxes: The channel-wise input max info for layers
-        :param alpha: Alpha value to balance the quantization difficulty of activation and weight, a float of a dict
-        :return:"""
+        """Calculate the adjustment scales.
+
+        Args:
+            absorb_to_layer (dict): A dictionary mapping absorb layers to smooth quantized layers.
+            input_maxes (dict): The channel-wise input max information for layers.
+            alpha (float or dict): Alpha value to balance the quantization difficulty of activation and weight.
+
+        Returns:
+            dict: A dictionary containing the calculated adjustment scales.
+        """
         absorb_to_input_maxes = {}
         for key in absorb_to_layer.keys():
             layer_name = absorb_to_layer[key][0]
@@ -957,12 +1482,17 @@ class AutoAlpha:
         return absorb_scales_info, weight_scales_info
 
     def _get_auto_loss(self, output, output_q, loss_type="abs", loss_alpha=1.0):
-        """Get the loss for auto tuning
-        :param output: Fp32 output for one layer
-        :param output_q: Quant output for one layer
-        :param loss_type: The type of loss
-        :param loss_alpha: Loss alpha i for mean scale error
-        :return: A tensor of the loss."""
+        """Get the loss for auto-tuning.
+
+        Args:
+            output (Tensor): FP32 output for one layer.
+            output_q (Tensor): Quantized output for one layer.
+            loss_type (str): The type of loss.
+            loss_alpha (float): Loss alpha value for mean scale error.
+
+        Returns:
+            Tensor: A tensor containing the calculated loss.
+        """
         if len(output.shape) <= 2:
             max_value = torch.max(torch.abs(output))
         else:
@@ -978,8 +1508,11 @@ class AutoAlpha:
             return torch.sum((output - output_q) ** 2)
 
     def _get_sq_layer_names(self):
-        """Get all the layers that could be smooth quanted
-        :return: All the sq layer names."""
+        """Get all the layers that could be smooth quantized.
+
+        Returns:
+            list: All the smooth quantization layer names.
+        """
         ##TODO this may not fit for folding=False
         module_names = []
         for key in self.absorb_to_layer:
@@ -987,9 +1520,10 @@ class AutoAlpha:
         return module_names
 
     def _get_best_alpha(self, absorb_to_layer, loss_alphas, shared_criterion):
-        """Obtain the optimal alpha values based on shared criterion and loss values recorded in auto-tuning step.
+        """Obtain the optimal alpha values based on shared criteria and loss values recorded in the auto-tuning step.
 
-        :return: A dict of layerwise alpha values.
+        Returns:
+            dict: A dictionary of layerwise alpha values.
         """
 
         def dict_to_list(dic):
@@ -1034,7 +1568,8 @@ class AutoAlpha:
     def _get_one_batch_auto_loss(self, input, alpha_space, orig_best_alpha, input_maxes):
         """Calculate the losses for all alpha values given an input.
 
-        :return: A dict of op-wise loss values with respect to alpha values.
+        Returns:
+            dict: A dictionary of operation-wise loss values with respect to alpha values.
         """
         self._change_qdq_for_auto(enable=False)
         module_names = self._get_sq_layer_names()
@@ -1084,7 +1619,8 @@ class AutoAlpha:
     def _get_one_batch_auto_loss_blockwise(self, input, alpha_space, orig_best_alpha, input_maxes):
         """Calculate the losses for all alpha values given an input in blockwise tuning mode.
 
-        :return: A dict of blockwise-wise loss values with respect to alpha values.
+        Returns:
+            dict: A dictionary of blockwise loss values with respect to alpha values.
         """
         self._change_qdq_for_auto(enable=False)
         module_names = self._get_sq_layer_names()
@@ -1158,9 +1694,10 @@ class AutoAlpha:
         return loss_alphas
 
     def opwise_rank(self, loss_alphas, best_alphas):
-        """Rank the final losses of ops based on their ratio with respect to op output norm.
+        """Rank the final losses of operations based on their ratio with respect to operation output norm.
 
-        :return:
+        Returns:
+            dict: A dictionary of ranked operations with their loss ratios.
         """
         max_op, max_ratio, max_key = "", 0, ""
         ratio_info = {}
@@ -1194,7 +1731,8 @@ class AutoAlpha:
     def default_tune_setup(self):
         """Setup default auto-tune settings.
 
-        :return: A dict of op-wise loss values with respect to alpha values.
+        Returns:
+            dict: A dictionary of operation-wise loss values with respect to alpha values.
         """
         round_num = max(  # Initialize the alpha search space
             len(str(self.alpha_min).split(".")[1]),
@@ -1229,14 +1767,15 @@ class AutoAlpha:
         best_alphas = self.init_alpha
 
         if not self.dataloader:
-            logger.info(f"Auto-tuning failed due to no dataloader, using {best_alphas} instead.")
-            self._qdq_model_unwrapper_for_auto()
-            return best_alphas
+            logger.info("No dataloader, performing auto-tuning with calibration function instead.")
+            self.model, self.dataloader = build_captured_dataloader(self.model, self.q_func, self.calib_sample_num)
+
         bar = tqdm(self.dataloader, total=self.calib_sample_num, desc="auto tune alpha")  # pylint: disable=E1102
         for input in bar:
             if isinstance(input, tuple) or isinstance(input, list):
                 if len(input) == 2:
                     input, _ = input  # Extract input when both input and label are yielded by dataloader.
+
             loss_alphas = {}
             best_alphas_per_module = best_alphas
             if isinstance(best_alphas, dict):
@@ -1254,8 +1793,9 @@ class AutoAlpha:
                     cur_loss = loss_alphas[key]
                     for alpha_key in cur_loss.keys():
                         cur_loss[alpha_key] += loss_tmp[key][alpha_key]
-            total_cnt += self.dataloader.batch_size
-            tmp_cnt += self.dataloader.batch_size
+
+            total_cnt += 1
+            tmp_cnt += 1
             if tmp_cnt // multiply_factor >= 1:
                 alpha_update_iter += 1
                 tmp_cnt = 0
@@ -1298,13 +1838,14 @@ class AutoAlpha:
         best_alphas = self.init_alpha
 
         if not self.dataloader:
-            logger.info(f"Auto-tuning failed due to no dataloader, using {best_alphas} instead.")
-            self._qdq_model_unwrapper_for_auto()
-            return best_alphas
+            logger.info("No dataloader, performing auto-tuning with calibration function instead.")
+            self.model, self.dataloader = build_captured_dataloader(self.model, self.q_func, self.calib_sample_num)
+
         bar = tqdm(self.dataloader, total=self.calib_sample_num, desc="auto tune alpha")  # pylint: disable=E1102
         for input in bar:
             if isinstance(input, tuple):  # Extract input when both input and label are yielded by dataloader.
                 input = input[0]
+
             loss_alphas = {}
             best_alphas_per_module = best_alphas
             if isinstance(best_alphas, dict):
@@ -1326,8 +1867,8 @@ class AutoAlpha:
                         for alpha_key in cur_loss.keys():
                             cur_loss[alpha_key] += loss_tmp[block_name][alpha_key]
 
-            total_cnt += self.dataloader.batch_size
-            tmp_cnt += self.dataloader.batch_size
+            total_cnt += 1
+            tmp_cnt += 1
             if tmp_cnt // multiply_factor >= 1:
                 alpha_update_iter += 1
                 tmp_cnt = 0
@@ -1354,13 +1895,14 @@ class AutoAlpha:
         return best_alphas
 
 
-class TorchSmoothQuant:
-    """Fake input channel quantization, for more details please refer to
+class TorchSmoothQuant:  # pragma: no cover
+    """Fake input channel quantization.
+
+    For more details please refer to:
     [1] SmoothQuant: Accurate and Efficient
     Post-Training Quantization for Large Language Models
     [2] SPIQ: Data-Free Per-Channel Static Input Quantization
     Currently, we only handle the layers whose smooth scale could be absorbed, we will support other layers later.
-
     We only support inplace mode which means the model weights will be changed, you can call recover function
     to recover the weights if needed
     """
@@ -1375,10 +1917,16 @@ class TorchSmoothQuant:
         scale_sharing=True,
         record_max_info=False,
     ):
-        """
-        :param model: Torch model :param dataloader: Calibration dataloader :param traced_model: A specific model
-        shares the same architecture as the model and could be traced by torch.jit. If not supplied, we use model
-        instead.
+        """Init TorchSmoothQuant Class.
+
+        Args:
+            model (torch.nn.Module): Torch model.
+            dataloader (DataLoader): Calibration dataloader.
+            traced_model (Optional[torch.jit.ScriptModule]): A specific model that shares the same architecture
+                as the model and could be traced by torch.jit. If not supplied, the model will be used instead.
+
+        Returns:
+            None
         """
         self.model = model
         if not isinstance(self.model, torch.nn.Module):
@@ -1412,18 +1960,26 @@ class TorchSmoothQuant:
         self.need_calibration = False
 
     def _get_device(self):
-        """Get the model device
-        :return:Model device."""
+        """Get the model device.
+
+        Returns:
+            torch.device: The device on which the model is located.
+        """
         for _, p in self.model.named_parameters():
             return p.data.device, p.data.dtype
 
     def _scale_layer_weight(self, layer_name, scale, alpha=0.5, input_minmax=None):  ##input channel
-        """Scale the layer weights at input channel, depthwise conv output channel
-        :param layer_name: The layer name
-        :param scale: The scale to be multiplied
-        :param alpha: alpha for SQLinearWrapper
-        :param input_minmax: input_minmax for SQLinearWrapper
-        :return:"""
+        """Scale the layer weights at input channel and depthwise convolution output channel.
+
+        Args:
+            layer_name (str): The layer name.
+            scale (Tensor): The scale to be multiplied.
+            alpha (float): Alpha value for SQLinearWrapper.
+            input_minmax (tuple): Input min and max values for SQLinearWrapper.
+
+        Returns:
+            None
+        """
         layer = get_module(self.model, layer_name)
         if self.insert_mul:
             layer = get_module(self.model, layer_name)
@@ -1439,11 +1995,16 @@ class TorchSmoothQuant:
         return scale
 
     def _absorb_scales(self, layer_name, scale):  ##output channel
-        """Absorb the scale to the layer at output channel
-        :param layer_name: The module name
-        :param scale: The scale to be absorbed
-        :param alpha_key: The alpha passed to SQLinearWrapper
-        :return:"""
+        """Absorb the scale to the layer at the output channel.
+
+        Args:
+            layer_name (str): The module name.
+            scale (Tensor): The scale to be absorbed.
+            alpha_key (str): The alpha value passed to SQLinearWrapper.
+
+        Returns:
+            None
+        """
         if self.insert_mul or not self.allow_absorb:
             return  # absorb is updated in SQLinearWrapper in def _scale_layer_weight
 
@@ -1503,6 +2064,17 @@ class TorchSmoothQuant:
                 layer.bias *= scale
 
     def _export_sq_info(self, absorb_to_layer, input_maxes, alpha=0.5):
+        """Export information required for SmoothQuant including scales and min/max values.
+
+        Args:
+            absorb_to_layer (dict): A dictionary mapping absorbable layer names to layers they can absorb.
+            input_maxes (dict): A dictionary mapping layer names to their channel-wise maximum values.
+            alpha (float or dict, optional): Alpha value(s) to balance the quantization difficulty
+                of activation and weight. Defaults to 0.5.
+
+        Returns:
+            None
+        """
         absorb_to_input_maxes = {}
         for key in absorb_to_layer.keys():
             layer_name = absorb_to_layer[key][0]
@@ -1551,11 +2123,16 @@ class TorchSmoothQuant:
                 }
 
     def _cal_scales(self, absorb_to_layer, input_maxes, alpha=0.5):
-        """Cal the adjust scales
-        :param absorb_to_layer: A dict mapping absorb layer to smooth quantized layer
-        :param input_maxes: The channel-wise input max info for layers
-        :param alpha: Alpha value to balance the quantization difficulty of activation and weight, a float of a dict
-        :return:"""
+        """Calculate the adjustment scales.
+
+        Args:
+            absorb_to_layer (dict): A dictionary mapping absorb layers to smooth quantized layers.
+            input_maxes (dict): The channel-wise input max information for layers.
+            alpha (float or dict): Alpha value to balance the quantization difficulty of activation and weight.
+
+        Returns:
+            dict: A dictionary containing the calculated adjustment scales.
+        """
         absorb_to_input_maxes = {}
         for key in absorb_to_layer.keys():
             layer_name = absorb_to_layer[key][0]
@@ -1582,11 +2159,16 @@ class TorchSmoothQuant:
         return absorb_scales_info, weight_scales_info
 
     def _adjust_parameters(self, absorb_to_layer, input_maxes, alpha=0.5):
-        """Adjust the weights and biases
-        :param absorb_to_layer: A dict mapping absorb layer to smooth quantized layer
-        :param input_maxes: The channel-wise input max info for layers
-        :param alpha: Alpha value to balance the quantization difficulty of activation and weight, a float of a dict
-        :return:"""
+        """Adjust the weights and biases.
+
+        Args:
+            absorb_to_layer (dict): A dictionary mapping absorb layers to smooth quantized layers.
+            input_maxes (dict): The channel-wise input max information for layers.
+            alpha (float or dict): Alpha value to balance the quantization difficulty of activation and weight.
+
+        Returns:
+            None
+        """
         absorb_scales_info, weight_scales_info = self._cal_scales(absorb_to_layer, input_maxes, alpha)
         if not absorb_scales_info or not weight_scales_info:
             return weight_scales_info, absorb_scales_info
@@ -1604,14 +2186,17 @@ class TorchSmoothQuant:
         return weight_scales_info, absorb_scales_info
 
     def _check_need_calibration(self, alpha, percentile, op_types, scales_per_op, calib_iter):
-        """
-        check need calibration or not
-        :param alpha: current alpha
-        :param percentile: current percentile
-        :param op_types: current op_types
-        :param scales_per_op: current scales_per_op
-        :param calib_iter:: current scales_per_op
-        :return:
+        """Check if calibration is needed.
+
+        Args:
+            alpha (float or dict): Current alpha values.
+            percentile (float): Current percentile.
+            op_types (list): Current operation types.
+            scales_per_op (dict): Current scales per operation.
+            calib_iter (int): Current calibration iterations.
+
+        Returns:
+            bool: True if calibration is needed, False otherwise.
         """
         need_calib = True
         from peft import PeftModel  # pylint: disable=E0401
@@ -1641,6 +2226,17 @@ class TorchSmoothQuant:
 
     @torch.no_grad()
     def _parse_absorb_to_layers(self, op_types, folding):
+        """Parse and map layers in the model for smooth quantization based on specified operation types.
+
+        Args:
+            op_types (list): List of operation types (e.g., ["Linear"]) to consider for quantization.
+            folding (bool): Flag indicating whether to insert multiplication operations (False) or
+                just handle foldable layers (True) for quantization.
+
+        Returns:
+            dict or None: Dictionary mapping absorb layer names to lists of layers that can be quantized.
+                If tracing fails or no layers can be quantized, returns None.
+        """
         str_op_types = [i.__name__ for i in op_types]
         self_absorb_layers = {}
         if self.insert_mul:
@@ -1711,24 +2307,27 @@ class TorchSmoothQuant:
             "n_samples": 32,  ##512 for cuda, 128 for cpu?
         },
     ):
-        """The main entry of smooth quant
-        :param alpha: Alpha value to balance the quantization difficulty of activation and weight, please refer
-        to the paper for more details
-        :param folding: whether insert mul(False) or just allow foldable layers(True) for SmoothQuant
-        :param percentile: Not supported now
-        :param op_types: The op typed to be smooth quantized
-        :param scales_per_op: Not supported now
-        :param calib_iter: Data size for calibration
-        :param weight_clip: Whether to clip weight_max when calculating scales.
+        """The main entry of SmoothQuant.
 
-        :param auto_alpha_args: Hyperparameters used to set the alpha search space in SQ auto-tuning.
-            By default, the search space is 0.0-1.0 with step_size 0.1.
-            do_blockwise: Whether to do blockwise auto-tuning.
-        :param init_alpha: A hyperparameter that is used in SQ auto-tuning; by default it is 0.5.
-        :return: A FP32 model with the same architecture as the orig model but with different weight which will be
-        benefit to quantization.
+        Args:
+            alpha (float or dict): Alpha value to balance the quantization difficulty of activation and weight.
+                Please refer to the paper for more details.
+            folding (bool): Whether to insert multiplication (False) or just allow foldable layers (True)
+                for SmoothQuant.
+            percentile (float): Not supported currently.
+            op_types (list): The operation types to be smooth quantized.
+            scales_per_op (dict): Not supported currently.
+            calib_iter (int): Data size for calibration.
+            weight_clip (bool): Whether to clip weight_max when calculating scales.
+            auto_alpha_args (dict): Hyperparameters used to set the alpha search space in SQ auto-tuning.
+                By default, the search space is 0.0-1.0 with step_size 0.1.
+            do_blockwise (bool): Whether to perform blockwise auto-tuning.
+            init_alpha (float): A hyperparameter used in SQ auto-tuning; by default, it is 0.5.
+
+        Returns:
+            torch.nn.Module: An FP32 model with the same architecture as the original model
+                but with modified weights, which will benefit quantization.
         """
-
         if not isinstance(self.model, torch.nn.Module):
             logger.warning("smoothquant is ignored since the model is not a torch module")
             return self.model
@@ -1835,6 +2434,20 @@ class TorchSmoothQuant:
         return self.model
 
     def output_is_equal(self, out1, out2, atol=1e-04):
+        """Compare two outputs to determine if they are approximately equal within a specified tolerance.
+
+        Args:
+            out1 (Union[tuple, dict, torch.Tensor]): The first output to compare.
+            out2 (Union[tuple, dict, torch.Tensor]): The second output to compare.
+            atol (float, optional): The absolute tolerance for the comparison. Default is 1e-04.
+
+        Returns:
+            bool: True if the outputs are approximately equal within the tolerance, False otherwise.
+
+        Raises:
+            Exception: If any unexpected error occurs during comparison, a warning is logged,
+                and True is returned to indicate that automatic checking failed.
+        """
         try:
             if isinstance(out1, tuple):
                 return all(torch.all(torch.isclose(out1[i], out2[i], atol=atol)) for i in range(len(out1)))
@@ -1852,8 +2465,11 @@ class TorchSmoothQuant:
 
     @torch.no_grad()
     def revert(self):
-        """Revert the model weights
-        :return:"""
+        """Revert the model weights to their original state.
+
+        Returns:
+            None
+        """
         for key in self.weight_scale_info:
             self._scale_layer_weight(key, 1.0 / self.weight_scale_info[key])
         for key in self.absorb_scales_info:
@@ -1862,11 +2478,14 @@ class TorchSmoothQuant:
         self.absorb_scales_info = {}
 
     def _get_all_layer_names(self, op_types=[torch.nn.Linear]):
-        """Try the model to find the layers which can be smooth quantized.
+        """Identify the layers which can be smooth quantized.
 
-        :param op_types: The op types to be smooth quantized
-        :return:
-        self_absorb_layer: A dict, absorb layer name (itself): layers to be smooth quantized
+        Args:
+            op_types (list): The operation types to be smooth quantized.
+
+        Returns:
+            dict: A dictionary where the keys are absorb layer names (themselves)
+                and the values are lists of layers to be smooth quantized.
         """
         self_absorb_layer = {}
         op_types = [torch.nn.Linear]  # TODO： only support SQLinearWrapper
@@ -1876,6 +2495,14 @@ class TorchSmoothQuant:
         return self_absorb_layer
 
     def _get_example_input(self):
+        """Retrieve an example input from the dataloader or return the pre-stored example inputs.
+
+        Returns:
+            Union[torch.Tensor, None]: The example input if available, otherwise None.
+
+        Raises:
+            RuntimeError: If an error occurs while fetching inputs from the dataloader.
+        """
         if self.dataloader is None and self.example_inputs is None:
             return None
         if self.example_inputs is None:
@@ -1891,14 +2518,16 @@ class TorchSmoothQuant:
         return self.example_inputs
 
     def _trace(self, op_types, skip_unsupported_layers=True):
-        """Try the model to find the layers which can be smooth quantized.
+        """Identify the layers which can be smooth quantized.
 
-        :param op_types: The op types to be smooth quantized
-        :return:
-        absorb_to_layer: A dict, absorb layer name:layers to be smooth quantized
-        no_absorb_layers: A list saving the layers which could not find the absorb layer
+        Args:
+            op_types (list): The operation types to be smooth quantized.
+
+        Returns:
+            dict: A dictionary where keys are absorb layer names and values are lists of
+                layers to be smooth quantized.
+            list: A list of layers for which no absorb layer was found.
         """
-
         tg = GraphTrace()
         self._get_example_input()
         absorb_to_layer, no_absorb_layers = tg.get_absorb_to_layer(
@@ -1929,8 +2558,19 @@ class TorchSmoothQuant:
         return absorb_to_layer, no_absorb_layers
 
 
-class SQLinearWrapper(torch.nn.Module):
+class SQLinearWrapper(torch.nn.Module):  # pragma: no cover
+    """SQLinearWrapper Class."""
+
     def __init__(self, module, input_scale, input_minmax, alpha=0.5, dtype=torch.quint8):
+        """Initialize the class.
+
+        Args:
+            module (torch.nn.Module): The module to be wrapped.
+            input_scale (Tensor): The scale for input features.
+            input_minmax (Tuple[Tensor, Tensor]): The min and max values for input features.
+            alpha (float, optional): A parameter for scaling. Defaults to 0.5.
+            dtype (torch.dtype, optional): The data type for quantization. Defaults to torch.quint8.
+        """
         super().__init__()
         self.register_buffer("input_scale", input_scale)
         self.alpha = alpha
@@ -1943,9 +2583,22 @@ class SQLinearWrapper(torch.nn.Module):
 
     @property
     def weight(self):
+        """Get the weight of the sq_linear module.
+
+        Returns:
+            Tensor: The weight of the sq_linear module.
+        """
         return self.sq_linear.weight
 
     def forward(self, X):
+        """Forward pass of the module.
+
+        Args:
+            X (Tensor): The input tensor.
+
+        Returns:
+            Tensor: The output tensor after applying the sq_linear module.
+        """
         if self.ipex:
             X = self.sq_linear(X)
         else:
@@ -1954,7 +2607,16 @@ class SQLinearWrapper(torch.nn.Module):
         return X
 
     def _calculate_qparams(self, input_scale, input_minmax, dtype=torch.quint8):
-        # calculate scale and zero_point
+        """Calculate scale and zero-point for quantization.
+
+        Args:
+            input_scale (Tensor): The scale for input features.
+            input_minmax (Tuple[Tensor, Tensor]): The min and max values for input features.
+            dtype (torch.dtype, optional): The data type for quantization. Defaults to torch.quint8.
+
+        Returns:
+            Tuple[Tensor, Tensor]: The calculated scale and zero-point.
+        """
         if dtype == torch.quint8:
             quant_min, quant_max = 0, 255
         min_val = torch.min(input_minmax[0] * input_scale)
@@ -1969,7 +2631,11 @@ class SQLinearWrapper(torch.nn.Module):
         return scale, zero_point
 
     def _get_weight_scale(self):
-        # get weight scale and zero_point
+        """Get the weight scale and zero-point.
+
+        Returns:
+            Tensor: The scale of the weight.
+        """
         from torch.ao.quantization.observer import default_per_channel_weight_observer
 
         obs = default_per_channel_weight_observer()
@@ -1978,20 +2644,36 @@ class SQLinearWrapper(torch.nn.Module):
         return scale
 
     def _update_sq_linear(self):
-        # remove mul and reset sq_linear for ipex inference
+        """Update the sq_linear module by removing the multiplication of scale.
+
+        This method adjusts the weight of sq_linear for ipex inference.
+        """
         scale = self.input_scale.view(1, self.input_scale.shape[0])
         with torch.no_grad():
             self.sq_linear.weight /= scale
 
     def _recover_sq_linear(self):
-        # remove mul and reset sq_linear for ipex inference
+        """Recover the original sq_linear module by restoring the multiplication of scale.
+
+        This method adjusts the weight of sq_linear for ipex inference.
+        """
         scale = self.input_scale.view(1, self.input_scale.shape[0])
         with torch.no_grad():
             self.sq_linear.weight *= scale
 
 
-class WrapperLayer(torch.nn.Module):
+class WrapperLayer(torch.nn.Module):  # pragma: no cover
+    """WrapperLayer Class."""
+
     def __init__(self, layer, input_min, input_max, save_q_input=False):
+        """Initialize the WrapperLayer.
+
+        Args:
+            layer (torch.nn.Module): The original layer to be wrapped.
+            input_min (Tensor): Minimum value of the input.
+            input_max (Tensor): Maximum value of the input.
+            save_q_input (bool, optional): Whether to save the quantized input. Defaults to False.
+        """
         super(WrapperLayer, self).__init__()
         self.add_module("orig_layer", layer)  # set orig_layer in get/set_module
         self.quant = False
@@ -2005,17 +2687,34 @@ class WrapperLayer(torch.nn.Module):
         self.do_blockwise = False
 
     def enable_quant(self):
+        """Enable quantization for the layer."""
         self.quant = True
 
     def disable_quant(self):
+        """Disable quantization for the layer."""
         self.quant = False
 
     def update_scale(self, input_scale, weight_scale):
+        """Update the input and weight scales.
+
+        Args:
+            input_scale (Tensor): The scale for the input.
+            weight_scale (Tensor): The scale for the weight.
+        """
         self.input_scale = input_scale
         self.weight_scale = weight_scale
 
-    ##TODO better tradeoff performance and memory, currently it's too slow
     def q_dq_forward(self, x, input_scale, weight_scale):
+        """Perform quantization and dequantization forward pass.
+
+        Args:
+            x (Tensor): The input tensor.
+            input_scale (Tensor): The scale for the input.
+            weight_scale (Tensor): The scale for the weight.
+
+        Returns:
+            Tensor: The output tensor after quantization and dequantization.
+        """
         layer_copy = copy.deepcopy(self.orig_layer)
         if weight_scale is not None:
             layer_copy.weight *= weight_scale
@@ -2030,6 +2729,15 @@ class WrapperLayer(torch.nn.Module):
         return output
 
     def q_dq_forward_blockwise(self, x, input_scale):
+        """Perform blockwise quantization and dequantization forward pass.
+
+        Args:
+            x (Tensor): The input tensor.
+            input_scale (Tensor): The scale for the input.
+
+        Returns:
+            Tensor: The output tensor after blockwise quantization and dequantization.
+        """
         layer_copy = copy.deepcopy(self.orig_layer)
         if input_scale is None:
             x = quant_dequant_x_v1(x, self.input_min, self.input_max)
@@ -2040,6 +2748,14 @@ class WrapperLayer(torch.nn.Module):
         return output
 
     def forward(self, x):
+        """Perform the forward pass of the module.
+
+        Args:
+            x (Tensor): The input tensor.
+
+        Returns:
+            Tensor: The output tensor.
+        """
         if self.quant:
             # self.q_input = x * scale ##save the q_input
             if self.save_q_input:
@@ -2048,7 +2764,6 @@ class WrapperLayer(torch.nn.Module):
                 output = self.q_dq_forward(x, self.input_scale, self.weight_scale)
             else:
                 output = self.q_dq_forward_blockwise(x, self.input_scale)
-
         else:
             output = self.orig_layer(x)
         self.output = output

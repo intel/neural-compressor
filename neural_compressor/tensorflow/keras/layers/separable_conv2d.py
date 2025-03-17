@@ -14,11 +14,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Initialize custom separable conv2d layers for Keras quantization."""
 
 import json
 
 import tensorflow as tf
-from tensorflow import quantization
 from tensorflow.keras import activations, constraints, initializers, regularizers
 
 from neural_compressor.tensorflow.utils import version1_gte_version2
@@ -33,15 +33,15 @@ else:
     from keras.layers.convolutional.base_separable_conv import SeparableConv  # pylint: disable=E0401
     from keras.utils import conv_utils  # pylint: disable=E0401
 
-if version1_gte_version2(tf.__version__, "2.16.1"):
+if version1_gte_version2(tf.__version__, "2.16.1"):  # pragma: no cover
 
     class QSeparableConv2D(BaseSeparableConv):
+        """The custom quantized SeparableConv2D layer."""
+
         def __init__(
             self,
             filters,
             kernel_size,
-            min_value,
-            max_value,
             strides=(1, 1),
             padding="valid",
             data_format=None,
@@ -72,6 +72,7 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
             quant_axis=None,
             **kwargs
         ):
+            """Initialize custom quantized SeparableConv2D layer."""
             super().__init__(
                 rank=2,
                 filters=filters,
@@ -97,13 +98,12 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
             )
 
             T_map = {"s8": tf.qint8, "u8": tf.quint8}
-            self.reverse_T_map = {tf.qint8: "s8", tf.quint8: "u8"}
             self.weight_min_value = weight_min_value
             self.weight_max_value = weight_max_value
             self.act_min_value = act_min_value
             self.act_max_value = act_max_value
             self.granularity = granularity
-            self.quant_status= quant_status
+            self.quant_status = quant_status
             self.quant_mode = quant_mode
             self.quant_T = T_map[quant_T]
             self.quant_round_mode = quant_round_mode
@@ -111,16 +111,19 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
             self.quant_axis = quant_axis
 
         def call(self, inputs):
+            """The __call__ function of custom quantized SeparableConv2D layer."""
             if self.quant_status == "calib" and not isinstance(inputs, tf.keras.KerasTensor):
                 if self.granularity == "per_tensor":
                     self.act_min_value = tf.math.reduce_min(inputs)
                     self.act_max_value = tf.math.reduce_max(inputs)
                 else:
-                    self.act_min_value = tf.math.reduce_min(inputs, axis=self.axis)
-                    self.act_max_value = tf.math.reduce_max(inputs, axis=self.axis)
+                    self.act_min_value = tf.math.reduce_min(inputs, axis=1)
+                    self.act_max_value = tf.math.reduce_max(inputs, axis=1)
                 depthwise_kernel = self.depthwise_kernel
             elif self.quant_status == "quantize":
-                assert self.act_min_value is not None, "Invalid activation min-max values, please check calibration process"
+                assert (
+                    self.act_min_value is not None
+                ), "Invalid activation min-max values, please check calibration process"
                 inputs, _, _ = tf.quantization.quantize(
                     inputs,
                     self.act_min_value,
@@ -131,7 +134,7 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
                     narrow_range=self.quant_narrow_range,
                     axis=self.quant_axis,
                 )
-                inputs =  tf.quantization.dequantize(
+                inputs = tf.quantization.dequantize(
                     inputs,
                     self.act_min_value,
                     self.act_max_value,
@@ -141,15 +144,10 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
                 )
 
                 # (TODO) it's ugly that we can't get the point_wise min/max here
-                depthwise_kernel, _, _ = quantization.quantize(
-                    self.depthwise_kernel, 
-                    self.weight_min_value, 
-                    self.weight_max_value, 
-                    tf.qint8, 
-                    axis=3, 
-                    mode="SCALED"
+                depthwise_kernel, _, _ = tf.quantization.quantize(
+                    self.depthwise_kernel, self.weight_min_value, self.weight_max_value, tf.qint8, axis=3, mode="SCALED"
                 )
-                depthwise_kernel = quantization.dequantize(
+                depthwise_kernel = tf.quantization.dequantize(
                     depthwise_kernel,
                     self.weight_min_value,
                     self.weight_max_value,
@@ -181,10 +179,12 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
 
         @classmethod
         def from_config(cls, config):
+            """Deserialize this class from a config dict."""
             return cls(**config)
 
         def get_config(self):
-            config = super(QConv2D, self).get_config()
+            """Serialize this class to a config dict."""
+            config = super(QSeparableConv2D, self).get_config()
             config.update(
                 {
                     "act_min_value": self.act_min_value,
@@ -194,24 +194,24 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
                     "granularity": self.granularity,
                     "quant_status": self.quant_status,
                     "quant_mode": self.quant_mode,
-                    "quant_T": self.reverse_T_map[self.quant_T],
+                    "quant_T": "s8" if self.quant_T == tf.qint8 else "u8",
                     "quant_round_mode": self.quant_round_mode,
                     "quant_narrow_range": self.quant_narrow_range,
                     "quant_axis": self.quant_axis,
                 }
             )
-            
+
             return config
 
 else:
 
     class QSeparableConv2D(SeparableConv):
+        """The custom quantized SeparableConv2D layer."""
+
         def __init__(
             self,
             filters,
             kernel_size,
-            min_value,
-            max_value,
             strides=(1, 1),
             padding="valid",
             data_format=None,
@@ -242,6 +242,7 @@ else:
             quant_axis=None,
             **kwargs
         ):
+            """Initialize custom quantized SeparableConv2D layer."""
             super().__init__(
                 rank=2,
                 filters=filters,
@@ -266,13 +267,12 @@ else:
                 **kwargs
             )
             T_map = {"s8": tf.qint8, "u8": tf.quint8}
-            self.reverse_T_map = {tf.qint8: "s8", tf.quint8: "u8"}
             self.weight_min_value = weight_min_value
             self.weight_max_value = weight_max_value
             self.act_min_value = act_min_value
             self.act_max_value = act_max_value
             self.granularity = granularity
-            self.quant_status= quant_status
+            self.quant_status = quant_status
             self.quant_mode = quant_mode
             self.quant_T = T_map[quant_T]
             self.quant_round_mode = quant_round_mode
@@ -280,16 +280,19 @@ else:
             self.quant_axis = quant_axis
 
         def call(self, inputs):
-            if self.quant_status == "calib" and not isinstance(inputs, tf.keras.KerasTensor):
+            """The __call__ function of custom quantized SeparableConv2D layer."""
+            if self.quant_status == "calib":
                 if self.granularity == "per_tensor":
                     self.act_min_value = tf.math.reduce_min(inputs)
                     self.act_max_value = tf.math.reduce_max(inputs)
                 else:
-                    self.act_min_value = tf.math.reduce_min(inputs, axis=self.axis)
-                    self.act_max_value = tf.math.reduce_max(inputs, axis=self.axis)
+                    self.act_min_value = tf.math.reduce_min(inputs, axis=1)
+                    self.act_max_value = tf.math.reduce_max(inputs, axis=1)
                 depthwise_kernel = self.depthwise_kernel
             elif self.quant_status == "quantize":
-                assert self.act_min_value is not None, "Invalid activation min-max values, please check calibration process"
+                assert (
+                    self.act_min_value is not None
+                ), "Invalid activation min-max values, please check calibration process"
                 inputs, _, _ = tf.quantization.quantize(
                     inputs,
                     self.act_min_value,
@@ -300,7 +303,7 @@ else:
                     narrow_range=self.quant_narrow_range,
                     axis=self.quant_axis,
                 )
-                inputs =  tf.quantization.dequantize(
+                inputs = tf.quantization.dequantize(
                     inputs,
                     self.act_min_value,
                     self.act_max_value,
@@ -310,15 +313,10 @@ else:
                 )
 
                 # (TODO) it's ugly that we can't get the point_wise min/max here
-                depthwise_kernel, _, _ = quantization.quantize(
-                    self.depthwise_kernel, 
-                    self.weight_min_value, 
-                    self.weight_max_value, 
-                    tf.qint8, 
-                    axis=3, 
-                    mode="SCALED"
+                depthwise_kernel, _, _ = tf.quantization.quantize(
+                    self.depthwise_kernel, self.weight_min_value, self.weight_max_value, tf.qint8, axis=3, mode="SCALED"
                 )
-                depthwise_kernel = quantization.dequantize(
+                depthwise_kernel = tf.quantization.dequantize(
                     depthwise_kernel,
                     self.weight_min_value,
                     self.weight_max_value,
@@ -351,10 +349,12 @@ else:
 
         @classmethod
         def from_config(cls, config):
+            """Deserialize this class from a config dict."""
             return cls(**config)
 
         def get_config(self):
-            config = super(QConv2D, self).get_config()
+            """Serialize this class to a config dict."""
+            config = super(QSeparableConv2D, self).get_config()
             config.update(
                 {
                     "act_min_value": self.act_min_value,
@@ -364,63 +364,45 @@ else:
                     "granularity": self.granularity,
                     "quant_status": self.quant_status,
                     "quant_mode": self.quant_mode,
-                    "quant_T": self.reverse_T_map[self.quant_T],
+                    "quant_T": "s8" if self.quant_T == tf.qint8 else "u8",
                     "quant_round_mode": self.quant_round_mode,
                     "quant_narrow_range": self.quant_narrow_range,
                     "quant_axis": self.quant_axis,
                 }
             )
-            
+
             return config
 
 
 def initialize_int8_separable_conv2d(fp32_layer, q_config):
+    """Initialize int8 separable conv2d."""
     kwargs = fp32_layer.get_config()
 
-    if "name" in kwargs:
-        del kwargs["name"]
-    if "filters" in kwargs:
-        del kwargs["filters"]
-    if "kernel_size" in kwargs:
-        del kwargs["kernel_size"]
-    if "strides" in kwargs:
-        del kwargs["strides"]
-    if "padding" in kwargs:
-        del kwargs["padding"]
-    if "data_format" in kwargs:
-        del kwargs["data_format"]
-    if "dilation_rate" in kwargs:
-        del kwargs["dilation_rate"]
-    if "depth_multiplier" in kwargs:
-        del kwargs["depth_multiplier"]
-    if "activation" in kwargs:
-        del kwargs["activation"]
-    if "use_bias" in kwargs:
-        del kwargs["use_bias"]
-    if "depthwise_initializer" in kwargs:
-        del kwargs["depthwise_initializer"]
-    if "pointwise_initializer" in kwargs:
-        del kwargs["pointwise_initializer"]
-    if "bias_initializer" in kwargs:
-        del kwargs["bias_initializer"]
-    if "depthwise_regularizer" in kwargs:
-        del kwargs["depthwise_regularizer"]
-    if "pointwise_regularizer" in kwargs:
-        del kwargs["pointwise_regularizer"]
-    if "activity_regularizer" in kwargs:
-        del kwargs["activity_regularizer"]
-    if "bias_regularizer" in kwargs:
-        del kwargs["bias_regularizer"]
-    if "depthwise_constraint" in kwargs:
-        del kwargs["depthwise_constraint"]
-    if "pointwise_constraint" in kwargs:
-        del kwargs["pointwise_constraint"]
-    if "bias_constraint" in kwargs:
-        del kwargs["bias_constraint"]
-    if "min_value" in kwargs:
-        del kwargs["min_value"]
-    if "max_value" in kwargs:
-        del kwargs["max_value"]
+    param_list = [
+        "name",
+        "filters",
+        "kernel_size",
+        "strides",
+        "padding",
+        "data_format",
+        "dilation_rate",
+        "depth_multiplier",
+        "activation",
+        "use_bias",
+        "depthwise_initializer",
+        "bias_initializer",
+        "pointwise_initializer",
+        "depthwise_regularizer",
+        "activity_regularizer",
+        "bias_regularizer",
+        "pointwise_regularizer",
+        "depthwise_constraint",
+        "bias_constraint",
+        "pointwise_constraint",
+    ]
+    for p in param_list:  # pragma: no cover
+        if p in kwargs:
+            del kwargs[p]
 
     return QSeparableConv2D(
         name=fp32_layer.name,

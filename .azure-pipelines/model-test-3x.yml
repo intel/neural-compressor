@@ -10,9 +10,12 @@ pr:
     include:
       - neural_compressor/common
       - neural_compressor/torch
+      - examples/3.x_api/pytorch/nlp/huggingface_models/language-modeling/quantization/weight_only
       - setup.py
       - requirements_pt.txt
       - .azure-pipelines/scripts/models
+      - .azure-pipelines/model-test-3x.yml
+      - .azure-pipelines/template/docker-template.yml
 
 variables:
   OUT_SCRIPT_PATH: $(Build.SourcesDirectory)/.azure-pipelines/scripts/models
@@ -28,13 +31,13 @@ parameters:
     type: object
     default:
       - opt_125m_woq_gptq_int4
-      - opt_125m_woq_gptq_int4_dq_bnb
+      - opt_125m_woq_gptq_nf4_dq_bnb
       - opt_125m_woq_gptq_int4_dq_ggml
 
 stages:
   - stage: PyTorchModels
     displayName: Run PyTorch Model
-    pool: MODEL_PERF_TEST
+    pool: ICX-16C
     dependsOn: []
     condition: and(succeeded(), eq('${{ parameters.PyTorch_Model_3X }}', 'true'))
     jobs:
@@ -59,7 +62,7 @@ stages:
           - script: |
               echo ${BUILD_SOURCESDIRECTORY}
               rm -fr ${BUILD_SOURCESDIRECTORY} || sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
-              echo y | docker system prune
+              echo y | docker system prune --all
             displayName: "Clean workspace"
           - checkout: self
             clean: true
@@ -110,7 +113,7 @@ stages:
             displayName: "Publish report"
           - script: |
               if [ $(is_perf_reg) == 'true' ]; then
-                echo "[Performance Regression] Some model performance regression occurred, please check artifacts and reports."
+                echo "Some benchmark regression occurred or the reference data need to be updated, please check artifacts and reports."
                 exit 1
               fi
-            displayName: "Specify performance regression"
+            displayName: "Specify regression"

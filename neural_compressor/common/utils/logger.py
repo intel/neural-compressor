@@ -17,11 +17,15 @@
 """Logger: handles logging functionalities."""
 
 
+import functools
 import logging
 import os
 
+from neural_compressor.common.utils import Mode
+
 __all__ = [
     "level",
+    "level_name",
     "Logger",  # TODO: not expose it
     "logger",
     "TuningLogger",
@@ -134,10 +138,30 @@ class Logger(object):
         else:
             Logger().get_logger().warning(msg, *args, **kwargs)
 
+    @functools.lru_cache(None)
+    def warning_once(msg, *args, **kwargs):
+        """Output log with the warning level only once."""
+        Logger.warning("Below warning will be shown only once:")
+        Logger.warning(msg, *args, **kwargs)
+
 
 level = Logger().get_logger().level
+level_name = logging.getLevelName(level)
 
 logger = Logger
+
+
+def _get_log_msg(mode):
+    log_msg = None
+    if mode == Mode.QUANTIZE:
+        log_msg = "Quantization"
+    elif mode == Mode.PREPARE:  # pragma: no cover
+        log_msg = "Preparation"
+    elif mode == Mode.CONVERT:  # pragma: no cover
+        log_msg = "Conversion"
+    elif mode == Mode.LOAD:  # pragma: no cover
+        log_msg = "Loading"
+    return log_msg
 
 
 class TuningLogger:
@@ -148,32 +172,44 @@ class TuningLogger:
 
     @classmethod
     def tuning_start(cls) -> None:
+        """Log the start of the tuning process."""
         logger.info("Tuning started.")
 
     @classmethod
     def trial_start(cls, trial_index: int = None) -> None:
+        """Log the start of a trial."""
         logger.info("%d-trail started.", trial_index)
 
     @classmethod
-    def quantization_start(cls, stacklevel=2) -> None:
-        logger.info("Quantization started.", stacklevel=stacklevel)
+    def execution_start(cls, mode=Mode.QUANTIZE, stacklevel=2):
+        """Log the start of the execution process."""
+        log_msg = _get_log_msg(mode)
+        assert log_msg is not None, "Please check `mode` in execution_start function of TuningLogger class."
+        logger.info("{} started.".format(log_msg), stacklevel=stacklevel)
 
     @classmethod
-    def quantization_end(cls, stacklevel=2) -> None:
-        logger.info("Quantization end.", stacklevel=stacklevel)
+    def execution_end(cls, mode=Mode.QUANTIZE, stacklevel=2):
+        """Log the end of the execution process."""
+        log_msg = _get_log_msg(mode)
+        assert log_msg is not None, "Please check `mode` in execution_end function of TuningLogger class."
+        logger.info("{} end.".format(log_msg), stacklevel=stacklevel)
 
     @classmethod
     def evaluation_start(cls) -> None:
+        """Log the start of the evaluation process."""
         logger.info("Evaluation started.")
 
     @classmethod
     def evaluation_end(cls) -> None:
+        """Log the end of the evaluation process."""
         logger.info("Evaluation end.")
 
     @classmethod
     def trial_end(cls, trial_index: int = None) -> None:
+        """Log the end of a trial."""
         logger.info("%d-trail end.", trial_index)
 
     @classmethod
     def tuning_end(cls) -> None:
+        """Log the end of the tuning process."""
         logger.info("Tuning completed.")

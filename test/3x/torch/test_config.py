@@ -1,18 +1,24 @@
 import copy
 import unittest
 
+import pytest
 import torch
 import transformers
 
+import neural_compressor.torch.utils as torch_utils
 from neural_compressor.torch.quantization import (
     AutoRoundConfig,
     AWQConfig,
+    FP8Config,
     GPTQConfig,
     HQQConfig,
+    INT8StaticQuantConfig,
     RTNConfig,
     SmoothQuantConfig,
     StaticQuantConfig,
     TEQConfig,
+    get_default_AutoRound_config,
+    get_default_gptq_config,
     get_default_hqq_config,
     get_default_rtn_config,
     quantize,
@@ -147,8 +153,8 @@ class TestQuantizationConfig(unittest.TestCase):
         logger.info(quant_config)
         configs_mapping = quant_config.to_config_mapping(model_info=model_info)
         logger.info(configs_mapping)
-        self.assertTrue(configs_mapping[("fc1", torch.nn.Linear)].bits == 6)
-        self.assertTrue(configs_mapping[("fc2", torch.nn.Linear)].bits == 4)
+        self.assertTrue(configs_mapping[("fc1", "Linear")].bits == 6)
+        self.assertTrue(configs_mapping[("fc2", "Linear")].bits == 4)
 
     def test_config_from_dict(self):
         quant_config = {
@@ -253,16 +259,31 @@ class TestQuantizationConfig(unittest.TestCase):
         logger.info(quant_config)
         configs_mapping = quant_config.to_config_mapping(model_info=model_info)
         logger.info(configs_mapping)
-        self.assertTrue(configs_mapping[("fc1", torch.nn.Linear)].bits == 6)
-        self.assertTrue(configs_mapping[("fc2", torch.nn.Linear)].bits == 4)
+        self.assertTrue(configs_mapping[("fc1", "Linear")].bits == 6)
+        self.assertTrue(configs_mapping[("fc2", "Linear")].bits == 4)
         # test regular matching
         fc_config = RTNConfig(bits=5, dtype="int8")
         quant_config.set_local("fc", fc_config)
         configs_mapping = quant_config.to_config_mapping(model_info=model_info)
         logger.info(configs_mapping)
-        self.assertTrue(configs_mapping[("fc1", torch.nn.Linear)].bits == 5)
-        self.assertTrue(configs_mapping[("fc2", torch.nn.Linear)].bits == 5)
-        self.assertTrue(configs_mapping[("fc3", torch.nn.Linear)].bits == 5)
+        self.assertTrue(configs_mapping[("fc1", "Linear")].bits == 5)
+        self.assertTrue(configs_mapping[("fc2", "Linear")].bits == 5)
+        self.assertTrue(configs_mapping[("fc3", "Linear")].bits == 5)
+
+    def test_set_local_op_type(self):
+        quant_config = RTNConfig(bits=4, dtype="nf4")
+        # set all `Linear`
+        fc1_config = RTNConfig(bits=6, dtype="int8")
+        quant_config.set_local(torch.nn.Linear, fc1_config)
+        # get model and quantize
+        fp32_model = build_simple_torch_model()
+        model_info = get_model_info(fp32_model, white_module_list=[torch.nn.Linear])
+        logger.info(quant_config)
+        configs_mapping = quant_config.to_config_mapping(model_info=model_info)
+        logger.info(configs_mapping)
+        self.assertTrue(configs_mapping[("fc1", "Linear")].bits == 6)
+        self.assertTrue(configs_mapping[("fc2", "Linear")].bits == 6)
+        self.assertTrue(configs_mapping[("fc3", "Linear")].bits == 6)
 
     def test_gptq_config(self):
         gptq_config1 = GPTQConfig(bits=8, act_order=True)
@@ -316,15 +337,58 @@ class TestQuantizationConfig(unittest.TestCase):
         self.assertEqual(hqq_config.to_dict(), hqq_config2.to_dict())
 
 
-class TestQuantConfigForAutotune(unittest.TestCase):
-    def test_expand_config(self):
-        # test the expand functionalities, the user is not aware it
+class TestQuantConfigBasedonProcessorType:
 
-        tune_config = RTNConfig(bits=[4, 6])
-        expand_config_list = RTNConfig.expand(tune_config)
-        self.assertEqual(expand_config_list[0].bits, 4)
-        self.assertEqual(expand_config_list[1].bits, 6)
+    @pytest.mark.parametrize("config_cls", [RTNConfig, GPTQConfig, AutoRoundConfig])
+    def test_get_config_based_on_processor_type(self, config_cls):
+        config_for_client = config_cls.get_predefined_configs()[torch_utils.ProcessorType.Client]
+        assert (
+            config_for_client.use_layer_wise
+        ), f"Expect use_layer_wise to be True, got {config_for_client.use_layer_wise}"
+
+        config_for_server = config_cls.get_predefined_configs()[torch_utils.ProcessorType.Server]
+        assert (
+            config_for_server.use_layer_wise is False
+        ), f"Expect use_layer_wise to be False, got {config_for_server.use_layer_wise}"
+
+    @pytest.fixture
+    def force_server(self, monkeypatch):
+        monkeypatch.setattr(torch_utils.utility.cpu_info, "sockets", 2)
+
+    def test_get_default_config_force_server(self, force_server):
+        rtn_config = get_default_rtn_config()
+        assert not rtn_config.use_layer_wise, f"Expect use_layer_wise to be `False`, got {rtn_config.use_layer_wise}"
+        gptq_config = get_default_gptq_config()
+        assert not gptq_config.use_layer_wise, f"Expect use_layer_wise to be `False`, got {gptq_config.use_layer_wise}"
+
+    @pytest.mark.parametrize("p_type", [None, torch_utils.ProcessorType.Client, torch_utils.ProcessorType.Server])
+    def test_get_default_config(self, p_type):
+        rtn_config = get_default_rtn_config(processor_type=p_type)
+        assert rtn_config.use_layer_wise == (
+            p_type == torch_utils.ProcessorType.Client
+        ), f"Expect use_layer_wise to be {p_type == torch_utils.ProcessorType.Client}, got {rtn_config.use_layer_wise}"
+        gptq_config = get_default_gptq_config(processor_type=p_type)
+        assert gptq_config.use_layer_wise == (
+            p_type == torch_utils.ProcessorType.Client
+        ), f"Expect use_layer_wise to be {p_type == torch_utils.ProcessorType.Client}, got {gptq_config.use_layer_wise}"
+        autoround_config = get_default_AutoRound_config(processor_type=p_type)
+        assert autoround_config.use_layer_wise == (
+            p_type == torch_utils.ProcessorType.Client
+        ), f"Expect use_layer_wise to be {p_type == torch_utils.ProcessorType.Client}, got {autoround_config.use_layer_wise}"
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_auto_config_mapping():
+    # case 1
+    class_obj = StaticQuantConfig()
+    assert isinstance(
+        class_obj, INT8StaticQuantConfig
+    ), "StaticQuantConfig should be mapped to INT8StaticQuantConfig by default."
+    # case 2
+    class_obj = StaticQuantConfig(fp8_config="E4M3")
+    assert isinstance(class_obj, FP8Config), "StaticQuantConfig should be mapped to FP8Config with fp8_config argument."
+    # case 3
+    class_obj = StaticQuantConfig(fp8_config="E4M3", observer="maxabs")
+    assert isinstance(class_obj, FP8Config), "StaticQuantConfig should be mapped to FP8Config with fp8_config argument."
+    # case 4
+    class_obj = StaticQuantConfig(act_sym=True, act_algo="kl")
+    assert isinstance(class_obj, INT8StaticQuantConfig), "StaticQuantConfig should be mapped to INT8StaticQuantConfig."

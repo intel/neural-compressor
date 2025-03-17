@@ -11,15 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""HQQ Quantizer."""
+
 
 from typing import Callable, List, Optional, Tuple
 
 import torch
 
+from neural_compressor.torch.algorithms import Quantizer
 from neural_compressor.torch.utils import logger
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
-from .config import ConfigMappingType, default_hqq_module_config, hqq_global_option
+from .config import ConfigMappingType, HQQModuleConfig, QTensorConfig, hqq_global_option
 from .core import HQQLinear
 
 
@@ -34,8 +37,7 @@ def _replace_with_custom_fn_if_matches_filter(
     cur_fqn: str = "",
     config_mapping: Optional[ConfigMappingType] = None,
 ) -> None:
-    """For each `child` in `model`, replaces it with `replacement_fn(child)`
-    if `filter_fn(child)` is `True`"""
+    """Recursively replaces modules in `model` with `replacement_fn` if `filter_fn` is `True`."""
     name_to_child = dict(model.named_children())
     for name, child in name_to_child.items():
         if cur_fqn == "":
@@ -63,44 +65,118 @@ def _replace_with_custom_fn_if_matches_filter(
 
 
 def patch_hqq_moduile(mod, config):
+    """Patch the given module with the HQQLinear module.
+
+    Args:
+        mod (torch.nn.Module): The module to be patched.
+        config (dict): Configuration parameters for the HQQLinear module.
+
+    Returns:
+        torch.nn.Module: The patched module with HQQLinear.
+    """
     new_mod = HQQLinear.from_float(mod, config)
     return new_mod
 
 
 def filter_fn(mod: torch.nn.Module, name: str, config_mapping: ConfigMappingType) -> bool:
+    """Filter function used to determine if a module should be quantized.
+
+    Args:
+        mod (torch.nn.Module): The module to be checked.
+        name (str): The name of the module.
+        config_mapping (ConfigMappingType): The configuration mapping.
+
+    Returns:
+        bool: True if the module should be quantized, False otherwise.
+    """
     return isinstance(mod, torch.nn.Linear) and name in config_mapping
 
 
 def replacement_fn(mod: torch.nn.Module, name: str, config_mapping: ConfigMappingType) -> torch.nn.Module:
+    """Replaces a Linear with HQQLinear if the module is in the config mapping.
+
+    Args:
+        mod (torch.nn.Module): The original module to be replaced.
+        name (str): The name of the module to be replaced.
+        config_mapping (ConfigMappingType): A mapping of module names to their corresponding configurations.
+
+    Returns:
+        torch.nn.Module: The patched module.
+    """
     config = config_mapping.get(name, None)
     logger.debug("Replace module %s", name)
     return patch_hqq_moduile(mod, config)
 
 
-class EagerModeQuantizer:
-    def __init__(self, config_mapping) -> None:
-        self.config_mapping = config_mapping
+class HQQuantizer(Quantizer):
+    """HQQ Quantizer."""
 
-    def prepare(self, model: torch.nn.Module, inplace=True) -> Optional[torch.nn.Module]:
-        pass
+    def __init__(self, quant_config: ConfigMappingType) -> None:
+        """Init a HQQuantizer object.
 
-    def convert(self, model: torch.nn.Module, inplace=True) -> Optional[torch.nn.Module]:
-        pass
+        Args:
+            quant_config (ConfigMappingType): quantization config for ops.
+        """
+        quant_config = self._parse_hqq_configs_mapping(quant_config)
+        super().__init__(quant_config=quant_config)
 
-    def save(self):
-        pass
+    @torch.no_grad()
+    def prepare(self, model: torch.nn.Module, *args, **kwargs) -> Optional[torch.nn.Module]:
+        """Prepares a given model for quantization.
 
+        Will return model directly in HQQ algorithm.
 
-class HQQuantizer(EagerModeQuantizer):
-    def __init__(self, config_mapping: ConfigMappingType) -> None:
-        super().__init__(config_mapping)
+        Args:
+            model (torch.nn.Module): The model to be prepared.
+        """
+        return model
 
-    def prepare(self, model: torch.nn.Module, inplace=True) -> Optional[torch.nn.Module]:
+    @torch.no_grad()
+    def convert(self, model: torch.nn.Module, *args, **kwargs) -> Optional[torch.nn.Module]:
+        """Converts a prepared model to a quantized model.
+
+        Args:
+            model (torch.nn.Module): The prepared model to be converted.
+
+        Returns:
+            Optional[torch.nn.Module]: A quantized model.
+        """
         _replace_with_custom_fn_if_matches_filter(
-            model, replacement_fn=replacement_fn, filter_fn=filter_fn, config_mapping=self.config_mapping
+            model, replacement_fn=replacement_fn, filter_fn=filter_fn, config_mapping=self.quant_config
         )
         return model
 
-    def save(self, model, path):
-        # TODO: to implement it in the next PR
-        pass
+    def _convert_hqq_module_config(self, config) -> HQQModuleConfig:
+        # TODO: (Yi) Please note that the configuration defined by INC should be separated from the algorithm.
+        # * 3.x API use `bits` for woq while HQQ internal API use `nbits`, we should change it in algorithm_entry.py
+        nbits = config.bits
+        group_size = config.group_size
+        quant_zero = config.quant_zero
+        quant_scale = config.quant_scale
+        scale_quant_group_size = config.scale_quant_group_size
+
+        weight_qconfig = QTensorConfig(
+            nbits=nbits,
+            channel_wise=True,
+            group_size=group_size,
+            optimize=True,
+            round_zero=True if nbits == 4 else False,
+        )
+        zero_qconfig = None
+        if quant_zero:
+            zero_qconfig = QTensorConfig(nbits=8, channel_wise=False, group_size=None, optimize=False)
+        scale_qconfig = None
+        if quant_scale:
+            scale_qconfig = QTensorConfig(nbits=8, channel_wise=True, group_size=scale_quant_group_size, optimize=False)
+        hqq_module_config = HQQModuleConfig(weight=weight_qconfig, scale=scale_qconfig, zero=zero_qconfig)
+        logger.debug(hqq_module_config)
+        return hqq_module_config
+
+    def _parse_hqq_configs_mapping(self, configs_mapping):
+        qconfig_mapping = {}
+        for (op_name, op_type), quant_config in configs_mapping.items():
+            if quant_config is not None and quant_config.dtype == "fp32":
+                logger.warning("Fallback %s.", op_name)
+                continue
+            qconfig_mapping[op_name] = self._convert_hqq_module_config(quant_config)
+        return qconfig_mapping

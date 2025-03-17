@@ -11,13 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""The common module."""
 
 from neural_compressor.common.utils import (
     level,
+    level_name,
     logger,
     Logger,
     TuningLogger,
-    log_quant_execution,
+    log_process,
     set_random_seed,
     set_resume_from,
     set_workspace,
@@ -25,13 +27,16 @@ from neural_compressor.common.utils import (
     dump_elapsed_time,
 )
 from neural_compressor.common.base_config import options
-
+from neural_compressor.common.version import __version__
 
 __all__ = [
     "options",
     "level",
+    "level_name",
     "logger",
     "Logger",
+    "TuningLogger",
+    "log_process",
     "set_workspace",
     "set_random_seed",
     "set_resume_from",

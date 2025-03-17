@@ -14,11 +14,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Initialize custom conv2d layers for Keras quantization."""
 
 import json
 
 import tensorflow as tf
-from tensorflow import quantization
 from tensorflow.keras import activations, constraints, initializers, regularizers
 
 from neural_compressor.tensorflow.utils import version1_gte_version2
@@ -31,8 +31,11 @@ elif version1_gte_version2(tf.__version__, "2.13.0"):
 else:
     from keras.layers.convolutional.base_conv import Conv  # pylint: disable=E0401
 
-if version1_gte_version2(tf.__version__, "2.16.1"):
+if version1_gte_version2(tf.__version__, "2.16.1"):  # pragma: no cover
+
     class QConv2D(BaseConv):
+        """The custom quantized Conv2D layer."""
+
         def __init__(
             self,
             name,
@@ -65,6 +68,7 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
             quant_axis=None,
             **kwargs
         ):
+            """Initialize custom quantized Conv2D layer."""
             super(QConv2D, self).__init__(
                 name=name,
                 rank=2,
@@ -87,13 +91,12 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
                 **kwargs
             )
             T_map = {"s8": tf.qint8, "u8": tf.quint8}
-            self.reverse_T_map = {tf.qint8: "s8", tf.quint8: "u8"}
             self.weight_min_value = weight_min_value
             self.weight_max_value = weight_max_value
             self.act_min_value = act_min_value
             self.act_max_value = act_max_value
             self.granularity = granularity
-            self.quant_status= quant_status
+            self.quant_status = quant_status
             self.quant_mode = quant_mode
             self.quant_T = T_map[quant_T]
             self.quant_round_mode = quant_round_mode
@@ -101,16 +104,19 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
             self.quant_axis = quant_axis
 
         def call(self, inputs):
+            """The __call__ function of custom quantized Conv2D layer."""
             if self.quant_status == "calib" and not isinstance(inputs, tf.keras.KerasTensor):
                 if self.granularity == "per_tensor":
                     self.act_min_value = tf.math.reduce_min(inputs)
                     self.act_max_value = tf.math.reduce_max(inputs)
                 else:
-                    self.act_min_value = tf.math.reduce_min(inputs, axis=self.axis)
-                    self.act_max_value = tf.math.reduce_max(inputs, axis=self.axis)
+                    self.act_min_value = tf.math.reduce_min(inputs, axis=1)
+                    self.act_max_value = tf.math.reduce_max(inputs, axis=1)
                 kernel = self.kernel
             elif self.quant_status == "quantize":
-                assert self.act_min_value is not None, "Invalid activation min-max values, please check calibration process"
+                assert (
+                    self.act_min_value is not None
+                ), "Invalid activation min-max values, please check calibration process"
                 inputs, _, _ = tf.quantization.quantize(
                     inputs,
                     self.act_min_value,
@@ -121,7 +127,7 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
                     narrow_range=self.quant_narrow_range,
                     axis=self.quant_axis,
                 )
-                inputs =  tf.quantization.dequantize(
+                inputs = tf.quantization.dequantize(
                     inputs,
                     self.act_min_value,
                     self.act_max_value,
@@ -133,15 +139,15 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
                 kernel_size = self.kernel.shape[-1]
 
                 if not self.weight_min_value:
-                    self.weight_min_value = [-10000]*kernel_size
+                    self.weight_min_value = [-10000] * kernel_size
                 if not self.weight_max_value:
-                    self.weight_max_value = [10000]*kernel_size
+                    self.weight_max_value = [10000] * kernel_size
 
                 # add the Q/DQ here
-                kernel, _, _ = quantization.quantize(
+                kernel, _, _ = tf.quantization.quantize(
                     self.kernel, self.weight_min_value, self.weight_max_value, tf.qint8, axis=3, mode="SCALED"
                 )
-                kernel = quantization.dequantize(
+                kernel = tf.quantization.dequantize(
                     kernel,
                     self.weight_min_value,
                     self.weight_max_value,
@@ -167,9 +173,11 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
 
         @classmethod
         def from_config(cls, config):
+            """Deserialize this class from a config dict."""
             return cls(**config)
 
         def get_config(self):
+            """Serialize this class to a config dict."""
             config = super(QConv2D, self).get_config()
             config.update(
                 {
@@ -180,17 +188,20 @@ if version1_gte_version2(tf.__version__, "2.16.1"):
                     "granularity": self.granularity,
                     "quant_status": self.quant_status,
                     "quant_mode": self.quant_mode,
-                    "quant_T": self.reverse_T_map[self.quant_T],
+                    "quant_T": "s8" if self.quant_T == tf.qint8 else "u8",
                     "quant_round_mode": self.quant_round_mode,
                     "quant_narrow_range": self.quant_narrow_range,
                     "quant_axis": self.quant_axis,
                 }
             )
-            
+
             return config
 
 else:
+
     class QConv2D(Conv):
+        """The custom quantized Conv2D layer."""
+
         def __init__(
             self,
             name,
@@ -223,6 +234,7 @@ else:
             quant_axis=None,
             **kwargs
         ):
+            """Initialize custom quantized Conv2D layer."""
             super(QConv2D, self).__init__(
                 name=name,
                 rank=2,
@@ -245,13 +257,12 @@ else:
                 **kwargs
             )
             T_map = {"s8": tf.qint8, "u8": tf.quint8}
-            self.reverse_T_map = {tf.qint8: "s8", tf.quint8: "u8"}
             self.weight_min_value = weight_min_value
             self.weight_max_value = weight_max_value
             self.act_min_value = act_min_value
             self.act_max_value = act_max_value
             self.granularity = granularity
-            self.quant_status= quant_status
+            self.quant_status = quant_status
             self.quant_mode = quant_mode
             self.quant_T = T_map[quant_T]
             self.quant_round_mode = quant_round_mode
@@ -259,16 +270,19 @@ else:
             self.quant_axis = quant_axis
 
         def call(self, inputs):
-            if self.quant_status == "calib" and not isinstance(inputs, tf.keras.KerasTensor):
+            """The __call__ function of custom quantized Conv2D layer."""
+            if self.quant_status == "calib":
                 if self.granularity == "per_tensor":
                     self.act_min_value = tf.math.reduce_min(inputs)
                     self.act_max_value = tf.math.reduce_max(inputs)
                 else:
-                    self.act_min_value = tf.math.reduce_min(inputs, axis=self.axis)
-                    self.act_max_value = tf.math.reduce_max(inputs, axis=self.axis)
+                    self.act_min_value = tf.math.reduce_min(inputs, axis=1)
+                    self.act_max_value = tf.math.reduce_max(inputs, axis=1)
                 kernel = self.kernel
             elif self.quant_status == "quantize":
-                assert self.act_min_value is not None, "Invalid activation min-max values, please check calibration process"
+                assert (
+                    self.act_min_value is not None
+                ), "Invalid activation min-max values, please check calibration process"
                 inputs, _, _ = tf.quantization.quantize(
                     inputs,
                     self.act_min_value,
@@ -279,7 +293,7 @@ else:
                     narrow_range=self.quant_narrow_range,
                     axis=self.quant_axis,
                 )
-                inputs =  tf.quantization.dequantize(
+                inputs = tf.quantization.dequantize(
                     inputs,
                     self.act_min_value,
                     self.act_max_value,
@@ -291,15 +305,15 @@ else:
                 kernel_size = self.kernel.shape[-1]
 
                 if not self.weight_min_value:
-                    self.weight_min_value = [-10000]*kernel_size
+                    self.weight_min_value = [-10000] * kernel_size
                 if not self.weight_max_value:
-                    self.weight_max_value = [10000]*kernel_size
+                    self.weight_max_value = [10000] * kernel_size
 
                 # add the Q/DQ here
-                kernel, _, _ = quantization.quantize(
+                kernel, _, _ = tf.quantization.quantize(
                     self.kernel, self.weight_min_value, self.weight_max_value, tf.qint8, axis=3, mode="SCALED"
                 )
-                kernel = quantization.dequantize(
+                kernel = tf.quantization.dequantize(
                     kernel,
                     self.weight_min_value,
                     self.weight_max_value,
@@ -325,9 +339,11 @@ else:
 
         @classmethod
         def from_config(cls, config):
+            """Deserialize this class from a config dict."""
             return cls(**config)
 
         def get_config(self):
+            """Serialize this class to a config dict."""
             config = super(QConv2D, self).get_config()
             config.update(
                 {
@@ -338,53 +354,42 @@ else:
                     "granularity": self.granularity,
                     "quant_status": self.quant_status,
                     "quant_mode": self.quant_mode,
-                    "quant_T": self.reverse_T_map[self.quant_T],
+                    "quant_T": "s8" if self.quant_T == tf.qint8 else "u8",
                     "quant_round_mode": self.quant_round_mode,
                     "quant_narrow_range": self.quant_narrow_range,
                     "quant_axis": self.quant_axis,
                 }
             )
-            
+
             return config
 
 
 def initialize_int8_conv2d(fp32_layer, q_config):
+    """Initialize int8 conv2d."""
     kwargs = fp32_layer.get_config()
 
-    if "name" in kwargs:
-        del kwargs["name"]
-    if "filters" in kwargs:
-        del kwargs["filters"]
-    if "kernel_size" in kwargs:
-        del kwargs["kernel_size"]
-    if "strides" in kwargs:
-        del kwargs["strides"]
-    if "padding" in kwargs:
-        del kwargs["padding"]
-    if "data_format" in kwargs:
-        del kwargs["data_format"]
-    if "dilation_rate" in kwargs:
-        del kwargs["dilation_rate"]
-    if "groups" in kwargs:
-        del kwargs["groups"]
-    if "activation" in kwargs:
-        del kwargs["activation"]
-    if "use_bias" in kwargs:
-        del kwargs["use_bias"]
-    if "kernel_initializer" in kwargs:
-        del kwargs["kernel_initializer"]
-    if "bias_initializer" in kwargs:
-        del kwargs["bias_initializer"]
-    if "kernel_regularizer" in kwargs:
-        del kwargs["kernel_regularizer"]
-    if "activity_regularizer" in kwargs:
-        del kwargs["activity_regularizer"]
-    if "bias_regularizer" in kwargs:
-        del kwargs["bias_regularizer"]
-    if "kernel_constraint" in kwargs:
-        del kwargs["kernel_constraint"]
-    if "bias_constraint" in kwargs:
-        del kwargs["bias_constraint"]
+    param_list = [
+        "name",
+        "filters",
+        "kernel_size",
+        "strides",
+        "padding",
+        "data_format",
+        "dilation_rate",
+        "groups",
+        "activation",
+        "use_bias",
+        "kernel_initializer",
+        "bias_initializer",
+        "kernel_regularizer",
+        "activity_regularizer",
+        "bias_regularizer",
+        "kernel_constraint",
+        "bias_constraint",
+    ]
+    for p in param_list:  # pragma: no cover
+        if p in kwargs:
+            del kwargs[p]
 
     return QConv2D(
         name=fp32_layer.name,

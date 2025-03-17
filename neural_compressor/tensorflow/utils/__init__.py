@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""The utils for Tensorflow."""
 
 from neural_compressor.tensorflow.utils.model import Model, framework_specific_info
 from neural_compressor.tensorflow.utils.data import BaseDataLoader, DummyDataset, DummyDatasetV2
@@ -42,13 +43,10 @@ from neural_compressor.tensorflow.utils.utility import (
     combine_histogram,
     get_all_fp32_data,
     get_tensor_histogram,
-    Dequantize,
-    dequantize_weight,
-    dump_data_to_local,
-    load_data_from_pkl,
     singleton,
     CpuInfo,
     Statistics,
     CaptureOutputToFile,
-    LazyImport,
+    valid_keras_format,
+    TFSlimNetsFactory,
 )

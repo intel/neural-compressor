@@ -28,7 +28,7 @@ import tensorflow as tf
 from neural_compressor.common import logger
 
 
-def default_collate(batch):  # pragma: no cover
+def default_collate(batch):
     """Merge data with outer dimension batch size."""
     elem = batch[0]
     if isinstance(elem, collections.abc.Mapping):
@@ -229,7 +229,7 @@ class BatchSampler:
             return (len(self.sampler) + self.batch_size - 1) // self.batch_size
 
 
-class BaseDataLoader:  # pragma: no cover
+class BaseDataLoader:
     """Base class for TF DataLoaders.
 
     _generate_dataloader is needed to create a dataloader object

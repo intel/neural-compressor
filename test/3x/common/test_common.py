@@ -34,13 +34,14 @@ torch_included_folder:
     │   ├── torch
 """
 
+import copy
 import unittest
 
 from neural_compressor.common import Logger
 
 logger = Logger().get_logger()
 
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Callable, List, Optional, Tuple, Union
 
 from neural_compressor.common.base_config import (
     BaseConfig,
@@ -49,7 +50,15 @@ from neural_compressor.common.base_config import (
     register_config,
     register_supported_configs_for_fwk,
 )
-from neural_compressor.common.base_tuning import ConfigLoader, ConfigSet, Evaluator, SequentialSampler
+from neural_compressor.common.base_tuning import (
+    ConfigLoader,
+    ConfigSet,
+    EvaluationFuncWrapper,
+    Evaluator,
+    SequentialSampler,
+    TuningConfig,
+    init_tuning,
+)
 from neural_compressor.common.tuning_param import TuningParam
 from neural_compressor.common.utils import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE
 
@@ -73,6 +82,29 @@ class FakeModel:
 
     def __repr__(self) -> str:
         return "FakeModel"
+
+
+class FakeOpType:
+    def __init__(self) -> None:
+        self.name = "fake_module"
+
+    def __call__(self, x) -> Any:
+        return x
+
+    def __repr__(self) -> str:
+        return "FakeModule"
+
+
+class OP_TYPE1(FakeOpType):
+    pass
+
+
+class OP_TYPE2(FakeOpType):
+    pass
+
+
+def build_simple_fake_model():
+    return FakeModel()
 
 
 @register_config(framework_name=FAKE_FRAMEWORK_NAME, algo_name=FAKE_CONFIG_NAME, priority=PRIORITY_FAKE_ALGO)
@@ -245,6 +277,11 @@ class TestBaseConfig(unittest.TestCase):
         for i in range(len(configs_list)):
             self.assertEqual(configs_list[i].target_op_type_list, target_op_type_list_options[i])
 
+    def test_config_expand_with_empty_options(self):
+        configs = FakeAlgoConfig(weight_dtype=["int", "float32"], weight_bits=[])
+        configs_list = configs.expand()
+        self.assertEqual(len(configs_list), 2)
+
     def test_mixed_two_algos(self):
         model = FakeModel()
         OP1_NAME = "OP1_NAME"
@@ -256,6 +293,32 @@ class TestBaseConfig(unittest.TestCase):
         config_mapping = mixed_config.to_config_mapping(model_info=model_info)
         self.assertIn(OP1_NAME, [op_info[0] for op_info in config_mapping])
         self.assertIn(OP2_NAME, [op_info[0] for op_info in config_mapping])
+
+    def test_set_local_op_name(self):
+        quant_config = FakeAlgoConfig(weight_bits=4)
+        # set `OP1_NAME`
+        fc1_config = FakeAlgoConfig(weight_bits=6)
+        quant_config.set_local("OP1_NAME", fc1_config)
+        model_info = FAKE_MODEL_INFO
+        logger.info(quant_config)
+        configs_mapping = quant_config.to_config_mapping(model_info=model_info)
+        logger.info(configs_mapping)
+        self.assertTrue(configs_mapping[("OP1_NAME", "OP_TYPE1")].weight_bits == 6)
+        self.assertTrue(configs_mapping[("OP2_NAME", "OP_TYPE1")].weight_bits == 4)
+        self.assertTrue(configs_mapping[("OP3_NAME", "OP_TYPE2")].weight_bits == 4)
+
+    def test_set_local_op_type(self):
+        quant_config = FakeAlgoConfig(weight_bits=4)
+        # set all `OP_TYPE1`
+        fc1_config = FakeAlgoConfig(weight_bits=6)
+        quant_config.set_local(OP_TYPE1, fc1_config)
+        model_info = FAKE_MODEL_INFO
+        logger.info(quant_config)
+        configs_mapping = quant_config.to_config_mapping(model_info=model_info)
+        logger.info(configs_mapping)
+        self.assertTrue(configs_mapping[("OP1_NAME", "OP_TYPE1")].weight_bits == 6)
+        self.assertTrue(configs_mapping[("OP2_NAME", "OP_TYPE1")].weight_bits == 6)
+        self.assertTrue(configs_mapping[("OP3_NAME", "OP_TYPE2")].weight_bits == 4)
 
 
 class TestConfigSet(unittest.TestCase):
@@ -286,6 +349,79 @@ class TestConfigLoader(unittest.TestCase):
         self.assertEqual(len(list(self.loader)), len(self.config_set))
         for i, config in enumerate(self.loader):
             self.assertEqual(config, self.config_set[i])
+
+    def test_config_loader_skip_verified_config(self) -> None:
+        config_set = [FakeAlgoConfig(weight_bits=[4, 8]), FakeAlgoConfig(weight_bits=8)]
+        config_loader = ConfigLoader(config_set)
+        config_count = 0
+        for i, config in enumerate(config_loader):
+            config_count += 1
+        self.assertEqual(config_count, 2)
+
+
+class TestEvaluationFuncWrapper(unittest.TestCase):
+    def test_evaluate(self):
+        # Define a sample evaluation function
+        def eval_fn(model):
+            return model * 2
+
+        # Create an instance of EvaluationFuncWrapper
+        wrapper = EvaluationFuncWrapper(eval_fn)
+
+        # Test the evaluate method
+        result = wrapper.evaluate(5)
+        self.assertEqual(result, 10)
+
+
+class TestAutoTune(unittest.TestCase):
+    def test_autotune(self):
+        class AutoTuner:
+
+            @staticmethod
+            def _quantize(model, quant_config, *args, **kwargs):
+                return model
+
+            def run(
+                self, model: FakeModel, tune_config: TuningConfig, eval_fn: Callable, eval_args=None, *args, **kwargs
+            ) -> Optional[FakeModel]:
+                """The main entry of auto-tune."""
+                best_quant_model = None
+                eval_func_wrapper = EvaluationFuncWrapper(eval_fn, eval_args)
+                config_loader, tuning_logger, tuning_monitor = init_tuning(tuning_config=tune_config)
+                baseline: float = eval_func_wrapper.evaluate(model)
+                tuning_monitor.set_baseline(baseline)
+                tuning_logger.tuning_start()
+                for trial_index, quant_config in enumerate(config_loader):
+                    tuning_logger.trial_start(trial_index=trial_index)
+                    tuning_logger.execution_start()
+                    logger.info(quant_config.to_dict())
+                    q_model = self._quantize(copy.deepcopy(model), quant_config, *args, **kwargs)
+                    tuning_logger.execution_end()
+                    tuning_logger.evaluation_start()
+                    eval_result: float = eval_func_wrapper.evaluate(q_model)
+                    tuning_logger.evaluation_end()
+                    tuning_monitor.add_trial_result(trial_index, eval_result, quant_config)
+                    tuning_logger.trial_end(trial_index)
+                    if tuning_monitor.need_stop():
+                        logger.info("Stopped tuning.")
+                        del q_model  # maybe gc.collect() is needed for memory release
+                        best_quant_config: BaseConfig = tuning_monitor.get_best_quant_config()
+                        q_model = self._quantize(copy.deepcopy(model), best_quant_config, *args, **kwargs)
+                        best_quant_model = q_model  # quantize model inplace
+                        break
+                tuning_logger.tuning_end()
+                return best_quant_model
+
+        config_set = [FakeAlgoConfig(weight_bits=4), FakeAlgoConfig(weight_bits=8)]
+        tuning_config = TuningConfig(config_set=config_set)
+        tunner = AutoTuner()
+        model = FakeModel()
+
+        def fake_eval_fn(model):
+            return 1.0
+
+        q_model = tunner.run(model=model, tune_config=tuning_config, eval_fn=fake_eval_fn)
+        self.assertIsNotNone(q_model)
 
 
 if __name__ == "__main__":

@@ -14,11 +14,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""The base config."""
 
 from __future__ import annotations
 
+import copy
 import inspect
 import json
+import os
 import re
 from abc import ABC, abstractmethod
 from collections import OrderedDict
@@ -51,12 +54,23 @@ __all__ = [
 ]
 
 
-# Config registry to store all registered configs.
 class ConfigRegistry(object):
+    """A registry for managing configuration classes for different algorithms within specific frameworks."""
+
     registered_configs = {}
     _config_registry = None
 
     def __new__(cls) -> Self:
+        """Create a new instance of the ConfigRegistry class.
+
+        This method is responsible for creating a new instance of the ConfigRegistry class.
+        It ensures that only one instance of the class is created by checking if the `_config_registry`
+        attribute is None. If it is None, a new instance is created and assigned to `_config_registry`.
+        If `_config_registry` is not None, the existing instance is returned.
+
+        Returns:
+            The instance of the ConfigRegistry class.
+        """
         if cls._config_registry is None:
             cls._config_registry = super(ConfigRegistry, cls).__new__(cls)
 
@@ -64,20 +78,22 @@ class ConfigRegistry(object):
 
     @classmethod
     def register_config_impl(cls, framework_name: str, algo_name: str, priority: Union[float, int] = 0):
-        """Register config decorator.
+        """Register a configuration decorator.
 
-        The register the configuration classes for different algorithms within specific frameworks.
+        This decorator is used to register the configuration classes
+        for different algorithms within specific frameworks.
 
         Usage example:
-            @ConfigRegistry.register_config(framework_name=FRAMEWORK_NAME, algo_name=ExampleAlgorithm, priority=100)
+            @ConfigRegistry.register_config_impl(framework_name=FRAMEWORK_NAME, algo_name=ExampleAlgorithm, priority=1)
             class ExampleAlgorithmConfig:
                 # Configuration details for the ExampleAlgorithm
 
         Args:
-            framework_name: the framework name.
-            algo_name: the algorithm name.
-            priority: priority: the priority of the configuration. A larger number indicates a higher priority,
-                which will be tried first at the auto-tune stage. Defaults to 0.
+            framework_name (str): The framework name.
+            algo_name (str): The algorithm name.
+            priority (Union[float, int], optional): The priority of the configuration.
+                A larger number indicates a higher priority, which will be tried first
+                at the auto-tune stage. Defaults to 0.
         """
 
         def decorator(config_cls):
@@ -89,12 +105,21 @@ class ConfigRegistry(object):
 
     @classmethod
     def get_all_configs(cls) -> Dict[str, Dict[str, Dict[str, object]]]:
-        """Get all registered configurations."""
+        """Get all registered configurations.
+
+        Returns:
+            Dict[str, Dict[str, Dict[str, object]]]: A dictionary containing all registered configurations.
+        """
         return cls.registered_configs
 
     @classmethod
     def get_sorted_configs(cls) -> Dict[str, OrderedDict[str, Dict[str, object]]]:
-        """Get registered configurations sorted by priority."""
+        """Get registered configurations sorted by priority.
+
+        Returns:
+            Dict[str, OrderedDict[str, Dict[str, object]]]:
+                A dictionary containing registered configurations sorted by priority.
+        """
         sorted_configs = OrderedDict()
         for framework_name, algos in sorted(cls.registered_configs.items()):
             sorted_configs[framework_name] = OrderedDict(
@@ -104,7 +129,11 @@ class ConfigRegistry(object):
 
     @classmethod
     def get_cls_configs(cls) -> Dict[str, Dict[str, object]]:
-        """Get registered configurations without priority."""
+        """Get registered configurations without priority.
+
+        Returns:
+            Dict[str, Dict[str, object]]: A dictionary containing registered configurations without priority.
+        """
         cls_configs = {}
         for framework_name, algos in cls.registered_configs.items():
             cls_configs[framework_name] = {}
@@ -114,6 +143,14 @@ class ConfigRegistry(object):
 
     @classmethod
     def get_all_config_cls_by_fwk_name(cls, fwk_name: str) -> List[Type[BaseConfig]]:
+        """Get all registered configuration classes for a specific framework.
+
+        Args:
+            fwk_name (str): The framework name.
+
+        Returns:
+            List[Type[BaseConfig]]: A list of all registered configuration classes for the specified framework.
+        """
         configs_cls = []
         for algo_name, config_pairs in cls.registered_configs.get(fwk_name, {}).items():
             configs_cls.append(config_pairs["cls"])
@@ -139,21 +176,31 @@ def register_config(framework_name: str, algo_name: str, priority: Union[float, 
         priority: the priority of the configuration. A larger number indicates a higher priority,
             which will be tried first at the auto-tune stage. Defaults to 0.
     """
-
     return config_registry.register_config_impl(framework_name=framework_name, algo_name=algo_name, priority=priority)
 
 
 class BaseConfig(ABC):
-    """The base config for all algorithm configs."""
+    """The base config for all algorithm configs.
+
+    Attributes:
+        name (str): The name of the config.
+        params_list (list): The list of **tunable parameters** in the config.
+    """
 
     name = BASE_CONFIG
     params_list = []
 
     def __init__(self, white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST) -> None:
+        """Initialize the BaseConfig.
+
+        Args:
+            white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): The white list of operator names or types.
+                Defaults to DEFAULT_WHITE_LIST.
+        """
         self._global_config: Optional[BaseConfig] = None
         # For PyTorch, operator_type is the collective name for module type and functional operation type,
         # for example, `torch.nn.Linear`, and `torch.nn.functional.linear`.
-        # local config is the collections of operator_type configs and operator configs
+        # local config is the collections of operator_type configs and operator configs.
         self._local_config: Dict[str, Optional[BaseConfig]] = {}
         self._white_list = white_list
 
@@ -176,35 +223,85 @@ class BaseConfig(ABC):
 
     @property
     def white_list(self):
+        """Get the white list of operator names or types.
+
+        Returns:
+            The white list of operator names or types.
+        """
         return self._white_list
 
     @white_list.setter
     def white_list(self, op_name_or_type_list: Optional[List[OP_NAME_OR_MODULE_TYPE]]):
+        """Set the white list of operator names or types.
+
+        Args:
+            op_name_or_type_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): The white list of operator names or types.
+        """
         self._white_list = op_name_or_type_list
 
     @property
     def global_config(self):
+        """Get the global configuration object.
+
+        Returns:
+            The global configuration object.
+        """
         return self._global_config
 
     @global_config.setter
     def global_config(self, config):
+        """Set the global configuration object.
+
+        Args:
+            config: The global configuration object.
+        """
         self._global_config = config
 
     @property
     def local_config(self):
+        """Get the local configuration objects.
+
+        Returns:
+            The local configuration objects.
+        """
         return self._local_config
 
     @local_config.setter
     def local_config(self, config):
+        """Set the local configuration objects.
+
+        Args:
+            config: The local configuration objects.
+        """
         self._local_config = config
 
-    def set_local(self, operator_name: str, config: BaseConfig) -> BaseConfig:
-        if operator_name in self.local_config:
-            logger.warning("The configuration for %s has already been set, update it.", operator_name)
-        self.local_config[operator_name] = config
+    def set_local(self, operator_name_or_list: Union[List, str, Callable], config: BaseConfig) -> BaseConfig:
+        """Set custom configuration based on the global configuration object.
+
+        Args:
+            operator_name_or_list (Union[List, str, Callable]): Specific operator name or list of operator names.
+            config (BaseConfig): Specific configuration.
+
+        Returns:
+            Updated Config.
+        """
+        if isinstance(operator_name_or_list, list):
+            for operator_name in operator_name_or_list:
+                if operator_name in self.local_config:
+                    logger.warning("The configuration for %s has already been set, update it.", operator_name)
+                self.local_config[operator_name] = config
+        else:
+            if operator_name_or_list in self.local_config:
+                logger.warning("The configuration for %s has already been set, update it.", operator_name_or_list)
+            self.local_config[operator_name_or_list] = config
         return self
 
     def to_dict(self):
+        """Convert the config to a dictionary.
+
+        Returns:
+            The config as a dictionary.
+        """
         result = {}
         global_config = self.get_params_dict()
         if bool(self.local_config):
@@ -218,6 +315,11 @@ class BaseConfig(ABC):
         return result
 
     def get_params_dict(self):
+        """Get a dictionary containing the parameters and their values for the current instance.
+
+        Returns:
+            A dictionary containing the parameters and their values.
+        """
         result = dict()
         for param, value in self.__dict__.items():
             if param not in ["_global_config", "_local_config", "_white_list"]:
@@ -226,10 +328,10 @@ class BaseConfig(ABC):
 
     @classmethod
     def from_dict(cls, config_dict):
-        """Construct config from a dict.
+        """Construct config from a dictionary.
 
         Args:
-            config_dict: _description_
+            config_dict: The dictionary containing the config.
 
         Returns:
             The constructed config.
@@ -247,16 +349,37 @@ class BaseConfig(ABC):
 
     @classmethod
     def to_diff_dict(cls, instance) -> Dict[str, Any]:
+        """Compare the instance with the default BaseConfig and return the differences as a dictionary.
+
+        Args:
+            instance: The instance to compare.
+
+        Returns:
+            A dictionary representation of the instance with only the differences from the class defaults.
+        """
         # TODO (Yi) to implement it
         return {}
 
     @classmethod
     def from_json_file(cls, filename):
+        """Load config from a JSON file.
+
+        Args:
+            filename (str): The path to the JSON file.
+
+        Returns:
+            The loaded config.
+        """
         with open(filename, "r", encoding="utf-8") as file:
             config_dict = json.load(file)
         return cls.from_dict(**config_dict)
 
     def to_json_file(self, filename):
+        """Save the config to a JSON file.
+
+        Args:
+            filename (str): The path to save the JSON file.
+        """
         config_dict = self.to_dict()
         with open(filename, "w", encoding="utf-8") as file:
             json.dump(config_dict, file, indent=4)
@@ -266,12 +389,11 @@ class BaseConfig(ABC):
         """Serializes this instance to a JSON string.
 
         Args:
-            use_diff (`bool`, *optional*, defaults to `True`):
-                If set to `True`, only the difference between the config instance and the default `BaseConfig()`
-                is serialized to JSON string.
+            use_diff (bool, optional): If True, only the difference between the config instance and the default
+                BaseConfig is serialized to JSON string. Defaults to False.
 
         Returns:
-            `str`: String containing all the attributes that make up this configuration instance in JSON format.
+            The config as a JSON string.
         """
         if use_diff is True:
             config_dict = self.to_diff_dict(self)
@@ -283,6 +405,11 @@ class BaseConfig(ABC):
             return config_dict
 
     def __repr__(self) -> str:
+        """Return a string representation of the config.
+
+        Returns:
+            str: The string representation of the config.
+        """
         return f"{self.__class__.__name__} {self.to_json_string()}"
 
     @classmethod
@@ -293,10 +420,29 @@ class BaseConfig(ABC):
 
     @classmethod
     def validate(self, user_config: BaseConfig):
+        """Validates the user configuration.
+
+        Args:
+            user_config (BaseConfig): The user configuration to be validated.
+
+        Returns:
+            None
+        """
         # TODO(Yi) validate the user config
         pass
 
     def __add__(self, other: BaseConfig) -> BaseConfig:
+        """Combine two configs.
+
+        If the other config is an instance of the same class, the local configs will be combined.
+        Otherwise, a `ComposableConfig` will be created to combine the two configs.
+
+        Args:
+            other (BaseConfig): The other config to combine.
+
+        Returns:
+            BaseConfig: The combined config.
+        """
         if isinstance(other, type(self)):
             for op_name, config in other.local_config.items():
                 self.set_local(op_name, config)
@@ -306,6 +452,15 @@ class BaseConfig(ABC):
 
     @staticmethod
     def get_the_default_value_of_param(config: BaseConfig, param: str) -> Any:
+        """Get the default value of a parameter in the config.
+
+        Args:
+            config (BaseConfig): The config object.
+            param (str): The name of the parameter.
+
+        Returns:
+            default_vaule: The default value of the parameter.
+        """
         # Get the signature of the __init__ method
         signature = inspect.signature(config.__init__)
 
@@ -377,11 +532,15 @@ class BaseConfig(ABC):
         if len(tuning_param_list) == 0:
             config_list = [config]
         else:
+            # The `TuningParam` instance with no options will cause the product to be empty.
+            # Filter out the `TuningParam` instances with no options
+            tuning_param_list = list(filter(lambda x: len(x.options) > 0, tuning_param_list))
             tuning_param_name_lst = [tuning_param.name for tuning_param in tuning_param_list]
             for params_values in product(*[tuning_param.options for tuning_param in tuning_param_list]):
                 tuning_param_pair = dict(zip(tuning_param_name_lst, params_values))
                 tmp_params_dict = {**not_tuning_param_pair, **tuning_param_pair}
                 new_config = self.__class__(**tmp_params_dict)
+                new_config.local_config = copy.deepcopy(self.local_config)
                 logger.info(new_config.to_dict())
                 config_list.append(new_config)
         logger.info("Expanded the %s and got %d configs.", self.__class__.name, len(config_list))
@@ -392,14 +551,30 @@ class BaseConfig(ABC):
         op_name_config_dict = dict()
         for name, config in self.local_config.items():
             if self._is_op_type(name):
-                op_type_config_dict[name] = config
+                # Convert the Callable to String.
+                new_name = self._op_type_to_str(name)
+                op_type_config_dict[new_name] = config
             else:
                 op_name_config_dict[name] = config
         return op_type_config_dict, op_name_config_dict
 
     def to_config_mapping(
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
-    ) -> OrderedDict[Union[str, Callable], OrderedDict[str, BaseConfig]]:
+    ) -> OrderedDict[Union[str, str], OrderedDict[str, BaseConfig]]:
+        """Generate the configuration mapping based on the model information.
+
+        Args:
+            config_list (List[BaseConfig], optional): A list of BaseConfig objects to be converted.
+                If not provided, the method will use the current instance of BaseConfig. Defaults to None.
+            model_info (List[Tuple[str, str]], optional): A list of tuples representing the model information.
+                Each tuple contains the operation name and operation type. Defaults to None.
+
+        Returns:
+            OrderedDict[Union[str, str], OrderedDict[str, BaseConfig]]:
+                A OrderedDict representing the configuration mapping.
+                The keys of the outer OrderedDict are tuples of (operation name, operation type),
+                and the values are inner OrderedDicts containing the corresponding configuration objects.
+        """
         config_mapping = OrderedDict()
         if config_list is None:
             config_list = [self]
@@ -410,13 +585,19 @@ class BaseConfig(ABC):
                 if self.global_config is not None:
                     config_mapping[(op_name, op_type)] = global_config
                 if op_type in op_type_config_dict:
-                    config_mapping[(op_name, op_type)] = op_name_config_dict[op_type]
+                    config_mapping[(op_name, op_type)] = op_type_config_dict[op_type]
                 for op_name_pattern in op_name_config_dict:
-                    if isinstance(op_name, str) and re.match(op_name_pattern, op_name):
-                        config_mapping[(op_name, op_type)] = op_name_config_dict[op_name_pattern]
-                    elif op_name_pattern == op_name:  # TODO: map ipex opname to stock pt op_name
+                    if re.match(op_name_pattern, op_name):
                         config_mapping[(op_name, op_type)] = op_name_config_dict[op_name_pattern]
         return config_mapping
+
+    @staticmethod
+    def _op_type_to_str(op_type: Callable) -> str:
+        # * Ort and TF may override this method.
+        op_type_name = getattr(op_type, "__name__", "")
+        if op_type_name == "":
+            logger.warning("The op_type %s has no attribute __name__.", op_type)
+        return op_type_name
 
     @staticmethod
     def _is_op_type(name: str) -> bool:
@@ -426,16 +607,76 @@ class BaseConfig(ABC):
     @classmethod
     @abstractmethod
     def get_config_set_for_tuning(cls):
+        """A set of predefined configurations used for tuning.
+
+        This method should be implemented by subclasses to provide a set of configurations
+        that can be used for auto-tune.
+
+        Returns:
+            set: A set of configurations for tuning.
+
+        Raises:
+            NotImplementedError: If the method is not implemented by the subclass.
+        """
         raise NotImplementedError
+
+    def __eq__(self, other: BaseConfig) -> bool:
+        """Check if the current BaseConfig object is equal to another BaseConfig object.
+
+        Args:
+            other (BaseConfig): The other BaseConfig object to compare with.
+
+        Returns:
+            bool: True if the objects are equal, False otherwise.
+        """
+        if not isinstance(other, type(self)):
+            return False
+
+        params_equal = self.params_list == other.params_list and all(
+            getattr(self, str(attr)) == getattr(other, str(attr)) for attr in self.params_list
+        )
+        local_config_equal = self.local_config == other.local_config
+        global_config_equal = self.global_config == other.global_config
+        return params_equal and local_config_equal and global_config_equal
 
 
 class ComposableConfig(BaseConfig):
+    """A class representing a composable configuration.
+
+    This class allows for composing multiple configurations together by using the `+` operator.
+
+    Args:
+        configs (List[BaseConfig]): A list of base configurations to be composed.
+
+    Attributes:
+        config_list (List[BaseConfig]): The list of base configurations.
+    """
+
     name = COMPOSABLE_CONFIG
 
     def __init__(self, configs: List[BaseConfig]) -> None:
+        """Initializes a new ComposableConfig.
+
+        Args:
+            configs (List[BaseConfig]): A list of BaseConfig objects.
+
+        Returns:
+            None
+        """
         self.config_list = configs
 
     def __add__(self, other: BaseConfig) -> BaseConfig:
+        """Adds another BaseConfig object to the current BaseConfig object.
+
+        If the other object is of the same type as the current object, the config_list of the other object is appended
+        to the config_list of the current object. Otherwise, the other object is appended directly to the config_list.
+
+        Args:
+            other (BaseConfig): The other BaseConfig object to be added.
+
+        Returns:
+            BaseConfig: The updated BaseConfig object after the addition.
+        """
         if isinstance(other, type(self)):
             self.config_list.extend(other.config_list)
         else:
@@ -443,6 +684,17 @@ class ComposableConfig(BaseConfig):
         return self
 
     def to_dict(self, params_list=[], operator2str=None):
+        """Converts the configuration object to a dictionary.
+
+        Args:
+            params_list (list): A list of parameters to include in the dictionary.
+                If empty, all parameters will be included.
+            operator2str (callable): A function that converts operator objects to strings.
+                If None, the default conversion will be used.
+
+        Returns:
+            dict: A dictionary representation of the configuration object.
+        """
         result = {}
         for config in self.config_list:
             result[config.name] = config.to_dict()
@@ -450,6 +702,18 @@ class ComposableConfig(BaseConfig):
 
     @classmethod
     def from_dict(cls, config_dict: OrderedDict[str, Dict], config_registry: Dict[str, BaseConfig]):
+        """Create a BaseConfig object from a dictionary representation.
+
+        Args:
+            config_dict (OrderedDict[str, Dict]): The dictionary representation of the configuration.
+            config_registry (Dict[str, BaseConfig]): The registry of available configurations.
+
+        Returns:
+            BaseConfig: The created BaseConfig object.
+
+        Raises:
+            AssertionError: If the config_dict does not include at least one configuration.
+        """
         assert len(config_dict) >= 1, "The config dict must include at least one configuration."
         num_configs = len(config_dict)
         name, value = next(iter(config_dict.items()))
@@ -460,14 +724,37 @@ class ComposableConfig(BaseConfig):
         return config
 
     def to_json_string(self, use_diff: bool = False) -> str:
+        """Convert the object to a JSON string representation.
+
+        Args:
+            use_diff (bool): Whether to include only the differences from the base configuration.
+                Defaults to False.
+
+        Returns:
+            str: The JSON string representation of the object.
+        """
         return json.dumps(self.to_dict(), indent=2) + "\n"
 
     def __repr__(self) -> str:
+        """A string representation of the object.
+
+        Returns:
+            str: The string representation of the object.
+        """
         return f"{self.__class__.__name__} {self.to_json_string()}"
 
     def to_config_mapping(
         self, config_list: List[BaseConfig] = None, model_info: Dict[str, Any] = None
     ) -> OrderedDict[str, BaseConfig]:
+        """Converts the configuration list to a mapping of (op_name, op_type) to corresponding BaseConfig objects.
+
+        Args:
+            config_list (List[BaseConfig], optional): List of BaseConfig objects. Defaults to None.
+            model_info (Dict[str, Any], optional): Dictionary containing model information. Defaults to None.
+
+        Returns:
+            OrderedDict[str, BaseConfig]: Mapping of (op_name, op_type) to corresponding BaseConfig objects.
+        """
         config_mapping = OrderedDict()
         for config in self.config_list:
             op_type_config_dict, op_name_config_dict = config._get_op_name_op_type_config()
@@ -487,10 +774,12 @@ class ComposableConfig(BaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> None:
+        """Get the set of predefined configurations used for tuning."""
         # TODO (Yi) handle the composable config in `tuning_config`
         return None
 
     def get_model_info(self, model, *args, **kwargs):
+        """Get the model information."""
         model_info_dict = dict()
         for config in self.config_list:
             model_info_dict.update({config.name: config.get_model_info(model, *args, **kwargs)})
@@ -498,6 +787,14 @@ class ComposableConfig(BaseConfig):
 
 
 def get_all_config_set_from_config_registry(fwk_name: str) -> Union[BaseConfig, List[BaseConfig]]:
+    """Retrieves all the configuration sets from the config registry for a given framework name.
+
+    Args:
+        fwk_name (str): The name of the framework.
+
+    Returns:
+        Union[BaseConfig, List[BaseConfig]]: The configuration set(s) for the given framework name.
+    """
     all_registered_config_cls: List[BaseConfig] = config_registry.get_all_config_cls_by_fwk_name(fwk_name)
     config_set = []
     for config_cls in all_registered_config_cls:
@@ -587,6 +884,7 @@ class Options:
 
     def __init__(self, random_seed=1978, workspace=DEFAULT_WORKSPACE, resume_from=None, tensorboard=False):
         """Init an Option object."""
+        os.makedirs(workspace, exist_ok=True)
         self.random_seed = random_seed
         self.workspace = workspace
         self.resume_from = resume_from
@@ -606,6 +904,7 @@ class Options:
     @property
     def workspace(self):
         """Get workspace."""
+        os.makedirs(self._workspace, exist_ok=True)
         return self._workspace
 
     @workspace.setter

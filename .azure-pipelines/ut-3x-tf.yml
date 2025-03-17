@@ -15,6 +15,7 @@ pr:
       - setup.py
       - requirements_tf.txt
       - .azure-pipelines/scripts/ut/3x/run_3x_tf.sh
+      - .azure-pipelines/template/docker-template.yml
 
 pool: ICX-16C
 
@@ -40,20 +41,6 @@ stages:
               utScriptFileName: "3x/run_3x_tf"
               uploadPath: $(UPLOAD_PATH)
               utArtifact: "ut_3x"
-
-  - stage: NewTF
-    displayName: Unit Test 3x New TF API
-    dependsOn: []
-    jobs:
-      - job:
-        displayName: Unit Test 3x New TF API
-        steps:
-          - template: template/ut-template.yml
-            parameters:
-              dockerConfigName: "commonDockerConfig"
-              utScriptFileName: "3x/run_3x_tf_new_api"
-              uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut_3x_tf_new_api"
 
   - stage: TensorFlow_baseline
     displayName: Unit Test 3x TensorFlow baseline
@@ -97,7 +84,7 @@ stages:
 
           - script: |
               echo "--- create container ---"
-              docker run -d -it --name="collectLogs"  -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor  ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash
+              docker run -d -it --name="collectLogs" -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor  ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash
               echo "--- docker ps ---"
               docker ps
               echo "--- collect logs ---"
@@ -105,6 +92,10 @@ stages:
               && bash install_nc.sh 3x_tf \
               && bash ut/3x/collect_log_3x.sh 3x_tf"
             displayName: "Collect UT Coverage"
+
+          - task: PublishCodeCoverageResults@2
+            inputs:
+              summaryFileLocation: $(Build.SourcesDirectory)/log_dir/coverage_PR/coverage.xml
 
           - task: PublishPipelineArtifact@1
             condition: succeededOrFailed()

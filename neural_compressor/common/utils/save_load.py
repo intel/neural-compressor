@@ -14,19 +14,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""The module for save/load config."""
 
 import json
 import os
 
 
-def save_config_mapping(config_mapping, qconfig_file_path):
+def save_config_mapping(config_mapping, qconfig_file_path):  # pragma: no cover
     """Save config mapping to json file.
 
     Args:
         config_mapping (dict): config mapping.
         qconfig_file_path (str): path to saved json file.
     """
-
     per_op_qconfig = {}
     for (op_name, op_type), op_config in config_mapping.items():
         value = {op_config.name: op_config.to_dict()}
@@ -36,7 +36,7 @@ def save_config_mapping(config_mapping, qconfig_file_path):
         json.dump(per_op_qconfig, f, indent=4)
 
 
-def load_config_mapping(qconfig_file_path, config_name_mapping):
+def load_config_mapping(qconfig_file_path, config_name_mapping):  # pragma: no cover
     """Reload config mapping from json file.
 
     Args:

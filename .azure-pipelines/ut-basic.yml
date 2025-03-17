@@ -12,14 +12,19 @@ pr:
       - test
       - setup.py
       - requirements.txt
+      - .azure-pipelines/ut-basic.yml
+      - .azure-pipelines/template/docker-template.yml
       - .azure-pipelines/scripts/ut
+      - .azure-pipelines/scripts/fwk_version.sh
+      - .azure-pipelines/scripts/install_nc.sh
     exclude:
-      - test/neural_coder
       - test/3x
       - neural_compressor/common
       - neural_compressor/torch
       - neural_compressor/tensorflow
       - neural_compressor/onnxrt
+      - neural_compressor/transformers
+      - neural_compressor/evaluation
       - .azure-pipelines/scripts/ut/3x
 
 pool: ICX-16C
@@ -253,7 +258,7 @@ stages:
 
           - script: |
               echo "--- create container ---"
-              docker run -d -it --name="collectLogs"  -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor  ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash
+              docker run -d -it --name="collectLogs" -v ${BUILD_SOURCESDIRECTORY}:/neural-compressor  ${IMAGE_NAME}:${IMAGE_TAG} /bin/bash
               echo "--- docker ps ---"
               docker ps
               echo "--- collect logs ---"
@@ -261,6 +266,10 @@ stages:
               && bash install_nc.sh \
               && bash ut/collect_log.sh"
             displayName: "Collect UT Coverage"
+
+          - task: PublishCodeCoverageResults@2
+            inputs:
+              summaryFileLocation: $(Build.SourcesDirectory)/log_dir/coverage_PR/coverage.xml
 
           - task: PublishPipelineArtifact@1
             condition: succeededOrFailed()

@@ -11,11 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Utility functions for Static quantization."""
+
 
 import copy
 import json
 import os
 import re
+from collections import OrderedDict
 from typing import Dict, List, Union
 
 import torch
@@ -23,12 +26,11 @@ from packaging.version import Version
 
 try:
     import intel_extension_for_pytorch as ipex
-    import prettytable as pt
-except:
+except:  # pragma: no cover
     pass
 
 from neural_compressor.common.utils import DEFAULT_WORKSPACE, CpuInfo
-from neural_compressor.torch.utils import get_ipex_version, get_torch_version, logger
+from neural_compressor.torch.utils import Statistics, get_ipex_version, get_torch_version, logger
 
 version = get_torch_version()
 ipex_ver = get_ipex_version()
@@ -42,13 +44,19 @@ unify_op_type_mapping_ipex = {
     "<class 'torch.nn.modules.conv.Conv2d'>": "Conv2d",
     "<class 'torch.nn.modules.conv.Conv3d'>": "Conv3d",
     "<class 'torch.nn.modules.activation.ReLU'>": "ReLU",
+    "<class 'torch.nn.modules.sparse.EmbeddingBag'>": "EmbeddingBag",
     "<method 'add' of 'torch._C._TensorBase' objects>": "add",  # for IPEX < 2.2
     "<method 'add' of 'torch._C.TensorBase' objects>": "add",  # for IPEX >= 2.2
     "<class 'torch.nn.modules.pooling.AdaptiveAvgPool2d'>": "AdaptiveAvgPool2d",
     "Linear_Relu": "Linear",
+    "Linear_add": "Linear",
     "<class 'torch.nn.modules.linear.Linear'>": "Linear",
     "<class 'torch.nn.modules.pooling.MaxPool2d'>": "MaxPool2d",
-    "re": {"<built-in method matmul of type object at": "matmul"},
+    "re": {
+        "<built-in method matmul of type object at": "matmul",
+        "<built-in method add of type object at": "add",
+        "<built-in method bmm of type object at": "bmm",
+    },
 }
 
 BLOCK_PATTERNS = [
@@ -64,11 +72,23 @@ BLOCK_PATTERNS = [
 
 
 def cfg_to_qconfig(tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_id_op_name):  # pragma: no cover
+    """Updates json file in ipex_config_path.
+
+    Args:
+        tune_cfg (dict): dictionary of quantization configuration.
+        cfgs (dict): configs loaded from ipex config path.
+        op_infos_from_cfgs (dict): dict containing configs that have been parsed for each op.
+        output_tensor_ids_op_name (dict): dict containing op names corresponding to 'op_infos_from_cfgs'.
+
+    Returns:
+        user_cfg (dict): quantization configuration for ops.
+    """
     assert cfgs is not None, "No configure for IPEX int8 model..."
     op_infos = copy.deepcopy(op_infos_from_cfgs)
-    cfgs = check_cfg_and_qconfig(tune_cfg["op"], cfgs, op_infos, output_tensor_id_op_name)
+    cfgs, user_cfg = check_cfg_and_qconfig(tune_cfg["op"], cfgs, op_infos, output_tensor_id_op_name)
     with open(ipex_config_path, "w") as write_f:
         json.dump(cfgs, write_f, indent=4)
+    return user_cfg
 
 
 def check_cfg_and_qconfig(user_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_op_name):  # pragma: no cover
@@ -83,8 +103,19 @@ def check_cfg_and_qconfig(user_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_
     Returns:
         cfgs (dict): updated configs.
     """
-    for op_name in user_cfg:
-        inc_op_cfg = user_cfg[op_name]
+    ori_user_cfg = copy.deepcopy(user_cfg)
+    tmp_user_cfg = OrderedDict()
+    for op in user_cfg:  # map ipex op_name to pt op_name
+        for i, op_name in enumerate(op):
+            for ops, _ in op_infos_from_cfgs.items():
+                if "fqn" in op_infos_from_cfgs[ops].keys() and op_infos_from_cfgs[ops]["fqn"] == op_name:
+                    if op_infos_from_cfgs[ops]["op_type"] in unify_op_type_mapping_ipex:
+                        ori_op = (tuple(ops), unify_op_type_mapping_ipex[op_infos_from_cfgs[ops]["op_type"]])
+                        tmp_user_cfg[((ori_op[0],), ori_op[1])] = user_cfg[op]
+                        break
+
+    for op_name in tmp_user_cfg:
+        inc_op_cfg = tmp_user_cfg[op_name]
         for i, name in enumerate(op_name[0]):
             # to int8
             ipex_op_cfg = op_infos_from_cfgs[name]
@@ -142,40 +173,127 @@ def check_cfg_and_qconfig(user_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_
                         else:
                             pass
             cfgs[name[0]][name[1]][name[2]] = ipex_op_cfg
-    return cfgs
+    return cfgs, ori_user_cfg
 
 
-def generate_activation_observer(scheme, algorithm, smooth_quant=False, smooth_quant_enable=False):  # pragma: no cover
-    """This is a helper method to generate a dict containing activation observer info.
+def generate_xpu_qconfig(tune_cfg):  # pragma: no cover
+    """Generates qconfig for quantiztaion on xpu device.
+
+    Args:
+        tune_cfg (dict): dictionary of quantization configuration.
+
+    Returns:
+        qconfig (dict): quantization configuration for ops.
+    """
+    # qconfig observer & config constants for ipex-xpu
+    from torch.ao.quantization import HistogramObserver, MinMaxObserver, QConfig
+
+    act_observer_minmax_asym = MinMaxObserver.with_args(quant_min=0, quant_max=127)
+    act_observer_minmax_sym = MinMaxObserver.with_args(
+        dtype=torch.qint8, qscheme=torch.per_tensor_symmetric, quant_min=-128, quant_max=127
+    )
+    act_observer_kl_asym = HistogramObserver.with_args(quant_min=0, quant_max=127)
+    act_observer_kl_sym = HistogramObserver.with_args(
+        dtype=torch.qint8, qscheme=torch.per_tensor_symmetric, quant_min=-128, quant_max=127
+    )
+    # no tuning for granularity due to tuning space
+    weight_observer_minmax_sym = MinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_tensor_symmetric)
+
+    qconfig = {}
+    user_cfg = copy.deepcopy(tune_cfg["op"])
+    for _, cfg in user_cfg.items():
+        act_algo = cfg["activation"]["algorithm"]
+        act_sym = cfg["activation"]["scheme"]
+        break
+
+    if act_algo == "minmax":
+        if act_sym == "sym":
+            activation = act_observer_minmax_sym
+        else:
+            activation = act_observer_minmax_asym
+    else:
+        if act_sym == "sym":
+            activation = act_observer_kl_sym
+        else:
+            activation = act_observer_kl_asym
+
+    qconfig[""] = QConfig(activation=activation, weight=weight_observer_minmax_sym)
+
+    for (op_name, op_type), cfg in user_cfg.items():
+        if cfg["weight"]["dtype"] == "fp32":
+            qconfig[op_name] = None
+    return qconfig
+
+
+def generate_activation_observer(
+    scheme, algorithm, smooth_quant=False, smooth_quant_enable=False, alpha=0.5
+):  # pragma: no cover
+    """This is a helper method to generate an activation observer.
 
     Args:
         scheme (str): Quantization scheme to be used.
         algorithm (str): What algorithm for computing the quantization parameters based on.
 
     Returns:
-        A dict containing observer info.zs
+        An observer.
     """
-    from intel_extension_for_pytorch.quantization._smooth_quant import SmoothQuantActivationObserver
-    from intel_extension_for_pytorch.quantization._utils import _get_observer_setting
-    from torch.quantization import HistogramObserver, MinMaxObserver
-
-    kl_activation_observer = _get_observer_setting(HistogramObserver(reduce_range=False))
-    minmax_activation_observer = _get_observer_setting(
-        MinMaxObserver(qscheme=torch.per_tensor_affine, dtype=torch.quint8)
-    )
-    smoothquant_kl_activation_observer = _get_observer_setting(
-        SmoothQuantActivationObserver(
-            reduce_range=False,
-            smooth_quant_enabled=smooth_quant_enable,
-        )
-    )
-    smoothquant_minmax_activation_observer = _get_observer_setting(
-        SmoothQuantActivationObserver(
-            reduce_range=False,
-            smooth_quant_enabled=smooth_quant_enable,
-        )
-    )
-
+    kl_activation_observer = {
+        "name": "HistogramObserver",
+        "bins": 2048,
+        "dtype": "torch.quint8",
+        "qscheme": "torch.per_tensor_affine",
+        "reduce_range": False,
+        "quant_min": 0,
+        "quant_max": 255,
+    }
+    minmax_activation_observer = {
+        "name": "MinMaxObserver",
+        "dtype": "torch.quint8",
+        "qscheme": "torch.per_tensor_affine",
+        "reduce_range": False,
+        "quant_min": 0,
+        "quant_max": 255,
+    }
+    smoothquant_kl_activation_observer = {
+        "name": "SmoothQuantActivationObserver",
+        "smooth_quant_enabled": smooth_quant_enable,
+        "dtype": "torch.quint8",
+        "qscheme": "torch.per_tensor_affine",
+        "reduce_range": False,
+        "quant_min": 0,
+        "quant_max": 255,
+        "alpha": 0.5 if alpha == "auto" else alpha,
+        "act_observer": kl_activation_observer,
+        "act_ic_observer": {
+            "name": "PerChannelMinMaxObserver",
+            "ch_axis": -1,
+            "dtype": "torch.quint8",
+            "qscheme": "torch.per_channel_affine",
+            "reduce_range": False,
+            "quant_min": 0,
+            "quant_max": 255,
+        },
+    }
+    smoothquant_minmax_activation_observer = {
+        "name": "SmoothQuantActivationObserver",
+        "smooth_quant_enabled": smooth_quant_enable,
+        "dtype": "torch.quint8",
+        "qscheme": "torch.per_tensor_affine",
+        "reduce_range": False,
+        "quant_min": 0,
+        "quant_max": 255,
+        "alpha": 0.5 if alpha == "auto" else alpha,
+        "act_observer": minmax_activation_observer,
+        "act_ic_observer": {
+            "name": "PerChannelMinMaxObserver",
+            "ch_axis": -1,
+            "dtype": "torch.quint8",
+            "qscheme": "torch.per_channel_affine",
+            "reduce_range": False,
+            "quant_min": 0,
+            "quant_max": 255,
+        },
+    }
     REDUCE_RANGE = False if CpuInfo().vnni else True
     if REDUCE_RANGE:
         minmax_activation_observer["reduce_range"] = REDUCE_RANGE
@@ -207,11 +325,15 @@ def get_quantizable_ops_recursively(model, example_inputs):  # pragma: no cover
     Args:
         model (object): input model
         example_inputs (dict|list|tuple|torch.Tensor): used to trace torch model.
+
     Returns:
         quantizable_ops (list): list of tuples of op_name and op_type.
-        cfgs (dict): dict of configuration
+        cfgs (dict): dict of configuration.
+        op_infos_from_cfgs (dict): dict containing configs that have been parsed for each op.
+        output_tensor_ids_op_name (dict): dict containing op names corresponding to 'op_infos_from_cfgs'.
     """
     quantizable_ops = []
+    op_name_info = []
     # group ops by position for transform-based model
     detector = TransformerBasedModelBlockPatternDetector(model)
     detect_result = detector.detect_block()
@@ -264,7 +386,7 @@ def get_quantizable_ops_recursively(model, example_inputs):  # pragma: no cover
             op_infos_from_cfgs,
             input_tensor_id_op_name,
             output_tensor_id_op_name,
-        ) = paser_cfgs(cfgs)
+        ) = parse_cfgs(cfgs)
         quantizable_op_names = get_quantizable_ops_from_cfgs(ops_name, op_infos_from_cfgs, input_tensor_id_op_name)
         for name in quantizable_op_names:
             # name : list
@@ -277,6 +399,14 @@ def get_quantizable_ops_recursively(model, example_inputs):  # pragma: no cover
                 if ipex_op_type in unify_op_type_mapping_ipex:
                     quantizable_ops.append((tuple(name), unify_op_type_mapping_ipex[ipex_op_type]))
                     map_op_name_to_fqn[(tuple(name), ipex_op_type)] = module_fqn
+                    if "class" in ipex_op_type:  # "<class 'torch.nn.modules.activation.ReLU'>"
+                        op_type = ipex_op_type.split("'")[1]
+                        op_name_info.append((module_fqn, eval(op_type).__name__))
+                    elif "method" in ipex_op_type:  # "<method 'add' of 'torch._C._TensorBase' objects>"
+                        method = ipex_op_type.split("'")[1]
+                        op_name_info.append((module_fqn, method))
+                    elif "_" in ipex_op_type:  # "Convolution_Relu", "Linear_Relu"
+                        op_name_info.append((module_fqn, ipex_op_type.split("_")[0]))
                 else:
                     re_flag = False
                     for pattern, unify_op_type in unify_op_type_mapping_ipex["re"].items():
@@ -284,10 +414,12 @@ def get_quantizable_ops_recursively(model, example_inputs):  # pragma: no cover
                             re_flag = True
                             quantizable_ops.append((tuple(name), unify_op_type))
                             map_op_name_to_fqn[(tuple(name), unify_op_type)] = module_fqn
+                            op_name_info.append((module_fqn, ipex_op_type))
                             break
                     if not re_flag:
                         quantizable_ops.append((tuple(name), ipex_op_type))
                         map_op_name_to_fqn[(tuple(name), ipex_op_type)] = module_fqn
+                        op_name_info.append((module_fqn, ipex_op_type))
             else:
                 op_type = ""
                 for op_name in name:
@@ -302,6 +434,7 @@ def get_quantizable_ops_recursively(model, example_inputs):  # pragma: no cover
                 _op_cfg_id = name[0][2]
                 module_fqn = cfgs[_module_key]["q_op_infos"][_op_cfg_id]["fqn"]
                 map_op_name_to_fqn[(tuple(name), op_type)] = module_fqn
+                op_name_info.append((module_fqn, op_type))
 
     logger.debug("Map op name to fqn: ")
     logger.debug(map_op_name_to_fqn)
@@ -309,7 +442,7 @@ def get_quantizable_ops_recursively(model, example_inputs):  # pragma: no cover
     logger.info(attention_block)
     logger.info("FFN Blocks : ")
     logger.info(ffn_blocks)
-    return quantizable_ops, cfgs, op_infos_from_cfgs, output_tensor_id_op_name
+    return quantizable_ops, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, op_name_info
 
 
 def simple_inference(q_model, example_inputs, iterations=1):
@@ -323,42 +456,18 @@ def simple_inference(q_model, example_inputs, iterations=1):
             q_model(example_inputs)
 
 
-def dump_model_op_stats(tune_cfg):
+def dump_model_op_stats(user_cfg):
     """This is a function to dump quantizable ops of model to user.
 
     Args:
-        tune_cfg (dict): quantization config
+        user_cfg (dict): quantization config
+
     Returns:
         None
     """
     res = dict()
-    for k, v in tune_cfg["op"].items():
-        op_type_list = k[-1].split("><")
-        op_type = ""
-        for op in op_type_list:
-            if "class" in op:
-                op_type = (
-                    op[op.rfind(".") + 1 : op.rfind("'")]
-                    if op_type == ""
-                    else op_type + "&" + op[op.rfind(".") + 1 : op.rfind("'")]
-                )
-            elif "method" in op:
-                start = op.find("'") + 1
-                if start > 1:
-                    op_type = (
-                        op[start : op.find("'", start)]
-                        if op_type == ""
-                        else op_type + "&" + op[start : op.find("'", start)]
-                    )
-                else:
-                    start = op.find("method") + 7
-                    op_type = (
-                        op[start : op.find(" ", start)]
-                        if op_type == ""
-                        else op_type + "&" + op[start : op.find(" ", start)]
-                    )
-            else:
-                op_type = op if op_type == "" else op_type + "&" + op
+    for k, v in user_cfg.items():
+        op_type = k[1]
         if op_type not in res.keys():
             res[op_type] = {"INT8": 0, "BF16": 0, "FP32": 0}
         if v["weight"]["dtype"] == "int8":
@@ -402,12 +511,11 @@ def get_element_under_depth(d, ops_lst):
         ops_lst.append(d)
 
 
-def paser_cfgs(cfgs):  # pragma: no cover
+def parse_cfgs(cfgs):  # pragma: no cover
     """Parse configs.
 
     Args:
         cfgs (dict): the input configs.
-
 
     Returns:
         ops_name (list): list of op names.
@@ -522,48 +630,6 @@ def get_quantizable_ops_from_cfgs(ops_name, op_infos_from_cfgs, input_tensor_ids
     return quantizable_ops
 
 
-class Statistics:  # pragma: no cover
-    """The statistics printer."""
-
-    def __init__(self, data, header, field_names, output_handle=logger.info):
-        """Init a Statistics object.
-
-        Args:
-            data: The statistics data
-            header: The table header
-            field_names: The field names
-            output_handle: The output logging method
-        """
-        self.field_names = field_names
-        self.header = header
-        self.data = data
-        self.output_handle = output_handle
-        self.tb = pt.PrettyTable(min_table_width=40)
-
-    def print_stat(self):
-        """Print the statistics."""
-        valid_field_names = []
-        for index, value in enumerate(self.field_names):
-            if index < 2:
-                valid_field_names.append(value)
-                continue
-
-            if any(i[index] for i in self.data):
-                valid_field_names.append(value)
-        self.tb.field_names = valid_field_names
-        for i in self.data:
-            tmp_data = []
-            for index, value in enumerate(i):
-                if self.field_names[index] in valid_field_names:
-                    tmp_data.append(value)
-            if any(tmp_data[1:]):
-                self.tb.add_row(tmp_data)
-        lines = self.tb.get_string().split("\n")
-        self.output_handle("|" + self.header.center(len(lines[0]) - 2, "*") + "|")
-        for i in lines:
-            self.output_handle(i)
-
-
 class TransformerBasedModelBlockPatternDetector:  # pragma: no cover
     """Detect the attention block and FFN block in transformer-based model."""
 
@@ -582,7 +648,6 @@ class TransformerBasedModelBlockPatternDetector:  # pragma: no cover
         """Traverse the model definition and return the attention blocks and ffn blocks.
 
         Returns:
-
             blocks: A dict include the detected attention blocks and ffn blocks.
         """
         # Step 1: Traverse model definition and record the op position

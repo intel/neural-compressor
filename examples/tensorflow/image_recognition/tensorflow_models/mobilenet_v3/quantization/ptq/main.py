@@ -249,7 +249,6 @@ class eval_classifier_optimized_graph:
             conf = PostTrainingQuantConfig(
                 calibration_sampling_size=[20, 50],
                 op_name_dict=op_name_dict,
-                diagnosis=args.diagnose,
             )
             from neural_compressor import Metric
             top1 = Metric(name="topk", k=1)
@@ -283,7 +282,6 @@ class eval_classifier_optimized_graph:
                     iteration=100,
                     cores_per_instance=4,
                     num_of_instance=1,
-                    diagnosis=args.diagnose,
                 )
                 fit(args.input_graph, conf, b_dataloader=dataloader)
             elif args.mode == 'accuracy':

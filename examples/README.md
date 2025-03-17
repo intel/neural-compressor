@@ -358,40 +358,10 @@ Intel® Neural Compressor validated examples with multiple compression technique
 </thead>
 <tbody>
   <tr>
-    <td>ResNet50 V1</td>
-    <td>Image Recognition</td>
-    <td>TF2ONNX</td>
-    <td><a href="./tensorflow/image_recognition/tensorflow_models/resnet50_v1/export">int8 fp32</a></td>
-  </tr>
-  <tr>
     <td>ResNet50 V1.5</td>
     <td>Image Recognition</td>
     <td>TF2ONNX</td>
     <td><a href="./tensorflow/image_recognition/tensorflow_models/resnet50_v1_5/export">int8 fp32</a></td>
-  </tr>
-  <tr>
-    <td>MobileNet V2</td>
-    <td>Image Recognition</td>
-    <td>TF2ONNX</td>
-    <td><a href="./tensorflow/image_recognition/tensorflow_models/mobilenet_v2/export">int8 fp32</a></td>
-  </tr>
-  <tr>
-    <td>VGG16</td>
-    <td>Image Recognition</td>
-    <td>TF2ONNX</td>
-    <td><a href="./tensorflow/image_recognition/tensorflow_models/vgg16/export">int8 fp32</a></td>
-  </tr>
-  <tr>
-    <td>Faster R-CNN ResNet50</td>
-    <td>Object Detection</td>
-    <td>TF2ONNX</td>
-    <td><a href="./tensorflow/object_detection/tensorflow_models/faster_rcnn_resnet50/export">int8 fp32</a></td>
-  </tr>
-  <tr>
-    <td>SSD MobileNet V1</td>
-    <td>Object Detection</td>
-    <td>TF2ONNX</td>
-    <td><a href="./tensorflow/object_detection/tensorflow_models/ssd_mobilenet_v1/export">int8 fp32</a></td>
   </tr>
 </tbody>
 </table>
@@ -515,12 +485,6 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Speech Recognition</td>
     <td>Post-Training Dynamic Quantization</td>
     <td><a href="./pytorch/speech_recognition/torchaudio_models/quantization/ptq_dynamic/fx">fx</a></td>
-  </tr>
-  <tr>
-    <td>RNNT</td>
-    <td>Speech Recognition</td>
-    <td>Post-Training Dynamic Quantization</td>
-    <td><a href="./pytorch/speech_recognition/rnnt/quantization/ptq_dynamic/fx">fx</a></td>
   </tr>
   <tr>
     <td>BlendCNN</td>
@@ -1509,7 +1473,6 @@ Intel® Neural Compressor validated examples with multiple compression technique
 # Notebook Examples
 
 * [Performance of FP32 Vs. INT8 ResNet50 Model](/examples/notebook/perf_fp32_int8_tf): compare existed FP32 & INT8 ResNet50 model directly.
-* [Intel® Neural Compressor Sample for PyTorch*](/examples/notebook/pytorch/alexnet_fashion_mnist): an End-To-End pipeline to build up a CNN model by PyTorch to recognize fashion image and speed up AI model by Intel® Neural Compressor.
 * [Intel® Neural Compressor Sample for TensorFlow*](/examples/notebook/tensorflow/alexnet_mnist): an End-To-End pipeline to build up a CNN model by TensorFlow to recognize handwriting number and speed up AI model by Intel® Neural Compressor.
 * [Accelerate VGG19 Inference on Intel® Gen4 Xeon® Sapphire Rapids](/examples/notebook/tensorflow/vgg19_ibean): an End-To-End pipeline to train VGG19 model by transfer learning based on pre-trained model from [TensorFlow Hub](https://tfhub.dev); quantize it by Intel® Neural Compressor on Intel® Gen4 Xeon® Sapphire Rapids.
 

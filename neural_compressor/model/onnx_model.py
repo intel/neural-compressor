@@ -827,7 +827,7 @@ class ONNXModel(BaseModel):
     def export(self, save_path, conf):
         """Export Qlinear to QDQ model."""
         from neural_compressor.config import ONNXQlinear2QDQConfig
-        from neural_compressor.experimental.export import onnx_qlinear_to_qdq
+        from neural_compressor.utils.export import onnx_qlinear_to_qdq
 
         if isinstance(conf, ONNXQlinear2QDQConfig):
             add_nodes, remove_nodes, inits = onnx_qlinear_to_qdq(self._model, self._input_name_to_nodes)

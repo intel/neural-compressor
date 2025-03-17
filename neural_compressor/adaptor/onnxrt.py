@@ -252,7 +252,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
 
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, data_loader, q_func=None):
-        """The function is used to do calibration and quanitization in post-training
+        """The function is used to do calibration and quantization in post-training
            quantization.
 
         Args:
@@ -274,6 +274,9 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         if ort_version < ONNXRT152_VERSION:  # pragma: no cover
             logger.warning("Quantize input needs onnxruntime 1.5.2 or newer.")
             return model
+        if ort_version < ONNXRT170_VERSION and self.format == "qdq":
+            logger.error("QDQ mode needs onnxruntime1.7.0 or newer.")
+            exit(0)
         if model.model.opset_import[0].version < 11:  # pragma: no cover
             logger.warning("Quantize input needs model opset 11 or newer.")
         if self.backend == "DnnlExecutionProvider" and any(
@@ -289,17 +292,6 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                     "please upgrade it manually to run with bf16 data type"
                 )
                 exit(0)
-
-        from neural_compressor.adaptor.ox_utils.util import QuantizationMode
-
-        if self.format == "qlinearops":
-            format = QuantizationMode.QLinearOps
-        elif self.format == "qdq":
-            assert ort_version >= ONNXRT170_VERSION, "QDQ mode needs onnxruntime1.7.0 or newer"
-            format = "qdq"
-        else:
-            format = QuantizationMode.IntegerOps
-
         self.quantizable_ops = self._query_quantizable_ops(model.model)
         quantize_config = self._cfg_to_quantize_config(tune_cfg)
 
@@ -405,43 +397,11 @@ class ONNXRUNTIMEAdaptor(Adaptor):
                 )
             else:
                 quantize_params = None
+            q_config = self._generate_qconfig(model.model, tune_cfg, quantize_params)
             self.quantize_params = quantize_params
-
-            from neural_compressor import options
-            from neural_compressor.adaptor.ox_utils.quantizer import Quantizer
-
-            quantizer = Quantizer(
-                tmp_model,
-                quantize_config,
-                format,
-                self.static,
-                quantize_params,
-                self.quantizable_op_types,
-                self.query_handler.get_fallback_list(),
-                self.reduce_range,
-                (
-                    options.onnxrt.qdq_setting.AddQDQPairToWeight
-                    if "add_qdq_pair_to_weight" not in self.recipes
-                    else self.recipes.get("add_qdq_pair_to_weight", False)
-                ),
-                (
-                    options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin
-                    if "optypes_to_exclude_output_quant" not in self.recipes
-                    else self.recipes.get("optypes_to_exclude_output_quant", [])
-                ),
-                (
-                    options.onnxrt.qdq_setting.DedicatedQDQPair
-                    if "dedicated_qdq_pair" not in self.recipes
-                    else self.recipes.get("dedicated_qdq_pair", False)
-                ),
-                self.backend,
-            )
-            quantizer.quantize_model()
-            tmp_model.q_config = self._generate_qconfig(model.model, tune_cfg, quantize_params)
-            tmp_model.model = quantizer.model.model
-            self.quantize_config = quantize_config  # update so other methods can know current configs
+            tmp_model = self._quantize_model(tmp_model, quantize_config, quantize_params)
+            tmp_model.q_config = q_config
             self._dump_model_op_stats(tmp_model)
-            tmp_model.topological_sort()
 
         # if the model is large and acc tuning is required, save it to workspace
         if not self.performance_only and tmp_model.is_large_model:  # pragma: no cover
@@ -496,13 +456,21 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         )
         return split_quantize_params, dataloder_for_next_split_model
 
-    def _quantize_split_model(self, split_model, quantize_config, quantize_params, quantized_model_merged):
-        """Quantize split model, and merge the quantized models to generate final model."""
+    def _quantize_model(self, model, quantize_config, quantize_params):
+        """Quantize model."""
         from neural_compressor import options
         from neural_compressor.adaptor.ox_utils.quantizer import Quantizer
+        from neural_compressor.adaptor.ox_utils.util import QuantizationMode
+
+        if self.format == "qlinearops":
+            format = QuantizationMode.QLinearOps
+        elif self.format == "qdq":
+            format = "qdq"
+        else:
+            format = QuantizationMode.IntegerOps
 
         quantizer = Quantizer(
-            split_model,
+            model,
             quantize_config,
             format,
             self.static,
@@ -528,14 +496,19 @@ class ONNXRUNTIMEAdaptor(Adaptor):
             self.backend,
         )
         quantizer.quantize_model()
-        split_model.model = quantizer.model.model
-        split_model.topological_sort()
+        model.model = quantizer.model.model
+        self.quantize_config = quantize_config  # update so other methods can know current configs
+        model.topological_sort()
+        return model
 
+    def _quantize_split_model(self, split_model, quantize_config, quantize_params, quantized_model_merged):
+        """Quantize split model, and merge the quantized models to generate final model."""
+        split_model = self._quantize_model(split_model, quantize_config, quantize_params)
         if quantized_model_merged is None:
-            quantized_model_merged = quantizer.model
+            quantized_model_merged = split_model
             quantized_model_merged.write_external_data_to_new_location(overwrite=True)
         else:
-            quantized_model_merged.merge_split_models(quantizer.model)
+            quantized_model_merged.merge_split_models(split_model)
 
         return quantized_model_merged
 
@@ -640,57 +613,109 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         """
         self._pre_optimize(model)
         model = self.pre_optimized_model
+
         ort_version = Version(ort.__version__)
         if ort_version < ONNXRT152_VERSION:  # pragma: no cover
             logger.warning("Quantize input needs onnxruntime 1.5.2 or newer.")
             return model
         if model.model.opset_import[0].version < 11:  # pragma: no cover
             logger.warning("Quantize input needs model opset 11 or newer.")
+        if ort_version < ONNXRT170_VERSION and self.format == "qdq":
+            logger.error("QDQ mode needs onnxruntime1.7.0 or newer.")
+            exit(0)
+        if self.backend == "DnnlExecutionProvider" and any(
+            [i.domain in ["", "ai.onnx"] and i.version < 15 for i in model.model.opset_import]
+        ):  # pragma: no cover
+            from onnx import version_converter
+
+            try:
+                model = self._rename_node(ONNXModel(version_converter.convert_version(model.model, 15)))
+            except:
+                logging.warning(
+                    "Fail to upgrade model opset_import to >= 15, "
+                    "please upgrade it manually to run with bf16 data type"
+                )
+                exit(0)
 
         from neural_compressor.adaptor.ox_utils.util import QuantizationMode
 
-        if self.format in ["qlinearops"]:
+        if self.format == "qlinearops":
             format = QuantizationMode.QLinearOps
         elif self.format == "qdq":
-            assert ort_version >= ONNXRT170_VERSION, "QDQ mode needs onnxruntime1.7.0 or newer"
-            format = self.format
+            format = "qdq"
         else:
             format = QuantizationMode.IntegerOps
-        from neural_compressor import options
-        from neural_compressor.adaptor.ox_utils.quantizer import Quantizer
 
         self.quantizable_ops = self._query_quantizable_ops(model.model)
         quantize_params, tune_cfg = self._parse_qconfig(q_config)
         quantize_config = self._cfg_to_quantize_config(tune_cfg)
-        quantizer = Quantizer(
-            model.model,
-            quantize_config,
-            format,
-            self.static,
-            quantize_params,
-            self.quantizable_op_types,
-            self.query_handler.get_fallback_list(),
-            self.reduce_range,
-            (
-                options.onnxrt.qdq_setting.AddQDQPairToWeight
-                if not options.onnxrt.qdq_setting.AddQDQPairToWeight
-                else self.recipes.get("add_qdq_pair_to_weight", False)
-            ),
-            (
-                options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin
-                if options.onnxrt.qdq_setting.OpTypesToExcludeOutputQuantizatioin is not None
-                else self.recipes.get("optypes_to_exclude_output_quant", [])
-            ),
-            (
-                options.onnxrt.qdq_setting.DedicatedQDQPair
-                if not options.onnxrt.qdq_setting.DedicatedQDQPair
-                else self.recipes.get("dedicated_qdq_pair", False)
-            ),
-        )
 
-        quantizer.quantize_model()
-        model.model = quantizer.model.model
-        model.topological_sort()
+        if self._need_smooth_quant(tune_cfg):
+            logger.error("Don't support to recover quantized model with smooth quant from original fp32 model.")
+            exit(0)
+
+        if self.recipes.get("layer_wise_quant", False) and not self.dynamic:
+            # layer-wise quantization
+            # details refer to docs/source/quantization_weight_only.md#layer-wise-quantization
+            _model_to_split = copy.deepcopy(model)
+
+            split_nodes = _model_to_split.find_split_nodes()
+            logger.info(
+                "Will split model into {} parts to do layer-wise quantization".format(
+                    len([node.name for node in split_nodes]) + 1
+                )
+            )
+            logger.debug(
+                "Will split model with these nodes for layer-wise quantization: {}".format(
+                    [node.name for node in split_nodes]
+                )
+            )
+
+            split_idx = 1
+            model_to_split = [_model_to_split]
+            quantized_model_merged = None
+
+            while len(model_to_split) != 0:
+                split_model = model_to_split.pop(0)
+                split_node = split_nodes.pop(0)
+                save_both_split_models = True if len(split_nodes) == 0 else False
+                shape_infer = True if split_idx == 1 else False
+
+                # split model with given split_node
+                split_model_part_1, split_model_part_2 = split_model.split_model_with_node(
+                    split_node.name, model.model_path, shape_infer, save_both_split_models
+                )
+                if not save_both_split_models:
+                    # append split_model_part_2 to do next split
+                    model_to_split.append(split_model_part_2)
+
+                logger.info("Quantize split model {}".format(split_idx))
+
+                # quantize split model
+                quantized_model_merged = self._quantize_split_model(
+                    split_model_part_1, quantize_config, quantize_params, quantized_model_merged
+                )
+
+                split_idx += 1
+
+                # if this is the last split, then quantize the last split model
+                if save_both_split_models:
+                    logger.info("Quantize split model {}".format(split_idx))
+
+                    # quantize split model
+                    quantized_model_merged = self._quantize_split_model(
+                        split_model_part_2, quantize_config, quantize_params, quantized_model_merged
+                    )
+                    quantized_model_merged.re_org_output(model.output())  # re-org output as the origin output
+
+            model.model = quantized_model_merged.model
+            self._dump_model_op_stats(model)
+            model.check_is_large_model()
+
+        else:
+            model = self._quantize_model(model, quantize_config, quantize_params)
+
+        self._dump_model_op_stats(model)
         return model
 
     def _parse_qconfig(self, q_config):
@@ -1672,57 +1697,6 @@ class ONNXRUNTIMEAdaptor(Adaptor):
         acc = 0 if metrics is None else [metric.result() for metric in metrics]
         return acc if not isinstance(acc, list) or len(acc) > 1 else acc[0]
 
-    def diagnosis_helper(self, fp32_model, int8_model, tune_cfg=None, save_path=None):
-        from neural_compressor.adaptor.ox_utils.util import find_by_name
-        from neural_compressor.utils.utility import dump_data_to_local
-
-        if self.format == "qlinearops":
-            supported_optype = [
-                "Conv",
-                "MatMul",
-                "Concat",
-                "Attention",
-                "FusedConv",
-                "Add",
-                "Mul",
-                "LeakyRelu",
-                "Sigmoid",
-                "GlobalAveragePool",
-                "AveragePool",
-            ]
-        elif self.format == "qdq":
-            supported_optype = [
-                "Conv",
-                "MatMul",
-                "Concat",
-                "Attention",
-                "FusedConv",
-                "LeakyRelu",
-                "Sigmoid",
-                "GlobalAveragePool",
-                "AveragePool",
-            ]
-        else:
-            supported_optype = ["Conv", "MatMul", "Attention", "LSTM"]
-        inspect_node_list = []
-        int8_node_names = [i.name for i in int8_model.nodes()]
-        for node in fp32_model.nodes():
-            if node.op_type in supported_optype and node.name + "_quant" in int8_node_names:
-                inspect_node_list.append(node.name)
-
-        filtered_params = {}
-        if self.min_max:
-            for node_name in inspect_node_list:
-                node = find_by_name(node_name, fp32_model.nodes())
-                filtered_params[node_name] = {
-                    "min": np.array(self.min_max[node.output[0]][0], dtype=np.float32),
-                    "max": np.array(self.min_max[node.output[0]][1], dtype=np.float32),
-                }
-        if save_path:
-            dump_data_to_local(filtered_params, save_path, "activation_min_max.pkl")
-            dump_data_to_local(tune_cfg, save_path, "cfg.pkl")
-        return inspect_node_list, tune_cfg
-
     def save(self, model, path):
         """Save model.
 
@@ -1879,7 +1853,7 @@ class ONNXRT_WeightOnlyAdaptor(ONNXRUNTIMEAdaptor):
 
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, model, data_loader, q_func=None):
-        """The function is used to do calibration and quanitization in post-training
+        """The function is used to do calibration and quantization in post-training
            quantization.
 
         Args:
@@ -2217,15 +2191,6 @@ class ONNXRTQuery(QueryBackendCapability):
                 raise ValueError(
                     "Please check if the format of {} follows Neural Compressor yaml schema.".format(self.cfg)
                 )
-        self._update_cfg_with_usr_definition()
-
-    def _update_cfg_with_usr_definition(self):
-        from neural_compressor.conf.pythonic_config import onnxruntime_config
-
-        if onnxruntime_config.graph_optimization_level is not None:
-            self.cur_config["graph_optimization"]["level"] = onnxruntime_config.graph_optimization_level
-        if onnxruntime_config.precisions is not None:
-            self.cur_config["precisions"]["names"] = ",".join(onnxruntime_config.precisions)
 
     def _get_specified_version_cfg(self, data):  # pragma: no cover
         """Get the configuration for the current runtime.

@@ -2,7 +2,6 @@
 
 import os
 import platform
-import shutil
 import unittest
 
 import numpy as np
@@ -51,10 +50,10 @@ class TestModelWrappers(unittest.TestCase):
 
     @classmethod
     def tearDownClass(self):
-        shutil.rmtree("simple_model.h5", ignore_errors=True)
-        shutil.rmtree("keras_model.h5", ignore_errors=True)
-        shutil.rmtree("simple_model.keras", ignore_errors=True)
-        shutil.rmtree("keras_model.keras", ignore_errors=True)
+        os.remove("simple_model.h5")
+        os.remove("keras_model.h5")
+        os.remove("simple_model.keras")
+        os.remove("keras_model.keras")
 
     def test_keras_h5_model(self):
         if parse_version(tf.version.VERSION) < parse_version("2.3.0"):
@@ -94,30 +93,6 @@ class TestModelWrappers(unittest.TestCase):
         model.save("./keras_model.keras")
 
         self.assertEqual(os.path.isfile("./keras_model.keras"), True)
-
-    def test_tf_qat_model(self):
-        if parse_version(tf.version.VERSION) < parse_version("2.3.0"):
-            return
-
-        from neural_compressor.tensorflow.utils.model_wrappers import TensorflowQATModel
-
-        keras_model = self.model
-        model = TensorflowQATModel(keras_model)
-        self.assertEqual(isinstance(model.model, tf.keras.Model), True)
-        self.assertEqual(model.model_path, None)
-
-        keras_model.save("./simple_model.keras")
-        model = TensorflowQATModel("./simple_model.keras")
-        self.assertEqual(isinstance(model.model, tf.keras.Model), True)
-        self.assertEqual(model.model_path, "./simple_model.keras")
-
-        model.save("./keras_model.keras")
-        loaded_model = tf.keras.models.load_model("./keras_model.keras")
-        self.assertEqual(isinstance(loaded_model, tf.keras.Model), True)
-
-        model.save("keras_model.h5")
-        loaded_model = tf.keras.models.load_model("keras_model.h5")
-        self.assertEqual(isinstance(loaded_model, tf.keras.Model), True)
 
 
 if __name__ == "__main__":

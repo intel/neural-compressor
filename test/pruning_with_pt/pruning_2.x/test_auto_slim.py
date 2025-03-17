@@ -50,7 +50,6 @@ class TestPruning(unittest.TestCase):
         # run mha and ffn pruning
         compression_manager = prepare_compression(model=model, confs=configs)
         compression_manager.callbacks.on_train_begin()
-        # import pdb;pdb.set_trace()
         for epoch in range(3):
             model.train()
             compression_manager.callbacks.on_epoch_begin(epoch)

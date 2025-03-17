@@ -14,7 +14,6 @@ cd /neural-compressor/test || exit 1
 find . -name "test*.py" | sed 's,\.\/,coverage run --source='"${lpot_path}"' --append ,g' | sed 's/$/ --verbose/'> run.sh
 sed -i '/ adaptor\//d' run.sh
 sed -i '/ tfnewapi\//d' run.sh
-sed -i '/ neural_coder\//d' run.sh
 sed -i '/ itex\//d' run.sh
 sed -i '/ pruning_with_pt/d' run.sh
 sed -i '/ pruning_with_tf/d' run.sh

@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Initialize custom layers for Keras quantization."""
 
 from neural_compressor.tensorflow.keras.layers.conv2d import QConv2D
 from neural_compressor.tensorflow.keras.layers.dense import QDense

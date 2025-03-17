@@ -7,75 +7,11 @@ import torch.nn as nn
 import torchvision
 
 from neural_compressor.data import Datasets
-from neural_compressor.experimental.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
-
-
-def build_fake_yaml():
-    fake_yaml = """
-    model:
-        name: self_distillation
-        framework: pytorch
-
-    distillation:
-        train:
-            start_epoch: 0
-            end_epoch: 3
-            iteration: 10
-            frequency: 1
-            optimizer:
-                SGD:
-                    learning_rate: 0.001
-                    momentum: 0.1
-                    nesterov: True
-                    weight_decay: 0.001
-            criterion:
-                SelfKnowledgeDistillationLoss:
-                    layer_mappings: [
-                        [['resblock.1.feature.output', 'resblock.deepst.feature.output'],
-                        ['resblock.2.feature.output','resblock.deepst.feature.output']],
-                        [['resblock.2.fc','resblock.deepst.fc'],
-                        ['resblock.3.fc','resblock.deepst.fc']],
-                        [['resblock.1.fc','resblock.deepst.fc'],
-                        ['resblock.2.fc','resblock.deepst.fc'],
-                        ['resblock.3.fc','resblock.deepst.fc']]
-                    ]
-                    temperature: 3.0
-                    loss_types: ['L2', 'KL', 'CE']
-                    loss_weights: [0.5, 0.05, 0.02]
-                    add_origin_loss: True
-            dataloader:
-                batch_size: 30
-                dataset:
-                    dummy:
-                        shape: [128, 3, 224, 224]
-                        label: True
-    evaluation:
-        accuracy:
-            metric:
-                topk: 1
-            dataloader:
-                batch_size: 30
-                dataset:
-                    dummy:
-                        shape: [128, 3, 224, 224]
-                        label: True
-    """
-    with open("fake.yaml", "w", encoding="utf-8") as f:
-        f.write(fake_yaml)
+from neural_compressor.data.dataloaders.pytorch_dataloader import PyTorchDataLoader
 
 
 class TestSelfDistillation(unittest.TestCase):
     model = torchvision.models.resnet50()
-
-    @classmethod
-    def setUpClass(cls):
-        build_fake_yaml()
-
-    @classmethod
-    def tearDownClass(cls):
-        os.remove("fake.yaml")
-        shutil.rmtree("./saved", ignore_errors=True)
-        shutil.rmtree("runs", ignore_errors=True)
 
     def test_self_distillation(self):
         import copy

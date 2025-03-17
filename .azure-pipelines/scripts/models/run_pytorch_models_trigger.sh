@@ -21,12 +21,6 @@ do
     esac
 done
 
-echo "specify FWs version..."
-source /neural-compressor/.azure-pipelines/scripts/fwk_version.sh 'latest'
-FRAMEWORK="pytorch"
-FRAMEWORK_VERSION=${pytorch_version}
-TORCH_VISION_VERSION=${torchvision_version}
-
 dataset_location=""
 input_model=""
 yaml=""
@@ -59,17 +53,29 @@ elif [ "${model}" == "resnet18_fx" ]; then
     tuning_cmd="bash run_quant.sh --topology=resnet18 --dataset_location=${dataset_location} --input_model=${input_model}"
     benchmark_cmd="bash run_benchmark.sh --topology=resnet18 --dataset_location=${dataset_location} --mode=performance --batch_size=${batch_size} --iters=500"
 elif [ "${model}" == "opt_125m_woq_gptq_int4" ]; then
-    model_src_dir="nlp/huggingface_models/language-modeling/quantization/llm"
+    model_src_dir="nlp/huggingface_models/language-modeling/quantization/weight_only"
     inc_new_api=3x_pt
     tuning_cmd="bash run_quant.sh --topology=opt_125m_woq_gptq_int4"
-elif [ "${model}" == "opt_125m_woq_gptq_int4_dq_bnb" ]; then
-    model_src_dir="nlp/huggingface_models/language-modeling/quantization/llm"
+elif [ "${model}" == "opt_125m_woq_gptq_nf4_dq_bnb" ]; then
+    model_src_dir="nlp/huggingface_models/language-modeling/quantization/weight_only"
     inc_new_api=3x_pt
-    tuning_cmd="bash run_quant.sh --topology=opt_125m_woq_gptq_int4_dq_bnb"
+    tuning_cmd="bash run_quant.sh --topology=opt_125m_woq_gptq_nf4_dq_bnb"
 elif [ "${model}" == "opt_125m_woq_gptq_int4_dq_ggml" ]; then
-    model_src_dir="nlp/huggingface_models/language-modeling/quantization/llm"
+    model_src_dir="nlp/huggingface_models/language-modeling/quantization/weight_only"
     inc_new_api=3x_pt
     tuning_cmd="bash run_quant.sh --topology=opt_125m_woq_gptq_int4_dq_ggml"
+fi
+
+echo "Specify FWs version..."
+
+FRAMEWORK="pytorch"
+source /neural-compressor/.azure-pipelines/scripts/fwk_version.sh 'latest'
+if [[ "${inc_new_api}" == "3x"* ]]; then
+    FRAMEWORK_VERSION="latest"
+    export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH
+else
+    FRAMEWORK_VERSION=${pytorch_version}
+    TORCH_VISION_VERSION=${torchvision_version}
 fi
 
 

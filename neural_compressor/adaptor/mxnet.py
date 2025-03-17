@@ -59,7 +59,7 @@ class MxNetAdaptor(Adaptor):
 
     @dump_elapsed_time("Pass quantize model")
     def quantize(self, tune_cfg, nc_model, dataloader, q_func=None):
-        """The function is used to do MXNet calibration and quanitization in post-training
+        """The function is used to do MXNet calibration and quantization in post-training
            quantization.
 
         Args:
@@ -446,13 +446,6 @@ class MXNetQuery(QueryBackendCapability):
                 raise ValueError(
                     "Please check if the format of {} follows Neural Compressor yaml schema.".format(self.cfg)
                 )
-        self._update_cfg_with_usr_definition()
-
-    def _update_cfg_with_usr_definition(self):
-        from neural_compressor.conf.pythonic_config import mxnet_config
-
-        if mxnet_config.precisions is not None:
-            self.cur_config["precisions"]["names"] = ",".join(mxnet_config.precisions)
 
     def _get_specified_version_cfg(self, data):
         """Get the configuration for the current runtime.

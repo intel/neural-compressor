@@ -28,13 +28,13 @@ from tensorflow.core.framework import graph_pb2
 from tensorflow.python.platform import gfile
 
 from neural_compressor.adaptor.tf_utils.graph_rewriter.generic.insert_print_node import InsertPrintMinMaxNode
-from neural_compressor.conf.dotdict import deep_get
 from neural_compressor.model import Model
 from neural_compressor.model.tensorflow_model import TensorflowSavedModelModel
 from neural_compressor.utils.utility import (
     CaptureOutputToFile,
     CpuInfo,
     combine_histogram,
+    deep_get,
     get_all_fp32_data,
     get_tensor_histogram,
 )

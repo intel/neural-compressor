@@ -11,12 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-import math
-
+"""Weight-Only utility."""
+import numpy as np
 import torch
 
-from neural_compressor.torch.utils import logger
+from neural_compressor.torch.utils import accelerator, device_synchronize, logger
 
 __all__ = [
     "FLOAT_MAPPING",
@@ -28,13 +27,12 @@ __all__ = [
     "INT_MAPPING",
     "NF4",
     "NF4_BIT",
-    "calibration",
     "fetch_module",
     "forward_wrapper",
     "get_absorb_layers",
     "get_block_prefix",
-    "get_example_input",
-    "get_hidden_states",
+    "replace_forward",
+    "recover_forward",
     "get_module",
     "get_module_input_output",
     "get_parent",
@@ -69,7 +67,23 @@ NF4 = [
     1.0,
 ]
 FP4_BNB = [-12.0, -8.0, -6.0, -4.0, -3.0, -2.0, -0.0625, 0, 0.0625, 2.0, 3.0, 4.0, 6.0, 8.0, 12.0]
-FP4_E2M1 = [-6.0, -4.0, -3.0, -2.0, -1.5, -1.0, -0.0625, 0, 0.0625, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0]
+FP4_E2M1 = [
+    -1.0,
+    -0.6666666666666666,
+    -0.5,
+    -0.3333333333333333,
+    -0.25,
+    -0.16666666666666666,
+    -0.010416666666666666,
+    0.0,
+    0.010416666666666666,
+    0.16666666666666666,
+    0.25,
+    0.3333333333333333,
+    0.5,
+    0.6666666666666666,
+    1.0,
+]
 
 # the order is the same as float list, bit value range is [-7, 7]
 # 1111 = -1, 1110 = -2, 1101= -3, ...
@@ -80,6 +94,18 @@ FP4_E2M1_BIT = [-1, -2, -3, -4, -5, -6, -7, 0, 1, 2, 3, 4, 5, 6, 7]
 
 FLOAT_MAPPING = {"nf4": NF4, "fp4": FP4_BNB, "fp4_e2m1_bnb": FP4_BNB, "fp4_e2m1": FP4_E2M1}
 INT_MAPPING = {"nf4": NF4_BIT, "fp4": FP4_BNB_BIT, "fp4_e2m1_bnb": FP4_BNB_BIT, "fp4_e2m1": FP4_E2M1_BIT}
+if hasattr(torch, "float8_e5m2") and hasattr(torch, "float8_e4m3fn"):
+    FP8_MAPPING = {
+        "fp8_e5m2": torch.float8_e5m2,
+        "fp8_e4m3fn": torch.float8_e4m3fn,
+    }
+if hasattr(torch, "float8_e5m2fnuz") and hasattr(torch, "float8_e4m3fnuz"):
+    FP8_MAPPING = {
+        "fp8_e5m2": torch.float8_e5m2,
+        "fp8_e4m3fn": torch.float8_e4m3fn,
+        "fp8_e5m2fnuz": torch.float8_e5m2fnuz,
+        "fp8_e4m3fnuz": torch.float8_e4m3fnuz,
+    }
 
 
 def quantize_4bit(tensor, quantile=1.0, dtype="nf4", return_int=False, **kwargs):
@@ -119,6 +145,17 @@ def quantize_4bit(tensor, quantile=1.0, dtype="nf4", return_int=False, **kwargs)
     if return_int or keep_scale:
         return tensor, scale, None
     return tensor.mul_(scale)
+
+
+def cast_fp8(tensor, dtype="fp8_e4m3fn", use_qdq=True):
+    torch_dtype = FP8_MAPPING[dtype]
+    if not use_qdq:  # pragma: no cover
+        return tensor.to(torch_dtype)
+    else:
+        orig_dtype = tensor.dtype
+        fp8_tensor = tensor.to(torch_dtype)
+        tensor.copy_(fp8_tensor.to(orig_dtype))
+        return tensor
 
 
 def qdq_weight_asym(weight, bits=4, quantile=1.0, return_int=False, **kwargs):
@@ -188,12 +225,12 @@ def qdq_weight_sym(weight, bits=4, quantile=1.0, return_int=False, full_range=Fa
     wmax = torch.max(torch.abs(max_val), torch.abs(min_val))
     wmax = wmax * quantile
     tmp = wmax == 0
-    wmax[tmp] = +1
+    wmax[tmp] = torch.tensor(1, dtype=wmax.dtype, device=wmax.device)
     if full_range:
         # use -8, 8 to make sure amax is not changed after fake quant
         scale = wmax / (-minq)
-        tmp = scale * flip_flag.int()
-        scale -= 2 * tmp  # set negative scale with flip_flag
+        # set negative scale with flip_flag
+        scale = torch.where(flip_flag, -scale, scale)
     else:
         scale = wmax / maxq
     scale.unsqueeze_(dim=-1)
@@ -231,6 +268,7 @@ def qdq_weight_actor(weight, bits, scheme, quantile=1.0, dtype="int", return_int
         return qdq_weight_asym(weight, bits, quantile, return_int, **kwargs)
 
 
+@device_synchronize
 def quant_tensor(
     weight,
     bits=4,
@@ -326,10 +364,12 @@ def quant_tensor(
         )
         if return_int or quant_scale:
             weight2, scale2, zp2 = weight2
-            orig_weight.copy_(torch.cat([weight1, weight2], dim=1))
+            weight = torch.cat([weight1, weight2], dim=1)
             scale = torch.cat([scale1, scale2], dim=1)
             zp = None if zp2 is None else torch.cat([zp1, zp2], dim=1)
-            q_state = (weight, scale, zp)
+            accelerator.synchronize()
+            orig_weight.copy_(weight)
+            return orig_weight, scale, zp
         else:
             orig_weight.copy_(torch.cat([weight1, weight2], dim=1))
             return orig_weight
@@ -339,7 +379,8 @@ def quant_tensor(
         scale_bits = kwargs.get("double_quant_bits", 8)
         scale_scheme = kwargs.get("double_quant_scheme", "asym")
         scale_group_size = kwargs.get("double_quant_group_size", 256)
-        scale_return_int = kwargs.get("double_quant_return_int", return_int)
+        # TODO: kwargs.get("double_quant_return_int", return_int)
+        scale_return_int = kwargs.get("double_quant_return_int", False)
         orig_scale_shape = scale.shape
         scale = scale.reshape(1, -1)
         # pre-process: scale_mean
@@ -426,7 +467,7 @@ def search_clip(m, bits=4, group_size=32, scheme="asym", dtype="int", enable_ful
             full_range=enable_full_range,
             quantile=ratio,
         )
-        loss = (org_weight - m.weight.data).float().pow(2).mean().item()
+        loss = (org_weight - m.weight.data).float().pow(2).mean()
         m.weight.data.copy_(org_weight)
         history.append(loss)
         is_best = loss < best_error
@@ -493,6 +534,7 @@ from functools import partial
 
 # AWQ Required, copy from neural_compressor/adaptor/torch_utils/smooth_quant.py
 def model_forward(model, dataloader, iters, device):
+    """The model forward function."""
     try:
         cnt = 0
         for idx, (input, label) in enumerate(dataloader):
@@ -512,6 +554,7 @@ def model_forward(model, dataloader, iters, device):
 # copy from neural_compressor/adaptor/torch_utils/smooth_quant.py
 # TODO: potential bug, data type
 def forward_wrapper(model, input, device=torch.device("cpu")):
+    """The forward wrapper."""
     try:
         model = model.to(device)
         input = move_input_to_device(input, device)
@@ -532,6 +575,7 @@ def forward_wrapper(model, input, device=torch.device("cpu")):
 
 # copy from neural_compressor/adaptor/torch_utils/smooth_quant.py
 def move_input_to_device(input, device=torch.device("cpu")):
+    """Move input to the spevific device."""
     if isinstance(input, dict) or isinstance(input, UserDict):
         tmp_input = {}
         for k, inp in input.items():
@@ -635,6 +679,7 @@ def get_absorb_layers(model, example_inputs, supported_layers=["Linear"], foldin
 
 # copy from neural_compressor/adaptor/torch_utils/smooth_quant.py
 def get_parent(node, all_parents=False):
+    """Get parent of node."""
     if node.inputs() is None:
         return None
     elif len(list(node.inputs())) == 0:
@@ -671,9 +716,10 @@ def get_module(model, key):
 
 # copy from neural_compressor/adaptor/torch_utils/smooth_quant.py
 class GraphTrace:
-    """"""
+    """GraphTrace."""
 
     def __init__(self):
+        """Init the GraphTrace object."""
         self.supported_torch_module_to_aten = {
             "Linear": "aten::linear",
             "Conv2d": "aten::_convolution",
@@ -702,12 +748,26 @@ class GraphTrace:
         ]  ##TODO,support more norm
 
     def trace(self, model, dummy_input):
+        """Trace a torch model.
+
+        Args:
+            model (torch.nn.module): model to be trace.
+            dummy_input : dummy input.
+
+        Returns:
+            traced model.
+        """
         traced_model = None
         optimize_numerics = False
         orig_device = str(next(model.parameters()).device)
         if orig_device != "cpu" and orig_device != "meta":  # pragma: no cover
             model = model.to("cpu")
             dummy_input = move_input_to_device(dummy_input, "cpu")
+        reset_model_config_return_dict = False
+        if getattr(getattr(model, "config", None), "return_dict", False):
+            # set return_dict=False to help transformers model jit.trace success, orig_return_dict is True here
+            reset_model_config_return_dict = True
+            model.config.return_dict = False
         if isinstance(dummy_input, dict) or isinstance(dummy_input, UserDict):
             try:
                 # pylint: disable=E1123, E1120
@@ -729,10 +789,22 @@ class GraphTrace:
                 except Exception as e:
                     logger.warning(e)
                     logger.warning("Jit trace in GraphTrace failed, absorb layer detection is skipped")
+        if reset_model_config_return_dict:
+            # recover return_dict original value for transformers model
+            model.config.return_dict = True
         model = model.to(orig_device)
         return traced_model
 
     def get_nodes(self, traced_model, op_types=["Linear"]):
+        """Get nodes from traced model.
+
+        Args:
+            traced_model: traced model.
+            op_types (list, optional): . Defaults to ["Linear"].
+
+        Returns:
+            list: nodes.
+        """
         if isinstance(op_types, str):
             op_types = [op_types]
         nodes = []
@@ -745,6 +817,14 @@ class GraphTrace:
         return nodes
 
     def get_prev_absorb_layer(self, nodes):
+        """Get previous absorb layers.
+
+        Args:
+            nodes (list): target nodes.
+
+        Returns:
+            list: previous absorb layer
+        """
         prev_absorb_layer = []
         for node in nodes:
             parent = get_parent(node)
@@ -773,6 +853,14 @@ class GraphTrace:
         return prev_absorb_layer
 
     def skip_op_absorb_helper(self, parent_node):
+        """Skip op absorption.
+
+        Args:
+            parent_node : parent node.
+
+        Returns:
+            bool: True or False.
+        """
         for val_user in list(parent_node.outputs())[0].uses():
             next_node = val_user.user
             if next_node.kind() == "aten::size":
@@ -788,6 +876,14 @@ class GraphTrace:
         return True
 
     def mapping_torch_module_to_aten(self, op_types):
+        """Mapping torch module to aten.
+
+        Args:
+            op_types : op types.
+
+        Returns:
+            list: the mapping results.
+        """
         res = []
         for op in op_types:
             if op not in self.supported_torch_module_to_aten.keys():
@@ -798,11 +894,7 @@ class GraphTrace:
         return res
 
     def _check_valid_conv(self, module):
-        """Remove group conv except depthwise conv
-        :param module:
-
-        :return:
-        """
+        """Remove group conv except depthwise conv."""
         if not isinstance(module, torch.nn.Conv2d):
             return True
         if module.groups > 1:
@@ -813,6 +905,17 @@ class GraphTrace:
         return True
 
     def get_absorb_to_layer(self, model, example_input, op_types, skip_unsupported_layers=True):
+        """Get absorbed layers of a model.
+
+        Args:
+            model: torch model
+            example_input: used to trace torch model.
+            op_types: op types.
+            skip_unsupported_layers (bool, optional): unsupported layers to skip. Defaults to True.
+
+        Returns:
+            absorb to layer, no absorb layers
+        """
         traced_model = self.trace(model, example_input)
         if traced_model is None:
             return None, None
@@ -841,6 +944,16 @@ class GraphTrace:
         return absorb_to_layer, no_absorb_layers
 
     def remove_unsupported_layers(self, model, absorb_to_layer, no_absorb_layers):
+        """Remove unsupported layers from layers to be absorb.
+
+        Args:
+            model : torch model.
+            absorb_to_layer (dict): layers to be absorb.
+            no_absorb_layers (dict): unsupported layers.
+
+        Returns:
+            dict: the new layers to be absorb.
+        """
         res = {}
         for key in absorb_to_layer.keys():
             absorb_layer = get_module(model, key)
@@ -894,6 +1007,7 @@ def get_example_input(dataloader, i=1):
         example_inp (object).
     """
     iter = 0
+    example_inp = None
     try:
         for example_inp, label in dataloader:
             if iter == i:
@@ -909,40 +1023,36 @@ def get_example_input(dataloader, i=1):
     return example_inp
 
 
-# copy from neural_compressor/adaptor/torch_utils/util.py
-def get_hidden_states(model, dataloader=None, n_samples=128, calib_func=None):
-    """Get the input args and kwargs of first block.
+def replace_forward(model):
+    """Replace forward to get the input args and kwargs of first block for AWQ algorithm.
 
     Args:
-        model (torch.nn.Module): input model
-        dataloader (dataloader, optional): input dataloader. Defaults to None.
-        n_samples (int, optional): number samples from dataloader. Defaults to 128.
-        calib_func (func, optional): a calib func to replace dataloader. Defaults to None.
+        model (torch.nn.Module): input model.
 
     Raises:
-        ValueError: to avoid inference of rest parts in model
+        ValueError: to avoid inference of rest parts in model.
 
     Returns:
-        total_block_args(list): a list of input args of each batch
-        total_block_kwargs(list):  a list of input kwargs of each batch
+        torch.nn.Module: model with replaced forward.
     """
     # Step 1: replace block_forward to collect block inputs and avoid entire inference
-    total_block_args = []
-    total_block_kwargs = []
+    setattr(model, "total_block_args", [])
+    setattr(model, "total_block_kwargs", [])
 
     def forward(layer, *args, **kwargs):
         # update total_hidden_states, total_block_kwargs, per batch
-        total_block_args.append(list(args))
-        total_block_kwargs.append(kwargs)
+        model.total_block_args.append(list(args))
+        model.total_block_kwargs.append(kwargs)
         raise ValueError
 
     block_prefix, block_num = get_block_prefix(model)
     block_list = fetch_module(model, block_prefix)
     first_block = block_list[0]
-    block_forward_cache = first_block.forward
+    first_block.forward_orig = first_block.forward
     first_block.forward = partial(forward, first_block)
 
     # Step 2: replace model_forward to avoid ValueError
+    model.forward_orig = model.forward
     model_forward_cache = model.forward
 
     def model_forward(model, *args, **kwargs):
@@ -953,44 +1063,25 @@ def get_hidden_states(model, dataloader=None, n_samples=128, calib_func=None):
             pass
 
     model.forward = partial(model_forward, model)
-
-    # Step 3: execute calibration
-    calibration(model, dataloader=dataloader, n_samples=n_samples, calib_func=calib_func)
-    logger.info("The hidden_states collection is done.")
-
-    # Step 4: recover model and block forward
-    model.forward = model_forward_cache
-    first_block.forward = block_forward_cache
-    return total_block_args, total_block_kwargs
+    return model
 
 
-# copy from neural_compressor/adaptor/torch_utils/util.py
-def calibration(model, dataloader=None, n_samples=128, calib_func=None):
-    """Calibration with dataloader or calib_func.
+def recover_forward(model):
+    """Recover model and block forward for AWQ algorithm.
 
     Args:
-        model (torch.nn.Module): input model
-        dataloader: dataloader. Defaults to None.
-        n_samples (int, optional): n_samples. Defaults to 128.
-        calib_func: calib_func. Defaults to None.
-    """
-    # calibration with dataloader or calib_func
-    if calib_func is not None:
-        calib_func(model)
-    else:
-        # from .smooth_quant import model_forward, move into this file
+        model (torch.nn.Module): input model.
 
-        batch_size = dataloader.batch_size
-        iters = int(math.ceil(n_samples / batch_size))
-        if n_samples % batch_size != 0:
-            logger.info(
-                "calibration samples increase from {} to {} due to batch_size is {}".format(
-                    n_samples,
-                    iters * batch_size,
-                    batch_size,
-                )
-            )
-        model_forward(model, dataloader, iters, next(model.parameters()).device)
+    Returns:
+        torch.nn.Module: model with recovered forward.
+    """
+    model.forward = model.forward_orig
+
+    block_prefix, _ = get_block_prefix(model)
+    block_list = fetch_module(model, block_prefix)
+    first_block = block_list[0]
+    first_block.forward = first_block.forward_orig
+    return model
 
 
 # copy from neural_compressor/adaptor/torch_utils/util.py
@@ -1025,10 +1116,15 @@ def get_module_input_output(
     total_values = defaultdict(defaultdict)
 
     def _save_input_output_hook(name, record_input=False, record_output=False):
-        """
-        A forward hook to save input and output values of a module
-            param name: the module name
-            return: A hook function
+        """A forward hook to save input and output values of a module.
+
+        Args:
+            name: the module name.
+            record_input (bool): to record input.
+            record_ouput (bool): to record output.
+
+        Returns:
+            A hook function
         """
 
         def _hook(module, inputs, outputs):
@@ -1074,3 +1170,280 @@ def get_module_input_output(
     for h in hook_list:
         h.remove()
     return total_values
+
+
+class CapturedDataloader(torch.utils.data.DataLoader):
+    def __init__(self, args_list, kwargs_list) -> None:
+        self.args_list = args_list
+        self.kwargs_list = kwargs_list
+
+    def __iter__(self):
+        for args, kwargs in zip(self.args_list, self.kwargs_list):
+            if not args:
+                yield kwargs
+            elif not kwargs:
+                # case: tensor
+                if len(args) == 1:
+                    yield args[0]
+                else:
+                    yield args
+            else:
+                yield args, kwargs
+
+
+class InputCaptureModule(torch.nn.Module):
+
+    def __init__(self, model) -> None:
+        super().__init__()
+        self.args_list = []
+        self.kwargs_list = []
+        self.orig_model = model
+
+    def forward(self, *args, **kwargs):
+        with torch.no_grad():
+            self.args_list.append(args)
+            self.kwargs_list.append(kwargs)
+
+
+def convert_dtype_str2torch(str_dtype):
+    """Converts a string dtype to its corresponding PyTorch dtype.
+
+    Args:
+        str_dtype (str): The string representation of the dtype.
+
+    Returns:
+        torch.dtype: The PyTorch dtype.
+
+    Raises:
+        AssertionError: If the input str_dtype is unsupported.
+    """
+    if isinstance(str_dtype, torch.dtype) or str_dtype is None:
+        return str_dtype
+    if str_dtype == "int8":
+        return torch.int8
+    elif str_dtype == "fp32" or str_dtype == "float32" or str_dtype == "auto":
+        return torch.float
+    elif str_dtype == "fp16" or str_dtype == "float16":
+        return torch.float16
+    elif str_dtype == "bf16" or str_dtype == "bfloat16":
+        return torch.bfloat16
+    else:
+        assert False, "Unsupported str dtype {} to torch dtype".format(str_dtype)
+
+
+# ref reverse reorder from AutoAWQ https://github.com/AutoGPTQ/AutoGPTQ/blob/v0.7.1/auto_gptq/modeling/_utils.py#L491
+def awq_reverse_reorder_int_tensor(int_tensor, bits: int):
+    """Awq tensor convert tool.
+
+    Reverse_reorder_int_tensor
+    """
+    assert bits == 4
+
+    int_tensor = int_tensor.T.contiguous()
+    compress_ratio = 32 // bits
+    assert int_tensor.shape[-1] % compress_ratio == 0
+
+    order_map = [0, 2, 4, 6, 1, 3, 5, 7]
+    order_tensor = torch.tensor(order_map, dtype=torch.int32, device=int_tensor.device).reshape(1, -1)
+    order_tensor = order_tensor.repeat(int_tensor.shape[1] // compress_ratio, 1)
+    order_tensor = order_tensor + torch.arange(
+        0,
+        int_tensor.shape[1],
+        compress_ratio,
+        dtype=torch.int32,
+        device=int_tensor.device,
+    ).reshape(-1, 1)
+    order_tensor = order_tensor.reshape(-1)
+
+    reverse_order_tensor = torch.arange(order_tensor.shape[0])[order_tensor]
+    reverse_order_tensor = reverse_order_tensor[order_tensor]
+    int_tensor = int_tensor[:, reverse_order_tensor]
+    return int_tensor
+
+
+# ref weight unpack from AutoAWQ https://github.com/AutoGPTQ/AutoGPTQ/blob/v0.7.1/auto_gptq/modeling/_utils.py#L516
+def unpack_awq(
+    awq_qweight: torch.Tensor,
+    awq_qzeros: torch.Tensor,
+    awq_scales: torch.Tensor,
+    bits: int,
+    group_size: int,
+):
+    """Unpack awq format to actual values.
+
+    Args:
+        awq_qweight (`torch.LongTensor`):
+            Expected shape: (in_features, out_features // (32 // bits))
+        awq_qzeros (`torch.LongTensor`):
+            Expected shape: (in_features // group_size, out_features // (32 // bits))
+        awq_scales (`torch.LongTensor`):
+            Expected shape: (in_features // group_size, out_features)
+
+    Returns:
+        fp16_weight (`torch.LongTensor`):
+            With shape (in_features, out_features).
+        zeros (`torch.LongTensor`):
+            With shape (in_features // group_size, out_features).
+    """
+    assert bits == 4
+
+    qzeros = awq_qzeros
+    qweight = awq_qweight
+    qweight = qweight.T.contiguous()
+
+    infeatures = awq_qweight.shape[0]
+
+    wf = torch.tensor(list(range(0, 32, bits)), dtype=torch.int32, device=qzeros.device).unsqueeze(0)
+    zeros = torch.bitwise_right_shift(torch.unsqueeze(qzeros, 2), wf.unsqueeze(0)).to(
+        torch.int16 if bits == 8 else torch.int8
+    )
+
+    # zeros = zeros + 1
+
+    torch.bitwise_and(zeros, (2**bits) - 1, out=zeros)
+
+    zeros = zeros.reshape(-1, 1, zeros.shape[1] * zeros.shape[2])
+
+    weight = torch.bitwise_right_shift(torch.unsqueeze(qweight, 1), wf.unsqueeze(-1)).to(
+        torch.int16 if bits == 8 else torch.int8
+    )
+    torch.bitwise_and(weight, (2**bits) - 1, out=weight)
+    weight = weight.reshape(-1, group_size, weight.shape[2])
+
+    weight = weight.view(-1, weight.shape[-1])
+    zeros = zeros.view(-1, zeros.shape[-1])
+
+    zeros = zeros.T.contiguous()
+    zeros = awq_reverse_reorder_int_tensor(zeros, bits)
+    weight = awq_reverse_reorder_int_tensor(weight, bits)
+
+    # Dequantize weights.
+    scales = awq_scales
+    zeros = zeros.contiguous()
+    scale_zeros = zeros * scales
+
+    g_idx = torch.tensor([i // group_size for i in range(infeatures)], dtype=torch.int32)
+    scale_mat = scales[g_idx]
+    scale_zeros_mat = scale_zeros[g_idx].half()
+
+    qdq_weight_T = weight * scale_mat - scale_zeros_mat.half()
+
+    fp16_weight = qdq_weight_T.T
+
+    return fp16_weight, zeros
+
+
+# ref weight unpack from AutoAWQ https://github.com/AutoGPTQ/AutoGPTQ/blob/v0.7.1/auto_gptq/modeling/_utils.py#L516
+def pack_from_tensors(
+    unpacked_qweight: torch.Tensor,
+    unpacked_qzeros: torch.Tensor,
+    awq_scales: torch.Tensor,
+    bits: int,
+    group_size: int,
+):
+    """Pack the tensor to optimum format.
+
+    Args:
+        unpacked_qweight (`torch.LongTensor`):
+            Expected shape: (in_features, out_features)
+        unpacked_qzeros (`torch.LongTensor`):
+            Expected shape: (in_features // group_size, out_features)
+        awq_scales (`torch.LongTensor`):
+            Expected shape: (in_features // group_size, out_features)
+
+    Returns:
+        qweight (`torch.LongTensor`):
+            With shape (in_features // (32 // bits), out_features)
+        qzeros (`torch.LongTensor`):
+            With shape (in_features // group_size, out_features // (32 // bits))
+    """
+    assert bits == 4
+    W = unpacked_qweight.clone().cpu()
+
+    # TODO: This should be checked somehow.
+    # if isinstance(linear, nn.Conv2d):
+    #     W = W.flatten(1)
+    # if isinstance(linear, transformers.pytorch_utils.Conv1D):
+    #     W = W.t()
+
+    awq_scales = awq_scales.t().contiguous()
+    unpacked_qzeros = unpacked_qzeros.contiguous()
+    unpacked_qzeros = unpacked_qzeros.cpu()
+
+    awq_scales = awq_scales.cpu()
+    scale_zeros = unpacked_qzeros.t() * awq_scales
+    scales = awq_scales.clone()
+
+    infeatures = unpacked_qweight.shape[1]
+
+    intweight = []
+    for idx in range(infeatures):
+        g_idx = idx // group_size
+
+        intweight.append(torch.round((W[:, idx] + scale_zeros[:, g_idx]) / scales[:, g_idx]).to(torch.int)[:, None])
+    intweight = torch.cat(intweight, dim=1)
+    intweight = intweight.t().contiguous()
+    intweight = intweight.numpy().astype(np.uint32)
+
+    i = 0
+    row = 0
+    qweight = np.zeros((intweight.shape[0] // 32 * bits, intweight.shape[1]), dtype=np.uint32)
+    while row < qweight.shape[0]:
+        for j in range(i, i + (32 // bits)):
+            qweight[row] |= intweight[j] << (bits * (j - i))
+        i += 32 // bits
+        row += 1
+
+    qweight = qweight.astype(np.int32)
+    qweight = torch.from_numpy(qweight)
+
+    unpacked_qzeros = unpacked_qzeros - 1
+    torch.bitwise_and(unpacked_qzeros, (2**bits) - 1, out=unpacked_qzeros)
+
+    unpacked_qzeros = unpacked_qzeros.numpy().astype(np.uint32)
+    qzeros = np.zeros(
+        (unpacked_qzeros.shape[0], unpacked_qzeros.shape[1] // 32 * bits),
+        dtype=np.uint32,
+    )
+    i = 0
+    col = 0
+    while col < qzeros.shape[1]:
+        for j in range(i, i + (32 // bits)):
+            qzeros[:, col] |= unpacked_qzeros[:, j] << (bits * (j - i))
+        i += 32 // bits
+        col += 1
+
+    qzeros = qzeros.astype(np.int32)
+    qzeros = torch.from_numpy(qzeros)
+
+    return qweight, qzeros
+
+
+def repack_awq_to_optimum_format(
+    awq_qweight: torch.Tensor,
+    awq_qzeros: torch.Tensor,
+    awq_scales: torch.Tensor,
+    bits: int,
+    group_size: int,
+):
+    """The function to repack_awq_to_optimum_format.
+
+    Args:
+        awq_qweight (`torch.LongTensor`):
+            Expected shape: (in_features, out_features // (32 // bits))
+        awq_qzeros (`torch.LongTensor`):
+            Expected shape: (in_features // group_size, out_features // (32 // bits))
+        awq_scales (`torch.LongTensor`):
+            Expected shape: (in_features // group_size, out_features)
+
+    Returns:
+        qweight (`torch.LongTensor`):
+            With shape (in_features // (32 // bits), out_features)
+        qzeros (`torch.LongTensor`):
+            With shape (in_features // group_size, out_features // (32 // bits))
+        scales (`torch.LongTensor`):
+            Expected shape: (in_features // group_size, out_features)
+    """
+    unpack_qweight, unpack_qzeros = unpack_awq(awq_qweight, awq_qzeros, awq_scales, bits, group_size)
+    qweight, qzeros = pack_from_tensors(unpack_qweight, unpack_qzeros, awq_scales, bits, group_size)
+    return qweight, qzeros, awq_scales

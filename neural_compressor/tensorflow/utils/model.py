@@ -14,27 +14,40 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""The Model API for wrapping all TF model formats."""
+
+import copy
 
 from neural_compressor.common.utils import DEFAULT_WORKSPACE
-from neural_compressor.tensorflow.utils.model_wrappers import (
-    BaseModel, 
-    KerasModel, 
-    TensorflowModel, 
-    get_tf_model_type,
-    TensorflowSubclassedKerasModel,
-)
-
-framework_specific_info = {
-    "device": "cpu",
-    "backend": "default",
-    "approach": "post_training_static_quant",
-    "random_seed": 1978,
-    "workspace_path": DEFAULT_WORKSPACE,
-    "format": "default",
-}
+from neural_compressor.tensorflow.utils.constants import TENSORFLOW_DEFAULT_CONFIG
+from neural_compressor.tensorflow.utils.model_wrappers import BaseModel, KerasModel, TensorflowModel, get_tf_model_type
+from neural_compressor.tensorflow.utils.utility import singleton
 
 
-class Model(object):
+@singleton
+class TensorflowGlobalConfig:
+    """A global config class for setting framework specific information."""
+
+    global_config = {
+        "device": "cpu",
+        "backend": "default",
+        "approach": "post_training_static_quant",
+        "random_seed": 1978,
+        "workspace_path": DEFAULT_WORKSPACE,
+        "format": "default",
+        "use_bf16": True,
+    }
+
+    def reset_global_config(self):
+        """Reset global config with default values."""
+        self.global_config = copy.deepcopy(TENSORFLOW_DEFAULT_CONFIG)
+        self.global_config["workspace_path"] = DEFAULT_WORKSPACE
+
+
+TFConfig = TensorflowGlobalConfig()
+
+
+class Model(object):  # pragma: no cover
     """A wrapper to construct a Neural Compressor TF Model."""
 
     def __new__(cls, root, **kwargs):
@@ -72,14 +85,9 @@ class Model(object):
         return model
 
     @staticmethod
-    def set_framework_info(conf, model):
-        from neural_compressor.tensorflow.utils import itex_installed
-
-        if itex_installed():
-            framework_specific_info["backend"] = "itex"
-
-        if conf == "NA":
-            return
+    def set_tf_config(conf, model):
+        """Set tf global config with model information."""
+        config = TFConfig.global_config
         framework = "keras" if isinstance(model, KerasModel) else "tensorflow"
 
         if conf.device:

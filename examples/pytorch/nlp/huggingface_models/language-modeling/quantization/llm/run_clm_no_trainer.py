@@ -50,9 +50,8 @@ parser.add_argument("--pad_max_length", default=512, type=int,
                     help="Pad input ids to max length.")
 parser.add_argument("--calib_iters", default=512, type=int,
                     help="calibration iters.")
-parser.add_argument("--tasks", nargs='+', default=["lambada_openai",
-                                                   "hellaswag", "winogrande", "piqa", "wikitext"],
-                    type=str, help="tasks list for accuracy validation, text-generation and code-generation tasks are different.")
+parser.add_argument("--tasks", default="lambada_openai,hellaswag,winogrande,piqa,wikitext",
+                    type=str, help="tasks for accuracy validation, text-generation and code-generation tasks are different.")
 parser.add_argument("--peft_model_id", type=str, default=None, help="model_name_or_path of peft model")
 # ============SmoothQuant configs==============
 parser.add_argument("--sq", action="store_true")
@@ -78,6 +77,8 @@ parser.add_argument('--gptq_pad_max_length', type=int, default=2048, help='Calib
                                                                            this should align with your model config, \
                                                                            and your dataset builder args: args.pad_max_length')
 parser.add_argument('--gptq_static_groups', action='store_true', help='Use determined group to do quantization')
+parser.add_argument('--gptq_true_sequential', action='store_true', help="Whether to run in true_sequential model.")
+parser.add_argument('--gptq_lm_head', action='store_true', help="Whether to use GPTQ to quantize the output layer of the LLMs.")
 # ==============code generation args===========
 parser.add_argument("--code_generation", action="store_true")
 parser.add_argument("--n_samples", default=200, type=int)
@@ -279,7 +280,8 @@ if args.quantize:
             'use_max_length': args.gptq_use_max_length,
             'pad_max_length': args.gptq_pad_max_length,
             'static_groups': args.gptq_static_groups,
-            "enable_mse_search": args.woq_enable_mse_search,
+            "true_sequential": args.gptq_true_sequential,
+            "lm_head": args.gptq_lm_head,
         }
         # GPTQ: use assistive functions to modify calib_dataloader and calib_func
         # TEQ: set calib_func=None, use default training func as calib_func
@@ -341,72 +343,96 @@ if args.int8 or args.int8_bf16_mixed:
 
     if args.ipex:
         user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)))
+        from transformers import AutoTokenizer, AutoConfig
+        tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=args.trust_remote_code)
+        config = AutoConfig.from_pretrained(args.model, trust_remote_code=args.trust_remote_code)
+        setattr(user_model, "config", config)
     else:
-        user_model, _ = get_user_model()
+        user_model, tokenizer = get_user_model()
         kwargs = {'weight_only': True} if args.approach == 'weight_only' else {}
         user_model = load(os.path.abspath(os.path.expanduser(args.output_dir)), user_model, **kwargs)
 else:
-    user_model, _ = get_user_model()
+    user_model, tokenizer = get_user_model()
 
 if args.accuracy:
     user_model.eval()
     if args.code_generation:
-        from intel_extension_for_transformers.llm.evaluation.lm_code_eval import evaluate
+        from neural_compressor.evaluation.bigcode_eval import evaluate
         from transformers import AutoTokenizer
         tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=args.trust_remote_code)
         results = evaluate(
             model=user_model,
             tokenizer=tokenizer,
-            tasks=",".join(args.tasks),
+            tasks=args.tasks,
             batch_size=args.batch_size,
             args=args,
         )
+        for task_name in args.tasks:
+            if task_name == "truthfulqa_mc":
+                acc = results["results"][task_name]["mc1"]
+            else:
+                acc = results["results"][task_name]["acc"]
     else:
-        from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate
-        results = evaluate(
-            model="hf-causal",
-            model_args='pretrained=' + args.model + ',tokenizer=' + args.model + ',dtype=float32',
+        from neural_compressor.evaluation.lm_eval import evaluate, LMEvalParser
+        eval_args = LMEvalParser(
+            model="hf", 
             user_model=user_model,
+            tokenizer=tokenizer,
             batch_size=args.batch_size,
             tasks=args.tasks,
+            device="cpu",
         )
+        results = evaluate(eval_args)
+        for task_name in args.tasks.split(","):
+            if task_name == "wikitext":
+                acc = results["results"][task_name]["word_perplexity,none"]
+            else:
+                acc = results["results"][task_name]["acc,none"]
 
-    dumped = json.dumps(results, indent=2)
-    if args.save_accuracy_path:
-        with open(args.save_accuracy_path, "w") as f:
-            f.write(dumped)
-    for task_name in args.tasks:
-        if task_name == "wikitext":
-            acc = results["results"][task_name]["word_perplexity"]
-        else:
-            acc = results["results"][task_name]["acc"]
     print("Accuracy: %.5f" % acc)
     print('Batch size = %d' % args.batch_size)
 
 if args.performance:
-    user_model.eval()
-    from intel_extension_for_transformers.transformers.llm.evaluation.lm_eval import evaluate
     import time
-
+    user_model.eval()
     samples = args.iters * args.batch_size
-    start = time.time()
-    results = evaluate(
-        model="hf-causal",
-        model_args='pretrained=' + args.model + ',tokenizer=' + args.model \
-            + ',dtype=float32' + ",trust_remote_code=" + str(args.trust_remote_code),
-        user_model=user_model,
-        batch_size=args.batch_size,
-        tasks=args.tasks,
-        limit=samples,
-    )
-    end = time.time()
-    for task_name in args.tasks:
-        if task_name == "wikitext":
-            acc = results["results"][task_name]["word_perplexity"]
-        elif task_name == "truthfulqa_mc":
-            acc = results["results"][task_name]["mc1"]
-        else:
-            acc = results["results"][task_name]["acc"]
+
+    if args.code_generation:
+        from neural_compressor.evaluation.bigcode_eval import evaluate
+        from transformers import AutoTokenizer
+        tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=args.trust_remote_code)
+        start = time.time()
+        results = evaluate(
+            model=user_model,
+            tokenizer=tokenizer,
+            tasks=args.tasks,
+            batch_size=args.batch_size,
+            args=args,
+        )
+        end = time.time()
+        for task_name in args.tasks:
+            if task_name == "truthfulqa_mc":
+                acc = results["results"][task_name]["mc1"]
+            else:
+                acc = results["results"][task_name]["acc"]
+    else:
+        from neural_compressor.evaluation.lm_eval import evaluate, LMEvalParser
+        eval_args = LMEvalParser(
+            model="hf", 
+            user_model=user_model,
+            tokenizer=tokenizer,
+            batch_size=args.batch_size,
+            tasks=args.tasks,
+            device="cpu",
+        )
+        start = time.time()
+        results = evaluate(eval_args)
+        end = time.time()
+        for task_name in args.tasks.split(","):
+            if task_name == "wikitext":
+                acc = results["results"][task_name]["word_perplexity,none"]
+            else:
+                acc = results["results"][task_name]["acc,none"]
     print("Accuracy: %.5f" % acc)
     print('Throughput: %.3f samples/sec' % (samples / (end - start)))
     print('Latency: %.3f ms' % ((end - start) * 1000 / samples))

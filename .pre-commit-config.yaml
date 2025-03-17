@@ -2,25 +2,17 @@ ci:
   autofix_prs: true
   autoupdate_schedule: quarterly
 
-exclude: |
-  (?x)^(
-      conda_meta/.+|
-      neural_insights/gui.+|
-      neural_insights/test.+|
-      neural_solution/frontend/gRPC/proto/neural_solution_pb2.py|
-      neural_coder/extensions/.+|
-      neural_coder/examples/.+
-  )$
-
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
       - id: end-of-file-fixer
         files: (.*\.(py|md|rst|yaml|yml))$
         exclude: |
           (?x)^(
-              examples/.+
+              examples/.+|
+              neural_compressor/torch/algorithms/fp8_quant/.+|
+              test/3x/torch/algorithms/fp8_quant/.+
           )$
       - id: check-json
         exclude: |
@@ -51,7 +43,10 @@ repos:
         files: (.*\.(py|rst|cmake|yaml|yml))$
         exclude: |
           (?x)^(
-              examples/.+
+              examples/.+|
+              neural_compressor/torch/utils/.+|
+              neural_compressor/torch/algorithms/fp8_quant/.+|
+              test/3x/torch/quantization/.+
           )$
 
   - repo: https://github.com/Lucas-C/pre-commit-hooks
@@ -60,13 +55,7 @@ repos:
       - id: insert-license
         files: |
           (?x)^(
-            neural_solution/.*(py|yaml|yml|sh)|
-            neural_compressor/.*(py|yaml|yml|sh)|
-            neural_insights/.*(py|yaml|yml|sh)
-          )$
-        exclude: |
-          (?x)^(
-              neural_solution/test/.*
+            neural_compressor/.*(py|yaml|yml|sh)
           )$
         args:
           [
@@ -88,11 +77,13 @@ repos:
       - id: isort
         exclude: |
           (?x)^(
-              examples/.+
+              examples/.+|
+              neural_compressor/torch/algorithms/fp8_quant/.+|
+              test/3x/torch/.+
           )$
 
   - repo: https://github.com/PyCQA/docformatter
-    rev: v1.7.5
+    rev: 06907d0
     hooks:
       - id: docformatter
         args: [
@@ -104,11 +95,13 @@ repos:
           ]
         exclude: |
           (?x)^(
-              examples/.+
+              examples/.+|
+              neural_compressor/torch/algorithms/fp8_quant/.+|
+              test/3x/torch/.+
           )$
 
   - repo: https://github.com/psf/black.git
-    rev: 24.3.0
+    rev: 24.10.0
     hooks:
       - id: black
         files: (.*\.py)$
@@ -116,24 +109,28 @@ repos:
           (?x)^(
               neural_compressor/conf/config.py|
               neural_compressor/conf/pythonic_config.py|
-              examples/.+
+              examples/.+|
+              neural_compressor/torch/algorithms/fp8_quant/.+|
+              test/3x/torch/.+
           )$
 
   - repo: https://github.com/asottile/blacken-docs
-    rev: 1.16.0
+    rev: 1.19.1
     hooks:
       - id: blacken-docs
         args: [--line-length=120, --skip-errors]
         additional_dependencies:
-          - black==24.3.0
+          - black==24.10.0
         exclude: |
           (?x)^(
               examples/.+|
-              docs/source-app
+              docs/source-app|
+              neural_compressor/torch/algorithms/fp8_quant/.+|
+              test/3x/torch/.+
           )$
 
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.6
+    rev: v2.3.0
     hooks:
       - id: codespell
         args: [-w]
@@ -144,15 +141,21 @@ repos:
               examples/.*(txt|patch)|
               examples/onnxrt/nlp/huggingface_model/text_generation/llama/quantization/ptq_static/prompt.json|
               examples/notebook/dynas/ResNet50_Quantiation_Search_Supernet_NAS.ipynb|
-              examples/notebook/dynas/Transformer_LT_Supernet_NAS.ipynb
+              examples/notebook/dynas/Transformer_LT_Supernet_NAS.ipynb|
+              neural_compressor/torch/algorithms/fp8_quant/internal/diffusion_evaluation/SR_evaluation/imagenet1000_clsidx_to_labels.txt|
+              neural_compressor/evaluation/hf_eval/datasets/cnn_validation.json|
+              neural_compressor/torch/algorithms/fp8_quant/.+|
+              test/3x/torch/.+
           )$
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.3.5
+    rev: v0.8.6
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix, --no-cache]
         exclude: |
           (?x)^(
-              examples/.+
+              examples/.+|
+              neural_compressor/torch/algorithms/fp8_quant/.+|
+              test/3x/torch/.+
           )$

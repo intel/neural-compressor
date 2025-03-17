@@ -19,7 +19,7 @@ echo "onnxruntime version is $onnxruntime_version"
 echo "mxnet version is $mxnet_version"
 
 test_case=$1
-echo "========= test case is ${test_case}"
+echo -e "##[group]test case is ${test_case}"
 
 if [[ "${tensorflow_version}" == *"-official" ]]; then
     pip install tensorflow==${tensorflow_version%-official}
@@ -100,6 +100,8 @@ pip install coverage
 pip install pytest
 pip install pytest-html
 
+echo "##[endgroup]"
+
 pip list
 echo "[DEBUG] list pipdeptree..."
 pip install pipdeptree
@@ -112,4 +114,3 @@ if [[ $(echo "${test_case}" | grep -c "run basic api") != 0 ]] || [[ $(echo "${t
     find . -name "test*.py" | xargs sed -i 's/import tensorflow.compat.v1 as tf/import torch; import tensorflow.compat.v1 as tf/g'
     find . -name "test*.py" | xargs sed -i 's/from tensorflow import keras/import torch; from tensorflow import keras/g'
 fi
-

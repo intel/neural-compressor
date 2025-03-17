@@ -11,8 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Intel Neural Compressor PyTorch quantization API."""
 
-from neural_compressor.torch.quantization.quantize import quantize
+from neural_compressor.torch.quantization.quantize import quantize, prepare, convert, finalize_calibration
 from neural_compressor.torch.quantization.config import (
     RTNConfig,
     get_default_rtn_config,
@@ -21,6 +22,7 @@ from neural_compressor.torch.quantization.config import (
     get_default_gptq_config,
     AWQConfig,
     get_default_awq_config,
+    INT8StaticQuantConfig,
     StaticQuantConfig,
     get_default_static_config,
     SmoothQuantConfig,
@@ -34,6 +36,14 @@ from neural_compressor.torch.quantization.config import (
     FP8Config,
     get_default_fp8_config,
     get_default_fp8_config_set,
+    MXQuantConfig,
+    get_default_mx_config,
+    MixedPrecisionConfig,
+    get_default_mixed_precision_config,
+    get_default_mixed_precision_config_set,
+    get_woq_tuning_config,
+    DynamicQuantConfig,
+    get_default_dynamic_config,
 )
 
 from neural_compressor.torch.quantization.autotune import (
@@ -45,4 +55,4 @@ from neural_compressor.torch.quantization.autotune import (
 
 ### Quantization Function Registration ###
 import neural_compressor.torch.quantization.algorithm_entry
-from neural_compressor.torch.quantization.load_entry import load
+from neural_compressor.torch.quantization.save_load_entry import save, load

@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import os.path
+import os
 import transformers
 import tensorflow as tf
 from tqdm import tqdm
@@ -186,7 +186,6 @@ def eval_func(model):
 
 from neural_compressor import PostTrainingQuantConfig
 from neural_compressor.config import AccuracyCriterion
-
 from neural_compressor import quantization
 
 recipes = {}

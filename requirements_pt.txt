@@ -1,7 +1,6 @@
-auto-round
-intel_extension_for_pytorch
-peft
+numpy==1.26.4 ; python_version < '3.12'
+numpy<2.0 ; python_version >= '3.12'
+prettytable
 psutil
 py-cpuinfo
 pydantic
-torch

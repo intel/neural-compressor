@@ -1,7 +1,6 @@
 accelerate
 datasets
 einops
-intel_extension_for_transformers
 optimum
 peft
 sentencepiece
@@ -10,4 +9,6 @@ torch
 tqdm
 tiktoken
 transformers_stream_generator
-git+https://github.com/EleutherAI/lm-evaluation-harness.git@cc9778fbe4fa1a709be2abed9deb6180fd40e7e2
+lm_eval==0.4.3
+numba
+pydantic

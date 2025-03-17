@@ -316,13 +316,6 @@
       "batch_size": 100,
       "main_script": "run.py"
     },
-    "rnnt": {
-      "model_src_dir": "speech_recognition/rnnt/quantization/ptq_dynamic/fx",
-      "dataset_location": "/tf_dataset/pytorch/rnnt/convert_dataset/",
-      "input_model": "/tf_dataset/pytorch/rnnt/rnnt.pt",
-      "main_script": "run_tune.py",
-      "batch_size": 100
-    },
     "wav2vec2_dynamic":{
       "model_src_dir": "speech_recognition/torchaudio_models/quantization/ptq_dynamic/fx",
       "dataset_location": "/tf_dataset2/datasets/speech_data/LibriSpeech/test-clean",
@@ -478,7 +471,7 @@
       "main_script": "run_clm_no_trainer.py",
       "batch_size": 8
     },
-    "opt_125m_woq_gptq_int4_dq_bnb":{
+    "opt_125m_woq_gptq_nf4_dq_bnb":{
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/llm",
       "dataset_location": "",
       "input_model": "",
@@ -541,7 +534,7 @@
       "main_script": "run_clm_no_trainer.py",
       "batch_size": 1
     },
-    "llama2_7b_gptq_int4_dq_bnb":{
+    "llama2_7b_gptq_nf4_dq_bnb":{
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/llm",
       "dataset_location": "",
       "input_model": "",
@@ -576,7 +569,7 @@
       "main_script": "run_clm_no_trainer.py",
       "batch_size": 1
     },
-    "gpt_j_woq_rtn_int4_dq_bnb":{
+    "gpt_j_woq_rtn_nf4_dq_bnb":{
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/llm",
       "dataset_location": "",
       "input_model": "",
@@ -597,7 +590,7 @@
       "main_script": "run_clm_no_trainer.py",
       "batch_size": 1
     },
-    "gpt_j_woq_gptq_int4_dq_bnb":{
+    "gpt_j_woq_gptq_nf4_dq_bnb":{
       "model_src_dir": "nlp/huggingface_models/language-modeling/quantization/llm",
       "dataset_location": "",
       "input_model": "",

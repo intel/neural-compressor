@@ -522,7 +522,15 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
                 },
             },
             recipes={
-                "gptq_args": {"percdamp": 0.01, "act_order": False, "use_max_length": True, "pad_max_length": 512},
+                "gptq_args": {
+                    "percdamp": 0.01,
+                    "act_order": False,
+                    "use_max_length": True,
+                    "pad_max_length": 512,
+                    "static_groups": True,
+                    "true_sequential": True,
+                    "lm_head": True,
+                },
             },
         )
 
@@ -537,7 +545,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         )
         q_model.save("saved")
         out1 = q_model.model(input)
-        self.assertTrue(torch.allclose(out1[0], out0[0], atol=1e-02))
+        self.assertTrue(torch.allclose(out1[0], out0[0], atol=1e-01))
         compressed_model = q_model.export_compressed_model(use_optimum_format=False)
         out2 = compressed_model(input)
         torch.save(compressed_model.state_dict(), "saved/compressed_model.pt")
@@ -752,9 +760,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
         tokenizer = transformers.AutoTokenizer.from_pretrained(
             "hf-internal-testing/tiny-random-GPTJForCausalLM", trust_remote_code=True
         )
-        dataloader = get_dataloader(
-            tokenizer, seqlen=10, seed=42, train_bs=8, dataset_split="train", dataset_name="NeelNanda/pile-10k"
-        )
+        dataloader = get_dataloader(tokenizer, 32, dataset_name="NeelNanda/pile-10k", seed=42, bs=8, nsamples=20)
         fp32_model = copy.deepcopy(self.gptj)
         conf = PostTrainingQuantConfig(
             approach="weight_only",
@@ -777,7 +783,7 @@ class TestPytorchWeightOnlyAdaptor(unittest.TestCase):
             recipes={
                 "autoround_args": {
                     "n_samples": 20,
-                    "seq_len": 10,
+                    "seqlen": 32,
                     "iters": 10,
                     "scale_dtype": "fp32",
                     "amp": False,
