@@ -546,6 +546,32 @@ def try_loading_keras(model, input_tensor_names, output_tensor_names):  # pragma
     shutil.rmtree(temp_dir, True)
     return graph_def_session(graph_def, input_names, output_names, **kwargs)
 
+def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
+    """Build session with keras model.
+
+    Args:
+        model (string or tf.keras.Model): model path or tf.keras.Model object.
+        input_tensor_names (list of string): input_tensor_names of model.
+        output_tensor_names (list of string): output_tensor_names of model.
+
+    Returns:
+        sess (tf.compat.v1.Session): tf.compat.v1.Session object.
+        input_tensor_names (list of string): validated input_tensor_names.
+        output_tensor_names (list of string): validated output_tensor_names.
+    """
+    if tf.version.VERSION > "2.1.0":
+        try:
+            graph_def, input_names, output_names = _get_graph_from_saved_model_v3(
+                model, input_tensor_names, output_tensor_names
+            )
+        except:
+            graph_def, input_names, output_names = try_loading_keras(model, input_tensor_names, output_tensor_names)
+    # tensorflow 1.x use v1 convert method
+    else:
+        tf.keras.backend.set_learning_phase(0)
+        graph_def, input_names, output_names = _get_graph_from_saved_model_v1(model)
+
+    return graph_def_session(graph_def, input_names, output_names, **kwargs)
 
 def slim_session(model, input_tensor_names, output_tensor_names, **kwargs):  # pragma: no cover
     """Build session with slim model.

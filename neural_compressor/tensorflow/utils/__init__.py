@@ -13,10 +13,14 @@
 # limitations under the License.
 """The utils for Tensorflow."""
 
-from neural_compressor.tensorflow.utils.model import Model, framework_specific_info
 from neural_compressor.tensorflow.utils.data import BaseDataLoader, DummyDataset, DummyDatasetV2
+from neural_compressor.tensorflow.utils.model import (
+    Model,
+    TFConfig,
+)
 from neural_compressor.tensorflow.utils.constants import (
     SPR_BASE_VERSIONS,
+    TENSORFLOW_DEFAULT_CONFIG,
     DEFAULT_SQ_ALPHA_ARGS,
     UNIFY_OP_TYPE_MAPPING,
 )

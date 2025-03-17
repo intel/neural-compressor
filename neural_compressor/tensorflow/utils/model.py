@@ -63,7 +63,6 @@ class Model(object):  # pragma: no cover
         from neural_compressor.tensorflow.utils import itex_installed
 
         if isinstance(root, BaseModel):
-            framework_specific_info["backend"] = "itex"
             return root
 
         if kwargs.get("approach", None) == "quant_aware_training":
@@ -76,11 +75,9 @@ class Model(object):  # pragma: no cover
         if model_type == "keras" and not itex_installed():
             model_type = "saved_model"
 
-        # model = TensorflowSubclassedKerasModel(root)
-        # framework_specific_info["backend"] = "itex"
         model = TensorflowModel(model_type, root, **kwargs)
-        conf = kwargs.pop("conf", "NA")
-        cls.set_framework_info(conf, model)
+        conf = kwargs.pop("conf", None)
+        cls.set_tf_config(conf, model)
 
         return model
 
@@ -90,31 +87,33 @@ class Model(object):  # pragma: no cover
         config = TFConfig.global_config
         framework = "keras" if isinstance(model, KerasModel) else "tensorflow"
 
-        if conf.device:
-            framework_specific_info["device"] = conf.device
-        if conf.approach:
-            framework_specific_info["approach"] = conf.approach
-        if conf.random_seed:
-            framework_specific_info["random_seed"] = conf.random_seed
-        if conf.inputs:
-            framework_specific_info["inputs"] = conf.inputs
-        if conf.outputs:
-            framework_specific_info["outputs"] = conf.outputs
+        if conf and "device" in conf:
+            config["device"] = conf["device"]
+        if conf and "approach" in conf:
+            config["approach"] = conf["approach"]
+        if conf and "random_seed" in conf:
+            config["random_seed"] = conf["random_seed"]
+        if conf and "inputs" in conf:
+            config["inputs"] = conf["inputs"]
+        if conf and "outputs" in conf:
+            config["outputs"] = conf["outputs"]
 
         if framework == "keras":
-            framework_specific_info["backend"] = "itex"
+            config["backend"] = "itex"
             return
 
-        if conf.performance_only:
-            framework_specific_info["performance_only"] = conf.performance_only
+        from neural_compressor.tensorflow.utils import itex_installed
 
-        if conf.workspace_path:
-            framework_specific_info["workspace_path"] = conf.workspace_path
-        if conf.recipes:
-            framework_specific_info["recipes"] = conf.recipes
+        if conf and "performance_only" in conf:
+            config["performance_only"] = conf["performance_only"]
+        if itex_installed():
+            config["backend"] = "itex"
+        if conf and "workspace_path" in conf:
+            config["workspace_path"] = conf["workspace_path"]
+        if conf and "recipes" in conf:
+            config["recipes"] = conf["recipes"] 
 
-        framework_specific_info["use_bf16"] = conf.use_bf16 if conf.use_bf16 else False
 
         for item in ["scale_propagation_max_pooling", "scale_propagation_concat"]:
-            if framework_specific_info["recipes"] and item not in framework_specific_info["recipes"]:
-                framework_specific_info["recipes"].update({item: True})
+            if "recipes" in config and item not in config["recipes"]:
+                config["recipes"].update({item: True}) 
