@@ -91,7 +91,7 @@ def get_fullscale(dtype, device, exp_bias=None):
         fullscale = MAX_RANGE[dtype]
     exp_bias = default_exp_bias if exp_bias is None else exp_bias
     fullscale = fullscale * (2 ** (default_exp_bias - exp_bias))
-    return fullscale
+    return float(fullscale)
 
 
 def get_fullscales_by_expbias_set(dtype, device, expbias_set):
