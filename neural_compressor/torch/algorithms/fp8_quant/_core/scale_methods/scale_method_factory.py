@@ -117,10 +117,10 @@ class ScaleMethodFactory:
                                      QuantTensorName.WEIGHT_OUT_CH: parse_tensor_scale_value_type(config_weight, self.op_type),
                                      QuantTensorName.WEIGHT_IN_CH: parse_tensor_scale_value_type(config_weight, self.op_type),
                                      QuantTensorName.OUTPUT: parse_tensor_scale_value_type(config_out, self.op_type)}
-        self.scale_backoff_map = {QuantTensorName.INPUT: self.params.get("input_backoff", 1),
-                                  QuantTensorName.WEIGHT_IN_CH: self.params.get("weight_backoff", 1),
-                                  QuantTensorName.WEIGHT_OUT_CH: self.params.get("weight_backoff", 1),
-                                  QuantTensorName.OUTPUT: self.params.get("output_backoff", self.params.get("input_backoff", 1)),} # get output_backoff, if doesn't exists use input_backoff, if doesn't exists use 1
+        self.scale_backoff_map = {QuantTensorName.INPUT: self.params.get("input_backoff", 1.0),
+                                  QuantTensorName.WEIGHT_IN_CH: self.params.get("weight_backoff", 1.0),
+                                  QuantTensorName.WEIGHT_OUT_CH: self.params.get("weight_backoff", 1.0),
+                                  QuantTensorName.OUTPUT: self.params.get("output_backoff", self.params.get("input_backoff", 1.0)),} # get output_backoff, if doesn't exists use input_backoff, if doesn't exists use 1
         logger.debug("%s %s".format(self.__class__.__name__, self.__dict__))
 
     ## TODO remove after SW-217369

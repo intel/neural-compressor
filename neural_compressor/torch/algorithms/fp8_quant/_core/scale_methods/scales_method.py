@@ -116,7 +116,7 @@ class MaxAbsPcs(ScalesMethod):
 
     def calc_scales(self, tensor, tensor_type, **additional_kwargs):
         if tensor_type in [QuantTensorType.CONST, QuantTensorType.DYNAMIC]:
-            max_abs_input = torch.max(torch.abs(tensor), dim=self.dim, keepdim=self.keepdim)[0]
+            max_abs_input = torch.amax(torch.abs(tensor), dim=self.dim, keepdim=self.keepdim)
             # on dynamic quantization we don't need to reshape
             if self.dim != -1:
                 max_abs_input = max_abs_input.reshape([-1, 1])
