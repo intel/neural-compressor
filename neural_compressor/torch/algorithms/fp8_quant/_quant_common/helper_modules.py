@@ -746,7 +746,7 @@ class PatchedGaudiMixtralSparseMoeBlock(PatchedModuleBase):
             )
             mod.call_dynamic_moe_op = get_call_wrapper(self, "call_dynamic_moe_quant_op")
         elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
-            mod.call_dynamic_moe_op = get_call_wrapper(self, "call_dynamic_moe_measure_op")
+            mod.call_dynamic_moe_op = self.call_dynamic_moe_measure_op
 
     def call_dynamic_moe_quant_op(self,
                                   hidden_states,
