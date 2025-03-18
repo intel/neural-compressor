@@ -21,6 +21,7 @@ import re
 import types
 
 from datasets import load_dataset
+from packaging.version import Version
 
 from neural_compressor.common.utils import LazyImport, logger
 from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
@@ -34,12 +35,12 @@ from neural_compressor.torch.quantization import (
     convert,
     prepare,
 )
-from neural_compressor.torch.utils import is_ipex_available, is_package_available, get_ipex_version
-from packaging.version import Version
+from neural_compressor.torch.utils import get_ipex_version, is_ipex_available, is_package_available
 
 if is_ipex_available():
     import intel_extension_for_pytorch as ipex
-    ipex_version= get_ipex_version()
+
+    ipex_version = get_ipex_version()
 
 if is_package_available("auto_round"):
     import auto_round
