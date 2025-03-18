@@ -34,10 +34,12 @@ from neural_compressor.torch.quantization import (
     convert,
     prepare,
 )
-from neural_compressor.torch.utils import is_ipex_available, is_package_available
+from neural_compressor.torch.utils import is_ipex_available, is_package_available, get_ipex_version
+from packaging.version import Version
 
 if is_ipex_available():
     import intel_extension_for_pytorch as ipex
+    ipex_version= get_ipex_version()
 
 if is_package_available("auto_round"):
     import auto_round
@@ -238,11 +240,17 @@ def _replace_linear(
                             dtype=torch.int32,
                             device=torch.device(device),
                         )
-                    model._modules[name].set_weights_bias(
-                        module.qweight.data if hasattr(module, "qweight") else weight,
-                        None if module.bias is None else module.bias.data,
-                        update_g_idx=not empty_weights,
-                    )
+                    if ipex_version >= Version("2.7"):
+                        model._modules[name].set_weights_bias(
+                            module.qweight.data if hasattr(module, "qweight") else weight,
+                            None if module.bias is None else module.bias.data,
+                            update_g_idx=not empty_weights,
+                        )
+                    else:
+                        model._modules[name].set_weights_bias(
+                            module.qweight.data if hasattr(module, "qweight") else weight,
+                            None if module.bias is None else module.bias.data,
+                        )
                 else:
                     raise Exception("{} device Unsupported weight only quantization!".format(device))
 
