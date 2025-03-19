@@ -75,6 +75,7 @@ function run_benchmark {
         model_name_or_path="facebook/opt-125m"
     elif [ "${topology}" = "deepseek-r1" ]; then
         model_name_or_path="/home/sdp/disks/sdb1/DeepSeek-R1"
+        extra_cmd=$extra_cmd" --tasks lambada_openai,hellaswag,winogrande,piqa,mmlu,gsm8k"
     elif [ "${topology}" = "opt_125m_woq_gptq_nf4_dq_bnb" ]; then
         model_name_or_path="facebook/opt-125m"
     elif [ "${topology}" = "opt_125m_woq_gptq_int4_dq_ggml" ]; then
