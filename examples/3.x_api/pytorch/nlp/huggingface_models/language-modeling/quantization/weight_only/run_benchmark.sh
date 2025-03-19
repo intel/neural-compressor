@@ -116,14 +116,14 @@ function run_benchmark {
     fi
 
     if [[ ${mode} == "accuracy" ]]; then
-        python -u run_clm_no_trainer.py \
+        echo y | python -u run_clm_no_trainer.py \
             --model ${model_name_or_path} \
             --output_dir ${tuned_checkpoint} \
             --task ${task} \
             --batch_size ${batch_size} \
             ${extra_cmd} ${mode_cmd}
     elif [[ ${mode} == "performance" ]]; then
-        ${incbench_cmd} run_clm_no_trainer.py \
+        echo y | ${incbench_cmd} run_clm_no_trainer.py \
             --model ${model_name_or_path} \
             --batch_size ${batch_size} \
             --output_dir ${tuned_checkpoint} \
