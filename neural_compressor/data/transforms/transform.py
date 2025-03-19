@@ -1782,9 +1782,7 @@ class NormalizeTransform(BaseTransform):
         return (image, label)
 
 
-@transform_registry(
-    transform_type="RandomCrop", process="preprocess", framework="onnxrt_qlinearops, onnxrt_integerops"
-)
+@transform_registry(transform_type="RandomCrop", process="preprocess", framework="onnxrt_qlinearops, onnxrt_integerops")
 class RandomCropTransform(BaseTransform):
     """Crop the image at a random location to the given size.
 
