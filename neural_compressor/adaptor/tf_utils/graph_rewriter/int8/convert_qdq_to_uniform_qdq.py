@@ -136,6 +136,8 @@ class ConvertUniformQDQOptimizer(GraphRewriterBase):
                         Helper.set_attr_int(uniform_quantize_node, "quantization_axis", 0)
                     else:
                         Helper.set_attr_int(uniform_quantize_node, "quantization_axis", 1)
+                else:
+                    raise ValueError("Unsupported op type for per-channel quantization.")
             # per-tensor weights and activations
             else:
                 Helper.set_attr_int(uniform_quantize_node, "quantization_axis", -1)
