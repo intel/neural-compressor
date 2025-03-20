@@ -167,6 +167,8 @@ def register_patched_measure_modules(model, mod_list, observer_class, d_shapes=N
                 # logger.info(f"Pacthed module pmod: {pmod}")
                 if pmod._mod_extra_config:
                     for param_name in pmod._mod_extra_config.params:
+                        # if torch.distributed.get_rank() == 0:
+                        #     import pdb; pdb.set_trace()
                         param = getattr(pmod, param_name)
                         if config["measure_on_hpu"]:
                             param = param.to(cur_accelerator.name())

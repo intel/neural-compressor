@@ -416,13 +416,22 @@ class PatchedRowParallelLinear(PatchedModuleBase):
         return self.post_all_reduce(dqoutput)
 
     def forward_measure(self, input):
-        resolved_input = self.resolve_input(input)
-        measure_input((resolved_input,), observer=self._mod_extra_config.inputs)
-        output = torch.matmul(resolved_input, self.weight.transpose(-1, -2))
+        # if torch.distributed.get_rank() == 0:
+        #     import pdb; pdb.set_trace()
+        # torch.distributed.barrier()
+        # resolved_input = self.resolve_input(input)
+        # measure_input((resolved_input,), observer=self._mod_extra_config.inputs)
+        # output = torch.matmul(resolved_input, self.weight.transpose(-1, -2))
+        # measure_output((output,), self._mod_extra_config.outputs)
+        # if self.reduce_results:
+        #     output = self.collective_func(output)
+        # return self.post_all_reduce(output)
+
+        # FIXME: It is not fully correct here
+        measure_input((input,), observer=self._mod_extra_config.inputs)
+        output, output_bias = self.orig_mod(input)
         measure_output((output,), self._mod_extra_config.outputs)
-        if self.reduce_results:
-            output = self.collective_func(output)
-        return self.post_all_reduce(output)
+        return output, output_bias
 
     def post_all_reduce(self, output):
         assert (
@@ -473,12 +482,21 @@ class PatchedColumnParallelLinear(PatchedModuleBase):
         return self.post_all_reduce(dqoutput)
 
     def forward_measure(self, input):
+        # if torch.distributed.get_rank() == 0:
+        #     import pdb; pdb.set_trace()
         measure_input((input,), observer=self._mod_extra_config.inputs)
-        output = torch.matmul(input, self.weight.transpose(-1, -2))
+        # FIXME: it is not fully correct here, 
+        output, output_bias = self.orig_mod(input)
         measure_output((output,), self._mod_extra_config.outputs)
-        if self.gather_output:
-            output = self.collective_func(output)
-        return self.post_all_reduce(output)
+        return output, output_bias
+
+        # output = torch.matmul(input, self.weight.transpose(-1, -2))
+
+        # output = torch.matmul(input, self.weight.transpose(-1, -2))
+        # measure_output((output,), self._mod_extra_config.outputs)
+        # if self.gather_output:
+        #     output = self.collective_func(output)
+        # return self.post_all_reduce(output)
 
     def post_all_reduce(self, output):
         if not self.skip_bias_add:
@@ -576,18 +594,19 @@ class PatchedMixtralMoE(PatchedModuleBase):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         # remove the MoE weights that are quanted by PatchedMoeMatmul
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
-            if hasattr(mod, "w13_weight"):
-                delattr(mod, "w13_weight")
-                setattr(mod, "w13_weight", None)
-            if hasattr(mod, "w2_weight"):
-                delattr(mod, "w2_weight")
-                setattr(self, "w2_weight", None)
-            if hasattr(mod, "w1_weight"):
-                delattr(mod, "w1_weight")
-                setattr(self, "w1_weight", None)
-            if hasattr(mod, "w3_weight"):
-                delattr(mod, "w3_weight")
-                setattr(self, "w3_weight", None)
+            pass
+            # if hasattr(mod, "w13_weight"):
+            #     delattr(mod, "w13_weight")
+            #     setattr(mod, "w13_weight", None)
+            # if hasattr(mod, "w2_weight"):
+            #     delattr(mod, "w2_weight")
+            #     setattr(self, "w2_weight", None)
+            # if hasattr(mod, "w1_weight"):
+            #     delattr(mod, "w1_weight")
+            #     setattr(self, "w1_weight", None)
+            # if hasattr(mod, "w3_weight"):
+            #     delattr(mod, "w3_weight")
+            #     setattr(self, "w3_weight", None)
         self.forward = self.forward_orig
 
 
@@ -724,8 +743,8 @@ class PatchedGaudiMixtralSparseMoeBlock(PatchedModuleBase):
 class PatchedVllmMixtureOfExpertsOpV1(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        self.experts_min = self.orig_mod.experts_min
-        self.experts_max = self.orig_mod.experts_max
+        self.experts_min = self.orig_mod.experts_min if hasattr(self.orig_mod, "experts_min") else 0
+        self.experts_max = self.orig_mod.experts_max if hasattr(self.orig_mod, "experts_max") else 7
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             self.forward = self.forward_quant
             self.dynamic_moe_op = get_quantized_func_wrapper(OP_TYPE.DYNAMIC_MOE_FUSED_WEIGHTS, self.scale_format)
