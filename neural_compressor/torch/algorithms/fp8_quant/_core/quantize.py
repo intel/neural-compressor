@@ -33,7 +33,7 @@ from neural_compressor.torch.utils import show_mem_info
 import time
 cur_accelerator = auto_detect_accelerator()
 
-from neural_compressor.torch.algorithms.fp8_quant._core.common import INFO_INTERVAL
+from neural_compressor.torch.algorithms.fp8_quant._core.common import INFO_INTERVAL, maybe_dequant_original_fp8_weight
 
 
 @torch.no_grad()
@@ -78,6 +78,7 @@ def quantize_params(mod, mod_extra_config):
         param = getattr(mod, param_name)
         if param.dtype == torch.float16:
             param = param.to(torch.bfloat16)
+        param = maybe_dequant_original_fp8_weight(mod, param)
         quantized_param = quantizer(param.to(cur_accelerator.name()))
         delattr(mod, param_name)
         setattr(mod, param_name, nn.Parameter(quantized_param))

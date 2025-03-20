@@ -42,6 +42,14 @@ UNMEASURED_MODELS = "UnmeasuredModels"
 
 INFO_INTERVAL = 30 # seconds
 
+def maybe_dequant_original_fp8_weight(mod: torch.nn.Module, param: torch.Tensor):
+    if param.dtype in [torch.float8_e4m3fn]:
+        if hasattr(mod, "get_post_process_weights_func"):
+            post_process_weights_func = mod.get_post_process_weights_func()
+            if post_process_weights_func is not None:
+                param = post_process_weights_func(mod)
+    return param
+
 _mod_types = {
     "linear": ModuleType(1, ["weight"], 1, False),
     "matmul": ModuleType(2, [], 1, False),

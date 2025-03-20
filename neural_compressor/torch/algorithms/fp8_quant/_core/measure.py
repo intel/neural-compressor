@@ -22,7 +22,7 @@ from abc import abstractmethod
 import time
 from .._quant_common.quant_config import MeasureExclude, QuantMode, ScaleMethod, get_hqt_config, set_hqt_config
 # from ..utils.logger import logger
-from neural_compressor.torch.algorithms.fp8_quant._core.common import INFO_INTERVAL
+from neural_compressor.torch.algorithms.fp8_quant._core.common import INFO_INTERVAL, maybe_dequant_original_fp8_weight
 from .common import *
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 from neural_compressor.torch.algorithms.fp8_quant.model_configs import (
@@ -170,6 +170,7 @@ def register_patched_measure_modules(model, mod_list, observer_class, d_shapes=N
                         # if torch.distributed.get_rank() == 0:
                         #     import pdb; pdb.set_trace()
                         param = getattr(pmod, param_name)
+                        param = maybe_dequant_original_fp8_weight(pmod.orig_mod, param)
                         if config["measure_on_hpu"]:
                             param = param.to(cur_accelerator.name())
                         pmod._mod_extra_config.params[param_name].measure(param)
