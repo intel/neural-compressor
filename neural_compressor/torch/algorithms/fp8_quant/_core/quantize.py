@@ -203,11 +203,11 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     show_mem_info("after move all")
     postporcess_after_convert_(model)
     show_mem_info("after post process")
-    torch.distributed.barrier()
     convert_fp16_to_bf16(model)
     show_mem_info("after convert_fp16_to_bf16")
     cur_accelerator.synchronize()
     show_mem_info("after synchronize")
+    torch.distributed.barrier()
 
 def postporcess_after_convert_(model):
     for _, mod in model.named_modules():
