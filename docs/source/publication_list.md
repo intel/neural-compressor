@@ -1,6 +1,8 @@
-Full Publications/Events (87)
+Full Publications/Events (89)
 ==========
-## 2025 (1)
+## 2025 (3)
+* arXiv: [Faster Inference of LLMs using FP8 on the Intel Gaudi](https://arxiv.org/abs/2503.09975) (Mar 2025)
+* PyTorch landscape: [PyTorch general optimizations](https://landscape.pytorch.org/) (Mar 2025)
 * Blog on SqueezeBits: [[Intel Gaudi] #4. FP8 Quantization](https://blog.squeezebits.com/intel-gaudi-4-fp8-quantization--40269) (Jan 2025)
 
 ## 2024 (7)
