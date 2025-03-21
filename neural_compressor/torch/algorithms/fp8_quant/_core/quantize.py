@@ -176,7 +176,7 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
                 logger.debug("Patched module name: %s", name)
             cur_accelerator.synchronize()
             logger.info("Patched module name: %s", name)
-            show_mem_info()
+            # show_mem_info()
     if save_file: # cache calculated scales
         save_scales(model, scales_obj, scales_file_format, scale_file + ".npz")
         save_scales(model, scales_obj, scales_file_format, scale_file + ".json")
